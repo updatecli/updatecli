@@ -5,15 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/BurntSushi/toml"
-	"gopkg.in/yaml.v2"
-)
-
-var (
-	configFileName string = "updateCli.yaml"
-	configFilePath string = "."
+	"gopkg.in/yaml.v3"
 )
 
 // Config hold our cli configuration
@@ -45,38 +39,41 @@ type Target struct {
 }
 
 // ReadTomlFile read settings from a toml file
-func (config *Config) ReadTomlFile() {
+func (config *Config) ReadTomlFile(cfgFile string) {
 
-	if _, err := toml.DecodeFile(filepath.Join(configFilePath, configFileName), &config); err != nil {
+	if _, err := toml.DecodeFile(cfgFile, &config); err != nil {
 		log.Println(err)
 		return
 	}
 }
 
 // ReadYamlFile read settings from a yaml file
-func (config *Config) ReadYamlFile() {
-	file, err := os.Open(filepath.Join(configFilePath, configFileName))
+func (config *Config) ReadYamlFile(cfgFile string) {
+	file, err := os.Open(cfgFile)
 	defer file.Close()
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 
 }
 
 // ReadFile is just a abstraction in front of ReadYamlFile or ReadTomlFile
-func (config *Config) ReadFile() {
+func (config *Config) ReadFile(cfgFile string) {
 
-	config.ReadYamlFile()
+	config.ReadYamlFile(cfgFile)
 
 }
 
