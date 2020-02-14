@@ -14,11 +14,16 @@ import (
 
 // Git stores git configuration for the repository that need to be updated
 type Git struct {
-	Repository string
-	Branch     string
-	User       string
-	Email      string
-	Directory  string
+	URL       string
+	Branch    string
+	User      string
+	Email     string
+	Directory string
+}
+
+// GetDirectory returns the git working directory
+func (g *Git) GetDirectory() (directory string) {
+	return g.Directory
 }
 
 // Init Directory
@@ -31,7 +36,7 @@ func (g *Git) Init() {
 			log.Fatal(err)
 		}
 	}
-	log.Printf("Directory %s", g.Directory)
+	log.Printf("\tInit Directory %s", g.Directory)
 }
 
 // Clean remove unneeded git repository
@@ -39,13 +44,13 @@ func (g *Git) Clean() {
 	os.RemoveAll(g.Directory) // clean up
 }
 
-// Clone run git clone on a helm repository that need to be updated
+// Clone run git clone on a repository containing the yaml that need to be updated
 func (g *Git) Clone() string {
 
 	// Disable for now
 
 	_, err := git.PlainClone(g.Directory, false, &git.CloneOptions{
-		URL:        g.Repository,
+		URL:        g.URL,
 		RemoteName: g.Branch,
 		Progress:   os.Stdout,
 	})
@@ -54,7 +59,7 @@ func (g *Git) Clone() string {
 		log.Println(err)
 	}
 
-	log.Printf("%s downloaded in %s", g.Repository, g.Directory)
+	log.Printf("\t\t%s downloaded in %s", g.URL, g.Directory)
 	return g.Directory
 }
 
@@ -98,7 +103,7 @@ func (g *Git) Commit(file, message string) {
 // Add execute `git add`
 func (g *Git) Add(file string) {
 
-	log.Printf("Adding file: %s", file)
+	log.Printf("\t\tAdding file: %s", file)
 
 	r, err := git.PlainOpen(g.Directory)
 	if err != nil {
