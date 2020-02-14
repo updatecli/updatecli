@@ -8,9 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
-	"github.com/olblak/updateCli/pkg/docker"
-	"github.com/olblak/updateCli/pkg/github"
-	"github.com/olblak/updateCli/pkg/helm"
 	"gopkg.in/yaml.v2"
 )
 
@@ -21,9 +18,30 @@ var (
 
 // Config hold our cli configuration
 type Config struct {
-	Github github.Github
-	Docker docker.Docker
-	Helm   helm.Helm
+	Source     Source
+	Conditions []Condition
+	Targets    []Target
+}
+
+// Source define...
+type Source struct {
+	Kind string
+	Spec interface{}
+}
+
+// Condition define...
+type Condition struct {
+	Name string
+	Kind string
+	Spec interface{}
+}
+
+// Target define ...
+type Target struct {
+	Name       string
+	Kind       string
+	Spec       interface{}
+	Repository interface{}
 }
 
 // ReadTomlFile read settings from a toml file
@@ -64,13 +82,6 @@ func (config *Config) ReadFile() {
 
 // Check is a function to test that some settings are correctly present
 func (config *Config) Check() bool {
-	if config.Docker.Tag == "" {
-		log.Printf("No docker image tag specified at %s/%s, so trying to guess based on release drafter information\n",
-			configFilePath,
-			configFileName)
-		config.Docker.Tag = config.Github.GetVersion()
-		return false
-	}
 	return true
 }
 
