@@ -1,22 +1,55 @@
-github:
-  owner: "jenkins-infra"
-  repository: "plugin-site-api"
-  token:  "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
-  url: "api.github.com"
-  version: "latest"
-
-docker:
-  image: "jenkinsciinfra/plugin-site"
-  url: "hub.docker.com/"
-  #tag: "latest"
-
-helm:
-  file: "charts/plugin-site/values.yaml"
-  key: "backend.image.tag"
-  message: "Docker image updated"
-  git:
-    repository: "git@github.com:olblak/charts.git"
-    branch: "master"
-    user: "update-bot"
-    email: "update-bot@olblak.com"
-    directory: /tmp/updateCli545776415
+source:
+  kind: githubRelease
+  spec:
+    owner: "jenkins-infra"
+    repository: "plugin-site-api"
+    token: "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
+    url: "api.github.com"
+    version: "latest"
+conditions:
+  - name: "Docker Image Published on Registry"
+    kind: dockerImage
+    spec:
+      image: "jenkinsciinfra/plugin-site"
+      url: "hub.docker.com"
+      tag: latest
+targets:
+  - name: "Docker Image"
+    kind: yaml
+    spec:
+      file: "charts/plugin-site/values.yaml"
+      key: backend.image.tag
+      message: "Docker image updated"
+      scm: "git"
+      repository:
+        url: "git@github.com:olblak/charts.git"
+        branch: "master"
+        user: "update-bot"
+        email: "update-bot@olblak.com"
+        directory: /tmp/updateCli545776415
+  - name: "Chart appVersion"
+    kind: yaml
+    spec:
+      file: "charts/plugin-site/Chart.yaml"
+      key: appVersion
+      message: "Chart appVersion updated"
+      scm: "git"
+      repository:
+        url: "git@github.com:olblak/charts.git"
+        branch: "master"
+        user: "update-bot"
+        email: "update-bot@olblak.com"
+        directory: /tmp/updateCli545776415
+  - name: "Chart Version"
+    kind: yaml
+    spec:
+      file: "charts/plugin-site/Chart.yaml"
+      key: version
+      message: "Chart appVersion updated"
+      scm: "git"
+      repository:
+        url: "git@github.com:olblak/charts.git"
+        branch: "master"
+        user: "update-bot"
+        email: "update-bot@olblak.com"
+        directory: /tmp/updateCli545776415
