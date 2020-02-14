@@ -1,4 +1,4 @@
-package helm
+package yaml
 
 import (
 	"fmt"
@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/git"
+	"github.com/olblak/updateCli/pkg/scm"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,12 +18,13 @@ var (
 	yamlIdent int = 2
 )
 
-// Helm stores configuration about the file and the key value that needs to be updated
-type Helm struct {
-	File    string
-	Key     string
-	Message string
-	Git     git.Git
+// Yaml stores configuration about the file and the key value that needs to be updated
+type Yaml struct {
+	File       string
+	Key        string
+	Message    string
+	Scm        string
+	Repository interface{}
 }
 
 func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, columnRef int) (found bool, oldVersion string, column int) {
@@ -72,14 +75,30 @@ func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, col
 	return valueFound, oldVersion, column
 }
 
-// UpdateChart reads and updates helm chart value
-func (helm *Helm) UpdateChart(version string) {
+// UpdateChart reads and updates yaml chart value
+func (y *Yaml) UpdateChart(version string) {
+	var scm scm.Scm
 
-	helm.Git.Init()
+	switch y.Scm {
+	case "git":
+		var g git.Git
 
-	path := filepath.Join(helm.Git.Directory, helm.File)
+		err := mapstructure.Decode(y.Repository, &g)
 
-	helm.Git.Clone()
+		if err != nil {
+			log.Println(err)
+		}
+
+		g.GetDirectory()
+
+		scm = &g
+	}
+
+	scm.Init()
+
+	path := filepath.Join(scm.GetDirectory(), y.File)
+
+	scm.Clone()
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -101,20 +120,20 @@ func (helm *Helm) UpdateChart(version string) {
 		log.Fatalf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, oldVersion, _ := searchAndUpdateVersion(&out, strings.Split(helm.Key, "."), version, 1)
+	valueFound, oldVersion, _ := searchAndUpdateVersion(&out, strings.Split(y.Key, "."), version, 1)
 
 	if valueFound != true {
-		log.Printf("cannot find key '%v' in file %v", helm.Key, path)
+		log.Printf("cannot find key '%v' in file %v", y.Key, path)
 		return
 	}
 
 	if oldVersion == version {
-		log.Printf("Value %v at %v already up to date", helm.Key, path)
+		log.Printf("Value %v at %v already up to date", y.Key, path)
 		return
 	}
 
-	message := fmt.Sprintf("Update key '%v' to %s",
-		helm.Key,
+	message := fmt.Sprintf("Updating key '%v' to %s",
+		y.Key,
 		version)
 
 	log.Printf("%s\n", message)
@@ -131,8 +150,8 @@ func (helm *Helm) UpdateChart(version string) {
 		log.Fatalf("Something went wrong while encoding %v", err)
 	}
 
-	helm.Git.Add(helm.File)
-	helm.Git.Commit(helm.File, message)
-	helm.Git.Push()
-	helm.Git.Clean()
+	scm.Add(y.File)
+	scm.Commit(y.File, message)
+	//	scm.Push()
+	scm.Clean()
 }
