@@ -62,7 +62,7 @@ conditions:
 
 ## Targets
 
-Targets stage will update every targets definition based on the value return during the source stage if all conditions are met.
+"Targets" stage will update the definition of every targets based on the value return during the source stage if all conditions are met.
 
 ### yaml
 
@@ -83,3 +83,9 @@ targets:
         email: "git user email to push from change"
         directory: "directory where to clone the git repository"
 ```
+
+## Usage
+### Docker
+A docker image is available.
+
+`docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:latest --config /home/updatecli/updateCli.yaml`
