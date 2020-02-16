@@ -12,6 +12,8 @@ RUN go build -v -a -o bin/updateCli
 
 FROM ubuntu
 
+LABEL maintainer="Olblak <me@olblak.com>"
+
 VOLUME /tmp
 
 RUN useradd -d /home/updatecli -U -u 1000 -m updatecli
