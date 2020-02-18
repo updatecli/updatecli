@@ -17,7 +17,6 @@ import (
 var (
 	cfgFile string
 	conf    config.Config
-	value   string
 
 	rootCmd = &cobra.Command{
 		Use:   "updateCli",
@@ -61,7 +60,7 @@ func run() {
 			panic(err)
 		}
 
-		value = spec.GetVersion()
+		conf.Source.Output = spec.GetVersion()
 
 	default:
 		log.Printf("⚠\tDon't support source kind: %v\n", conf.Source.Kind)
@@ -82,7 +81,7 @@ func run() {
 				panic(err)
 			}
 
-			d.Tag = value
+			d.Tag = conf.Source.Output
 
 			if ok := d.IsTagPublished(); !ok {
 				log.Printf("\t☠ Tag \"%v:%v\" not found\n", d.Image, d.Tag)
@@ -107,7 +106,7 @@ func run() {
 				log.Println(err)
 			}
 
-			spec.UpdateChart(value)
+			spec.UpdateChart(conf.Source.Output)
 		}
 	}
 }
