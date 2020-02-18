@@ -4,7 +4,7 @@ source:
     owner: "jenkins-infra"
     repository: "plugin-site-api"
     token: "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
-    url: "api.github.com"
+    username: "olblak"
     version: "latest"
 conditions:
   - name: "Docker Image Published on Registry"
@@ -20,13 +20,16 @@ targets:
       file: "charts/plugin-site/values.yaml"
       key: backend.image.tag
       message: "Docker image updated"
-      scm: "git"
+      scm: "github"
       repository:
-        url: "git@github.com:olblak/charts.git"
-        branch: "master"
         user: "update-bot"
         email: "update-bot@olblak.com"
         directory: /tmp/updateCli545776415
+        owner: "olblak"
+        repository: "charts"
+        token: "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
+        username: "olblak"
+        branch: "master"
   - name: "Chart appVersion"
     kind: yaml
     spec:

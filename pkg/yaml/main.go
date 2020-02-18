@@ -10,6 +10,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/git"
+	"github.com/olblak/updateCli/pkg/github"
 	"github.com/olblak/updateCli/pkg/scm"
 	"gopkg.in/yaml.v3"
 )
@@ -92,6 +93,20 @@ func (y *Yaml) UpdateChart(version string) {
 		g.GetDirectory()
 
 		scm = &g
+	case "github":
+		var g github.Github
+
+		err := mapstructure.Decode(y.Repository, &g)
+
+		if err != nil {
+			log.Println(err)
+		}
+
+		g.GetDirectory()
+
+		scm = &g
+	default:
+		log.Printf("Something went wrong while looking at yaml repository kind")
 	}
 
 	scm.Init()

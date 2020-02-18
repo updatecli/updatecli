@@ -19,8 +19,9 @@ type Config struct {
 
 // Source define...
 type Source struct {
-	Kind string
-	Spec interface{}
+	Kind   string
+	Output string
+	Spec   interface{}
 }
 
 // Condition define...
