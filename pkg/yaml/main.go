@@ -113,7 +113,9 @@ func (y *Yaml) UpdateChart(version string) {
 
 	path := filepath.Join(scm.GetDirectory(), y.File)
 
-	scm.Clone()
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		scm.Clone()
+	}
 
 	file, err := os.Open(path)
 	if err != nil {
