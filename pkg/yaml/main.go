@@ -76,8 +76,8 @@ func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, col
 	return valueFound, oldVersion, column
 }
 
-// UpdateChart reads and updates yaml chart value
-func (y *Yaml) UpdateChart(version string) {
+// Update reads and updates yaml chart value
+func (y *Yaml) Update(version string) {
 	var scm scm.Scm
 
 	switch y.Scm {
@@ -169,6 +169,6 @@ func (y *Yaml) UpdateChart(version string) {
 
 	scm.Add(y.File)
 	scm.Commit(y.File, message)
-	//	scm.Push()
+	scm.Push()
 	scm.Clean()
 }
