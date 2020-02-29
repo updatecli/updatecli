@@ -106,7 +106,7 @@ func run() {
 				log.Println(err)
 			}
 
-			spec.UpdateChart(conf.Source.Output)
+			spec.Update(conf.Source.Output)
 		}
 	}
 }
