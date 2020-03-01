@@ -24,7 +24,6 @@ targets:
       repository:
         user: "update-bot"
         email: "update-bot@olblak.com"
-        directory: /tmp/updateCli545776415
         owner: "olblak"
         repository: "charts"
         token: "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
@@ -36,23 +35,41 @@ targets:
       file: "charts/plugin-site/Chart.yaml"
       key: appVersion
       message: "Chart appVersion updated"
-      scm: "git"
+      scm: "github"
       repository:
-        url: "git@github.com:olblak/charts.git"
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
+        username: "olblak"
         branch: "master"
-        user: "update-bot"
-        email: "update-bot@olblak.com"
-        directory: /tmp/updateCli545776415
+  #    scm: "git"
+  #    repository:
+  #      url: "git@github.com:olblak/charts.git"
+  #      branch: "master"
+  #      user: "update-bot"
+  #      email: "update-bot@olblak.com"
+  #      directory: /tmp/updateCli545776415
   - name: "Chart Version"
     kind: yaml
     spec:
       file: "charts/plugin-site/Chart.yaml"
       key: version
       message: "Chart appVersion updated"
-      scm: "git"
+      scm: "github"
       repository:
-        url: "git@github.com:olblak/charts.git"
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
+        username: "olblak"
         branch: "master"
-        user: "update-bot"
-        email: "update-bot@olblak.com"
-        directory: /tmp/updateCli545776415
+  #    scm: "git"
+  #    repository:
+  #      url: "git@github.com:olblak/charts.git"
+  #      branch: "master"
+  #      user: "update-bot"
+  #      email: "update-bot@olblak.com"
+  #      directory: /tmp/updateCli545776415
