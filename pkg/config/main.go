@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -43,7 +42,7 @@ type Target struct {
 func (config *Config) ReadTomlFile(cfgFile string) {
 
 	if _, err := toml.DecodeFile(cfgFile, &config); err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		return
 	}
 }
