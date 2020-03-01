@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -47,7 +46,7 @@ func (g *Github) GetVersion() string {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	req.Header.Add("Authorization", "token "+g.Token)
@@ -55,7 +54,7 @@ func (g *Github) GetVersion() string {
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	defer res.Body.Close()
@@ -63,7 +62,7 @@ func (g *Github) GetVersion() string {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	v := map[string]string{}
@@ -72,7 +71,7 @@ func (g *Github) GetVersion() string {
 	if val, ok := v["name"]; ok {
 		return val
 	}
-	log.Printf("\u2717 No tag founded from %s\n", url)
+	fmt.Printf("\u2717 No tag founded from %s\n", url)
 	return ""
 
 }
@@ -93,7 +92,7 @@ func (g *Github) setDirectory(version string) {
 
 		err := os.MkdirAll(directory, 0755)
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 		}
 	}
 
@@ -123,9 +122,9 @@ func (g *Github) Clone() string {
 	g.Checkout()
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
-	log.Printf("\t\t%s downloaded in %s", URL, g.directory)
+	fmt.Printf("\t\t%s downloaded in %s", URL, g.directory)
 	return g.directory
 }
 
@@ -134,19 +133,19 @@ func (g *Github) Commit(file, message string) {
 	// Opens an existing repository.
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	w, err := r.Worktree()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	status, err := w.Status()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
-	log.Println(status)
+	fmt.Println(status)
 
 	commit, err := w.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
@@ -156,13 +155,13 @@ func (g *Github) Commit(file, message string) {
 		},
 	})
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 	obj, err := r.CommitObject(commit)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
-	log.Println(obj)
+	fmt.Println(obj)
 
 }
 
@@ -170,16 +169,16 @@ func (g *Github) Commit(file, message string) {
 func (g *Github) Checkout() {
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	w, err := r.Worktree()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	branch := "updatecli/" + g.Version
-	log.Printf("Creating Branch: %v\n", branch)
+	fmt.Printf("Creating Branch: %v\n", branch)
 
 	err = w.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(branch),
@@ -189,28 +188,28 @@ func (g *Github) Checkout() {
 	})
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 }
 
 // Add execute `git add`
 func (g *Github) Add(file string) {
 
-	log.Printf("\t\tAdding file: %s", file)
+	fmt.Printf("\t\tAdding file: %s", file)
 
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	w, err := r.Worktree()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	_, err = w.Add(file)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 }
 
@@ -219,7 +218,7 @@ func (g *Github) Push() {
 
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	URL := fmt.Sprintf("https://%v:%v@github.com/%v/%v.git",
@@ -238,7 +237,7 @@ func (g *Github) Push() {
 		Progress:   os.Stdout,
 	})
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	g.OpenPR()
@@ -249,7 +248,7 @@ func (g *Github) OpenPR() {
 	title := fmt.Sprintf("[Updatecli] Bump to version %v", g.Version)
 
 	if g.isPRExist(title) {
-		log.Println("PR already exist")
+		fmt.Println("PR already exist")
 		return
 	}
 
@@ -269,13 +268,13 @@ func (g *Github) OpenPR() {
 	req.Header.Add("Content-Type", "application/json")
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	defer res.Body.Close()
@@ -283,17 +282,17 @@ func (g *Github) OpenPR() {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	v := map[string]string{}
 	err = json.Unmarshal(body, &v)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
-	log.Println(res.Status)
+	fmt.Println(res.Status)
 
 }
 
@@ -307,7 +306,7 @@ func (g *Github) isPRExist(title string) bool {
 	req, err := http.NewRequest("GET", URL, nil)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	req.Header.Add("Authorization", "token "+g.Token)
@@ -315,7 +314,7 @@ func (g *Github) isPRExist(title string) bool {
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	defer res.Body.Close()
@@ -323,7 +322,7 @@ func (g *Github) isPRExist(title string) bool {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	v := []map[string]string{}
@@ -331,7 +330,7 @@ func (g *Github) isPRExist(title string) bool {
 	err = json.Unmarshal(body, &v)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	for _, v := range v {

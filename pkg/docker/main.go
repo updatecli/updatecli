@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -27,13 +26,13 @@ func (docker *Docker) IsTagPublished() bool {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	defer res.Body.Close()
@@ -41,7 +40,7 @@ func (docker *Docker) IsTagPublished() bool {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	data := map[string]string{}
@@ -49,16 +48,16 @@ func (docker *Docker) IsTagPublished() bool {
 	json.Unmarshal(body, &data)
 
 	if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
-		log.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", docker.Image, docker.Tag)
+		fmt.Printf("\t\t\u2717\t%s:%s doesn't exist on the Docker Registry \n", docker.Image, docker.Tag)
 		return false
 	}
 
 	if val, ok := data["name"]; ok && val == docker.Tag {
-		log.Printf("\u2714 %s:%s available on the Docker Registry\n", docker.Image, docker.Tag)
+		fmt.Printf("\t\t\u2714\t%s:%s available on the Docker Registry\n", docker.Image, docker.Tag)
 		return true
 	}
 
-	log.Printf("Something went wrong, no field 'name' founded from %s\n", url)
+	fmt.Printf("\t\t\u2717Something went wrong, no field 'name' founded from %s\n", url)
 
 	return false
 }
