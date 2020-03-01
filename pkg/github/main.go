@@ -93,7 +93,7 @@ func (g *Github) setDirectory(version string) {
 
 		err := os.MkdirAll(directory, 0755)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 
@@ -246,17 +246,20 @@ func (g *Github) Push() {
 
 // OpenPR creates a new Github Pull Request
 func (g *Github) OpenPR() {
+	title := fmt.Sprintf("[Updatecli] Bump to version %v", g.Version)
+
+	if g.isPRExist(title) {
+		log.Println("PR already exist")
+		return
+	}
+
+	bodyPR := "Please pull these awesome changes in!"
 
 	URL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls",
 		g.Owner,
 		g.Repository)
 
-	title := fmt.Sprintf("[Updatecli] Bump to version %v", g.Version)
-	bodyPR := "Please pull these awesome changes in!"
-
 	jsonData := fmt.Sprintf("{ \"title\": \"%v\", \"body\": \"%v\", \"head\": \"%v\", \"base\": \"%v\"}", title, bodyPR, g.remoteBranch, g.Branch)
-
-	fmt.Println(jsonData)
 
 	var jsonStr = []byte(jsonData)
 
@@ -284,9 +287,58 @@ func (g *Github) OpenPR() {
 	}
 
 	v := map[string]string{}
-	json.Unmarshal(body, &v)
+	err = json.Unmarshal(body, &v)
+
+	if err != nil {
+		log.Println(err)
+	}
 
 	log.Println(res.Status)
 
-	fmt.Println("response Body:", string(body))
+}
+
+// OpenPR creates a new Github Pull Request
+func (g *Github) isPRExist(title string) bool {
+
+	URL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls",
+		g.Owner,
+		g.Repository)
+
+	req, err := http.NewRequest("GET", URL, nil)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	req.Header.Add("Authorization", "token "+g.Token)
+
+	res, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	v := []map[string]string{}
+
+	err = json.Unmarshal(body, &v)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	for _, v := range v {
+		if v["title"] == title {
+			return true
+		}
+	}
+
+	return false
 }
