@@ -85,7 +85,7 @@ func run() {
 
 			if ok := d.IsTagPublished(); !ok {
 				log.Printf("\t☠ Tag \"%v:%v\" not found\n", d.Image, d.Tag)
-				// os.Exit(1)
+				os.Exit(1)
 			}
 
 		default:
