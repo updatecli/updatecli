@@ -109,7 +109,7 @@ func (y *Yaml) Update(version string) {
 		log.Printf("Something went wrong while looking at yaml repository kind")
 	}
 
-	scm.Init()
+	scm.Init(version)
 
 	path := filepath.Join(scm.GetDirectory(), y.File)
 

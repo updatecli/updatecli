@@ -2,7 +2,6 @@ package git
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -19,6 +18,7 @@ type Git struct {
 	User      string
 	Email     string
 	Directory string
+	Version   string
 }
 
 // GetDirectory returns the git working directory
@@ -27,16 +27,26 @@ func (g *Git) GetDirectory() (directory string) {
 }
 
 // Init Directory
-func (g *Git) Init() {
-	if g.Directory == "" {
-		// Create temporary working directory
-		name, err := ioutil.TempDir("", "updateCli")
-		g.Directory = name
+func (g *Git) Init(version string) {
+	g.Version = version
+	g.setDirectory(version)
+}
+
+func (g *Git) setDirectory(version string) {
+
+	directory := fmt.Sprintf("%v/%v", os.TempDir(), g.URL)
+
+	if _, err := os.Stat(directory); os.IsNotExist(err) {
+
+		err := os.MkdirAll(directory, 0755)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-	log.Printf("\tInit Directory %s", g.Directory)
+
+	g.Directory = directory
+
+	fmt.Printf("Directory: %v\n", g.Directory)
 }
 
 // Clean remove unneeded git repository
