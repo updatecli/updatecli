@@ -3,18 +3,20 @@ source:
   spec:
     owner: "jenkins-infra"
     repository: "plugin-site-api"
-    token: "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
+    token: ""
     username: "olblak"
     version: "latest"
 conditions:
-  - name: "Docker Image Published on Registry"
+  docker:
+    name: "Docker Image Published on Registry"
     kind: dockerImage
     spec:
       image: "jenkinsciinfra/plugin-site"
       url: "hub.docker.com"
       tag: latest
 targets:
-  - name: "Docker Image"
+  imageTag:
+    name: "Docker Image"
     kind: yaml
     spec:
       file: "charts/plugin-site/values.yaml"
@@ -24,35 +26,52 @@ targets:
       repository:
         user: "update-bot"
         email: "update-bot@olblak.com"
-        directory: /tmp/updateCli545776415
         owner: "olblak"
         repository: "charts"
-        token: "560ff7a139f7aeb5bed1f3acc27d91aa1b23b2a5"
+        token: ""
         username: "olblak"
         branch: "master"
-  - name: "Chart appVersion"
+  appVersion:
+    name: "Chart appVersion"
     kind: yaml
     spec:
       file: "charts/plugin-site/Chart.yaml"
       key: appVersion
       message: "Chart appVersion updated"
-      scm: "git"
+      scm: "github"
       repository:
-        url: "git@github.com:olblak/charts.git"
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: ""
+        username: "olblak"
         branch: "master"
-        user: "update-bot"
-        email: "update-bot@olblak.com"
-        directory: /tmp/updateCli545776415
-  - name: "Chart Version"
+  #    scm: "git"
+  #    repository:
+  #      url: "git@github.com:olblak/charts.git"
+  #      branch: "master"
+  #      user: "update-bot"
+  #      email: "update-bot@olblak.com"
+  chartVersion:
+    name: "Chart Version"
     kind: yaml
     spec:
       file: "charts/plugin-site/Chart.yaml"
       key: version
-      message: "Chart appVersion updated"
-      scm: "git"
+      message: "Chart Version updated"
+      scm: "github"
       repository:
-        url: "git@github.com:olblak/charts.git"
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: ""
+        username: "olblak"
         branch: "master"
-        user: "update-bot"
-        email: "update-bot@olblak.com"
-        directory: /tmp/updateCli545776415
+  #    scm: "git"
+  #    repository:
+  #      url: "git@github.com:olblak/charts.git"
+  #      branch: "master"
+  #      user: "update-bot"
+  #      email: "update-bot@olblak.com"

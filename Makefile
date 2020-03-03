@@ -1,5 +1,9 @@
 .PHONY: build
 
+ENV=updateCli.env
+
+include $(ENV)
+
 DOCKER_IMAGE=olblak/updatecli
 DOCKER_TAG=latest
 

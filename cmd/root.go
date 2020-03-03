@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/mitchellh/mapstructure"
@@ -48,11 +47,11 @@ func run() {
 	conf.ReadFile(cfgFile)
 	conf.Check()
 
-	log.Printf("👀\tParsing source:\n")
+	fmt.Printf("👀\tParsing source:\n")
 
 	switch conf.Source.Kind {
 	case "githubRelease":
-		log.Printf("\tgithubRelease specified\n")
+		fmt.Printf("\tgithubRelease specified\n")
 		var spec github.Github
 		err := mapstructure.Decode(conf.Source.Spec, &spec)
 
@@ -63,16 +62,14 @@ func run() {
 		conf.Source.Output = spec.GetVersion()
 
 	default:
-		log.Printf("⚠\tDon't support source kind: %v\n", conf.Source.Kind)
+		fmt.Printf("⚠\tDon't support source kind: %v\n", conf.Source.Kind)
 	}
 
-	log.Printf("👀\tChecking conditions\n")
+	fmt.Printf("👀\tChecking conditions\n")
 
 	for _, condition := range conf.Conditions {
 		switch condition.Kind {
 		case "dockerImage":
-			log.Printf("\t\t- dockerImage:\n")
-
 			var d docker.Docker
 
 			err := mapstructure.Decode(condition.Spec, &d)
@@ -84,17 +81,16 @@ func run() {
 			d.Tag = conf.Source.Output
 
 			if ok := d.IsTagPublished(); !ok {
-				log.Printf("\t☠ Tag \"%v:%v\" not found\n", d.Image, d.Tag)
-				// os.Exit(1)
+				os.Exit(1)
 			}
 
 		default:
-			log.Printf("\t\t⚠\tDon't support condition: %v\n", condition.Kind)
+			fmt.Printf("\t\t⚠\tDon't support condition: %v\n", condition.Kind)
 		}
 
 	}
 
-	log.Printf("✍\tUpdating Targets\n")
+	fmt.Printf("✍\tUpdating Targets\n")
 	for _, target := range conf.Targets {
 		switch target.Kind {
 		case "yaml":
@@ -103,10 +99,10 @@ func run() {
 			err := mapstructure.Decode(target.Spec, &spec)
 
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 			}
 
-			spec.UpdateChart(conf.Source.Output)
+			spec.Update(conf.Source.Output)
 		}
 	}
 }
