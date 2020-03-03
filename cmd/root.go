@@ -64,7 +64,7 @@ func run(cfg string) {
 		files, err := dir.Readdirnames(-1)
 		fmt.Printf("Files: %v \n", files)
 		for _, file := range files {
-			run(filepath.Join(cfg,file))
+			run(filepath.Join(cfg, file))
 		}
 	} else {
 		fmt.Printf("Reading: %v \n", cfg)
@@ -86,6 +86,17 @@ func engine(cfgFile string) error {
 	case "githubRelease":
 		fmt.Printf("\tgithubRelease specified\n")
 		var spec github.Github
+		err := mapstructure.Decode(conf.Source.Spec, &spec)
+
+		if err != nil {
+			panic(err)
+		}
+
+		conf.Source.Output = spec.GetVersion()
+
+	case "dockerDigest":
+		fmt.Printf("\tdockerDigest specified\n")
+		var spec docker.Docker
 		err := mapstructure.Decode(conf.Source.Spec, &spec)
 
 		if err != nil {
