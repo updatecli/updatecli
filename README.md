@@ -96,16 +96,19 @@ Yaml accept two kind of scm, github and git.
 ##### git
 Git push every changes on the remote git repository
 
+```
 repository:
   url: "git repository url"
   branch: "git branch to push changes"
   user: "git user to push from changes"
   email: "git user email to push from change"
   directory: "directory where to clone the git repository"
+```
 
 ##### github
 Github  push every changes on a temporary branch then open a pull request
 
+```
 repository:
   user: "git user to push from changes"
   email: "git user email to push from change"
@@ -115,6 +118,7 @@ repository:
   token: "github token with enough permission on repository"
   username: "github username used for push git changes"
   branch: "git branch where to push changes"
+```
 
 ## Usage
 
