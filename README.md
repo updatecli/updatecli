@@ -45,7 +45,7 @@ This source will check a docker image tag from a docker registry and return its 
 
 ```
 source:
-  kind: dockerTag
+  kind: dockerDigest
   spec:
     image: "Docker Image"
     url: "Docker registry url"
