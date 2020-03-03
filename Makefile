@@ -11,7 +11,7 @@ build:
 	go build -o bin/updatecli
 
 run:
-	./bin/updatecli
+	./bin/updatecli --config ./updateCli.d
 
 docker.build:
 	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
