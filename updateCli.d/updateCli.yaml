@@ -1,0 +1,77 @@
+source:
+  kind: githubRelease
+  spec:
+    owner: "jenkins-infra"
+    repository: "plugin-site-api"
+    token: ""
+    username: "olblak"
+    version: "latest"
+conditions:
+  docker:
+    name: "Docker Image Published on Registry"
+    kind: dockerImage
+    spec:
+      image: "jenkinsciinfra/plugin-site"
+      url: "hub.docker.com"
+      tag: latest
+targets:
+  imageTag:
+    name: "Docker Image"
+    kind: yaml
+    spec:
+      file: "charts/plugin-site/values.yaml"
+      key: backend.image.tag
+      message: "Docker image updated"
+      scm: "github"
+      repository:
+        user: "update-bot"
+        email: "update-bot@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: ""
+        username: "olblak"
+        branch: "master"
+  appVersion:
+    name: "Chart appVersion"
+    kind: yaml
+    spec:
+      file: "charts/plugin-site/Chart.yaml"
+      key: appVersion
+      message: "Chart appVersion updated"
+      scm: "github"
+      repository:
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: ""
+        username: "olblak"
+        branch: "master"
+  #    scm: "git"
+  #    repository:
+  #      url: "git@github.com:olblak/charts.git"
+  #      branch: "master"
+  #      user: "update-bot"
+  #      email: "update-bot@olblak.com"
+  chartVersion:
+    name: "Chart Version"
+    kind: yaml
+    spec:
+      file: "charts/plugin-site/Chart.yaml"
+      key: version
+      message: "Chart Version updated"
+      scm: "github"
+      repository:
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: ""
+        username: "olblak"
+        branch: "master"
+  #    scm: "git"
+  #    repository:
+  #      url: "git@github.com:olblak/charts.git"
+  #      branch: "master"
+  #      user: "update-bot"
+  #      email: "update-bot@olblak.com"
