@@ -57,6 +57,7 @@ func run(cfg string) {
 	if fileInfo.IsDir() {
 		fmt.Println("Configuration directory provided")
 		dir, err := os.Open(cfg)
+		defer dir.Close()
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -66,11 +67,15 @@ func run(cfg string) {
 			run(filepath.Join(cfg,file))
 		}
 	} else {
-		engine(cfg)
+		fmt.Printf("Reading: %v \n", cfg)
+		err := engine(cfg)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
-func engine(cfgFile string) {
+func engine(cfgFile string) error {
 
 	conf.ReadFile(cfgFile)
 	conf.Check()
@@ -109,7 +114,7 @@ func engine(cfgFile string) {
 			d.Tag = conf.Source.Output
 
 			if ok := d.IsTagPublished(); !ok {
-				os.Exit(1)
+				return fmt.Errorf("Docker Image Tag not published")
 			}
 
 		default:
@@ -133,4 +138,5 @@ func engine(cfgFile string) {
 			spec.Update(conf.Source.Output)
 		}
 	}
+	return nil
 }

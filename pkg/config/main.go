@@ -38,9 +38,17 @@ type Target struct {
 	Repository interface{}
 }
 
+// Reset reset configuration
+func (config *Config) Reset(){
+	config.Source = Source{}
+	config.Conditions = map[string]Condition{}
+	config.Targets = map[string]Target{}
+}
+
 // ReadFile reads the updatecli configuration file
 func (config *Config) ReadFile(cfgFile string) {
 
+	config.Reset()
 	v := viper.New()
 
 	dirname, basename := filepath.Split(cfgFile)
@@ -68,7 +76,7 @@ func (config *Config) ReadFile(cfgFile string) {
 
 // Check is a function that test if the configuration is correct
 func (config *Config) Check() bool {
-	fmt.Printf("TODO: Implement configuration check")
+	fmt.Printf("TODO: Implement configuration check\n")
 	return true
 }
 
