@@ -244,14 +244,14 @@ func (g *Github) Push() {
 
 // OpenPR creates a new pull request
 func (g *Github) OpenPR() {
-	title := fmt.Sprintf("[Updatecli] Bump to version %v", g.Version)
+	title := fmt.Sprintf("[Updatecli] Update version to %v", g.Version)
 
 	if g.isPRExist(title) {
-		fmt.Println("PR already exist")
+		fmt.Printf("Pull Request titled '%v' already exist\n", title)
 		return
 	}
 
-	bodyPR := "Please pull these awesome changes in!"
+	bodyPR := "**! Experimental project**\\nThis pull request was automatically created using [olblak/updatecli](https://github.com/olblak/updatecli)\\nBased on a source rule, it checks if yaml value can be update to the latest version\\nPlease carefully review yaml modification as it also reformat it.\\nPlease report any issues with this tool [here](https://github.com/olblak/updatecli/issues/new)"
 
 	URL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls",
 		g.Owner,
@@ -291,7 +291,10 @@ func (g *Github) OpenPR() {
 		fmt.Println(err)
 	}
 
-	fmt.Println(res.Status)
+	if res.StatusCode != 201 {
+		fmt.Printf("Json Request: %v", jsonData)
+		fmt.Println("Response: %v", v)
+	}
 
 }
 
