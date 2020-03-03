@@ -1,6 +1,6 @@
 .PHONY: build
 
-ENV="updateCli.env"
+ENV=updateCli.env
 
 include $(ENV)
 
