@@ -1,5 +1,10 @@
 # Updatecli
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/olblak/updatecli?label=olblak%2Fupdatecli&logo=docker&logoColor=white)](https://hub.docker.com/r/olblak/updatecli)
+
+[![Go](https://github.com/olblak/updatecli/workflows/Go/badge.svg)](https://github.com/olblak/updatecli/actions?query=workflow%3AGo)
+[![Release Drafter](https://github.com/olblak/updatecli/workflows/Release%20Drafter/badge.svg)](https://github.com/olblak/updatecli/actions?query=workflow%3A%22Release+Drafter%22)
+
 **Prototype**
 
 Updatecli is a small cli tool used for automating yaml values updates.
