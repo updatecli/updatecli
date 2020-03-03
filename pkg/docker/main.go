@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -16,12 +17,12 @@ type Docker struct {
 }
 
 // IsTagPublished checks if a docker image with a specific tag is published
-func (docker *Docker) IsTagPublished() bool {
+func (d *Docker) IsTagPublished() bool {
 
 	url := fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s",
-		docker.URL,
-		docker.Image,
-		docker.Tag)
+		d.URL,
+		d.Image,
+		d.Tag)
 
 	req, err := http.NewRequest("GET", url, nil)
 
@@ -48,16 +49,67 @@ func (docker *Docker) IsTagPublished() bool {
 	json.Unmarshal(body, &data)
 
 	if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
-		fmt.Printf("\t\t\u2717\t%s:%s doesn't exist on the Docker Registry \n", docker.Image, docker.Tag)
+		fmt.Printf("\t\t\u2717\t%s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
 		return false
 	}
 
-	if val, ok := data["name"]; ok && val == docker.Tag {
-		fmt.Printf("\t\t\u2714\t%s:%s available on the Docker Registry\n", docker.Image, docker.Tag)
+	if val, ok := data["name"]; ok && val == d.Tag {
+		fmt.Printf("\t\t\u2714\t%s:%s available on the Docker Registry\n", d.Image, d.Tag)
 		return true
 	}
 
 	fmt.Printf("\t\t\u2717Something went wrong, no field 'name' founded from %s\n", url)
 
 	return false
+}
+
+// GetVersion retrieve docker image tag digest from a registry
+func (d *Docker) GetVersion() string {
+
+	// https://hub.docker.com/v2/repositories/olblak/updatecli/tags/latest
+	URL := fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s",
+		d.URL,
+		d.Image,
+		d.Tag)
+
+	req, err := http.NewRequest("GET", URL, nil)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	res, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	type respond struct {
+		ID     string
+		Images []map[string]string
+	}
+
+	data := respond{}
+
+	json.Unmarshal(body, &data)
+
+	log.Printf("Data: %v", data)
+
+	for _, image := range data.Images {
+		if image["architecture"] == "amd64" {
+			digest := image["digest"]
+			fmt.Printf("Digest: %v", digest)
+			log.Printf("Digest: %v", digest)
+			return digest
+		}
+	}
+	return ""
 }
