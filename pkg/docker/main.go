@@ -8,14 +8,14 @@ import (
 	"strings"
 )
 
-// Docker contains various information to check if a docker image exists
+// Docker contains various information to interact with a docker registry
 type Docker struct {
 	Image string
 	Tag   string
 	URL   string
 }
 
-// IsTagPublished check if a docker image with a specific tag is published
+// IsTagPublished checks if a docker image with a specific tag is published
 func (docker *Docker) IsTagPublished() bool {
 
 	url := fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s",
