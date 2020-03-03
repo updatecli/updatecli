@@ -17,3 +17,5 @@
 bin/
 
 *.code-workspace
+
+*.env

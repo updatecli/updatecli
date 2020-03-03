@@ -2,8 +2,6 @@ package git
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"time"
 
@@ -19,6 +17,7 @@ type Git struct {
 	User      string
 	Email     string
 	Directory string
+	Version   string
 }
 
 // GetDirectory returns the git working directory
@@ -27,16 +26,26 @@ func (g *Git) GetDirectory() (directory string) {
 }
 
 // Init Directory
-func (g *Git) Init() {
-	if g.Directory == "" {
-		// Create temporary working directory
-		name, err := ioutil.TempDir("", "updateCli")
-		g.Directory = name
+func (g *Git) Init(version string) {
+	g.Version = version
+	g.setDirectory(version)
+}
+
+func (g *Git) setDirectory(version string) {
+
+	directory := fmt.Sprintf("%v/%v", os.TempDir(), g.URL)
+
+	if _, err := os.Stat(directory); os.IsNotExist(err) {
+
+		err := os.MkdirAll(directory, 0755)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 	}
-	log.Printf("\tInit Directory %s", g.Directory)
+
+	g.Directory = directory
+
+	fmt.Printf("Directory: %v\n", g.Directory)
 }
 
 // Clean remove unneeded git repository
@@ -56,10 +65,10 @@ func (g *Git) Clone() string {
 	})
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
-	log.Printf("\t\t%s downloaded in %s", g.URL, g.Directory)
+	fmt.Printf("\t\t%s downloaded in %s", g.URL, g.Directory)
 	return g.Directory
 }
 
@@ -68,19 +77,19 @@ func (g *Git) Commit(file, message string) {
 	// Opens an already existing repository.
 	r, err := git.PlainOpen(g.Directory)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	w, err := r.Worktree()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	status, err := w.Status()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
-	log.Println(status)
+	fmt.Println(status)
 
 	commit, err := w.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
@@ -90,33 +99,33 @@ func (g *Git) Commit(file, message string) {
 		},
 	})
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 	obj, err := r.CommitObject(commit)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
-	log.Println(obj)
+	fmt.Println(obj)
 
 }
 
 // Add execute `git add`
 func (g *Git) Add(file string) {
 
-	log.Printf("\t\tAdding file: %s", file)
+	fmt.Printf("\t\tAdding file: %s", file)
 
 	r, err := git.PlainOpen(g.Directory)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	w, err := r.Worktree()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 	_, err = w.Add(file)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 }
 
@@ -125,14 +134,14 @@ func (g *Git) TmpBranch(name string) {
 
 	r, err := git.PlainOpen(g.Directory)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	// Create a new branch to the current HEAD
 
 	headRef, err := r.Head()
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	// Create a new plumbing.HashReference object with the name of the branch
@@ -150,7 +159,7 @@ func (g *Git) TmpBranch(name string) {
 	err = r.Storer.SetReference(ref)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 }
 
@@ -159,14 +168,14 @@ func (g *Git) Push() {
 
 	r, err := git.PlainOpen(g.Directory)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	err = r.Push(&git.PushOptions{
 		RemoteName: g.Branch,
 	})
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 }

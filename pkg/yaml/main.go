@@ -58,15 +58,15 @@ func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, col
 			column = content.Column
 
 			if version != content.Value {
-				log.Printf("Version mismatched between %s (old) and %s (new)", content.Value, version)
+				fmt.Printf("Version mismatched between %s (old) and %s (new)", content.Value, version)
 				oldVersion = content.Value
 				content.SetString(version)
 			} else if version == content.Value {
-				log.Printf("Version already set to %v", content.Value)
+				fmt.Printf("Version already set to %v", content.Value)
 				oldVersion = content.Value
 				content.SetString(version)
 			} else {
-				log.Printf("Something weird happened while comparing old and new version")
+				fmt.Printf("Something weird happened while comparing old and new version")
 			}
 			break
 		} else if content.Kind == yaml.MappingNode {
@@ -76,8 +76,8 @@ func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, col
 	return valueFound, oldVersion, column
 }
 
-// UpdateChart reads and updates yaml chart value
-func (y *Yaml) UpdateChart(version string) {
+// Update reads and updates yaml chart value
+func (y *Yaml) Update(version string) {
 	var scm scm.Scm
 
 	switch y.Scm {
@@ -87,7 +87,7 @@ func (y *Yaml) UpdateChart(version string) {
 		err := mapstructure.Decode(y.Repository, &g)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 		}
 
 		g.GetDirectory()
@@ -99,32 +99,34 @@ func (y *Yaml) UpdateChart(version string) {
 		err := mapstructure.Decode(y.Repository, &g)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 		}
 
 		g.GetDirectory()
 
 		scm = &g
 	default:
-		log.Printf("Something went wrong while looking at yaml repository kind")
+		fmt.Printf("Something went wrong while looking at yaml repository kind")
 	}
 
-	scm.Init()
+	scm.Init(version)
 
 	path := filepath.Join(scm.GetDirectory(), y.File)
 
-	scm.Clone()
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		scm.Clone()
+	}
 
 	file, err := os.Open(path)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	defer file.Close()
 
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
 
 	var out yaml.Node
@@ -138,12 +140,12 @@ func (y *Yaml) UpdateChart(version string) {
 	valueFound, oldVersion, _ := searchAndUpdateVersion(&out, strings.Split(y.Key, "."), version, 1)
 
 	if valueFound != true {
-		log.Printf("cannot find key '%v' in file %v", y.Key, path)
+		fmt.Printf("cannot find key '%v' in file %v", y.Key, path)
 		return
 	}
 
 	if oldVersion == version {
-		log.Printf("Value %v at %v already up to date", y.Key, path)
+		fmt.Printf("Value %v at %v already up to date", y.Key, path)
 		return
 	}
 
@@ -151,7 +153,7 @@ func (y *Yaml) UpdateChart(version string) {
 		y.Key,
 		version)
 
-	log.Printf("%s\n", message)
+	fmt.Printf("%s\n", message)
 
 	newFile, err := os.Create(path)
 	defer newFile.Close()
@@ -167,6 +169,6 @@ func (y *Yaml) UpdateChart(version string) {
 
 	scm.Add(y.File)
 	scm.Commit(y.File, message)
-	//	scm.Push()
+	scm.Push()
 	scm.Clean()
 }
