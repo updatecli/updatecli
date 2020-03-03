@@ -1,3 +1,4 @@
+---
 name-template: 'v$NEXT_PATCH_VERSION 🌈'
 tag-template: 'v$NEXT_PATCH_VERSION'
 categories:
@@ -13,11 +14,12 @@ categories:
   - title: '🧰 Maintenance'
     label: 'chore'
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+
 template: |
   ## Changes
 
   $CHANGES
 
   ## Contributors
-  
+
   $CONTRIBUTORS
