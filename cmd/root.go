@@ -81,7 +81,7 @@ func run() {
 			d.Tag = conf.Source.Output
 
 			if ok := d.IsTagPublished(); !ok {
-				// os.Exit(1)
+				os.Exit(1)
 			}
 
 		default:
