@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/config"
@@ -25,7 +26,7 @@ updateCli is a tool to update yaml
 key value based on source rule
 then validated by conditions`,
 		Run: func(cmd *cobra.Command, args []string) {
-			run()
+			run(cfgFile)
 		},
 	}
 )
@@ -42,7 +43,34 @@ func init() {
 	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "config file (default is ./updateCli.yaml)")
 }
 
-func run() {
+func run(cfg string) {
+	fileInfo, err := os.Stat(cfg)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if os.IsNotExist(err) {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if fileInfo.IsDir() {
+		fmt.Println("Configuration directory provided")
+		dir, err := os.Open(cfg)
+		if err != nil {
+			fmt.Println(err)
+		}
+		files, err := dir.Readdirnames(-1)
+		fmt.Printf("Files: %v \n", files)
+		for _, file := range files {
+			run(filepath.Join(cfg,file))
+		}
+	} else {
+		engine(cfg)
+	}
+}
+
+func engine(cfgFile string) {
 
 	conf.ReadFile(cfgFile)
 	conf.Check()
