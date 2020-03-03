@@ -39,7 +39,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", "updateCli.yaml", "config file (default is ./updateCli.yaml)")
+	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "config file (default is ./updateCli.yaml)")
 }
 
 func run() {

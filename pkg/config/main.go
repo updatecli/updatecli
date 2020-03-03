@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -42,12 +43,15 @@ func (config *Config) ReadFile(cfgFile string) {
 
 	v := viper.New()
 
+	dirname, basename := filepath.Split(cfgFile)
+
+	fmt.Printf("%v - %v\n", dirname, basename)
+
 	v.SetEnvPrefix("updatecli")
 	v.AutomaticEnv()
-	v.SetConfigName("updateCli")        // name of config file (without extension)
-	v.SetConfigType("yaml")             // REQUIRED if the config file does not have the extension in the name
-	v.AddConfigPath("$HOME/.updateCli") // call multiple times to add many search paths
-	v.AddConfigPath(".")                // optionally look for config in the working directory
+	v.SetConfigName(strings.TrimSuffix(basename, filepath.Ext(basename))) // name of config file (without extension)
+	v.SetConfigType(strings.Replace(filepath.Ext(basename), ".", "", -1)) // REQUIRED if the config file does not have the extension in the name
+	v.AddConfigPath(dirname)                                              // optionally look for config in the working directory
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := v.ReadInConfig(); err != nil {
