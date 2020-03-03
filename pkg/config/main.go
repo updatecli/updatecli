@@ -45,8 +45,6 @@ func (config *Config) ReadFile(cfgFile string) {
 
 	dirname, basename := filepath.Split(cfgFile)
 
-	fmt.Printf("%v - %v\n", dirname, basename)
-
 	v.SetEnvPrefix("updatecli")
 	v.AutomaticEnv()
 	v.SetConfigName(strings.TrimSuffix(basename, filepath.Ext(basename))) // name of config file (without extension)
