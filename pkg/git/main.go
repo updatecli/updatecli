@@ -10,7 +10,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-// Git stores git configuration for the repository that need to be updated
+// Git contains settings to interact with a specific git repository.
 type Git struct {
 	URL       string
 	Branch    string
@@ -25,7 +25,7 @@ func (g *Git) GetDirectory() (directory string) {
 	return g.Directory
 }
 
-// Init Directory
+// Init Git struct
 func (g *Git) Init(version string) {
 	g.Version = version
 	g.setDirectory(version)
@@ -48,15 +48,13 @@ func (g *Git) setDirectory(version string) {
 	fmt.Printf("Directory: %v\n", g.Directory)
 }
 
-// Clean remove unneeded git repository
+// Clean remove unneeded git repository from local storage
 func (g *Git) Clean() {
 	os.RemoveAll(g.Directory) // clean up
 }
 
-// Clone run git clone on a repository containing the yaml that need to be updated
+// Clone run `git clone`
 func (g *Git) Clone() string {
-
-	// Disable for now
 
 	_, err := git.PlainClone(g.Directory, false, &git.CloneOptions{
 		URL:        g.URL,
@@ -72,7 +70,7 @@ func (g *Git) Clone() string {
 	return g.Directory
 }
 
-// Commit run git commit
+// Commit run `git commit`
 func (g *Git) Commit(file, message string) {
 	// Opens an already existing repository.
 	r, err := git.PlainOpen(g.Directory)
@@ -109,7 +107,7 @@ func (g *Git) Commit(file, message string) {
 
 }
 
-// Add execute `git add`
+// Add run `git add`
 func (g *Git) Add(file string) {
 
 	fmt.Printf("\t\tAdding file: %s", file)
@@ -129,7 +127,7 @@ func (g *Git) Add(file string) {
 	}
 }
 
-// TmpBranch will create a new ephemeral branch
+// TmpBranch creates a ephemeral branch
 func (g *Git) TmpBranch(name string) {
 
 	r, err := git.PlainOpen(g.Directory)
@@ -137,25 +135,14 @@ func (g *Git) TmpBranch(name string) {
 		fmt.Println(err)
 	}
 
-	// Create a new branch to the current HEAD
-
 	headRef, err := r.Head()
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	// Create a new plumbing.HashReference object with the name of the branch
-	// and the hash from the HEAD. The reference name should be a full reference
-	// name and not an abbreviated one, as is used on the git cli.
-	//
-	// For tags we should use `refs/tags/%s` instead of `refs/heads/%s` used
-	// for branches.
-
 	reference := plumbing.NewBranchReferenceName(fmt.Sprintf("refs/head/%s", name))
 	ref := plumbing.NewHashReference(reference, headRef.Hash())
 
-	// The created reference is saved in the storage.
-	// https://github.com/src-d/go-git/blob/master/_examples/checkout/main.go
 	err = r.Storer.SetReference(ref)
 
 	if err != nil {
@@ -163,7 +150,7 @@ func (g *Git) TmpBranch(name string) {
 	}
 }
 
-// Push execute git push
+// Push run `git push`
 func (g *Git) Push() {
 
 	r, err := git.PlainOpen(g.Directory)

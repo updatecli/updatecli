@@ -7,28 +7,29 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config hold our cli configuration
+// Config contains cli configuration
 type Config struct {
 	Source     Source
 	Conditions map[string]Condition
 	Targets    map[string]Target
 }
 
-// Source define...
+// Source defines how a value is retrieved from a specific source
 type Source struct {
 	Kind   string
 	Output string
 	Spec   interface{}
 }
 
-// Condition define...
+// Condition defines which condition needs to be met
+// in order to update targets based on the source output
 type Condition struct {
 	Name string
 	Kind string
 	Spec interface{}
 }
 
-// Target define ...
+// Target defines which file need to be updated based on source output
 type Target struct {
 	Name       string
 	Kind       string
@@ -36,7 +37,7 @@ type Target struct {
 	Repository interface{}
 }
 
-// ReadFile is just a abstraction in front of ReadYamlFile or ReadTomlFile
+// ReadFile reads the updatecli configuration file
 func (config *Config) ReadFile(cfgFile string) {
 
 	v := viper.New()
@@ -63,12 +64,13 @@ func (config *Config) ReadFile(cfgFile string) {
 	}
 }
 
-// Check is a function to test that some settings are correctly present
+// Check is a function that test if the configuration is correct
 func (config *Config) Check() bool {
+	fmt.Printf("TODO: Implement configuration check")
 	return true
 }
 
-// Display show loaded configuration
+// Display shows updatecli configuration including secrets !
 func (config *Config) Display() {
 	fmt.Println(config)
 }

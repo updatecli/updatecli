@@ -1,6 +1,6 @@
 package scm
 
-// Scm defines ...
+// Scm is an interface in from of source controle manager like git or github
 type Scm interface {
 	Add(file string)
 	Clone() string

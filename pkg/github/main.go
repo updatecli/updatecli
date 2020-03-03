@@ -15,7 +15,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-// Github holds github specific configuration
+// Github contains settings to interact with Github
 type Github struct {
 	Owner        string
 	Repository   string
@@ -30,12 +30,12 @@ type Github struct {
 	Email        string
 }
 
-// GetDirectory returns the git working directory
+// GetDirectory returns the local git repository path
 func (g *Github) GetDirectory() (directory string) {
 	return g.directory
 }
 
-// GetVersion retrieves the version tag from releases
+// GetVersion retrieves the version tag from Github Releases
 func (g *Github) GetVersion() string {
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%s",
@@ -76,7 +76,7 @@ func (g *Github) GetVersion() string {
 
 }
 
-// Init Directory before running git clone
+// Init Github struct
 func (g *Github) Init(version string) {
 	g.Version = version
 	g.setDirectory(version)
@@ -101,12 +101,12 @@ func (g *Github) setDirectory(version string) {
 	fmt.Printf("Directory: %v\n", g.directory)
 }
 
-// Clean remote working directory
+// Clean Github working directory
 func (g *Github) Clean() {
 	os.RemoveAll(g.directory)
 }
 
-// Clone run git clone
+// Clone run `git clone`
 func (g *Github) Clone() string {
 	URL := fmt.Sprintf("https://%v:%v@github.com/%v/%v.git",
 		g.Username,
@@ -128,9 +128,8 @@ func (g *Github) Clone() string {
 	return g.directory
 }
 
-// Commit run git commit
+// Commit run `git commit`
 func (g *Github) Commit(file, message string) {
-	// Opens an existing repository.
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
 		fmt.Println(err)
@@ -165,7 +164,7 @@ func (g *Github) Commit(file, message string) {
 
 }
 
-// Checkout will create and use a temporary branch
+// Checkout create and use a temporary branch
 func (g *Github) Checkout() {
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
@@ -192,7 +191,7 @@ func (g *Github) Checkout() {
 	}
 }
 
-// Add execute `git add`
+// Add run `git add`
 func (g *Github) Add(file string) {
 
 	fmt.Printf("\t\tAdding file: %s", file)
@@ -213,7 +212,7 @@ func (g *Github) Add(file string) {
 	}
 }
 
-// Push execute git push
+// Push run `git push`
 func (g *Github) Push() {
 
 	r, err := git.PlainOpen(g.directory)
@@ -243,7 +242,7 @@ func (g *Github) Push() {
 	g.OpenPR()
 }
 
-// OpenPR creates a new Github Pull Request
+// OpenPR creates a new pull request
 func (g *Github) OpenPR() {
 	title := fmt.Sprintf("[Updatecli] Bump to version %v", g.Version)
 
@@ -296,7 +295,7 @@ func (g *Github) OpenPR() {
 
 }
 
-// OpenPR creates a new Github Pull Request
+// isPRExist checks if an open pull request already exist based on a title
 func (g *Github) isPRExist(title string) bool {
 
 	URL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls",
