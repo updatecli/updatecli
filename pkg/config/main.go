@@ -10,8 +10,8 @@ import (
 // Config hold our cli configuration
 type Config struct {
 	Source     Source
-	Conditions []Condition
-	Targets    []Target
+	Conditions map[string]Condition
+	Targets    map[string]Target
 }
 
 // Source define...
