@@ -28,6 +28,7 @@ type Yaml struct {
 	Repository interface{}
 }
 
+// searchAndUpdateVersion parses a yaml object looking for a specific key that need to be updated if needed
 func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, columnRef int) (found bool, oldVersion string, column int) {
 
 	valueFound := false
@@ -76,7 +77,7 @@ func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, col
 	return valueFound, oldVersion, column
 }
 
-// Update reads and updates yaml chart value
+// Update updates a scm repository based on yaml modification
 func (y *Yaml) Update(version string) {
 	var scm scm.Scm
 
@@ -106,7 +107,7 @@ func (y *Yaml) Update(version string) {
 
 		scm = &g
 	default:
-		fmt.Printf("Something went wrong while looking at yaml repository kind")
+		fmt.Printf("Something went wrong while looking at yaml repository of kind")
 	}
 
 	scm.Init(version)
