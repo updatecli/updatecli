@@ -69,9 +69,10 @@ func (g *Github) GetVersion() string {
 	json.Unmarshal(body, &v)
 
 	if val, ok := v["name"]; ok {
+		fmt.Printf("\u2714 '%s' github release version founded: %s\n", g.Version, val)
 		return val
 	}
-	fmt.Printf("\u2717 No tag founded from %s\n", url)
+	fmt.Printf("\u2717 No '%s' github release version founded from %s\n", g.Version, url)
 	return ""
 
 }
@@ -97,8 +98,6 @@ func (g *Github) setDirectory(version string) {
 	}
 
 	g.directory = directory
-
-	fmt.Printf("Directory: %v\n", g.directory)
 }
 
 // Clean Github working directory
@@ -108,6 +107,7 @@ func (g *Github) Clean() {
 
 // Clone run `git clone`
 func (g *Github) Clone() string {
+	fmt.Printf("Cloning git repository: \n\n")
 	URL := fmt.Sprintf("https://%v:%v@github.com/%v/%v.git",
 		g.Username,
 		g.Token,
@@ -118,13 +118,14 @@ func (g *Github) Clone() string {
 		RemoteName: g.Branch,
 		Progress:   os.Stdout,
 	})
+	fmt.Printf("\n")
 
 	g.Checkout()
 
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("\t\t%s downloaded in %s", URL, g.directory)
+	fmt.Printf("%s downloaded in %s", URL, g.directory)
 	return g.directory
 }
 
@@ -189,12 +190,13 @@ func (g *Github) Checkout() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Printf("\n")
 }
 
 // Add run `git add`
 func (g *Github) Add(file string) {
 
-	fmt.Printf("\t\tAdding file: %s", file)
+	fmt.Printf("Adding file: %s\n", file)
 
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
@@ -238,6 +240,8 @@ func (g *Github) Push() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	fmt.Printf("\n")
 
 	g.OpenPR()
 }
@@ -292,8 +296,8 @@ func (g *Github) OpenPR() {
 	}
 
 	if res.StatusCode != 201 {
-		fmt.Printf("Json Request: %v", jsonData)
-		fmt.Println("Response: %v", v)
+		fmt.Printf("Json Request: %v\n", jsonData)
+		fmt.Printf("Response: %v\n", v)
 	}
 
 }
