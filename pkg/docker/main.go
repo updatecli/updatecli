@@ -49,12 +49,12 @@ func (d *Docker) IsTagPublished() bool {
 	json.Unmarshal(body, &data)
 
 	if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
-		fmt.Printf("\t\t\u2717\t%s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
+		fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
 		return false
 	}
 
 	if val, ok := data["name"]; ok && val == d.Tag {
-		fmt.Printf("\t\t\u2714\t%s:%s available on the Docker Registry\n", d.Image, d.Tag)
+		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
 		return true
 	}
 
@@ -106,8 +106,7 @@ func (d *Docker) GetVersion() string {
 	for _, image := range data.Images {
 		if image["architecture"] == "amd64" {
 			digest := image["digest"]
-			fmt.Printf("Digest: %v", digest)
-			log.Printf("Digest: %v", digest)
+			fmt.Printf("%s:%s digest found is %v", d.Image, d.Tag, digest)
 			return digest
 		}
 	}

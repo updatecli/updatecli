@@ -58,17 +58,9 @@ func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, col
 		if content.Kind == yaml.ScalarNode && valueFound == true {
 			column = content.Column
 
-			if version != content.Value {
-				fmt.Printf("Version mismatched between %s (old) and %s (new)", content.Value, version)
-				oldVersion = content.Value
-				content.SetString(version)
-			} else if version == content.Value {
-				fmt.Printf("Version already set to %v", content.Value)
-				oldVersion = content.Value
-				content.SetString(version)
-			} else {
-				fmt.Printf("Something weird happened while comparing old and new version")
-			}
+			oldVersion = content.Value
+			content.SetString(version)
+
 			break
 		} else if content.Kind == yaml.MappingNode {
 			valueFound, oldVersion, column = searchAndUpdateVersion(content, keys, version, column)
@@ -107,8 +99,10 @@ func (y *Yaml) Update(version string) {
 
 		scm = &g
 	default:
-		fmt.Printf("Something went wrong while looking at yaml repository of kind")
+		fmt.Printf("Something went wrong while looking at yaml repository of kind\n")
 	}
+
+	fmt.Printf("\nUpdating key  '%s' from target file: %s:\n\n", y.Key, y.File)
 
 	scm.Init(version)
 
@@ -135,18 +129,21 @@ func (y *Yaml) Update(version string) {
 	err = yaml.Unmarshal(data, &out)
 
 	if err != nil {
-		log.Fatalf("cannot unmarshal data: %v", err)
+		log.Printf("cannot unmarshal data: %v", err)
 	}
 
 	valueFound, oldVersion, _ := searchAndUpdateVersion(&out, strings.Split(y.Key, "."), version, 1)
 
-	if valueFound != true {
-		fmt.Printf("cannot find key '%v' in file %v", y.Key, path)
-		return
-	}
+	if valueFound {
+		if oldVersion == version {
+			fmt.Printf("\u2714 Value '%s' already up to date\n", version)
+			return
+		}
 
-	if oldVersion == version {
-		fmt.Printf("Value %v at %v already up to date", y.Key, path)
+		fmt.Printf("\u2717 Version mismatched between %s (old) and %s (new)\n", oldVersion, version)
+
+	} else {
+		fmt.Printf("\u2717 cannot find key '%v' in file %v\n", y.Key, path)
 		return
 	}
 
@@ -165,7 +162,7 @@ func (y *Yaml) Update(version string) {
 	err = encoder.Encode(&out)
 
 	if err != nil {
-		log.Fatalf("Something went wrong while encoding %v", err)
+		log.Fatalf("Something went wrong while encoding %v\n", err)
 	}
 
 	scm.Add(y.File)
