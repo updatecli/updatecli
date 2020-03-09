@@ -66,7 +66,7 @@ func (g *Git) Clone() string {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("\t\t%s downloaded in %s", g.URL, g.Directory)
+	fmt.Printf("%s downloaded in %s \n", g.URL, g.Directory)
 	return g.Directory
 }
 
@@ -110,7 +110,7 @@ func (g *Git) Commit(file, message string) {
 // Add run `git add`
 func (g *Git) Add(file string) {
 
-	fmt.Printf("\t\tAdding file: %s", file)
+	fmt.Printf("Adding file: %s\n", file)
 
 	r, err := git.PlainOpen(g.Directory)
 	if err != nil {

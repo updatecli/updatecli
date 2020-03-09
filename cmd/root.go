@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/config"
@@ -34,7 +35,7 @@ then validated by conditions`,
 // Execute executes the root command.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Printf("\n\u26A0 %s \n", err)
 		os.Exit(1)
 	}
 }
@@ -46,7 +47,7 @@ func init() {
 func run(cfg string) {
 	fileInfo, err := os.Stat(cfg)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("\n\u26A0 %s \n", err)
 	}
 
 	if os.IsNotExist(err) {
@@ -55,36 +56,43 @@ func run(cfg string) {
 	}
 
 	if fileInfo.IsDir() {
-		fmt.Println("Configuration directory provided")
+		fmt.Println("Directory configuration provided")
 		dir, err := os.Open(cfg)
 		defer dir.Close()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("\n\u26A0 %s \n", err)
 		}
 		files, err := dir.Readdirnames(-1)
-		fmt.Printf("Files: %v \n", files)
+		fmt.Printf("Detected configuration Files: %v \n", files)
 		for _, file := range files {
 			run(filepath.Join(cfg, file))
 		}
 	} else {
-		fmt.Printf("Reading: %v \n", cfg)
 		err := engine(cfg)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("\n\u26A0 %s \n", err)
 		}
 	}
 }
 
 func engine(cfgFile string) error {
 
+	_, basename := filepath.Split(cfgFile)
+	cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
+
+	fmt.Printf("\n\n%s\n", strings.Repeat("#", len(cfgFileName)+4))
+	fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
+	fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
+
 	conf.ReadFile(cfgFile)
+
 	conf.Check()
 
-	fmt.Printf("👀\tParsing source:\n")
+	fmt.Printf("\n\n%s:\n", strings.ToTitle("Source"))
+	fmt.Printf("%s\n\n", strings.Repeat("=", len("Source")+1))
 
 	switch conf.Source.Kind {
 	case "githubRelease":
-		fmt.Printf("\tgithubRelease specified\n")
 		var spec github.Github
 		err := mapstructure.Decode(conf.Source.Spec, &spec)
 
@@ -95,9 +103,11 @@ func engine(cfgFile string) error {
 		conf.Source.Output = spec.GetVersion()
 
 	case "dockerDigest":
-		fmt.Printf("\tdockerDigest specified\n")
+		fmt.Printf("dockerDigest specified\n")
 		var spec docker.Docker
 		err := mapstructure.Decode(conf.Source.Spec, &spec)
+
+		fmt.Printf("Looking for %s:%s digest\n\n", spec.Image, spec.Tag)
 
 		if err != nil {
 			panic(err)
@@ -106,10 +116,11 @@ func engine(cfgFile string) error {
 		conf.Source.Output = spec.GetVersion()
 
 	default:
-		fmt.Printf("⚠\tDon't support source kind: %v\n", conf.Source.Kind)
+		fmt.Printf("⚠ Don't support source kind: %v\n", conf.Source.Kind)
 	}
 
-	fmt.Printf("👀\tChecking conditions\n")
+	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
+	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
 	for _, condition := range conf.Conditions {
 		switch condition.Kind {
@@ -125,16 +136,19 @@ func engine(cfgFile string) error {
 			d.Tag = conf.Source.Output
 
 			if ok := d.IsTagPublished(); !ok {
-				return fmt.Errorf("Docker Image Tag not published")
+				return fmt.Errorf("skipping: condition not met")
 			}
+			fmt.Printf("\n")
 
 		default:
-			fmt.Printf("\t\t⚠\tDon't support condition: %v\n", condition.Kind)
+			fmt.Printf("⚠ Don't support condition: %v\n", condition.Kind)
 		}
 
 	}
 
-	fmt.Printf("✍\tUpdating Targets\n")
+	fmt.Printf("\n\n%s:\n", strings.ToTitle("Targets"))
+	fmt.Printf("%s\n\n", strings.Repeat("=", len("Targets")+1))
+
 	for _, target := range conf.Targets {
 		switch target.Kind {
 		case "yaml":
@@ -147,7 +161,12 @@ func engine(cfgFile string) error {
 			}
 
 			spec.Update(conf.Source.Output)
+
+		default:
+			fmt.Printf("⚠ Don't support target: %v\n", target.Kind)
 		}
+
+		fmt.Printf("\n\n")
 	}
 	return nil
 }
