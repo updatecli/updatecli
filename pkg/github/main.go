@@ -77,11 +77,43 @@ func (g *Github) GetVersion() string {
 
 }
 
+// Checks verify that mandatory Github parameters are provided
+func (g *Github) Checks() bool {
+	ok := true
+
+	if g.Token == "" {
+		ok = false
+		fmt.Println("\u2717 Github Token required")
+	}
+
+	if g.Username == "" {
+		ok = false
+		fmt.Println("\u2717 Github Username required")
+	}
+
+	if g.Owner == "" {
+		ok = false
+		fmt.Println("\u2717 Github owner required")
+	}
+
+	if g.Repository == "" {
+		ok = false
+		fmt.Println("\u2717 Github Repository required")
+	}
+
+	return ok
+
+}
+
 // Init Github struct
 func (g *Github) Init(version string) {
 	g.Version = version
 	g.setDirectory(version)
 	g.remoteBranch = fmt.Sprintf("updatecli/%v", version)
+
+	if ok := g.Checks(); !ok {
+		fmt.Println("Current target cannot be correctly updated")
+	}
 
 }
 
@@ -125,7 +157,7 @@ func (g *Github) Clone() string {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("%s downloaded in %s", URL, g.directory)
+	fmt.Printf("%s downloaded in %s\n", URL, g.directory)
 	return g.directory
 }
 
