@@ -1,0 +1,49 @@
+source:
+  kind: githubRelease
+  spec:
+    owner: "jenkins-infra"
+    repository: "jenkins-wiki-exporter"
+    token: ""
+    username: "olblak"
+    version: "latest"
+conditions:
+  docker:
+    name: "Docker Image Published on Registry"
+    kind: dockerImage
+    spec:
+      image: "halkeye/jenkins-wiki-exporter"
+      url: "hub.docker.com"
+      tag: latest
+targets:
+  imageTag:
+    name: "Docker Image"
+    kind: yaml
+    spec:
+      file: "charts/jenkins-wiki-exporter/values.yaml"
+      key: image.tag
+      message: "[updatecli][jenkins-wiki-exporter] Default image tag updated"
+      scm: "github"
+      repository:
+        user: "update-bot"
+        email: "update-bot@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: ""
+        username: "olblak"
+        branch: "master"
+  appVersion:
+    name: "Chart appVersion"
+    kind: yaml
+    spec:
+      file: "charts/jenkins-wiki-exporter/Chart.yaml"
+      key: appVersion
+      message: "[updatecli][jenkins-wiki-exporter] Helm chart appVersion updated"
+      scm: "github"
+      repository:
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: ""
+        username: "olblak"
+        branch: "master"
