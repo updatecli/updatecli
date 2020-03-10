@@ -11,7 +11,7 @@ conditions:
     name: "Docker Image Published on Registry"
     kind: dockerImage
     spec:
-      image: "jenkinsciinfra/plugin-site"
+      image: "jenkinsciinfra/plugin-site-api"
       url: "hub.docker.com"
       tag: latest
 targets:
@@ -20,12 +20,12 @@ targets:
     kind: yaml
     spec:
       file: "charts/plugin-site/values.yaml"
-      key: backend.image.tag
-      message: "Docker image updated"
+      key: "backend.image.tag"
+      message: "[updatecli][pluginsite] Default image tag updated"
       scm: "github"
       repository:
-        user: "update-bot"
-        email: "update-bot@olblak.com"
+        user: "updatecli"
+        email: "updatecli@olblak.com"
         owner: "olblak"
         repository: "charts"
         token: ""
@@ -37,29 +37,7 @@ targets:
     spec:
       file: "charts/plugin-site/Chart.yaml"
       key: appVersion
-      message: "Chart appVersion updated"
-      scm: "github"
-      repository:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "olblak"
-        repository: "charts"
-        token: ""
-        username: "olblak"
-        branch: "master"
-  #    scm: "git"
-  #    repository:
-  #      url: "git@github.com:olblak/charts.git"
-  #      branch: "master"
-  #      user: "update-bot"
-  #      email: "update-bot@olblak.com"
-  chartVersion:
-    name: "Chart Version"
-    kind: yaml
-    spec:
-      file: "charts/plugin-site/Chart.yaml"
-      key: version
-      message: "Chart Version updated"
+      message: "[updatecli][pluginsite-api] Helm Chart appVersion updated"
       scm: "github"
       repository:
         user: "updatecli"

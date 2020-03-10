@@ -1,0 +1,33 @@
+source:
+  kind: maven
+  postfix: "-jdk11"
+  spec:
+    owner: "maven"
+    url: "repo.jenkins-ci.org"
+    repository: "releases"
+    groupID: "org.jenkins-ci.main"
+    artifactID: "jenkins-war"
+conditions:
+  docker:
+    name: "Docker Image Published on Registry"
+    kind: dockerImage
+    spec:
+      image: "jenkins/jenkins"
+      url: "hub.docker.com"
+targets:
+  imageTag:
+    name: "Docker Image"
+    kind: yaml
+    spec:
+      file: "charts/jenkins/values.yaml"
+      key: "jenkins.master.imageTag"
+      message: "[updatecli][Jenkins] Update default jenkins docker image tag"
+      scm: "github"
+      repository:
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: ""
+        username: "olblak"
+        branch: "master"
