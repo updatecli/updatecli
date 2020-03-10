@@ -92,6 +92,8 @@ func engine(cfgFile string) error {
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("Source"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("Source")+1))
 
+	var output string
+
 	switch conf.Source.Kind {
 	case "githubRelease":
 		var spec github.Github
@@ -101,7 +103,7 @@ func engine(cfgFile string) error {
 			panic(err)
 		}
 
-		conf.Source.Output = spec.GetVersion()
+		output = spec.GetVersion()
 
 	case "maven":
 		var spec maven.Maven
@@ -111,7 +113,7 @@ func engine(cfgFile string) error {
 			panic(err)
 		}
 
-		conf.Source.Output = spec.GetVersion()
+		output = spec.GetVersion()
 
 	case "dockerDigest":
 		fmt.Printf("dockerDigest specified\n")
@@ -124,11 +126,13 @@ func engine(cfgFile string) error {
 			panic(err)
 		}
 
-		conf.Source.Output = spec.GetVersion()
+		output = spec.GetVersion()
 
 	default:
 		fmt.Printf("⚠ Don't support source kind: %v\n", conf.Source.Kind)
 	}
+
+	conf.Source.Output = conf.Source.Prefix + output + conf.Source.Postfix
 
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))

@@ -17,9 +17,11 @@ type Config struct {
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	Kind   string
-	Output string
-	Spec   interface{}
+	Kind    string
+	Output  string
+	Prefix  string
+	Postfix string
+	Spec    interface{}
 }
 
 // Condition defines which condition needs to be met
@@ -39,7 +41,7 @@ type Target struct {
 }
 
 // Reset reset configuration
-func (config *Config) Reset(){
+func (config *Config) Reset() {
 	config.Source = Source{}
 	config.Conditions = map[string]Condition{}
 	config.Targets = map[string]Target{}
