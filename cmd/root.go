@@ -10,6 +10,7 @@ import (
 	"github.com/olblak/updateCli/pkg/config"
 	"github.com/olblak/updateCli/pkg/docker"
 	"github.com/olblak/updateCli/pkg/github"
+	"github.com/olblak/updateCli/pkg/maven"
 	"github.com/olblak/updateCli/pkg/yaml"
 
 	"github.com/spf13/cobra"
@@ -102,6 +103,16 @@ func engine(cfgFile string) error {
 
 		conf.Source.Output = spec.GetVersion()
 
+	case "maven":
+		var spec maven.Maven
+		err := mapstructure.Decode(conf.Source.Spec, &spec)
+
+		if err != nil {
+			panic(err)
+		}
+
+		conf.Source.Output = spec.GetVersion()
+
 	case "dockerDigest":
 		fmt.Printf("dockerDigest specified\n")
 		var spec docker.Docker
@@ -136,6 +147,21 @@ func engine(cfgFile string) error {
 			d.Tag = conf.Source.Output
 
 			if ok := d.IsTagPublished(); !ok {
+				return fmt.Errorf("skipping: condition not met")
+			}
+			fmt.Printf("\n")
+		case "maven":
+			var m maven.Maven
+
+			err := mapstructure.Decode(condition.Spec, &m)
+
+			if err != nil {
+				panic(err)
+			}
+
+			m.Version = conf.Source.Output
+
+			if ok := m.IsTagPublished(); !ok {
 				return fmt.Errorf("skipping: condition not met")
 			}
 			fmt.Printf("\n")
