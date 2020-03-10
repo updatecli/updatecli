@@ -39,8 +39,6 @@ Environment variable `UPDATECLI_SOURCE_SPEC_TOKEN` can be used instead of writin
 
 ### DockerRegistry
 
-**Not Ready Yet Implemented**
-
 This source will check a docker image tag from a docker registry and return its digest, so we always reference a specific image, even when the tag is updating regularly.
 
 ```
@@ -50,6 +48,20 @@ source:
     image: "Docker Image"
     url: "Docker registry url"
     tag: "Docker Image Tag to fetch the checksum"
+```
+
+### Maven
+
+This source will look for the latest version returned from a maven repository
+
+```
+source:
+  kind: maven
+  spec:
+    url:  "repo.jenkins-ci.org",
+	repository: "releases",
+	groupID:    "org.jenkins-ci.main",
+	artifactID: "jenkins-war",
 ```
 
 ## Condition
@@ -69,6 +81,19 @@ conditions:
       image: _Docker Image_
       url: _Docker Registry url_
       tag: _Docker Image Tag_
+```
+
+### Maven
+This conditon checks if a specific version, returned by the source, is published on a maven repository
+
+```
+condition:
+  kind: maven
+  spec:
+    url:  "repo.jenkins-ci.org",
+	repository: "releases",
+	groupID:    "org.jenkins-ci.main",
+	artifactID: "jenkins-war",
 ```
 
 ## Targets
