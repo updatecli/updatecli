@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -138,15 +137,17 @@ func (d *Docker) GetVersion() string {
 
 	json.Unmarshal(body, &data)
 
-	log.Printf("Data: %v", data)
-
 	for _, image := range data.Images {
 		if image["architecture"] == d.Architecture {
 			digest := strings.TrimPrefix(image["digest"], "sha256:")
-			fmt.Printf("%s:%s digest found is %v\n", d.Image, d.Tag, digest)
-			fmt.Printf("Remark: Do not forget to add @sha256 after your the docker image name\n")
+			fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
+			fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
+			fmt.Printf("Example: %v@sha256%v\n", d.Image, digest)
 			return digest
 		}
 	}
+
+	fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
+
 	return ""
 }
