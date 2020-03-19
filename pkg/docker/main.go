@@ -142,8 +142,9 @@ func (d *Docker) GetVersion() string {
 
 	for _, image := range data.Images {
 		if image["architecture"] == d.Architecture {
-			digest := image["digest"]
-			fmt.Printf("%s:%s digest found is %v", d.Image, d.Tag, digest)
+			digest := strings.TrimPrefix(image["digest"], "sha256:")
+			fmt.Printf("%s:%s digest found is %v\n", d.Image, d.Tag, digest)
+			fmt.Printf("Remark: Do not forget to add @sha256 after your the docker image name\n")
 			return digest
 		}
 	}

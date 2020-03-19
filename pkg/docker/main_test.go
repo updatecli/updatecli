@@ -93,7 +93,7 @@ func TestGetVersion(t *testing.T) {
 	}
 
 	got := d.GetVersion()
-	expected := "sha256:4f9936580d3caa6b7a27da62df78acf0294277a4b62bc128de7b88ff836ed2a9"
+	expected := "4f9936580d3caa6b7a27da62df78acf0294277a4b62bc128de7b88ff836ed2a9"
 
 	if got != expected {
 		t.Errorf("Docker Image %v:%v expect digest %v, got %v", d.Image, d.Tag, expected, got)
