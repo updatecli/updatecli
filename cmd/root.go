@@ -190,7 +190,10 @@ func engine(cfgFile string) error {
 				fmt.Println(err)
 			}
 
-			spec.Update(conf.Source.Output)
+			err = spec.Update(conf.Source.Output)
+			if err != nil {
+				return err
+			}
 
 		default:
 			fmt.Printf("⚠ Don't support target: %v\n", target.Kind)
