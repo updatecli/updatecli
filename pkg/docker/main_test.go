@@ -28,6 +28,13 @@ func TestParameters(t *testing.T) {
 		t.Errorf("URL is not configured! expected value %v, got %v", expected, got)
 	}
 
+	// Test if we correctly return the default architecture if not defined
+	expected = "amd64"
+	got = d.Architecture
+	if got != expected {
+		t.Errorf("Architecture is not configured! expected value %v, got %v", expected, got)
+	}
+
 	// Test if we correctly return the default docker hub url if not defined
 	expected = "latest"
 	got = d.Tag
@@ -81,13 +88,15 @@ func TestGetVersion(t *testing.T) {
 	// Test if existing return the correct digest
 	d := &Docker{
 		URL:   "hub.docker.com",
-		Tag:   "latest",
+		Tag:   "v0.0.2",
 		Image: "olblak/updatecli",
 	}
+
 	got := d.GetVersion()
-	expected := "sha256:535c6eda6ce32e8c3309878bd27faa0cd41c0cb833149bf5544c7bccff817541"
+	expected := "sha256:4f9936580d3caa6b7a27da62df78acf0294277a4b62bc128de7b88ff836ed2a9"
+
 	if got != expected {
-		t.Errorf("Digest expected %v, got %v", expected, got)
+		t.Errorf("Docker Image %v:%v expect digest %v, got %v", d.Image, d.Tag, expected, got)
 	}
 
 	// Test if non existing tag return empty string

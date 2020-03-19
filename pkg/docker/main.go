@@ -11,9 +11,10 @@ import (
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
-	Image string
-	Tag   string
-	URL   string
+	Image        string
+	Tag          string
+	URL          string
+	Architecture string
 }
 
 // Check verify if Docker parameters are correctly set
@@ -29,6 +30,10 @@ func (d *Docker) Check() (bool, error) {
 
 	if d.Tag == "" {
 		d.Tag = "latest"
+	}
+
+	if d.Architecture == "" {
+		d.Architecture = "amd64"
 	}
 
 	if image := strings.Split(d.Image, "/"); len(image) == 1 {
@@ -136,7 +141,7 @@ func (d *Docker) GetVersion() string {
 	log.Printf("Data: %v", data)
 
 	for _, image := range data.Images {
-		if image["architecture"] == "amd64" {
+		if image["architecture"] == d.Architecture {
 			digest := image["digest"]
 			fmt.Printf("%s:%s digest found is %v", d.Image, d.Tag, digest)
 			return digest
