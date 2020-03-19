@@ -70,7 +70,7 @@ func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, col
 }
 
 // Update updates a scm repository based on yaml modification
-func (y *Yaml) Update(version string) {
+func (y *Yaml) Update(version string) error {
 	var scm scm.Scm
 
 	switch y.Scm {
@@ -99,7 +99,7 @@ func (y *Yaml) Update(version string) {
 
 		scm = &g
 	default:
-		fmt.Printf("Something went wrong while looking at yaml repository of kind\n")
+		return fmt.Errorf("wrong scm type provided, accepted values [git,github]")
 	}
 
 	fmt.Printf("\nUpdating key  '%s' from target file: %s:\n\n", y.Key, y.File)
@@ -137,14 +137,14 @@ func (y *Yaml) Update(version string) {
 	if valueFound {
 		if oldVersion == version {
 			fmt.Printf("\u2714 Value '%s' already up to date\n", version)
-			return
+			return nil
 		}
 
 		fmt.Printf("\u2717 Version mismatched between %s (old) and %s (new)\n", oldVersion, version)
 
 	} else {
 		fmt.Printf("\u2717 cannot find key '%v' in file %v\n", y.Key, path)
-		return
+		return nil
 	}
 
 	message := fmt.Sprintf("Updating key '%v' to %s",
@@ -169,4 +169,5 @@ func (y *Yaml) Update(version string) {
 	scm.Commit(y.File, message)
 	scm.Push()
 	scm.Clean()
+	return nil
 }
