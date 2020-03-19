@@ -16,8 +16,35 @@ type Docker struct {
 	URL   string
 }
 
+// Check verify if Docker parameters are correctly set
+func (d *Docker) Check() (bool, error) {
+	if d.Image == "" {
+		err := fmt.Errorf("Docker Image is required")
+		return false, err
+	}
+
+	if d.URL == "" {
+		d.URL = "hub.docker.com"
+	}
+
+	if d.Tag == "" {
+		d.Tag = "latest"
+	}
+
+	if image := strings.Split(d.Image, "/"); len(image) == 1 {
+		d.Image = "library/" + d.Image
+	}
+
+	return true, nil
+}
+
 // IsTagPublished checks if a docker image with a specific tag is published
 func (d *Docker) IsTagPublished() bool {
+
+	if ok, err := d.Check(); !ok {
+		fmt.Println(err)
+		return ok
+	}
 
 	url := fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s",
 		d.URL,
@@ -65,6 +92,11 @@ func (d *Docker) IsTagPublished() bool {
 
 // GetVersion retrieve docker image tag digest from a registry
 func (d *Docker) GetVersion() string {
+
+	if ok, err := d.Check(); !ok {
+		fmt.Println(err)
+		return ""
+	}
 
 	// https://hub.docker.com/v2/repositories/olblak/updatecli/tags/latest
 	URL := fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s",
