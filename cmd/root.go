@@ -134,8 +134,12 @@ func engine(cfgFile string) error {
 
 	conf.Source.Output = conf.Source.Prefix + output + conf.Source.Postfix
 
-	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
-	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
+	if len(conf.Conditions) > 0 {
+
+		fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
+		fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
+
+	}
 
 	for _, condition := range conf.Conditions {
 		switch condition.Kind {
