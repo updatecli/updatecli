@@ -71,7 +71,7 @@ func run(cfg string) {
 	} else {
 		err := engine(cfg)
 		if err != nil {
-			fmt.Printf("\n\u26A0 %s \n", err)
+			fmt.Printf("\n\u26A0 %s \n\n", err)
 		}
 	}
 }
