@@ -34,7 +34,7 @@ func TestIsPublished(t *testing.T) {
 	}
 }
 
-func TestGetVersion(t *testing.T) {
+func TestSource(t *testing.T) {
 	// Test if existing image tag return true
 	m := &Maven{
 		URL:        "repo.jenkins-ci.org",
@@ -43,7 +43,7 @@ func TestGetVersion(t *testing.T) {
 		ArtifactID: "wikitext.core",
 	}
 
-	got := m.GetVersion()
+	got, _ := m.Source()
 	expected := "1.7.4.v20130429"
 	if got != expected {
 		t.Errorf("Latest version published expected is %v, got %v", expected, got)
@@ -58,7 +58,7 @@ func TestGetVersion(t *testing.T) {
 		Version:    "0.3",
 	}
 
-	got = m.GetVersion()
+	got, _ = m.Source()
 	expected = "2.21"
 	if got == expected {
 		t.Errorf("Latest version published expected is %v, got %v", expected, got)
