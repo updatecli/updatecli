@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"gopkg.in/src-d/go-git.v4"
@@ -37,6 +38,12 @@ func (g *Github) GetDirectory() (directory string) {
 
 // GetVersion retrieves the version tag from Github Releases
 func (g *Github) GetVersion() string {
+
+	_, err := g.Check()
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%s",
 		g.Owner,
@@ -77,31 +84,34 @@ func (g *Github) GetVersion() string {
 
 }
 
-// Checks verify that mandatory Github parameters are provided
-func (g *Github) Checks() bool {
+// Check verify that mandatory Github parameters are provided
+func (g *Github) Check() (bool, error) {
 	ok := true
+	required := []string{}
 
 	if g.Token == "" {
 		ok = false
-		fmt.Println("\u2717 Github Token required")
+		required = append(required, "token")
 	}
 
 	if g.Username == "" {
 		ok = false
-		fmt.Println("\u2717 Github Username required")
+		required = append(required, "username")
 	}
 
 	if g.Owner == "" {
 		ok = false
-		fmt.Println("\u2717 Github owner required")
+		required = append(required, "owner")
 	}
 
 	if g.Repository == "" {
 		ok = false
-		fmt.Println("\u2717 Github Repository required")
+		required = append(required, "repository")
 	}
 
-	return ok
+	err := fmt.Errorf("\u2717 Github parameter(s) required: [%v]", strings.Join(required, ","))
+
+	return ok, err
 
 }
 
@@ -111,8 +121,8 @@ func (g *Github) Init(version string) {
 	g.setDirectory(version)
 	g.remoteBranch = fmt.Sprintf("updatecli/%v", version)
 
-	if ok := g.Checks(); !ok {
-		fmt.Println("Current target cannot be correctly updated")
+	if ok, err := g.Check(); !ok {
+		fmt.Println(err)
 	}
 
 }
