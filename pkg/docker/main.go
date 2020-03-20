@@ -94,12 +94,11 @@ func (d *Docker) IsTagPublished() bool {
 	return false
 }
 
-// GetVersion retrieve docker image tag digest from a registry
-func (d *Docker) GetVersion() string {
+// Source retrieve docker image tag digest from a registry
+func (d *Docker) Source() (string, error) {
 
 	if ok, err := d.Check(); !ok {
-		fmt.Println(err)
-		return ""
+		return "", err
 	}
 
 	// https://hub.docker.com/v2/repositories/olblak/updatecli/tags/latest
@@ -111,13 +110,13 @@ func (d *Docker) GetVersion() string {
 	req, err := http.NewRequest("GET", URL, nil)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	defer res.Body.Close()
@@ -125,7 +124,7 @@ func (d *Docker) GetVersion() string {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	type respond struct {
@@ -143,11 +142,11 @@ func (d *Docker) GetVersion() string {
 			fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
 			fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
 			fmt.Printf("Example: %v@sha256%v\n", d.Image, digest)
-			return digest
+			return digest, nil
 		}
 	}
 
 	fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
 
-	return ""
+	return "", nil
 }

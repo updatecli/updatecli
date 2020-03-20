@@ -36,6 +36,11 @@ func Run(cfgFile string) error {
 		return err
 	}
 
+	if source == "" {
+		fmt.Printf("\n\u26A0 No value returned from Source, nothing else to do")
+		return nil
+	}
+
 	if len(engine.conf.Conditions) > 0 {
 		ok, err := engine.conditions(source)
 		if err != nil {

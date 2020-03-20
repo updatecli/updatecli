@@ -36,13 +36,12 @@ func (g *Github) GetDirectory() (directory string) {
 	return g.directory
 }
 
-// GetVersion retrieves the version tag from Github Releases
-func (g *Github) GetVersion() string {
+// Source retrieves the version tag from Github Releases
+func (g *Github) Source() (string, error) {
 
 	_, err := g.Check()
 	if err != nil {
-		fmt.Println(err)
-		return ""
+		return "", err
 	}
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%s",
@@ -53,7 +52,7 @@ func (g *Github) GetVersion() string {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	req.Header.Add("Authorization", "token "+g.Token)
@@ -61,7 +60,7 @@ func (g *Github) GetVersion() string {
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	defer res.Body.Close()
@@ -69,7 +68,7 @@ func (g *Github) GetVersion() string {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	v := map[string]string{}
@@ -77,10 +76,10 @@ func (g *Github) GetVersion() string {
 
 	if val, ok := v["name"]; ok {
 		fmt.Printf("\u2714 '%s' github release version founded: %s\n", g.Version, val)
-		return val
+		return val, nil
 	}
 	fmt.Printf("\u2717 No '%s' github release version founded from %s\n", g.Version, url)
-	return ""
+	return "", nil
 
 }
 
@@ -90,28 +89,27 @@ func (g *Github) Check() (bool, error) {
 	required := []string{}
 
 	if g.Token == "" {
-		ok = false
 		required = append(required, "token")
 	}
 
 	if g.Username == "" {
-		ok = false
 		required = append(required, "username")
 	}
 
 	if g.Owner == "" {
-		ok = false
 		required = append(required, "owner")
 	}
 
 	if g.Repository == "" {
-		ok = false
 		required = append(required, "repository")
 	}
 
-	err := fmt.Errorf("\u2717 Github parameter(s) required: [%v]", strings.Join(required, ","))
+	if len(required) > 0 {
+		err := fmt.Errorf("\u2717 Github parameter(s) required: [%v]", strings.Join(required, ","))
+		return false, err
+	}
 
-	return ok, err
+	return ok, nil
 
 }
 
