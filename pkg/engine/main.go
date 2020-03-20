@@ -60,21 +60,21 @@ func (e *Engine) conditions(source string) (bool, error) {
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
-	ok := true
-
 	for _, c := range e.conf.Conditions {
 		ok, err := c.Execute(source)
-		if !ok {
-			fmt.Printf("\n\u26A0 skipping: condition not met")
-			ok = false
-		}
-
 		if err != nil {
 			return false, err
 		}
+
+		if !ok {
+			fmt.Printf("\n\u26A0 skipping: condition not met")
+			ok = false
+			return false, nil
+		}
+
 	}
 
-	return ok, nil
+	return true, nil
 }
 
 // targets iterate on every targets and then call target on each of them
