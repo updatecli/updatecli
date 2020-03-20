@@ -84,7 +84,7 @@ func TestIsPublished(t *testing.T) {
 
 }
 
-func TestGetVersion(t *testing.T) {
+func TestSource(t *testing.T) {
 	// Test if existing return the correct digest
 	d := &Docker{
 		URL:   "hub.docker.com",
@@ -92,7 +92,7 @@ func TestGetVersion(t *testing.T) {
 		Image: "olblak/updatecli",
 	}
 
-	got := d.GetVersion()
+	got, _ := d.Source()
 	expected := "4f9936580d3caa6b7a27da62df78acf0294277a4b62bc128de7b88ff836ed2a9"
 
 	if got != expected {
@@ -105,7 +105,7 @@ func TestGetVersion(t *testing.T) {
 		Tag:   "donotexist",
 		Image: "olblak/updatecli",
 	}
-	got = d.GetVersion()
+	got, _ = d.Source()
 	expected = ""
 	if got != expected {
 		t.Errorf("Digest expected %v, got %v", expected, got)
