@@ -3,7 +3,6 @@ package yaml
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -80,7 +79,7 @@ func (y *Yaml) Update(version string) error {
 		err := mapstructure.Decode(y.Repository, &g)
 
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 
 		g.GetDirectory()
@@ -92,7 +91,7 @@ func (y *Yaml) Update(version string) error {
 		err := mapstructure.Decode(y.Repository, &g)
 
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 
 		g.GetDirectory()
@@ -114,14 +113,14 @@ func (y *Yaml) Update(version string) error {
 
 	file, err := os.Open(path)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	defer file.Close()
 
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	var out yaml.Node
@@ -129,7 +128,7 @@ func (y *Yaml) Update(version string) error {
 	err = yaml.Unmarshal(data, &out)
 
 	if err != nil {
-		log.Printf("cannot unmarshal data: %v", err)
+		return fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
 	valueFound, oldVersion, _ := searchAndUpdateVersion(&out, strings.Split(y.Key, "."), version, 1)
@@ -162,7 +161,7 @@ func (y *Yaml) Update(version string) error {
 	err = encoder.Encode(&out)
 
 	if err != nil {
-		log.Fatalf("Something went wrong while encoding %v\n", err)
+		return fmt.Errorf("something went wrong while encoding %v", err)
 	}
 
 	scm.Add(y.File)
