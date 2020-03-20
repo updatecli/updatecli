@@ -16,8 +16,15 @@ type Condition struct {
 	Spec interface{}
 }
 
+// Spec is an interface to test if condition is met
+type Spec interface {
+	Condition() (bool, error)
+}
+
 // Execute tests if a specific condition is true
 func (c *Condition) Execute(source string) (bool, error) {
+
+	var spec Spec
 
 	ok := true
 
@@ -34,9 +41,7 @@ func (c *Condition) Execute(source string) (bool, error) {
 
 		d.Tag = source
 
-		ok = d.IsTagPublished()
-
-		fmt.Printf("\n")
+		spec = &d
 
 	case "maven":
 		var m maven.Maven
@@ -49,11 +54,16 @@ func (c *Condition) Execute(source string) (bool, error) {
 
 		m.Version = source
 
-		ok = m.IsTagPublished()
-		fmt.Printf("\n")
+		spec = &m
 
 	default:
 		return false, fmt.Errorf("⚠ Don't support condition: %v", c.Kind)
+	}
+
+	ok, err := spec.Condition()
+
+	if err != nil {
+		return false, err
 	}
 
 	return ok, nil
