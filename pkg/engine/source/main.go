@@ -19,6 +19,11 @@ type Source struct {
 	Spec    interface{}
 }
 
+// Spec source is an interface to handle source spec
+type Spec interface {
+	Source() (string, error)
+}
+
 // Execute execute actions defined by the source configuration
 func (s *Source) Execute() (string, error) {
 
@@ -26,37 +31,48 @@ func (s *Source) Execute() (string, error) {
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("Source")+1))
 
 	var output string
+	var err error
+
+	var spec Spec
 
 	switch s.Kind {
 	case "githubRelease":
-		var spec github.Github
-		err := mapstructure.Decode(s.Spec, &spec)
+		g := github.Github{}
+		err := mapstructure.Decode(s.Spec, &g)
 
 		if err != nil {
 			return "", err
 		}
-		output = spec.GetVersion()
+
+		spec = &g
 
 	case "maven":
-		var spec maven.Maven
-		err := mapstructure.Decode(s.Spec, &spec)
+		m := maven.Maven{}
+		err := mapstructure.Decode(s.Spec, &m)
 
 		if err != nil {
 			return "", err
 		}
-		output = spec.GetVersion()
+
+		spec = &m
 
 	case "dockerDigest":
-		var spec docker.Docker
-		err := mapstructure.Decode(s.Spec, &spec)
+		d := docker.Docker{}
+		err := mapstructure.Decode(s.Spec, &d)
 
 		if err != nil {
 			return "", err
 		}
-		output = spec.GetVersion()
+
+		spec = &d
 
 	default:
 		return "", fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)
+	}
+
+	output, err = spec.Source()
+	if err != nil {
+		return "", err
 	}
 
 	s.Output = s.Prefix + output + s.Postfix
