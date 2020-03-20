@@ -2,7 +2,7 @@ package maven
 
 import "testing"
 
-func TestIsPublished(t *testing.T) {
+func TestCondition(t *testing.T) {
 	// Test if existing image tag return true
 	m := &Maven{
 		URL:        "repo.jenkins-ci.org",
@@ -12,7 +12,7 @@ func TestIsPublished(t *testing.T) {
 		Version:    "1.7.4.v20130429",
 	}
 
-	got := m.IsTagPublished()
+	got, _ := m.Condition()
 	expected := true
 	if got != expected {
 		t.Errorf("ArtifactID %v is published! expected %v, got %v", m.ArtifactID, expected, got)
@@ -27,7 +27,7 @@ func TestIsPublished(t *testing.T) {
 		Version:    "0.3",
 	}
 
-	got = m.IsTagPublished()
+	got, _ = m.Condition()
 	expected = false
 	if got != expected {
 		t.Errorf("ArtifactID %v is not published! expected %v, got %v", m.ArtifactID, expected, got)
