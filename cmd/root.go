@@ -67,4 +67,6 @@ func run(cfg string) {
 			fmt.Printf("\n\u26A0 %s \n\n", err)
 		}
 	}
+
+	fmt.Printf("\n\n")
 }
