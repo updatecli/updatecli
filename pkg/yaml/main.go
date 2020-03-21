@@ -108,7 +108,7 @@ func (y *Yaml) Target(source string, workDir string) (message string, err error)
 		return "", nil
 	}
 
-	message = fmt.Sprintf("[%s] Updating key from '%v' to %s",
+	message = fmt.Sprintf("[updatecli] %s - Updating key '%v' to %s",
 		y.File,
 		y.Key,
 		source)
