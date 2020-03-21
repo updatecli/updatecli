@@ -1,0 +1,22 @@
+source:
+  kind: dockerDigest
+  spec:
+    image: "library/nginx"
+    tag: "1.17"
+targets:
+  jenkinsioNginxDigest:
+    name: "Jenkins.io nginx"
+    kind: yaml
+    spec:
+      file: "charts/jenkins.io/values.yaml"
+      key: image.tag
+      message: "[updatecli][jenkins.io] Nginx image digest updated"
+    scm:
+      github:
+        user: "update-bot"
+        email: "update-bot@olblak.com"
+        owner: "jenkins-infra"
+        repository: "charts"
+        token: ""
+        username: "olblak"
+        branch: "master"

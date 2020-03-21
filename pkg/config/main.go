@@ -6,45 +6,24 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+
+	"github.com/olblak/updateCli/pkg/engine/condition"
+	"github.com/olblak/updateCli/pkg/engine/source"
+	"github.com/olblak/updateCli/pkg/engine/target"
 )
 
 // Config contains cli configuration
 type Config struct {
-	Source     Source
-	Conditions map[string]Condition
-	Targets    map[string]Target
-}
-
-// Source defines how a value is retrieved from a specific source
-type Source struct {
-	Kind    string
-	Output  string
-	Prefix  string
-	Postfix string
-	Spec    interface{}
-}
-
-// Condition defines which condition needs to be met
-// in order to update targets based on the source output
-type Condition struct {
-	Name string
-	Kind string
-	Spec interface{}
-}
-
-// Target defines which file need to be updated based on source output
-type Target struct {
-	Name       string
-	Kind       string
-	Spec       interface{}
-	Repository interface{}
+	Source     source.Source
+	Conditions map[string]condition.Condition
+	Targets    map[string]target.Target
 }
 
 // Reset reset configuration
 func (config *Config) Reset() {
-	config.Source = Source{}
-	config.Conditions = map[string]Condition{}
-	config.Targets = map[string]Target{}
+	config.Source = source.Source{}
+	config.Conditions = map[string]condition.Condition{}
+	config.Targets = map[string]target.Target{}
 }
 
 // ReadFile reads the updatecli configuration file

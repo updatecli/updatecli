@@ -42,12 +42,11 @@ func (d *Docker) Check() (bool, error) {
 	return true, nil
 }
 
-// IsTagPublished checks if a docker image with a specific tag is published
-func (d *Docker) IsTagPublished() bool {
+// Condition checks if a docker image with a specific tag is published
+func (d *Docker) Condition() (bool, error) {
 
 	if ok, err := d.Check(); !ok {
-		fmt.Println(err)
-		return ok
+		return false, err
 	}
 
 	url := fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s",
@@ -58,13 +57,13 @@ func (d *Docker) IsTagPublished() bool {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		fmt.Println(err)
+		return false, err
 	}
 
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		fmt.Println(err)
+		return false, err
 	}
 
 	defer res.Body.Close()
@@ -72,7 +71,7 @@ func (d *Docker) IsTagPublished() bool {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		fmt.Println(err)
+		return false, err
 	}
 
 	data := map[string]string{}
@@ -81,25 +80,24 @@ func (d *Docker) IsTagPublished() bool {
 
 	if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
 		fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
-		return false
+		return false, nil
 	}
 
 	if val, ok := data["name"]; ok && val == d.Tag {
 		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
-		return true
+		return true, nil
 	}
 
 	fmt.Printf("\t\t\u2717Something went wrong, no field 'name' founded from %s\n", url)
 
-	return false
+	return false, fmt.Errorf("something went wrong, no field 'name' founded from %s", url)
 }
 
-// GetVersion retrieve docker image tag digest from a registry
-func (d *Docker) GetVersion() string {
+// Source retrieve docker image tag digest from a registry
+func (d *Docker) Source() (string, error) {
 
 	if ok, err := d.Check(); !ok {
-		fmt.Println(err)
-		return ""
+		return "", err
 	}
 
 	// https://hub.docker.com/v2/repositories/olblak/updatecli/tags/latest
@@ -111,13 +109,13 @@ func (d *Docker) GetVersion() string {
 	req, err := http.NewRequest("GET", URL, nil)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	defer res.Body.Close()
@@ -125,7 +123,7 @@ func (d *Docker) GetVersion() string {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	type respond struct {
@@ -143,11 +141,11 @@ func (d *Docker) GetVersion() string {
 			fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
 			fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
 			fmt.Printf("Example: %v@sha256%v\n", d.Image, digest)
-			return digest
+			return digest, nil
 		}
 	}
 
 	fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
 
-	return ""
+	return "", nil
 }

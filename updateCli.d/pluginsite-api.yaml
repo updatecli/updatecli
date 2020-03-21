@@ -21,9 +21,8 @@ targets:
     spec:
       file: "charts/plugin-site/values.yaml"
       key: "backend.image.tag"
-      message: "[updatecli][pluginsite] Default image tag updated"
-      scm: "github"
-      repository:
+    scm:
+      github:
         user: "updatecli"
         email: "updatecli@olblak.com"
         owner: "olblak"
@@ -37,9 +36,8 @@ targets:
     spec:
       file: "charts/plugin-site/Chart.yaml"
       key: appVersion
-      message: "[updatecli][pluginsite-api] Helm Chart appVersion updated"
-      scm: "github"
-      repository:
+    scm: 
+      github:
         user: "updatecli"
         email: "updatecli@olblak.com"
         owner: "olblak"
@@ -47,8 +45,7 @@ targets:
         token: ""
         username: "olblak"
         branch: "master"
-  #    scm: "git"
-  #    repository:
+  #    git:
   #      url: "git@github.com:olblak/charts.git"
   #      branch: "master"
   #      user: "update-bot"
