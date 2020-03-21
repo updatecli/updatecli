@@ -21,9 +21,8 @@ targets:
     spec:
       file: "charts/jenkins/values.yaml"
       key: "jenkins.master.imageTag"
-      message: "[updatecli][Jenkins] Update default jenkins docker image tag"
-      scm: "github"
-      repository:
+    scm:
+      github:
         user: "updatecli"
         email: "updatecli@olblak.com"
         owner: "olblak"
