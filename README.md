@@ -84,7 +84,7 @@ conditions:
 ```
 
 ### Maven
-This conditon checks if a specific version, returned by the source, is published on a maven repository
+This condition checks if a specific version, returned by the source, is published on a maven repository
 
 ```
 condition:
