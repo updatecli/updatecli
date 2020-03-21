@@ -7,10 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
-	"github.com/olblak/updateCli/pkg/git"
-	"github.com/olblak/updateCli/pkg/github"
-	"github.com/olblak/updateCli/pkg/scm"
 	"gopkg.in/yaml.v3"
 )
 
@@ -18,17 +14,19 @@ var (
 	yamlIdent int = 2
 )
 
-// Yaml stores configuration about the file and the key value that needs to be updated
+// Yaml stores configuration about the file and the key value which needs to be updated.
 type Yaml struct {
-	File       string
-	Key        string
-	Message    string
-	Scm        string
-	Repository interface{}
+	File string
+	Key  string
 }
 
-// searchAndUpdateVersion parses a yaml object looking for a specific key that need to be updated if needed
-func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, columnRef int) (found bool, oldVersion string, column int) {
+// GetFile returns the yaml file which need to be updated.
+func (y *Yaml) GetFile() string {
+	return y.File
+}
+
+// replace parses a yaml object looking for a specific key which needs to be updated and replace it if needed.
+func replace(entry *yaml.Node, keys []string, version string, columnRef int) (found bool, oldVersion string, column int) {
 
 	valueFound := false
 	column = columnRef
@@ -62,65 +60,29 @@ func searchAndUpdateVersion(entry *yaml.Node, keys []string, version string, col
 
 			break
 		} else if content.Kind == yaml.MappingNode {
-			valueFound, oldVersion, column = searchAndUpdateVersion(content, keys, version, column)
+			valueFound, oldVersion, column = replace(content, keys, version, column)
 		}
 	}
 	return valueFound, oldVersion, column
 }
 
-// Update updates a scm repository based on yaml modification
-func (y *Yaml) Update(version string) error {
-	var scm scm.Scm
-
-	switch y.Scm {
-	case "git":
-		var g git.Git
-
-		err := mapstructure.Decode(y.Repository, &g)
-
-		if err != nil {
-			return err
-		}
-
-		g.GetDirectory()
-
-		scm = &g
-	case "github":
-		var g github.Github
-
-		err := mapstructure.Decode(y.Repository, &g)
-
-		if err != nil {
-			return err
-		}
-
-		g.GetDirectory()
-
-		scm = &g
-	default:
-		return fmt.Errorf("wrong scm type provided, accepted values [git,github]")
-	}
+// Target updates a scm repository based on the modified yaml file.
+func (y *Yaml) Target(source string, workDir string) (message string, err error) {
 
 	fmt.Printf("\nUpdating key  '%s' from target file: %s:\n\n", y.Key, y.File)
 
-	scm.Init(version)
-
-	path := filepath.Join(scm.GetDirectory(), y.File)
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		scm.Clone()
-	}
+	path := filepath.Join(workDir, y.File)
 
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	defer file.Close()
 
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var out yaml.Node
@@ -128,29 +90,28 @@ func (y *Yaml) Update(version string) error {
 	err = yaml.Unmarshal(data, &out)
 
 	if err != nil {
-		return fmt.Errorf("cannot unmarshal data: %v", err)
+		return "", fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, oldVersion, _ := searchAndUpdateVersion(&out, strings.Split(y.Key, "."), version, 1)
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), source, 1)
 
 	if valueFound {
-		if oldVersion == version {
-			fmt.Printf("\u2714 Value '%s' already up to date\n", version)
-			return nil
+		if oldVersion == source {
+			fmt.Printf("\u2714 Value '%s' already up to date\n", source)
+			return "", nil
 		}
 
-		fmt.Printf("\u2717 Version mismatched between %s (old) and %s (new)\n", oldVersion, version)
+		fmt.Printf("\u2717 Version mismatched between %s (old) and %s (new)\n", oldVersion, source)
 
 	} else {
 		fmt.Printf("\u2717 cannot find key '%v' in file %v\n", y.Key, path)
-		return nil
+		return "", nil
 	}
 
-	message := fmt.Sprintf("Updating key '%v' to %s",
+	message = fmt.Sprintf("[%s] Updating key from '%v' to %s",
+		y.File,
 		y.Key,
-		version)
-
-	fmt.Printf("%s\n", message)
+		source)
 
 	newFile, err := os.Create(path)
 	defer newFile.Close()
@@ -161,12 +122,8 @@ func (y *Yaml) Update(version string) error {
 	err = encoder.Encode(&out)
 
 	if err != nil {
-		return fmt.Errorf("something went wrong while encoding %v", err)
+		return "", fmt.Errorf("something went wrong while encoding %v", err)
 	}
 
-	scm.Add(y.File)
-	scm.Commit(y.File, message)
-	scm.Push()
-	scm.Clean()
-	return nil
+	return message, nil
 }

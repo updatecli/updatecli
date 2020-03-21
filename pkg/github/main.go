@@ -31,12 +31,12 @@ type Github struct {
 	Email        string
 }
 
-// GetDirectory returns the local git repository path
+// GetDirectory returns the local git repository path.
 func (g *Github) GetDirectory() (directory string) {
 	return g.directory
 }
 
-// Source retrieves the version tag from Github Releases
+// Source retrieves a specific version tag from Github Releases.
 func (g *Github) Source() (string, error) {
 
 	_, err := g.Check()
@@ -83,7 +83,7 @@ func (g *Github) Source() (string, error) {
 
 }
 
-// Check verify that mandatory Github parameters are provided
+// Check verifies if mandatory Github parameters are provided and return false if not.
 func (g *Github) Check() (bool, error) {
 	ok := true
 	required := []string{}
@@ -113,16 +113,16 @@ func (g *Github) Check() (bool, error) {
 
 }
 
-// Init Github struct
-func (g *Github) Init(version string) {
-	g.Version = version
-	g.setDirectory(version)
-	g.remoteBranch = fmt.Sprintf("updatecli/%v", version)
+// Init set default Github parameters if not set.
+func (g *Github) Init(source string) error {
+	g.Version = source
+	g.setDirectory(source)
+	g.remoteBranch = fmt.Sprintf("updatecli/%v", source)
 
 	if ok, err := g.Check(); !ok {
-		fmt.Println(err)
+		return err
 	}
-
+	return nil
 }
 
 func (g *Github) setDirectory(version string) {
@@ -140,12 +140,12 @@ func (g *Github) setDirectory(version string) {
 	g.directory = directory
 }
 
-// Clean Github working directory
+// Clean deletes github working directory.
 func (g *Github) Clean() {
 	os.RemoveAll(g.directory)
 }
 
-// Clone run `git clone`
+// Clone run `git clone`.
 func (g *Github) Clone() string {
 	fmt.Printf("Cloning git repository: \n\n")
 	URL := fmt.Sprintf("https://%v:%v@github.com/%v/%v.git",
@@ -169,7 +169,7 @@ func (g *Github) Clone() string {
 	return g.directory
 }
 
-// Commit run `git commit`
+// Commit run `git commit`.
 func (g *Github) Commit(file, message string) {
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
@@ -205,7 +205,7 @@ func (g *Github) Commit(file, message string) {
 
 }
 
-// Checkout create and use a temporary branch
+// Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() {
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
@@ -233,7 +233,7 @@ func (g *Github) Checkout() {
 	fmt.Printf("\n")
 }
 
-// Add run `git add`
+// Add run `git add`.
 func (g *Github) Add(file string) {
 
 	fmt.Printf("Adding file: %s\n", file)
@@ -254,7 +254,7 @@ func (g *Github) Add(file string) {
 	}
 }
 
-// Push run `git push`
+// Push run `git push` then open a pull request on Github if not already created.
 func (g *Github) Push() {
 
 	r, err := git.PlainOpen(g.directory)
@@ -286,7 +286,7 @@ func (g *Github) Push() {
 	g.OpenPR()
 }
 
-// OpenPR creates a new pull request
+// OpenPR creates a new pull request.
 func (g *Github) OpenPR() {
 	title := fmt.Sprintf("[Updatecli] Update version to %v", g.Version)
 
@@ -342,7 +342,7 @@ func (g *Github) OpenPR() {
 
 }
 
-// isPRExist checks if an open pull request already exist based on a title
+// isPRExist checks if an open pull request already exist based on a title.
 func (g *Github) isPRExist(title string) bool {
 
 	URL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls",
