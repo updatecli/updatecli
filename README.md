@@ -46,7 +46,7 @@ source:
   kind: dockerDigest
   spec:
     image: "Docker Image"
-    url: "Docker registry url"
+    url: "Docker registry url" # Not Mandatory
     tag: "Docker Image Tag to fetch the checksum"
 ```
 
@@ -79,8 +79,7 @@ conditions:
     kind: dockerImage
     spec:
       image: _Docker Image_
-      url: _Docker Registry url_
-      tag: _Docker Image Tag_
+      url: _Docker Registry url_ #Not mandatory
 ```
 
 ### Maven
@@ -111,14 +110,10 @@ targets:
     spec:
       file: "Yaml file path from the root repository"
       key: "yaml key to update"
-      message: "Git message to identify this commit change"
-      scm: "scm repository type"
-      repository:
-        url: "git repository url"
-        branch: "git branch to push changes"
-        user: "git user to push from changes"
-        email: "git user email to push from change"
-        directory: "directory where to clone the git repository"
+    scm: #scm repository type"
+      #github:
+      # or
+      #git:
 ```
 #### scm
 Yaml accept two kind of scm, github and git.
@@ -127,7 +122,7 @@ Yaml accept two kind of scm, github and git.
 Git push every changes on the remote git repository
 
 ```
-repository:
+git:
   url: "git repository url"
   branch: "git branch to push changes"
   user: "git user to push from changes"
@@ -139,7 +134,7 @@ repository:
 Github  push every changes on a temporary branch then open a pull request
 
 ```
-repository:
+github:
   user: "git user to push from changes"
   email: "git user email to push from change"
   directory: "directory where to clone the git repository"
