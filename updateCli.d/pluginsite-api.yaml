@@ -12,8 +12,6 @@ conditions:
     kind: dockerImage
     spec:
       image: "jenkinsciinfra/plugin-site-api"
-      url: "hub.docker.com"
-      tag: latest
 targets:
   imageTag:
     name: "Docker Image"
