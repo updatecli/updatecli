@@ -10,7 +10,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-// Git contains settings to interact with a specific git repository.
+// Git contains settings to manipulate a git repository.
 type Git struct {
 	URL       string
 	Branch    string
@@ -20,15 +20,16 @@ type Git struct {
 	Version   string
 }
 
-// GetDirectory returns the git working directory
+// GetDirectory returns the working git directory.
 func (g *Git) GetDirectory() (directory string) {
 	return g.Directory
 }
 
-// Init Git struct
-func (g *Git) Init(version string) {
-	g.Version = version
-	g.setDirectory(version)
+// Init set Git parameters if needed.
+func (g *Git) Init(source string) error {
+	g.Version = source
+	g.setDirectory(source)
+	return nil
 }
 
 func (g *Git) setDirectory(version string) {
@@ -48,12 +49,12 @@ func (g *Git) setDirectory(version string) {
 	fmt.Printf("Directory: %v\n", g.Directory)
 }
 
-// Clean remove unneeded git repository from local storage
+// Clean removes the current git repository from local storage.
 func (g *Git) Clean() {
 	os.RemoveAll(g.Directory) // clean up
 }
 
-// Clone run `git clone`
+// Clone run `git clone`.
 func (g *Git) Clone() string {
 
 	_, err := git.PlainClone(g.Directory, false, &git.CloneOptions{
@@ -70,7 +71,7 @@ func (g *Git) Clone() string {
 	return g.Directory
 }
 
-// Commit run `git commit`
+// Commit run `git commit`.
 func (g *Git) Commit(file, message string) {
 	// Opens an already existing repository.
 	r, err := git.PlainOpen(g.Directory)
@@ -107,7 +108,7 @@ func (g *Git) Commit(file, message string) {
 
 }
 
-// Add run `git add`
+// Add run `git add`.
 func (g *Git) Add(file string) {
 
 	fmt.Printf("Adding file: %s\n", file)
@@ -127,7 +128,7 @@ func (g *Git) Add(file string) {
 	}
 }
 
-// TmpBranch creates a ephemeral branch
+// TmpBranch creates an ephemeral branch.
 func (g *Git) TmpBranch(name string) {
 
 	r, err := git.PlainOpen(g.Directory)
@@ -150,7 +151,7 @@ func (g *Git) TmpBranch(name string) {
 	}
 }
 
-// Push run `git push`
+// Push run `git push`.
 func (g *Git) Push() {
 
 	r, err := git.PlainOpen(g.Directory)
