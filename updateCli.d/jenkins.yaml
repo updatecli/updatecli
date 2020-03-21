@@ -13,7 +13,6 @@ conditions:
     kind: dockerImage
     spec:
       image: "jenkins/jenkins"
-      url: "hub.docker.com"
 targets:
   imageTag:
     name: "Docker Image"
