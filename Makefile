@@ -20,8 +20,8 @@ docker.run:
 	docker run -i -t --rm --name updateCli $(DOCKER_IMAGE):$(DOCKER_TAG) --help
 docker.test:
 	docker run -i -t \
-		-v $$PWD/updateCli.yaml:/home/updatecli/updateCli.yaml:ro \
-		olblak/updatecli:latest --config /home/updatecli/updateCli.yaml
+		-v $$PWD/updateCli.d:/home/updatecli/updateCli.d:ro \
+		olblak/updatecli:latest --config /home/updatecli/updateCli.d/pluginsite-api.yaml
 
 docker.push:
 	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
