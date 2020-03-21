@@ -140,7 +140,7 @@ func (d *Docker) Source() (string, error) {
 			digest := strings.TrimPrefix(image["digest"], "sha256:")
 			fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
 			fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
-			fmt.Printf("Example: %v@sha256%v\n", d.Image, digest)
+			fmt.Printf("Example: %v@sha256:%v\n", d.Image, digest)
 			return digest, nil
 		}
 	}
