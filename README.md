@@ -1,5 +1,7 @@
 # Updatecli
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/olblak/updatecli)](https://goreportcard.com/report/github.com/olblak/updatecli)
+
 [![Docker Pulls](https://img.shields.io/docker/pulls/olblak/updatecli?label=olblak%2Fupdatecli&logo=docker&logoColor=white)](https://hub.docker.com/r/olblak/updatecli)
 
 [![Go](https://github.com/olblak/updatecli/workflows/Go/badge.svg)](https://github.com/olblak/updatecli/actions?query=workflow%3AGo)
