@@ -67,7 +67,9 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 }
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, workDir string) (message string, err error) {
+func (y *Yaml) Target(source string, workDir string) (changed bool, message string, err error) {
+
+	changed = false
 
 	fmt.Printf("\nUpdating key  '%s' from target file: %s:\n\n", y.Key, y.File)
 
@@ -75,14 +77,14 @@ func (y *Yaml) Target(source string, workDir string) (message string, err error)
 
 	file, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return changed, "", err
 	}
 
 	defer file.Close()
 
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		return "", err
+		return changed, "", err
 	}
 
 	var out yaml.Node
@@ -90,7 +92,7 @@ func (y *Yaml) Target(source string, workDir string) (message string, err error)
 	err = yaml.Unmarshal(data, &out)
 
 	if err != nil {
-		return "", fmt.Errorf("cannot unmarshal data: %v", err)
+		return changed, "", fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
 	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), source, 1)
@@ -98,14 +100,14 @@ func (y *Yaml) Target(source string, workDir string) (message string, err error)
 	if valueFound {
 		if oldVersion == source {
 			fmt.Printf("\u2714 Value '%s' already up to date\n", source)
-			return "", nil
+			return changed, "", nil
 		}
 
 		fmt.Printf("\u2717 Version mismatched between %s (old) and %s (new)\n", oldVersion, source)
 
 	} else {
 		fmt.Printf("\u2717 cannot find key '%v' in file %v\n", y.Key, path)
-		return "", nil
+		return changed, "", nil
 	}
 
 	message = fmt.Sprintf("[updatecli] %s - Updating key '%v' to %s",
@@ -122,8 +124,10 @@ func (y *Yaml) Target(source string, workDir string) (message string, err error)
 	err = encoder.Encode(&out)
 
 	if err != nil {
-		return "", fmt.Errorf("something went wrong while encoding %v", err)
+		return changed, "", fmt.Errorf("something went wrong while encoding %v", err)
 	}
 
-	return message, nil
+	changed = true
+
+	return changed, message, nil
 }
