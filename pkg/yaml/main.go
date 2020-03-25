@@ -71,8 +71,6 @@ func (y *Yaml) Target(source string, workDir string) (changed bool, message stri
 
 	changed = false
 
-	fmt.Printf("\nUpdating key  '%s' from target file: %s:\n\n", y.Key, y.File)
-
 	path := filepath.Join(workDir, y.File)
 
 	file, err := os.Open(path)
@@ -99,20 +97,27 @@ func (y *Yaml) Target(source string, workDir string) (changed bool, message stri
 
 	if valueFound {
 		if oldVersion == source {
-			fmt.Printf("\u2714 Value '%s' already up to date\n", source)
+			fmt.Printf("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done\n",
+				y.Key,
+				y.File,
+				source)
 			return changed, "", nil
 		}
 
-		fmt.Printf("\u2717 Version mismatched between %s (old) and %s (new)\n", oldVersion, source)
+		fmt.Printf("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'\n",
+			y.Key,
+			y.File,
+			oldVersion,
+			source)
 
 	} else {
-		fmt.Printf("\u2717 cannot find key '%v' in file %v\n", y.Key, path)
+		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n", y.Key, path)
 		return changed, "", nil
 	}
 
-	message = fmt.Sprintf("[updatecli] %s - Updating key '%v' to %s",
-		y.File,
+	message = fmt.Sprintf("[updatecli] Key '%s', from file '%v', was updated to '%s'\n",
 		y.Key,
+		y.File,
 		source)
 
 	newFile, err := os.Create(path)
