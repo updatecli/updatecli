@@ -21,7 +21,7 @@ type Target struct {
 // Spec is an interface which offers common function to manipulate targets.
 type Spec interface {
 	GetFile() string
-	Target(source, workDir string) (string, error)
+	Target(source, workDir string) (bool, string, error)
 }
 
 // Unmarshal parses target spec and return its Spec interface
@@ -76,16 +76,21 @@ func (t *Target) Execute(source string) error {
 		scm.Clone()
 	}
 
-	message, err := spec.Target(source, scm.GetDirectory())
+	changed, message, err := spec.Target(source, scm.GetDirectory())
 
 	if err != nil {
 		return err
 	}
 
-	scm.Add(file)
-	scm.Commit(file, message)
-	scm.Push()
-	scm.Clean()
+	if changed {
+		if message == "" {
+			return fmt.Errorf("Target has no change message")
+		}
+		scm.Add(file)
+		scm.Commit(file, message)
+		scm.Push()
+		scm.Clean()
+	}
 
 	return nil
 }
