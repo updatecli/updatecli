@@ -151,6 +151,16 @@ github:
 
 A configuration can be specified by using --config, it accepts either a single file or a directory, if a directory is specified, then it checks for every files inside.
 
+## Examples
+
+This project is currently used to automate Jenkins OSS kubernetes cluster
+* [UpdateCli configuration](https://github.com/jenkins-infra/charts/tree/master/updateCli.d)
+* [Jenkinsfile](https://github.com/jenkins-infra/charts/blob/master/Jenkinsfile_k8s#L35L47)
+* [Results]()
+  * [Docker Digest](https://github.com/jenkins-infra/charts/pull/188)
+  * [Maven Repository](https://github.com/jenkins-infra/charts/pull/179)
+  * [Github Release](https://github.com/jenkins-infra/charts/pull/145)
+
 ### Docker
 A docker image is available.
 
