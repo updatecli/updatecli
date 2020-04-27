@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -69,8 +68,6 @@ func (config *Config) ReadFile(cfgFile string) {
 	default:
 		fmt.Printf("File extension not supported: %v", extension)
 	}
-
-	os.Exit(32)
 
 }
 
