@@ -149,7 +149,11 @@ github:
 
 ## Usage
 
-A configuration can be specified by using --config, it accepts either a single file or a directory, if a directory is specified, then it checks for every files inside.
+A YAML configuration can be specified using `--config <yaml_file>`, it accepts either a single file or a directory, if a directory is specified, then it runs on every file inside.
+
+Another way to use this tool is by using go template files in place of YAML, in that case, updateCli accepts the parameter --values <yaml file> to specify YAML key value and then they can then referenced from the go template using {{ key.key2 }}.
+We also provide a custom function called requireEnd to inject any environment variable in the template example, `{{ requiredEnv "PATH" }}`.
+
 
 ## Examples
 
