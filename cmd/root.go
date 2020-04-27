@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	cfgFile string
+	cfgFile    string
+	valuesFile string
 
 	rootCmd = &cobra.Command{
 		Use:   "updateCli",
@@ -36,6 +37,7 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "config file (default is ./updateCli.yaml)")
+	rootCmd.Flags().StringVarP(&valuesFile, "values", "v", "./values.yaml", "values file (default is ./values.yaml)")
 }
 
 func run(cfg string) {

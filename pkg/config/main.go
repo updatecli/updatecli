@@ -5,11 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
-
 	"github.com/olblak/updateCli/pkg/engine/condition"
 	"github.com/olblak/updateCli/pkg/engine/source"
 	"github.com/olblak/updateCli/pkg/engine/target"
+	"github.com/spf13/viper"
 )
 
 // Config contains cli configuration
@@ -30,29 +29,46 @@ func (config *Config) Reset() {
 func (config *Config) ReadFile(cfgFile string) {
 
 	config.Reset()
-	v := viper.New()
 
 	dirname, basename := filepath.Split(cfgFile)
 
-	v.SetEnvPrefix("updatecli")
-	v.AutomaticEnv()
-	v.SetConfigName(strings.TrimSuffix(basename, filepath.Ext(basename))) // name of config file (without extension)
-	v.SetConfigType(strings.Replace(filepath.Ext(basename), ".", "", -1)) // REQUIRED if the config file does not have the extension in the name
-	v.AddConfigPath(dirname)                                              // optionally look for config in the working directory
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	switch extension := filepath.Ext(basename); extension {
+	case ".tpl", ".tmpl":
+		t := Template{
+			CfgFile:    filepath.Join(dirname, basename),
+			ValuesFile: "values.yaml",
+		}
 
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("Config file not found")
-		} else {
+		err := t.Unmarshal(config)
+		if err != nil {
 			fmt.Println(err)
 		}
+
+	case ".yaml", ".yml":
+		v := viper.New()
+
+		v.SetEnvPrefix("updatecli")
+		v.AutomaticEnv()
+		v.SetConfigName(strings.TrimSuffix(basename, filepath.Ext(basename))) // name of config file (without extension)
+		v.SetConfigType(strings.Replace(filepath.Ext(basename), ".", "", -1)) // REQUIRED if the config file does not have the extension in the name
+		v.AddConfigPath(dirname)                                              // optionally look for config in the working directory
+		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+		if err := v.ReadInConfig(); err != nil {
+			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+				fmt.Println("Config file not found")
+			} else {
+				fmt.Println(err)
+			}
+		}
+		err := v.Unmarshal(&config)
+		if err != nil {
+			fmt.Printf("unable to decode into struct, %v\n", err)
+		}
+	default:
+		fmt.Printf("File extension not supported: %v", extension)
 	}
 
-	err := v.Unmarshal(&config)
-	if err != nil {
-		fmt.Printf("unable to decode into struct, %v\n", err)
-	}
 }
 
 // Check is a function that test if the configuration is correct
