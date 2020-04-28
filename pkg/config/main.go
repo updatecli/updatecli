@@ -26,7 +26,7 @@ func (config *Config) Reset() {
 }
 
 // ReadFile reads the updatecli configuration file
-func (config *Config) ReadFile(cfgFile string) {
+func (config *Config) ReadFile(cfgFile, valuesFile string) {
 
 	config.Reset()
 
@@ -36,7 +36,7 @@ func (config *Config) ReadFile(cfgFile string) {
 	case ".tpl", ".tmpl":
 		t := Template{
 			CfgFile:    filepath.Join(dirname, basename),
-			ValuesFile: "values.yaml",
+			ValuesFile: valuesFile,
 		}
 
 		err := t.Unmarshal(config)
