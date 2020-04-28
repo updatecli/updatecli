@@ -38,14 +38,23 @@ func (t *Template) Unmarshal(config *Config) error {
 		return err
 	}
 
-	v, err := os.Open(t.ValuesFile)
-	defer v.Close()
-	if err != nil {
-		return err
-	}
+	content := []byte{}
 
-	content, err := ioutil.ReadAll(v)
-	if err != nil {
+	if _, err := os.Stat(t.ValuesFile); err == nil && t.ValuesFile != "" {
+
+		if t.ValuesFile != "" {
+			v, err := os.Open(t.ValuesFile)
+			defer v.Close()
+			if err != nil {
+				return err
+			}
+
+			content, err = ioutil.ReadAll(v)
+			if err != nil {
+				return err
+			}
+		}
+	} else if err != nil && t.ValuesFile != "" {
 		return err
 	}
 
