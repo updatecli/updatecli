@@ -37,7 +37,7 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "config file (default is ./updateCli.yaml)")
-	rootCmd.Flags().StringVarP(&valuesFile, "values", "v", "./values.yaml", "values file (default is ./values.yaml)")
+	rootCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "values file")
 }
 
 func run(cfg string) {
@@ -64,7 +64,7 @@ func run(cfg string) {
 			run(filepath.Join(cfg, file))
 		}
 	} else {
-		err := engine.Run(cfg)
+		err := engine.Run(cfg, valuesFile)
 		if err != nil {
 			fmt.Printf("\n\u26A0 %s \n\n", err)
 		}

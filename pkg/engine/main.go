@@ -17,7 +17,7 @@ type Engine struct {
 }
 
 // Run run the full process one yaml file
-func Run(cfgFile string) error {
+func Run(cfgFile, valuesFile string) error {
 
 	_, basename := filepath.Split(cfgFile)
 	cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
@@ -26,7 +26,7 @@ func Run(cfgFile string) error {
 	fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
 	fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
 
-	engine.conf.ReadFile(cfgFile)
+	engine.conf.ReadFile(cfgFile, valuesFile)
 
 	engine.conf.Check()
 
