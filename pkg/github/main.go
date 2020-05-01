@@ -14,6 +14,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/config"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	transportHttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 )
 
 // Github contains settings to interact with Github
@@ -147,14 +148,19 @@ func (g *Github) Clean() {
 
 // Clone run `git clone`.
 func (g *Github) Clone() string {
-	fmt.Printf("Cloning git repository: \n\n")
-	URL := fmt.Sprintf("https://%v:%v@github.com/%v/%v.git",
-		g.Username,
-		g.Token,
+	URL := fmt.Sprintf("https://github.com/%v/%v.git",
 		g.Owner,
 		g.Repository)
+
+	fmt.Printf("Cloning git repository: %s\n", URL)
+	fmt.Printf("Downloaded in %s\n\n", g.directory)
+
 	_, err := git.PlainClone(g.directory, false, &git.CloneOptions{
-		URL:        URL,
+		URL: URL,
+		Auth: &transportHttp.BasicAuth{
+			Username: g.Username, // anything except an empty string
+			Password: g.Token,
+		},
 		RemoteName: g.Branch,
 		Progress:   os.Stdout,
 	})
@@ -165,12 +171,14 @@ func (g *Github) Clone() string {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("%s downloaded in %s\n", URL, g.directory)
 	return g.directory
 }
 
 // Commit run `git commit`.
 func (g *Github) Commit(file, message string) {
+
+	fmt.Printf("Commit changes \n\n")
+
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
 		fmt.Println(err)
@@ -207,6 +215,7 @@ func (g *Github) Commit(file, message string) {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() {
+
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
 		fmt.Println(err)
@@ -218,7 +227,7 @@ func (g *Github) Checkout() {
 	}
 
 	branch := "updatecli/" + g.Version
-	fmt.Printf("Creating Branch: %v\n", branch)
+	fmt.Printf("Checkout Git Branch: %v\n", branch)
 
 	err = w.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(branch),
@@ -257,6 +266,8 @@ func (g *Github) Add(file string) {
 // Push run `git push` then open a pull request on Github if not already created.
 func (g *Github) Push() {
 
+	fmt.Printf("Push changes\n\n")
+
 	r, err := git.PlainOpen(g.directory)
 	if err != nil {
 		fmt.Println(err)
@@ -288,6 +299,7 @@ func (g *Github) Push() {
 
 // OpenPR creates a new pull request.
 func (g *Github) OpenPR() {
+	fmt.Println("Opening Github pull request")
 	title := fmt.Sprintf("[Updatecli] Update version to %v", g.Version)
 
 	if g.isPRExist(title) {
