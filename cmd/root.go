@@ -21,9 +21,6 @@ var (
 updateCli is a tool to update yaml
 key value based on source rule
 then validated by conditions`,
-		Run: func(cmd *cobra.Command, args []string) {
-			run(cfgFile)
-		},
 	}
 )
 
@@ -36,11 +33,10 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "config file (default is ./updateCli.yaml)")
-	rootCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "values file")
+	rootCmd.AddCommand(applyCmd, showCmd, versionCmd)
 }
 
-func run(cfg string) {
+func run(cfg string, command string) {
 	fileInfo, err := os.Stat(cfg)
 	if err != nil {
 		fmt.Printf("\n\u26A0 %s \n", err)
@@ -61,14 +57,24 @@ func run(cfg string) {
 		files, err := dir.Readdirnames(-1)
 		fmt.Printf("Detected configuration Files: %v \n", files)
 		for _, file := range files {
-			run(filepath.Join(cfg, file))
+			run(filepath.Join(cfg, file), command)
 		}
 	} else {
-		err := engine.Run(cfg, valuesFile)
-		if err != nil {
-			fmt.Printf("\n\u26A0 %s \n\n", err)
+		switch command {
+		case "apply":
+			err := engine.Run(cfg, valuesFile)
+			if err != nil {
+				fmt.Printf("\n\u26A0 %s \n\n", err)
+			}
+		case "show":
+			err := engine.Show(cfg, valuesFile)
+			if err != nil {
+				fmt.Printf("\n\u26A0 %s \n\n", err)
+			}
+		default:
+			fmt.Println("Wrong command")
 		}
 	}
 
-	fmt.Printf("\n\n")
+	fmt.Printf("\n")
 }
