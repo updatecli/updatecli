@@ -9,6 +9,7 @@ import (
 	"github.com/olblak/updateCli/pkg/engine/source"
 	"github.com/olblak/updateCli/pkg/engine/target"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 // Config contains cli configuration
@@ -78,6 +79,11 @@ func (config *Config) Check() bool {
 }
 
 // Display shows updatecli configuration including secrets !
-func (config *Config) Display() {
-	fmt.Println(config)
+func (config *Config) Display() error {
+	c, err := yaml.Marshal(&config)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s", string(c))
+	return nil
 }
