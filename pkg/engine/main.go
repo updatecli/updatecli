@@ -97,3 +97,22 @@ func (e *Engine) targets(source string) error {
 	}
 	return nil
 }
+
+// Show run the full process one yaml file
+func Show(cfgFile, valuesFile string) error {
+
+	_, basename := filepath.Split(cfgFile)
+	cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
+
+	fmt.Printf("\n\n%s\n", strings.Repeat("#", len(cfgFileName)+4))
+	fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
+	fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
+
+	engine.conf.ReadFile(cfgFile, valuesFile)
+	err := engine.conf.Display()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
