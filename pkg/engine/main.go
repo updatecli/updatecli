@@ -13,11 +13,12 @@ var engine Engine
 
 // Engine defined parameters for a specific engine run
 type Engine struct {
-	conf config.Config
+	conf    config.Config
+	Options Options
 }
 
-// Run run the full process one yaml file
-func Run(cfgFile, valuesFile string) error {
+// Apply run the full process one yaml file
+func (e *Engine) Apply(cfgFile string) error {
 
 	_, basename := filepath.Split(cfgFile)
 	cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
@@ -26,11 +27,9 @@ func Run(cfgFile, valuesFile string) error {
 	fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
 	fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
 
-	engine.conf.ReadFile(cfgFile, valuesFile)
+	e.conf.ReadFile(cfgFile, e.Options.ValuesFile)
 
-	engine.conf.Check()
-
-	source, err := engine.conf.Source.Execute()
+	source, err := e.conf.Source.Execute()
 
 	if err != nil {
 		return err
@@ -41,8 +40,8 @@ func Run(cfgFile, valuesFile string) error {
 		return nil
 	}
 
-	if len(engine.conf.Conditions) > 0 {
-		ok, err := engine.conditions(source)
+	if len(e.conf.Conditions) > 0 {
+		ok, err := e.conditions(source)
 		if err != nil {
 			return err
 		}
@@ -52,8 +51,8 @@ func Run(cfgFile, valuesFile string) error {
 		}
 	}
 
-	if len(engine.conf.Targets) > 0 {
-		engine.targets(source)
+	if len(e.conf.Targets) > 0 {
+		e.targets(source)
 	}
 
 	return nil
@@ -82,6 +81,15 @@ func (e *Engine) conditions(source string) (bool, error) {
 	return true, nil
 }
 
+// Init Options
+func (o *Options) Init() error {
+
+	o.Target.Init()
+
+	return nil
+
+}
+
 // targets iterate on every targets and then call target on each of them
 func (e *Engine) targets(source string) error {
 
@@ -89,7 +97,7 @@ func (e *Engine) targets(source string) error {
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("Targets")+1))
 
 	for id, t := range e.conf.Targets {
-		err := t.Execute(source)
+		err := t.Execute(source, &e.Options.Target)
 		if err != nil {
 			fmt.Printf("Something went wrong in target \"%v\" :\n", id)
 			fmt.Printf("%v\n\n", err)
@@ -98,8 +106,8 @@ func (e *Engine) targets(source string) error {
 	return nil
 }
 
-// Show run the full process one yaml file
-func Show(cfgFile, valuesFile string) error {
+// Show displays the configuration that should be apply
+func (e *Engine) Show(cfgFile string) error {
 
 	_, basename := filepath.Split(cfgFile)
 	cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
@@ -108,8 +116,8 @@ func Show(cfgFile, valuesFile string) error {
 	fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
 	fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
 
-	engine.conf.ReadFile(cfgFile, valuesFile)
-	err := engine.conf.Display()
+	e.conf.ReadFile(cfgFile, e.Options.ValuesFile)
+	err := e.conf.Display()
 	if err != nil {
 		return err
 	}
