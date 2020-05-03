@@ -20,8 +20,17 @@ build:
 			-X \"github.com/olblak/updateCli/pkg/version.Version=$(VERSION)\""\
 		-o bin/updatecli
 
-run:
-	./bin/updatecli --config ./updateCli.d
+diff:
+	./bin/updatecli diff --config ./updateCli.d
+
+show:
+	./bin/updatecli show --config ./updateCli.d
+
+apply:
+	./bin/updatecli apply --config ./updateCli.d
+
+version:
+	./bin/updatecli version
 
 docker.build:
 	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) -t $(DOCKER_IMAGE):latest .
