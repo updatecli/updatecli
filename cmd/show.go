@@ -13,7 +13,11 @@ var (
 		Short: "Print the configuration that will be executed",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("\n%s\n\n", strings.ToTitle("Show"))
-			run(cfgFile, "show")
+
+			e.Options.File = cfgFile
+			e.Options.ValuesFile = valuesFile
+
+			run("show")
 		},
 	}
 )

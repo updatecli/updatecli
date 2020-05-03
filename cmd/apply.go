@@ -8,12 +8,26 @@ import (
 )
 
 var (
+	applyCommit bool
+	applyClean  bool
+	applyPush   bool
+
 	applyCmd = &cobra.Command{
 		Use:   "apply",
 		Short: "apply will execute updateCli and update target if needed",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("\n%s\n\n", strings.ToTitle("Apply"))
-			run(cfgFile, "apply")
+
+			e.Options.File = cfgFile
+			e.Options.ValuesFile = valuesFile
+
+			e.Options.Target.Commit = applyCommit
+			e.Options.Target.Push = applyPush
+			e.Options.Target.Clean = applyClean
+
+			run(
+				"apply",
+			)
 		},
 	}
 )
@@ -21,4 +35,8 @@ var (
 func init() {
 	applyCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "config file (default is ./updateCli.yaml)")
 	applyCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "values file use for templating (required {.tpl,.tmpl} config)")
+
+	showCmd.Flags().BoolVarP(&applyCommit, "commit", "", true, "Commit")
+	showCmd.Flags().BoolVarP(&applyPush, "push", "", true, "Push changes")
+	showCmd.Flags().BoolVarP(&applyClean, "clean", "", true, "clean working directory")
 }

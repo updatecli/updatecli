@@ -50,7 +50,7 @@ func (t *Target) Unmarshal() (Spec, error) {
 }
 
 // Execute applies a specific target configuration
-func (t *Target) Execute(source string) error {
+func (t *Target) Execute(source string, o *Options) error {
 
 	scm, err := scm.Unmarshal(t.Scm)
 	if err != nil {
@@ -86,10 +86,17 @@ func (t *Target) Execute(source string) error {
 		if message == "" {
 			return fmt.Errorf("Target has no change message")
 		}
-		scm.Add(file)
-		scm.Commit(file, message)
-		scm.Push()
-		scm.Clean()
+
+		if o.Commit {
+			scm.Add(file)
+			scm.Commit(file, message)
+		}
+		if o.Push {
+			scm.Push()
+		}
+		if o.Clean {
+			scm.Clean()
+		}
 	}
 
 	return nil

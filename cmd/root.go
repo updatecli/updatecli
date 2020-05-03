@@ -14,6 +14,8 @@ var (
 	cfgFile    string
 	valuesFile string
 
+	e engine.Engine
+
 	rootCmd = &cobra.Command{
 		Use:   "updateCli",
 		Short: "updateCli is a tool to update yaml key values",
@@ -33,41 +35,33 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(applyCmd, showCmd, versionCmd)
+	rootCmd.AddCommand(
+		applyCmd,
+		diffCmd,
+		showCmd,
+		versionCmd)
 }
 
-func run(cfg string, command string) {
-	fileInfo, err := os.Stat(cfg)
-	if err != nil {
-		fmt.Printf("\n\u26A0 %s \n", err)
-	}
+func run(command string) {
 
-	if os.IsNotExist(err) {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	files := GetFiles(e.Options.File)
 
-	if fileInfo.IsDir() {
-		fmt.Println("Directory configuration provided")
-		dir, err := os.Open(cfg)
-		defer dir.Close()
+	for _, file := range files {
+
+		err := e.Options.Init()
+
 		if err != nil {
-			fmt.Printf("\n\u26A0 %s \n", err)
+			fmt.Println(err)
 		}
-		files, err := dir.Readdirnames(-1)
-		fmt.Printf("Detected configuration Files: %v \n", files)
-		for _, file := range files {
-			run(filepath.Join(cfg, file), command)
-		}
-	} else {
+
 		switch command {
 		case "apply":
-			err := engine.Run(cfg, valuesFile)
+			err := e.Apply(file)
 			if err != nil {
 				fmt.Printf("\n\u26A0 %s \n\n", err)
 			}
 		case "show":
-			err := engine.Show(cfg, valuesFile)
+			err := e.Show(file)
 			if err != nil {
 				fmt.Printf("\n\u26A0 %s \n\n", err)
 			}
@@ -77,4 +71,24 @@ func run(cfg string, command string) {
 	}
 
 	fmt.Printf("\n")
+}
+
+// GetFiles return an array with every valid files
+func GetFiles(root string) (files []string) {
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("\n\u26A0 File %s: %s\n", path, err)
+			os.Exit(1)
+		}
+		if info.Mode().IsRegular() {
+			files = append(files, path)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return files
 }
