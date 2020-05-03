@@ -14,7 +14,7 @@ var (
 
 	applyCmd = &cobra.Command{
 		Use:   "apply",
-		Short: "apply will execute updateCli and update target if needed",
+		Short: "apply checks if an updated is needed then apply the changes",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("\n%s\n\n", strings.ToTitle("Apply"))
 
