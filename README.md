@@ -9,10 +9,10 @@
 
 **Prototype**
 
-Updatecli is a small cli tool used for automating yaml values updates.
-It fetches its configuration from one yaml file and then works in three stages
+Updatecli is a tool used for automating values updates.
+It fetches its configuration from one yaml configuration file, then works into three stages
 
-1. Source: Based on a rule fetch a value that will be used during later stages
+1. Source: Based on a rule fetch a value that will be injected in later stages
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source rule
 3. Target: Update and publish the target files based on a value retrieved from the source stage.
 
@@ -20,28 +20,27 @@ It fetches its configuration from one yaml file and then works in three stages
 
 ## Source
 
-Currently "source" only supports two kinds of sources
-
 ### Github Release
 
-This source will check Github Release for a specific version if latest is specified, it retrieves the version referenced by 'latest'
+This source will check Github Release api for a specific version. If `latest` is specified, it retrieves the version referenced by 'latest'.
 
+.Example
 ```
 source:
   kind: githubRelease
   spec:
     owner: "Github Owner"
     repository: "Github Repository"
-    token: "You should use environment variable!"
+    token: "Don't commit your secrets!"
     url: "Github Url"
     version: "Version to fetch"
 ```
 
-Environment variable `UPDATECLI_SOURCE_SPEC_TOKEN` can be used instead of writing secrets in files
+Environment variable `UPDATECLI_SOURCE_SPEC_TOKEN` can be used instead of writing secrets in files or go templates could be used instead of plain YAML, cfr later.
 
 ### DockerRegistry
 
-This source will check a docker image tag from a docker registry and return its digest, so we always reference a specific image, even when the tag is updating regularly.
+This source will check a docker image tag from a docker registry and return its digest, so we can always reference a specific image tag like `latest`, even when the tag is updating regularly.
 
 ```
 source:
@@ -67,8 +66,7 @@ source:
 ```
 
 ## Condition
- It will check for a environment variable with a name matching the key uppercased and prefixed with the EnvPrefix
-During this stage, we check if conditions are met based on the value retrieved in the source stage
+During this stage, we check if conditions are met based on the value retrieved in the source stage otherwise we can skip the "target" stage.
 
 ### dockerImage
 
@@ -99,7 +97,7 @@ condition:
 
 ## Targets
 
-"Targets" stage will update the definition for every targets based on the value return during the source stage if all conditions are met.
+"Targets" stage will update the definition for every targets based on the value returned during the source stage if all conditions are met.
 
 ### yaml
 
@@ -148,10 +146,13 @@ github:
 ```
 
 ## Usage
+The best way know how to use this tool is : `updateCli --help`
 
-A YAML configuration can be specified using `--config <yaml_file>`, it accepts either a single file or a directory, if a directory is specified, then it runs on every file inside.
+### YAML {.yaml,.yml}
+A YAML configuration can be specified using `--config <yaml_file>`, it accepts either a single file or a directory, if a directory is specified, then it runs recursively on every file inside the directory.
 
-Another way to use this tool is by using go template files in place of YAML, in that case, updateCli accepts the parameter --values <yaml file> to specify YAML key value and then they can then referenced from the go template using {{ key.key2 }}.
+### Go Templates {.tpl, tmpl}
+Another way to use this tool is by using go template files in place of YAML, in that case, updateCli can also use the parameter --values <yaml file> to specify YAML key value and then they can be referenced from the go template using {{ key.key2 }}.
 We also provide a custom function called requireEnd to inject any environment variable in the template example, `{{ requiredEnv "PATH" }}`.
 
 

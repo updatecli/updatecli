@@ -18,11 +18,9 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "updateCli",
-		Short: "updateCli is a tool to update yaml key values",
+		Short: "updateCli is a tool to automate file updates",
 		Long: `
-updateCli is a tool to update yaml
-key value based on source rule
-then validated by conditions`,
+updateCli is a tool to automate file updates based on source rule.`,
 	}
 )
 

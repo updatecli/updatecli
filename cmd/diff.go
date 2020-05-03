@@ -10,7 +10,7 @@ import (
 var (
 	diffCmd = &cobra.Command{
 		Use:   "diff",
-		Short: "diff will execute updateCli and check if target update are needed",
+		Short: "diff shows if targets update are needed",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("\n%s\n\n", strings.ToTitle("Apply"))
 
