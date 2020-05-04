@@ -46,12 +46,6 @@ func run(command string) {
 
 	for _, file := range files {
 
-		err := e.Options.Init()
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
 		switch command {
 		case "apply":
 			err := e.Apply(file)

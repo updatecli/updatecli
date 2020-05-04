@@ -81,15 +81,6 @@ func (e *Engine) conditions(source string) (bool, error) {
 	return true, nil
 }
 
-// Init Options
-func (o *Options) Init() error {
-
-	o.Target.Init()
-
-	return nil
-
-}
-
 // targets iterate on every targets and then call target on each of them
 func (e *Engine) targets(source string) error {
 
