@@ -19,7 +19,7 @@ var (
 
 			e.Options.Target.Commit = false
 			e.Options.Target.Push = false
-			e.Options.Target.Clean = false
+			e.Options.Target.Clean = true
 
 			run(
 				"apply",
