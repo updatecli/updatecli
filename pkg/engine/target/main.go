@@ -64,6 +64,11 @@ func (t *Target) Execute(source string, o *Options) error {
 	}
 
 	err = scm.Init(source)
+
+	if o.Clean {
+		defer scm.Clean()
+	}
+
 	if err != nil {
 		return err
 	}
@@ -93,9 +98,6 @@ func (t *Target) Execute(source string, o *Options) error {
 		}
 		if o.Push {
 			scm.Push()
-		}
-		if o.Clean {
-			scm.Clean()
 		}
 	}
 
