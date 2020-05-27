@@ -3,6 +3,7 @@ module github.com/olblak/updateCli
 go 1.14
 
 require (
+	github.com/go-git/go-git/v5 v5.1.0
 	github.com/golang-migrate/migrate/v4 v4.7.1 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/spf13/cobra v1.0.0
