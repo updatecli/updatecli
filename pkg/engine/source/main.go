@@ -7,6 +7,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/docker"
 	"github.com/olblak/updateCli/pkg/github"
+	"github.com/olblak/updateCli/pkg/helm/chart"
 	"github.com/olblak/updateCli/pkg/maven"
 )
 
@@ -45,6 +46,16 @@ func (s *Source) Execute() (string, error) {
 		}
 
 		spec = &g
+
+	case "helmChart":
+		c := chart.Chart{}
+		err := mapstructure.Decode(s.Spec, &c)
+
+		if err != nil {
+			return "", err
+		}
+
+		spec = &c
 
 	case "maven":
 		m := maven.Maven{}
