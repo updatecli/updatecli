@@ -3,84 +3,86 @@ package chart
 import "testing"
 
 func TestCondition(t *testing.T) {
-	c := &Chart{
-		URL:     "https://kubernetes-charts.storage.googleapis.com",
-		Name:    "jenkins",
-		Version: "1.21.1",
+	type dataSet struct {
+		chart    Chart
+		expected bool
 	}
 
-	got, _ := c.Condition()
-
-	expected := true
-
-	if got != expected {
-		t.Errorf("%s Version %v is published! expected %v, got %v", c.Name, c.Version, expected, got)
+	set := []dataSet{
+		{
+			chart: Chart{
+				URL:     "https://kubernetes-charts.storage.googleapis.com",
+				Name:    "jenkins",
+				Version: "1.21.1",
+			},
+			expected: true,
+		},
+		{
+			chart: Chart{
+				URL:     "https://kubernetes-charts.storage.googleapis.com",
+				Name:    "jenkins",
+				Version: "999",
+			},
+			expected: false,
+		},
+		{
+			chart: Chart{
+				URL:     "https://example.com",
+				Name:    "jenkins",
+				Version: "999",
+			},
+			expected: false,
+		},
 	}
 
-	c = &Chart{
-		URL:     "https://kubernetes-charts.storage.googleapis.com",
-		Name:    "jenkins",
-		Version: "999",
-	}
+	for _, d := range set {
+		got, _ := d.chart.Condition()
 
-	got, _ = c.Condition()
+		if got != d.expected {
+			t.Errorf("%s Version %v is published! expected %v, got %v", d.chart.Name, d.chart.Version, d.expected, got)
+		}
 
-	expected = false
-
-	if got != expected {
-		t.Errorf("%s Version %v is not published! expected %v, got %v", c.Name, c.Version, expected, got)
-	}
-
-	c = &Chart{
-		URL:  "https://example.com",
-		Name: "tor-prox",
-	}
-
-	got, _ = c.Condition()
-
-	expected = false
-
-	if got != expected {
-		t.Errorf("repository %v doesn't exist! expected version %v, got %v", c.URL, expected, got)
 	}
 }
 
 func TestSource(t *testing.T) {
-	c := &Chart{
-		URL:  "https://charts.jetstack.io",
-		Name: "tor-proxy",
+
+	type dataSet struct {
+		chart    Chart
+		expected string
 	}
 
-	got, _ := c.Source()
-
-	expected := "0.1.1"
-
-	if got != expected {
-		t.Errorf("%v is published! latest expected version %v, got %v", c.Name, expected, got)
+	set := []dataSet{
+		{
+			chart: Chart{
+				URL:  "https://charts.jetstack.io",
+				Name: "tor-proxy",
+			},
+			expected: "0.1.1",
+		},
+		{
+			chart: Chart{
+				URL:  "https://charts.jetstack.io",
+				Name: "tor-prox",
+			},
+			expected: "",
+		},
+		{
+			chart: Chart{
+				URL:     "https://example.com",
+				Name:    "jenkins",
+				Version: "999",
+			},
+			expected: "",
+		},
 	}
 
-	c = &Chart{
-		URL:  "https://charts.jetstack.io",
-		Name: "tor-prox",
-	}
+	for _, d := range set {
+		got, _ := d.chart.Source()
 
-	got, _ = c.Source()
+		if got != d.expected {
+			t.Errorf("%v is published! latest expected version %v, got %v", d.chart.Name, d.expected, got)
+		}
 
-	expected = ""
-
-	if got != expected {
-		t.Errorf("%v doesn't exist! latest expected version %v, got %v", c.Name, expected, got)
-	}
-	c = &Chart{
-		URL:  "https://example.com",
-		Name: "tor-prox",
-	}
-
-	got, _ = c.Source()
-
-	expected = ""
-
-	if got != expected {
-		t.Errorf("repository %v doesn't exist! expected version %v, got %v", c.URL, expected, got)
 	}
 }
