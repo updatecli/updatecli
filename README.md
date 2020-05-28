@@ -51,6 +51,17 @@ source:
     tag: "Docker Image Tag to fetch the checksum"
 ```
 
+### HelmChart
+This source check if a helm chart version can be updated based on a repository and a chart name
+
+```
+source
+  kind: helmChart
+  spec:
+    url: https://kubernetes-charts.storage.googleapis.com
+    name: jenkins
+```
+
 ### Maven
 
 This source will look for the latest version returned from a maven repository
@@ -93,6 +104,18 @@ condition:
 	repository: "releases",
 	groupID:    "org.jenkins-ci.main",
 	artifactID: "jenkins-war",
+```
+
+### HelmChart
+This source check if a helm chart exist, a version can also be specified
+
+```
+source
+  kind: helmChart
+  spec:
+    url: https://kubernetes-charts.storage.googleapis.com
+    name: jenkins
+    version: 'x.y.x' (Optional)
 ```
 
 ## Targets
