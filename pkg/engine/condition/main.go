@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/docker"
+	"github.com/olblak/updateCli/pkg/helm/chart"
 	"github.com/olblak/updateCli/pkg/maven"
 )
 
@@ -55,6 +56,16 @@ func (c *Condition) Execute(source string) (bool, error) {
 		m.Version = source
 
 		spec = &m
+
+	case "helmChart":
+		ch := chart.Chart{}
+		err := mapstructure.Decode(c.Spec, &ch)
+
+		if err != nil {
+			return false, err
+		}
+
+		spec = &ch
 
 	default:
 		return false, fmt.Errorf("⚠ Don't support condition: %v", c.Kind)
