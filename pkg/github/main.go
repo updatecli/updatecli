@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/config"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	transportHttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 // Github contains settings to interact with Github
