@@ -13,7 +13,7 @@ type Scm interface {
 	Add(file string)
 	Clone() string
 	GetDirectory() (directory string)
-	Init(source string) error
+	Init(source string, name string) error
 	Push()
 	Commit(file, message string)
 	Clean()
