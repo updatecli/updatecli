@@ -25,6 +25,7 @@ type Github struct {
 	Token        string
 	URL          string
 	Version      string
+	Name         string
 	directory    string
 	Branch       string
 	remoteBranch string
@@ -115,10 +116,11 @@ func (g *Github) Check() (bool, error) {
 }
 
 // Init set default Github parameters if not set.
-func (g *Github) Init(source string) error {
+func (g *Github) Init(source string, name string) error {
 	g.Version = source
+	g.Name = name
 	g.setDirectory(source)
-	g.remoteBranch = fmt.Sprintf("updatecli/%v", source)
+	g.remoteBranch = fmt.Sprintf("updatecli/%v/%v", g.Name, g.Version)
 
 	if ok, err := g.Check(); !ok {
 		return err
@@ -226,7 +228,7 @@ func (g *Github) Checkout() {
 		fmt.Println(err)
 	}
 
-	branch := "updatecli/" + g.Version
+	branch := fmt.Sprintf("updatecli/%v/%v", g.Name, g.Version)
 	fmt.Printf("Checkout Git Branch: %v\n", branch)
 
 	err = w.Checkout(&git.CheckoutOptions{
@@ -300,7 +302,7 @@ func (g *Github) Push() {
 // OpenPR creates a new pull request.
 func (g *Github) OpenPR() {
 	fmt.Println("Opening Github pull request")
-	title := fmt.Sprintf("[Updatecli] Update version to %v", g.Version)
+	title := fmt.Sprintf("[updatecli] Update %v version to %v", g.Name, g.Version)
 
 	if g.isPRExist(title) {
 		fmt.Printf("Pull Request titled '%v' already exist\n", title)

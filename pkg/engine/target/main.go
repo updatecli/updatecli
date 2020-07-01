@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/scm"
@@ -21,7 +22,7 @@ type Target struct {
 // Spec is an interface which offers common function to manipulate targets.
 type Spec interface {
 	GetFile() string
-	Target(source, workDir string) (bool, string, error)
+	Target(source, name string, workDir string) (bool, string, error)
 }
 
 // Unmarshal parses target spec and return its Spec interface
@@ -49,8 +50,30 @@ func (t *Target) Unmarshal() (Spec, error) {
 	return spec, nil
 }
 
+// Check verifies if mandatory Targets parameters are provided and return false if not.
+func (t *Target) Check() (bool, error) {
+	ok := true
+	required := []string{}
+
+	if t.Name == "" {
+		required = append(required, "Name")
+	}
+
+	if len(required) > 0 {
+		err := fmt.Errorf("\u2717 Target parameter(s) required: [%v]", strings.Join(required, ","))
+		return false, err
+	}
+
+	return ok, nil
+}
+
 // Execute applies a specific target configuration
 func (t *Target) Execute(source string, o *Options) error {
+
+	_, err := t.Check()
+	if err != nil {
+		return err
+	}
 
 	scm, err := scm.Unmarshal(t.Scm)
 	if err != nil {
@@ -63,7 +86,7 @@ func (t *Target) Execute(source string, o *Options) error {
 		return err
 	}
 
-	err = scm.Init(source)
+	err = scm.Init(source, t.Name)
 
 	if o.Clean {
 		defer scm.Clean()
@@ -81,7 +104,7 @@ func (t *Target) Execute(source string, o *Options) error {
 		scm.Clone()
 	}
 
-	changed, message, err := spec.Target(source, scm.GetDirectory())
+	changed, message, err := spec.Target(source, t.Name, scm.GetDirectory())
 
 	if err != nil {
 		return err
