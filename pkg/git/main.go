@@ -12,12 +12,13 @@ import (
 
 // Git contains settings to manipulate a git repository.
 type Git struct {
-	URL       string
-	Branch    string
-	User      string
-	Email     string
-	Directory string
-	Version   string
+	URL          string
+	Branch       string
+	remoteBranch string
+	User         string
+	Email        string
+	Directory    string
+	Version      string
 }
 
 // GetDirectory returns the working git directory.
@@ -26,9 +27,10 @@ func (g *Git) GetDirectory() (directory string) {
 }
 
 // Init set Git parameters if needed.
-func (g *Git) Init(source string) error {
+func (g *Git) Init(source string, name string) error {
 	g.Version = source
 	g.setDirectory(source)
+	g.remoteBranch = fmt.Sprintf("updatecli/%v/%v", name, source)
 	return nil
 }
 
@@ -160,7 +162,7 @@ func (g *Git) Push() {
 	}
 
 	err = r.Push(&git.PushOptions{
-		RemoteName: g.Branch,
+		RemoteName: g.remoteBranch,
 	})
 	if err != nil {
 		fmt.Println(err)

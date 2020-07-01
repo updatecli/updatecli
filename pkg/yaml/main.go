@@ -67,7 +67,7 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 }
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, workDir string) (changed bool, message string, err error) {
+func (y *Yaml) Target(source string, name string, workDir string) (changed bool, message string, err error) {
 
 	changed = false
 
@@ -115,7 +115,9 @@ func (y *Yaml) Target(source string, workDir string) (changed bool, message stri
 		return changed, "", nil
 	}
 
-	message = fmt.Sprintf("[updatecli] Key '%s', from file '%v', was updated to '%s'\n",
+	message = fmt.Sprintf("[updatecli] Update %s version to %v\n\nKey '%s', from file '%v', was updated to '%s'\n",
+		name,
+		source,
 		y.Key,
 		y.File,
 		source)
