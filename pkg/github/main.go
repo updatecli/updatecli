@@ -120,7 +120,7 @@ func (g *Github) Init(source string, name string) error {
 	g.Version = source
 	g.Name = name
 	g.setDirectory(source)
-	g.remoteBranch = fmt.Sprintf("updatecli/%v/%v", g.Name, g.Version)
+	g.remoteBranch = strings.ReplaceAll(fmt.Sprintf("updatecli/%v/%v", g.Name, g.Version), " ", "_")
 
 	if ok, err := g.Check(); !ok {
 		return err
@@ -228,11 +228,8 @@ func (g *Github) Checkout() {
 		fmt.Println(err)
 	}
 
-	branch := fmt.Sprintf("updatecli/%v/%v", g.Name, g.Version)
-	fmt.Printf("Checkout Git Branch: %v\n", branch)
-
 	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branch),
+		Branch: plumbing.NewBranchReferenceName(g.remoteBranch),
 		Create: true,
 		Force:  false,
 		Keep:   true,
@@ -285,6 +282,10 @@ func (g *Github) Push() {
 		Name: g.remoteBranch,
 		URLs: []string{URL},
 	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	err = r.Push(&git.PushOptions{
 		RemoteName: g.remoteBranch,
@@ -342,7 +343,7 @@ func (g *Github) OpenPR() {
 		fmt.Println(err)
 	}
 
-	v := map[string]string{}
+	v := make(map[string]interface{})
 	err = json.Unmarshal(body, &v)
 
 	if err != nil {
