@@ -138,6 +138,10 @@ targets:
       # or
       #git:
 ```
+
+NOTE: A key can either be string like 'key' or a position in an array like `array[0]` where 0 means the first element of `array`.
+Keys and arrays can also be grouped with dot like `key.array[3].key`.
+
 #### scm
 Yaml accept two kind of scm, github and git.
 
