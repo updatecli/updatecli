@@ -47,7 +47,6 @@ func getPositionKeyValue(k string) (key string, position int, err error) {
 
 		positions := re.FindStringSubmatch(k)
 
-		fmt.Println(positions)
 		position, err = strconv.Atoi(positions[1])
 
 		if err != nil {
