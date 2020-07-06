@@ -65,7 +65,8 @@ func (e *Engine) conditions() (bool, error) {
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
 	for _, c := range e.conf.Conditions {
-		ok, err := c.Execute(e.conf.Source.Output)
+		ok, err := c.Execute(
+			e.conf.Source.Prefix + e.conf.Source.Output + e.conf.Source.Postfix)
 		if err != nil {
 			return false, err
 		}
