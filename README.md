@@ -76,6 +76,25 @@ source:
 	artifactID: "jenkins-war",
 ```
 
+### Prefix/Postfix
+A prefix and/or postfix can be added to any value retrieved from the source.
+This prefix/postfix will be used by 'condition' checks, then by every target unless one is explicitly defined in a target.
+
+.Example
+```
+source:
+  kind: githubRelease
+  prefix: "v"
+  postfix: "-beta"
+  spec:
+    owner: "Github Owner"
+    repository: "Github Repository"
+    token: "Don't commit your secrets!"
+    url: "Github Url"
+    version: "Version to fetch"
+```
+
+
 ## Condition
 During this stage, we check if conditions are met based on the value retrieved in the source stage otherwise we can skip the "target" stage.
 
@@ -170,6 +189,32 @@ github:
   token: "github token with enough permission on repository"
   username: "github username used for push git changes"
   branch: "git branch where to push changes"
+```
+
+### Prefix/Postfix
+A prefix and/or postfix can be added based value retrieved from the source.
+This prefix/postfix won't be used by 'condition' checks. Any value specified at the target level override values defined in the source.
+
+.Example
+```
+targets:
+  imageTag:
+    name: "Docker Image"
+    kind: yaml
+    prefix: "beta-"
+    postfix: "-jdk11"
+    spec:
+      file: "charts/jenkins/values.yaml"
+      key: "jenkins.master.imageTag"
+    scm:
+      github:
+        user: "updatecli"
+        email: "updatecli@example.com"
+        owner: "jenkins-infra"
+        repository: "charts"
+        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        username: "updatecli"
+        branch: "master"
 ```
 
 ## Usage
