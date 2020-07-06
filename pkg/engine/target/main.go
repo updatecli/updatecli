@@ -13,10 +13,12 @@ import (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
-	Name string
-	Kind string
-	Spec interface{}
-	Scm  map[string]interface{}
+	Name    string
+	Kind    string
+	Prefix  string
+	Postfix string
+	Spec    interface{}
+	Scm     map[string]interface{}
 }
 
 // Spec is an interface which offers common function to manipulate targets.
@@ -104,7 +106,10 @@ func (t *Target) Execute(source string, o *Options) error {
 		scm.Clone()
 	}
 
-	changed, message, err := spec.Target(source, t.Name, scm.GetDirectory())
+	changed, message, err := spec.Target(
+		t.Prefix+source+t.Postfix,
+		t.Name,
+		scm.GetDirectory())
 
 	if err != nil {
 		return err

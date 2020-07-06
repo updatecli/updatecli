@@ -29,19 +29,19 @@ func (e *Engine) Apply(cfgFile string) error {
 
 	e.conf.ReadFile(cfgFile, e.Options.ValuesFile)
 
-	source, err := e.conf.Source.Execute()
+	err := e.conf.Source.Execute()
 
 	if err != nil {
 		return err
 	}
 
-	if source == "" {
+	if e.conf.Source.Output == "" {
 		fmt.Printf("\n\u26A0 No value returned from Source, nothing else to do")
 		return nil
 	}
 
 	if len(e.conf.Conditions) > 0 {
-		ok, err := e.conditions(source)
+		ok, err := e.conditions()
 		if err != nil {
 			return err
 		}
@@ -52,20 +52,21 @@ func (e *Engine) Apply(cfgFile string) error {
 	}
 
 	if len(e.conf.Targets) > 0 {
-		e.targets(source)
+		e.targets()
 	}
 
 	return nil
 }
 
 // conditions iterates on every conditions and test the result
-func (e *Engine) conditions(source string) (bool, error) {
+func (e *Engine) conditions() (bool, error) {
 
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
 	for _, c := range e.conf.Conditions {
-		ok, err := c.Execute(source)
+		ok, err := c.Execute(
+			e.conf.Source.Prefix + e.conf.Source.Output + e.conf.Source.Postfix)
 		if err != nil {
 			return false, err
 		}
@@ -82,13 +83,22 @@ func (e *Engine) conditions(source string) (bool, error) {
 }
 
 // targets iterate on every targets and then call target on each of them
-func (e *Engine) targets(source string) error {
+func (e *Engine) targets() error {
 
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("Targets"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("Targets")+1))
 
 	for id, t := range e.conf.Targets {
-		err := t.Execute(source, &e.Options.Target)
+
+		if t.Prefix == "" && e.conf.Source.Prefix != "" {
+			t.Prefix = e.conf.Source.Prefix
+		}
+
+		if t.Postfix == "" && e.conf.Source.Postfix != "" {
+			t.Postfix = e.conf.Source.Postfix
+		}
+
+		err := t.Execute(e.conf.Source.Output, &e.Options.Target)
 		if err != nil {
 			fmt.Printf("Something went wrong in target \"%v\" :\n", id)
 			fmt.Printf("%v\n\n", err)

@@ -26,7 +26,7 @@ type Spec interface {
 }
 
 // Execute execute actions defined by the source configuration
-func (s *Source) Execute() (string, error) {
+func (s *Source) Execute() error {
 
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("Source"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("Source")+1))
@@ -42,7 +42,7 @@ func (s *Source) Execute() (string, error) {
 		err := mapstructure.Decode(s.Spec, &g)
 
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		spec = &g
@@ -52,7 +52,7 @@ func (s *Source) Execute() (string, error) {
 		err := mapstructure.Decode(s.Spec, &c)
 
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		spec = &c
@@ -62,7 +62,7 @@ func (s *Source) Execute() (string, error) {
 		err := mapstructure.Decode(s.Spec, &m)
 
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		spec = &m
@@ -72,21 +72,21 @@ func (s *Source) Execute() (string, error) {
 		err := mapstructure.Decode(s.Spec, &d)
 
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		spec = &d
 
 	default:
-		return "", fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)
+		return fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)
 	}
 
 	output, err = spec.Source()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	s.Output = s.Prefix + output + s.Postfix
+	s.Output = output
 
-	return s.Output, nil
+	return nil
 }
