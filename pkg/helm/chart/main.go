@@ -97,6 +97,13 @@ func (c *Chart) Source() (string, error) {
 		return "", err
 	}
 
+	if e.Version != "" {
+		fmt.Printf("\u2714 Helm Chart '%s' version '%v' is founded from repository %s\n",
+			c.Name,
+			e.Version,
+			c.URL)
+	}
+
 	return e.Version, nil
 
 }
