@@ -18,13 +18,78 @@ var (
 
 // Yaml stores configuration about the file and the key value which needs to be updated.
 type Yaml struct {
-	File string
-	Key  string
+	Path  string
+	File  string
+	Key   string
+	Value string
 }
 
-// GetFile returns the yaml file which need to be updated.
-func (y *Yaml) GetFile() string {
-	return y.File
+// ReadFile read a yaml file then return its data
+func (y *Yaml) ReadFile() (data []byte, err error) {
+
+	path := filepath.Join(y.Path, y.File)
+
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	data, err = ioutil.ReadAll(file)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, err
+}
+
+// Condition checks if a key exists in a yaml file
+func (y *Yaml) Condition() (bool, error) {
+	exist := false
+
+	data, err := y.ReadFile()
+	if err != nil {
+		return exist, err
+	}
+
+	var out yaml.Node
+
+	err = yaml.Unmarshal(data, &out)
+
+	if err != nil {
+		return exist, fmt.Errorf("cannot unmarshal data: %v", err)
+	}
+
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
+
+	if valueFound && oldVersion == y.Value {
+
+		fmt.Printf("\u2714 Key '%s', from file '%v', is correctly set to %s'\n",
+			y.Key,
+			filepath.Join(y.Path, y.File),
+			y.Value)
+
+	} else if valueFound && oldVersion != y.Value {
+
+		fmt.Printf("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
+			y.Key,
+			filepath.Join(y.Path, y.File),
+			oldVersion,
+			y.Value)
+
+	} else {
+		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n",
+			y.Key,
+			filepath.Join(y.Path, y.File))
+
+		return exist, nil
+	}
+
+	exist = true
+
+	return exist, nil
 }
 
 // isPositionKey checks if key use the array position format
@@ -203,22 +268,14 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 }
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, name string, workDir string) (changed bool, message string, err error) {
+func (y *Yaml) Target() (changed bool, err error) {
 
 	changed = false
 
-	path := filepath.Join(workDir, y.File)
+	data, err := y.ReadFile()
 
-	file, err := os.Open(path)
 	if err != nil {
-		return changed, "", err
-	}
-
-	defer file.Close()
-
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return changed, "", err
+		return changed, err
 	}
 
 	var out yaml.Node
@@ -226,39 +283,32 @@ func (y *Yaml) Target(source string, name string, workDir string) (changed bool,
 	err = yaml.Unmarshal(data, &out)
 
 	if err != nil {
-		return changed, "", fmt.Errorf("cannot unmarshal data: %v", err)
+		return changed, fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), source, 1)
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
 
 	if valueFound {
-		if oldVersion == source {
+		if oldVersion == y.Value {
 			fmt.Printf("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done\n",
 				y.Key,
-				y.File,
-				source)
-			return changed, "", nil
+				filepath.Join(y.Path, y.File),
+				y.Value)
+			return changed, nil
 		}
 
 		fmt.Printf("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'\n",
 			y.Key,
-			y.File,
+			filepath.Join(y.Path, y.File),
 			oldVersion,
-			source)
+			y.Value)
 
 	} else {
-		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n", y.Key, path)
-		return changed, "", nil
+		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n", y.Key, y.Path)
+		return changed, nil
 	}
 
-	message = fmt.Sprintf("[updatecli] Update %s version to %v\n\nKey '%s', from file '%v', was updated to '%s'\n",
-		name,
-		source,
-		y.Key,
-		y.File,
-		source)
-
-	newFile, err := os.Create(path)
+	newFile, err := os.Create(filepath.Join(y.Path, y.File))
 	defer newFile.Close()
 
 	encoder := yaml.NewEncoder(newFile)
@@ -267,10 +317,10 @@ func (y *Yaml) Target(source string, name string, workDir string) (changed bool,
 	err = encoder.Encode(&out)
 
 	if err != nil {
-		return changed, "", fmt.Errorf("something went wrong while encoding %v", err)
+		return changed, fmt.Errorf("something went wrong while encoding %v", err)
 	}
 
 	changed = true
 
-	return changed, message, nil
+	return changed, nil
 }

@@ -23,7 +23,7 @@ type Scm interface {
 func Unmarshal(scm map[string]interface{}) (Scm, error) {
 	var s Scm
 	if len(scm) != 1 {
-		return nil, fmt.Errorf("Target scm: Only one scm can be provided [git,github]")
+		return nil, fmt.Errorf("Target scm: Only one scm can be provided between git and github")
 	}
 
 	for key, value := range scm {
