@@ -76,7 +76,7 @@ func (g *Github) Source() (string, error) {
 	v := map[string]string{}
 	json.Unmarshal(body, &v)
 
-	if val, ok := v["name"]; ok {
+	if val, ok := v["tag_name"]; ok {
 		fmt.Printf("\u2714 '%s' github release version founded: %s\n", g.Version, val)
 		return val, nil
 	}
