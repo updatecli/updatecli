@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -150,6 +149,14 @@ func (g *Github) Clean() {
 
 // Clone run `git clone`.
 func (g *Github) Clone() string {
+
+	var repo *git.Repository
+
+	auth := transportHttp.BasicAuth{
+		Username: g.Username, // anything except an empty string
+		Password: g.Token,
+	}
+
 	URL := fmt.Sprintf("https://github.com/%v/%v.git",
 		g.Owner,
 		g.Repository)
@@ -157,16 +164,56 @@ func (g *Github) Clone() string {
 	fmt.Printf("Cloning git repository: %s\n", URL)
 	fmt.Printf("Downloaded in %s\n\n", g.directory)
 
-	_, err := git.PlainClone(g.directory, false, &git.CloneOptions{
-		URL: URL,
-		Auth: &transportHttp.BasicAuth{
-			Username: g.Username, // anything except an empty string
-			Password: g.Token,
-		},
-		RemoteName: g.Branch,
-		Progress:   os.Stdout,
+	repo, err := git.PlainClone(g.directory, false, &git.CloneOptions{
+		URL:      URL,
+		Auth:     &auth,
+		Progress: os.Stdout,
 	})
-	fmt.Printf("\n")
+
+	if err == git.ErrRepositoryAlreadyExists {
+		fmt.Println(err)
+		repo, err = git.PlainOpen(g.directory)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		w, err := repo.Worktree()
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		status, err := w.Status()
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(status)
+
+		err = w.Pull(&git.PullOptions{
+			Auth:     &auth,
+			Force:    true,
+			Progress: os.Stdout,
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
+
+	} else if err != nil {
+		fmt.Println(err)
+	}
+
+	remotes, err := repo.Remotes()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, r := range remotes {
+
+		err := r.Fetch(&git.FetchOptions{})
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	g.Checkout()
 
@@ -228,16 +275,57 @@ func (g *Github) Checkout() {
 		fmt.Println(err)
 	}
 
+	// If remoteBranch already exist then use it
+	// otherwise use the one define in the spec
+
 	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(g.remoteBranch),
-		Create: true,
-		Force:  false,
-		Keep:   true,
+		Branch: plumbing.NewRemoteReferenceName("origin", g.remoteBranch),
+		Create: false,
 	})
 
+	if err == plumbing.ErrReferenceNotFound {
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewRemoteReferenceName("origin", g.Branch),
+			Create: false,
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else if err != nil {
+		fmt.Println(err)
+	}
+
+	err = w.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(g.remoteBranch),
+		Create: false,
+	})
+
+	if err == plumbing.ErrReferenceNotFound {
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(g.remoteBranch),
+			Create: true,
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else if err != nil {
+		fmt.Println(err)
+	}
+
+	remoteBranchRef := fmt.Sprintf("refs/remotes/origin/%s", g.remoteBranch)
+
+	remoteRef, err := r.Reference(
+		plumbing.ReferenceName(
+			remoteBranchRef), true)
+
+	err = w.Reset(&git.ResetOptions{
+		Commit: remoteRef.Hash(),
+		Mode:   git.HardReset,
+	})
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	fmt.Printf("\n")
 }
 
@@ -265,6 +353,11 @@ func (g *Github) Add(file string) {
 // Push run `git push` then open a pull request on Github if not already created.
 func (g *Github) Push() {
 
+	auth := transportHttp.BasicAuth{
+		Username: g.Username, // anything except an empty string
+		Password: g.Token,
+	}
+
 	fmt.Printf("Push changes\n\n")
 
 	r, err := git.PlainOpen(g.directory)
@@ -272,24 +365,9 @@ func (g *Github) Push() {
 		fmt.Println(err)
 	}
 
-	URL := fmt.Sprintf("https://%v:%v@github.com/%v/%v.git",
-		g.Username,
-		g.Token,
-		g.Owner,
-		g.Repository)
-
-	_, err = r.CreateRemote(&config.RemoteConfig{
-		Name: g.remoteBranch,
-		URLs: []string{URL},
-	})
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	err = r.Push(&git.PushOptions{
-		RemoteName: g.remoteBranch,
-		Progress:   os.Stdout,
+		Auth:     &auth,
+		Progress: os.Stdout,
 	})
 	if err != nil {
 		fmt.Println(err)
