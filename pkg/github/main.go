@@ -8,12 +8,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	git "github.com/olblak/updateCli/pkg/git/generic"
 )
 
 // Github contains settings to interact with Github
@@ -150,201 +146,45 @@ func (g *Github) Clean() {
 // Clone run `git clone`.
 func (g *Github) Clone() string {
 
-	var repo *git.Repository
-
-	auth := transportHttp.BasicAuth{
-		Username: g.Username, // anything except an empty string
-		Password: g.Token,
-	}
-
 	URL := fmt.Sprintf("https://github.com/%v/%v.git",
 		g.Owner,
 		g.Repository)
 
-	fmt.Printf("Cloning git repository: %s\n", URL)
-	fmt.Printf("Downloaded in %s\n\n", g.directory)
-
-	repo, err := git.PlainClone(g.directory, false, &git.CloneOptions{
-		URL:      URL,
-		Auth:     &auth,
-		Progress: os.Stdout,
-	})
-
-	if err == git.ErrRepositoryAlreadyExists {
-		fmt.Println(err)
-		repo, err = git.PlainOpen(g.directory)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		w, err := repo.Worktree()
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		status, err := w.Status()
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println(status)
-
-		err = w.Pull(&git.PullOptions{
-			Auth:     &auth,
-			Force:    true,
-			Progress: os.Stdout,
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
-
-	} else if err != nil {
-		fmt.Println(err)
-	}
-
-	remotes, err := repo.Remotes()
+	err := git.Clone(g.Username, g.Token, URL, g.GetDirectory())
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	for _, r := range remotes {
-
-		err := r.Fetch(&git.FetchOptions{})
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
-	g.Checkout()
+	err = git.Checkout(g.Branch, g.remoteBranch, g.GetDirectory())
 
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	return g.directory
 }
 
 // Commit run `git commit`.
 func (g *Github) Commit(file, message string) {
-
-	fmt.Printf("Commit changes \n\n")
-
-	r, err := git.PlainOpen(g.directory)
+	err := git.Commit(file, g.User, g.Email, message, g.GetDirectory())
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	w, err := r.Worktree()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	status, err := w.Status()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(status)
-
-	commit, err := w.Commit(message, &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  g.User,
-			Email: g.Email,
-			When:  time.Now(),
-		},
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-	obj, err := r.CommitObject(commit)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(obj)
-
 }
 
 // Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() {
-
-	r, err := git.PlainOpen(g.directory)
+	err := git.Checkout(g.Branch, g.remoteBranch, g.directory)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	w, err := r.Worktree()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// If remoteBranch already exist then use it
-	// otherwise use the one define in the spec
-
-	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewRemoteReferenceName("origin", g.remoteBranch),
-		Create: false,
-	})
-
-	if err == plumbing.ErrReferenceNotFound {
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewRemoteReferenceName("origin", g.Branch),
-			Create: false,
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else if err != nil {
-		fmt.Println(err)
-	}
-
-	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(g.remoteBranch),
-		Create: false,
-	})
-
-	if err == plumbing.ErrReferenceNotFound {
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(g.remoteBranch),
-			Create: true,
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else if err != nil {
-		fmt.Println(err)
-	}
-
-	remoteBranchRef := fmt.Sprintf("refs/remotes/origin/%s", g.remoteBranch)
-
-	remoteRef, err := r.Reference(
-		plumbing.ReferenceName(
-			remoteBranchRef), true)
-
-	err = w.Reset(&git.ResetOptions{
-		Commit: remoteRef.Hash(),
-		Mode:   git.HardReset,
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Printf("\n")
 }
 
 // Add run `git add`.
 func (g *Github) Add(file string) {
 
-	fmt.Printf("Adding file: %s\n", file)
-
-	r, err := git.PlainOpen(g.directory)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	w, err := r.Worktree()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	_, err = w.Add(file)
+	err := git.Add([]string{file}, g.directory)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -353,22 +193,7 @@ func (g *Github) Add(file string) {
 // Push run `git push` then open a pull request on Github if not already created.
 func (g *Github) Push() {
 
-	auth := transportHttp.BasicAuth{
-		Username: g.Username, // anything except an empty string
-		Password: g.Token,
-	}
-
-	fmt.Printf("Push changes\n\n")
-
-	r, err := git.PlainOpen(g.directory)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	err = r.Push(&git.PushOptions{
-		Auth:     &auth,
-		Progress: os.Stdout,
-	})
+	err := git.Push(g.Username, g.Token, g.GetDirectory())
 	if err != nil {
 		fmt.Println(err)
 	}
