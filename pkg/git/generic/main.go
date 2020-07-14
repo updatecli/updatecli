@@ -48,7 +48,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		return err
 	}
 
-	// If remoteBranch already exist then use it
+	// If remoteBranch already exist, use it
 	// otherwise use the one define in the spec
 
 	err = w.Checkout(&git.CheckoutOptions{
@@ -84,8 +84,9 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 	} else if err != plumbing.ErrReferenceNotFound {
 		return err
 	} else {
-		// Means that a local branch named remoteBranch alreayd exist so we want to be sure
-		// that the local branch is aligned with remote.
+		// Means that a local branch named remoteBranch already exist
+		// so we want to be sure that the local branch is
+		// aligned with the remote one.
 		remoteBranchRef := fmt.Sprintf("refs/remotes/origin/%s", remoteBranch)
 
 		fmt.Println(remoteBranchRef)
@@ -217,11 +218,11 @@ func Clone(username, password, URL, workingDir string) error {
 	return err
 }
 
-// Push run `git push` then open a pull request on Github if not already created.
+// Push run `git push`.
 func Push(username, password, workingDir string) error {
 
 	auth := transportHttp.BasicAuth{
-		Username: username, // anything except an empty string
+		Username: username, // anything excepted an empty string
 		Password: password,
 	}
 
