@@ -29,7 +29,7 @@ func (g *Git) GetDirectory() (directory string) {
 func (g *Git) Init(source string, name string) error {
 	g.Version = source
 	g.setDirectory(source)
-	g.remoteBranch = g.Branch
+	g.remoteBranch = git.SanitizeBranchName(g.Branch)
 	return nil
 }
 
