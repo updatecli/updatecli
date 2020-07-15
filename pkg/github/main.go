@@ -115,7 +115,7 @@ func (g *Github) Init(source string, name string) error {
 	g.Version = source
 	g.Name = name
 	g.setDirectory(source)
-	g.remoteBranch = git.SanitizeBranchName("updatecli/%v/%v", g.Name, g.Version))
+	g.remoteBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli/%v/%v", g.Name, g.Version))
 
 	if ok, err := g.Check(); !ok {
 		return err
