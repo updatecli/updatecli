@@ -3,6 +3,7 @@ package generic
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -244,4 +245,17 @@ func Push(username, password, workingDir string) error {
 	fmt.Printf("\n")
 
 	return nil
+}
+
+// SanitizeBranchName replace wrong character in the branch name
+func SanitizeBranchName(branch string) string {
+	branch = strings.ReplaceAll(branch, " ", "")
+	branch = strings.ReplaceAll(branch, ":", "")
+	branch = strings.ReplaceAll(branch, "*", "")
+	branch = strings.ReplaceAll(branch, "+", "")
+
+	if len(branch) > 255 {
+		return branch[0:255]
+	}
+	return branch
 }
