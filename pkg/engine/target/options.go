@@ -5,4 +5,5 @@ type Options struct {
 	Commit bool
 	Push   bool
 	Clean  bool
+	DryRun bool
 }

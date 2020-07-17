@@ -48,7 +48,12 @@ func run(command string) {
 
 		switch command {
 		case "apply":
-			err := e.Apply(file)
+			err := e.Run(file)
+			if err != nil {
+				fmt.Printf("\n\u26A0 %s \n\n", err)
+			}
+		case "diff":
+			err := e.Run(file)
 			if err != nil {
 				fmt.Printf("\n\u26A0 %s \n\n", err)
 			}
