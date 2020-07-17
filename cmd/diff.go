@@ -12,7 +12,7 @@ var (
 		Use:   "diff",
 		Short: "diff shows if targets update are needed",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("\n%s\n\n", strings.ToTitle("Apply"))
+			fmt.Printf("\n%s\n\n", strings.ToTitle("Diff"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile
@@ -20,9 +20,10 @@ var (
 			e.Options.Target.Commit = false
 			e.Options.Target.Push = false
 			e.Options.Target.Clean = true
+			e.Options.Target.DryRun = true
 
 			run(
-				"apply",
+				"diff",
 			)
 		},
 	}

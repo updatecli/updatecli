@@ -17,8 +17,8 @@ type Engine struct {
 	Options Options
 }
 
-// Apply run the full process one yaml file
-func (e *Engine) Apply(cfgFile string) error {
+// Run run the full process one yaml file
+func (e *Engine) Run(cfgFile string) error {
 
 	_, basename := filepath.Split(cfgFile)
 	cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
