@@ -32,7 +32,7 @@ func (c *Condition) Execute(source string) (bool, error) {
 
 	var s scm.Scm
 
-	pwd, err := os.Executable()
+	pwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
@@ -105,10 +105,27 @@ func (c *Condition) Execute(source string) (bool, error) {
 	case "yaml":
 		var y yaml.Yaml
 
+		y.DryRun = true
+
 		err := mapstructure.Decode(c.Spec, &y)
 
 		if err != nil {
 			return false, err
+		}
+
+		if y.Path == "" {
+			// if no scm configuration has been provided and neither file path then we try to guess the file directory.
+			// if file name contains a path then we use it otherwise we fallback to the current path
+			// otherwise
+			if dir, base, err := isFileExist(y.File); err == nil && len(c.Scm) == 0 {
+				y.Path = dir
+				y.File = base
+			} else {
+				y.Path = workingDir
+			}
+		} else if y.Path != "" && !isDirectory(y.Path) {
+			fmt.Printf("Directory '%s' is not valid so fallback to '%s'", y.Path, workingDir)
+			y.Path = workingDir
 		}
 
 		y.Path = workingDir
@@ -127,4 +144,31 @@ func (c *Condition) Execute(source string) (bool, error) {
 
 	return ok, nil
 
+}
+
+func isFileExist(file string) (dir string, base string, err error) {
+	if _, err := os.Stat(file); err != nil {
+		return "", "", err
+	}
+
+	absolutePath, err := filepath.Abs(file)
+	if err != nil {
+		return "", "", err
+	}
+	dir = filepath.Dir(absolutePath)
+	base = filepath.Base(absolutePath)
+
+	return dir, base, err
+}
+
+func isDirectory(path string) bool {
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	if info.IsDir() {
+		return true
+	}
+	return false
 }
