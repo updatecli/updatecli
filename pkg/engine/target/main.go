@@ -109,16 +109,23 @@ func (t *Target) Execute(source string, o *Options) error {
 		if y.Path == "" {
 			// if no scm configuration has been provided and neither file path then we try to guess the file directory.
 			// if file name contains a path then we use it otherwise we fallback to the current path
-			// otherwise
 			if dir, base, err := isFileExist(y.File); err == nil && len(t.Scm) == 0 {
 				y.Path = dir
 				y.File = base
 			} else {
 				y.Path = workingDir
 			}
-		} else if y.Path != "" && !isDirectory(y.Path) {
-			fmt.Printf("Directory '%s' is not valid so fallback to '%s'", y.Path, workingDir)
-			y.Path = workingDir
+		} else {
+			if !isDirectory(y.Path) && len(t.Scm) > 0 {
+
+				y.Path = workingDir
+
+			} else if !isDirectory(y.Path) && len(t.Scm) == 0 {
+				fmt.Printf("Directory '%s' is not valid so fallback to '%s'", y.Path, workingDir)
+				y.Path = workingDir
+			} else {
+				return fmt.Errorf("Something weird happened while trying to set working directory")
+			}
 		}
 
 		file = y.File
