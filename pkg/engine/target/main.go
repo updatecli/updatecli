@@ -50,7 +50,7 @@ func (t *Target) Execute(source string, o *Options) error {
 	var message string
 	var file string
 
-	pwd, err := os.Executable()
+	pwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
@@ -99,9 +99,18 @@ func (t *Target) Execute(source string, o *Options) error {
 
 		y.Value = t.Prefix + source + t.Postfix
 
-		y.Path = workingDir
+		if dir, base, err := isFileExist(y.File); y.Path == "" && err == nil {
+			y.Path = dir
+			y.File = base
+		} else if !isDirectory(y.Path) {
+			fmt.Printf("Directory %s is not valid so fallback to current directory %s\n", y.Path, workingDir)
+			y.Path = workingDir
+		} else {
+			fmt.Println("Something weird happened while settings yaml directory")
+		}
 
 		file = y.File
+
 		message = fmt.Sprintf("[updatecli] Update %s version to %v\n\nKey '%s', from file '%v', was updated to '%s'\n",
 			t.Name,
 			y.Value,
@@ -139,4 +148,31 @@ func (t *Target) Execute(source string, o *Options) error {
 	}
 
 	return nil
+}
+
+func isFileExist(file string) (dir string, base string, err error) {
+	if _, err := os.Stat(file); err != nil {
+		return "", "", err
+	}
+
+	absolutePath, err := filepath.Abs(file)
+	if err != nil {
+		return "", "", err
+	}
+	dir = filepath.Dir(absolutePath)
+	base = filepath.Base(absolutePath)
+
+	return dir, base, err
+}
+
+func isDirectory(path string) bool {
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	if info.IsDir() {
+		return true
+	}
+	return false
 }
