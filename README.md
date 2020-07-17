@@ -242,3 +242,11 @@ This project is currently used to automate Jenkins OSS kubernetes cluster
 A docker image is available.
 
 `docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:latest --config /home/updatecli/updateCli.yaml`
+
+### CONTRIBUTING
+
+See [CONTRIBUTING](/CONTRIBUTING.md)
+
+### ADOPTERS
+
+See [ADOPTERS](/ADOPTERS.md)
