@@ -18,10 +18,11 @@ var (
 
 // Yaml stores configuration about the file and the key value which needs to be updated.
 type Yaml struct {
-	Path  string
-	File  string
-	Key   string
-	Value string
+	Path   string
+	File   string
+	Key    string
+	Value  string
+	DryRun bool
 }
 
 // ReadFile read a yaml file then return its data
@@ -308,16 +309,19 @@ func (y *Yaml) Target() (changed bool, err error) {
 		return changed, nil
 	}
 
-	newFile, err := os.Create(filepath.Join(y.Path, y.File))
-	defer newFile.Close()
+	if !y.DryRun {
 
-	encoder := yaml.NewEncoder(newFile)
-	defer encoder.Close()
-	encoder.SetIndent(yamlIdent)
-	err = encoder.Encode(&out)
+		newFile, err := os.Create(filepath.Join(y.Path, y.File))
+		defer newFile.Close()
 
-	if err != nil {
-		return changed, fmt.Errorf("something went wrong while encoding %v", err)
+		encoder := yaml.NewEncoder(newFile)
+		defer encoder.Close()
+		encoder.SetIndent(yamlIdent)
+		err = encoder.Encode(&out)
+
+		if err != nil {
+			return changed, fmt.Errorf("something went wrong while encoding %v", err)
+		}
 	}
 
 	changed = true

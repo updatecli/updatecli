@@ -24,6 +24,7 @@ var (
 			e.Options.Target.Commit = applyCommit
 			e.Options.Target.Push = applyPush
 			e.Options.Target.Clean = applyClean
+			e.Options.Target.DryRun = false
 
 			run(
 				"apply",

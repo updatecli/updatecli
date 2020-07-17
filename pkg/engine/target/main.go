@@ -46,6 +46,11 @@ func (t *Target) Check() (bool, error) {
 // Execute applies a specific target configuration
 func (t *Target) Execute(source string, o *Options) error {
 
+	if o.DryRun {
+
+		fmt.Printf("**Dry Run enabled**\n\n")
+	}
+
 	var s scm.Scm
 	var message string
 	var file string
@@ -97,13 +102,15 @@ func (t *Target) Execute(source string, o *Options) error {
 			return err
 		}
 
+		y.DryRun = o.DryRun
+
 		y.Value = t.Prefix + source + t.Postfix
 
 		if dir, base, err := isFileExist(y.File); y.Path == "" && err == nil {
 			y.Path = dir
 			y.File = base
 		} else if !isDirectory(y.Path) {
-			fmt.Printf("Directory %s is not valid so fallback to current directory %s\n", y.Path, workingDir)
+			fmt.Printf("Directory %s is not valid so fallback to %s", y.Path, workingDir)
 			y.Path = workingDir
 		} else {
 			fmt.Println("Something weird happened while settings yaml directory")
@@ -130,7 +137,7 @@ func (t *Target) Execute(source string, o *Options) error {
 		return err
 	}
 
-	if changed {
+	if changed && !o.DryRun {
 		if message == "" {
 			return fmt.Errorf("Target has no change message")
 		}
