@@ -106,14 +106,29 @@ func (t *Target) Execute(source string, o *Options) error {
 
 		y.Value = t.Prefix + source + t.Postfix
 
-		if dir, base, err := isFileExist(y.File); y.Path == "" && err == nil {
-			y.Path = dir
-			y.File = base
-		} else if !isDirectory(y.Path) {
-			fmt.Printf("Directory %s is not valid so fallback to %s", y.Path, workingDir)
+		// Means a scm configuration is provided then use the directory from s.GetDirecotry() otherwise try to guess
+		if len(t.Scm) > 0 {
 			y.Path = workingDir
+
 		} else {
-			fmt.Println("Something weird happened while settings yaml directory")
+			if dir, base, err := isFileExist(y.File); err == nil && y.Path == "" {
+				// if no scm configuration has been provided and neither file path then we try to guess the file directory.
+				// if file name contains a path then we use it otherwise we fallback to the current path
+				y.Path = dir
+				y.File = base
+			} else if _, _, err := isFileExist(y.File); err != nil && y.Path == "" {
+
+				y.Path = workingDir
+
+			} else if y.Path != "" && !isDirectory(y.Path) {
+
+				fmt.Printf("Directory '%s' is not valid so fallback to '%s'", y.Path, workingDir)
+				y.Path = workingDir
+
+			} else {
+				return fmt.Errorf("Something weird happened while trying to set working directory")
+			}
+
 		}
 
 		file = y.File
