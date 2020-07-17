@@ -231,8 +231,8 @@ We also provide a custom function called requireEnd to inject any environment va
 ## Examples
 
 This project is currently used to automate Jenkins OSS kubernetes cluster
-* [UpdateCli configuration](https://github.com/jenkins-infra/charts/tree/master/updateCli.d)
-* [Jenkinsfile](https://github.com/jenkins-infra/charts/blob/master/Jenkinsfile_k8s#L35L47)
+* [UpdateCli configuration](https://github.com/jenkins-infra/charts/tree/master/updateCli/updateCli.d)
+* [Jenkinsfile](https://github.com/jenkins-infra/charts/blob/master/Jenkinsfile_k8s#L35L48)
 * [Results]()
   * [Docker Digest](https://github.com/jenkins-infra/charts/pull/188)
   * [Maven Repository](https://github.com/jenkins-infra/charts/pull/179)
