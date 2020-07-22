@@ -9,18 +9,32 @@
 
 **Prototype**
 
-Updatecli is a tool used for automating values updates.
-It fetches its configuration from one yaml configuration file, then works into three stages
+Updatecli is a tool to define and apply file update strategy.
+
+It reads its configuration from a yaml or go template configuration file, then works into three stages
 
 1. Source: Based on a rule fetch a value that will be injected in later stages
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source rule
 3. Target: Update and publish the target files based on a value retrieved from the source stage.
 
-**Remark: Environment variable with a name matching the key uppercased and prefixed with UPDATECLI, can be used in place of key/value in configuration file.**
+## Installation
+For each releases binaries are provided [here](https://github.com/olblak/updatecli/releases/latest) for Linux/Windows/MacOS.
+You just have to download it into the right location then you can use it
 
-## Source
+A docker image is also available on [DockerHub](https://hub.docker.com/r/olblak/updatecli)
 
-### Github Release
+## Usage
+
+To use 'updateCli', you first have to write a strategy as explained in the next session then you can run `updatecli diff --config strategy.yaml` or `updatecli apply --config strategy.yaml` but the best way to know how to use it by running `updatecli help`
+
+If you are more a docker kind of person then you just have to mount your strategy file into the docker image like 
+
+`docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.16 --config /home/updatecli/updateCli.yaml`
+
+## Documentation
+### Source
+
+#### Github Release
 
 This source will check Github Release api for a specific version. If `latest` is specified, it retrieves the version referenced by 'latest'.
 
@@ -36,9 +50,9 @@ source:
     version: "Version to fetch"
 ```
 
-Environment variable `UPDATECLI_SOURCE_SPEC_TOKEN` can be used instead of writing secrets in files or go templates could be used instead of plain YAML, cfr later.
+**A configuration using go template can be used to retrieve environment variable instead of writing secrets in files, cfr later.**
 
-### DockerRegistry
+#### DockerRegistry
 
 This source will check a docker image tag from a docker registry and return its digest, so we can always reference a specific image tag like `latest`, even when the tag is updating regularly.
 
@@ -51,7 +65,7 @@ source:
     tag: "Docker Image Tag to fetch the checksum"
 ```
 
-### HelmChart
+#### HelmChart
 This source check if a helm chart version can be updated based on a repository and a chart name
 
 ```
@@ -62,7 +76,7 @@ source
     name: jenkins
 ```
 
-### Maven
+#### Maven
 
 This source will look for the latest version returned from a maven repository
 
@@ -76,7 +90,7 @@ source:
 	artifactID: "jenkins-war",
 ```
 
-### Prefix/Postfix
+#### Prefix/Postfix
 A prefix and/or postfix can be added to any value retrieved from the source.
 This prefix/postfix will be used by 'condition' checks, then by every target unless one is explicitly defined in a target.
 
@@ -95,10 +109,10 @@ source:
 ```
 
 
-## Condition
+### Condition
 During this stage, we check if conditions are met based on the value retrieved in the source stage otherwise we can skip the "target" stage.
 
-### dockerImage
+#### dockerImage
 
 This condition checks if a docker image with a specific tag is published on Docker Registry.
 If the condition is not met, it skips the target stage.
@@ -112,7 +126,7 @@ conditions:
       url: _Docker Registry url_ #Not mandatory
 ```
 
-### Maven
+#### Maven
 This condition checks if a specific version, returned by the source, is published on a maven repository
 
 ```
@@ -125,7 +139,7 @@ condition:
 	artifactID: "jenkins-war",
 ```
 
-### HelmChart
+#### HelmChart
 This source check if a helm chart exist, a version can also be specified
 
 ```
@@ -137,11 +151,11 @@ source
     version: 'x.y.x' (Optional)
 ```
 
-## Targets
+### Targets
 
 "Targets" stage will update the definition for every targets based on the value returned during the source stage if all conditions are met.
 
-### yaml
+#### yaml
 
 This target will update an yaml file base a value retrieve during the source stage.
 
@@ -161,10 +175,10 @@ targets:
 NOTE: A key can either be string like 'key' or a position in an array like `array[0]` where 0 means the first element of `array`.
 Keys and arrays can also be grouped with dot like `key.array[3].key`.
 
-#### scm
-Yaml accept two kind of scm, github and git.
+### scm
+Depending on the situation a specific scm block can be provided to target and condition stage. At the moment it supports github and git.
 
-##### git
+#### git
 Git push every changes on the remote git repository
 
 ```
@@ -176,7 +190,7 @@ git:
   directory: "directory where to clone the git repository"
 ```
 
-##### github
+#### github
 Github  push every changes on a temporary branch then open a pull request
 
 ```
@@ -217,14 +231,14 @@ targets:
         branch: "master"
 ```
 
-## Usage
-The best way know how to use this tool is : `updateCli --help`
+### Strategy file
+Strategy file can either be using a yaml format or a golang template.
 
-### YAML {.yaml,.yml}
+#### YAML {.yaml,.yml}
 A YAML configuration can be specified using `--config <yaml_file>`, it accepts either a single file or a directory, if a directory is specified, then it runs recursively on every file inside the directory.
 
-### Go Templates {.tpl, tmpl}
-Another way to use this tool is by using go template files in place of YAML, in that case, updateCli can also use the parameter --values <yaml file> to specify YAML key value and then they can be referenced from the go template using {{ key.key2 }}.
+#### Go Templates {.tpl, tmpl}
+Another way to use this tool is by using go template files in place of YAML, in that case, updateCli can use the parameter --values <yaml file> to specify YAML key value and then they can be referenced from the go template using {{ key.key2 }}.
 We also provide a custom function called requireEnd to inject any environment variable in the template example, `{{ requiredEnv "PATH" }}`.
 
 
@@ -238,11 +252,6 @@ This project is currently used to automate Jenkins OSS kubernetes cluster
   * [Maven Repository](https://github.com/jenkins-infra/charts/pull/179)
   * [Github Release](https://github.com/jenkins-infra/charts/pull/145)
 
-### Docker
-A docker image is available.
-
-`docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:latest --config /home/updatecli/updateCli.yaml`
-
 ### CONTRIBUTING
 
 See [CONTRIBUTING](/CONTRIBUTING.md)
@@ -250,3 +259,11 @@ See [CONTRIBUTING](/CONTRIBUTING.md)
 ### ADOPTERS
 
 See [ADOPTERS](/ADOPTERS.md)
+
+### LICENSE
+
+See [LICENSE](/LICENSE.md)
+
+### SCENARIOS
+
+[Docker-compose](/doc/scenarios/docker-compose.adoc)
