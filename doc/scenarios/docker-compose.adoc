@@ -1,4 +1,5 @@
 = Docker Compose
+:toc: right
 
 In this scenario, we have to maintain a docker-compose file and we want to be sure that we always use the newest docker images available.
 
