@@ -35,26 +35,80 @@ func (d *Docker) Check() (bool, error) {
 		d.Architecture = "amd64"
 	}
 
-	if image := strings.Split(d.Image, "/"); len(image) == 1 {
+	image := strings.Split(d.Image, "/")
+
+	if len(image) == 1 && d.isDockerHub() {
 		d.Image = "library/" + d.Image
 	}
 
 	return true, nil
 }
 
-// Condition checks if a docker image with a specific tag is published
-func (d *Docker) Condition() (bool, error) {
+func (d *Docker) isDockerHub() bool {
+	return strings.Contains(d.URL, "hub.docker.com")
+}
+
+/*
+	IsDockerRegistry validates that we are on docker registry api
+	https://docs.docker.com/registry/spec/api/#api-version-check
+*/
+func (d *Docker) IsDockerRegistry() (bool, error) {
 
 	if ok, err := d.Check(); !ok {
 		return false, err
 	}
 
-	url := fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s",
-		d.URL,
-		d.Image,
-		d.Tag)
+	if d.isDockerHub() {
+		return false, fmt.Errorf("DockerHub Api is not docker registry api compliant")
+	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	URL := fmt.Sprintf("https://%s/v2/", d.URL)
+
+	req, err := http.NewRequest("GET", URL, nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	res, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		return false, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return false, nil
+	}
+	return true, nil
+}
+
+// Condition checks if a docker image with a specific tag is published
+func (d *Docker) Condition() (bool, error) {
+	URL := ""
+
+	if ok, err := d.Check(); !ok {
+		return false, err
+	}
+
+	if d.isDockerHub() {
+		URL = fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s/",
+			d.URL,
+			d.Image,
+			d.Tag)
+
+	} else {
+		if ok, err := d.IsDockerRegistry(); !ok {
+			return false, err
+		}
+		URL = fmt.Sprintf("https://%s/v2/%s/manifests/%s",
+			d.URL,
+			d.Image,
+			d.Tag)
+	}
+
+	req, err := http.NewRequest("GET", URL, nil)
 
 	if err != nil {
 		return false, err
@@ -74,23 +128,32 @@ func (d *Docker) Condition() (bool, error) {
 		return false, err
 	}
 
-	data := map[string]string{}
-
-	json.Unmarshal(body, &data)
-
-	if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
-		fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
-		return false, nil
-	}
-
-	if val, ok := data["name"]; ok && val == d.Tag {
+	if res.StatusCode == 200 && !d.isDockerHub() {
 		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
 		return true, nil
+
+	} else if d.isDockerHub() {
+
+		data := map[string]string{}
+
+		json.Unmarshal(body, &data)
+
+		if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
+			fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
+			return false, nil
+		}
+
+		if val, ok := data["name"]; ok && val == d.Tag {
+			fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
+			return true, nil
+		}
+
+	} else {
+
+		fmt.Printf("\u2717Something went wrong on URL: %s\n", URL)
 	}
 
-	fmt.Printf("\t\t\u2717Something went wrong, no field 'name' founded from %s\n", url)
-
-	return false, fmt.Errorf("something went wrong, no field 'name' founded from %s", url)
+	return false, fmt.Errorf("something went wrong %s", URL)
 }
 
 // Source retrieve docker image tag digest from a registry
@@ -101,15 +164,35 @@ func (d *Docker) Source() (string, error) {
 	}
 
 	// https://hub.docker.com/v2/repositories/olblak/updatecli/tags/latest
-	URL := fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s",
-		d.URL,
-		d.Image,
-		d.Tag)
+	URL := ""
+
+	if d.isDockerHub() {
+		URL = fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s/",
+			d.URL,
+			d.Image,
+			d.Tag)
+
+	} else {
+		if ok, err := d.IsDockerRegistry(); !ok {
+			return "", err
+		}
+		URL = fmt.Sprintf("https://%s/v2/%s/manifests/%s",
+			d.URL,
+			d.Image,
+			d.Tag)
+	}
 
 	req, err := http.NewRequest("GET", URL, nil)
 
 	if err != nil {
 		return "", err
+	}
+
+	if ok, err := d.IsDockerRegistry(); ok && err == nil {
+		// Retrieve v2 manifest
+		// application/vnd.docker.distribution.manifest.v1+prettyjws v1 manifest
+		req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+
 	}
 
 	res, err := http.DefaultClient.Do(req)
@@ -126,26 +209,39 @@ func (d *Docker) Source() (string, error) {
 		return "", err
 	}
 
-	type respond struct {
-		ID     string
-		Images []map[string]string
-	}
+	if d.isDockerHub() {
 
-	data := respond{}
-
-	json.Unmarshal(body, &data)
-
-	for _, image := range data.Images {
-		if image["architecture"] == d.Architecture {
-			digest := strings.TrimPrefix(image["digest"], "sha256:")
-			fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
-			fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
-			fmt.Printf("Example: %v@sha256:%v\n", d.Image, digest)
-			return digest, nil
+		type respond struct {
+			ID     string
+			Images []map[string]string
 		}
+
+		data := respond{}
+
+		json.Unmarshal(body, &data)
+
+		for _, image := range data.Images {
+			if image["architecture"] == d.Architecture {
+				digest := strings.TrimPrefix(image["digest"], "sha256:")
+				fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
+				fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
+				fmt.Printf("Example: %v@sha256:%v\n", d.Image, digest)
+				return digest, nil
+			}
+		}
+
+		fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
+
+		return "", nil
+	} else {
+		digest := res.Header.Get("Docker-Content-Digest")
+		digest = strings.TrimPrefix(digest, "sha256:")
+
+		fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
+		fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
+		fmt.Printf("Example: %v/%v@sha256:%v\n", d.URL, d.Image, digest)
+
+		return digest, nil
 	}
 
-	fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
-
-	return "", nil
 }
