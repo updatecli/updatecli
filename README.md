@@ -90,6 +90,26 @@ source:
 	artifactID: "jenkins-war",
 ```
 
+#### Replacer
+A List of replacer rule can be provided to modify the value retrieved from source
+
+```
+source:
+  kind: githubRelease
+  replaces: 
+    - from: "string"
+      to: ""
+    - from: "substring1"
+      to: "substring2"
+  spec:
+    owner: "Github Owner"
+    repository: "Github Repository"
+    token: "Don't commit your secrets!"
+    url: "Github Url"
+    version: "Version to fetch"
+```
+
+
 #### Prefix/Postfix
 A prefix and/or postfix can be added to any value retrieved from the source.
 This prefix/postfix will be used by 'condition' checks, then by every target unless one is explicitly defined in a target.
