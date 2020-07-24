@@ -13,11 +13,12 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	Kind    string
-	Output  string
-	Prefix  string
-	Postfix string
-	Spec    interface{}
+	Kind     string
+	Output   string
+	Prefix   string
+	Postfix  string
+	Replaces Replacers
+	Spec     interface{}
 }
 
 // Spec source is an interface to handle source spec
@@ -86,7 +87,14 @@ func (s *Source) Execute() error {
 		return err
 	}
 
-	s.Output = output
+	if len(s.Replaces) > 0 {
+		args := s.Replaces.Unmarshal()
+
+		r := strings.NewReplacer(args...)
+		s.Output = (r.Replace(output))
+	} else {
+		s.Output = output
+	}
 
 	return nil
 }
