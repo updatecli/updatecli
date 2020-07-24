@@ -8,16 +8,16 @@ import (
 func TestReplacersUnmarshall(t *testing.T) {
 	dataSet := Replacers{
 		{
-			Source: "a",
-			Destination: "b",
+			From: "a",
+			To: "b",
 		},
 		{
-			Source: "c",
-			Destination: "d",
+			From: "c",
+			To: "d",
 		},
 		{
-			Source: "e",
-			Destination: "f",
+			From: "e",
+			To: "f",
 		},
 	}
 	expected := []string{ "a","b","c","d","e","f"}
