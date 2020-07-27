@@ -32,7 +32,6 @@ type Spec interface {
 func (c *Condition) Execute(source string) (bool, error) {
 
 	var s scm.Scm
-	c.Result = "\u2717"
 
 	pwd, err := os.Getwd()
 	if err != nil {
