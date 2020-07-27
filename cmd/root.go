@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/olblak/updateCli/pkg/engine"
+	"github.com/olblak/updateCli/pkg/reports"
 
 	"github.com/spf13/cobra"
 )
@@ -43,20 +44,23 @@ func init() {
 func run(command string) {
 
 	files := GetFiles(e.Options.File)
+	reports := reports.Reports{}
 
 	for _, file := range files {
 
 		switch command {
 		case "apply":
-			err := e.Run(file)
+			report, err := e.Run(file)
 			if err != nil {
 				fmt.Printf("\n\u26A0 %s \n\n", err)
 			}
+			reports = append(reports, report)
 		case "diff":
-			err := e.Run(file)
+			report, err := e.Run(file)
 			if err != nil {
 				fmt.Printf("\n\u26A0 %s \n\n", err)
 			}
+			reports = append(reports, report)
 		case "show":
 			err := e.Show(file)
 			if err != nil {
@@ -67,6 +71,8 @@ func run(command string) {
 		}
 	}
 
+	reports.Show()
+	reports.Summary()
 	fmt.Printf("\n")
 }
 
