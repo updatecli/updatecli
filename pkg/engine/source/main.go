@@ -13,12 +13,14 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
+	Name     string
 	Kind     string
 	Output   string
 	Prefix   string
 	Postfix  string
 	Replaces Replacers
 	Spec     interface{}
+	Result   string `yaml:"-"` // Ignore this key field when unmarshalling yaml file
 }
 
 // Spec source is an interface to handle source spec

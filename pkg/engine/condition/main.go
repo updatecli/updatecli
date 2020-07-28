@@ -16,10 +16,11 @@ import (
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
-	Name string
-	Kind string
-	Spec interface{}
-	Scm  map[string]interface{}
+	Name   string
+	Kind   string
+	Spec   interface{}
+	Scm    map[string]interface{}
+	Result string `yaml:"-"` // Ignore this field when unmarshal YAML
 }
 
 // Spec is an interface that test if condition is met
