@@ -19,6 +19,7 @@ type Target struct {
 	Postfix string
 	Spec    interface{}
 	Scm     map[string]interface{}
+	Result  string `yaml:"-"`
 }
 
 // Spec is an interface which offers common function to manipulate targets.
@@ -44,7 +45,7 @@ func (t *Target) Check() (bool, error) {
 }
 
 // Execute applies a specific target configuration
-func (t *Target) Execute(source string, o *Options) error {
+func (t *Target) Execute(source string, o *Options) (bool, error) {
 
 	if o.DryRun {
 
@@ -65,12 +66,12 @@ func (t *Target) Execute(source string, o *Options) error {
 	if len(t.Scm) > 0 {
 		_, err := t.Check()
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		s, err = scm.Unmarshal(t.Scm)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		err = s.Init(source, t.Name)
@@ -80,7 +81,7 @@ func (t *Target) Execute(source string, o *Options) error {
 		}
 
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		s.Clone()
@@ -99,7 +100,7 @@ func (t *Target) Execute(source string, o *Options) error {
 		err := mapstructure.Decode(t.Spec, &y)
 
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		y.DryRun = o.DryRun
@@ -126,7 +127,7 @@ func (t *Target) Execute(source string, o *Options) error {
 				y.Path = workingDir
 
 			} else {
-				return fmt.Errorf("Something weird happened while trying to set working directory")
+				return false, fmt.Errorf("Something weird happened while trying to set working directory")
 			}
 
 		}
@@ -143,18 +144,18 @@ func (t *Target) Execute(source string, o *Options) error {
 		spec = &y
 
 	default:
-		return fmt.Errorf("Don't support target: %v", t.Kind)
+		return false, fmt.Errorf("Don't support target: %v", t.Kind)
 	}
 
 	changed, err := spec.Target()
 
 	if err != nil {
-		return err
+		return changed, err
 	}
 
 	if changed && !o.DryRun {
 		if message == "" {
-			return fmt.Errorf("Target has no change message")
+			return changed, fmt.Errorf("Target has no change message")
 		}
 
 		if len(t.Scm) > 0 {
@@ -169,7 +170,7 @@ func (t *Target) Execute(source string, o *Options) error {
 		}
 	}
 
-	return nil
+	return changed, nil
 }
 
 func isFileExist(file string) (dir string, base string, err error) {
