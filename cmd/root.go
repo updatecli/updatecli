@@ -7,6 +7,7 @@ import (
 
 	"github.com/olblak/updateCli/pkg/engine"
 	"github.com/olblak/updateCli/pkg/reports"
+	"github.com/olblak/updateCli/pkg/result"
 
 	"github.com/spf13/cobra"
 )
@@ -52,19 +53,19 @@ func run(command string) {
 		case "apply":
 			report, err := e.Run(file)
 			if err != nil {
-				fmt.Printf("\n\u26A0 %s \n\n", err)
+				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
 			}
 			reports = append(reports, report)
 		case "diff":
 			report, err := e.Run(file)
 			if err != nil {
-				fmt.Printf("\n\u26A0 %s \n\n", err)
+				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
 			}
 			reports = append(reports, report)
 		case "show":
 			err := e.Show(file)
 			if err != nil {
-				fmt.Printf("\n\u26A0 %s \n\n", err)
+				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
 			}
 		default:
 			fmt.Println("Wrong command")

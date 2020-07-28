@@ -30,7 +30,15 @@ func (e *Engine) Run(cfgFile string) (report reports.Report, err error) {
 	fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
 	fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
 
-	e.conf.ReadFile(cfgFile, e.Options.ValuesFile)
+	err = e.conf.ReadFile(cfgFile, e.Options.ValuesFile)
+
+	if err != nil {
+		r := reports.Report{}
+		r.Result = result.FAILURE
+		r.Err = err.Error()
+		r.Name = strings.ToTitle(cfgFileName)
+		return r, err
+	}
 
 	e.Report = reports.New(&e.conf)
 	e.Report.Name = strings.ToTitle(cfgFileName)

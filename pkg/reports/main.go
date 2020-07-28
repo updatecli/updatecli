@@ -15,6 +15,10 @@ const reportsTpl string = `
 REPORTS:
 
 {{ range . }}
+{{ if  .Err }}
+{{- .Result }} {{ .Name -}}{{"\n"}}
+{{ "\t"}}Error: {{ .Err}}
+{{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
 {{- "\t"}}Source:
 {{ "\t"}}{{"\t"}}{{- .Source.Result }}  {{ .Source.Name -}}({{- .Source.Kind -}}){{"\n"}}
@@ -28,6 +32,7 @@ REPORTS:
 {{ range .Targets }} 
 {{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
 {{- end }}
+{{ end }}
 {{ end }}
 `
 

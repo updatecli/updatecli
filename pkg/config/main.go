@@ -27,7 +27,7 @@ func (config *Config) Reset() {
 }
 
 // ReadFile reads the updatecli configuration file
-func (config *Config) ReadFile(cfgFile, valuesFile string) {
+func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 
 	config.Reset()
 
@@ -42,7 +42,7 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) {
 
 		err := t.Unmarshal(config)
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 
 	case ".yaml", ".yml":
@@ -57,18 +57,20 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) {
 
 		if err := v.ReadInConfig(); err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-				fmt.Println("Config file not found")
+				return fmt.Errorf("Config file not found")
 			} else {
-				fmt.Println(err)
+				return err
 			}
 		}
 		err := v.Unmarshal(&config)
 		if err != nil {
-			fmt.Printf("unable to decode into struct, %v\n", err)
+			return fmt.Errorf("unable to decode into struct, %v", err)
 		}
 	default:
-		fmt.Printf("File extension not supported: %v", extension)
+		return fmt.Errorf("file extension not supported: %v", extension)
 	}
+
+	return nil
 
 }
 

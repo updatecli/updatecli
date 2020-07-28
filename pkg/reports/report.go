@@ -7,6 +7,7 @@ import (
 // Report contains a list of Rules
 type Report struct {
 	Name       string
+	Err        string
 	Result     string
 	Source     Stage
 	Conditions []Stage
