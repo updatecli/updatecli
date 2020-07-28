@@ -59,7 +59,7 @@ func TestCondition(t *testing.T) {
 	// Test if existing image tag return true
 	d := &Docker{
 		URL:   "hub.docker.com",
-		Tag:   "latest",
+		Tag:   "v0.0.16",
 		Image: "olblak/updatecli",
 	}
 
