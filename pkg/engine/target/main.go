@@ -13,13 +13,14 @@ import (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
-	Name    string
-	Kind    string
-	Prefix  string
-	Postfix string
-	Spec    interface{}
-	Scm     map[string]interface{}
-	Result  string `yaml:"-"`
+	Name      string
+	Kind      string
+	Changelog string `yaml:"-"`
+	Prefix    string
+	Postfix   string
+	Spec      interface{}
+	Scm       map[string]interface{}
+	Result    string `yaml:"-"`
 }
 
 // Spec is an interface which offers common function to manipulate targets.
