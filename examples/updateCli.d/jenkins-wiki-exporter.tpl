@@ -3,7 +3,7 @@ source:
   spec:
     owner: "jenkins-infra"
     repository: "jenkins-wiki-exporter"
-    token: ""
+    token: {{ requiredEnv "GITHUB_TOKEN" }}
     username: "olblak"
     version: "latest"
 conditions:
@@ -25,7 +25,7 @@ targets:
         email: "update-bot@olblak.com"
         owner: "olblak"
         repository: "charts"
-        token: ""
+        token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
         branch: "master"
   #appVersion:
@@ -40,7 +40,7 @@ targets:
   #      email: "updatecli@olblak.com"
   #      owner: "olblak"
   #      repository: "charts"
-  #      token: ""
+  #      token: {{ requiredEnv "GITHUB_TOKEN" }}
   #      username: "olblak"
   #      branch: "master"
   appVersion:
@@ -55,6 +55,6 @@ targets:
         email: "updatecli@olblak.com"
         owner: "olblak"
         repository: "charts"
-        token: ""
+        token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
         branch: "master"

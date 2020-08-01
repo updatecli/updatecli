@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	git "github.com/olblak/updateCli/pkg/git/generic"
 	"github.com/shurcooL/githubv4"
@@ -14,6 +15,7 @@ import (
 // Github contains settings to interact with Github
 type Github struct {
 	Owner        string
+	Description  string
 	Repository   string
 	Username     string
 	Token        string
@@ -45,10 +47,11 @@ func (g *Github) Source() (string, error) {
 		# Query
 		query getLatestRelease($owner: String!, $repository: String!){
 			repository(owner: $owner, name: $repository){
-				releases(last: 1){
+				releases(first:10, orderBy:$orderBy){
 					nodes{
 						name
 						tagName
+						isDraft
 					}
 				}
 			}
@@ -65,19 +68,24 @@ func (g *Github) Source() (string, error) {
 	type release struct {
 		Name    string
 		TagName string
+		IsDraft bool
 	}
 
 	var query struct {
 		Repository struct {
 			Releases struct {
 				Nodes []release
-			} `graphql:"releases(last: 1)"`
+			} `graphql:"releases(first: 5, orderBy: $orderBy)"`
 		} `graphql:"repository(owner: $owner, name: $repository)"`
 	}
 
 	variables := map[string]interface{}{
 		"owner":      githubv4.String(g.Owner),
 		"repository": githubv4.String(g.Repository),
+		"orderBy": githubv4.ReleaseOrder{
+			Field:     "CREATED_AT",
+			Direction: "DESC",
+		},
 	}
 
 	err = client.Query(context.Background(), &query, variables)
@@ -88,7 +96,13 @@ func (g *Github) Source() (string, error) {
 		return "", err
 	}
 
-	value := query.Repository.Releases.Nodes[0].TagName
+	value := ""
+	for _, release := range query.Repository.Releases.Nodes {
+		if !release.IsDraft {
+			value = release.TagName
+			break
+		}
+	}
 
 	fmt.Printf("\u2714 '%s' github release version founded: %s\n", g.Version, value)
 	return value, nil
@@ -150,6 +164,72 @@ func (g *Github) setDirectory(version string) {
 	}
 
 	g.directory = directory
+}
+
+// Changelog returns a changelog description based on a release name
+func (g *Github) Changelog(name string) (string, error) {
+	_, err := g.Check()
+	if err != nil {
+		return "", err
+	}
+
+	/*
+			https://developer.github.com/v4/explorer/
+		# Query
+		query getLatestRelease($owner: String!, $repository: String!){
+			repository(owner: $owner, name: $repository){
+				release(tagName: 1){
+					description
+					publishedAt
+					url
+				}
+			}
+		}
+		# Variables
+		{
+			"owner": "olblak",
+			"repository": "charts",
+		}
+	*/
+
+	client := g.NewClient()
+
+	type release struct {
+		Name    string
+		TagName string
+		Url     string
+		Body    string
+	}
+
+	var query struct {
+		Repository struct {
+			Release struct {
+				Description string
+				Url         string
+				PublishedAt time.Time
+			} `graphql:"release(tagName: $tagName)"`
+		} `graphql:"repository(owner: $owner, name: $repository)"`
+	}
+
+	variables := map[string]interface{}{
+		"owner":      githubv4.String(g.Owner),
+		"repository": githubv4.String(g.Repository),
+		"tagName":    githubv4.String(name),
+	}
+
+	err = client.Query(context.Background(), &query, variables)
+
+	if err != nil {
+		fmt.Printf("\t %s\n", err)
+		return "", err
+	}
+
+	changelog := fmt.Sprintf("\nRelease published on the %v at the url %v\n%v\n",
+		query.Repository.Release.PublishedAt.String(),
+		query.Repository.Release.Url,
+		query.Repository.Release.Description)
+
+	return changelog, nil
 }
 
 // Clean deletes github working directory.
@@ -219,6 +299,8 @@ func (g *Github) Push() {
 
 // OpenPullRequest creates a new pull request.
 func (g *Github) OpenPullRequest() {
+
+	fmt.Printf("DEBUG GITHUB: %v\n", g)
 	/*
 		mutation($input: CreatePullRequestInput!){
 			createPullRequest(input:$input){
@@ -254,7 +336,7 @@ func (g *Github) OpenPullRequest() {
 	maintainerCanModify := true
 	draft := false
 
-	bodyPR, err := SetBody("")
+	bodyPR, err := SetBody(g.Description)
 
 	if err != nil {
 		fmt.Println(err)

@@ -37,8 +37,8 @@ targets:
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
         branch: "master"
-      git:
-        url: "git@github.com:olblak/charts.git"
-        branch: "updatecli/Helm_Chart/2.3.3"
-        user: "update-bot"
-        email: "update-bot@olblak.com"
+#      git:
+#        url: "git@github.com:olblak/charts.git"
+#        branch: "updatecli/Helm_Chart/2.3.3"
+#        user: "update-bot"
+#        email: "update-bot@olblak.com"

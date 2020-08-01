@@ -13,19 +13,25 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	Name     string
-	Kind     string
-	Output   string
-	Prefix   string
-	Postfix  string
-	Replaces Replacers
-	Spec     interface{}
-	Result   string `yaml:"-"` // Ignore this key field when unmarshalling yaml file
+	Name      string
+	Kind      string
+	Changelog string
+	Output    string
+	Prefix    string
+	Postfix   string
+	Replaces  Replacers
+	Spec      interface{}
+	Result    string `yaml:"-"` // Ignore this key field when unmarshalling yaml file
 }
 
 // Spec source is an interface to handle source spec
 type Spec interface {
 	Source() (string, error)
+}
+
+// Changelog is an interface to retrieve changelog description
+type Changelog interface {
+	Changelog(release string) (string, error)
 }
 
 // Execute execute actions defined by the source configuration
@@ -38,6 +44,7 @@ func (s *Source) Execute() error {
 	var err error
 
 	var spec Spec
+	var changelog Changelog
 
 	switch s.Kind {
 	case "githubRelease":
@@ -49,6 +56,7 @@ func (s *Source) Execute() error {
 		}
 
 		spec = &g
+		changelog = &g
 
 	case "helmChart":
 		c := chart.Chart{}
@@ -89,6 +97,13 @@ func (s *Source) Execute() error {
 		return err
 	}
 
+	if changelog != nil && s.Changelog == "" {
+		s.Changelog, err = changelog.Changelog(output)
+		if err != nil {
+			return err
+		}
+	}
+
 	if len(s.Replaces) > 0 {
 		args := s.Replaces.Unmarshal()
 
@@ -97,6 +112,8 @@ func (s *Source) Execute() error {
 	} else {
 		s.Output = output
 	}
+
+	fmt.Println(s.Changelog)
 
 	return nil
 }

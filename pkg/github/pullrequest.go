@@ -42,7 +42,7 @@ func SetBody(changelog string) (body string, err error) {
 	}
 
 	err = t.Execute(buffer, params{
-		Changelog: "Update Docker Image version to 2.250"})
+		Changelog: changelog})
 
 	if err != nil {
 		return "", err
