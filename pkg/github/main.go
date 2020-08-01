@@ -300,7 +300,6 @@ func (g *Github) Push() {
 // OpenPullRequest creates a new pull request.
 func (g *Github) OpenPullRequest() {
 
-	fmt.Printf("DEBUG GITHUB: %v\n", g)
 	/*
 		mutation($input: CreatePullRequestInput!){
 			createPullRequest(input:$input){
