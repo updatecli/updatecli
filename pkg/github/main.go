@@ -52,6 +52,7 @@ func (g *Github) Source() (string, error) {
 						name
 						tagName
 						isDraft
+						isPrerelease
 					}
 				}
 			}
@@ -66,9 +67,10 @@ func (g *Github) Source() (string, error) {
 	client := g.NewClient()
 
 	type release struct {
-		Name    string
-		TagName string
-		IsDraft bool
+		Name         string
+		TagName      string
+		IsDraft      bool
+		IsPrerelease bool
 	}
 
 	var query struct {
@@ -98,7 +100,7 @@ func (g *Github) Source() (string, error) {
 
 	value := ""
 	for _, release := range query.Repository.Releases.Nodes {
-		if !release.IsDraft {
+		if !release.IsDraft && !release.IsPrerelease {
 			value = release.TagName
 			break
 		}
