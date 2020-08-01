@@ -1,15 +1,14 @@
 package github
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"strings"
 
 	git "github.com/olblak/updateCli/pkg/git/generic"
+	"github.com/shurcooL/githubv4"
+	"golang.org/x/oauth2"
 )
 
 // Github contains settings to interact with Github
@@ -41,43 +40,58 @@ func (g *Github) Source() (string, error) {
 		return "", err
 	}
 
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%s",
-		g.Owner,
-		g.Repository,
-		g.Version)
+	/*
+			https://developer.github.com/v4/explorer/
+		# Query
+		query getLatestRelease($owner: String!, $repository: String!){
+			repository(owner: $owner, name: $repository){
+				releases(last: 1){
+					nodes{
+						name
+						tagName
+					}
+				}
+			}
+		}
+		# Variables
+		{
+			"owner": "olblak",
+			"repository": "charts",
+		}
+	*/
 
-	req, err := http.NewRequest("GET", url, nil)
+	client := g.NewClient()
+
+	type release struct {
+		Name    string
+		TagName string
+	}
+
+	var query struct {
+		Repository struct {
+			Releases struct {
+				Nodes []release
+			} `graphql:"releases(last: 1)"`
+		} `graphql:"repository(owner: $owner, name: $repository)"`
+	}
+
+	variables := map[string]interface{}{
+		"owner":      githubv4.String(g.Owner),
+		"repository": githubv4.String(g.Repository),
+	}
+
+	err = client.Query(context.Background(), &query, variables)
 
 	if err != nil {
+		fmt.Printf("\u2717 Couldn't find a valid github release version\n")
+		fmt.Printf("\t %s\n", err)
 		return "", err
 	}
 
-	req.Header.Add("Authorization", "token "+g.Token)
+	value := query.Repository.Releases.Nodes[0].TagName
 
-	res, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		return "", err
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return "", err
-	}
-
-	v := map[string]string{}
-	json.Unmarshal(body, &v)
-
-	if val, ok := v["tag_name"]; ok {
-		fmt.Printf("\u2714 '%s' github release version founded: %s\n", g.Version, val)
-		return val, nil
-	}
-	fmt.Printf("\u2717 No '%s' github release version founded from %s\n", g.Version, url)
-	return "", nil
-
+	fmt.Printf("\u2714 '%s' github release version founded: %s\n", g.Version, value)
+	return value, nil
 }
 
 // Check verifies if mandatory Github parameters are provided and return false if not.
@@ -200,108 +214,182 @@ func (g *Github) Push() {
 
 	fmt.Printf("\n")
 
-	g.OpenPR()
+	g.OpenPullRequest()
 }
 
-// OpenPR creates a new pull request.
-func (g *Github) OpenPR() {
-	fmt.Println("Opening Github pull request")
-	title := fmt.Sprintf("[updatecli] Update %v version to %v", g.Name, g.Version)
+// OpenPullRequest creates a new pull request.
+func (g *Github) OpenPullRequest() {
+	/*
+		mutation($input: CreatePullRequestInput!){
+			createPullRequest(input:$input){
+				pullRequest{
+					url
+				}
+			}
+		}
+		{
 
-	if g.isPRExist(title) {
-		fmt.Printf("Pull Request titled '%v' already exist\n", title)
+		"input":{
+			"baseRefName": "x" ,
+			"repositoryId":"y",
+			"headRefName": "z",
+			"title",
+			"body",
+		}
+
+
+	*/
+	client := g.NewClient()
+
+	var mutation struct {
+		createPullRequest struct {
+			pullRequest PullRequest
+		} `graphql:"createPullRequest(input: $input)"`
+	}
+
+	fmt.Println("Opening Github pull request")
+
+	title := fmt.Sprintf("[updatecli] Update %v version to %v", g.Name, g.Version)
+	repositoryID, err := g.queryRepositoryID()
+	maintainerCanModify := true
+	draft := false
+
+	bodyPR, err := SetBody("")
+
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
-	bodyPR := "**! Experimental project**\\nThis pull request was automatically created using [olblak/updatecli](https://github.com/olblak/updatecli)\\nBased on a source rule, it checks if yaml value can be update to the latest version\\nPlease carefully review yaml modification as it also reformat it.\\nPlease report any issues with this tool [here](https://github.com/olblak/updatecli/issues/new)"
-
-	URL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls",
-		g.Owner,
-		g.Repository)
-
-	jsonData := fmt.Sprintf("{ \"title\": \"%v\", \"body\": \"%v\", \"head\": \"%v\", \"base\": \"%v\"}", title, bodyPR, g.remoteBranch, g.Branch)
-
-	var jsonStr = []byte(jsonData)
-
-	req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonStr))
-
-	req.Header.Add("Authorization", "token "+g.Token)
-	req.Header.Add("Content-Type", "application/json")
+	if ok, url, err := g.isPRExist(); ok && err == nil {
+		fmt.Printf("Pull Request titled '%v' already exist at\n\t%s\n", title, url)
+		return
+	}
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	res, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		fmt.Println(err)
+	input := githubv4.CreatePullRequestInput{
+		BaseRefName:         githubv4.String(g.Branch),
+		RepositoryID:        githubv4.String(repositoryID),
+		HeadRefName:         githubv4.String(g.remoteBranch),
+		Title:               githubv4.String(title),
+		Body:                githubv4.NewString(githubv4.String(bodyPR)),
+		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(maintainerCanModify)),
+		Draft:               githubv4.NewBoolean(githubv4.Boolean(draft)),
 	}
 
-	defer res.Body.Close()
+	err = client.Mutate(context.Background(), &mutation, input, nil)
 
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	v := make(map[string]interface{})
-	err = json.Unmarshal(body, &v)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	if res.StatusCode != 201 {
-		fmt.Printf("Json Request: %v\n", jsonData)
-		fmt.Printf("Response: %v\n", v)
-	}
+	return
 
 }
 
-// isPRExist checks if an open pull request already exist based on a title.
-func (g *Github) isPRExist(title string) bool {
-
-	URL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls",
-		g.Owner,
-		g.Repository)
-
-	req, err := http.NewRequest("GET", URL, nil)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	req.Header.Add("Authorization", "token "+g.Token)
-
-	res, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	v := []map[string]string{}
-
-	err = json.Unmarshal(body, &v)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	for _, v := range v {
-		if v["title"] == title {
-			return true
+//// isPRExist checks if an open pull request already exist and is in an open state.
+func (g *Github) isPRExist() (bool, string, error) {
+	/*
+			https://developer.github.com/v4/explorer/
+		# Query
+		query getPullRequests(
+			$owner: String!,
+			$name:String!,
+			$baseRefName:String!,
+			$headRefName:String!){
+				repository(owner: $owner, name: $name) {
+					pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1) {
+						nodes {
+							state
+							id
+						}
+					}
+				}
+			}
 		}
+		# Variables
+		{
+			"owner": "olblak",
+			"name": "charts",
+			"baseRefName": "master",
+			"headRefName": "updatecli/HelmChart/2.4.0"
+		}
+	*/
+
+	client := g.NewClient()
+
+	var query struct {
+		Repository struct {
+			PullRequests struct {
+				Nodes []PullRequest
+			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: OPEN)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
-	return false
+	variables := map[string]interface{}{
+		"owner":       githubv4.String(g.Owner),
+		"name":        githubv4.String(g.Repository),
+		"baseRefName": githubv4.String(g.Branch),
+		"headRefName": githubv4.String(g.remoteBranch),
+	}
+
+	err := client.Query(context.Background(), &query, variables)
+
+	if err != nil {
+		fmt.Println(err)
+		return false, "", err
+	}
+
+	if len(query.Repository.PullRequests.Nodes) > 0 {
+		return true, query.Repository.PullRequests.Nodes[0].Url, nil
+	}
+
+	return false, "", nil
+}
+
+//NewClient return a new client
+func (g *Github) NewClient() *githubv4.Client {
+	src := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: g.Token},
+	)
+	httpClient := oauth2.NewClient(context.Background(), src)
+
+	if g.URL == "" || strings.HasSuffix(g.URL, "github.com") {
+		return githubv4.NewClient(httpClient)
+
+	}
+
+	return githubv4.NewEnterpriseClient(os.Getenv(g.Token), httpClient)
+}
+
+func (g *Github) queryRepositoryID() (string, error) {
+	/*
+		query($owner: String!, $name: String!) {
+			repository(owner: $owner, name: $name){
+				id
+			}
+		}
+	*/
+
+	client := g.NewClient()
+
+	var query struct {
+		Repository struct {
+			ID string
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	variables := map[string]interface{}{
+		"owner": githubv4.String(g.Owner),
+		"name":  githubv4.String(g.Repository),
+	}
+
+	err := client.Query(context.Background(), &query, variables)
+
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+
+	return query.Repository.ID, nil
+
 }
