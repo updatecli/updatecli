@@ -3,7 +3,9 @@ package engine
 import (
 	"fmt"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/config"
+	"github.com/olblak/updateCli/pkg/github"
 	"github.com/olblak/updateCli/pkg/reports"
 	"github.com/olblak/updateCli/pkg/result"
 
@@ -111,10 +113,9 @@ func (e *Engine) conditions() (bool, error) {
 			fmt.Printf("\n%s skipping: condition not met\n", result.FAILURE)
 			ok = false
 			return false, nil
-		} else {
-			c.Result = result.SUCCESS
-			e.conf.Conditions[k] = c
 		}
+		c.Result = result.SUCCESS
+		e.conf.Conditions[k] = c
 	}
 
 	return true, nil
@@ -129,6 +130,23 @@ func (e *Engine) targets() (targetsChanged bool, err error) {
 
 	for id, t := range e.conf.Targets {
 		targetChanged := false
+
+		t.Changelog = e.conf.Source.Changelog
+
+		if _, ok := t.Scm["github"]; ok {
+			var g github.Github
+
+			err := mapstructure.Decode(t.Scm["github"], &g)
+
+			if err != nil {
+				return false, err
+			}
+
+			g.Description = t.Changelog
+
+			t.Scm["github"] = g
+
+		}
 
 		if t.Prefix == "" && e.conf.Source.Prefix != "" {
 			t.Prefix = e.conf.Source.Prefix
