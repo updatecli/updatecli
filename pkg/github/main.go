@@ -233,7 +233,7 @@ func (g *Github) Changelog(name string) (string, error) {
 		return "", err
 	}
 
-	changelog := fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v\n",
+	changelog := fmt.Sprintf("\nRelease published on the %v at the url %v\n%v\n",
 		query.Repository.Release.PublishedAt.String(),
 		query.Repository.Release.Url,
 		query.Repository.Release.Description)
