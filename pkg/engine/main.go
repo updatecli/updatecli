@@ -128,6 +128,17 @@ func (e *Engine) targets() (targetsChanged bool, err error) {
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("Targets"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("Targets")+1))
 
+	sourceReport, err := e.Report.String("source")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	conditionReport, err := e.Report.String("conditions")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	for id, t := range e.conf.Targets {
 		targetChanged := false
 
@@ -142,7 +153,12 @@ func (e *Engine) targets() (targetsChanged bool, err error) {
 				return false, err
 			}
 
-			g.Description = t.Changelog
+			g.PullRequestDescription.Description = t.Changelog
+			g.PullRequestDescription.Report = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
+
+			if err != nil {
+				fmt.Println(err)
+			}
 
 			t.Scm["github"] = g
 
