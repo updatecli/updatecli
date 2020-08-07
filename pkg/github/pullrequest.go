@@ -2,23 +2,28 @@ package github
 
 import (
 	"bytes"
+	"fmt"
 	"text/template"
 )
 
-// PULLREQUESTBODY contains the Github Pull request body
-// TODO Add changelog
-// TODO Explain source
-// TODO Add conditions if exist
+// PULLREQUESTBODY is the pull request template used as pull request description
 const PULLREQUESTBODY string = `
-{{ .Changelog }}
+
+## Changelog
+
+{{ .Description }}
+
+## Reports
+
+{{ .Report }}
+
+## Remark
 
 This pull request was automatically created using [olblak/updatecli](https://github.com/olblak/updatecli).
-Based on a source rule, it checks if yaml value can be update to the latest version
-Please carefully review yaml modification as it also reformat it.
 Please report any issues with this tool [here](https://github.com/olblak/updatecli/issues/new)
 `
 
-// PullRequest contains multiple fields mapped on Github V4 api...
+// PullRequest contains multiple fields mapped to Github V4 api
 type PullRequest struct {
 	BaseRefName string
 	Body        string
@@ -29,20 +34,17 @@ type PullRequest struct {
 	Url         string
 }
 
-// SetBody generate the body pull request based on the template PULLREQUESTBODY
-func SetBody(changelog string) (body string, err error) {
+// SetBody generates the body pull request based on PULLREQUESTBODY
+func SetBody(changelog Changelog) (body string, err error) {
 	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
 
 	body = ""
 
 	buffer := new(bytes.Buffer)
 
-	type params struct {
-		Changelog string
-	}
+	fmt.Println(changelog)
 
-	err = t.Execute(buffer, params{
-		Changelog: changelog})
+	err = t.Execute(buffer, changelog)
 
 	if err != nil {
 		return "", err

@@ -67,6 +67,7 @@ func (s *Source) Execute() error {
 		}
 
 		spec = &c
+		changelog = &c
 
 	case "maven":
 		m := maven.Maven{}
@@ -102,6 +103,10 @@ func (s *Source) Execute() error {
 		if err != nil {
 			return err
 		}
+	} else if changelog == nil && s.Changelog == "" {
+		s.Changelog = "We couldn't identify a way to automatically retrieve changelog information"
+	} else {
+		return fmt.Errorf("Something weird happened while setting changelog")
 	}
 
 	if len(s.Replaces) > 0 {
@@ -113,7 +118,13 @@ func (s *Source) Execute() error {
 		s.Output = output
 	}
 
-	fmt.Println(s.Changelog)
+	if len(s.Changelog) > 0 {
+		fmt.Printf("\n\n%s:\n", strings.ToTitle("Changelog"))
+		fmt.Printf("%s\n", strings.Repeat("=", len("Changelog")+1))
+
+		fmt.Printf("%s\n", s.Changelog)
+
+	}
 
 	return nil
 }

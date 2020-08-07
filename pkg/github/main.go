@@ -12,21 +12,28 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// Changelog contains various information used to describe target changes
+type Changelog struct {
+	Description string
+	Report      string
+}
+
 // Github contains settings to interact with Github
 type Github struct {
-	Owner        string
-	Description  string
-	Repository   string
-	Username     string
-	Token        string
-	URL          string
-	Version      string
-	Name         string
-	directory    string
-	Branch       string
-	remoteBranch string
-	User         string
-	Email        string
+	Owner                  string
+	Description            string
+	PullRequestDescription Changelog `yaml:"-"`
+	Repository             string
+	Username               string
+	Token                  string
+	URL                    string
+	Version                string
+	Name                   string
+	directory              string
+	Branch                 string
+	remoteBranch           string
+	User                   string
+	Email                  string
 }
 
 // GetDirectory returns the local git repository path.
@@ -226,7 +233,7 @@ func (g *Github) Changelog(name string) (string, error) {
 		return "", err
 	}
 
-	changelog := fmt.Sprintf("\nRelease published on the %v at the url %v\n%v\n",
+	changelog := fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v\n",
 		query.Repository.Release.PublishedAt.String(),
 		query.Repository.Release.Url,
 		query.Repository.Release.Description)
@@ -337,7 +344,7 @@ func (g *Github) OpenPullRequest() {
 	maintainerCanModify := true
 	draft := false
 
-	bodyPR, err := SetBody(g.Description)
+	bodyPR, err := SetBody(g.PullRequestDescription)
 
 	if err != nil {
 		fmt.Println(err)
