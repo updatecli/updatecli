@@ -7,6 +7,7 @@ require (
 	github.com/go-git/go-git/v5 v5.2.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mitchellh/mapstructure v1.3.3
+	github.com/moby/buildkit v0.7.2
 	github.com/pelletier/go-toml v1.8.0 // indirect
 	github.com/shurcooL/githubv4 v0.0.0-20200802174311-f27d2ca7f6d5
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f //indirect
@@ -22,4 +23,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	helm.sh/helm/v3 v3.2.4
 	sigs.k8s.io/yaml v1.2.0
+)
+
+replace (
+	github.com/containerd/containerd => github.com/containerd/containerd v1.4.0-beta.2.0.20200730150746-fa1220fce33f
+	github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200310163718-4634ce647cf2+incompatible
 )
