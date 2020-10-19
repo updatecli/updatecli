@@ -93,9 +93,10 @@ func (y *Yaml) Condition() (bool, error) {
 	return exist, nil
 }
 
-// isPositionKey checks if key use the array position format
+// isPositionKey checks if key use the array position like agents[0].
+// where [0] references the position 0 in the array 'agents'
 func isPositionKey(key string) bool {
-	matched, err := regexp.MatchString("^[[:alnum:]]*[[[:digit:]]*]$", key)
+	matched, err := regexp.MatchString("(.*)[[[:digit:]]+]$", key)
 
 	if err != nil {
 		fmt.Println(err)
@@ -105,11 +106,11 @@ func isPositionKey(key string) bool {
 
 func getPositionKeyValue(k string) (key string, position int, err error) {
 	if isPositionKey(k) {
-		re := regexp.MustCompile(`^([[:alnum:]]*)\[[[:digit:]]*\]$`)
+		re := regexp.MustCompile(`^(.*)\[[[:digit:]]*\]$`)
 		keys := re.FindStringSubmatch(k)
 		key = keys[1]
 
-		re = regexp.MustCompile(`^[[:alnum:]]*\[([[:digit:]]*)\]$`)
+		re = regexp.MustCompile(`^.*\[([[:digit:]]*)\]$`)
 
 		positions := re.FindStringSubmatch(k)
 
@@ -121,16 +122,9 @@ func getPositionKeyValue(k string) (key string, position int, err error) {
 		}
 
 	} else {
-		if strings.ContainsAny(k, "_?:,[]{}#&*!|>`\"%") {
-			key = ""
-			position = -1
-			err = fmt.Errorf("Error: key '%s' cannot contains yaml special characters", k)
-
-		} else {
-			key = k
-			position = -1
-			err = nil
-		}
+		key = k
+		position = -1
+		err = nil
 	}
 
 	return key, position, err
