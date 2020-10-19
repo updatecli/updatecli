@@ -1,7 +1,6 @@
 package yaml
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -80,27 +79,27 @@ func TestGetPositionKeyValue(t *testing.T) {
 		},
 		{
 			key:              "[0]image",
-			expectedKey:      "",
+			expectedKey:      "[0]image",
 			expectedPosition: -1,
-			expectedError:    errors.New("Error: key '[0]image' cannot contains yaml special characters"),
+			expectedError:    nil,
 		},
 		{
 			key:              "image[x]",
-			expectedKey:      "",
+			expectedKey:      "image[x]",
 			expectedPosition: -1,
-			expectedError:    fmt.Errorf("Error: key 'image[x]' cannot contains yaml special characters"),
+			expectedError:    nil,
 		},
 		{
 			key:              "im[0]age",
-			expectedKey:      "",
+			expectedKey:      "im[0]age",
 			expectedPosition: -1,
-			expectedError:    fmt.Errorf("Error: key 'im[0]age' cannot contains yaml special characters"),
+			expectedError:    nil,
 		},
 		{
 			key:              "#image",
-			expectedKey:      "",
+			expectedKey:      "#image",
 			expectedPosition: -1,
-			expectedError:    fmt.Errorf("Error: key '#image' cannot contains yaml special characters"),
+			expectedError:    nil,
 		},
 	}
 
