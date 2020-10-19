@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -313,5 +314,42 @@ func TestReplace(t *testing.T) {
 		if oldVersion != d.expectedOldVersion {
 			t.Errorf("Old Version mismatch for key %v! expected %v, got %v", d.key, d.expectedOldVersion, oldVersion)
 		}
+	}
+}
+
+func TestIndent(t *testing.T) {
+
+	inputData := `
+image:
+  repository: nginx
+image4:
+- c
+- d
+- f
+`
+	outputData := `image:
+    repository: apache
+image4:
+    - c
+    - d
+    - f
+`
+	out := yaml.Node{}
+
+	err := yaml.Unmarshal([]byte(inputData), &out)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	replace(&out, []string{"image", "repository"}, "apache", 1)
+
+	raw, err := yaml.Marshal(&out)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if !(reflect.DeepEqual(raw, []byte(outputData))) {
+		t.Errorf("Wrong Yaml output\nexpected:\t%#v\n\ngot:\t\t%#v\n", outputData, string(raw))
 	}
 }
