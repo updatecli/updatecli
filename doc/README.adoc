@@ -19,15 +19,29 @@ A docker image is also available on https://hub.docker.com/r/olblak/updatecli[Do
 
 'updateCli' is a tool that updates files according to a custom update strategy definition. Once your strategy has been defined, just call one of the following:
 
-- `updatecli diff --config strategy.yaml`
-- `updatecli apply --config strategy.yaml` 
-- `updatecli help`
+Using a yaml strategy
+```
+updatecli diff --config strategy.yaml
+updatecli apply --config strategy.yaml
+updatecli help
+```
 
-or using the docker image
+Using a go template strategy
+```
+updatecli diff --config strategy.tpl --values values.yaml
+updatecli apply --config strategy.tpl --values values.yaml
+updatecli help
+```
 
-- `docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.21 diff --config /home/updatecli/updateCli.yaml`
-- `docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.21 apply --config /home/updatecli/updateCli.yaml`
-- `docker run -i -t olblak/updatecli:v0.0.21 help`
+Using a docker image
+
+```
+ docker run -i -t -v "$PWD/updateCli.yaml":/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.21 diff --config /updatecli/updateCli.yaml
+
+ docker run -i -t -v "$PWD/updateCli.yaml":/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.21 apply --config /updatecli/updateCli.yaml
+
+ docker run -i -t olblak/updatecli:v0.0.21 help
+```
 
 == Strategy
 
@@ -135,7 +149,7 @@ A List of replacer rules can be provided to modify the value retrieved from sour
 ```
 source:
   kind: githubRelease
-  replaces: 
+  replaces:
     - from: "string"
       to: ""
     - from: "substring1"
@@ -307,7 +321,7 @@ targets:
 ```
 
 == Continuous Update
-Updatecli is better when executed on a regular basis.
+Updatecli is better when executed on a regular basis so let see how to use a CI environment for that.
 
 === Jenkins
 As long as your Jenkins instance has the right credential to commit to your targeted repositories, you can use the following example
@@ -321,7 +335,7 @@ pipeline {
     kubernetes {
       label 'updatecli'
       yamlFile 'PodTemplates.yaml'
-    }   
+    }
   }
   environment {
     UPDATECLI_GITHUB_TOKEN  = credentials('updatecli-github-token')
@@ -337,15 +351,15 @@ pipeline {
         container('updatecli') {
           sh 'updatecli diff --config ./updateCli/updateCli.d --values ./updateCli/values.yaml'
         }
-      }   
-    }   
+      }
+    }
     stage('Apply Configuration Update') {
       steps {
         container('updatecli') {
           sh 'updatecli apply --config ./updateCli/updateCli.d --values ./updateCli/values.yaml'
         }
-      }   
-    }   
+      }
+    }
   }
 
 ```
