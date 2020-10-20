@@ -397,6 +397,15 @@ spec:
 
 In case you are using Github Action, you can create a file with following content in the Github repository containing your updatecli strategies.
 
+.updatecli/values.yaml
+```
+github:
+  user: "GitHub Actions"
+  email: "41898282+github-actions[bot]@users.noreply.github.com"
+  username: "github-actions"
+  token: "UPDATECLI_GITHUB_TOKEN"
+```
+
 ..github/workflows/updatecli.yaml
 ```
 name: Update CLI
