@@ -140,7 +140,7 @@ func (t *Target) Execute(source string, o *Options) (bool, error) {
 			y.Value,
 			y.Key,
 			y.File,
-			y.Key)
+			y.Value)
 
 		spec = &y
 
