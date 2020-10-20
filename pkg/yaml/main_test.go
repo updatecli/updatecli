@@ -1,7 +1,6 @@
 package yaml
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -27,6 +26,13 @@ image4:
 - c
 - d
 - f
+image5::tag: 1.17
+image6::tags: 
+- 1.17
+- 1.18
+image7@backend:
+  - repository: golang
+  - repository: nodejs
 `
 var data2 = `
 - image:
@@ -74,27 +80,27 @@ func TestGetPositionKeyValue(t *testing.T) {
 		},
 		{
 			key:              "[0]image",
-			expectedKey:      "",
+			expectedKey:      "[0]image",
 			expectedPosition: -1,
-			expectedError:    errors.New("Error: key '[0]image' cannot contains yaml special characters"),
+			expectedError:    nil,
 		},
 		{
 			key:              "image[x]",
-			expectedKey:      "",
+			expectedKey:      "image[x]",
 			expectedPosition: -1,
-			expectedError:    fmt.Errorf("Error: key 'image[x]' cannot contains yaml special characters"),
+			expectedError:    nil,
 		},
 		{
 			key:              "im[0]age",
-			expectedKey:      "",
+			expectedKey:      "im[0]age",
 			expectedPosition: -1,
-			expectedError:    fmt.Errorf("Error: key 'im[0]age' cannot contains yaml special characters"),
+			expectedError:    nil,
 		},
 		{
 			key:              "#image",
-			expectedKey:      "",
+			expectedKey:      "#image",
 			expectedPosition: -1,
-			expectedError:    fmt.Errorf("Error: key '#image' cannot contains yaml special characters"),
+			expectedError:    nil,
 		},
 	}
 
@@ -150,7 +156,19 @@ func TestIsPositionKey(t *testing.T) {
 			expected: true,
 		},
 		{
+			key:      "image&tags[0]",
+			expected: true,
+		},
+		{
+			key:      "image&tags\\[0\\]",
+			expected: false,
+		},
+		{
 			key:      "[0]image",
+			expected: false,
+		},
+		{
+			key:      "[0]image::tag",
 			expected: false,
 		},
 		{
@@ -160,6 +178,10 @@ func TestIsPositionKey(t *testing.T) {
 		{
 			key:      "im[0]age",
 			expected: false,
+		},
+		{
+			key:      "image7@backend[1]",
+			expected: true,
 		},
 	}
 
@@ -208,6 +230,16 @@ func TestReplace(t *testing.T) {
 			expectedValueFound: true,
 		},
 		{
+			key:                []string{"image5::tag"},
+			expectedOldVersion: "1.17",
+			expectedValueFound: true,
+		},
+		{
+			key:                []string{"image6::tags[0]"},
+			expectedOldVersion: "1.17",
+			expectedValueFound: true,
+		},
+		{
 			key:                []string{"image4[0]"},
 			expectedOldVersion: "c",
 			expectedValueFound: true,
@@ -221,6 +253,11 @@ func TestReplace(t *testing.T) {
 			key:                []string{"image4[10]"},
 			expectedOldVersion: "",
 			expectedValueFound: false,
+		},
+		{
+			key:                []string{"image7@backend[0]", "repository"},
+			expectedOldVersion: "golang",
+			expectedValueFound: true,
 		},
 	}
 
