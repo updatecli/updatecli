@@ -1,4 +1,6 @@
-## Documentation
+= Documentation
+:toc: left
+
 
 Updatecli is a tool to define and apply file update strategy.
 
@@ -8,12 +10,12 @@ It reads its configuration from a yaml or go template configuration file, then w
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source rule
 3. Target: Update and publish the target files based on a value retrieved from the source stage.
 
-## Installation
-Updatecli is available [here](https://github.com/olblak/updatecli/releases/latest).
+== Installation
+Updatecli is available https://github.com/olblak/updatecli/releases/latest[here] (Windows,Linux,OSX).
 
-A docker image is also available on [DockerHub](https://hub.docker.com/r/olblak/updatecli)
+A docker image is also available on https://hub.docker.com/r/olblak/updatecli[Dockerhub]
 
-## Usage
+== Usage
 
 'updateCli' is a tool that updates files according to a custom update strategy definition. Once your strategy has been defined, just call one of the following:
 
@@ -23,11 +25,17 @@ A docker image is also available on [DockerHub](https://hub.docker.com/r/olblak/
 
 or using the docker image
 
-- `docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.20 diff --config /home/updatecli/updateCli.yaml`
-- `docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.20 apply --config /home/updatecli/updateCli.yaml`
-- `docker run -i -t olblak/updatecli:v0.0.20 help`
+- `docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.21 diff --config /home/updatecli/updateCli.yaml`
+- `docker run -i -t -v "$PWD/updateCli.yaml":/home/updatecli/updateCli.yaml:ro olblak/updatecli:v0.0.21 apply --config /home/updatecli/updateCli.yaml`
+- `docker run -i -t olblak/updatecli:v0.0.21 help`
 
-## Strategy
+== Strategy
+
+A strategy defines how to update a target file and it describe three stages
+
+1. Source: Based on a rule fetch a value that will be injected in later stages
+2. Conditions: Ensure that conditions are met based on the value retrieved during the source rule
+3. Target: Update and publish the target files based on a value retrieved from the source stage.
 
 .strategy.yaml
 ```
@@ -63,9 +71,9 @@ We also provide a custom function called requireEnd to inject any environment va
 
 The strategy file can either be using a yaml format or a golang template.
 
-### Source
+=== Source
 
-#### Github Release
+==== Github Release
 
 This source will get a release version from Github Release api. If `latest` is specified, it retrieves the version referenced by 'latest'.
 
@@ -83,7 +91,7 @@ source:
 
 **A configuration using go template can be used to retrieve the environment variable instead of writing secrets in files, cfr later.**
 
-#### DockerRegistry
+==== DockerRegistry
 
 This source will get a docker image tag from a docker registry and return its digest, so we can always reference a specific image tag like `latest`.
 
@@ -96,7 +104,7 @@ source:
     tag: "Docker Image Tag to fetch the checksum"
 ```
 
-#### HelmChart
+==== HelmChart
 This source will get the latest helm chart version available.
 
 ```
@@ -107,7 +115,7 @@ source
     name: jenkins
 ```
 
-#### Maven
+==== Maven
 
 This source will get the latest maven artifact version.
 
@@ -121,7 +129,7 @@ source:
 	artifactID: "jenkins-war",
 ```
 
-#### Replacer
+==== Replacer
 A List of replacer rules can be provided to modify the value retrieved from source.
 
 ```
@@ -141,7 +149,7 @@ source:
 ```
 
 
-#### Prefix/Postfix
+==== Prefix/Postfix
 A prefix and/or postfix can be added to any value retrieved from the source.
 This prefix/postfix will be used by 'condition' checks, then by every target unless one is explicitly defined in a target.
 
@@ -160,12 +168,12 @@ source:
 ```
 
 
-### Condition
+=== Condition
 During this stage, we check if conditions are met based on the value retrieved from the source stage otherwise we can skip the "target" stage.
 
-#### dockerImage
+==== dockerImage
 
-This condition checks if a docker image tag is available from a Docker Registry.
+This condition checks if a docker image tag is available on a Docker Registry.
 
 ```
 conditions:
@@ -176,7 +184,7 @@ conditions:
       url: _Docker Registry url_ #Not mandatory
 ```
 
-#### Maven
+==== Maven
 This condition checks if the source value is available on a maven repository
 
 ```
@@ -189,7 +197,7 @@ condition:
 	artifactID: "jenkins-war",
 ```
 
-#### HelmChart
+==== HelmChart
 This source checks if a helm chart exist, a version can also be specified
 
 ```
@@ -201,11 +209,11 @@ source
     version: 'x.y.x' (Optional)
 ```
 
-### Targets
+=== Targets
 
 "Targets" stage will update the definition for every target based on the value returned during the source stage if all conditions are met.
 
-#### yaml
+==== yaml
 
 This target will update a yaml file base a value retrieve during the source stage.
 
@@ -225,37 +233,54 @@ targets:
 NOTE: A key can either be string like 'key' or a position in an array like `array[0]` where 0 means the first element of `array`.
 Keys and arrays can also be grouped with dot like `key.array[3].key`.
 
-### scm
+=== Misc
+This category describe settings which can be use in any stages.
+
+==== scm
 Depending on the situation a specific scm block can be provided to the target and condition stage. At the moment it supports github and git.
 
-#### git
+===== git
 Git push every change on the remote git repository
 
 ```
-git:
-  url: "git repository url"
-  branch: "git branch to push changes"
-  user: "git user to push from changes"
-  email: "git user email to push from change"
-  directory: "directory where to clone the git repository"
+targets:
+  id:
+    kind: yaml
+    spec:
+      file: "Yaml file path from the root repository"
+      key: "yaml key to update"
+    scm:
+      git:
+        url: "git repository url"
+        branch: "git branch to push changes"
+        user: "git user to push from changes"
+        email: "git user email to push from change"
+        directory: "directory where to clone the git repository"
 ```
 
-#### github
+===== github
 Github  push every change on a temporary branch then open a pull request
 
 ```
-github:
-  user: "git user to push from changes"
-  email: "git user email to push from change"
-  directory: "directory where to clone the git repository"
-  owner: "github owner"
-  repository: "github repository"
-  token: "github token with enough permission on repository"
-  username: "github username used for push git changes"
-  branch: "git branch where to push changes"
+targets:
+  id:
+    kind: yaml
+    spec:
+      file: "Yaml file path from the root repository"
+      key: "yaml key to update"
+    scm:
+      github:
+        user: "git user to push from changes"
+        email: "git user email to push from change"
+        directory: "directory where to clone the git repository"
+        owner: "github owner"
+        repository: "github repository"
+        token: "github token with enough permission on repository"
+        username: "github username used for push git changes"
+        branch: "git branch where to push changes"
 ```
 
-### Prefix/Postfix
+==== Prefix/Postfix
 A prefix and/or postfix can be added based on the value retrieved from the source.
 This prefix/postfix won't be used by 'condition' checks. Any value specified at the target level override values defined in the source.
 
@@ -281,12 +306,115 @@ targets:
         branch: "master"
 ```
 
-## Examples
+== Continuous Update
+Updatecli is better when executed on a regular basis.
 
-This project is currently used to automate Jenkins OSS kubernetes cluster
-* [UpdateCli configuration](https://github.com/jenkins-infra/charts/tree/master/updateCli/updateCli.d)
-* [Jenkinsfile](https://github.com/jenkins-infra/charts/blob/master/Jenkinsfile_k8s#L35L48)
-* [Results]()
-  * [Docker Digest](https://github.com/jenkins-infra/charts/pull/188)
-  * [Maven Repository](https://github.com/jenkins-infra/charts/pull/179)
-  * [Github Release](https://github.com/jenkins-infra/charts/pull/145)
+=== Jenkins
+As long as your Jenkins instance has the right credential to commit to your targeted repositories, you can use the following example
+
+*Remark*: It assumes using Jenkins on kubernetes with the https://plugins.jenkins.io/kubernetes/[kubernetes-plugin]
+
+.Jenkinsfile
+```
+pipeline {
+  agent {
+    kubernetes {
+      label 'updatecli'
+      yamlFile 'PodTemplates.yaml'
+    }   
+  }
+  environment {
+    UPDATECLI_GITHUB_TOKEN  = credentials('updatecli-github-token')
+  }
+
+  triggers {
+    cron 'H/30 * * * *'
+  }
+
+  stages {
+    stage('Check Configuration Update') {
+      steps {
+        container('updatecli') {
+          sh 'updatecli diff --config ./updateCli/updateCli.d --values ./updateCli/values.yaml'
+        }
+      }   
+    }   
+    stage('Apply Configuration Update') {
+      steps {
+        container('updatecli') {
+          sh 'updatecli apply --config ./updateCli/updateCli.d --values ./updateCli/values.yaml'
+        }
+      }   
+    }   
+  }
+
+```
+.PodTemplates.yaml
+```
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  labels:
+    jenkins: "agent"
+    job: "updatecli"
+spec:
+  containers:
+  - args:
+    - "99d"
+    command:
+    - "sleep"
+    image: "olblak/updatecli:v0.0.21"
+    imagePullPolicy: "Always"
+    name: "updatecli"
+    resources:
+      limits:
+        memory: "512Mi"
+        cpu: "400m"
+      requests:
+        memory: "512Mi"
+        cpu: "400m"
+    securityContext:
+      privileged: false
+    tty: true
+  restartPolicy: "Never"
+```
+
+=== Github Action
+
+In case you are using Github Action, you can create a file with following content in the Github repository containing your updatecli strategies.
+
+..github/workflows/updatecli.yaml
+```
+name: Update CLI
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1'
+
+jobs:
+  update_cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Update CLI
+        env:
+          UPDATECLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sSfL -o updatecli https://github.com/olblak/updatecli/releases/download/v0.0.21/updatecli.linux.amd64
+          chmod +x ./updatecli
+          ./updatecli diff --config ./updateCli/updateCli.d --values ./updateCli/values.yaml
+          ./updatecli apply --config ./updateCli/updateCli.d --values ./updateCli/values.yaml
+```
+
+== Examples
+
+This project is currently used in the Jenkins Infrastructure project https://www.jenkins.io/projects/infrastructure/[link]
+
+* https://github.com/jenkins-infra/charts/tree/master/updateCli/updateCli.d[UpdateCli configuration]
+* https://github.com/jenkins-infra/charts/blob/master/Jenkinsfile_k8s#L35L48[Jenkinsfile]
+* Results
+** https://github.com/jenkins-infra/charts/pull/188[Docker Digest]
+** https://github.com/jenkins-infra/charts/pull/179[Maven Repository]
+** https://github.com/jenkins-infra/charts/pull/145[Github Release]
