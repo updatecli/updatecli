@@ -229,7 +229,15 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 					fmt.Println(err)
 				}
 			} else {
-				if entry.Content[index+1].Kind == yaml.ScalarNode {
+				if entry.Content[index+1].Kind == yaml.ScalarNode && !isPositionKey(keys[0]) {
+					/*
+						It means we reached the key/value
+						that need to be updated like :
+						array:
+							- name: key0
+							- name: key1
+					*/
+
 					column = entry.Content[index+1].Column
 
 					oldVersion = entry.Content[index+1].Value
@@ -237,13 +245,21 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 					valueFound = true
 					break
 
-				} else if entry.Content[index+1].Kind == yaml.SequenceNode {
+				} else if entry.Content[index+1].Kind == yaml.SequenceNode && isPositionKey(keys[0]) {
+					/*
+						It means we reached the list of values
+						that need to be updated like :
+						array:
+							- key0
+							- key1
+					*/
 
 					if len(entry.Content[index+1].Content) < position {
 						return false, "", 0
 					}
 
 					oldVersion = entry.Content[index+1].Content[position].Value
+					entry.Content[index+1].Content[position].SetString(version)
 					valueFound = true
 					column = entry.Content[index+1].Content[position].Column
 
@@ -259,6 +275,7 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 			break
 		}
 	}
+
 	return valueFound, oldVersion, column
 }
 
