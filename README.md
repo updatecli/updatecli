@@ -16,7 +16,7 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
 3. Target: Update and publish the target files based on a value retrieved from the source stage.
 
-**[Documentation](doc/README.md)**
+**[Documentation](doc/README.adoc)**
 
 **[Contributing](/CONTRIBUTING.md)**
 
