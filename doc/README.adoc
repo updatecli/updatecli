@@ -1,5 +1,6 @@
 = Documentation
 :toc: left
+:toclevels: 3
 
 
 Updatecli is a tool to define and apply file update strategy.
