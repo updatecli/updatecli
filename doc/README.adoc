@@ -224,6 +224,22 @@ source
     version: 'x.y.x' (Optional)
 ```
 
+==== yaml
+Yaml key/value can be specified as condition in order to apply the target stage
+
+```
+conditions:
+  uniqConditionName:
+    name: "Test key/value presence"
+    kind: yaml
+    spec:
+      file: "file.yaml"
+      key: "key[0]"
+      value:  "value"
+    scm:
+      ...
+```
+
 === Targets
 
 "Targets" stage will update the definition for every target based on the value returned during the source stage if all conditions are met.
