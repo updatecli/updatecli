@@ -162,7 +162,7 @@ func (g *Github) Init(source string, name string) error {
 
 func (g *Github) setDirectory(version string) {
 
-	directory := fmt.Sprintf("%v/%v/%v/%v", os.TempDir(), g.Owner, g.Repository, g.Version)
+	directory := os.path.Join(os.TempDir(), "updatecli", g.Owner, g.Repository)
 
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
 

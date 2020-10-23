@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"os"
+	"path"
 
 	git "github.com/olblak/updateCli/pkg/git/generic"
 )
@@ -35,7 +36,7 @@ func (g *Git) Init(source string, name string) error {
 
 func (g *Git) setDirectory(version string) {
 
-	directory := fmt.Sprintf("%v/%v", os.TempDir(), g.URL)
+	directory := path.Join(os.TempDir(), "updatecli", g.URL)
 
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
 
