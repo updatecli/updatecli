@@ -23,7 +23,7 @@ jobs:
         id: prep
         run: |
           DOCKER_IMAGE=olblak/updatecli
-          REGISTRY_GITHUB_IMAGE=docker.pkg.github.com/olblak/updatecli/updatecli
+          REGISTRY_GITHUB_IMAGE=ghcr.io/olblak/updatecli
           VERSION=noop
           if [ "${{ github.event_name }}" = "schedule" ]; then
             VERSION=nightly
@@ -64,9 +64,9 @@ jobs:
       - name: Login to GitHub Docker Registry
         uses: docker/login-action@v1 
         with:
-          registry: docker.pkg.github.com
-          username: github-actions
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
 
       - name: Build and push
         id: docker_build
