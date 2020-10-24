@@ -8,6 +8,8 @@ import (
 )
 
 var (
+	diffClean bool
+
 	diffCmd = &cobra.Command{
 		Use:   "diff",
 		Short: "diff shows if targets update are needed",
@@ -19,7 +21,7 @@ var (
 
 			e.Options.Target.Commit = false
 			e.Options.Target.Push = false
-			e.Options.Target.Clean = true
+			e.Options.Target.Clean = diffClean
 			e.Options.Target.DryRun = true
 
 			run(
@@ -32,4 +34,5 @@ var (
 func init() {
 	diffCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "config file (default is ./updateCli.yaml)")
 	diffCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "values file use for templating (required {.tpl,.tmpl} config)")
+	diffCmd.Flags().BoolVarP(&diffClean, "clean", "", true, "clean working directory")
 }
