@@ -21,9 +21,15 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "updateCli",
-		Short: "updateCli is a tool to automate file updates",
+		Short: "Updatecli is a tool used to define and apply file update strategies. ",
 		Long: `
-updateCli is a tool to automate file updates based on source rule.`,
+Updatecli is a tool uses to apply file update strategies.
+It reads a yaml or a go template configuration file, then works into three stages:
+
+1. Source: Based on a rule fetch a value that will be injected in later stages.
+2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
+3. Target: Update and publish the target files based on a value retrieved from the source stage.
+`,
 	}
 )
 

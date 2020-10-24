@@ -23,6 +23,6 @@ var (
 )
 
 func init() {
-	showCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "config file (default is ./updateCli.yaml)")
-	showCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "values file uses for templating (required {.tpl,.tmpl} as config)")
+	showCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "Sets config file or directory. (default: './updateCli.yaml')")
+	showCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "Sets values file uses for templating (required {.tpl,.tmpl} config)")
 }
