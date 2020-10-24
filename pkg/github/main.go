@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"time"
 
 	git "github.com/olblak/updateCli/pkg/git/generic"
+	"github.com/olblak/updateCli/pkg/tmp"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
 )
@@ -162,7 +164,7 @@ func (g *Github) Init(source string, name string) error {
 
 func (g *Github) setDirectory(version string) {
 
-	directory := os.path.Join(os.TempDir(), "updatecli", g.Owner, g.Repository)
+	directory := path.Join(tmp.Directory, g.Owner, g.Repository)
 
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
 

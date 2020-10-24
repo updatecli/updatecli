@@ -8,6 +8,7 @@ import (
 	"github.com/olblak/updateCli/pkg/engine"
 	"github.com/olblak/updateCli/pkg/reports"
 	"github.com/olblak/updateCli/pkg/result"
+	"github.com/olblak/updateCli/pkg/tmp"
 
 	"github.com/spf13/cobra"
 )
@@ -46,6 +47,15 @@ func run(command string) {
 
 	files := GetFiles(e.Options.File)
 	reports := reports.Reports{}
+	err := tmp.Create()
+	if err != nil {
+		fmt.Printf("\n\u26A0 %s\n", err)
+		os.Exit(1)
+	}
+
+	if applyClean && diffClean {
+		defer tmp.Clean()
+	}
 
 	for _, file := range files {
 

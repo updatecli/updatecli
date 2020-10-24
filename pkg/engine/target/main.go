@@ -77,10 +77,6 @@ func (t *Target) Execute(source string, o *Options) (bool, error) {
 
 		err = s.Init(source, t.Name)
 
-		if o.Clean {
-			defer s.Clean()
-		}
-
 		if err != nil {
 			return false, err
 		}
