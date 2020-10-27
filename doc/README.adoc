@@ -442,7 +442,7 @@ jobs:
         env:
           UPDATECLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          curl -sSfL -o updatecli https://github.com/olblak/updatecli/releases/download/v0.0.21/updatecli.linux.amd64
+          curl -sSfL -o updatecli https://github.com/olblak/updatecli/releases/latest/download/updatecli.linux.amd64
           chmod +x ./updatecli
           ./updatecli diff --config ./updateCli/updateCli.d --values ./updateCli/values.yaml
           ./updatecli apply --config ./updateCli/updateCli.d --values ./updateCli/values.yaml
