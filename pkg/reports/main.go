@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/olblak/updateCli/pkg/config"
 	"github.com/olblak/updateCli/pkg/result"
 )
 
@@ -58,36 +57,6 @@ func (r *Reports) Show() error {
 	fmt.Println(reports)
 
 	return nil
-}
-
-// New init a new reports
-func New(config *config.Config) (report Report) {
-
-	report.Result = result.FAILURE
-
-	report.Source = Stage{
-		Name:   config.Source.Name,
-		Kind:   config.Source.Kind,
-		Result: result.FAILURE,
-	}
-
-	for _, condition := range config.Conditions {
-		report.Conditions = append(report.Conditions, Stage{
-			Name:   condition.Name,
-			Kind:   condition.Kind,
-			Result: result.FAILURE,
-		})
-	}
-
-	for _, target := range config.Targets {
-		report.Targets = append(report.Targets, Stage{
-			Name:   target.Name,
-			Kind:   target.Kind,
-			Result: result.FAILURE,
-		})
-	}
-
-	return report
 }
 
 // Summary display a summary of
