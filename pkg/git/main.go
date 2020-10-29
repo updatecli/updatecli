@@ -3,8 +3,10 @@ package git
 import (
 	"fmt"
 	"os"
+	"path"
 
 	git "github.com/olblak/updateCli/pkg/git/generic"
+	"github.com/olblak/updateCli/pkg/tmp"
 )
 
 // Git contains settings to manipulate a git repository.
@@ -35,7 +37,7 @@ func (g *Git) Init(source string, name string) error {
 
 func (g *Git) setDirectory(version string) {
 
-	directory := fmt.Sprintf("%v/%v", os.TempDir(), g.URL)
+	directory := path.Join(tmp.Directory, g.URL)
 
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
 

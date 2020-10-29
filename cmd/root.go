@@ -8,6 +8,7 @@ import (
 	"github.com/olblak/updateCli/pkg/engine"
 	"github.com/olblak/updateCli/pkg/reports"
 	"github.com/olblak/updateCli/pkg/result"
+	"github.com/olblak/updateCli/pkg/tmp"
 
 	"github.com/spf13/cobra"
 )
@@ -20,9 +21,15 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "updateCli",
-		Short: "updateCli is a tool to automate file updates",
+		Short: "Updatecli is a tool used to define and apply file update strategies. ",
 		Long: `
-updateCli is a tool to automate file updates based on source rule.`,
+Updatecli is a tool uses to apply file update strategies.
+It reads a yaml or a go template configuration file, then works into three stages:
+
+1. Source: Based on a rule fetch a value that will be injected in later stages.
+2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
+3. Target: Update and publish the target files based on a value retrieved from the source stage.
+`,
 	}
 )
 
@@ -46,6 +53,15 @@ func run(command string) {
 
 	files := GetFiles(e.Options.File)
 	reports := reports.Reports{}
+	err := tmp.Create()
+	if err != nil {
+		fmt.Printf("\n\u26A0 %s\n", err)
+		os.Exit(1)
+	}
+
+	if applyClean && diffClean {
+		defer tmp.Clean()
+	}
 
 	for _, file := range files {
 
