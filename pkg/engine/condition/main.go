@@ -50,8 +50,6 @@ func (c *Condition) Execute(source string) (bool, error) {
 
 		err = s.Init(source, c.Name)
 
-		defer s.Clean()
-
 		if err != nil {
 			return false, err
 		}
