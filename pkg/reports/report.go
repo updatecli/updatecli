@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/olblak/updateCli/pkg/config"
+	"github.com/olblak/updateCli/pkg/result"
 )
 
 const (
@@ -66,31 +66,41 @@ type Report struct {
 	Targets    []Stage
 }
 
-// Update report based on latest information
-func (r *Report) Update(config *config.Config) {
+// Init init a new report for a specific configuration
+//func (config *Config) InitReport() (report *Report) {
+func Init(
+	name string,
+	source Stage,
+	conditions []Stage,
+	targets []Stage,
+) (report Report) {
 
-	r.Source.Kind = config.Source.Kind
-	r.Source.Name = config.Source.Name
-	r.Source.Result = config.Source.Result
+	report.Name = name
+	report.Result = result.FAILURE
 
-	i := 0
-	for _, condition := range config.Conditions {
-		c := &r.Conditions[i]
-		c.Name = condition.Name
-		c.Kind = condition.Kind
-		c.Result = condition.Result
-		i++
+	report.Source = Stage{
+		Name:   source.Name,
+		Kind:   source.Kind,
+		Result: result.FAILURE,
 	}
 
-	i = 0
-	for _, target := range config.Targets {
-		t := &r.Targets[i]
-		t.Name = target.Name
-		t.Kind = target.Kind
-		t.Result = target.Result
-		i++
+	for _, condition := range conditions {
+		report.Conditions = append(report.Conditions, Stage{
+			Name:   condition.Name,
+			Kind:   condition.Kind,
+			Result: result.FAILURE,
+		})
 	}
 
+	for _, target := range targets {
+		report.Targets = append(report.Targets, Stage{
+			Name:   target.Name,
+			Kind:   target.Kind,
+			Result: result.FAILURE,
+		})
+	}
+
+	return report
 }
 
 // String return a report as a string
