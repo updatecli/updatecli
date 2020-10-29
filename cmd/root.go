@@ -3,12 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/olblak/updateCli/pkg/engine"
-	"github.com/olblak/updateCli/pkg/reports"
 	"github.com/olblak/updateCli/pkg/result"
-	"github.com/olblak/updateCli/pkg/tmp"
 
 	"github.com/spf13/cobra"
 )
@@ -51,64 +48,33 @@ func init() {
 
 func run(command string) {
 
-	files := GetFiles(e.Options.File)
-	reports := reports.Reports{}
-	err := tmp.Create()
-	if err != nil {
-		fmt.Printf("\n\u26A0 %s\n", err)
-		os.Exit(1)
-	}
-
 	if applyClean && diffClean {
-		defer tmp.Clean()
+		defer e.Clean()
 	}
 
-	for _, file := range files {
+	err := e.Prepare()
 
-		switch command {
-		case "apply":
-			report, err := e.Run(file)
-			if err != nil {
-				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
-			}
-			reports = append(reports, report)
-		case "diff":
-			report, err := e.Run(file)
-			if err != nil {
-				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
-			}
-			reports = append(reports, report)
-		case "show":
-			err := e.Show(file)
-			if err != nil {
-				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
-			}
-		default:
-			fmt.Println("Wrong command")
-		}
-	}
-
-	reports.Show()
-	reports.Summary()
-	fmt.Printf("\n")
-}
-
-// GetFiles return an array with every valid files
-func GetFiles(root string) (files []string) {
-
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			fmt.Printf("\n\u26A0 File %s: %s\n", path, err)
-			os.Exit(1)
-		}
-		if info.Mode().IsRegular() {
-			files = append(files, path)
-		}
-		return nil
-	})
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
 	}
 
-	return files
+	switch command {
+	case "apply":
+		err = e.Run()
+		if err != nil {
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+	case "diff":
+		err = e.Run()
+		if err != nil {
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+	case "show":
+		err := e.Show()
+		if err != nil {
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+	default:
+		fmt.Println("Wrong command")
+	}
 }
