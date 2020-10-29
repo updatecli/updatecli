@@ -2,12 +2,17 @@ package engine
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/config"
+	"github.com/olblak/updateCli/pkg/engine/target"
 	"github.com/olblak/updateCli/pkg/github"
 	"github.com/olblak/updateCli/pkg/reports"
 	"github.com/olblak/updateCli/pkg/result"
+	"github.com/olblak/updateCli/pkg/scm"
+	"github.com/olblak/updateCli/pkg/tmp"
 
 	"path/filepath"
 	"strings"
@@ -17,91 +22,275 @@ var engine Engine
 
 // Engine defined parameters for a specific engine run
 type Engine struct {
-	conf    config.Config
-	Options Options
-	Report  reports.Report
+	configurations []config.Config
+	Options        Options
+	Reports        reports.Reports
+}
+
+// Clean remove every traces from an updatecli run
+func (e *Engine) Clean() (err error) {
+	tmp.Clean()
+	return err
+}
+
+// GetFiles return an array with every valid files
+func GetFiles(root string) (files []string) {
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("\n\u26A0 File %s: %s\n", path, err)
+			os.Exit(1)
+		}
+		if info.Mode().IsRegular() {
+			files = append(files, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return files
+}
+
+// InitSCM search and clone only once SCM configurations found
+func (e *Engine) InitSCM() (err error) {
+
+	hashes := []uint64{}
+
+	for _, conf := range e.configurations {
+		for _, condition := range conf.Conditions {
+			if len(condition.Scm) > 0 {
+				hash, err := hashstructure.Hash(condition.Scm, nil)
+				if err != nil {
+					fmt.Println(hash)
+				}
+				found := false
+
+				for _, h := range hashes {
+					if h == hash {
+						found = true
+					}
+				}
+
+				if !found {
+					s, err := scm.Unmarshal(condition.Scm)
+
+					if err != nil {
+						fmt.Println(err)
+					}
+					hashes = append(hashes, hash)
+					s.Clone()
+				}
+			}
+		}
+		for _, target := range conf.Targets {
+			if len(target.Scm) > 0 {
+				hash, err := hashstructure.Hash(target.Scm, nil)
+				if err != nil {
+					fmt.Println(hash)
+				}
+				found := false
+
+				for _, h := range hashes {
+					if h == hash {
+						found = true
+					}
+				}
+
+				if !found {
+					s, err := scm.Unmarshal(target.Scm)
+
+					if err != nil {
+					}
+					fmt.Println(err)
+					hashes = append(hashes, hash)
+					s.Clone()
+				}
+			}
+		}
+	}
+
+	return err
+}
+
+// Prepare run every actions needed before going further
+func (e *Engine) Prepare() (err error) {
+	err = tmp.Create()
+	if err != nil {
+		fmt.Printf("\n\u26A0 %s\n", err)
+		os.Exit(1)
+	}
+
+	err = e.ReadConfigurations()
+
+	if err != nil {
+		fmt.Printf("\n\u26A0 %s\n", err)
+	}
+
+	err = e.InitSCM()
+
+	if err != nil {
+		fmt.Printf("\n\u26A0 %s\n", err)
+	}
+
+	return err
+}
+
+// ReadConfigurations read every strategies configuration
+func (e *Engine) ReadConfigurations() error {
+	// Read every strategy files
+	for _, cfgFile := range GetFiles(e.Options.File) {
+
+		c := config.Config{}
+
+		_, basename := filepath.Split(cfgFile)
+		cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
+
+		// fmt.Printf("\n\n%s\n", strings.Repeat("#", len(cfgFileName)+4))
+		// fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
+		// fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
+
+		c.Name = strings.ToTitle(cfgFileName)
+
+		err := c.ReadFile(cfgFile, e.Options.ValuesFile)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		e.configurations = append(e.configurations, c)
+	}
+	return nil
+
 }
 
 // Run run the full process one yaml file
-func (e *Engine) Run(cfgFile string) (report reports.Report, err error) {
+func (e *Engine) Run() (err error) {
 
-	_, basename := filepath.Split(cfgFile)
-	cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
+	for _, conf := range e.configurations {
 
-	fmt.Printf("\n\n%s\n", strings.Repeat("#", len(cfgFileName)+4))
-	fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
-	fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
+		fmt.Printf("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
+		fmt.Printf("# %s #\n", strings.ToTitle(conf.Name))
+		fmt.Printf("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 
-	err = e.conf.ReadFile(cfgFile, e.Options.ValuesFile)
-
-	if err != nil {
-		r := reports.Report{}
-		r.Result = result.FAILURE
-		r.Err = err.Error()
-		r.Name = strings.ToTitle(cfgFileName)
-		return r, err
-	}
-
-	e.Report = reports.New(&e.conf)
-	e.Report.Name = strings.ToTitle(cfgFileName)
-
-	err = e.conf.Source.Execute()
-
-	if err != nil {
-		return e.Report, err
-	}
-
-	if e.conf.Source.Output == "" {
-		e.conf.Source.Result = result.FAILURE
-		fmt.Printf("\n%s Something went wrong no value returned from Source", result.FAILURE)
-		return e.Report, nil
-	}
-
-	e.conf.Source.Result = result.SUCCESS
-	e.Report.Update(&e.conf)
-
-	if len(e.conf.Conditions) > 0 {
-		ok, err := e.conditions()
-		e.Report.Update(&e.conf)
-		if err != nil {
-			return e.Report, err
+		sourceStageReport := reports.Stage{
+			Name:   conf.Source.Name,
+			Kind:   conf.Source.Kind,
+			Result: result.FAILURE,
 		}
 
-		if !ok {
-			return e.Report, nil
-		}
-	}
+		conditionsStageReport := []reports.Stage{}
+		targetsStageReport := []reports.Stage{}
 
-	if len(e.conf.Targets) > 0 {
-		changed, err := e.targets()
+		for _, c := range conf.Conditions {
+			s := reports.Stage{
+				Name:   c.Name,
+				Kind:   c.Kind,
+				Result: result.FAILURE,
+			}
+			conditionsStageReport = append(conditionsStageReport, s)
+		}
+
+		for _, t := range conf.Targets {
+			s := reports.Stage{
+				Name:   t.Name,
+				Kind:   t.Kind,
+				Result: result.FAILURE,
+			}
+			targetsStageReport = append(targetsStageReport, s)
+		}
+
+		report := reports.Init(
+			conf.Name,
+			sourceStageReport,
+			conditionsStageReport,
+			targetsStageReport,
+		)
+
+		report.Name = strings.ToTitle(conf.Name)
+
+		err = conf.Source.Execute()
 
 		if err != nil {
-			return e.Report, err
+			e.Reports = append(e.Reports, report)
+			continue
 		}
-		if changed {
-			e.Report.Result = result.CHANGED
-		} else {
-			e.Report.Result = result.SUCCESS
+
+		if conf.Source.Output == "" {
+			conf.Source.Result = result.FAILURE
+			report.Source.Result = result.FAILURE
+			fmt.Printf("\n%s Something went wrong no value returned from Source", result.FAILURE)
+			e.Reports = append(e.Reports, report)
+			continue
 		}
-		e.Report.Update(&e.conf)
+
+		conf.Source.Result = result.SUCCESS
+		sourceStageReport.Result = result.SUCCESS
+		report.Source.Result = result.SUCCESS
+
+		if len(conf.Conditions) > 0 {
+			ok, err := RunConditions(&conf)
+			if err != nil {
+				e.Reports = append(e.Reports, report)
+				continue
+			}
+
+			if !ok {
+				e.Reports = append(e.Reports, report)
+				continue
+			}
+			i := 0
+			for _, c := range conf.Conditions {
+				conditionsStageReport[i].Result = c.Result
+				i++
+			}
+		}
+
+		if len(conf.Targets) > 0 {
+			changed, err := RunTargets(&conf, &e.Options.Target, &report)
+			if err != nil {
+				e.Reports = append(e.Reports, report)
+				continue
+			}
+			if changed {
+				report.Result = result.CHANGED
+			} else {
+				report.Result = result.SUCCESS
+			}
+			i := 0
+			for _, t := range conf.Targets {
+				targetsStageReport[i].Result = t.Result
+				i++
+			}
+		}
+
+		if err != nil {
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+		e.Reports = append(e.Reports, report)
 	}
 
-	return e.Report, nil
+	e.Reports.Show()
+	e.Reports.Summary()
+	fmt.Printf("\n")
+
+	return err
 }
 
-// conditions iterates on every conditions and test the result
-func (e *Engine) conditions() (bool, error) {
+// RunConditions run every conditions for a given configuration config
+func RunConditions(conf *config.Config) (bool, error) {
 
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
-	for k, c := range e.conf.Conditions {
+	for k, c := range conf.Conditions {
 
 		c.Result = result.FAILURE
 
-		e.conf.Conditions[k] = c
-		ok, err := c.Execute(
-			e.conf.Source.Prefix + e.conf.Source.Output + e.conf.Source.Postfix)
+		conf.Conditions[k] = c
+		ok, err := c.Run(
+			conf.Source.Prefix + conf.Source.Output + conf.Source.Postfix)
 		if err != nil {
 			return false, err
 		}
@@ -109,40 +298,40 @@ func (e *Engine) conditions() (bool, error) {
 		if !ok {
 
 			c.Result = result.FAILURE
-			e.conf.Conditions[k] = c
+			conf.Conditions[k] = c
 			fmt.Printf("\n%s skipping: condition not met\n", result.FAILURE)
 			ok = false
 			return false, nil
 		}
 		c.Result = result.SUCCESS
-		e.conf.Conditions[k] = c
+		conf.Conditions[k] = c
 	}
 
 	return true, nil
 }
 
-// targets iterate on every targets and then call target on each of them
-func (e *Engine) targets() (targetsChanged bool, err error) {
+// RunTargets iterate on every targets then call target on each of them
+func RunTargets(config *config.Config, options *target.Options, report *reports.Report) (targetsChanged bool, err error) {
 	targetsChanged = false
 
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("Targets"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("Targets")+1))
 
-	sourceReport, err := e.Report.String("source")
+	sourceReport, err := report.String("source")
 
 	if err != nil {
 		fmt.Println(err)
 	}
-	conditionReport, err := e.Report.String("conditions")
+	conditionReport, err := report.String("conditions")
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	for id, t := range e.conf.Targets {
+	for id, t := range config.Targets {
 		targetChanged := false
 
-		t.Changelog = e.conf.Source.Changelog
+		t.Changelog = config.Source.Changelog
 
 		if _, ok := t.Scm["github"]; ok {
 			var g github.Github
@@ -164,15 +353,15 @@ func (e *Engine) targets() (targetsChanged bool, err error) {
 
 		}
 
-		if t.Prefix == "" && e.conf.Source.Prefix != "" {
-			t.Prefix = e.conf.Source.Prefix
+		if t.Prefix == "" && config.Source.Prefix != "" {
+			t.Prefix = config.Source.Prefix
 		}
 
-		if t.Postfix == "" && e.conf.Source.Postfix != "" {
-			t.Postfix = e.conf.Source.Postfix
+		if t.Postfix == "" && config.Source.Postfix != "" {
+			t.Postfix = config.Source.Postfix
 		}
 
-		targetChanged, err = t.Execute(e.conf.Source.Output, &e.Options.Target)
+		targetChanged, err = t.Run(config.Source.Output, options)
 
 		if err != nil {
 			fmt.Printf("Something went wrong in target \"%v\" :\n", id)
@@ -195,26 +384,25 @@ func (e *Engine) targets() (targetsChanged bool, err error) {
 			fmt.Println(err)
 		}
 
-		e.conf.Targets[id] = t
+		config.Targets[id] = t
 	}
 	return targetsChanged, nil
 }
 
-// Show displays the configuration that should be apply
-func (e *Engine) Show(cfgFile string) error {
+// Show displays configurations that should be apply
+func (e *Engine) Show() error {
 
-	_, basename := filepath.Split(cfgFile)
-	cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
+	for _, conf := range e.configurations {
 
-	fmt.Printf("\n\n%s\n", strings.Repeat("#", len(cfgFileName)+4))
-	fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
-	fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
+		fmt.Printf("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
+		fmt.Printf("# %s #\n", strings.ToTitle(conf.Name))
+		fmt.Printf("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 
-	e.conf.ReadFile(cfgFile, e.Options.ValuesFile)
-	err := e.conf.Display()
-	if err != nil {
-		return err
+		err := conf.Display()
+		if err != nil {
+			return err
+		}
+
 	}
-
 	return nil
 }
