@@ -30,12 +30,12 @@ func (g *Git) GetDirectory() (directory string) {
 // Init set Git parameters if needed.
 func (g *Git) Init(source string, name string) error {
 	g.Version = source
-	g.setDirectory(source)
+	g.setDirectory()
 	g.remoteBranch = git.SanitizeBranchName(g.Branch)
 	return nil
 }
 
-func (g *Git) setDirectory(version string) {
+func (g *Git) setDirectory() {
 
 	directory := path.Join(tmp.Directory, g.URL)
 

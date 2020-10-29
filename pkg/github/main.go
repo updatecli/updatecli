@@ -31,7 +31,7 @@ type Github struct {
 	URL                    string
 	Version                string
 	Name                   string
-	directory              string
+	Directory              string
 	Branch                 string
 	remoteBranch           string
 	User                   string
@@ -40,7 +40,7 @@ type Github struct {
 
 // GetDirectory returns the local git repository path.
 func (g *Github) GetDirectory() (directory string) {
-	return g.directory
+	return g.Directory
 }
 
 // Source retrieves a specific version tag from Github Releases.
@@ -153,7 +153,6 @@ func (g *Github) Check() (bool, error) {
 func (g *Github) Init(source string, name string) error {
 	g.Version = source
 	g.Name = name
-	g.setDirectory(source)
 	g.remoteBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli/%v/%v", g.Name, g.Version))
 
 	if ok, err := g.Check(); !ok {
@@ -162,19 +161,19 @@ func (g *Github) Init(source string, name string) error {
 	return nil
 }
 
-func (g *Github) setDirectory(version string) {
+func (g *Github) setDirectory() {
 
-	directory := path.Join(tmp.Directory, g.Owner, g.Repository)
+	if g.Directory == "" {
+		g.Directory = path.Join(tmp.Directory, g.Owner, g.Repository)
+	}
 
-	if _, err := os.Stat(directory); os.IsNotExist(err) {
+	if _, err := os.Stat(g.Directory); os.IsNotExist(err) {
 
-		err := os.MkdirAll(directory, 0755)
+		err := os.MkdirAll(g.Directory, 0755)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-
-	g.directory = directory
 }
 
 // Changelog returns a changelog description based on a release name
@@ -245,7 +244,7 @@ func (g *Github) Changelog(name string) (string, error) {
 
 // Clean deletes github working directory.
 func (g *Github) Clean() {
-	os.RemoveAll(g.directory)
+	os.RemoveAll(g.Directory)
 }
 
 // Clone run `git clone`.
@@ -254,6 +253,8 @@ func (g *Github) Clone() string {
 	URL := fmt.Sprintf("https://github.com/%v/%v.git",
 		g.Owner,
 		g.Repository)
+
+	g.setDirectory()
 
 	err := git.Clone(g.Username, g.Token, URL, g.GetDirectory())
 
@@ -267,7 +268,7 @@ func (g *Github) Clone() string {
 		fmt.Println(err)
 	}
 
-	return g.directory
+	return g.Directory
 }
 
 // Commit run `git commit`.
@@ -280,7 +281,7 @@ func (g *Github) Commit(file, message string) {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() {
-	err := git.Checkout(g.Branch, g.remoteBranch, g.directory)
+	err := git.Checkout(g.Branch, g.remoteBranch, g.Directory)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -289,7 +290,7 @@ func (g *Github) Checkout() {
 // Add run `git add`.
 func (g *Github) Add(file string) {
 
-	err := git.Add([]string{file}, g.directory)
+	err := git.Add([]string{file}, g.Directory)
 	if err != nil {
 		fmt.Println(err)
 	}
