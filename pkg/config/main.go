@@ -14,6 +14,7 @@ import (
 
 // Config contains cli configuration
 type Config struct {
+	Name       string
 	Source     source.Source
 	Conditions map[string]condition.Condition
 	Targets    map[string]target.Target
@@ -58,9 +59,9 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 		if err := v.ReadInConfig(); err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 				return fmt.Errorf("Config file not found")
-			} else {
-				return err
 			}
+
+			return err
 		}
 		err := v.Unmarshal(&config)
 		if err != nil {
