@@ -28,8 +28,8 @@ type Spec interface {
 	Condition() (bool, error)
 }
 
-// Execute tests if a specific condition is true
-func (c *Condition) Execute(source string) (bool, error) {
+// Run tests if a specific condition is true
+func (c *Condition) Run(source string) (bool, error) {
 
 	var s scm.Scm
 

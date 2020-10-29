@@ -45,8 +45,8 @@ func (t *Target) Check() (bool, error) {
 	return ok, nil
 }
 
-// Execute applies a specific target configuration
-func (t *Target) Execute(source string, o *Options) (bool, error) {
+// Run applies a specific target configuration
+func (t *Target) Run(source string, o *Options) (bool, error) {
 
 	if o.DryRun {
 
