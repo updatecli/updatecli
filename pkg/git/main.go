@@ -74,6 +74,8 @@ func (g *Git) Clone() string {
 		g.URL,
 		g.GetDirectory())
 
+	g.setDirectory()
+
 	if err != nil {
 		fmt.Println(err)
 	}
