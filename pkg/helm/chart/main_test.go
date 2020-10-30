@@ -36,7 +36,7 @@ func TestCondition(t *testing.T) {
 	}
 
 	for _, d := range set {
-		got, _ := d.chart.Condition()
+		got, _ := d.chart.Condition("")
 
 		if got != d.expected {
 			t.Errorf("%s Version %v is published! expected %v, got %v", d.chart.Name, d.chart.Version, d.expected, got)

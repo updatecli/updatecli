@@ -63,7 +63,7 @@ func TestCondition(t *testing.T) {
 		Image: "olblak/updatecli",
 	}
 
-	got, _ := d.Condition()
+	got, _ := d.Condition("")
 	expected := true
 	if got != expected {
 		t.Errorf("%v:%v is published! expected %v, got %v", d.Image, d.Tag, expected, got)
@@ -76,7 +76,7 @@ func TestCondition(t *testing.T) {
 		Image: "olblak/updatecli",
 	}
 
-	got, _ = d.Condition()
+	got, _ = d.Condition("")
 	expected = false
 	if got != expected {
 		t.Errorf("%v:%v is not published! expected %v, got %v", d.Image, d.Tag, expected, got)
