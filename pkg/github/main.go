@@ -273,8 +273,8 @@ func (g *Github) Clone() string {
 }
 
 // Commit run `git commit`.
-func (g *Github) Commit(file, message string) {
-	err := git.Commit(file, g.User, g.Email, message, g.GetDirectory())
+func (g *Github) Commit(message string) {
+	err := git.Commit(g.User, g.Email, message, g.GetDirectory())
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -289,9 +289,9 @@ func (g *Github) Checkout() {
 }
 
 // Add run `git add`.
-func (g *Github) Add(file string) {
+func (g *Github) Add(files []string) {
 
-	err := git.Add([]string{file}, g.Directory)
+	err := git.Add(files, g.Directory)
 	if err != nil {
 		fmt.Println(err)
 	}

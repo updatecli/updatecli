@@ -86,9 +86,9 @@ func (g *Git) Clone() string {
 }
 
 // Commit run `git commit`.
-func (g *Git) Commit(file, message string) {
+func (g *Git) Commit(message string) {
 
-	err := git.Commit(file,
+	err := git.Commit(
 		g.User,
 		g.Email,
 		message,
@@ -101,9 +101,9 @@ func (g *Git) Commit(file, message string) {
 }
 
 // Add run `git add`.
-func (g *Git) Add(file string) {
+func (g *Git) Add(files []string) {
 
-	err := git.Add([]string{file}, g.GetDirectory())
+	err := git.Add(files, g.GetDirectory())
 
 	if err != nil {
 		fmt.Println(err)
