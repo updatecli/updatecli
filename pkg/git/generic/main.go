@@ -111,7 +111,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 }
 
 // Commit run `git commit`.
-func Commit(file, user, email, message, workingDir string) error {
+func Commit(user, email, message, workingDir string) error {
 
 	fmt.Printf("Commit changes \n\n")
 

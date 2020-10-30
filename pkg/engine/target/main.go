@@ -117,11 +117,8 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 			if len(t.Scm) > 0 {
 
 				if o.Commit {
-					for _, file := range files {
-						s.Add(file)
-						s.Commit(file, message)
-
-					}
+					s.Add(files)
+					s.Commit(message)
 				}
 				if o.Push {
 					s.Push()

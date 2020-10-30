@@ -10,12 +10,12 @@ import (
 
 // Scm is an interface that offers common functions for a source control manager like git or github
 type Scm interface {
-	Add(file string)
+	Add(files []string)
 	Clone() string
 	GetDirectory() (directory string)
 	Init(source string, name string) error
 	Push()
-	Commit(file, message string)
+	Commit(message string)
 	Clean()
 }
 
