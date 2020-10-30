@@ -25,7 +25,8 @@ type Target struct {
 
 // Spec is an interface which offers common function to manipulate targets.
 type Spec interface {
-	Target() (bool, error)
+	Target(source string, dryRun bool) (bool, error)
+	TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error)
 }
 
 // Check verifies if mandatory Targets parameters are provided and return false if not.
@@ -45,26 +46,47 @@ func (t *Target) Check() (bool, error) {
 	return ok, nil
 }
 
+// Unmarshal decodes a target struct
+func Unmarshal(target *Target) (spec Spec, err error) {
+	switch target.Kind {
+	case "yaml":
+		y := yaml.Yaml{}
+
+		err := mapstructure.Decode(target.Spec, &y)
+
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		spec = &y
+	}
+	return spec, nil
+}
+
 // Run applies a specific target configuration
-func (t *Target) Run(source string, o *Options) (bool, error) {
+func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 
 	if o.DryRun {
 
 		fmt.Printf("**Dry Run enabled**\n\n")
 	}
 
-	var s scm.Scm
-	var message string
-	var file string
+	spec, err := Unmarshal(t)
 
-	pwd, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	workingDir := filepath.Dir(pwd)
+	if err != nil {
+		return false, err
+	}
 
 	if len(t.Scm) > 0 {
+		var message string
+		var files []string
+		var s scm.Scm
+
 		_, err := t.Check()
 		if err != nil {
 			return false, err
@@ -81,90 +103,40 @@ func (t *Target) Run(source string, o *Options) (bool, error) {
 			return false, err
 		}
 
-		s.Clone()
-
-		workingDir = s.GetDirectory()
-
-	}
-
-	var spec Spec
-
-	switch t.Kind {
-
-	case "yaml":
-		var y yaml.Yaml
-
-		err := mapstructure.Decode(t.Spec, &y)
+		changed, files, message, err = spec.TargetFromSCM(t.Prefix+source+t.Postfix, s, o.DryRun)
 
 		if err != nil {
-			return false, err
+			return changed, err
 		}
 
-		y.DryRun = o.DryRun
-
-		y.Value = t.Prefix + source + t.Postfix
-
-		// Means a scm configuration is provided then use the directory from s.GetDirecotry() otherwise try to guess
-		if len(t.Scm) > 0 {
-			y.Path = workingDir
-
-		} else {
-			if dir, base, err := isFileExist(y.File); err == nil && y.Path == "" {
-				// if no scm configuration has been provided and neither file path then we try to guess the file directory.
-				// if file name contains a path then we use it otherwise we fallback to the current path
-				y.Path = dir
-				y.File = base
-			} else if _, _, err := isFileExist(y.File); err != nil && y.Path == "" {
-
-				y.Path = workingDir
-
-			} else if y.Path != "" && !isDirectory(y.Path) {
-
-				fmt.Printf("Directory '%s' is not valid so fallback to '%s'", y.Path, workingDir)
-				y.Path = workingDir
-
-			} else {
-				return false, fmt.Errorf("Something weird happened while trying to set working directory")
+		if changed && !o.DryRun {
+			if message == "" {
+				return changed, fmt.Errorf("Target has no change message")
 			}
 
-		}
+			if len(t.Scm) > 0 {
 
-		file = y.File
+				if o.Commit {
+					for _, file := range files {
+						s.Add(file)
+						s.Commit(file, message)
 
-		message = fmt.Sprintf("[updatecli] Update %s version to %v\n\nKey '%s', from file '%v', was updated to '%s'\n",
-			t.Name,
-			y.Value,
-			y.Key,
-			y.File,
-			y.Value)
-
-		spec = &y
-
-	default:
-		return false, fmt.Errorf("Don't support target: %v", t.Kind)
-	}
-
-	changed, err := spec.Target()
-
-	if err != nil {
-		return changed, err
-	}
-
-	if changed && !o.DryRun {
-		if message == "" {
-			return changed, fmt.Errorf("Target has no change message")
-		}
-
-		if len(t.Scm) > 0 {
-
-			if o.Commit {
-				s.Add(file)
-				s.Commit(file, message)
-			}
-			if o.Push {
-				s.Push()
+					}
+				}
+				if o.Push {
+					s.Push()
+				}
 			}
 		}
+
+	} else if len(t.Scm) == 0 {
+
+		changed, err = spec.Target(t.Prefix+source+t.Postfix, o.DryRun)
+
+		if err != nil {
+			return changed, err
+		}
+
 	}
 
 	return changed, nil
