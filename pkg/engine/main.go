@@ -55,6 +55,7 @@ func GetFiles(root string) (files []string) {
 }
 
 // InitSCM search and clone only once SCM configurations found
+
 func (e *Engine) InitSCM() (err error) {
 
 	hashes := []uint64{}
@@ -174,12 +175,6 @@ func (e *Engine) Run() (err error) {
 		fmt.Printf("# %s #\n", strings.ToTitle(conf.Name))
 		fmt.Printf("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 
-		sourceStageReport := reports.Stage{
-			Name:   conf.Source.Name,
-			Kind:   conf.Source.Kind,
-			Result: result.FAILURE,
-		}
-
 		conditionsStageReport := []reports.Stage{}
 		targetsStageReport := []reports.Stage{}
 
@@ -203,7 +198,11 @@ func (e *Engine) Run() (err error) {
 
 		report := reports.Init(
 			conf.Name,
-			sourceStageReport,
+			reports.Stage{
+				Name:   conf.Source.Name,
+				Kind:   conf.Source.Kind,
+				Result: result.FAILURE,
+			},
 			conditionsStageReport,
 			targetsStageReport,
 		)
@@ -224,27 +223,24 @@ func (e *Engine) Run() (err error) {
 			e.Reports = append(e.Reports, report)
 			continue
 		}
-
 		conf.Source.Result = result.SUCCESS
-		sourceStageReport.Result = result.SUCCESS
 		report.Source.Result = result.SUCCESS
 
 		if len(conf.Conditions) > 0 {
 			ok, err := RunConditions(&conf)
-			if err != nil {
+
+			i := 0
+			for _, c := range conf.Conditions {
+				conditionsStageReport[i].Result = c.Result
+				report.Conditions[i].Result = c.Result
+				i++
+			}
+
+			if err != nil || !ok {
 				e.Reports = append(e.Reports, report)
 				continue
 			}
 
-			if !ok {
-				e.Reports = append(e.Reports, report)
-				continue
-			}
-			i := 0
-			for _, c := range conf.Conditions {
-				conditionsStageReport[i].Result = c.Result
-				i++
-			}
 		}
 
 		if len(conf.Targets) > 0 {
@@ -261,6 +257,7 @@ func (e *Engine) Run() (err error) {
 			i := 0
 			for _, t := range conf.Targets {
 				targetsStageReport[i].Result = t.Result
+				report.Targets[i].Result = t.Result
 				i++
 			}
 		}
@@ -304,6 +301,7 @@ func RunConditions(conf *config.Config) (bool, error) {
 			return false, nil
 		}
 		c.Result = result.SUCCESS
+
 		conf.Conditions[k] = c
 	}
 
