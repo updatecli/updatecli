@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/olblak/updateCli/pkg/scm"
 	"helm.sh/helm/v3/pkg/repo"
 	"sigs.k8s.io/yaml"
 )
@@ -102,7 +103,13 @@ func (c *Chart) Changelog(name string) (string, error) {
 }
 
 // Condition check if a specific chart version exist
-func (c *Chart) Condition() (bool, error) {
+func (c *Chart) Condition(source string) (bool, error) {
+
+	if c.Version != "" {
+		fmt.Printf("Version %v, already defined from configuration file\n", c.Version)
+	} else {
+		c.Version = source
+	}
 	URL := fmt.Sprintf("%s/index.yaml", c.URL)
 
 	req, err := http.NewRequest("GET", URL, nil)
@@ -144,6 +151,11 @@ func (c *Chart) Condition() (bool, error) {
 	fmt.Printf("\u2717 Helm Chart '%s' isn't available on %s%s\n", c.Name, c.URL, message)
 	return false, nil
 
+}
+
+// ConditionFromSCM returns an error because it's not supported
+func (c *Chart) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+	return false, fmt.Errorf("SCM configuration is not supported for Helm chart condition, aborting")
 }
 
 // Source return the latest version

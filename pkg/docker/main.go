@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/olblak/updateCli/pkg/scm"
 )
 
 // Docker contains various information to interact with a docker registry
@@ -48,10 +50,8 @@ func (d *Docker) isDockerHub() bool {
 	return strings.Contains(d.URL, "hub.docker.com")
 }
 
-/*
-	IsDockerRegistry validates that we are on docker registry api
-	https://docs.docker.com/registry/spec/api/#api-version-check
-*/
+// IsDockerRegistry validates that we are on docker registry api
+// https://docs.docker.com/registry/spec/api/#api-version-check
 func (d *Docker) IsDockerRegistry() (bool, error) {
 
 	if ok, err := d.Check(); !ok {
@@ -84,9 +84,20 @@ func (d *Docker) IsDockerRegistry() (bool, error) {
 	return true, nil
 }
 
+// ConditionFromSCM returns an error because it's not supported
+func (d *Docker) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+	return false, fmt.Errorf("SCM configuration is not supported for dockerRegistry condition, aborting")
+}
+
 // Condition checks if a docker image with a specific tag is published
-func (d *Docker) Condition() (bool, error) {
+func (d *Docker) Condition(source string) (bool, error) {
 	URL := ""
+
+	if d.Tag != "" {
+		fmt.Printf("Tag %v, already defined from configuration file\n", d.Tag)
+	} else {
+		d.Tag = source
+	}
 
 	if ok, err := d.Check(); !ok {
 		return false, err
@@ -233,15 +244,15 @@ func (d *Docker) Source() (string, error) {
 		fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
 
 		return "", nil
-	} else {
-		digest := res.Header.Get("Docker-Content-Digest")
-		digest = strings.TrimPrefix(digest, "sha256:")
-
-		fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
-		fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
-		fmt.Printf("Example: %v/%v@sha256:%v\n", d.URL, d.Image, digest)
-
-		return digest, nil
 	}
+
+	digest := res.Header.Get("Docker-Content-Digest")
+	digest = strings.TrimPrefix(digest, "sha256:")
+
+	fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
+	fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
+	fmt.Printf("Example: %v/%v@sha256:%v\n", d.URL, d.Image, digest)
+
+	return digest, nil
 
 }

@@ -2,8 +2,6 @@ package condition
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/docker"
@@ -25,25 +23,24 @@ type Condition struct {
 
 // Spec is an interface that test if condition is met
 type Spec interface {
-	Condition() (bool, error)
+	Condition(version string) (bool, error)
+	ConditionFromSCM(version string, scm scm.Scm) (bool, error)
 }
 
 // Run tests if a specific condition is true
-func (c *Condition) Run(source string) (bool, error) {
+func (c *Condition) Run(source string) (ok bool, err error) {
 
-	var s scm.Scm
+	ok = true
 
-	pwd, err := os.Getwd()
+	spec, err := Unmarshal(c)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
-
-	// By default workingDir is set to local directory
-	workingDir := filepath.Dir(pwd)
 
 	// If scm is defined then clone the repository
 	if len(c.Scm) > 0 {
-		s, err = scm.Unmarshal(c.Scm)
+		s, err := scm.Unmarshal(c.Scm)
+
 		if err != nil {
 			return false, err
 		}
@@ -54,49 +51,62 @@ func (c *Condition) Run(source string) (bool, error) {
 			return false, err
 		}
 
-		s.Clone()
+		fmt.Printf("Directory: %v\n", s.GetDirectory())
 
-		workingDir = s.GetDirectory()
-	}
-
-	var spec Spec
-
-	ok := true
-
-	switch c.Kind {
-
-	case "dockerImage":
-		var d docker.Docker
-
-		err := mapstructure.Decode(c.Spec, &d)
+		ok, err = spec.ConditionFromSCM(source, s)
 
 		if err != nil {
 			return false, err
 		}
 
-		d.Tag = source
+	} else if len(c.Scm) == 0 {
+
+		ok, err = spec.Condition(source)
+
+		if err != nil {
+			return false, err
+		}
+	} else {
+		return false, fmt.Errorf("Don't support condition: %v", c.Kind)
+	}
+
+	return ok, nil
+
+}
+
+// Unmarshal decodes a condition struct
+func Unmarshal(condition *Condition) (spec Spec, err error) {
+
+	switch condition.Kind {
+
+	case "dockerImage":
+		var d docker.Docker
+
+		err := mapstructure.Decode(condition.Spec, &d)
+
+		if err != nil {
+			return nil, err
+		}
 
 		spec = &d
 
 	case "maven":
 		var m maven.Maven
 
-		err := mapstructure.Decode(c.Spec, &m)
+		err := mapstructure.Decode(condition.Spec, &m)
 
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-
-		m.Version = source
 
 		spec = &m
 
 	case "helmChart":
 		ch := chart.Chart{}
-		err := mapstructure.Decode(c.Spec, &ch)
+		err := mapstructure.Decode(condition.Spec, &ch)
 
 		if err != nil {
-			return false, err
+			return nil, err
 		}
 
 		spec = &ch
@@ -106,77 +116,17 @@ func (c *Condition) Run(source string) (bool, error) {
 
 		y.DryRun = true
 
-		err := mapstructure.Decode(c.Spec, &y)
+		err := mapstructure.Decode(condition.Spec, &y)
 
 		if err != nil {
-			return false, err
+			return nil, err
 		}
-
-		// Means a scm configuration is provided then use the directory from s.GetDirecotry() otherwise try to guess
-		if len(c.Scm) > 0 {
-			y.Path = workingDir
-
-		} else {
-			if dir, base, err := isFileExist(y.File); err == nil && y.Path == "" {
-				// if no scm configuration has been provided and neither file path then we try to guess the file directory.
-				// if file name contains a path then we use it otherwise we fallback to the current path
-				y.Path = dir
-				y.File = base
-			} else if _, _, err := isFileExist(y.File); err != nil && y.Path == "" {
-
-				y.Path = workingDir
-
-			} else if y.Path != "" && !isDirectory(y.Path) {
-
-				fmt.Printf("Directory '%s' is not valid so fallback to '%s'", y.Path, workingDir)
-				y.Path = workingDir
-
-			} else {
-				return false, fmt.Errorf("Something weird happened while trying to set working directory")
-			}
-
-		}
-		y.Path = workingDir
 
 		spec = &y
 
 	default:
-		return false, fmt.Errorf("Don't support condition: %v", c.Kind)
+		return nil, fmt.Errorf("Don't support condition: %v", condition.Kind)
 	}
+	return spec, nil
 
-	ok, err = spec.Condition()
-
-	if err != nil {
-		return false, err
-	}
-
-	return ok, nil
-
-}
-
-func isFileExist(file string) (dir string, base string, err error) {
-	if _, err := os.Stat(file); err != nil {
-		return "", "", err
-	}
-
-	absolutePath, err := filepath.Abs(file)
-	if err != nil {
-		return "", "", err
-	}
-	dir = filepath.Dir(absolutePath)
-	base = filepath.Base(absolutePath)
-
-	return dir, base, err
-}
-
-func isDirectory(path string) bool {
-
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	if info.IsDir() {
-		return true
-	}
-	return false
 }

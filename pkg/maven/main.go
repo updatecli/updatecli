@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/olblak/updateCli/pkg/scm"
 )
 
 // Maven hold maven repository information
@@ -40,7 +42,13 @@ type Versions struct {
 }
 
 // Condition tests if a specific version exist on the maven repository
-func (m *Maven) Condition() (bool, error) {
+func (m *Maven) Condition(source string) (bool, error) {
+
+	if m.Version != "" {
+		fmt.Printf("Version %v, already defined from configuration file\n", m.Version)
+	} else {
+		m.Version = source
+	}
 	URL := fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
 		m.URL,
 		m.Repository,
@@ -81,6 +89,11 @@ func (m *Maven) Condition() (bool, error) {
 
 	fmt.Printf("\u2717 Version %s is not available on Maven Repository\n", m.Version)
 	return false, nil
+}
+
+// ConditionFromSCM returns an error because it's not supported
+func (m *Maven) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+	return false, fmt.Errorf("SCM configuration is not supported for maven condition, aborting")
 }
 
 // Source return the latest version

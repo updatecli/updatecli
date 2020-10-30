@@ -12,7 +12,7 @@ func TestCondition(t *testing.T) {
 		Version:    "1.7.4.v20130429",
 	}
 
-	got, _ := m.Condition()
+	got, _ := m.Condition("")
 	expected := true
 	if got != expected {
 		t.Errorf("ArtifactID %v is published! expected %v, got %v", m.ArtifactID, expected, got)
@@ -27,7 +27,7 @@ func TestCondition(t *testing.T) {
 		Version:    "0.3",
 	}
 
-	got, _ = m.Condition()
+	got, _ = m.Condition("")
 	expected = false
 	if got != expected {
 		t.Errorf("ArtifactID %v is not published! expected %v, got %v", m.ArtifactID, expected, got)
