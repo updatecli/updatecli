@@ -51,8 +51,6 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 			return false, err
 		}
 
-		fmt.Printf("Directory: %v\n", s.GetDirectory())
-
 		ok, err = spec.ConditionFromSCM(source, s)
 
 		if err != nil {
