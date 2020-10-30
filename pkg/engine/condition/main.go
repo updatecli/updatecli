@@ -80,7 +80,7 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 	switch condition.Kind {
 
 	case "dockerImage":
-		var d docker.Docker
+		d := docker.Docker{}
 
 		err := mapstructure.Decode(condition.Spec, &d)
 
@@ -91,7 +91,7 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		spec = &d
 
 	case "maven":
-		var m maven.Maven
+		m := maven.Maven{}
 
 		err := mapstructure.Decode(condition.Spec, &m)
 
@@ -103,6 +103,7 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 
 	case "helmChart":
 		ch := chart.Chart{}
+
 		err := mapstructure.Decode(condition.Spec, &ch)
 
 		if err != nil {
@@ -112,9 +113,7 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		spec = &ch
 
 	case "yaml":
-		var y yaml.Yaml
-
-		y.DryRun = true
+		y := yaml.Yaml{}
 
 		err := mapstructure.Decode(condition.Spec, &y)
 
