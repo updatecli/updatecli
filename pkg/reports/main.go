@@ -22,9 +22,11 @@ REPORTS:
 {{- "\t"}}Source:
 {{ "\t"}}{{"\t"}}{{- .Source.Result }}  {{ .Source.Name -}}({{- .Source.Kind -}}){{"\n"}}
 
+{{- if .Conditions -}}
 {{- "\t" }}Condition:
 {{ range .Conditions }} 
 {{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{- end -}}
 {{- end -}}
 
 {{- "\t" -}}Target:
