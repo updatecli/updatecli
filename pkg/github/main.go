@@ -6,19 +6,12 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	git "github.com/olblak/updateCli/pkg/git/generic"
 	"github.com/olblak/updateCli/pkg/tmp"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
 )
-
-// Changelog contains various information used to describe target changes
-type Changelog struct {
-	Description string
-	Report      string
-}
 
 // Github contains settings to interact with Github
 type Github struct {
@@ -41,82 +34,6 @@ type Github struct {
 // GetDirectory returns the local git repository path.
 func (g *Github) GetDirectory() (directory string) {
 	return g.Directory
-}
-
-// Source retrieves a specific version tag from Github Releases.
-func (g *Github) Source() (string, error) {
-
-	_, err := g.Check()
-	if err != nil {
-		return "", err
-	}
-
-	/*
-			https://developer.github.com/v4/explorer/
-		# Query
-		query getLatestRelease($owner: String!, $repository: String!){
-			repository(owner: $owner, name: $repository){
-				releases(first:10, orderBy:$orderBy){
-					nodes{
-						name
-						tagName
-						isDraft
-						isPrerelease
-					}
-				}
-			}
-		}
-		# Variables
-		{
-			"owner": "olblak",
-			"repository": "charts",
-		}
-	*/
-
-	client := g.NewClient()
-
-	type release struct {
-		Name         string
-		TagName      string
-		IsDraft      bool
-		IsPrerelease bool
-	}
-
-	var query struct {
-		Repository struct {
-			Releases struct {
-				Nodes []release
-			} `graphql:"releases(first: 5, orderBy: $orderBy)"`
-		} `graphql:"repository(owner: $owner, name: $repository)"`
-	}
-
-	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.Owner),
-		"repository": githubv4.String(g.Repository),
-		"orderBy": githubv4.ReleaseOrder{
-			Field:     "CREATED_AT",
-			Direction: "DESC",
-		},
-	}
-
-	err = client.Query(context.Background(), &query, variables)
-
-	if err != nil {
-		fmt.Printf("\u2717 Couldn't find a valid github release version\n")
-		fmt.Printf("\t %s\n", err)
-		return "", err
-	}
-
-	value := ""
-	for _, release := range query.Repository.Releases.Nodes {
-		if !release.IsDraft && !release.IsPrerelease {
-			value = release.TagName
-			break
-		}
-	}
-
-	fmt.Printf("\u2714 '%s' github release version founded: %s\n", g.Version, value)
-	return value, nil
 }
 
 // Check verifies if mandatory Github parameters are provided and return false if not.
@@ -175,72 +92,6 @@ func (g *Github) setDirectory() {
 			fmt.Println(err)
 		}
 	}
-}
-
-// Changelog returns a changelog description based on a release name
-func (g *Github) Changelog(name string) (string, error) {
-	_, err := g.Check()
-	if err != nil {
-		return "", err
-	}
-
-	/*
-			https://developer.github.com/v4/explorer/
-		# Query
-		query getLatestRelease($owner: String!, $repository: String!){
-			repository(owner: $owner, name: $repository){
-				release(tagName: 1){
-					description
-					publishedAt
-					url
-				}
-			}
-		}
-		# Variables
-		{
-			"owner": "olblak",
-			"repository": "charts",
-		}
-	*/
-
-	client := g.NewClient()
-
-	type release struct {
-		Name    string
-		TagName string
-		Url     string
-		Body    string
-	}
-
-	var query struct {
-		Repository struct {
-			Release struct {
-				Description string
-				Url         string
-				PublishedAt time.Time
-			} `graphql:"release(tagName: $tagName)"`
-		} `graphql:"repository(owner: $owner, name: $repository)"`
-	}
-
-	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.Owner),
-		"repository": githubv4.String(g.Repository),
-		"tagName":    githubv4.String(name),
-	}
-
-	err = client.Query(context.Background(), &query, variables)
-
-	if err != nil {
-		fmt.Printf("\t %s\n", err)
-		return "", err
-	}
-
-	changelog := fmt.Sprintf("\nRelease published on the %v at the url %v\n%v\n",
-		query.Repository.Release.PublishedAt.String(),
-		query.Repository.Release.Url,
-		query.Repository.Release.Description)
-
-	return changelog, nil
 }
 
 // Clean deletes github working directory.
