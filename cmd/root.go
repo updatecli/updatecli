@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/olblak/updateCli/pkg/engine"
-	"github.com/olblak/updateCli/pkg/result"
+	"github.com/olblak/updateCli/pkg/core/engine"
+	"github.com/olblak/updateCli/pkg/core/result"
 
 	"github.com/spf13/cobra"
 )
