@@ -165,7 +165,6 @@ func Clone(username, password, URL, workingDir string) error {
 
 	var b bytes.Buffer
 
-	b.WriteString(fmt.Sprintf("==============================\n"))
 	b.WriteString(fmt.Sprintf("Cloning git repository: %s in %s\n", URL, workingDir))
 	repo, err := git.PlainClone(workingDir, false, &git.CloneOptions{
 		URL:      URL,
