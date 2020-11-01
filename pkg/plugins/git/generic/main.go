@@ -1,6 +1,7 @@
 package generic
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -162,17 +163,19 @@ func Clone(username, password, URL, workingDir string) error {
 		Password: password,
 	}
 
-	fmt.Printf("Cloning git repository: %s\n", URL)
-	fmt.Printf("Downloaded in %s\n\n", workingDir)
+	var b bytes.Buffer
 
+	b.WriteString(fmt.Sprintf("==============================\n"))
+	b.WriteString(fmt.Sprintf("Cloning git repository: %s in %s\n", URL, workingDir))
 	repo, err := git.PlainClone(workingDir, false, &git.CloneOptions{
 		URL:      URL,
 		Auth:     &auth,
-		Progress: os.Stdout,
+		Progress: &b,
 	})
 
 	if err == git.ErrRepositoryAlreadyExists {
-		fmt.Println(err)
+		b.Reset()
+
 		repo, err = git.PlainOpen(workingDir)
 		if err != nil {
 			return err
@@ -187,13 +190,16 @@ func Clone(username, password, URL, workingDir string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(status)
+		b.WriteString(status.String())
 
 		err = w.Pull(&git.PullOptions{
 			Auth:     &auth,
 			Force:    true,
-			Progress: os.Stdout,
+			Progress: &b,
 		})
+
+		fmt.Println(b.String())
+		b.Reset()
 		if err != nil {
 			return err
 		}
@@ -208,9 +214,12 @@ func Clone(username, password, URL, workingDir string) error {
 		return err
 	}
 
+	b.WriteString("Fetching remote branches")
 	for _, r := range remotes {
 
-		err := r.Fetch(&git.FetchOptions{})
+		err := r.Fetch(&git.FetchOptions{Progress: &b})
+		fmt.Println(b.String())
+		b.Reset()
 		if err != nil {
 			return err
 		}
