@@ -174,15 +174,11 @@ func (e *Engine) ReadConfigurations() error {
 		_, basename := filepath.Split(cfgFile)
 		cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
 
-		// fmt.Printf("\n\n%s\n", strings.Repeat("#", len(cfgFileName)+4))
-		// fmt.Printf("# %s #\n", strings.ToTitle(cfgFileName))
-		// fmt.Printf("%s\n\n", strings.Repeat("#", len(cfgFileName)+4))
-
 		c.Name = strings.ToTitle(cfgFileName)
 
 		err := c.ReadFile(cfgFile, e.Options.ValuesFile)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error: %s - %s\n\n", basename, err)
 			continue
 		}
 		e.configurations = append(e.configurations, c)
