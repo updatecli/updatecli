@@ -42,15 +42,12 @@ func init() {
 	rootCmd.AddCommand(
 		applyCmd,
 		diffCmd,
+		prepareCmd,
 		showCmd,
 		versionCmd)
 }
 
 func run(command string) {
-
-	if applyClean && diffClean {
-		defer e.Clean()
-	}
 
 	err := e.Prepare()
 
@@ -60,14 +57,24 @@ func run(command string) {
 
 	switch command {
 	case "apply":
+		if applyClean {
+			defer e.Clean()
+		}
 		err = e.Run()
 		if err != nil {
 			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
 		}
 	case "diff":
+		if diffClean {
+			defer e.Clean()
+		}
 		err = e.Run()
 		if err != nil {
 			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+	case "prepare":
+		if prepareClean {
+			defer e.Clean()
 		}
 	case "show":
 		err := e.Show()
