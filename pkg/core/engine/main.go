@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
@@ -55,17 +56,20 @@ func GetFiles(root string) (files []string) {
 }
 
 // InitSCM search and clone only once SCM configurations found
-
 func (e *Engine) InitSCM() (err error) {
 
 	hashes := []uint64{}
+
+	wg := sync.WaitGroup{}
+	channel := make(chan int, 20)
+	defer wg.Wait()
 
 	for _, conf := range e.configurations {
 		for _, condition := range conf.Conditions {
 			if len(condition.Scm) > 0 {
 				hash, err := hashstructure.Hash(condition.Scm, nil)
 				if err != nil {
-					fmt.Println(hash)
+					fmt.Println(err)
 				}
 				found := false
 
@@ -82,15 +86,24 @@ func (e *Engine) InitSCM() (err error) {
 						fmt.Println(err)
 					}
 					hashes = append(hashes, hash)
-					s.Clone()
+					wg.Add(1)
+					go func(s scm.Scm) {
+						channel <- 1
+						defer wg.Done()
+						s.Clone()
+					}(s)
+					<-channel
+
 				}
+
 			}
 		}
+
 		for _, target := range conf.Targets {
 			if len(target.Scm) > 0 {
 				hash, err := hashstructure.Hash(target.Scm, nil)
 				if err != nil {
-					fmt.Println(hash)
+					fmt.Println(err)
 				}
 				found := false
 
@@ -104,10 +117,17 @@ func (e *Engine) InitSCM() (err error) {
 					s, err := scm.Unmarshal(target.Scm)
 
 					if err != nil {
+						fmt.Println(err)
 					}
-					fmt.Println(err)
 					hashes = append(hashes, hash)
-					s.Clone()
+					wg.Add(1)
+					go func(s scm.Scm) {
+						channel <- 1
+						defer wg.Done()
+						s.Clone()
+					}(s)
+					<-channel
+
 				}
 			}
 		}
@@ -118,6 +138,11 @@ func (e *Engine) InitSCM() (err error) {
 
 // Prepare run every actions needed before going further
 func (e *Engine) Prepare() (err error) {
+
+	fmt.Printf("\n\n%s\n", strings.Repeat("+", len("Prepare")+4))
+	fmt.Printf("+ %s +\n", strings.ToTitle("Prepare"))
+	fmt.Printf("%s\n\n", strings.Repeat("+", len("Prepare")+4))
+
 	err = tmp.Create()
 	if err != nil {
 		fmt.Printf("\n\u26A0 %s\n", err)
@@ -168,6 +193,10 @@ func (e *Engine) ReadConfigurations() error {
 
 // Run run the full process one yaml file
 func (e *Engine) Run() (err error) {
+
+	fmt.Printf("\n\n%s\n", strings.Repeat("+", len("Run")+4))
+	fmt.Printf("+ %s +\n", strings.ToTitle("Run"))
+	fmt.Printf("%s\n\n", strings.Repeat("+", len("Run")+4))
 
 	for _, conf := range e.configurations {
 
