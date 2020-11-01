@@ -12,9 +12,9 @@ build:
 	echo $(VERSION)
 	go build \
 		-ldflags "-w -s \
-        -X \"github.com/olblak/updateCli/pkg/version.BuildTime=$(BUILD_DATE)\" \
-        -X \"github.com/olblak/updateCli/pkg/version.GoVersion=$(GOVERSION)\" \
-        -X \"github.com/olblak/updateCli/pkg/version.Version=$(VERSION)\""\
+        -X \"github.com/olblak/updateCli/pkg/core/version.BuildTime=$(BUILD_DATE)\" \
+        -X \"github.com/olblak/updateCli/pkg/core/version.GoVersion=$(GOVERSION)\" \
+        -X \"github.com/olblak/updateCli/pkg/core/version.Version=$(VERSION)\""\
         -o bin/updatecli
 
 
