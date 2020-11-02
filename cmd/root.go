@@ -3,12 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/olblak/updateCli/pkg/engine"
-	"github.com/olblak/updateCli/pkg/reports"
-	"github.com/olblak/updateCli/pkg/result"
-	"github.com/olblak/updateCli/pkg/tmp"
+	"github.com/olblak/updateCli/pkg/core/engine"
+	"github.com/olblak/updateCli/pkg/core/result"
 
 	"github.com/spf13/cobra"
 )
@@ -45,70 +42,46 @@ func init() {
 	rootCmd.AddCommand(
 		applyCmd,
 		diffCmd,
+		prepareCmd,
 		showCmd,
 		versionCmd)
 }
 
 func run(command string) {
 
-	files := GetFiles(e.Options.File)
-	reports := reports.Reports{}
-	err := tmp.Create()
+	err := e.Prepare()
+
 	if err != nil {
-		fmt.Printf("\n\u26A0 %s\n", err)
-		os.Exit(1)
+		fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
 	}
 
-	if applyClean && diffClean {
-		defer tmp.Clean()
-	}
-
-	for _, file := range files {
-
-		switch command {
-		case "apply":
-			report, err := e.Run(file)
-			if err != nil {
-				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
-			}
-			reports = append(reports, report)
-		case "diff":
-			report, err := e.Run(file)
-			if err != nil {
-				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
-			}
-			reports = append(reports, report)
-		case "show":
-			err := e.Show(file)
-			if err != nil {
-				fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
-			}
-		default:
-			fmt.Println("Wrong command")
+	switch command {
+	case "apply":
+		if applyClean {
+			defer e.Clean()
 		}
-	}
-
-	reports.Show()
-	reports.Summary()
-	fmt.Printf("\n")
-}
-
-// GetFiles return an array with every valid files
-func GetFiles(root string) (files []string) {
-
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		err = e.Run()
 		if err != nil {
-			fmt.Printf("\n\u26A0 File %s: %s\n", path, err)
-			os.Exit(1)
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
 		}
-		if info.Mode().IsRegular() {
-			files = append(files, path)
+	case "diff":
+		if diffClean {
+			defer e.Clean()
 		}
-		return nil
-	})
-	if err != nil {
-		fmt.Println(err)
+		err = e.Run()
+		if err != nil {
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+	case "prepare":
+		if prepareClean {
+			defer e.Clean()
+		}
+	case "show":
+		err := e.Show()
+		if err != nil {
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+	default:
+		fmt.Println("Wrong command")
 	}
-
-	return files
 }

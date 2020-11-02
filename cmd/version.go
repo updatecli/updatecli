@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/olblak/updateCli/pkg/version"
+	"github.com/olblak/updateCli/pkg/core/version"
 )
 
 var (
