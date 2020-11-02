@@ -1,0 +1,98 @@
+= Updatecli
+
+image:https://img.shields.io/github/license/olblak/updatecli[GitHub]
+image:https://goreportcard.com/badge/github.com/olblak/updatecli[Go Report Card]
+image:https://img.shields.io/docker/pulls/olblak/updatecli?label=olblak%2Fupdatecli&logo=docker&logoColor=white[Docker Pulls]
+image:https://img.shields.io/github/downloads/olblak/updatecli/latest/total[GitHub Releases]
+image:https://img.shields.io/github/workflow/status/olblak/updatecli/Go[GitHub Workflow Status]
+
+Updatecli is a tool used to apply file update strategies. Designed to be used from everywhere, each application "run" detects if a value needs to be updated using a custom strategy then apply changes according to the strategy.
+
+You describe your update strategy in a file then you run updatecli to it.
+
+Updatecli reads a yaml or a go template configuration file, then works into three stages
+
+1. Source: Based on a rule, updatecli fetches a value that will be injected in later stages.
+2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
+3. Target: Update and publish the target files based on a value retrieved from the source stage.
+
+== Feature
+
+* *Flexibility*: Easy to define tailored update strategies, you are just one yaml file to it.
+* *Portability*: Easy to add to your workflow whatever it is. Just one command to run.  Of course, it's easy to remove.
+* *Extensibility*: Easy to add new go packages to support more workflows.
+
+
+== Why
+
+They are many projects out there, which can continuously update your files but they all have an opinionated way of doing it and they often want you to adopt a new platform. Building and distributing software is a difficult thing and good practices constantly evolve. Updatecli was built to work independently wherever you need, and combining whatever workflow you are using as you can see in the following section.
+
+== Example
+In this example, we define an update strategy in "updatecli.yaml" then we run `updatecli apply --config updatecli.yaml`.
+
+[cols="2a,2a"]
+|===
+|```
+## updatecli.yaml
+source:
+  kind: maven
+  postfix: "-jdk11"
+  spec:
+    owner: "maven"
+    url: "repo.jenkins-ci.org"
+    repository: "releases"
+    groupID: "org.jenkins-ci.main"
+    artifactID: "jenkins-war"
+conditions:
+  docker:
+    name: "Docker Image Published on Registry"
+    kind: dockerImage
+    spec:
+      image: "jenkins/jenkins"
+targets:
+  imageTag:
+    name: "jenkins/jenkins docker tag"
+    kind: yaml
+    spec:
+      file: "charts/jenkins/values.yaml"
+      key: "jenkins.master.imageTag"
+    scm:
+      github:
+        user: olblak
+        email: me@olblak.com
+        owner: "olblak"
+        repository: "charts"
+        token: mySecretTokenWhichShouldNeverUsedThisWay
+        username: olblak
+        branch: "master"
+```
+
+|What it says:
+
+. Source:
+
+    What's the latest version for the artifactID "jenkins-war" from the maven repository "releases" located on "repo.jenkins-ci.org"?
+    => 2.264
+    Append "-jdk11" to it
+    => 2.264-jdk11
+
+. Conditions:
+
+    Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.264-jdk11"
+    => Yes then proceed otherwise abort
+
+. Targets:
+
+    Do we have to update the key "jenkins.master.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264-jdk11"?
+    => If yes then open a Github pull request to the branch "master" 
+
+|===
+
+
+[cols="4*","header"]
+|===
+|link:https://github.com/olblak/updatecli/blob/master/LICENSE[LICENSE]
+|link:https://github.com/olblak/updatecli/blob/master/doc/CONTRIBUTING.adocs[CONTRIBUTING]
+|link:https://github.com/olblak/updatecli/blob/master/doc/README.adoc[DOCUMENTATION]
+|link:https://github.com/olblak/updatecli/blob/master/doc/ADOPTERS.md[ADOPTERS]
+|===
