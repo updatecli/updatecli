@@ -7,14 +7,14 @@ Updatecli is a tool to define and apply file update strategy.
 
 It reads its configuration from a yaml or go template configuration file, then works into three stages
 
-1. Source: Based on a rule fetch a value that will be injected in later stages
+1. Source: Based on a rule, updatecli fetches a value that will be injected in later stages
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source rule
 3. Target: Update and publish the target files based on a value retrieved from the source stage.
 
 == Installation
-Updatecli is available https://github.com/olblak/updatecli/releases/latest[here] (Windows,Linux,OSX).
+Updatecli is available https://github.com/olblak/updatecli/releases/latest[here] (Windows, Linux, OSX).
 
-A docker image is also available on https://hub.docker.com/r/olblak/updatecli[Dockerhub]
+A docker image is also available on https://hub.docker.com/r/olblak/updatecli[Dockerhub] or https://github.com/users/olblak/packages/container/package/updatecli[Ghcr]
 
 == Usage
 
@@ -46,7 +46,7 @@ Using a docker image
 
 == Strategy
 
-A strategy defines how to update a target file and it describe three stages
+A strategy defines how to update a target file and it describes three stages
 
 1. Source: Based on a rule fetch a value that will be injected in later stages
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source rule
@@ -90,7 +90,7 @@ The strategy file can either be using a yaml format or a golang template.
 
 ==== Github Release
 
-This source will get a release version from Github Release api. If `latest` is specified, it retrieves the version referenced by 'latest'.
+This source will get a release version from Github Release api. If "latest" is specified, it retrieves the version referenced by 'latest'.
 
 .Example
 ```
