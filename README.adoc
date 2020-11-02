@@ -89,7 +89,7 @@ Do we have to update the key "jenkins.master.imageTag" from file "./charts/jenki
 [cols="4*","header"]
 |===
 |link:https://github.com/olblak/updatecli/blob/master/LICENSE[LICENSE]
-|link:https://github.com/olblak/updatecli/blob/master/doc/CONTRIBUTING.adocs[CONTRIBUTING]
+|link:https://github.com/olblak/updatecli/blob/master/doc/CONTRIBUTING.adoc[CONTRIBUTING]
 |link:https://github.com/olblak/updatecli/blob/master/doc/README.adoc[DOCUMENTATION]
 |link:https://github.com/olblak/updatecli/blob/master/doc/ADOPTERS.md[ADOPTERS]
 |===
