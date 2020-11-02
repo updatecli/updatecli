@@ -69,22 +69,19 @@ targets:
 
 |What it says:
 
-. Source:
+. Source: +
+What's the latest version for the artifactID "jenkins-war" from the maven repository "releases" located on "repo.jenkins-ci.org"? +
+=> 2.264 +
+Append "-jdk11" to it +
+=> 2.264-jdk11 +
 
-    What's the latest version for the artifactID "jenkins-war" from the maven repository "releases" located on "repo.jenkins-ci.org"?
-    => 2.264
-    Append "-jdk11" to it
-    => 2.264-jdk11
+. Conditions: +
+Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.264-jdk11" +
+=> Yes then proceed otherwise abort +
 
-. Conditions:
-
-    Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.264-jdk11"
-    => Yes then proceed otherwise abort
-
-. Targets:
-
-    Do we have to update the key "jenkins.master.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264-jdk11"?
-    => If yes then open a Github pull request to the branch "master" 
+. Targets: +
+Do we have to update the key "jenkins.master.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264-jdk11"? +
+=> If yes then open a Github pull request to the branch "master" 
 
 |===
 
