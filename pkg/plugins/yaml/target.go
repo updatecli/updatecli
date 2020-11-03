@@ -67,6 +67,7 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 			return changed, nil
 		}
 
+		changed = true
 		fmt.Printf("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'\n",
 			y.Key,
 			filepath.Join(y.Path, y.File),
@@ -92,8 +93,6 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 			return changed, fmt.Errorf("something went wrong while encoding %v", err)
 		}
 	}
-
-	changed = true
 
 	return changed, nil
 }
@@ -130,7 +129,7 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 				y.Value)
 			return changed, files, message, nil
 		}
-
+		changed = true
 		fmt.Printf("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'\n",
 			y.Key,
 			filepath.Join(y.Path, y.File),
@@ -163,8 +162,6 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 		y.File,
 		oldVersion,
 		y.Value)
-
-	changed = true
 
 	return changed, files, message, nil
 }
