@@ -6,6 +6,8 @@ image:https://img.shields.io/docker/pulls/olblak/updatecli?label=olblak%2Fupdate
 image:https://img.shields.io/github/downloads/olblak/updatecli/latest/total[GitHub Releases]
 image:https://img.shields.io/github/workflow/status/olblak/updatecli/Go[GitHub Workflow Status]
 
+_"Automatically open a PR on your GitOps repository when a third service publishes an updates"_
+
 Updatecli is a tool used to apply file update strategies. Designed to be used from everywhere, each application "run" detects if a value needs to be updated using a custom strategy then apply changes according to the strategy.
 
 You describe your update strategy in a file then you run updatecli to it.
@@ -29,6 +31,7 @@ They are many projects out there, which can continuously update your files but t
 
 == Example
 In this example, we define an update strategy in "updatecli.yaml" then we run `updatecli apply --config updatecli.yaml`.
+Our objective is to know if the Jenkins project published a new version, if they build an appropriated docker image and automatically update our infrastructure accordingly.
 
 [cols="2a,2a"]
 |===
