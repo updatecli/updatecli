@@ -82,7 +82,7 @@ Accepted extensions: ".tpl",".tmpl"
 
 Another way to use this tool is by using go template files in place of YAML. 
 Using go templates allow us to specify generic values in a different yaml file then reference those values from each go templates.
-We also provide a custom function called requireEnd to inject any environment variable in the template example, `{{ requiredEnv "PATH" }}`.
+We also provide a custom function called requireEnv to inject any environment variable in the template example, `{{ requiredEnv "PATH" }}`.
 
 The strategy file can either be using a yaml format or a golang template.
 
