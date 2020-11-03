@@ -38,13 +38,13 @@ func (g *Git) Clean() {
 // Clone run `git clone`.
 func (g *Git) Clone() string {
 
+	g.setDirectory()
+
 	err := git.Clone(
 		g.Username,
 		g.Password,
 		g.URL,
 		g.GetDirectory())
-
-	g.setDirectory()
 
 	if err != nil {
 		fmt.Println(err)
