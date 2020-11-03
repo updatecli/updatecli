@@ -75,7 +75,7 @@ targets:
     scm:
       git:
         url: "git@github.com:olblak/charts.git"
-        branch: master
+        branch: alertmanager
         user: olblak
         email: me@olblak.com
         directory: "/home/olblak/Project/Jenkins-infra/charts"
