@@ -1,10 +1,12 @@
 = Updatecli
 
-image:https://img.shields.io/github/license/olblak/updatecli[GitHub]
-image:https://goreportcard.com/badge/github.com/olblak/updatecli[Go Report Card]
-image:https://img.shields.io/docker/pulls/olblak/updatecli?label=olblak%2Fupdatecli&logo=docker&logoColor=white[Docker Pulls]
-image:https://img.shields.io/github/downloads/olblak/updatecli/latest/total[GitHub Releases]
-image:https://img.shields.io/github/workflow/status/olblak/updatecli/Go[GitHub Workflow Status]
+link:https://github.com/olblak/updatecli/blob/master/LICENSE[image:https://img.shields.io/github/license/olblak/updatecli[GitHub]]
+link:https://goreportcard.com/report/github.com/olblak/updatecli[image:https://goreportcard.com/badge/github.com/olblak/updatecli[Go Report Card]]
+link:https://hub.docker.com/r/olblak/updatecli[image:https://img.shields.io/docker/pulls/olblak/updatecli?label=olblak%2Fupdatecli&logo=docker&logoColor=white[Docker Pulls]]
+link:https://github.com/olblak/updatecli/releases[image:https://img.shields.io/github/downloads/olblak/updatecli/latest/total[GitHub Releases]]
+link:https://github.com/olblak/updatecli/actions?query=workflow%3AGo[image:https://img.shields.io/github/workflow/status/olblak/updatecli/Go[GitHub Workflow Status]]
+link:https://gitter.im/Updatecli/community#[image:https://img.shields.io/gitter/room/updatecli/community[Gitter]]
+
 
 _"Automatically open a PR on your GitOps repository when a third service publishes an updates"_
 
