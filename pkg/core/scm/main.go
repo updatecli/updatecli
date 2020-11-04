@@ -12,6 +12,7 @@ import (
 type Scm interface {
 	Add(files []string)
 	Clone() string
+	Checkout()
 	GetDirectory() (directory string)
 	Init(source string, name string) error
 	Push()

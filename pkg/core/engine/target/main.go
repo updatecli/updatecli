@@ -103,6 +103,8 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 			return false, err
 		}
 
+		s.Checkout()
+
 		changed, files, message, err = spec.TargetFromSCM(t.Prefix+source+t.Postfix, s, o.DryRun)
 
 		if err != nil {

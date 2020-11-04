@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/olblak/updateCli/pkg/core/tmp"
 )
@@ -23,13 +24,19 @@ type Git struct {
 
 func (g *Git) setDirectory() {
 
-	directory := path.Join(tmp.Directory, g.URL)
+	URL := strings.Replace(g.URL, "/", "_", -1)
+	URL = strings.Replace(URL, "\\", "_", -1)
+	URL = strings.Replace(URL, " ", "_", -1)
 
-	if _, err := os.Stat(directory); os.IsNotExist(err) {
+	directory := path.Join(tmp.Directory, URL)
 
-		err := os.MkdirAll(directory, 0755)
-		if err != nil {
-			fmt.Println(err)
+	for _, dir := range []string{tmp.Directory, URL} {
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+
+			err := os.MkdirAll(dir, 0755)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 

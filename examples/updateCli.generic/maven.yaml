@@ -1,0 +1,82 @@
+---
+
+###
+# This strategy will:
+#
+# Source:
+# =======
+#
+#   Retrieve the version from a Maven source for the artifactID "jenkins-war" from the group "org.jenkins-ci.org"
+#   in the repository "releases" located on "repo.jenkins-ci.org"
+#     => 2.264
+#   Append "jdk11" to it
+#     => 2.264-jdk11
+#
+# Conditions:
+# ===========
+#
+#   Then it will test two conditions.
+#   1 - Test a dockerImage condition, "Do we have a docker image published on Dockerhub"
+#       for the "jenkins/jenkins" using the tag "2.264-jdk11"
+#         => Yes, proceed, No then abort
+#   2 - Test a yaml condition, "Do we have a docker image set?" 
+#       Test if the key jenkins.master.image is set to the value "jenkins/jenkins" 
+#       from the file "charts/jenkins/values.yaml" located on the git repository 
+#       "tgit@github.com:olblak/charts.git"
+#         => Yes, proceed, No then abort
+#
+#  Targets:
+#  ========
+#
+#  If conditions are all met, then updatecli will update (if needed) the key
+#  "jenkins.master.imageTag" to "2.264-jdk11" for the file "charts/jenkins/values.yaml"
+#  from the git repository "git@github.com:olblak/charts.git" then commit the change to the 
+#  branch master
+#
+#
+###
+
+
+source:
+  kind: maven
+  postfix: "-jdk11"
+  spec:
+    owner: "maven"
+    url: "repo.jenkins-ci.org"
+    repository: "releases"
+    groupID: "org.jenkins-ci.main"
+    artifactID: "jenkins-war"
+conditions:
+  docker:
+    name: "Docker Image Published on Registry"
+    kind: "dockerImage"
+    spec:
+      image: "jenkins/jenkins"
+  imageTag:
+    name: "Is jenkins/jenkins docker image used"
+    kind: yaml
+    spec:
+      file: "charts/jenkins/values.yaml"
+      key: "jenkins.master.image"
+      value: "jenkins/jenkins"
+    scm:
+      git:
+        url: "git@github.com:olblak/charts.git"
+        branch: "master"
+        user: "olblak"
+        email: "me@olblak.com"
+targets:
+  imageTag:
+    name: "jenkins/jenkins docker tag"
+    kind: yaml
+    spec:
+      file: "charts/jenkins/values.yaml"
+      key: "jenkins.master.imageTag"
+    scm:
+      git:
+        url: "git@github.com:olblak/charts.git"
+        branch: alertmanager
+        user: olblak
+        email: me@olblak.com
+        directory: "/home/olblak/Project/Jenkins-infra/charts"
+
