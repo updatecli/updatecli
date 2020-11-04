@@ -47,6 +47,8 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 
 		err = s.Init(source, c.Name)
 
+		s.Checkout()
+
 		if err != nil {
 			return false, err
 		}
