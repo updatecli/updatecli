@@ -64,7 +64,6 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 	} else if valueFound && oldVersion != y.Value {
 
-		exist = true
 		fmt.Printf("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
 			y.Key,
 			filepath.Join(y.Path, y.File),
@@ -112,7 +111,6 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 			y.Value)
 
 	} else if valueFound && oldVersion != y.Value {
-		exist = true
 		fmt.Printf("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
 			y.Key,
 			filepath.Join(y.Path, y.File),
