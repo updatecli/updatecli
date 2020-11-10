@@ -14,8 +14,6 @@ jobs:
         fetch-depth: 0
 
     - name: Build updateCli
-      env:
-        TAG: ${{ github.ref }}
       run: |
         touch updateCli.env
         make build.all
