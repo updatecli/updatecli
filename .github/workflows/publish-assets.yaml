@@ -3,7 +3,7 @@ name: Upload assets to releases
 on:
   release:
     types:
-      - created
+      - published
 
 jobs:
   build:
