@@ -8,11 +8,11 @@ BASENAME="updatecli"
 
 echo "Building updatecli OS packages for version $VERSION"
 
-for GOOS in darwin linux windows; do 
-  for GOARCH in amd64 386; do 
+for GOOS in darwin linux windows; do
+  for GOARCH in amd64 386; do
 
     BINARY="$BASENAME.$GOOS.$GOARCH"
-    BINARY_DIRECTORY="./bin/"
+    BINARY_DIRECTORY="./bin"
 
     if [ $GOOS = "windows" ]; then
         BINARY="$BASENAME.$GOARCH"
@@ -22,7 +22,7 @@ for GOOS in darwin linux windows; do
 
     echo "Build $BINARY_DIRECTORY/$BINARY for $GOOS-$GOARCH"
 
-     GOOS=$GOOS GOARCH=$GOARCH go build \
+    GOOS=$GOOS GOARCH=$GOARCH go build \
       -ldflags "-w -s \
         -X \"github.com/olblak/updateCli/pkg/core/version.BuildTime=$BUILD_DATE\" \
         -X \"github.com/olblak/updateCli/pkg/core/version.GoVersion=$GOVERSION\" \
