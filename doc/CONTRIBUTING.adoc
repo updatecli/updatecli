@@ -14,7 +14,7 @@ v0.0.15-6-g1e24f1d
 go build \
 	-ldflags "-w -s \
         -X \"github.com/olblak/updateCli/pkg/version.BuildTime=`date -R`\" \
-        -X \"github.com/olblak/updateCli/pkg/version.GoVersion=go version go1.14.2 linux/amd64\" \
+        -X \"github.com/olblak/updateCli/pkg/version.GoVersion=go version go1.15.2 linux/amd64\" \
         -X \"github.com/olblak/updateCli/pkg/version.Version=v0.0.15-6-g1e24f1d\""\
         -o bin/updatecli
 ```
@@ -22,7 +22,7 @@ go build \
 or using docker
 
 ```
-docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windows -e GOARCH=386 golang:1.14 go build -v
+docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windows -e GOARCH=386 golang:1.15 go build -v
 ```
 
 == CONTRIBUTE
