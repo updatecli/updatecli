@@ -263,7 +263,6 @@ func (e *Engine) Run() (err error) {
 			}
 
 			if err != nil || !ok {
-				fmt.Println(err)
 				e.Reports = append(e.Reports, report)
 				continue
 			}
