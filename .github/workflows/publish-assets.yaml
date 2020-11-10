@@ -1,0 +1,74 @@
+name: Upload assets to releases
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Build updateCli
+      run: |
+        touch updateCli.env
+        make build.all
+
+    - name: Upload updatecli.386.exe
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./bin/updatecli.386.exe
+        asset_name: updatecli.386.exe
+        asset_content_type: application/octet-stream
+    - name: updatecli.amd64.exe
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./bin/updatecli.amd64.exe
+        asset_name: updatecli.amd64.exe
+        asset_content_type: application/octet-stream
+    - name: Upload updatecli.darwin.386
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./bin/updatecli.darwin.386
+        asset_name: updatecli.darwin.386
+        asset_content_type: application/octet-stream
+    - name: Upload updatecli.darwin.amd64
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./bin/updatecli.darwin.amd64
+        asset_name: updatecli.darwin.amd64
+        asset_content_type: application/octet-stream
+    - name: Upload updatecli.linux.386
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./bin/updatecli.linux.386
+        asset_name: updatecli.linux.386
+        asset_content_type: application/octet-stream
+    - name: Upload updatecli.linux.amd64
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./bin/updatecli.linux.amd64
+        asset_name: updatecli.linux.amd64
+        asset_content_type: application/octet-stream
