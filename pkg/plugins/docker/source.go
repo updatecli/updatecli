@@ -11,6 +11,12 @@ import (
 // Source retrieve docker image tag digest from a registry
 func (d *Docker) Source() (string, error) {
 
+	hostname, image, err := parseImage(d.Image)
+
+	if err != nil {
+		return "", err
+	}
+
 	if ok, err := d.Check(); !ok {
 		return "", err
 	}
@@ -19,9 +25,8 @@ func (d *Docker) Source() (string, error) {
 	URL := ""
 
 	if d.isDockerHub() {
-		URL = fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s/",
-			d.URL,
-			d.Image,
+		URL = fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/%s/",
+			image,
 			d.Tag)
 
 	} else {
@@ -29,8 +34,8 @@ func (d *Docker) Source() (string, error) {
 			return "", err
 		}
 		URL = fmt.Sprintf("https://%s/v2/%s/manifests/%s",
-			d.URL,
-			d.Image,
+			hostname,
+			image,
 			d.Tag)
 	}
 
@@ -92,7 +97,7 @@ func (d *Docker) Source() (string, error) {
 
 	fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
 	fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
-	fmt.Printf("Example: %v/%v@sha256:%v\n", d.URL, d.Image, digest)
+	fmt.Printf("Example: %v/%v@sha256:%v\n", hostname, image, digest)
 
 	return digest, nil
 

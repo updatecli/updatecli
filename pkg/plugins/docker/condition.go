@@ -17,10 +17,17 @@ func (d *Docker) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 
 // Condition checks if a docker image with a specific tag is published
 func (d *Docker) Condition(source string) (bool, error) {
+
+	hostname, image, err := parseImage(d.Image)
+
+	if err != nil {
+		return false, err
+	}
+
 	URL := ""
 
 	if d.Tag != "" {
-		fmt.Printf("Tag %v, already defined from configuration file\n", d.Tag)
+		fmt.Printf("INFO: Tag %v, already defined from configuration file\n", d.Tag)
 	} else {
 		d.Tag = source
 	}
@@ -30,9 +37,8 @@ func (d *Docker) Condition(source string) (bool, error) {
 	}
 
 	if d.isDockerHub() {
-		URL = fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s/",
-			d.URL,
-			d.Image,
+		URL = fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/%s/",
+			image,
 			d.Tag)
 
 	} else {
@@ -40,8 +46,8 @@ func (d *Docker) Condition(source string) (bool, error) {
 			return false, err
 		}
 		URL = fmt.Sprintf("https://%s/v2/%s/manifests/%s",
-			d.URL,
-			d.Image,
+			hostname,
+			image,
 			d.Tag)
 	}
 
@@ -66,7 +72,7 @@ func (d *Docker) Condition(source string) (bool, error) {
 	}
 
 	if res.StatusCode == 200 && !d.isDockerHub() {
-		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
+		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", image, d.Tag)
 		return true, nil
 
 	} else if d.isDockerHub() {
@@ -76,12 +82,12 @@ func (d *Docker) Condition(source string) (bool, error) {
 		json.Unmarshal(body, &data)
 
 		if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
-			fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
+			fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", image, d.Tag)
 			return false, nil
 		}
 
 		if val, ok := data["name"]; ok && val == d.Tag {
-			fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
+			fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", image, d.Tag)
 			return true, nil
 		}
 
