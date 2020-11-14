@@ -29,6 +29,9 @@ func (d *Docker) Source() (string, error) {
 			image,
 			d.Tag)
 
+	} else if d.isQuaiIO() {
+		URL = fmt.Sprintf("https://quay.io/api/v1/repository/%s", image)
+
 	} else {
 		if ok, err := d.IsDockerRegistry(); !ok {
 			return "", err
@@ -68,12 +71,12 @@ func (d *Docker) Source() (string, error) {
 
 	if d.isDockerHub() {
 
-		type respond struct {
+		type response struct {
 			ID     string
 			Images []map[string]string
 		}
 
-		data := respond{}
+		data := response{}
 
 		json.Unmarshal(body, &data)
 
@@ -90,6 +93,37 @@ func (d *Docker) Source() (string, error) {
 		fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
 
 		return "", nil
+	} else if d.isQuaiIO() {
+
+		type tagMetadata struct {
+			Image_id        string
+			Last_modified   string
+			Name            string
+			Manifest_digest string
+			Size            string
+		}
+
+		type response struct {
+			Description string
+			Name        string
+			Namespace   string
+			Tags        map[string]tagMetadata
+		}
+
+		data := response{}
+
+		json.Unmarshal(body, &data)
+
+		if tag, ok := data.Tags[d.Tag]; ok {
+			digest := strings.TrimLeft(tag.Manifest_digest, "sha256:")
+
+			fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Quay.io\n", digest, d.Image, d.Tag)
+			fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
+
+			return digest, nil
+		}
+		return "", nil
+
 	}
 
 	digest := res.Header.Get("Docker-Content-Digest")
