@@ -41,6 +41,10 @@ func (d *Docker) Condition(source string) (bool, error) {
 			image,
 			d.Tag)
 
+	} else if d.isQuaiIO() {
+
+		URL = fmt.Sprintf("https://quay.io/api/v1/repository/%s", image)
+
 	} else {
 		if ok, err := d.IsDockerRegistry(); !ok {
 			return false, err
@@ -72,7 +76,7 @@ func (d *Docker) Condition(source string) (bool, error) {
 	}
 
 	if res.StatusCode == 200 && !d.isDockerHub() {
-		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", image, d.Tag)
+		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
 		return true, nil
 
 	} else if d.isDockerHub() {
@@ -82,14 +86,41 @@ func (d *Docker) Condition(source string) (bool, error) {
 		json.Unmarshal(body, &data)
 
 		if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
-			fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", image, d.Tag)
+			fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
 			return false, nil
 		}
 
 		if val, ok := data["name"]; ok && val == d.Tag {
-			fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", image, d.Tag)
+			fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
 			return true, nil
 		}
+
+	} else if d.isQuaiIO() {
+		type tagMetadata struct {
+			Image_id        string
+			Last_modified   string
+			Name            string
+			Manifest_digest string
+			Size            string
+		}
+
+		type response struct {
+			Description string
+			Name        string
+			Namespace   string
+			Tags        map[string]tagMetadata
+		}
+
+		data := response{}
+
+		json.Unmarshal(body, &data)
+
+		if _, ok := data.Tags[d.Tag]; ok {
+			fmt.Printf("\u2714 %s:%s available on Quai.io\n", d.Image, d.Tag)
+			return true, nil
+		}
+		fmt.Printf("\u2717 %s:%s doesn't exist on Quay.io\n", d.Image, d.Tag)
+		return false, nil
 
 	} else {
 

@@ -73,7 +73,17 @@ var data = []DataSet{
 		expectedCondition: true,
 		expectedHostname:  "quay.io",
 		expectedImage:     "jetstack/cert-manager-controller",
-		expectedDigest:    "xxx",
+		expectedDigest:    "8eda7cd9fe3e72fd23c9646fd6e4fba5407113872462268aa37ae3660eda9992",
+	},
+	{
+		docker: Docker{
+			Image: "quay.io/jetstack/cert-manager-controller",
+			Tag:   "donotexist",
+		},
+		expectedCondition: false,
+		expectedHostname:  "quay.io",
+		expectedImage:     "jetstack/cert-manager-controller",
+		expectedDigest:    "",
 	},
 }
 
