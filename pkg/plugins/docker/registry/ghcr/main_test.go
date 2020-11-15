@@ -66,7 +66,7 @@ func TestDigest(t *testing.T) {
 		expected := d.expectedDigest
 
 		if got != expected {
-			t.Errorf("Docker Image %v:%v for archi '%s', expect digest %v, got %v", d.docker.Image, d.docker.Tag, d.docker.Architecture, expected, got)
+			t.Errorf("Docker Image %v:%v for architecture '%s', expect digest %v, got %v", d.docker.Image, d.docker.Tag, d.docker.Architecture, expected, got)
 		}
 	}
 }
