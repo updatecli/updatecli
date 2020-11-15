@@ -14,13 +14,18 @@ type Docker struct {
 	Architecture string
 }
 
+// Registry is an interface for every docker registry api
+type Registry interface {
+	Digest() (string, error)
+}
+
 func parseImage(name string) (hostname string, image string, err error) {
 	URL, err := url.ParseRequestURI("https://" + name)
 	if err != nil {
 		return "", "", err
 	}
 
-	// if hostname does't contains valid url with at least a dot
+	// if hostname doesn't contains valid url with at least a dot
 	if s := strings.Split(URL.Hostname(), "."); len(s) <= 1 {
 		URL, err = url.Parse("https://hub.docker.com/" + name)
 	}

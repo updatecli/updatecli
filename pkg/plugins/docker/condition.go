@@ -1,13 +1,12 @@
 package docker
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerregistry"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/quay"
 )
 
 // ConditionFromSCM returns an error because it's not supported
@@ -16,6 +15,8 @@ func (d *Docker) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 }
 
 // Condition checks if a docker image with a specific tag is published
+// We assume that if we can't retrieve the docker image digest, then it means
+// it doesn't exist.
 func (d *Docker) Condition(source string) (bool, error) {
 
 	hostname, image, err := parseImage(d.Image)
@@ -24,10 +25,8 @@ func (d *Docker) Condition(source string) (bool, error) {
 		return false, err
 	}
 
-	URL := ""
-
 	if d.Tag != "" {
-		fmt.Printf("INFO: Tag %v, already defined from configuration file\n", d.Tag)
+		fmt.Printf("INFO: Tag %v, defined from configuration file which override the source value '%v'\n", d.Tag, source)
 	} else {
 		d.Tag = source
 	}
@@ -36,96 +35,58 @@ func (d *Docker) Condition(source string) (bool, error) {
 		return false, err
 	}
 
+	var r Registry
+
 	if d.isDockerHub() {
-		URL = fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/%s/",
-			image,
-			d.Tag)
+		dh := dockerhub.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+		}
+
+		r = &dh
 
 	} else if d.isQuaiIO() {
 
-		URL = fmt.Sprintf("https://quay.io/api/v1/repository/%s", image)
+		q := quay.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+		}
 
-	} else {
-		if ok, err := d.IsDockerRegistry(); !ok {
+		r = &q
+
+	} else if ok, err := d.IsDockerRegistry(); ok {
+		if err != nil {
 			return false, err
 		}
-		URL = fmt.Sprintf("https://%s/v2/%s/manifests/%s",
-			hostname,
-			image,
-			d.Tag)
-	}
 
-	req, err := http.NewRequest("GET", URL, nil)
-
-	if err != nil {
-		return false, err
-	}
-
-	res, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		return false, err
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return false, err
-	}
-
-	if res.StatusCode == 200 && !d.isDockerHub() {
-		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
-		return true, nil
-
-	} else if d.isDockerHub() {
-
-		data := map[string]string{}
-
-		json.Unmarshal(body, &data)
-
-		if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
-			fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
-			return false, nil
+		dr := dockerregistry.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Hostname:     hostname,
 		}
 
-		if val, ok := data["name"]; ok && val == d.Tag {
-			fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
-			return true, nil
-		}
-
-	} else if d.isQuaiIO() {
-		type tagMetadata struct {
-			Image_id        string
-			Last_modified   string
-			Name            string
-			Manifest_digest string
-			Size            string
-		}
-
-		type response struct {
-			Description string
-			Name        string
-			Namespace   string
-			Tags        map[string]tagMetadata
-		}
-
-		data := response{}
-
-		json.Unmarshal(body, &data)
-
-		if _, ok := data.Tags[d.Tag]; ok {
-			fmt.Printf("\u2714 %s:%s available on Quai.io\n", d.Image, d.Tag)
-			return true, nil
-		}
-		fmt.Printf("\u2717 %s:%s doesn't exist on Quay.io\n", d.Image, d.Tag)
-		return false, nil
+		r = &dr
 
 	} else {
-
-		fmt.Printf("\u2717Something went wrong on URL: %s\n", URL)
+		return false, fmt.Errorf("Unknown Docker Registry API")
 	}
 
-	return false, fmt.Errorf("something went wrong %s", URL)
+	digest, err := r.Digest()
+
+	if err != nil {
+		return false, err
+	}
+
+	if digest == "" {
+		fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
+		return false, nil
+	}
+
+	fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
+
+	return true, nil
+
 }
