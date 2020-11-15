@@ -63,7 +63,7 @@ var data = []DataSet{
 		expectedCondition: true,
 		expectedHostname:  "ghcr.io",
 		expectedImage:     "olblak/updatecli",
-		expectedDigest:    "xxx",
+		expectedDigest:    "fd0a342a6df8b4ecb10b38c16a222bc3a964be1ab34547dbf116910b2184f4b9",
 	},
 	{
 		docker: Docker{
