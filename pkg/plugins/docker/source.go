@@ -5,6 +5,7 @@ import (
 
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerregistry"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/ghcr"
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/quay"
 )
 
@@ -43,6 +44,17 @@ func (d *Docker) Source() (string, error) {
 		}
 
 		r = &q
+
+	} else if d.isGHCR() {
+
+		g := ghcr.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Token:        d.Token,
+		}
+
+		r = &g
 
 	} else if ok, err := d.IsDockerRegistry(); ok {
 		if err != nil {
