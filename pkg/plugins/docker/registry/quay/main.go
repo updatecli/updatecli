@@ -27,7 +27,7 @@ func (d *Docker) Digest() (string, error) {
 		return "", err
 	}
 
-	if d.Architecture != "" {
+	if d.Architecture != "amd64" {
 		fmt.Printf("Quay.io doesn't support arch '%v', fallback to amd64\n", d.Architecture)
 	}
 
