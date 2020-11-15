@@ -19,8 +19,6 @@ type Docker struct {
 // Digest retrieve docker image tag digest from a registry
 func (d *Docker) Digest() (string, error) {
 
-	// https://ghcr.io/v2/olblak/updatecli/manifests/edge
-
 	URL := fmt.Sprintf("https://ghcr.io/v2/%s/manifests/%s", d.Image, d.Tag)
 
 	req, err := http.NewRequest("GET", URL, nil)
