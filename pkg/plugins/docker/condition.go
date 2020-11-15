@@ -42,6 +42,7 @@ func (d *Docker) Condition(source string) (bool, error) {
 			Image:        image,
 			Tag:          d.Tag,
 			Architecture: d.Architecture,
+			Token:        d.Token,
 		}
 
 		r = &dh
@@ -52,6 +53,7 @@ func (d *Docker) Condition(source string) (bool, error) {
 			Image:        image,
 			Tag:          d.Tag,
 			Architecture: d.Architecture,
+			Token:        d.Token,
 		}
 
 		r = &q
@@ -66,6 +68,7 @@ func (d *Docker) Condition(source string) (bool, error) {
 			Tag:          d.Tag,
 			Architecture: d.Architecture,
 			Hostname:     hostname,
+			Token:        d.Token,
 		}
 
 		r = &dr

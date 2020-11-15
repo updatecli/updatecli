@@ -13,6 +13,7 @@ type Docker struct {
 	Tag          string
 	Architecture string
 	Hostname     string
+	Token        string
 }
 
 // Digest retrieve docker image tag digest from a registry
@@ -27,6 +28,10 @@ func (d *Docker) Digest() (string, error) {
 
 	if err != nil {
 		return "", err
+	}
+
+	if len(d.Token) > 0 {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", d.Token))
 	}
 
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
