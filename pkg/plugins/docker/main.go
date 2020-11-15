@@ -9,9 +9,10 @@ import (
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
+	Architecture string
 	Image        string
 	Tag          string
-	Architecture string
+	Token        string
 }
 
 // Registry is an interface for every docker registry api
@@ -97,6 +98,10 @@ func (d *Docker) IsDockerRegistry() (bool, error) {
 
 	if err != nil {
 		return false, err
+	}
+
+	if len(d.Token) > 0 {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", d.Token))
 	}
 
 	res, err := http.DefaultClient.Do(req)

@@ -13,6 +13,7 @@ type Docker struct {
 	Image        string
 	Tag          string
 	Architecture string
+	Token        string
 }
 
 // Digest retrieve docker image tag digest from a registry
@@ -28,6 +29,10 @@ func (d *Docker) Digest() (string, error) {
 
 	if d.Architecture != "" {
 		fmt.Printf("Quay.io doesn't support arch '%v', fallback to amd64\n", d.Architecture)
+	}
+
+	if len(d.Token) > 0 {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", d.Token))
 	}
 
 	res, err := http.DefaultClient.Do(req)

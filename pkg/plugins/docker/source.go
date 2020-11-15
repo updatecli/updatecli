@@ -28,6 +28,7 @@ func (d *Docker) Source() (string, error) {
 			Image:        image,
 			Tag:          d.Tag,
 			Architecture: d.Architecture,
+			Token:        d.Token,
 		}
 
 		r = &dh
@@ -38,6 +39,7 @@ func (d *Docker) Source() (string, error) {
 			Image:        image,
 			Tag:          d.Tag,
 			Architecture: d.Architecture,
+			Token:        d.Token,
 		}
 
 		r = &q
@@ -52,6 +54,7 @@ func (d *Docker) Source() (string, error) {
 			Tag:          d.Tag,
 			Architecture: d.Architecture,
 			Hostname:     hostname,
+			Token:        d.Token,
 		}
 
 		r = &dr
