@@ -74,6 +74,20 @@ func (d *Docker) isDockerHub() bool {
 	return false
 }
 
+func (d *Docker) isGHCR() bool {
+
+	hostname, _, err := parseImage(d.Image)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if hostname == "ghcr.io" {
+		return true
+	}
+	return false
+}
+
 // IsDockerRegistry validates that we are on docker registry api
 // https://docs.docker.com/registry/spec/api/#api-version-check
 func (d *Docker) IsDockerRegistry() (bool, error) {
