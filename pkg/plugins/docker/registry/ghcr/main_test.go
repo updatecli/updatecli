@@ -2,6 +2,7 @@ package ghcr
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ var data = []DataSet{
 		docker: Docker{
 			Image: "olblak/updatecli",
 			Tag:   "v0.0.22",
-			Token: "xxx",
+			Token: os.Getenv("GITHUB_TOKEN"),
 		},
 		expectedDigest: "fd0a342a6df8b4ecb10b38c16a222bc3a964be1ab34547dbf116910b2184f4b9",
 	},
@@ -23,7 +24,7 @@ var data = []DataSet{
 		docker: Docker{
 			Image:        "olblak/updatecli",
 			Tag:          "v0.0.22",
-			Token:        "xxx",
+			Token:        os.Getenv("GITHUB_TOKEN"),
 			Architecture: "amd64",
 		},
 		expectedDigest: "fd0a342a6df8b4ecb10b38c16a222bc3a964be1ab34547dbf116910b2184f4b9",
@@ -32,7 +33,7 @@ var data = []DataSet{
 		docker: Docker{
 			Image:        "olblak/updatecli",
 			Tag:          "v0.0.22",
-			Token:        "xxx",
+			Token:        os.Getenv("GITHUB_TOKEN"),
 			Architecture: "arm64",
 		},
 		expectedDigest: "8c2d98213a7851b8dd8f3851f7453ab0ea5c9f92ca495882ef193466c3a92c21",
@@ -41,7 +42,7 @@ var data = []DataSet{
 		docker: Docker{
 			Image: "olblak/updatecli",
 			Tag:   "donotexist",
-			Token: "xxx",
+			Token: os.Getenv("GITHUB_TOKEN"),
 		},
 		expectedDigest: "",
 	},
@@ -49,7 +50,7 @@ var data = []DataSet{
 		docker: Docker{
 			Image: "donotexist/donotexist",
 			Tag:   "donotexist",
-			Token: "xxx",
+			Token: os.Getenv("GITHUB_TOKEN"),
 		},
 		expectedDigest: "",
 	},
