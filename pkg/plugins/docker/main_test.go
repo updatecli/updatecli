@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -59,6 +60,7 @@ var data = []DataSet{
 		docker: Docker{
 			Image: "ghcr.io/olblak/updatecli",
 			Tag:   "v0.0.22",
+			Token: os.Getenv("GITHUB_TOKEN"),
 		},
 		expectedCondition: true,
 		expectedHostname:  "ghcr.io",
