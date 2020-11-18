@@ -14,10 +14,10 @@ var data = []DataSet{
 	{
 		docker: Docker{
 			Image:    "azure-cli",
-			Tag:      "latest",
+			Tag:      "2.0.27",
 			Hostname: "mcr.microsoft.com",
 		},
-		expectedDigest: "bddcbadc711fd3c0a41c3101a0ba07ace4c1b124b6ee7b57be3ffe8142f140c9",
+		expectedDigest: "d7c97a1951c336e4427450023409712a9993e8f1f8764be10e05e03d8c863279",
 	},
 	{
 		docker: Docker{
