@@ -39,22 +39,22 @@ var data = []DataSet{
 	{
 		docker: Docker{
 			Image: "nginx",
-			Tag:   "latest",
+			Tag:   "1.12.1",
 		},
 		expectedCondition: true,
 		expectedHostname:  "hub.docker.com",
 		expectedImage:     "library/nginx",
-		expectedDigest:    "34f3f875e745861ff8a37552ed7eb4b673544d2c56c7cc58f9a9bec5b4b3530e",
+		expectedDigest:    "0f5baf09c628c0f44c1d53be8293f95ee80cd542f2ea37c48a667d535614b12a",
 	},
 	{
 		docker: Docker{
 			Image: "mcr.microsoft.com/azure-cli",
-			Tag:   "latest",
+			Tag:   "2.0.27",
 		},
 		expectedCondition: true,
 		expectedHostname:  "mcr.microsoft.com",
 		expectedImage:     "azure-cli",
-		expectedDigest:    "bddcbadc711fd3c0a41c3101a0ba07ace4c1b124b6ee7b57be3ffe8142f140c9",
+		expectedDigest:    "d7c97a1951c336e4427450023409712a9993e8f1f8764be10e05e03d8c863279",
 	},
 	{
 		docker: Docker{
