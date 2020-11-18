@@ -117,7 +117,24 @@ source:
     image: "Docker Image"
     url: "Docker registry url" # Not Mandatory
     tag: "Docker Image Tag to fetch the checksum"
+    token: "Token required for private repository"
 ```
+
+Token value depends on the Docker registry and it can be retrieved in different ways:
+
+* GHCR - Github uses personal access token as explained https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token[here]
+* DockerHub - To retrieve a dockerhub token, it's easier to run `docker login` and then retriev the token stored in '~/.docker/config.json'
+
+.~/.docker/config.json
+```
+        "auths": {
+                "https://index.docker.io/v1/": {
+                        "auth": "token"
+                }
+        },
+```
+
+Tested with Dockerhub, Ghcr.io
 
 ==== HelmChart
 This source will get the latest helm chart version available.
@@ -197,7 +214,24 @@ conditions:
     spec:
       image: _Docker Image_
       url: _Docker Registry url_ #Not mandatory
+      token: "Token required for private repository"
 ```
+
+Token value depends on the Docker registry and it can be retrieved in different ways:
+
+* GHCR - Github uses personal access token as explained https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token[here]
+* DockerHub - To retrieve the token, it's easier to run `docker login` and then retrieve the token stored in '~/.docker/config.json'
+
+.~/.docker/config.json
+```
+        "auths": {
+                "https://index.docker.io/v1/": {
+                        "auth": "token"
+                }
+        },
+```
+
+Tested with Dockerhub, Ghcr.io
 
 ==== Maven
 This condition checks if the source value is available on a maven repository

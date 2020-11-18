@@ -35,4 +35,7 @@ jobs:
       run: go build -v .
 
     - name: Test
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       run: go test ./...

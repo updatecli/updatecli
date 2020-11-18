@@ -1,99 +1,93 @@
 package docker
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
+
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerregistry"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/ghcr"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/quay"
 )
 
 // Source retrieve docker image tag digest from a registry
 func (d *Docker) Source() (string, error) {
 
+	hostname, image, err := parseImage(d.Image)
+
+	if err != nil {
+		return "", err
+	}
+
 	if ok, err := d.Check(); !ok {
 		return "", err
 	}
 
-	// https://hub.docker.com/v2/repositories/olblak/updatecli/tags/latest
-	URL := ""
+	var r Registry
 
 	if d.isDockerHub() {
-		URL = fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s/",
-			d.URL,
-			d.Image,
-			d.Tag)
+		dh := dockerhub.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Token:        d.Token,
+		}
 
-	} else {
-		if ok, err := d.IsDockerRegistry(); !ok {
+		r = &dh
+
+	} else if d.isQuaiIO() {
+
+		q := quay.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Token:        d.Token,
+		}
+
+		r = &q
+
+	} else if d.isGHCR() {
+
+		g := ghcr.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Token:        d.Token,
+		}
+
+		r = &g
+
+	} else if ok, err := d.IsDockerRegistry(); ok {
+		if err != nil {
 			return "", err
 		}
-		URL = fmt.Sprintf("https://%s/v2/%s/manifests/%s",
-			d.URL,
-			d.Image,
-			d.Tag)
-	}
 
-	req, err := http.NewRequest("GET", URL, nil)
-
-	if err != nil {
-		return "", err
-	}
-
-	if ok, err := d.IsDockerRegistry(); ok && err == nil {
-		// Retrieve v2 manifest
-		// application/vnd.docker.distribution.manifest.v1+prettyjws v1 manifest
-		req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
-
-	}
-
-	res, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		return "", err
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return "", err
-	}
-
-	if d.isDockerHub() {
-
-		type respond struct {
-			ID     string
-			Images []map[string]string
+		dr := dockerregistry.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Hostname:     hostname,
+			Token:        d.Token,
 		}
 
-		data := respond{}
+		r = &dr
 
-		json.Unmarshal(body, &data)
+	} else {
+		return "", fmt.Errorf("Unknown Docker Registry API")
+	}
 
-		for _, image := range data.Images {
-			if image["architecture"] == d.Architecture {
-				digest := strings.TrimPrefix(image["digest"], "sha256:")
-				fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
-				fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
-				fmt.Printf("Example: %v@sha256:%v\n", d.Image, digest)
-				return digest, nil
-			}
-		}
+	digest, err := r.Digest()
 
+	if err != nil {
+		return "", err
+	}
+
+	if digest == "" {
 		fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
-
-		return "", nil
+	} else {
+		fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
+		fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
+		fmt.Printf("Example: %v@sha256:%v\n", d.Image, digest)
 	}
-
-	digest := res.Header.Get("Docker-Content-Digest")
-	digest = strings.TrimPrefix(digest, "sha256:")
-
-	fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
-	fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
-	fmt.Printf("Example: %v/%v@sha256:%v\n", d.URL, d.Image, digest)
 
 	return digest, nil
-
 }
