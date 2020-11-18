@@ -2,6 +2,7 @@ package dockerhub
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -61,6 +62,21 @@ var data = []DataSet{
 			Tag:   "donotexist",
 		},
 		expectedDigest: "",
+	},
+	{
+		docker: Docker{
+			Image: "olblak/test",
+			Tag:   "updatecli",
+		},
+		expectedDigest: "",
+	},
+	{
+		docker: Docker{
+			Image: "olblak/test",
+			Tag:   "updatecli",
+			Token: os.Getenv("DOCKERHUB_TOKEN"),
+		},
+		expectedDigest: "ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6",
 	},
 }
 
