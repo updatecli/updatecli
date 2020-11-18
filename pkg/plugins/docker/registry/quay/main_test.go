@@ -21,6 +21,20 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
+			Image: "coreos/prometheus-operator",
+			Tag:   "v0.39.0-arm64",
+		},
+		expectedDigest: "3142406cb96f300355462312607db40078828b32e9c7a904c3e461687383b96",
+	},
+	{
+		docker: Docker{
+			Image: "coreos/prometheus-operator",
+			Tag:   "v0.39.0-amd64",
+		},
+		expectedDigest: "775ed3360c67ae11a2521a404b0964f65245bbd75f498118cd4058e09c8fcb91",
+	},
+	{
+		docker: Docker{
 			Image: "jetstack/cert-manager-controller",
 			Tag:   "donotexist",
 		},
