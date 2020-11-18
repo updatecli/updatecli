@@ -114,8 +114,8 @@ This source will get a docker image tag from a docker registry and return its di
 source:
   kind: dockerDigest
   spec:
+    architecture: "Default to amd64, it's used when the same tag can reference different architecture like amd64 and arm64"
     image: "Docker Image"
-    url: "Docker registry url" # Not Mandatory
     tag: "Docker Image Tag to fetch the checksum"
     token: "Token required for private repository"
 ```
@@ -212,8 +212,9 @@ conditions:
   id:
     kind: dockerImage
     spec:
+      architecture: "Default to amd64, it's used when the same tag can reference different architecture like amd64 and arm64"
       image: _Docker Image_
-      url: _Docker Registry url_ #Not mandatory
+      tag: "Docker Image Tag to test, it overrides the value from source"
       token: "Token required for private repository"
 ```
 
