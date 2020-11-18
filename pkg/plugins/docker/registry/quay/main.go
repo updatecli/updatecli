@@ -27,10 +27,6 @@ func (d *Docker) Digest() (string, error) {
 		return "", err
 	}
 
-	if d.Architecture != "amd64" {
-		fmt.Printf("Quay.io doesn't support arch '%v', fallback to amd64\n", d.Architecture)
-	}
-
 	if len(d.Token) > 0 {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", d.Token))
 	}
