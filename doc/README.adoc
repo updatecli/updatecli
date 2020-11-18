@@ -117,7 +117,7 @@ source:
     image: "Docker Image"
     url: "Docker registry url" # Not Mandatory
     tag: "Docker Image Tag to fetch the checksum"
-    token: "Token requires for private repository"
+    token: "Token required for private repository"
 ```
 
 Token value depends on the Docker registry and it can be retrieved in different ways:
@@ -214,7 +214,7 @@ conditions:
     spec:
       image: _Docker Image_
       url: _Docker Registry url_ #Not mandatory
-      token: "Token requires for private repository"
+      token: "Token required for private repository"
 ```
 
 Token value depends on the Docker registry and it can be retrieved in different ways:
