@@ -37,4 +37,5 @@ jobs:
     - name: Test
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       run: go test ./...
