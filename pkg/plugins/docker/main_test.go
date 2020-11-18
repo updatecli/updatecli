@@ -1,6 +1,111 @@
 package docker
 
-import "testing"
+import (
+	"fmt"
+	"os"
+	"testing"
+)
+
+type DataSet struct {
+	docker            Docker
+	digest            string
+	expectedHostname  string
+	expectedImage     string
+	expectedDigest    string
+	expectedCondition bool
+}
+
+var data = []DataSet{
+	{
+		docker: Docker{
+			Image: "olblak/updatecli",
+			Tag:   "v0.0.16",
+		},
+		expectedCondition: true,
+		expectedDigest:    "3c615fb45d190c8dfcdc8cb6b020aa27b86610755694d3ef072495d368ef81e5",
+		expectedHostname:  "hub.docker.com",
+		expectedImage:     "olblak/updatecli",
+	},
+	{
+		docker: Docker{
+			Image: "olblak/updatecli",
+			Tag:   "donotexist",
+		},
+		expectedCondition: false,
+		expectedDigest:    "",
+		expectedHostname:  "hub.docker.com",
+		expectedImage:     "olblak/updatecli",
+	},
+	{
+		docker: Docker{
+			Image: "nginx",
+			Tag:   "1.12.1",
+		},
+		expectedCondition: true,
+		expectedHostname:  "hub.docker.com",
+		expectedImage:     "library/nginx",
+		expectedDigest:    "0f5baf09c628c0f44c1d53be8293f95ee80cd542f2ea37c48a667d535614b12a",
+	},
+	{
+		docker: Docker{
+			Image: "mcr.microsoft.com/azure-cli",
+			Tag:   "2.0.27",
+		},
+		expectedCondition: true,
+		expectedHostname:  "mcr.microsoft.com",
+		expectedImage:     "azure-cli",
+		expectedDigest:    "d7c97a1951c336e4427450023409712a9993e8f1f8764be10e05e03d8c863279",
+	},
+	{
+		docker: Docker{
+			Image: "ghcr.io/olblak/updatecli",
+			Tag:   "v0.0.22",
+			Token: os.Getenv("GITHUB_TOKEN"),
+		},
+		expectedCondition: true,
+		expectedHostname:  "ghcr.io",
+		expectedImage:     "olblak/updatecli",
+		expectedDigest:    "fd0a342a6df8b4ecb10b38c16a222bc3a964be1ab34547dbf116910b2184f4b9",
+	},
+	{
+		docker: Docker{
+			Image: "quay.io/jetstack/cert-manager-controller",
+			Tag:   "v1.0.0",
+		},
+		expectedCondition: true,
+		expectedHostname:  "quay.io",
+		expectedImage:     "jetstack/cert-manager-controller",
+		expectedDigest:    "8eda7cd9fe3e72fd23c9646fd6e4fba5407113872462268aa37ae3660eda9992",
+	},
+	{
+		docker: Docker{
+			Image: "quay.io/jetstack/cert-manager-controller",
+			Tag:   "donotexist",
+		},
+		expectedCondition: false,
+		expectedHostname:  "quay.io",
+		expectedImage:     "jetstack/cert-manager-controller",
+		expectedDigest:    "",
+	},
+}
+
+func TestParseImage(t *testing.T) {
+	for _, d := range data {
+		hostnameGot, imageGot, err := parseImage(d.docker.Image)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if hostnameGot != d.expectedHostname {
+			t.Errorf("Wrong hostname found! expected %v, got %v", d.expectedHostname, hostnameGot)
+		}
+
+		if imageGot != d.expectedImage {
+			t.Errorf("Wrong image found! expected %v, got %v", d.expectedImage, imageGot)
+		}
+
+	}
+}
 
 func TestParameters(t *testing.T) {
 	d := &Docker{
@@ -14,23 +119,9 @@ func TestParameters(t *testing.T) {
 		t.Errorf("Minimum valid configuration provided! Expect %v, got %v", true, ok)
 	}
 
-	// Test if we correctly return library images if dockerhub namespace is not specified
-	got := d.Image
-	expected := "library/nginx"
-	if got != expected {
-		t.Errorf("Image is configured without namespace! expected %v, got %v", expected, got)
-	}
-
-	// Test if we correctly return the default docker hub url if not defined
-	expected = "hub.docker.com"
-	got = d.URL
-	if got != expected {
-		t.Errorf("URL is not configured! expected value %v, got %v", expected, got)
-	}
-
 	// Test if we correctly return the default architecture if not defined
-	expected = "amd64"
-	got = d.Architecture
+	expected := "amd64"
+	got := d.Architecture
 	if got != expected {
 		t.Errorf("Architecture is not configured! expected value %v, got %v", expected, got)
 	}
@@ -57,57 +148,25 @@ func TestCheck(t *testing.T) {
 
 func TestCondition(t *testing.T) {
 	// Test if existing image tag return true
-	d := &Docker{
-		URL:   "hub.docker.com",
-		Tag:   "v0.0.16",
-		Image: "olblak/updatecli",
-	}
 
-	got, _ := d.Condition("")
-	expected := true
-	if got != expected {
-		t.Errorf("%v:%v is published! expected %v, got %v", d.Image, d.Tag, expected, got)
+	for _, d := range data {
+		got, _ := d.docker.Condition("")
+		expected := d.expectedCondition
+		if got != expected && expected {
+			t.Errorf("%v:%v is published! expected %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
+		} else if got != expected && !expected {
+			t.Errorf("%v:%v is not published! expected %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
+		}
 	}
-
-	// Test if none existing image tag return false
-	d = &Docker{
-		URL:   "hub.docker.com",
-		Tag:   "donotexist",
-		Image: "olblak/updatecli",
-	}
-
-	got, _ = d.Condition("")
-	expected = false
-	if got != expected {
-		t.Errorf("%v:%v is not published! expected %v, got %v", d.Image, d.Tag, expected, got)
-	}
-
 }
 
 func TestSource(t *testing.T) {
 	// Test if existing return the correct digest
-	d := &Docker{
-		URL:   "hub.docker.com",
-		Tag:   "v0.0.2",
-		Image: "olblak/updatecli",
-	}
-
-	got, _ := d.Source()
-	expected := "4f9936580d3caa6b7a27da62df78acf0294277a4b62bc128de7b88ff836ed2a9"
-
-	if got != expected {
-		t.Errorf("Docker Image %v:%v expect digest %v, got %v", d.Image, d.Tag, expected, got)
-	}
-
-	// Test if non existing tag return empty string
-	d = &Docker{
-		URL:   "hub.docker.com",
-		Tag:   "donotexist",
-		Image: "olblak/updatecli",
-	}
-	got, _ = d.Source()
-	expected = ""
-	if got != expected {
-		t.Errorf("Digest expected %v, got %v", expected, got)
+	for _, d := range data {
+		got, _ := d.docker.Source()
+		expected := d.expectedDigest
+		if got != expected {
+			t.Errorf("Docker Image %v:%v expect digest %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
+		}
 	}
 }

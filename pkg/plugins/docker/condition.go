@@ -1,13 +1,13 @@
 package docker
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerregistry"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/ghcr"
+	"github.com/olblak/updateCli/pkg/plugins/docker/registry/quay"
 )
 
 // ConditionFromSCM returns an error because it's not supported
@@ -16,11 +16,18 @@ func (d *Docker) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 }
 
 // Condition checks if a docker image with a specific tag is published
+// We assume that if we can't retrieve the docker image digest, then it means
+// it doesn't exist.
 func (d *Docker) Condition(source string) (bool, error) {
-	URL := ""
+
+	hostname, image, err := parseImage(d.Image)
+
+	if err != nil {
+		return false, err
+	}
 
 	if d.Tag != "" {
-		fmt.Printf("Tag %v, already defined from configuration file\n", d.Tag)
+		fmt.Printf("INFO: Tag %v, defined from configuration file which override the source value '%v'\n", d.Tag, source)
 	} else {
 		d.Tag = source
 	}
@@ -29,66 +36,72 @@ func (d *Docker) Condition(source string) (bool, error) {
 		return false, err
 	}
 
-	if d.isDockerHub() {
-		URL = fmt.Sprintf("https://%s/v2/repositories/%s/tags/%s/",
-			d.URL,
-			d.Image,
-			d.Tag)
+	var r Registry
 
-	} else {
-		if ok, err := d.IsDockerRegistry(); !ok {
+	if d.isDockerHub() {
+		dh := dockerhub.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Token:        d.Token,
+		}
+
+		r = &dh
+
+	} else if d.isQuaiIO() {
+
+		q := quay.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Token:        d.Token,
+		}
+
+		r = &q
+
+	} else if d.isGHCR() {
+
+		g := ghcr.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Token:        d.Token,
+		}
+
+		r = &g
+
+	} else if ok, err := d.IsDockerRegistry(); ok {
+		if err != nil {
 			return false, err
 		}
-		URL = fmt.Sprintf("https://%s/v2/%s/manifests/%s",
-			d.URL,
-			d.Image,
-			d.Tag)
-	}
 
-	req, err := http.NewRequest("GET", URL, nil)
-
-	if err != nil {
-		return false, err
-	}
-
-	res, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		return false, err
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return false, err
-	}
-
-	if res.StatusCode == 200 && !d.isDockerHub() {
-		fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
-		return true, nil
-
-	} else if d.isDockerHub() {
-
-		data := map[string]string{}
-
-		json.Unmarshal(body, &data)
-
-		if val, ok := data["message"]; ok && strings.Contains(val, "not found") {
-			fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
-			return false, nil
+		dr := dockerregistry.Docker{
+			Image:        image,
+			Tag:          d.Tag,
+			Architecture: d.Architecture,
+			Hostname:     hostname,
+			Token:        d.Token,
 		}
 
-		if val, ok := data["name"]; ok && val == d.Tag {
-			fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
-			return true, nil
-		}
+		r = &dr
 
 	} else {
-
-		fmt.Printf("\u2717Something went wrong on URL: %s\n", URL)
+		return false, fmt.Errorf("Unknown Docker Registry API")
 	}
 
-	return false, fmt.Errorf("something went wrong %s", URL)
+	digest, err := r.Digest()
+
+	if err != nil {
+		return false, err
+	}
+
+	if digest == "" {
+		fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
+		return false, nil
+	}
+
+	fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
+
+	return true, nil
+
 }
