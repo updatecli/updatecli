@@ -4,10 +4,6 @@ BUILD_DATE=`date -R`
 VERSION=$(shell git describe --tags)
 GOVERSION=$(shell go version)
 
-ENV=updateCli.env
-
-include $(ENV)
-
 build:
 	echo $(VERSION)
 	go build \

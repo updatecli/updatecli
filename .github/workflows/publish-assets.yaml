@@ -15,7 +15,6 @@ jobs:
 
     - name: Build updateCli
       run: |
-        touch updateCli.env
         make build.all
 
     - name: Upload updatecli.386.exe
@@ -27,7 +26,7 @@ jobs:
         asset_path: ./bin/updatecli.386.exe
         asset_name: updatecli.386.exe
         asset_content_type: application/octet-stream
-    - name: updatecli.amd64.exe
+    - name: Upload updatecli.amd64.exe
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
