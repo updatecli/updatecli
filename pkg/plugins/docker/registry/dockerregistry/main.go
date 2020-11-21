@@ -1,6 +1,7 @@
 package dockerregistry
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,15 +10,26 @@ import (
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
-	Image        string
-	Tag          string
-	Architecture string
-	Hostname     string
-	Token        string
+	Image    string
+	Tag      string
+	Hostname string
+	Token    string
 }
 
 // Digest retrieve docker image tag digest from a registry
 func (d *Docker) Digest() (string, error) {
+
+	type error struct {
+		Code    string
+		Message string
+		Detail  string
+	}
+
+	type response struct {
+		MediaType     string
+		SchemaVersion string
+		Errors        []error
+	}
 
 	URL := fmt.Sprintf("https://%s/v2/%s/manifests/%s",
 		d.Hostname,
@@ -44,11 +56,30 @@ func (d *Docker) Digest() (string, error) {
 
 	defer res.Body.Close()
 
-	_, err = ioutil.ReadAll(res.Body)
-	// body, err := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
 		return "", err
+	}
+
+	data := response{}
+
+	json.Unmarshal(body, &data)
+
+	if len(data.Errors) > 0 {
+		e := fmt.Errorf("%s:%s", d.Image, d.Tag)
+		for _, err := range data.Errors {
+			e = fmt.Errorf("%s - %s", e, err.Message)
+		}
+		return "", e
+	}
+
+	if len(data.Errors) > 0 {
+		e := fmt.Errorf("%s:%s", d.Image, d.Tag)
+		for _, err := range data.Errors {
+			e = fmt.Errorf("%s - %s", e, err.Message)
+		}
+		return "", e
 	}
 
 	digest := res.Header.Get("Docker-Content-Digest")

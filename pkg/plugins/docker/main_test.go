@@ -119,16 +119,9 @@ func TestParameters(t *testing.T) {
 		t.Errorf("Minimum valid configuration provided! Expect %v, got %v", true, ok)
 	}
 
-	// Test if we correctly return the default architecture if not defined
-	expected := "amd64"
-	got := d.Architecture
-	if got != expected {
-		t.Errorf("Architecture is not configured! expected value %v, got %v", expected, got)
-	}
-
 	// Test if we correctly return the default docker hub url if not defined
-	expected = "latest"
-	got = d.Tag
+	expected := "latest"
+	got := d.Tag
 	if got != expected {
 		t.Errorf("Tag is not configured! expected %v, got %v", expected, got)
 	}
