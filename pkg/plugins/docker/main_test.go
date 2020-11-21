@@ -65,7 +65,7 @@ var data = []DataSet{
 		expectedCondition: true,
 		expectedHostname:  "ghcr.io",
 		expectedImage:     "olblak/updatecli",
-		expectedDigest:    "fd0a342a6df8b4ecb10b38c16a222bc3a964be1ab34547dbf116910b2184f4b9",
+		expectedDigest:    "f237aed76d3d00538d44448e8161df00d6c044f8823cc8eb9aeccc8413f5a029",
 	},
 	{
 		docker: Docker{
@@ -119,16 +119,9 @@ func TestParameters(t *testing.T) {
 		t.Errorf("Minimum valid configuration provided! Expect %v, got %v", true, ok)
 	}
 
-	// Test if we correctly return the default architecture if not defined
-	expected := "amd64"
-	got := d.Architecture
-	if got != expected {
-		t.Errorf("Architecture is not configured! expected value %v, got %v", expected, got)
-	}
-
 	// Test if we correctly return the default docker hub url if not defined
-	expected = "latest"
-	got = d.Tag
+	expected := "latest"
+	got := d.Tag
 	if got != expected {
 		t.Errorf("Tag is not configured! expected %v, got %v", expected, got)
 	}
