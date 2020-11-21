@@ -10,11 +10,12 @@ import (
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
-	Image        string
-	Tag          string
-	Architecture string
-	Token        string
+	Image string
+	Tag   string
+	Token string
 }
+
+// https://github.com/docker/distribution/blob/master/docs/spec/api.md
 
 // Digest retrieve docker image tag digest from a registry
 func (d *Docker) Digest() (string, error) {
@@ -25,10 +26,6 @@ func (d *Docker) Digest() (string, error) {
 
 	if err != nil {
 		return "", err
-	}
-
-	if len(d.Architecture) == 0 {
-		d.Architecture = "amd64"
 	}
 
 	if len(d.Token) > 0 {
@@ -49,34 +46,33 @@ func (d *Docker) Digest() (string, error) {
 		return "", err
 	}
 
-	type platform struct {
-		Architecture string
-		Os           string
-	}
-
-	type manifest struct {
-		MediaType string
-		Digest    string
-		Platform  platform
+	type error struct {
+		Code    string
+		Message string
+		Detail  string
 	}
 
 	type response struct {
 		MediaType     string
 		SchemaVersion string
-		Manifests     []manifest
+		Errors        []error
 	}
 
 	data := response{}
 
 	json.Unmarshal(body, &data)
 
-	for _, manifest := range data.Manifests {
-		if manifest.Platform.Architecture == d.Architecture {
-			digest := strings.TrimLeft(manifest.Digest, "sha256:")
-			fmt.Println(digest)
-			return digest, nil
+	if len(data.Errors) > 0 {
+		e := fmt.Errorf("%s:%s", d.Image, d.Tag)
+		for _, err := range data.Errors {
+			e = fmt.Errorf("%s - %s", e, err.Message)
 		}
+		return "", e
 	}
-	return "", nil
+
+	digest := res.Header.Get("Docker-Content-Digest")
+	digest = strings.TrimPrefix(digest, "sha256:")
+
+	return digest, nil
 
 }

@@ -40,10 +40,9 @@ func (d *Docker) Condition(source string) (bool, error) {
 
 	if d.isDockerHub() {
 		dh := dockerhub.Docker{
-			Image:        image,
-			Tag:          d.Tag,
-			Architecture: d.Architecture,
-			Token:        d.Token,
+			Image: image,
+			Tag:   d.Tag,
+			Token: d.Token,
 		}
 
 		r = &dh
@@ -51,10 +50,9 @@ func (d *Docker) Condition(source string) (bool, error) {
 	} else if d.isQuaiIO() {
 
 		q := quay.Docker{
-			Image:        image,
-			Tag:          d.Tag,
-			Architecture: d.Architecture,
-			Token:        d.Token,
+			Image: image,
+			Tag:   d.Tag,
+			Token: d.Token,
 		}
 
 		r = &q
@@ -62,10 +60,9 @@ func (d *Docker) Condition(source string) (bool, error) {
 	} else if d.isGHCR() {
 
 		g := ghcr.Docker{
-			Image:        image,
-			Tag:          d.Tag,
-			Architecture: d.Architecture,
-			Token:        d.Token,
+			Image: image,
+			Tag:   d.Tag,
+			Token: d.Token,
 		}
 
 		r = &g
@@ -76,11 +73,10 @@ func (d *Docker) Condition(source string) (bool, error) {
 		}
 
 		dr := dockerregistry.Docker{
-			Image:        image,
-			Tag:          d.Tag,
-			Architecture: d.Architecture,
-			Hostname:     hostname,
-			Token:        d.Token,
+			Image:    image,
+			Tag:      d.Tag,
+			Hostname: hostname,
+			Token:    d.Token,
 		}
 
 		r = &dr
