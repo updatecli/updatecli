@@ -15,28 +15,26 @@ var data = []DataSet{
 	{
 		docker: Docker{
 			Image: "olblak/updatecli",
+			Tag:   "v0.0.25",
+			Token: os.Getenv("GITHUB_TOKEN"),
+		},
+		expectedDigest: "786e49e87808a9808625cfca69b86e8e4e6a26d7f6199499f927633ea906676f",
+	},
+	{
+		docker: Docker{
+			Image: "olblak/updatecli",
 			Tag:   "v0.0.22",
 			Token: os.Getenv("GITHUB_TOKEN"),
 		},
-		expectedDigest: "fd0a342a6df8b4ecb10b38c16a222bc3a964be1ab34547dbf116910b2184f4b9",
+		expectedDigest: "f237aed76d3d00538d44448e8161df00d6c044f8823cc8eb9aeccc8413f5a029",
 	},
 	{
 		docker: Docker{
-			Image:        "olblak/updatecli",
-			Tag:          "v0.0.22",
-			Token:        os.Getenv("GITHUB_TOKEN"),
-			Architecture: "amd64",
+			Image: "olblak/updatecli",
+			Tag:   "v0.0.24",
+			Token: os.Getenv("GITHUB_TOKEN"),
 		},
-		expectedDigest: "fd0a342a6df8b4ecb10b38c16a222bc3a964be1ab34547dbf116910b2184f4b9",
-	},
-	{
-		docker: Docker{
-			Image:        "olblak/updatecli",
-			Tag:          "v0.0.22",
-			Token:        os.Getenv("GITHUB_TOKEN"),
-			Architecture: "arm64",
-		},
-		expectedDigest: "8c2d98213a7851b8dd8f3851f7453ab0ea5c9f92ca495882ef193466c3a92c21",
+		expectedDigest: "a0dfa59bddbaa538f40e2ef8eb7d87cc7591b3e2d725a1bec9135ed304f88053",
 	},
 	{
 		docker: Docker{
@@ -67,7 +65,7 @@ func TestDigest(t *testing.T) {
 		expected := d.expectedDigest
 
 		if got != expected {
-			t.Errorf("Docker Image %v:%v for architecture '%s', expect digest %v, got %v", d.docker.Image, d.docker.Tag, d.docker.Architecture, expected, got)
+			t.Errorf("Docker Image %v:%v, expect digest %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
 		}
 	}
 }

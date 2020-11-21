@@ -9,10 +9,9 @@ import (
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
-	Architecture string
-	Image        string
-	Tag          string
-	Token        string
+	Image string
+	Tag   string
+	Token string
 }
 
 // Registry is an interface for every docker registry api
@@ -51,10 +50,6 @@ func (d *Docker) Check() (ok bool, err error) {
 
 	if d.Tag == "" {
 		d.Tag = "latest"
-	}
-
-	if d.Architecture == "" {
-		d.Architecture = "amd64"
 	}
 
 	return true, nil
