@@ -6,7 +6,13 @@ COPY . .
 
 RUN go get -d -v ./...
 
-RUN go build -v -a -o bin/updateCli
+RUN \
+  go build -v -a \
+  -ldflags "-w -s \
+    -X \"github.com/olblak/updateCli/pkg/core/version.BuildTime=`date -R`\" \
+    -X \"github.com/olblak/updateCli/pkg/core/version.GoVersion=`go version`\" \
+    -X \"github.com/olblak/updateCli/pkg/core/version.Version=`git describe --tags`\""\
+  -o bin/updateCli
 
 ###
 

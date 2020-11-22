@@ -1,8 +1,11 @@
 .PHONY: build
 
-BUILD_DATE=`date -R`
+BUILD_DATE=$(shell date -R)
 VERSION=$(shell git describe --tags)
 GOVERSION=$(shell go version)
+
+DOCKER_IMAGE=olblak/updatecli
+DOCKER_TAG=$(VERSION)
 
 build:
 	echo $(VERSION)
@@ -30,7 +33,13 @@ version:
 	./bin/updatecli version
 
 docker.build:
-	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) -t $(DOCKER_IMAGE):latest .
+	docker build \
+		-t "$(DOCKER_IMAGE):$(DOCKER_TAG)" \
+		-t "$(DOCKER_IMAGE):latest" \
+		-t "ghcr.io/$(DOCKER_IMAGE):$(DOCKER_TAG)" \
+		-t "ghcr.io/$(DOCKER_IMAGE):latest" \
+		-f Dockerfile \
+		.
 
 docker.run:
 	docker run -i -t --rm --name updateCli $(DOCKER_IMAGE):$(DOCKER_TAG) --help
@@ -42,6 +51,8 @@ docker.test:
 docker.push:
 	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 	docker push $(DOCKER_IMAGE):latest
+	docker push ghcr.io/$(DOCKER_IMAGE):$(DOCKER_TAG)
+	docker push ghcr.io/$(DOCKER_IMAGE):latest
 
 display: echo $(DOCKER_TAG)
 
