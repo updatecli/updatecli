@@ -19,13 +19,13 @@ Please use following information to take informed decision
 {{ if .Sources }}
 Sources:
 {{ range $index, $source := .Sources }}
-	- {{ $source }}
+* {{ $source }}
 {{ end }}
 {{ end }}
 {{ if .URLs }}
 URL:
 {{ range $index, $url := .URLs }}
-	- {{ $url }}
+* {{ $url }}
 {{ end }}
 {{ end }}
 `
