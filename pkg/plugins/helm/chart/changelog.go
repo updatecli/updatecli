@@ -54,8 +54,8 @@ func (c *Chart) Changelog(name string) (string, error) {
 		Home        string
 		KubeVersion string
 		Created     string
-		URL         []string
-		SOURCES     []string
+		URLs        []string `json:"url"`
+		Sources     []string
 	}
 
 	err = t.Execute(buffer, params{
@@ -64,8 +64,8 @@ func (c *Chart) Changelog(name string) (string, error) {
 		Home:        e.Home,
 		KubeVersion: e.KubeVersion,
 		Created:     e.Created.String(),
-		URL:         e.URLs,
-		SOURCES:     e.Sources})
+		URLs:        e.URLs,
+		Sources:     e.Sources})
 
 	if err != nil {
 		return "", err
