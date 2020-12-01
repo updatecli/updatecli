@@ -185,11 +185,16 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 				column = entry.Content[index+1].Column
 
 				if entry.Content[index+1].Kind == yaml.SequenceNode && entry.Content[index+1].Content[0].Kind == yaml.MappingNode {
-					positionIndex := 0
+					/*
+						If looking for a key at a specific position in a sequence like keys[2].key
+						for following example should parse - key : c
+						keys:
+							- key: a
+							- key: b
+							- key: c
+					*/
 
-					if (position*2)-1 >= 0 {
-						positionIndex = (position * 2) - 1
-					}
+					positionIndex := position
 
 					if positionIndex > len(entry.Content[index+1].Content) {
 						return false, "", 0
