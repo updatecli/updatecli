@@ -22,10 +22,16 @@ image3:
   version: 1.0
 - name: b
   version: 1.5
+- name: c
+  version: 3.5
+- name: d
+  version: 5.5
 image4:
 - c
 - d
 - f
+- g
+- h
 image5::tag: 1.17
 image6::tags: 
 - 1.17
@@ -230,6 +236,16 @@ func TestReplace(t *testing.T) {
 			expectedValueFound: true,
 		},
 		{
+			key:                []string{"image3[2]", "version"},
+			expectedOldVersion: "3.5",
+			expectedValueFound: true,
+		},
+		{
+			key:                []string{"image3[3]", "version"},
+			expectedOldVersion: "5.5",
+			expectedValueFound: true,
+		},
+		{
 			key:                []string{"image5::tag"},
 			expectedOldVersion: "1.17",
 			expectedValueFound: true,
@@ -247,6 +263,16 @@ func TestReplace(t *testing.T) {
 		{
 			key:                []string{"image4[1]"},
 			expectedOldVersion: "d",
+			expectedValueFound: true,
+		},
+		{
+			key:                []string{"image4[2]"},
+			expectedOldVersion: "f",
+			expectedValueFound: true,
+		},
+		{
+			key:                []string{"image4[3]"},
+			expectedOldVersion: "g",
 			expectedValueFound: true,
 		},
 		{
