@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -242,9 +243,36 @@ func Push(username, password, workingDir string) error {
 		return err
 	}
 
+	// Retrieve local branch
+	head, err := r.Head()
+	if err != nil {
+		return err
+	}
+
+	if !head.Name().IsBranch() {
+		return fmt.Errorf("Not pushing from a branch")
+	}
+
+	localBranch := strings.TrimPrefix(head.Name().String(), "refs/heads/")
+	localRefSpec := head.Name().String()
+
+	remote, err := r.Remote("origin")
+	// Retrieve remote name
+
+	if err != nil {
+		return err
+	}
+
+	// Only push one branch at a time
 	err = r.Push(&git.PushOptions{
 		Auth:     &auth,
 		Progress: os.Stdout,
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(fmt.Sprintf("+%s:refs/remotes/%s/%s",
+				localRefSpec,
+				remote.Config().Name,
+				localBranch)),
+		},
 	})
 	if err != nil {
 		return err
