@@ -256,11 +256,12 @@ func Push(username, password, workingDir string) error {
 	localBranch := strings.TrimPrefix(head.Name().String(), "refs/heads/")
 	localRefSpec := head.Name().String()
 
-	remote, err := r.Remote("origin")
-	// Retrieve remote name
+	refspec := config.RefSpec(fmt.Sprintf("+%s:refs/heads/%s",
+		localRefSpec,
+		localBranch))
 
-	if err != nil {
-		return err
+	if err := refspec.Validate(); err != nil {
+		fmt.Println(err)
 	}
 
 	// Only push one branch at a time
@@ -268,14 +269,11 @@ func Push(username, password, workingDir string) error {
 		Auth:     &auth,
 		Progress: os.Stdout,
 		RefSpecs: []config.RefSpec{
-			config.RefSpec(fmt.Sprintf("+%s:refs/remotes/%s/%s",
-				localRefSpec,
-				remote.Config().Name,
-				localBranch)),
+			refspec,
 		},
 	})
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
 	fmt.Printf("\n")
