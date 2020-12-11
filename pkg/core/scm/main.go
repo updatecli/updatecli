@@ -10,14 +10,14 @@ import (
 
 // Scm is an interface that offers common functions for a source control manager like git or github
 type Scm interface {
-	Add(files []string)
-	Clone() string
-	Checkout()
+	Add(files []string) error
+	Clone() (string, error)
+	Checkout() error
 	GetDirectory() (directory string)
 	Init(source string, name string) error
-	Push()
-	Commit(message string)
-	Clean()
+	Push() error
+	Commit(message string) error
+	Clean() error
 }
 
 // Unmarshal parses a scm struct like git or github and returns a scm interface
