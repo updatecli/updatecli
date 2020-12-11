@@ -261,7 +261,7 @@ func Push(username, password, workingDir string) error {
 		localBranch))
 
 	if err := refspec.Validate(); err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	// Only push one branch at a time
@@ -272,8 +272,9 @@ func Push(username, password, workingDir string) error {
 			refspec,
 		},
 	})
+
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	fmt.Printf("\n")
