@@ -76,7 +76,7 @@ func (g *Github) setDirectory() {
 }
 
 // OpenPullRequest creates a new pull request.
-func (g *Github) OpenPullRequest() {
+func (g *Github) OpenPullRequest() error {
 
 	/*
 		mutation($input: CreatePullRequestInput!){
@@ -116,17 +116,11 @@ func (g *Github) OpenPullRequest() {
 	bodyPR, err := SetBody(g.PullRequestDescription)
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	if ok, url, err := g.isPRExist(); ok && err == nil {
-		fmt.Printf("Pull Request titled '%v' already exist at\n\t%s\n", title, url)
-		return
-	}
-
-	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Pull request titled '%v' already exist at\n\t%s\n", title, url)
 	}
 
 	input := githubv4.CreatePullRequestInput{
@@ -141,7 +135,11 @@ func (g *Github) OpenPullRequest() {
 
 	err = client.Mutate(context.Background(), &mutation, input, nil)
 
-	return
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }
 

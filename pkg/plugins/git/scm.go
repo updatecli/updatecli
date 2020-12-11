@@ -8,21 +8,23 @@ import (
 )
 
 // Add run `git add`.
-func (g *Git) Add(files []string) {
+func (g *Git) Add(files []string) error {
 
 	err := git.Add(files, g.GetDirectory())
 
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g *Git) Checkout() {
+func (g *Git) Checkout() error {
 	err := git.Checkout(g.Branch, g.remoteBranch, g.GetDirectory())
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
 // GetDirectory returns the working git directory.
@@ -31,12 +33,16 @@ func (g *Git) GetDirectory() (directory string) {
 }
 
 // Clean removes the current git repository from local storage.
-func (g *Git) Clean() {
-	os.RemoveAll(g.Directory) // clean up
+func (g *Git) Clean() error {
+	err := os.RemoveAll(g.Directory) // clean up
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Clone run `git clone`.
-func (g *Git) Clone() string {
+func (g *Git) Clone() (string, error) {
 
 	g.setDirectory()
 
@@ -48,15 +54,16 @@ func (g *Git) Clone() string {
 
 	if err != nil {
 		fmt.Println(err)
+		return "", err
 	}
 
 	g.Checkout()
 
-	return g.Directory
+	return g.Directory, nil
 }
 
 // Commit run `git commit`.
-func (g *Git) Commit(message string) {
+func (g *Git) Commit(message string) error {
 
 	err := git.Commit(
 		g.User,
@@ -65,9 +72,9 @@ func (g *Git) Commit(message string) {
 		g.GetDirectory())
 
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
-
+	return nil
 }
 
 // Init set Git parameters if needed.
@@ -79,7 +86,7 @@ func (g *Git) Init(source string, name string) error {
 }
 
 // Push run `git push`.
-func (g *Git) Push() {
+func (g *Git) Push() error {
 
 	err := git.Push(
 		g.Username,
@@ -87,9 +94,10 @@ func (g *Git) Push() {
 		g.GetDirectory())
 
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	fmt.Printf("\n")
+	return nil
 
 }
