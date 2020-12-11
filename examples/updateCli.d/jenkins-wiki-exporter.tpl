@@ -21,13 +21,13 @@ targets:
       key: image.tag
     scm:
       github:
-        user: "update-bot"
-        email: "update-bot@olblak.com"
-        owner: "olblak"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
   #appVersion:
   #  name: "Chart appVersion"
   #  kind: yaml
@@ -51,10 +51,10 @@ targets:
       key: appVersion
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "olblak"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"

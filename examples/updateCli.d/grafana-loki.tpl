@@ -19,13 +19,13 @@ conditions:
       value: "grafana"
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "jenkins-infra"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
 
 targets:
   chartVersion:
@@ -36,10 +36,10 @@ targets:
       key: "releases[0].version"
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "jenkins-infra"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
