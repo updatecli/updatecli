@@ -1,22 +1,24 @@
 source:
   kind: helmChart
+  name: "Get latest loki helm chart version"
   spec:
     url: https://grafana.github.io/loki/charts
     name: loki
 
 conditions:
   exist:
-    name: "Loki helm chart available on Registry"
+    name: "Is Loki helm chart available on Registry?"
     kind: helmChart
     spec:
       url: https://grafana.github.io/loki/charts
       name: loki
   isNameGrafana:
     kind: yaml
+    name: "Is loki release name is correctly set?"
     spec:
       file: "helmfile.d/loki.yaml"
       key: "releases[0].name"
-      value: "grafana"
+      value: "loki"
     scm:
       github:
         user: "{{ .github.user }}"
@@ -29,7 +31,7 @@ conditions:
 
 targets:
   chartVersion:
-    name: "grafana/loki Helm Chart"
+    name: "Update grafana/loki Helm Chart to latest version"
     kind: yaml
     spec:
       file: "helmfile.d/loki.yaml"

@@ -1,5 +1,6 @@
 source:
   kind: githubRelease
+  name: "Get latest pluginsite version"
   spec:
     owner: "jenkins-infra"
     repository: "plugin-site-api"
@@ -8,7 +9,7 @@ source:
     version: "latest"
 targets:
   imageTag:
-    name: "Docker Image"
+    name: "Is Docker Image published on dockerhub"
     kind: yaml
     spec:
       file: "charts/plugin-site/values.yaml"
@@ -23,7 +24,7 @@ targets:
         username: "{{ .github.username }}"
         branch: "{{ .github.branch }}"
   appVersion:
-    name: "Chart appVersion"
+    name: "Update Chart appVersion"
     kind: yaml
     spec:
       file: "charts/plugin-site/Chart.yaml"

@@ -1,5 +1,6 @@
 source:
   kind: helmChart
+  name
   spec:
     name: prometheus
     url: https://prometheus-community.github.io/helm-charts
@@ -21,7 +22,7 @@ conditions:
         branch: {{ .github.branch }}
 targets:
   chartVersion:
-    name: "prometheus Helm Chart"
+    name: "Update Prometheus Helm Chart version"
     kind: yaml
     spec:
       file: "helmfile.d/prometheus.yaml"
