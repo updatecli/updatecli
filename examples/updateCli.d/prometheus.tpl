@@ -1,5 +1,6 @@
 source:
   kind: helmChart
+  name
   spec:
     name: prometheus
     url: https://prometheus-community.github.io/helm-charts
@@ -16,12 +17,12 @@ conditions:
         email: {{ .github.email }}
         owner: {{ .github.owner }}
         repository: {{ .github.repository }}
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        token: "{{ requiredEnv .github.token }}"
         username: {{ .github.username }}
         branch: {{ .github.branch }}
 targets:
   chartVersion:
-    name: "prometheus Helm Chart"
+    name: "Update Prometheus Helm Chart version"
     kind: yaml
     spec:
       file: "helmfile.d/prometheus.yaml"
@@ -32,6 +33,6 @@ targets:
         email: {{ .github.email }}
         owner: {{ .github.owner }}
         repository: {{ .github.repository }}
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        token: "{{ requiredEnv .github.token }}"
         username: {{ .github.username }}
         branch: {{ .github.branch }}

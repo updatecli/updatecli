@@ -1,5 +1,6 @@
 source:
   kind: githubRelease
+  name: "Get latest pluginsite version"
   spec:
     owner: "jenkins-infra"
     repository: "plugin-site-api"
@@ -8,35 +9,35 @@ source:
     version: "latest"
 targets:
   imageTag:
-    name: "Docker Image"
+    name: "Is Docker Image published on dockerhub"
     kind: yaml
     spec:
       file: "charts/plugin-site/values.yaml"
       key: "backend.image.tag"
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "olblak"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: updatecli/Helm_Chart/2.3.3
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
   appVersion:
-    name: "Chart appVersion"
+    name: "Update Chart appVersion"
     kind: yaml
     spec:
       file: "charts/plugin-site/Chart.yaml"
       key: appVersion
     scm: 
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "olblak"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
 #      git:
 #        url: "git@github.com:olblak/charts.git"
 #        branch: "updatecli/Helm_Chart/2.3.3"
