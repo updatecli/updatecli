@@ -16,7 +16,7 @@ conditions:
         email: {{ .github.email }}
         owner: {{ .github.owner }}
         repository: {{ .github.repository }}
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        token: "{{ requiredEnv .github.token }}"
         username: {{ .github.username }}
         branch: {{ .github.branch }}
 targets:
@@ -32,6 +32,6 @@ targets:
         email: {{ .github.email }}
         owner: {{ .github.owner }}
         repository: {{ .github.repository }}
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        token: "{{ requiredEnv .github.token }}"
         username: {{ .github.username }}
         branch: {{ .github.branch }}

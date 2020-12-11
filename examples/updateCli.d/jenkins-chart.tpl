@@ -1,7 +1,7 @@
 source:
   kind: helmChart
   spec:
-    url: https://kubernetes-charts.storage.googleapis.com
+    url: https://charts.jenkins.io
     name: jenkins
 
 conditions:
@@ -20,13 +20,13 @@ conditions:
       value: "jenkins"
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "olblak"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
 
 targets:
   imageTag:
@@ -37,10 +37,10 @@ targets:
       key: "dependencies[0].version"
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "olblak"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
