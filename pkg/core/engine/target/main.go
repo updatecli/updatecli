@@ -119,11 +119,23 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 			if len(t.Scm) > 0 {
 
 				if o.Commit {
-					s.Add(files)
-					s.Commit(message)
+					err := s.Add(files)
+
+					if err != nil {
+						return changed, err
+					}
+
+					err = s.Commit(message)
+					if err != nil {
+						return changed, err
+					}
+
 				}
 				if o.Push {
-					s.Push()
+					err := s.Push()
+					if err != nil {
+						return changed, err
+					}
 				}
 			}
 		}

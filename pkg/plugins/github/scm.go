@@ -26,12 +26,16 @@ func (g *Github) GetDirectory() (directory string) {
 }
 
 // Clean deletes github working directory.
-func (g *Github) Clean() {
-	os.RemoveAll(g.Directory)
+func (g *Github) Clean() error {
+	err := os.RemoveAll(g.Directory)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Clone run `git clone`.
-func (g *Github) Clone() string {
+func (g *Github) Clone() (string, error) {
 
 	URL := fmt.Sprintf("https://github.com/%v/%v.git",
 		g.Owner,
@@ -42,52 +46,60 @@ func (g *Github) Clone() string {
 	err := git.Clone(g.Username, g.Token, URL, g.GetDirectory())
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	err = git.Checkout(g.Branch, g.remoteBranch, g.GetDirectory())
 
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
-	return g.Directory
+	return g.Directory, nil
 }
 
 // Commit run `git commit`.
-func (g *Github) Commit(message string) {
+func (g *Github) Commit(message string) error {
 	err := git.Commit(g.User, g.Email, message, g.GetDirectory())
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g *Github) Checkout() {
+func (g *Github) Checkout() error {
 	err := git.Checkout(g.Branch, g.remoteBranch, g.Directory)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
 // Add run `git add`.
-func (g *Github) Add(files []string) {
+func (g *Github) Add(files []string) error {
 
 	err := git.Add(files, g.Directory)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
 // Push run `git push` then open a pull request on Github if not already created.
-func (g *Github) Push() {
+func (g *Github) Push() error {
 
 	err := git.Push(g.Username, g.Token, g.GetDirectory())
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	fmt.Printf("\n")
 
-	g.OpenPullRequest()
+	err = g.OpenPullRequest()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
