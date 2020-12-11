@@ -1,4 +1,5 @@
 source:
+  name: "Get docker image digest for olblak/polls:latest"
   kind: dockerDigest
   spec:
     image: "olblak/polls"

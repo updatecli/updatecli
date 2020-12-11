@@ -1,5 +1,6 @@
 source:
   kind: githubRelease
+  name: "Get jenkins-wiki-exporter latest version"
   spec:
     owner: "jenkins-infra"
     repository: "jenkins-wiki-exporter"
@@ -8,13 +9,13 @@ source:
     version: "latest"
 conditions:
   docker:
-    name: "Docker Image Published on Registry"
+    name: "Is Docker Image Published on Registry?"
     kind: dockerImage
     spec:
       image: "halkeye/jenkins-wiki-exporter"
 targets:
   imageTag:
-    name: "Docker Image"
+    name: "Update docker image tag jenkins-wiki-exporter used in helm chart"
     kind: yaml
     spec:
       file: "charts/jenkins-wiki-exporter/values.yaml"
@@ -28,23 +29,8 @@ targets:
         token: "{{ requiredEnv .github.token }}"
         username: "{{ .github.username }}"
         branch: "{{ .github.branch }}"
-  #appVersion:
-  #  name: "Chart appVersion"
-  #  kind: yaml
-  #  spec:
-  #    file: "charts/jenkins-wiki-exporter/Chart.yaml"
-  #    key: appVersion
-  #  scm:
-  #    github:
-  #      user: "updatecli"
-  #      email: "updatecli@olblak.com"
-  #      owner: "olblak"
-  #      repository: "charts"
-  #      token: {{ requiredEnv "GITHUB_TOKEN" }}
-  #      username: "olblak"
-  #      branch: "master"
   appVersion:
-    name: "Chart appVersion"
+    name: "Update chart appversion for jenkins-wiki-exporter helm chart"
     kind: yaml
     spec:
       file: "charts/jenkins-wiki-exporter/Chart.yaml"

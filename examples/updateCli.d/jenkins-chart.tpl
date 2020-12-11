@@ -1,18 +1,19 @@
 source:
   kind: helmChart
+  name: "Get latest jenkins helm chart version"
   spec:
     url: https://charts.jenkins.io
     name: jenkins
 
 conditions:
   exist:
-    name: "Docker Image Published on Registry"
+    name: "Is Jenkins helm chart available on Registry?"
     kind: helmChart
     spec:
       url: https://kubernetes-charts.storage.googleapis.com
       name: jenkins
   chartDependencyIsJenkins:
-    name: "Helm Chart"
+    name: "Is Jenkins dependency correclty set?"
     kind: yaml
     spec:
       file: "charts/jenkins/requirements.yaml"
@@ -30,7 +31,7 @@ conditions:
 
 targets:
   imageTag:
-    name: "Helm Chart"
+    name: "Update required Jenkins helm chart version"
     kind: yaml
     spec:
       file: "charts/jenkins/requirements.yaml"
