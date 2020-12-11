@@ -1,45 +1,47 @@
 source:
   kind: helmChart
+  name: "Get latest loki helm chart version"
   spec:
     url: https://grafana.github.io/loki/charts
     name: loki
 
 conditions:
   exist:
-    name: "Loki helm chart available on Registry"
+    name: "Is Loki helm chart available on Registry?"
     kind: helmChart
     spec:
       url: https://grafana.github.io/loki/charts
       name: loki
   isNameGrafana:
     kind: yaml
+    name: "Is loki release name is correctly set?"
     spec:
       file: "helmfile.d/loki.yaml"
       key: "releases[0].name"
-      value: "grafana"
+      value: "loki"
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "jenkins-infra"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
 
 targets:
   chartVersion:
-    name: "grafana/loki Helm Chart"
+    name: "Update grafana/loki Helm Chart to latest version"
     kind: yaml
     spec:
       file: "helmfile.d/loki.yaml"
       key: "releases[0].version"
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "jenkins-infra"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"

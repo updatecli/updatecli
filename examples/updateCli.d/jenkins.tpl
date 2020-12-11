@@ -1,5 +1,6 @@
 source:
   kind: maven
+  name: "Get latest jenkins weekly version from maven repository"
   postfix: "-jdk11"
   spec:
     owner: "maven"
@@ -9,25 +10,25 @@ source:
     artifactID: "jenkins-war"
 conditions:
   docker:
-    name: "Docker Image Published on Registry"
+    name: "Is Docker Image Published on Registry?"
     kind: dockerImage
     spec:
       image: "jenkins/jenkins"
 targets:
   imageTag:
-    name: "Docker Image"
+    name: "Update Jenkins docker image tag"
     kind: yaml
-    prefix: "test-"
-    postfix: "-jdk13"
+    #prefix: "test-"
+    #postfix: "-jdk13"
     spec:
       file: "charts/jenkins/values.yaml"
       key: "jenkins.master.imageTag"
     scm:
       github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "olblak"
-        repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: "master"
+        user: "{{ .github.user }}"
+        email: "{{ .github.email }}"
+        owner: "{{ .github.owner }}"
+        repository: "{{ .github.repository }}"
+        token: "{{ requiredEnv .github.token }}"
+        username: "{{ .github.username }}"
+        branch: "{{ .github.branch }}"
