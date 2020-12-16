@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/plugins/docker"
+	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
@@ -81,6 +82,17 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 
 	case "dockerImage":
 		d := docker.Docker{}
+
+		err := mapstructure.Decode(condition.Spec, &d)
+
+		if err != nil {
+			return nil, err
+		}
+
+		spec = &d
+
+	case "dockerfile":
+		d := dockerfile.Dockerfile{}
 
 		err := mapstructure.Decode(condition.Spec, &d)
 
