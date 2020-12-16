@@ -2,9 +2,8 @@ package dockerfile
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -13,109 +12,103 @@ import (
 //	https://github.com/moby/buildkit/blob/master/frontend/dockerfile/parser/parser
 // https://github.com/moby/buildkit/issues/1561
 
-// Dockerfile is struct that contains parametes to interact with a Dockerfile
+// Dockerfile is struct that contains parameters to interact with a Dockerfile
 type Dockerfile struct {
-	Path        string
 	File        string
 	Instruction string
 	Value       string
 	DryRun      bool
 }
 
-// ReadFile read a Dockerfile
-func (d *Dockerfile) ReadFile() (data []byte, err error) {
-	path := filepath.Join(d.Path, d.File)
-
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	defer file.Close()
-
-	data, err = ioutil.ReadAll(file)
+// isPositionKey checks if key use the array position like instruction[0][0].
+// where first [0] references the instruction position
+// and the  second [0] references the element inside instruction line
+func isPositionKeys(key string) bool {
+	matched, err := regexp.MatchString(`^(.*)\[[[:digit:]]*\]\[[[:digit:]]*\]$`, key)
 
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
 	}
-
-	return data, err
+	return matched
 }
 
-func lines(node *parser.Node) (result []int) {
+func getPositionKeys(k string) (
+	key string,
+	instructionPosition int,
+	elementPosition int,
+	err error) {
 
-	for _, n := range node.Children {
-		fmt.Println(n.StartLine)
-		result = append(result, n.StartLine)
-	}
+	if isPositionKeys(k) {
+		re := regexp.MustCompile(`(.*)*\[[[:digit:]]*\]\[[[:digit:]]*\]$`)
+		keys := re.FindStringSubmatch(k)
+		key = keys[1]
 
-	for n := node.Next; n != nil; n = n.Next {
-		fmt.Println(n.StartLine)
-		result = append(result, n.StartLine)
-	}
+		re = regexp.MustCompile(`^.*\[([[:digit:]]*)\]\[[[:digit:]]*\]$`)
 
-	return result
-}
+		positions := re.FindStringSubmatch(k)
 
-func show(node *parser.Node) string {
-	str := ""
-	str += node.Value
+		instructionPosition, err = strconv.Atoi(positions[1])
 
-	if len(node.Flags) > 0 {
-		str += fmt.Sprintf(" %q", node.Flags)
-	}
-
-	for _, n := range node.Children {
-		str += n.Dump() + "\n"
-	}
-
-	for n := node.Next; n != nil; n = n.Next {
-		if len(n.Children) > 0 {
-			str += " " + n.Dump()
-		} else {
-			str += " " + n.Value
+		if err != nil {
+			fmt.Println(err)
+			return "", -1, -1, err
 		}
+
+		re = regexp.MustCompile(`^.*\[[[:digit:]]*\]\[([[:digit:]])*\]$`)
+
+		positions = re.FindStringSubmatch(k)
+
+		elementPosition, err = strconv.Atoi(positions[1])
+
+		if err != nil {
+			fmt.Println(err)
+			return "", -1, -1, err
+		}
+
+	} else {
+		key = k
+		instructionPosition = 0
+		elementPosition = 0
+		err = nil
 	}
 
-	return strings.TrimSpace(str)
+	return key, instructionPosition, elementPosition, err
+
 }
 
-func (d *Dockerfile) search(node *parser.Node) (found bool, err error) {
+// Search for both a Dockerfile instruction and its value to defined in the Dockerfile
+// While the dockerfile instruction not case sensitive, its value is
+func (d *Dockerfile) search(node *parser.Node) (bool, error) {
+	instruction, instructionPosition, elementPosition, err := getPositionKeys(d.Instruction)
 
-	fmt.Printf("Instruction: %v\n", node.Value)
+	if err != nil {
 
-	if len(node.Children) > 0 {
-		for i, child := range node.Children {
-			fmt.Printf("Exploring child %v\n", i)
-			found, err = d.search(child)
-			if found {
-				return found, nil
+		return false, err
+	}
+
+	i := 0
+	for _, n := range node.Children {
+
+		fmt.Println(i)
+		if strings.ToUpper(n.Value) == strings.ToUpper(instruction) && i == instructionPosition {
+
+			fmt.Println("Here")
+
+			if n.Next != nil {
+				j := 0
+				for nod := n.Next; nod != nil && j <= elementPosition; nod = nod.Next {
+					if nod.Value == d.Value && elementPosition == j {
+
+						return true, nil
+					}
+					j++
+				}
+
 			}
+		} else if strings.ToUpper(n.Value) == strings.ToUpper(instruction) {
+			i++
 		}
+
 	}
-
-	if node.Next == nil {
-		return false, nil
-	}
-
-	fmt.Printf("Instruction: %v %v\n", node.Value, node.Next.Value)
-	if strings.ToUpper(d.Instruction) == strings.ToUpper(node.Value) &&
-		strings.ToUpper(d.Value) == strings.ToUpper(node.Next.Value) {
-		found = true
-		fmt.Println("Found")
-		return true, nil
-	}
-
-	//if strings.ToUpper(d.Instruction) == "LABEL" &&
-	//	len(strings.Split(d.Value, "=")) > 1 {
-	//	// if label
-	//	if strings.ToUpper(d.Instruction) == strings.ToUpper(node.Value) &&
-	//		strings.ToUpper(d.Value) == strings.ToUpper(node.Next.Value) {
-	//		found = true
-	//		fmt.Println("Found")
-	//		return true, nil
-	//	}
-	//}
-
-	return false, err
+	return false, nil
 }
