@@ -67,7 +67,7 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 			return false, err
 		}
 	} else {
-		return false, fmt.Errorf("Don't support condition: %v", c.Kind)
+		return false, fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Scm)
 	}
 
 	return ok, nil
