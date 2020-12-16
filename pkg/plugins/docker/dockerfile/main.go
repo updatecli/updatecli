@@ -89,10 +89,7 @@ func (d *Dockerfile) search(node *parser.Node) (bool, error) {
 	i := 0
 	for _, n := range node.Children {
 
-		fmt.Println(i)
 		if strings.ToUpper(n.Value) == strings.ToUpper(instruction) && i == instructionPosition {
-
-			fmt.Println("Here")
 
 			if n.Next != nil {
 				j := 0
