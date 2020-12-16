@@ -29,23 +29,31 @@ func (d *Dockerfile) Condition(version string) (bool, error) {
 		return false, err
 	}
 
-	found, err := d.search(data.AST)
+	found, val, err := d.replace(data.AST)
 
 	if err != nil {
 		return false, err
 	}
 
 	if found {
-		fmt.Printf("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s' \n",
+		if val == d.Value {
+			fmt.Printf("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s' \n",
+				d.Instruction,
+				d.File,
+				d.Value)
+			return true, nil
+		}
+
+		fmt.Printf("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' instead of '%s'\n",
 			d.Instruction,
 			d.File,
+			val,
 			d.Value)
-		return true, nil
+
+	} else {
+
+		fmt.Printf("\u2717 Instruction '%s' from Dockerfile '%s', wasn't found \n", d.Instruction, d.File)
 	}
-	fmt.Printf("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' \n",
-		d.Instruction,
-		d.File,
-		d.Value)
 
 	return false, nil
 
@@ -70,23 +78,31 @@ func (d *Dockerfile) ConditionFromSCM(version string, scm scm.Scm) (bool, error)
 		return false, err
 	}
 
-	found, err := d.search(data.AST)
+	found, val, err := d.replace(data.AST)
 
 	if err != nil {
 		return false, err
 	}
 
 	if found {
-		fmt.Printf("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s' \n",
+		if val == d.Value {
+			fmt.Printf("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s' \n",
+				d.Instruction,
+				d.File,
+				d.Value)
+			return true, nil
+		}
+
+		fmt.Printf("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' instead of '%s'\n",
 			d.Instruction,
 			d.File,
+			val,
 			d.Value)
-		return true, nil
+
+	} else {
+		fmt.Printf("\u2717 Instruction '%s' from Dockerfile '%s', wasn't found \n", d.Instruction, d.File)
+
 	}
-	fmt.Printf("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' \n",
-		d.Instruction,
-		d.File,
-		d.Value)
 
 	return false, nil
 }

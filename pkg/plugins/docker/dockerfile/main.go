@@ -78,12 +78,12 @@ func getPositionKeys(k string) (
 
 // Search for both a Dockerfile instruction and its value to defined in the Dockerfile
 // While the dockerfile instruction not case sensitive, its value is
-func (d *Dockerfile) search(node *parser.Node) (bool, error) {
+func (d *Dockerfile) replace(node *parser.Node) (bool, string, error) {
 	instruction, instructionPosition, elementPosition, err := getPositionKeys(d.Instruction)
 
 	if err != nil {
 
-		return false, err
+		return false, "", err
 	}
 
 	i := 0
@@ -94,9 +94,11 @@ func (d *Dockerfile) search(node *parser.Node) (bool, error) {
 			if n.Next != nil {
 				j := 0
 				for nod := n.Next; nod != nil && j <= elementPosition; nod = nod.Next {
-					if nod.Value == d.Value && elementPosition == j {
+					if elementPosition == j {
+						val := nod.Value
+						nod.Value = d.Value
 
-						return true, nil
+						return true, val, nil
 					}
 					j++
 				}
@@ -107,5 +109,5 @@ func (d *Dockerfile) search(node *parser.Node) (bool, error) {
 		}
 
 	}
-	return false, nil
+	return false, "", nil
 }
