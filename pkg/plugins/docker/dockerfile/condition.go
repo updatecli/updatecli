@@ -4,17 +4,23 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/olblak/updatecli/pkg/core/helpers"
+	"github.com/olblak/updateCli/pkg/core/helpers"
+	"github.com/olblak/updateCli/pkg/core/scm"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
 
 // Condition test if the Dockerfile contains the correct key/value
-func (d *Dockerfile) Condition() (bool, error) {
+func (d *Dockerfile) Condition(version string) (bool, error) {
 	raw, err := helpers.ReadFile(d.File)
 	if err != nil {
 		return false, err
 	}
+
+	if len(d.Value) == 0 {
+		d.Value = version
+	}
+
 	data, err := parser.Parse(bytes.NewReader(raw))
 
 	if err != nil {
@@ -41,4 +47,10 @@ func (d *Dockerfile) Condition() (bool, error) {
 
 	return false, nil
 
+}
+
+// ConditionFromSCM run based on a file from SCM
+func (d *Dockerfile) ConditionFromSCM(version string, scm scm.Scm) (bool, error) {
+	//
+	return false, nil
 }
