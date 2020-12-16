@@ -256,7 +256,7 @@ func TestGetPositionKeys(t *testing.T) {
 	}
 }
 
-func TestSearchNode(t *testing.T) {
+func TestReplacehNode(t *testing.T) {
 	for _, data := range datas {
 		d, err := parser.Parse(bytes.NewReader([]byte(*data.dockerfile)))
 
@@ -264,7 +264,7 @@ func TestSearchNode(t *testing.T) {
 			fmt.Println(err)
 		}
 
-		found, err := data.spec.search(d.AST)
+		found, _, err := data.spec.replace(d.AST)
 
 		if err != nil {
 			fmt.Println(err)
