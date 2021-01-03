@@ -12,7 +12,7 @@ import (
 //	https://github.com/moby/buildkit/blob/master/frontend/dockerfile/parser/parser
 // https://github.com/moby/buildkit/issues/1561
 
-// Dockerfile is struct that contains parameters to interact with a Dockerfile
+// Dockerfile is struct that contains parameters to manipulate Dockerfile in updatecli
 type Dockerfile struct {
 	File        string
 	Instruction string
@@ -76,8 +76,8 @@ func getPositionKeys(k string) (
 
 }
 
-// Search for both a Dockerfile instruction and its value to defined in the Dockerfile
-// While the dockerfile instruction not case sensitive, its value is
+// Search for both a Dockerfile instruction and its value.
+// While the dockerfile instruction is not case sensitive, its value is
 func (d *Dockerfile) replace(node *parser.Node) (bool, string, error) {
 	instruction, instructionPosition, elementPosition, err := getPositionKeys(d.Instruction)
 

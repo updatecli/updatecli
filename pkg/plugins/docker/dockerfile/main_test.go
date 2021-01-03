@@ -9,9 +9,10 @@ import (
 )
 
 type dataSet struct {
-	dockerfile    *string
-	spec          Dockerfile
-	expectedFound bool
+	dockerfile      string
+	spec            Dockerfile
+	expectedFound   bool
+	expectedReplace bool
 }
 
 type positionKeyDataSet struct {
@@ -26,8 +27,7 @@ type positionKeyDataSets []positionKeyDataSet
 type dataSets []dataSet
 
 var (
-	rawDockerfile string = `---
-FROM ubuntu:20.04
+	rawDockerfile string = `FROM ubuntu:20.04
 
 #Simple labels
 LABEL version="0.1"
@@ -49,16 +49,19 @@ LABEL vendor=ACME\ Incorporated \
 RUN echo "Hello World"
 RUN \
 	ls
+RUN \
+	echo true && \
+	echo false && \
+	echo true
 `
-	multiStageDockerfile string = `---
-FROM golang:1.15 as builder
+	multiStageDockerfile string = `FROM golang:1.15 as builder
 
 WORKDIR /go/src/app
 
 COPY . .
 
 RUN go get -d -v ./...
----
+
 FROM ubuntu
 
 LABEL maintainer="Olblak <me@olblak.com>"
@@ -86,84 +89,125 @@ CMD ["--help"]
 
 	datas dataSets = []dataSet{
 		{
-			dockerfile: &rawDockerfile,
+			dockerfile: rawDockerfile,
 			spec: Dockerfile{
 				File:        "Dockerfile",
 				Instruction: "From",
 				Value:       "ubuntu:20.04",
 				DryRun:      false,
 			},
-			expectedFound: true,
+			expectedFound:   true,
+			expectedReplace: false,
 		},
 		{
-			dockerfile: &rawDockerfile,
+			dockerfile: rawDockerfile,
 			spec: Dockerfile{
 				File:        "Dockerfile",
 				Instruction: "From[0][0]",
 				Value:       "ubuntu:20.04",
 				DryRun:      false,
 			},
-			expectedFound: true,
+			expectedFound:   true,
+			expectedReplace: false,
 		},
 		{
-			dockerfile: &rawDockerfile,
+			dockerfile: rawDockerfile,
 			spec: Dockerfile{
 				File:        "Dockerfile",
 				Instruction: "FROM",
 				Value:       "ubuntu:20.04",
 				DryRun:      false,
 			},
-			expectedFound: true,
+			expectedFound:   true,
+			expectedReplace: false,
 		},
 		{
-			dockerfile: &rawDockerfile,
+			dockerfile: rawDockerfile,
 			spec: Dockerfile{
 				File:        "Dockerfile",
 				Instruction: "FROM",
 				Value:       "UBUNTU:20.04",
 				DryRun:      false,
 			},
-			expectedFound: false,
+			expectedFound:   true,
+			expectedReplace: true,
 		},
 		{
-			dockerfile: &rawDockerfile,
+			dockerfile: rawDockerfile,
 			spec: Dockerfile{
 				File:        "Dockerfile",
 				Instruction: "From",
 				Value:       "ubuntu:18.04",
 				DryRun:      false,
 			},
-			expectedFound: false,
+			expectedFound:   true,
+			expectedReplace: true,
 		},
 		{
-			dockerfile: &rawDockerfile,
+			dockerfile: rawDockerfile,
 			spec: Dockerfile{
 				File:        "Dockerfile",
 				Instruction: "label[4][2]",
 				Value:       "com.example.release-date",
 				DryRun:      false,
 			},
-			expectedFound: true,
+			expectedFound:   true,
+			expectedReplace: false,
 		},
 		{
-			dockerfile: &multiStageDockerfile,
+			dockerfile: multiStageDockerfile,
 			spec: Dockerfile{
 				File:        "Dockerfile",
 				Instruction: "From",
 				Value:       "golang:1.15",
 				DryRun:      false,
 			},
-			expectedFound: true,
+			expectedFound:   true,
+			expectedReplace: false,
 		},
 		{
-			dockerfile: &multiStageDockerfile,
+			dockerfile: multiStageDockerfile,
 			spec: Dockerfile{
 				File:        "Dockerfile",
 				Instruction: "From[1][0]",
 				Value:       "ubuntu",
 				DryRun:      false,
 			},
-			expectedFound: true,
+			expectedFound:   true,
+			expectedReplace: false,
+		},
+		{
+			dockerfile: multiStageDockerfile,
+			spec: Dockerfile{
+				File:        "Dockerfile",
+				Instruction: "From[3][0]",
+				Value:       "ubuntu",
+				DryRun:      false,
+			},
+			expectedFound:   false,
+			expectedReplace: false,
+		},
+		{
+			dockerfile: multiStageDockerfile,
+			spec: Dockerfile{
+				File:        "Dockerfile",
+				Instruction: "---",
+				Value:       "",
+				DryRun:      false,
+			},
+			expectedFound:   false,
+			expectedReplace: false,
+		},
+		{
+			dockerfile: multiStageDockerfile,
+			spec: Dockerfile{
+				File:        "Dockerfile",
+				Instruction: "FROM[a][b]",
+				Value:       "",
+				DryRun:      false,
+			},
+			expectedFound:   false,
+			expectedReplace: false,
 		},
 	}
 
@@ -256,22 +300,30 @@ func TestGetPositionKeys(t *testing.T) {
 	}
 }
 
-func TestReplacehNode(t *testing.T) {
-	for _, data := range datas {
-		d, err := parser.Parse(bytes.NewReader([]byte(*data.dockerfile)))
+func TestReplaceNode(t *testing.T) {
+	for i, data := range datas {
+		d, err := parser.Parse(bytes.NewReader([]byte(data.dockerfile)))
 
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		found, _, err := data.spec.replace(d.AST)
+		found, val, err := data.spec.replace(d.AST)
 
 		if err != nil {
 			fmt.Println(err)
 		}
 
 		if found != data.expectedFound {
-			t.Errorf("Expected %s %s to be found, got %v",
+			t.Errorf("%d: Expected %s %s to be found, got %v",
+				i,
+				data.spec.Instruction,
+				data.spec.Value,
+				found)
+		}
+		if data.expectedReplace && val == data.spec.Value {
+			t.Errorf("%d: Expected %s %s to be replace, got %v",
+				i,
 				data.spec.Instruction,
 				data.spec.Value,
 				found)
