@@ -8,6 +8,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
 )
 
@@ -49,6 +50,17 @@ func (t *Target) Check() (bool, error) {
 // Unmarshal decodes a target struct
 func Unmarshal(target *Target) (spec Spec, err error) {
 	switch target.Kind {
+	case "dockerfile":
+		d := dockerfile.Dockerfile{}
+
+		err := mapstructure.Decode(target.Spec, &d)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		spec = &d
+
 	case "yaml":
 		y := yaml.Yaml{}
 
@@ -168,14 +180,14 @@ func isFileExist(file string) (dir string, base string, err error) {
 	return dir, base, err
 }
 
-func isDirectory(path string) bool {
+func isDirectory(path string) (bool, error) {
 
 	info, err := os.Stat(path)
 	if err != nil {
-		return false
+		return false, err
 	}
 	if info.IsDir() {
-		return true
+		return true, nil
 	}
-	return false
+	return false, nil
 }
