@@ -1,6 +1,6 @@
 ---
 source:
-  name: Get Latest jenkinsci/jenkins release name
+  name: Get Latest helm release version
   kind: githubRelease
   spec:
     owner: "helm"
