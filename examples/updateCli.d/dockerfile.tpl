@@ -10,7 +10,7 @@ source:
     version: latest
 conditions:
   isENVSet:
-    name: Is ENV HELM_VERSION set?
+    name: Is ENV HELM_VERSION set
     kind: dockerfile
     spec:
       file: docker/Dockerfile
@@ -28,7 +28,7 @@ conditions:
         branch: "master"
 targets:
   setENV:
-    name: Set Label version
+    name: Update HELM_VERSION
     kind: dockerfile
     spec:
       file: docker/Dockerfile
