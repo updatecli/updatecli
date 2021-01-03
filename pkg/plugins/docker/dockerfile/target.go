@@ -101,6 +101,7 @@ func (d *Dockerfile) Target(source string, dryRun bool) (changed bool, err error
 // TargetFromSCM updates a targeted Dockerfile from source controle management system
 func (d *Dockerfile) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error) {
 
+	file := d.File
 	d.File = path.Join(scm.GetDirectory(), d.File)
 
 	changed, err = d.Target(source, d.DryRun)
@@ -110,12 +111,12 @@ func (d *Dockerfile) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (cha
 
 	}
 
-	files = append(files, d.File)
+	files = append(files, file)
 
 	if changed {
 		message = fmt.Sprintf("[updatecli] Instruction '%s' from Dockerfile '%s' updated to '%s'\n",
 			d.Instruction,
-			d.File,
+			file,
 			d.Value,
 		)
 	}
