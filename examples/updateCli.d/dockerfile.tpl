@@ -15,7 +15,6 @@ conditions:
     spec:
       file: docker/Dockerfile
       Instruction: ENV[1][0]
-      Position: 1
       Value: "HELM_VERSION"
     scm:
       github:
