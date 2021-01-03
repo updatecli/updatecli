@@ -206,6 +206,12 @@ RUN echo true && \
 			expectedDockerfile: "ENTRYPOINT [ \"echo true\" ]\n",
 		},
 		{
+			dockerfile:         "ENTRYPOINT \"/usr/local/bin/helmfile\"\n",
+			expectedResult:     true,
+			expectedError:      false,
+			expectedDockerfile: "ENTRYPOINT [ \"/usr/local/bin/helmfile\" ]\n",
+		},
+		{
 			dockerfile:         "ENTRYPOINT [\"/bin/bash\", \"-c\", \"echo hello\"]\n",
 			expectedResult:     true,
 			expectedError:      false,
