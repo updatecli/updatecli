@@ -11,9 +11,9 @@ func TestCondition(t *testing.T) {
 	set := []dataSet{
 		{
 			chart: Chart{
-				URL:     "https://kubernetes-charts.storage.googleapis.com",
+				URL:     "https://charts.jenkins.io",
 				Name:    "jenkins",
-				Version: "1.21.1",
+				Version: "2.19.0",
 			},
 			expected: true,
 		},
