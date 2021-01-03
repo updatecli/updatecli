@@ -105,7 +105,12 @@ func ExecForm(node *parser.Node) (arguments string) {
 	tmp := []string{}
 
 	for n := node.Next; n != nil; n = n.Next {
-		tmp = append(tmp, `"`+n.Value+`"`)
+		value := n.Value
+		if strings.HasPrefix(n.Value, `"`) && strings.HasSuffix(n.Value, `"`) {
+			value = strings.TrimPrefix(value, `"`)
+			value = strings.TrimSuffix(value, `"`)
+		}
+		tmp = append(tmp, `"`+strings.ReplaceAll(value, `"`, `\"`)+`"`)
 	}
 
 	arguments = `[ ` + strings.Join(tmp, `,`) + ` ]`
