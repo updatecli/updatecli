@@ -27,7 +27,7 @@ conditions:
         username: "olblak"
         branch: "master"
 targets:
-  setENV:
+  updateENVHELMVERSION:
     name: Update HELM_VERSION
     kind: dockerfile
     spec:
