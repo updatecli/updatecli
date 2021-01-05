@@ -106,6 +106,35 @@ source:
 
 **A configuration using go template can be used to retrieve the environment variable instead of writing secrets in files, cfr later.**
 
+==== Dockerfile
+A Dockerfile retrieves information from a Dockerfile. To identify which information to retrieve, it uses the field "Instruction" with a custom syntax, `INSTRUCTION[x][y]`.
+
+* `INSTRUCTION` must be replaced by any valid Dockerfile instruction like `ARG`, `ENV`, `LABEL`, etc
+* "x", reference a specific instruction position where x is replaced by any integer starting from 0. So "0" means the first instruction of type `INSTRUCTION`, "1" means the second, etc
+* "y", reference a specific argument element for the `INSTRUCTION[x]` where "y" is replaced by any integer starting from 0. So "0" means the first argument, "1" means the second, etc
+
+The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line 
+`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]` 
+
+* `LABEL[0][0]` equal `key1`
+* `LABEL[0][1]` equal `value2`
+* `LABEL[0][3]` equal `key2`
+* `LABEL[0][4]` equal `value2`
+
+NOTE: A shorter syntax is available where `INSTRUCTION` is an alias for `INSTRUCTION[0][0]`.
+For instance, based on the previous example, `LABEL` means "key1"
+
+```
+source:
+  kind: dockerfile
+  spec:
+    file: docker/Dockerfile
+    Instruction: ENV[0][0] #Long Syntax
+    Instruction: ENV       #Short Syntax
+#    Value: "HELM_VERSION"
+
+```
+
 ==== DockerRegistry
 
 This source will get a docker image tag from a docker registry and return its digest, so we can always reference a specific image tag like `latest`.
@@ -203,6 +232,39 @@ source:
 === Condition
 During this stage, we check if conditions are met based on the value retrieved from the source stage otherwise we can skip the "target" stage.
 
+==== Dockerfile
+A Dockerfile validate information from a Dockerfile. It uses the field "Value" to define the expected value or if not defined, the field "Value" is set based on the source output. Then it uses the field "Instruction" to identify which information to validate using the custom syntax, `INSTRUCTION[x][y]`.
+
+* `INSTRUCTION` must be replaced by any valid Dockerfile instruction like `ARG`, `ENV`, `LABEL`, etc
+* "x", reference a specific instruction position where x is replaced by any integer starting from 0. So "0" means the first instruction of type `INSTRUCTION`, "1" means the second, etc
+* "y", reference a specific argument element for the `INSTRUCTION[x]` where "y" is replaced by any integer starting from 0. So "0" means the first argument, "1" means the second, etc
+
+The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line 
+`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]` 
+
+* `LABEL[0][0]` equal `key1`
+* `LABEL[0][1]` equal `value2`
+* `LABEL[0][3]` equal `key2`
+* `LABEL[0][4]` equal `value2`
+
+NOTE: A shorter syntax is available where `INSTRUCTION` is an alias for `INSTRUCTION[0][0]`.
+For instance, based on the previous example, `LABEL` means "key1"
+
+```
+conditions:
+  id: 
+    kind: dockerfile
+    spec:
+      file: docker/Dockerfile
+      Instruction: ENV[0][0] #Long Syntax
+      # Instruction: ENV       #Short Syntax
+      Value: "HELM_VERSION"
+      scm: #scm repository type", *optional
+        #github:
+        # or
+        #git:
+
+```
 ==== dockerImage
 
 This condition checks if a docker image tag is available on a Docker Registry.
@@ -278,6 +340,44 @@ conditions:
 === Targets
 
 "Targets" stage will update the definition for every target based on the value returned during the source stage if all conditions are met.
+
+==== Dockerfile
+
+CAUTION: The targeted Dockerfile syntax won't be preserved and comments will be drop.
+
+A Dockerfile target, updates a Dockerfile based on information retrieved from source. It uses the field "Value" to define the expected value or if not defined, the field "Value" is set based on the source output (which should be purpose anyway). Then it uses the field "Instruction" to identify which information to validate using the custom syntax, `INSTRUCTION[x][y]`.
+
+* `INSTRUCTION` must be replaced by any valid Dockerfile instruction like `ARG`, `ENV`, `LABEL`, etc
+* "x", reference a specific instruction position where x is replaced by any integer starting from 0. So "0" means the first instruction of type `INSTRUCTION`, "1" means the second, etc
+* "y", reference a specific argument element for the `INSTRUCTION[x]` where "y" is replaced by any integer starting from 0. So "0" means the first argument, "1" means the second, etc
+
+The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line 
+`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]` 
+
+* `LABEL[0][0]` equal `key1`
+* `LABEL[0][1]` equal `value2`
+* `LABEL[0][3]` equal `key2`
+* `LABEL[0][4]` equal `value2`
+
+NOTE: A shorter syntax is available where `INSTRUCTION` is an alias for `INSTRUCTION[0][0]`.
+For instance, based on the previous example, `LABEL` means "key1"
+
+TIP: It's a good idea to test that a LABEL key exist before updating its value
+
+
+```
+targets:
+  taskId 
+    kind: dockerfile
+    spec:
+      file: docker/Dockerfile
+      Instruction: ENV[0][1] #Long Syntax
+    scm: #scm repository type", *optional
+      #github:
+      # or
+      #git:
+
+```
 
 ==== yaml
 
