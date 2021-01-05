@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/plugins/docker"
+	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
@@ -67,7 +68,7 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 			return false, err
 		}
 	} else {
-		return false, fmt.Errorf("Don't support condition: %v", c.Kind)
+		return false, fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Scm)
 	}
 
 	return ok, nil
@@ -81,6 +82,17 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 
 	case "dockerImage":
 		d := docker.Docker{}
+
+		err := mapstructure.Decode(condition.Spec, &d)
+
+		if err != nil {
+			return nil, err
+		}
+
+		spec = &d
+
+	case "dockerfile":
+		d := dockerfile.Dockerfile{}
 
 		err := mapstructure.Decode(condition.Spec, &d)
 

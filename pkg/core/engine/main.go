@@ -237,7 +237,7 @@ func (e *Engine) Run() (err error) {
 		err = conf.Source.Execute()
 
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("%s %v\n", result.FAILURE, err)
 			e.Reports = append(e.Reports, report)
 			continue
 		}
@@ -263,6 +263,7 @@ func (e *Engine) Run() (err error) {
 			}
 
 			if err != nil || !ok {
+				fmt.Printf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
 				continue
 			}
@@ -272,7 +273,7 @@ func (e *Engine) Run() (err error) {
 		if len(conf.Targets) > 0 {
 			changed, err := RunTargets(&conf, &e.Options.Target, &report)
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
 				continue
 			}

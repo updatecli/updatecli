@@ -73,6 +73,8 @@ func (c *Chart) Changelog(name string) (string, error) {
 
 	changelog := buffer.String()
 
+	fmt.Println(changelog)
+
 	return changelog, nil
 
 }
