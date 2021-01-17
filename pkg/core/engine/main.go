@@ -65,35 +65,18 @@ func (e *Engine) InitSCM() (err error) {
 	defer wg.Wait()
 
 	for _, conf := range e.configurations {
+		if len(conf.Source.Scm) > 0 {
+			err = Clone(&conf.Source.Scm, &hashes, channel, &wg)
+			if err != nil {
+				return err
+			}
+		}
 		for _, condition := range conf.Conditions {
 			if len(condition.Scm) > 0 {
-				hash, err := hashstructure.Hash(condition.Scm, nil)
+
+				err = Clone(&condition.Scm, &hashes, channel, &wg)
 				if err != nil {
-					fmt.Println(err)
-				}
-				found := false
-
-				for _, h := range hashes {
-					if h == hash {
-						found = true
-					}
-				}
-
-				if !found {
-					s, err := scm.Unmarshal(condition.Scm)
-
-					if err != nil {
-						fmt.Println(err)
-					}
-					hashes = append(hashes, hash)
-					wg.Add(1)
-					go func(s scm.Scm) {
-						channel <- 1
-						defer wg.Done()
-						s.Clone()
-					}(s)
-					<-channel
-
+					return err
 				}
 
 			}
@@ -101,39 +84,54 @@ func (e *Engine) InitSCM() (err error) {
 
 		for _, target := range conf.Targets {
 			if len(target.Scm) > 0 {
-				hash, err := hashstructure.Hash(target.Scm, nil)
+
+				err = Clone(&target.Scm, &hashes, channel, &wg)
 				if err != nil {
-					fmt.Println(err)
-				}
-				found := false
-
-				for _, h := range hashes {
-					if h == hash {
-						found = true
-					}
-				}
-
-				if !found {
-					s, err := scm.Unmarshal(target.Scm)
-
-					if err != nil {
-						fmt.Println(err)
-					}
-					hashes = append(hashes, hash)
-					wg.Add(1)
-					go func(s scm.Scm) {
-						channel <- 1
-						defer wg.Done()
-						s.Clone()
-					}(s)
-					<-channel
-
+					return err
 				}
 			}
 		}
 	}
 
 	return err
+}
+
+//Clone parses a scm configuration then clone the git repository if needed
+func Clone(
+	SCM *map[string]interface{},
+	hashes *[]uint64,
+	channel chan int,
+	wg *sync.WaitGroup) error {
+
+	hash, err := hashstructure.Hash(SCM, nil)
+	if err != nil {
+		return err
+	}
+	found := false
+
+	for _, h := range *hashes {
+		if h == hash {
+			found = true
+		}
+	}
+
+	if !found {
+		s, err := scm.Unmarshal(*SCM)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		*hashes = append(*hashes, hash)
+		wg.Add(1)
+		go func(s scm.Scm) {
+			channel <- 1
+			defer wg.Done()
+			s.Clone()
+		}(s)
+		<-channel
+
+	}
+	return nil
 }
 
 // Prepare run every actions needed before going further
