@@ -9,6 +9,7 @@ import (
 	"github.com/olblak/updateCli/pkg/plugins/github"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
+	"github.com/olblak/updateCli/pkg/plugins/yaml"
 )
 
 // Source defines how a value is retrieved from a specific source
@@ -88,6 +89,16 @@ func (s *Source) Execute() error {
 		}
 
 		spec = &d
+
+	case "yaml":
+		y := yaml.Yaml{}
+		err := mapstructure.Decode(s.Spec, &y)
+
+		if err != nil {
+			return err
+		}
+
+		spec = &y
 
 	default:
 		return fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)
