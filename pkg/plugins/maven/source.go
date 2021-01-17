@@ -9,7 +9,8 @@ import (
 )
 
 // Source return the latest version
-func (m *Maven) Source() (string, error) {
+func (m *Maven) Source(workingDir string) (string, error) {
+
 	URL := fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
 		m.URL,
 		m.Repository,

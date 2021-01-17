@@ -1,6 +1,8 @@
 package maven
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestCondition(t *testing.T) {
 	// Test if existing image tag return true
@@ -43,7 +45,7 @@ func TestSource(t *testing.T) {
 		ArtifactID: "wikitext.core",
 	}
 
-	got, _ := m.Source()
+	got, _ := m.Source("")
 	expected := "1.7.4.v20130429"
 	if got != expected {
 		t.Errorf("Latest version published expected is %v, got %v", expected, got)
@@ -58,7 +60,7 @@ func TestSource(t *testing.T) {
 		Version:    "0.3",
 	}
 
-	got, _ = m.Source()
+	got, _ = m.Source("")
 	expected = "2.21"
 	if got == expected {
 		t.Errorf("Latest version published expected is %v, got %v", expected, got)

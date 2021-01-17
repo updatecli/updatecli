@@ -8,7 +8,7 @@ import (
 )
 
 // Source retrieves a specific version tag from Github Releases.
-func (g *Github) Source() (string, error) {
+func (g *Github) Source(workingDir string) (string, error) {
 
 	_, err := g.Check()
 	if err != nil {
