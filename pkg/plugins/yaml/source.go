@@ -2,7 +2,6 @@ package yaml
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -10,13 +9,8 @@ import (
 )
 
 // Source return the latest version
-func (y *Yaml) Source() (string, error) {
+func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
-	pwd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	workingDir := filepath.Dir(pwd)
 
 	if y.Value != "" {
 		fmt.Println("WARNING: Key 'Value' is not used by source YAML")
@@ -55,18 +49,14 @@ func (y *Yaml) Source() (string, error) {
 
 	valueFound, value, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
 
-	if !valueFound {
-		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n",
-			y.Key,
-			filepath.Join(y.Path, y.File))
-		return "", nil
-
+	if valueFound {
+		fmt.Printf("\u2714 Value '%v' found for key %v in the yaml file %v \n", value, y.Key, y.File)
+		return value, nil
 	}
 
-	fmt.Printf("\u2714 Key '%s', from file '%v', is correctly set to %s'\n",
+	fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n",
 		y.Key,
-		filepath.Join(y.Path, y.File),
-		y.Value)
-	return value, nil
+		filepath.Join(y.Path, y.File))
+	return "", nil
 
 }

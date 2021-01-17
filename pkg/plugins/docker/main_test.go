@@ -156,7 +156,7 @@ func TestCondition(t *testing.T) {
 func TestSource(t *testing.T) {
 	// Test if existing return the correct digest
 	for _, d := range data {
-		got, _ := d.docker.Source()
+		got, _ := d.docker.Source("")
 		expected := d.expectedDigest
 		if got != expected {
 			t.Errorf("Docker Image %v:%v expect digest %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
