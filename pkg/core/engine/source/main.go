@@ -2,13 +2,17 @@ package source
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/plugins/docker"
 	"github.com/olblak/updateCli/pkg/plugins/github"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
+	"github.com/olblak/updateCli/pkg/plugins/yaml"
 )
 
 // Source defines how a value is retrieved from a specific source
@@ -21,12 +25,13 @@ type Source struct {
 	Postfix   string
 	Replaces  Replacers
 	Spec      interface{}
+	Scm       map[string]interface{}
 	Result    string `yaml:"-"` // Ignore this key field when unmarshalling yaml file
 }
 
 // Spec source is an interface to handle source spec
 type Spec interface {
-	Source() (string, error)
+	Source(workingDir string) (string, error)
 }
 
 // Changelog is an interface to retrieve changelog description
@@ -43,57 +48,48 @@ func (s *Source) Execute() error {
 	var output string
 	var err error
 
-	var spec Spec
-	var changelog Changelog
+	spec, changelog, err := s.Unmarshal()
 
-	switch s.Kind {
-	case "githubRelease":
-		g := github.Github{}
-		err := mapstructure.Decode(s.Spec, &g)
-
-		if err != nil {
-			return err
-		}
-
-		spec = &g
-		changelog = &g
-
-	case "helmChart":
-		c := chart.Chart{}
-		err := mapstructure.Decode(s.Spec, &c)
-
-		if err != nil {
-			return err
-		}
-
-		spec = &c
-		changelog = &c
-
-	case "maven":
-		m := maven.Maven{}
-		err := mapstructure.Decode(s.Spec, &m)
-
-		if err != nil {
-			return err
-		}
-
-		spec = &m
-
-	case "dockerDigest":
-		d := docker.Docker{}
-		err := mapstructure.Decode(s.Spec, &d)
-
-		if err != nil {
-			return err
-		}
-
-		spec = &d
-
-	default:
-		return fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)
+	if err != nil {
+		return err
 	}
 
-	output, err = spec.Source()
+	workingDir := ""
+
+	if len(s.Scm) > 0 {
+
+		SCM, err := scm.Unmarshal(s.Scm)
+
+		if err != nil {
+			return err
+		}
+
+		err = SCM.Init("", workingDir)
+
+		if err != nil {
+			return err
+		}
+
+		err = SCM.Checkout()
+
+		if err != nil {
+			return err
+		}
+
+		workingDir = SCM.GetDirectory()
+
+	} else if len(s.Scm) == 0 {
+
+		pwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+
+		workingDir = filepath.Dir(pwd)
+	}
+
+	output, err = spec.Source(workingDir)
+
 	if err != nil {
 		return err
 	}
@@ -127,4 +123,66 @@ func (s *Source) Execute() error {
 	}
 
 	return nil
+}
+
+// Unmarshal decode a source spec and returned its typed content
+func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
+	switch s.Kind {
+	case "githubRelease":
+		g := github.Github{}
+		err := mapstructure.Decode(s.Spec, &g)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec = &g
+		changelog = &g
+
+	case "helmChart":
+		c := chart.Chart{}
+		err := mapstructure.Decode(s.Spec, &c)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec = &c
+		changelog = &c
+
+	case "maven":
+		m := maven.Maven{}
+		err := mapstructure.Decode(s.Spec, &m)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec = &m
+
+	case "dockerDigest":
+		d := docker.Docker{}
+		err := mapstructure.Decode(s.Spec, &d)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec = &d
+
+	case "yaml":
+		y := yaml.Yaml{}
+		err := mapstructure.Decode(s.Spec, &y)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec = &y
+
+	default:
+		return nil, nil, fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)
+	}
+	return spec, changelog, nil
+
 }

@@ -7,7 +7,8 @@ import (
 )
 
 // Source return the latest version
-func (c *Chart) Source() (string, error) {
+func (c *Chart) Source(workingDir string) (string, error) {
+
 	URL := fmt.Sprintf("%s/index.yaml", c.URL)
 
 	req, err := http.NewRequest("GET", URL, nil)

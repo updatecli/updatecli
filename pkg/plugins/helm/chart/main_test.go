@@ -78,7 +78,7 @@ func TestSource(t *testing.T) {
 	}
 
 	for _, d := range set {
-		got, _ := d.chart.Source()
+		got, _ := d.chart.Source("")
 
 		if got != d.expected {
 			t.Errorf("%v is published! latest expected version %v, got %v", d.chart.Name, d.expected, got)

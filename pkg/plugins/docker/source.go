@@ -10,7 +10,7 @@ import (
 )
 
 // Source retrieve docker image tag digest from a registry
-func (d *Docker) Source() (string, error) {
+func (d *Docker) Source(workingDir string) (string, error) {
 
 	hostname, image, err := parseImage(d.Image)
 
