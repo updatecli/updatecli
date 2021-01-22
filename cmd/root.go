@@ -44,7 +44,8 @@ func init() {
 		diffCmd,
 		prepareCmd,
 		showCmd,
-		versionCmd)
+		versionCmd,
+		docsCmd)
 }
 
 func run(command string) {
