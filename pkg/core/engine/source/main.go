@@ -3,12 +3,12 @@ package source
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/plugins/docker"
+	"github.com/olblak/updateCli/pkg/plugins/file"
 	"github.com/olblak/updateCli/pkg/plugins/github"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
@@ -85,7 +85,7 @@ func (s *Source) Execute() error {
 			return err
 		}
 
-		workingDir = filepath.Dir(pwd)
+		workingDir = pwd
 	}
 
 	output, err = spec.Source(workingDir)
@@ -138,6 +138,17 @@ func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
 
 		spec = &g
 		changelog = &g
+
+	case "file":
+		f := file.File{}
+
+		err := mapstructure.Decode(s.Spec, &f)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec = &f
 
 	case "helmChart":
 		c := chart.Chart{}

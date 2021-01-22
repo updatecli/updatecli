@@ -254,16 +254,16 @@ func (e *Engine) Run() (err error) {
 			ok, err := RunConditions(&conf)
 
 			i := 0
-			for _, c := range conf.Conditions {
-				conditionsStageReport[i].Result = c.Result
-				report.Conditions[i].Result = c.Result
-				i++
-			}
-
 			if err != nil || !ok {
 				fmt.Printf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
 				continue
+			}
+
+			for _, c := range conf.Conditions {
+				conditionsStageReport[i].Result = c.Result
+				report.Conditions[i].Result = c.Result
+				i++
 			}
 
 		}
