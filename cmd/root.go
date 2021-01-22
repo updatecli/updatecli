@@ -50,22 +50,30 @@ func init() {
 
 func run(command string) {
 
-	err := e.Prepare()
-
-	if err != nil {
-		fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
-	}
-
 	switch command {
 	case "apply":
+		err := e.Prepare()
+
+		if err != nil {
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+
 		if applyClean {
 			defer e.Clean()
 		}
+
 		err = e.Run()
+
 		if err != nil {
 			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
 		}
 	case "diff":
+		err := e.Prepare()
+
+		if err != nil {
+			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+		}
+
 		if diffClean {
 			defer e.Clean()
 		}
