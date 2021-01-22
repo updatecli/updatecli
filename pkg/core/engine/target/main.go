@@ -9,6 +9,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
+	"github.com/olblak/updateCli/pkg/plugins/file"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
 )
 
@@ -72,6 +73,21 @@ func Unmarshal(target *Target) (spec Spec, err error) {
 		}
 
 		spec = &y
+
+	case "file":
+		f := file.File{}
+
+		err := mapstructure.Decode(target.Spec, &f)
+
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		spec = &f
+
+	default:
+		return nil, fmt.Errorf("⚠ Don't support target kind: %v", target.Kind)
 	}
 	return spec, nil
 }
