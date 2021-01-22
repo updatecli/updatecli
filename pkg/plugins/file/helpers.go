@@ -57,6 +57,46 @@ func ReadFromFile(file string) (data []byte, err error) {
 	return data, nil
 }
 
+// HasPrefix test if a filename uses a prefix
+func HasPrefix(filename string, prefixes []string) bool {
+
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(filename, prefix) {
+			return true
+		}
+	}
+
+	return false
+
+}
+
+// Read read file from a location then return
+// an array of byte. The location accepts multiple input
+// http/https urls "https://", file url "file://", or a simple file
+func Read(filename, workingDir string) (data []byte, err error) {
+
+	if strings.HasPrefix(filename, "https://") ||
+		strings.HasPrefix(filename, "http://") {
+		data, err = ReadFromURL(filename)
+
+		if err != nil {
+			return nil, err
+		}
+		return data, err
+
+	} else if strings.HasPrefix(filename, "file://") {
+		filename = strings.TrimPrefix(filename, "file://")
+	}
+
+	data, err = ReadFromFile(filepath.Join(workingDir, filename))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, err
+}
+
 // Diff return a diff like string, comparing string A and string B
 func Diff(a, b string) (result string) {
 

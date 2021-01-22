@@ -2,9 +2,6 @@ package yaml
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 
@@ -17,57 +14,10 @@ var (
 
 // Yaml stores configuration about the file and the key value which needs to be updated.
 type Yaml struct {
-	Path  string
 	File  string
 	Key   string
+	Path  string
 	Value string
-}
-
-// ReadFile read a yaml file then return its data
-func (y *Yaml) ReadFile() (data []byte, err error) {
-
-	path := filepath.Join(y.Path, y.File)
-
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	defer file.Close()
-
-	data, err = ioutil.ReadAll(file)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return data, err
-}
-
-func isFileExist(file string) (dir string, base string, err error) {
-	if _, err := os.Stat(file); err != nil {
-		return "", "", err
-	}
-
-	absolutePath, err := filepath.Abs(file)
-	if err != nil {
-		return "", "", err
-	}
-	dir = filepath.Dir(absolutePath)
-	base = filepath.Base(absolutePath)
-
-	return dir, base, err
-}
-
-func isDirectory(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	if info.IsDir() {
-		return true
-	}
-	return false
 }
 
 // isPositionKey checks if key use the array position like agents[0].

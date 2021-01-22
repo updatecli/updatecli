@@ -143,20 +143,19 @@ func (e *Engine) Prepare() (err error) {
 
 	err = tmp.Create()
 	if err != nil {
-		fmt.Printf("\n\u26A0 %s\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	err = e.ReadConfigurations()
 
 	if err != nil {
-		fmt.Printf("\n\u26A0 %s\n", err)
+		return err
 	}
 
 	err = e.InitSCM()
 
 	if err != nil {
-		fmt.Printf("\n\u26A0 %s\n", err)
+		return err
 	}
 
 	return err

@@ -2,48 +2,26 @@ package yaml
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/olblak/updateCli/pkg/plugins/file"
 	"gopkg.in/yaml.v3"
 )
 
 // Condition checks if a key exists in a yaml file
 func (y *Yaml) Condition(source string) (bool, error) {
 
-	// By default workingDir is set to local directory
-	pwd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	workingDir := filepath.Dir(pwd)
-
-	if dir, base, err := isFileExist(y.File); err == nil && y.Path == "" {
-		// if no scm configuration has been provided and neither file path then we try to guess the file directory.
-		// if file name contains a path then we use it otherwise we fallback to the current path
-		y.Path = dir
-		y.File = base
-	} else if _, _, err := isFileExist(y.File); err != nil && y.Path == "" {
-
-		y.Path = workingDir
-
-	} else if y.Path != "" && !isDirectory(y.Path) {
-
-		fmt.Printf("Directory '%s' is not valid so fallback to '%s'", y.Path, workingDir)
-		y.Path = workingDir
-
-	} else {
-		return false, fmt.Errorf("Something weird happened while trying to set working directory")
+	if len(y.Path) > 0 {
+		fmt.Println("WARNING: Key 'Path' is obsolete and now directly defined from file")
 	}
 
-	data, err := y.ReadFile()
+	data, err := file.Read(y.File, "")
 	if err != nil {
 		return false, err
 	}
 
-	var out yaml.Node
+	out := yaml.Node{}
 
 	err = yaml.Unmarshal(data, &out)
 
@@ -56,7 +34,7 @@ func (y *Yaml) Condition(source string) (bool, error) {
 	if valueFound && oldVersion == y.Value {
 		fmt.Printf("\u2714 Key '%s', from file '%v', is correctly set to %s'\n",
 			y.Key,
-			filepath.Join(y.Path, y.File),
+			y.File,
 			y.Value)
 		return true, nil
 
@@ -64,14 +42,14 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 		fmt.Printf("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
 			y.Key,
-			filepath.Join(y.Path, y.File),
+			y.File,
 			oldVersion,
 			y.Value)
 
 	} else {
 		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n",
 			y.Key,
-			filepath.Join(y.Path, y.File))
+			y.File)
 	}
 
 	return false, nil
@@ -80,14 +58,16 @@ func (y *Yaml) Condition(source string) (bool, error) {
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 
-	y.Path = scm.GetDirectory()
+	if len(y.Path) > 0 {
+		fmt.Println("WARNING: Key 'Path' is obsolete and now directly defined from file")
+	}
 
-	data, err := y.ReadFile()
+	data, err := file.Read(y.File, scm.GetDirectory())
 	if err != nil {
 		return false, err
 	}
 
-	var out yaml.Node
+	out := yaml.Node{}
 
 	err = yaml.Unmarshal(data, &out)
 
@@ -100,21 +80,21 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	if valueFound && oldVersion == y.Value {
 		fmt.Printf("\u2714 Key '%s', from file '%v', is correctly set to %s'\n",
 			y.Key,
-			filepath.Join(y.Path, y.File),
+			y.File,
 			y.Value)
 		return true, nil
 
 	} else if valueFound && oldVersion != y.Value {
 		fmt.Printf("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
 			y.Key,
-			filepath.Join(y.Path, y.File),
+			y.File,
 			oldVersion,
 			y.Value)
 
 	} else {
 		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n",
 			y.Key,
-			filepath.Join(y.Path, y.File))
+			y.File)
 	}
 
 	return false, nil
