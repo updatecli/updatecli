@@ -63,7 +63,7 @@ func (d *Docker) isDockerHub() bool {
 		fmt.Println(err)
 	}
 
-	if hostname == "hub.docker.com" {
+	if hostname == "hub.docker.com" || hostname == "docker.io" {
 		return true
 	}
 	return false
