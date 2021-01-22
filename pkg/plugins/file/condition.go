@@ -11,40 +11,13 @@ import (
 // Condition test if a file content match the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
 func (f *File) Condition(source string) (bool, error) {
-	var data []byte
-	var err error
 
 	// If f.Content is not provided then we use the value returned from source
 	if len(f.Content) == 0 {
 		f.Content = source
 	}
 
-	workingDir := ""
-	if strings.HasPrefix(f.File, "https://") ||
-		strings.HasPrefix(f.File, "http://") {
-		data, err = ReadFromURL(f.File)
-
-		if err != nil {
-			return false, err
-		}
-
-	} else if strings.HasPrefix(f.File, "file://") {
-		f.File = strings.TrimPrefix(f.File, "file://")
-
-		data, err = ReadFromFile(filepath.Join(workingDir, f.File))
-
-		if err != nil {
-			return false, err
-		}
-	} else {
-		data, err = ReadFromFile(filepath.Join(workingDir, f.File))
-
-		if err != nil {
-			return false, err
-		}
-
-	}
-
+	data, err := Read(f.File, "")
 	if err != nil {
 		return false, err
 	}
@@ -64,40 +37,15 @@ func (f *File) Condition(source string) (bool, error) {
 // If the configuration doesn't specify a value then it fall back to the source output
 func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 
-	var data []byte
-	var err error
-
 	if len(f.Content) > 0 {
 		fmt.Println("Key content defined from updatecli configuration")
 	} else {
 		f.Content = source
 	}
 
-	workingDir := scm.GetDirectory()
-
-	if strings.HasPrefix(f.File, "https://") ||
-		strings.HasPrefix(f.File, "http://") {
-		data, err = ReadFromURL(f.File)
-
-		if err != nil {
-			return false, err
-		}
-
-	} else if strings.HasPrefix(f.File, "file://") {
-		f.File = strings.TrimPrefix(f.File, "file://")
-
-		data, err = ReadFromFile(filepath.Join(workingDir, f.File))
-
-		if err != nil {
-			return false, err
-		}
-	} else {
-		data, err = ReadFromFile(filepath.Join(workingDir, f.File))
-
-		if err != nil {
-			return false, err
-		}
-
+	data, err := Read(f.File, scm.GetDirectory())
+	if err != nil {
+		return false, err
 	}
 
 	if strings.Compare(f.Content, string(data)) == 0 {
