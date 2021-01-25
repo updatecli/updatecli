@@ -65,18 +65,18 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "olblak/test",
-			Tag:   "updatecli",
+			Image: "jenkins/jenkins",
+			Tag:   "doNotExist",
 		},
 		expectedDigest: "",
 	},
 	{
 		docker: Docker{
-			Image: "olblak/test",
-			Tag:   "updatecli",
+			Image: "jenkins/jenkins",
+			Tag:   "2.275",
 			Token: os.Getenv("DOCKERHUB_TOKEN"),
 		},
-		expectedDigest: "ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6",
+		expectedDigest: "e4630b9084110ad05b4b51f5131d62161881216d60433d1f2074d522c3dcd6dc",
 	},
 }
 
