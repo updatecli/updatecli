@@ -117,9 +117,14 @@ func (d *Docker) Digest() (string, error) {
 		return "", err
 	}
 
+	type images struct {
+		Architecture string
+		Digest       string
+	}
+
 	type response struct {
-		ID     string
-		Images []map[string]string
+		ID     int
+		Images []images
 	}
 
 	data := response{}
@@ -130,8 +135,8 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	for _, image := range data.Images {
-		if image["architecture"] == architecture {
-			digest := strings.TrimPrefix(image["digest"], "sha256:")
+		if image.Architecture == architecture {
+			digest := strings.TrimPrefix(image.Digest, "sha256:")
 			return digest, nil
 		}
 	}
