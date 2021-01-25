@@ -47,7 +47,7 @@ func (d *Docker) Digest() (string, error) {
 		LastModified   string `json:"last_modified"`
 		Name           string `json:"name"`
 		ManifestDigest string `json:"manifest_digest"`
-		Size           string `json:"size"`
+		Size           int    `json:"size"`
 	}
 
 	type response struct {
