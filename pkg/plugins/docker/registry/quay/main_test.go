@@ -7,7 +7,6 @@ import (
 
 type DataSet struct {
 	docker         Docker
-	digest         string
 	expectedDigest string
 }
 

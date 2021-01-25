@@ -22,7 +22,6 @@ func (d *Docker) Digest() (string, error) {
 	URL := fmt.Sprintf("https://quay.io/api/v1/repository/%s", d.Image)
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +31,6 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return "", err
 	}
@@ -40,7 +38,6 @@ func (d *Docker) Digest() (string, error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
 		return "", err
 	}
@@ -62,7 +59,10 @@ func (d *Docker) Digest() (string, error) {
 
 	data := response{}
 
-	json.Unmarshal(body, &data)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return "", err
+	}
 
 	if tag, ok := data.Tags[d.Tag]; ok {
 		digest := strings.TrimLeft(tag.ManifestDigest, "sha256:")

@@ -19,7 +19,7 @@ func Marshal(data *parser.Result, document *string) (err error) {
 	for _, node := range data.AST.Children {
 
 		instruction := strings.ToUpper(node.Value)
-		tab := fmt.Sprintf("%s", strings.Repeat(" ", len(node.Value)+1))
+		tab := strings.Repeat(" ", len(node.Value)+1)
 
 		switch instruction {
 		case "FROM":
@@ -74,7 +74,7 @@ func Marshal(data *parser.Result, document *string) (err error) {
 		if len(arguments) > 0 {
 			tmp = append(tmp, fmt.Sprintf("%s %s", instruction, arguments))
 		} else {
-			tmp = append(tmp, fmt.Sprintf("%s", instruction))
+			tmp = append(tmp, instruction)
 		}
 
 	}
@@ -162,7 +162,7 @@ func KeyValueForm(node *parser.Node, tab string) (arguments string) {
 func ShellForm(node *parser.Node) (arguments string) {
 	separator := ""
 	for n := node.Next; n != nil; n = n.Next {
-		replacer := fmt.Sprintf("&& \\\n")
+		replacer := "&& \\\n"
 		raw := strings.ReplaceAll(n.Value, "&& ", replacer)
 		arguments = fmt.Sprintf("%s%s%s", arguments, separator, raw)
 		separator = " "

@@ -19,7 +19,6 @@ type Template struct {
 
 // Unmarshal parse golang templates then return its config struct
 func (t *Template) Unmarshal(config *Config) error {
-
 	funcMap := template.FuncMap{
 		// Retrieve value from environment variable, return error if not found
 		"requiredEnv": func(env string) (string, error) {
@@ -58,7 +57,10 @@ func (t *Template) Unmarshal(config *Config) error {
 		return err
 	}
 
-	yaml.Unmarshal(content, &t.Values)
+	err = yaml.Unmarshal(content, &t.Values)
+	if err != nil {
+		return err
+	}
 
 	content, err = ioutil.ReadAll(c)
 	if err != nil {
@@ -67,10 +69,6 @@ func (t *Template) Unmarshal(config *Config) error {
 
 	tmpl := template.Must(template.New("cfg").Funcs(funcMap).Parse(string(content)))
 
-	if err != nil {
-		return err
-	}
-
 	b := bytes.Buffer{}
 
 	if err := tmpl.Execute(&b, t.Values); err != nil {
@@ -78,7 +76,6 @@ func (t *Template) Unmarshal(config *Config) error {
 	}
 
 	err = yaml.Unmarshal(b.Bytes(), &config)
-
 	if err != nil {
 		return err
 	}
