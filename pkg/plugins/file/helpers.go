@@ -10,10 +10,10 @@ import (
 	"strings"
 )
 
-// ReadFromURL read a file form a http/https url then return its data as an array of byte
+// ReadFromURL read a file form a http/https url then return its data as an array of byte.
 func ReadFromURL(file string) (data []byte, err error) {
-
 	if IsURL(file) {
+		// #nosec G107
 		resp, err := http.Get(file)
 		if err != nil {
 			return nil, err
@@ -28,9 +28,8 @@ func ReadFromURL(file string) (data []byte, err error) {
 	return data, nil
 }
 
-// ReadFromFile read a file then return its data as an array of byte
+// ReadFromFile read a file then return its data as an array of byte.
 func ReadFromFile(file string) (data []byte, err error) {
-
 	// If path is not absolute then we specify it to the current directory
 	if !filepath.IsAbs(file) {
 		wd, err := os.Getwd()
@@ -38,7 +37,6 @@ func ReadFromFile(file string) (data []byte, err error) {
 			return nil, err
 		}
 		file = filepath.Join(wd, file)
-
 	}
 
 	f, err := os.Open(file)

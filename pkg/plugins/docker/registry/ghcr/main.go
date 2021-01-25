@@ -19,11 +19,9 @@ type Docker struct {
 
 // Digest retrieve docker image tag digest from a registry
 func (d *Docker) Digest() (string, error) {
-
 	URL := fmt.Sprintf("https://ghcr.io/v2/%s/manifests/%s", d.Image, d.Tag)
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
 		return "", err
 	}
@@ -33,7 +31,6 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return "", err
 	}
@@ -41,7 +38,6 @@ func (d *Docker) Digest() (string, error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
 		return "", err
 	}
@@ -60,7 +56,10 @@ func (d *Docker) Digest() (string, error) {
 
 	data := response{}
 
-	json.Unmarshal(body, &data)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return "", err
+	}
 
 	if len(data.Errors) > 0 {
 		e := fmt.Errorf("%s:%s", d.Image, d.Tag)

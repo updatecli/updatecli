@@ -2,8 +2,6 @@ package target
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -126,15 +124,16 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		}
 
 		err = s.Init(source, t.Name)
-
 		if err != nil {
 			return false, err
 		}
 
-		s.Checkout()
+		err = s.Checkout()
+		if err != nil {
+			return false, err
+		}
 
 		changed, files, message, err = spec.TargetFromSCM(t.Prefix+source+t.Postfix, s, o.DryRun)
-
 		if err != nil {
 			return changed, err
 		}
@@ -148,7 +147,6 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 
 				if o.Commit {
 					err := s.Add(files)
-
 					if err != nil {
 						return changed, err
 					}
@@ -157,7 +155,6 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 					if err != nil {
 						return changed, err
 					}
-
 				}
 				if o.Push {
 					err := s.Push()
@@ -171,7 +168,6 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 	} else if len(t.Scm) == 0 {
 
 		changed, err = spec.Target(t.Prefix+source+t.Postfix, o.DryRun)
-
 		if err != nil {
 			return changed, err
 		}
@@ -179,31 +175,4 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 	}
 
 	return changed, nil
-}
-
-func isFileExist(file string) (dir string, base string, err error) {
-	if _, err := os.Stat(file); err != nil {
-		return "", "", err
-	}
-
-	absolutePath, err := filepath.Abs(file)
-	if err != nil {
-		return "", "", err
-	}
-	dir = filepath.Dir(absolutePath)
-	base = filepath.Base(absolutePath)
-
-	return dir, base, err
-}
-
-func isDirectory(path string) (bool, error) {
-
-	info, err := os.Stat(path)
-	if err != nil {
-		return false, err
-	}
-	if info.IsDir() {
-		return true, nil
-	}
-	return false, nil
 }

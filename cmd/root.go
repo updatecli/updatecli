@@ -59,7 +59,11 @@ func run(command string) {
 	switch command {
 	case "apply":
 		if applyClean {
-			defer e.Clean()
+			defer func() {
+				if err := e.Clean(); err != nil {
+					fmt.Errorf("error in apply clean - %s", err)
+				}
+			}()
 		}
 		err = e.Run()
 		if err != nil {
@@ -67,7 +71,11 @@ func run(command string) {
 		}
 	case "diff":
 		if diffClean {
-			defer e.Clean()
+			defer func() {
+				if err := e.Clean(); err != nil {
+					fmt.Errorf("error in diff clean - %s", err)
+				}
+			}()
 		}
 		err = e.Run()
 		if err != nil {
@@ -75,7 +83,11 @@ func run(command string) {
 		}
 	case "prepare":
 		if prepareClean {
-			defer e.Clean()
+			defer func() {
+				if err := e.Clean(); err != nil {
+					fmt.Errorf("error in prepare clean - %s", err)
+				}
+			}()
 		}
 	case "show":
 		err := e.Show()

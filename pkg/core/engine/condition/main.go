@@ -31,7 +31,6 @@ type Spec interface {
 
 // Run tests if a specific condition is true
 func (c *Condition) Run(source string) (ok bool, err error) {
-
 	ok = true
 
 	spec, err := Unmarshal(c)
@@ -42,29 +41,27 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 	// If scm is defined then clone the repository
 	if len(c.Scm) > 0 {
 		s, err := scm.Unmarshal(c.Scm)
-
 		if err != nil {
 			return false, err
 		}
 
 		err = s.Init(source, c.Name)
+		if err != nil {
+			return false, err
+		}
 
-		s.Checkout()
-
+		err = s.Checkout()
 		if err != nil {
 			return false, err
 		}
 
 		ok, err = spec.ConditionFromSCM(source, s)
-
 		if err != nil {
 			return false, err
 		}
 
 	} else if len(c.Scm) == 0 {
-
 		ok, err = spec.Condition(source)
-
 		if err != nil {
 			return false, err
 		}
@@ -85,7 +82,6 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		d := docker.Docker{}
 
 		err := mapstructure.Decode(condition.Spec, &d)
-
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +92,6 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		d := dockerfile.Dockerfile{}
 
 		err := mapstructure.Decode(condition.Spec, &d)
-
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +102,6 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		f := file.File{}
 
 		err := mapstructure.Decode(condition.Spec, &f)
-
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +112,6 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		m := maven.Maven{}
 
 		err := mapstructure.Decode(condition.Spec, &m)
-
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +122,6 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		ch := chart.Chart{}
 
 		err := mapstructure.Decode(condition.Spec, &ch)
-
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +132,6 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		y := yaml.Yaml{}
 
 		err := mapstructure.Decode(condition.Spec, &y)
-
 		if err != nil {
 			return nil, err
 		}
@@ -151,5 +142,4 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		return nil, fmt.Errorf("Don't support condition: %v", condition.Kind)
 	}
 	return spec, nil
-
 }

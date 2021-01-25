@@ -34,24 +34,20 @@ func Unmarshal(scm map[string]interface{}) (Scm, error) {
 			var g github.Github
 
 			err := mapstructure.Decode(value, &g)
-
 			if err != nil {
 				return nil, err
 			}
 
 			s = &g
-
 		case "git":
 			g := git.Git{}
 
 			err := mapstructure.Decode(value, &g)
-
 			if err != nil {
 				return nil, err
 			}
 
 			s = &g
-
 		default:
 			return nil, fmt.Errorf("wrong scm type provided, accepted values [git,github]")
 
