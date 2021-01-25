@@ -26,7 +26,7 @@ func (d *Docker) Digest() (string, error) {
 
 	type response struct {
 		MediaType     string
-		SchemaVersion string
+		SchemaVersion int
 		Errors        []error
 	}
 
