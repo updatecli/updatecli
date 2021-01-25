@@ -18,7 +18,6 @@ var (
 
 // Show displays various version information
 func Show() {
-
 	strings.ReplaceAll(GoVersion, "go version go", "Golang     :")
 	fmt.Printf("\n")
 	fmt.Printf("Application:\t%s\n", Version)

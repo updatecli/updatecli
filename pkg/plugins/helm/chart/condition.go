@@ -10,7 +10,6 @@ import (
 
 // Condition check if a specific chart version exist
 func (c *Chart) Condition(source string) (bool, error) {
-
 	if c.Version != "" {
 		fmt.Printf("Version %v, already defined from configuration file\n", c.Version)
 	} else {
@@ -19,13 +18,11 @@ func (c *Chart) Condition(source string) (bool, error) {
 	URL := fmt.Sprintf("%s/index.yaml", c.URL)
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
 		return false, err
 	}
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return false, err
 	}
@@ -33,13 +30,11 @@ func (c *Chart) Condition(source string) (bool, error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
 		return false, err
 	}
 
 	index, err := loadIndex(body)
-
 	if err != nil {
 		return false, err
 	}
@@ -56,7 +51,6 @@ func (c *Chart) Condition(source string) (bool, error) {
 
 	fmt.Printf("\u2717 Helm Chart '%s' isn't available on %s%s\n", c.Name, c.URL, message)
 	return false, nil
-
 }
 
 // ConditionFromSCM returns an error because it's not supported

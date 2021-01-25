@@ -19,8 +19,6 @@ import (
 	"strings"
 )
 
-var engine Engine
-
 // Engine defined parameters for a specific engine run
 type Engine struct {
 	configurations []config.Config
@@ -30,13 +28,12 @@ type Engine struct {
 
 // Clean remove every traces from an updatecli run
 func (e *Engine) Clean() (err error) {
-	tmp.Clean()
-	return err
+	err = tmp.Clean()
+	return
 }
 
 // GetFiles return an array with every valid files
 func GetFiles(root string) (files []string) {
-
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Printf("\n\u26A0 File %s: %s\n", path, err)
@@ -126,7 +123,10 @@ func Clone(
 		go func(s scm.Scm) {
 			channel <- 1
 			defer wg.Done()
-			s.Clone()
+			_, err := s.Clone()
+			if err != nil {
+				fmt.Println(err)
+			}
 		}(s)
 		<-channel
 
@@ -186,7 +186,6 @@ func (e *Engine) ReadConfigurations() error {
 
 // Run run the full process one yaml file
 func (e *Engine) Run() (err error) {
-
 	fmt.Printf("\n\n%s\n", strings.Repeat("+", len("Run")+4))
 	fmt.Printf("+ %s +\n", strings.ToTitle("Run"))
 	fmt.Printf("%s\n\n", strings.Repeat("+", len("Run")+4))
@@ -250,7 +249,8 @@ func (e *Engine) Run() (err error) {
 		report.Source.Result = result.SUCCESS
 
 		if len(conf.Conditions) > 0 {
-			ok, err := RunConditions(&conf)
+			c := conf
+			ok, err := RunConditions(&c)
 
 			i := 0
 			if err != nil || !ok {
@@ -268,7 +268,8 @@ func (e *Engine) Run() (err error) {
 		}
 
 		if len(conf.Targets) > 0 {
-			changed, err := RunTargets(&conf, &e.Options.Target, &report)
+			c := conf
+			changed, err := RunTargets(&c, &e.Options.Target, &report)
 			if err != nil {
 				fmt.Printf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
@@ -293,8 +294,15 @@ func (e *Engine) Run() (err error) {
 		e.Reports = append(e.Reports, report)
 	}
 
-	e.Reports.Show()
-	e.Reports.Summary()
+	err = e.Reports.Show()
+	if err != nil {
+		return err
+	}
+	err = e.Reports.Summary()
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("\n")
 
 	return err
@@ -302,7 +310,6 @@ func (e *Engine) Run() (err error) {
 
 // RunConditions run every conditions for a given configuration config
 func RunConditions(conf *config.Config) (bool, error) {
-
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
@@ -368,10 +375,6 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 			g.PullRequestDescription.Description = t.Changelog
 			g.PullRequestDescription.Report = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
 
-			if err != nil {
-				fmt.Println(err)
-			}
-
 			t.Scm["github"] = g
 
 		}
@@ -403,7 +406,7 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 			t.Result = result.SUCCESS
 		} else {
 			t.Result = result.FAILURE
-			err = fmt.Errorf("Unplanned target result")
+			err = fmt.Errorf("unplanned target result")
 			fmt.Println(err)
 		}
 
@@ -414,7 +417,6 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 
 // Show displays configurations that should be apply
 func (e *Engine) Show() error {
-
 	for _, conf := range e.configurations {
 
 		fmt.Printf("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))

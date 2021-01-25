@@ -79,7 +79,6 @@ func (d *Dockerfile) Target(source string, dryRun bool) (changed bool, err error
 		writer := bufio.NewWriter(newFile)
 
 		for _, line := range strings.Split(document, "\n") {
-			//fmt.Println(newFile, line)
 			_, err := writer.WriteString(line + "\n")
 			if err != nil {
 				log.Fatalf("Got error while writing to a file. Err: %s", err.Error())
