@@ -3,6 +3,7 @@ package yaml
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
@@ -139,8 +140,12 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	if !dryRun {
 
-		newFile, err := os.Create(y.File)
+		newFile, err := os.Create(filepath.Join(scm.GetDirectory(), y.File))
 		defer newFile.Close()
+
+		if err != nil {
+			return changed, files, message, nil
+		}
 
 		encoder := yaml.NewEncoder(newFile)
 		defer encoder.Close()
@@ -148,7 +153,7 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 		err = encoder.Encode(&out)
 
 		if err != nil {
-			return changed, files, message, fmt.Errorf("something went wrong while encoding %v", err)
+			return changed, files, message, err
 		}
 	}
 

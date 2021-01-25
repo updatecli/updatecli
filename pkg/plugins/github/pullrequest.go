@@ -19,8 +19,8 @@ const PULLREQUESTBODY string = `
 
 ## Remark
 
-This pull request was automatically created using [olblak/updatecli](https://github.com/olblak/updatecli).
-Please report any issues with this tool [here](https://github.com/olblak/updatecli/issues/new)
+This pull request was automatically created using [Updatecli](https://www.updatecli.io).
+Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/new)
 `
 
 // PullRequest contains multiple fields mapped to Github V4 api

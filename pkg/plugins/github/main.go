@@ -101,8 +101,8 @@ func (g *Github) OpenPullRequest() error {
 	client := g.NewClient()
 
 	var mutation struct {
-		createPullRequest struct {
-			pullRequest PullRequest
+		CreatePullRequest struct {
+			PullRequest PullRequest
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
@@ -192,7 +192,6 @@ func (g *Github) isPRExist() (bool, string, error) {
 	err := client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		fmt.Println(err)
 		return false, "", err
 	}
 
