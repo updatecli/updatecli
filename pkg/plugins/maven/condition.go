@@ -12,7 +12,6 @@ import (
 
 // Condition tests if a specific version exist on the maven repository
 func (m *Maven) Condition(source string) (bool, error) {
-
 	if m.Version != "" {
 		fmt.Printf("Version %v, already defined from configuration file\n", m.Version)
 	} else {
@@ -25,13 +24,11 @@ func (m *Maven) Condition(source string) (bool, error) {
 		m.ArtifactID)
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
 		return false, err
 	}
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return false, err
 	}
@@ -39,14 +36,16 @@ func (m *Maven) Condition(source string) (bool, error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
 		return false, err
 	}
 
 	data := Metadata{}
 
-	xml.Unmarshal(body, &data)
+	err = xml.Unmarshal(body, &data)
+	if err != nil {
+		return false, err
+	}
 
 	for _, version := range data.Versioning.Versions.Version {
 		if version == m.Version {

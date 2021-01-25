@@ -42,13 +42,6 @@ func (g *Github) Changelog(name string) (string, error) {
 
 	client := g.NewClient()
 
-	type release struct {
-		Name    string
-		TagName string
-		Url     string
-		Body    string
-	}
-
 	var query struct {
 		Repository struct {
 			Release struct {

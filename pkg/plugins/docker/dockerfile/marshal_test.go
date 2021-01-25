@@ -19,7 +19,7 @@ type MarshalDataSet struct {
 type MarshalDataSets []MarshalDataSet
 
 var (
-	expectedRawDockerfile string = `FROM ubuntu:20.04
+	expectedRawDockerfile = `FROM ubuntu:20.04
 
 LABEL version="0.1"
 
@@ -46,9 +46,7 @@ RUN echo true && \
 	echo false && \
 	echo true
 `
-	expectedInstructionFrom = "FROM golang:1.15 as builder\n"
-
-	marshalData MarshalDataSets = MarshalDataSets{
+	marshalData = MarshalDataSets{
 		{
 			dockerfile:         "#Comment\nFROM golang:1.15 as builder\n",
 			expectedResult:     true,
@@ -288,7 +286,5 @@ func TestMarshal(t *testing.T) {
 					strings.Repeat("=", 10))
 			}
 		}
-
 	}
-
 }

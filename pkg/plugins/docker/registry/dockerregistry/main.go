@@ -18,7 +18,6 @@ type Docker struct {
 
 // Digest retrieve docker image tag digest from a registry
 func (d *Docker) Digest() (string, error) {
-
 	type error struct {
 		Code    string
 		Message string
@@ -37,7 +36,6 @@ func (d *Docker) Digest() (string, error) {
 		d.Tag)
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
 		return "", err
 	}
@@ -49,7 +47,6 @@ func (d *Docker) Digest() (string, error) {
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return "", err
 	}
@@ -57,14 +54,16 @@ func (d *Docker) Digest() (string, error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
 		return "", err
 	}
 
 	data := response{}
 
-	json.Unmarshal(body, &data)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return "", err
+	}
 
 	if len(data.Errors) > 0 {
 		e := fmt.Errorf("%s:%s", d.Image, d.Tag)
@@ -86,5 +85,4 @@ func (d *Docker) Digest() (string, error) {
 	digest = strings.TrimPrefix(digest, "sha256:")
 
 	return digest, nil
-
 }

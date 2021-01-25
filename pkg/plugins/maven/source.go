@@ -10,7 +10,6 @@ import (
 
 // Source return the latest version
 func (m *Maven) Source(workingDir string) (string, error) {
-
 	URL := fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
 		m.URL,
 		m.Repository,
@@ -18,13 +17,11 @@ func (m *Maven) Source(workingDir string) (string, error) {
 		m.ArtifactID)
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
 		return "", err
 	}
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return "", err
 	}
@@ -32,14 +29,16 @@ func (m *Maven) Source(workingDir string) (string, error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
 		return "", err
 	}
 
 	data := Metadata{}
 
-	xml.Unmarshal(body, &data)
+	err = xml.Unmarshal(body, &data)
+	if err != nil {
+		return "", err
+	}
 
 	if data.Versioning.Latest != "" {
 		fmt.Printf("\u2714 Latest version is %s on Maven Repository\n", data.Versioning.Latest)

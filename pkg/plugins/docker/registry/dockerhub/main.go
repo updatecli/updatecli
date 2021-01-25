@@ -20,7 +20,6 @@ type Docker struct {
 
 // Login authenticate with Dockerhub then return a valid bearer token
 func (d *Docker) Login() (string, error) {
-
 	decoded, err := base64.StdEncoding.DecodeString(d.Token)
 	if err != nil {
 		return "", err
@@ -33,10 +32,9 @@ func (d *Docker) Login() (string, error) {
 
 	authentication := fmt.Sprintf("{\"username\": \"%s\", \"password\": \"%s\"}", username, password)
 
-	URL := fmt.Sprintf("https://hub.docker.com/v2/users/login/")
+	URL := "https://hub.docker.com/v2/users/login/"
 
 	req, err := http.NewRequest("POST", URL, bytes.NewBuffer([]byte(authentication)))
-
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +42,6 @@ func (d *Docker) Login() (string, error) {
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +49,6 @@ func (d *Docker) Login() (string, error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
 		return "", err
 	}
@@ -69,15 +65,16 @@ func (d *Docker) Login() (string, error) {
 
 	data := response{}
 
-	json.Unmarshal(body, &data)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return "", err
+	}
 
 	return data.Token, nil
-
 }
 
 // Digest retrieve docker image tag digest from Dockerhub
 func (d *Docker) Digest() (string, error) {
-
 	URL := fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags/%s/",
 		d.Image,
 		d.Tag)
@@ -89,7 +86,6 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +93,6 @@ func (d *Docker) Digest() (string, error) {
 	if len(d.Token) > 0 {
 
 		token, err := d.Login()
-
 		if err != nil {
 			return "", err
 		}
@@ -106,7 +101,6 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return "", err
 	}
@@ -130,7 +124,10 @@ func (d *Docker) Digest() (string, error) {
 
 	data := response{}
 
-	json.Unmarshal(body, &data)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return "", err
+	}
 
 	for _, image := range data.Images {
 		if image["architecture"] == architecture {
@@ -140,5 +137,4 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	return "", nil
-
 }

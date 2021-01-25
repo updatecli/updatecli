@@ -8,7 +8,6 @@ import (
 
 type DataSet struct {
 	docker            Docker
-	digest            string
 	expectedHostname  string
 	expectedImage     string
 	expectedDigest    string
@@ -132,10 +131,9 @@ func TestCheck(t *testing.T) {
 	// Test if image is not defined
 	d := &Docker{}
 
-	expected := false
 	got, _ := d.Check()
 	if got != false {
-		t.Errorf("Image is not configured! expected %v, got %v", expected, got)
+		t.Errorf("Image is not configured! expected %v, got %v", false, got)
 	}
 }
 

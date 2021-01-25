@@ -9,9 +9,7 @@ import (
 
 // Add run `git add`.
 func (g *Git) Add(files []string) error {
-
 	err := git.Add(files, g.GetDirectory())
-
 	if err != nil {
 		return err
 	}
@@ -57,14 +55,17 @@ func (g *Git) Clone() (string, error) {
 		return "", err
 	}
 
-	g.Checkout()
+	err = g.Checkout()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 
 	return g.Directory, nil
 }
 
 // Commit run `git commit`.
 func (g *Git) Commit(message string) error {
-
 	err := git.Commit(
 		g.User,
 		g.Email,
@@ -87,7 +88,6 @@ func (g *Git) Init(source string, name string) error {
 
 // Push run `git push`.
 func (g *Git) Push() error {
-
 	err := git.Push(
 		g.Username,
 		g.Password,
