@@ -101,8 +101,8 @@ func (g *Github) OpenPullRequest() error {
 	client := g.NewClient()
 
 	var mutation struct {
-		createPullRequest struct {
-			pullRequest PullRequest
+		CreatePullRequest struct {
+			PullRequest PullRequest
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
