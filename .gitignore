@@ -19,3 +19,4 @@ bin/
 *.code-workspace
 
 *.env
+.idea

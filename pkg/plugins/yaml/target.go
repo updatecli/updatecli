@@ -66,6 +66,10 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 	if !dryRun {
 
 		newFile, err := os.Create(y.File)
+		if err != nil {
+			return changed, fmt.Errorf("unable to write to file %s: %v", y.File, err)
+		}
+
 		defer newFile.Close()
 
 		encoder := yaml.NewEncoder(newFile)
