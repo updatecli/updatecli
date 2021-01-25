@@ -23,7 +23,7 @@ jobs:
         id: prep
         run: |
           DOCKER_IMAGE=olblak/updatecli
-          REGISTRY_GITHUB_IMAGE=ghcr.io/olblak/updatecli
+          REGISTRY_GITHUB_IMAGE=ghcr.io/updatecli/updatecli
           VERSION=noop
           if [ "${{ github.event_name }}" = "schedule" ]; then
             VERSION=nightly
