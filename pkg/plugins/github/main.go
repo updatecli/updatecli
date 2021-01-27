@@ -52,7 +52,7 @@ func (g *Github) Check() (bool, error) {
 	}
 
 	if len(required) > 0 {
-		err := fmt.Errorf("\u2717 Github parameter(s) required: [%v]", strings.Join(required, ","))
+		err := fmt.Errorf("github parameter(s) required: [%v]", strings.Join(required, ","))
 		return false, err
 	}
 
