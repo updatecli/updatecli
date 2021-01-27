@@ -9,6 +9,7 @@ import (
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/file"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
+	"github.com/olblak/updateCli/pkg/plugins/jenkins"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
 )
@@ -107,6 +108,16 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		}
 
 		spec = &f
+
+	case "jenkins":
+		j := jenkins.Jenkins{}
+
+		err := mapstructure.Decode(condition.Spec, &j)
+		if err != nil {
+			return nil, err
+		}
+
+		spec = &j
 
 	case "maven":
 		m := maven.Maven{}
