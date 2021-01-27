@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -26,9 +27,11 @@ var (
 			e.Options.Target.Clean = applyClean
 			e.Options.Target.DryRun = false
 
-			run(
-				"apply",
-			)
+			err := run("apply")
+			if err != nil {
+				fmt.Errorf("command failed: %s", err)
+				os.Exit(1)
+			}
 		},
 	}
 )

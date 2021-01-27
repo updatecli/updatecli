@@ -97,6 +97,9 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		remoteRef, err := r.Reference(
 			plumbing.ReferenceName(
 				remoteBranchRef), true)
+		if err != nil {
+			return err
+		}
 
 		err = w.Reset(&git.ResetOptions{
 			Commit: remoteRef.Hash(),
