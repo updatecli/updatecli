@@ -65,10 +65,20 @@ func (g *Github) Changelog(name string) (string, error) {
 		return "", err
 	}
 
-	changelog := fmt.Sprintf("\nRelease published on the %v at the url %v\n%v\n",
-		query.Repository.Release.PublishedAt.String(),
-		query.Repository.Release.Url,
-		query.Repository.Release.Description)
+	changelog := ""
+
+	if len(query.Repository.Release.Url) == 0 {
+		changelog = fmt.Sprintf("No Github Release found for %s on https://github.com/%s/%s",
+			name,
+			g.Owner,
+			g.Repository)
+	} else {
+		changelog = fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v\n",
+			query.Repository.Release.PublishedAt.String(),
+			query.Repository.Release.Url,
+			query.Repository.Release.Description)
+
+	}
 
 	return changelog, nil
 }
