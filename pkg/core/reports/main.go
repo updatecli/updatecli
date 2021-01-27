@@ -2,6 +2,7 @@ package reports
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"text/template"
 
@@ -62,7 +63,7 @@ func (r *Reports) Show() error {
 }
 
 // Summary display a summary of
-func (r *Reports) Summary() error {
+func (r *Reports) Summary() (int, int, int, error) {
 	counter := 0
 	successCounter := 0
 	changedCounter := 0
@@ -90,5 +91,9 @@ func (r *Reports) Summary() error {
 	fmt.Printf("%d job failed\n", failedCounter)
 	fmt.Printf("%d job applied changes\n", changedCounter)
 
-	return nil
+	if failedCounter > 0 {
+		return successCounter, changedCounter, failedCounter, errors.New("a job has failed")
+	}
+
+	return successCounter, changedCounter, failedCounter, nil
 }
