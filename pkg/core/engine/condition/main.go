@@ -16,11 +16,13 @@ import (
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
-	Name   string
-	Kind   string
-	Spec   interface{}
-	Scm    map[string]interface{}
-	Result string `yaml:"-"` // Ignore this field when unmarshal YAML
+	Name    string
+	Kind    string
+	Prefix  string
+	Postfix string
+	Spec    interface{}
+	Scm     map[string]interface{}
+	Result  string `yaml:"-"` // Ignore this field when unmarshal YAML
 }
 
 // Spec is an interface that test if condition is met
@@ -45,7 +47,7 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 			return false, err
 		}
 
-		err = s.Init(source, c.Name)
+		err = s.Init(c.Prefix+source+c.Postfix, c.Name)
 		if err != nil {
 			return false, err
 		}
@@ -55,13 +57,13 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 			return false, err
 		}
 
-		ok, err = spec.ConditionFromSCM(source, s)
+		ok, err = spec.ConditionFromSCM(c.Prefix+source+c.Postfix, s)
 		if err != nil {
 			return false, err
 		}
 
 	} else if len(c.Scm) == 0 {
-		ok, err = spec.Condition(source)
+		ok, err = spec.Condition(c.Prefix + source + c.Postfix)
 		if err != nil {
 			return false, err
 		}
