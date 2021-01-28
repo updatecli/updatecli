@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/olblak/updateCli/pkg/core/log"
+	"github.com/sirupsen/logrus"
 	"os"
 
 	"github.com/olblak/updateCli/pkg/core/engine"
@@ -13,10 +14,10 @@ import (
 var (
 	cfgFile    string
 	valuesFile string
-
 	e engine.Engine
+    verbose bool
 
-	rootCmd = &cobra.Command{
+rootCmd = &cobra.Command{
 		Use:   "updateCli",
 		Short: "Updatecli is a tool used to define and apply file update strategies. ",
 		Long: `
@@ -32,13 +33,21 @@ It reads a yaml or a go template configuration file, then works into three stage
 
 // Execute executes the root command.
 func Execute() {
+	logrus.SetFormatter(log.NewTextFormat())
+
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Printf("\n\u26A0 %s \n", err)
+		logrus.Errorf("\u26A0 %s", err)
 		os.Exit(1)
 	}
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "debug", "", false, "Debug Output")
+	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		if verbose {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
+	}
 	rootCmd.AddCommand(
 		applyCmd,
 		diffCmd,
@@ -54,59 +63,59 @@ func run(command string) error {
 	case "apply":
 		err := e.Prepare()
 		if err != nil {
-			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 		if applyClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
-					fmt.Errorf("error in apply clean - %s", err)
+					logrus.Errorf("error in apply clean - %s", err)
 				}
 			}()
 		}
 
 		err = e.Run()
 		if err != nil {
-			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	case "diff":
 		err := e.Prepare()
 		if err != nil {
-			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
-					fmt.Errorf("error in diff clean - %s", err)
+					logrus.Errorf("error in diff clean - %s", err)
 				}
 			}()
 		}
 
 		err = e.Run()
 		if err != nil {
-			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	case "prepare":
 		if prepareClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
-					fmt.Errorf("error in prepare clean - %s", err)
+					logrus.Errorf("error in prepare clean - %s", err)
 				}
 			}()
 		}
 	case "show":
 		err := e.Show()
 		if err != nil {
-			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	default:
-		fmt.Println("Wrong command")
+		logrus.Warnf("Wrong command")
 	}
 	return nil
 }

@@ -2,7 +2,7 @@ package dockerfile
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 	"testing"
 
@@ -274,7 +274,7 @@ func TestMarshal(t *testing.T) {
 
 			err = Marshal(d, &gotDockerfile)
 			if err != nil {
-				fmt.Println(err)
+				logrus.Errorf("err - %s", err)
 			}
 
 			if (gotDockerfile != data.expectedDockerfile) == data.expectedResult {

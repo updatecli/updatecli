@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"strings"
@@ -60,7 +61,7 @@ func (d *Docker) isDockerHub() bool {
 	hostname, _, err := parseImage(d.Image)
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	if hostname == "hub.docker.com" || hostname == "docker.io" {
@@ -74,7 +75,7 @@ func (d *Docker) isGHCR() bool {
 	hostname, _, err := parseImage(d.Image)
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	if hostname == "ghcr.io" {
