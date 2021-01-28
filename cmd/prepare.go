@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -21,9 +22,11 @@ var (
 
 			e.Options.Target.Clean = prepareClean
 
-			run(
-				"prepare",
-			)
+			err := run("prepare")
+			if err != nil {
+				fmt.Errorf("command failed: %s", err)
+				os.Exit(1)
+			}
 		},
 	}
 )

@@ -253,16 +253,17 @@ func (e *Engine) Run() (err error) {
 			ok, err := RunConditions(&c)
 
 			i := 0
-			if err != nil || !ok {
-				fmt.Printf("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, report)
-				continue
-			}
 
 			for _, c := range conf.Conditions {
 				conditionsStageReport[i].Result = c.Result
 				report.Conditions[i].Result = c.Result
 				i++
+			}
+
+			if err != nil || !ok {
+				fmt.Printf("%s %v\n", result.FAILURE, err)
+				e.Reports = append(e.Reports, report)
+				continue
 			}
 
 		}
@@ -298,7 +299,7 @@ func (e *Engine) Run() (err error) {
 	if err != nil {
 		return err
 	}
-	err = e.Reports.Summary()
+	_, _, _, err = e.Reports.Summary()
 	if err != nil {
 		return err
 	}
@@ -308,39 +309,35 @@ func (e *Engine) Run() (err error) {
 	return err
 }
 
-// RunConditions run every conditions for a given configuration config
+// RunConditions run every conditions for a given configuration config.
 func RunConditions(conf *config.Config) (bool, error) {
 	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
 	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
 	for k, c := range conf.Conditions {
-
 		c.Result = result.FAILURE
 
 		conf.Conditions[k] = c
-		ok, err := c.Run(
-			conf.Source.Prefix + conf.Source.Output + conf.Source.Postfix)
+		ok, err := c.Run(conf.Source.Prefix + conf.Source.Output + conf.Source.Postfix)
 		if err != nil {
 			return false, err
 		}
 
 		if !ok {
-
 			c.Result = result.FAILURE
 			conf.Conditions[k] = c
 			fmt.Printf("\n%s skipping: condition not met\n", result.FAILURE)
-			ok = false
 			return false, nil
 		}
-		c.Result = result.SUCCESS
 
+		c.Result = result.SUCCESS
 		conf.Conditions[k] = c
 	}
 
 	return true, nil
 }
 
-// RunTargets iterate on every targets then call target on each of them
+// RunTargets iterate on every targets then call target on each of them.
 func RunTargets(config *config.Config, options *target.Options, report *reports.Report) (targetsChanged bool, err error) {
 	targetsChanged = false
 
@@ -392,22 +389,14 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 		if err != nil {
 			fmt.Printf("Something went wrong in target \"%v\" :\n", id)
 			fmt.Printf("%v\n\n", err)
-		}
-
-		if err != nil {
 			fmt.Println(err)
 			t.Result = result.FAILURE
-
-		} else if targetChanged && err == nil {
+			return targetChanged, err
+		} else if targetChanged {
 			t.Result = result.CHANGED
 			targetsChanged = true
-
-		} else if !targetChanged && err == nil {
-			t.Result = result.SUCCESS
 		} else {
-			t.Result = result.FAILURE
-			err = fmt.Errorf("unplanned target result")
-			fmt.Println(err)
+			t.Result = result.SUCCESS
 		}
 
 		config.Targets[id] = t

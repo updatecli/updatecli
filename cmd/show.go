@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -17,7 +18,11 @@ var (
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile
 
-			run("show")
+			err := run("show")
+			if err != nil {
+				fmt.Errorf("command failed: %s", err)
+				os.Exit(1)
+			}
 		},
 	}
 )
