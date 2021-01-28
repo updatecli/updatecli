@@ -1,6 +1,6 @@
 = Updatecli
 
-link:https://github.com/olblak/updatecli/blob/master/LICENSE[image:https://img.shields.io/github/license/olblak/updatecli[GitHub]]
+link:https://github.com/olblak/updatecli/blob/main/LICENSE[image:https://img.shields.io/github/license/olblak/updatecli[GitHub]]
 link:https://goreportcard.com/report/github.com/olblak/updatecli[image:https://goreportcard.com/badge/github.com/olblak/updatecli[Go Report Card]]
 link:https://hub.docker.com/r/olblak/updatecli[image:https://img.shields.io/docker/pulls/olblak/updatecli?label=olblak%2Fupdatecli&logo=docker&logoColor=white[Docker Pulls]]
 link:https://github.com/olblak/updatecli/releases[image:https://img.shields.io/github/downloads/olblak/updatecli/latest/total[GitHub Releases]]
@@ -60,7 +60,7 @@ targets:
     kind: yaml
     spec:
       file: "charts/jenkins/values.yaml"
-      key: "jenkins.master.imageTag"
+      key: "jenkins.controller.imageTag"
     scm:
       github:
         user: olblak
@@ -69,7 +69,7 @@ targets:
         repository: "charts"
         token: mySecretTokenWhichShouldNeverUsedThisWay
         username: olblak
-        branch: "master"
+        branch: "main"
 ```
 
 |What it says:
@@ -85,16 +85,16 @@ Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.264-jdk
 => Yes then proceed otherwise abort +
 
 . Targets: +
-Do we have to update the key "jenkins.master.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264-jdk11"? +
-=> If yes then open a Github pull request to the branch "master" 
+Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264-jdk11"? +
+=> If yes then open a Github pull request to the branch "main"
 
 |===
 
 
 [cols="4*","header"]
 |===
-|link:https://github.com/olblak/updatecli/blob/master/LICENSE[LICENSE]
-|link:https://github.com/olblak/updatecli/blob/master/doc/CONTRIBUTING.adoc[CONTRIBUTING]
-|link:https://github.com/olblak/updatecli/blob/master/doc/README.adoc[DOCUMENTATION]
-|link:https://github.com/olblak/updatecli/blob/master/doc/ADOPTERS.md[ADOPTERS]
+|link:https://github.com/olblak/updatecli/blob/main/LICENSE[LICENSE]
+|link:https://github.com/olblak/updatecli/blob/main/doc/CONTRIBUTING.adoc[CONTRIBUTING]
+|link:https://github.com/olblak/updatecli/blob/main/doc/README.adoc[DOCUMENTATION]
+|link:https://github.com/olblak/updatecli/blob/main/doc/ADOPTERS.md[ADOPTERS]
 |===

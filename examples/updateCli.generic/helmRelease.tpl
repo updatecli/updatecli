@@ -23,7 +23,7 @@
 #  If conditions are all met, then updatecli will update (if needed) the first element of the key
 #  "dependencies" to "2.7.1" for the file "charts/jenkins/requirements.yaml"
 #  from the github repository olblak/chart then commit the change to a temporary branch then open
-#  a pull request targeting master
+#  a pull request targeting main
 #
 # Remark: The specificity in this example is that we are using a go template
 # so we could reuse information accross the yaml file or use environment variable which contains the github token
