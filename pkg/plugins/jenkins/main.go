@@ -29,6 +29,21 @@ const (
 	WRONG string = "unknown"
 )
 
+// Validate run some validation on the Jenkins struct
+func (j *Jenkins) Validate() error {
+	if len(j.Release) == 0 {
+		j.Release = "stable"
+	}
+
+	if j.Release != WEEKLY &&
+		j.Release != STABLE {
+		return fmt.Errorf("wrong Jenkins release type '%s', accepted values ['%s','%s']",
+			j.Release, WEEKLY, STABLE)
+
+	}
+	return nil
+}
+
 // GetVersions fetch every jenkins version from the maven repository
 func GetVersions() (latest string, versions []string, err error) {
 	m := maven.Maven{
