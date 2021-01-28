@@ -71,20 +71,17 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 		}
 
 		logrus.Debugf("fileInfo for %s mode=%s", y.File, fileInfo.Mode().String(), fileInfo.Mode())
-		logrus.Debugf("fileInfo.IsDir() - %t", fileInfo.IsDir())
 
 		user, err := user.Current()
 		if err != nil {
 			logrus.Errorf("unable to get user info: %s", err)
 		}
 
-		logrus.Debugf("user.Username - %s", user.Username)
-		logrus.Debugf("user.Uid - %s", user.Uid)
-		logrus.Debugf("user.Gid - %s", user.Gid)
+		logrus.Debugf("user: username=%s, uid=%s, gid=%s", user.Username, user.Uid, user.Gid)
 
-		newFile, err := os.Create("./" + y.File)
+		newFile, err := os.Create(y.File)
 		if err != nil {
-			return changed, fmt.Errorf("unable to write to file ./%s: %v", y.File, err)
+			return changed, fmt.Errorf("unable to write to file %s: %v", y.File, err)
 		}
 
 		defer newFile.Close()

@@ -62,7 +62,7 @@ func (g *Github) Changelog(name string) (string, error) {
 	err = client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		logrus.Infof("\t %s\n", err)
+		logrus.Warnf("\t %s\n", err)
 		return "", err
 	}
 
