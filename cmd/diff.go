@@ -1,8 +1,10 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -14,7 +16,7 @@ var (
 		Use:   "diff",
 		Short: "diff shows changes",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("\n%s\n\n", strings.ToTitle("Diff"))
+			logrus.Infof("\n%s\n", strings.ToTitle("Diff"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile
@@ -24,9 +26,11 @@ var (
 			e.Options.Target.Clean = diffClean
 			e.Options.Target.DryRun = true
 
-			run(
-				"diff",
-			)
+			err := run("diff")
+			if err != nil {
+				logrus.Errorf("command failed")
+				os.Exit(1)
+			}
 		},
 	}
 )

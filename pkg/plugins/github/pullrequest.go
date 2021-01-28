@@ -2,7 +2,7 @@ package github
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"text/template"
 )
 
@@ -42,7 +42,7 @@ func SetBody(changelog Changelog) (body string, err error) {
 
 	buffer := new(bytes.Buffer)
 
-	fmt.Println(changelog)
+	logrus.Infof("%s", changelog)
 
 	err = t.Execute(buffer, changelog)
 

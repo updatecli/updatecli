@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/olblak/updateCli/pkg/core/result"
 )
 
@@ -56,13 +58,13 @@ func (r *Reports) Show() error {
 		return err
 	}
 
-	fmt.Println(reports)
+	logrus.Infof(reports)
 
 	return nil
 }
 
 // Summary display a summary of
-func (r *Reports) Summary() error {
+func (r *Reports) Summary() (int, int, int, error) {
 	counter := 0
 	successCounter := 0
 	changedCounter := 0
@@ -79,16 +81,23 @@ func (r *Reports) Summary() error {
 		} else if report.Result == result.CHANGED {
 			changedCounter++
 		} else {
-			fmt.Printf("Unknown report result '%s'\n", report.Result)
+			logrus.Infof("Unknown report result '%s'", report.Result)
 		}
 	}
 
-	fmt.Printf("Run Summary\n")
-	fmt.Printf("===========\n\n")
-	fmt.Printf("%d job run\n", counter)
-	fmt.Printf("%d job succeed\n", successCounter)
-	fmt.Printf("%d job failed\n", failedCounter)
-	fmt.Printf("%d job applied changes\n", changedCounter)
+	logrus.Infof("Run Summary")
+	logrus.Infof("===========")
+	logrus.Infof("%d job run", counter)
+	logrus.Infof("%d job succeed", successCounter)
+	logrus.Infof("%d job failed", failedCounter)
+	logrus.Infof("%d job applied changes", changedCounter)
 
-	return nil
+	if failedCounter > 0 {
+		return successCounter,
+			changedCounter,
+			failedCounter,
+			fmt.Errorf("%d/%d job(s) failed", failedCounter, counter)
+	}
+
+	return successCounter, changedCounter, failedCounter, nil
 }
