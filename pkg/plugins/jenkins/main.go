@@ -69,7 +69,11 @@ func GetVersions() (latest string, versions []string, err error) {
 	latest = data.Versioning.Latest
 	versions = data.Versioning.Versions.Version
 
-	xml.Unmarshal(body, &data)
+	err = xml.Unmarshal(body, &data)
+
+	if err != nil {
+		return "", nil, err
+	}
 
 	return data.Versioning.Latest, data.Versioning.Versions.Version, nil
 
