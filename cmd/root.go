@@ -48,14 +48,14 @@ func init() {
 		docsCmd)
 }
 
-func run(command string) {
+func run(command string) error {
 
 	switch command {
 	case "apply":
 		err := e.Prepare()
-
 		if err != nil {
 			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			return err
 		}
 
 		if applyClean {
@@ -67,15 +67,15 @@ func run(command string) {
 		}
 
 		err = e.Run()
-
 		if err != nil {
 			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			return err
 		}
 	case "diff":
 		err := e.Prepare()
-
 		if err != nil {
 			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			return err
 		}
 
 		if diffClean {
@@ -85,9 +85,11 @@ func run(command string) {
 				}
 			}()
 		}
+
 		err = e.Run()
 		if err != nil {
 			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			return err
 		}
 	case "prepare":
 		if prepareClean {
@@ -101,8 +103,10 @@ func run(command string) {
 		err := e.Show()
 		if err != nil {
 			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			return err
 		}
 	default:
 		fmt.Println("Wrong command")
 	}
+	return nil
 }
