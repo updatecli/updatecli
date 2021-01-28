@@ -25,6 +25,18 @@ func (j *Jenkins) Condition(source string) (bool, error) {
 		return false, err
 	}
 
+	// Init release type based on version if not defined
+	if len(j.Release) == 0 {
+		j.Release = releaseType
+
+	}
+
+	err = j.Validate()
+
+	if err != nil {
+		return false, err
+	}
+
 	validReleaseType = true
 
 	if len(j.Release) > 0 {
