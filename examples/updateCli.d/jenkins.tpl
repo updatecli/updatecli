@@ -22,7 +22,7 @@ targets:
     #postfix: "-jdk13"
     spec:
       file: "charts/jenkins/values.yaml"
-      key: "jenkins.master.imageTag"
+      key: "jenkins.controller.imageTag"
     scm:
       github:
         user: "{{ .github.user }}"
