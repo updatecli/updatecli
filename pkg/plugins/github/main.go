@@ -32,7 +32,6 @@ type Github struct {
 
 // Check verifies if mandatory Github parameters are provided and return false if not.
 func (g *Github) Check() (bool, error) {
-	ok := true
 	required := []string{}
 
 	if g.Token == "" {
@@ -52,16 +51,14 @@ func (g *Github) Check() (bool, error) {
 	}
 
 	if len(required) > 0 {
-		err := fmt.Errorf("\u2717 Github parameter(s) required: [%v]", strings.Join(required, ","))
+		err := fmt.Errorf("github parameter(s) required: [%v]", strings.Join(required, ","))
 		return false, err
 	}
 
-	return ok, nil
-
+	return true, nil
 }
 
 func (g *Github) setDirectory() {
-
 	if g.Directory == "" {
 		g.Directory = path.Join(tmp.Directory, g.Owner, g.Repository)
 	}
@@ -110,11 +107,13 @@ func (g *Github) OpenPullRequest() error {
 
 	title := fmt.Sprintf("[updatecli] Update %v version to %v", g.Name, g.Version)
 	repositoryID, err := g.queryRepositoryID()
+	if err != nil {
+		return err
+	}
 	maintainerCanModify := true
 	draft := false
 
 	bodyPR, err := SetBody(g.PullRequestDescription)
-
 	if err != nil {
 		return err
 	}

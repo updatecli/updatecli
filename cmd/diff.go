@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -24,9 +25,11 @@ var (
 			e.Options.Target.Clean = diffClean
 			e.Options.Target.DryRun = true
 
-			run(
-				"diff",
-			)
+			err := run("diff")
+			if err != nil {
+				fmt.Errorf("command failed: %s", err)
+				os.Exit(1)
+			}
 		},
 	}
 )
