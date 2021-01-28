@@ -2,6 +2,7 @@ package github
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 
 	git "github.com/olblak/updateCli/pkg/plugins/git/generic"
@@ -94,7 +95,7 @@ func (g *Github) Push() error {
 		return err
 	}
 
-	fmt.Printf("\n")
+	logrus.Infof("")
 
 	err = g.OpenPullRequest()
 	if err != nil {

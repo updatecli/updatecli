@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
@@ -27,7 +28,7 @@ func (d *Docker) Condition(source string) (bool, error) {
 	}
 
 	if d.Tag != "" {
-		fmt.Printf("INFO: Tag %v, defined from configuration file which override the source value '%v'\n", d.Tag, source)
+		logrus.Infof("INFO: Tag %v, defined from configuration file which override the source value '%v'\n", d.Tag, source)
 	} else {
 		d.Tag = source
 	}
@@ -92,11 +93,11 @@ func (d *Docker) Condition(source string) (bool, error) {
 	}
 
 	if digest == "" {
-		fmt.Printf("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
+		logrus.Infof("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
 		return false, nil
 	}
 
-	fmt.Printf("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
+	logrus.Infof("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
 
 	return true, nil
 

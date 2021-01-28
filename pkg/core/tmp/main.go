@@ -23,7 +23,6 @@ func Clean() error {
 
 // Create will create the main temporary directory used by updatecli
 func Create() error {
-
 	if _, err := os.Stat(Directory); os.IsNotExist(err) {
 
 		err := os.MkdirAll(Directory, 0755)

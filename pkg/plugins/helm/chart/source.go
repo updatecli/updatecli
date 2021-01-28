@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 )
@@ -44,7 +45,7 @@ func (c *Chart) Source(workingDir string) (string, error) {
 	}
 
 	if e.Version != "" {
-		fmt.Printf("\u2714 Helm Chart '%s' version '%v' is founded from repository %s\n",
+		logrus.Infof("\u2714 Helm Chart '%s' version '%v' is founded from repository %s\n",
 			c.Name,
 			e.Version,
 			c.URL)

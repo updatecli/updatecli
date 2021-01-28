@@ -2,7 +2,9 @@ package yaml
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 
@@ -13,17 +15,16 @@ import (
 
 // Target updates a scm repository based on the modified yaml file.
 func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
-
 	y.Value = source
 
 	if len(y.Path) > 0 {
-		fmt.Println("WARNING: Key 'Path' is obsolete and now directly defined from file")
+		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
 	// Test if target reference a file with a prefix like https:// or file://
 	// In that case we don't know how to update those files.
 	if file.HasPrefix(y.File, []string{"https://", "http://", "file://"}) {
-		return false, fmt.Errorf("Unsupported filename prefix")
+		return false, fmt.Errorf("unsupported filename prefix")
 	}
 
 	changed = false
@@ -45,7 +46,7 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 
 	if valueFound {
 		if oldVersion == y.Value {
-			fmt.Printf("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done\n",
+			logrus.Infof("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done\n",
 				y.Key,
 				y.File,
 				y.Value)
@@ -53,22 +54,37 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 		}
 
 		changed = true
-		fmt.Printf("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'\n",
+		logrus.Infof("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'\n",
 			y.Key,
 			y.File,
 			oldVersion,
 			y.Value)
-
 	} else {
-		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n", y.Key, y.File)
+		logrus.Infof("\u2717 cannot find key '%s' from file '%s'\n", y.Key, y.File)
 		return changed, nil
 	}
 
 	if !dryRun {
-
-		newFile, err := os.Create(y.File)
+		fileInfo, err := os.Stat(y.File)
 		if err != nil {
-			return changed, fmt.Errorf("unable to write to file %s: %v", y.File, err)
+			logrus.Errorf("unable to get file info: %s\n", err)
+		}
+
+		logrus.Debugf("fileInfo for %s mode=%s", y.File, fileInfo.Mode().String(), fileInfo.Mode())
+		logrus.Debugf("fileInfo.IsDir() - %t", fileInfo.IsDir())
+
+		user, err := user.Current()
+		if err != nil {
+			logrus.Errorf("unable to get user info: %s", err)
+		}
+
+		logrus.Debugf("user.Username - %s", user.Username)
+		logrus.Debugf("user.Uid - %s", user.Uid)
+		logrus.Debugf("user.Gid - %s", user.Gid)
+
+		newFile, err := os.Create("./" + y.File)
+		if err != nil {
+			return changed, fmt.Errorf("unable to write to file ./%s: %v", y.File, err)
 		}
 
 		defer newFile.Close()
@@ -90,13 +106,13 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error) {
 
 	if len(y.Path) > 0 {
-		fmt.Println("WARNING: Key 'Path' is obsolete and now directly retrieve from File")
+		logrus.Warnf("WARNING: Key 'Path' is obsolete and now directly retrieve from File")
 	}
 
 	// Test if target reference a file with a prefix like https:// or file://
 	// In that case we don't know how to update those files.
 	if file.HasPrefix(y.File, []string{"https://", "http://", "file://"}) {
-		return false, files, message, fmt.Errorf("Unsupported filename prefix")
+		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
 	y.Value = source
@@ -120,21 +136,21 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	if valueFound {
 		if oldVersion == y.Value {
-			fmt.Printf("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done\n",
+			logrus.Infof("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done\n",
 				y.Key,
 				y.File,
 				y.Value)
 			return changed, files, message, nil
 		}
 		changed = true
-		fmt.Printf("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'\n",
+		logrus.Infof("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'\n",
 			y.Key,
 			y.File,
 			oldVersion,
 			y.Value)
 
 	} else {
-		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n", y.Key, y.File)
+		logrus.Infof("\u2717 cannot find key '%s' from file '%s'\n", y.Key, y.File)
 		return changed, files, message, nil
 	}
 

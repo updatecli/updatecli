@@ -2,7 +2,7 @@ package dockerfile
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"testing"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -275,7 +275,7 @@ func TestGetPositionKeys(t *testing.T) {
 		gotKey, gotInstPos, gotElemPos, err := getPositionKeys(d.key)
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 		}
 
 		if gotInstPos != d.expectedInstructionPosition {
@@ -305,13 +305,13 @@ func TestReplaceNode(t *testing.T) {
 		d, err := parser.Parse(bytes.NewReader([]byte(data.dockerfile)))
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 		}
 
 		found, val, err := data.spec.replace(d.AST)
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 		}
 
 		if found != data.expectedFound {

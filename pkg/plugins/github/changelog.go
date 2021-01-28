@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/shurcooL/githubv4"
@@ -61,7 +62,7 @@ func (g *Github) Changelog(name string) (string, error) {
 	err = client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		fmt.Printf("\t %s\n", err)
+		logrus.Infof("\t %s\n", err)
 		return "", err
 	}
 
