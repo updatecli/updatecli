@@ -36,7 +36,7 @@ func Execute() {
 	logrus.SetFormatter(log.NewTextFormat())
 
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Errorf("\n\u26A0 %s \n", err)
+		logrus.Errorf("\u26A0 %s", err)
 		os.Exit(1)
 	}
 }
@@ -63,7 +63,7 @@ func run(command string) error {
 	case "apply":
 		err := e.Prepare()
 		if err != nil {
-			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
@@ -77,13 +77,13 @@ func run(command string) error {
 
 		err = e.Run()
 		if err != nil {
-			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	case "diff":
 		err := e.Prepare()
 		if err != nil {
-			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
@@ -97,7 +97,7 @@ func run(command string) error {
 
 		err = e.Run()
 		if err != nil {
-			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	case "prepare":
@@ -111,7 +111,7 @@ func run(command string) error {
 	case "show":
 		err := e.Show()
 		if err != nil {
-			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	default:

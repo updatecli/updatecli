@@ -37,11 +37,11 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	valueFound, value, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
 
 	if valueFound {
-		logrus.Infof("\u2714 Value '%v' found for key %v in the yaml file %v \n", value, y.Key, y.File)
+		logrus.Infof("\u2714 Value '%v' found for key %v in the yaml file %v", value, y.Key, y.File)
 		return value, nil
 	}
 
-	logrus.Infof("\u2717 cannot find key '%s' from file '%s'\n",
+	logrus.Infof("\u2717 cannot find key '%s' from file '%s'",
 		y.Key,
 		y.File)
 	return "", nil

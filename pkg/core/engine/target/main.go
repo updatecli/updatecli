@@ -96,7 +96,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 
 	if o.DryRun {
 
-		logrus.Infof("**Dry Run enabled**\n")
+		logrus.Infof("**Dry Run enabled**")
 	}
 
 	spec, err := Unmarshal(t)

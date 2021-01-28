@@ -20,8 +20,8 @@ var (
 func Show() {
 	strings.ReplaceAll(GoVersion, "go version go", "Golang     :")
 	logrus.Infof("")
-	logrus.Infof("Application:\t%s\n", Version)
-	logrus.Infof("%s\n", strings.ReplaceAll(GoVersion, "go version go", "Golang     :\t"))
-	logrus.Infof("Build Time :\t%s\n", BuildTime)
+	logrus.Infof("Application:\t%s", Version)
+	logrus.Infof("%s", strings.ReplaceAll(GoVersion, "go version go", "Golang     :\t"))
+	logrus.Infof("Build Time :\t%s", BuildTime)
 	logrus.Infof("")
 }

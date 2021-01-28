@@ -31,11 +31,11 @@ func (f *File) Target(source string, dryRun bool) (changed bool, err error) {
 
 	if strings.Compare(f.Content, string(data)) != 0 {
 		changed = true
-		logrus.Infof("\u2714 File content for '%v', updated. \n%s\n",
+		logrus.Infof("\u2714 File content for '%v', updated. \n%s",
 			f.File, Diff(string(data), f.Content))
 
 	} else {
-		logrus.Infof("\u2714 Content from file '%v' already up to date\n", f.File)
+		logrus.Infof("\u2714 Content from file '%v' already up to date", f.File)
 	}
 
 	if !dryRun {
@@ -60,7 +60,7 @@ func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 	// Test if target reference a file with a prefix like https:// or file://
 	// In that case we don't know how to update those files.
 	if HasPrefix(f.File, []string{"https://", "http://", "file://"}) {
-		return false, files, message, fmt.Errorf("Unsupported filename prefix")
+		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
 	changed = false
@@ -72,11 +72,11 @@ func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	if strings.Compare(f.Content, string(data)) != 0 {
 		changed = true
-		logrus.Infof("\u2714 File content for '%v', updated. \n%s\n",
+		logrus.Infof("\u2714 File content for '%v', updated. \n%s",
 			f.File, Diff(string(data), f.Content))
 
 	} else {
-		logrus.Infof("\u2714 Content from file '%v' already up to date\n", f.File)
+		logrus.Infof("\u2714 Content from file '%v' already up to date", f.File)
 	}
 
 	if !dryRun {

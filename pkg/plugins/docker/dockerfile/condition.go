@@ -37,14 +37,14 @@ func (d *Dockerfile) Condition(version string) (bool, error) {
 
 	if found {
 		if val == d.Value {
-			logrus.Infof("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s' \n",
+			logrus.Infof("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s'",
 				d.Instruction,
 				d.File,
 				d.Value)
 			return true, nil
 		}
 
-		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' instead of '%s'\n",
+		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' instead of '%s'",
 			d.Instruction,
 			d.File,
 			val,
@@ -52,7 +52,7 @@ func (d *Dockerfile) Condition(version string) (bool, error) {
 
 	} else {
 
-		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', wasn't found \n", d.Instruction, d.File)
+		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', wasn't found", d.Instruction, d.File)
 	}
 
 	return false, nil
@@ -86,21 +86,21 @@ func (d *Dockerfile) ConditionFromSCM(version string, scm scm.Scm) (bool, error)
 
 	if found {
 		if val == d.Value {
-			logrus.Infof("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s' \n",
+			logrus.Infof("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s'",
 				d.Instruction,
 				d.File,
 				d.Value)
 			return true, nil
 		}
 
-		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' instead of '%s'\n",
+		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' instead of '%s'",
 			d.Instruction,
 			d.File,
 			val,
 			d.Value)
 
 	} else {
-		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', wasn't found \n", d.Instruction, d.File)
+		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', wasn't found", d.Instruction, d.File)
 
 	}
 

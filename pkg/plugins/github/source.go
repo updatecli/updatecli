@@ -67,7 +67,7 @@ func (g *Github) Source(workingDir string) (string, error) {
 
 	if err != nil {
 		logrus.Errorf("\u2717 Couldn't find a valid github release version")
-		logrus.Errorf("\t %s\n", err)
+		logrus.Errorf("\t %s", err)
 		return "", err
 	}
 
@@ -79,6 +79,6 @@ func (g *Github) Source(workingDir string) (string, error) {
 		}
 	}
 
-	logrus.Infof("\u2714 '%s' github release version founded: %s\n", g.Version, value)
+	logrus.Infof("\u2714 '%s' github release version founded: %s", g.Version, value)
 	return value, nil
 }

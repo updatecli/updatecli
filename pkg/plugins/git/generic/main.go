@@ -19,7 +19,7 @@ import (
 func Add(files []string, workingDir string) error {
 
 	for _, file := range files {
-		logrus.Infof("Adding file: %s\n", file)
+		logrus.Infof("Adding file: %s", file)
 
 		r, err := git.PlainOpen(workingDir)
 		if err != nil {
@@ -119,7 +119,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 // Commit run `git commit`.
 func Commit(user, email, message, workingDir string) error {
 
-	logrus.Infof("Commit changes \n")
+	logrus.Infof("Commit changes")
 
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
@@ -240,7 +240,7 @@ func Push(username, password, workingDir string) error {
 		Password: password,
 	}
 
-	logrus.Infof("Push changes\n")
+	logrus.Infof("Push changes")
 
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {

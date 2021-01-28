@@ -80,16 +80,16 @@ func (r *Reports) Summary() (int, int, int, error) {
 		} else if report.Result == result.CHANGED {
 			changedCounter++
 		} else {
-			logrus.Infof("Unknown report result '%s'\n", report.Result)
+			logrus.Infof("Unknown report result '%s'", report.Result)
 		}
 	}
 
 	logrus.Infof("Run Summary")
-	logrus.Infof("===========\n")
-	logrus.Infof("%d job run\n", counter)
-	logrus.Infof("%d job succeed\n", successCounter)
-	logrus.Infof("%d job failed\n", failedCounter)
-	logrus.Infof("%d job applied changes\n", changedCounter)
+	logrus.Infof("===========")
+	logrus.Infof("%d job run", counter)
+	logrus.Infof("%d job succeed", successCounter)
+	logrus.Infof("%d job failed", failedCounter)
+	logrus.Infof("%d job applied changes", changedCounter)
 
 	if failedCounter > 0 {
 		return successCounter, changedCounter, failedCounter, errors.New("a job has failed")
