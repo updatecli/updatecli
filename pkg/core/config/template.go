@@ -67,7 +67,11 @@ func (t *Template) Unmarshal(config *Config) error {
 		return err
 	}
 
-	tmpl := template.Must(template.New("cfg").Funcs(funcMap).Parse(string(content)))
+	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
+
+	if err != nil {
+		return err
+	}
 
 	b := bytes.Buffer{}
 
