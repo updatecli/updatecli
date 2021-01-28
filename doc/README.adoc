@@ -61,7 +61,7 @@ source:
 conditions:
   conditionID:
     kind: <conditionType>
-    spec: 
+    spec:
       <conditionTypeSpec>
 targets:
   target1:
@@ -70,7 +70,7 @@ targets:
       <targetTypeSpec>
 ```
 
-**YAML** 
+**YAML**
 
 Accepted extensions: ".yaml",".yml"
 
@@ -80,7 +80,7 @@ A YAML configuration can be specified using `--config <yaml_file>`, it accepts e
 
 Accepted extensions: ".tpl",".tmpl"
 
-Another way to use this tool is by using go template files in place of YAML. 
+Another way to use this tool is by using go template files in place of YAML.
 Using go templates allow us to specify generic values in a different yaml file then reference those values from each go templates.
 We also provide a custom function called requireEnv to inject any environment variable in the template example, `{{ requiredEnv "PATH" }}`.
 
@@ -113,8 +113,8 @@ A Dockerfile retrieves information from a Dockerfile. To identify which informat
 * "x", reference a specific instruction position where x is replaced by any integer starting from 0. So "0" means the first instruction of type `INSTRUCTION`, "1" means the second, etc
 * "y", reference a specific argument element for the `INSTRUCTION[x]` where "y" is replaced by any integer starting from 0. So "0" means the first argument, "1" means the second, etc
 
-The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line 
-`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]` 
+The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line
+`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]`
 
 * `LABEL[0][0]` equal `key1`
 * `LABEL[0][1]` equal `value2`
@@ -239,8 +239,8 @@ A Dockerfile validate information from a Dockerfile. It uses the field "Value" t
 * "x", reference a specific instruction position where x is replaced by any integer starting from 0. So "0" means the first instruction of type `INSTRUCTION`, "1" means the second, etc
 * "y", reference a specific argument element for the `INSTRUCTION[x]` where "y" is replaced by any integer starting from 0. So "0" means the first argument, "1" means the second, etc
 
-The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line 
-`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]` 
+The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line
+`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]`
 
 * `LABEL[0][0]` equal `key1`
 * `LABEL[0][1]` equal `value2`
@@ -252,7 +252,7 @@ For instance, based on the previous example, `LABEL` means "key1"
 
 ```
 conditions:
-  id: 
+  id:
     kind: dockerfile
     spec:
       file: docker/Dockerfile
@@ -351,8 +351,8 @@ A Dockerfile target, updates a Dockerfile based on information retrieved from so
 * "x", reference a specific instruction position where x is replaced by any integer starting from 0. So "0" means the first instruction of type `INSTRUCTION`, "1" means the second, etc
 * "y", reference a specific argument element for the `INSTRUCTION[x]` where "y" is replaced by any integer starting from 0. So "0" means the first argument, "1" means the second, etc
 
-The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line 
-`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]` 
+The library uses to manipulate Dockerfile, split each INSTRUCTION into arrays so the line
+`LABEL key1=value2 key2=value2` becomes `["key1","value2","key2","value2"]`
 
 * `LABEL[0][0]` equal `key1`
 * `LABEL[0][1]` equal `value2`
@@ -367,7 +367,7 @@ TIP: It's a good idea to test that a LABEL key exist before updating its value
 
 ```
 targets:
-  taskId 
+  taskId
     kind: dockerfile
     spec:
       file: docker/Dockerfile

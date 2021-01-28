@@ -35,7 +35,7 @@ source:
   spec:
     owner: "jenkins-infra"
     repository: "jenkins-wiki-exporter"
-    token: "{{ requiredEnv .github.token }}" 
+    token: "{{ requiredEnv .github.token }}"
     username: "olblak"
     version: "latest"
 conditions:
