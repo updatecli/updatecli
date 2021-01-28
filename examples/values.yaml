@@ -6,4 +6,4 @@ github:
   #token: "UPDATECLI_GITHUB_TOKEN"
   token: "GITHUB_TOKEN"
   username: olblak
-  branch: master
+  branch: main

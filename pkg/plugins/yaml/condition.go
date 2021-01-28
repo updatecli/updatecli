@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
@@ -13,7 +14,7 @@ import (
 func (y *Yaml) Condition(source string) (bool, error) {
 
 	if len(y.Path) > 0 {
-		fmt.Println("WARNING: Key 'Path' is obsolete and now directly defined from file")
+		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
 	data, err := file.Read(y.File, "")
@@ -32,22 +33,19 @@ func (y *Yaml) Condition(source string) (bool, error) {
 	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
 
 	if valueFound && oldVersion == y.Value {
-		fmt.Printf("\u2714 Key '%s', from file '%v', is correctly set to %s'\n",
+		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'",
 			y.Key,
 			y.File,
 			y.Value)
 		return true, nil
-
 	} else if valueFound && oldVersion != y.Value {
-
-		fmt.Printf("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
+		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
 			y.Key,
 			y.File,
 			oldVersion,
 			y.Value)
-
 	} else {
-		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n",
+		logrus.Infof("\u2717 cannot find key '%s' from file '%s'",
 			y.Key,
 			y.File)
 	}
@@ -57,9 +55,8 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
-
 	if len(y.Path) > 0 {
-		fmt.Println("WARNING: Key 'Path' is obsolete and now directly defined from file")
+		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
 	data, err := file.Read(y.File, scm.GetDirectory())
@@ -78,21 +75,19 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
 
 	if valueFound && oldVersion == y.Value {
-		fmt.Printf("\u2714 Key '%s', from file '%v', is correctly set to %s'\n",
+		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'",
 			y.Key,
 			y.File,
 			y.Value)
 		return true, nil
-
 	} else if valueFound && oldVersion != y.Value {
-		fmt.Printf("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
+		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
 			y.Key,
 			y.File,
 			oldVersion,
 			y.Value)
-
 	} else {
-		fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n",
+		logrus.Infof("\u2717 cannot find key '%s' from file '%s'",
 			y.Key,
 			y.File)
 	}

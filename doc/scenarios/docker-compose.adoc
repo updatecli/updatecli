@@ -12,7 +12,7 @@ This means that a docker image tag can't be considered as a source of truth.
 
 *Digest*
 
-The second method to identify a docker image version is by using its digest like in `nginx@sha256:8269a7352a7dad1f8b3dc83284f195bac72027dd50279422d363d49311ab7d9b` where `8269a7352a7dad1f8b3dc83284f195bac72027dd50279422d363d49311ab7d9b` is the digest. A digest is a hash referencing a specific version of a docker image tag like in this case `nginx:1.17`. A digest is immutable, we can always rollblack to a specific digest if need. But we must admit that it's not convenient to identify which version we are referencing to without having to dig into it. 
+The second method to identify a docker image version is by using its digest like in `nginx@sha256:8269a7352a7dad1f8b3dc83284f195bac72027dd50279422d363d49311ab7d9b` where `8269a7352a7dad1f8b3dc83284f195bac72027dd50279422d363d49311ab7d9b` is the digest. A digest is a hash referencing a specific version of a docker image tag like in this case `nginx:1.17`. A digest is immutable, we can always rollblack to a specific digest if need. But we must admit that it's not convenient to identify which version we are referencing to without having to dig into it.
 
 
 The problem here could be resumed by "Do we want to only use well-defined docker image by using digests but with the cost of losing readability?" or "Are we ok to take the risk of running an unwanted version by using image tags?".
@@ -157,7 +157,7 @@ targets:
         repository: "charts"
         token: "{{ requiredEnv GITHUB_TOKEN }}"
         username: "johnDoe"
-        branch: "master"
+        branch: "main"
 
 ```
 
@@ -171,4 +171,4 @@ And now you can use the same command than before
 
 In this scenario, we saw how to automatically update docker-compose file using custom strategies by using updatecli. Updatecli is a small tool that can be used from your favorite CI environment.
 
-Now we can replace our docker-compose file by any other YAML file to automate YAML update. 
+Now we can replace our docker-compose file by any other YAML file to automate YAML update.

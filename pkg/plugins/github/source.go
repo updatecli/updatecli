@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"fmt"
+	"github.com/sirupsen/logrus"
 
 	"github.com/shurcooL/githubv4"
 )
@@ -66,8 +66,8 @@ func (g *Github) Source(workingDir string) (string, error) {
 	err = client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		fmt.Printf("\u2717 Couldn't find a valid github release version\n")
-		fmt.Printf("\t %s\n", err)
+		logrus.Errorf("\u2717 Couldn't find a valid github release version")
+		logrus.Errorf("\t %s", err)
 		return "", err
 	}
 
@@ -79,6 +79,6 @@ func (g *Github) Source(workingDir string) (string, error) {
 		}
 	}
 
-	fmt.Printf("\u2714 '%s' github release version founded: %s\n", g.Version, value)
+	logrus.Infof("\u2714 '%s' github release version founded: %s", g.Version, value)
 	return value, nil
 }

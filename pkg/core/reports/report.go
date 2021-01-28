@@ -2,7 +2,7 @@ package reports
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"text/template"
 
 	"github.com/olblak/updateCli/pkg/core/result"
@@ -119,7 +119,7 @@ func (r *Report) String(mode string) (report string, err error) {
 	case "all":
 		t = template.Must(template.New("reports").Parse(REPORTTEMPLATE))
 	default:
-		fmt.Println("Wrong report template provided")
+		logrus.Infof("Wrong report template provided")
 	}
 
 	buffer := new(bytes.Buffer)

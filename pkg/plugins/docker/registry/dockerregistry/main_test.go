@@ -1,7 +1,7 @@
 package dockerregistry
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"testing"
 )
 
@@ -43,7 +43,7 @@ func TestDigest(t *testing.T) {
 		got, err := d.docker.Digest()
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 		}
 		expected := d.expectedDigest
 		if got != expected {

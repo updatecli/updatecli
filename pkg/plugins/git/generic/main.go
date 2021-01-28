@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -18,7 +20,7 @@ import (
 func Add(files []string, workingDir string) error {
 
 	for _, file := range files {
-		fmt.Printf("Adding file: %s\n", file)
+		logrus.Infof("Adding file: %s", file)
 
 		r, err := git.PlainOpen(workingDir)
 		if err != nil {
@@ -92,7 +94,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		// aligned with the remote one.
 		remoteBranchRef := fmt.Sprintf("refs/remotes/origin/%s", remoteBranch)
 
-		fmt.Println(remoteBranchRef)
+		logrus.Infof(remoteBranchRef)
 
 		remoteRef, err := r.Reference(
 			plumbing.ReferenceName(
@@ -110,7 +112,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		}
 	}
 
-	fmt.Printf("\n")
+	logrus.Infof("")
 
 	return nil
 }
@@ -118,7 +120,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 // Commit run `git commit`.
 func Commit(user, email, message, workingDir string) error {
 
-	fmt.Printf("Commit changes \n\n")
+	logrus.Infof("Commit changes")
 
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
@@ -134,7 +136,7 @@ func Commit(user, email, message, workingDir string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(status)
+	logrus.Infof("%s", status)
 
 	commit, err := w.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
@@ -144,14 +146,14 @@ func Commit(user, email, message, workingDir string) error {
 		},
 	})
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 		return err
 	}
 	obj, err := r.CommitObject(commit)
 	if err != nil {
 		return err
 	}
-	fmt.Println(obj)
+	logrus.Infof("%s", obj)
 
 	return nil
 
@@ -201,13 +203,17 @@ func Clone(username, password, URL, workingDir string) error {
 			Progress: &b,
 		})
 
-		fmt.Println(b.String())
+		logrus.Infof(b.String())
+
 		b.Reset()
-		if err != nil {
+
+		if err != nil &&
+			err != git.NoErrAlreadyUpToDate {
 			return err
 		}
 
-	} else if err != nil {
+	} else if err != nil &&
+		err != git.NoErrAlreadyUpToDate {
 		return err
 	}
 
@@ -221,9 +227,10 @@ func Clone(username, password, URL, workingDir string) error {
 	for _, r := range remotes {
 
 		err := r.Fetch(&git.FetchOptions{Progress: &b})
-		fmt.Println(b.String())
+		logrus.Infof(b.String())
 		b.Reset()
-		if err != nil {
+		if err != nil &&
+			err != git.NoErrAlreadyUpToDate {
 			return err
 		}
 	}
@@ -239,7 +246,7 @@ func Push(username, password, workingDir string) error {
 		Password: password,
 	}
 
-	fmt.Printf("Push changes\n\n")
+	logrus.Infof("Push changes")
 
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
@@ -253,7 +260,7 @@ func Push(username, password, workingDir string) error {
 	}
 
 	if !head.Name().IsBranch() {
-		return fmt.Errorf("Not pushing from a branch")
+		return fmt.Errorf("not pushing from a branch")
 	}
 
 	localBranch := strings.TrimPrefix(head.Name().String(), "refs/heads/")
@@ -280,7 +287,7 @@ func Push(username, password, workingDir string) error {
 		return err
 	}
 
-	fmt.Printf("\n")
+	logrus.Infof("")
 
 	return nil
 }
