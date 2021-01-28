@@ -3,6 +3,7 @@ package chart
 import (
 	"bytes"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -73,7 +74,7 @@ func (c *Chart) Changelog(name string) (string, error) {
 
 	changelog := buffer.String()
 
-	fmt.Println(changelog)
+	logrus.Infof(changelog)
 
 	return changelog, nil
 

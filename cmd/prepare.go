@@ -1,8 +1,10 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -14,16 +16,18 @@ var (
 		Use:   "prepare",
 		Short: "prepare run tasks needed for a run like `git clone`",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("\n%s\n\n", strings.ToTitle("Prepare"))
+			logrus.Infof("\n%s\n", strings.ToTitle("Prepare"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile
 
 			e.Options.Target.Clean = prepareClean
 
-			run(
-				"prepare",
-			)
+			err := run("prepare")
+			if err != nil {
+				logrus.Errorf("command failed")
+				os.Exit(1)
+			}
 		},
 	}
 )

@@ -81,7 +81,7 @@ linters:
     - goprintffuncname
     - gosec
     - gosimple
-      #- ineffassign
+    - ineffassign
     - interfacer
       #    - lll  
     - maligned
@@ -90,7 +90,7 @@ linters:
     - nolintlint
     - rowserrcheck
     - structcheck
-      #- stylecheck
+    #- stylecheck
     - typecheck
     - unconvert
     - unparam

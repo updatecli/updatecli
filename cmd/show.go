@@ -1,8 +1,10 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -12,12 +14,16 @@ var (
 		Use:   "show",
 		Short: "Print the configuration that will be executed",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("\n%s\n\n", strings.ToTitle("Show"))
+			logrus.Infof("\n%s\n", strings.ToTitle("Show"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile
 
-			run("show")
+			err := run("show")
+			if err != nil {
+				logrus.Errorf("command failed")
+				os.Exit(1)
+			}
 		},
 	}
 )

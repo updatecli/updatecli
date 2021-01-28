@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
 
@@ -19,24 +20,24 @@ import (
 	"strings"
 )
 
-// Engine defined parameters for a specific engine run
+// Engine defined parameters for a specific engine run.
 type Engine struct {
 	configurations []config.Config
 	Options        Options
 	Reports        reports.Reports
 }
 
-// Clean remove every traces from an updatecli run
+// Clean remove every traces from an updatecli run.
 func (e *Engine) Clean() (err error) {
 	err = tmp.Clean()
 	return
 }
 
-// GetFiles return an array with every valid files
+// GetFiles return an array with every valid files.
 func GetFiles(root string) (files []string) {
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Printf("\n\u26A0 File %s: %s\n", path, err)
+			logrus.Errorf("\n\u26A0 File %s: %s\n", path, err)
 			os.Exit(1)
 		}
 		if info.Mode().IsRegular() {
@@ -46,15 +47,14 @@ func GetFiles(root string) (files []string) {
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	return files
 }
 
-// InitSCM search and clone only once SCM configurations found
+// InitSCM search and clone only once SCM configurations found.
 func (e *Engine) InitSCM() (err error) {
-
 	hashes := []uint64{}
 
 	wg := sync.WaitGroup{}
@@ -93,7 +93,7 @@ func (e *Engine) InitSCM() (err error) {
 	return err
 }
 
-//Clone parses a scm configuration then clone the git repository if needed
+// Clone parses a scm configuration then clone the git repository if needed.
 func Clone(
 	SCM *map[string]interface{},
 	hashes *[]uint64,
@@ -114,9 +114,8 @@ func Clone(
 
 	if !found {
 		s, err := scm.Unmarshal(*SCM)
-
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 		}
 		*hashes = append(*hashes, hash)
 		wg.Add(1)
@@ -125,7 +124,7 @@ func Clone(
 			defer wg.Done()
 			_, err := s.Clone()
 			if err != nil {
-				fmt.Println(err)
+				logrus.Errorf("err - %s", err)
 			}
 		}(s)
 		<-channel
@@ -134,12 +133,11 @@ func Clone(
 	return nil
 }
 
-// Prepare run every actions needed before going further
+// Prepare run every actions needed before going further.
 func (e *Engine) Prepare() (err error) {
-
-	fmt.Printf("\n\n%s\n", strings.Repeat("+", len("Prepare")+4))
-	fmt.Printf("+ %s +\n", strings.ToTitle("Prepare"))
-	fmt.Printf("%s\n\n", strings.Repeat("+", len("Prepare")+4))
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Prepare")+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle("Prepare"))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Prepare")+4))
 
 	err = tmp.Create()
 	if err != nil {
@@ -147,13 +145,11 @@ func (e *Engine) Prepare() (err error) {
 	}
 
 	err = e.ReadConfigurations()
-
 	if err != nil {
 		return err
 	}
 
 	err = e.InitSCM()
-
 	if err != nil {
 		return err
 	}
@@ -161,7 +157,7 @@ func (e *Engine) Prepare() (err error) {
 	return err
 }
 
-// ReadConfigurations read every strategies configuration
+// ReadConfigurations read every strategies configuration.
 func (e *Engine) ReadConfigurations() error {
 	// Read every strategy files
 	for _, cfgFile := range GetFiles(e.Options.File) {
@@ -175,7 +171,7 @@ func (e *Engine) ReadConfigurations() error {
 
 		err := c.ReadFile(cfgFile, e.Options.ValuesFile)
 		if err != nil {
-			fmt.Printf("Error: %s - %s\n\n", basename, err)
+			logrus.Errorf("%s - %s\n\n", basename, err)
 			continue
 		}
 		e.configurations = append(e.configurations, c)
@@ -184,17 +180,16 @@ func (e *Engine) ReadConfigurations() error {
 
 }
 
-// Run run the full process one yaml file
+// Run run the full process one yaml file.
 func (e *Engine) Run() (err error) {
-	fmt.Printf("\n\n%s\n", strings.Repeat("+", len("Run")+4))
-	fmt.Printf("+ %s +\n", strings.ToTitle("Run"))
-	fmt.Printf("%s\n\n", strings.Repeat("+", len("Run")+4))
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Run")+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle("Run"))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
 
 	for _, conf := range e.configurations {
-
-		fmt.Printf("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
-		fmt.Printf("# %s #\n", strings.ToTitle(conf.Name))
-		fmt.Printf("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
+		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
+		logrus.Infof("# %s #\n", strings.ToTitle(conf.Name))
+		logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 
 		conditionsStageReport := []reports.Stage{}
 		targetsStageReport := []reports.Stage{}
@@ -233,7 +228,7 @@ func (e *Engine) Run() (err error) {
 		err = conf.Source.Execute()
 
 		if err != nil {
-			fmt.Printf("%s %v\n", result.FAILURE, err)
+			logrus.Errorf("%s %v\n", result.FAILURE, err)
 			e.Reports = append(e.Reports, report)
 			continue
 		}
@@ -241,10 +236,11 @@ func (e *Engine) Run() (err error) {
 		if conf.Source.Output == "" {
 			conf.Source.Result = result.FAILURE
 			report.Source.Result = result.FAILURE
-			fmt.Printf("\n%s Something went wrong no value returned from Source", result.FAILURE)
+			logrus.Infof("\n%s Something went wrong no value returned from Source", result.FAILURE)
 			e.Reports = append(e.Reports, report)
 			continue
 		}
+
 		conf.Source.Result = result.SUCCESS
 		report.Source.Result = result.SUCCESS
 
@@ -253,11 +249,6 @@ func (e *Engine) Run() (err error) {
 			ok, err := RunConditions(&c)
 
 			i := 0
-			if err != nil || !ok {
-				fmt.Printf("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, report)
-				continue
-			}
 
 			for _, c := range conf.Conditions {
 				conditionsStageReport[i].Result = c.Result
@@ -265,13 +256,18 @@ func (e *Engine) Run() (err error) {
 				i++
 			}
 
+			if err != nil || !ok {
+				logrus.Infof("%s %v\n", result.FAILURE, err)
+				e.Reports = append(e.Reports, report)
+				continue
+			}
 		}
 
 		if len(conf.Targets) > 0 {
 			c := conf
 			changed, err := RunTargets(&c, &e.Options.Target, &report)
 			if err != nil {
-				fmt.Printf("%s %v\n", result.FAILURE, err)
+				logrus.Errorf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
 				continue
 			}
@@ -280,6 +276,7 @@ func (e *Engine) Run() (err error) {
 			} else {
 				report.Result = result.SUCCESS
 			}
+
 			i := 0
 			for _, t := range conf.Targets {
 				targetsStageReport[i].Result = t.Result
@@ -289,8 +286,9 @@ func (e *Engine) Run() (err error) {
 		}
 
 		if err != nil {
-			fmt.Printf("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
 		}
+
 		e.Reports = append(e.Reports, report)
 	}
 
@@ -298,64 +296,60 @@ func (e *Engine) Run() (err error) {
 	if err != nil {
 		return err
 	}
-	err = e.Reports.Summary()
+	_, _, _, err = e.Reports.Summary()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("\n")
+	logrus.Infof("")
 
 	return err
 }
 
-// RunConditions run every conditions for a given configuration config
+// RunConditions run every conditions for a given configuration config.
 func RunConditions(conf *config.Config) (bool, error) {
-	fmt.Printf("\n\n%s:\n", strings.ToTitle("conditions"))
-	fmt.Printf("%s\n\n", strings.Repeat("=", len("conditions")+1))
+	logrus.Infof("\n\n%s:\n", strings.ToTitle("conditions"))
+	logrus.Infof("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
 	for k, c := range conf.Conditions {
-
 		c.Result = result.FAILURE
 
 		conf.Conditions[k] = c
-		ok, err := c.Run(
-			conf.Source.Prefix + conf.Source.Output + conf.Source.Postfix)
+		ok, err := c.Run(conf.Source.Prefix + conf.Source.Output + conf.Source.Postfix)
 		if err != nil {
 			return false, err
 		}
 
 		if !ok {
-
 			c.Result = result.FAILURE
 			conf.Conditions[k] = c
-			fmt.Printf("\n%s skipping: condition not met\n", result.FAILURE)
-			ok = false
+			logrus.Infof("\n%s skipping: condition not met\n", result.FAILURE)
 			return false, nil
 		}
-		c.Result = result.SUCCESS
 
+		c.Result = result.SUCCESS
 		conf.Conditions[k] = c
 	}
 
 	return true, nil
 }
 
-// RunTargets iterate on every targets then call target on each of them
+// RunTargets iterate on every targets then call target on each of them.
 func RunTargets(config *config.Config, options *target.Options, report *reports.Report) (targetsChanged bool, err error) {
 	targetsChanged = false
 
-	fmt.Printf("\n\n%s:\n", strings.ToTitle("Targets"))
-	fmt.Printf("%s\n\n", strings.Repeat("=", len("Targets")+1))
+	logrus.Infof("\n\n%s:\n", strings.ToTitle("Targets"))
+	logrus.Infof("%s\n\n", strings.Repeat("=", len("Targets")+1))
 
 	sourceReport, err := report.String("source")
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 	conditionReport, err := report.String("conditions")
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	for id, t := range config.Targets {
@@ -390,24 +384,15 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 		targetChanged, err = t.Run(config.Source.Output, options)
 
 		if err != nil {
-			fmt.Printf("Something went wrong in target \"%v\" :\n", id)
-			fmt.Printf("%v\n\n", err)
-		}
-
-		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("Something went wrong in target \"%v\" :\n", id)
+			logrus.Errorf("%v\n\n", err)
 			t.Result = result.FAILURE
-
-		} else if targetChanged && err == nil {
+			return targetChanged, err
+		} else if targetChanged {
 			t.Result = result.CHANGED
 			targetsChanged = true
-
-		} else if !targetChanged && err == nil {
-			t.Result = result.SUCCESS
 		} else {
-			t.Result = result.FAILURE
-			err = fmt.Errorf("unplanned target result")
-			fmt.Println(err)
+			t.Result = result.SUCCESS
 		}
 
 		config.Targets[id] = t
@@ -415,13 +400,13 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 	return targetsChanged, nil
 }
 
-// Show displays configurations that should be apply
+// Show displays configurations that should be apply.
 func (e *Engine) Show() error {
 	for _, conf := range e.configurations {
 
-		fmt.Printf("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
-		fmt.Printf("# %s #\n", strings.ToTitle(conf.Name))
-		fmt.Printf("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
+		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
+		logrus.Infof("# %s #\n", strings.ToTitle(conf.Name))
+		logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 
 		err := conf.Display()
 		if err != nil {

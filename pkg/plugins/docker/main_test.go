@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"testing"
 )
@@ -92,7 +92,7 @@ func TestParseImage(t *testing.T) {
 	for _, d := range data {
 		hostnameGot, imageGot, err := parseImage(d.docker.Image)
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 		}
 
 		if hostnameGot != d.expectedHostname {

@@ -54,9 +54,9 @@ func (d *Docker) Login() (string, error) {
 	}
 
 	if res.StatusCode == 403 {
-		return "", fmt.Errorf("Incorrect authentication credentials")
+		return "", fmt.Errorf("incorrect authentication credentials")
 	} else if res.StatusCode != 200 {
-		return "", fmt.Errorf("Something went wrong while login to Dockerhub")
+		return "", fmt.Errorf("something went wrong while login to dockerhub")
 	}
 
 	type response struct {
@@ -97,7 +97,7 @@ func (d *Docker) Digest() (string, error) {
 			return "", err
 		}
 
-		req.Header.Add("Authorization", "Bearer "+token)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	}
 
 	res, err := http.DefaultClient.Do(req)

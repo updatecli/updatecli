@@ -23,7 +23,7 @@
 #  If conditions are all met, then updatecli will update (if needed) the key
 #  "image.tag" to "1.10.3" for the file "charts/jenkins-wiki-exporter/values.yaml"
 #  from the github repository olblak/chart then commit the change to a temporary branch then open
-#  a pull request targeting master
+#  a pull request targeting main
 #
 # Remark: The specificity in this example is that we are using a go template
 # so we could reuse information accross the yaml file or use environment variable which contains the github token
@@ -35,7 +35,7 @@ source:
   spec:
     owner: "jenkins-infra"
     repository: "jenkins-wiki-exporter"
-    token: "{{ requiredEnv .github.token }}" 
+    token: "{{ requiredEnv .github.token }}"
     username: "olblak"
     version: "latest"
 conditions:

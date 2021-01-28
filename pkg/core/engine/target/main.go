@@ -2,6 +2,7 @@ package target
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -54,7 +55,7 @@ func Unmarshal(target *Target) (spec Spec, err error) {
 
 		err := mapstructure.Decode(target.Spec, &d)
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
@@ -66,7 +67,7 @@ func Unmarshal(target *Target) (spec Spec, err error) {
 		err := mapstructure.Decode(target.Spec, &y)
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
@@ -78,7 +79,7 @@ func Unmarshal(target *Target) (spec Spec, err error) {
 		err := mapstructure.Decode(target.Spec, &f)
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
@@ -95,7 +96,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 
 	if o.DryRun {
 
-		fmt.Printf("**Dry Run enabled**\n\n")
+		logrus.Infof("**Dry Run enabled**")
 	}
 
 	spec, err := Unmarshal(t)

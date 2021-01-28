@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 )
 
 func (d *Docker) isQuaiIO() bool {
@@ -9,7 +9,7 @@ func (d *Docker) isQuaiIO() bool {
 	hostname, _, err := parseImage(d.Image)
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	if hostname == "quay.io" {
