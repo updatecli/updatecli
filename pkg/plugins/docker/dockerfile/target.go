@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"log"
 	"os"
 	"path"
@@ -41,7 +42,7 @@ func (d *Dockerfile) Target(source string, dryRun bool) (changed bool, err error
 
 	if valueFound {
 		if oldVersion == d.Value {
-			fmt.Printf("\u2714 Instruction '%s', from Dockerfile '%v', already set to %s, nothing else need to be done\n",
+			logrus.Infof("\u2714 Instruction '%s', from Dockerfile '%v', already set to %s, nothing else need to be done",
 				d.Instruction,
 				d.File,
 				d.Value)
@@ -49,14 +50,14 @@ func (d *Dockerfile) Target(source string, dryRun bool) (changed bool, err error
 		}
 
 		changed = true
-		fmt.Printf("\u2714 Instruction '%s', from Dockerfile '%v', was updated from '%s' to '%s'\n",
+		logrus.Infof("\u2714 Instruction '%s', from Dockerfile '%v', was updated from '%s' to '%s'",
 			d.Instruction,
 			d.File,
 			oldVersion,
 			d.Value)
 
 	} else {
-		fmt.Printf("\u2717 cannot find instruction '%s' from Dockerfile '%s'\n", d.Instruction, d.File)
+		logrus.Infof("\u2717 cannot find instruction '%s' from Dockerfile '%s'", d.Instruction, d.File)
 		return changed, nil
 	}
 

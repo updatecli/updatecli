@@ -1,7 +1,7 @@
 package dockerfile
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,7 +27,7 @@ func isPositionKeys(key string) bool {
 	matched, err := regexp.MatchString(`^(.*)\[[[:digit:]]*\]\[[[:digit:]]*\]$`, key)
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 	return matched
 }
@@ -50,7 +50,7 @@ func getPositionKeys(k string) (
 		instructionPosition, err = strconv.Atoi(positions[1])
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 			return "", -1, -1, err
 		}
 
@@ -61,7 +61,7 @@ func getPositionKeys(k string) (
 		elementPosition, err = strconv.Atoi(positions[1])
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 			return "", -1, -1, err
 		}
 
