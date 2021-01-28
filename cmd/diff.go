@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -27,7 +28,7 @@ var (
 
 			err := run("diff")
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				logrus.Errorf("command failed")
 				os.Exit(1)
 			}
 		},
