@@ -33,19 +33,19 @@ func (y *Yaml) Condition(source string) (bool, error) {
 	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
 
 	if valueFound && oldVersion == y.Value {
-		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'\n",
+		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'",
 			y.Key,
 			y.File,
 			y.Value)
 		return true, nil
 	} else if valueFound && oldVersion != y.Value {
-		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
+		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
 			y.Key,
 			y.File,
 			oldVersion,
 			y.Value)
 	} else {
-		logrus.Infof("\u2717 cannot find key '%s' from file '%s'\n",
+		logrus.Infof("\u2717 cannot find key '%s' from file '%s'",
 			y.Key,
 			y.File)
 	}
@@ -75,19 +75,19 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
 
 	if valueFound && oldVersion == y.Value {
-		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'\n",
+		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'",
 			y.Key,
 			y.File,
 			y.Value)
 		return true, nil
 	} else if valueFound && oldVersion != y.Value {
-		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'\n",
+		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
 			y.Key,
 			y.File,
 			oldVersion,
 			y.Value)
 	} else {
-		logrus.Infof("\u2717 cannot find key '%s' from file '%s'\n",
+		logrus.Infof("\u2717 cannot find key '%s' from file '%s'",
 			y.Key,
 			y.File)
 	}

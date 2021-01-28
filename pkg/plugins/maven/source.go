@@ -42,7 +42,7 @@ func (m *Maven) Source(workingDir string) (string, error) {
 	}
 
 	if data.Versioning.Latest != "" {
-		logrus.Infof("\u2714 Latest version is %s on Maven Repository\n", data.Versioning.Latest)
+		logrus.Infof("\u2714 Latest version is %s on Maven Repository", data.Versioning.Latest)
 		return data.Versioning.Latest, nil
 	}
 

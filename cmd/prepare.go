@@ -15,7 +15,7 @@ var (
 		Use:   "prepare",
 		Short: "prepare run tasks needed for a run like `git clone`",
 		Run: func(cmd *cobra.Command, args []string) {
-			logrus.Infof("\n%s\n\n", strings.ToTitle("Prepare"))
+			logrus.Infof("\n%s\n", strings.ToTitle("Prepare"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile

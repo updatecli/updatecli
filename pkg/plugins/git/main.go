@@ -42,5 +42,5 @@ func (g *Git) setDirectory() {
 
 	g.Directory = directory
 
-	logrus.Infof("Directory: %v\n", g.Directory)
+	logrus.Infof("Directory: %v", g.Directory)
 }

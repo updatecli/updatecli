@@ -69,7 +69,7 @@ func (d *Docker) Source(workingDir string) (string, error) {
 		r = &dr
 
 	} else {
-		return "", fmt.Errorf("Unknown Docker Registry API")
+		return "", fmt.Errorf("unknown docker registry api")
 	}
 
 	digest, err := r.Digest()
@@ -79,11 +79,11 @@ func (d *Docker) Source(workingDir string) (string, error) {
 	}
 
 	if digest == "" {
-		logrus.Infof("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
+		logrus.Infof("\u2717 No Digest found for docker image %s:%s on the Docker Registry", d.Image, d.Tag)
 	} else {
-		logrus.Infof("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
-		logrus.Infof("\nRemark: Do not forget to add @sha256 after your the docker image name")
-		logrus.Infof("Example: %v@sha256:%v\n", d.Image, digest)
+		logrus.Infof("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry", digest, d.Image, d.Tag)
+		logrus.Infof("Remark: Do not forget to add @sha256 after your the docker image name")
+		logrus.Infof("Example: %v@sha256:%v", d.Image, digest)
 	}
 
 	return digest, nil

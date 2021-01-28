@@ -120,7 +120,7 @@ func (g *Github) OpenPullRequest() error {
 	}
 
 	if ok, url, err := g.isPRExist(); ok && err == nil {
-		logrus.Infof("Pull request titled '%v' already exist at\n\t%s\n", title, url)
+		logrus.Infof("Pull request titled '%v' already exist at\n\t%s", title, url)
 	}
 
 	input := githubv4.CreatePullRequestInput{

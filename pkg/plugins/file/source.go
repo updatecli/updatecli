@@ -12,7 +12,7 @@ func (f *File) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	logrus.Infof("\u2714 Content:\n%v\n\n found from file %v \n",
+	logrus.Infof("\u2714 Content:\n%v\n\n found from file %v",
 		Show(string(data)),
 		f.File)
 

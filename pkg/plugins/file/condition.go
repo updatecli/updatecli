@@ -23,11 +23,11 @@ func (f *File) Condition(source string) (bool, error) {
 	}
 
 	if strings.Compare(f.Content, string(data)) == 0 {
-		logrus.Infof("\u2714 Content from file '%v' is correct'\n", filepath.Join(f.File))
+		logrus.Infof("\u2714 Content from file '%v' is correct'", filepath.Join(f.File))
 		return true, nil
 	}
 
-	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s\n",
+	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s",
 		f.File, Diff(f.Content, string(data)))
 
 	return false, nil
@@ -49,11 +49,11 @@ func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	}
 
 	if strings.Compare(f.Content, string(data)) == 0 {
-		logrus.Infof("\u2714 Content from file '%v' is correct'\n", f.File)
+		logrus.Infof("\u2714 Content from file '%v' is correct'", f.File)
 		return true, nil
 	}
 
-	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s\n",
+	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s",
 		f.File, Diff(f.Content, string(data)))
 
 	return false, nil

@@ -13,7 +13,7 @@ var (
 		Use:   "show",
 		Short: "Print the configuration that will be executed",
 		Run: func(cmd *cobra.Command, args []string) {
-			logrus.Infof("\n%s\n\n", strings.ToTitle("Show"))
+			logrus.Infof("\n%s\n", strings.ToTitle("Show"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile

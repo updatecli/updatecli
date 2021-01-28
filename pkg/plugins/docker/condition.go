@@ -28,7 +28,7 @@ func (d *Docker) Condition(source string) (bool, error) {
 	}
 
 	if d.Tag != "" {
-		logrus.Infof("INFO: Tag %v, defined from configuration file which override the source value '%v'\n", d.Tag, source)
+		logrus.Infof("Tag %v, defined from configuration file which override the source value '%v'", d.Tag, source)
 	} else {
 		d.Tag = source
 	}
@@ -83,7 +83,7 @@ func (d *Docker) Condition(source string) (bool, error) {
 		r = &dr
 
 	} else {
-		return false, fmt.Errorf("Unknown Docker Registry API")
+		return false, fmt.Errorf("unknown docker registry api")
 	}
 
 	digest, err := r.Digest()
@@ -93,11 +93,11 @@ func (d *Docker) Condition(source string) (bool, error) {
 	}
 
 	if digest == "" {
-		logrus.Infof("\u2717 %s:%s doesn't exist on the Docker Registry \n", d.Image, d.Tag)
+		logrus.Infof("\u2717 %s:%s doesn't exist on the Docker Registry", d.Image, d.Tag)
 		return false, nil
 	}
 
-	logrus.Infof("\u2714 %s:%s available on the Docker Registry\n", d.Image, d.Tag)
+	logrus.Infof("\u2714 %s:%s available on the Docker Registry", d.Image, d.Tag)
 
 	return true, nil
 

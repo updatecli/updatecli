@@ -14,7 +14,7 @@ import (
 // Condition tests if a specific version exist on the maven repository
 func (m *Maven) Condition(source string) (bool, error) {
 	if m.Version != "" {
-		logrus.Infof("Version %v, already defined from configuration file\n", m.Version)
+		logrus.Infof("Version %v, already defined from configuration file", m.Version)
 	} else {
 		m.Version = source
 	}
@@ -50,13 +50,13 @@ func (m *Maven) Condition(source string) (bool, error) {
 
 	for _, version := range data.Versioning.Versions.Version {
 		if version == m.Version {
-			logrus.Infof("\u2713 Version %s is available on Maven Repository\n", m.Version)
+			logrus.Infof("\u2713 Version %s is available on Maven Repository", m.Version)
 			return true, nil
 		}
 
 	}
 
-	logrus.Infof("\u2716 Version %s is not available on Maven Repository\n", m.Version)
+	logrus.Infof("\u2716 Version %s is not available on Maven Repository", m.Version)
 	return false, nil
 }
 

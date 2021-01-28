@@ -15,7 +15,7 @@ var (
 		Use:   "diff",
 		Short: "diff shows changes",
 		Run: func(cmd *cobra.Command, args []string) {
-			logrus.Infof("\n%s\n\n", strings.ToTitle("Diff"))
+			logrus.Infof("\n%s\n", strings.ToTitle("Diff"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile
