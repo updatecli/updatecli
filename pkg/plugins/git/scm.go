@@ -1,7 +1,7 @@
 package git
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 
 	git "github.com/olblak/updateCli/pkg/plugins/git/generic"
@@ -51,13 +51,13 @@ func (g *Git) Clone() (string, error) {
 		g.GetDirectory())
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 		return "", err
 	}
 
 	err = g.Checkout()
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 		return "", err
 	}
 
@@ -97,7 +97,7 @@ func (g *Git) Push() error {
 		return err
 	}
 
-	fmt.Printf("\n")
+	logrus.Infof("")
 	return nil
 
 }

@@ -1,7 +1,7 @@
 package git
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"strings"
@@ -33,14 +33,14 @@ func (g *Git) setDirectory() {
 	for _, dir := range []string{tmp.Directory, URL} {
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 
-			err := os.MkdirAll(dir, 0755)
+			err = os.MkdirAll(dir, 0755)
 			if err != nil {
-				fmt.Println(err)
+				logrus.Errorf("err - %s", err)
 			}
 		}
 	}
 
 	g.Directory = directory
 
-	fmt.Printf("Directory: %v\n", g.Directory)
+	logrus.Infof("Directory: %v", g.Directory)
 }

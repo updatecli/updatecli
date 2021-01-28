@@ -1,7 +1,7 @@
 package file
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 )
 
 // Source return a file content
@@ -12,7 +12,7 @@ func (f *File) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	fmt.Printf("\u2714 Content:\n%v\n\n found from file %v \n",
+	logrus.Infof("\u2714 Content:\n%v\n\n found from file %v",
 		Show(string(data)),
 		f.File)
 

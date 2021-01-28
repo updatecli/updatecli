@@ -1,7 +1,7 @@
 package yaml
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"testing"
 
@@ -309,7 +309,7 @@ func TestReplace(t *testing.T) {
 
 	err := yaml.Unmarshal([]byte(data), &out)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	for _, d := range dataset {
@@ -327,7 +327,7 @@ func TestReplace(t *testing.T) {
 	out2 := yaml.Node{}
 	err = yaml.Unmarshal([]byte(data2), &out2)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	for _, d := range dataset2 {
@@ -364,7 +364,7 @@ image4:
 
 	err := yaml.Unmarshal([]byte(inputData), &out)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	replace(&out, []string{"image", "repository"}, "apache", 1)
@@ -372,7 +372,7 @@ image4:
 	raw, err := yaml.Marshal(&out)
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	if !(reflect.DeepEqual(raw, []byte(outputData))) {

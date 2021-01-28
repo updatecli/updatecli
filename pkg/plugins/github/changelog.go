@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/shurcooL/githubv4"
@@ -61,7 +62,7 @@ func (g *Github) Changelog(name string) (string, error) {
 	err = client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		fmt.Printf("\t %s\n", err)
+		logrus.Warnf("\t %s", err)
 		return "", err
 	}
 
@@ -73,7 +74,7 @@ func (g *Github) Changelog(name string) (string, error) {
 			g.Owner,
 			g.Repository)
 	} else {
-		changelog = fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v\n",
+		changelog = fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v",
 			query.Repository.Release.PublishedAt.String(),
 			query.Repository.Release.Url,
 			query.Repository.Release.Description)

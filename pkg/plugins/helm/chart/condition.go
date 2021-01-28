@@ -2,6 +2,7 @@ package chart
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 // Condition check if a specific chart version exist
 func (c *Chart) Condition(source string) (bool, error) {
 	if c.Version != "" {
-		fmt.Printf("Version %v, already defined from configuration file\n", c.Version)
+		logrus.Infof("Version %v, already defined from configuration file", c.Version)
 	} else {
 		c.Version = source
 	}
@@ -45,11 +46,11 @@ func (c *Chart) Condition(source string) (bool, error) {
 	}
 
 	if index.Has(c.Name, c.Version) {
-		fmt.Printf("\u2714 Helm Chart '%s' is available on %s%s\n", c.Name, c.URL, message)
+		logrus.Infof("\u2714 Helm Chart '%s' is available on %s%s", c.Name, c.URL, message)
 		return true, nil
 	}
 
-	fmt.Printf("\u2717 Helm Chart '%s' isn't available on %s%s\n", c.Name, c.URL, message)
+	logrus.Infof("\u2717 Helm Chart '%s' isn't available on %s%s", c.Name, c.URL, message)
 	return false, nil
 }
 

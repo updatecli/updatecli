@@ -26,7 +26,7 @@ conditions:
         repository: "updatecli"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
-        branch: master
+        branch: main
 targets:
   dockerFile:
     name: "isDockerfileCorrect"
@@ -42,5 +42,5 @@ targets:
         repository: "updatecli"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
-        branch: master
+        branch: main
         email: "update-bot@olblak.com"

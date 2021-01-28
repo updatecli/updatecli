@@ -2,6 +2,7 @@ package source
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
 
@@ -43,8 +44,8 @@ type Changelog interface {
 // Execute execute actions defined by the source configuration
 func (s *Source) Execute() error {
 
-	fmt.Printf("\n\n%s:\n", strings.ToTitle("Source"))
-	fmt.Printf("%s\n\n", strings.Repeat("=", len("Source")+1))
+	logrus.Infof("\n\n%s:\n", strings.ToTitle("Source"))
+	logrus.Infof("%s\n\n", strings.Repeat("=", len("Source")+1))
 
 	var output string
 	var err error
@@ -116,10 +117,10 @@ func (s *Source) Execute() error {
 	}
 
 	if len(s.Changelog) > 0 {
-		fmt.Printf("\n\n%s:\n", strings.ToTitle("Changelog"))
-		fmt.Printf("%s\n", strings.Repeat("=", len("Changelog")+1))
+		logrus.Infof("\n\n%s:\n", strings.ToTitle("Changelog"))
+		logrus.Infof("%s\n", strings.Repeat("=", len("Changelog")+1))
 
-		fmt.Printf("%s\n", s.Changelog)
+		logrus.Infof("%s\n", s.Changelog)
 
 	}
 
