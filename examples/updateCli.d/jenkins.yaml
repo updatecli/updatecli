@@ -20,7 +20,7 @@ targets:
     kind: yaml
     spec:
       file: "charts/jenkins/values.yaml"
-      key: "jenkins.master.imageTag"
+      key: "jenkins.controller.imageTag"
     scm:
       github:
         user: "updatecli"

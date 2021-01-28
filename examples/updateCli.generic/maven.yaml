@@ -19,9 +19,9 @@
 #   1 - Test a dockerImage condition, "Do we have a docker image published on Dockerhub"
 #       for the "jenkins/jenkins" using the tag "2.264-jdk11"
 #         => Yes, proceed, No then abort
-#   2 - Test a yaml condition, "Do we have a docker image set?" 
-#       Test if the key jenkins.master.image is set to the value "jenkins/jenkins" 
-#       from the file "charts/jenkins/values.yaml" located on the git repository 
+#   2 - Test a yaml condition, "Do we have a docker image set?"
+#       Test if the key jenkins.controller.image is set to the value "jenkins/jenkins"
+#       from the file "charts/jenkins/values.yaml" located on the git repository
 #       "tgit@github.com:olblak/charts.git"
 #         => Yes, proceed, No then abort
 #
@@ -57,7 +57,7 @@ conditions:
     kind: yaml
     spec:
       file: "charts/jenkins/values.yaml"
-      key: "jenkins.master.image"
+      key: "jenkins.controller.image"
       value: "jenkins/jenkins"
     scm:
       git:

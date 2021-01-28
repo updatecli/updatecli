@@ -460,7 +460,7 @@ targets:
     postfix: "-jdk11"
     spec:
       file: "charts/jenkins/values.yaml"
-      key: "jenkins.master.imageTag"
+      key: "jenkins.controller.imageTag"
     scm:
       github:
         user: "updatecli"
