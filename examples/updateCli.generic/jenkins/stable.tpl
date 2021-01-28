@@ -10,7 +10,7 @@ conditions:
   jenkinsVersion:
     kind: jenkins
     spec:
-      version: "2.275"
+      version: "2.263.3"
   jenkinsStable:
     kind: jenkins
     spec:
