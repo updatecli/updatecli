@@ -1,7 +1,7 @@
 package file
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
 
@@ -23,11 +23,11 @@ func (f *File) Condition(source string) (bool, error) {
 	}
 
 	if strings.Compare(f.Content, string(data)) == 0 {
-		fmt.Printf("\u2714 Content from file '%v' is correct'\n", filepath.Join(f.File))
+		logrus.Infof("\u2714 Content from file '%v' is correct'\n", filepath.Join(f.File))
 		return true, nil
 	}
 
-	fmt.Printf("\u2717 Wrong content from file '%v'. \n%s\n",
+	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s\n",
 		f.File, Diff(f.Content, string(data)))
 
 	return false, nil
@@ -38,7 +38,7 @@ func (f *File) Condition(source string) (bool, error) {
 func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 
 	if len(f.Content) > 0 {
-		fmt.Println("Key content defined from updatecli configuration")
+		logrus.Infof("Key content defined from updatecli configuration")
 	} else {
 		f.Content = source
 	}
@@ -49,11 +49,11 @@ func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	}
 
 	if strings.Compare(f.Content, string(data)) == 0 {
-		fmt.Printf("\u2714 Content from file '%v' is correct'\n", f.File)
+		logrus.Infof("\u2714 Content from file '%v' is correct'\n", f.File)
 		return true, nil
 	}
 
-	fmt.Printf("\u2717 Wrong content from file '%v'. \n%s\n",
+	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s\n",
 		f.File, Diff(f.Content, string(data)))
 
 	return false, nil

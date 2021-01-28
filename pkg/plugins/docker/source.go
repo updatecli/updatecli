@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerregistry"
@@ -78,11 +79,11 @@ func (d *Docker) Source(workingDir string) (string, error) {
 	}
 
 	if digest == "" {
-		fmt.Printf("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
+		logrus.Infof("\u2717 No Digest found for docker image %s:%s on the Docker Registry \n", d.Image, d.Tag)
 	} else {
-		fmt.Printf("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
-		fmt.Printf("\nRemark: Do not forget to add @sha256 after your the docker image name\n")
-		fmt.Printf("Example: %v@sha256:%v\n", d.Image, digest)
+		logrus.Infof("\u2714 Digest '%v' found for docker image %s:%s available from Docker Registry\n", digest, d.Image, d.Tag)
+		logrus.Infof("\nRemark: Do not forget to add @sha256 after your the docker image name")
+		logrus.Infof("Example: %v@sha256:%v\n", d.Image, digest)
 	}
 
 	return digest, nil

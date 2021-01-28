@@ -3,6 +3,7 @@ package maven
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -41,10 +42,10 @@ func (m *Maven) Source(workingDir string) (string, error) {
 	}
 
 	if data.Versioning.Latest != "" {
-		fmt.Printf("\u2714 Latest version is %s on Maven Repository\n", data.Versioning.Latest)
+		logrus.Infof("\u2714 Latest version is %s on Maven Repository\n", data.Versioning.Latest)
 		return data.Versioning.Latest, nil
 	}
 
-	fmt.Printf("\u2717 No latest version on Maven Repository\n")
+	logrus.Infof("\u2717 No latest version on Maven Repository")
 	return "", nil
 }

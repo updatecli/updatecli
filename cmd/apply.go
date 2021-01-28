@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
 
@@ -17,7 +17,7 @@ var (
 		Use:   "apply",
 		Short: "apply checks if an update is needed then apply the changes",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("\n%s\n\n", strings.ToTitle("Apply"))
+			logrus.Infof("\n%s\n\n", strings.ToTitle("Apply"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile
@@ -29,7 +29,7 @@ var (
 
 			err := run("apply")
 			if err != nil {
-				fmt.Errorf("command failed: %s", err)
+				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 		},

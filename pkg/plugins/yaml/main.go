@@ -1,7 +1,7 @@
 package yaml
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
 
@@ -26,7 +26,7 @@ func isPositionKey(key string) bool {
 	matched, err := regexp.MatchString("(.*)[[[:digit:]]+]$", key)
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 	return matched
 }
@@ -44,7 +44,7 @@ func getPositionKeyValue(k string) (key string, position int, err error) {
 		position, err = strconv.Atoi(positions[1])
 
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 			return "", -1, err
 		}
 
@@ -69,7 +69,7 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 
 	key, position, err := getPositionKeyValue(keys[0])
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 	}
 
 	// If document start with a sequence and we are looking for an array position
@@ -158,7 +158,7 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 
 				key, position, err = getPositionKeyValue(keys[0])
 				if err != nil {
-					fmt.Println(err)
+					logrus.Errorf("err - %s", err)
 				}
 			} else {
 				if entry.Content[index+1].Kind == yaml.ScalarNode && !isPositionKey(keys[0]) {

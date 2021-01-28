@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
 
@@ -15,7 +15,7 @@ var (
 		Use:   "prepare",
 		Short: "prepare run tasks needed for a run like `git clone`",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("\n%s\n\n", strings.ToTitle("Prepare"))
+			logrus.Infof("\n%s\n\n", strings.ToTitle("Prepare"))
 
 			e.Options.File = cfgFile
 			e.Options.ValuesFile = valuesFile
@@ -24,7 +24,7 @@ var (
 
 			err := run("prepare")
 			if err != nil {
-				fmt.Errorf("command failed: %s", err)
+				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 		},

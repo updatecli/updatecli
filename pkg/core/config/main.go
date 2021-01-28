@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
 
@@ -77,7 +78,7 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 
 // Check is a function that test if the configuration is correct
 func (config *Config) Check() bool {
-	fmt.Printf("TODO: Implement configuration check\n")
+	logrus.Infof("TODO: Implement configuration check")
 	return true
 }
 
@@ -87,6 +88,6 @@ func (config *Config) Display() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s", string(c))
+	logrus.Infof("%s", string(c))
 	return nil
 }

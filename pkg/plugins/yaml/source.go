@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/olblak/updateCli/pkg/plugins/file"
@@ -13,11 +14,11 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
 
 	if y.Value != "" {
-		fmt.Println("WARNING: Key 'Value' is not used by source YAML")
+		logrus.Warnf("Key 'Value' is not used by source YAML")
 	}
 
 	if len(y.Path) > 0 {
-		fmt.Println("WARNING: Key 'Path' is obsolete and now directly defined from file")
+		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
 	data, err := file.Read(y.File, workingDir)
@@ -36,11 +37,11 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	valueFound, value, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
 
 	if valueFound {
-		fmt.Printf("\u2714 Value '%v' found for key %v in the yaml file %v \n", value, y.Key, y.File)
+		logrus.Infof("\u2714 Value '%v' found for key %v in the yaml file %v \n", value, y.Key, y.File)
 		return value, nil
 	}
 
-	fmt.Printf("\u2717 cannot find key '%s' from file '%s'\n",
+	logrus.Infof("\u2717 cannot find key '%s' from file '%s'\n",
 		y.Key,
 		y.File)
 	return "", nil

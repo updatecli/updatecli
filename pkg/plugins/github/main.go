@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"strings"
@@ -67,7 +68,7 @@ func (g *Github) setDirectory() {
 
 		err := os.MkdirAll(g.Directory, 0755)
 		if err != nil {
-			fmt.Println(err)
+			logrus.Errorf("err - %s", err)
 		}
 	}
 }
@@ -103,7 +104,7 @@ func (g *Github) OpenPullRequest() error {
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
-	fmt.Println("Opening Github pull request")
+	logrus.Infof("Opening Github pull request")
 
 	title := fmt.Sprintf("[updatecli] Update %v version to %v", g.Name, g.Version)
 	repositoryID, err := g.queryRepositoryID()
@@ -119,7 +120,7 @@ func (g *Github) OpenPullRequest() error {
 	}
 
 	if ok, url, err := g.isPRExist(); ok && err == nil {
-		fmt.Printf("Pull request titled '%v' already exist at\n\t%s\n", title, url)
+		logrus.Infof("Pull request titled '%v' already exist at\n\t%s\n", title, url)
 	}
 
 	input := githubv4.CreatePullRequestInput{
@@ -133,7 +134,6 @@ func (g *Github) OpenPullRequest() error {
 	}
 
 	err = client.Mutate(context.Background(), &mutation, input, nil)
-
 	if err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func (g *Github) queryRepositoryID() (string, error) {
 	err := client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("err - %s", err)
 		return "", err
 	}
 

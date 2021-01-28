@@ -24,7 +24,7 @@ func (t *Template) Unmarshal(config *Config) error {
 		"requiredEnv": func(env string) (string, error) {
 			value := os.Getenv(env)
 			if value == "" {
-				return "", errors.New("No value found for environment variable " + env)
+				return "", errors.New("no value found for environment variable " + env)
 			}
 			return value, nil
 		},

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ var (
 		Short: "Print current application version",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("\n%s\n\n", strings.ToTitle("Version"))
+			logrus.Infof("\n%s\n\n", strings.ToTitle("Version"))
 			version.Show()
 		},
 	}
