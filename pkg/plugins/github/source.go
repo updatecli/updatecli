@@ -66,8 +66,8 @@ func (g *Github) Source(workingDir string) (string, error) {
 	err = client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		logrus.Infof("\u2717 Couldn't find a valid github release version")
-		logrus.Infof("\t %s\n", err)
+		logrus.Errorf("\u2717 Couldn't find a valid github release version")
+		logrus.Errorf("\t %s\n", err)
 		return "", err
 	}
 

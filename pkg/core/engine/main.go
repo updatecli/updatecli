@@ -37,7 +37,7 @@ func (e *Engine) Clean() (err error) {
 func GetFiles(root string) (files []string) {
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			logrus.Infof("\n\u26A0 File %s: %s\n", path, err)
+			logrus.Errorf("\n\u26A0 File %s: %s\n", path, err)
 			os.Exit(1)
 		}
 		if info.Mode().IsRegular() {
@@ -171,7 +171,7 @@ func (e *Engine) ReadConfigurations() error {
 
 		err := c.ReadFile(cfgFile, e.Options.ValuesFile)
 		if err != nil {
-			logrus.Infof("Error: %s - %s\n\n", basename, err)
+			logrus.Errorf("%s - %s\n\n", basename, err)
 			continue
 		}
 		e.configurations = append(e.configurations, c)
@@ -187,7 +187,6 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
 
 	for _, conf := range e.configurations {
-
 		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
 		logrus.Infof("# %s #\n", strings.ToTitle(conf.Name))
 		logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
@@ -229,7 +228,7 @@ func (e *Engine) Run() (err error) {
 		err = conf.Source.Execute()
 
 		if err != nil {
-			logrus.Infof("%s %v\n", result.FAILURE, err)
+			logrus.Errorf("%s %v\n", result.FAILURE, err)
 			e.Reports = append(e.Reports, report)
 			continue
 		}
@@ -241,6 +240,7 @@ func (e *Engine) Run() (err error) {
 			e.Reports = append(e.Reports, report)
 			continue
 		}
+
 		conf.Source.Result = result.SUCCESS
 		report.Source.Result = result.SUCCESS
 
@@ -267,7 +267,7 @@ func (e *Engine) Run() (err error) {
 			c := conf
 			changed, err := RunTargets(&c, &e.Options.Target, &report)
 			if err != nil {
-				logrus.Infof("%s %v\n", result.FAILURE, err)
+				logrus.Errorf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
 				continue
 			}
@@ -286,7 +286,7 @@ func (e *Engine) Run() (err error) {
 		}
 
 		if err != nil {
-			logrus.Infof("\n%s %s \n\n", result.FAILURE, err)
+			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
 		}
 
 		e.Reports = append(e.Reports, report)
@@ -384,9 +384,8 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 		targetChanged, err = t.Run(config.Source.Output, options)
 
 		if err != nil {
-			logrus.Infof("Something went wrong in target \"%v\" :\n", id)
-			logrus.Infof("%v\n\n", err)
-			logrus.Errorf("err - %s", err)
+			logrus.Errorf("Something went wrong in target \"%v\" :\n", id)
+			logrus.Errorf("%v\n\n", err)
 			t.Result = result.FAILURE
 			return targetChanged, err
 		} else if targetChanged {
