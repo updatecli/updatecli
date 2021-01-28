@@ -3,10 +3,11 @@ package generic
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -203,12 +204,16 @@ func Clone(username, password, URL, workingDir string) error {
 		})
 
 		logrus.Infof(b.String())
+
 		b.Reset()
-		if err != nil {
+
+		if err != nil &&
+			err != git.NoErrAlreadyUpToDate {
 			return err
 		}
 
-	} else if err != nil {
+	} else if err != nil &&
+		err != git.NoErrAlreadyUpToDate {
 		return err
 	}
 
@@ -224,7 +229,8 @@ func Clone(username, password, URL, workingDir string) error {
 		err := r.Fetch(&git.FetchOptions{Progress: &b})
 		logrus.Infof(b.String())
 		b.Reset()
-		if err != nil {
+		if err != nil &&
+			err != git.NoErrAlreadyUpToDate {
 			return err
 		}
 	}
