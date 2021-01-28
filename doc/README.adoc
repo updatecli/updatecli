@@ -469,7 +469,7 @@ targets:
         repository: "charts"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "updatecli"
-        branch: "master"
+        branch: "main"
 ```
 
 == Continuous Update
