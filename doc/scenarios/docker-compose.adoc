@@ -157,7 +157,7 @@ targets:
         repository: "charts"
         token: "{{ requiredEnv GITHUB_TOKEN }}"
         username: "johnDoe"
-        branch: "master"
+        branch: "main"
 
 ```
 

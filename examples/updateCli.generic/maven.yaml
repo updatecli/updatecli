@@ -29,9 +29,9 @@
 #  ========
 #
 #  If conditions are all met, then updatecli will update (if needed) the key
-#  "jenkins.master.imageTag" to "2.264-jdk11" for the file "charts/jenkins/values.yaml"
-#  from the git repository "git@github.com:olblak/charts.git" then commit the change to the 
-#  branch master
+#  "jenkins.controller.imageTag" to "2.264-jdk11" for the file "charts/jenkins/values.yaml"
+#  from the git repository "git@github.com:olblak/charts.git" then commit the change to the
+#  branch main
 #
 #
 ###
@@ -62,7 +62,7 @@ conditions:
     scm:
       git:
         url: "git@github.com:olblak/charts.git"
-        branch: "master"
+        branch: "main"
         user: "olblak"
         email: "me@olblak.com"
 targets:
@@ -71,12 +71,11 @@ targets:
     kind: yaml
     spec:
       file: "charts/jenkins/values.yaml"
-      key: "jenkins.master.imageTag"
+      key: "jenkins.controller.imageTag"
     scm:
       git:
         url: "git@github.com:olblak/charts.git"
-        branch: master
+        branch: main
         user: olblak
         email: me@olblak.com
         directory: "/home/olblak/Project/Jenkins-infra/charts"
-
