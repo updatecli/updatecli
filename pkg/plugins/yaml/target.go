@@ -2,12 +2,12 @@ package yaml
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
-	"syscall"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/plugins/file"
@@ -71,19 +71,7 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 			logrus.Errorf("unable to get file info: %s", err)
 		}
 
-		var uid int
-		var gid int
-		if stat, ok := fileInfo.Sys().(*syscall.Stat_t); ok {
-			uid = int(stat.Uid)
-			gid = int(stat.Gid)
-		} else {
-			// we are not in linux, this won't work anyway in windows,
-			// but maybe you want to log warnings
-			uid = -1
-			gid = -1
-		}
-
-		logrus.Debugf("fileInfo for %s mode=%s, uid=%d, gid=%d", y.File, fileInfo.Mode().String(), uid, gid)
+		logrus.Debugf("fileInfo for %s mode=%s", y.File, fileInfo.Mode().String())
 
 		user, err := user.Current()
 		if err != nil {
