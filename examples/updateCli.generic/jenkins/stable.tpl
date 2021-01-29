@@ -2,7 +2,8 @@
 source:
   kind: jenkins
   spec:
-    release: stable
+    # already default value
+    # release: stable
     github:
       token: {{ requiredEnv .github.token }}
       username: {{ .github.username }}
@@ -11,6 +12,8 @@ conditions:
     kind: jenkins
     spec:
       version: "2.263.3"
+  defaultjenkinsStable:
+    kind: jenkins
   jenkinsStable:
     kind: jenkins
     spec:

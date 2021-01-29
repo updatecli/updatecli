@@ -10,6 +10,7 @@ import (
 
 	"github.com/olblak/updateCli/pkg/plugins/github"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
+	"github.com/sirupsen/logrus"
 )
 
 // Jenkins defines parameters needed to retrieve latest Jenkins version
@@ -30,9 +31,16 @@ const (
 )
 
 // Validate run some validation on the Jenkins struct
-func (j *Jenkins) Validate() error {
-	if len(j.Release) == 0 {
+func (j *Jenkins) Validate() (err error) {
+	if len(j.Release) == 0 && len(j.Version) == 0 {
+		logrus.Debugln("Jenkins release type not defined, default set to stable")
 		j.Release = "stable"
+	} else if len(j.Release) == 0 && len(j.Version) != 0 {
+		j.Release, err = ReleaseType(j.Version)
+		logrus.Debugf("Jenkins release type not defined, guessing based on Version %s", j.Version)
+		if err != nil {
+			return err
+		}
 	}
 
 	if j.Release != WEEKLY &&
