@@ -15,6 +15,10 @@ func (j *Jenkins) Source(workingDir string) (string, error) {
 
 	latest, versions, err := GetVersions()
 
+	if err != nil {
+		return "", err
+	}
+
 	if strings.Compare(WEEKLY, j.Release) == 0 {
 		fmt.Printf("\u2714 Version %s found for the %s release", latest, WEEKLY)
 		return latest, nil
