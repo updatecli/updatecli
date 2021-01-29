@@ -2,9 +2,10 @@ package reports
 
 import (
 	"bytes"
-	"errors"
-	"github.com/sirupsen/logrus"
+	"fmt"
 	"text/template"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/result"
 )
@@ -92,7 +93,10 @@ func (r *Reports) Summary() (int, int, int, error) {
 	logrus.Infof("%d job applied changes", changedCounter)
 
 	if failedCounter > 0 {
-		return successCounter, changedCounter, failedCounter, errors.New("a job has failed")
+		return successCounter,
+			changedCounter,
+			failedCounter,
+			fmt.Errorf("%d/%d job(s) failed", failedCounter, counter)
 	}
 
 	return successCounter, changedCounter, failedCounter, nil
