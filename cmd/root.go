@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/olblak/updateCli/pkg/core/log"
 	"github.com/sirupsen/logrus"
-	"os"
 
 	"github.com/olblak/updateCli/pkg/core/engine"
 	"github.com/olblak/updateCli/pkg/core/result"
@@ -14,10 +15,10 @@ import (
 var (
 	cfgFile    string
 	valuesFile string
-	e engine.Engine
-    verbose bool
+	e          engine.Engine
+	verbose    bool
 
-rootCmd = &cobra.Command{
+	rootCmd = &cobra.Command{
 		Use:   "updateCli",
 		Short: "Updatecli is a tool used to define and apply file update strategies. ",
 		Long: `
@@ -61,12 +62,6 @@ func run(command string) error {
 
 	switch command {
 	case "apply":
-		err := e.Prepare()
-		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
-			return err
-		}
-
 		if applyClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -75,24 +70,30 @@ func run(command string) error {
 			}()
 		}
 
+		err := e.Prepare()
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			logrus.Errorln("Continuing and trying to go as far as possible")
+		}
+
 		err = e.Run()
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	case "diff":
-		err := e.Prepare()
-		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
-			return err
-		}
-
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
 					logrus.Errorf("error in diff clean - %s", err)
 				}
 			}()
+		}
+
+		err := e.Prepare()
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			logrus.Errorln("Continuing and trying to go as far as possible")
 		}
 
 		err = e.Run()
@@ -108,6 +109,12 @@ func run(command string) error {
 				}
 			}()
 		}
+
+		err := e.Prepare()
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+		}
+
 	case "show":
 		err := e.Show()
 		if err != nil {
