@@ -31,11 +31,14 @@ jobs:
             dep ensure
         fi
 
-    - name: Build
-      run: go build -v .
+    - name: Run GolangCI-Lint Action
+      uses: docker://matoous/golangci-lint-action:v1.1.0
 
     - name: Test
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      run: go test ./...
+      run: make test
+
+    - name: Build
+      run: make build.all

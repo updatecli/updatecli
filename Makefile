@@ -58,3 +58,6 @@ display: echo $(DOCKER_TAG)
 
 test:
 	go test ./...
+
+lint:
+	golangci-lint run
