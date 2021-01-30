@@ -1,6 +1,8 @@
 package file
 
 import (
+	"strings"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -12,9 +14,20 @@ func (f *File) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	logrus.Infof("\u2714 Content:\n%v\n\n found from file %v",
-		Show(string(data)),
-		f.File)
+	if len(f.Content) == 0 {
+		f.Content = string(data)
+	}
 
-	return string(data), nil
+	if len(f.Line) > 0 {
+		for _, line := range strings.Split(f.Content, "\n") {
+			if strings.Contains(line, f.Line) {
+				f.Content = line
+				break
+			}
+		}
+	}
+
+	logrus.Infof("\u2714 Content:\n%v\n\n found from file %v", f.Content, f.File)
+
+	return f.Content, nil
 }

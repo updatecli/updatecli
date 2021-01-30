@@ -23,13 +23,24 @@ func (f *File) Condition(source string) (bool, error) {
 		return false, err
 	}
 
-	if strings.Compare(f.Content, string(data)) == 0 {
+	content := string(data)
+
+	if len(f.Line) > 0 {
+		for _, line := range strings.Split(content, "\n") {
+			if strings.Contains(line, f.Line) {
+				content = line
+				break
+			}
+		}
+	}
+
+	if strings.Compare(f.Content, content) == 0 {
 		logrus.Infof("\u2714 Content from file '%v' is correct'", filepath.Join(f.File))
 		return true, nil
 	}
 
 	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s",
-		f.File, Diff(f.Content, string(data)))
+		f.File, Diff(f.Content, content))
 
 	return false, nil
 }
