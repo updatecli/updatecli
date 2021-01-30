@@ -1,10 +1,11 @@
 package git
 
 import (
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/tmp"
 )

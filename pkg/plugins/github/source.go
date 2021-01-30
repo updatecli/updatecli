@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/shurcooL/githubv4"

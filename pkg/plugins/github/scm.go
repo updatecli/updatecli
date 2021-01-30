@@ -2,8 +2,9 @@ package github
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
+
+	"github.com/sirupsen/logrus"
 
 	git "github.com/olblak/updateCli/pkg/plugins/git/generic"
 )

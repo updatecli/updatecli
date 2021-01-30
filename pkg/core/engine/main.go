@@ -297,10 +297,17 @@ func (e *Engine) Run() (err error) {
 	if err != nil {
 		return err
 	}
-	_, _, _, err = e.Reports.Summary()
+	successCounter, changedCounter, failedCounter, err := e.Reports.Summary()
 	if err != nil {
 		return err
 	}
+
+	logrus.Infof("Run Summary")
+	logrus.Infof("===========")
+	logrus.Infof("%d job run", successCounter+changedCounter+failedCounter)
+	logrus.Infof("%d job succeed", successCounter)
+	logrus.Infof("%d job failed", failedCounter)
+	logrus.Infof("%d job applied changes", changedCounter)
 
 	logrus.Infof("")
 
@@ -416,7 +423,7 @@ func (e *Engine) Show() error {
 		logrus.Infof("# %s #\n", strings.ToTitle(conf.Name))
 		logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 
-		err := conf.Display()
+		err = conf.Display()
 		if err != nil {
 			return err
 		}

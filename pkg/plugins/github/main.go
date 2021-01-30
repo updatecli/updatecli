@@ -3,10 +3,11 @@ package github
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/tmp"
 	"github.com/shurcooL/githubv4"

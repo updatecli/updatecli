@@ -2,8 +2,9 @@ package log
 
 import (
 	"bytes"
-	"github.com/fatih/color"
 	"strings"
+
+	"github.com/fatih/color"
 
 	"github.com/sirupsen/logrus"
 )

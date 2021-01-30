@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/engine/condition"
 	"github.com/olblak/updateCli/pkg/core/engine/source"
