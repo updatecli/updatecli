@@ -1,8 +1,9 @@
 package quay
 
 import (
-	"github.com/sirupsen/logrus"
 	"testing"
+
+	"github.com/sirupsen/logrus"
 )
 
 type DataSet struct {

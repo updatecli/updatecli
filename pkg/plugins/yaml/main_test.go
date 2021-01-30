@@ -1,9 +1,10 @@
 package yaml
 
 import (
-	"github.com/sirupsen/logrus"
 	"reflect"
 	"testing"
+
+	"github.com/sirupsen/logrus"
 
 	"gopkg.in/yaml.v3"
 )

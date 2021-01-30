@@ -3,10 +3,11 @@ package maven
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Source return the latest version

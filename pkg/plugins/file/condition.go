@@ -1,9 +1,10 @@
 package file
 
 import (
-	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
 )

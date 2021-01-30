@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/scm"

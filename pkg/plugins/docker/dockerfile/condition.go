@@ -2,8 +2,9 @@ package dockerfile
 
 import (
 	"bytes"
-	"github.com/sirupsen/logrus"
 	"path"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/helpers"
 	"github.com/olblak/updateCli/pkg/core/scm"
