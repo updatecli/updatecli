@@ -2,9 +2,10 @@ package engine
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
@@ -402,6 +403,13 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 
 // Show displays configurations that should be apply.
 func (e *Engine) Show() error {
+
+	err := e.ReadConfigurations()
+
+	if err != nil {
+		return err
+	}
+
 	for _, conf := range e.configurations {
 
 		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
