@@ -3,8 +3,9 @@ package github
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/shurcooL/githubv4"
 )

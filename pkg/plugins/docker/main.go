@@ -2,10 +2,11 @@ package docker
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Docker contains various information to interact with a docker registry

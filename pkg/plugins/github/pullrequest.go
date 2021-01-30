@@ -2,8 +2,9 @@ package github
 
 import (
 	"bytes"
-	"github.com/sirupsen/logrus"
 	"text/template"
+
+	"github.com/sirupsen/logrus"
 )
 
 // PULLREQUESTBODY is the pull request template used as pull request description

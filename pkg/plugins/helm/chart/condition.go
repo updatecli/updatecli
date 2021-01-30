@@ -2,9 +2,10 @@ package chart
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/scm"
 )

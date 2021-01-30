@@ -1,9 +1,10 @@
 package dockerhub
 
 import (
-	"github.com/sirupsen/logrus"
 	"os"
 	"testing"
+
+	"github.com/sirupsen/logrus"
 )
 
 type DataSet struct {

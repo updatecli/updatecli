@@ -2,8 +2,9 @@ package reports
 
 import (
 	"bytes"
-	"github.com/sirupsen/logrus"
 	"text/template"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/result"
 )

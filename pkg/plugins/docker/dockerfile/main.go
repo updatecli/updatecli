@@ -1,10 +1,11 @@
 package dockerfile
 
 import (
-	"github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )

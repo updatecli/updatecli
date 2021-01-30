@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"log"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/olblak/updateCli/pkg/core/helpers"

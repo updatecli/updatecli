@@ -3,10 +3,11 @@ package chart
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"html/template"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Changelog return any information available for a helm chart
