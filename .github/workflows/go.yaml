@@ -32,7 +32,7 @@ jobs:
         fi
 
     - name: Run GolangCI-Lint Action
-      uses: docker://matoous/golangci-lint-action:v1.1.0
+      uses: matoous/golangci-lint-action@v1.1.0
 
     - name: Test
       env:
