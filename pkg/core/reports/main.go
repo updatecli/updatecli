@@ -85,13 +85,6 @@ func (r *Reports) Summary() (int, int, int, error) {
 		}
 	}
 
-	logrus.Infof("Run Summary")
-	logrus.Infof("===========")
-	logrus.Infof("%d job run", counter)
-	logrus.Infof("%d job succeed", successCounter)
-	logrus.Infof("%d job failed", failedCounter)
-	logrus.Infof("%d job applied changes", changedCounter)
-
 	if failedCounter > 0 {
 		return successCounter,
 			changedCounter,

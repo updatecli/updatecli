@@ -2,9 +2,10 @@ package dockerfile
 
 import (
 	"bytes"
-	"github.com/sirupsen/logrus"
 	"strings"
 	"testing"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
