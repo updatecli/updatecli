@@ -18,3 +18,12 @@ func (replacers Replacers) Unmarshal() (result []string) {
 	}
 	return result
 }
+
+// Unmarshal read a struct of Replacer then return a slice of string
+func (r Replacer) Unmarshal() (result []string) {
+
+	result = append(result, r.From)
+	result = append(result, r.To)
+
+	return result
+}
