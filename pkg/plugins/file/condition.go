@@ -26,27 +26,35 @@ func (f *File) Condition(source string) (bool, error) {
 
 	content := string(data)
 
-	f.Content, err = f.Line.ContainsExcluded(f.Content)
+	if len(f.Line.Excludes) > 0 {
+		f.Content, err = f.Line.ContainsExcluded(f.Content)
 
-	if err != nil {
-		return false, err
+		if err != nil {
+			return false, err
+		}
 	}
 
-	if ok, err := f.Line.ContainsIncluded(f.Content); err != nil || !ok {
+	if len(f.Line.Includes) > 0 {
+		if ok, err := f.Line.ContainsIncluded(f.Content); err != nil || !ok {
+			if err != nil {
+				return false, err
+			}
+
+			if !ok {
+				return false, fmt.Errorf(ErrLineNotFound)
+			}
+
+		}
+
+	}
+
+	if len(f.Line.IncludesOnly) > 0 {
+		f.Content, err = f.Line.ContainsIncludedOnly(f.Content)
+
 		if err != nil {
 			return false, err
 		}
 
-		if !ok {
-			return false, fmt.Errorf(ErrLineNotFound)
-		}
-
-	}
-
-	f.Content, err = f.Line.ContainsIncludedOnly(f.Content)
-
-	if err != nil {
-		return false, err
 	}
 
 	if strings.Compare(f.Content, content) == 0 {
