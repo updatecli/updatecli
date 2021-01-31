@@ -46,9 +46,23 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 
 			output = strings.TrimSuffix(output, val)
 
-		case "replacer":
+		case "replacers":
 
 			r := Replacers{}
+
+			err := mapstructure.Decode(value, &r)
+			if err != nil {
+				return "", err
+			}
+
+			args := r.Unmarshal()
+
+			replacer := strings.NewReplacer(args...)
+
+			output = (replacer.Replace(output))
+		case "replacer":
+
+			r := Replacer{}
 
 			err := mapstructure.Decode(value, &r)
 			if err != nil {
