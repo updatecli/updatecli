@@ -71,11 +71,24 @@ var (
 			input: "alpha-2.263",
 			rules: Transformers{
 				Transformer{
-					"replacer": Replacers{
+					"replacers": Replacers{
 						Replacer{
 							From: "alpha",
 							To:   "beta",
 						},
+					},
+				},
+			},
+			expectedOutput: "beta-2.263",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "alpha-2.263",
+			rules: Transformers{
+				Transformer{
+					"replacer": Replacer{
+						From: "alpha",
+						To:   "beta",
 					},
 				},
 			},
