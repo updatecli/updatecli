@@ -1,7 +1,7 @@
 package source
 
 // 2021/01/31
-// Deprecated in favor of Transformer, need to be deleted in a futur release
+// Deprecated in favor of Transformer, need to be deleted in a future release
 
 // Replacer is struct used to feed strings.Replacer
 type Replacer struct {
