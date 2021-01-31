@@ -95,6 +95,36 @@ var (
 			expectedOutput: "beta-2.263",
 			expectedErr:    nil,
 		},
+		Data{
+			input: "4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip",
+			rules: Transformers{
+				Transformer{
+					"find": "terraform_(.*)$",
+				},
+			},
+			expectedOutput: "terraform_0.14.5_freebsd_amd64.zip",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip",
+			rules: Transformers{
+				Transformer{
+					"find": `^\S*`,
+				},
+			},
+			expectedOutput: "4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip",
+			rules: Transformers{
+				Transformer{
+					"find": `\S*$`,
+				},
+			},
+			expectedOutput: "terraform_0.14.5_freebsd_amd64.zip",
+			expectedErr:    nil,
+		},
 	}
 )
 

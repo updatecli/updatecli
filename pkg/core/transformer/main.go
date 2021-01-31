@@ -2,6 +2,7 @@ package transformer
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -74,6 +75,23 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 			replacer := strings.NewReplacer(args...)
 
 			output = (replacer.Replace(output))
+
+		case "find":
+
+			val, ok := value.(string)
+
+			if !ok {
+				return "", fmt.Errorf("unknown value for find: %v", val)
+			}
+
+			re, err := regexp.Compile(val)
+			if err != nil {
+				return "", err
+			}
+
+			found := re.FindString(output)
+
+			output = found
 
 		default:
 			return "", fmt.Errorf("key '%v' not supported", key)
