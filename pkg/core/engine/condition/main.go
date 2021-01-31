@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/olblak/updateCli/pkg/core/transformer"
 	"github.com/olblak/updateCli/pkg/plugins/docker"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/file"
@@ -12,18 +13,20 @@ import (
 	"github.com/olblak/updateCli/pkg/plugins/jenkins"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
+	"github.com/sirupsen/logrus"
 )
 
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
-	Name    string
-	Kind    string
-	Prefix  string
-	Postfix string
-	Spec    interface{}
-	Scm     map[string]interface{}
-	Result  string `yaml:"-"` // Ignore this field when unmarshal YAML
+	Name         string
+	Kind         string
+	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
+	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
+	Transformers transformer.Transformers
+	Spec         interface{}
+	Scm          map[string]interface{}
+	Result       string `yaml:"-"` // Ignore this field when unmarshal YAML
 }
 
 // Spec is an interface that test if condition is met
@@ -39,6 +42,23 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 	spec, err := Unmarshal(c)
 	if err != nil {
 		return false, err
+	}
+
+	if len(c.Transformers) > 0 {
+		source, err = c.Transformers.Apply(source)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	// Announce deprecation on 2021/01/31
+	if len(c.Prefix) > 0 {
+		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a futur release")
+	}
+
+	// Announce deprecation on 2021/01/31
+	if len(c.Postfix) > 0 {
+		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a futur release")
 	}
 
 	// If scm is defined then clone the repository

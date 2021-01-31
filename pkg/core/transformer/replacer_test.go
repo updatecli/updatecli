@@ -1,7 +1,4 @@
-package source
-
-// 2021/01/31
-// Deprecated in favor of Transformer, need to be deleted in a futur release
+package transformer
 
 import (
 	"reflect"
