@@ -53,12 +53,12 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 
 	// Announce deprecation on 2021/01/31
 	if len(c.Prefix) > 0 {
-		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a futur release")
+		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
 	// Announce deprecation on 2021/01/31
 	if len(c.Postfix) > 0 {
-		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a futur release")
+		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
 	// If scm is defined then clone the repository

@@ -104,12 +104,12 @@ func (s *Source) Execute() error {
 
 	// Announce deprecation on 2021/01/31
 	if len(s.Prefix) > 0 {
-		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a futur release")
+		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release\n")
 	}
 
 	// Announce deprecation on 2021/01/31
 	if len(s.Postfix) > 0 {
-		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a futur release")
+		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release\n")
 	}
 
 	if err != nil {
