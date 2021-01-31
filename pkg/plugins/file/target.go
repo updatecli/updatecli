@@ -32,13 +32,27 @@ func (f *File) Target(source string, dryRun bool) (changed bool, err error) {
 
 	content := string(data)
 
-	if len(f.Line) > 0 {
-		for _, line := range strings.Split(f.Content, "\n") {
-			if strings.Contains(line, f.Line) {
-				f.Content = line
-				break
-			}
+	f.Content, err = f.Line.ContainsExcluded(f.Content)
+
+	if err != nil {
+		return false, err
+	}
+
+	if ok, err := f.Line.ContainsIncluded(f.Content); err != nil || !ok {
+		if err != nil {
+			return false, err
 		}
+
+		if !ok {
+			return false, fmt.Errorf(ErrLineNotFound)
+		}
+
+	}
+
+	f.Content, err = f.Line.ContainsIncludedOnly(f.Content)
+
+	if err != nil {
+		return false, err
 	}
 
 	if strings.Compare(f.Content, content) == 0 {
