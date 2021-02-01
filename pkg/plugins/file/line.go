@@ -39,8 +39,8 @@ func (l *Line) ContainsIncludedOnly(content string) (output string, err error) {
 	return output, nil
 }
 
-// ContainsIncluded return an error content with only matching lines
-func (l *Line) ContainsIncluded(content string) (found bool, err error) {
+// HasIncluded return an error content with only matching lines
+func (l *Line) HasIncluded(content string) (found bool, err error) {
 	for _, i := range l.Includes {
 		found = false
 		for _, line := range strings.Split(content, "\n") {
