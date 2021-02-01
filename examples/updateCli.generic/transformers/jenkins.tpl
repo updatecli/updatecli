@@ -2,10 +2,10 @@ source:
   name: "Get latest jenkins weekly version"
   kind: jenkins
   transformers:
-    - prefix: "alpha-"
-    - suffix: "-jdk11"
+    - addPrefix: "alpha-"
+    - addSuffix: "-jdk11"
     - trimSuffix: "-jdk11"
-    - suffix: "-jdk11"
+    - addSuffix: "-jdk11"
     - replacer:
         from: "-jdk11"
         to: "-jdk15"

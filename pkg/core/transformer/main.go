@@ -23,10 +23,10 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 	for key, value := range *t {
 		switch key {
 
-		case "prefix":
+		case "addPrefix":
 			output = fmt.Sprintf("%s%s", value, input)
 
-		case "suffix":
+		case "addSuffix":
 			output = fmt.Sprintf("%s%s", input, value)
 
 		case "trimPrefix":
