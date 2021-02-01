@@ -83,7 +83,6 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 			if err != nil &&
 				(err != plumbing.ErrReferenceNotFound ||
 					err != git.ErrBranchExists) {
-				logrus.Debugf("-> %v\n", err)
 				return err
 			}
 
