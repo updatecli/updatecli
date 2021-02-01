@@ -51,7 +51,9 @@ func (g *Github) Clone() (string, error) {
 		return "", err
 	}
 
-	err = git.Checkout(g.Branch, g.remoteBranch, g.GetDirectory())
+	if len(g.remoteBranch) > 0 && len(g.GetDirectory()) > 0 {
+		err = git.Checkout(g.Branch, g.remoteBranch, g.GetDirectory())
+	}
 
 	if err != nil {
 		return "", err
