@@ -9,6 +9,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/olblak/updateCli/pkg/core/transformer"
 	"github.com/olblak/updateCli/pkg/plugins/docker"
 	"github.com/olblak/updateCli/pkg/plugins/file"
 	"github.com/olblak/updateCli/pkg/plugins/github"
@@ -20,16 +21,17 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	Name      string
-	Kind      string
-	Changelog string
-	Output    string
-	Prefix    string
-	Postfix   string
-	Replaces  Replacers
-	Spec      interface{}
-	Scm       map[string]interface{}
-	Result    string `yaml:"-"` // Ignore this key field when unmarshalling yaml file
+	Name         string
+	Kind         string
+	Changelog    string
+	Output       string
+	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
+	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
+	Transformers transformer.Transformers
+	Replaces     Replacers // Deprecated in favor of Transformers on 2021/01/3
+	Spec         interface{}
+	Scm          map[string]interface{}
+	Result       string `yaml:"-"` // Ignore this key field when unmarshalling yaml file
 }
 
 // Spec source is an interface to handle source spec
@@ -93,6 +95,23 @@ func (s *Source) Execute() error {
 
 	output, err = spec.Source(workingDir)
 
+	if len(s.Transformers) > 0 {
+		output, err = s.Transformers.Apply(output)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Announce deprecation on 2021/01/31
+	if len(s.Prefix) > 0 {
+		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release\n")
+	}
+
+	// Announce deprecation on 2021/01/31
+	if len(s.Postfix) > 0 {
+		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release\n")
+	}
+
 	if err != nil {
 		return err
 	}
@@ -108,6 +127,7 @@ func (s *Source) Execute() error {
 		return fmt.Errorf("Something weird happened while setting changelog")
 	}
 
+	// Deprecated in favor of Transformers on 2021/01/3
 	if len(s.Replaces) > 0 {
 		args := s.Replaces.Unmarshal()
 
