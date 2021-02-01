@@ -48,9 +48,9 @@ func TestContainsExcludedSuccess(t *testing.T) {
 
 }
 
-func TestContainsIncludedOnlySuccess(t *testing.T) {
+func TestContainsIncludedSuccess(t *testing.T) {
 	line := Line{
-		IncludesOnly: []string{
+		Includes: []string{
 			"freebsd_386",
 			"freebsd_amd64",
 			"freebsd_arm",
@@ -74,9 +74,9 @@ func TestContainsIncludedOnlySuccess(t *testing.T) {
 
 }
 
-func TestContainsIncludedOnlyFailure(t *testing.T) {
+func TestContainsIncludedFailure(t *testing.T) {
 	line := Line{
-		IncludesOnly: []string{
+		Includes: []string{
 			"freebsd_386_386",
 		},
 	}
@@ -88,9 +88,9 @@ func TestContainsIncludedOnlyFailure(t *testing.T) {
 	}
 }
 
-func TestContainsIncludedSuccess(t *testing.T) {
+func TestContainsHasIncludedSuccess(t *testing.T) {
 	line := Line{
-		Includes: []string{
+		HasIncludes: []string{
 			"freebsd_386",
 			"freebsd_amd64",
 			"freebsd_arm",
