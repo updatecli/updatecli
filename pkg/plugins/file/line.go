@@ -9,9 +9,9 @@ import (
 
 // Line hold rule that define if a specific line should be included or excluded
 type Line struct {
-	Includes     []string
-	IncludesOnly []string
-	Excludes     []string
+	HasIncludes []string
+	Includes    []string
+	Excludes    []string
 }
 
 const (
@@ -21,7 +21,7 @@ const (
 
 // ContainsIncluded return a content with only matching lines
 func (l *Line) ContainsIncluded(content string) (output string, err error) {
-	for _, i := range l.IncludesOnly {
+	for _, i := range l.Includes {
 		found := false
 		for _, line := range strings.Split(content, "\n") {
 
@@ -41,7 +41,7 @@ func (l *Line) ContainsIncluded(content string) (output string, err error) {
 
 // HasIncluded return an error content with only matching lines
 func (l *Line) HasIncluded(content string) (found bool, err error) {
-	for _, i := range l.Includes {
+	for _, i := range l.HasIncludes {
 		found = false
 		for _, line := range strings.Split(content, "\n") {
 

@@ -27,7 +27,7 @@ func (f *File) Source(workingDir string) (string, error) {
 
 	}
 
-	if len(f.Line.Includes) > 0 {
+	if len(f.Line.HasIncludes) > 0 {
 		if ok, err := f.Line.HasIncluded(f.Content); err != nil || !ok {
 			if err != nil {
 				return "", err
@@ -40,7 +40,7 @@ func (f *File) Source(workingDir string) (string, error) {
 		}
 	}
 
-	if len(f.Line.IncludesOnly) > 0 {
+	if len(f.Line.Includes) > 0 {
 		f.Content, err = f.Line.ContainsIncluded(f.Content)
 
 		if err != nil {

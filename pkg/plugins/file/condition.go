@@ -34,7 +34,7 @@ func (f *File) Condition(source string) (bool, error) {
 		}
 	}
 
-	if len(f.Line.Includes) > 0 {
+	if len(f.Line.HasIncludes) > 0 {
 		if ok, err := f.Line.HasIncluded(f.Content); err != nil || !ok {
 			if err != nil {
 				return false, err
@@ -48,7 +48,7 @@ func (f *File) Condition(source string) (bool, error) {
 
 	}
 
-	if len(f.Line.IncludesOnly) > 0 {
+	if len(f.Line.Includes) > 0 {
 		f.Content, err = f.Line.ContainsIncluded(f.Content)
 
 		if err != nil {
