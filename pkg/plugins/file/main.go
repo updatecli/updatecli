@@ -4,5 +4,6 @@ package file
 // from an updatecli configuration
 type File struct {
 	File    string
+	Line    Line
 	Content string
 }
