@@ -30,14 +30,47 @@ func (f *File) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, err
 	}
 
-	if strings.Compare(f.Content, string(data)) != 0 {
-		changed = true
-		logrus.Infof("\u2714 File content for '%v', updated. \n%s",
-			f.File, Diff(string(data), f.Content))
+	content := string(data)
 
-	} else {
-		logrus.Infof("\u2714 Content from file '%v' already up to date", f.File)
+	if len(f.Line.Excludes) > 0 {
+		f.Content, err = f.Line.ContainsExcluded(f.Content)
+
+		if err != nil {
+			return false, err
+		}
+
 	}
+
+	if len(f.Line.HasIncludes) > 0 {
+		if ok, err := f.Line.HasIncluded(f.Content); err != nil || !ok {
+			if err != nil {
+				return false, err
+			}
+
+			if !ok {
+				return false, fmt.Errorf(ErrLineNotFound)
+			}
+
+		}
+
+	}
+
+	if len(f.Line.Includes) > 0 {
+		f.Content, err = f.Line.ContainsIncluded(f.Content)
+
+		if err != nil {
+			return false, err
+		}
+	}
+
+	if strings.Compare(f.Content, content) == 0 {
+		logrus.Infof("\u2714 Content from file '%v' already up to date", f.File)
+		return false, nil
+	}
+
+	changed = true
+	logrus.Infof("\u2714 File content for '%v', updated. \n%s",
+		f.File, Diff(content, f.Content))
 
 	if !dryRun {
 

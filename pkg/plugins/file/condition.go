@@ -1,6 +1,7 @@
 package file
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -23,13 +24,46 @@ func (f *File) Condition(source string) (bool, error) {
 		return false, err
 	}
 
-	if strings.Compare(f.Content, string(data)) == 0 {
+	content := string(data)
+
+	if len(f.Line.Excludes) > 0 {
+		f.Content, err = f.Line.ContainsExcluded(f.Content)
+
+		if err != nil {
+			return false, err
+		}
+	}
+
+	if len(f.Line.HasIncludes) > 0 {
+		if ok, err := f.Line.HasIncluded(f.Content); err != nil || !ok {
+			if err != nil {
+				return false, err
+			}
+
+			if !ok {
+				return false, fmt.Errorf(ErrLineNotFound)
+			}
+
+		}
+
+	}
+
+	if len(f.Line.Includes) > 0 {
+		f.Content, err = f.Line.ContainsIncluded(f.Content)
+
+		if err != nil {
+			return false, err
+		}
+
+	}
+
+	if strings.Compare(f.Content, content) == 0 {
 		logrus.Infof("\u2714 Content from file '%v' is correct'", filepath.Join(f.File))
 		return true, nil
 	}
 
 	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s",
-		f.File, Diff(f.Content, string(data)))
+		f.File, Diff(f.Content, content))
 
 	return false, nil
 }
