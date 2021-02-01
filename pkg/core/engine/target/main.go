@@ -8,6 +8,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/olblak/updateCli/pkg/core/transformer"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/file"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
@@ -15,14 +16,15 @@ import (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
-	Name      string
-	Kind      string
-	Changelog string `yaml:"-"`
-	Prefix    string
-	Postfix   string
-	Spec      interface{}
-	Scm       map[string]interface{}
-	Result    string `yaml:"-"`
+	Name         string
+	Kind         string
+	Changelog    string `yaml:"-"`
+	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
+	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
+	Transformers transformer.Transformers
+	Spec         interface{}
+	Scm          map[string]interface{}
+	Result       string `yaml:"-"`
 }
 
 // Spec is an interface which offers common function to manipulate targets.
@@ -94,6 +96,23 @@ func Unmarshal(target *Target) (spec Spec, err error) {
 
 // Run applies a specific target configuration
 func (t *Target) Run(source string, o *Options) (changed bool, err error) {
+
+	if len(t.Transformers) > 0 {
+		source, err = t.Transformers.Apply(source)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	// Announce deprecation on 2021/01/31
+	if len(t.Prefix) > 0 {
+		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
+	}
+
+	// Announce deprecation on 2021/01/31
+	if len(t.Postfix) > 0 {
+		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
+	}
 
 	if o.DryRun {
 
