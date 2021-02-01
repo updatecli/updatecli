@@ -19,8 +19,8 @@ const (
 	ErrLineNotFound string = "line not found"
 )
 
-// ContainsIncludedOnly return a content with only matching lines
-func (l *Line) ContainsIncludedOnly(content string) (output string, err error) {
+// ContainsIncluded return a content with only matching lines
+func (l *Line) ContainsIncluded(content string) (output string, err error) {
 	for _, i := range l.IncludesOnly {
 		found := false
 		for _, line := range strings.Split(content, "\n") {

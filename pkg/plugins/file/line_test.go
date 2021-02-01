@@ -62,7 +62,7 @@ func TestContainsIncludedOnlySuccess(t *testing.T) {
 03c201a9a3e1d2776d0cfc0163e52484f3dbbbd73eb08d5bac491ca87a9aa3b7  terraform_0.14.5_freebsd_arm.zip
 `
 
-	got, err := line.ContainsIncludedOnly(content)
+	got, err := line.ContainsIncluded(content)
 
 	if err != nil {
 		t.Error(err)
@@ -81,7 +81,7 @@ func TestContainsIncludedOnlyFailure(t *testing.T) {
 		},
 	}
 
-	_, err := line.ContainsIncludedOnly(content)
+	_, err := line.ContainsIncluded(content)
 
 	if strings.Compare(err.Error(), ErrLineNotFound) != 0 {
 		t.Error(err)

@@ -41,7 +41,7 @@ func (f *File) Source(workingDir string) (string, error) {
 	}
 
 	if len(f.Line.IncludesOnly) > 0 {
-		f.Content, err = f.Line.ContainsIncludedOnly(f.Content)
+		f.Content, err = f.Line.ContainsIncluded(f.Content)
 
 		if err != nil {
 			return "", err
