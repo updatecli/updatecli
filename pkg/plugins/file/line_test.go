@@ -109,9 +109,9 @@ func TestContainsHasIncludedSuccess(t *testing.T) {
 
 }
 
-func TestContainsIncludedFailure(t *testing.T) {
+func TestContainsHasIncludedFailure(t *testing.T) {
 	line := Line{
-		Includes: []string{
+		HasIncludes: []string{
 			"freebsd_386_386",
 		},
 	}
