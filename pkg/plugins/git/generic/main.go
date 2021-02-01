@@ -57,17 +57,27 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 	err = w.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewRemoteReferenceName("origin", remoteBranch),
 		Create: false,
-		Keep:   true,
+		Keep:   false,
 	})
 
 	if err == plumbing.ErrReferenceNotFound {
+		// Checkout source branch without creating it yet
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(branch),
+			Create: false,
+			Keep:   false,
+		})
+
+		if err != nil {
+			return err
+		}
 
 		logrus.Debugf("Checkout branch: '%v'", remoteBranch)
 		// Checkout locale branch without creating it yet
 		err = w.Checkout(&git.CheckoutOptions{
 			Branch: plumbing.NewBranchReferenceName(remoteBranch),
 			Create: false,
-			Keep:   true,
+			Keep:   false,
 		})
 
 		// Branch doesn't exist locally
@@ -77,7 +87,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 			err = w.Checkout(&git.CheckoutOptions{
 				Branch: plumbing.NewBranchReferenceName(remoteBranch),
 				Create: true,
-				Keep:   true,
+				Keep:   false,
 			})
 
 			if err != nil &&
@@ -87,11 +97,9 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 			}
 
 		} else if err != nil && err != plumbing.ErrReferenceNotFound {
-			logrus.Debugf("? %v", err)
 			return err
 		}
 	} else if err != plumbing.ErrReferenceNotFound && err != nil {
-		logrus.Debugf("Here?")
 		return err
 	} else {
 		// Means that a local branch named remoteBranch already exist
