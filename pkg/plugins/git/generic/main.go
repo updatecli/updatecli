@@ -3,7 +3,6 @@ package generic
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -55,38 +54,44 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 
 	// If remoteBranch already exist, use it
 	// otherwise use the one define in the spec
-
 	err = w.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewRemoteReferenceName("origin", remoteBranch),
 		Create: false,
+		Keep:   true,
 	})
 
 	if err == plumbing.ErrReferenceNotFound {
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewRemoteReferenceName("origin", branch),
-			Create: false,
-		})
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
-	}
 
-	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(remoteBranch),
-		Create: false,
-	})
-
-	if err == plumbing.ErrReferenceNotFound {
+		logrus.Debugf("Checkout branch: '%v'", remoteBranch)
+		// Checkout locale branch without creating it yet
 		err = w.Checkout(&git.CheckoutOptions{
 			Branch: plumbing.NewBranchReferenceName(remoteBranch),
-			Create: true,
+			Create: false,
+			Keep:   true,
 		})
-		if err != nil {
+
+		// Branch doesn't exist locally
+		if err == plumbing.ErrReferenceNotFound {
+			logrus.Debugf("Creating first branch: '%v'", remoteBranch)
+
+			err = w.Checkout(&git.CheckoutOptions{
+				Branch: plumbing.NewBranchReferenceName(remoteBranch),
+				Create: true,
+				Keep:   true,
+			})
+
+			if err != nil &&
+				(err != plumbing.ErrReferenceNotFound ||
+					err != git.ErrBranchExists) {
+				return err
+			}
+
+		} else if err != nil && err != plumbing.ErrReferenceNotFound {
+			logrus.Debugf("? %v", err)
 			return err
 		}
-	} else if err != plumbing.ErrReferenceNotFound {
+	} else if err != plumbing.ErrReferenceNotFound && err != nil {
+		logrus.Debugf("Here?")
 		return err
 	} else {
 		// Means that a local branch named remoteBranch already exist
@@ -107,6 +112,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 			Commit: remoteRef.Hash(),
 			Mode:   git.HardReset,
 		})
+
 		if err != nil {
 			return err
 		}
@@ -146,7 +152,6 @@ func Commit(user, email, message, workingDir string) error {
 		},
 	})
 	if err != nil {
-		logrus.Errorf("err - %s", err)
 		return err
 	}
 	obj, err := r.CommitObject(commit)
@@ -230,7 +235,8 @@ func Clone(username, password, URL, workingDir string) error {
 		logrus.Infof(b.String())
 		b.Reset()
 		if err != nil &&
-			err != git.NoErrAlreadyUpToDate {
+			err != git.NoErrAlreadyUpToDate &&
+			err != git.ErrBranchExists {
 			return err
 		}
 	}
@@ -274,14 +280,18 @@ func Push(username, password, workingDir string) error {
 		return err
 	}
 
+	b := bytes.Buffer{}
+
 	// Only push one branch at a time
 	err = r.Push(&git.PushOptions{
 		Auth:     &auth,
-		Progress: os.Stdout,
+		Progress: &b,
 		RefSpecs: []config.RefSpec{
 			refspec,
 		},
 	})
+
+	fmt.Println(b.String())
 
 	if err != nil {
 		return err
