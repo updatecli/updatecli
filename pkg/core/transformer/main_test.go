@@ -19,7 +19,7 @@ var (
 			input: "2.263",
 			rules: Transformers{
 				Transformer{
-					"prefix": "alpha-",
+					"addPrefix": "alpha-",
 				},
 			},
 			expectedOutput: "alpha-2.263",
@@ -28,7 +28,7 @@ var (
 			input: "2.263",
 			rules: Transformers{
 				Transformer{
-					"suffix": "-jdk11",
+					"addSuffix": "-jdk11",
 				},
 			},
 			expectedOutput: "2.263-jdk11",
