@@ -58,6 +58,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		Branch: plumbing.NewRemoteReferenceName("origin", remoteBranch),
 		Create: false,
 		Keep:   false,
+		Force:  true,
 	})
 
 	if err == plumbing.ErrReferenceNotFound {
@@ -66,6 +67,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 			Branch: plumbing.NewBranchReferenceName(branch),
 			Create: false,
 			Keep:   false,
+			Force:  true,
 		})
 
 		if err != nil {
@@ -78,6 +80,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 			Branch: plumbing.NewBranchReferenceName(remoteBranch),
 			Create: false,
 			Keep:   false,
+			Force:  true,
 		})
 
 		// Branch doesn't exist locally
@@ -88,6 +91,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 				Branch: plumbing.NewBranchReferenceName(remoteBranch),
 				Create: true,
 				Keep:   false,
+				Force:  true,
 			})
 
 			if err != nil &&
