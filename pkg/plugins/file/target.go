@@ -42,7 +42,7 @@ func (f *File) Target(source string, dryRun bool) (changed bool, err error) {
 	}
 
 	if len(f.Line.Includes) > 0 {
-		if ok, err := f.Line.ContainsIncluded(f.Content); err != nil || !ok {
+		if ok, err := f.Line.HasIncluded(f.Content); err != nil || !ok {
 			if err != nil {
 				return false, err
 			}

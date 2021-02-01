@@ -97,7 +97,7 @@ func TestContainsIncludedSuccess(t *testing.T) {
 		},
 	}
 
-	got, err := line.ContainsIncluded(content)
+	got, err := line.HasIncluded(content)
 
 	if err != nil {
 		t.Error(err)
@@ -116,7 +116,7 @@ func TestContainsIncludedFailure(t *testing.T) {
 		},
 	}
 
-	_, err := line.ContainsIncluded(content)
+	_, err := line.HasIncluded(content)
 
 	if strings.Compare(err.Error(), ErrLineNotFound) != 0 {
 		t.Error(err)
