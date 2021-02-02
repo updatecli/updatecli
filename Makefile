@@ -7,30 +7,29 @@ GOVERSION=$(shell go version)
 DOCKER_IMAGE=olblak/updatecli
 DOCKER_TAG=$(VERSION)
 
+local_bin=./bin/updateCli
 build:
 	echo $(VERSION)
-	go build \
-		-ldflags "-w -s \
-        -X \"github.com/olblak/updateCli/pkg/core/version.BuildTime=$(BUILD_DATE)\" \
-        -X \"github.com/olblak/updateCli/pkg/core/version.GoVersion=$(GOVERSION)\" \
-        -X \"github.com/olblak/updateCli/pkg/core/version.Version=$(VERSION)\""\
-        -o bin/updatecli
-
+	# Only build for the current host's OS and arch. Use 'make build.all' for cross-compile
+	OS_TARGETS="$(shell go env GOHOSTOS)" \
+	ARCH_TARGETS="$(shell go env GOHOSTARCH)" \
+	CUSTOM_BINARY="$(local_bin)" \
+		./utils/build.sh
 
 build.all:
 	./utils/build.sh
 
 diff:
-	./bin/updatecli diff --config ./updateCli.d
+	"$(local_bin)" diff --config ./updateCli.d
 
 show:
-	./bin/updatecli show --config ./updateCli.d
+	"$(local_bin)" show --config ./updateCli.d
 
 apply:
-	./bin/updatecli apply --config ./updateCli.d
+	"$(local_bin)" apply --config ./updateCli.d
 
 version:
-	./bin/updatecli version
+	"$(local_bin)" version
 
 docker.build:
 	docker build \
