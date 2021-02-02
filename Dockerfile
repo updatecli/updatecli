@@ -10,7 +10,7 @@ RUN make build
 
 ###
 
-FROM ubuntu
+FROM ubuntu:20.04
 
 LABEL maintainer="Olblak <me@olblak.com>"
 
