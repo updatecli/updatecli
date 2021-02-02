@@ -5,6 +5,8 @@ GOVERSION=$(shell go version)
 
 DOCKER_IMAGE=olblak/updatecli
 DOCKER_TAG=$(VERSION)
+DOCKER_BUILDKIT=1
+export DOCKER_BUILDKIT
 
 local_bin=./bin/updateCli
 
