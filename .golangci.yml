@@ -83,7 +83,7 @@ linters:
     - gosimple
     - ineffassign
     - interfacer
-      #    - lll  
+      #    - lll
     - maligned
     - misspell
     - nakedret

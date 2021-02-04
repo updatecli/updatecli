@@ -6,17 +6,11 @@ COPY . .
 
 RUN go get -d -v ./...
 
-RUN \
-  go build -v -a \
-  -ldflags "-w -s \
-    -X \"github.com/olblak/updateCli/pkg/core/version.BuildTime=`date -R`\" \
-    -X \"github.com/olblak/updateCli/pkg/core/version.GoVersion=`go version`\" \
-    -X \"github.com/olblak/updateCli/pkg/core/version.Version=`git describe --tags`\""\
-  -o bin/updateCli
+RUN make build
 
 ###
 
-FROM ubuntu
+FROM ubuntu:20.04
 
 LABEL maintainer="Olblak <me@olblak.com>"
 
