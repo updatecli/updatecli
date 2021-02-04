@@ -1,5 +1,8 @@
 #!/bin/bash
 
+OS_TARGETS="${OS_TARGETS:-"darwin linux windows"}"
+ARCH_TARGETS="${ARCH_TARGETS:-"amd64 386"}"
+
 BUILD_DATE=$(date -R)
 VERSION=$(git describe --tags)
 GOVERSION=$(go version)
@@ -8,16 +11,19 @@ BASENAME="updatecli"
 
 echo "Building updatecli OS packages for version $VERSION"
 
-for GOOS in darwin linux windows; do
-  for GOARCH in amd64 386; do
+for GOOS in $OS_TARGETS; do
+  for GOARCH in $ARCH_TARGETS; do
 
-    BINARY="$BASENAME.$GOOS.$GOARCH"
-    BINARY_DIRECTORY="./bin"
-
-    if [ $GOOS = "windows" ]; then
-        BINARY="$BASENAME.$GOARCH"
-        BINARY+='.exe'
-
+    if [ -z "${CUSTOM_BINARY}" ]
+    then
+      BINARY="$BASENAME.$GOOS.$GOARCH"
+      if [ $GOOS = "windows" ]; then
+          BINARY="$BASENAME.$GOARCH"
+          BINARY+='.exe'
+      fi
+      BINARY="./bin/${BINARY}"
+    else
+      BINARY="${CUSTOM_BINARY}"
     fi
 
     echo "Build $BINARY_DIRECTORY/$BINARY for $GOOS-$GOARCH"
@@ -27,6 +33,6 @@ for GOOS in darwin linux windows; do
         -X \"github.com/olblak/updateCli/pkg/core/version.BuildTime=$BUILD_DATE\" \
         -X \"github.com/olblak/updateCli/pkg/core/version.GoVersion=$GOVERSION\" \
         -X \"github.com/olblak/updateCli/pkg/core/version.Version=$VERSION\""\
-      -o "$BINARY_DIRECTORY/$BINARY"
+      -o "$BINARY"
   done;
 done

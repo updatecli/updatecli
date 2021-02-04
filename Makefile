@@ -1,4 +1,3 @@
-.PHONY: build
 
 BUILD_DATE=$(shell date -R)
 VERSION=$(shell git describe --tags)
@@ -6,33 +5,42 @@ GOVERSION=$(shell go version)
 
 DOCKER_IMAGE=olblak/updatecli
 DOCKER_TAG=$(VERSION)
+DOCKER_BUILDKIT=1
+export DOCKER_BUILDKIT
 
-build:
+local_bin=./bin/updateCli
+
+.PHONY: build
+build: ## Build updateCli for the host OS and architecture
 	echo $(VERSION)
-	go build \
-		-ldflags "-w -s \
-        -X \"github.com/olblak/updateCli/pkg/core/version.BuildTime=$(BUILD_DATE)\" \
-        -X \"github.com/olblak/updateCli/pkg/core/version.GoVersion=$(GOVERSION)\" \
-        -X \"github.com/olblak/updateCli/pkg/core/version.Version=$(VERSION)\""\
-        -o bin/updatecli
+	# Only build for the current host's OS and arch. Use 'make build.all' for cross-compile
+	OS_TARGETS="$(shell go env GOHOSTOS)" \
+	ARCH_TARGETS="$(shell go env GOHOSTARCH)" \
+	CUSTOM_BINARY="$(local_bin)" \
+		./utils/build.sh
 
-
-build.all:
+.PHONY: build.all
+build.all: ## Build updateCli for all supported OSes and architectures
 	./utils/build.sh
 
-diff:
-	./bin/updatecli diff --config ./updateCli.d
+.PHONY: diff
+diff: ## Run the "diff" updateCli's subcommand for smoke test
+	"$(local_bin)" diff --config ./updateCli.d
 
-show:
-	./bin/updatecli show --config ./updateCli.d
+.PHONY: show
+show: ## Run the "show" updateCli's subcommand for smoke test
+	"$(local_bin)" show --config ./updateCli.d
 
-apply:
-	./bin/updatecli apply --config ./updateCli.d
+.PHONY: apply
+apply: ## Run the "apply" updateCli's subcommand for smoke test
+	"$(local_bin)" apply --config ./updateCli.d
 
-version:
-	./bin/updatecli version
+.PHONY: version
+version: ## Run the "version" updateCli's subcommand for smoke test
+	"$(local_bin)" version
 
-docker.build:
+.PHONY: docker.build
+docker.build: ## Build the updateCli's Docker image
 	docker build \
 		-t "$(DOCKER_IMAGE):$(DOCKER_TAG)" \
 		-t "$(DOCKER_IMAGE):latest" \
@@ -41,23 +49,35 @@ docker.build:
 		-f Dockerfile \
 		.
 
-docker.run:
+.PHONY: docker.run
+docker.run: docker.build ## Execute the updateCli's Docker image
 	docker run -i -t --rm --name updateCli $(DOCKER_IMAGE):$(DOCKER_TAG) --help
-docker.test:
+
+.PHONY: docker.test
+docker.test: docker.build ## Smoke Test the updateCli's Docker image
 	docker run -i -t \
 		-v $$PWD/updateCli.d:/home/updatecli/updateCli.d:ro \
-		olblak/updatecli:latest --config /home/updatecli/updateCli.d/pluginsite-api.yaml
+		"$(DOCKER_IMAGE):$(DOCKER_TAG)" --config /home/updatecli/updateCli.d/pluginsite-api.yaml
 
-docker.push:
+.PHONY: docker.push
+docker.push: docker.build ## Push the updateCli's Docker image to remote registry
 	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 	docker push $(DOCKER_IMAGE):latest
 	docker push ghcr.io/$(DOCKER_IMAGE):$(DOCKER_TAG)
 	docker push ghcr.io/$(DOCKER_IMAGE):latest
 
-display: echo $(DOCKER_TAG)
+.PHONY: display
+display: ## Prints the current DOCKER_TAG
+	echo $(DOCKER_TAG)
 
-test:
+.PHONY: test
+test: ## Execute the Golang's tests for updateCli
 	go test ./...
 
-lint:
+.PHONY: lint
+lint: ## Execute the Golang's linters on updateCli's source code
 	golangci-lint run
+
+.PHONY: help
+help: ## Show this Makefile's help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
