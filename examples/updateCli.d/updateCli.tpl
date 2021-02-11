@@ -12,12 +12,9 @@ conditions:
     kind: dockerfile
     spec:
       file: Dockerfile
-      #instruction: FROM
-      ## value: "golang:1.14"
-      #value: "golang:1.15"
-      instruction: USER
-      # value: "golang:1.14"
-      value: updatecli
+      Instruction:
+        keyword: "FROM"
+        matcher: "golang:1.14"
     scm:
       github:
         user: "updatecli"
@@ -33,8 +30,10 @@ targets:
     kind: dockerfile
     prefix: "olblak/updatecli:"
     spec:
-      file: "Dockerfile"
-      instruction: "FROM"
+      file: Dockerfile
+      Instruction:
+        keyword: "FROM"
+        matcher: "golang:1.14"
     scm:
       github:
         user: "updatecli"
