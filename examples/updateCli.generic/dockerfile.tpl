@@ -40,13 +40,14 @@ source:
     username: olblak
     version: latest
 conditions:
-  isENVSet:
+  isARGSet:
     name: Is ENV HELM_VERSION set
     kind: dockerfile
     spec:
-      file: docker/Dockerfile
-      Instruction: ENV[1][0]
-      Value: "HELM_VERSION"
+      file: Dockerfile
+      Instruction:
+        keyword: "ARG"
+        matcher: "TERRAFORM_VERSION"
     scm:
       github:
         user: "updatecli"
@@ -57,12 +58,14 @@ conditions:
         username: "olblak"
         branch: "main"
 targets:
-  updateENVHELMVERSION:
+  updateARGHELMVERSION:
     name: Update HELM_VERSION
     kind: dockerfile
     spec:
-      file: docker/Dockerfile
-      Instruction: ENV[1][1]
+      file: Dockerfile
+      Instruction:
+        keyword: "ARG"
+        matcher: "TERRAFORM_VERSION"
     scm:
       github:
         user: "updatecli"

@@ -14,8 +14,9 @@ conditions:
     kind: dockerfile
     spec:
       file: docker/Dockerfile
-      Instruction: ENV[1][0]
-      Value: "HELM_VERSION"
+      Instruction:
+        keyword: "ENV"
+        matcher: "HELM_VERSION"
     scm:
       github:
         user: "updatecli"
@@ -31,7 +32,9 @@ targets:
     kind: dockerfile
     spec:
       file: docker/Dockerfile
-      Instruction: ENV[1][1]
+      Instruction:
+        keyword: "ENV"
+        matcher: "HELM_VERSION"
     scm:
       github:
         user: "updatecli"
