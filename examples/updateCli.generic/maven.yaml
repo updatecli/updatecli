@@ -62,7 +62,7 @@ conditions:
     scm:
       git:
         url: "git@github.com:olblak/charts.git"
-        branch: "main"
+        branch: "master"
         user: "olblak"
         email: "me@olblak.com"
 targets:
@@ -75,7 +75,7 @@ targets:
     scm:
       git:
         url: "git@github.com:olblak/charts.git"
-        branch: main
+        branch: master
         user: olblak
         email: me@olblak.com
         directory: "/home/olblak/Project/Jenkins-infra/charts"

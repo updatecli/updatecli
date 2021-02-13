@@ -24,7 +24,7 @@ conditions:
         repository: "charts"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
-        branch: "main"
+        branch: "master"
   isARGSet:
     name: Is there any ARG instruction starting with "HELM_VERSION"
     kind: dockerfile
@@ -41,7 +41,7 @@ conditions:
         repository: "charts"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
-        branch: "main"
+        branch: "master"
 targets:
   updateENVHELMVERSION:
     name: Update the 2nd element of the 2nd ENV instruction to the source value
@@ -57,7 +57,7 @@ targets:
         repository: "charts"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
-        branch: "main"
+        branch: "master"
   updateARGTERRAFORMVERSION:
     name: Update all ARG instructions starting with HELM_VERSION
     kind: dockerfile
@@ -74,4 +74,4 @@ targets:
         repository: "charts"
         token: {{ requiredEnv "GITHUB_TOKEN" }}
         username: "olblak"
-        branch: "main"
+        branch: "master"

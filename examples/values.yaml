@@ -6,4 +6,6 @@ github:
   #token: "UPDATECLI_GITHUB_TOKEN"
   token: "GITHUB_TOKEN"
   username: olblak
-  branch: main
+  branch: mirror-rsync
+  #branch: master
+  #branch: azure-mirror
