@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/engine/condition"
@@ -73,14 +74,13 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 		return fmt.Errorf("file extension not supported: %v", extension)
 	}
 
+	err = config.Validate()
+	if err != nil {
+		return err
+	}
+
 	return nil
 
-}
-
-// Check is a function that test if the configuration is correct
-func (config *Config) Check() bool {
-	logrus.Infof("TODO: Implement configuration check")
-	return true
 }
 
 // Display shows updatecli configuration including secrets !
@@ -90,5 +90,22 @@ func (config *Config) Display() error {
 		return err
 	}
 	logrus.Infof("%s", string(c))
+	return nil
+}
+
+// Validate run various validation test on the configuration and update fields if necessary
+func (config *Config) Validate() error {
+	pipelineID, err := hashstructure.Hash(config, nil)
+	if err != nil {
+		return err
+	}
+
+	for id, t := range config.Targets {
+		if len(t.PipelineID) == 0 {
+			t.PipelineID = fmt.Sprintf("%d", pipelineID)
+		}
+		config.Targets[id] = t
+	}
+
 	return nil
 }

@@ -114,7 +114,7 @@ func Clone(
 	}
 
 	if !found {
-		s, err := scm.Unmarshal(*SCM)
+		s, _, err := scm.Unmarshal(*SCM)
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 		}

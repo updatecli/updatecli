@@ -17,6 +17,7 @@ import (
 // Target defines which file needs to be updated based on source output
 type Target struct {
 	Name         string
+	PipelineID   string `yaml:"pipelineID"` // PipelineID references a uniq pipeline run that allows to groups targets
 	Kind         string
 	Changelog    string `yaml:"-"`
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
@@ -97,6 +98,8 @@ func Unmarshal(target *Target) (spec Spec, err error) {
 // Run applies a specific target configuration
 func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 
+	var pr scm.PullRequest
+
 	if len(t.Transformers) > 0 {
 		source, err = t.Transformers.Apply(source)
 		if err != nil {
@@ -139,12 +142,12 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 			return false, err
 		}
 
-		s, err = scm.Unmarshal(t.Scm)
+		s, pr, err = scm.Unmarshal(t.Scm)
 		if err != nil {
 			return false, err
 		}
 
-		err = s.Init(source, t.Name)
+		err = s.Init(source, t.PipelineID)
 		if err != nil {
 			return false, err
 		}
@@ -183,6 +186,23 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 						return changed, err
 					}
 				}
+			}
+		}
+		if pr != nil && !o.DryRun {
+			ID, err := pr.IsPullRequest()
+
+			if len(ID) != 0 && err == nil {
+
+				err = pr.UpdatePullRequest(ID)
+				if err != nil {
+					return changed, err
+				}
+			} else if len(ID) == 0 && err == nil {
+				err = pr.OpenPullRequest()
+				if err != nil {
+					return changed, err
+				}
+
 			}
 		}
 
