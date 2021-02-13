@@ -42,6 +42,11 @@ func Add(files []string, workingDir string) error {
 // Checkout create and then uses a temporary git branch.
 func Checkout(branch, remoteBranch, workingDir string) error {
 
+	logrus.Debugf("Checkout branch '%v', based on '%v' from directory '%v'",
+		remoteBranch,
+		branch,
+		workingDir)
+
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
 		return err
@@ -49,13 +54,28 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 
 	w, err := r.Worktree()
 	if err != nil {
+		logrus.Debugln(err)
+		return err
+	}
+
+	b := bytes.Buffer{}
+
+	err = w.Pull(&git.PullOptions{
+		Force:    true,
+		Progress: &b,
+	})
+
+	if err != nil &&
+		err != git.ErrNonFastForwardUpdate &&
+		err != git.NoErrAlreadyUpToDate {
+		logrus.Debugln(err)
 		return err
 	}
 
 	// If remoteBranch already exist, use it
 	// otherwise use the one define in the spec
 	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewRemoteReferenceName("origin", remoteBranch),
+		Branch: plumbing.NewBranchReferenceName(remoteBranch),
 		Create: false,
 		Keep:   false,
 		Force:  true,
@@ -63,6 +83,9 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 
 	if err == plumbing.ErrReferenceNotFound {
 		// Checkout source branch without creating it yet
+
+		logrus.Debugf("Branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
+
 		err = w.Checkout(&git.CheckoutOptions{
 			Branch: plumbing.NewBranchReferenceName(branch),
 			Create: false,
@@ -71,51 +94,54 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		})
 
 		if err != nil {
+			logrus.Debugf("Branch: '%v' - \n\t%v", branch, err)
 			return err
 		}
 
-		logrus.Debugf("Checkout branch: '%v'", remoteBranch)
 		// Checkout locale branch without creating it yet
 		err = w.Checkout(&git.CheckoutOptions{
 			Branch: plumbing.NewBranchReferenceName(remoteBranch),
-			Create: false,
+			Create: true,
 			Keep:   false,
 			Force:  true,
 		})
 
-		// Branch doesn't exist locally
-		if err == plumbing.ErrReferenceNotFound {
-			logrus.Debugf("Creating first branch: '%v'", remoteBranch)
+		logrus.Debugf("Creating branch '%v'", remoteBranch)
 
-			err = w.Checkout(&git.CheckoutOptions{
-				Branch: plumbing.NewBranchReferenceName(remoteBranch),
-				Create: true,
-				Keep:   false,
-				Force:  true,
-			})
-
-			if err != nil &&
-				(err != plumbing.ErrReferenceNotFound ||
-					err != git.ErrBranchExists) {
-				return err
-			}
-
-		} else if err != nil && err != plumbing.ErrReferenceNotFound {
+		if err != nil {
 			return err
 		}
+
 	} else if err != plumbing.ErrReferenceNotFound && err != nil {
+		logrus.Debugln(err)
 		return err
 	} else {
+
 		// Means that a local branch named remoteBranch already exist
 		// so we want to be sure that the local branch is
 		// aligned with the remote one.
-		remoteBranchRef := fmt.Sprintf("refs/remotes/origin/%s", remoteBranch)
 
-		logrus.Infof(remoteBranchRef)
+		remote, err := r.Remote("origin")
+		if err != nil {
+			return err
+		}
+		refs, err := remote.List(&git.ListOptions{})
+
+		if !exists(
+			plumbing.NewBranchReferenceName(remoteBranch),
+			refs) {
+			logrus.Debugf("No remote name '%v'", remoteBranch)
+			return nil
+		}
+
+		remoteBranchRef := plumbing.NewRemoteReferenceName("origin", remoteBranch)
+
+		logrus.Infof("Remote branch: ", remoteBranchRef)
 
 		remoteRef, err := r.Reference(
 			plumbing.ReferenceName(
 				remoteBranchRef), true)
+
 		if err != nil {
 			return err
 		}
@@ -126,11 +152,29 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		})
 
 		if err != nil {
+			logrus.Debugln(err)
 			return err
 		}
+
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(remoteBranch),
+			Create: false,
+			Keep:   false,
+			Force:  true,
+		})
+
 	}
 
 	return nil
+}
+
+func exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bool {
+	for _, ref2 := range refs {
+		if ref.String() == ref2.Name().String() {
+			return true
+		}
+	}
+	return false
 }
 
 // Commit run `git commit`.
@@ -188,9 +232,10 @@ func Clone(username, password, URL, workingDir string) error {
 
 	b.WriteString(fmt.Sprintf("Cloning git repository: %s in %s\n", URL, workingDir))
 	repo, err := git.PlainClone(workingDir, false, &git.CloneOptions{
-		URL:      URL,
-		Auth:     &auth,
-		Progress: &b,
+		URL:               URL,
+		Auth:              &auth,
+		Progress:          &b,
+		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 	})
 
 	if err == git.ErrRepositoryAlreadyExists {
@@ -223,7 +268,9 @@ func Clone(username, password, URL, workingDir string) error {
 		b.Reset()
 
 		if err != nil &&
+			err != git.ErrNonFastForwardUpdate &&
 			err != git.NoErrAlreadyUpToDate {
+			logrus.Debugln(err)
 			return err
 		}
 
@@ -241,8 +288,15 @@ func Clone(username, password, URL, workingDir string) error {
 	b.WriteString("Fetching remote branches")
 	for _, r := range remotes {
 
-		err := r.Fetch(&git.FetchOptions{Progress: &b})
+		err := r.Fetch(&git.FetchOptions{
+			Auth:     &auth,
+			Progress: &b,
+			RefSpecs: []config.RefSpec{"refs/*:refs/*"},
+			Force:    true,
+		})
+
 		logrus.Infof(b.String())
+
 		b.Reset()
 		if err != nil &&
 			err != git.NoErrAlreadyUpToDate &&
@@ -314,10 +368,21 @@ func Push(username, password, workingDir string) error {
 
 // SanitizeBranchName replace wrong character in the branch name
 func SanitizeBranchName(branch string) string {
-	branch = strings.ReplaceAll(branch, " ", "")
-	branch = strings.ReplaceAll(branch, ":", "")
-	branch = strings.ReplaceAll(branch, "*", "")
-	branch = strings.ReplaceAll(branch, "+", "")
+
+	replacedByUnderscore := []string{
+		":", "=", "+", "-", "$", "&", "#", "!", "@",
+	}
+
+	removedCharacter := []string{
+		"/", "\\", "{", "}", "[", "]",
+	}
+
+	for _, character := range removedCharacter {
+		branch = strings.ReplaceAll(branch, character, "")
+	}
+	for _, character := range replacedByUnderscore {
+		branch = strings.ReplaceAll(branch, character, "_")
+	}
 
 	if len(branch) > 255 {
 		return branch[0:255]
