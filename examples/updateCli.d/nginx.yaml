@@ -19,4 +19,4 @@ targets:
         repository: "charts"
         token: ""
         username: "olblak"
-        branch: "main"
+        branch: "master"
