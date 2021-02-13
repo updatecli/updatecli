@@ -63,7 +63,7 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 
 	// If scm is defined then clone the repository
 	if len(c.Scm) > 0 {
-		s, err := scm.Unmarshal(c.Scm)
+		s, _, err := scm.Unmarshal(c.Scm)
 		if err != nil {
 			return false, err
 		}

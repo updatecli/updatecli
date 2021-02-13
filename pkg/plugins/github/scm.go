@@ -4,16 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sirupsen/logrus"
-
 	git "github.com/olblak/updateCli/pkg/plugins/git/generic"
 )
 
 // Init set default Github parameters if not set.
-func (g *Github) Init(source string, name string) error {
+func (g *Github) Init(source string, pipelineID string) error {
 	g.Version = source
-	g.Name = name
-	g.remoteBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli/%v/%v", g.Name, g.Version))
+	g.remoteBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
 	g.setDirectory()
 
 	if ok, err := g.Check(); !ok {
@@ -94,13 +91,6 @@ func (g *Github) Add(files []string) error {
 func (g *Github) Push() error {
 
 	err := git.Push(g.Username, g.Token, g.GetDirectory())
-	if err != nil {
-		return err
-	}
-
-	logrus.Infof("")
-
-	err = g.OpenPullRequest()
 	if err != nil {
 		return err
 	}
