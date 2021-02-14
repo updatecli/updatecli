@@ -201,7 +201,7 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 				"matcher": "HELM_VERSION",
 			},
 			expectedChanges:      types.ChangedLines{},
-			expectedErrorMessage: "\u2717 No instruction found for the keyword \"ARG\" and the matcher \"HELM_VERSION\" from Dockerfile 'FOO'",
+			expectedErrorMessage: "\u2717 No line found matching the keyword \"ARG\" and the matcher \"HELM_VERSION\".",
 		},
 		{
 			name:              "Instruction kept the same",
@@ -233,7 +233,6 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 				assert.NotNil(t, gotError)
 				assert.Equal(t, tt.expectedErrorMessage, gotError.Error())
 			}
-
 			// Check for expected changes
 			assert.Equal(t, tt.expectedChanges, gotChanges)
 

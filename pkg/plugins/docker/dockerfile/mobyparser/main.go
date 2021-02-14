@@ -21,43 +21,37 @@ func (m MobyParser) FindInstruction(dockerfileContent []byte) bool {
 
 	data, err := parser.Parse(bytes.NewReader(dockerfileContent))
 	if err != nil {
-		// TODO: Error?
+		logrus.Error(err.Error())
 		return false
 	}
 
 	found, val, err := m.replace(data.AST)
 	if err != nil {
-		// TODO: Error?
+		logrus.Error(err.Error())
 		return false
 	}
 
 	if found {
 		if val == m.Value {
-			logrus.Infof("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s'",
+			logrus.Infof("\u2714 Instruction %q is correctly set to %q",
 				m.Instruction,
-				// TODO: Dockerfile path (put on parent caller?)
-				"FOO",
 				m.Value)
 			return true
 		}
 
-		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', is incorrectly set to '%s' instead of '%s'",
+		logrus.Infof("\u2717 Instruction %q is incorrectly set to %q instead of %q",
 			m.Instruction,
-			// TODO: Dockerfile path (put on parent caller?)
-			"FOO",
 			val,
 			m.Value)
 
 	} else {
 
-		logrus.Infof("\u2717 Instruction '%s' from Dockerfile '%s', wasn't found",
+		logrus.Infof("\u2717 Instruction %q wasn't found",
 			m.Instruction,
-			// TODO: Dockerfile path (put on parent caller?)
-			"FOO",
 		)
 	}
 
-	// TODO: Error?
+	logrus.Error(err.Error())
 	return false
 }
 
@@ -79,28 +73,20 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue st
 
 	if valueFound {
 		if oldVersion == m.Value {
-			logrus.Infof("\u2714 Instruction '%s', from Dockerfile '%v', already set to %s, nothing else need to be done",
+			logrus.Infof("\u2714 Instruction %q already set to %q, nothing else need to be done",
 				m.Instruction,
-				// TODO
-				"FOO",
 				m.Value)
 			return dockerfileContent, changed, nil
 		}
-	} else {
-		logrus.Infof("\u2717 cannot find instruction '%s' from Dockerfile '%s'",
-			m.Instruction,
-			// TODO
-			"FOO",
-		)
-		return dockerfileContent, changed, nil
-	}
 
-	logrus.Infof("\u2714 Instruction '%s', from Dockerfile '%v', was updated from '%s' to '%s'",
-		m.Instruction,
-		// TODO
-		"FOO",
-		oldVersion,
-		m.Value)
+		logrus.Infof("\u2714 Instruction %q, was updated from %q to %q",
+			m.Instruction,
+			oldVersion,
+			m.Value,
+		)
+	} else {
+		return dockerfileContent, changed, fmt.Errorf("\u2717 cannot find instruction %q", m.Instruction)
+	}
 
 	newDockerfileContent := ""
 	err = Marshal(data, &newDockerfileContent)
@@ -114,7 +100,7 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue st
 		// If the line is not a comment, then we expect it to be a change
 		if !strings.HasPrefix(strings.TrimSpace(currentLine), "#") {
 			// Check that the originalDockerfile has the original line or ignore the change
-			if len(originalDockerfileContentLines) > index {
+			if len(originalDockerfileContentLines) > index && currentLine != originalDockerfileContentLines[index] {
 				changed[index] = types.LineDiff{Original: originalDockerfileContentLines[index], New: currentLine}
 			}
 		}

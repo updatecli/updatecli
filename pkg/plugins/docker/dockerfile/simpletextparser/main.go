@@ -18,6 +18,16 @@ type SimpleTextDockerfileParser struct {
 }
 
 func (s SimpleTextDockerfileParser) FindInstruction(dockerfileContent []byte) bool {
+	if found, originalLine := s.hasMatch(dockerfileContent); found {
+		logrus.Infof("\u2714 Line %q found, matching the keyword %q and the matcher %q.", originalLine, s.Keyword, s.Matcher)
+		return true
+	}
+
+	logrus.Infof("\u2717 No line found matching the keyword %q and the matcher %q.", s.Keyword, s.Matcher)
+	return false
+}
+
+func (s SimpleTextDockerfileParser) hasMatch(dockerfileContent []byte) (bool, string) {
 	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
 
 	// For each line of the dockerfile
@@ -25,25 +35,20 @@ func (s SimpleTextDockerfileParser) FindInstruction(dockerfileContent []byte) bo
 		originalLine := scanner.Text()
 
 		if s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
-			// Immediately return if there is match: the result of a condition is the same with one or multiple matches
-			return true
+			// Immediately returns if there is match: the result of a condition is the same with one or multiple matches
+			return true, originalLine
 		}
 	}
-	return false
+
+	return false, ""
 }
 
 func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte, sourceValue string) ([]byte, types.ChangedLines, error) {
 
 	changedLines := make(types.ChangedLines)
 
-	if !s.FindInstruction(dockerfileContent) {
-		// TODO: Dockerfile path (put on parent caller?)
-		return dockerfileContent, changedLines, fmt.Errorf(
-			"\u2717 No instruction found for the keyword %q and the matcher %q from Dockerfile '%s'",
-			s.Keyword,
-			s.Matcher,
-			"FOO",
-		)
+	if found, _ := s.hasMatch(dockerfileContent); !found {
+		return dockerfileContent, changedLines, fmt.Errorf("\u2717 No line found matching the keyword %q and the matcher %q.", s.Keyword, s.Matcher)
 	}
 
 	var newDockerfile bytes.Buffer
@@ -61,10 +66,21 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 			newLine = s.KeywordLogic.ReplaceLine(sourceValue, originalLine, s.Matcher)
 
 			if newLine != originalLine {
+				logrus.Infof("\u2714 The line #%d, matched by the keyword %q and the matcher %q, is changed from %q to %q.",
+					linePosition,
+					s.Keyword,
+					s.Matcher,
+					originalLine,
+					newLine,
+				)
 				changedLines[linePosition] = types.LineDiff{Original: originalLine, New: newLine}
 			} else {
-				// TODO: Dockerfile path (put on parent caller?)
-				logrus.Infof("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s'", s.Keyword, "FOO", originalLine)
+				logrus.Infof("\u2714 The line #%d, matched by the keyword %q and the matcher %q, is correctly set to %q.",
+					linePosition,
+					s.Keyword,
+					s.Matcher,
+					originalLine,
+				)
 			}
 		}
 
@@ -115,8 +131,4 @@ func (s *SimpleTextDockerfileParser) setKeywordLogic() error {
 	}
 
 	return nil
-}
-
-func (s SimpleTextDockerfileParser) String() string {
-	return fmt.Sprintf("%s %s", strings.ToUpper(s.Keyword), s.Matcher)
 }
