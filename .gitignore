@@ -20,3 +20,4 @@ bin/
 
 *.env
 .idea
+.vscode
