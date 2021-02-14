@@ -64,6 +64,28 @@ func TestDockerfile_Target(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "FROM with moby parser and dryrun",
+			source:      "golang:1.16-alpine",
+			file:        "FROM.Dockerfile",
+			dryRun:      true,
+			instruction: "FROM[1][0]",
+			wantChanged: true,
+		},
+		{
+			name:        "FROM with moby parser",
+			source:      "golang:1.16-alpine",
+			file:        "FROM.Dockerfile",
+			dryRun:      true,
+			instruction: "FROM[1][0]",
+			wantChanged: true,
+			wantDiff: types.ChangedLines{
+				11: types.LineDiff{
+					Original: "FROM golang:1.15 as tester",
+					New:      "FROM golang:1.16-alpine as tester",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

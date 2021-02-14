@@ -3,6 +3,7 @@ package dockerfile
 import (
 	"testing"
 
+	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/mobyparser"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/simpletextparser"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/types"
@@ -13,6 +14,7 @@ func TestDockerfile_SetParser(t *testing.T) {
 	tests := []struct {
 		name           string
 		instruction    types.Instruction
+		value          string
 		wantParser     types.DockerfileParser
 		wantErrMessage string
 	}{
@@ -41,10 +43,13 @@ func TestDockerfile_SetParser(t *testing.T) {
 			},
 		},
 		{
-			name:           "Full Fledge Parser",
-			instruction:    "FROM[0][1]",
-			wantParser:     nil,
-			wantErrMessage: "Full Fledge Parser",
+			name:        "Moby Parser",
+			instruction: "ARG[0][1]",
+			value:       "HELM_VERSION",
+			wantParser: mobyparser.MobyParser{
+				Instruction: "ARG[0][1]",
+				Value:       "HELM_VERSION",
+			},
 		},
 		{
 			name:           "Cannot determine parser",
@@ -65,6 +70,7 @@ func TestDockerfile_SetParser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Dockerfile{
 				Instruction: tt.instruction,
+				Value:       tt.value,
 			}
 
 			gotErr := d.SetParser()

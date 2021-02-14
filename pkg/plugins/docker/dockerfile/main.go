@@ -3,6 +3,7 @@ package dockerfile
 import (
 	"fmt"
 
+	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/mobyparser"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/simpletextparser"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/types"
 )
@@ -26,7 +27,11 @@ func (d *Dockerfile) SetParser() error {
 	default:
 		return fmt.Errorf("Parsing Error: cannot determine instruction: %v.", i)
 	case string:
-		return fmt.Errorf("Full Fledge Parser")
+		d.parser = mobyparser.MobyParser{
+			Instruction: i,
+			Value:       d.Value,
+		}
+		return nil
 	case map[string]string:
 		d.parser, err = simpletextparser.NewSimpleTextDockerfileParser(i)
 		return err
