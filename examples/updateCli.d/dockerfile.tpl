@@ -10,12 +10,28 @@ source:
     version: latest
 conditions:
   isENVSet:
-    name: Is ENV HELM_VERSION set
+    name: Is the 2nd ENV instruction having a "keyword" set to "HELM_VERSION"
     kind: dockerfile
     spec:
       file: docker/Dockerfile
-      Instruction:
-        keyword: "ENV"
+      Instruction: "ENV[1][0]"
+      Value: "HELM_VERSION"
+    scm:
+      github:
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        username: "olblak"
+        branch: "main"
+  isARGSet:
+    name: Is there any ARG instruction starting with "HELM_VERSION"
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: "ARG"
         matcher: "HELM_VERSION"
     scm:
       github:
@@ -28,13 +44,28 @@ conditions:
         branch: "main"
 targets:
   updateENVHELMVERSION:
-    name: Update HELM_VERSION
+    name: Update the 2nd element of the 2nd ENV instruction to the source value
     kind: dockerfile
     spec:
       file: docker/Dockerfile
-      Instruction:
-        keyword: "ENV"
-        matcher: "HELM_VERSION"
+      Instruction: ENV[1][1]
+    scm:
+      github:
+        user: "updatecli"
+        email: "updatecli@olblak.com"
+        owner: "olblak"
+        repository: "charts"
+        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        username: "olblak"
+        branch: "main"
+  updateARGTERRAFORMVERSION:
+    name: Update all ARG instructions starting with HELM_VERSION
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: "ARG"
+        matcher: "TERRAFORM_VERSION"
     scm:
       github:
         user: "updatecli"

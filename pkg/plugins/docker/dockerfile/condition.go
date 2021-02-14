@@ -21,16 +21,11 @@ func (d *Dockerfile) Condition(source string) (bool, error) {
 		return false, err
 	}
 
+	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.File)
+
 	found := d.parser.FindInstruction(dockerfileContent)
 
-	if !found {
-		logrus.Infof("\u2717 Instruction %v from Dockerfile %q, wasn't found", d.Instruction, d.File)
-		return false, nil
-	}
-
-	logrus.Infof("\u2714 There is a match for the instruction %s in the Dockerfile %q", d.Instruction, d.File)
-
-	return true, nil
+	return found, nil
 }
 
 // ConditionFromSCM run based on a file from SCM

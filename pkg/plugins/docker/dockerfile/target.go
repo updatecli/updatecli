@@ -9,6 +9,7 @@ import (
 
 	"github.com/olblak/updateCli/pkg/core/helpers"
 	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/sirupsen/logrus"
 )
 
 // Target updates a targeted Dockerfile
@@ -24,6 +25,8 @@ func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.File)
 
 	newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions(dockerfileContent, source)
 	if err != nil {
