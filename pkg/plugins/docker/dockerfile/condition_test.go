@@ -27,6 +27,13 @@ func TestDockerfile_Condition(t *testing.T) {
 			wantChanged: true,
 		},
 		{
+			name:        "Found FROM with moby parser",
+			source:      "golang:1.15",
+			file:        "FROM.Dockerfile",
+			instruction: "FROM[1][0]",
+			wantChanged: true,
+		},
+		{
 			name:   "Not Found ARG with text parser",
 			source: "1.16",
 			file:   "FROM.Dockerfile",
@@ -63,6 +70,7 @@ func TestDockerfile_Condition(t *testing.T) {
 			d := &Dockerfile{
 				File:        "./test_fixtures/" + tt.file,
 				Instruction: tt.instruction,
+				Value:       tt.source, // Value and source are the same field in a condition
 			}
 
 			gotChanged, gotErr := d.Condition(tt.source)

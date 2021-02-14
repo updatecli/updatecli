@@ -37,6 +37,7 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 	changedLines := make(types.ChangedLines)
 
 	if !s.FindInstruction(dockerfileContent) {
+		// TODO: Dockerfile path (put on parent caller?)
 		return dockerfileContent, changedLines, fmt.Errorf(
 			"\u2717 No instruction found for the keyword %q and the matcher %q from Dockerfile '%s'",
 			s.Keyword,
@@ -62,6 +63,7 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 			if newLine != originalLine {
 				changedLines[linePosition] = types.LineDiff{Original: originalLine, New: newLine}
 			} else {
+				// TODO: Dockerfile path (put on parent caller?)
 				logrus.Infof("\u2714 Instruction '%s' from Dockerfile '%s', is correctly set to '%s'", s.Keyword, "FOO", originalLine)
 			}
 		}
