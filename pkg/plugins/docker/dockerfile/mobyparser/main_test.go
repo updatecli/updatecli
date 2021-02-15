@@ -53,6 +53,7 @@ RUN \
 	multiStageDockerfile string = `FROM golang:1.15 as builder
 WORKDIR /go/src/app
 COPY . .
+ENV GOLANG_VERSION=1.15
 RUN go get -d -v ./...
 FROM ubuntu
 LABEL maintainer="Olblak <me@olblak.com>"
@@ -170,6 +171,15 @@ CMD ["--help"]
 			expectedFound:   false,
 			expectedReplace: false,
 		},
+		{
+			dockerfile: multiStageDockerfile,
+			spec: MobyParser{
+				Instruction: "ENV[0][0]",
+				Value:       "HELM_VERSION",
+			},
+			expectedFound:   true,
+			expectedReplace: false,
+		},
 	}
 
 	positionKeysdata positionKeyDataSets = positionKeyDataSets{
@@ -276,20 +286,36 @@ func TestReplaceNode(t *testing.T) {
 		}
 
 		if found != data.expectedFound {
-			t.Errorf("%d: Expected %s %s to be found, got %v",
+			t.Errorf("%d: Expected %s %s finding to be '%t', got '%t'",
 				i,
 				data.spec.Instruction,
 				data.spec.Value,
+				data.expectedFound,
 				found)
 		}
 		if data.expectedReplace && val == data.spec.Value {
-			t.Errorf("%d: Expected %s %s to be replace, got %v",
+			t.Errorf("%d: Expected %s %s to be replaced but got %q",
 				i,
 				data.spec.Instruction,
 				data.spec.Value,
-				found)
+				data.spec.Value)
 		}
 
 	}
 
+}
+
+func TestMobyParser_FindInstruction(t *testing.T) {
+	for i, data := range datas {
+		found := data.spec.FindInstruction([]byte(data.dockerfile))
+
+		if found != data.expectedFound {
+			t.Errorf("%d: Expected %s %s finding to be '%t', got '%t'",
+				i,
+				data.spec.Instruction,
+				data.spec.Value,
+				data.expectedFound,
+				found)
+		}
+	}
 }
