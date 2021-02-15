@@ -63,7 +63,10 @@ func (d *Dockerfile) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (cha
 	files = append(files, file)
 
 	if changed {
-		message = fmt.Sprintf("[updatecli] Instructions changed from Dockerfile %q:\n"+strings.Join(d.messages, "\n"), d.File)
+		// Generate a multiline string with one message per line (each message maps to a line changed by the parser)
+		messageList := strings.Join(d.messages, "\n")
+		// Generate a nice commit message with a first line title, and append the previous message list
+		message = fmt.Sprintf("[updatecli] Instructions changed from Dockerfile %q:\n"+messageList, d.File)
 	}
 
 	return changed, files, message, err
