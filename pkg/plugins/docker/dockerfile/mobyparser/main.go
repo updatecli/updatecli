@@ -73,22 +73,22 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue st
 		return dockerfileContent, changed, err
 	}
 
-	if valueFound {
-		if oldVersion == m.Value {
-			logrus.Infof("\u2714 Instruction %q already set to %q, nothing else need to be done",
-				m.Instruction,
-				m.Value)
-			return dockerfileContent, changed, nil
-		}
-
-		logrus.Infof("\u2714 Instruction %q, was updated from %q to %q",
-			m.Instruction,
-			oldVersion,
-			m.Value,
-		)
-	} else {
+	if !valueFound {
 		return dockerfileContent, changed, fmt.Errorf("\u2717 cannot find instruction %q", m.Instruction)
 	}
+
+	if oldVersion == m.Value {
+		logrus.Infof("\u2714 Instruction %q already set to %q, nothing else need to be done",
+			m.Instruction,
+			m.Value)
+		return dockerfileContent, changed, nil
+	}
+
+	logrus.Infof("\u2714 Instruction %q, was updated from %q to %q",
+		m.Instruction,
+		oldVersion,
+		m.Value,
+	)
 
 	newDockerfileContent := ""
 	err = Marshal(data, &newDockerfileContent)
