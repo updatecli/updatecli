@@ -17,6 +17,13 @@ type MobyParser struct {
 	Value       string
 }
 
+var (
+	instructionRegex = regexp.MustCompile(`^.*\[([[:digit:]]*)\]\[[[:digit:]]*\]$`)
+	positionRegex    = regexp.MustCompile(`(.*)*\[[[:digit:]]*\]\[[[:digit:]]*\]$`)
+	elementRegex     = regexp.MustCompile(`^.*\[[[:digit:]]*\]\[([[:digit:]])*\]$`)
+	positionKeyRegex = regexp.MustCompile(`^(.*)\[[[:digit:]]*\]\[[[:digit:]]*\]$`)
+)
+
 func (m MobyParser) FindInstruction(dockerfileContent []byte) bool {
 
 	data, err := parser.Parse(bytes.NewReader(dockerfileContent))
@@ -112,11 +119,8 @@ func (m MobyParser) String() string {
 // where first [0] references the instruction position
 // and the  second [0] references the element inside instruction line
 func isPositionKeys(key string) bool {
-	matched, err := regexp.MatchString(`^(.*)\[[[:digit:]]*\]\[[[:digit:]]*\]$`, key)
+	matched := positionKeyRegex.MatchString(key)
 
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-	}
 	return matched
 }
 
@@ -127,13 +131,10 @@ func getPositionKeys(k string) (
 	err error) {
 
 	if isPositionKeys(k) {
-		re := regexp.MustCompile(`(.*)*\[[[:digit:]]*\]\[[[:digit:]]*\]$`)
-		keys := re.FindStringSubmatch(k)
+		keys := positionRegex.FindStringSubmatch(k)
 		key = keys[1]
 
-		re = regexp.MustCompile(`^.*\[([[:digit:]]*)\]\[[[:digit:]]*\]$`)
-
-		positions := re.FindStringSubmatch(k)
+		positions := instructionRegex.FindStringSubmatch(k)
 
 		instructionPosition, err = strconv.Atoi(positions[1])
 
@@ -142,9 +143,7 @@ func getPositionKeys(k string) (
 			return "", -1, -1, err
 		}
 
-		re = regexp.MustCompile(`^.*\[[[:digit:]]*\]\[([[:digit:]])*\]$`)
-
-		positions = re.FindStringSubmatch(k)
+		positions = elementRegex.FindStringSubmatch(k)
 
 		elementPosition, err = strconv.Atoi(positions[1])
 
