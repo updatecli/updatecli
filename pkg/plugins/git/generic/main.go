@@ -127,6 +127,10 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		}
 		refs, err := remote.List(&git.ListOptions{})
 
+		if err != nil {
+			return err
+		}
+
 		if !exists(
 			plumbing.NewBranchReferenceName(remoteBranch),
 			refs) {
@@ -138,9 +142,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 
 		logrus.Infof("Remote branch: ", remoteBranchRef)
 
-		remoteRef, err := r.Reference(
-			plumbing.ReferenceName(
-				remoteBranchRef), true)
+		remoteRef, err := r.Reference(remoteBranchRef, true)
 
 		if err != nil {
 			return err
@@ -162,6 +164,11 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 			Keep:   false,
 			Force:  true,
 		})
+
+		if err != nil {
+			logrus.Debugln(err)
+			return err
+		}
 
 	}
 
