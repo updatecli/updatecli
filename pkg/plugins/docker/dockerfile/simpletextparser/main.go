@@ -120,15 +120,38 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 	return newParser, nil
 }
 
+var supportedKeywordsInitializers = map[string]keywords.Logic{
+	"from":        keywords.From{},
+	"run":         nil,
+	"cmd":         nil,
+	"label":       nil,
+	"maintainer":  nil,
+	"expose":      nil,
+	"env":         nil,
+	"add":         nil,
+	"copy":        nil,
+	"entrypoint":  nil,
+	"volume":      nil,
+	"user":        nil,
+	"workdir":     nil,
+	"arg":         keywords.Arg{},
+	"onbuild":     nil,
+	"stopsignal":  nil,
+	"healthcheck": nil,
+	"shell":       nil,
+}
+
 func (s *SimpleTextDockerfileParser) setKeywordLogic() error {
-	switch strings.ToLower(s.Keyword) {
-	case "from":
-		s.KeywordLogic = keywords.From{}
-	case "arg":
-		s.KeywordLogic = keywords.Arg{}
-	default:
+	keywordLogic, found := supportedKeywordsInitializers[strings.ToLower(s.Keyword)]
+	if !found {
 		return fmt.Errorf("\u2717 Unknown keyword %q provided for Dockerfile's instruction.", s.Keyword)
 	}
+
+	if keywordLogic == nil {
+		return fmt.Errorf("\u2717 Provided keyword %q not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation.", s.Keyword)
+	}
+
+	s.KeywordLogic = keywordLogic
 
 	return nil
 }
