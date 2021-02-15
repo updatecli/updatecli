@@ -130,8 +130,6 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		}
 	}
 
-	logrus.Infof("")
-
 	return nil
 }
 
