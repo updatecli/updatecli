@@ -375,7 +375,7 @@ func Push(username, password, workingDir string) error {
 func SanitizeBranchName(branch string) string {
 
 	removedCharacter := []string{
-		":", "=", "+", "-", "$", "&", "#", "!", "@","*"
+		":", "=", "+", "-", "$", "&", "#", "!", "@", "*", " ",
 	}
 
 	replacedByUnderscore := []string{
