@@ -140,8 +140,6 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 
 		remoteBranchRef := plumbing.NewRemoteReferenceName("origin", remoteBranch)
 
-		logrus.Infof("Remote branch: ", remoteBranchRef)
-
 		remoteRef, err := r.Reference(remoteBranchRef, true)
 
 		if err != nil {
@@ -376,11 +374,11 @@ func Push(username, password, workingDir string) error {
 // SanitizeBranchName replace wrong character in the branch name
 func SanitizeBranchName(branch string) string {
 
-	replacedByUnderscore := []string{
-		":", "=", "+", "-", "$", "&", "#", "!", "@",
+	removedCharacter := []string{
+		":", "=", "+", "-", "$", "&", "#", "!", "@","*"
 	}
 
-	removedCharacter := []string{
+	replacedByUnderscore := []string{
 		"/", "\\", "{", "}", "[", "]",
 	}
 
