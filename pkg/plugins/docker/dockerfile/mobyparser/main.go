@@ -31,28 +31,23 @@ func (m MobyParser) FindInstruction(dockerfileContent []byte) bool {
 		return false
 	}
 
-	if found {
-		if val == m.Value {
-			logrus.Infof("\u2714 Instruction %q is correctly set to %q",
-				m.Instruction,
-				m.Value)
-			return true
-		}
-
-		logrus.Infof("\u2717 Instruction %q is incorrectly set to %q instead of %q",
-			m.Instruction,
-			val,
-			m.Value)
-
-	} else {
-
-		logrus.Infof("\u2717 Instruction %q wasn't found",
-			m.Instruction,
-		)
+	if !found {
+		logrus.Infof("\u2717 Instruction %q wasn't found", m.Instruction)
+		return false
 	}
 
-	logrus.Error(err.Error())
-	return false
+	if val == m.Value {
+		logrus.Infof("\u2714 Instruction %q is correctly set to %q",
+			m.Instruction,
+			m.Value)
+		return true
+	}
+
+	logrus.Infof("\u2717 Instruction %q found but incorrectly set to %q instead of %q",
+		m.Instruction,
+		val,
+		m.Value)
+	return true
 }
 
 func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue string) ([]byte, types.ChangedLines, error) {
