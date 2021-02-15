@@ -18,35 +18,43 @@ func TestInstruction_setKeywordLogic(t *testing.T) {
 		wantErrorMessage string
 	}{
 		{
-			name: "FROM instruction",
+			name: "'FROM' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "FROM",
 			},
 			wantLogic: keywords.From{},
 		},
 		{
-			name: "from instruction",
+			name: "'from' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "from",
 			},
 			wantLogic: keywords.From{},
 		},
 		{
-			name: "ARG instruction",
+			name: "'ARG' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "ARG",
 			},
 			wantLogic: keywords.Arg{},
 		},
 		{
-			name: "arg instruction",
+			name: "'arg' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "arg",
 			},
 			wantLogic: keywords.Arg{},
 		},
 		{
-			name: "unknown instruction",
+			name: "Not supported (yet) instruction",
+			parser: SimpleTextDockerfileParser{
+				Keyword: "ONBUILD",
+			},
+			wantLogic:        nil,
+			wantErrorMessage: "\u2717 Provided keyword \"ONBUILD\" not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation.",
+		},
+		{
+			name: "Unknown instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "QUACK",
 			},
