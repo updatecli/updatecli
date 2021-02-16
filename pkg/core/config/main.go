@@ -18,6 +18,7 @@ import (
 // Config contains cli configuration
 type Config struct {
 	Name       string
+	Title      string // Title is used for the full pipeline
 	Source     source.Source
 	Conditions map[string]condition.Condition
 	Targets    map[string]target.Target

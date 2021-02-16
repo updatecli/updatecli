@@ -3,7 +3,6 @@ package github
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"text/template"
 
 	"github.com/shurcooL/githubv4"
@@ -89,7 +88,7 @@ func (g *Github) UpdatePullRequest(ID string) error {
 
 	logrus.Debugf("Updating Github pull request")
 
-	title := fmt.Sprintf("[updatecli] Update version to %v", g.Version)
+	title := g.PullRequestDescription.Title
 
 	bodyPR, err := SetBody(g.PullRequestDescription)
 	if err != nil {
@@ -107,7 +106,7 @@ func (g *Github) UpdatePullRequest(ID string) error {
 		return err
 	}
 
-	logrus.Infof("\nPull Request available on:\n\n\t%s\n", mutation.UpdatePullRequest.PullRequest.Url)
+	logrus.Infof("\nPull Request available on:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
 
 	return nil
 }
@@ -145,7 +144,8 @@ func (g *Github) OpenPullRequest() error {
 
 	logrus.Infof("Opening Pull Request")
 
-	title := fmt.Sprintf("[updatecli] Update version to %v", g.Version)
+	title := g.PullRequestDescription.Title
+
 	repositoryID, err := g.queryRepositoryID()
 	if err != nil {
 		return err
@@ -173,7 +173,7 @@ func (g *Github) OpenPullRequest() error {
 		return err
 	}
 
-	logrus.Infof("\nPull Request available on =>\n\n\t%s\n", mutation.CreatePullRequest.PullRequest.Url)
+	logrus.Infof("\nPull Request available on =>\n\n\t%s\n\n", mutation.CreatePullRequest.PullRequest.Url)
 
 	return nil
 

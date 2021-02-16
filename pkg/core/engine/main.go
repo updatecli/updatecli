@@ -188,9 +188,16 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
 
 	for _, conf := range e.configurations {
-		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
-		logrus.Infof("# %s #\n", strings.ToTitle(conf.Name))
-		logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
+		if len(conf.Title) > 0 {
+			logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Title)+4))
+			logrus.Infof("# %s #\n", strings.ToTitle(conf.Title))
+			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Title)+4))
+
+		} else {
+			logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
+			logrus.Infof("# %s #\n", strings.ToTitle(conf.Name))
+			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
+		}
 
 		conditionsStageReport := []reports.Stage{}
 		targetsStageReport := []reports.Stage{}
@@ -376,6 +383,24 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 
 			g.PullRequestDescription.Description = t.Changelog
 			g.PullRequestDescription.Report = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
+
+			if len(config.Title) > 0 {
+				// If a pipeline title has been defined, then use it for pull request title
+				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s",
+					config.Title)
+
+			} else if len(config.Targets) == 1 && len(t.Name) > 0 {
+				// If we only have one target then we can use it as fallback.
+				// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
+				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s", t.Name)
+			} else {
+				// At the moment, we don't have an easy way to describe what changed
+				// I am still thinking to a better solution.
+				logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
+				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
+					config.Source.Kind,
+					config.Source.Output)
+			}
 
 			t.Scm["github"] = g
 
