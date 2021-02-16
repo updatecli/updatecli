@@ -12,6 +12,7 @@ import (
 
 // Changelog contains various information used to describe target changes
 type Changelog struct {
+	Title       string
 	Description string
 	Report      string
 }
