@@ -14,17 +14,18 @@ type Scm interface {
 	Clone() (string, error)
 	Checkout() error
 	GetDirectory() (directory string)
-	Init(source string, name string) error
+	Init(source string, pipelineID string) error
 	Push() error
 	Commit(message string) error
 	Clean() error
 }
 
 // Unmarshal parses a scm struct like git or github and returns a scm interface
-func Unmarshal(scm map[string]interface{}) (Scm, error) {
+func Unmarshal(scm map[string]interface{}) (Scm, PullRequest, error) {
 	var s Scm
+	var pr PullRequest
 	if len(scm) != 1 {
-		return nil, fmt.Errorf("target scm: only one scm can be provided between git and github")
+		return nil, nil, fmt.Errorf("target scm: only one scm can be provided between git and github")
 	}
 
 	for key, value := range scm {
@@ -35,23 +36,25 @@ func Unmarshal(scm map[string]interface{}) (Scm, error) {
 
 			err := mapstructure.Decode(value, &g)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			s = &g
+			pr = &g
+
 		case "git":
 			g := git.Git{}
 
 			err := mapstructure.Decode(value, &g)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			s = &g
 		default:
-			return nil, fmt.Errorf("wrong scm type provided, accepted values [git,github]")
+			return nil, nil, fmt.Errorf("wrong scm type provided, accepted values [git,github]")
 
 		}
 	}
-	return s, nil
+	return s, pr, nil
 }

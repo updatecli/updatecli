@@ -3,26 +3,26 @@ source:
   kind: file
   spec:
     # Test url
-    file: https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
+    # file: https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
     # Test file url
     #file: file://LICENSE
     # Test file
-    # file: LICENSE
+    file: LICENSE
   scm:
     github:
       user: "{{ .github.user }}"
       email: "{{ .github.email }}"
-      owner: "{{ .github.owner }}"
-      repository: "{{ .github.repository }}"
+      owner: "updatecli"
+      repository: "updatecli"
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
-      branch: "{{ .github.branch }}"
+      branch: "main"
 conditions:
-  condition0:
-    name: condition0
-    kind: file
-    spec:
-      file: CODEOWNERS
+  #condition0:
+  #  name: condition0
+  #  kind: file
+  #  spec:
+  #    file: CODEOWNERS
   condition1:
     name: condition1
     kind: file
@@ -60,11 +60,11 @@ conditions:
       github:
         user: "{{ .github.user }}"
         email: "{{ .github.email }}"
-        owner: "{{ .github.owner }}"
-        repository: "{{ .github.repository }}"
+        owner: "updatecli"
+        repository: "updatecli"
         token: "{{ requiredEnv .github.token }}"
         username: "{{ .github.username }}"
-        branch: "{{ .github.branch }}"
+        branch: "main"
   condition3:
     name: condition3
     kind: file
@@ -76,7 +76,7 @@ conditions:
     name: condition4
     kind: file
     spec:
-      file: /home/olblak/Project/Olblak/updatecli/LICENSE
+      file: /home/olblak/Project/Updatecli/updatecli/LICENSE
       content: |
         MIT License
         
@@ -109,11 +109,11 @@ targets:
       github:
         user: "{{ .github.user }}"
         email: "{{ .github.email }}"
-        owner: "{{ .github.owner }}"
-        repository: "{{ .github.repository }}"
+        owner: "updatecli"
+        repository: "updatecli"
         token: "{{ requiredEnv .github.token }}"
         username: "{{ .github.username }}"
-        branch: "{{ .github.branch }}"
+        branch: "main"
   file2:
     name: target2
     kind: file
@@ -123,8 +123,8 @@ targets:
       github:
         user: "{{ .github.user }}"
         email: "{{ .github.email }}"
-        owner: "{{ .github.owner }}"
-        repository: "{{ .github.repository }}"
+        owner: "updatecli"
+        repository: "updatecli"
         token: "{{ requiredEnv .github.token }}"
         username: "{{ .github.username }}"
-        branch: "{{ .github.branch }}"
+        branch: "main"

@@ -63,7 +63,7 @@ func (s *Source) Execute() error {
 
 	if len(s.Scm) > 0 {
 
-		SCM, err := scm.Unmarshal(s.Scm)
+		SCM, _, err := scm.Unmarshal(s.Scm)
 
 		if err != nil {
 			return err
