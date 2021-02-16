@@ -1,4 +1,4 @@
-package dockerfile
+package mobyparser
 
 import (
 	"fmt"
