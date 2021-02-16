@@ -56,10 +56,12 @@ func (g *Git) Clone() (string, error) {
 		return "", err
 	}
 
-	err = g.Checkout()
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-		return "", err
+	if len(g.remoteBranch) > 0 && len(g.GetDirectory()) > 0 {
+		err = g.Checkout()
+		if err != nil {
+			logrus.Errorf("err - %s", err)
+			return "", err
+		}
 	}
 
 	return g.Directory, nil
@@ -80,7 +82,7 @@ func (g *Git) Commit(message string) error {
 }
 
 // Init set Git parameters if needed.
-func (g *Git) Init(source string, name string) error {
+func (g *Git) Init(source string, pipelineID string) error {
 	g.Version = source
 	g.setDirectory()
 	g.remoteBranch = git.SanitizeBranchName(g.Branch)
@@ -98,7 +100,6 @@ func (g *Git) Push() error {
 		return err
 	}
 
-	logrus.Infof("")
 	return nil
 
 }
