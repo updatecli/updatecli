@@ -163,18 +163,15 @@ func (e *Engine) ReadConfigurations() error {
 	// Read every strategy files
 	for _, cfgFile := range GetFiles(e.Options.File) {
 
-		c := config.Config{}
+		c, err := config.New(cfgFile, e.Options.ValuesFile)
 
-		_, basename := filepath.Split(cfgFile)
-		cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
-
-		c.Name = strings.ToTitle(cfgFileName)
-
-		err := c.ReadFile(cfgFile, e.Options.ValuesFile)
-		if err != nil {
-			logrus.Errorf("%s - %s\n\n", basename, err)
+		if err != nil && err != config.ErrConfigFileTypeNotSupported {
+			logrus.Errorf("%s\n\n", err)
+			continue
+		} else if err == config.ErrConfigFileTypeNotSupported {
 			continue
 		}
+
 		e.configurations = append(e.configurations, c)
 	}
 	return nil
@@ -252,6 +249,11 @@ func (e *Engine) Run() (err error) {
 		conf.Source.Result = result.SUCCESS
 		report.Source.Result = result.SUCCESS
 
+		err := conf.Update()
+		if err != nil {
+			return err
+		}
+
 		if len(conf.Conditions) > 0 {
 			c := conf
 			ok, err := RunConditions(&c)
@@ -262,6 +264,11 @@ func (e *Engine) Run() (err error) {
 				conditionsStageReport[i].Result = c.Result
 				report.Conditions[i].Result = c.Result
 				i++
+				// Update config if some templating value need to be apply
+				err := conf.Update()
+				if err != nil {
+					return err
+				}
 			}
 
 			if err != nil || !ok {
@@ -289,7 +296,12 @@ func (e *Engine) Run() (err error) {
 			for _, t := range conf.Targets {
 				targetsStageReport[i].Result = t.Result
 				report.Targets[i].Result = t.Result
+				// Update config if some templating value need to be apply
 				i++
+				err := conf.Update()
+				if err != nil {
+					return err
+				}
 			}
 		}
 
