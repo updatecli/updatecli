@@ -1,12 +1,18 @@
 FROM golang:1.15 as builder
 
+# RUN go get -d -v ./...
+
+ARG GORELEASER_VERSION=0.156.2
+RUN curl --silent --show-error --location --output "/tmp/goreleaser.tgz" \
+  "https://github.com/goreleaser/goreleaser/releases/download/v${GORELEASER_VERSION}/goreleaser_Linux_x86_64.tar.gz" \
+  && tar xzf /tmp/goreleaser.tgz --directory /usr/local/bin goreleaser \
+  && goreleaser --version 2>&1 | grep -q "${GORELEASER_VERSION}" \
+  && rm -f /tmp/goreleaser.tgz
+
 WORKDIR /go/src/app
 
 COPY . .
-
-RUN go get -d -v ./...
-
-RUN make build
+RUN make build.all
 
 ###
 
@@ -28,7 +34,7 @@ USER updatecli
 
 WORKDIR /home/updatecli
 
-COPY --from=builder --chown=updatecli:updatecli /go/src/app/bin/updateCli /usr/bin/updatecli
+COPY --from=builder --chown=updatecli:updatecli /go/src/app/dist/updateCli /usr/bin/updatecli
 
 ENTRYPOINT [ "/usr/bin/updatecli" ]
 

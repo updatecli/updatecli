@@ -1,0 +1,46 @@
+---
+env:
+  - GO111MODULE=on
+  - CGO_ENABLED=0
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: updatecli
+    main: ./main.go
+    binary: updatecli
+    ldflags:
+      - -w -s
+      - -X "github.com/olblak/updateCli/pkg/core/version.BuildTime={{.Date}}"
+      - -X "github.com/olblak/updateCli/pkg/core/version.GoVersion={{.Env.GOVERSION}}"
+      - -X "github.com/olblak/updateCli/pkg/core/version.Version={{ .Version }}"
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - "386"
+      - "amd64"
+
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+
+checksum:
+  disable: true
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+release:
+  disable: true
+changelog:
+  ## Delegate Changelog to release-drafter
+  skip: true
+...
