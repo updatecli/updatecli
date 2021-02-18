@@ -2,10 +2,12 @@ package config
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -13,6 +15,20 @@ import (
 	"github.com/olblak/updateCli/pkg/core/engine/source"
 	"github.com/olblak/updateCli/pkg/core/engine/target"
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	// ErrConfigFileTypeNotSupported is returned when updatecli try to read
+	// an unsupported file type.
+	ErrConfigFileTypeNotSupported = errors.New("file extension not supported")
+
+	// ErrNoEnvironmentVariableSet is returned when during the templating process,
+	// it tries to access en environment variable not set.
+	ErrNoEnvironmentVariableSet = errors.New("Environment variable doesn't exist")
+
+	// ErrNoKeyDefined is returned when during the templating process, it tries to
+	// retrieve a key value which is not defined in the configuration
+	ErrNoKeyDefined = errors.New("key not defined in configuration")
 )
 
 // Config contains cli configuration
@@ -27,13 +43,11 @@ type Config struct {
 
 // Reset reset configuration
 func (config *Config) Reset() {
-	config.Source = source.Source{}
-	config.Conditions = map[string]condition.Condition{}
-	config.Targets = map[string]target.Target{}
+	*config = Config{}
 }
 
-// ReadFile reads the updatecli configuration file
-func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
+// New reads an updatecli configuration file
+func New(cfgFile, valuesFile string) (config Config, err error) {
 
 	config.Reset()
 
@@ -43,7 +57,7 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 	// templates values as in some situation those values changes for each run
 	pipelineID, err := Checksum(cfgFile)
 	if err != nil {
-		return err
+		return config, err
 	}
 
 	switch extension := filepath.Ext(basename); extension {
@@ -53,12 +67,14 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 			ValuesFile: valuesFile,
 		}
 
-		err := t.Unmarshal(config)
+		err := t.Init(&config)
 		if err != nil {
-			return err
+			return config, err
 		}
+
 	default:
-		return fmt.Errorf("file extension not supported: %v", extension)
+		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, filepath.Join(dirname, basename))
+		return config, ErrConfigFileTypeNotSupported
 	}
 
 	// config.PipelineID is required for config.Validate()
@@ -66,10 +82,16 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 
 	err = config.Validate()
 	if err != nil {
-		return err
+		return config, err
 	}
 
-	return nil
+	if len(config.Name) == 0 {
+		config.Name = strings.ToTitle(basename)
+	}
+
+	err = config.Validate()
+
+	return config, err
 
 }
 

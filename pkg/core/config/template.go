@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"text/template"
@@ -17,16 +18,19 @@ type Template struct {
 	CfgFile    string
 }
 
-// Unmarshal parse golang templates then return its config struct
-func (t *Template) Unmarshal(config *Config) error {
+// Init parse golang templates then return its config struct
+func (t *Template) Init(config *Config) error {
 	funcMap := template.FuncMap{
 		// Retrieve value from environment variable, return error if not found
-		"requiredEnv": func(env string) (string, error) {
-			value := os.Getenv(env)
+		"requiredEnv": func(s string) (string, error) {
+			value := os.Getenv(s)
 			if value == "" {
-				return "", errors.New("no value found for environment variable " + env)
+				return "", errors.New("no value found for environment variable " + s)
 			}
 			return value, nil
+		},
+		"pipeline": func(s string) (string, error) {
+			return fmt.Sprintf(`"{{ pipeline \"%s\" }}"`, s), nil
 		},
 	}
 
