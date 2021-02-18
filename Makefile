@@ -1,46 +1,41 @@
 
-BUILD_DATE=$(shell date -R)
-VERSION=$(shell git describe --tags)
 GOVERSION=$(shell go version)
+export GOVERSION
 
 DOCKER_IMAGE=olblak/updatecli
-DOCKER_TAG=$(VERSION)
+DOCKER_TAG=$(shell git describe --tags)
 DOCKER_BUILDKIT=1
 export DOCKER_BUILDKIT
 
-local_bin=./bin/updateCli
+local_bin=./dist/updatecli_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)/updatecli
 
 .PHONY: build
-build: ## Build updateCli for the host OS and architecture
+build: ## Build updatecli for the host OS and architecture
 	echo $(VERSION)
-	# Only build for the current host's OS and arch. Use 'make build.all' for cross-compile
-	OS_TARGETS="$(shell go env GOHOSTOS)" \
-	ARCH_TARGETS="$(shell go env GOHOSTARCH)" \
-	CUSTOM_BINARY="$(local_bin)" \
-		./utils/build.sh
+	goreleaser build --snapshot --rm-dist
 
 .PHONY: build.all
-build.all: ## Build updateCli for all supported OSes and architectures
-	./utils/build.sh
+build.all: ## Build updatecli for all supported OSes and architectures
+	goreleaser --rm-dist --skip-publish
 
 .PHONY: diff
-diff: ## Run the "diff" updateCli's subcommand for smoke test
+diff: ## Run the "diff" updatecli's subcommand for smoke test
 	"$(local_bin)" diff --config ./updateCli.d
 
 .PHONY: show
-show: ## Run the "show" updateCli's subcommand for smoke test
+show: ## Run the "show" updatecli's subcommand for smoke test
 	"$(local_bin)" show --config ./updateCli.d
 
 .PHONY: apply
-apply: ## Run the "apply" updateCli's subcommand for smoke test
+apply: ## Run the "apply" updatecli's subcommand for smoke test
 	"$(local_bin)" apply --config ./updateCli.d
 
 .PHONY: version
-version: ## Run the "version" updateCli's subcommand for smoke test
+version: ## Run the "version" updatecli's subcommand for smoke test
 	"$(local_bin)" version
 
 .PHONY: docker.build
-docker.build: ## Build the updateCli's Docker image
+docker.build: ## Build the updatecli's Docker image
 	docker build \
 		-t "$(DOCKER_IMAGE):$(DOCKER_TAG)" \
 		-t "$(DOCKER_IMAGE):latest" \
@@ -50,17 +45,17 @@ docker.build: ## Build the updateCli's Docker image
 		.
 
 .PHONY: docker.run
-docker.run: docker.build ## Execute the updateCli's Docker image
-	docker run -i -t --rm --name updateCli $(DOCKER_IMAGE):$(DOCKER_TAG) --help
+docker.run: docker.build ## Execute the updatecli's Docker image
+	docker run -i -t --rm --name updatecli $(DOCKER_IMAGE):$(DOCKER_TAG) --help
 
 .PHONY: docker.test
-docker.test: docker.build ## Smoke Test the updateCli's Docker image
+docker.test: docker.build ## Smoke Test the updatecli's Docker image
 	docker run -i -t \
 		-v $$PWD/updateCli.d:/home/updatecli/updateCli.d:ro \
 		"$(DOCKER_IMAGE):$(DOCKER_TAG)" --config /home/updatecli/updateCli.d/pluginsite-api.yaml
 
 .PHONY: docker.push
-docker.push: docker.build ## Push the updateCli's Docker image to remote registry
+docker.push: docker.build ## Push the updatecli's Docker image to remote registry
 	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 	docker push $(DOCKER_IMAGE):latest
 	docker push ghcr.io/$(DOCKER_IMAGE):$(DOCKER_TAG)
@@ -71,11 +66,11 @@ display: ## Prints the current DOCKER_TAG
 	echo $(DOCKER_TAG)
 
 .PHONY: test
-test: ## Execute the Golang's tests for updateCli
+test: ## Execute the Golang's tests for updatecli
 	go test ./...
 
 .PHONY: lint
-lint: ## Execute the Golang's linters on updateCli's source code
+lint: ## Execute the Golang's linters on updatecli's source code
 	golangci-lint run
 
 .PHONY: help

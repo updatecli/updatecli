@@ -19,7 +19,15 @@ jobs:
       with:
         go-version: 1.15
       id: go
-      
+
+    - name: Install GoReleaser
+      uses: goreleaser/goreleaser-action@v2
+      with:
+        install-only: true
+
+    - name: Show GoReleaser version
+      run: goreleaser --version
+
     - name: Build updateCli
       run: |
         make build.all
@@ -30,7 +38,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./bin/updatecli.386.exe
+        asset_path: ./dist/updatecli_windows_386/updatecli.exe
         asset_name: updatecli.386.exe
         asset_content_type: application/octet-stream
     - name: Upload updatecli.amd64.exe
@@ -39,7 +47,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./bin/updatecli.amd64.exe
+        asset_path: ./dist/updatecli_windows_amd64/updatecli.exe
         asset_name: updatecli.amd64.exe
         asset_content_type: application/octet-stream
     - name: Upload updatecli.darwin.386
@@ -48,7 +56,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./bin/updatecli.darwin.386
+        asset_path: ./dist/updatecli_darwin_386/updatecli
         asset_name: updatecli.darwin.386
         asset_content_type: application/octet-stream
     - name: Upload updatecli.darwin.amd64
@@ -57,7 +65,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./bin/updatecli.darwin.amd64
+        asset_path: ./dist/updatecli_darwin_amd64/updatecli
         asset_name: updatecli.darwin.amd64
         asset_content_type: application/octet-stream
     - name: Upload updatecli.linux.386
@@ -66,7 +74,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./bin/updatecli.linux.386
+        asset_path: ./dist/updatecli_linux_386/updatecli
         asset_name: updatecli.linux.386
         asset_content_type: application/octet-stream
     - name: Upload updatecli.linux.amd64
@@ -75,6 +83,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./bin/updatecli.linux.amd64
+        asset_path: ./dist/updatecli_linux_amd64/updatecli
         asset_name: updatecli.linux.amd64
         asset_content_type: application/octet-stream

@@ -15,6 +15,7 @@
 # vendor/
 #
 bin/
+dist/
 
 *.code-workspace
 
