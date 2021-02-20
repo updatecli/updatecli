@@ -30,7 +30,7 @@ func (t *Template) Init(config *Config) error {
 			return value, nil
 		},
 		"pipeline": func(s string) (string, error) {
-			return fmt.Sprintf(`"{{ pipeline \"%s\" }}"`, s), nil
+			return fmt.Sprintf(`{{ pipeline %q }}`, s), nil
 		},
 	}
 
