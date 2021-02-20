@@ -27,6 +27,7 @@ type Target struct {
 	Spec         interface{}
 	Scm          map[string]interface{}
 	Result       string `yaml:"-"`
+	SourceID     string `yaml:"sourceID"`
 }
 
 // Spec is an interface which offers common function to manipulate targets.

@@ -27,6 +27,7 @@ type Condition struct {
 	Spec         interface{}
 	Scm          map[string]interface{}
 	Result       string `yaml:"-"` // Ignore this field when unmarshal YAML
+	SourceID     string `yaml:"sourceID"`
 }
 
 // Spec is an interface that test if condition is met
