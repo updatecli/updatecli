@@ -10,19 +10,28 @@ import (
 )
 
 // PULLREQUESTBODY is the pull request template used as pull request description
-const PULLREQUESTBODY = "## Report\n" +
-	"{{ .Report }}" +
-	"\n" +
-	"## Changelog\n" +
-	"<details><summary>Click to expand</summary>\n" +
-	"\n```\n" +
-	"{{ .Description }}\n" +
-	"```\n" +
-	"</details>\n" +
-	"\n" +
-	"## Remark\n" +
-	"This pull request was automatically created using [Updatecli](https://www.updatecli.io).\n" +
-	"Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/new)\n"
+// Please note that triple backticks are concatenated with the literals, as they cannot be escaped
+const PULLREQUESTBODY = `
+
+## Report
+
+{{ .Report }}
+
+## Changelog
+
+<details><summary>Click to expand</summary>
+
+` + "```\n{{ .Description }}\n```" + `
+
+</details>
+
+## Remark
+
+This pull request was automatically created using [Updatecli](https://www.updatecli.io).
+
+Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/new)
+
+`
 
 // PullRequest contains multiple fields mapped to Github V4 api
 type PullRequest struct {
