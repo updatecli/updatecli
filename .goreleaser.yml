@@ -18,7 +18,7 @@ builds:
       - -X "github.com/olblak/updateCli/pkg/core/version.Version={{ .Version }}"
     goos:
       - linux
-      - darwin
+      - darwin # i386 not supported anymore https://github.com/golang/go/issues/37610
       - windows
     goarch:
       - "386"
