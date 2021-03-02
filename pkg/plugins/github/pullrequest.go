@@ -10,20 +10,27 @@ import (
 )
 
 // PULLREQUESTBODY is the pull request template used as pull request description
-const PULLREQUESTBODY string = `
+// Please note that triple backticks are concatenated with the literals, as they cannot be escaped
+const PULLREQUESTBODY = `
+
+## Report
+
+{{ .Report }}
 
 ## Changelog
 
-{{ .Description }}
+<details><summary>Click to expand</summary>
 
-## Reports
+` + "```\n{{ .Description }}\n```" + `
 
-{{ .Report }}
+</details>
 
 ## Remark
 
 This pull request was automatically created using [Updatecli](https://www.updatecli.io).
+
 Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/new)
+
 `
 
 // PullRequest contains multiple fields mapped to Github V4 api
