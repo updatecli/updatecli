@@ -1,7 +1,5 @@
 FROM golang:1.15 as builder
 
-# RUN go get -d -v ./...
-
 ARG GORELEASER_VERSION=0.156.2
 RUN curl --silent --show-error --location --output "/tmp/goreleaser.tgz" \
   "https://github.com/goreleaser/goreleaser/releases/download/v${GORELEASER_VERSION}/goreleaser_Linux_x86_64.tar.gz" \
@@ -12,7 +10,10 @@ RUN curl --silent --show-error --location --output "/tmp/goreleaser.tgz" \
 WORKDIR /go/src/app
 
 COPY . .
-RUN make build.all
+
+# Default make build is a "dirty/snapshot" build
+ARG MAKE_TARGET=build
+RUN make "${MAKE_TARGET}"
 
 ###
 

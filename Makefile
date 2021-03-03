@@ -10,12 +10,12 @@ export DOCKER_BUILDKIT
 local_bin=./dist/updatecli_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)/updatecli
 
 .PHONY: build
-build: ## Build updatecli for the host OS and architecture
+build: ## Build updatecli as a "dirty snapshot" (no tag, no release, but all OS/arch combinations)
 	echo $(VERSION)
 	goreleaser build --snapshot --rm-dist
 
 .PHONY: build.all
-build.all: ## Build updatecli for all supported OSes and architectures
+build.all: ## Build updatecli for "release" (tag or release and all OS/arch combinations)
 	goreleaser --rm-dist --skip-publish
 
 .PHONY: diff
