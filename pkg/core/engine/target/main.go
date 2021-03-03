@@ -191,18 +191,33 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		if pr != nil && !o.DryRun {
 			ID, err := pr.IsPullRequest()
 
-			if len(ID) != 0 && err == nil {
+			logrus.Debugf("Pull Request ID: %v", ID)
 
-				err = pr.UpdatePullRequest(ID)
-				if err != nil {
-					return changed, err
-				}
-			} else if len(ID) == 0 && err == nil {
+			// We try to update the pullrequest even if nothing changed in the current run
+			// so we always update the pull request body if needed.
+			if err != nil {
+				return changed, err
+			} else if len(ID) == 0 && err == nil && changed {
+				// Something changed and no open pull request exist so we create it
+				logrus.Infof("Creating Pull Request\n")
 				err = pr.OpenPullRequest()
 				if err != nil {
 					return changed, err
 				}
 
+			} else if len(ID) != 0 && err == nil {
+				// A pull request already exist so we try to update it to overide old information
+				// whatever a change was applied during the run or not
+				logrus.Infof("Pull Request already exist, updating it\n")
+				err = pr.UpdatePullRequest(ID)
+				if err != nil {
+					return changed, err
+				}
+				// No change and no pull request, nothing else to do
+			} else if len(ID) == 0 && err == nil && !changed {
+				// We try to catch un-planned scenario
+			} else {
+				logrus.Errorf("Something unexpected happened while dealing with Pull Request")
 			}
 		}
 
