@@ -2,7 +2,7 @@ package chart
 
 import (
 	"helm.sh/helm/v3/pkg/repo"
-	"sigs.k8s.io/yaml"
+	yml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -33,9 +33,16 @@ URL:
 
 // Chart describe helm repository metadata
 type Chart struct {
-	URL     string
-	Name    string
-	Version string
+	URL        string // [source][condition] Define the chart location
+	Name       string // [source][condition][target] Define Chart name path like "stable/chart"
+	Version    string // [source][condition]
+	AppVersion bool   // [target] Boolean that define we must update the App Version
+	File       string // [target] Define file to update
+	Value      string // [target] Define value to set
+	Key        string // [target] Define Key to update
+	IncMinor   bool   // [target] Define if we bump a minor chart version
+	IncPatch   bool   // [target] Define if we bump a patch chart version
+	IncMajor   bool   // [target] Define if we bump a major chart version
 }
 
 // loadIndex loads an index file and does minimal validity checking.
@@ -43,7 +50,7 @@ type Chart struct {
 func loadIndex(data []byte) (repo.IndexFile, error) {
 	i := repo.IndexFile{}
 
-	if err := yaml.Unmarshal(data, &i); err != nil {
+	if err := yml.Unmarshal(data, &i); err != nil {
 		return i, err
 	}
 
