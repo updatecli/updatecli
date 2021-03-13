@@ -9,6 +9,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/core/transformer"
+	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/file"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
@@ -54,6 +55,18 @@ func (t *Target) Check() (bool, error) {
 // Unmarshal decodes a target struct
 func Unmarshal(target *Target) (spec Spec, err error) {
 	switch target.Kind {
+	case "helmChart":
+		ch := chart.Chart{}
+
+		err := mapstructure.Decode(target.Spec, &ch)
+
+		if err != nil {
+			logrus.Errorf("err - %s", err)
+			return nil, err
+		}
+
+		spec = &ch
+
 	case "dockerfile":
 		d := dockerfile.Dockerfile{}
 
