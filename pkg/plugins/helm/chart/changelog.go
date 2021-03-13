@@ -46,8 +46,7 @@ func (c *Chart) Changelog(name string) (string, error) {
 		return "", err
 	}
 
-	t := &template.Template{}
-	t = template.Must(template.New("changelog").Parse(CHANGELOGTEMPLATE))
+	t := template.Must(template.New("changelog").Parse(CHANGELOGTEMPLATE))
 	buffer := new(bytes.Buffer)
 
 	type params struct {

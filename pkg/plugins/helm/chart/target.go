@@ -24,9 +24,10 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, err
 	}
 
-	Yaml := yaml.Yaml{}
-	Yaml.File = filepath.Join(c.Name,c.File)
-	Yaml.Key = c.Key
+	Yaml := yaml.Yaml{
+		File: filepath.Join(c.Name, c.File),
+		Key:  c.Key,
+	}
 
 	if len(c.Value) == 0 {
 		Yaml.Value = source
@@ -45,14 +46,14 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 
 	// Reset requirements.lock if we modified the file 'requirements.yaml'
 	if strings.Compare(c.File, "requirements.yaml") == 0 && !dryRun {
-		_, err := c.UpdateRequirements(filepath.Join(c.Name,"requirements.lock"))
+		_, err := c.UpdateRequirements(filepath.Join(c.Name, "requirements.lock"))
 		if err != nil {
 			return false, err
 		}
 	}
 
 	// Update Chart.yaml file new Chart Version and appVersion if needed
-	err = c.UpdateMetadata(filepath.Join(c.Name,"Chart.yaml"), dryRun)
+	err = c.UpdateMetadata(filepath.Join(c.Name, "Chart.yaml"), dryRun)
 	if err != nil {
 		return false, err
 	}
@@ -71,11 +72,12 @@ func (c *Chart) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (
 		return false, files, message, err
 	}
 
-	filename := filepath.Join(c.Name,c.File)
+	filename := filepath.Join(c.Name, c.File)
 
-	Yaml := yaml.Yaml{}
-	Yaml.File = filename
-	Yaml.Key = c.Key
+	Yaml := yaml.Yaml{
+		File: filename,
+		Key:  c.Key,
+	}
 
 	if len(c.Value) == 0 {
 		Yaml.Value = source
@@ -93,21 +95,21 @@ func (c *Chart) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (
 	}
 
 	if strings.Compare(c.File, "requirements.yaml") == 0 {
-		found, err := c.UpdateRequirements(filepath.Join(scm.GetDirectory(),c.Name,"requirements.lock"))
+		found, err := c.UpdateRequirements(filepath.Join(scm.GetDirectory(), c.Name, "requirements.lock"))
 		if err != nil {
 			return false, files, message, err
 		}
 		if found {
-			files = append(files, filepath.Join(c.Name,"requirements.lock"))
+			files = append(files, filepath.Join(c.Name, "requirements.lock"))
 
 		}
 	}
 
-	err = c.UpdateMetadata(filepath.Join(scm.GetDirectory(),c.Name,"Chart.yaml"), dryRun)
+	err = c.UpdateMetadata(filepath.Join(scm.GetDirectory(), c.Name, "Chart.yaml"), dryRun)
 	if err != nil {
 		return false, files, message, err
 	}
-	files = append(files, filepath.Join(c.Name,"Chart.yaml"))
+	files = append(files, filepath.Join(c.Name, "Chart.yaml"))
 
 	return changed, files, message, err
 }
@@ -149,7 +151,15 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 
 	data, err := ioutil.ReadAll(file)
 
+	if err != nil {
+		return err
+	}
+
 	err = YAML.Unmarshal(data, &md)
+
+	if err != nil {
+		return err
+	}
 
 	if len(md.AppVersion) > 0 && c.AppVersion {
 		logrus.Debugf("Updating AppVersion from %s to %s\n", md.AppVersion, c.Value)

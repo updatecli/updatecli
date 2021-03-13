@@ -36,10 +36,10 @@ type Chart struct {
 	URL        string // [source][condition] Define the chart location
 	Name       string // [source][condition][target] Define Chart name path like "stable/chart"
 	Version    string // [source][condition]
-	AppVersion bool   // [target] Boolean that define we must update the App Version
 	File       string // [target] Define file to update
 	Value      string // [target] Define value to set
 	Key        string // [target] Define Key to update
+	AppVersion bool   // [target] Boolean that define we must update the App Version
 	IncMinor   bool   // [target] Define if we bump a minor chart version
 	IncPatch   bool   // [target] Define if we bump a patch chart version
 	IncMajor   bool   // [target] Define if we bump a major chart version
