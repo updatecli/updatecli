@@ -104,10 +104,25 @@ func (g *Github) Source(workingDir string) (string, error) {
 		}
 	}
 
-	if len(g.Constraint) > 0 {
+	versions := []string{}
+	for _, release := range query.Repository.Releases.Nodes {
+		versions = append(versions, release.TagName)
+	}
+
+	if len(g.Constraint) > 0 && len(value) > 0 {
 		logrus.Infof("\u2714 %q github release version matching constraint %q, founded: %q", g.Version, g.Constraint, value)
-	} else {
+	} else if len(g.Constraint) == 0 && len(value) > 0 {
 		logrus.Infof("\u2714 %q github release version founded: %q", g.Version, value)
+	} else if len(value) == 0 && len(g.Constraint) == 0 {
+		logrus.Infof("\u2714 No %q github release version founded", g.Version)
+		logrus.Debugf("%d version returned from Github", len(query.Repository.Releases.Nodes))
+		logrus.Debugf("%s", versions)
+	} else if len(value) == 0 && len(g.Constraint) >= 0 {
+		logrus.Infof("\u2714 No %q github release version founded matching constraint %q", g.Version, g.Constraint)
+		logrus.Debugf("%d version returned from Github", len(query.Repository.Releases.Nodes))
+		logrus.Debugf("%s", versions)
+	} else {
+		logrus.Errorf("Something unexpected happened in Github source")
 	}
 	return value, nil
 }
