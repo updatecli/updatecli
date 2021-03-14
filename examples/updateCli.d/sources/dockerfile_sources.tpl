@@ -1,7 +1,7 @@
 ---
 title: Bump jenkinsciinfra/helmfile image
 sources:
-  helm:
+  helm1:
     name: Get Latest helm release version
     kind: githubRelease
     spec:
@@ -10,14 +10,15 @@ sources:
       token: {{ requiredEnv .github.token }}
       username: olblak
       version: latest
-  checksum:
-    name: Get Latest kubectl release version
-    kind: file
-    transformers:
-      - find: '^\S*'
+  helm2:
+    name: Get Latest helm release version
+    kind: githubRelease
     spec:
-      # For some reason helm must start with lower case
-      file: https://get.helm.sh/helm-{{ pipeline "Sources.helm.Output" }}-linux-amd64.tar.gz.sha256sum
+      owner: "helm"
+      repository: "helm"
+      token: {{ requiredEnv .github.token }}
+      username: olblak
+      version: latest
 conditions:
   isENVSet:
     sourceID: helm
