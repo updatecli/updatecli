@@ -14,8 +14,8 @@ targets:
     spec:
       appVersion: true
       Name: "charts/jenkins"
-      file: "values.yaml"
       key: "jenkins.controller.tag"
+      incminor: true
     scm:
       github:
         user: "updatecli"
