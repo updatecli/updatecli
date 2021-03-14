@@ -6,14 +6,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/engine/condition"
 	"github.com/olblak/updateCli/pkg/core/engine/source"
 	"github.com/olblak/updateCli/pkg/core/engine/target"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
@@ -49,7 +47,7 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 	}
 
 	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl":
+	case ".tpl", ".tmpl", ".yaml", ".yml":
 		t := Template{
 			CfgFile:    filepath.Join(dirname, basename),
 			ValuesFile: valuesFile,
@@ -58,28 +56,6 @@ func (config *Config) ReadFile(cfgFile, valuesFile string) (err error) {
 		err := t.Unmarshal(config)
 		if err != nil {
 			return err
-		}
-
-	case ".yaml", ".yml":
-		v := viper.New()
-
-		v.SetEnvPrefix("updatecli")
-		v.AutomaticEnv()
-		v.SetConfigName(strings.TrimSuffix(basename, filepath.Ext(basename))) // name of config file (without extension)
-		v.SetConfigType(strings.Replace(filepath.Ext(basename), ".", "", -1)) // REQUIRED if the config file does not have the extension in the name
-		v.AddConfigPath(dirname)                                              // optionally look for config in the working directory
-		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-		if err := v.ReadInConfig(); err != nil {
-			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-				return fmt.Errorf("Config file not found")
-			}
-
-			return err
-		}
-		err := v.Unmarshal(&config)
-		if err != nil {
-			return fmt.Errorf("unable to decode into struct, %v", err)
 		}
 	default:
 		return fmt.Errorf("file extension not supported: %v", extension)
