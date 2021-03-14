@@ -3,7 +3,6 @@ package config
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"text/template"
@@ -28,9 +27,6 @@ func (t *Template) Init(config *Config) error {
 				return "", errors.New("no value found for environment variable " + s)
 			}
 			return value, nil
-		},
-		"pipeline": func(s string) (string, error) {
-			return fmt.Sprintf(`{{ pipeline %q }}`, s), nil
 		},
 	}
 
