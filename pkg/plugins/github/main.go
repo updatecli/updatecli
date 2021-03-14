@@ -29,6 +29,7 @@ type Github struct {
 	remoteBranch           string
 	User                   string
 	Email                  string
+	Constraint             string // Specify version constraint
 }
 
 // Check verifies if mandatory Github parameters are provided and return false if not.
