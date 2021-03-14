@@ -1,0 +1,18 @@
+# To work
+# cd /tmp 
+# git clone https://github.com/jenkinsci/helm-charts.git
+
+source:
+  kind: jenkins
+  spec:
+    release: stable
+targets:
+  chartjenkins:
+    name: "jenkinsci/jenkins Helm Chart"
+    kind: helmChart
+    spec:
+      appVersion: true
+      Name: "/tmp/helm-charts/charts/jenkins"
+      file: "values.yaml"
+      incminor: true
+      key: "controller.tag"
