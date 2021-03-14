@@ -6,6 +6,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/shurcooL/githubv4"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 // Source retrieves a specific version tag from Github Releases.
@@ -51,7 +53,7 @@ func (g *Github) Source(workingDir string) (string, error) {
 		Repository struct {
 			Releases struct {
 				Nodes []release
-			} `graphql:"releases(first: 5, orderBy: $orderBy)"`
+			} `graphql:"releases(first: 100, orderBy: $orderBy)"`
 		} `graphql:"repository(owner: $owner, name: $repository)"`
 	}
 
@@ -73,13 +75,39 @@ func (g *Github) Source(workingDir string) (string, error) {
 	}
 
 	value := ""
-	for _, release := range query.Repository.Releases.Nodes {
-		if !release.IsDraft && !release.IsPrerelease {
-			value = release.TagName
-			break
+
+	c := &semver.Constraints{}
+	if len(g.Constraint) > 0 {
+		c, err = semver.NewConstraint(g.Constraint)
+		if err != nil {
+			return value, err
 		}
 	}
 
-	logrus.Infof("\u2714 '%s' github release version founded: %s", g.Version, value)
+	for _, release := range query.Repository.Releases.Nodes {
+		if !release.IsDraft && !release.IsPrerelease {
+			if len(g.Constraint) > 0 {
+
+				v, err := semver.NewVersion(release.TagName)
+				if err != nil {
+					return value, err
+				}
+
+				if !c.Check(v) {
+					continue
+				}
+
+			}
+			value = release.TagName
+			break
+
+		}
+	}
+
+	if len(g.Constraint) > 0 {
+		logrus.Infof("\u2714 %q github release version matching constraint %q, founded: %q", g.Version, g.Constraint, value)
+	} else {
+		logrus.Infof("\u2714 %q github release version founded: %q", g.Version, value)
+	}
 	return value, nil
 }

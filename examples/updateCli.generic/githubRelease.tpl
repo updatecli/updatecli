@@ -38,6 +38,7 @@ source:
     token: "{{ requiredEnv .github.token }}"
     username: "olblak"
     version: "latest"
+    constraint: "~1.10"
 conditions:
   docker:
     name: "Docker Image Published on Registry"
