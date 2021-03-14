@@ -121,7 +121,7 @@ func (config *Config) Validate() error {
 
 	} else if config.Source.Kind != "" && len(config.Sources) == 0 {
 
-		logrus.Warning("**Deprecated** 2021/02/18 Is replaced by Sources, this parameter will be deleted in a future release")
+		logrus.Warning("Since version 1.2.0, the single source definition is **Deprecated**  and replaced by Sources. This parameter will be deleted in a future release")
 
 		config.Sources = make(map[string]source.Source)
 		config.Sources[defaultSourceID] = config.Source
