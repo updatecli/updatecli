@@ -3,6 +3,7 @@ module github.com/olblak/updateCli
 go 1.15
 
 require (
+	github.com/Masterminds/semver/v3 v3.1.0
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-git/go-git/v5 v5.2.0
