@@ -354,7 +354,6 @@ func RunConditions(conf *config.Config) (bool, error) {
 			return false, err
 		}
 
-
 		if !ok {
 			c.Result = result.FAILURE
 			conf.Conditions[k] = c
