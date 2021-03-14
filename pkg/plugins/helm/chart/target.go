@@ -219,7 +219,7 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 //ValidateTarget ensure that target required parameter are set
 func (c *Chart) ValidateTarget() error {
 	if len(c.File) == 0 {
-		return fmt.Errorf("Parameter 'file' required")
+		c.File = "values.yaml"
 	}
 
 	if len(c.Name) == 0 {
