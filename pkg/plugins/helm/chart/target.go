@@ -230,8 +230,5 @@ func (c *Chart) ValidateTarget() error {
 		return fmt.Errorf("Parameter key required")
 	}
 
-	if !c.IncMajor && !c.IncMinor && !c.IncPatch {
-		c.IncMinor = true
-	}
 	return nil
 }
