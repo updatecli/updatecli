@@ -21,18 +21,20 @@ REPORTS:
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
-{{- "\t"}}Source:
-{{ "\t"}}{{"\t"}}{{- .Source.Result }}  {{ .Source.Name -}}({{- .Source.Kind -}}){{"\n"}}
+{{- "\t"}}Sources:
+{{ range .Sources }}
+{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{- end }}
 
 {{- if .Conditions -}}
 {{- "\t" }}Condition:
-{{ range .Conditions }} 
+{{ range .Conditions }}
 {{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
 {{- end -}}
 {{- end -}}
 
 {{- "\t" -}}Target:
-{{ range .Targets }} 
+{{ range .Targets }}
 {{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
 {{- end }}
 {{ end }}

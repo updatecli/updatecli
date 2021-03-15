@@ -63,10 +63,13 @@ func (e *Engine) InitSCM() (err error) {
 	defer wg.Wait()
 
 	for _, conf := range e.configurations {
-		if len(conf.Source.Scm) > 0 {
-			err = Clone(&conf.Source.Scm, &hashes, channel, &wg)
-			if err != nil {
-				return err
+		for _, source := range conf.Sources {
+
+			if len(source.Scm) > 0 {
+				err = Clone(&source.Scm, &hashes, channel, &wg)
+				if err != nil {
+					return err
+				}
 			}
 		}
 		for _, condition := range conf.Conditions {
@@ -163,18 +166,15 @@ func (e *Engine) ReadConfigurations() error {
 	// Read every strategy files
 	for _, cfgFile := range GetFiles(e.Options.File) {
 
-		c := config.Config{}
+		c, err := config.New(cfgFile, e.Options.ValuesFile)
 
-		_, basename := filepath.Split(cfgFile)
-		cfgFileName := strings.TrimSuffix(basename, filepath.Ext(basename))
-
-		c.Name = strings.ToTitle(cfgFileName)
-
-		err := c.ReadFile(cfgFile, e.Options.ValuesFile)
-		if err != nil {
-			logrus.Errorf("%s - %s\n\n", basename, err)
+		if err != nil && err != config.ErrConfigFileTypeNotSupported {
+			logrus.Errorf("%s\n\n", err)
+			continue
+		} else if err == config.ErrConfigFileTypeNotSupported {
 			continue
 		}
+
 		e.configurations = append(e.configurations, c)
 	}
 	return nil
@@ -199,8 +199,18 @@ func (e *Engine) Run() (err error) {
 			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 		}
 
+		sourcesStageReport := []reports.Stage{}
 		conditionsStageReport := []reports.Stage{}
 		targetsStageReport := []reports.Stage{}
+
+		for _, s := range conf.Sources {
+			s := reports.Stage{
+				Name:   s.Name,
+				Kind:   s.Kind,
+				Result: result.FAILURE,
+			}
+			sourcesStageReport = append(sourcesStageReport, s)
+		}
 
 		for _, c := range conf.Conditions {
 			s := reports.Stage{
@@ -222,35 +232,38 @@ func (e *Engine) Run() (err error) {
 
 		report := reports.Init(
 			conf.Name,
-			reports.Stage{
-				Name:   conf.Source.Name,
-				Kind:   conf.Source.Kind,
-				Result: result.FAILURE,
-			},
+			sourcesStageReport,
 			conditionsStageReport,
 			targetsStageReport,
 		)
 
 		report.Name = strings.ToTitle(conf.Name)
 
-		err = conf.Source.Execute()
+		i := 0
+		for id, s := range conf.Sources {
+			err = s.Execute()
 
-		if err != nil {
-			logrus.Errorf("%s %v\n", result.FAILURE, err)
-			e.Reports = append(e.Reports, report)
-			continue
+			if err != nil {
+				logrus.Errorf("%s %v\n", result.FAILURE, err)
+				e.Reports = append(e.Reports, report)
+				continue
+			}
+
+			if s.Output == "" {
+				s.Result = result.FAILURE
+				logrus.Infof("\n%s Something went wrong no value returned from Source", result.FAILURE)
+				e.Reports = append(e.Reports, report)
+				continue
+			}
+
+			s.Result = result.SUCCESS
+			report.Sources[i].Result = result.SUCCESS
+
+			i++
+
+			conf.Sources[id] = s
+
 		}
-
-		if conf.Source.Output == "" {
-			conf.Source.Result = result.FAILURE
-			report.Source.Result = result.FAILURE
-			logrus.Infof("\n%s Something went wrong no value returned from Source", result.FAILURE)
-			e.Reports = append(e.Reports, report)
-			continue
-		}
-
-		conf.Source.Result = result.SUCCESS
-		report.Source.Result = result.SUCCESS
 
 		if len(conf.Conditions) > 0 {
 			c := conf
@@ -287,10 +300,13 @@ func (e *Engine) Run() (err error) {
 
 			i := 0
 			for _, t := range conf.Targets {
-				targetsStageReport[i].Result = t.Result
+
 				report.Targets[i].Result = t.Result
+
+				targetsStageReport[i].Result = t.Result
 				i++
 			}
+
 		}
 
 		if err != nil {
@@ -330,7 +346,10 @@ func RunConditions(conf *config.Config) (bool, error) {
 		c.Result = result.FAILURE
 
 		conf.Conditions[k] = c
-		ok, err := c.Run(conf.Source.Prefix + conf.Source.Output + conf.Source.Postfix)
+		ok, err := c.Run(
+			conf.Sources[c.SourceID].Prefix +
+				conf.Sources[c.SourceID].Output +
+				conf.Sources[c.SourceID].Postfix)
 		if err != nil {
 			return false, err
 		}
@@ -356,7 +375,7 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("Targets"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Targets")+1))
 
-	sourceReport, err := report.String("source")
+	sourceReport, err := report.String("sources")
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
@@ -370,7 +389,7 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 	for id, t := range config.Targets {
 		targetChanged := false
 
-		t.Changelog = config.Source.Changelog
+		t.Changelog = config.Sources[t.SourceID].Changelog
 
 		if _, ok := t.Scm["github"]; ok {
 			var g github.Github
@@ -398,37 +417,40 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 				// I am still thinking to a better solution.
 				logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
 				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
-					config.Source.Kind,
-					config.Source.Output)
+					config.Sources[t.SourceID].Kind,
+					config.Sources[t.SourceID].Output)
 			}
 
 			t.Scm["github"] = g
 
 		}
 
-		if t.Prefix == "" && config.Source.Prefix != "" {
-			t.Prefix = config.Source.Prefix
+		if t.Prefix == "" && config.Sources[t.SourceID].Prefix != "" {
+			t.Prefix = config.Sources[t.SourceID].Prefix
 		}
 
-		if t.Postfix == "" && config.Source.Postfix != "" {
-			t.Postfix = config.Source.Postfix
+		if t.Postfix == "" && config.Sources[t.SourceID].Postfix != "" {
+			t.Postfix = config.Sources[t.SourceID].Postfix
 		}
 
-		targetChanged, err = t.Run(config.Source.Output, options)
+		targetChanged, err = t.Run(config.Sources[t.SourceID].Output, options)
 
 		if err != nil {
 			logrus.Errorf("Something went wrong in target \"%v\" :\n", id)
 			logrus.Errorf("%v\n\n", err)
 			t.Result = result.FAILURE
 			return targetChanged, err
-		} else if targetChanged {
+		}
+
+		if !targetChanged {
+			t.Result = result.SUCCESS
+		} else {
 			t.Result = result.CHANGED
 			targetsChanged = true
-		} else {
-			t.Result = result.SUCCESS
 		}
 
 		config.Targets[id] = t
+
 	}
 	return targetsChanged, nil
 }
