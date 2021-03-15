@@ -103,7 +103,12 @@ func (g *Github) Source(workingDir string) (string, error) {
 		sv := semver.Semver{
 			Constraint: g.Version,
 		}
-		sv.Init(versions)
+		err = sv.Init(versions)
+
+		if err != nil {
+			return value, err
+		}
+
 		value, err = sv.GetLatestVersion()
 		if err != nil {
 			return value, err
