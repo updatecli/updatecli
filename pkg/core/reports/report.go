@@ -27,7 +27,9 @@ const (
 	// SOURCEREPORTTEMPLATE ...
 	SOURCEREPORTTEMPLATE string = `
 {{- "\t"}}Source:
-{{ "\t"}}{{"\t"}}{{- .Source.Result }}  {{ .Source.Name -}}({{- .Source.Kind -}}){{"\n"}}
+{{ range .Sources }}
+{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{- end }}
 `
 
 	// REPORTTEMPLATE ...
@@ -42,7 +44,9 @@ REPORTS:
 {{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
 {{- "\t"}}Source:
-{{ "\t"}}{{"\t"}}{{- .Source.Result }}  {{ .Source.Name -}}({{- .Source.Kind -}}){{"\n"}}
+{{ range .Sources }}
+{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{- end }}
 
 {{- if .Conditions -}}
 {{- "\t" }}Condition:
@@ -64,7 +68,7 @@ type Report struct {
 	Name       string
 	Err        string
 	Result     string
-	Source     Stage
+	Sources    []Stage
 	Conditions []Stage
 	Targets    []Stage
 }
@@ -73,7 +77,7 @@ type Report struct {
 //func (config *Config) InitReport() (report *Report) {
 func Init(
 	name string,
-	source Stage,
+	sources []Stage,
 	conditions []Stage,
 	targets []Stage,
 ) (report Report) {
@@ -81,10 +85,12 @@ func Init(
 	report.Name = name
 	report.Result = result.FAILURE
 
-	report.Source = Stage{
-		Name:   source.Name,
-		Kind:   source.Kind,
-		Result: result.FAILURE,
+	for _, source := range sources {
+		report.Sources = append(report.Sources, Stage{
+			Name:   source.Name,
+			Kind:   source.Kind,
+			Result: result.FAILURE,
+		})
 	}
 
 	for _, condition := range conditions {
@@ -113,7 +119,7 @@ func (r *Report) String(mode string) (report string, err error) {
 	switch mode {
 	case "conditions":
 		t = template.Must(template.New("reports").Parse(CONDITIONREPORTTEMPLATE))
-	case "source":
+	case "sources":
 		t = template.Must(template.New("reports").Parse(SOURCEREPORTTEMPLATE))
 	case "targets":
 		t = template.Must(template.New("reports").Parse(TARGETREPORTTEMPLATE))
