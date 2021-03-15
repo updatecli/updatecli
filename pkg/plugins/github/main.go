@@ -14,6 +14,13 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const (
+	// STRINGVERSIONTYPE stores the version as a simple string
+	STRINGVERSIONTYPE string = "string"
+	// SEMVERVERSIONTYPE stores the semantic versionning type
+	SEMVERVERSIONTYPE string = "semver"
+)
+
 // Github contains settings to interact with Github
 type Github struct {
 	Owner                  string
@@ -24,16 +31,16 @@ type Github struct {
 	Token                  string
 	URL                    string
 	Version                string
+	VersionType            string //VersionType defines the type of version, semver, default,etc...
 	Directory              string
 	Branch                 string
 	remoteBranch           string
 	User                   string
 	Email                  string
-	Constraint             string // Specify version constraint
 }
 
 // Check verifies if mandatory Github parameters are provided and return false if not.
-func (g *Github) Check() (bool, error) {
+func (g *Github) Check() (errs []error) {
 	required := []string{}
 
 	if g.Token == "" {
@@ -52,12 +59,22 @@ func (g *Github) Check() (bool, error) {
 		required = append(required, "repository")
 	}
 
-	if len(required) > 0 {
-		err := fmt.Errorf("github parameter(s) required: [%v]", strings.Join(required, ","))
-		return false, err
+	if len(g.VersionType) == 0 {
+		g.VersionType = SEMVERVERSIONTYPE
 	}
 
-	return true, nil
+	if g.VersionType != STRINGVERSIONTYPE &&
+		g.VersionType != SEMVERVERSIONTYPE &&
+		g.VersionType != "" {
+		errs = append(errs, fmt.Errorf("wrong versionType %q, only accepted values [%q,%q]", g.VersionType, STRINGVERSIONTYPE, SEMVERVERSIONTYPE))
+
+	}
+
+	if len(required) > 0 {
+		errs = append(errs, fmt.Errorf("github parameter(s) required: [%v]", strings.Join(required, ",")))
+	}
+
+	return errs
 }
 
 func (g *Github) setDirectory() {
