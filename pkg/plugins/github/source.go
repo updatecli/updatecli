@@ -2,20 +2,24 @@ package github
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
+	"github.com/olblak/updateCli/pkg/plugins/version/semver"
 	"github.com/sirupsen/logrus"
 
 	"github.com/shurcooL/githubv4"
-
-	"github.com/Masterminds/semver/v3"
 )
 
 // Source retrieves a specific version tag from Github Releases.
 func (g *Github) Source(workingDir string) (string, error) {
 
-	_, err := g.Check()
-	if err != nil {
-		return "", err
+	errs := g.Check()
+	if len(errs) > 0 {
+		for _, e := range errs {
+			logrus.Errorf("%s\n", e)
+		}
+		return "", fmt.Errorf("wrong github configuration")
 	}
 
 	/*
@@ -66,7 +70,7 @@ func (g *Github) Source(workingDir string) (string, error) {
 		},
 	}
 
-	err = client.Query(context.Background(), &query, variables)
+	err := client.Query(context.Background(), &query, variables)
 
 	if err != nil {
 		logrus.Errorf("\u2717 Couldn't find a valid github release version")
@@ -75,54 +79,49 @@ func (g *Github) Source(workingDir string) (string, error) {
 	}
 
 	value := ""
-
-	c := &semver.Constraints{}
-	if len(g.Constraint) > 0 {
-		c, err = semver.NewConstraint(g.Constraint)
-		if err != nil {
-			return value, err
-		}
-	}
+	versions := []string{}
 
 	for _, release := range query.Repository.Releases.Nodes {
 		if !release.IsDraft && !release.IsPrerelease {
-			if len(g.Constraint) > 0 {
-
-				v, err := semver.NewVersion(release.TagName)
-				if err != nil {
-					return value, err
-				}
-
-				if !c.Check(v) {
-					continue
-				}
-
-			}
-			value = release.TagName
-			break
-
+			versions = append(versions, release.TagName)
 		}
 	}
 
-	versions := []string{}
-	for _, release := range query.Repository.Releases.Nodes {
-		versions = append(versions, release.TagName)
+	switch g.VersionType {
+	case STRINGVERSIONTYPE:
+		if g.Version == "latest" {
+			value = versions[0]
+		} else {
+			for _, version := range versions {
+				if strings.HasPrefix(version, g.Version) {
+					value = version
+					break
+				}
+			}
+		}
+	case SEMVERVERSIONTYPE:
+		sv := semver.Semver{
+			Constraint: g.Version,
+		}
+		sv.Init(versions)
+		value, err = sv.GetLatestVersion()
+		if err != nil {
+			return value, err
+		}
+	default:
+		return value, fmt.Errorf("Something went wrong while decoding version %q for version pattern %q", g.Version, g.VersionType)
 	}
 
-	if len(g.Constraint) > 0 && len(value) > 0 {
-		logrus.Infof("\u2714 %q github release version matching constraint %q, founded: %q", g.Version, g.Constraint, value)
-	} else if len(g.Constraint) == 0 && len(value) > 0 {
-		logrus.Infof("\u2714 %q github release version founded: %q", g.Version, value)
-	} else if len(value) == 0 && len(g.Constraint) == 0 {
-		logrus.Infof("\u2714 No %q github release version founded", g.Version)
-		logrus.Debugf("%d version returned from Github", len(query.Repository.Releases.Nodes))
-		logrus.Debugf("%s", versions)
-	} else if len(value) == 0 && len(g.Constraint) >= 0 {
-		logrus.Infof("\u2714 No %q github release version founded matching constraint %q", g.Version, g.Constraint)
-		logrus.Debugf("%d version returned from Github", len(query.Repository.Releases.Nodes))
-		logrus.Debugf("%s", versions)
+	logrus.Debugf("%d version returned from Github", len(query.Repository.Releases.Nodes))
+	logrus.Debugf("%s", versions)
+
+	if len(value) == 0 {
+		logrus.Infof("\u2717 No Github Release version founded matching pattern %q", g.Version)
+	} else if len(value) > 0 {
+		logrus.Infof("\u2714 Github Release version %q founded matching pattern %q", value, g.Version)
 	} else {
 		logrus.Errorf("Something unexpected happened in Github source")
 	}
+
 	return value, nil
 }

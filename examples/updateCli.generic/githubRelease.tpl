@@ -37,8 +37,14 @@ source:
     repository: "jenkins-wiki-exporter"
     token: "{{ requiredEnv .github.token }}"
     username: "olblak"
-    version: "latest"
-    constraint: "~1.10"
+    #version: "latest"
+    version: "~1.10"
+    #version: "~9.10"
+    #version: "v1.10"
+    #versiontype: string
+    #versiontype: random
+  transformers:
+    - addPrefix: "v"
 conditions:
   docker:
     name: "Docker Image Published on Registry"
