@@ -173,19 +173,22 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 
 	oldVersion := md.Version
 
-	v, err := semver.NewVersion(md.Version)
-	if err != nil {
-		return err
-	}
+	for _, inc := range strings.Split(c.VersionIncrement, ",") {
+		v, err := semver.NewVersion(md.Version)
+		if err != nil {
+			return err
+		}
 
-	if c.IncMajor {
-		md.Version = v.IncMajor().String()
-	}
-	if c.IncMinor {
-		md.Version = v.IncMinor().String()
-	}
-	if c.IncPatch {
-		md.Version = v.IncPatch().String()
+		switch inc {
+		case "major":
+			md.Version = v.IncMajor().String()
+		case "minor":
+			md.Version = v.IncMinor().String()
+		case "patch":
+			md.Version = v.IncPatch().String()
+		default:
+			logrus.Errorf("Wrong increment rule %q.", inc)
+		}
 	}
 
 	logrus.Debugf("Update Chart version from %q to %q\n", oldVersion, md.Version)
@@ -228,6 +231,18 @@ func (c *Chart) ValidateTarget() error {
 
 	if len(c.Key) == 0 {
 		return fmt.Errorf("Parameter key required")
+	}
+
+	if len(c.VersionIncrement) == 0 {
+		c.VersionIncrement = "minor"
+	}
+
+	for _, inc := range strings.Split(c.VersionIncrement, ",") {
+
+		if inc != "major" && inc != "minor" && inc != "patch" && inc != "" {
+			return fmt.Errorf("Unrecognized increment rule %q. accepted values are a comma separated list of [major,minor,patch]", inc)
+
+		}
 	}
 
 	return nil
