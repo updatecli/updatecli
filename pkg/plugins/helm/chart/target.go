@@ -180,11 +180,11 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 		}
 
 		switch inc {
-		case "major":
+		case MAJORVERSION:
 			md.Version = v.IncMajor().String()
-		case "minor":
+		case MINORVERSION:
 			md.Version = v.IncMinor().String()
-		case "patch":
+		case PATCHVERSION:
 			md.Version = v.IncPatch().String()
 		default:
 			logrus.Errorf("Wrong increment rule %q.", inc)
@@ -234,14 +234,16 @@ func (c *Chart) ValidateTarget() error {
 	}
 
 	if len(c.VersionIncrement) == 0 {
-		c.VersionIncrement = "minor"
+		c.VersionIncrement = MINORVERSION
 	}
 
 	for _, inc := range strings.Split(c.VersionIncrement, ",") {
 
-		if inc != "major" && inc != "minor" && inc != "patch" && inc != "" {
+		if inc != MAJORVERSION &&
+			inc != MINORVERSION &&
+			inc != PATCHVERSION &&
+			inc != "" {
 			return fmt.Errorf("Unrecognized increment rule %q. accepted values are a comma separated list of [major,minor,patch]", inc)
-
 		}
 	}
 
