@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	// STRINGVERSIONTYPE stores the version as a simple string
-	STRINGVERSIONTYPE string = "string"
+	// TEXTVERSIONTYPE stores the version as a simple string
+	TEXTVERSIONTYPE string = "string"
 	// SEMVERVERSIONTYPE stores the semantic versionning type
 	SEMVERVERSIONTYPE string = "semver"
 )
@@ -63,10 +63,10 @@ func (g *Github) Check() (errs []error) {
 		g.VersionType = SEMVERVERSIONTYPE
 	}
 
-	if g.VersionType != STRINGVERSIONTYPE &&
+	if g.VersionType != TEXTVERSIONTYPE &&
 		g.VersionType != SEMVERVERSIONTYPE &&
 		g.VersionType != "" {
-		errs = append(errs, fmt.Errorf("wrong versionType %q, only accepted values [%q,%q]", g.VersionType, STRINGVERSIONTYPE, SEMVERVERSIONTYPE))
+		errs = append(errs, fmt.Errorf("wrong versionType %q, only accepted values [%q,%q]", g.VersionType, TEXTVERSIONTYPE, SEMVERVERSIONTYPE))
 
 	}
 
