@@ -29,6 +29,12 @@ URL:
 {{ end }}
 {{ end }}
 `
+	// MINORVERSION defines minor version identifier
+	MINORVERSION = "minor"
+	// MAJORVERSION defines major version identifier
+	MAJORVERSION = "major"
+	// PATCHVERSION defines patch version identifier
+	PATCHVERSION = "patch"
 )
 
 // Chart describe helm repository metadata
