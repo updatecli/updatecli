@@ -88,7 +88,7 @@ func (g *Github) Source(workingDir string) (string, error) {
 	}
 
 	switch g.VersionType {
-	case STRINGVERSIONTYPE:
+	case TEXTVERSIONTYPE:
 		if g.Version == "latest" {
 			value = versions[0]
 		} else {
