@@ -13,7 +13,7 @@ targets:
       Name: "charts/jenkins"
       file: "requirements.yaml"
       key: "dependencies[0].version"
-      incminor: true
+      versionIncrement: "patch"
     scm:
       github:
         user: "updatecli"
