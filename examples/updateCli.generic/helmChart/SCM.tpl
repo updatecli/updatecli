@@ -15,7 +15,7 @@ targets:
       appVersion: true
       Name: "charts/jenkins"
       key: "jenkins.controller.tag"
-      incminor: true
+      versionincrement: "major"
     scm:
       github:
         user: "updatecli"
