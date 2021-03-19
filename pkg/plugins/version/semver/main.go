@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	sv "github.com/Masterminds/semver/v3"
+	"github.com/sirupsen/logrus"
 )
 
 // Semver is an interface in front the masterminds/semver used across the updatecli project
@@ -16,19 +17,20 @@ type Semver struct {
 // Init creates a new semver object
 func (s *Semver) Init(versions []string) error {
 
-	vs := make([]*sv.Version, len(versions))
-	for i, version := range versions {
+	for _, version := range versions {
 		v, err := sv.NewVersion(version)
 		if err != nil {
-			return fmt.Errorf("Error parsing version: %s", err)
+			logrus.Debugf("Skipping %q because %s, skipping", version, err)
+		} else {
+			s.versions = append(s.versions, v)
 		}
-
-		vs[i] = v
 	}
 
-	s.versions = vs
+	if len(s.versions) > 0 {
+		return nil
+	}
 
-	return nil
+	return fmt.Errorf("No valid semantic version found")
 }
 
 // Sort re-order a list of versions with the newest first
@@ -38,6 +40,11 @@ func (s *Semver) Sort() {
 
 // GetLatestVersion return the latest version matching pattern from a sorted list.
 func (s *Semver) GetLatestVersion() (version string, err error) {
+	// We need to be sure that at least one version exist
+	if len(s.versions) == 0 {
+		return "", fmt.Errorf("empty list of versions")
+	}
+
 	s.Sort()
 
 	if len(s.Constraint) == 0 {
