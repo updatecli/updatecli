@@ -16,7 +16,7 @@ import (
 
 const (
 	// TEXTVERSIONTYPE stores the version as a simple string
-	TEXTVERSIONTYPE string = "string"
+	TEXTVERSIONTYPE string = "text"
 	// SEMVERVERSIONTYPE stores the semantic versionning type
 	SEMVERVERSIONTYPE string = "semver"
 )
