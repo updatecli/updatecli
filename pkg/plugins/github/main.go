@@ -58,7 +58,7 @@ func (g *Github) Check() (errs []error) {
 	}
 
 	if len(g.Versioning.Kind) == 0 {
-		g.Versioning.Kind = version.SEMVERVERSIONKIND
+		g.Versioning.Kind = version.TEXTVERSIONKIND
 	}
 
 	if err := g.Versioning.Validate(); err != nil {
