@@ -41,7 +41,8 @@ sources:
       #version: 'kubernetes-1.(\d*).(\d*)$' # return latest publish version starting with kubernetes-1.20
       #version: latest
       version: v0.20
-      versionType: text
+      versioning:
+        kind: text
     transformers:
       - trimPrefix: "kubernetes-"
   jenkins-wiki-exporter:
