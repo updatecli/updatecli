@@ -27,6 +27,6 @@ func TestGetTags(t *testing.T) {
 	}
 
 	if len(tags) == 0 {
-		t.Errorf("No tags founded: %q", tags)
+		t.Errorf("No tags found: %q", tags)
 	}
 }
