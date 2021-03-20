@@ -53,6 +53,8 @@ sources:
       token: "{{ requiredEnv .github.token }}"
       username: "olblak"
       version: "~1.10"
+      versioning:
+        kind: semver
     transformers:
       - addPrefix: "v"
 conditions:
