@@ -57,10 +57,6 @@ func (g *Github) Check() (errs []error) {
 		g.Versioning.Pattern = g.Version
 	}
 
-	if len(g.Versioning.Kind) == 0 {
-		g.Versioning.Kind = version.TEXTVERSIONKIND
-	}
-
 	if err := g.Versioning.Validate(); err != nil {
 		errs = append(errs, err)
 	}

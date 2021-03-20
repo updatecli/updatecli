@@ -31,6 +31,11 @@ var (
 
 // Validate tests if we are analysing a valid version type
 func (v *Version) Validate() error {
+
+	if len(v.Kind) == 0 {
+		v.Kind = TEXTVERSIONKIND
+	}
+
 	ok := false
 	for id := range SupportedKind {
 		if SupportedKind[id] == v.Kind {
