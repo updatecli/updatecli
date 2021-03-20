@@ -46,7 +46,7 @@ func (c *Chart) Source(workingDir string) (string, error) {
 	}
 
 	if e.Version != "" {
-		logrus.Infof("\u2714 Helm Chart '%s' version '%v' is founded from repository %s",
+		logrus.Infof("\u2714 Helm Chart '%s' version '%v' is found from repository %s",
 			c.Name,
 			e.Version,
 			c.URL)
