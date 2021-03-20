@@ -3,9 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	"regexp"
 
-	"github.com/olblak/updateCli/pkg/plugins/version/semver"
 	"github.com/sirupsen/logrus"
 
 	"github.com/shurcooL/githubv4"
@@ -37,57 +35,21 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 			return "", err
 		}
 		if len(versions) == 0 {
-			logrus.Infof("\t=> No release neither git tags founded, exiting")
-			return "", fmt.Errorf("No release or git tags founded, exiting")
+			logrus.Infof("\t=> No release or git tags found, exiting")
+			return "", fmt.Errorf("No release or git tags found, exiting")
 		}
 	}
 
-	switch g.VersionType {
-	case TEXTVERSIONTYPE:
-		logrus.Infof("Searching for version %s", g.Version)
-		if g.Version == "latest" {
-			value = versions[len(versions)-1]
-		} else {
-			re, err := regexp.Compile(g.Version)
-			if err != nil {
-				return "", err
-			}
-
-			// Parse version in by date publishing
-			for i := len(versions) - 1; i >= 0; i-- {
-				version := versions[i]
-				if re.Match([]byte(version)) {
-					value = version
-					break
-				}
-			}
-		}
-	case SEMVERVERSIONTYPE:
-		logrus.Info("Searching for version respecting semantic versioning %q", g.Version)
-		sv := semver.Semver{
-			Constraint: g.Version,
-		}
-		err = sv.Init(versions)
-
-		if err != nil {
-			logrus.Errorf("%s", err)
-			return value, err
-		}
-
-		value, err = sv.GetLatestVersion()
-		if err != nil {
-			logrus.Errorf("%s", err)
-			return value, err
-		}
-	default:
-		return value, fmt.Errorf("Something went wrong while decoding version %q for version pattern %q", g.Version, g.VersionType)
+	value, err = g.Versioning.Search(versions)
+	if err != nil {
+		return "", err
 	}
 
 	if len(value) == 0 {
-		logrus.Infof("\u2717 No Github Release version founded matching pattern %q", g.Version)
-		return value, fmt.Errorf("no Github Release version founded matching pattern %q", g.Version)
+		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.Version)
+		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.Version)
 	} else if len(value) > 0 {
-		logrus.Infof("\u2714 Github Release version %q founded matching pattern %q", value, g.Version)
+		logrus.Infof("\u2714 Github Release version %q found matching pattern %q", value, g.Version)
 	} else {
 		logrus.Errorf("Something unexpected happened in Github source")
 	}
@@ -100,18 +62,6 @@ func (g *Github) SearchTags() (tags []string, err error) {
 
 	client := g.NewClient()
 
-	//var query struct {
-	//	RateLimit  RateLimit
-	//	Repository struct {
-	//		Refs struct {
-	//			TotalCount string
-	//			Nodes      []struct {
-	//				Name string
-	//			}
-	//		} `graphql:"refs(refPrefix: $refPrefix, last: 100,orderBy: $orderBy)"`
-	//	} `graphql:"repository(owner: $owner, name: $repository)"`
-	//}
-	//		{
 	//	  rateLimit {
 	//	    cost
 	//	    remaining

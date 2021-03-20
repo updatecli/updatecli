@@ -10,15 +10,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/tmp"
+	"github.com/olblak/updateCli/pkg/plugins/version"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
-)
-
-const (
-	// TEXTVERSIONTYPE stores the version as a simple string
-	TEXTVERSIONTYPE string = "text"
-	// SEMVERVERSIONTYPE stores the semantic versionning type
-	SEMVERVERSIONTYPE string = "semver"
 )
 
 // Github contains settings to interact with Github
@@ -31,7 +25,7 @@ type Github struct {
 	Token                  string
 	URL                    string
 	Version                string
-	VersionType            string //VersionType defines the type of version, semver, default,etc...
+	Versioning             version.Version //Versioning provide parameters to clarify the type of version, simple text, semantic versioning,etc.
 	Directory              string
 	Branch                 string
 	remoteBranch           string
@@ -59,15 +53,16 @@ func (g *Github) Check() (errs []error) {
 		required = append(required, "repository")
 	}
 
-	if len(g.VersionType) == 0 {
-		g.VersionType = SEMVERVERSIONTYPE
+	if len(g.Versioning.Pattern) == 0 {
+		g.Versioning.Pattern = g.Version
 	}
 
-	if g.VersionType != TEXTVERSIONTYPE &&
-		g.VersionType != SEMVERVERSIONTYPE &&
-		g.VersionType != "" {
-		errs = append(errs, fmt.Errorf("wrong versionType %q, only accepted values [%q,%q]", g.VersionType, TEXTVERSIONTYPE, SEMVERVERSIONTYPE))
+	if len(g.Versioning.Kind) == 0 {
+		g.Versioning.Kind = version.SEMVERVERSIONKIND
+	}
 
+	if err := g.Versioning.Validate(); err != nil {
+		errs = append(errs, err)
 	}
 
 	if len(required) > 0 {

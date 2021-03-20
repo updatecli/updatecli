@@ -33,16 +33,22 @@ func (s *Semver) Init(versions []string) error {
 	return fmt.Errorf("No valid semantic version found")
 }
 
-// Sort re-order a list of versions with the newest first
+// Sort re-order a list of versions with the newest version first
 func (s *Semver) Sort() {
 	sort.Sort(sort.Reverse(sv.Collection(s.versions)))
 }
 
-// GetLatestVersion return the latest version matching pattern from a sorted list.
-func (s *Semver) GetLatestVersion() (version string, err error) {
+// Searcher returns the version matching pattern from a sorted list.
+func (s *Semver) Searcher(versions []string) (version string, err error) {
 	// We need to be sure that at least one version exist
-	if len(s.versions) == 0 {
+	if len(versions) == 0 {
 		return "", fmt.Errorf("empty list of versions")
+
+	}
+	err = s.Init(versions)
+	if err != nil {
+		logrus.Error(err)
+		return version, err
 	}
 
 	s.Sort()
