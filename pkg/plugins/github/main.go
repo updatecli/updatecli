@@ -24,8 +24,8 @@ type Github struct {
 	Username               string
 	Token                  string
 	URL                    string
-	Version                string
-	Versioning             version.Version //Versioning provide parameters to clarify the type of version, simple text, semantic versioning,etc.
+	Version                string          // **Deprecated** Field depecated in favor of `versionFilter.pattern`, this field will be removed in a futur version
+	versionFilter          version.Version //Versioning provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	Directory              string
 	Branch                 string
 	remoteBranch           string
@@ -53,12 +53,16 @@ func (g *Github) Check() (errs []error) {
 		required = append(required, "repository")
 	}
 
-	if len(g.Versioning.Pattern) == 0 {
-		g.Versioning.Pattern = g.Version
+	if len(g.versionFilter.Pattern) == 0 {
+		g.versionFilter.Pattern = g.Version
 	}
 
-	if err := g.Versioning.Validate(); err != nil {
+	if err := g.versionFilter.Validate(); err != nil {
 		errs = append(errs, err)
+	}
+
+	if len(g.Version) > 0 {
+		logrus.Warningln("**Deprecated** Field deprecated in favor of `versionFilter.pattern`, this field will be removed in the next major version")
 	}
 
 	if len(required) > 0 {

@@ -40,7 +40,7 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 		}
 	}
 
-	value, err = g.Versioning.Search(versions)
+	value, err = g.versionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
