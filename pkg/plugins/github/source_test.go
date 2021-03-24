@@ -2,31 +2,69 @@ package github
 
 import (
 	"os"
-	"path/filepath"
+	"strings"
 	"testing"
+)
+
+type DataSet struct {
+	github           Github
+	expectedTags     []string
+	expectedReleases []string
+	expectedSource   string
+}
+
+var (
+	dataSet = DataSet{
+		github: Github{
+			Owner:      "olblak",
+			Repository: "nocode",
+			Token:      os.Getenv("GITHUB_TOKEN"),
+		},
+		expectedTags:     []string{"1.0.0"},
+		expectedReleases: []string{"1.0.0"},
+		expectedSource:   "1.0.0",
+	}
 )
 
 func TestGetTags(t *testing.T) {
 
-	g := Github{
-		Owner:      "updatecli",
-		Repository: "updatecli",
-		Token:      os.Getenv("GITHUB_TOKEN"),
-		Directory:  filepath.Join(os.TempDir(), "tests", "updatecli"),
-	}
-
-	_, err := g.Clone()
-	if err != nil {
-		t.Errorf("Something went wrong when running git clone: %q", err)
-	}
-
-	tags, err := g.SearchTags()
+	tags, err := dataSet.github.SearchTags()
 
 	if err != nil {
 		t.Errorf("Something went wrong when retrieving tags: %q", err)
 	}
 
-	if len(tags) == 0 {
-		t.Errorf("No tags found: %q", tags)
+	for id, tag := range tags {
+		if strings.Compare(tag, dataSet.expectedTags[id]) != 0 {
+			t.Errorf("At position %d, expected tag %q, got %q", id, tag, dataSet.expectedTags[id])
+		}
+	}
+}
+
+func TestSource(t *testing.T) {
+
+	got, err := dataSet.github.Source("")
+
+	if err != nil {
+		t.Errorf("Something went wrong when retrieving tags: %q", err)
+	}
+
+	if strings.Compare(got, dataSet.expectedSource) != 0 {
+		t.Errorf("Expected source value %q, got %q", dataSet.expectedSource, got)
+	}
+}
+
+func TestSearchReleases(t *testing.T) {
+
+	releases, err := dataSet.github.SearchReleases()
+
+	if err != nil {
+		t.Errorf("Something went wrong when retrieving tags: %q", err)
+	}
+
+	for id, release := range releases {
+		if strings.Compare(release, dataSet.expectedReleases[id]) != 0 {
+			t.Errorf("At position %d, expected tag %q, got %q", id, release, dataSet.expectedReleases[id])
+		}
 	}
 }

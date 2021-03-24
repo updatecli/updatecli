@@ -24,8 +24,8 @@ type Github struct {
 	Username               string
 	Token                  string
 	URL                    string
-	Version                string          // **Deprecated** Field depecated in favor of `versionFilter.pattern`, this field will be removed in a futur version
-	versionFilter          version.Version //Versioning provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	Version                string         // **Deprecated** Field depecated in favor of `versionFilter.pattern`, this field will be removed in a futur version
+	versionFilter          version.Filter //Versioning provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	Directory              string
 	Branch                 string
 	remoteBranch           string
@@ -39,10 +39,6 @@ func (g *Github) Check() (errs []error) {
 
 	if g.Token == "" {
 		required = append(required, "token")
-	}
-
-	if g.Username == "" {
-		required = append(required, "username")
 	}
 
 	if g.Owner == "" {
