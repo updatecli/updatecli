@@ -1,6 +1,7 @@
 package semver
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -13,6 +14,13 @@ type Semver struct {
 	Constraint string
 	versions   []*sv.Version
 }
+
+var (
+	// ErrNoVersionFound return a error when no version couldn't be found
+	ErrNoVersionFound error = errors.New("No version found")
+	// ErrNoVersionsFound return a error when the versions list is empty
+	ErrNoVersionsFound error = errors.New("Versions list empty")
+)
 
 // Init creates a new semver object
 func (s *Semver) Init(versions []string) error {
@@ -38,11 +46,11 @@ func (s *Semver) Sort() {
 	sort.Sort(sort.Reverse(sv.Collection(s.versions)))
 }
 
-// Searcher returns the version matching pattern from a sorted list.
-func (s *Semver) Searcher(versions []string) (version string, err error) {
+// Search returns the version matching pattern from a sorted list.
+func (s *Semver) Search(versions []string) (version string, err error) {
 	// We need to be sure that at least one version exist
 	if len(versions) == 0 {
-		return "", fmt.Errorf("empty list of versions")
+		return "", ErrNoVersionsFound
 
 	}
 	err = s.Init(versions)
@@ -66,8 +74,11 @@ func (s *Semver) Searcher(versions []string) (version string, err error) {
 
 		if c.Check(v) {
 			version = v.String()
-			return version, err
+			break
 		}
+	}
+	if len(version) == 0 {
+		return "", ErrNoVersionFound
 	}
 
 	return version, err

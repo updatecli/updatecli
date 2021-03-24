@@ -8,84 +8,96 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Version hold version information
-type Version struct {
+// Filter defines parameters to apply different kind of version matching based on a list of versions
+type Filter struct {
 	Kind    string
 	Pattern string
 }
 
 const (
-	// TEXTVERSIONKIND represent versions as a simple string
-	TEXTVERSIONKIND string = "text"
-	// SEMVERVERSIONKIND represent versions as a semantic versionning type
+	// REGEXVERSIONKIND represents versions as a simple string
+	REGEXVERSIONKIND string = "regex"
+	// SEMVERVERSIONKIND represents versions as a semantic versionning type
 	SEMVERVERSIONKIND string = "semver"
+	// LATESTVERSIONKIND specifies that we are looking for the latest version of an array
+	LATESTVERSIONKIND string = "latest"
 )
 
 var (
 	// SupportedKind holds a list of supported version kind
 	SupportedKind []string = []string{
-		TEXTVERSIONKIND,
+		REGEXVERSIONKIND,
 		SEMVERVERSIONKIND,
+		LATESTVERSIONKIND,
 	}
 )
 
-// Validate tests if we are analysing a valid version type
-func (v *Version) Validate() error {
+// Validate tests if our filter contains valid parameters
+func (f *Filter) Validate() error {
 
-	if len(v.Kind) == 0 {
-		v.Kind = TEXTVERSIONKIND
+	// Set default kind value to "latest"
+	if len(f.Kind) == 0 {
+		f.Kind = LATESTVERSIONKIND
+	}
+
+	// Set default pattern value based on kind
+	if f.Kind == LATESTVERSIONKIND && len(f.Pattern) == 0 {
+		f.Pattern = LATESTVERSIONKIND
+	} else if f.Kind == SEMVERVERSIONKIND && len(f.Pattern) == 0 {
+		f.Pattern = "*"
+	} else if f.Kind == REGEXVERSIONKIND && len(f.Pattern) == 0 {
+		f.Pattern = ".*"
 	}
 
 	ok := false
+
 	for id := range SupportedKind {
-		if SupportedKind[id] == v.Kind {
+		if SupportedKind[id] == f.Kind {
 			ok = true
 			break
 		}
 	}
 	if !ok {
-		return fmt.Errorf("Unsupported version kind %q", v.Kind)
+		return fmt.Errorf("Unsupported version kind %q", f.Kind)
 	}
 	return nil
 }
 
 // Search returns a value matching pattern
-func (v *Version) Search(versions []string) (version string, err error) {
+func (f *Filter) Search(versions []string) (version string, err error) {
 
-	logrus.Infof("Searching for version matching pattern %q", v.Pattern)
+	logrus.Infof("Searching for version matching pattern %q", f.Pattern)
 
-	switch v.Kind {
-	case TEXTVERSIONKIND:
-		if v.Pattern == "latest" {
-			version = versions[len(versions)-1]
-		} else {
-			re, err := regexp.Compile(v.Pattern)
-			if err != nil {
-				return "", err
-			}
+	switch f.Kind {
+	case LATESTVERSIONKIND:
+		version = versions[len(versions)-1]
+	case REGEXVERSIONKIND:
+		re, err := regexp.Compile(f.Pattern)
+		if err != nil {
+			return "", err
+		}
 
-			// Parse version in by date publishing
-			// Oldest version appears first in array
-			for i := len(versions) - 1; i >= 0; i-- {
-				v := versions[i]
-				if re.Match([]byte(v)) {
-					version = v
-					break
-				}
+		// Parse version in by date publishing
+		// Oldest version appears first in array
+		for i := len(versions) - 1; i >= 0; i-- {
+			v := versions[i]
+			if re.Match([]byte(v)) {
+				version = v
+				break
 			}
 		}
 	case SEMVERVERSIONKIND:
 		s := semver.Semver{
-			Constraint: v.Pattern,
+			Constraint: f.Pattern,
 		}
 
-		version, err = s.Searcher(versions)
+		version, err = s.Search(versions)
 		if err != nil {
 			logrus.Error(err)
 			return version, err
 		}
 	default:
-		return version, fmt.Errorf("Unsupported version kind %q with pattern %q", v.Kind, v.Pattern)
+		return version, fmt.Errorf("Unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
 
 	}
 
