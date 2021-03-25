@@ -40,16 +40,16 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 		}
 	}
 
-	value, err = g.versionFilter.Search(versions)
+	value, err = g.VersionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
 
 	if len(value) == 0 {
-		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.versionFilter.Pattern)
-		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.versionFilter.Pattern)
+		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.VersionFilter.Pattern)
+		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.VersionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("\u2714 Github Release version %q found matching pattern %q", value, g.versionFilter.Pattern)
+		logrus.Infof("\u2714 Github Release version %q found matching pattern %q", value, g.VersionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in Github source")
 	}

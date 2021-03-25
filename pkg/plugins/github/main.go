@@ -25,7 +25,7 @@ type Github struct {
 	Token                  string
 	URL                    string
 	Version                string         // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a futur version
-	versionFilter          version.Filter //Versioning provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter          version.Filter //Versioning provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	Directory              string
 	Branch                 string
 	remoteBranch           string
@@ -49,11 +49,11 @@ func (g *Github) Check() (errs []error) {
 		required = append(required, "repository")
 	}
 
-	if len(g.versionFilter.Pattern) == 0 {
-		g.versionFilter.Pattern = g.Version
+	if len(g.VersionFilter.Pattern) == 0 {
+		g.VersionFilter.Pattern = g.Version
 	}
 
-	if err := g.versionFilter.Validate(); err != nil {
+	if err := g.VersionFilter.Validate(); err != nil {
 		errs = append(errs, err)
 	}
 

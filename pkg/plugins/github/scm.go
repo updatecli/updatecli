@@ -10,7 +10,7 @@ import (
 
 // Init set default Github parameters if not set.
 func (g *Github) Init(source string, pipelineID string) error {
-	g.versionFilter.Pattern = source
+	g.VersionFilter.Pattern = source
 	g.remoteBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
 	g.setDirectory()
 
