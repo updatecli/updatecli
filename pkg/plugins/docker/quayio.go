@@ -4,7 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (d *Docker) isQuaiIO() bool {
+func (d *Docker) isQuayIO() bool {
 
 	hostname, _, err := parseImage(d.Image)
 

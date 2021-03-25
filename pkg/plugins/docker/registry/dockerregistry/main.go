@@ -3,6 +3,7 @@ package dockerregistry
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/olblak/updateCli/pkg/core/helpers"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -14,6 +15,7 @@ type Docker struct {
 	Tag      string
 	Hostname string
 	Token    string
+	Client   helpers.HttpClient
 }
 
 // Digest retrieve docker image tag digest from a registry
@@ -46,7 +48,7 @@ func (d *Docker) Digest() (string, error) {
 
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := d.Client.Do(req)
 	if err != nil {
 		return "", err
 	}

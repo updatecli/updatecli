@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/olblak/updateCli/pkg/core/helpers"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -16,6 +17,7 @@ type Docker struct {
 	Tag          string
 	Architecture string
 	Token        string
+	Client       helpers.HttpClient
 }
 
 // Login authenticate with Dockerhub then return a valid bearer token
@@ -41,7 +43,7 @@ func (d *Docker) Login() (string, error) {
 
 	req.Header.Add("Content-Type", "application/json")
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := d.Client.Do(req)
 	if err != nil {
 		return "", err
 	}

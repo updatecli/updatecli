@@ -31,16 +31,18 @@ func (d *Docker) Source(workingDir string) (string, error) {
 			Image: image,
 			Tag:   d.Tag,
 			Token: d.Token,
+			Client: d.client,
 		}
 
 		r = &dh
 
-	} else if d.isQuaiIO() {
+	} else if d.isQuayIO() {
 
 		q := quay.Docker{
 			Image: image,
 			Tag:   d.Tag,
 			Token: d.Token,
+			Client: d.client,
 		}
 
 		r = &q
@@ -51,6 +53,7 @@ func (d *Docker) Source(workingDir string) (string, error) {
 			Image: image,
 			Tag:   d.Tag,
 			Token: d.Token,
+			Client: d.client,
 		}
 
 		r = &g
@@ -65,6 +68,7 @@ func (d *Docker) Source(workingDir string) (string, error) {
 			Tag:      d.Tag,
 			Hostname: hostname,
 			Token:    d.Token,
+			Client: d.client,
 		}
 
 		r = &dr

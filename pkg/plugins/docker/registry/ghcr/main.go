@@ -3,6 +3,7 @@ package ghcr
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/olblak/updateCli/pkg/core/helpers"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -10,9 +11,10 @@ import (
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
-	Image string
-	Tag   string
-	Token string
+	Image  string
+	Tag    string
+	Token  string
+	Client helpers.HttpClient
 }
 
 // https://github.com/docker/distribution/blob/master/docs/spec/api.md
@@ -30,7 +32,7 @@ func (d *Docker) Digest() (string, error) {
 		req.Header.Add("Authorization", fmt.Sprintf("Token %s", d.Token))
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := d.Client.Do(req)
 	if err != nil {
 		return "", err
 	}

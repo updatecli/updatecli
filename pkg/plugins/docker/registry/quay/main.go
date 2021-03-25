@@ -3,6 +3,7 @@ package quay
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/olblak/updateCli/pkg/core/helpers"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -14,6 +15,7 @@ type Docker struct {
 	Tag          string
 	Architecture string
 	Token        string
+	Client       helpers.HttpClient
 }
 
 // Digest retrieve docker image tag digest from a registry
@@ -30,7 +32,7 @@ func (d *Docker) Digest() (string, error) {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", d.Token))
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := d.Client.Do(req)
 	if err != nil {
 		return "", err
 	}
