@@ -229,7 +229,9 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 		for i := len(query.Repository.Releases.Edges) - 1; i >= 0; i-- {
 			releaseCounter++
 			node := query.Repository.Releases.Edges[i]
-			releases = append(releases, node.Node.Name)
+			if !node.Node.IsDraft && !node.Node.IsPrerelease {
+				releases = append(releases, node.Node.TagName)
+			}
 		}
 
 		expectedFound = query.Repository.Releases.TotalCount
