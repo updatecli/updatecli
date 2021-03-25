@@ -30,21 +30,42 @@
 #
 ###
 
-source:
-  kind: githubRelease
-  spec:
-    owner: "jenkins-infra"
-    repository: "jenkins-wiki-exporter"
-    token: "{{ requiredEnv .github.token }}"
-    username: "olblak"
-    version: "latest"
+sources:
+  kubectl:
+    kind: githubRelease
+    spec:
+      owner: "kubernetes"
+      repository: "kubectl"
+      token: "{{ requiredEnv .github.token }}"
+      username: "olblak"
+      #version: 'kubernetes-1.(\d*).(\d*)$' # return latest publish version starting with kubernetes-1.20
+      #version: latest
+      version: v0.20
+      versioning:
+        kind: text
+    transformers:
+      - trimPrefix: "kubernetes-"
+  jenkins-wiki-exporter:
+    kind: githubRelease
+    spec:
+      owner: "jenkins-infra"
+      repository: "jenkins-wiki-exporter"
+      token: "{{ requiredEnv .github.token }}"
+      username: "olblak"
+      version: "~1.10"
+      versioning:
+        kind: semver
+    transformers:
+      - addPrefix: "v"
 conditions:
   docker:
+    sourceID: jenkins-wiki-exporter
     name: "Docker Image Published on Registry"
     kind: dockerImage
     spec:
       image: "jenkinsciinfra/jenkins-wiki-exporter"
   imageName:
+    sourceID: jenkins-wiki-exporter
     name: "jenkinsci/jenkins Helm Chart used"
     kind: yaml
     spec:
@@ -62,6 +83,7 @@ conditions:
         branch: "{{ .github.branch }}"
 targets:
   chartVersion:
+    sourceID: jenkins-wiki-exporter
     name: "jenkinsci/jenkins Helm Chart"
     kind: yaml
     spec:
