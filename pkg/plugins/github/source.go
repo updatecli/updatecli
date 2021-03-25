@@ -40,16 +40,16 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 		}
 	}
 
-	value, err = g.versionFilter.Search(versions)
+	value, err = g.VersionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
 
 	if len(value) == 0 {
-		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.Version)
-		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.Version)
+		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.VersionFilter.Pattern)
+		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.VersionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("\u2714 Github Release version %q found matching pattern %q", value, g.Version)
+		logrus.Infof("\u2714 Github Release version %q found matching pattern %q", value, g.VersionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in Github source")
 	}
@@ -229,7 +229,9 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 		for i := len(query.Repository.Releases.Edges) - 1; i >= 0; i-- {
 			releaseCounter++
 			node := query.Repository.Releases.Edges[i]
-			releases = append(releases, node.Node.Name)
+			if !node.Node.IsDraft && !node.Node.IsPrerelease {
+				releases = append(releases, node.Node.TagName)
+			}
 		}
 
 		expectedFound = query.Repository.Releases.TotalCount
