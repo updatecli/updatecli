@@ -3,10 +3,11 @@ package quay
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/olblak/updateCli/pkg/core/helpers"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/olblak/updateCli/pkg/core/helpers"
 )
 
 // Docker contains various information to interact with a docker registry

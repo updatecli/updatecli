@@ -1,8 +1,9 @@
 package dockerregistry
 
 import (
-	"github.com/olblak/updateCli/pkg/core/helpers"
 	"testing"
+
+	"github.com/olblak/updateCli/pkg/core/helpers"
 
 	"github.com/sirupsen/logrus"
 )

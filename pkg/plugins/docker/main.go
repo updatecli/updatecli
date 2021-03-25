@@ -2,19 +2,20 @@ package docker
 
 import (
 	"fmt"
-	"github.com/olblak/updateCli/pkg/core/helpers"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/olblak/updateCli/pkg/core/helpers"
 
 	"github.com/sirupsen/logrus"
 )
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
-	Image string
-	Tag   string
-	Token string
+	Image  string
+	Tag    string
+	Token  string
 	client helpers.HttpClient
 }
 

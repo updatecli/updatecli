@@ -13,7 +13,6 @@ type HttpClient interface {
 }
 
 type DefaultHttpClient struct {
-
 }
 
 func (d *DefaultHttpClient) Do(req *http.Request) (*http.Response, error) {
@@ -26,16 +25,16 @@ type FakeHttpClient struct {
 
 type FakeResponse struct {
 	StatusCode int
-	Body string
-	Headers map[string][]string
+	Body       string
+	Headers    map[string][]string
 }
 
 func (d *FakeHttpClient) Do(req *http.Request) (*http.Response, error) {
 	if response, ok := d.Requests[req.URL.String()]; ok {
 		res := http.Response{
 			StatusCode: response.StatusCode,
-			Body: io.NopCloser(strings.NewReader(response.Body)),
-			Header: response.Headers,
+			Body:       io.NopCloser(strings.NewReader(response.Body)),
+			Header:     response.Headers,
 		}
 		return &res, nil
 	} else {

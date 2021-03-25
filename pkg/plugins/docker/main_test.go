@@ -1,11 +1,12 @@
 package docker
 
 import (
-	"github.com/olblak/updateCli/pkg/core/helpers"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/olblak/updateCli/pkg/core/helpers"
+	"github.com/sirupsen/logrus"
 )
 
 type DataSet struct {
@@ -19,8 +20,8 @@ type DataSet struct {
 var data = []DataSet{
 	{
 		docker: Docker{
-			Image: "olblak/updatecli",
-			Tag:   "v0.0.16",
+			Image:  "olblak/updatecli",
+			Tag:    "v0.0.16",
 			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: true,
@@ -30,8 +31,8 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "olblak/updatecli",
-			Tag:   "donotexist",
+			Image:  "olblak/updatecli",
+			Tag:    "donotexist",
 			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: false,
@@ -41,8 +42,8 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "nginx",
-			Tag:   "1.12.1",
+			Image:  "nginx",
+			Tag:    "1.12.1",
 			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: true,
@@ -52,8 +53,8 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "mcr.microsoft.com/azure-cli",
-			Tag:   "2.0.27",
+			Image:  "mcr.microsoft.com/azure-cli",
+			Tag:    "2.0.27",
 			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: true,
@@ -70,9 +71,9 @@ var data = []DataSet{
 				Requests: map[string]helpers.FakeResponse{
 					"https://ghcr.io/v2/olblak/updatecli/manifests/v0.0.22": {
 						StatusCode: 200,
-						Body: GetContents("test_data/0.0.22.json"),
+						Body:       GetContents("test_data/0.0.22.json"),
 						Headers: map[string][]string{
-							"Docker-Content-Digest":{"sha256:f237aed76d3d00538d44448e8161df00d6c044f8823cc8eb9aeccc8413f5a029"},
+							"Docker-Content-Digest": {"sha256:f237aed76d3d00538d44448e8161df00d6c044f8823cc8eb9aeccc8413f5a029"},
 						},
 					},
 				},
@@ -85,8 +86,8 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "quay.io/jetstack/cert-manager-controller",
-			Tag:   "v1.0.0",
+			Image:  "quay.io/jetstack/cert-manager-controller",
+			Tag:    "v1.0.0",
 			client: &helpers.FakeHttpClient{},
 		},
 
@@ -97,8 +98,8 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "quay.io/jetstack/cert-manager-controller",
-			Tag:   "donotexist",
+			Image:  "quay.io/jetstack/cert-manager-controller",
+			Tag:    "donotexist",
 			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: false,
