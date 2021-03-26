@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/tmp"
+	"github.com/olblak/updateCli/pkg/plugins/version"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
 )
@@ -23,7 +24,8 @@ type Github struct {
 	Username               string
 	Token                  string
 	URL                    string
-	Version                string
+	Version                string         // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a futur version
+	VersionFilter          version.Filter //Versioning provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	Directory              string
 	Branch                 string
 	remoteBranch           string
@@ -32,15 +34,11 @@ type Github struct {
 }
 
 // Check verifies if mandatory Github parameters are provided and return false if not.
-func (g *Github) Check() (bool, error) {
+func (g *Github) Check() (errs []error) {
 	required := []string{}
 
 	if g.Token == "" {
 		required = append(required, "token")
-	}
-
-	if g.Username == "" {
-		required = append(required, "username")
 	}
 
 	if g.Owner == "" {
@@ -51,12 +49,23 @@ func (g *Github) Check() (bool, error) {
 		required = append(required, "repository")
 	}
 
-	if len(required) > 0 {
-		err := fmt.Errorf("github parameter(s) required: [%v]", strings.Join(required, ","))
-		return false, err
+	if len(g.VersionFilter.Pattern) == 0 {
+		g.VersionFilter.Pattern = g.Version
 	}
 
-	return true, nil
+	if err := g.VersionFilter.Validate(); err != nil {
+		errs = append(errs, err)
+	}
+
+	if len(g.Version) > 0 {
+		logrus.Warningln("**Deprecated** Field `version` from resource githubRelease is deprecated in favor of `versionFilter.pattern`, this field will be removed in the next major version")
+	}
+
+	if len(required) > 0 {
+		errs = append(errs, fmt.Errorf("github parameter(s) required: [%v]", strings.Join(required, ",")))
+	}
+
+	return errs
 }
 
 func (g *Github) setDirectory() {

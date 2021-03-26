@@ -19,9 +19,13 @@ type Changelog struct {
 
 // Changelog returns a changelog description based on a release name
 func (g *Github) Changelog(name string) (string, error) {
-	_, err := g.Check()
-	if err != nil {
-		return "", err
+
+	errs := g.Check()
+	if len(errs) > 0 {
+		for _, e := range errs {
+			logrus.Errorf("%s\n", e)
+		}
+		return "", fmt.Errorf("wrong github configuration")
 	}
 
 	/*
@@ -61,7 +65,7 @@ func (g *Github) Changelog(name string) (string, error) {
 		"tagName":    githubv4.String(name),
 	}
 
-	err = client.Query(context.Background(), &query, variables)
+	err := client.Query(context.Background(), &query, variables)
 
 	if err != nil {
 		logrus.Warnf("\t %s", err)
