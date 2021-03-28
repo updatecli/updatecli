@@ -5,16 +5,21 @@ import (
 	"os"
 
 	git "github.com/olblak/updateCli/pkg/plugins/git/generic"
+	"github.com/sirupsen/logrus"
 )
 
 // Init set default Github parameters if not set.
 func (g *Github) Init(source string, pipelineID string) error {
-	g.Version = source
+	g.VersionFilter.Pattern = source
 	g.remoteBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
 	g.setDirectory()
 
-	if ok, err := g.Check(); !ok {
-		return err
+	errs := g.Check()
+	if len(errs) > 0 {
+		for _, e := range errs {
+			logrus.Errorf("%s\n", e)
+		}
+		return fmt.Errorf("wrong github configuration")
 	}
 	return nil
 }
