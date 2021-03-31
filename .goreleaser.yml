@@ -21,7 +21,6 @@ builds:
       - darwin # i386 not supported anymore https://github.com/golang/go/issues/37610
       - windows
     goarch:
-      - "386"
       - "amd64"
 
 archives:
@@ -29,7 +28,6 @@ archives:
       darwin: Darwin
       linux: Linux
       windows: Windows
-      386: i386
       amd64: x86_64
 
 checksum:
