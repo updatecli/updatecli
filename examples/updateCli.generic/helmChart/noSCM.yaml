@@ -14,5 +14,4 @@ targets:
       appVersion: true
       Name: "/tmp/helm-charts/charts/jenkins"
       file: "values.yaml"
-      incminor: true
       key: "controller.tag"
