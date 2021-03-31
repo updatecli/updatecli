@@ -1,4 +1,4 @@
-FROM golang:1.15 as builder
+FROM golang:1.16 as builder
 
 ARG GORELEASER_VERSION=0.156.2
 RUN curl --silent --show-error --location --output "/tmp/goreleaser.tgz" \
