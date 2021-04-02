@@ -95,6 +95,19 @@ func (s *Source) Execute() error {
 
 	output, err = spec.Source(workingDir)
 
+	// Retrieve changelog using default source output before
+	// modifying its value with the transformer
+	if changelog != nil && s.Changelog == "" {
+		s.Changelog, err = changelog.Changelog(output)
+		if err != nil {
+			return err
+		}
+	} else if changelog == nil && s.Changelog == "" {
+		s.Changelog = "We couldn't identify a way to automatically retrieve changelog information"
+	} else {
+		return fmt.Errorf("Something weird happened while setting changelog")
+	}
+
 	if len(s.Transformers) > 0 {
 		output, err = s.Transformers.Apply(output)
 		if err != nil {
@@ -114,17 +127,6 @@ func (s *Source) Execute() error {
 
 	if err != nil {
 		return err
-	}
-
-	if changelog != nil && s.Changelog == "" {
-		s.Changelog, err = changelog.Changelog(output)
-		if err != nil {
-			return err
-		}
-	} else if changelog == nil && s.Changelog == "" {
-		s.Changelog = "We couldn't identify a way to automatically retrieve changelog information"
-	} else {
-		return fmt.Errorf("Something weird happened while setting changelog")
 	}
 
 	// Deprecated in favor of Transformers on 2021/01/3
