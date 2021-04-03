@@ -9,6 +9,7 @@ import (
 	"github.com/olblak/updateCli/pkg/plugins/docker"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/file"
+	gitTag "github.com/olblak/updateCli/pkg/plugins/git/tag"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/jenkins"
 	"github.com/olblak/updateCli/pkg/plugins/maven"
@@ -151,6 +152,16 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		}
 
 		spec = &m
+
+	case "gitTag":
+		g := gitTag.Tag{}
+		err := mapstructure.Decode(condition.Spec, &g)
+
+		if err != nil {
+			return nil, err
+		}
+
+		spec = &g
 
 	case "helmChart":
 		ch := chart.Chart{}
