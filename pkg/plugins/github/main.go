@@ -25,7 +25,7 @@ type Github struct {
 	Token                  string
 	URL                    string
 	Version                string         // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a futur version
-	VersionFilter          version.Filter //Versioning provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter          version.Filter //VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	Directory              string
 	Branch                 string
 	remoteBranch           string
