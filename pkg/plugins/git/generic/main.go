@@ -394,3 +394,31 @@ func SanitizeBranchName(branch string) string {
 	}
 	return branch
 }
+
+// Tags return a list of git tags ordered by creation time
+func Tags(workingDir string) (tags []string, err error) {
+	logrus.Infof("Get Tags")
+
+	r, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return tags, err
+	}
+
+	tagrefs, err := r.Tags()
+
+	if err != nil {
+		return tags, err
+	}
+
+	err = tagrefs.ForEach(func(t *plumbing.Reference) error {
+		tags = append(tags, t.Name().Short())
+		return nil
+	})
+
+	if err != nil {
+		return tags, err
+	}
+
+	return tags, err
+
+}
