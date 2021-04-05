@@ -1,9 +1,11 @@
 package docker
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
+	"github.com/olblak/updateCli/pkg/core/helpers"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,8 +20,9 @@ type DataSet struct {
 var data = []DataSet{
 	{
 		docker: Docker{
-			Image: "olblak/updatecli",
-			Tag:   "v0.0.16",
+			Image:  "olblak/updatecli",
+			Tag:    "v0.0.16",
+			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: true,
 		expectedDigest:    "3c615fb45d190c8dfcdc8cb6b020aa27b86610755694d3ef072495d368ef81e5",
@@ -28,8 +31,9 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "olblak/updatecli",
-			Tag:   "donotexist",
+			Image:  "olblak/updatecli",
+			Tag:    "donotexist",
+			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: false,
 		expectedDigest:    "",
@@ -38,8 +42,9 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "nginx",
-			Tag:   "1.12.1",
+			Image:  "nginx",
+			Tag:    "1.12.1",
+			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: true,
 		expectedHostname:  "hub.docker.com",
@@ -48,8 +53,9 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "mcr.microsoft.com/azure-cli",
-			Tag:   "2.0.27",
+			Image:  "mcr.microsoft.com/azure-cli",
+			Tag:    "2.0.27",
+			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: true,
 		expectedHostname:  "mcr.microsoft.com",
@@ -61,6 +67,17 @@ var data = []DataSet{
 			Image: "ghcr.io/olblak/updatecli",
 			Tag:   "v0.0.22",
 			Token: os.Getenv("GITHUB_TOKEN"),
+			client: &helpers.FakeHttpClient{
+				Requests: map[string]helpers.FakeResponse{
+					"https://ghcr.io/v2/olblak/updatecli/manifests/v0.0.22": {
+						StatusCode: 200,
+						Body:       GetContents("test_data/0.0.22.json"),
+						Headers: map[string][]string{
+							"Docker-Content-Digest": {"sha256:f237aed76d3d00538d44448e8161df00d6c044f8823cc8eb9aeccc8413f5a029"},
+						},
+					},
+				},
+			},
 		},
 		expectedCondition: true,
 		expectedHostname:  "ghcr.io",
@@ -69,9 +86,11 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "quay.io/jetstack/cert-manager-controller",
-			Tag:   "v1.0.0",
+			Image:  "quay.io/jetstack/cert-manager-controller",
+			Tag:    "v1.0.0",
+			client: &helpers.FakeHttpClient{},
 		},
+
 		expectedCondition: true,
 		expectedHostname:  "quay.io",
 		expectedImage:     "jetstack/cert-manager-controller",
@@ -79,8 +98,9 @@ var data = []DataSet{
 	},
 	{
 		docker: Docker{
-			Image: "quay.io/jetstack/cert-manager-controller",
-			Tag:   "donotexist",
+			Image:  "quay.io/jetstack/cert-manager-controller",
+			Tag:    "donotexist",
+			client: &helpers.FakeHttpClient{},
 		},
 		expectedCondition: false,
 		expectedHostname:  "quay.io",
@@ -91,19 +111,20 @@ var data = []DataSet{
 
 func TestParseImage(t *testing.T) {
 	for _, d := range data {
-		hostnameGot, imageGot, err := parseImage(d.docker.Image)
-		if err != nil {
-			logrus.Errorf("err - %s", err)
-		}
+		t.Run(d.expectedImage, func(t *testing.T) {
+			hostnameGot, imageGot, err := parseImage(d.docker.Image)
+			if err != nil {
+				logrus.Errorf("err - %s", err)
+			}
 
-		if hostnameGot != d.expectedHostname {
-			t.Errorf("Wrong hostname found! expected %v, got %v", d.expectedHostname, hostnameGot)
-		}
+			if hostnameGot != d.expectedHostname {
+				t.Errorf("Wrong hostname found! expected %v, got %v", d.expectedHostname, hostnameGot)
+			}
 
-		if imageGot != d.expectedImage {
-			t.Errorf("Wrong image found! expected %v, got %v", d.expectedImage, imageGot)
-		}
-
+			if imageGot != d.expectedImage {
+				t.Errorf("Wrong image found! expected %v, got %v", d.expectedImage, imageGot)
+			}
+		})
 	}
 }
 
@@ -140,25 +161,36 @@ func TestCheck(t *testing.T) {
 
 func TestCondition(t *testing.T) {
 	// Test if existing image tag return true
-
 	for _, d := range data {
-		got, _ := d.docker.Condition("")
-		expected := d.expectedCondition
-		if got != expected && expected {
-			t.Errorf("%v:%v is published! expected %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
-		} else if got != expected && !expected {
-			t.Errorf("%v:%v is not published! expected %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
-		}
+		t.Run(d.docker.Image, func(t *testing.T) {
+			got, _ := d.docker.Condition("")
+			expected := d.expectedCondition
+			if got != expected && expected {
+				t.Errorf("%v:%v is published! expected %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
+			} else if got != expected && !expected {
+				t.Errorf("%v:%v is not published! expected %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
+			}
+		})
 	}
 }
 
 func TestSource(t *testing.T) {
 	// Test if existing return the correct digest
 	for _, d := range data {
-		got, _ := d.docker.Source("")
-		expected := d.expectedDigest
-		if got != expected {
-			t.Errorf("Docker Image %v:%v expect digest %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
-		}
+		t.Run(d.docker.Image, func(t *testing.T) {
+			got, _ := d.docker.Source("")
+			expected := d.expectedDigest
+			if got != expected {
+				t.Errorf("Docker Image %v:%v expect digest %v, got %v", d.docker.Image, d.docker.Tag, expected, got)
+			}
+		})
 	}
+}
+
+func GetContents(path string) string {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
 }

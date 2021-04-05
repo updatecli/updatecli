@@ -6,14 +6,17 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/olblak/updateCli/pkg/core/helpers"
+
 	"github.com/sirupsen/logrus"
 )
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
-	Image string
-	Tag   string
-	Token string
+	Image  string
+	Tag    string
+	Token  string
+	client helpers.HttpClient
 }
 
 // Registry is an interface for every docker registry api
@@ -115,7 +118,7 @@ func (d *Docker) IsDockerRegistry() (bool, error) {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", d.Token))
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := d.client.Do(req)
 
 	if err != nil {
 		return false, err

@@ -3,6 +3,8 @@ package dockerregistry
 import (
 	"testing"
 
+	"github.com/olblak/updateCli/pkg/core/helpers"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,6 +19,7 @@ var data = []DataSet{
 			Image:    "azure-cli",
 			Tag:      "2.0.27",
 			Hostname: "mcr.microsoft.com",
+			Client:   &helpers.DefaultHttpClient{},
 		},
 		expectedDigest: "d7c97a1951c336e4427450023409712a9993e8f1f8764be10e05e03d8c863279",
 	},
@@ -25,6 +28,7 @@ var data = []DataSet{
 			Image:    "azure-cli",
 			Tag:      "donotexist",
 			Hostname: "mcr.microsoft.com",
+			Client:   &helpers.DefaultHttpClient{},
 		},
 		expectedDigest: "",
 	},
@@ -33,6 +37,7 @@ var data = []DataSet{
 			Image:    "dotnotexist",
 			Tag:      "donotexist",
 			Hostname: "mcr.microsoft.com",
+			Client:   &helpers.DefaultHttpClient{},
 		},
 		expectedDigest: "",
 	},

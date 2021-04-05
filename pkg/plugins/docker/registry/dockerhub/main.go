@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/olblak/updateCli/pkg/core/helpers"
 )
 
 // Docker contains various information to interact with a dockerhub registry
@@ -16,6 +18,7 @@ type Docker struct {
 	Tag          string
 	Architecture string
 	Token        string
+	Client       helpers.HttpClient
 }
 
 // Login authenticate with Dockerhub then return a valid bearer token
@@ -41,7 +44,7 @@ func (d *Docker) Login() (string, error) {
 
 	req.Header.Add("Content-Type", "application/json")
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := d.Client.Do(req)
 	if err != nil {
 		return "", err
 	}
