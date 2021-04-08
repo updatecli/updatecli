@@ -2,7 +2,9 @@ package generic
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -397,10 +399,9 @@ func SanitizeBranchName(branch string) string {
 
 // Tags return a list of git tags ordered by creation time
 func Tags(workingDir string) (tags []string, err error) {
-	logrus.Infof("Get Tags")
-
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
+		logrus.Errorf("opening %q git directory err: %s", err)
 		return tags, err
 	}
 
@@ -419,6 +420,80 @@ func Tags(workingDir string) (tags []string, err error) {
 		return tags, err
 	}
 
+	logrus.Debugf("Got tags: %v", tags)
+
+	if len(tags) == 0 {
+		err = errors.New("no tag found")
+		return tags, err
+	}
+
 	return tags, err
 
+}
+
+// NewTag create a tag then return a boolean to indicate if
+// the tag was created or not.
+func NewTag(tag, workingDir string) (bool, error) {
+
+	r, err := git.PlainOpen(workingDir)
+
+	if err != nil {
+		logrus.Errorf("opening %q git directory err: %s", err)
+		return false, err
+	}
+
+	h, err := r.Head()
+	if err != nil {
+		logrus.Errorf("get HEAD error: %s", err)
+		return false, err
+	}
+
+	_, err = r.CreateTag(tag, h.Hash(), &git.CreateTagOptions{
+		Message: tag,
+	})
+	if err != nil {
+		logrus.Errorf("create git tag error: %s", err)
+		return false, err
+	}
+	return true, nil
+}
+
+// PushTag publish a single tag created locally
+func PushTag(tag, username, password, workingDir string) error {
+
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything except an empty string
+		Password: password,
+	}
+
+	r, err := git.PlainOpen(workingDir)
+
+	if err != nil {
+		logrus.Errorf("opening %q git directory err: %s", err)
+		return err
+	}
+
+	logrus.Debugf("Pushing git Tag: %q", tag)
+
+	po := &git.PushOptions{
+		RemoteName: "origin",
+		Progress:   os.Stdout,
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(
+				config.RefSpec("+refs/tags/" + tag + ":refs/tags/" + tag))},
+		Auth: &auth,
+	}
+
+	err = r.Push(po)
+
+	if err != nil {
+		if err == git.NoErrAlreadyUpToDate {
+			logrus.Info("origin remote was up to date, no push done")
+			return nil
+		}
+		logrus.Infof("push to remote origin error: %s", err)
+		return err
+	}
+
+	return nil
 }
