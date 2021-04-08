@@ -11,6 +11,7 @@ import (
 	"github.com/olblak/updateCli/pkg/core/transformer"
 	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
 	"github.com/olblak/updateCli/pkg/plugins/file"
+	"github.com/olblak/updateCli/pkg/plugins/git/tag"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/yaml"
 )
@@ -79,6 +80,17 @@ func Unmarshal(target *Target) (spec Spec, err error) {
 
 		spec = &d
 
+	case "gitTag":
+		t := tag.Tag{}
+
+		err := mapstructure.Decode(target.Spec, &t)
+		if err != nil {
+			logrus.Errorf("err - %s", err)
+			return nil, err
+		}
+
+		spec = &t
+
 	case "yaml":
 		y := yaml.Yaml{}
 
@@ -117,6 +129,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 	if len(t.Transformers) > 0 {
 		source, err = t.Transformers.Apply(source)
 		if err != nil {
+			logrus.Error(err)
 			return false, err
 		}
 	}
@@ -182,6 +195,11 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 			}
 
 			if len(t.Scm) > 0 {
+
+				if len(files) == 0 {
+					logrus.Info("no changed files to commit")
+					return changed, nil
+				}
 
 				if o.Commit {
 					err := s.Add(files)
