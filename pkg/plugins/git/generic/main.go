@@ -479,8 +479,7 @@ func PushTag(tag, username, password, workingDir string) error {
 		RemoteName: "origin",
 		Progress:   os.Stdout,
 		RefSpecs: []config.RefSpec{
-			config.RefSpec(
-				config.RefSpec("+refs/tags/" + tag + ":refs/tags/" + tag))},
+			config.RefSpec("+refs/tags/" + tag + ":refs/tags/" + tag)},
 		Auth: &auth,
 	}
 
