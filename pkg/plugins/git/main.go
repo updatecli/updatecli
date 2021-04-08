@@ -23,25 +23,53 @@ type Git struct {
 	Version      string
 }
 
-func (g *Git) setDirectory() {
+func newDirectory(URL string) (string, error) {
 
-	URL := strings.Replace(g.URL, "/", "_", -1)
-	URL = strings.Replace(URL, "\\", "_", -1)
-	URL = strings.Replace(URL, " ", "_", -1)
+	directory := path.Join(
+		tmp.Directory,
+		sanitizeDirectoryName(URL))
 
-	directory := path.Join(tmp.Directory, URL)
+	if _, err := os.Stat(directory); os.IsNotExist(err) {
 
-	for _, dir := range []string{tmp.Directory, URL} {
-		if _, err := os.Stat(dir); os.IsNotExist(err) {
-
-			err = os.MkdirAll(dir, 0755)
-			if err != nil {
-				logrus.Errorf("err - %s", err)
-			}
+		err = os.MkdirAll(directory, 0755)
+		if err != nil {
+			logrus.Errorf("err - %s", err)
+			return "", err
 		}
 	}
 
-	g.Directory = directory
+	logrus.Infof("Git Directory: %v", directory)
 
-	logrus.Infof("Directory: %v", g.Directory)
+	return directory, nil
+
+}
+
+// sanitizeDirectoryName ensures that we don't have unwanted information
+// in the git directory name like username/password or special characters
+func sanitizeDirectoryName(URL string) string {
+
+	gitProtocols := []string{"https://", "ssh://", "http://", "file://"}
+
+	forbiddenCharacters := []string{
+		"@", "~", "%", "$", "*", " ",
+		"+", "?", "\"", "<", ">", "|",
+	}
+
+	// Trim git protocols
+	for _, str := range gitProtocols {
+		URL = strings.TrimPrefix(URL, str)
+	}
+
+	for _, str := range forbiddenCharacters {
+		if strings.Contains(URL, str) {
+			URL = strings.ReplaceAll(URL, str, "")
+		}
+	}
+
+	for _, str := range []string{"/", "\\", ".", ":"} {
+		if strings.Contains(URL, str) {
+			URL = strings.ReplaceAll(URL, str, "_")
+		}
+	}
+	return URL
 }
