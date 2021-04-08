@@ -52,7 +52,7 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 		return changed, err
 	}
 
-	changed, err = generic.NewTag(newTag, t.Path)
+	changed, err = generic.NewTag(newTag, t.Message, t.Path)
 
 	if err != nil {
 		return changed, err
@@ -124,7 +124,7 @@ func (t *Tag) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bo
 		return changed, files, message, err
 	}
 
-	changed, err = generic.NewTag(newTag, path)
+	changed, err = generic.NewTag(newTag, t.Message, path)
 	if err != nil {
 		return changed, files, message, err
 	}
