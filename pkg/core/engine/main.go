@@ -166,7 +166,7 @@ func (e *Engine) ReadConfigurations() error {
 	// Read every strategy files
 	for _, cfgFile := range GetFiles(e.Options.File) {
 
-		c, err := config.New(cfgFile, e.Options.ValuesFile)
+		c, err := config.New(cfgFile, e.Options.ValuesFiles, e.Options.SecretsFiles)
 
 		if err != nil && err != config.ErrConfigFileTypeNotSupported {
 			logrus.Errorf("%s\n\n", err)
