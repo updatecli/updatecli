@@ -1,6 +1,9 @@
 package tag
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/plugins/git/generic"
 	"github.com/sirupsen/logrus"
@@ -10,6 +13,12 @@ import (
 func (t *Tag) Condition(source string) (bool, error) {
 	if len(t.VersionFilter.Pattern) == 0 {
 		t.VersionFilter.Pattern = source
+	}
+
+	err := t.Validate()
+	if err != nil {
+		logrus.Errorln(err)
+		return false, err
 	}
 
 	tags, err := generic.Tags(t.Path)
@@ -24,11 +33,17 @@ func (t *Tag) Condition(source string) (bool, error) {
 		return false, err
 	}
 
-	if tag == t.VersionFilter.Pattern {
-		logrus.Printf("\u2714 Git Tag %q matching\n", t.VersionFilter.Pattern)
+	if len(tag) == 0 {
+		err = fmt.Errorf("no git tag matching pattern %q, found", t.VersionFilter.Pattern)
+		return false, err
+	}
+
+	if strings.Compare(tag, t.VersionFilter.Pattern) == 0 {
+		logrus.Printf("\u2714 git tag %q matching\n", t.VersionFilter.Pattern)
 		return true, nil
 	}
-	logrus.Printf("\u2717 Git Tag %q not matching %q\n",
+
+	logrus.Printf("\u2717 git tag %q not matching %q\n",
 		t.VersionFilter.Pattern,
 		tag)
 
@@ -51,11 +66,6 @@ func (t *Tag) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	t.Path = path
 
 	err := t.Validate()
-	if err != nil {
-		return false, err
-	}
-
-	err = t.Validate()
 	if err != nil {
 		return false, err
 	}
