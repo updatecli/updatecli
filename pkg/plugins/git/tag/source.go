@@ -14,7 +14,11 @@ func (t *Tag) Source(workingDir string) (string, error) {
 		t.Path = workingDir
 	}
 
-	t.Validate()
+	err := t.Validate()
+	if err != nil {
+		logrus.Errorln(err)
+		return "", err
+	}
 
 	tags, err := generic.Tags(workingDir)
 
