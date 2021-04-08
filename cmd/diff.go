@@ -19,7 +19,8 @@ var (
 			logrus.Infof("\n%s\n", strings.ToTitle("Diff"))
 
 			e.Options.File = cfgFile
-			e.Options.ValuesFile = valuesFile
+			e.Options.ValuesFiles = valuesFiles
+			e.Options.SecretsFiles = secretsFiles
 
 			e.Options.Target.Commit = false
 			e.Options.Target.Push = false
@@ -37,6 +38,7 @@ var (
 
 func init() {
 	diffCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "Sets config file or directory. (default: './updateCli.yaml')")
-	diffCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "Sets values file uses for templating (required {.tpl,.tmpl} config)")
+	diffCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	diffCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	diffCmd.Flags().BoolVarP(&diffClean, "clean", "", true, "Remove updatecli working directory like '--clean=false '(default: true)")
 }

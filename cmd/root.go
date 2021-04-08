@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	cfgFile    string
-	valuesFile string
-	e          engine.Engine
-	verbose    bool
+	cfgFile      string
+	valuesFiles  []string
+	secretsFiles []string
+	e            engine.Engine
+	verbose      bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updateCli",

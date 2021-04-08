@@ -17,7 +17,8 @@ var (
 			logrus.Infof("\n%s\n", strings.ToTitle("Show"))
 
 			e.Options.File = cfgFile
-			e.Options.ValuesFile = valuesFile
+			e.Options.ValuesFiles = valuesFiles
+			e.Options.SecretsFiles = secretsFiles
 
 			err := run("show")
 			if err != nil {
@@ -30,5 +31,6 @@ var (
 
 func init() {
 	showCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "Sets config file or directory. (default: './updateCli.yaml')")
-	showCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "Sets values file uses for templating (required {.tpl,.tmpl} config)")
+	showCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	showCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
 }

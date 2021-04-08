@@ -54,7 +54,7 @@ func (config *Config) Reset() {
 }
 
 // New reads an updatecli configuration file
-func New(cfgFile, valuesFile string) (config Config, err error) {
+func New(cfgFile string, valuesFiles, secretsFiles []string) (config Config, err error) {
 
 	config.Reset()
 
@@ -70,8 +70,9 @@ func New(cfgFile, valuesFile string) (config Config, err error) {
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml":
 		t := Template{
-			CfgFile:    filepath.Join(dirname, basename),
-			ValuesFile: valuesFile,
+			CfgFile:      filepath.Join(dirname, basename),
+			ValuesFiles:  valuesFiles,
+			SecretsFiles: secretsFiles,
 		}
 
 		err := t.Init(&config)

@@ -19,7 +19,8 @@ var (
 			logrus.Infof("\n%s\n", strings.ToTitle("Prepare"))
 
 			e.Options.File = cfgFile
-			e.Options.ValuesFile = valuesFile
+			e.Options.ValuesFiles = valuesFiles
+			e.Options.SecretsFiles = secretsFiles
 
 			e.Options.Target.Clean = prepareClean
 
@@ -34,6 +35,7 @@ var (
 
 func init() {
 	prepareCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updateCli.yaml", "Sets config file or directory. (default: './updateCli.yaml')")
-	prepareCmd.Flags().StringVarP(&valuesFile, "values", "v", "", "Sets values file uses for templating (required {.tpl,.tmpl} config)")
+	prepareCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	prepareCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	prepareCmd.Flags().BoolVarP(&prepareClean, "clean", "", false, "Remove updatecli working directory like '--clean=true '(default: false)")
 }
