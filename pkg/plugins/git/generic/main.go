@@ -433,7 +433,7 @@ func Tags(workingDir string) (tags []string, err error) {
 
 // NewTag create a tag then return a boolean to indicate if
 // the tag was created or not.
-func NewTag(tag, workingDir string) (bool, error) {
+func NewTag(tag, message, workingDir string) (bool, error) {
 
 	r, err := git.PlainOpen(workingDir)
 
@@ -449,7 +449,7 @@ func NewTag(tag, workingDir string) (bool, error) {
 	}
 
 	_, err = r.CreateTag(tag, h.Hash(), &git.CreateTagOptions{
-		Message: tag,
+		Message: message,
 	})
 	if err != nil {
 		logrus.Errorf("create git tag error: %s", err)
