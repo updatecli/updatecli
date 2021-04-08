@@ -1,0 +1,79 @@
+title: "Test new gitTag resource"
+sources:
+  git:
+    name: Get Latest updatecli test
+    kind: gitTag
+    scm:
+      git:
+        url: "git@github.com:updatecli/updatecli.git"
+        branch: "main"
+  githubRegex:
+    name: Get Latest updatecli test
+    kind: gitTag
+    spec:
+      versionFilter:
+        kind: semver
+        pattern: "~0.1"
+    scm:
+      github:
+        user: "{{ .github.user }}" 
+        email: "{{ .github.email }}" 
+        owner: "updatecli" 
+        repository: "updatecli" 
+        token: "{{ requiredEnv .github.token }}" 
+        username: "{{ .github.username }}" 
+        branch: "main" 
+conditions:
+  gitRegex:
+    sourceID: default
+    name: Test Get Latest updatecli test
+    kind: gitTag
+    spec:
+      versionFilter:
+        pattern: "v0.1.2"
+    scm:
+      git:
+        url: "git@github.com:updatecli/updatecli.git"
+        branch: "main"
+  githubRegex:
+    sourceID: default
+    name: Test Get Latest updatecli test
+    kind: gitTag
+    spec:
+      versionFilter:
+        pattern: "v0.1.2"
+    scm:
+      github:
+        user: "{{ .github.user }}" 
+        email: "{{ .github.email }}" 
+        owner: "updatecli" 
+        repository: "updatecli" 
+        token: "{{ requiredEnv .github.token }}" 
+        username: "{{ .github.username }}" 
+        branch: "main" 
+targets:
+  github:
+    sourceID: git
+    name: Publish tags updatecli test
+    kind: gitTag
+    transformers:
+      - addSuffix: "-github"
+    scm:
+      github:
+        user: "{{ .github.user }}" 
+        email: "{{ .github.email }}" 
+        owner: "olblak" 
+        repository: "nocode"
+        token: "{{ requiredEnv .github.token }}" 
+        username: "{{ .github.username }}" 
+        branch: "master" 
+  git:
+    sourceID: githubRegex
+    name: Publish tags updatecli test
+    kind: gitTag
+    transformers:
+      - addSuffix: "-git"
+    scm:
+      git:
+        url: "git@github.com:olblak/nocode.git"
+        branch: "master"
