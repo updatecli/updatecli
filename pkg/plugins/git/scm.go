@@ -122,3 +122,14 @@ func (g *Git) Push() error {
 	return nil
 
 }
+
+// PushTag push tags
+func (g *Git) PushTag(tag string) error {
+
+	err := git.PushTag(tag, g.Username, g.Password, g.GetDirectory())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
