@@ -401,7 +401,7 @@ func SanitizeBranchName(branch string) string {
 func Tags(workingDir string) (tags []string, err error) {
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
-		logrus.Errorf("opening %q git directory err: %s", err)
+		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
 		return tags, err
 	}
 
@@ -438,7 +438,7 @@ func NewTag(tag, message, workingDir string) (bool, error) {
 	r, err := git.PlainOpen(workingDir)
 
 	if err != nil {
-		logrus.Errorf("opening %q git directory err: %s", err)
+		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
 		return false, err
 	}
 
@@ -469,7 +469,7 @@ func PushTag(tag, username, password, workingDir string) error {
 	r, err := git.PlainOpen(workingDir)
 
 	if err != nil {
-		logrus.Errorf("opening %q git directory err: %s", err)
+		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
 		return err
 	}
 
