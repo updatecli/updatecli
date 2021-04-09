@@ -101,6 +101,10 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 				return "", fmt.Errorf("unknown value for find: %v", val)
 			}
 
+			if len(val) == 0 {
+				return "", fmt.Errorf("no incremental semantic versioning rule, accept comma separated list of major,minor,patch")
+			}
+
 			v, err := semver.NewVersion(input)
 			if err != nil {
 				return "", fmt.Errorf("wrong semantic version input: %q", val)

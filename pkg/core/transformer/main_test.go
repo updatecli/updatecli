@@ -37,6 +37,16 @@ var (
 			expectedErr:    fmt.Errorf("key 'wrong' not supported"),
 		},
 		Data{
+			input: "2.263",
+			rules: Transformers{
+				Transformer{
+					"semverInc": "",
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("no incremental semantic versioning rule, accept comma separated list of major,minor,patch"),
+		},
+		Data{
 			input: "1.0.0",
 			rules: Transformers{
 				Transformer{
