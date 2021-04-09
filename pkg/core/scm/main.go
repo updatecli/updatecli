@@ -18,6 +18,7 @@ type Scm interface {
 	Push() error
 	Commit(message string) error
 	Clean() error
+	PushTag(tag string) error
 }
 
 // Unmarshal parses a scm struct like git or github and returns a scm interface

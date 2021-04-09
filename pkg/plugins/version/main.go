@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/olblak/updateCli/pkg/plugins/version/semver"
 	"github.com/sirupsen/logrus"
@@ -70,7 +71,16 @@ func (f *Filter) Search(versions []string) (version string, err error) {
 
 	switch f.Kind {
 	case LATESTVERSIONKIND:
-		version = versions[len(versions)-1]
+		if f.Pattern == LATESTVERSIONKIND {
+			version = versions[len(versions)-1]
+		}
+		// Search for simple text matching
+		for i := len(versions) - 1; i >= 0; i-- {
+			if strings.Compare(f.Pattern, versions[i]) == 0 {
+				version = versions[i]
+				break
+			}
+		}
 	case REGEXVERSIONKIND:
 		re, err := regexp.Compile(f.Pattern)
 		if err != nil {

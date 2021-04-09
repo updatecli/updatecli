@@ -12,6 +12,7 @@ import (
 	"github.com/olblak/updateCli/pkg/core/transformer"
 	"github.com/olblak/updateCli/pkg/plugins/docker"
 	"github.com/olblak/updateCli/pkg/plugins/file"
+	gitTag "github.com/olblak/updateCli/pkg/plugins/git/tag"
 	"github.com/olblak/updateCli/pkg/plugins/github"
 	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
 	"github.com/olblak/updateCli/pkg/plugins/jenkins"
@@ -207,6 +208,16 @@ func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
 		}
 
 		spec = &m
+
+	case "gitTag":
+		g := gitTag.Tag{}
+		err := mapstructure.Decode(s.Spec, &g)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec = &g
 
 	case "dockerDigest":
 		d := docker.Docker{}
