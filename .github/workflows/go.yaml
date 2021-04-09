@@ -1,11 +1,12 @@
+---
 name: Go
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
     branches:
-    - main
+      - main
 
 jobs:
 
@@ -14,35 +15,37 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
 
-    # https://github.com/actions/setup-go
-    - name: Set up Go 1.16
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
-      id: go
+      # https://github.com/actions/setup-go
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+        id: go
 
-    - name: Install GoReleaser
-      uses: goreleaser/goreleaser-action@v2
-      with:
-        install-only: true
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          install-only: true
 
-    - name: Show GoReleaser version
-      run: goreleaser --version
+      - name: Show GoReleaser version
+        run: goreleaser --version
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v2.5.2
-      with:
-          # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2.5.2
+        with:
+        # Required: the version of golangci-lint is required
+        # and must be specified without patch version:
+        # we always use the latest patch version.
         version: v1.29
 
-    - name: Build
-      run: make build
+      - name: Build
+        run: make build
 
-    - name: Test
-      env:
+      - name: Test
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      run: make test
+        run: make test
