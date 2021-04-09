@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
@@ -92,6 +93,37 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 			found := re.FindString(output)
 
 			output = found
+
+		case "semverInc":
+			val, ok := value.(string)
+
+			if !ok {
+				return "", fmt.Errorf("unknown value for find: %v", val)
+			}
+
+			if len(val) == 0 {
+				return "", fmt.Errorf("no incremental semantic versioning rule, accept comma separated list of major,minor,patch")
+			}
+
+			v, err := semver.NewVersion(input)
+			if err != nil {
+				return "", fmt.Errorf("wrong semantic version input: %q", val)
+			}
+
+			rules := strings.Split(val, ",")
+			for _, rule := range rules {
+				switch rule {
+				case "major":
+					*v = v.IncMajor()
+				case "minor":
+					*v = v.IncMinor()
+				case "patch":
+					*v = v.IncPatch()
+				default:
+					return "", fmt.Errorf("unsupported incremental semantic versioning rule %q, only accept a comma separated list between major, minor, patch", val)
+				}
+			}
+			output = v.String()
 
 		default:
 			return "", fmt.Errorf("key '%v' not supported", key)

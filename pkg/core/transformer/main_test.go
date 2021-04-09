@@ -1,6 +1,8 @@
 package transformer
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -23,6 +25,55 @@ var (
 				},
 			},
 			expectedOutput: "alpha-2.263",
+		},
+		Data{
+			input: "2.263",
+			rules: Transformers{
+				Transformer{
+					"wrong": "xxx",
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("key 'wrong' not supported"),
+		},
+		Data{
+			input: "2.263",
+			rules: Transformers{
+				Transformer{
+					"semverInc": "",
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("no incremental semantic versioning rule, accept comma separated list of major,minor,patch"),
+		},
+		Data{
+			input: "1.0.0",
+			rules: Transformers{
+				Transformer{
+					"semverInc": "wrong",
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("unsupported incremental semantic versioning rule \"wrong\", only accept a comma separated list between major, minor, patch"),
+		},
+		Data{
+			input: "1.x.y",
+			rules: Transformers{
+				Transformer{
+					"semverInc": "major",
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("wrong semantic version input: \"major\""),
+		},
+		Data{
+			input: "1.0.0",
+			rules: Transformers{
+				Transformer{
+					"semverInc": "major,minor,patch",
+				},
+			},
+			expectedOutput: "2.1.1",
 		},
 		Data{
 			input: "2.263",
@@ -131,8 +182,13 @@ var (
 func TestApply(t *testing.T) {
 	for _, d := range dataSet {
 		got, err := d.rules.Apply(d.input)
-		if err != nil {
-			t.Errorf("%v\n", err)
+		if err != nil &&
+			strings.Compare(
+				d.expectedErr.Error(),
+				err.Error()) != 0 {
+			t.Errorf("Error:\n\tExpected:\t%q\n\tGot:\t\t%q\n",
+				d.expectedErr,
+				err)
 		}
 
 		if got != d.expectedOutput {
