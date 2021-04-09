@@ -59,7 +59,7 @@ func (t *Tag) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	}
 
 	if len(t.Path) > 0 {
-		logrus.Warning("Path is defined and set to %q but is overridden by the scm definition %q",
+		logrus.Warningf("Path is defined and set to %q but is overridden by the scm definition %q",
 			t.Path,
 			path)
 	}
