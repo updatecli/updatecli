@@ -16,10 +16,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/shurcooL/githubv4 v0.0.0-20200802174311-f27d2ca7f6d5
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f //indirect
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
-	go.mozilla.org/sops v0.0.0-20190912205235-14a22d7a7060 // indirect
+	go.mozilla.org/sops v0.0.0-20190912205235-14a22d7a7060
 	go.mozilla.org/sops/v3 v3.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	gopkg.in/yaml.v3 v3.0.0-20210107172259-749611fa9fcc
