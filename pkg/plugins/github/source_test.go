@@ -6,7 +6,8 @@ import (
 	"testing"
 )
 
-type DataSet struct {
+type DataSet []Data
+type Data struct {
 	github           Github
 	expectedTags     []string
 	expectedReleases []string
@@ -15,56 +16,72 @@ type DataSet struct {
 
 var (
 	dataSet = DataSet{
-		github: Github{
-			Owner:      "olblak",
-			Repository: "nocode",
-			Token:      os.Getenv("GITHUB_TOKEN"),
+		{
+			github: Github{
+				Owner:      "olblak",
+				Repository: "nocode",
+				Token:      os.Getenv("GITHUB_TOKEN"),
+			},
+			expectedTags:     []string{"1.0.0"},
+			expectedReleases: []string{"1.0.0"},
+			expectedSource:   "1.0.0",
 		},
-		expectedTags:     []string{"1.0.0"},
-		expectedReleases: []string{"1.0.0"},
-		expectedSource:   "1.0.0",
 	}
 )
 
 func TestGetTags(t *testing.T) {
 
-	tags, err := dataSet.github.SearchTags()
+	for _, data := range dataSet {
+		tags, err := data.github.SearchTags()
 
-	if err != nil {
-		t.Errorf("Something went wrong when retrieving tags: %q", err)
-	}
-
-	for id, tag := range tags {
-		if strings.Compare(tag, dataSet.expectedTags[id]) != 0 {
-			t.Errorf("At position %d, expected tag %q, got %q", id, tag, dataSet.expectedTags[id])
+		if len(tags) < len(data.expectedTags) {
+			t.Errorf("Error missign tags, expected %v, got %v", data.expectedTags, tags)
 		}
+
+		if err != nil {
+			t.Errorf("Something went wrong when retrieving tags: %q", err)
+		}
+
+		t.Logf("Tags:\n\tExpected:\t%v\n\tGot:\t\t%v\n", data.expectedTags, tags)
+
+		for id, tag := range data.expectedTags {
+			if strings.Compare(tag, tags[id]) != 0 {
+				t.Errorf("At position %d, expected tag %q, got %q", id, tag, tags[id])
+			}
+		}
+
 	}
 }
 
 func TestSource(t *testing.T) {
 
-	got, err := dataSet.github.Source("")
+	for _, data := range dataSet {
+		got, err := data.github.Source("")
 
-	if err != nil {
-		t.Errorf("Something went wrong when retrieving tags: %q", err)
+		if err != nil {
+			t.Errorf("Something went wrong when retrieving tags: %q", err)
+		}
+
+		if strings.Compare(got, data.expectedSource) != 0 {
+			t.Errorf("Expected source value %q, got %q", data.expectedSource, got)
+		}
 	}
 
-	if strings.Compare(got, dataSet.expectedSource) != 0 {
-		t.Errorf("Expected source value %q, got %q", dataSet.expectedSource, got)
-	}
 }
 
 func TestSearchReleases(t *testing.T) {
 
-	releases, err := dataSet.github.SearchReleases()
+	for _, data := range dataSet {
+		releases, err := data.github.SearchReleases()
 
-	if err != nil {
-		t.Errorf("Something went wrong when retrieving tags: %q", err)
-	}
+		if err != nil {
+			t.Errorf("Something went wrong when retrieving tags: %q", err)
+		}
 
-	for id, release := range releases {
-		if strings.Compare(release, dataSet.expectedReleases[id]) != 0 {
-			t.Errorf("At position %d, expected tag %q, got %q", id, release, dataSet.expectedReleases[id])
+		for id, release := range releases {
+			if strings.Compare(release, data.expectedReleases[id]) != 0 {
+				t.Errorf("At position %d, expected tag %q, got %q", id, release, data.expectedReleases[id])
+			}
 		}
 	}
 }
