@@ -94,6 +94,9 @@ env:
   - CGO_ENABLED=0
 
 release:
+  github:
+    owner: updatecli
+    name: updatecli
   draft: true
 
 snapshot:
