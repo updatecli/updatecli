@@ -1,28 +1,23 @@
 ---
-env:
-  - GO111MODULE=on
-  - CGO_ENABLED=0
 
-build:
-  goos:
-    - linux
-    - windows
-    - darwin
-
-  goarch:
-    - amd64
-    - arm64
-    - arm
-  goarm:
-    - 6
-    - 7
-  ignore:
-    - goos: linux
-      goarch: arm
-      goarm: 7
+archives:
+  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE.md
+      - completions/*
 
 before:
   hooks:
+    - go mod tidy
     - go mod download
 
 builds:
@@ -40,23 +35,66 @@ builds:
       - windows
     goarch:
       - "amd64"
+      - arm64
+      - arm
 
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
-
-snapshot:
-  name_template: "{{ .Tag }}-next"
-
-release:
-  github:
-    owner: updatecli
-    name: updatecli
-  draft: true
 changelog:
   ## Delegate Changelog to release-drafter
   skip: true
-...
+
+dockers:
+  - image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
+    dockerfile: Dockerfile
+    use_buildx: true
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
+  - image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+    dockerfile: Dockerfile
+    use_buildx: true
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
+    goarch: arm64
+
+docker_manifests:
+  - name_template: 'updatecli/updatecli:{{ .Tag }}'
+    image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-amd64'
+      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+  - name_template: 'ghcr.io/updatecli/updatecli:{{ .Tag }}'
+    image_templates:
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+  - name_template: 'updatecli/updatecli:latest'
+    image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-amd64'
+      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+  - name_template: 'ghcr.io/updatecli/updatecli:latest'
+    image_templates:
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+
+env:
+  - GO111MODULE=on
+  - CGO_ENABLED=0
+
+release:
+  draft: true
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
