@@ -1,5 +1,4 @@
 ---
-
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     replacements:
@@ -11,13 +10,12 @@ archives:
       - goos: windows
         format: zip
     files:
-      - README.md
-      - LICENSE.md
-      - completions/*
+      - README.adoc
+      - LICENSE
 
 before:
   hooks:
-    - go mod tidy
+##    - go mod tidy
     - go mod download
 
 builds:
@@ -56,48 +54,63 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--platform=linux/amd64"
-  - image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-arm64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
-    dockerfile: Dockerfile
-    use_buildx: true
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/arm64"
-    goarch: arm64
+#  - image_templates:
+#      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+#      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+#    dockerfile: Dockerfile
+#    use_buildx: true
+#    build_flag_templates:
+#      - "--pull"
+#      - "--label=org.opencontainers.image.created={{.Date}}"
+#      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+#      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+#      - "--label=org.opencontainers.image.version={{.Version}}"
+#      - "--label=org.opencontainers.image.source={{.GitURL}}"
+#      - "--platform=linux/arm64"
+#    goarch: arm64
 
 docker_manifests:
   - name_template: 'updatecli/updatecli:{{ .Tag }}'
     image_templates:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+#      - 'updatecli/updatecli:{{ .Tag }}-arm64'
   - name_template: 'ghcr.io/updatecli/updatecli:{{ .Tag }}'
     image_templates:
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+#      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
   - name_template: 'updatecli/updatecli:latest'
     image_templates:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+#      - 'updatecli/updatecli:{{ .Tag }}-arm64'
   - name_template: 'ghcr.io/updatecli/updatecli:latest'
     image_templates:
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+#      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
 
 env:
   - GO111MODULE=on
   - CGO_ENABLED=0
+
+nfpms:
+  - file_name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    homepage: 'https://www.updatecli.io'
+    description: 'Updatecli is a tool used to define and apply file update strategies.'
+    maintainer: 'Olivier Vernin <olivier@vernin.me>'
+    license: 'MIT'
+    vendor: Updatecli
+    formats:
+      - apk
+      - deb
+      - rpm
+    dependencies:
+      - ca-certificates
 
 release:
   github:
     owner: updatecli
     name: updatecli
   draft: true
+  name_template: '{{ .Tag }}🌈'
 
 snapshot:
   name_template: "{{ .Tag }}-next"
