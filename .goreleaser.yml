@@ -3,6 +3,24 @@ env:
   - GO111MODULE=on
   - CGO_ENABLED=0
 
+build:
+  goos:
+    - linux
+    - windows
+    - darwin
+
+  goarch:
+    - amd64
+    - arm64
+    - arm
+  goarm:
+    - 6
+    - 7
+  ignore:
+    - goos: linux
+      goarch: arm
+      goarm: 7
+
 before:
   hooks:
     - go mod download
@@ -30,14 +48,14 @@ archives:
       windows: Windows
       amd64: x86_64
 
-checksum:
-  disable: true
-
 snapshot:
   name_template: "{{ .Tag }}-next"
 
 release:
-  disable: true
+  github:
+    owner: updatecli
+    name: updatecli
+  draft: true
 changelog:
   ## Delegate Changelog to release-drafter
   skip: true
