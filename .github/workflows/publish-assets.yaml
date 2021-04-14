@@ -33,15 +33,6 @@ jobs:
       run: |
         make build.all
 
-    - name: Upload updatecli.386.exe
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist/updatecli_windows_386/updatecli.exe
-        asset_name: updatecli.386.exe
-        asset_content_type: application/octet-stream
     - name: Upload updatecli.amd64.exe
       uses: actions/upload-release-asset@v1
       env:
@@ -59,15 +50,6 @@ jobs:
         upload_url: ${{ github.event.release.upload_url }}
         asset_path: ./dist/updatecli_darwin_amd64/updatecli
         asset_name: updatecli.darwin.amd64
-        asset_content_type: application/octet-stream
-    - name: Upload updatecli.linux.386
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist/updatecli_linux_386/updatecli
-        asset_name: updatecli.linux.386
         asset_content_type: application/octet-stream
     - name: Upload updatecli.linux.amd64
       uses: actions/upload-release-asset@v1
