@@ -1,18 +1,15 @@
+ARG GORELEASER_VERSION=0.156.2
+FROM goreleaser/goreleaser:v${GORELEASER_VERSION} as goreleaser
 FROM golang:1.16 as builder
 
-ARG GORELEASER_VERSION=0.156.2
-RUN curl --silent --show-error --location --output "/tmp/goreleaser.tgz" \
-  "https://github.com/goreleaser/goreleaser/releases/download/v${GORELEASER_VERSION}/goreleaser_Linux_x86_64.tar.gz" \
-  && tar xzf /tmp/goreleaser.tgz --directory /usr/local/bin goreleaser \
-  && goreleaser --version 2>&1 | grep -q "${GORELEASER_VERSION}" \
-  && rm -f /tmp/goreleaser.tgz
+COPY --from=goreleaser /usr/local/bin/goreleaser /usr/local/bin/goreleaser
 
 WORKDIR /go/src/app
 
-COPY . .
+COPY . /go/src/app
 
-# Default make build is a "dirty/snapshot" build
-ARG MAKE_TARGET=build
+## Default make build is a "dirty/snapshot" build
+ARG MAKE_TARGET=build.all
 RUN make "${MAKE_TARGET}"
 
 ###
@@ -23,18 +20,19 @@ LABEL maintainer="Olblak <me@olblak.com>"
 
 VOLUME /tmp
 
-RUN useradd -d /home/updatecli -U -u 1000 -m updatecli
+COPY --from=builder --chown=updatecli:updatecli /go/src/app/dist/updatecli_*.deb /tmp/updatecli_*.deb
 
-RUN \
-  apt-get update && \
-  apt-get install -y ca-certificates && \
-  apt-get clean && \
-  find /var/lib/apt/lists -type f -delete
+RUN apt-get update && \
+    apt-get install --no-install-recommends  -y ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    apk add --no-cache --allow-untrusted /tmp/updatecli_*.apk
+
+RUN useradd -d /home/updatecli -U -u 1000 -m updatecli
 
 USER updatecli
 
 WORKDIR /home/updatecli
-COPY --from=builder --chown=updatecli:updatecli /go/src/app/dist/updatecli_linux_amd64/updatecli /usr/bin/updatecli
 
 ENTRYPOINT [ "/usr/bin/updatecli" ]
 
