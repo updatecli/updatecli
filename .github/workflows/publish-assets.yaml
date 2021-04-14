@@ -1,6 +1,7 @@
 name: Upload assets to releases
 
 on:
+  workflow_dispatch:
   release:
     types:
       - published
