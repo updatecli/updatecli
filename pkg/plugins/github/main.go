@@ -31,6 +31,7 @@ type Github struct {
 	remoteBranch           string
 	User                   string
 	Email                  string
+	Force                  bool // Force is used during the git push phase to run `git push --force`.
 }
 
 // Check verifies if mandatory Github parameters are provided and return false if not.

@@ -316,7 +316,7 @@ func Clone(username, password, URL, workingDir string) error {
 }
 
 // Push run `git push`.
-func Push(username, password, workingDir string) error {
+func Push(username string, password string, workingDir string, force bool) error {
 
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything excepted an empty string
@@ -343,9 +343,16 @@ func Push(username, password, workingDir string) error {
 	localBranch := strings.TrimPrefix(head.Name().String(), "refs/heads/")
 	localRefSpec := head.Name().String()
 
-	refspec := config.RefSpec(fmt.Sprintf("+%s:refs/heads/%s",
+	// By default don't force push
+	refspec := config.RefSpec(fmt.Sprintf("%s:refs/heads/%s",
 		localRefSpec,
 		localBranch))
+
+	if force {
+		refspec = config.RefSpec(fmt.Sprintf("+%s:refs/heads/%s",
+			localRefSpec,
+			localBranch))
+	}
 
 	if err := refspec.Validate(); err != nil {
 		return err
@@ -357,9 +364,7 @@ func Push(username, password, workingDir string) error {
 	err = r.Push(&git.PushOptions{
 		Auth:     &auth,
 		Progress: &b,
-		RefSpecs: []config.RefSpec{
-			refspec,
-		},
+		RefSpecs: []config.RefSpec{refspec},
 	})
 
 	fmt.Println(b.String())
@@ -459,7 +464,7 @@ func NewTag(tag, message, workingDir string) (bool, error) {
 }
 
 // PushTag publish a single tag created locally
-func PushTag(tag, username, password, workingDir string) error {
+func PushTag(tag string, username string, password string, workingDir string, force bool) error {
 
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything except an empty string
@@ -475,12 +480,18 @@ func PushTag(tag, username, password, workingDir string) error {
 
 	logrus.Debugf("Pushing git Tag: %q", tag)
 
+	// By default don't force push
+	refspec := config.RefSpec("refs/tags/" + tag + ":refs/tags/" + tag)
+
+	if force {
+		refspec = config.RefSpec("+refs/tags/" + tag + ":refs/tags/" + tag)
+	}
+
 	po := &git.PushOptions{
 		RemoteName: "origin",
 		Progress:   os.Stdout,
-		RefSpecs: []config.RefSpec{
-			config.RefSpec("+refs/tags/" + tag + ":refs/tags/" + tag)},
-		Auth: &auth,
+		RefSpecs:   []config.RefSpec{refspec},
+		Auth:       &auth,
 	}
 
 	err = r.Push(po)

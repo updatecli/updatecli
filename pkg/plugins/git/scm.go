@@ -113,7 +113,8 @@ func (g *Git) Push() error {
 	err := git.Push(
 		g.Username,
 		g.Password,
-		g.GetDirectory())
+		g.GetDirectory(),
+		g.Force)
 
 	if err != nil {
 		return err
