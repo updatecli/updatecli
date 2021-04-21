@@ -106,7 +106,7 @@ func (g *Github) Push() error {
 // PushTag push tags
 func (g *Github) PushTag(tag string) error {
 
-	err := git.PushTag(tag, g.Username, g.Token, g.GetDirectory())
+	err := git.PushTag(tag, g.Username, g.Token, g.GetDirectory(), g.Force)
 	if err != nil {
 		return err
 	}
