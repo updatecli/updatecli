@@ -71,6 +71,8 @@ jobs:
             make release
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
             make release.snapshot
+          else
+            make release.snapshot
           fi
 
       - name: Clean up
