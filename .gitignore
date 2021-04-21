@@ -22,3 +22,5 @@ dist/
 *.env
 .idea
 .vscode
+
+*.swp
