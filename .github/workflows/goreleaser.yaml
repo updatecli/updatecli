@@ -14,6 +14,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    env:
+      DOCKER_CLI_EXPERIMENTAL: "enabled"
+      DOCKER_BUILDKIT: 1
     steps:
       - uses: actions/checkout@v2
         with:
@@ -65,9 +68,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            ./goreleaser
+            make release
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
-            ./goreleaser --snapshot
+            make release.snapshot
           fi
 
       - name: Clean up

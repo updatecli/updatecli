@@ -1,32 +1,29 @@
+## Retrieve goreleaser binary
 ARG GORELEASER_VERSION=0.156.2
-FROM goreleaser/goreleaser:v${GORELEASER_VERSION} as goreleaser
-FROM golang:1.16 as builder
+ARG BUILDPLATFORM=amd64
 
-COPY --from=goreleaser /usr/local/bin/goreleaser /usr/local/bin/goreleaser
+FROM --platform=${BUILDPLATFORM} goreleaser/goreleaser:v${GORELEASER_VERSION} as goreleaser
+
+## Build using golang docker image
+FROM --platform=${BUILDPLATFORM} golang:1.16 as builder
 
 WORKDIR /go/src/app
 
-COPY . /go/src/app
+COPY --from=goreleaser /usr/local/bin/goreleaser /usr/local/bin/goreleaser
+COPY . .
 
-## Default make build is a "dirty/snapshot" build
-ARG MAKE_TARGET=build.all
+ARG MAKE_TARGET=build
 RUN make "${MAKE_TARGET}"
 
-###
-
-FROM ubuntu:20.04
+## Build final updatecli docker image
+FROM --platform=${BUILDPLATFORM} debian:stable-slim
 
 LABEL maintainer="Olblak <me@olblak.com>"
 
-VOLUME /tmp
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
 
-COPY --from=builder --chown=updatecli:updatecli /go/src/app/dist/updatecli_*.deb /tmp/updatecli_*.deb
-
-RUN apt-get update && \
-    apt-get install --no-install-recommends  -y ca-certificates && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    apk add --no-cache --allow-untrusted /tmp/updatecli_*.apk
+COPY --from=builder /go/src/app/dist/updatecli_${TARGETOS}_${TARGETARCH}/updatecli /usr/local/bin/updatecli
 
 RUN useradd -d /home/updatecli -U -u 1000 -m updatecli
 
@@ -34,6 +31,5 @@ USER updatecli
 
 WORKDIR /home/updatecli
 
-ENTRYPOINT [ "/usr/bin/updatecli" ]
-
-CMD ["--help"]
+ENTRYPOINT [ "/usr/local/bin/updatecli" ]
+CMD ["help"]
