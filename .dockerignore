@@ -1,5 +1,4 @@
 bin/
-dist/
 *zip
 *gz
 *.swp

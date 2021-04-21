@@ -29,10 +29,10 @@ builds:
       - -X "github.com/olblak/updateCli/pkg/core/version.Version={{ .Version }}"
     goos:
       - linux
-      - darwin # i386 not supported anymore https://github.com/golang/go/issues/37610
+      - darwin
       - windows
     goarch:
-      - "amd64"
+      - amd64
       - arm64
       - arm
 
@@ -44,44 +44,53 @@ dockers:
   - image_templates:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.release
     use_buildx: true
     build_flag_templates:
       - "--pull"
+      - "--no-cache"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.name={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--platform=linux/amd64"
-#  - image_templates:
-#      - 'updatecli/updatecli:{{ .Tag }}-arm64'
-#      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
-#    dockerfile: Dockerfile
-#    use_buildx: true
-#    build_flag_templates:
-#      - "--pull"
-#      - "--label=org.opencontainers.image.created={{.Date}}"
-#      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-#      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-#      - "--label=org.opencontainers.image.version={{.Version}}"
-#      - "--label=org.opencontainers.image.source={{.GitURL}}"
-#      - "--platform=linux/arm64"
-#    goarch: arm64
+    goos: linux
+    goarch: amd64
+    extra_files:
+      - Makefile
+  - image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+    dockerfile: Dockerfile.release
+    use_buildx: true
+    build_flag_templates:
+      - "--pull"
+      - "--no-cache"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
+    goos: linux
+    goarch: arm64
+    extra_files:
+      - Makefile
 
 docker_manifests:
   - name_template: 'updatecli/updatecli:{{ .Tag }}'
     image_templates:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
-#      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+      - 'updatecli/updatecli:{{ .Tag }}-arm64'
   - name_template: 'ghcr.io/updatecli/updatecli:{{ .Tag }}'
     image_templates:
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
-#      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
   - name_template: 'updatecli/updatecli:latest'
     image_templates:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
-#      - 'updatecli/updatecli:{{ .Tag }}-arm64'
+      - 'updatecli/updatecli:{{ .Tag }}-arm64'
   - name_template: 'ghcr.io/updatecli/updatecli:latest'
     image_templates:
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
