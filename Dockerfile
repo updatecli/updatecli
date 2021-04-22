@@ -23,6 +23,15 @@ LABEL maintainer="Olblak <me@olblak.com>"
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
 
+# /tmp is used by updatecli to store git repository so it's better
+# to define a volume
+VOLUME /tmp
+
+RUN apt-get update && \
+    apt-get install -y ca-certificates && \
+    apt-get clean && \
+    find /var/lib/apt/lists -type f -delete
+
 COPY --from=builder /go/src/app/dist/updatecli_${TARGETOS}_${TARGETARCH}/updatecli /usr/local/bin/updatecli
 
 RUN useradd -d /home/updatecli -U -u 1000 -m updatecli
