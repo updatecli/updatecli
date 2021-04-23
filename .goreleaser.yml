@@ -114,12 +114,5 @@ nfpms:
     dependencies:
       - ca-certificates
 
-release:
-  github:
-    owner: updatecli
-    name: updatecli
-  draft: false
-  name_template: '{{ .Tag }}🌈'
-
 snapshot:
   name_template: "{{ .Tag }}-next"
