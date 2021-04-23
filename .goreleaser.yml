@@ -118,7 +118,7 @@ release:
   github:
     owner: updatecli
     name: updatecli
-  draft: true
+  draft: false
   name_template: '{{ .Tag }}🌈'
 
 snapshot:
