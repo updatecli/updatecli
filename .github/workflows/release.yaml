@@ -4,8 +4,7 @@ name: Publish Release Assets
 
 on:
   release:
-    type:
-      - created
+    types: [published]
 
 jobs:
   build:
