@@ -21,6 +21,7 @@ type Git struct {
 	Email        string
 	Directory    string
 	Version      string
+	Force        bool // Force is used during the git push phase to run `git push --force`.
 }
 
 func newDirectory(URL string) (string, error) {

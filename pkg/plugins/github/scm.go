@@ -95,7 +95,7 @@ func (g *Github) Add(files []string) error {
 // Push run `git push` then open a pull request on Github if not already created.
 func (g *Github) Push() error {
 
-	err := git.Push(g.Username, g.Token, g.GetDirectory())
+	err := git.Push(g.Username, g.Token, g.GetDirectory(), g.Force)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (g *Github) Push() error {
 // PushTag push tags
 func (g *Github) PushTag(tag string) error {
 
-	err := git.PushTag(tag, g.Username, g.Token, g.GetDirectory())
+	err := git.PushTag(tag, g.Username, g.Token, g.GetDirectory(), g.Force)
 	if err != nil {
 		return err
 	}

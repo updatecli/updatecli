@@ -113,7 +113,8 @@ func (g *Git) Push() error {
 	err := git.Push(
 		g.Username,
 		g.Password,
-		g.GetDirectory())
+		g.GetDirectory(),
+		g.Force)
 
 	if err != nil {
 		return err
@@ -126,7 +127,7 @@ func (g *Git) Push() error {
 // PushTag push tags
 func (g *Git) PushTag(tag string) error {
 
-	err := git.PushTag(tag, g.Username, g.Password, g.GetDirectory())
+	err := git.PushTag(tag, g.Username, g.Password, g.GetDirectory(), g.Force)
 	if err != nil {
 		return err
 	}
