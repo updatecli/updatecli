@@ -66,7 +66,14 @@ func (g *Github) Clone() (string, error) {
 
 // Commit run `git commit`.
 func (g *Github) Commit(message string) error {
-	err := git.Commit(g.User, g.Email, message, g.GetDirectory())
+
+	// Generate the conventionnal commit message
+	commitMessage, err := g.CommitMessage.Generate(message)
+	if err != nil {
+		return err
+	}
+
+	err = git.Commit(g.User, g.Email, commitMessage, g.GetDirectory())
 	if err != nil {
 		return err
 	}

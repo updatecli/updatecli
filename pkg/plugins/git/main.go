@@ -8,20 +8,22 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/tmp"
+	"github.com/olblak/updateCli/pkg/plugins/git/commit"
 )
 
 // Git contains settings to manipulate a git repository.
 type Git struct {
-	URL          string
-	Username     string
-	Password     string
-	Branch       string
-	remoteBranch string
-	User         string
-	Email        string
-	Directory    string
-	Version      string
-	Force        bool // Force is used during the git push phase to run `git push --force`.
+	URL           string
+	Username      string
+	Password      string
+	Branch        string
+	remoteBranch  string
+	User          string
+	Email         string
+	Directory     string
+	Version       string
+	Force         bool // Force is used during the git push phase to run `git push --force`.
+	CommitMessage commit.Commit // CommitMessage contains conventionnal commit metadata as type or scope, used to generate the final commit message.
 }
 
 func newDirectory(URL string) (string, error) {
