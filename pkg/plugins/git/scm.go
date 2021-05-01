@@ -75,7 +75,7 @@ func (g *Git) Clone() (string, error) {
 // Commit run `git commit`.
 func (g *Git) Commit(message string) error {
 
-	// Generate the conventionnal commit message
+	// Generate the conventional commit message
 	commitMessage, err := g.CommitMessage.Generate(message)
 	if err != nil {
 		return err

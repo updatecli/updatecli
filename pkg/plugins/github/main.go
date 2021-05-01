@@ -32,8 +32,8 @@ type Github struct {
 	remoteBranch           string
 	User                   string
 	Email                  string
-    Force                  bool // Force is used during the git push phase to run `git push --force`.
-	CommitMessage          commit.Commit // CommitMessage represents conventionnal commit metadata as type or scope, used to generate the final commit message.
+	Force                  bool          // Force is used during the git push phase to run `git push --force`.
+	CommitMessage          commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
 }
 
 // Check verifies if mandatory Github parameters are provided and return false if not.

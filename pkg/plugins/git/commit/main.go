@@ -20,11 +20,11 @@ var (
 	ErrEmptyCommitMessage error = errors.New("error: empty commmit messager")
 )
 
-// Commit contains conventionnal commit information
-// More information on what is conventionnal commits
+// Commit contains conventional commit information
+// More information on what is conventional commits
 // -> https://www.conventionalcommits.org/en/v1.0.0/#summary
 type Commit struct {
-	Version string // Define conventionnalCommit version
+	Version string // Define conventionalCommit version
 	Type    string // Define commit type, like chore, fix, etc
 	Scope   string // Define commit type scope
 	Footers string // Define commit footer
@@ -32,7 +32,7 @@ type Commit struct {
 	Body    string // Define commit body
 }
 
-// Generate generates the conventionnal commit
+// Generate generates the conventional commit
 func (c Commit) Generate(raw string) (string, error) {
 
 	err := c.Validate()
@@ -98,7 +98,7 @@ func ParseMessage(message string) (title, body string, err error) {
 	return title, body, nil
 }
 
-// Validate validates "conventionnal commit" default parameters.
+// Validate validates "conventional commit" default parameters.
 func (c Commit) Validate() error {
 	if len(c.Type) == 0 {
 		c.Type = "chore"

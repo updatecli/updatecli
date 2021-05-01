@@ -22,8 +22,8 @@ type Git struct {
 	Email         string
 	Directory     string
 	Version       string
-	Force         bool // Force is used during the git push phase to run `git push --force`.
-	CommitMessage commit.Commit // CommitMessage contains conventionnal commit metadata as type or scope, used to generate the final commit message.
+	Force         bool          // Force is used during the git push phase to run `git push --force`.
+	CommitMessage commit.Commit // CommitMessage contains conventional commit metadata as type or scope, used to generate the final commit message.
 }
 
 func newDirectory(URL string) (string, error) {
