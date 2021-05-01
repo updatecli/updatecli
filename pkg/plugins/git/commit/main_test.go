@@ -37,6 +37,12 @@ var (
 			Message:        "Bump updatecli version",
 			ExpectedOutput: "chore: Bump updatecli version",
 			ExpectedError:  nil,
+			Commit:         Commit{},
+		},
+		{
+			Message:        "Bump updatecli version",
+			ExpectedOutput: "chore: Bump updatecli version",
+			ExpectedError:  nil,
 			Commit: Commit{
 				Type: "chore",
 			},
