@@ -220,7 +220,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 				}
 			}
 		}
-		if pr != nil && !o.DryRun {
+		if pr != nil && !o.DryRun && o.Push {
 			ID, err := pr.IsPullRequest()
 
 			logrus.Debugf("Pull Request ID: %v", ID)
