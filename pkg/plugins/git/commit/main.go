@@ -33,7 +33,7 @@ type Commit struct {
 }
 
 // Generate generates the conventional commit
-func (c Commit) Generate(raw string) (string, error) {
+func (c *Commit) Generate(raw string) (string, error) {
 
 	err := c.Validate()
 
@@ -99,12 +99,10 @@ func ParseMessage(message string) (title, body string, err error) {
 }
 
 // Validate validates "conventional commit" default parameters.
-func (c Commit) Validate() error {
+func (c *Commit) Validate() error {
 	if len(c.Type) == 0 {
 		c.Type = "chore"
 	}
-	if len(c.Scope) == 0 {
-		c.Scope = "deps"
-	}
+
 	return nil
 }
