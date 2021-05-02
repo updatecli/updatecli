@@ -55,10 +55,10 @@ func TestSource(t *testing.T) {
 	set := []dataSet{
 		{
 			chart: Chart{
-				URL:  "https://charts.jetstack.io",
-				Name: "tor-proxy",
+				URL:  "https://stenic.github.io/helm-charts",
+				Name: "proxy",
 			},
-			expected: "0.1.1",
+			expected: "1.0.3",
 		},
 		{
 			chart: Chart{
