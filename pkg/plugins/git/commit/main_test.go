@@ -49,7 +49,7 @@ var (
 		},
 		{
 			Message:        "Bump updatecli version",
-			ExpectedOutput: "chore: Bump updatecli version\nBREAKING CHANGE\n",
+			ExpectedOutput: "chore: Bump updatecli version\n\nBREAKING CHANGE",
 			ExpectedError:  nil,
 			Commit: Commit{
 				Type:    "chore",
@@ -58,7 +58,7 @@ var (
 		},
 		{
 			Message:        strings.Repeat("a", 75),
-			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n... aaaaaa\n\nBREAKING CHANGE\n",
+			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaa\n\nBREAKING CHANGE",
 			ExpectedError:  nil,
 			Commit: Commit{
 				Type:    "chore",
@@ -67,7 +67,7 @@ var (
 		},
 		{
 			Message:        strings.Repeat("a", 75),
-			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n... aaaaaa\n",
+			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaa",
 			ExpectedError:  nil,
 			Commit: Commit{
 				Type: "chore",
@@ -98,7 +98,7 @@ var (
 		{
 			Message:       strings.Repeat("a", 75),
 			ExpectedTitle: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
-			ExpectedBody:  "... aaaaaa\n",
+			ExpectedBody:  "... aaaaaa",
 			ExpectedError: nil,
 		},
 		{

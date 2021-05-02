@@ -11,8 +11,8 @@ import (
 
 const (
 	commitTpl string = "{{ .Type}}{{if .Scope}}({{.Scope}}){{ end }}: {{ .Title }}" +
-		"{{ if .Body }}\n{{ .Body }}{{ end }}" +
-		"{{ if .Footers }}\n{{ .Footers }}\n{{ end }}"
+		"{{ if .Body }}\n\n{{ .Body }}{{ end }}" +
+		"{{ if .Footers }}\n\n{{ .Footers }}{{ end }}"
 )
 
 var (
@@ -94,6 +94,9 @@ func ParseMessage(message string) (title, body string, err error) {
 	if len(lines) > 1 {
 		body = body + strings.Join(lines[1:], "\n")
 	}
+
+	// Remove trailing \b so we can handle it from the go template
+	body = strings.TrimRight(body, "\n")
 
 	return title, body, nil
 }
