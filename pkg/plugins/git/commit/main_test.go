@@ -29,13 +29,14 @@ var (
 			ExpectedOutput: "chore(deps): Bump updatecli version",
 			ExpectedError:  nil,
 			Commit: Commit{
-				Type:  "chore",
-				Scope: "deps",
+				Type:        "chore",
+				Scope:       "deps",
+				HideCredits: true,
 			},
 		},
 		{
 			Message:        "Bump updatecli version",
-			ExpectedOutput: "chore: Bump updatecli version",
+			ExpectedOutput: "chore: Bump updatecli version\nMade with ❤️️ by updatecli",
 			ExpectedError:  nil,
 			Commit:         Commit{},
 		},
@@ -44,7 +45,8 @@ var (
 			ExpectedOutput: "chore: Bump updatecli version",
 			ExpectedError:  nil,
 			Commit: Commit{
-				Type: "chore",
+				Type:        "chore",
+				HideCredits: true,
 			},
 		},
 		{
@@ -52,8 +54,9 @@ var (
 			ExpectedOutput: "chore: Bump updatecli version\n\nBREAKING CHANGE",
 			ExpectedError:  nil,
 			Commit: Commit{
-				Type:    "chore",
-				Footers: "BREAKING CHANGE",
+				Type:        "chore",
+				Footers:     "BREAKING CHANGE",
+				HideCredits: true,
 			},
 		},
 		{
@@ -61,8 +64,9 @@ var (
 			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaa\n\nBREAKING CHANGE",
 			ExpectedError:  nil,
 			Commit: Commit{
-				Type:    "chore",
-				Footers: "BREAKING CHANGE",
+				Type:        "chore",
+				Footers:     "BREAKING CHANGE",
+				HideCredits: true,
 			},
 		},
 		{
@@ -70,7 +74,8 @@ var (
 			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaa",
 			ExpectedError:  nil,
 			Commit: Commit{
-				Type: "chore",
+				Type:        "chore",
+				HideCredits: true,
 			},
 		},
 		{
@@ -78,7 +83,8 @@ var (
 			ExpectedOutput: "",
 			ExpectedError:  ErrEmptyCommitMessage,
 			Commit: Commit{
-				Type: "chore",
+				Type:        "chore",
+				HideCredits: true,
 			},
 		},
 	}
