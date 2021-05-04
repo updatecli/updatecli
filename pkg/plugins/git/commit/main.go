@@ -12,7 +12,7 @@ import (
 const (
 	commitTpl string = "{{ .Type}}{{if .Scope}}({{.Scope}}){{ end }}: {{ .Title }}" +
 		"{{ if .Body }}\n\n{{ .Body }}{{ end }}" +
-		"{{ if not .HideCredits }}\nMade with ❤️️  by updatecli{{end}}" +
+		"{{ if not .HideCredits }}\n\nMade with ❤️️  by updatecli{{end}}" +
 		"{{ if .Footers }}\n\n{{ .Footers }}{{ end }}"
 )
 
