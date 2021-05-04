@@ -6,20 +6,14 @@ import (
 )
 
 type DataSet []Data
-type MessageDataSet []MessageData
 
 type Data struct {
 	Message        string
 	ExpectedOutput string
 	ExpectedError  error
+	ExpectedTitle  string
+	ExpectedBody   string
 	Commit         Commit
-}
-
-type MessageData struct {
-	Message       string
-	ExpectedTitle string
-	ExpectedBody  string
-	ExpectedError error
 }
 
 var (
@@ -28,6 +22,8 @@ var (
 			Message:        "Bump updatecli version",
 			ExpectedOutput: "chore(deps): Bump updatecli version",
 			ExpectedError:  nil,
+			ExpectedBody:   "",
+			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
 				Type:        "chore",
 				Scope:       "deps",
@@ -38,12 +34,16 @@ var (
 			Message:        "Bump updatecli version",
 			ExpectedOutput: "chore: Bump updatecli version\nMade with ❤️️ by updatecli",
 			ExpectedError:  nil,
+			ExpectedBody:   "",
+			ExpectedTitle:  "Bump updatecli version",
 			Commit:         Commit{},
 		},
 		{
 			Message:        "Bump updatecli version",
 			ExpectedOutput: "chore: Bump updatecli version",
 			ExpectedError:  nil,
+			ExpectedBody:   "",
+			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
 				Type:        "chore",
 				HideCredits: true,
@@ -53,6 +53,8 @@ var (
 			Message:        "Bump updatecli version",
 			ExpectedOutput: "chore: Bump updatecli version\n\nBREAKING CHANGE",
 			ExpectedError:  nil,
+			ExpectedBody:   "",
+			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
 				Type:        "chore",
 				Footers:     "BREAKING CHANGE",
@@ -61,8 +63,10 @@ var (
 		},
 		{
 			Message:        strings.Repeat("a", 75),
-			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaa\n\nBREAKING CHANGE",
+			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaaaaaaa\n\nBREAKING CHANGE",
 			ExpectedError:  nil,
+			ExpectedBody:   "... aaaaaaaaaaa",
+			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
 			Commit: Commit{
 				Type:        "chore",
 				Footers:     "BREAKING CHANGE",
@@ -71,8 +75,10 @@ var (
 		},
 		{
 			Message:        strings.Repeat("a", 75),
-			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaa",
+			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaaaaaaa",
 			ExpectedError:  nil,
+			ExpectedBody:   "... aaaaaaaaaaa",
+			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
 			Commit: Commit{
 				Type:        "chore",
 				HideCredits: true,
@@ -82,42 +88,12 @@ var (
 			Message:        "",
 			ExpectedOutput: "",
 			ExpectedError:  ErrEmptyCommitMessage,
+			ExpectedBody:   "",
+			ExpectedTitle:  "",
 			Commit: Commit{
 				Type:        "chore",
 				HideCredits: true,
 			},
-		},
-	}
-	messagedataset = MessageDataSet{
-		{
-			Message:       "Bump updatecli version",
-			ExpectedTitle: "Bump updatecli version",
-			ExpectedBody:  "",
-			ExpectedError: nil,
-		},
-		{
-			Message:       strings.Repeat("a", 72),
-			ExpectedTitle: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			ExpectedBody:  "",
-			ExpectedError: nil,
-		},
-		{
-			Message:       strings.Repeat("a", 75),
-			ExpectedTitle: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
-			ExpectedBody:  "... aaaaaa",
-			ExpectedError: nil,
-		},
-		{
-			Message:       "Title\nBody",
-			ExpectedTitle: "Title",
-			ExpectedBody:  "Body",
-			ExpectedError: nil,
-		},
-		{
-			Message:       "",
-			ExpectedTitle: "",
-			ExpectedBody:  "",
-			ExpectedError: ErrEmptyCommitMessage,
 		},
 	}
 )
@@ -144,8 +120,8 @@ func TestCommit(t *testing.T) {
 
 func TestParseMessage(t *testing.T) {
 
-	for id, data := range messagedataset {
-		gotTitle, gotBody, err := ParseMessage(data.Message)
+	for id, data := range dataset {
+		err := data.Commit.ParseMessage(data.Message)
 
 		if err != nil && data.ExpectedError != nil {
 			if strings.Compare(err.Error(), data.ExpectedError.Error()) != 0 {
@@ -155,16 +131,16 @@ func TestParseMessage(t *testing.T) {
 			t.Errorf("Unexpected error %q for commit #%d", err, id)
 		}
 
-		if strings.Compare(data.ExpectedTitle, gotTitle) != 0 {
+		if strings.Compare(data.ExpectedTitle, data.Commit.Title) != 0 {
 			t.Errorf("Wrong Commit Title %d:\n\tGot:\t\t%q\n\tExpected:\t%q",
 				id,
-				gotTitle,
+				data.Commit.Title,
 				data.ExpectedTitle)
 		}
-		if strings.Compare(data.ExpectedBody, gotBody) != 0 {
+		if strings.Compare(data.ExpectedBody, data.Commit.Body) != 0 {
 			t.Errorf("Wrong Commit Body %d:\n\tGot:\t\t%q\n\tExpected:\t%q",
 				id,
-				gotBody,
+				data.Commit.Body,
 				data.ExpectedBody)
 		}
 	}
