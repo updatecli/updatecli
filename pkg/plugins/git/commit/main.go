@@ -12,7 +12,7 @@ import (
 const (
 	commitTpl string = "{{ .Type}}{{if .Scope}}({{.Scope}}){{ end }}: {{ .Title }}" +
 		"{{ if .Body }}\n\n{{ .Body }}{{ end }}" +
-		"{{ if not .HideCredits }}\n\nMade with ❤️️  by updatecli{{end}}" +
+		"{{ if not .HideCredit }}\n\nMade with ❤️️  by updatecli{{end}}" +
 		"{{ if .Footers }}\n\n{{ .Footers }}{{ end }}"
 )
 
@@ -25,12 +25,12 @@ var (
 // More information on what is conventional commits
 // -> https://www.conventionalcommits.org/en/v1.0.0/#summary
 type Commit struct {
-	Type        string // Define commit type, like chore, fix, etc
-	Scope       string // Define commit type scope
-	Footers     string // Define commit footer
-	Title       string // Define commit title
-	Body        string // Define commit body
-	HideCredits bool   // Display updatecli credits inside commit message body
+	Type       string // Define commit type, like chore, fix, etc
+	Scope      string // Define commit type scope
+	Footers    string // Define commit footer
+	Title      string // Define commit title
+	Body       string // Define commit body
+	HideCredit bool   // Display updatecli credits inside commit message body
 }
 
 // Generate generates the conventional commit

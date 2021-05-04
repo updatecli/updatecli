@@ -25,14 +25,14 @@ var (
 			ExpectedBody:   "",
 			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
-				Type:        "chore",
-				Scope:       "deps",
-				HideCredits: true,
+				Type:       "chore",
+				Scope:      "deps",
+				HideCredit: true,
 			},
 		},
 		{
 			Message:        "Bump updatecli version",
-			ExpectedOutput: "chore: Bump updatecli version\nMade with ❤️️ by updatecli",
+			ExpectedOutput: "chore: Bump updatecli version\n\nMade with ❤️️  by updatecli",
 			ExpectedError:  nil,
 			ExpectedBody:   "",
 			ExpectedTitle:  "Bump updatecli version",
@@ -45,8 +45,8 @@ var (
 			ExpectedBody:   "",
 			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
-				Type:        "chore",
-				HideCredits: true,
+				Type:       "chore",
+				HideCredit: true,
 			},
 		},
 		{
@@ -56,9 +56,9 @@ var (
 			ExpectedBody:   "",
 			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
-				Type:        "chore",
-				Footers:     "BREAKING CHANGE",
-				HideCredits: true,
+				Type:       "chore",
+				Footers:    "BREAKING CHANGE",
+				HideCredit: true,
 			},
 		},
 		{
@@ -68,9 +68,9 @@ var (
 			ExpectedBody:   "... aaaaaaaaaaa",
 			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
 			Commit: Commit{
-				Type:        "chore",
-				Footers:     "BREAKING CHANGE",
-				HideCredits: true,
+				Type:       "chore",
+				Footers:    "BREAKING CHANGE",
+				HideCredit: true,
 			},
 		},
 		{
@@ -80,8 +80,8 @@ var (
 			ExpectedBody:   "... aaaaaaaaaaa",
 			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
 			Commit: Commit{
-				Type:        "chore",
-				HideCredits: true,
+				Type:       "chore",
+				HideCredit: true,
 			},
 		},
 		{
@@ -91,8 +91,8 @@ var (
 			ExpectedBody:   "",
 			ExpectedTitle:  "",
 			Commit: Commit{
-				Type:        "chore",
-				HideCredits: true,
+				Type:       "chore",
+				HideCredit: true,
 			},
 		},
 	}
