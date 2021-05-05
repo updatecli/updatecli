@@ -66,7 +66,7 @@ func (d *Dockerfile) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (cha
 		// Generate a multiline string with one message per line (each message maps to a line changed by the parser)
 		messageList := strings.Join(d.messages, "\n")
 		// Generate a nice commit message with a first line title, and append the previous message list
-		message = fmt.Sprintf("[updatecli] Instructions changed from Dockerfile %q:\n"+messageList, d.File)
+		message = fmt.Sprintf("Update Dockerfile instruction for %q\n%s\n", d.File, messageList)
 	}
 
 	return changed, files, message, err

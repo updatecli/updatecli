@@ -172,11 +172,8 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 	}
 
 	files = append(files, y.File)
-	message = fmt.Sprintf("[updatecli] Key '%s', from file '%v', was updated from %s to '%s'",
-		y.Key,
-		y.File,
-		oldVersion,
-		y.Value)
+
+	message = fmt.Sprintf("Update key %q from file %q", y.Key, y.File)
 
 	return changed, files, message, nil
 }

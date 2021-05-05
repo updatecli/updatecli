@@ -122,7 +122,7 @@ func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 	}
 
 	files = append(files, f.File)
-	message = fmt.Sprintf("[updatecli] Content for file '%v' updated\n", f.File)
+	message = fmt.Sprintf("Update %q content\n", f.File)
 
 	return changed, files, message, nil
 }
