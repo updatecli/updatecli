@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/core/tmp"
+	"github.com/olblak/updateCli/pkg/plugins/git/commit"
 	"github.com/olblak/updateCli/pkg/plugins/version"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
@@ -31,7 +32,8 @@ type Github struct {
 	remoteBranch           string
 	User                   string
 	Email                  string
-	Force                  bool // Force is used during the git push phase to run `git push --force`.
+	Force                  bool          // Force is used during the git push phase to run `git push --force`.
+	CommitMessage          commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
 }
 
 // Check verifies if mandatory Github parameters are provided and return false if not.
