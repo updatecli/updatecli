@@ -8,7 +8,8 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/fatih/color v1.10.0
+	github.com/aws/aws-sdk-go v1.37.18 // indirect
+	github.com/fatih/color v1.11.0
 	github.com/go-git/go-git/v5 v5.3.0
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1
@@ -20,11 +21,10 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	go.mozilla.org/sops v0.0.0-20190912205235-14a22d7a7060
-	go.mozilla.org/sops/v3 v3.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107172259-749611fa9fcc
 	helm.sh/helm/v3 v3.2.4
-	k8s.io/apimachinery v0.18.0 // indirect
 	sigs.k8s.io/yaml v1.2.0
 )
 
