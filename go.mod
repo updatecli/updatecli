@@ -10,7 +10,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/aws/aws-sdk-go v1.37.18 // indirect
 	github.com/fatih/color v1.11.0
-	github.com/go-git/go-git/v5 v5.3.0
+	github.com/go-git/go-git/v5 v5.4.0
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/moby/buildkit v0.7.2
