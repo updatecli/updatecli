@@ -187,7 +187,7 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("+ %s +\n", strings.ToTitle("Run"))
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
 
-	for _, conf := range e.configurations {
+	for id, conf := range e.configurations {
 		if len(conf.Title) > 0 {
 			logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Title)+4))
 			logrus.Infof("# %s #\n", strings.ToTitle(conf.Title))
@@ -272,7 +272,7 @@ func (e *Engine) Run() (err error) {
 
 		if len(conf.Conditions) > 0 {
 
-			ok, err := RunConditions(&conf)
+			ok, err := RunConditions(&e.configurations[id])
 
 			i := 0
 
@@ -294,7 +294,7 @@ func (e *Engine) Run() (err error) {
 		}
 
 		if len(conf.Targets) > 0 {
-			changed, err := RunTargets(&conf, &e.Options.Target, &report)
+			changed, err := RunTargets(&e.configurations[id], &e.Options.Target, &report)
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
