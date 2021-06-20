@@ -1,13 +1,16 @@
 package config
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
 
@@ -177,4 +180,131 @@ func Checksum(filename string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
+// Update updates its own configuration file
+// It's used when the configuration expected a value defined a runtime
+func (config *Config) Update() (err error) {
+	funcMap := template.FuncMap{
+		"pipeline": func(s string) (string, error) {
+			/*
+				Retrieve the value of a third location key from
+				the updatecli configuration.
+				It returns an error if a key doesn't exist
+				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
+				then we assume that the value will be set later in the run.
+				Otherwise it returns the value.
+				This func is design to constantly reevaluate if a configuration changed
+			*/
+
+			var field func(interface{}, []string) (string, error)
+
+			field = func(conf interface{}, query []string) (value string, err error) {
+				ValueIface := reflect.ValueOf(conf)
+
+				Field := reflect.Value{}
+
+				// We want to be able to use case insensitive key
+				insensitiveQuery := []string{
+					query[0],
+					strings.Title(query[0]),
+					strings.ToTitle(query[0]),
+					strings.ToLower(query[0]),
+				}
+
+				switch ValueIface.Kind() {
+				case reflect.Ptr:
+					// Check if the passed interface is a pointer
+					// Create a new type of Iface's Type, so we have a pointer to work with
+					// 'dereference' with Elem() and get the field by name
+					Field = ValueIface.Elem().FieldByName(query[0])
+				case reflect.Map:
+					// We want to be able to use case insensitive key
+					for _, query := range insensitiveQuery {
+						Field = ValueIface.MapIndex(reflect.ValueOf(query))
+						if Field.IsValid() {
+							break
+						}
+					}
+				case reflect.Struct:
+					// We want to be able to use case insensitive key
+					for _, query := range insensitiveQuery {
+						Field = ValueIface.FieldByName(query)
+						if Field.IsValid() {
+							break
+						}
+					}
+				}
+
+				// Means that despite the different case sensitive key, we couldn't find it
+				if !Field.IsValid() {
+					logrus.Debugf(
+						"Configuration `%s` does not have the field `%s`",
+						ValueIface.Type(),
+						query[0])
+					return "", ErrNoKeyDefined
+				}
+
+				if len(query) > 1 {
+					value, err = field(Field.Interface(), query[1:])
+					if err != nil {
+						return "", err
+					}
+
+				} else if len(query) == 1 {
+					return Field.String(), nil
+				}
+
+				return value, nil
+
+			}
+
+			val, err := field(config, strings.Split(s, "."))
+
+			if err != nil {
+				return "", err
+			}
+
+			if len(val) > 0 {
+				return val, nil
+			}
+			// If we couldn't find a value, then we return the function so we can retry
+			// later on.
+			return fmt.Sprintf("{{ pipeline %q }}", s), nil
+
+		},
+	}
+
+	data := config
+
+	content, err := yaml.Marshal(config)
+
+	if err != nil {
+		return err
+	}
+
+	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
+
+	if err != nil {
+		return err
+	}
+
+	b := bytes.Buffer{}
+
+	if err := tmpl.Execute(&b, &data); err != nil {
+		return err
+	}
+
+	err = yaml.Unmarshal(b.Bytes(), &config)
+	if err != nil {
+		return err
+	}
+
+	err = config.Validate()
+	if err != nil {
+		return err
+	}
+
+	return err
+
 }

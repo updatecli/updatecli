@@ -20,7 +20,7 @@ import (
 type Github struct {
 	Owner                  string
 	Description            string
-	PullRequestDescription Changelog `yaml:"-"`
+	PullRequestDescription Changelog
 	Repository             string
 	Username               string
 	Token                  string

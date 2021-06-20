@@ -27,7 +27,7 @@ type Condition struct {
 	Transformers transformer.Transformers
 	Spec         interface{}
 	Scm          map[string]interface{}
-	Result       string `yaml:"-"` // Ignore this field when unmarshal YAML
+	Result       string
 	SourceID     string `yaml:"sourceID"`
 }
 

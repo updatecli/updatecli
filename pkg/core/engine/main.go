@@ -241,7 +241,7 @@ func (e *Engine) Run() (err error) {
 
 		i := 0
 		for id, s := range conf.Sources {
-			err = s.Execute()
+			err := s.Execute()
 
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
@@ -258,22 +258,30 @@ func (e *Engine) Run() (err error) {
 
 			s.Result = result.SUCCESS
 			report.Sources[i].Result = result.SUCCESS
+			report.Sources[i].Name = s.Name
 
 			i++
 
 			conf.Sources[id] = s
 
+			err = conf.Update()
+			if err != nil {
+				return err
+			}
 		}
 
 		if len(conf.Conditions) > 0 {
-			c := conf
-			ok, err := RunConditions(&c)
+
+			ok, err := RunConditions(&conf)
 
 			i := 0
 
+			// Updating report information
 			for _, c := range conf.Conditions {
 				conditionsStageReport[i].Result = c.Result
+				conditionsStageReport[i].Name = c.Name
 				report.Conditions[i].Result = c.Result
+				report.Conditions[i].Name = c.Name
 				i++
 			}
 
@@ -282,11 +290,11 @@ func (e *Engine) Run() (err error) {
 				e.Reports = append(e.Reports, report)
 				continue
 			}
+
 		}
 
 		if len(conf.Targets) > 0 {
-			c := conf
-			changed, err := RunTargets(&c, &e.Options.Target, &report)
+			changed, err := RunTargets(&conf, &e.Options.Target, &report)
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
@@ -302,8 +310,10 @@ func (e *Engine) Run() (err error) {
 			for _, t := range conf.Targets {
 
 				report.Targets[i].Result = t.Result
+				report.Targets[i].Name = t.Name
 
 				targetsStageReport[i].Result = t.Result
+				targetsStageReport[i].Name = t.Name
 				i++
 			}
 
@@ -345,11 +355,11 @@ func RunConditions(conf *config.Config) (bool, error) {
 	for k, c := range conf.Conditions {
 		c.Result = result.FAILURE
 
-		conf.Conditions[k] = c
 		ok, err := c.Run(
 			conf.Sources[c.SourceID].Prefix +
 				conf.Sources[c.SourceID].Output +
 				conf.Sources[c.SourceID].Postfix)
+
 		if err != nil {
 			return false, err
 		}
@@ -363,6 +373,13 @@ func RunConditions(conf *config.Config) (bool, error) {
 
 		c.Result = result.SUCCESS
 		conf.Conditions[k] = c
+
+		// Update pipeline after each condition run
+		err = conf.Update()
+		if err != nil {
+			return false, err
+		}
+
 	}
 
 	return true, nil
@@ -388,6 +405,12 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 
 	for id, t := range config.Targets {
 		targetChanged := false
+
+		// Update pipeline before each target run
+		err = config.Update()
+		if err != nil {
+			return false, err
+		}
 
 		t.Changelog = config.Sources[t.SourceID].Changelog
 

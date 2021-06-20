@@ -32,7 +32,7 @@ type Source struct {
 	Replaces     Replacers // Deprecated in favor of Transformers on 2021/01/3
 	Spec         interface{}
 	Scm          map[string]interface{}
-	Result       string `yaml:"-"` // Ignore this key field when unmarshalling yaml file
+	Result       string
 }
 
 // Spec source is an interface to handle source spec

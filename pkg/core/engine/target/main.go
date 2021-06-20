@@ -21,13 +21,13 @@ type Target struct {
 	Name         string
 	PipelineID   string `yaml:"pipelineID"` // PipelineID references a uniq pipeline run that allows to groups targets
 	Kind         string
-	Changelog    string `yaml:"-"`
+	Changelog    string
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
 	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
 	Transformers transformer.Transformers
 	Spec         interface{}
 	Scm          map[string]interface{}
-	Result       string `yaml:"-"`
+	Result       string
 	SourceID     string `yaml:"sourceID"`
 }
 
