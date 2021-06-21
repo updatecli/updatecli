@@ -23,7 +23,7 @@ require (
 	go.mozilla.org/sops v0.0.0-20190912205235-14a22d7a7060
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	gopkg.in/yaml.v3 v3.0.0-20210107172259-749611fa9fcc
-	helm.sh/helm/v3 v3.6.0
+	helm.sh/helm/v3 v3.6.1
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0
 )
