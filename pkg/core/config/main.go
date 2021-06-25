@@ -37,6 +37,10 @@ var (
 	// retrieve a key value which is not defined in the configuration
 	ErrNoKeyDefined = errors.New("key not defined in configuration")
 
+	// ErrNotAllowedTemplatedKey is returned when
+	// we are planning to template at runtime unauthorized keys such map key
+	ErrNotAllowedTemplatedKey = errors.New("not allowed templated key")
+
 	defaultSourceID = "default"
 )
 
@@ -132,6 +136,13 @@ func (config *Config) Validate() error {
 		config.Source = source.Source{}
 	}
 
+	for id := range config.Sources {
+		if IsTemplatedString(id) {
+			logrus.Errorf("sources key %q contains forbidden go template instruction", id)
+			return ErrNotAllowedTemplatedKey
+		}
+	}
+
 	for id, c := range config.Conditions {
 		// Try to guess SourceID
 		if len(c.SourceID) == 0 && len(config.Sources) > 1 {
@@ -141,6 +152,11 @@ func (config *Config) Validate() error {
 			for id := range config.Sources {
 				c.SourceID = id
 			}
+		}
+
+		if IsTemplatedString(id) {
+			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
+			return ErrNotAllowedTemplatedKey
 		}
 		config.Conditions[id] = c
 	}
@@ -157,6 +173,11 @@ func (config *Config) Validate() error {
 			for id := range config.Sources {
 				t.SourceID = id
 			}
+		}
+
+		if IsTemplatedString(id) {
+			logrus.Errorf("target key %q contains forbidden go template instruction", id)
+			return ErrNotAllowedTemplatedKey
 		}
 		config.Targets[id] = t
 	}
@@ -307,4 +328,25 @@ func (config *Config) Update() (err error) {
 
 	return err
 
+}
+
+// IsTemplatedString test if a string contains go template information
+func IsTemplatedString(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+
+	leftDelimiterFound := false
+
+	for _, val := range strings.SplitAfter(s, "{{") {
+		if strings.Contains(val, "{{") {
+			leftDelimiterFound = true
+			continue
+		}
+		if strings.Contains(val, "}}") && leftDelimiterFound {
+			return true
+		}
+	}
+
+	return false
 }

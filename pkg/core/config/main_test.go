@@ -9,10 +9,11 @@ import (
 )
 
 type Data struct {
-	ID             string
-	Config         Config
-	ExpectedConfig Config
-	ExpectedErr    error
+	ID                  string
+	Config              Config
+	ExpectedConfig      Config
+	ExpectedUpdateErr   error
+	ExpectedValidateErr error
 }
 type DataSet []Data
 
@@ -34,7 +35,8 @@ var (
 					Kind: "jenkins",
 				},
 			},
-			ExpectedErr: nil,
+			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
 		},
 		{
 			ID: "2",
@@ -52,12 +54,12 @@ var (
 					Kind: "jenkins",
 				},
 			},
-			ExpectedErr: nil,
+			ExpectedUpdateErr: nil,
 		},
 		{
 			ID: "3",
 			Config: Config{
-				Name: `{{ pipeline "Source.kind" }}`,
+				Name: `{{ pipeline "Source.kindd" }}`,
 				Source: source.Source{
 					Name: "Get Version",
 					Kind: "jenkins",
@@ -66,7 +68,7 @@ var (
 			ExpectedConfig: Config{
 				Name: "jenkins",
 			},
-			ExpectedErr: ErrNoKeyDefined,
+			ExpectedUpdateErr: ErrNoKeyDefined,
 		},
 		{
 			ID: "4",
@@ -77,8 +79,8 @@ var (
 					Kind: "jenkins",
 				},
 			},
-			ExpectedConfig: Config{},
-			ExpectedErr:    fmt.Errorf(`function "Source" not defined`),
+			ExpectedConfig:    Config{},
+			ExpectedUpdateErr: fmt.Errorf(`function "Source" not defined`),
 		},
 		{
 			ID: "5",
@@ -92,7 +94,7 @@ var (
 			ExpectedConfig: Config{
 				Name: "jenkins",
 			},
-			ExpectedErr: fmt.Errorf(`function "Source" not defined`),
+			ExpectedUpdateErr: fmt.Errorf(`function "Source" not defined`),
 		},
 		{
 			ID: "6",
@@ -106,7 +108,23 @@ var (
 			ExpectedConfig: Config{
 				Name: "lts-jenkins-jdk11",
 			},
-			ExpectedErr: ErrNoKeyDefined,
+		},
+		{
+			ID: "wrongSourceKeyName",
+			Config: Config{
+				Name: `lts-jenkins-jdk11`,
+				Sources: map[string]source.Source{
+					`{{ pipeline "Source.Name" }}`: {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			ExpectedConfig: Config{
+				Name: "lts-jenkins-jdk11",
+			},
+			ExpectedUpdateErr:   ErrNotAllowedTemplatedKey,
+			ExpectedValidateErr: ErrNotAllowedTemplatedKey,
 		},
 	}
 )
@@ -114,15 +132,27 @@ var (
 func TestUpdate(t *testing.T) {
 	for _, data := range dataSet {
 		err := data.Config.Update()
-		if err != nil && !strings.Contains(err.Error(), data.ExpectedErr.Error()) {
-			t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\nGot\t\t\t%q\n",
+		if err != nil && data.ExpectedUpdateErr != nil {
+			if !strings.Contains(err.Error(), data.ExpectedUpdateErr.Error()) {
+				t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
+					data.ID,
+					data.ExpectedUpdateErr.Error(),
+					err.Error())
+				continue
+			}
+		} else if err != nil && data.ExpectedUpdateErr == nil {
+			t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
 				data.ID,
-				data.ExpectedErr,
-				err)
-			continue
-		} else if err == nil {
+				err.Error(),
+				"nil")
+		} else if err == nil && data.ExpectedUpdateErr != nil {
+			t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
+				data.ID,
+				data.ExpectedUpdateErr.Error(),
+				"nil")
+		} else if err == nil && data.ExpectedUpdateErr == nil {
 			if strings.Compare(data.Config.Name, data.ExpectedConfig.Name) != 0 {
-				t.Errorf("\n\nWrong output expected for dataset ID %q:\n\texpected:\t\t`%q`\n\tgot:\t\t\t`%q`\n",
+				t.Errorf("\n\nWrong output expected for dataset ID %q:\n\tExpected:\t\t`%q`\n\tGot:\t\t\t`%q`\n",
 					data.ID,
 					data.ExpectedConfig.Name,
 					data.Config.Name)
@@ -141,5 +171,47 @@ func TestChecksum(t *testing.T) {
 
 	if got != expected {
 		t.Errorf("Got %q, expected %q", got, expected)
+	}
+}
+
+func TestValidate(t *testing.T) {
+	for _, data := range dataSet {
+		err := data.Config.Validate()
+		if err != nil && data.ExpectedValidateErr == nil {
+			t.Errorf("Unexpected Validate Error result for data %q\n\tExpected:\t\t'nil'\n\tGot:\t\t\t%q", data.ID, err.Error())
+
+		} else if err == nil && data.ExpectedValidateErr != nil {
+			t.Errorf("Unexpected Validate Error result for data %q\n\tExpected:\t\t%q\n\tGot:\t\t\t\"nil\"", data.ID, data.ExpectedValidateErr.Error())
+
+		} else if err != nil && data.ExpectedValidateErr != nil {
+			if strings.Compare(err.Error(), data.ExpectedValidateErr.Error()) != 0 {
+				t.Errorf("Unexpected Validate Error for data %q", data.ID)
+			}
+		}
+	}
+}
+
+func TestIsTemplatedString(t *testing.T) {
+	type templatedStringData struct {
+		Key            string
+		ExpectedResult bool
+	}
+	dataset := []templatedStringData{
+		{Key: "bob", ExpectedResult: false},
+		{Key: "", ExpectedResult: false},
+		{Key: "{{ bob }}", ExpectedResult: true},
+		{Key: "{{ {{ bob }}", ExpectedResult: true},
+		{Key: "{{ bob }} }}", ExpectedResult: true},
+		{Key: "{{ bob", ExpectedResult: false},
+		{Key: "bob }}", ExpectedResult: false},
+		{Key: "}} bob {{", ExpectedResult: false},
+		{Key: "alpha-{{ version }}-jdk11", ExpectedResult: true},
+	}
+
+	for _, data := range dataset {
+		got := IsTemplatedString(data.Key)
+		if got != data.ExpectedResult {
+			t.Errorf("Expected '%v' for key %q but got '%v' ", data.ExpectedResult, data.Key, got)
+		}
 	}
 }
