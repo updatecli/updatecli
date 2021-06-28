@@ -25,28 +25,40 @@ var (
 			Conf: config.Config{
 				Sources: map[string]source.Source{
 					"1": {
-						DependsOn: "2",
+						DependsOn: []string{
+							"2",
+						},
 					},
 					"2": {
-						DependsOn: "3",
+						DependsOn: []string{
+							"3",
+						},
 					},
 					"3": {},
 				},
 				Conditions: map[string]condition.Condition{
 					"1": {
-						DependsOn: "2",
+						DependsOn: []string{
+							"2",
+						},
 					},
 					"2": {
-						DependsOn: "3",
+						DependsOn: []string{
+							"3",
+						},
 					},
 					"3": {},
 				},
 				Targets: map[string]target.Target{
 					"1": {
-						DependsOn: "2",
+						DependsOn: []string{
+							"2",
+						},
 					},
 					"2": {
-						DependsOn: "3",
+						DependsOn: []string{
+							"3",
+						},
 					},
 					"3": {},
 				},
@@ -65,37 +77,55 @@ var (
 			Conf: config.Config{
 				Sources: map[string]source.Source{
 					"1": {
-						DependsOn: "3",
+						DependsOn: []string{
+							"3",
+						},
 					},
 					"2": {
-						DependsOn: "4",
+						DependsOn: []string{
+							"4",
+						},
 					},
 					"3": {
-						DependsOn: "2",
+						DependsOn: []string{
+							"2",
+						},
 					},
 					"4": {},
 				},
 				Conditions: map[string]condition.Condition{
 					"1": {
-						DependsOn: "3",
+						DependsOn: []string{
+							"3",
+						},
 					},
 					"2": {
-						DependsOn: "4",
+						DependsOn: []string{
+							"4",
+						},
 					},
 					"3": {
-						DependsOn: "2",
+						DependsOn: []string{
+							"2",
+						},
 					},
 					"4": {},
 				},
 				Targets: map[string]target.Target{
 					"1": {
-						DependsOn: "3",
+						DependsOn: []string{
+							"3",
+						},
 					},
 					"2": {
-						DependsOn: "4",
+						DependsOn: []string{
+							"4",
+						},
 					},
 					"3": {
-						DependsOn: "2",
+						DependsOn: []string{
+							"2",
+						},
 					},
 					"4": {},
 				},

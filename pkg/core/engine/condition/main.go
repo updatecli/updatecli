@@ -20,7 +20,7 @@ import (
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
-	DependsOn    string `yaml:"depends_on"`
+	DependsOn    []string `yaml:"depends_on"`
 	Name         string
 	Kind         string
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3

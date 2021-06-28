@@ -42,9 +42,12 @@ func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err 
 	// Update vertices dependencies based on depends_on
 	for key, s := range *sources {
 		if len(s.DependsOn) > 0 {
-			err = d.AddEdge(index[key], index[s.DependsOn])
-			if err != nil {
-				return result, err
+			for _, dep := range s.DependsOn {
+				err = d.AddEdge(index[key], index[dep])
+				if err != nil {
+					return result, err
+				}
+
 			}
 		}
 	}
@@ -107,9 +110,11 @@ func SortedConditionsKeys(conditions *map[string]condition.Condition) (result []
 	// Update vertices dependencies based on depends_on
 	for key, s := range *conditions {
 		if len(s.DependsOn) > 0 {
-			err = d.AddEdge(index[key], index[s.DependsOn])
-			if err != nil {
-				return result, err
+			for _, dep := range s.DependsOn {
+				err = d.AddEdge(index[key], index[dep])
+				if err != nil {
+					return result, err
+				}
 			}
 		}
 	}
@@ -172,9 +177,11 @@ func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err 
 	// Update vertices dependencies based on depends_on
 	for key, s := range *targets {
 		if len(s.DependsOn) > 0 {
-			err = d.AddEdge(index[key], index[s.DependsOn])
-			if err != nil {
-				return result, err
+			for _, dep := range s.DependsOn {
+				err = d.AddEdge(index[key], index[dep])
+				if err != nil {
+					return result, err
+				}
 			}
 		}
 	}
