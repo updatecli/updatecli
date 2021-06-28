@@ -22,6 +22,7 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
+	DependsOn    string `yaml:"depends_on"` // DependsOn specify dag dependencies between sources
 	Name         string
 	Kind         string
 	Changelog    string

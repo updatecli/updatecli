@@ -2,6 +2,7 @@
 sources:
   stable:
     kind: jenkins
+    depends_on: weekly
     name: Get Latest Jenkins stable version
     spec:
       github:
