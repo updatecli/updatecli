@@ -15,6 +15,9 @@ type SortedKeysData struct {
 	ExpectedSourcesResult    []string
 	ExpectedConditionsResult []string
 	ExpectedTargetsResult    []string
+	ExpectedSourcesErr       error
+	ExpectedConditionsErr    error
+	ExpectedTargetsErr       error
 }
 
 type SortedKeysDataSet []SortedKeysData
@@ -27,6 +30,7 @@ var (
 					"1": {
 						DependsOn: []string{
 							"2",
+							"3",
 						},
 					},
 					"2": {
@@ -140,6 +144,37 @@ var (
 				"4", "2", "3", "1",
 			},
 		},
+		{
+			Conf: config.Config{
+				Sources: map[string]source.Source{
+					"1": {
+						DependsOn: []string{
+							"2",
+						},
+					},
+				},
+				Conditions: map[string]condition.Condition{
+					"2": {
+						DependsOn: []string{
+							"3",
+						},
+					},
+				},
+				Targets: map[string]target.Target{
+					"3": {
+						DependsOn: []string{
+							"4",
+						},
+					},
+				},
+			},
+			ExpectedSourcesResult:    []string{},
+			ExpectedConditionsResult: []string{},
+			ExpectedTargetsResult:    []string{},
+			ExpectedSourcesErr:       ErrNotValidDependsOn,
+			ExpectedConditionsErr:    ErrNotValidDependsOn,
+			ExpectedTargetsErr:       ErrNotValidDependsOn,
+		},
 	}
 )
 
@@ -148,8 +183,21 @@ func TestSortedSourcesKeys(t *testing.T) {
 	for _, data := range sortedKeysDataset {
 		// Test Source
 		gotSortedSourcesKeys, err := SortedSourcesKeys(&data.Conf.Sources)
-		if err != nil {
-			t.Errorf("Unexpected error: %q", err.Error())
+		if err != nil && data.ExpectedSourcesErr != nil {
+			if strings.Compare(err.Error(), data.ExpectedSourcesErr.Error()) != 0 {
+				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q",
+					data.ExpectedSourcesErr,
+					err.Error())
+
+			}
+
+		} else if err != nil && data.ExpectedSourcesErr == nil {
+			t.Errorf("Unexpected error:\nExpected:\t\tnil\nGot:\t\t\t%q",
+				err.Error())
+
+		} else if err == nil && data.ExpectedSourcesErr != nil {
+			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\tnil",
+				data.ExpectedSourcesErr)
 		}
 
 		for i := range gotSortedSourcesKeys {
@@ -176,8 +224,21 @@ func TestSortedConditionsKeys(t *testing.T) {
 	for _, data := range sortedKeysDataset {
 		// Test Source
 		gotSortedConditionsKeys, err := SortedConditionsKeys(&data.Conf.Conditions)
-		if err != nil {
-			t.Errorf("Unexpected error: %q", err.Error())
+
+		if err != nil && data.ExpectedConditionsErr != nil {
+			if strings.Compare(err.Error(), data.ExpectedConditionsErr.Error()) != 0 {
+				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q",
+					data.ExpectedConditionsErr,
+					err.Error())
+			}
+
+		} else if err != nil && data.ExpectedConditionsErr == nil {
+			t.Errorf("Unexpected error:\nExpected:\t\tnil\nGot:\t\t\t%q",
+				err.Error())
+
+		} else if err == nil && data.ExpectedConditionsErr != nil {
+			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\tnil",
+				data.ExpectedConditionsErr)
 		}
 
 		for i := range gotSortedConditionsKeys {
@@ -204,8 +265,21 @@ func TestSortedTargetsKeys(t *testing.T) {
 	for _, data := range sortedKeysDataset {
 		// Test Source
 		gotSortedTargetsKeys, err := SortedTargetsKeys(&data.Conf.Targets)
-		if err != nil {
-			t.Errorf("Unexpected error: %q", err.Error())
+
+		if err != nil && data.ExpectedTargetsErr != nil {
+			if strings.Compare(err.Error(), data.ExpectedTargetsErr.Error()) != 0 {
+				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q",
+					data.ExpectedTargetsErr,
+					err.Error())
+			}
+
+		} else if err != nil && data.ExpectedTargetsErr == nil {
+			t.Errorf("Unexpected error:\nExpected:\t\tnil\nGot:\t\t\t%q",
+				err.Error())
+
+		} else if err == nil && data.ExpectedTargetsErr != nil {
+			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\tnil",
+				data.ExpectedTargetsErr)
 		}
 
 		for i := range gotSortedTargetsKeys {

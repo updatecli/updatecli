@@ -1,16 +1,36 @@
 package engine
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/heimdalr/dag"
 	"github.com/olblak/updateCli/pkg/core/engine/condition"
 	"github.com/olblak/updateCli/pkg/core/engine/source"
 	"github.com/olblak/updateCli/pkg/core/engine/target"
+	"github.com/sirupsen/logrus"
 )
 
 /*
 	I can't find a good way to avoid code duplication
 	with the three following functions
 */
+
+var (
+	// ErrNotValidDependsOn is triggered when we define a non existing depends on value.
+	ErrNotValidDependsOn = errors.New("no valid depends_on value")
+)
+
+// isValidateDependsOn test if we are referencing an exist resource key
+func isValidDependsOn(dependsOn string, index map[string]string) bool {
+
+	for val := range index {
+		if strings.Compare(dependsOn, val) == 0 {
+			return true
+		}
+	}
+	return false
+}
 
 // SortedSourcesKeys return a a list of resources by building a DAG
 func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err error) {
@@ -43,6 +63,9 @@ func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err 
 	for key, s := range *sources {
 		if len(s.DependsOn) > 0 {
 			for _, dep := range s.DependsOn {
+				if !isValidDependsOn(dep, index) {
+					return result, ErrNotValidDependsOn
+				}
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
 					return result, err
@@ -111,6 +134,10 @@ func SortedConditionsKeys(conditions *map[string]condition.Condition) (result []
 	for key, s := range *conditions {
 		if len(s.DependsOn) > 0 {
 			for _, dep := range s.DependsOn {
+				if !isValidDependsOn(dep, index) {
+					logrus.Errorf("%v: ", dep)
+					return result, ErrNotValidDependsOn
+				}
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
 					return result, err
@@ -178,6 +205,10 @@ func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err 
 	for key, s := range *targets {
 		if len(s.DependsOn) > 0 {
 			for _, dep := range s.DependsOn {
+				if !isValidDependsOn(dep, index) {
+					logrus.Errorf("%v: ", dep)
+					return result, ErrNotValidDependsOn
+				}
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
 					return result, err
