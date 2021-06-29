@@ -244,7 +244,9 @@ func (e *Engine) Run() (err error) {
 
 		sortedSourcesKeys, err := SortedSourcesKeys(&conf.Sources)
 		if err != nil {
-			return err
+			logrus.Errorf("%s %v\n", result.FAILURE, err)
+			e.Reports = append(e.Reports, report)
+			continue
 		}
 
 		i := 0
