@@ -19,6 +19,8 @@ import (
 var (
 	// ErrNotValidDependsOn is triggered when we define a non existing depends on value.
 	ErrNotValidDependsOn = errors.New("no valid depends_on value")
+	// ErrDependsOnLoopDetected is triggered when we define a dependency loop.
+	ErrDependsOnLoopDetected = errors.New("dependency loop detected")
 )
 
 // isValidateDependsOn test if we are referencing an exist resource key
@@ -64,10 +66,17 @@ func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err 
 		if len(s.DependsOn) > 0 {
 			for _, dep := range s.DependsOn {
 				if !isValidDependsOn(dep, index) {
+					logrus.Errorf("%s:%q", ErrNotValidDependsOn, dep)
 					return result, ErrNotValidDependsOn
 				}
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
+					if strings.Contains(err.Error(), "would create a loop") {
+						logrus.Errorf("Depency loop detected between Sources[%q] and Sources[%q]",
+							key,
+							dep)
+						return result, ErrDependsOnLoopDetected
+					}
 					return result, err
 				}
 
@@ -135,11 +144,17 @@ func SortedConditionsKeys(conditions *map[string]condition.Condition) (result []
 		if len(s.DependsOn) > 0 {
 			for _, dep := range s.DependsOn {
 				if !isValidDependsOn(dep, index) {
-					logrus.Errorf("%v: ", dep)
+					logrus.Errorf("%s:%q", ErrNotValidDependsOn, dep)
 					return result, ErrNotValidDependsOn
 				}
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
+					if strings.Contains(err.Error(), "would create a loop") {
+						logrus.Errorf("Depency loop detected between Conditions[%q] and Conditions[%q]",
+							key,
+							dep)
+						return result, ErrDependsOnLoopDetected
+					}
 					return result, err
 				}
 			}
@@ -206,11 +221,17 @@ func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err 
 		if len(s.DependsOn) > 0 {
 			for _, dep := range s.DependsOn {
 				if !isValidDependsOn(dep, index) {
-					logrus.Errorf("%v: ", dep)
+					logrus.Errorf("%s: %q", ErrNotValidDependsOn, dep)
 					return result, ErrNotValidDependsOn
 				}
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
+					if strings.Contains(err.Error(), "would create a loop") {
+						logrus.Errorf("Depency loop detected between Targets[%q] and Targets[%q]",
+							key,
+							dep)
+						return result, ErrDependsOnLoopDetected
+					}
 					return result, err
 				}
 			}

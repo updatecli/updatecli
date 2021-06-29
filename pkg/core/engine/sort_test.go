@@ -175,6 +175,52 @@ var (
 			ExpectedConditionsErr:    ErrNotValidDependsOn,
 			ExpectedTargetsErr:       ErrNotValidDependsOn,
 		},
+		{
+			Conf: config.Config{
+				Sources: map[string]source.Source{
+					"1": {
+						DependsOn: []string{
+							"2",
+						},
+					},
+					"2": {
+						DependsOn: []string{
+							"1",
+						},
+					},
+				},
+				Conditions: map[string]condition.Condition{
+					"1": {
+						DependsOn: []string{
+							"2",
+						},
+					},
+					"2": {
+						DependsOn: []string{
+							"1",
+						},
+					},
+				},
+				Targets: map[string]target.Target{
+					"1": {
+						DependsOn: []string{
+							"2",
+						},
+					},
+					"2": {
+						DependsOn: []string{
+							"1",
+						},
+					},
+				},
+			},
+			ExpectedSourcesResult:    []string{},
+			ExpectedConditionsResult: []string{},
+			ExpectedTargetsResult:    []string{},
+			ExpectedSourcesErr:       ErrDependsOnLoopDetected,
+			ExpectedConditionsErr:    ErrDependsOnLoopDetected,
+			ExpectedTargetsErr:       ErrDependsOnLoopDetected,
+		},
 	}
 )
 
