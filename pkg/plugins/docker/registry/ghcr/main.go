@@ -26,9 +26,12 @@ func (d *Docker) Digest() (string, error) {
 		return "", err
 	}
 
+	// Docker login ghcr.io then retrieve bearer from auths.ghcr.io.auth
 	if len(d.Token) > 0 {
-		req.Header.Add("Authorization", fmt.Sprintf("Token %s", d.Token))
+		req.Header.Add("authorization", fmt.Sprintf("Bearer %s", d.Token))
 	}
+
+	req.Header.Add("Content-Type", "application/json")
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
