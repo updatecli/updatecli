@@ -35,6 +35,7 @@ var data = []DataSet{
 			Tag:   "donotexist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("olblak/updatecli:donotexist not found on DockerHub"),
 	},
 	{
 		docker: Docker{
@@ -57,6 +58,7 @@ var data = []DataSet{
 			Tag:   "latest",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("olblak/donotexist:latest not found on DockerHub"),
 	},
 	{
 		docker: Docker{
@@ -64,6 +66,7 @@ var data = []DataSet{
 			Tag:   "donotexist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("donotexist/donotexist:donotexist not found on DockerHub"),
 	},
 	{
 		docker: Docker{
@@ -71,6 +74,7 @@ var data = []DataSet{
 			Tag:   "doNotExist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("jenkins/jenkins:doNotExist not found on DockerHub"),
 	},
 	{
 		docker: Docker{
