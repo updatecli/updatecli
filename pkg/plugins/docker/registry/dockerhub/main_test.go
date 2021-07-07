@@ -8,9 +8,10 @@ import (
 )
 
 type DataSet struct {
-	docker         Docker
-	expectedDigest string
-	expectedError  error
+	docker             Docker
+	expectedDigest     string
+	expectedError      error
+	requireCredentials bool
 }
 
 var data = []DataSet{
@@ -82,7 +83,8 @@ var data = []DataSet{
 			Tag:   "2.275",
 			Token: os.Getenv("DOCKERHUB_TOKEN"),
 		},
-		expectedDigest: "e4630b9084110ad05b4b51f5131d62161881216d60433d1f2074d522c3dcd6dc",
+		expectedDigest:     "e4630b9084110ad05b4b51f5131d62161881216d60433d1f2074d522c3dcd6dc",
+		requireCredentials: true,
 	},
 	{
 		// Test private docker image with authentication
@@ -91,7 +93,8 @@ var data = []DataSet{
 			Tag:   "updatecli",
 			Token: os.Getenv("DOCKERHUB_TOKEN"),
 		},
-		expectedDigest: "ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6",
+		expectedDigest:     "ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6",
+		requireCredentials: true,
 	},
 	{
 		// Test private docker image without authentication
@@ -107,6 +110,12 @@ var data = []DataSet{
 func TestDigest(t *testing.T) {
 	// Test if existing return the correct digest
 	for _, d := range data {
+		// Short mode also skip integration test that require credentials
+		if testing.Short() && d.requireCredentials {
+			t.Skip("Skipping test in short mode when it requires specific credentials")
+			continue
+		}
+
 		got, err := d.docker.Digest()
 
 		if err != nil && d.expectedError != nil {

@@ -10,12 +10,13 @@ import (
 )
 
 type DataSet struct {
-	docker            Docker
-	expectedHostname  string
-	expectedImage     string
-	expectedDigest    string
-	expectedError     error
-	expectedCondition bool
+	docker             Docker
+	expectedHostname   string
+	expectedImage      string
+	expectedDigest     string
+	expectedError      error
+	expectedCondition  bool
+	requireCredentials bool
 }
 
 var data = []DataSet{
@@ -27,10 +28,11 @@ var data = []DataSet{
 			Username: os.Getenv("DOCKERHUB_USERNAME"),
 			Password: os.Getenv("DOCKERHUB_PASSWORD"),
 		},
-		expectedCondition: true,
-		expectedDigest:    "ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6",
-		expectedHostname:  "hub.docker.com",
-		expectedImage:     "olblak/test",
+		expectedCondition:  true,
+		expectedDigest:     "ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6",
+		expectedHostname:   "hub.docker.com",
+		expectedImage:      "olblak/test",
+		requireCredentials: true,
 	},
 	{
 		docker: Docker{
@@ -185,6 +187,10 @@ var data = []DataSet{
 
 func TestParseImage(t *testing.T) {
 	for _, d := range data {
+		if testing.Short() && d.requireCredentials {
+			t.Skip("Skipping test in short mode when it requires specific credentials")
+			continue
+		}
 		hostnameGot, imageGot, err := parseImage(d.docker.Image)
 		if err != nil {
 			logrus.Errorf("err - %s", err)
@@ -227,6 +233,12 @@ func TestCondition(t *testing.T) {
 	// Test if existing image tag return true
 
 	for _, d := range data {
+		// Short mode also skip integration test that require credentials
+		if testing.Short() && d.requireCredentials {
+			t.Skip("Skipping test in short mode when it requires specific credentials")
+			continue
+		}
+
 		got, err := d.docker.Condition("")
 
 		if err != nil && d.expectedError != nil {
@@ -255,6 +267,12 @@ func TestCondition(t *testing.T) {
 func TestSource(t *testing.T) {
 	// Test if existing return the correct digest
 	for _, d := range data {
+		// Short mode also skip integration test that require credentials
+		if testing.Short() && d.requireCredentials {
+			t.Skip("Skipping test in short mode when it requires specific credentials")
+			continue
+		}
+
 		got, err := d.docker.Source("")
 
 		if err != nil && d.expectedError != nil {
