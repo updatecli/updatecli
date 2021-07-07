@@ -61,4 +61,4 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: make test
-        if: ${{ github.event_name == 'schedule' }} || ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'schedule' }}
