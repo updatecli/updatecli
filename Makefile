@@ -9,6 +9,9 @@ export DOCKER_BUILDKIT
 
 local_bin=./dist/updatecli_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)/updatecli
 
+clean: ## Clean go test cache
+	go clean -testcache
+
 .PHONY: build
 build: ## Build updatecli as a "dirty snapshot" (no tag, no release, but all OS/arch combinations)
 	goreleaser build --snapshot --rm-dist
@@ -79,6 +82,9 @@ display: ## Prints the current DOCKER_TAG
 .PHONY: test
 test: ## Execute the Golang's tests for updatecli
 	go test ./...
+
+test-short: ## Execute the Golang's tests for updatecli
+	go test ./... -short
 
 .PHONY: lint
 lint: ## Execute the Golang's linters on updatecli's source code

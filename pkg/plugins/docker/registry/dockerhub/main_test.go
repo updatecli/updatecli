@@ -1,15 +1,17 @@
 package dockerhub
 
 import (
+	"errors"
 	"os"
+	"strings"
 	"testing"
-
-	"github.com/sirupsen/logrus"
 )
 
 type DataSet struct {
-	docker         Docker
-	expectedDigest string
+	docker             Docker
+	expectedDigest     string
+	expectedError      error
+	requireCredentials bool
 }
 
 var data = []DataSet{
@@ -34,6 +36,7 @@ var data = []DataSet{
 			Tag:   "donotexist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("olblak/updatecli:donotexist not found on DockerHub"),
 	},
 	{
 		docker: Docker{
@@ -56,6 +59,7 @@ var data = []DataSet{
 			Tag:   "latest",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("olblak/donotexist:latest not found on DockerHub"),
 	},
 	{
 		docker: Docker{
@@ -63,6 +67,7 @@ var data = []DataSet{
 			Tag:   "donotexist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("donotexist/donotexist:donotexist not found on DockerHub"),
 	},
 	{
 		docker: Docker{
@@ -70,6 +75,7 @@ var data = []DataSet{
 			Tag:   "doNotExist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("jenkins/jenkins:doNotExist not found on DockerHub"),
 	},
 	{
 		docker: Docker{
@@ -77,18 +83,56 @@ var data = []DataSet{
 			Tag:   "2.275",
 			Token: os.Getenv("DOCKERHUB_TOKEN"),
 		},
-		expectedDigest: "e4630b9084110ad05b4b51f5131d62161881216d60433d1f2074d522c3dcd6dc",
+		expectedDigest:     "e4630b9084110ad05b4b51f5131d62161881216d60433d1f2074d522c3dcd6dc",
+		requireCredentials: true,
+	},
+	{
+		// Test private docker image with authentication
+		docker: Docker{
+			Image: "olblak/test",
+			Tag:   "updatecli",
+			Token: os.Getenv("DOCKERHUB_TOKEN"),
+		},
+		expectedDigest:     "ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6",
+		requireCredentials: true,
+	},
+	{
+		// Test private docker image without authentication
+		docker: Docker{
+			Image: "olblak/test",
+			Tag:   "updatecli",
+		},
+		expectedDigest: "",
+		expectedError:  errors.New("olblak/test:updatecli not found on DockerHub"),
 	},
 }
 
 func TestDigest(t *testing.T) {
 	// Test if existing return the correct digest
 	for _, d := range data {
+		// Short mode also skip integration test that require credentials
+		if testing.Short() && d.requireCredentials {
+			t.Skip("Skipping test in short mode when it requires specific credentials")
+			continue
+		}
+
 		got, err := d.docker.Digest()
 
-		if err != nil {
-			logrus.Errorf("err - %s", err)
+		if err != nil && d.expectedError != nil {
+			if strings.Compare(err.Error(), d.expectedError.Error()) != 0 {
+
+				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q\n",
+					d.expectedError.Error(), err.Error())
+			}
+		} else if err != nil && d.expectedError == nil {
+			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q\n",
+				"nil", err.Error())
+
+		} else if err == nil && d.expectedError != nil {
+			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q\n",
+				d.expectedError.Error(), "nil")
 		}
+
 		expected := d.expectedDigest
 		if got != expected {
 			t.Errorf("Docker Image %v:%v for arch %v, expect digest %v, got %v", d.docker.Image, d.docker.Tag, d.docker.Architecture, expected, got)
