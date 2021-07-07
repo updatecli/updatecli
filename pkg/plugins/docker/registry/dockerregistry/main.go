@@ -10,9 +10,9 @@ import (
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
+	Hostname string
 	Image    string
 	Tag      string
-	Hostname string
 	Token    string
 }
 
@@ -45,6 +45,7 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Add("Content-Type", "application/json")
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -66,7 +67,7 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	if len(data.Errors) > 0 {
-		e := fmt.Errorf("%s:%s", d.Image, d.Tag)
+		e := fmt.Errorf("%s/%s:%s", d.Hostname, d.Image, d.Tag)
 		for _, err := range data.Errors {
 			e = fmt.Errorf("%s - %s", e, err.Message)
 		}
@@ -74,7 +75,7 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	if len(data.Errors) > 0 {
-		e := fmt.Errorf("%s:%s", d.Image, d.Tag)
+		e := fmt.Errorf("%s/%s:%s", d.Hostname, d.Image, d.Tag)
 		for _, err := range data.Errors {
 			e = fmt.Errorf("%s - %s", e, err.Message)
 		}

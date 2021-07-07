@@ -1,26 +1,30 @@
 package docker
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerregistry"
-	"github.com/olblak/updateCli/pkg/plugins/docker/registry/ghcr"
 	"github.com/olblak/updateCli/pkg/plugins/docker/registry/quay"
 )
 
 // Source retrieve docker image tag digest from a registry
 func (d *Docker) Source(workingDir string) (string, error) {
+	errs := d.Validate()
+
+	if len(errs) > 0 {
+		for _, err := range errs {
+			logrus.Errorln(err)
+		}
+		return "", errors.New("error found in docker parameters")
+	}
 
 	hostname, image, err := parseImage(d.Image)
 
 	if err != nil {
-		return "", err
-	}
-
-	if ok, err := d.Check(); !ok {
 		return "", err
 	}
 
@@ -44,16 +48,6 @@ func (d *Docker) Source(workingDir string) (string, error) {
 		}
 
 		r = &q
-
-	} else if d.isGHCR() {
-
-		g := ghcr.Docker{
-			Image: image,
-			Tag:   d.Tag,
-			Token: d.Token,
-		}
-
-		r = &g
 
 	} else if ok, err := d.IsDockerRegistry(); ok {
 		if err != nil {
