@@ -1,14 +1,15 @@
 package quay
 
 import (
+	"errors"
+	"strings"
 	"testing"
-
-	"github.com/sirupsen/logrus"
 )
 
 type DataSet struct {
 	docker         Docker
 	expectedDigest string
+	expectedError  error
 }
 
 var data = []DataSet{
@@ -39,6 +40,7 @@ var data = []DataSet{
 			Tag:   "donotexist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("tag doesn't exist for quay.io/jetstack/cert-manager-controller:donotexist"),
 	},
 	{
 		docker: Docker{
@@ -46,6 +48,7 @@ var data = []DataSet{
 			Tag:   "donotexist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("quay.io/jetstack/donotexist:donotexist - doesn't exist on quay.io"),
 	},
 	{
 		docker: Docker{
@@ -53,6 +56,7 @@ var data = []DataSet{
 			Tag:   "donotexist",
 		},
 		expectedDigest: "",
+		expectedError:  errors.New("quay.io/donotexist/donotexist:donotexist - doesn't exist on quay.io"),
 	},
 }
 
@@ -61,9 +65,21 @@ func TestDigest(t *testing.T) {
 	for _, d := range data {
 		got, err := d.docker.Digest()
 
-		if err != nil {
-			logrus.Errorf("err - %s", err)
+		if err != nil && d.expectedError != nil {
+			if strings.Compare(err.Error(), d.expectedError.Error()) != 0 {
+
+				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q\n",
+					d.expectedError.Error(), err.Error())
+			}
+		} else if err != nil && d.expectedError == nil {
+			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q\n",
+				"nil", err.Error())
+
+		} else if err == nil && d.expectedError != nil {
+			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q\n",
+				d.expectedError.Error(), "nil")
 		}
+
 		expected := d.expectedDigest
 		if got != expected {
 			t.Errorf("Docker Image %v:%v expect digest %v, got %v", d.docker.Image, d.docker.Tag, expected, got)

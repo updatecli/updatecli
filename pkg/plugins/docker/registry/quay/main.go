@@ -10,9 +10,9 @@ import (
 
 // Docker contains various information to interact with a docker registry
 type Docker struct {
+	Architecture string
 	Image        string
 	Tag          string
-	Architecture string
 	Token        string
 }
 
@@ -29,6 +29,7 @@ func (d *Docker) Digest() (string, error) {
 	if len(d.Token) > 0 {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", d.Token))
 	}
+	req.Header.Add("Content-Type", "application/json")
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -36,6 +37,11 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	defer res.Body.Close()
+
+	if res.StatusCode >= 400 && res.StatusCode < 500 {
+
+		return "", fmt.Errorf("quay.io/%s:%s - doesn't exist on quay.io", d.Image, d.Tag)
+	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -51,10 +57,12 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	type response struct {
-		Description string
-		Name        string
-		Namespace   string
-		Tags        map[string]tagMetadata
+		Title        string
+		Description  string
+		Name         string
+		Namespace    string
+		Tags         map[string]tagMetadata
+		ErrorMessage string `json:"error_message"`
 	}
 
 	data := response{}
@@ -69,6 +77,6 @@ func (d *Docker) Digest() (string, error) {
 
 		return digest, nil
 	}
-	return "", nil
-
+	err = fmt.Errorf("tag doesn't exist for quay.io/%s:%s", d.Image, d.Tag)
+	return "", err
 }

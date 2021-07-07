@@ -8,29 +8,36 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Docker contains various information to interact with a dockerhub registry
 type Docker struct {
+	Architecture string
 	Image        string
 	Tag          string
-	Architecture string
 	Token        string
 }
 
 // Login authenticate with Dockerhub then return a valid bearer token
 func (d *Docker) Login() (string, error) {
-	decoded, err := base64.StdEncoding.DecodeString(d.Token)
-	if err != nil {
-		return "", err
+
+	authentication := ""
+
+	if len(d.Token) > 0 {
+		// Based on token, guess username/password
+		decoded, err := base64.StdEncoding.DecodeString(d.Token)
+		if err != nil {
+			return "", err
+		}
+
+		value := strings.SplitAfterN(string(decoded), ":", 2)
+
+		username := strings.TrimSuffix(value[0], ":")
+		password := value[1]
+		authentication = fmt.Sprintf("{\"username\": \"%s\", \"password\": \"%s\"}", username, password)
 	}
-
-	value := strings.SplitAfterN(string(decoded), ":", 2)
-
-	username := strings.TrimSuffix(value[0], ":")
-	password := value[1]
-
-	authentication := fmt.Sprintf("{\"username\": \"%s\", \"password\": \"%s\"}", username, password)
 
 	URL := "https://hub.docker.com/v2/users/login/"
 
@@ -90,10 +97,13 @@ func (d *Docker) Digest() (string, error) {
 		return "", err
 	}
 
+	req.Header.Add("Content-Type", "application/json")
+
 	if len(d.Token) > 0 {
 
 		token, err := d.Login()
 		if err != nil {
+			logrus.Error(err)
 			return "", err
 		}
 
@@ -110,7 +120,14 @@ func (d *Docker) Digest() (string, error) {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if res.StatusCode != 200 {
-		return "", nil
+		if res.StatusCode == 404 {
+			err = fmt.Errorf("%s:%s not found on DockerHub", d.Image, d.Tag)
+			logrus.Error(err)
+			return "", err
+		}
+		err = fmt.Errorf("Unexpected error from DockerHub for image %s:%s", d.Image, d.Tag)
+		logrus.Error(err)
+		return "", err
 	}
 
 	if err != nil {
@@ -123,8 +140,11 @@ func (d *Docker) Digest() (string, error) {
 	}
 
 	type response struct {
-		ID     int
-		Images []images
+		ID      int
+		Images  []images
+		Message string
+		Error   bool
+		Detail  string
 	}
 
 	data := response{}
@@ -132,6 +152,10 @@ func (d *Docker) Digest() (string, error) {
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		return "", err
+	}
+
+	if data.Error {
+		logrus.Debugln(data.Detail)
 	}
 
 	for _, image := range data.Images {
