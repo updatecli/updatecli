@@ -20,6 +20,7 @@ import (
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
+	DependsOn    []string `yaml:"depends_on"`
 	Name         string
 	Kind         string
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
@@ -27,7 +28,7 @@ type Condition struct {
 	Transformers transformer.Transformers
 	Spec         interface{}
 	Scm          map[string]interface{}
-	Result       string `yaml:"-"` // Ignore this field when unmarshal YAML
+	Result       string
 	SourceID     string `yaml:"sourceID"`
 }
 
