@@ -8,6 +8,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    # Run full test once a day
+    - cron: '0 0 * * *'
 
 jobs:
 
@@ -45,10 +48,17 @@ jobs:
       - name: Build
         run: make build
 
-      - name: Test
+      - name: Quick Test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make test-short
+        if: ${{ github.event_name == 'pull_request' }}
+
+      - name: All Test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: make test
+        if: ${{ github.event_name == 'schedule' }} || ${{ github.event_name == 'push' }}
