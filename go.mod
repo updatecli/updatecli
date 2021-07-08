@@ -11,7 +11,6 @@ require (
 	github.com/aws/aws-sdk-go v1.37.18 // indirect
 	github.com/fatih/color v1.12.0
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/heimdalr/dag v1.0.1
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/moby/buildkit v0.8.3
