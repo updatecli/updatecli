@@ -18,17 +18,16 @@ import (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
-	DependsOn    []string `yaml:"depends_on"`
 	Name         string
 	PipelineID   string `yaml:"pipelineID"` // PipelineID references a uniq pipeline run that allows to groups targets
 	Kind         string
-	Changelog    string
+	Changelog    string `yaml:"-"`
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
 	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
 	Transformers transformer.Transformers
 	Spec         interface{}
 	Scm          map[string]interface{}
-	Result       string
+	Result       string `yaml:"-"`
 	SourceID     string `yaml:"sourceID"`
 }
 
