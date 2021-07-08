@@ -22,7 +22,6 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	DependsOn    []string `yaml:"depends_on"` // DependsOn specify dag dependencies between sources
 	Name         string
 	Kind         string
 	Changelog    string
@@ -33,7 +32,7 @@ type Source struct {
 	Replaces     Replacers // Deprecated in favor of Transformers on 2021/01/3
 	Spec         interface{}
 	Scm          map[string]interface{}
-	Result       string
+	Result       string `yaml:"-"` // Ignore this key field when unmarshalling yaml file
 }
 
 // Spec source is an interface to handle source spec

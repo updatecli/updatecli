@@ -187,7 +187,7 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("+ %s +\n", strings.ToTitle("Run"))
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
 
-	for id, conf := range e.configurations {
+	for _, conf := range e.configurations {
 		if len(conf.Title) > 0 {
 			logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Title)+4))
 			logrus.Infof("# %s #\n", strings.ToTitle(conf.Title))
@@ -203,7 +203,6 @@ func (e *Engine) Run() (err error) {
 		conditionsStageReport := []reports.Stage{}
 		targetsStageReport := []reports.Stage{}
 
-		// Init sources report
 		for _, s := range conf.Sources {
 			s := reports.Stage{
 				Name:   s.Name,
@@ -213,7 +212,6 @@ func (e *Engine) Run() (err error) {
 			sourcesStageReport = append(sourcesStageReport, s)
 		}
 
-		// Init conditions report
 		for _, c := range conf.Conditions {
 			s := reports.Stage{
 				Name:   c.Name,
@@ -223,7 +221,6 @@ func (e *Engine) Run() (err error) {
 			conditionsStageReport = append(conditionsStageReport, s)
 		}
 
-		// Init target report
 		for _, t := range conf.Targets {
 			s := reports.Stage{
 				Name:   t.Name,
@@ -242,17 +239,9 @@ func (e *Engine) Run() (err error) {
 
 		report.Name = strings.ToTitle(conf.Name)
 
-		sortedSourcesKeys, err := SortedSourcesKeys(&conf.Sources)
-		if err != nil {
-			logrus.Errorf("%s %v\n", result.FAILURE, err)
-			e.Reports = append(e.Reports, report)
-			continue
-		}
-
 		i := 0
-		for _, id := range sortedSourcesKeys {
-			s := conf.Sources[id]
-			err := s.Execute()
+		for id, s := range conf.Sources {
+			err = s.Execute()
 
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
@@ -269,30 +258,22 @@ func (e *Engine) Run() (err error) {
 
 			s.Result = result.SUCCESS
 			report.Sources[i].Result = result.SUCCESS
-			report.Sources[i].Name = s.Name
 
 			i++
 
 			conf.Sources[id] = s
 
-			err = conf.Update()
-			if err != nil {
-				return err
-			}
 		}
 
 		if len(conf.Conditions) > 0 {
-
-			ok, err := RunConditions(&e.configurations[id])
+			c := conf
+			ok, err := RunConditions(&c)
 
 			i := 0
 
-			// Updating report information
 			for _, c := range conf.Conditions {
 				conditionsStageReport[i].Result = c.Result
-				conditionsStageReport[i].Name = c.Name
 				report.Conditions[i].Result = c.Result
-				report.Conditions[i].Name = c.Name
 				i++
 			}
 
@@ -301,11 +282,11 @@ func (e *Engine) Run() (err error) {
 				e.Reports = append(e.Reports, report)
 				continue
 			}
-
 		}
 
 		if len(conf.Targets) > 0 {
-			changed, err := RunTargets(&e.configurations[id], &e.Options.Target, &report)
+			c := conf
+			changed, err := RunTargets(&c, &e.Options.Target, &report)
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, report)
@@ -321,10 +302,8 @@ func (e *Engine) Run() (err error) {
 			for _, t := range conf.Targets {
 
 				report.Targets[i].Result = t.Result
-				report.Targets[i].Name = t.Name
 
 				targetsStageReport[i].Result = t.Result
-				targetsStageReport[i].Name = t.Name
 				i++
 			}
 
@@ -359,45 +338,31 @@ func (e *Engine) Run() (err error) {
 }
 
 // RunConditions run every conditions for a given configuration config.
-func RunConditions(config *config.Config) (bool, error) {
+func RunConditions(conf *config.Config) (bool, error) {
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("conditions"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
-	// Sort conditions keys by building a dependency graph
-	sortedConditionsKeys, err := SortedConditionsKeys(&config.Conditions)
-	if err != nil {
-		return false, err
-	}
-
-	for _, id := range sortedConditionsKeys {
-		c := config.Conditions[id]
+	for k, c := range conf.Conditions {
 		c.Result = result.FAILURE
 
+		conf.Conditions[k] = c
 		ok, err := c.Run(
-			config.Sources[c.SourceID].Prefix +
-				config.Sources[c.SourceID].Output +
-				config.Sources[c.SourceID].Postfix)
-
+			conf.Sources[c.SourceID].Prefix +
+				conf.Sources[c.SourceID].Output +
+				conf.Sources[c.SourceID].Postfix)
 		if err != nil {
 			return false, err
 		}
 
 		if !ok {
 			c.Result = result.FAILURE
-			config.Conditions[id] = c
+			conf.Conditions[k] = c
 			logrus.Infof("\n%s skipping: condition not met\n", result.FAILURE)
 			return false, nil
 		}
 
 		c.Result = result.SUCCESS
-		config.Conditions[id] = c
-
-		// Update pipeline after each condition run
-		err = config.Update()
-		if err != nil {
-			return false, err
-		}
-
+		conf.Conditions[k] = c
 	}
 
 	return true, nil
@@ -421,21 +386,8 @@ func RunTargets(config *config.Config, options *target.Options, report *reports.
 		logrus.Errorf("err - %s", err)
 	}
 
-	// Sort targets keys by building a dependency graph
-	sortedTargetsKeys, err := SortedTargetsKeys(&config.Targets)
-	if err != nil {
-		return false, err
-	}
-
-	for _, id := range sortedTargetsKeys {
-		t := config.Targets[id]
+	for id, t := range config.Targets {
 		targetChanged := false
-
-		// Update pipeline before each target run
-		err = config.Update()
-		if err != nil {
-			return false, err
-		}
 
 		t.Changelog = config.Sources[t.SourceID].Changelog
 
