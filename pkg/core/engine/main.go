@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/config"
+	"github.com/olblak/updateCli/pkg/core/context"
 	"github.com/olblak/updateCli/pkg/core/engine/target"
 	"github.com/olblak/updateCli/pkg/core/reports"
 	"github.com/olblak/updateCli/pkg/core/result"
@@ -24,6 +25,7 @@ import (
 // Engine defined parameters for a specific engine run.
 type Engine struct {
 	configurations []config.Config
+	Contexts       []context.Context
 	Options        Options
 	Reports        reports.Reports
 }
@@ -188,6 +190,13 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
 
 	for id, conf := range e.configurations {
+
+		currentContext := context.Context{}
+		currentContext.Init(&conf)
+
+		currentReport := reports.Report{}
+		currentReport.Init(&conf)
+
 		if len(conf.Title) > 0 {
 			logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Title)+4))
 			logrus.Infof("# %s #\n", strings.ToTitle(conf.Title))
@@ -199,142 +208,56 @@ func (e *Engine) Run() (err error) {
 			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 		}
 
-		sourcesStageReport := []reports.Stage{}
-		conditionsStageReport := []reports.Stage{}
-		targetsStageReport := []reports.Stage{}
-
-		// Init sources report
-		for _, s := range conf.Sources {
-			s := reports.Stage{
-				Name:   s.Name,
-				Kind:   s.Kind,
-				Result: result.FAILURE,
-			}
-			sourcesStageReport = append(sourcesStageReport, s)
-		}
-
-		// Init conditions report
-		for _, c := range conf.Conditions {
-			s := reports.Stage{
-				Name:   c.Name,
-				Kind:   c.Kind,
-				Result: result.FAILURE,
-			}
-			conditionsStageReport = append(conditionsStageReport, s)
-		}
-
-		// Init target report
-		for _, t := range conf.Targets {
-			s := reports.Stage{
-				Name:   t.Name,
-				Kind:   t.Kind,
-				Result: result.FAILURE,
-			}
-			targetsStageReport = append(targetsStageReport, s)
-		}
-
-		report := reports.Init(
-			conf.Name,
-			sourcesStageReport,
-			conditionsStageReport,
-			targetsStageReport,
-		)
-
-		report.Name = strings.ToTitle(conf.Name)
-
-		sortedSourcesKeys, err := SortedSourcesKeys(&conf.Sources)
+		err = RunSources(&conf, &currentReport, &currentContext)
 		if err != nil {
-			logrus.Errorf("%s %v\n", result.FAILURE, err)
-			e.Reports = append(e.Reports, report)
+			logrus.Errorf("Error occurred while running sources - %q", err.Error())
+			e.Reports = append(e.Reports, currentReport)
+			e.Contexts = append(e.Contexts, currentContext)
 			continue
-		}
-
-		i := 0
-		for _, id := range sortedSourcesKeys {
-			s := conf.Sources[id]
-			err := s.Execute()
-
-			if err != nil {
-				logrus.Errorf("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, report)
-				continue
-			}
-
-			if s.Output == "" {
-				s.Result = result.FAILURE
-				logrus.Infof("\n%s Something went wrong no value returned from Source", result.FAILURE)
-				e.Reports = append(e.Reports, report)
-				continue
-			}
-
-			s.Result = result.SUCCESS
-			report.Sources[i].Result = result.SUCCESS
-			report.Sources[i].Name = s.Name
-
-			i++
-
-			conf.Sources[id] = s
-
-			err = conf.Update()
-			if err != nil {
-				return err
-			}
 		}
 
 		if len(conf.Conditions) > 0 {
 
-			ok, err := RunConditions(&e.configurations[id])
+			ok, err := RunConditions(
+				&e.configurations[id],
+				&currentContext,
+				&currentReport)
 
-			i := 0
-
-			// Updating report information
-			for _, c := range conf.Conditions {
-				conditionsStageReport[i].Result = c.Result
-				conditionsStageReport[i].Name = c.Name
-				report.Conditions[i].Result = c.Result
-				report.Conditions[i].Name = c.Name
-				i++
-			}
-
-			if err != nil || !ok {
-				logrus.Infof("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, report)
+			if err != nil {
+				logrus.Infof("\n%s error happened during condition evaluation\n\n", result.FAILURE)
+				e.Reports = append(e.Reports, currentReport)
+				e.Contexts = append(e.Contexts, currentContext)
+				continue
+			} else if !ok {
+				logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
+				e.Reports = append(e.Reports, currentReport)
+				e.Contexts = append(e.Contexts, currentContext)
 				continue
 			}
 
 		}
 
 		if len(conf.Targets) > 0 {
-			changed, err := RunTargets(&e.configurations[id], &e.Options.Target, &report)
+			err := RunTargets(
+				&e.configurations[id],
+				&e.Options.Target,
+				&currentReport,
+				&currentContext)
+
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, report)
+				e.Reports = append(e.Reports, currentReport)
+				e.Contexts = append(e.Contexts, currentContext)
 				continue
 			}
-			if changed {
-				report.Result = result.CHANGED
-			} else {
-				report.Result = result.SUCCESS
-			}
-
-			i := 0
-			for _, t := range conf.Targets {
-
-				report.Targets[i].Result = t.Result
-				report.Targets[i].Name = t.Name
-
-				targetsStageReport[i].Result = t.Result
-				targetsStageReport[i].Name = t.Name
-				i++
-			}
-
 		}
 
 		if err != nil {
 			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
 		}
 
-		e.Reports = append(e.Reports, report)
+		e.Reports = append(e.Reports, currentReport)
+		e.Contexts = append(e.Contexts, currentContext)
 	}
 
 	err = e.Reports.Show()
@@ -359,7 +282,11 @@ func (e *Engine) Run() (err error) {
 }
 
 // RunConditions run every conditions for a given configuration config.
-func RunConditions(config *config.Config) (bool, error) {
+func RunConditions(
+	config *config.Config,
+	pipelineContext *context.Context,
+	pipelineReport *reports.Report) (globalResult bool, err error) {
+
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("conditions"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
@@ -369,138 +296,227 @@ func RunConditions(config *config.Config) (bool, error) {
 		return false, err
 	}
 
-	for _, id := range sortedConditionsKeys {
-		c := config.Conditions[id]
-		c.Result = result.FAILURE
+	i := 0
+	globalResult = true
 
-		ok, err := c.Run(
-			config.Sources[c.SourceID].Prefix +
-				config.Sources[c.SourceID].Output +
-				config.Sources[c.SourceID].Postfix)
+	for _, id := range sortedConditionsKeys {
+		condition := config.Conditions[id]
+		ctx := pipelineContext.Conditions[id]
+		rpt := pipelineReport.Conditions[i]
+
+		ok, err := condition.Run(
+			config.Sources[condition.SourceID].Prefix +
+				pipelineContext.Sources[condition.SourceID].Output +
+				config.Sources[condition.SourceID].Postfix)
 
 		if err != nil {
-			return false, err
+			globalResult = false
+			pipelineContext.Conditions[id] = ctx
+			pipelineReport.Conditions[i] = rpt
+			i++
+			continue
 		}
 
 		if !ok {
-			c.Result = result.FAILURE
-			config.Conditions[id] = c
-			logrus.Infof("\n%s skipping: condition not met\n", result.FAILURE)
-			return false, nil
+			globalResult = false
+			pipelineContext.Conditions[id] = ctx
+			pipelineReport.Conditions[i] = rpt
+			i++
+			continue
 		}
 
-		c.Result = result.SUCCESS
-		config.Conditions[id] = c
+		ctx.Result = result.SUCCESS
+		rpt.Result = result.SUCCESS
+
+		pipelineContext.Conditions[id] = ctx
+		pipelineReport.Conditions[i] = rpt
 
 		// Update pipeline after each condition run
-		err = config.Update()
+		err = config.Update(pipelineContext)
 		if err != nil {
-			return false, err
+			globalResult = false
+			return globalResult, err
 		}
-
+		i++
 	}
 
-	return true, nil
+	return globalResult, nil
+}
+
+// RunSources execute every updatecli sources for a specific pipeline
+func RunSources(
+	conf *config.Config,
+	pipelineReport *reports.Report,
+	pipelineContext *context.Context) error {
+
+	sortedSourcesKeys, err := SortedSourcesKeys(&conf.Sources)
+	if err != nil {
+		logrus.Errorf("%s %v\n", result.FAILURE, err)
+		return err
+	}
+
+	i := 0
+
+	for _, id := range sortedSourcesKeys {
+		source := conf.Sources[id]
+		ctx := pipelineContext.Sources[id]
+		rpt := pipelineReport.Sources[i]
+
+		ctx.Result = result.FAILURE
+		ctx.Output, ctx.Changelog, err = source.Execute()
+
+		if err != nil {
+			logrus.Errorf("%s %v\n", result.FAILURE, err)
+			pipelineContext.Sources[id] = ctx
+			pipelineReport.Sources[i] = rpt
+			i++
+			continue
+		}
+
+		if len(ctx.Output) == 0 {
+			logrus.Infof("\n%s Something went wrong no value returned from Source", result.FAILURE)
+			pipelineContext.Sources[id] = ctx
+			pipelineReport.Sources[i] = rpt
+			i++
+			continue
+		}
+
+		ctx.Result = result.SUCCESS
+		rpt.Result = result.SUCCESS
+
+		pipelineContext.Sources[id] = ctx
+		pipelineReport.Sources[i] = rpt
+
+		err = conf.Update(pipelineContext)
+		if err != nil {
+			return err
+		}
+
+		i++
+	}
+	return err
 }
 
 // RunTargets iterate on every targets then call target on each of them.
-func RunTargets(config *config.Config, options *target.Options, report *reports.Report) (targetsChanged bool, err error) {
-	targetsChanged = false
+func RunTargets(
+	cfg *config.Config,
+	options *target.Options,
+	pipelineReport *reports.Report,
+	pipelineContext *context.Context) error {
 
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("Targets"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Targets")+1))
 
-	sourceReport, err := report.String("sources")
+	sourceReport, err := pipelineReport.String("sources")
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
 	}
-	conditionReport, err := report.String("conditions")
+	conditionReport, err := pipelineReport.String("conditions")
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
 	}
 
 	// Sort targets keys by building a dependency graph
-	sortedTargetsKeys, err := SortedTargetsKeys(&config.Targets)
+	sortedTargetsKeys, err := SortedTargetsKeys(&cfg.Targets)
 	if err != nil {
-		return false, err
+		return err
 	}
 
+	i := 0
+
 	for _, id := range sortedTargetsKeys {
-		t := config.Targets[id]
+		target := cfg.Targets[id]
+		ctx := pipelineContext.Targets[id]
+		rpt := pipelineReport.Targets[i]
+
 		targetChanged := false
 
 		// Update pipeline before each target run
-		err = config.Update()
+		err = cfg.Update(pipelineContext)
 		if err != nil {
-			return false, err
+			return err
 		}
 
-		t.Changelog = config.Sources[t.SourceID].Changelog
+		target.Changelog = pipelineContext.Sources[target.SourceID].Changelog
 
-		if _, ok := t.Scm["github"]; ok {
+		if _, ok := target.Scm["github"]; ok {
 			var g github.Github
 
-			err := mapstructure.Decode(t.Scm["github"], &g)
+			err := mapstructure.Decode(target.Scm["github"], &g)
 
 			if err != nil {
-				return false, err
+				continue
 			}
 
-			g.PullRequestDescription.Description = t.Changelog
+			g.PullRequestDescription.Description = target.Changelog
 			g.PullRequestDescription.Report = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
 
-			if len(config.Title) > 0 {
+			if len(cfg.Title) > 0 {
 				// If a pipeline title has been defined, then use it for pull request title
 				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s",
-					config.Title)
+					cfg.Title)
 
-			} else if len(config.Targets) == 1 && len(t.Name) > 0 {
+			} else if len(cfg.Targets) == 1 && len(target.Name) > 0 {
 				// If we only have one target then we can use it as fallback.
 				// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
-				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s", t.Name)
+				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s", target.Name)
 			} else {
 				// At the moment, we don't have an easy way to describe what changed
 				// I am still thinking to a better solution.
 				logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
 				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
-					config.Sources[t.SourceID].Kind,
-					config.Sources[t.SourceID].Output)
+					cfg.Sources[target.SourceID].Kind,
+					pipelineContext.Sources[target.SourceID].Output)
 			}
 
-			t.Scm["github"] = g
+			target.Scm["github"] = g
 
 		}
 
-		if t.Prefix == "" && config.Sources[t.SourceID].Prefix != "" {
-			t.Prefix = config.Sources[t.SourceID].Prefix
+		if target.Prefix == "" && cfg.Sources[target.SourceID].Prefix != "" {
+			target.Prefix = cfg.Sources[target.SourceID].Prefix
 		}
 
-		if t.Postfix == "" && config.Sources[t.SourceID].Postfix != "" {
-			t.Postfix = config.Sources[t.SourceID].Postfix
+		if target.Postfix == "" && cfg.Sources[target.SourceID].Postfix != "" {
+			target.Postfix = cfg.Sources[target.SourceID].Postfix
 		}
 
-		targetChanged, err = t.Run(config.Sources[t.SourceID].Output, options)
+		targetChanged, err = target.Run(
+			pipelineContext.Sources[target.SourceID].Output,
+			options)
 
 		if err != nil {
 			logrus.Errorf("Something went wrong in target \"%v\" :\n", id)
 			logrus.Errorf("%v\n\n", err)
-			t.Result = result.FAILURE
-			return targetChanged, err
-		}
 
-		if !targetChanged {
-			t.Result = result.SUCCESS
+			rpt.Result = result.FAILURE
+			ctx.Result = result.FAILURE
+
+			cfg.Targets[id] = target
+			pipelineContext.Targets[id] = ctx
+			pipelineReport.Targets[i] = rpt
+			i++
+			continue
+
+		} else if targetChanged {
+			ctx.Result = result.CHANGED
+			rpt.Result = result.CHANGED
+
 		} else {
-			t.Result = result.CHANGED
-			targetsChanged = true
+			ctx.Result = result.SUCCESS
+			rpt.Result = result.SUCCESS
+
 		}
 
-		config.Targets[id] = t
+		cfg.Targets[id] = target
+		pipelineContext.Targets[id] = ctx
+		pipelineReport.Targets[i] = rpt
 
+		i++
 	}
-	return targetsChanged, nil
+	return nil
 }
 
 // Show displays configurations that should be apply.

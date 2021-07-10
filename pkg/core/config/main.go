@@ -49,7 +49,7 @@ type Config struct {
 	Name       string
 	PipelineID string        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	Title      string        // Title is used for the full pipeline
-	Source     source.Source // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a futur release
+	Source     source.Source // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
 	Sources    map[string]source.Source
 	Conditions map[string]condition.Condition
 	Targets    map[string]target.Target
@@ -129,7 +129,7 @@ func (config *Config) Validate() error {
 
 	} else if config.Source.Kind != "" && len(config.Sources) == 0 {
 
-		logrus.Warning("Since version 1.2.0, the single source definition is **Deprecated**  and replaced by Sources. This parameter will be deleted in a future release")
+		logrus.Warning("Since version 0.2.0, the single source definition is **Deprecated**  and replaced by Sources. This parameter will be deleted in a future release")
 
 		config.Sources = make(map[string]source.Source)
 		config.Sources[defaultSourceID] = config.Source
@@ -205,7 +205,7 @@ func Checksum(filename string) (string, error) {
 
 // Update updates its own configuration file
 // It's used when the configuration expected a value defined a runtime
-func (config *Config) Update() (err error) {
+func (config *Config) Update(data interface{}) (err error) {
 	funcMap := template.FuncMap{
 		"pipeline": func(s string) (string, error) {
 			/*
@@ -218,69 +218,34 @@ func (config *Config) Update() (err error) {
 				This func is design to constantly reevaluate if a configuration changed
 			*/
 
-			var field func(interface{}, []string) (string, error)
+			val, err := getFieldValueByQuery(config, strings.Split(s, "."))
 
-			field = func(conf interface{}, query []string) (value string, err error) {
-				ValueIface := reflect.ValueOf(conf)
-
-				Field := reflect.Value{}
-
-				// We want to be able to use case insensitive key
-				insensitiveQuery := []string{
-					query[0],
-					strings.Title(query[0]),
-					strings.ToTitle(query[0]),
-					strings.ToLower(query[0]),
-				}
-
-				switch ValueIface.Kind() {
-				case reflect.Ptr:
-					// Check if the passed interface is a pointer
-					// Create a new type of Iface's Type, so we have a pointer to work with
-					// 'dereference' with Elem() and get the field by name
-					Field = ValueIface.Elem().FieldByName(query[0])
-				case reflect.Map:
-					// We want to be able to use case insensitive key
-					for _, query := range insensitiveQuery {
-						Field = ValueIface.MapIndex(reflect.ValueOf(query))
-						if Field.IsValid() {
-							break
-						}
-					}
-				case reflect.Struct:
-					// We want to be able to use case insensitive key
-					for _, query := range insensitiveQuery {
-						Field = ValueIface.FieldByName(query)
-						if Field.IsValid() {
-							break
-						}
-					}
-				}
-
-				// Means that despite the different case sensitive key, we couldn't find it
-				if !Field.IsValid() {
-					logrus.Debugf(
-						"Configuration `%s` does not have the field `%s`",
-						ValueIface.Type(),
-						query[0])
-					return "", ErrNoKeyDefined
-				}
-
-				if len(query) > 1 {
-					value, err = field(Field.Interface(), query[1:])
-					if err != nil {
-						return "", err
-					}
-
-				} else if len(query) == 1 {
-					return Field.String(), nil
-				}
-
-				return value, nil
-
+			if err != nil {
+				return "", err
 			}
 
-			val, err := field(config, strings.Split(s, "."))
+			if len(val) > 0 {
+				return val, nil
+			}
+			// If we couldn't find a value, then we return the function so we can retry
+			// later on.
+			return fmt.Sprintf("{{ pipeline %q }}", s), nil
+
+		},
+		"context": func(s string) (string, error) {
+			/*
+				Retrieve the value of a third location key from
+				the updatecli contex.
+				It returns an error if a key doesn't exist
+				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
+				then we assume that the value will be set later in the run.
+				Otherwise it returns the value.
+				This func is design to constantly reevaluate if a configuration changed
+			*/
+
+			fmt.Printf("Data: %v\n", data)
+
+			val, err := getFieldValueByQuery(data, strings.Split(s, "."))
 
 			if err != nil {
 				return "", err
@@ -295,8 +260,6 @@ func (config *Config) Update() (err error) {
 
 		},
 	}
-
-	data := config
 
 	content, err := yaml.Marshal(config)
 
@@ -349,4 +312,64 @@ func IsTemplatedString(s string) bool {
 	}
 
 	return false
+}
+
+func getFieldValueByQuery(conf interface{}, query []string) (value string, err error) {
+	ValueIface := reflect.ValueOf(conf)
+
+	Field := reflect.Value{}
+
+	// We want to be able to use case insensitive key
+	insensitiveQuery := []string{
+		query[0],
+		strings.Title(query[0]),
+		strings.ToTitle(query[0]),
+		strings.ToLower(query[0]),
+	}
+
+	switch ValueIface.Kind() {
+	case reflect.Ptr:
+		// Check if the passed interface is a pointer
+		// Create a new type of Iface's Type, so we have a pointer to work with
+		// 'dereference' with Elem() and get the field by name
+		Field = ValueIface.Elem().FieldByName(query[0])
+	case reflect.Map:
+		// We want to be able to use case insensitive key
+		for _, query := range insensitiveQuery {
+			Field = ValueIface.MapIndex(reflect.ValueOf(query))
+			if Field.IsValid() {
+				break
+			}
+		}
+	case reflect.Struct:
+		// We want to be able to use case insensitive key
+		for _, query := range insensitiveQuery {
+			Field = ValueIface.FieldByName(query)
+			if Field.IsValid() {
+				break
+			}
+		}
+	}
+
+	// Means that despite the different case sensitive key, we couldn't find it
+	if !Field.IsValid() {
+		logrus.Debugf(
+			"Configuration `%s` does not have the field `%s`",
+			ValueIface.Type(),
+			query[0])
+		return "", ErrNoKeyDefined
+	}
+
+	if len(query) > 1 {
+		value, err = getFieldValueByQuery(Field.Interface(), query[1:])
+		if err != nil {
+			return "", err
+		}
+
+	} else if len(query) == 1 {
+		return Field.String(), nil
+	}
+
+	return value, nil
+
 }

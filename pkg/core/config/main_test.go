@@ -22,17 +22,45 @@ var (
 		{
 			ID: "1",
 			Config: Config{
-				Name: "{{ pipeline \"Source.Kind\" }}",
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+				Name: "{{ pipeline \"Sources.default.Kind\" }}",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
 				},
 			},
 			ExpectedConfig: Config{
 				Name: "jenkins",
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
+		},
+		{
+			ID: "1.1",
+			Config: Config{
+				Name:       "{{ context \"pipelineID\" }}",
+				PipelineID: "xyz",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			ExpectedConfig: Config{
+				Name: "xyz",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
 				},
 			},
 			ExpectedUpdateErr:   nil,
@@ -41,14 +69,14 @@ var (
 		{
 			ID: "2",
 			Config: Config{
-				Name: `{{ pipeline "Source.Output" }}`,
+				Name: `{{ pipeline "Source.Name" }}`,
 				Source: source.Source{
 					Name: "Get Version",
 					Kind: "jenkins",
 				},
 			},
 			ExpectedConfig: Config{
-				Name: `{{ pipeline "Source.Output" }}`,
+				Name: `Get Version`,
 				Source: source.Source{
 					Name: "Get Version",
 					Kind: "jenkins",
@@ -131,7 +159,7 @@ var (
 
 func TestUpdate(t *testing.T) {
 	for _, data := range dataSet {
-		err := data.Config.Update()
+		err := data.Config.Update(data.Config)
 		if err != nil && data.ExpectedUpdateErr != nil {
 			if !strings.Contains(err.Error(), data.ExpectedUpdateErr.Error()) {
 				t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
@@ -178,14 +206,19 @@ func TestValidate(t *testing.T) {
 	for _, data := range dataSet {
 		err := data.Config.Validate()
 		if err != nil && data.ExpectedValidateErr == nil {
-			t.Errorf("Unexpected Validate Error result for data %q\n\tExpected:\t\t'nil'\n\tGot:\t\t\t%q", data.ID, err.Error())
+			t.Errorf("Unexpected Validate Error result for data %q\n\tExpected:\t\t'nil'\n\tGot:\t\t\t%q",
+				data.ID,
+				err.Error())
 
 		} else if err == nil && data.ExpectedValidateErr != nil {
-			t.Errorf("Unexpected Validate Error result for data %q\n\tExpected:\t\t%q\n\tGot:\t\t\t\"nil\"", data.ID, data.ExpectedValidateErr.Error())
+			t.Errorf("Unexpected Validate Error result for data %q\n\tExpected:\t\t%q\n\tGot:\t\t\t\"nil\"",
+				data.ID,
+				data.ExpectedValidateErr.Error())
 
 		} else if err != nil && data.ExpectedValidateErr != nil {
 			if strings.Compare(err.Error(), data.ExpectedValidateErr.Error()) != 0 {
-				t.Errorf("Unexpected Validate Error for data %q", data.ID)
+				t.Errorf("Unexpected Validate Error for data %q",
+					data.ID)
 			}
 		}
 	}

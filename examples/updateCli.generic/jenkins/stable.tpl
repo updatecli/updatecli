@@ -9,13 +9,16 @@ source:
       username: {{ .github.username }}
 conditions:
   jenkinsVersion:
+    name: Test jenkinsversion 2.263.3
     kind: jenkins
     spec:
       version: "2.263.3"
   defaultjenkinsStable:
+    name: Test jenkins stable version
     kind: jenkins
   jenkinsStable:
     kind: jenkins
+    name: Test jenkins stable version a second time
     spec:
       release: stable
   imageTag:
@@ -32,6 +35,7 @@ conditions:
         user: olblak
         email: me@olblak.com
   dockerImage:
+    name: Test jenkins docker image
     kind: dockerImage
     postfix: "-jdk11"
     spec:

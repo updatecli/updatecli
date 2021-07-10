@@ -28,7 +28,6 @@ type Condition struct {
 	Transformers transformer.Transformers
 	Spec         interface{}
 	Scm          map[string]interface{}
-	Result       string
 	SourceID     string `yaml:"sourceID"`
 }
 

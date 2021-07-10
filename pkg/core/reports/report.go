@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/olblak/updateCli/pkg/core/config"
 	"github.com/olblak/updateCli/pkg/core/result"
 )
 
@@ -75,41 +76,34 @@ type Report struct {
 
 // Init init a new report for a specific configuration
 //func (config *Config) InitReport() (report *Report) {
-func Init(
-	name string,
-	sources []Stage,
-	conditions []Stage,
-	targets []Stage,
-) (report Report) {
+func (r *Report) Init(cfg *config.Config) {
 
-	report.Name = name
-	report.Result = result.FAILURE
+	r.Name = cfg.Name
+	r.Result = result.FAILURE
 
-	for _, source := range sources {
-		report.Sources = append(report.Sources, Stage{
+	for _, source := range cfg.Sources {
+		r.Sources = append(r.Sources, Stage{
 			Name:   source.Name,
 			Kind:   source.Kind,
 			Result: result.FAILURE,
 		})
 	}
 
-	for _, condition := range conditions {
-		report.Conditions = append(report.Conditions, Stage{
+	for _, condition := range cfg.Conditions {
+		r.Conditions = append(r.Conditions, Stage{
 			Name:   condition.Name,
 			Kind:   condition.Kind,
 			Result: result.FAILURE,
 		})
 	}
 
-	for _, target := range targets {
-		report.Targets = append(report.Targets, Stage{
+	for _, target := range cfg.Targets {
+		r.Targets = append(r.Targets, Stage{
 			Name:   target.Name,
 			Kind:   target.Kind,
 			Result: result.FAILURE,
 		})
 	}
-
-	return report
 }
 
 // String return a report as a string

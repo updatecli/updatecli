@@ -19,42 +19,42 @@ sources:
         username: {{ .github.username }}
 conditions:
   stabledockerImage:
-    name: 'Is docker image jenkins/jenkins:{{ pipeline "Sources.stable.output" }} published?'
+    name: 'Is docker image jenkins/jenkins:{{ context "Sources.stable.Output" }} published?'
     kind: dockerImage
     sourceID: stable
     spec:
       image: jenkins/jenkins
-      tag: '{{ pipeline "Sources.stable.output" }}-jdk11'
+      tag: '{{ context "Sources.stable.Output" }}-jdk11'
   weeklydockerImage:
-    name: 'Is docker image tag{{ pipeline "Sources.weekly.output" }} published?'
+    name: 'Is docker image tag{{ context "Sources.weekly.Output" }} published?'
     kind: dockerImage
     sourceID: weekly
     spec:
       image: jenkins/jenkins
-      tag: '{{ pipeline "Sources.weekly.output" }}-jdk11'
+      tag: '{{ context "Sources.weekly.Output" }}-jdk11'
   weekly2dockerImage:
-    name: 'Is docker image tag{{ pipeline "Sources.weekly.output" }} published?'
+    name: 'Is docker image tag{{ context "Sources.weekly.Output" }} published?'
     kind: dockerImage
     sourceID: weekly
     spec:
       image: jenkins/jenkins
-      tag: '{{ pipeline "Sources.weekly.output" }}-jdk11'
+      tag: '{{ context "Sources.weekly.Output" }}-jdk11'
   weekly3dockerImage:
-    name: 'Is docker image tag{{ pipeline "Sources.weekly.output" }} published?'
+    name: 'Is docker image tag{{ context "Sources.weekly.Output" }} published?'
     kind: dockerImage
     sourceID: weekly
     spec:
       image: jenkins/jenkins
-      tag: '{{ pipeline "Sources.weekly.output" }}-jdk11'
+      tag: '{{ context "Sources.weekly.Output" }}-jdk11'
 targets:
   imageTag:
-    name: 'Update jenkins/jenkins docker tag to {{ pipeline "Sources.weekly.output" }}-jdk11'
+    name: 'Update jenkins/jenkins docker tag to {{ context "Sources.weekly.Output" }}-jdk11'
     kind: yaml
     sourceID: stable
     spec:
       file: "charts/jenkins/values.yaml"
       key: "jenkins.controller.tag"
-      value: '{{ pipeline "Sources.weekly.output" }}-jdk11' 
+      value: '{{ context "Sources.weekly.Output" }}-jdk11' 
     scm:
       git:
         url: "git@github.com:olblak/charts.git"

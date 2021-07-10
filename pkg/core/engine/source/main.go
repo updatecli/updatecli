@@ -25,15 +25,12 @@ type Source struct {
 	DependsOn    []string `yaml:"depends_on"` // DependsOn specify dag dependencies between sources
 	Name         string
 	Kind         string
-	Changelog    string
-	Output       string
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
 	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
 	Transformers transformer.Transformers
 	Replaces     Replacers // Deprecated in favor of Transformers on 2021/01/3
 	Spec         interface{}
 	Scm          map[string]interface{}
-	Result       string
 }
 
 // Spec source is an interface to handle source spec
@@ -47,18 +44,15 @@ type Changelog interface {
 }
 
 // Execute execute actions defined by the source configuration
-func (s *Source) Execute() error {
+func (s *Source) Execute() (output string, changelogContent string, err error) {
 
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("Source"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Source")+1))
 
-	var output string
-	var err error
-
 	spec, changelog, err := s.Unmarshal()
 
 	if err != nil {
-		return err
+		return output, changelogContent, err
 	}
 
 	workingDir := ""
@@ -68,19 +62,19 @@ func (s *Source) Execute() error {
 		SCM, _, err := scm.Unmarshal(s.Scm)
 
 		if err != nil {
-			return err
+			return output, changelogContent, err
 		}
 
 		err = SCM.Init("", workingDir)
 
 		if err != nil {
-			return err
+			return output, changelogContent, err
 		}
 
 		err = SCM.Checkout()
 
 		if err != nil {
-			return err
+			return output, changelogContent, err
 		}
 
 		workingDir = SCM.GetDirectory()
@@ -89,7 +83,7 @@ func (s *Source) Execute() error {
 
 		pwd, err := os.Getwd()
 		if err != nil {
-			return err
+			return output, changelogContent, err
 		}
 
 		workingDir = pwd
@@ -99,21 +93,22 @@ func (s *Source) Execute() error {
 
 	// Retrieve changelog using default source output before
 	// modifying its value with the transformer
-	if changelog != nil && s.Changelog == "" {
-		s.Changelog, err = changelog.Changelog(output)
+	if changelog != nil {
+		changelogContent, err = changelog.Changelog(output)
 		if err != nil {
-			return err
+			return output, changelogContent, err
 		}
-	} else if changelog == nil && s.Changelog == "" {
-		s.Changelog = "We couldn't identify a way to automatically retrieve changelog information"
+	} else if changelog == nil {
+		changelogContent = "We couldn't identify a way to automatically retrieve changelog information"
 	} else {
-		return fmt.Errorf("Something weird happened while setting changelog")
+		err = fmt.Errorf("Something weird happened while setting changelog")
+		return output, changelogContent, err
 	}
 
 	if len(s.Transformers) > 0 {
 		output, err = s.Transformers.Apply(output)
 		if err != nil {
-			return err
+			return output, changelogContent, err
 		}
 	}
 
@@ -128,7 +123,7 @@ func (s *Source) Execute() error {
 	}
 
 	if err != nil {
-		return err
+		return output, changelogContent, err
 	}
 
 	// Deprecated in favor of Transformers on 2021/01/3
@@ -136,20 +131,18 @@ func (s *Source) Execute() error {
 		args := s.Replaces.Unmarshal()
 
 		r := strings.NewReplacer(args...)
-		s.Output = (r.Replace(output))
-	} else {
-		s.Output = output
+		output = (r.Replace(output))
 	}
 
-	if len(s.Changelog) > 0 {
+	if len(changelogContent) > 0 {
 		logrus.Infof("\n\n%s:\n", strings.ToTitle("Changelog"))
 		logrus.Infof("%s\n", strings.Repeat("=", len("Changelog")+1))
 
-		logrus.Infof("%s\n", s.Changelog)
+		logrus.Infof("%s\n", changelogContent)
 
 	}
 
-	return nil
+	return output, changelogContent, err
 }
 
 // Unmarshal decode a source spec and returned its typed content
