@@ -1,21 +1,18 @@
 package engine
 
 import (
-	"fmt"
 	"os"
 	"sync"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/mitchellh/mapstructure"
 	"github.com/olblak/updateCli/pkg/core/config"
-	"github.com/olblak/updateCli/pkg/core/engine/target"
+	"github.com/olblak/updateCli/pkg/core/context"
 	"github.com/olblak/updateCli/pkg/core/reports"
 	"github.com/olblak/updateCli/pkg/core/result"
 	"github.com/olblak/updateCli/pkg/core/scm"
 	"github.com/olblak/updateCli/pkg/core/tmp"
-	"github.com/olblak/updateCli/pkg/plugins/github"
 
 	"path/filepath"
 	"strings"
@@ -24,6 +21,7 @@ import (
 // Engine defined parameters for a specific engine run.
 type Engine struct {
 	configurations []config.Config
+	Contexts       []context.Context
 	Options        Options
 	Reports        reports.Reports
 }
@@ -187,7 +185,18 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("+ %s +\n", strings.ToTitle("Run"))
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
 
-	for _, conf := range e.configurations {
+	for id, conf := range e.configurations {
+
+		currentContext := context.Context{}
+		currentContext.Init(&e.configurations[id])
+
+		currentReport := reports.Report{}
+		currentReport.Init(
+			e.configurations[id].Name,
+			len(e.configurations[id].Sources),
+			len(e.configurations[id].Conditions),
+			len(e.configurations[id].Targets))
+
 		if len(conf.Title) > 0 {
 			logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Title)+4))
 			logrus.Infof("# %s #\n", strings.ToTitle(conf.Title))
@@ -199,121 +208,60 @@ func (e *Engine) Run() (err error) {
 			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 		}
 
-		sourcesStageReport := []reports.Stage{}
-		conditionsStageReport := []reports.Stage{}
-		targetsStageReport := []reports.Stage{}
+		err = RunSources(
+			&e.configurations[id],
+			&currentReport,
+			&currentContext)
 
-		for _, s := range conf.Sources {
-			s := reports.Stage{
-				Name:   s.Name,
-				Kind:   s.Kind,
-				Result: result.FAILURE,
-			}
-			sourcesStageReport = append(sourcesStageReport, s)
-		}
-
-		for _, c := range conf.Conditions {
-			s := reports.Stage{
-				Name:   c.Name,
-				Kind:   c.Kind,
-				Result: result.FAILURE,
-			}
-			conditionsStageReport = append(conditionsStageReport, s)
-		}
-
-		for _, t := range conf.Targets {
-			s := reports.Stage{
-				Name:   t.Name,
-				Kind:   t.Kind,
-				Result: result.FAILURE,
-			}
-			targetsStageReport = append(targetsStageReport, s)
-		}
-
-		report := reports.Init(
-			conf.Name,
-			sourcesStageReport,
-			conditionsStageReport,
-			targetsStageReport,
-		)
-
-		report.Name = strings.ToTitle(conf.Name)
-
-		i := 0
-		for id, s := range conf.Sources {
-			err = s.Execute()
-
-			if err != nil {
-				logrus.Errorf("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, report)
-				continue
-			}
-
-			if s.Output == "" {
-				s.Result = result.FAILURE
-				logrus.Infof("\n%s Something went wrong no value returned from Source", result.FAILURE)
-				e.Reports = append(e.Reports, report)
-				continue
-			}
-
-			s.Result = result.SUCCESS
-			report.Sources[i].Result = result.SUCCESS
-
-			i++
-
-			conf.Sources[id] = s
-
+		if err != nil {
+			logrus.Errorf("Error occurred while running sources - %q", err.Error())
+			e.Reports = append(e.Reports, currentReport)
+			e.Contexts = append(e.Contexts, currentContext)
+			continue
 		}
 
 		if len(conf.Conditions) > 0 {
-			c := conf
-			ok, err := RunConditions(&c)
 
-			i := 0
+			ok, err := RunConditions(
+				&e.configurations[id],
+				&currentContext,
+				&currentReport)
 
-			for _, c := range conf.Conditions {
-				conditionsStageReport[i].Result = c.Result
-				report.Conditions[i].Result = c.Result
-				i++
-			}
-
-			if err != nil || !ok {
-				logrus.Infof("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, report)
+			if err != nil {
+				logrus.Infof("\n%s error happened during condition evaluation\n\n", result.FAILURE)
+				e.Reports = append(e.Reports, currentReport)
+				e.Contexts = append(e.Contexts, currentContext)
+				continue
+			} else if !ok {
+				logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
+				e.Reports = append(e.Reports, currentReport)
+				e.Contexts = append(e.Contexts, currentContext)
 				continue
 			}
+
 		}
 
 		if len(conf.Targets) > 0 {
-			c := conf
-			changed, err := RunTargets(&c, &e.Options.Target, &report)
+			err := RunTargets(
+				&e.configurations[id],
+				&e.Options.Target,
+				&currentReport,
+				&currentContext)
+
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, report)
+				e.Reports = append(e.Reports, currentReport)
+				e.Contexts = append(e.Contexts, currentContext)
 				continue
 			}
-			if changed {
-				report.Result = result.CHANGED
-			} else {
-				report.Result = result.SUCCESS
-			}
-
-			i := 0
-			for _, t := range conf.Targets {
-
-				report.Targets[i].Result = t.Result
-
-				targetsStageReport[i].Result = t.Result
-				i++
-			}
-
 		}
 
 		if err != nil {
 			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
 		}
 
-		e.Reports = append(e.Reports, report)
+		e.Reports = append(e.Reports, currentReport)
+		e.Contexts = append(e.Contexts, currentContext)
 	}
 
 	err = e.Reports.Show()
@@ -335,124 +283,6 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("")
 
 	return err
-}
-
-// RunConditions run every conditions for a given configuration config.
-func RunConditions(conf *config.Config) (bool, error) {
-	logrus.Infof("\n\n%s:\n", strings.ToTitle("conditions"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("conditions")+1))
-
-	for k, c := range conf.Conditions {
-		c.Result = result.FAILURE
-
-		conf.Conditions[k] = c
-		ok, err := c.Run(
-			conf.Sources[c.SourceID].Prefix +
-				conf.Sources[c.SourceID].Output +
-				conf.Sources[c.SourceID].Postfix)
-		if err != nil {
-			return false, err
-		}
-
-		if !ok {
-			c.Result = result.FAILURE
-			conf.Conditions[k] = c
-			logrus.Infof("\n%s skipping: condition not met\n", result.FAILURE)
-			return false, nil
-		}
-
-		c.Result = result.SUCCESS
-		conf.Conditions[k] = c
-	}
-
-	return true, nil
-}
-
-// RunTargets iterate on every targets then call target on each of them.
-func RunTargets(config *config.Config, options *target.Options, report *reports.Report) (targetsChanged bool, err error) {
-	targetsChanged = false
-
-	logrus.Infof("\n\n%s:\n", strings.ToTitle("Targets"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Targets")+1))
-
-	sourceReport, err := report.String("sources")
-
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-	}
-	conditionReport, err := report.String("conditions")
-
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-	}
-
-	for id, t := range config.Targets {
-		targetChanged := false
-
-		t.Changelog = config.Sources[t.SourceID].Changelog
-
-		if _, ok := t.Scm["github"]; ok {
-			var g github.Github
-
-			err := mapstructure.Decode(t.Scm["github"], &g)
-
-			if err != nil {
-				return false, err
-			}
-
-			g.PullRequestDescription.Description = t.Changelog
-			g.PullRequestDescription.Report = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
-
-			if len(config.Title) > 0 {
-				// If a pipeline title has been defined, then use it for pull request title
-				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s",
-					config.Title)
-
-			} else if len(config.Targets) == 1 && len(t.Name) > 0 {
-				// If we only have one target then we can use it as fallback.
-				// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
-				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s", t.Name)
-			} else {
-				// At the moment, we don't have an easy way to describe what changed
-				// I am still thinking to a better solution.
-				logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
-				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
-					config.Sources[t.SourceID].Kind,
-					config.Sources[t.SourceID].Output)
-			}
-
-			t.Scm["github"] = g
-
-		}
-
-		if t.Prefix == "" && config.Sources[t.SourceID].Prefix != "" {
-			t.Prefix = config.Sources[t.SourceID].Prefix
-		}
-
-		if t.Postfix == "" && config.Sources[t.SourceID].Postfix != "" {
-			t.Postfix = config.Sources[t.SourceID].Postfix
-		}
-
-		targetChanged, err = t.Run(config.Sources[t.SourceID].Output, options)
-
-		if err != nil {
-			logrus.Errorf("Something went wrong in target \"%v\" :\n", id)
-			logrus.Errorf("%v\n\n", err)
-			t.Result = result.FAILURE
-			return targetChanged, err
-		}
-
-		if !targetChanged {
-			t.Result = result.SUCCESS
-		} else {
-			t.Result = result.CHANGED
-			targetsChanged = true
-		}
-
-		config.Targets[id] = t
-
-	}
-	return targetsChanged, nil
 }
 
 // Show displays configurations that should be apply.
