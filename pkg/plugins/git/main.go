@@ -41,8 +41,6 @@ func newDirectory(URL string) (string, error) {
 		}
 	}
 
-	logrus.Infof("Git Directory: %v", directory)
-
 	return directory, nil
 
 }

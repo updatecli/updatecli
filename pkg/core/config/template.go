@@ -35,6 +35,15 @@ func (t *Template) Init(config *Config) error {
 			}
 			return value, nil
 		},
+		"pipeline": func(s string) (string, error) {
+			return fmt.Sprintf(`{{ pipeline %q }}`, s), nil
+		},
+		"context": func(s string) (string, error) {
+			return fmt.Sprintf(`{{ context %q }}`, s), nil
+		},
+		"source": func(s string) (string, error) {
+			return fmt.Sprintf(`{{ source %q }}`, s), nil
+		},
 	}
 
 	c, err := os.Open(t.CfgFile)
