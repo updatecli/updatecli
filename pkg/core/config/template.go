@@ -38,9 +38,6 @@ func (t *Template) Init(config *Config) error {
 		"pipeline": func(s string) (string, error) {
 			return fmt.Sprintf(`{{ pipeline %q }}`, s), nil
 		},
-		"context": func(s string) (string, error) {
-			return fmt.Sprintf(`{{ context %q }}`, s), nil
-		},
 		"source": func(s string) (string, error) {
 			return fmt.Sprintf(`{{ source %q }}`, s), nil
 		},

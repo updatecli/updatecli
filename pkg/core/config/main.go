@@ -218,31 +218,6 @@ func (config *Config) Update(data interface{}) (err error) {
 				This func is design to constantly reevaluate if a configuration changed
 			*/
 
-			val, err := getFieldValueByQuery(config, strings.Split(s, "."))
-
-			if err != nil {
-				return "", err
-			}
-
-			if len(val) > 0 {
-				return val, nil
-			}
-			// If we couldn't find a value, then we return the function so we can retry
-			// later on.
-			return fmt.Sprintf("{{ pipeline %q }}", s), nil
-
-		},
-		"context": func(s string) (string, error) {
-			/*
-				Retrieve the value of a third location key from
-				the updatecli contex.
-				It returns an error if a key doesn't exist
-				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
-				then we assume that the value will be set later in the run.
-				Otherwise it returns the value.
-				This func is design to constantly reevaluate if a configuration changed
-			*/
-
 			val, err := getFieldValueByQuery(data, strings.Split(s, "."))
 
 			if err != nil {

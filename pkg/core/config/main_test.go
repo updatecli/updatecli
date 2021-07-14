@@ -8,9 +8,20 @@ import (
 	"github.com/olblak/updateCli/pkg/core/engine/source"
 )
 
+// Mocking the context package
+type mockSourceContext struct {
+	Output string
+}
+
+// Mocking the context package
+type context struct {
+	Sources map[string]mockSourceContext
+}
+
 type Data struct {
 	ID                  string
 	Config              Config
+	Context             context
 	ExpectedConfig      Config
 	ExpectedUpdateErr   error
 	ExpectedValidateErr error
@@ -19,10 +30,11 @@ type DataSet []Data
 
 var (
 	dataSet DataSet = DataSet{
+		// Testing that we get the correct value
 		{
 			ID: "1",
 			Config: Config{
-				Name: "{{ pipeline \"Sources.default.Kind\" }}",
+				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 				Sources: map[string]source.Source{
 					"default": {
 						Name: "Get Version",
@@ -30,8 +42,15 @@ var (
 					},
 				},
 			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
 			ExpectedConfig: Config{
-				Name: "jenkins",
+				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Source{
 					"default": {
 						Name: "Get Version",
@@ -45,8 +64,7 @@ var (
 		{
 			ID: "1.1",
 			Config: Config{
-				Name:       "{{ context \"pipelineID\" }}",
-				PipelineID: "xyz",
+				Name: "jenkins - {{ source \"default\" }}",
 				Sources: map[string]source.Source{
 					"default": {
 						Name: "Get Version",
@@ -54,8 +72,46 @@ var (
 					},
 				},
 			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
 			ExpectedConfig: Config{
-				Name: "xyz",
+				Name: "jenkins - 2.289.2",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
+		},
+		// Testing key case sensitive
+		{
+			ID: "2",
+			Config: Config{
+				Name: "jenkins - {{ pipeline \"sources.default.output\" }}",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedConfig: Config{
+				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Source{
 					"default": {
 						Name: "Get Version",
@@ -67,59 +123,36 @@ var (
 			ExpectedValidateErr: nil,
 		},
 		{
-			ID: "2",
-			Config: Config{
-				Name: `{{ pipeline "Source.Name" }}`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
-				},
-			},
-			ExpectedConfig: Config{
-				Name: `Get Version`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
-				},
-			},
-			ExpectedUpdateErr: nil,
-		},
-		{
 			ID: "2.1",
 			Config: Config{
-				Name: `{{ pipeline "source.name" }}`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+				Name: "jenkins - {{ source \"Default\" }}",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
 				},
 			},
 			ExpectedConfig: Config{
-				Name: `Get Version`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+				Name: "jenkins - 2.289.2",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
 				},
 			},
-			ExpectedUpdateErr: nil,
+			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
 		},
-		{
-			ID: "2.2",
-			Config: Config{
-				Name: `{{ pipeline "soUrce.name" }}`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
-				},
-			},
-			ExpectedConfig: Config{
-				Name: `Get Version`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
-				},
-			},
-			ExpectedUpdateErr: nil,
-		},
+		// Testing wrong key returning error message
 		{
 			ID: "3",
 			Config: Config{
@@ -127,6 +160,13 @@ var (
 				Source: source.Source{
 					Name: "Get Version",
 					Kind: "jenkins",
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
 				},
 			},
 			ExpectedConfig: Config{
@@ -137,10 +177,17 @@ var (
 		{
 			ID: "3.1",
 			Config: Config{
-				Name: `{{ context "Source.kindd" }}`,
+				Name: `{{ pipeline "Source.kindd" }}`,
 				Source: source.Source{
 					Name: "Get Version",
 					Kind: "jenkins",
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
 				},
 			},
 			ExpectedConfig: Config{
@@ -148,53 +195,86 @@ var (
 			},
 			ExpectedUpdateErr: ErrNoKeyDefined,
 		},
+		// Testing wrong function name
 		{
 			ID: "4",
 			Config: Config{
 				Name: `{{ pipeline Source.kind }}`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
 				},
 			},
 			ExpectedConfig:    Config{},
 			ExpectedUpdateErr: fmt.Errorf(`function "Source" not defined`),
 		},
 		{
-			ID: "5",
+			ID: "4.1",
 			Config: Config{
-				Name: `{{ pipeline Source.Kind }}`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+				Name: `{{ source default }}`,
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
 				},
 			},
-			ExpectedConfig: Config{
-				Name: "jenkins",
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
 			},
-			ExpectedUpdateErr: fmt.Errorf(`function "Source" not defined`),
+			ExpectedConfig:    Config{},
+			ExpectedUpdateErr: fmt.Errorf(`function "default" not defined`),
 		},
 		{
 			ID: "6",
 			Config: Config{
-				Name: `lts-{{ pipeline "Source.kind" }}-jdk11`,
-				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+				Name: `{{ source "default" }}-jdk11`,
+				Sources: map[string]source.Source{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
 				},
 			},
 			ExpectedConfig: Config{
-				Name: "lts-jenkins-jdk11",
+				Name: "2.289.2-jdk11",
 			},
 		},
 		{
-			ID: "wrongSourceKeyName",
+			ID: "7",
 			Config: Config{
 				Name: `lts-jenkins-jdk11`,
 				Sources: map[string]source.Source{
-					`{{ pipeline "Source.Name" }}`: {
+					`{{ pipeline "Sources.default.output" }}`: {
 						Name: "Get Version",
 						Kind: "jenkins",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
 					},
 				},
 			},
@@ -209,7 +289,7 @@ var (
 
 func TestUpdate(t *testing.T) {
 	for _, data := range dataSet {
-		err := data.Config.Update(data.Config)
+		err := data.Config.Update(data.Context)
 		if err != nil && data.ExpectedUpdateErr != nil {
 			if !strings.Contains(err.Error(), data.ExpectedUpdateErr.Error()) {
 				t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
@@ -221,8 +301,8 @@ func TestUpdate(t *testing.T) {
 		} else if err != nil && data.ExpectedUpdateErr == nil {
 			t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
 				data.ID,
-				err.Error(),
-				"nil")
+				"nil",
+				err.Error())
 		} else if err == nil && data.ExpectedUpdateErr != nil {
 			t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
 				data.ID,
