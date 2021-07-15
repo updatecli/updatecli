@@ -75,41 +75,14 @@ type Report struct {
 
 // Init init a new report for a specific configuration
 //func (config *Config) InitReport() (report *Report) {
-func Init(
-	name string,
-	sources []Stage,
-	conditions []Stage,
-	targets []Stage,
-) (report Report) {
+func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 
-	report.Name = name
-	report.Result = result.FAILURE
+	r.Name = name
+	r.Result = result.FAILURE
 
-	for _, source := range sources {
-		report.Sources = append(report.Sources, Stage{
-			Name:   source.Name,
-			Kind:   source.Kind,
-			Result: result.FAILURE,
-		})
-	}
-
-	for _, condition := range conditions {
-		report.Conditions = append(report.Conditions, Stage{
-			Name:   condition.Name,
-			Kind:   condition.Kind,
-			Result: result.FAILURE,
-		})
-	}
-
-	for _, target := range targets {
-		report.Targets = append(report.Targets, Stage{
-			Name:   target.Name,
-			Kind:   target.Kind,
-			Result: result.FAILURE,
-		})
-	}
-
-	return report
+	r.Sources = make([]Stage, sourceNbr)
+	r.Conditions = make([]Stage, conditionNbr)
+	r.Targets = make([]Stage, targetNbr)
 }
 
 // String return a report as a string

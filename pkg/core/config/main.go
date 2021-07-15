@@ -1,13 +1,16 @@
 package config
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
 
@@ -34,6 +37,10 @@ var (
 	// retrieve a key value which is not defined in the configuration
 	ErrNoKeyDefined = errors.New("key not defined in configuration")
 
+	// ErrNotAllowedTemplatedKey is returned when
+	// we are planning to template at runtime unauthorized keys such map key
+	ErrNotAllowedTemplatedKey = errors.New("not allowed templated key")
+
 	defaultSourceID = "default"
 )
 
@@ -42,7 +49,7 @@ type Config struct {
 	Name       string
 	PipelineID string        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	Title      string        // Title is used for the full pipeline
-	Source     source.Source // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a futur release
+	Source     source.Source // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
 	Sources    map[string]source.Source
 	Conditions map[string]condition.Condition
 	Targets    map[string]target.Target
@@ -122,11 +129,18 @@ func (config *Config) Validate() error {
 
 	} else if config.Source.Kind != "" && len(config.Sources) == 0 {
 
-		logrus.Warning("Since version 1.2.0, the single source definition is **Deprecated**  and replaced by Sources. This parameter will be deleted in a future release")
+		logrus.Warning("Since version 0.2.0, the single source definition is **Deprecated**  and replaced by Sources. This parameter will be deleted in a future release")
 
 		config.Sources = make(map[string]source.Source)
 		config.Sources[defaultSourceID] = config.Source
 		config.Source = source.Source{}
+	}
+
+	for id := range config.Sources {
+		if IsTemplatedString(id) {
+			logrus.Errorf("sources key %q contains forbidden go template instruction", id)
+			return ErrNotAllowedTemplatedKey
+		}
 	}
 
 	for id, c := range config.Conditions {
@@ -138,6 +152,11 @@ func (config *Config) Validate() error {
 			for id := range config.Sources {
 				c.SourceID = id
 			}
+		}
+
+		if IsTemplatedString(id) {
+			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
+			return ErrNotAllowedTemplatedKey
 		}
 		config.Conditions[id] = c
 	}
@@ -154,6 +173,11 @@ func (config *Config) Validate() error {
 			for id := range config.Sources {
 				t.SourceID = id
 			}
+		}
+
+		if IsTemplatedString(id) {
+			logrus.Errorf("target key %q contains forbidden go template instruction", id)
+			return ErrNotAllowedTemplatedKey
 		}
 		config.Targets[id] = t
 	}
@@ -177,4 +201,184 @@ func Checksum(filename string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
+// Update updates its own configuration file
+// It's used when the configuration expected a value defined a runtime
+func (config *Config) Update(data interface{}) (err error) {
+	funcMap := template.FuncMap{
+		"pipeline": func(s string) (string, error) {
+			/*
+				Retrieve the value of a third location key from
+				the updatecli configuration.
+				It returns an error if a key doesn't exist
+				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
+				then we assume that the value will be set later in the run.
+				Otherwise it returns the value.
+				This func is design to constantly reevaluate if a configuration changed
+			*/
+
+			val, err := getFieldValueByQuery(data, strings.Split(s, "."))
+
+			if err != nil {
+				return "", err
+			}
+
+			if len(val) > 0 {
+				return val, nil
+			}
+			// If we couldn't find a value, then we return the function so we can retry
+			// later on.
+			return fmt.Sprintf("{{ pipeline %q }}", s), nil
+
+		},
+		"source": func(s string) (string, error) {
+			/*
+				Retrieve the value of a third location key from
+				the updatecli contex.
+				It returns an error if a key doesn't exist
+				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
+				then we assume that the value will be set later in the run.
+				Otherwise it returns the value.
+				This func is design to constantly reevaluate if a configuration changed
+			*/
+
+			val, err := getFieldValueByQuery(
+				data, []string{"Sources", s, "Output"})
+
+			if err != nil {
+				return "", err
+			}
+
+			if len(val) > 0 {
+				return val, nil
+			}
+			// If we couldn't find a value, then we return the function so we can retry
+			// later on.
+			return fmt.Sprintf("{{ source %q }}", s), nil
+
+		},
+	}
+
+	content, err := yaml.Marshal(config)
+
+	if err != nil {
+		return err
+	}
+
+	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
+
+	if err != nil {
+		return err
+	}
+
+	b := bytes.Buffer{}
+
+	if err := tmpl.Execute(&b, &data); err != nil {
+		return err
+	}
+
+	err = yaml.Unmarshal(b.Bytes(), &config)
+	if err != nil {
+		return err
+	}
+
+	err = config.Validate()
+	if err != nil {
+		return err
+	}
+
+	return err
+
+}
+
+// IsTemplatedString test if a string contains go template information
+func IsTemplatedString(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+
+	leftDelimiterFound := false
+
+	for _, val := range strings.SplitAfter(s, "{{") {
+		if strings.Contains(val, "{{") {
+			leftDelimiterFound = true
+			continue
+		}
+		if strings.Contains(val, "}}") && leftDelimiterFound {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getFieldValueByQuery(conf interface{}, query []string) (value string, err error) {
+	ValueIface := reflect.ValueOf(conf)
+
+	Field := reflect.Value{}
+
+	// We want to be able to use case insensitive key
+	insensitiveQuery := []string{
+		query[0],
+		strings.ToLower(query[0]),
+		strings.Title(strings.ToLower(query[0])),
+		strings.Title(query[0]),
+		strings.ToTitle(query[0]),
+	}
+
+	switch ValueIface.Kind() {
+	case reflect.Ptr:
+		// Check if the passed interface is a pointer
+		// Create a new type of Iface's Type, so we have a pointer to work with
+		// 'dereference' with Elem() and get the field by name
+		//Field = ValueIface.Elem().FieldByName(query[0])
+
+		for _, q := range insensitiveQuery {
+			Field = ValueIface.Elem().FieldByName(q)
+			if Field.IsValid() {
+				query[0] = q
+				break
+			}
+		}
+	case reflect.Map:
+		// We want to be able to use case insensitive key
+		for _, q := range insensitiveQuery {
+			Field = ValueIface.MapIndex(reflect.ValueOf(q))
+			if Field.IsValid() {
+				query[0] = q
+				break
+			}
+		}
+	case reflect.Struct:
+		// We want to be able to use case insensitive key
+		for _, q := range insensitiveQuery {
+			Field = ValueIface.FieldByName(q)
+			if Field.IsValid() {
+				break
+			}
+		}
+	}
+
+	// Means that despite the different case sensitive key, we couldn't find it
+	if !Field.IsValid() {
+		logrus.Debugf(
+			"Configuration `%s` does not have the field `%s`",
+			ValueIface.Type(),
+			query[0])
+		return "", ErrNoKeyDefined
+	}
+
+	if len(query) > 1 {
+		value, err = getFieldValueByQuery(Field.Interface(), query[1:])
+		if err != nil {
+			return "", err
+		}
+
+	} else if len(query) == 1 {
+		return Field.String(), nil
+	}
+
+	return value, nil
+
 }
