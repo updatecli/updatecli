@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -115,7 +116,7 @@ func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	if !dryRun {
 
-		err := WriteToFile(f.Content, f.File)
+		err := WriteToFile(f.Content, filepath.Join(scm.GetDirectory(), f.File))
 		if err != nil {
 			return false, files, message, err
 		}
