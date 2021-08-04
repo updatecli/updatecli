@@ -3,11 +3,11 @@ package dockerfile
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/mobyparser"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDockerfile_SetParser(t *testing.T) {

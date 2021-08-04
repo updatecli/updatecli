@@ -3,9 +3,9 @@ package dockerfile
 import (
 	"path"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/helpers"
 	"github.com/updatecli/updatecli/pkg/core/scm"
-	"github.com/sirupsen/logrus"
 )
 
 // Condition test if the Dockerfile contains the correct key/value

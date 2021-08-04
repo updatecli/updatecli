@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/updatecli/updatecli/pkg/core/helpers"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDockerfile_Target(t *testing.T) {

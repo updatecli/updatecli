@@ -3,8 +3,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/engine"
 	"github.com/updatecli/updatecli/pkg/core/result"

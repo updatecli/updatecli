@@ -7,9 +7,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/helpers"
 	"github.com/updatecli/updatecli/pkg/core/scm"
-	"github.com/sirupsen/logrus"
 )
 
 // Target updates a targeted Dockerfile

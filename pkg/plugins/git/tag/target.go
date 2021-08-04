@@ -3,10 +3,10 @@ package tag
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/git"
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
-	"github.com/sirupsen/logrus"
 )
 
 // Target create a tag if needed from a local git repository, without pushing the tag

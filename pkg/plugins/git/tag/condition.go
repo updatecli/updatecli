@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
-	"github.com/sirupsen/logrus"
 )
 
 // Condition checks that a git tag exists
