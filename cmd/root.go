@@ -3,11 +3,11 @@ package cmd
 import (
 	"os"
 
-	"github.com/olblak/updateCli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/sirupsen/logrus"
 
-	"github.com/olblak/updateCli/pkg/core/engine"
-	"github.com/olblak/updateCli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/engine"
+	"github.com/updatecli/updatecli/pkg/core/result"
 
 	"github.com/spf13/cobra"
 )

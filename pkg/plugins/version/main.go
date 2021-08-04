@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/olblak/updateCli/pkg/plugins/version/semver"
+	"github.com/updatecli/updatecli/pkg/plugins/version/semver"
 	"github.com/sirupsen/logrus"
 )
 

@@ -7,13 +7,13 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/olblak/updateCli/pkg/core/scm"
-	"github.com/olblak/updateCli/pkg/core/transformer"
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
-	"github.com/olblak/updateCli/pkg/plugins/file"
-	"github.com/olblak/updateCli/pkg/plugins/git/tag"
-	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
-	"github.com/olblak/updateCli/pkg/plugins/yaml"
+	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/transformer"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
+	"github.com/updatecli/updatecli/pkg/plugins/file"
+	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
+	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
+	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Target defines which file needs to be updated based on source output

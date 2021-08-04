@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/olblak/updateCli/pkg/plugins/git"
-	"github.com/olblak/updateCli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/git"
+	"github.com/updatecli/updatecli/pkg/plugins/github"
 )
 
 // Scm is an interface that offers common functions for a source control manager like git or github

@@ -7,7 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/olblak/updateCli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 const reportsTpl string = `

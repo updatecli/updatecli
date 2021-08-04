@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/olblak/updateCli/pkg/plugins/github"
-	"github.com/olblak/updateCli/pkg/plugins/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/sirupsen/logrus"
 )
 

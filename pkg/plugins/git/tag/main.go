@@ -1,7 +1,7 @@
 package tag
 
 import (
-	"github.com/olblak/updateCli/pkg/plugins/version"
+	"github.com/updatecli/updatecli/pkg/plugins/version"
 	"github.com/sirupsen/logrus"
 )
 

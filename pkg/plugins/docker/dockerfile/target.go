@@ -7,8 +7,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/olblak/updateCli/pkg/core/helpers"
-	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/helpers"
+	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/sirupsen/logrus"
 )
 

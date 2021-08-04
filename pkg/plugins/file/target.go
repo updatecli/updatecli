@@ -7,7 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 // Target creates or updates a file located locally.

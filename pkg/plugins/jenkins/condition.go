@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/olblak/updateCli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 // Condition checks that a Jenkins version exists and that the version

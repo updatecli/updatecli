@@ -3,7 +3,7 @@ package dockerfile
 import (
 	"testing"
 
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/types"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 	"github.com/stretchr/testify/assert"
 )
 

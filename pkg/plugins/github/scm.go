@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	git "github.com/olblak/updateCli/pkg/plugins/git/generic"
+	git "github.com/updatecli/updatecli/pkg/plugins/git/generic"
 	"github.com/sirupsen/logrus"
 )
 

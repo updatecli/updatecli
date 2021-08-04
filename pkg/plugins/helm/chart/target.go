@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/olblak/updateCli/pkg/core/scm"
-	"github.com/olblak/updateCli/pkg/plugins/yaml"
+	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 	"github.com/sirupsen/logrus"
 	helm "helm.sh/helm/v3/pkg/chart"
 
