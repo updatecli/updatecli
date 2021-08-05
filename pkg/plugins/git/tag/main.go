@@ -1,8 +1,8 @@
 package tag
 
 import (
-	"github.com/olblak/updateCli/pkg/plugins/version"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/version"
 )
 
 // Tag contains git tag information

@@ -7,12 +7,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/olblak/updateCli/pkg/core/config"
-	"github.com/olblak/updateCli/pkg/core/context"
-	"github.com/olblak/updateCli/pkg/core/reports"
-	"github.com/olblak/updateCli/pkg/core/result"
-	"github.com/olblak/updateCli/pkg/core/scm"
-	"github.com/olblak/updateCli/pkg/core/tmp"
+	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/context"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/tmp"
 
 	"path/filepath"
 	"strings"

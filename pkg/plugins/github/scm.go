@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	git "github.com/olblak/updateCli/pkg/plugins/git/generic"
 	"github.com/sirupsen/logrus"
+	git "github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )
 
 // Init set default Github parameters if not set.

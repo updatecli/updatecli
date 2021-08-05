@@ -9,10 +9,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/olblak/updateCli/pkg/core/tmp"
-	"github.com/olblak/updateCli/pkg/plugins/git/commit"
-	"github.com/olblak/updateCli/pkg/plugins/version"
 	"github.com/shurcooL/githubv4"
+	"github.com/updatecli/updatecli/pkg/core/tmp"
+	"github.com/updatecli/updatecli/pkg/plugins/git/commit"
+	"github.com/updatecli/updatecli/pkg/plugins/version"
 	"golang.org/x/oauth2"
 )
 

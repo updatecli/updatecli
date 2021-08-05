@@ -6,9 +6,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
-	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerregistry"
-	"github.com/olblak/updateCli/pkg/plugins/docker/registry/quay"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerhub"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerregistry"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/quay"
 )
 
 // Source retrieve docker image tag digest from a registry

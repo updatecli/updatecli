@@ -3,9 +3,9 @@ package dockerfile
 import (
 	"fmt"
 
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/mobyparser"
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/simpletextparser"
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/types"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/mobyparser"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 )
 
 // Dockerfile is struct that holds parameters for a "Dockerfile" kind from updatecli's parsing (YAML, command and flags)

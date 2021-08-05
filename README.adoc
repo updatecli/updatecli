@@ -1,8 +1,10 @@
 = Updatecli
 
+CAUTION: Updatecli is an experiment to help keeping infrastructure as much up to date as possible.
+While a significant effort is done to avoid breaking changes, we can't guaranty stability.
+
 link:https://github.com/updatecli/updatecli/blob/main/LICENSE[image:https://img.shields.io/github/license/updatecli/updatecli[GitHub]]
 link:https://goreportcard.com/report/github.com/updatecli/updatecli[image:https://goreportcard.com/badge/github.com/updatecli/updatecli[Go Report Card]]
-link:https://hub.docker.com/r/olblak/updatecli[image:https://img.shields.io/docker/pulls/olblak/updatecli?label=olblak%2Fupdatecli&logo=docker&logoColor=white[Docker Pulls]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/latest/total[GitHub Releases]]
 link:https://github.com/updatecli/updatecli/actions?query=workflow%3AGo[image:https://img.shields.io/github/workflow/status/updatecli/updatecli/Go[GitHub Workflow Status]]
 link:https://gitter.im/Updatecli/community#[image:https://img.shields.io/gitter/room/updatecli/community[Gitter]]
@@ -16,7 +18,7 @@ You describe your update strategy in a file then you run updatecli to it.
 
 Updatecli reads a yaml or a go template configuration file, then works into three stages
 
-1. Sources: Based on a rule, updatecli fetches a value that will be injected in later stages.
+1. Sources: Based on a rule, updatecli fetches a value that will be injected in later stages such as latest application version.
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
 3. Target: Update and publish the target files based on a value retrieved from the source stage.
 
@@ -26,12 +28,15 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 * *Portability*: Easy to add to your workflow whatever it is. Just one command to run.  Of course, it's easy to remove.
 * *Extensibility*: Easy to add new go packages to support more workflows.
 
-
 == Why
 
 They are many projects out there, which can continuously update your files but they all have an opinionated way of doing it and they often want you to adopt a new platform. Building and distributing software is a difficult thing and good practices constantly evolve. Updatecli was built to work independently wherever you need, and combining whatever workflow you are using as you can see in the following section.
 
-== Example
+== Documentation
+
+Documentation for updatecli is available on link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io] but feel free to look at the next section to get an overview of how updatecli works.
+
+=== Example
 In this example, we define an update strategy in "updatecli.yaml" then we run `updatecli apply --config updatecli.yaml`.
 Our objective is to know if the Jenkins project published a new stable version, if they build an appropriated docker image specifically for jdk11 and automatically update our infrastructure accordingly.
 
@@ -42,9 +47,8 @@ Our objective is to know if the Jenkins project published a new stable version, 
 sources:
   default:
     kind: jenkins
-    postfix: "-jdk11"
     spec:
-      release: stable
+      release: weekly
 conditions:
   docker:
     name: "Docker Image Published on Registry"
@@ -72,27 +76,32 @@ targets:
 |What it says:
 
 . Sources: +
-What's the latest jenkins stable version? +
+What's the latest jenkins weekly version? +
 => 2.264 +
-Append "-jdk11" to it +
-=> 2.264-jdk11 +
 
 . Conditions: +
-Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.264-jdk11" +
+Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.264" +
 => Yes then proceed otherwise abort +
 
 . Targets: +
-Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264-jdk11"? +
+Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264"? +
 => If yes then open a Github pull request to the branch "main"
 
 |===
 
-More link:https://www.updatecli.io/docs/prologue/introduction/[Introduction]
+More information link:https://www.updatecli.io/docs/prologue/introduction/[here]
 
-[cols="4*","header"]
-|===
-|link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
-|link:https://github.com/updatecli/updatecli/blob/main/doc/CONTRIBUTING.adoc[CONTRIBUTING]
-|link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
-|link:https://github.com/updatecli/updatecli/blob/main/doc/ADOPTERS.md[ADOPTERS]
-|===
+
+---
+
+== Contributing
+
+|link:https://github.com/updatecli/updatecli/blob/main/docs/CONTRIBUTING.adoc[CONTRIBUTING]
+
+
+== Links
+
+* link:https://github.com/updatecli/updatecli/blob/main/docs/ADOPTERS.md[ADOPTERS]
+* link:https://github.com/updatecli/updatecli/blob/main/docs/CONTRIBUTING.adoc[CONTRIBUTING]
+* link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
+* link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
