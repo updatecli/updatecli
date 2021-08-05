@@ -5,7 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	git "github.com/olblak/updateCli/pkg/plugins/git/generic"
+	git "github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )
 
 // Add run `git add`.

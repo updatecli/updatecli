@@ -3,9 +3,9 @@ package context
 import (
 	"fmt"
 
-	"github.com/olblak/updateCli/pkg/core/config"
-	"github.com/olblak/updateCli/pkg/core/reports"
-	"github.com/olblak/updateCli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Context contains every context information gathered during an updatecli run

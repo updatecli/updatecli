@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/olblak/updateCli/pkg/core/helpers"
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/core/helpers"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 )
 
 func TestDockerfile_Target(t *testing.T) {

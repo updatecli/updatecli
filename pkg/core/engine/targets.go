@@ -5,13 +5,13 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/olblak/updateCli/pkg/core/config"
-	"github.com/olblak/updateCli/pkg/core/context"
-	"github.com/olblak/updateCli/pkg/core/engine/target"
-	"github.com/olblak/updateCli/pkg/core/reports"
-	"github.com/olblak/updateCli/pkg/core/result"
-	"github.com/olblak/updateCli/pkg/plugins/github"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/context"
+	"github.com/updatecli/updatecli/pkg/core/engine/target"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/github"
 )
 
 // RunTargets iterates on every target to update each them.

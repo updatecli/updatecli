@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/types"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 )
 
 type SimpleTextDockerfileParser struct {

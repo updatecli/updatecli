@@ -13,9 +13,9 @@ echo v0.0.15-6-g1e24f1d
 v0.0.15-6-g1e24f1d
 go build \
 	-ldflags "-w -s \
-        -X \"github.com/olblak/updateCli/pkg/version.BuildTime=`date -R`\" \
-        -X \"github.com/olblak/updateCli/pkg/version.GoVersion=go version go1.16.2 linux/amd64\" \
-        -X \"github.com/olblak/updateCli/pkg/version.Version=v0.0.15-6-g1e24f1d\""\
+        -X \"github.com/updatecli/updatecli/pkg/version.BuildTime=`date -R`\" \
+        -X \"github.com/updatecli/updatecli/pkg/version.GoVersion=go version go1.16.2 linux/amd64\" \
+        -X \"github.com/updatecli/updatecli/pkg/version.Version=v0.0.15-6-g1e24f1d\""\
         -o bin/updatecli
 ```
 
@@ -131,7 +131,7 @@ type Spec interface {
 Each stage which can be configured using a yaml/go template has to bind a resource kind and a package name, this is done in the "Unmarshal" function
 
 ```
-  import "github.com/olblak/updateCli/pkg/plugins/packageName"
+  import "github.com/updatecli/updatecli/pkg/plugins/packageName"
   ...
 
 	case "packageName":
@@ -170,3 +170,4 @@ targets:
 === DOCUMENTATION
 
 If you spot phrasing issues or just a lack of documentation, feel free to open an issue and/or a pull request with your contribution.
+https://github.com/updatecli/website[website]

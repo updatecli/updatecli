@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/types"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 )
 
 type MobyParser struct {

@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/olblak/updateCli/pkg/plugins/github"
-	"github.com/olblak/updateCli/pkg/plugins/maven"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/maven"
 )
 
 // Jenkins defines parameters needed to retrieve latest Jenkins version

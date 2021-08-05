@@ -1,7 +1,7 @@
 package jenkins
 
 import (
-	"github.com/olblak/updateCli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/github"
 )
 
 var (

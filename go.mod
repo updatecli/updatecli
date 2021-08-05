@@ -1,4 +1,4 @@
-module github.com/olblak/updateCli
+module github.com/updatecli/updatecli
 
 go 1.16
 

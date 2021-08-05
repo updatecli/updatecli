@@ -4,17 +4,17 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/olblak/updateCli/pkg/core/scm"
-	"github.com/olblak/updateCli/pkg/core/transformer"
-	"github.com/olblak/updateCli/pkg/plugins/docker"
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile"
-	"github.com/olblak/updateCli/pkg/plugins/file"
-	gitTag "github.com/olblak/updateCli/pkg/plugins/git/tag"
-	"github.com/olblak/updateCli/pkg/plugins/helm/chart"
-	"github.com/olblak/updateCli/pkg/plugins/jenkins"
-	"github.com/olblak/updateCli/pkg/plugins/maven"
-	"github.com/olblak/updateCli/pkg/plugins/yaml"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/transformer"
+	"github.com/updatecli/updatecli/pkg/plugins/docker"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
+	"github.com/updatecli/updatecli/pkg/plugins/file"
+	gitTag "github.com/updatecli/updatecli/pkg/plugins/git/tag"
+	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
+	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
+	"github.com/updatecli/updatecli/pkg/plugins/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Condition defines which condition needs to be met

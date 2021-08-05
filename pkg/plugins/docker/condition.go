@@ -6,10 +6,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/olblak/updateCli/pkg/core/scm"
-	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerhub"
-	"github.com/olblak/updateCli/pkg/plugins/docker/registry/dockerregistry"
-	"github.com/olblak/updateCli/pkg/plugins/docker/registry/quay"
+	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerhub"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerregistry"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/quay"
 )
 
 // ConditionFromSCM returns an error because it's not supported

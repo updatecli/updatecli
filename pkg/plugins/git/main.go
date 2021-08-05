@@ -7,8 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/olblak/updateCli/pkg/core/tmp"
-	"github.com/olblak/updateCli/pkg/plugins/git/commit"
+	"github.com/updatecli/updatecli/pkg/core/tmp"
+	"github.com/updatecli/updatecli/pkg/plugins/git/commit"
 )
 
 // Git contains settings to manipulate a git repository.

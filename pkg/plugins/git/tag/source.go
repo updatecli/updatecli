@@ -3,8 +3,8 @@ package tag
 import (
 	"fmt"
 
-	"github.com/olblak/updateCli/pkg/plugins/git/generic"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )
 
 // Source return the latest git tag based on create time

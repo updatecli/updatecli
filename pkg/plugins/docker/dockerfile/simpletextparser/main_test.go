@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
-	"github.com/olblak/updateCli/pkg/plugins/docker/dockerfile/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
+	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 )
 
 func TestInstruction_setKeywordLogic(t *testing.T) {

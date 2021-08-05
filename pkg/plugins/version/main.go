@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/olblak/updateCli/pkg/plugins/version/semver"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/version/semver"
 )
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
