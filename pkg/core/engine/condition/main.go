@@ -14,6 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
@@ -182,6 +183,16 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		}
 
 		spec = &y
+
+	case "shell":
+		shellResourceSpec := shell.ShellSpec{}
+
+		err := mapstructure.Decode(condition.Spec, &shellResourceSpec)
+		if err != nil {
+			return nil, err
+		}
+
+		spec = shell.New(shellResourceSpec)
 
 	default:
 		return nil, fmt.Errorf("Don't support condition: %v", condition.Kind)
