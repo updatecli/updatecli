@@ -1,18 +1,19 @@
 package ami
 
 import (
+	"strings"
 	"testing"
 )
 
-type ConditionData struct {
+type Data struct {
 	ami            AMI
-	expectedResult bool
+	expectedResult string
 }
 
-type ConditionDataSet []ConditionData
+type DataSet []Data
 
 var (
-	conditionDataset = ConditionDataSet{
+	dataset = DataSet{
 		{
 			ami: AMI{
 				Region: "us-east-2",
@@ -20,7 +21,7 @@ var (
 					Name: "jenkins-agent-ubuntu*",
 				},
 			},
-			expectedResult: true,
+			expectedResult: "ami-0ff3b7aefa91e0935",
 		},
 		{
 			ami: AMI{
@@ -29,7 +30,7 @@ var (
 					Name: "jenkins-agent-ubuntu-18-amd64-20210422161407",
 				},
 			},
-			expectedResult: true,
+			expectedResult: "ami-04099718d202c0132",
 		},
 		{
 			ami: AMI{
@@ -37,7 +38,7 @@ var (
 					ImageID: "ami-0477181fce0d41679",
 				},
 			},
-			expectedResult: true,
+			expectedResult: "ami-0477181fce0d41679",
 		},
 		{
 			ami: AMI{
@@ -45,22 +46,22 @@ var (
 					ImageID: "xxx",
 				},
 			},
-			expectedResult: false,
+			expectedResult: "",
 		},
 	}
 )
 
-func TestCondition(t *testing.T) {
+func TestSource(t *testing.T) {
 
-	for id, d := range conditionDataset {
-		got, err := d.ami.Condition("")
+	for id, d := range dataset {
+		got, err := d.ami.Source("")
 		if err != nil {
 			t.Errorf("Unexpected error: %q",
 				err)
 		}
 
-		if got != d.expectedResult {
-			t.Errorf("[%d] Wrong AMI ID returned:\nExpected Result:\t\t%v\nGot:\t\t\t\t\t%v",
+		if strings.Compare(got, d.expectedResult) != 0 {
+			t.Errorf("[%d] Wrong AMI ID returned:\nExpected Result:\t\t%q\nGot:\t\t\t\t\t%q",
 				id,
 				d.expectedResult,
 				got)

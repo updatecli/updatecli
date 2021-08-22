@@ -1,6 +1,7 @@
 package ami
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -12,23 +13,33 @@ import (
 
 // Source returns the latest AMI matching the filter
 func (a *AMI) Source(workingDir string) (string, error) {
-	//
+
+	errs := a.Init()
+
+	for _, err := range errs {
+		logrus.Error(err)
+	}
+	if len(errs) > 0 {
+		return "", errors.New("Too many errors")
+	}
 
 	svc := ec2.New(session.New(), &aws.Config{
-		Region:      aws.String("us-east-1"),
-		Endpoint:    aws.String("https://ec2.us-,east-1.amazonaws.com"),
-		Credentials: aws.String("xxx"),
+		CredentialsChainVerboseErrors: func(verbose bool) *bool {
+			return &verbose
+		}(true),
+		Region:      aws.String(a.Region),
+		Endpoint:    aws.String(a.Endpoint),
+		Credentials: a.credentials,
+		MaxRetries:  func(val int) *int { return &val }(3),
 	})
 
-	//input := &ec2.DescribeImagesInput{
-	//	ImageIds: []*string{
-	//		aws.String("ami-5731123e"),
-	//	},
-	//}
+	input := &ec2.DescribeImagesInput{
+		DryRun:  &a.DryRun,
+		Filters: a.ec2Filters,
+	}
 
-	//result, err := svc.DescribeImages(input)
+	result, err := svc.DescribeImages(input)
 
-	result, err := svc.DescribeImages(&a.Filters)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
@@ -43,7 +54,15 @@ func (a *AMI) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(result)
+	if nbImages := len(result.Images); nbImages > 0 {
+		logrus.Infof("\u2714 %d AMI found\n", nbImages)
 
-	return result.String(), nil
+		ShowShortDescription(result.Images[len(result.Images)-1])
+
+		return *result.Images[len(result.Images)-1].ImageId, nil
+	}
+
+	fmt.Printf("\u2717 No AMI found matching criteria\n")
+
+	return "", nil
 }
