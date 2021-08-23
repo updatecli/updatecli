@@ -3,6 +3,7 @@ package ami
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -15,8 +16,27 @@ import (
 // Condition test if a image matching specific filters exist.
 func (a *AMI) Condition(source string) (bool, error) {
 
-	if len(a.Filters.ImageID) == 0 {
-		a.Filters.ImageID = source
+	if source != "" {
+		// Based on source information,
+		// we try to define a default image-id resource
+		// if not researched
+		isImageIDDefined := false
+		for i := 0; i < len(a.Filters); i++ {
+			if strings.Compare(a.Filters[i].Name, "image-id") == 0 {
+				isImageIDDefined = true
+				break
+			}
+
+		}
+
+		// Set image-id to source output if not yet defined
+		if !isImageIDDefined {
+			a.Filters = append(a.Filters, Filter{
+				Name:   "image-id",
+				Values: source,
+			})
+		}
+
 	}
 
 	errs := a.Init()

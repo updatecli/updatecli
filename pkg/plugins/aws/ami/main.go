@@ -22,26 +22,31 @@ type AMI struct {
 	credentials *credentials.Credentials
 }
 
-// Filters represents all filter type that can be used to identify a specific AMI
-type Filters struct {
-	Architecture       string // architecture        - The image architecture (i386 | x86_64 | arm64).
-	ImageID            string // image-id            - The ID of the image.
-	ImageType          string // image-type          - The image type (machine | kernel | ramdisk).
-	IsPublic           bool   // is-public           - A Boolean that indicates whether the image is public.
-	HyperVisor         string // hypervisor          - The hypervisor type (ovm | xen).
-	Name               string // name 	             - The name of the AMI (provided during image creation).
-	OwnerID            string // owner-id            - The AWS account ID of the owner. We recommend that you use. the Owner request parameter instead of this filter.
-	VirtualizationType string // virtualization-type - The virtualization type (paravirtual | hvm).
+// Filter represents the updatecli configuration to define AMI filter
+// This datatype need to be convert the ec2.Filter.
+type Filter struct {
+	Name   string
+	Values string
 }
 
+// Filters represent a list of Filter
+type Filters []Filter
+
 func (f *Filters) String() string {
-	output := ""
-	output = fmt.Sprintf("Architecture: \t%q", f.Architecture)
-	output = output + fmt.Sprintf("/\nArchitecture: \t%q", f.Architecture)
-	output = output + fmt.Sprintf("/\nImageID: \t%q", f.ImageID)
-	output = output + fmt.Sprintf("/\nImageType: \t%q", f.ImageType)
-	output = output + fmt.Sprintf("/\nName: \t%q", f.Name)
-	return output
+	str := ""
+	filters := *f
+
+	for i := 0; i < len(filters); i++ {
+		filter := filters[i]
+		str = str + fmt.Sprintf("%s: \t%q", filter.Name, filter.Values)
+
+		if i < len(filters)-1 {
+			str = str + "\n"
+		}
+
+	}
+
+	return str
 }
 
 // Init run basic parameter initiation
@@ -63,29 +68,14 @@ func (a *AMI) Init() (errs []error) {
 		return output
 	}
 
-	if len(a.Filters.Architecture) > 0 {
-		name := "architecture"
+	// Init ec2Filters
+	for i := 0; i < len(a.Filters); i++ {
 		filter := ec2.Filter{
-			Name:   &name,
-			Values: values(strings.Split(a.Filters.Architecture, ",")),
-		}
-		a.ec2Filters = append(a.ec2Filters, &filter)
-	}
-
-	if len(a.Filters.Name) > 0 {
-		name := "name"
-		filter := ec2.Filter{
-			Name:   &name,
-			Values: values(strings.Split(a.Filters.Name, ",")),
-		}
-		a.ec2Filters = append(a.ec2Filters, &filter)
-	}
-
-	if len(a.Filters.ImageID) > 0 {
-		name := "image-id"
-		filter := ec2.Filter{
-			Name:   &name,
-			Values: values(strings.Split(a.Filters.ImageID, ",")),
+			Name: func(input string) *string {
+				output := strings.ToLower(input)
+				return &output
+			}(a.Filters[i].Name),
+			Values: values(strings.Split(a.Filters[i].Values, ",")),
 		}
 		a.ec2Filters = append(a.ec2Filters, &filter)
 	}

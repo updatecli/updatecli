@@ -17,7 +17,10 @@ var (
 			ami: AMI{
 				Region: "us-east-2",
 				Filters: Filters{
-					Name: "jenkins-agent-ubuntu*",
+					{
+						Name:   "name",
+						Values: "jenkins-agent-ubuntu*",
+					},
 				},
 			},
 			expectedResult: true,
@@ -26,7 +29,10 @@ var (
 			ami: AMI{
 				Region: "us-east-2",
 				Filters: Filters{
-					Name: "jenkins-agent-ubuntu-18-amd64-20210422161407",
+					{
+						Name:   "name",
+						Values: "jenkins-agent-ubuntu-18-amd64-20210422161407",
+					},
 				},
 			},
 			expectedResult: true,
@@ -34,7 +40,10 @@ var (
 		{
 			ami: AMI{
 				Filters: Filters{
-					ImageID: "ami-0477181fce0d41679",
+					{
+						Name:   "image-id",
+						Values: "ami-0477181fce0d41679",
+					},
 				},
 			},
 			expectedResult: true,
@@ -42,7 +51,10 @@ var (
 		{
 			ami: AMI{
 				Filters: Filters{
-					ImageID: "xxx",
+					{
+						Name:   "image-id",
+						Values: "xxx",
+					},
 				},
 			},
 			expectedResult: false,
