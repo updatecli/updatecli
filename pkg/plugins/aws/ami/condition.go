@@ -37,6 +37,11 @@ func (a *AMI) Condition(source string) (bool, error) {
 			})
 		}
 
+	} else {
+		if len(a.Filters) == 0 {
+			logrus.Infof("\u2717 No AMI could found as no AMI filters defined\n")
+			return false, nil
+		}
 	}
 
 	errs := a.Init()
