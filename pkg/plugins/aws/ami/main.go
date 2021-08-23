@@ -62,7 +62,8 @@ func (a *AMI) Init() (errs []error) {
 	// Convert []string to []*string as required by the ec2.Filter values field
 	values := func(input []string) []*string {
 		var output []*string
-		for _, s := range input {
+		for i := range input {
+			s := input[i]
 			output = append(output, &s)
 		}
 		return output
