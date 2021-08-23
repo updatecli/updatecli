@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
+	"github.com/updatecli/updatecli/pkg/plugins/aws/ami"
 	"github.com/updatecli/updatecli/pkg/plugins/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	gitTag "github.com/updatecli/updatecli/pkg/plugins/git/tag"
@@ -149,6 +150,17 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 // Unmarshal decode a source spec and returned its typed content
 func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
 	switch s.Kind {
+	case "aws/ami":
+		a := ami.AMI{}
+
+		err := mapstructure.Decode(s.Spec, &a)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec = &a
+
 	case "githubRelease":
 		g := github.Github{}
 		err := mapstructure.Decode(s.Spec, &g)
