@@ -1,0 +1,33 @@
+sources:
+  ami1:
+    kind: aws/ami
+    spec: 
+      region: us-east-2
+      filters:
+        - name: "name"
+          values: "jenkins-agent-ubuntu*"
+  ami2:
+    kind: aws/ami
+    spec: 
+      region: us-east-2
+      filters:
+        - name: "image-id"
+          values: "ami-0ff3b7aefa91e0935"
+
+conditions:
+  ami1:
+    sourceID: ami1
+    kind: aws/ami
+    spec:
+      region: us-east-2
+  ami2:
+    sourceID: ami2
+    kind: aws/ami
+    spec:
+      region: us-east-2
+targets:
+  file:
+    sourceID: ami1
+    kind: file
+    spec:
+      file: /tmp/updatecli_cli_test 
