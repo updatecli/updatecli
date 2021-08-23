@@ -62,7 +62,7 @@ func (a *AMI) Source(workingDir string) (string, error) {
 		return *result.Images[len(result.Images)-1].ImageId, nil
 	}
 
-	fmt.Printf("\u2717 No AMI found matching criteria\n")
+	fmt.Printf("\u2717 No AMI found matching criteria in region %s\n", a.Region)
 
 	return "", nil
 }
