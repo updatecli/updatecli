@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
+	"github.com/updatecli/updatecli/pkg/plugins/aws/ami"
 	"github.com/updatecli/updatecli/pkg/plugins/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
@@ -103,6 +104,17 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 func Unmarshal(condition *Condition) (spec Spec, err error) {
 
 	switch condition.Kind {
+
+	case "aws/ami":
+		a := ami.AMI{}
+
+		err := mapstructure.Decode(condition.Spec, &a)
+
+		if err != nil {
+			return nil, err
+		}
+
+		spec = &a
 
 	case "dockerImage":
 		d := docker.Docker{}
