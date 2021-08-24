@@ -36,7 +36,7 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 	}
 
 	if cmdResult.ExitCode != 0 {
-		logrus.Infof("%v The shell 🐚 command %q failed to validate the condition:\nexit code was %q\nstderr=\n%v\nstdout=\n%v\n.", result.FAILURE, customCommand, cmdResult.ExitCode, cmdResult.Stderr, cmdResult.Stdout)
+		logrus.Infof(errorMessage(cmdResult.ExitCode, customCommand, cmdResult.Stderr, cmdResult.Stdout))
 		return false, nil
 	}
 

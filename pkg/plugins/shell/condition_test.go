@@ -109,19 +109,6 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 			},
 		},
 		{
-			name:        "Failed Condition in existing SCM",
-			command:     "ls",
-			source:      "1.2.3",
-			scmDir:      "/dummy/dir",
-			wantResult:  false,
-			wantErr:     false,
-			wantCommand: "ls 1.2.3",
-			commandResult: commandResult{
-				ExitCode: 1,
-				Stderr:   "ls: 1.2.3: No such file or directory",
-			},
-		},
-		{
 			name:       "Empty command with non empty source in existing SCM",
 			command:    "",
 			source:     "1.2.3",

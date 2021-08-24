@@ -3,7 +3,6 @@ package shell
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -24,13 +23,9 @@ type commandExecutor interface {
 	ExecuteCommand(cmd command) (commandResult, error)
 }
 
-type nativeCommandExecutor struct {}
+type nativeCommandExecutor struct{}
 
 func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResult, error) {
-	if strings.TrimSpace(inputCmd.Cmd) == "" {
-		return commandResult{}, fmt.Errorf(ErrEmptyCommand)
-	}
-
 	var stdout, stderr bytes.Buffer
 	cmdFields := strings.Fields(inputCmd.Cmd)
 	command := exec.Command(cmdFields[0], cmdFields[1:]...) //nolint: gosec

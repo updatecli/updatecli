@@ -1,10 +1,12 @@
 package shell
 
-import "fmt"
+import (
+	"github.com/updatecli/updatecli/pkg/core/scm"
+)
 
-////////////// Test Utilities method aimed at mocking calls to other objects
-
-// mockCommandExecutor is a stub implementation of the `commandExecutor` interface to be used in our test suite. It stores the received `command` and returns the preconfigured `result` and `err`.
+// mockCommandExecutor is a stub implementation of the `commandExecutor` interface
+// to be used in our test suite.
+// It stores the received `command` and returns the preconfigured `result` and `err`.
 type mockCommandExecutor struct {
 	gotCommand command
 	result     commandResult
@@ -13,9 +15,6 @@ type mockCommandExecutor struct {
 
 func (mce *mockCommandExecutor) ExecuteCommand(cmd command) (commandResult, error) {
 	mce.gotCommand = cmd
-	if mce.gotCommand.Cmd == "" {
-		return commandResult{}, fmt.Errorf(ErrEmptyCommand)
-	}
 	return mce.result, mce.err
 }
 

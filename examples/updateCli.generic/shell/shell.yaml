@@ -3,16 +3,16 @@ sources:
   default:
     kind: shell
     spec:
-      command: "bash -x ./examples/updateCli.generic/shell/source.sh"
+      command: "./examples/updateCli.generic/shell/source.sh"
 conditions:
   default:
     kind: shell
     spec:
-      command: "bash -x ./examples/updateCli.generic/shell/condition.sh"
+      command: "./examples/updateCli.generic/shell/condition.sh"
 targets:
   default:
     name: setGrepVersion
     sourceID: default
     kind: shell
     spec:
-      command: "bash -x ./examples/updateCli.generic/shell/target.sh"
+      command: "./examples/updateCli.generic/shell/target.sh"

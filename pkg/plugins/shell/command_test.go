@@ -50,13 +50,6 @@ func TestNativeCommandExecutor_ExecuteCommand(t *testing.T) {
 			},
 			wantErr: true,
 		},
-		{
-			name: "Runs empty command",
-			cmd: command{
-				Cmd: "",
-			},
-			wantErr: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1,8 +1,6 @@
 package shell
 
 import (
-	"fmt"
-
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -20,7 +18,11 @@ func (s *Shell) Source(workingDir string) (string, error) {
 	}
 
 	if cmdResult.ExitCode != 0 {
-		return "",  &ExecutionFailedError{Code: code, Stdout: stdout, Stderr: stderr}
+		return "", &executionFailedError{
+			Command: s.spec.Command,
+			ErrCode: cmdResult.ExitCode,
+			Stdout:  cmdResult.Stdout,
+			Stderr:  cmdResult.Stderr}
 	}
 
 	logrus.Infof("%v The shell 🐚 command %q ran successfully and retrieved the following source value: %q", result.SUCCESS, s.spec.Command, cmdResult.Stdout)

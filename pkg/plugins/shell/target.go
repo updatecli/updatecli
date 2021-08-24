@@ -42,7 +42,12 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (changed bool, co
 	}
 
 	if cmdResult.ExitCode != 0 {
-		return false, commands, message, fmt.Errorf("The command %q failed with the following message: \nstderr=\n%v\nstdout=\n%v\n", s.spec.Command, cmdResult.Stderr, cmdResult.Stdout)
+		return false, commands, message, &executionFailedError{
+			Command: customCommand,
+			ErrCode: cmdResult.ExitCode,
+			Stdout:  cmdResult.Stdout,
+			Stderr:  cmdResult.Stderr,
+		}
 	}
 
 	commands = append(commands, customCommand)
