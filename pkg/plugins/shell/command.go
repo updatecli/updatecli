@@ -27,7 +27,7 @@ type commandExecutor interface {
 type nativeCommandExecutor struct {}
 
 func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResult, error) {
-	if inputCmd.Cmd == "" {
+	if strings.TrimSpace(inputCmd.Cmd) == "" {
 		return commandResult{}, fmt.Errorf(ErrEmptyCommand)
 	}
 
