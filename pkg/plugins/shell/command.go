@@ -24,8 +24,7 @@ type commandExecutor interface {
 	ExecuteCommand(cmd command) (commandResult, error)
 }
 
-type nativeCommandExecutor struct {
-}
+type nativeCommandExecutor struct {}
 
 func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResult, error) {
 	if inputCmd.Cmd == "" {
