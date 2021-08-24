@@ -75,3 +75,35 @@ func TestShell_New(t *testing.T) {
 		})
 	}
 }
+
+func TestShell_customCommand(t *testing.T) {
+	tests := []struct {
+		name    string
+		source  string
+		want    string
+		command string
+	}{
+		{
+			name:    "case with empty source",
+			source:  "",
+			command: "Hello There",
+			want:    "Hello There",
+		},
+		{
+			name:    "case with source",
+			command: "Hello There",
+			source:  "General Kenobi",
+			want:    "Hello There General Kenobi",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sut := &Shell{
+				spec: ShellSpec{
+					Command: tt.command,
+				},
+			}
+			assert.Equal(t, sut.customCommand(tt.source), tt.want)
+		})
+	}
+}

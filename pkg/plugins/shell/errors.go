@@ -7,7 +7,7 @@ import (
 type ErrEmptyCommand struct{}
 
 func (e *ErrEmptyCommand) Error() string {
-	return fmt.Sprintf("Invalid spec for shell resource: command is empty.")
+	return "Invalid spec for shell resource: command is empty."
 }
 
 // executionFailedError is used to help formatting errors reported to the user

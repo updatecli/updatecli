@@ -18,3 +18,12 @@ func New(spec ShellSpec) (*Shell, error) {
 		spec:     spec,
 	}, nil
 }
+
+func (s *Shell) customCommand(source string) string {
+	// Append the source as last argument if not empty
+	if source != "" {
+		return s.spec.Command + " " + source
+	}
+
+	return s.spec.Command
+}

@@ -17,12 +17,8 @@ func (s *Shell) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 }
 
 func (s *Shell) condition(source, workingDir string) (bool, error) {
-	customCommand := s.spec.Command
+	customCommand := s.customCommand(source)
 
-	// Append the source as last argument if not empty
-	if source != "" {
-		customCommand += " " + source
-	}
 	cmdResult, err := s.executor.ExecuteCommand(command{
 		Cmd: customCommand,
 		Dir: workingDir,
