@@ -191,7 +191,10 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 			return nil, err
 		}
 
-		spec = shell.New(shellResourceSpec)
+		spec, err = shell.New(shellResourceSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, fmt.Errorf("Don't support condition: %v", condition.Kind)

@@ -59,13 +59,6 @@ func TestShell_Target(t *testing.T) {
 			},
 			commandEnv: []string{"DRY_RUN=false"},
 		},
-		{
-			name:        "raises an error with an empty command and non empty source",
-			command:     "",
-			source:      "1.2.3",
-			wantChanged: false,
-			wantErr:     true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

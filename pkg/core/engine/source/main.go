@@ -242,7 +242,10 @@ func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
 			return nil, nil, err
 		}
 
-		spec = shell.New(shellResourceSpec)
+		spec, err = shell.New(shellResourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
 
 	default:
 		return nil, nil, fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)

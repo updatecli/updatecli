@@ -9,9 +9,12 @@ type Shell struct {
 	spec     ShellSpec
 }
 
-func New(spec ShellSpec) *Shell {
+func New(spec ShellSpec) (*Shell, error) {
+	if spec.Command == "" {
+		return nil, &ErrEmptyCommand{}
+	}
 	return &Shell{
 		executor: &nativeCommandExecutor{},
 		spec:     spec,
-	}
+	}, nil
 }

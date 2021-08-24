@@ -4,10 +4,11 @@ import (
 	"fmt"
 )
 
-const (
-	//ErrEmptyCommand is the error message when the provided command is empty
-	ErrEmptyCommand string = "command is empty"
-)
+type ErrEmptyCommand struct{}
+
+func (e *ErrEmptyCommand) Error() string {
+	return fmt.Sprintf("Invalid spec for shell resource: command is empty.")
+}
 
 // executionFailedError is used to help formatting errors reported to the user
 type executionFailedError struct {

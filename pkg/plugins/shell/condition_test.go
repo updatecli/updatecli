@@ -41,20 +41,6 @@ func TestShell_Condition(t *testing.T) {
 				Stderr:   "ls: 1.2.3: No such file or directory",
 			},
 		},
-		{
-			name:       "Empty command with empty source",
-			command:    "",
-			source:     "",
-			wantResult: false,
-			wantErr:    true,
-		},
-		{
-			name:       "Empty command with non empty source",
-			command:    "",
-			source:     "1.2.3",
-			wantResult: false,
-			wantErr:    true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -107,14 +93,6 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 				ExitCode: 0,
 				Stdout:   "Hello",
 			},
-		},
-		{
-			name:       "Empty command with non empty source in existing SCM",
-			command:    "",
-			source:     "1.2.3",
-			scmDir:     "/dummy/dir",
-			wantResult: false,
-			wantErr:    true,
 		},
 	}
 	for _, tt := range tests {

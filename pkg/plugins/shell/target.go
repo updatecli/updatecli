@@ -25,9 +25,8 @@ func (s *Shell) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed 
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
 func (s *Shell) target(source, workingDir string, dryRun bool) (changed bool, commands []string, message string, err error) {
 	customCommand := s.spec.Command
-	if customCommand == "" {
-		return false, commands, message, fmt.Errorf(ErrEmptyCommand)
-	}
+
+	// Append the source as last argument if not empty
 	if source != "" {
 		customCommand += " " + source
 	}

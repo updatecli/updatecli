@@ -1,8 +1,6 @@
 package shell
 
 import (
-	"fmt"
-
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
@@ -20,9 +18,8 @@ func (s *Shell) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 
 func (s *Shell) condition(source, workingDir string) (bool, error) {
 	customCommand := s.spec.Command
-	if customCommand == "" {
-		return false, fmt.Errorf(ErrEmptyCommand)
-	}
+
+	// Append the source as last argument if not empty
 	if source != "" {
 		customCommand += " " + source
 	}
