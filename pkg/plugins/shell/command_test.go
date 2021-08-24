@@ -69,9 +69,7 @@ func TestNativeCommandExecutor_ExecuteCommand(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.wantExitCode, got.ExitCode)
-
 			assert.Equal(t, tt.wantStdout, got.Stdout)
-
 			assert.Equal(t, tt.wandStderr, got.Stderr)
 		})
 	}

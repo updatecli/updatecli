@@ -20,7 +20,7 @@ func (s *Shell) Source(workingDir string) (string, error) {
 	}
 
 	if cmdResult.ExitCode != 0 {
-		return "", fmt.Errorf("%v The shell 🐚 command %q failed with the following message: \nstderr=\n%v\nstdout=\n%v\n", result.FAILURE, s.spec.Command, cmdResult.Stderr, cmdResult.Stdout)
+		return "",  &ExecutionFailedError{Code: code, Stdout: stdout, Stderr: stderr}
 	}
 
 	logrus.Infof("%v The shell 🐚 command %q ran successfully and retrieved the following source value: %q", result.SUCCESS, s.spec.Command, cmdResult.Stdout)

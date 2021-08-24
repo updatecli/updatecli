@@ -34,9 +34,7 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 	var stdout, stderr bytes.Buffer
 	cmdFields := strings.Fields(inputCmd.Cmd)
 	command := exec.Command(cmdFields[0], cmdFields[1:]...) //nolint: gosec
-	if inputCmd.Dir != "" {
-		command.Dir = inputCmd.Dir
-	}
+	command.Dir = inputCmd.Dir
 	command.Stdout = &stdout
 	command.Stderr = &stderr
 	// Pass current environment to process and append the customized environment variables used internally by updatecli (such as DRY_RUN)
@@ -63,5 +61,4 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 		Stdout:   out,
 		Stderr:   stderr.String(),
 	}, nil
-
 }

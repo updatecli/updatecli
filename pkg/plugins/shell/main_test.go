@@ -4,7 +4,7 @@ import "fmt"
 
 ////////////// Test Utilities method aimed at mocking calls to other objects
 
-// mocking commandExecutor.ExecuteCommand
+// mockCommandExecutor is a stub implementation of the `commandExecutor` interface to be used in our test suite. It stores the received `command` and returns the preconfigured `result` and `err`.
 type mockCommandExecutor struct {
 	gotCommand command
 	result     commandResult
@@ -21,33 +21,11 @@ func (mce *mockCommandExecutor) ExecuteCommand(cmd command) (commandResult, erro
 
 // mocking SCM object (no introspection: only get values)
 type mockScm struct {
+	scm.Scm
+
 	workingDir string
 }
 
-func (m *mockScm) Add(files []string) error {
-	return nil
-}
-func (m *mockScm) Clone() (string, error) {
-	return "", nil
-}
-func (m *mockScm) Checkout() error {
-	return nil
-}
 func (m *mockScm) GetDirectory() (directory string) {
 	return m.workingDir
-}
-func (m *mockScm) Init(source string, pipelineID string) error {
-	return nil
-}
-func (m *mockScm) Push() error {
-	return nil
-}
-func (m *mockScm) Commit(message string) error {
-	return nil
-}
-func (m *mockScm) Clean() error {
-	return nil
-}
-func (m *mockScm) PushTag(tag string) error {
-	return nil
 }
