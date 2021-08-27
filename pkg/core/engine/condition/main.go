@@ -185,7 +185,7 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 		spec = &y
 
 	case "shell":
-		shellResourceSpec := shell.ShellSpec{}
+		var shellResourceSpec shell.ShellSpec
 
 		if err := mapstructure.Decode(condition.Spec, &shellResourceSpec); err != nil {
 			return nil, err
