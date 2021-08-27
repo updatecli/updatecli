@@ -20,7 +20,7 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 	customCommand := s.customCommand(source)
 
 	cmdResult, err := s.executor.ExecuteCommand(command{
-		Cmd: customCommand,
+		Cmd: s.customCommand(source),
 		Dir: workingDir,
 	})
 
