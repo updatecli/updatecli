@@ -24,10 +24,8 @@ func (s *Shell) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed 
 //	- Any other exit code means "failed command with no change"
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
 func (s *Shell) target(source, workingDir string, dryRun bool) (changed bool, commands []string, message string, err error) {
-	customCommand := s.customCommand(source)
-
 	cmdResult, err := s.executor.ExecuteCommand(command{
-		Cmd: customCommand,
+		Cmd: s.appendSource(source),
 		Dir: workingDir,
 		Env: []string{fmt.Sprintf("DRY_RUN=%v", dryRun)},
 	})
@@ -38,21 +36,21 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (changed bool, co
 
 	if cmdResult.ExitCode != 0 {
 		return false, commands, message, &executionFailedError{
-			Command: customCommand,
+			Command: s.appendSource(source),
 			ErrCode: cmdResult.ExitCode,
 			Stdout:  cmdResult.Stdout,
 			Stderr:  cmdResult.Stderr,
 		}
 	}
 
-	commands = append(commands, customCommand)
+	commands = append(commands, s.appendSource(source))
 
 	if cmdResult.Stdout == "" {
-		logrus.Infof("%v The shell 🐚 command %q ran successfully with no change.", result.SUCCESS, customCommand)
+		logrus.Infof("%v The shell 🐚 command %q ran successfully with no change.", result.SUCCESS, s.appendSource(source))
 		return false, commands, message, nil
 	}
 
-	message = fmt.Sprintf("%v The shell 🐚 command %q ran successfully and reported the following change: %q.", result.CHANGED, customCommand, cmdResult.Stdout)
+	message = fmt.Sprintf("%v The shell 🐚 command %q ran successfully and reported the following change: %q.", result.CHANGED, s.appendSource(source), cmdResult.Stdout)
 	logrus.Infof(message)
 
 	return true, commands, message, nil

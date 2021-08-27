@@ -17,10 +17,8 @@ func (s *Shell) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 }
 
 func (s *Shell) condition(source, workingDir string) (bool, error) {
-	customCommand := s.customCommand(source)
-
 	cmdResult, err := s.executor.ExecuteCommand(command{
-		Cmd: s.customCommand(source),
+		Cmd: s.appendSource(source),
 		Dir: workingDir,
 	})
 
@@ -29,11 +27,11 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 	}
 
 	if cmdResult.ExitCode != 0 {
-		logrus.Infof(errorMessage(cmdResult.ExitCode, customCommand, cmdResult.Stderr, cmdResult.Stdout))
+		logrus.Infof(errorMessage(cmdResult.ExitCode, s.appendSource(source), cmdResult.Stderr, cmdResult.Stdout))
 		return false, nil
 	}
 
-	logrus.Infof("%v The shell 🐚 command %q successfully validated the condition.", result.SUCCESS, customCommand)
+	logrus.Infof("%v The shell 🐚 command %q successfully validated the condition.", result.SUCCESS, s.appendSource(source))
 
 	return true, nil
 }

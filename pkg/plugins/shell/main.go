@@ -9,6 +9,8 @@ type Shell struct {
 	spec     ShellSpec
 }
 
+// New returns a reference to a newly initialized Shell object from a shellspec
+// or an error if the provided shellspec triggers a validation error.
 func New(spec ShellSpec) (*Shell, error) {
 	if spec.Command == "" {
 		return nil, &ErrEmptyCommand{}
@@ -19,7 +21,7 @@ func New(spec ShellSpec) (*Shell, error) {
 	}, nil
 }
 
-// Append the source as last argument if not empty. 
+// appendSource appends the source as last argument if not empty.
 func (s *Shell) appendSource(source string) string {
 	// Append the source as last argument if not empty
 	if source != "" {
