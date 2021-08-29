@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
@@ -12,14 +14,13 @@ import (
 
 // AMI contains information to manipuliate AWS AMI information
 type AMI struct {
-	AccessKey   string // AWs access key
-	SecretKey   string // AWS secret key
-	Filters     Filters
-	Region      string
-	Endpoint    string
-	DryRun      bool
-	ec2Filters  []*ec2.Filter
-	credentials *credentials.Credentials
+	AccessKey  string // AWs access key
+	SecretKey  string // AWS secret key
+	Filters    Filters
+	Region     string
+	Endpoint   string
+	DryRun     bool
+	ec2Filters []*ec2.Filter
 }
 
 // Filter represents the updatecli configuration to define AMI filter
@@ -50,7 +51,7 @@ func (f *Filters) String() string {
 }
 
 // Init run basic parameter initiation
-func (a *AMI) Init() (errs []error) {
+func (a *AMI) Init() (svc *ec2.EC2, errs []error) {
 	if len(a.Region) == 0 {
 		a.Region = "us-east-1"
 	}
@@ -81,17 +82,26 @@ func (a *AMI) Init() (errs []error) {
 		a.ec2Filters = append(a.ec2Filters, &filter)
 	}
 
-	a.credentials = credentials.NewChainCredentials(
-		[]credentials.Provider{
-			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{},
-			&credentials.StaticProvider{
-				Value: credentials.Value{
-					AccessKeyID:     a.AccessKey,
-					SecretAccessKey: a.SecretKey,
+	svc = ec2.New(session.New(), &aws.Config{
+		CredentialsChainVerboseErrors: func(verbose bool) *bool {
+			return &verbose
+		}(true),
+		Region:   aws.String(a.Region),
+		Endpoint: aws.String(a.Endpoint),
+		Credentials: credentials.NewChainCredentials(
+			[]credentials.Provider{
+				&credentials.EnvProvider{},
+				&credentials.SharedCredentialsProvider{},
+				&credentials.StaticProvider{
+					Value: credentials.Value{
+						AccessKeyID:     a.AccessKey,
+						SecretAccessKey: a.SecretKey,
+					},
 				},
-			},
-		})
+			}),
 
-	return errs
+		MaxRetries: func(val int) *int { return &val }(3),
+	})
+
+	return svc, errs
 }
