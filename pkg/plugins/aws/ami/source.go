@@ -12,11 +12,11 @@ func (a *AMI) Source(workingDir string) (string, error) {
 
 	svc, errs := a.Init()
 
-	for _, err := range errs {
-		logrus.Error(err)
-	}
 	if len(errs) > 0 {
-		return "", errors.New("Too many errors")
+		for _, err := range errs {
+			logrus.Printf("%s\n", err.Error())
+		}
+		return "", errors.New("something went wrong while retrieving ec2 AMI")
 	}
 
 	if svc == nil {

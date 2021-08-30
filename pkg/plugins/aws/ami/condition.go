@@ -41,11 +41,11 @@ func (a *AMI) Condition(source string) (bool, error) {
 
 	svc, errs := a.Init()
 
-	for _, err := range errs {
-		logrus.Error(err)
-	}
 	if len(errs) > 0 {
-		return false, errors.New("Too many errors")
+		for _, err := range errs {
+			logrus.Printf("%s\n", err.Error())
+		}
+		return false, errors.New("something went wrong while retrieving aws/ami condition information")
 	}
 
 	result, err := a.GetLatestAmiID(svc)
