@@ -30,32 +30,6 @@ type AMI struct {
 	ec2Filters []*ec2.Filter
 }
 
-// Filter represents the updatecli configuration which describes AMI filters
-type Filter struct {
-	Name   string
-	Values string
-}
-
-// Filters represent a list of Filter
-type Filters []Filter
-
-func (f *Filters) String() string {
-	str := ""
-	filters := *f
-
-	for i := 0; i < len(filters); i++ {
-		filter := filters[i]
-		str = str + fmt.Sprintf("%s: \t%q", filter.Name, filter.Values)
-
-		if i < len(filters)-1 {
-			str = str + "\n"
-		}
-
-	}
-
-	return str
-}
-
 // Init run basic parameter initiation
 func (a *AMI) Init() (svc *ec2.EC2, errs []error) {
 	if len(a.Region) == 0 {
