@@ -9,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
-// Condition test if a image matching specific filters exist.
+// Condition tests if an image matching the specific filters exists.
 func (a *AMI) Condition(source string) (bool, error) {
 
 	if source != "" {
