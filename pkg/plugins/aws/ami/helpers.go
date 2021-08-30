@@ -43,7 +43,7 @@ func (a *AMI) GetLatestAmiID(svc ec2iface.EC2API) (string, error) {
 	return "", nil
 }
 
-// ShowShortDescription print a short AMI description.
+// ShowShortDescription returns a short AMI description as a String.
 func ShowShortDescription(AMI *ec2.Image) string {
 	output := ""
 	if AMI.Name != nil {
