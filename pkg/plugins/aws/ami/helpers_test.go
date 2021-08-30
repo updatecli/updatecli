@@ -8,7 +8,7 @@ import (
 func TestGetLatestAmiID(t *testing.T) {
 
 	for id, d := range dataset {
-		got, err := d.ami.GetLatestAmiID(
+		got, err := d.ami.getLatestAmiID(
 			mockDescribeImagesOutput{
 				Resp: d.resp})
 		if err != nil {

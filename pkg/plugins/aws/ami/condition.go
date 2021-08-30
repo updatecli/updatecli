@@ -45,10 +45,10 @@ func (a *AMI) Condition(source string) (bool, error) {
 		for _, err := range errs {
 			logrus.Printf("%s\n", err.Error())
 		}
-		return false, errors.New("something went wrong while retrieving aws/ami condition information")
+		return false, errors.New("something went wrong while testing if the AWS AMI exist.")
 	}
 
-	result, err := a.GetLatestAmiID(svc)
+	result, err := a.getLatestAmiID(svc)
 
 	if err != nil {
 		return false, err

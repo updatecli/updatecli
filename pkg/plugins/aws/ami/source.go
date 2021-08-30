@@ -22,7 +22,7 @@ func (a *AMI) Source(workingDir string) (string, error) {
 		return "", errors.New("Something went wrong while connecting AWS API")
 	}
 
-	result, err := a.GetLatestAmiID(svc)
+	result, err := a.getLatestAmiID(svc)
 
 	if err != nil {
 		return "", err

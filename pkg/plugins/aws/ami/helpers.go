@@ -9,8 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// GetLatestAmiID query the AWS API to return the newest AMI image id
-func (a *AMI) GetLatestAmiID(svc ec2iface.EC2API) (string, error) {
+// getLatestAmiID query the AWS API to return the newest AMI image id
+func (a *AMI) getLatestAmiID(svc ec2iface.EC2API) (string, error) {
 	input := ec2.DescribeImagesInput{
 		DryRun:  &a.DryRun,
 		Filters: a.ec2Filters,
@@ -35,7 +35,7 @@ func (a *AMI) GetLatestAmiID(svc ec2iface.EC2API) (string, error) {
 	if nbImages := len(result.Images); nbImages > 0 {
 		logrus.Infof("%d AMI found\n", nbImages)
 
-		ShowShortDescription(result.Images[len(result.Images)-1])
+		showShortDescription(result.Images[len(result.Images)-1])
 
 		return *result.Images[len(result.Images)-1].ImageId, nil
 	}
@@ -43,8 +43,8 @@ func (a *AMI) GetLatestAmiID(svc ec2iface.EC2API) (string, error) {
 	return "", nil
 }
 
-// ShowShortDescription returns a short AMI description as a String.
-func ShowShortDescription(AMI *ec2.Image) string {
+// showShortDescription returns a short AMI description as a String.
+func showShortDescription(AMI *ec2.Image) string {
 	output := ""
 	if AMI.Name != nil {
 		output = fmt.Sprintf("\tName: %s\n", *AMI.Name)
