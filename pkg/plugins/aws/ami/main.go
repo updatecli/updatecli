@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/sirupsen/logrus"
 )
 
 // https://docs.aws.amazon.com/sdk-for-go/api/service/ec2/#EC2.DescribeImages
@@ -52,6 +53,7 @@ func (f *Filters) String() string {
 // Init run basic parameter initiation
 func (a *AMI) Init() (svc *ec2.EC2, errs []error) {
 	if len(a.Region) == 0 {
+		logrus.Println("No region specified, falling back to %s", "us-east-1")
 		a.Region = "us-east-1"
 	}
 
