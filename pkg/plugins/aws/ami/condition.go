@@ -12,32 +12,32 @@ import (
 // Condition tests if an image matching the specific filters exists.
 func (a *AMI) Condition(source string) (bool, error) {
 
-// It's an error if the upstream source is empty and the user does not provide any filter
-// then it mean
-if source == "" && len(a.Filters) == 0 {
-	logrus.Infof("\u2717 No AMI could be found as no AMI filters defined\n")
-	return false, nil
-}
-
-// Based on source information,
-// we try to define a default image-id resource
-// if not researched
-isImageIDDefined := false
-for i := 0; i < len(a.Filters); i++ {
-	if strings.Compare(a.Filters[i].Name, "image-id") == 0 {
-		isImageIDDefined = true
-		break
+	// It's an error if the upstream source is empty and the user does not provide any filter
+	// then it mean
+	if source == "" && len(a.Filters) == 0 {
+		logrus.Infof("\u2717 No AMI could be found as no AMI filters defined\n")
+		return false, nil
 	}
 
-}
+	// Based on source information,
+	// we try to define a default image-id resource
+	// if not researched
+	isImageIDDefined := false
+	for i := 0; i < len(a.Filters); i++ {
+		if strings.Compare(a.Filters[i].Name, "image-id") == 0 {
+			isImageIDDefined = true
+			break
+		}
 
-// Set image-id to source output if not yet defined
-if !isImageIDDefined {
-	a.Filters = append(a.Filters, Filter{
-		Name:   "image-id",
-		Values: source,
-	})
-}
+	}
+
+	// Set image-id to source output if not yet defined
+	if !isImageIDDefined {
+		a.Filters = append(a.Filters, Filter{
+			Name:   "image-id",
+			Values: source,
+		})
+	}
 
 	svc, errs := a.Init()
 
