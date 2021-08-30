@@ -23,8 +23,7 @@ type AMI struct {
 	ec2Filters []*ec2.Filter
 }
 
-// Filter represents the updatecli configuration to define AMI filter
-// This datatype need to be convert the ec2.Filter.
+// Filter represents the updatecli configuration which describes AMI filters
 type Filter struct {
 	Name   string
 	Values string
@@ -60,25 +59,12 @@ func (a *AMI) Init() (svc *ec2.EC2, errs []error) {
 		a.Endpoint = fmt.Sprintf("https://ec2.%s.amazonaws.com", a.Region)
 	}
 
-	// Convert []string to []*string as required by the ec2.Filter values field
-	values := func(input []string) []*string {
-		var output []*string
-		for i := range input {
-			s := input[i]
-			output = append(output, &s)
-		}
-		return output
-	}
-
 	// Init ec2Filters
 	for i := 0; i < len(a.Filters); i++ {
 		filter := ec2.Filter{
-			Name: func(input string) *string {
-				output := strings.ToLower(input)
-				return &output
-			}(a.Filters[i].Name),
-			Values: values(strings.Split(a.Filters[i].Values, ",")),
-		}
+			Name:   aws.String(a.Filters[i].Name),
+			Values: aws.StringSlice(strings.Split(a.Filters[i].Values, ","))}
+
 		a.ec2Filters = append(a.ec2Filters, &filter)
 	}
 
