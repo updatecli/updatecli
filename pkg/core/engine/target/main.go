@@ -13,6 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
+	"github.com/updatecli/updatecli/pkg/plugins/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
@@ -114,6 +115,19 @@ func Unmarshal(target *Target) (spec Spec, err error) {
 		}
 
 		spec = &f
+
+	case "shell":
+		shellResourceSpec := shell.ShellSpec{}
+
+		err := mapstructure.Decode(target.Spec, &shellResourceSpec)
+		if err != nil {
+			return nil, err
+		}
+
+		spec, err = shell.New(shellResourceSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, fmt.Errorf("⚠ Don't support target kind: %v", target.Kind)

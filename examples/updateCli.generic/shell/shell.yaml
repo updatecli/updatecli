@@ -1,0 +1,18 @@
+---
+sources:
+  default:
+    kind: shell
+    spec:
+      command: "./examples/updateCli.generic/shell/source.sh"
+conditions:
+  default:
+    kind: shell
+    spec:
+      command: "./examples/updateCli.generic/shell/condition.sh"
+targets:
+  default:
+    name: setGrepVersion
+    sourceID: default
+    kind: shell
+    spec:
+      command: "./examples/updateCli.generic/shell/target.sh"

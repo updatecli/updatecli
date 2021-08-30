@@ -17,6 +17,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
@@ -232,6 +233,19 @@ func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
 		}
 
 		spec = &y
+
+	case "shell":
+		shellResourceSpec := shell.ShellSpec{}
+
+		err := mapstructure.Decode(s.Spec, &shellResourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		spec, err = shell.New(shellResourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
 
 	default:
 		return nil, nil, fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)
