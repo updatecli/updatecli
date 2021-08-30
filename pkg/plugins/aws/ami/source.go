@@ -2,12 +2,11 @@ package ami
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 )
 
-// Source returns the latest AMI matching the filter
+// Source returns the latest AMI matching filter(s)
 func (a *AMI) Source(workingDir string) (string, error) {
 
 	svc, errs := a.Init()
@@ -20,7 +19,7 @@ func (a *AMI) Source(workingDir string) (string, error) {
 	}
 
 	if svc == nil {
-		return "", errors.New("Something went wrong in aws connection")
+		return "", errors.New("Something went wrong while connecting AWS API")
 	}
 
 	result, err := a.GetLatestAmiID(svc)
@@ -34,7 +33,7 @@ func (a *AMI) Source(workingDir string) (string, error) {
 		return result, nil
 	}
 
-	fmt.Printf("\u2717 No AMI found matching criteria in region %s\n", a.Region)
+	logrus.Infof("\u2717 No AMI found matching criteria in region %s\n", a.Region)
 
 	logrus.Debugf("AMI Filter:\n%s\n\n", a.Filters.String())
 
