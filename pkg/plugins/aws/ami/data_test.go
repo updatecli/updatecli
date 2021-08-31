@@ -30,7 +30,9 @@ var (
 	dataset = DataSet{
 		{
 			ami: AMI{
-				Filters: Filters{},
+				Spec: Spec{
+					Filters: Filters{},
+				},
 			},
 			resp: ec2.DescribeImagesOutput{
 				Images: []*ec2.Image{},
@@ -41,11 +43,13 @@ var (
 		},
 		{
 			ami: AMI{
-				Region: "us-east-2",
-				Filters: Filters{
-					{
-						Name:   "name",
-						Values: "jenkins-agent-ubuntu*",
+				Spec: Spec{
+					Region: "us-east-2",
+					Filters: Filters{
+						{
+							Name:   "name",
+							Values: "jenkins-agent-ubuntu*",
+						},
 					},
 				},
 			},
@@ -80,10 +84,12 @@ var (
 		},
 		{
 			ami: AMI{
-				Filters: Filters{
-					{
-						Name:   "name",
-						Values: "jenkins-agent-ubuntu*",
+				Spec: Spec{
+					Filters: Filters{
+						{
+							Name:   "name",
+							Values: "jenkins-agent-ubuntu*",
+						},
 					},
 				},
 			},
@@ -94,11 +100,13 @@ var (
 		},
 		{
 			ami: AMI{
-				Region: "us-east-1",
-				Filters: Filters{
-					{
-						Name:   "name",
-						Values: "centos*",
+				Spec: Spec{
+					Region: "us-east-1",
+					Filters: Filters{
+						{
+							Name:   "name",
+							Values: "centos*",
+						},
 					},
 				},
 			},
@@ -115,10 +123,12 @@ var (
 		},
 		{
 			ami: AMI{
-				Filters: Filters{
-					{
-						Name:   "name",
-						Values: "doNotExist",
+				Spec: Spec{
+					Filters: Filters{
+						{
+							Name:   "name",
+							Values: "doNotExist",
+						},
 					},
 				},
 			},

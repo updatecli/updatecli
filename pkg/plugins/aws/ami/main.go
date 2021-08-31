@@ -2,7 +2,6 @@ package ami
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -21,35 +20,27 @@ var (
 
 // AMI contains information to manipuliate AWS AMI information
 type AMI struct {
-	AccessKey  string // AWs access key
-	SecretKey  string // AWS secret key
-	Filters    Filters
-	Region     string
-	Endpoint   string
-	DryRun     bool
+	Spec       Spec
 	ec2Filters []*ec2.Filter
 }
 
 // Init run basic parameter initiation
 func (a *AMI) Init() (svc *ec2.EC2, errs []error) {
-	if len(a.Region) == 0 {
-		logrus.Printf("No region specified, falling back to %s\n", "us-east-1")
-		a.Region = "us-east-1"
-	}
 
-	if len(a.Endpoint) == 0 {
-		a.Endpoint = fmt.Sprintf("https://ec2.%s.amazonaws.com", a.Region)
-	}
+	errs = a.Spec.Validate()
 
-	if len(a.Filters) == 0 {
-		errs = append(errs, ErrNoFiltersSpecified)
+	if len(errs) > 0 {
+		for _, err := range errs {
+			logrus.Printf("%s\n", err.Error())
+		}
+		return nil, errs
 	}
 
 	// Init ec2Filters
-	for i := 0; i < len(a.Filters); i++ {
+	for i := 0; i < len(a.Spec.Filters); i++ {
 		filter := ec2.Filter{
-			Name:   aws.String(a.Filters[i].Name),
-			Values: aws.StringSlice(strings.Split(a.Filters[i].Values, ","))}
+			Name:   aws.String(a.Spec.Filters[i].Name),
+			Values: aws.StringSlice(strings.Split(a.Spec.Filters[i].Values, ","))}
 
 		a.ec2Filters = append(a.ec2Filters, &filter)
 	}
@@ -58,16 +49,16 @@ func (a *AMI) Init() (svc *ec2.EC2, errs []error) {
 		CredentialsChainVerboseErrors: func(verbose bool) *bool {
 			return &verbose
 		}(true),
-		Region:   aws.String(a.Region),
-		Endpoint: aws.String(a.Endpoint),
+		Region:   aws.String(a.Spec.Region),
+		Endpoint: aws.String(a.Spec.Endpoint),
 		Credentials: credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{},
 				&credentials.StaticProvider{
 					Value: credentials.Value{
-						AccessKeyID:     a.AccessKey,
-						SecretAccessKey: a.SecretKey,
+						AccessKeyID:     a.Spec.AccessKey,
+						SecretAccessKey: a.Spec.SecretKey,
 					},
 				},
 			}),

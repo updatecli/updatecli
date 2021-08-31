@@ -108,7 +108,7 @@ func Unmarshal(condition *Condition) (spec Spec, err error) {
 	case "aws/ami":
 		a := ami.AMI{}
 
-		err := mapstructure.Decode(condition.Spec, &a)
+		err := mapstructure.Decode(condition.Spec, &a.Spec)
 
 		if err != nil {
 			return nil, err

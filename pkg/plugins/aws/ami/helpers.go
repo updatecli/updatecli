@@ -2,6 +2,7 @@ package ami
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -12,7 +13,7 @@ import (
 // getLatestAmiID query the AWS API to return the newest AMI image id
 func (a *AMI) getLatestAmiID(svc ec2iface.EC2API) (string, error) {
 	input := ec2.DescribeImagesInput{
-		DryRun:  &a.DryRun,
+		DryRun:  &a.Spec.DryRun,
 		Filters: a.ec2Filters,
 	}
 
@@ -33,9 +34,12 @@ func (a *AMI) getLatestAmiID(svc ec2iface.EC2API) (string, error) {
 	}
 
 	if nbImages := len(result.Images); nbImages > 0 {
-		logrus.Infof("%d AMI found\n", nbImages)
 
-		showShortDescription(result.Images[len(result.Images)-1])
+		logrus.Debugf("Latest AMI ID found:\n  ---\n  %s---\n\n",
+			strings.ReplaceAll(
+				showShortDescription(result.Images[len(result.Images)-1]),
+				"\n",
+				"\n  "))
 
 		return *result.Images[len(result.Images)-1].ImageId, nil
 	}
@@ -47,19 +51,19 @@ func (a *AMI) getLatestAmiID(svc ec2iface.EC2API) (string, error) {
 func showShortDescription(AMI *ec2.Image) string {
 	output := ""
 	if AMI.Name != nil {
-		output = fmt.Sprintf("\tName: %s\n", *AMI.Name)
+		output = fmt.Sprintf("* name: %s\n", *AMI.Name)
 	}
 	if AMI.CreationDate != nil {
-		output = output + fmt.Sprintf("\n\tCreation Date: %s\n", *AMI.CreationDate)
+		output = output + fmt.Sprintf("* creation date: %s\n", *AMI.CreationDate)
 	}
 	if AMI.Description != nil {
-		output = output + fmt.Sprintf("\n\tDescription: %s\n", *AMI.Description)
+		output = output + fmt.Sprintf("* description: %s\n", *AMI.Description)
 	}
 	if AMI.Architecture != nil {
-		output = output + fmt.Sprintf("\n\tArchitecture: %s\n", *AMI.Architecture)
+		output = output + fmt.Sprintf("* architecture: %s\n", *AMI.Architecture)
 	}
 	if AMI.Platform != nil {
-		output = output + fmt.Sprintf("\n\tPlatform: %s\n", *AMI.Platform)
+		output = output + fmt.Sprintf("* Platform: %s\n", *AMI.Platform)
 	}
 	return output
 }

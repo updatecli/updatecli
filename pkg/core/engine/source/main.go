@@ -153,7 +153,7 @@ func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
 	case "aws/ami":
 		a := ami.AMI{}
 
-		err := mapstructure.Decode(s.Spec, &a)
+		err := mapstructure.Decode(s.Spec, &a.Spec)
 
 		if err != nil {
 			return nil, nil, err

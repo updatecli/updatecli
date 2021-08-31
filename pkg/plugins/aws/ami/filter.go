@@ -17,7 +17,7 @@ func (f *Filters) String() string {
 
 	for i := 0; i < len(filters); i++ {
 		filter := filters[i]
-		str = str + fmt.Sprintf("%s: \t%q", filter.Name, filter.Values)
+		str = str + fmt.Sprintf("* %s:\t%q\n", filter.Name, filter.Values)
 
 		if i < len(filters)-1 {
 			str = str + "\n"
