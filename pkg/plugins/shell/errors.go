@@ -19,7 +19,7 @@ type executionFailedError struct {
 }
 
 func (e *executionFailedError) Error() string {
-	return errorMessage(e.ErrCode, e.Command, e.Stderr, e.Stdout)
+	return errorMessage(e.ErrCode, e.Command, e.Stdout, e.Stderr)
 }
 
 func errorMessage(exitCode int, command, stdout, stderr string) string {
