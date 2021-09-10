@@ -44,6 +44,25 @@ var (
 		{
 			ami: AMI{
 				Spec: Spec{
+					Region: "DoNotExist",
+					Filters: Filters{
+						{
+							Name:   "name",
+							Values: "jenkins-agent-ubuntu*",
+						},
+					},
+				},
+			},
+			resp: ec2.DescribeImagesOutput{
+				Images: []*ec2.Image{},
+			},
+			expectedGetAMI:    "",
+			expectedSource:    "",
+			expectedCondition: false,
+		},
+		{
+			ami: AMI{
+				Spec: Spec{
 					Region: "us-east-2",
 					Filters: Filters{
 						{
