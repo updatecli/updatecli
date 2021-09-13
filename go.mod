@@ -1,6 +1,6 @@
 module github.com/updatecli/updatecli
 
-go 1.16
+go 1.17.1
 
 require (
 	github.com/Azure/go-autorest/autorest v0.11.18 // indirect
