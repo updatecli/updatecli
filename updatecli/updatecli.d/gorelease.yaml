@@ -24,7 +24,7 @@ targets:
   dockerfile:
     name: Update Goreleaser version
     kind: dockerfile
-    spec: 
+    spec:
       file: Dockerfile
       instruction:
         keyword: "ARG"
