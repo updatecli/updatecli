@@ -134,8 +134,10 @@ targets:
     sourceID: latestGoVersion
     kind: dockerfile
     spec:
-      keyword: "ARG"
-      matcher: "GOLANG_VERSION"
+      file: Dockerfile
+      instruction:
+        keyword: "ARG"
+        matcher: "GOLANG_VERSION"
     scm:
       github:
         user: updatecli
