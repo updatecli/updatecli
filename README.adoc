@@ -96,12 +96,12 @@ More information link:https://www.updatecli.io/docs/prologue/introduction/[here]
 
 == Contributing
 
-|link:https://github.com/updatecli/updatecli/blob/main/docs/CONTRIBUTING.adoc[CONTRIBUTING]
+link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 
 
 == Links
 
-* link:https://github.com/updatecli/updatecli/blob/main/docs/ADOPTERS.md[ADOPTERS]
-* link:https://github.com/updatecli/updatecli/blob/main/docs/CONTRIBUTING.adoc[CONTRIBUTING]
+* link:https://github.com/updatecli/updatecli/blob/main/ADOPTERS.md[ADOPTERS]
+* link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 * link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
 * link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
