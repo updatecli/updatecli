@@ -1,4 +1,3 @@
----
 name: Go
 on:
   workflow_dispatch:
@@ -11,32 +10,25 @@ on:
   schedule:
     # Run full test once a day
     - cron: '0 0 * * *'
-
 jobs:
-
   build:
     name: Build
     runs-on: ubuntu-20.04
     steps:
-
       # https://github.com/actions/setup-go
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17.1
         id: go
-
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
           install-only: true
-
       - name: Show GoReleaser version
         run: goreleaser --version
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
-
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2.5.2
         with:
@@ -44,16 +36,13 @@ jobs:
           # and must be specified without patch version:
           # we always use the latest patch version.
           version: v1.29
-
       - name: Build
         run: make build
-
       - name: Quick Test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make test-short
         if: ${{ github.event_name == 'pull_request' }}
-
       - name: All Test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
