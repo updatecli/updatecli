@@ -1,11 +1,12 @@
 ## Retrieve goreleaser binary
-ARG GORELEASER_VERSION=0.156.2
+ARG GORELEASER_VERSION=0.179.0
 ARG BUILDPLATFORM=amd64
+ARG GOLANG_VERSION=1.16
 
 FROM --platform=${BUILDPLATFORM} goreleaser/goreleaser:v${GORELEASER_VERSION} as goreleaser
 
 ## Build using golang docker image
-FROM --platform=${BUILDPLATFORM} golang:1.16 as builder
+FROM --platform=${BUILDPLATFORM} golang:${GOLANG_VERSION} as builder
 
 WORKDIR /go/src/app
 

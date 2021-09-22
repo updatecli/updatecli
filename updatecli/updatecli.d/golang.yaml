@@ -1,0 +1,150 @@
+title: Bump Golang Version
+sources:
+  latestGoVersion:
+    name: Get Latest Go Release
+    kind: githubRelease
+    spec:
+      owner: golang
+      repository: go
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+    versionFilter:
+      kind: regex
+      pattern: 'go-1.(\d*).(\d*)$'
+    transformers:
+      - trimPrefix: go
+  currentGoVersion:
+    name: Upate go.mod
+    kind: file
+    spec:
+      file: go.mod
+    transformers:
+      - find: 'go (.*)'
+  gomod:
+    name: Upate go.mod
+    kind: file
+    spec:
+      file: go.mod
+    depends_on:
+      - currentGoVersion
+      - latestGoVersion
+    transformers:
+      - replacer: 
+          from: '{{ source "currentGoVersion" }}'
+          to: 'go {{ source "latestGoVersion" }}'
+conditions:
+  workflowrelease-sandbox:
+    name: Ensure GA step is defined in Github Action named release-sandbox
+    kind: yaml
+    sourceID: latestGoVersion
+    spec:
+      file: .github/workflows/release-sandbox.yaml
+      key: jobs.build.steps[3].id
+      value: go
+  workflowrelease:
+    name: Ensure GA step is defined in Github Action named release
+    kind: yaml
+    sourceID: latestGoVersion
+    spec:
+      file: .github/workflows/release.yaml
+      key: jobs.build.steps[3].id
+      value: go
+  workflowgo:
+    name: Ensure GA step is defined in Github Action named go
+    kind: yaml
+    sourceID: latestGoVersion
+    spec:
+      file: .github/workflows/go.yaml
+      key: jobs.build.steps[0].id
+      value: go
+  dockerTag:
+    name: 'Is docker image golang:{{ source "latestGoVersion" }} published'
+    sourceID: latestGoVersion
+    kind: dockerImage
+    spec:
+      image: golang
+      tag: '{{ source "latestGoVersion" }}'
+
+targets:
+  release-sandbox:
+    name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
+    sourceID: latestGoVersion
+    kind: yaml
+    spec:
+      file: .github/workflows/release.yaml
+      key: jobs.build.steps[3].with.go-version
+    scm:
+      github:
+        user: updatecli
+        email: me@olblak.com
+        owner: updatecli
+        repository: updatecli
+        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        branch: main
+  release:
+    name: '[release-sandbox.yaml] Update Golang version to {{ source "latestGoVersion" }}'
+    sourceID: latestGoVersion
+    kind: yaml
+    spec:
+      file: .github/workflows/release-sandbox.yaml
+      key: jobs.build.steps[3].with.go-version
+    scm:
+      github:
+        user: updatecli
+        email: me@olblak.com
+        owner: updatecli
+        repository: updatecli
+        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        branch: main
+  workflowgo:
+    name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
+    kind: yaml
+    sourceID: latestGoVersion
+    spec:
+      file: .github/workflows/go.yaml
+      key: jobs.build.steps[0].with.go-version
+    scm:
+      github:
+        user: updatecli
+        email: me@olblak.com
+        owner: updatecli
+        repository: updatecli
+        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        branch: main
+  go.mod:
+    name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
+    sourceID: gomod
+    kind: file
+    spec:
+      file: go.mod
+    scm:
+      github:
+        user: updatecli
+        email: me@olblak.com
+        owner: updatecli
+        repository: updatecli
+        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        branch: main
+  dockerFile:
+    name: 'Update Golang version in Dockerfile'
+    sourceID: latestGoVersion
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: "ARG"
+        matcher: "GOLANG_VERSION"
+    scm:
+      github:
+        user: updatecli
+        email: me@olblak.com
+        owner: updatecli
+        repository: updatecli
+        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        branch: main
+
