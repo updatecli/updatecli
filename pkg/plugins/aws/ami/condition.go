@@ -31,7 +31,7 @@ func (a *AMI) Condition(source string) (bool, error) {
 	}
 
 	// Set image-id to source output if not yet defined
-	if !isImageIDDefined {
+	if !isImageIDDefined && len(source) > 0 {
 		a.Spec.Filters = append(a.Spec.Filters, Filter{
 			Name:   "image-id",
 			Values: source,
