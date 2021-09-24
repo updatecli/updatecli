@@ -12,8 +12,12 @@ import (
 )
 
 var (
-	// ErrNoFiltersSpecified is return when didn't narrow AMI ID result
-	ErrNoFiltersSpecified error = errors.New("Error - no filters specified")
+	// ErrNoFilter is return when didn't narrow AMI ID result
+	ErrNoFilter error = errors.New("no filter specified")
+	// ErrSpecNotValid is return when aws/ami spec are is not valid
+	ErrSpecNotValid error = errors.New("ami spec not valid")
+	// ErrWrongServiceConnection is returned when failing to connect to AWS api
+	ErrWrongServiceConnection error = errors.New("can't connect to aws api")
 )
 
 // https://docs.aws.amazon.com/sdk-for-go/api/service/ec2/#EC2.DescribeImages
@@ -25,15 +29,16 @@ type AMI struct {
 }
 
 // Init run basic parameter initiation
-func (a *AMI) Init() (svc *ec2.EC2, errs []error) {
+func (a *AMI) Init() (svc *ec2.EC2, err error) {
 
-	errs = a.Spec.Validate()
+	errs := a.Spec.Validate()
 
 	if len(errs) > 0 {
+		logrus.Errorln("failed to validate aws/ami configuration")
 		for _, err := range errs {
-			logrus.Printf("%s\n", err.Error())
+			logrus.Errorf("%s\n", err.Error())
 		}
-		return nil, errs
+		return nil, ErrSpecNotValid
 	}
 
 	// Init ec2Filters
@@ -66,5 +71,5 @@ func (a *AMI) Init() (svc *ec2.EC2, errs []error) {
 		MaxRetries: func(val int) *int { return &val }(3),
 	})
 
-	return svc, errs
+	return svc, err
 }

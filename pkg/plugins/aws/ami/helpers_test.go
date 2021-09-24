@@ -10,7 +10,7 @@ func TestGetLatestAmiID(t *testing.T) {
 	for id, d := range dataset {
 		got, err := d.ami.getLatestAmiID(
 			mockDescribeImagesOutput{
-				Resp: d.resp})
+				Resp: d.mockedResponse})
 		if err != nil {
 			t.Errorf("Unexpected error: %q",
 				err)

@@ -15,8 +15,8 @@ func (a *AMI) Condition(source string) (bool, error) {
 	// It's an error if the upstream source is empty and the user does not provide any filter
 	// then it mean
 	if source == "" && len(a.Spec.Filters) == 0 {
-		logrus.Infof("\u2717 No AMI could be found as no AMI filters defined\n")
-		return false, nil
+		logrus.Errorln(ErrNoFilter)
+		return false, ErrSpecNotValid
 	}
 
 	isFilterDefined := func(filter string) (found bool) {
@@ -37,10 +37,10 @@ func (a *AMI) Condition(source string) (bool, error) {
 		})
 	}
 
-	svc, errs := a.Init()
+	svc, err := a.Init()
 
-	if len(errs) > 0 {
-		return false, errors.New("something went wrong while testing if the AWS AMI exist")
+	if err != nil {
+		return false, err
 	}
 
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
@@ -58,7 +58,7 @@ func (a *AMI) Condition(source string) (bool, error) {
 		return true, nil
 	}
 
-	fmt.Printf("\u2717 No AMI found matching criteria in region %s\n", a.Spec.Region)
+	fmt.Printf("\u2717 No AMI found matching criteria for region %s\n", a.Spec.Region)
 
 	return false, nil
 }

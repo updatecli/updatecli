@@ -1,7 +1,6 @@
 package ami
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -10,14 +9,14 @@ import (
 // Source returns the latest AMI matching filter(s)
 func (a *AMI) Source(workingDir string) (string, error) {
 
-	svc, errs := a.Init()
+	svc, err := a.Init()
 
-	if len(errs) > 0 {
-		return "", errors.New("something went wrong while retrieving ec2 AMI")
+	if err != nil {
+		return "", err
 	}
 
 	if svc == nil {
-		return "", errors.New("Something went wrong while connecting AWS API")
+		return "", ErrWrongServiceConnection
 	}
 
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",

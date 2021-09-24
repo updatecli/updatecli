@@ -38,7 +38,7 @@ func (s *Spec) Validate() (errs []error) {
 	}
 
 	if len(s.Filters) == 0 {
-		errs = append(errs, ErrNoFiltersSpecified)
+		errs = append(errs, ErrNoFilter)
 	}
 	return errs
 }

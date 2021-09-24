@@ -8,10 +8,11 @@ import (
 
 type Data struct {
 	ami               AMI
-	resp              ec2.DescribeImagesOutput
+	mockedResponse    ec2.DescribeImagesOutput
 	expectedGetAMI    string
 	expectedSource    string
 	expectedCondition bool
+	expectedError     error
 }
 
 type mockDescribeImagesOutput struct {
@@ -34,110 +35,79 @@ var (
 					Filters: Filters{},
 				},
 			},
-			resp: ec2.DescribeImagesOutput{
+			mockedResponse: ec2.DescribeImagesOutput{
 				Images: []*ec2.Image{},
 			},
 			expectedGetAMI:    "",
 			expectedSource:    "",
 			expectedCondition: false,
+			expectedError:     ErrSpecNotValid,
 		},
 		{
 			ami: AMI{
 				Spec: Spec{
-					Region: "DoNotExist",
+					Region: "eu-west-1",
 					Filters: Filters{
 						{
 							Name:   "name",
-							Values: "jenkins-agent-ubuntu*",
+							Values: "openSUSE-Tumbleweed-v202006*",
 						},
 					},
 				},
 			},
-			resp: ec2.DescribeImagesOutput{
-				Images: []*ec2.Image{},
-			},
-			expectedGetAMI:    "",
-			expectedSource:    "",
-			expectedCondition: false,
-		},
-		{
-			ami: AMI{
-				Spec: Spec{
-					Region: "us-east-2",
-					Filters: Filters{
-						{
-							Name:   "name",
-							Values: "jenkins-agent-ubuntu*",
-						},
-					},
-				},
-			},
-			resp: ec2.DescribeImagesOutput{
+			mockedResponse: ec2.DescribeImagesOutput{
 				Images: []*ec2.Image{
 					{
-						Name:         aws.String("ubuntu-20.04"),
-						CreationDate: aws.String("2020-04-03"),
-						ImageId:      aws.String("ami-0ff3b7aefa91e0933"),
-						Description:  aws.String("Default jenkins agent based on ubuntu"),
-						Platform:     aws.String("linux"),
+						Name:         aws.String("openSUSE-Tumbleweed-v20200626-HVM-x86_64-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0fe97336dfbbcbb07.4"),
+						CreationDate: aws.String("2020-06-26"),
+						ImageId:      aws.String("ami-0626a14b9b39e862f"),
+						Description:  aws.String("openSUSE Tumbleweed (HVM, 64-bit) cabelo@opensuse.org"),
 					},
 					{
-						Name:         aws.String("ubuntu-20.04"),
-						CreationDate: aws.String("2020-04-04"),
-						ImageId:      aws.String("ami-0ff3b7aefa91e0934"),
-						Description:  aws.String("Default jenkins agent based on ubuntu"),
-						Platform:     aws.String("linux"),
+						Name:         aws.String("openSUSE-Tumbleweed-v20200604-HVM-x86_64-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0ce36c26c006545c9.4"),
+						CreationDate: aws.String("2020-06-04"),
+						ImageId:      aws.String("ami-08c7016cda7d370a5"),
+						Description:  aws.String("openSUSE Tumbleweed (HVM, 64-bit) cabelo@opensuse.org"),
+						Platform:     aws.String("OpenSuse"),
 					},
 					{
-						Name:         aws.String("ubuntu-20.04"),
-						CreationDate: aws.String("2020-04-04"),
-						ImageId:      aws.String("ami-0ff3b7aefa91e0935"),
-						Description:  aws.String("Default jenkins agent based on ubuntu"),
-						Platform:     aws.String("linux"),
+						Name:         aws.String("openSUSE-Tumbleweed-v20200627-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0941971a046aba5d4.4"),
+						CreationDate: aws.String("2020-06-27"),
+						ImageId:      aws.String("ami-0a9972d9b4dbdabc7"),
+						Description:  aws.String("openSUSE Tumbleweed (HVM, 64-bit) cabelo@opensuse.org"),
+						Platform:     aws.String("OpenSuse"),
 					},
 				},
 			},
-			expectedGetAMI:    "ami-0ff3b7aefa91e0935",
-			expectedSource:    "ami-0fbefe596801fce98",
+			expectedGetAMI:    "ami-0a9972d9b4dbdabc7",
+			expectedSource:    "ami-0a9972d9b4dbdabc7",
 			expectedCondition: true,
 		},
 		{
 			ami: AMI{
 				Spec: Spec{
+					Region: "eu-west-1",
 					Filters: Filters{
 						{
 							Name:   "name",
-							Values: "jenkins-agent-ubuntu*",
+							Values: "openSUSE-Tumbleweed-v20200627-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0941971a046aba5d4.4",
 						},
 					},
 				},
 			},
-			resp:              ec2.DescribeImagesOutput{},
-			expectedGetAMI:    "",
-			expectedSource:    "",
-			expectedCondition: false,
-		},
-		{
-			ami: AMI{
-				Spec: Spec{
-					Region: "us-east-1",
-					Filters: Filters{
-						{
-							Name:   "name",
-							Values: "centos*",
-						},
-					},
-				},
-			},
-			resp: ec2.DescribeImagesOutput{
+			mockedResponse: ec2.DescribeImagesOutput{
 				Images: []*ec2.Image{
 					{
-						ImageId: aws.String(""),
+						Name:         aws.String("openSUSE-Tumbleweed-v20200627-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0941971a046aba5d4.4"),
+						CreationDate: aws.String("2020-06-27"),
+						ImageId:      aws.String("ami-0a9972d9b4dbdabc7"),
+						Description:  aws.String("openSUSE Tumbleweed (HVM, 64-bit) cabelo@opensuse.org"),
+						Platform:     aws.String("OpenSuse"),
 					},
 				},
 			},
-			expectedGetAMI:    "",
-			expectedSource:    "ami-f2dc849a",
+			expectedGetAMI:    "ami-0a9972d9b4dbdabc7",
+			expectedSource:    "ami-0a9972d9b4dbdabc7",
 			expectedCondition: true,
 		},
 		{
@@ -151,7 +121,7 @@ var (
 					},
 				},
 			},
-			resp: ec2.DescribeImagesOutput{
+			mockedResponse: ec2.DescribeImagesOutput{
 				Images: []*ec2.Image{},
 			},
 			expectedGetAMI:    "",

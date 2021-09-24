@@ -1,6 +1,7 @@
 package ami
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -14,9 +15,10 @@ func TestSource(t *testing.T) {
 
 	for id, d := range dataset {
 		got, err := d.ami.Source("")
-		if err != nil {
-			t.Errorf("Unexpected error: %q",
-				err)
+
+		if !errors.Is(err, d.expectedError) {
+			t.Errorf("[%d] Wrong error:\nExpected Error:\t%v\nGot:\t\t%v\n",
+				id, d.expectedError, err)
 		}
 
 		if strings.Compare(got, d.expectedSource) != 0 {
