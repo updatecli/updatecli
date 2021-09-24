@@ -1,38 +1,38 @@
 sources:
-  ami1:
-    name: "Get latest jenkins-agent-ubuntu* ami"
+  opensuse202006:
+    name: "Get latest AMI for openSUSE-Tumbleweed released in 2020 06"
     kind: aws/ami
-    spec: 
-      region: us-east-2
+    spec:
+      region: eu-west-1
       filters:
         - name: "name"
-          values: "jenkins-agent-ubuntu*"
-  ami2:
-    name: "Get latest  ami matching ami-0fbefe596801fce98"
+          values: "openSUSE-Tumbleweed-v202006*"
+  opensuse202009:
+    name: "Get latest AMI for openSUSE-Tumbleweed released in 2020 09"
     kind: aws/ami
-    spec: 
-      region: us-east-2
+    spec:
+      region: eu-west-1
       filters:
-        - name: "image-id"
-          values: "ami-0fbefe596801fce98"
+        - name: "name"
+          values: "openSUSE-Tumbleweed-v202009*"
 
 conditions:
-  ami1:
+  opensuse202006:
     name: Test if ami1 exist
-    sourceID: ami1
+    sourceID: opensuse202006
     kind: aws/ami
     spec:
-      region: us-east-2
-  ami2:
+      region: eu-west-1
+  opensuse202009:
     name: Test if ami2 exist
-    sourceID: ami2
+    sourceID: opensuse202009
     kind: aws/ami
     spec:
-      region: us-east-2
+      region: eu-west-1
 targets:
   file:
     name: Update fictive file
     sourceID: ami1
     kind: file
     spec:
-      file: /tmp/updatecli_cli_test 
+      file: /tmp/updatecli_ci_test
