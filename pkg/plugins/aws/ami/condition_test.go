@@ -18,7 +18,7 @@ func TestCondition(t *testing.T) {
 		if got != d.expectedCondition {
 			t.Errorf("[%d] Wrong AMI conditional result:\nExpected Result:\t\t%v\nGot:\t\t\t\t\t%v",
 				id,
-				d.expectedSource,
+				d.expectedCondition,
 				got)
 		}
 	}
