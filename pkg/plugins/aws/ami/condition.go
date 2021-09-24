@@ -19,19 +19,18 @@ func (a *AMI) Condition(source string) (bool, error) {
 		return false, nil
 	}
 
-	// Based on source information,
-	// we try to define a default image-id resource
-	// if not researched
-	isImageIDDefined := false
-	for i := 0; i < len(a.Spec.Filters); i++ {
-		if strings.Compare(a.Spec.Filters[i].Name, "image-id") == 0 {
-			isImageIDDefined = true
-			break
+	isFilterDefined := func(filter string) (found bool) {
+		for i := 0; i < len(a.Spec.Filters); i++ {
+			if strings.Compare(a.Spec.Filters[i].Name, filter) == 0 {
+				found = true
+				break
+			}
 		}
+		return found
 	}
 
 	// Set image-id to source output if not yet defined
-	if !isImageIDDefined && len(source) > 0 {
+	if !isFilterDefined("image-id") && len(source) > 0 {
 		a.Spec.Filters = append(a.Spec.Filters, Filter{
 			Name:   "image-id",
 			Values: source,
