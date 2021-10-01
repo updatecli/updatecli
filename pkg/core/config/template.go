@@ -11,7 +11,7 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"go.mozilla.org/sops/decrypt"
+	"go.mozilla.org/sops/v3/decrypt"
 	"gopkg.in/yaml.v3"
 )
 
