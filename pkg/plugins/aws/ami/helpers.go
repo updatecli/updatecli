@@ -2,6 +2,7 @@ package ami
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -34,6 +35,13 @@ func (a *AMI) getLatestAmiID(svc ec2iface.EC2API) (string, error) {
 	}
 
 	if nbImages := len(result.Images); nbImages > 0 {
+
+		switch a.Spec.SortBy {
+		case "creationdateasc":
+			sort.Sort(ByCreationDateAsc(result.Images))
+		case "creationdatedesc":
+			sort.Sort(ByCreationDateDesc(result.Images))
+		}
 
 		logrus.Debugf("Latest AMI ID found:\n  ---\n  %s---\n\n",
 			strings.ReplaceAll(
