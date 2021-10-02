@@ -13,7 +13,14 @@ sources:
       pattern: 'go-1.(\d*).(\d*)$'
     transformers:
       - trimPrefix: go
-  currentGoVersion:
+  latestMajorMinorGoVersion:
+    name: Get Latest Go Release without the patch
+    kind: shell
+    depends_on:
+      - latestGoVersion
+    spec:
+      command: ./updatecli/script/removePatch.sh {{ source "latestGoVersion" }}
+  currentGoModGoVersionLine:
     name: Upate go.mod
     kind: file
     spec:
@@ -26,12 +33,12 @@ sources:
     spec:
       file: go.mod
     depends_on:
-      - currentGoVersion
-      - latestGoVersion
+      - latestMajorMinorGoVersion
+      - currentGoModGoVersionLine
     transformers:
-      - replacer: 
-          from: '{{ source "currentGoVersion" }}'
-          to: 'go {{ source "latestGoVersion" }}'
+      - replacer:
+          from: '{{ source "currentGoModGoVersionLine" }}'
+          to: 'go {{ source "latestMajorMinorGoVersion" }}'
 conditions:
   workflowrelease-sandbox:
     name: Ensure GA step is defined in Github Action named release-sandbox
@@ -115,7 +122,7 @@ targets:
         username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
         branch: main
   go.mod:
-    name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
+    name: '[go.mod] Update Golang version to {{ source "latestMajorMinorGoVersion" }}'
     sourceID: gomod
     kind: file
     spec:
@@ -147,4 +154,3 @@ targets:
         token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
         username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
         branch: main
-
