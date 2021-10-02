@@ -16,16 +16,17 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Diff
-        uses: updatecli/updatecli-action@v1.10.0
+        uses: updatecli/updatecli-action@v1.11.0
         with:
           command: diff
           flags: "--config ./updatecli/updatecli.d"
         env:
           UPDATECLI_GITHUB_ACTOR: ${{ github.actor }}
           UPDATECLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Apply
-        uses: updatecli/updatecli-action@v1.10.0
+        uses: updatecli/updatecli-action@v1.11.0
+        if: github.ref == 'refs/heads/main'
         with:
           command: apply
           flags: "--config ./updatecli/updatecli.d"
