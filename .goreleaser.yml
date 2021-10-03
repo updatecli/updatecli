@@ -45,7 +45,7 @@ dockers:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
     dockerfile: Dockerfile.release
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--pull"
       - "--no-cache"
@@ -63,7 +63,7 @@ dockers:
       - 'updatecli/updatecli:{{ .Tag }}-arm64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
     dockerfile: Dockerfile.release
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--pull"
       - "--no-cache"
