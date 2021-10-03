@@ -116,3 +116,16 @@ nfpms:
 
 snapshot:
   name_template: "{{ .Tag }}-next"
+
+brews:
+  - name: updatecli
+    folder: Formula
+    tap:
+      owner: updatecli
+      name: homebrew-updatecli
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: "https://updatecli.io/"
+    description: "Continuously update everything."
+    license: "MIT"
+    test: |
+      system "#{bin}/updatecli version"
