@@ -45,7 +45,7 @@ dockers:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
     dockerfile: Dockerfile.release
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--pull"
       - "--no-cache"
@@ -63,7 +63,7 @@ dockers:
       - 'updatecli/updatecli:{{ .Tag }}-arm64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
     dockerfile: Dockerfile.release
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--pull"
       - "--no-cache"
@@ -116,3 +116,16 @@ nfpms:
 
 snapshot:
   name_template: "{{ .Tag }}-next"
+
+brews:
+  - name: updatecli
+    folder: Formula
+    tap:
+      owner: updatecli
+      name: homebrew-updatecli
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: "https://updatecli.io/"
+    description: "Continuously update everything."
+    license: "MIT"
+    test: |
+      system "#{bin}/updatecli version"
