@@ -123,6 +123,7 @@ brews:
     tap:
       owner: updatecli
       name: homebrew-updatecli
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: "https://updatecli.io/"
     description: "Continuously update everything."
