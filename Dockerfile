@@ -1,7 +1,7 @@
 ## Retrieve goreleaser binary
 ARG GORELEASER_VERSION=0.181.1
 ARG BUILDPLATFORM=amd64
-ARG GOLANG_VERSION=1.16
+ARG GOLANG_VERSION=1.17.1
 
 FROM --platform=${BUILDPLATFORM} goreleaser/goreleaser:v${GORELEASER_VERSION} as goreleaser
 

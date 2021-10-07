@@ -13,25 +13,13 @@ sources:
       pattern: 'go-1.(\d*).(\d*)$'
     transformers:
       - trimPrefix: go
-  currentGoVersion:
-    name: Upate go.mod
-    kind: file
-    spec:
-      file: go.mod
-    transformers:
-      - find: 'go (.*)'
   gomod:
-    name: Upate go.mod
-    kind: file
-    spec:
-      file: go.mod
+    name: Update go.mod
+    kind: shell
     depends_on:
-      - currentGoVersion
       - latestGoVersion
-    transformers:
-      - replacer: 
-          from: '{{ source "currentGoVersion" }}'
-          to: 'go {{ source "latestGoVersion" }}'
+    spec:
+      command: ./updatecli/scripts/updateGomodGoversion.sh ./go.mod {{ source "latestGoVersion" }}
 conditions:
   workflowrelease-sandbox:
     name: Ensure GA step is defined in Github Action named release-sandbox
