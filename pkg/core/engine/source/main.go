@@ -162,8 +162,15 @@ func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
 		spec = &a
 
 	case "githubRelease":
-		g := github.Github{}
-		err := mapstructure.Decode(s.Spec, &g)
+		githubSpec := github.Spec{}
+
+		err := mapstructure.Decode(s.Spec, &githubSpec)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		g, err := github.New(githubSpec)
 
 		if err != nil {
 			return nil, nil, err

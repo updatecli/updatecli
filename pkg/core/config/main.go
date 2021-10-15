@@ -382,3 +382,27 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 	return value, nil
 
 }
+
+// GetChangelogTitle try to guess a specific target based on various information available for
+// a specific job
+func (config *Config) GetChangelogTitle(ID string, fallback string) (title string) {
+
+	if len(config.Title) > 0 {
+		// If a pipeline title has been defined, then use it for pull request title
+		title = fmt.Sprintf("[updatecli] %s",
+			config.Title)
+
+	} else if len(config.Targets) == 1 && len(config.Targets[ID].Name) > 0 {
+		// If we only have one target then we can use it as fallback.
+		// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
+		title = fmt.Sprintf("[updatecli] %s", config.Targets[ID].Name)
+	} else {
+		// At the moment, we don't have an easy way to describe what changed
+		// I am still thinking to a better solution.
+		logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
+		title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
+			config.Sources[config.Targets[ID].SourceID].Kind,
+			fallback)
+	}
+	return title
+}

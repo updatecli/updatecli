@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/context"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/github"
 )
 
 // RunTargets iterates on every target to update each them.
@@ -64,41 +62,12 @@ func RunTargets(
 			return err
 		}
 
+		// Init target reporting
 		target.Changelog = pipelineContext.Sources[target.SourceID].Changelog
-
-		if _, ok := target.Scm["github"]; ok {
-			var g github.Github
-
-			err := mapstructure.Decode(target.Scm["github"], &g)
-
-			if err != nil {
-				continue
-			}
-
-			g.PullRequestDescription.Description = target.Changelog
-			g.PullRequestDescription.Report = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
-
-			if len(cfg.Title) > 0 {
-				// If a pipeline title has been defined, then use it for pull request title
-				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s",
-					cfg.Title)
-
-			} else if len(cfg.Targets) == 1 && len(target.Name) > 0 {
-				// If we only have one target then we can use it as fallback.
-				// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
-				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli] %s", target.Name)
-			} else {
-				// At the moment, we don't have an easy way to describe what changed
-				// I am still thinking to a better solution.
-				logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
-				g.PullRequestDescription.Title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
-					cfg.Sources[target.SourceID].Kind,
-					pipelineContext.Sources[target.SourceID].Output)
-			}
-
-			target.Scm["github"] = g
-
-		}
+		target.ReportBody = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
+		target.ReportTitle = cfg.GetChangelogTitle(
+			id,
+			pipelineContext.Sources[target.SourceID].Output)
 
 		if target.Prefix == "" && cfg.Sources[target.SourceID].Prefix != "" {
 			target.Prefix = cfg.Sources[target.SourceID].Prefix

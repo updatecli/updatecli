@@ -26,6 +26,8 @@ type Target struct {
 	Changelog    string
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
 	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
+	ReportTitle  string // ReportTitle contains the updatecli reports title for sources and conditions run
+	ReportBody   string // ReportBody contains the updatecli reports body for sources and conditions run
 	Transformers transformer.Transformers
 	Spec         interface{}
 	Scm          map[string]interface{}
@@ -173,107 +175,113 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		return false, err
 	}
 
-	if len(t.Scm) > 0 {
-		var message string
-		var files []string
-		var s scm.Scm
-
-		_, err := t.Check()
-		if err != nil {
-			return false, err
-		}
-
-		s, pr, err = scm.Unmarshal(t.Scm)
-		if err != nil {
-			return false, err
-		}
-
-		err = s.Init(source, t.PipelineID)
-		if err != nil {
-			return false, err
-		}
-
-		err = s.Checkout()
-		if err != nil {
-			return false, err
-		}
-
-		changed, files, message, err = spec.TargetFromSCM(t.Prefix+source+t.Postfix, s, o.DryRun)
-		if err != nil {
-			return changed, err
-		}
-
-		if changed && !o.DryRun {
-			if message == "" {
-				return changed, fmt.Errorf("Target has no change message")
-			}
-
-			if len(t.Scm) > 0 {
-
-				if len(files) == 0 {
-					logrus.Info("no changed files to commit")
-					return changed, nil
-				}
-
-				if o.Commit {
-					err := s.Add(files)
-					if err != nil {
-						return changed, err
-					}
-
-					err = s.Commit(message)
-					if err != nil {
-						return changed, err
-					}
-				}
-				if o.Push {
-					err := s.Push()
-					if err != nil {
-						return changed, err
-					}
-				}
-			}
-		}
-		if pr != nil && !o.DryRun && o.Push {
-			ID, err := pr.IsPullRequest()
-
-			logrus.Debugf("Pull Request ID: %v", ID)
-
-			// We try to update the pullrequest even if nothing changed in the current run
-			// so we always update the pull request body if needed.
-			if err != nil {
-				return changed, err
-			} else if len(ID) == 0 && err == nil && changed {
-				// Something changed and no open pull request exist so we create it
-				logrus.Infof("Creating Pull Request\n")
-				err = pr.OpenPullRequest()
-				if err != nil {
-					return changed, err
-				}
-
-			} else if len(ID) != 0 && err == nil {
-				// A pull request already exist so we try to update it to overide old information
-				// whatever a change was applied during the run or not
-				logrus.Infof("Pull Request already exist, updating it\n")
-				err = pr.UpdatePullRequest(ID)
-				if err != nil {
-					return changed, err
-				}
-				// No change and no pull request, nothing else to do
-			} else if len(ID) == 0 && err == nil && !changed {
-				// We try to catch un-planned scenario
-			} else {
-				logrus.Errorf("Something unexpected happened while dealing with Pull Request")
-			}
-		}
-
-	} else if len(t.Scm) == 0 {
+	if len(t.Scm) == 0 {
 
 		changed, err = spec.Target(t.Prefix+source+t.Postfix, o.DryRun)
 		if err != nil {
 			return changed, err
 		}
+		return changed, nil
 
+	}
+
+	var message string
+	var files []string
+	var s scm.Scm
+
+	_, err = t.Check()
+	if err != nil {
+		return false, err
+	}
+
+	s, pr, err = scm.Unmarshal(t.Scm)
+	if err != nil {
+		return false, err
+	}
+
+	err = s.Init(source, t.PipelineID)
+	if err != nil {
+		return false, err
+	}
+
+	err = s.Checkout()
+	if err != nil {
+		return false, err
+	}
+
+	changed, files, message, err = spec.TargetFromSCM(t.Prefix+source+t.Postfix, s, o.DryRun)
+	if err != nil {
+		return changed, err
+	}
+
+	if changed && !o.DryRun {
+		if message == "" {
+			return changed, fmt.Errorf("Target has no change message")
+		}
+
+		if len(t.Scm) > 0 {
+
+			if len(files) == 0 {
+				logrus.Info("no changed files to commit")
+				return changed, nil
+			}
+
+			if o.Commit {
+				err := s.Add(files)
+				if err != nil {
+					return changed, err
+				}
+
+				err = s.Commit(message)
+				if err != nil {
+					return changed, err
+				}
+			}
+			if o.Push {
+				err := s.Push()
+				if err != nil {
+					return changed, err
+				}
+			}
+		}
+	}
+	if pr != nil && !o.DryRun && o.Push {
+		pr.InitPullRequestDescription(
+			t.ReportTitle,
+			t.Changelog,
+			t.ReportBody,
+		)
+
+		ID, err := pr.IsPullRequest()
+
+		logrus.Debugf("Pull Request ID: %v", ID)
+
+		// We try to update the pullrequest even if nothing changed in the current run
+		// so we always update the pull request body if needed.
+		if err != nil {
+			return changed, err
+		} else if len(ID) == 0 && err == nil && changed {
+			// Something changed and no open pull request exist so we create it
+			logrus.Infof("Creating Pull Request\n")
+			err = pr.OpenPullRequest()
+			if err != nil {
+				return changed, err
+			}
+
+		} else if len(ID) != 0 && err == nil {
+			// A pull request already exist so we try to update it to overide old information
+			// whatever a change was applied during the run or not
+			logrus.Infof("Pull Request already exist, updating it\n")
+			err = pr.UpdatePullRequest(ID)
+			if err != nil {
+				return changed, err
+			}
+			// No change and no pull request, nothing else to do
+		} else if len(ID) == 0 && err == nil && !changed {
+			// We try to catch un-planned scenario
+		} else {
+			logrus.Errorf("Something unexpected happened while dealing with Pull Request")
+		}
 	}
 
 	return changed, nil

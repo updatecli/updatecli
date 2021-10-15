@@ -18,9 +18,12 @@ var (
 	dataSet = DataSet{
 		{
 			github: Github{
-				Owner:      "olblak",
-				Repository: "nocode",
-				Token:      os.Getenv("GITHUB_TOKEN"),
+				spec: Spec{
+					Owner:      "olblak",
+					Repository: "nocode",
+					Token:      os.Getenv("GITHUB_TOKEN"),
+					Username:   os.Getenv("GITHUB_ACTOR"),
+				},
 			},
 			expectedTags:     []string{"1.0.0"},
 			expectedReleases: []string{"1.0.0"},
