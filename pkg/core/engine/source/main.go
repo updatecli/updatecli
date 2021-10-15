@@ -40,11 +40,6 @@ type Spec interface {
 	Source(workingDir string) (string, error)
 }
 
-// Changelog is an interface to retrieve changelog description
-type Changelog interface {
-	Changelog(release string) (string, error)
-}
-
 // Execute execute actions defined by the source configuration
 func (s *Source) Execute() (output string, changelogContent string, err error) {
 
