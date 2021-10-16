@@ -37,8 +37,10 @@ var (
 				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -53,8 +55,10 @@ var (
 				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -67,8 +71,10 @@ var (
 				Name: "jenkins - {{ source \"default\" }}",
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -83,8 +89,10 @@ var (
 				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -98,8 +106,10 @@ var (
 				Name: "jenkins - {{ pipeline \"sources.default.output\" }}",
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -114,8 +124,10 @@ var (
 				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -128,8 +140,10 @@ var (
 				Name: "jenkins - {{ source \"Default\" }}",
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -144,8 +158,10 @@ var (
 				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -158,8 +174,10 @@ var (
 			Config: Config{
 				Name: `{{ pipeline "Source.kindd" }}`,
 				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+					Spec: source.Spec{
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
 				},
 			},
 			Context: context{
@@ -179,8 +197,10 @@ var (
 			Config: Config{
 				Name: `{{ pipeline "Source.kindd" }}`,
 				Source: source.Source{
-					Name: "Get Version",
-					Kind: "jenkins",
+					Spec: source.Spec{
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
 				},
 			},
 			Context: context{
@@ -202,8 +222,10 @@ var (
 				Name: `{{ pipeline Source.kind }}`,
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -223,8 +245,10 @@ var (
 				Name: `{{ source default }}`,
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -244,8 +268,10 @@ var (
 				Name: `{{ source "default" }}-jdk11`,
 				Sources: map[string]source.Source{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -266,8 +292,10 @@ var (
 				Name: `lts-jenkins-jdk11`,
 				Sources: map[string]source.Source{
 					`{{ pipeline "Sources.default.output" }}`: {
-						Name: "Get Version",
-						Kind: "jenkins",
+						Spec: source.Spec{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},

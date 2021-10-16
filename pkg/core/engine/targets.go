@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/context"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -14,7 +13,6 @@ import (
 
 // RunTargets iterates on every target to update each them.
 func RunTargets(
-	cfg *config.Config,
 	options *target.Options,
 	pipelineReport *reports.Report,
 	pipelineContext *context.Context) error {
@@ -34,7 +32,7 @@ func RunTargets(
 	}
 
 	// Sort targets keys by building a dependency graph
-	sortedTargetsKeys, err := SortedTargetsKeys(&cfg.Targets)
+	sortedTargetsKeys, err := SortedTargetsKeys(&pipelineContext.Targets)
 	if err != nil {
 		pipelineReport.Result = result.FAILURE
 		return err
@@ -46,39 +44,40 @@ func RunTargets(
 	isResultIsFailed := false
 
 	for _, id := range sortedTargetsKeys {
-		target := cfg.Targets[id]
-		ctx := pipelineContext.Targets[id]
-		rpt := pipelineReport.Targets[i]
-
-		rpt.Name = target.Name
-		rpt.Result = result.FAILURE
-		rpt.Kind = target.Kind
-
-		targetChanged := false
-
 		// Update pipeline before each target run
-		err = cfg.Update(pipelineContext)
+		err = pipelineContext.Config.Update(pipelineContext)
 		if err != nil {
 			return err
 		}
 
-		// Init target reporting
-		target.Changelog = pipelineContext.Sources[target.SourceID].Changelog
-		target.ReportBody = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
-		target.ReportTitle = cfg.GetChangelogTitle(
-			id,
-			pipelineContext.Sources[target.SourceID].Output)
+		target := pipelineContext.Targets[id]
+		target.Spec = pipelineContext.Config.Targets[id].Spec
 
-		if target.Prefix == "" && cfg.Sources[target.SourceID].Prefix != "" {
-			target.Prefix = cfg.Sources[target.SourceID].Prefix
+		rpt := pipelineReport.Targets[i]
+
+		rpt.Name = target.Spec.Name
+		rpt.Result = result.FAILURE
+		rpt.Kind = target.Spec.Kind
+
+		targetChanged := false
+
+		// Init target reporting
+		target.Changelog = pipelineContext.Sources[target.Spec.SourceID].Changelog
+		target.ReportBody = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
+		target.ReportTitle = pipelineContext.Config.GetChangelogTitle(
+			id,
+			pipelineContext.Sources[target.Spec.SourceID].Result)
+
+		if target.Spec.Prefix == "" && pipelineContext.Sources[target.Spec.SourceID].Spec.Prefix != "" {
+			target.Spec.Prefix = pipelineContext.Sources[target.Spec.SourceID].Spec.Prefix
 		}
 
-		if target.Postfix == "" && cfg.Sources[target.SourceID].Postfix != "" {
-			target.Postfix = cfg.Sources[target.SourceID].Postfix
+		if target.Spec.Postfix == "" && pipelineContext.Sources[target.Spec.SourceID].Spec.Postfix != "" {
+			target.Spec.Postfix = pipelineContext.Sources[target.Spec.SourceID].Spec.Postfix
 		}
 
 		targetChanged, err = target.Run(
-			pipelineContext.Sources[target.SourceID].Output,
+			pipelineContext.Sources[target.Spec.SourceID].Result,
 			options)
 
 		if err != nil {
@@ -88,10 +87,9 @@ func RunTargets(
 			isResultIsFailed = true
 
 			rpt.Result = result.FAILURE
-			ctx.Result = result.FAILURE
+			target.Result = result.FAILURE
 
-			cfg.Targets[id] = target
-			pipelineContext.Targets[id] = ctx
+			pipelineContext.Targets[id] = target
 			pipelineReport.Targets[i] = rpt
 			i++
 			continue
@@ -99,16 +97,15 @@ func RunTargets(
 		} else if targetChanged {
 			isResultIsChanged = true
 
-			ctx.Result = result.CHANGED
+			target.Result = result.CHANGED
 			rpt.Result = result.CHANGED
 
 		} else {
-			ctx.Result = result.SUCCESS
+			target.Result = result.SUCCESS
 			rpt.Result = result.SUCCESS
 		}
 
-		cfg.Targets[id] = target
-		pipelineContext.Targets[id] = ctx
+		pipelineContext.Targets[id] = target
 		pipelineReport.Targets[i] = rpt
 
 		i++

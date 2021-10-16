@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/scm"
@@ -14,16 +15,24 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
-	"github.com/updatecli/updatecli/pkg/plugins/yaml"
+	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
+	Result      string // Result store the condition result after a target run. This variable can't be set by an updatecli configuration
+	Spec        Spec
+	ReportBody  string
+	ReportTitle string
+	Changelog   string
+}
+
+// Spec defines target parameters
+type Spec struct {
 	DependsOn    []string `yaml:"depends_on"`
 	Name         string
 	PipelineID   string `yaml:"pipelineID"` // PipelineID references a uniq pipeline run that allows to groups targets
 	Kind         string
-	Changelog    string
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
 	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
 	ReportTitle  string // ReportTitle contains the updatecli reports title for sources and conditions run
@@ -34,8 +43,8 @@ type Target struct {
 	SourceID     string `yaml:"sourceID"`
 }
 
-// Spec is an interface which offers common function to manipulate targets.
-type Spec interface {
+// Targeter is an interface which offers common function to manipulate targets.
+type Targeter interface {
 	Target(source string, dryRun bool) (bool, error)
 	TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error)
 }
@@ -45,7 +54,7 @@ func (t *Target) Check() (bool, error) {
 	ok := true
 	required := []string{}
 
-	if t.Name == "" {
+	if t.Spec.Name == "" {
 		required = append(required, "Name")
 	}
 
@@ -58,83 +67,83 @@ func (t *Target) Check() (bool, error) {
 }
 
 // Unmarshal decodes a target struct
-func Unmarshal(target *Target) (spec Spec, err error) {
-	switch target.Kind {
+func Unmarshal(target *Target) (targeter Targeter, err error) {
+	switch target.Spec.Kind {
 	case "helmChart":
 		ch := chart.Chart{}
 
-		err := mapstructure.Decode(target.Spec, &ch)
+		err := mapstructure.Decode(target.Spec.Spec, &ch)
 
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		spec = &ch
+		targeter = &ch
 
 	case "dockerfile":
 		d := dockerfile.Dockerfile{}
 
-		err := mapstructure.Decode(target.Spec, &d)
+		err := mapstructure.Decode(target.Spec.Spec, &d)
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		spec = &d
+		targeter = &d
 
 	case "gitTag":
 		t := tag.Tag{}
 
-		err := mapstructure.Decode(target.Spec, &t)
+		err := mapstructure.Decode(target.Spec.Spec, &t)
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		spec = &t
+		targeter = &t
 
 	case "yaml":
-		y := yaml.Yaml{}
+		y := yml.Yaml{}
 
-		err := mapstructure.Decode(target.Spec, &y)
+		err := mapstructure.Decode(target.Spec.Spec, &y)
 
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		spec = &y
+		targeter = &y
 
 	case "file":
 		f := file.File{}
 
-		err := mapstructure.Decode(target.Spec, &f)
+		err := mapstructure.Decode(target.Spec.Spec, &f)
 
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		spec = &f
+		targeter = &f
 
 	case "shell":
 		shellResourceSpec := shell.ShellSpec{}
 
-		err := mapstructure.Decode(target.Spec, &shellResourceSpec)
+		err := mapstructure.Decode(target.Spec.Spec, &shellResourceSpec)
 		if err != nil {
 			return nil, err
 		}
 
-		spec, err = shell.New(shellResourceSpec)
+		targeter, err = shell.New(shellResourceSpec)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		return nil, fmt.Errorf("⚠ Don't support target kind: %v", target.Kind)
+		return nil, fmt.Errorf("⚠ Don't support target kind: %v", target.Spec.Kind)
 	}
-	return spec, nil
+	return targeter, nil
 }
 
 // Run applies a specific target configuration
@@ -142,8 +151,8 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 
 	var pr scm.PullRequest
 
-	if len(t.Transformers) > 0 {
-		source, err = t.Transformers.Apply(source)
+	if len(t.Spec.Transformers) > 0 {
+		source, err = t.Spec.Transformers.Apply(source)
 		if err != nil {
 			logrus.Error(err)
 			return false, err
@@ -151,12 +160,12 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(t.Prefix) > 0 {
+	if len(t.Spec.Prefix) > 0 {
 		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(t.Postfix) > 0 {
+	if len(t.Spec.Postfix) > 0 {
 		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
@@ -175,9 +184,9 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		return false, err
 	}
 
-	if len(t.Scm) == 0 {
+	if len(t.Spec.Scm) == 0 {
 
-		changed, err = spec.Target(t.Prefix+source+t.Postfix, o.DryRun)
+		changed, err = spec.Target(t.Spec.Prefix+source+t.Spec.Postfix, o.DryRun)
 		if err != nil {
 			return changed, err
 		}
@@ -194,12 +203,12 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		return false, err
 	}
 
-	s, pr, err = scm.Unmarshal(t.Scm)
+	s, pr, err = scm.Unmarshal(t.Spec.Scm)
 	if err != nil {
 		return false, err
 	}
 
-	err = s.Init(source, t.PipelineID)
+	err = s.Init(source, t.Spec.PipelineID)
 	if err != nil {
 		return false, err
 	}
@@ -209,7 +218,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		return false, err
 	}
 
-	changed, files, message, err = spec.TargetFromSCM(t.Prefix+source+t.Postfix, s, o.DryRun)
+	changed, files, message, err = spec.TargetFromSCM(t.Spec.Prefix+source+t.Spec.Postfix, s, o.DryRun)
 	if err != nil {
 		return changed, err
 	}
@@ -219,7 +228,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 			return changed, fmt.Errorf("Target has no change message")
 		}
 
-		if len(t.Scm) > 0 {
+		if len(t.Spec.Scm) > 0 {
 
 			if len(files) == 0 {
 				logrus.Info("no changed files to commit")
@@ -285,4 +294,30 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 	}
 
 	return changed, nil
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface.
+func (t *Target) UnmarshalYAML(value *yaml.Node) error {
+
+	var spec Spec
+
+	if err := value.Decode(&spec); err != nil {
+		logrus.Errorln(err)
+		return err
+	}
+
+	t.Spec = spec
+
+	return nil
+}
+
+// MarshalYAML implements the yaml.Unmarshaler interface.
+// https://github.com/go-yaml/yaml/issues/714
+func (t Target) MarshalYAML() (interface{}, error) {
+	node := yaml.Node{}
+	err := node.Encode(t.Spec)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
 }

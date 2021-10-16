@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/engine/condition"
+	"github.com/updatecli/updatecli/pkg/core/engine/source"
+	"github.com/updatecli/updatecli/pkg/core/engine/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -14,35 +17,15 @@ type Context struct {
 	PipelineID string // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	Title      string // Title is used for the full pipelin
 
-	Sources    map[string]Source
-	Conditions map[string]Condition
-	Targets    map[string]Target
+	Sources    map[string]source.Source
+	Conditions map[string]condition.Condition
+	Targets    map[string]target.Target
 
 	SourcesStageReport    []reports.Stage
 	ConditionsStageReport []reports.Stage
 	TargetsStageReport    []reports.Stage
 
 	Config *config.Config
-}
-
-// Source hold context information gathered during an updatecli run
-// that are specific to a source resource
-type Source struct {
-	Output    string
-	Result    string
-	Changelog string
-}
-
-// Condition hold context information gathered during an updatecli run
-// that are specific to a condition resource
-type Condition struct {
-	Result string
-}
-
-// Target hold context information gathered during an updatecli run
-// that are specific to a condition resource
-type Target struct {
-	Result string
 }
 
 // Init initialize a updatecli context based on its bind configuration
@@ -55,48 +38,54 @@ func (c *Context) Init(config *config.Config) {
 	c.Config = config
 
 	// Init context resource size
-	c.Sources = make(map[string]Source, len(config.Sources))
-	c.Conditions = make(map[string]Condition, len(config.Conditions))
-	c.Targets = make(map[string]Target, len(config.Targets))
+	c.Sources = make(map[string]source.Source, len(config.Sources))
+	c.Conditions = make(map[string]condition.Condition, len(config.Conditions))
+	c.Targets = make(map[string]target.Target, len(config.Targets))
 
 	// Init sources report
-	for id, source := range config.Sources {
+	for id := range config.Sources {
 		c.SourcesStageReport = append(
 			c.SourcesStageReport,
 			reports.Stage{
-				Name:   source.Name,
-				Kind:   source.Kind,
+				Name:   config.Sources[id].Spec.Name,
+				Kind:   config.Sources[id].Spec.Kind,
 				Result: result.FAILURE,
 			})
-		c.Sources[id] = Source{
-			Result: result.FAILURE,
-		}
+
+		// Init Sources[id]
+		s := config.Sources[id]
+		s.Result = result.FAILURE
+
+		c.Sources[id] = s
+
 	}
 
 	// Init conditions report
-	for id, condition := range config.Conditions {
+	for id := range config.Conditions {
 		c.ConditionsStageReport = append(
 			c.ConditionsStageReport,
 			reports.Stage{
-				Name:   condition.Name,
-				Kind:   condition.Kind,
+				Name:   config.Conditions[id].Spec.Name,
+				Kind:   config.Conditions[id].Spec.Kind,
 				Result: result.FAILURE,
 			})
-		c.Conditions[id] = Condition{
-			Result: result.FAILURE,
-		}
+
+		cond := config.Conditions[id]
+		cond.Result = result.FAILURE
+
+		c.Conditions[id] = cond
 	}
 
 	// Init target report
-	for id, target := range config.Conditions {
+	for id := range config.Targets {
 		c.TargetsStageReport = append(
 			c.TargetsStageReport,
 			reports.Stage{
-				Name:   target.Name,
-				Kind:   target.Kind,
+				Name:   config.Targets[id].Spec.Name,
+				Kind:   config.Targets[id].Spec.Kind,
 				Result: result.FAILURE,
 			})
-		c.Targets[id] = Target{
+		c.Targets[id] = target.Target{
 			Result: result.FAILURE,
 		}
 	}

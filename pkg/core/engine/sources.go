@@ -2,7 +2,6 @@ package engine
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/context"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -10,11 +9,10 @@ import (
 
 // RunSources iterates on every source definition to retrieve every information.
 func RunSources(
-	conf *config.Config,
 	pipelineReport *reports.Report,
 	pipelineContext *context.Context) error {
 
-	sortedSourcesKeys, err := SortedSourcesKeys(&conf.Sources)
+	sortedSourcesKeys, err := SortedSourcesKeys(&pipelineContext.Sources)
 	if err != nil {
 		logrus.Errorf("%s %v\n", result.FAILURE, err)
 		return err
@@ -23,40 +21,40 @@ func RunSources(
 	i := 0
 
 	for _, id := range sortedSourcesKeys {
-		source := conf.Sources[id]
-		ctx := pipelineContext.Sources[id]
+		source := pipelineContext.Sources[id]
+		source.Spec = pipelineContext.Config.Sources[id].Spec
+
 		rpt := pipelineReport.Sources[i]
 
-		rpt.Name = source.Name
+		rpt.Name = source.Spec.Name
 		rpt.Result = result.FAILURE
-		rpt.Kind = source.Kind
+		rpt.Kind = source.Spec.Kind
 
-		ctx.Result = result.FAILURE
-		ctx.Output, ctx.Changelog, err = source.Execute()
+		source.Output, source.Changelog, err = source.Execute()
 
 		if err != nil {
 			logrus.Errorf("%s %v\n", result.FAILURE, err)
-			pipelineContext.Sources[id] = ctx
+			pipelineContext.Sources[id] = source
 			pipelineReport.Sources[i] = rpt
 			i++
 			continue
 		}
 
-		if len(ctx.Output) == 0 {
+		if len(source.Output) == 0 {
 			logrus.Infof("\n%s Something went wrong no value returned from Source", result.FAILURE)
-			pipelineContext.Sources[id] = ctx
+			pipelineContext.Sources[id] = source
 			pipelineReport.Sources[i] = rpt
 			i++
 			continue
 		}
 
-		ctx.Result = result.SUCCESS
+		source.Result = result.SUCCESS
 		rpt.Result = result.SUCCESS
 
-		pipelineContext.Sources[id] = ctx
+		pipelineContext.Sources[id] = source
 		pipelineReport.Sources[i] = rpt
 
-		err = conf.Update(pipelineContext)
+		err = pipelineContext.Config.Update(pipelineContext)
 		if err != nil {
 			return err
 		}

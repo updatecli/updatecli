@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/context"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -12,7 +11,6 @@ import (
 
 // RunConditions run every conditions for a given configuration config.
 func RunConditions(
-	config *config.Config,
 	pipelineContext *context.Context,
 	pipelineReport *reports.Report) (globalResult bool, err error) {
 
@@ -20,7 +18,7 @@ func RunConditions(
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("conditions")+1))
 
 	// Sort conditions keys by building a dependency graph
-	sortedConditionsKeys, err := SortedConditionsKeys(&config.Conditions)
+	sortedConditionsKeys, err := SortedConditionsKeys(&pipelineContext.Conditions)
 	if err != nil {
 		return false, err
 	}
@@ -29,22 +27,23 @@ func RunConditions(
 	globalResult = true
 
 	for _, id := range sortedConditionsKeys {
-		condition := config.Conditions[id]
-		ctx := pipelineContext.Conditions[id]
+		condition := pipelineContext.Conditions[id]
+		condition.Spec = pipelineContext.Config.Conditions[id].Spec
+
 		rpt := pipelineReport.Conditions[i]
 
-		rpt.Name = condition.Name
+		rpt.Name = condition.Spec.Name
 		rpt.Result = result.FAILURE
-		rpt.Kind = condition.Kind
+		rpt.Kind = condition.Spec.Kind
 
 		ok, err := condition.Run(
-			config.Sources[condition.SourceID].Prefix +
-				pipelineContext.Sources[condition.SourceID].Output +
-				config.Sources[condition.SourceID].Postfix)
+			pipelineContext.Sources[condition.Spec.SourceID].Spec.Prefix +
+				pipelineContext.Sources[condition.Spec.SourceID].Output +
+				pipelineContext.Sources[condition.Spec.SourceID].Spec.Postfix)
 
 		if err != nil {
 			globalResult = false
-			pipelineContext.Conditions[id] = ctx
+			pipelineContext.Conditions[id] = condition
 			pipelineReport.Conditions[i] = rpt
 			i++
 			continue
@@ -52,24 +51,25 @@ func RunConditions(
 
 		if !ok {
 			globalResult = false
-			pipelineContext.Conditions[id] = ctx
+			pipelineContext.Conditions[id] = condition
 			pipelineReport.Conditions[i] = rpt
 			i++
 			continue
 		}
 
-		ctx.Result = result.SUCCESS
+		condition.Result = result.SUCCESS
 		rpt.Result = result.SUCCESS
 
-		pipelineContext.Conditions[id] = ctx
+		pipelineContext.Conditions[id] = condition
 		pipelineReport.Conditions[i] = rpt
 
 		// Update pipeline after each condition run
-		err = config.Update(pipelineContext)
+		err = pipelineContext.Config.Update(pipelineContext)
 		if err != nil {
 			globalResult = false
 			return globalResult, err
 		}
+
 		i++
 	}
 
