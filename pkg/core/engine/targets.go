@@ -77,7 +77,7 @@ func RunTargets(
 		}
 
 		targetChanged, err = target.Run(
-			pipelineContext.Sources[target.Spec.SourceID].Result,
+			pipelineContext.Sources[target.Spec.SourceID].Output,
 			options)
 
 		if err != nil {
