@@ -19,7 +19,8 @@ func (y *Yaml) Condition(source string) (bool, error) {
 		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
-	data, err := text.ReadAll(y.File)
+	contentRetriever := &text.Text{}
+	data, err := contentRetriever.ReadAll(y.File)
 	if err != nil {
 		return false, err
 	}
@@ -61,7 +62,8 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
-	data, err := text.ReadAll(filepath.Join(scm.GetDirectory(), y.File))
+	contentRetriever := &text.Text{}
+	data, err := contentRetriever.ReadAll(filepath.Join(scm.GetDirectory(), y.File))
 	if err != nil {
 		return false, err
 	}

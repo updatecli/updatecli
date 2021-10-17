@@ -22,15 +22,15 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
-	// Test if target reference a file with a prefix like https:// or file://
-	// In that case we don't know how to update those files.
+	// Test if target reference is an URL. In that case we don't know how to update.
 	if text.IsURL(y.File) {
 		return false, fmt.Errorf("unsupported filename prefix")
 	}
 
 	changed = false
 
-	data, err := text.ReadAll(y.File)
+	contentRetriever := &text.Text{}
+	data, err := contentRetriever.ReadAll(y.File)
 	if err != nil {
 		return changed, err
 	}
@@ -117,7 +117,8 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	changed = false
 
-	data, err := text.ReadAll(filepath.Join(scm.GetDirectory(), y.File))
+	contentRetriever := &text.Text{}
+	data, err := contentRetriever.ReadAll(filepath.Join(scm.GetDirectory(), y.File))
 	if err != nil {
 		return changed, files, message, err
 	}
