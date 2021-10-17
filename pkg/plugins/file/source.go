@@ -1,7 +1,6 @@
 package file
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -11,17 +10,17 @@ import (
 // Source return a file content
 func (f *File) Source(workingDir string) (string, error) {
 
-	data, err := text.ReadAll(filepath.Join(workingDir, f.File))
+	data, err := text.ReadAll(filepath.Join(workingDir, f.spec.File))
 	if err != nil {
 		return "", err
 	}
 
-	if len(f.Content) == 0 {
-		f.Content = data
+	if len(f.spec.Content) == 0 {
+		f.spec.Content = data
 	}
 
-	if len(f.Line.Excludes) > 0 {
-		f.Content, err = f.Line.ContainsExcluded(f.Content)
+	if len(f.spec.Line.Excludes) > 0 {
+		f.spec.Content, err = f.spec.Line.ContainsExcluded(f.spec.Content)
 
 		if err != nil {
 			return "", err
@@ -29,21 +28,21 @@ func (f *File) Source(workingDir string) (string, error) {
 
 	}
 
-	if len(f.Line.HasIncludes) > 0 {
-		if ok, err := f.Line.HasIncluded(f.Content); err != nil || !ok {
+	if len(f.spec.Line.HasIncludes) > 0 {
+		if ok, err := f.spec.Line.HasIncluded(f.spec.Content); err != nil || !ok {
 			if err != nil {
 				return "", err
 			}
 
 			if !ok {
-				return "", fmt.Errorf(ErrLineNotFound)
+				return "", &ErrLineNotFound{}
 			}
 
 		}
 	}
 
-	if len(f.Line.Includes) > 0 {
-		f.Content, err = f.Line.ContainsIncluded(f.Content)
+	if len(f.spec.Line.Includes) > 0 {
+		f.spec.Content, err = f.spec.Line.ContainsIncluded(f.spec.Content)
 
 		if err != nil {
 			return "", err
@@ -51,7 +50,7 @@ func (f *File) Source(workingDir string) (string, error) {
 
 	}
 
-	logrus.Infof("\u2714 Content:\n%v\n\n found from file %v", f.Content, f.File)
+	logrus.Infof("\u2714 Content:\n%v\n\n found from file %v", f.spec.Content, f.spec.File)
 
-	return f.Content, nil
+	return f.spec.Content, nil
 }
