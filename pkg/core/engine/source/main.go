@@ -5,8 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/mapstructure"
@@ -276,31 +274,4 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 	}
 	return sourcer, changelog, nil
 
-}
-
-// UnmarshalYAML implements the yaml.Unmarshaler interface.
-// https://abhinavg.net/posts/flexible-yaml/
-func (s *Source) UnmarshalYAML(value *yaml.Node) error {
-
-	var spec *Spec
-
-	if err := value.Decode(&spec); err != nil {
-		logrus.Errorln(err)
-		return err
-	}
-
-	s.Spec = *spec
-
-	return nil
-}
-
-// MarshalYAML implements the yaml.Unmarshaler interface.
-// https://github.com/go-yaml/yaml/issues/714
-func (s Source) MarshalYAML() (interface{}, error) {
-	node := yaml.Node{}
-	err := node.Encode(s.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return node, nil
 }

@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/context"
 	"github.com/updatecli/updatecli/pkg/core/engine/condition"
 	"github.com/updatecli/updatecli/pkg/core/engine/source"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
 )
 
 type SortedKeysData struct {
-	Conf                     config.Config
+	Conf                     context.Context
 	ExpectedSourcesResult    []string
 	ExpectedConditionsResult []string
 	ExpectedTargetsResult    []string
@@ -25,7 +25,7 @@ type SortedKeysDataSet []SortedKeysData
 var (
 	sortedKeysDataset = SortedKeysDataSet{
 		{
-			Conf: config.Config{
+			Conf: context.Context{
 				Sources: map[string]source.Source{
 					"1": {
 						Spec: source.Spec{
@@ -90,7 +90,7 @@ var (
 			},
 		},
 		{
-			Conf: config.Config{
+			Conf: context.Context{
 				Sources: map[string]source.Source{
 					"1": {
 						Spec: source.Spec{
@@ -176,7 +176,7 @@ var (
 			},
 		},
 		{
-			Conf: config.Config{
+			Conf: context.Context{
 				Sources: map[string]source.Source{
 					"1": {
 						Spec: source.Spec{
@@ -213,7 +213,7 @@ var (
 			ExpectedTargetsErr:       ErrNotValidDependsOn,
 		},
 		{
-			Conf: config.Config{
+			Conf: context.Context{
 				Sources: map[string]source.Source{
 					"1": {
 						Spec: source.Spec{

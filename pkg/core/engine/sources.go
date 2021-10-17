@@ -22,7 +22,7 @@ func RunSources(
 
 	for _, id := range sortedSourcesKeys {
 		source := pipelineContext.Sources[id]
-		source.Spec = pipelineContext.Config.Sources[id].Spec
+		source.Spec = pipelineContext.Config.Sources[id]
 
 		rpt := pipelineReport.Sources[i]
 

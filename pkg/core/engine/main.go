@@ -63,17 +63,17 @@ func (e *Engine) InitSCM() (err error) {
 	for _, conf := range e.configurations {
 		for _, source := range conf.Sources {
 
-			if len(source.Spec.Scm) > 0 {
-				err = Clone(&source.Spec.Scm, &hashes, channel, &wg)
+			if len(source.Scm) > 0 {
+				err = Clone(&source.Scm, &hashes, channel, &wg)
 				if err != nil {
 					return err
 				}
 			}
 		}
 		for _, condition := range conf.Conditions {
-			if len(condition.Spec.Scm) > 0 {
+			if len(condition.Scm) > 0 {
 
-				err = Clone(&condition.Spec.Scm, &hashes, channel, &wg)
+				err = Clone(&condition.Scm, &hashes, channel, &wg)
 				if err != nil {
 					return err
 				}
@@ -82,9 +82,9 @@ func (e *Engine) InitSCM() (err error) {
 		}
 
 		for _, target := range conf.Targets {
-			if len(target.Spec.Scm) > 0 {
+			if len(target.Scm) > 0 {
 
-				err = Clone(&target.Spec.Scm, &hashes, channel, &wg)
+				err = Clone(&target.Scm, &hashes, channel, &wg)
 				if err != nil {
 					return err
 				}

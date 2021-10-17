@@ -51,7 +51,7 @@ func RunTargets(
 		}
 
 		target := pipelineContext.Targets[id]
-		target.Spec = pipelineContext.Config.Targets[id].Spec
+		target.Spec = pipelineContext.Config.Targets[id]
 
 		rpt := pipelineReport.Targets[i]
 

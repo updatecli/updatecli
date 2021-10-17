@@ -28,7 +28,7 @@ func RunConditions(
 
 	for _, id := range sortedConditionsKeys {
 		condition := pipelineContext.Conditions[id]
-		condition.Spec = pipelineContext.Config.Conditions[id].Spec
+		condition.Spec = pipelineContext.Config.Conditions[id]
 
 		rpt := pipelineReport.Conditions[i]
 

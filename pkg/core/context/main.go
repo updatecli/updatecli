@@ -47,16 +47,16 @@ func (c *Context) Init(config *config.Config) {
 		c.SourcesStageReport = append(
 			c.SourcesStageReport,
 			reports.Stage{
-				Name:   config.Sources[id].Spec.Name,
-				Kind:   config.Sources[id].Spec.Kind,
+				Name:   config.Sources[id].Name,
+				Kind:   config.Sources[id].Kind,
 				Result: result.FAILURE,
 			})
 
 		// Init Sources[id]
-		s := config.Sources[id]
-		s.Result = result.FAILURE
-
-		c.Sources[id] = s
+		c.Sources[id] = source.Source{
+			Spec:   config.Sources[id],
+			Result: result.FAILURE,
+		}
 
 	}
 
@@ -65,15 +65,15 @@ func (c *Context) Init(config *config.Config) {
 		c.ConditionsStageReport = append(
 			c.ConditionsStageReport,
 			reports.Stage{
-				Name:   config.Conditions[id].Spec.Name,
-				Kind:   config.Conditions[id].Spec.Kind,
+				Name:   config.Conditions[id].Name,
+				Kind:   config.Conditions[id].Kind,
 				Result: result.FAILURE,
 			})
 
-		cond := config.Conditions[id]
-		cond.Result = result.FAILURE
-
-		c.Conditions[id] = cond
+		c.Conditions[id] = condition.Condition{
+			Spec:   config.Conditions[id],
+			Result: result.FAILURE,
+		}
 	}
 
 	// Init target report
@@ -81,11 +81,13 @@ func (c *Context) Init(config *config.Config) {
 		c.TargetsStageReport = append(
 			c.TargetsStageReport,
 			reports.Stage{
-				Name:   config.Targets[id].Spec.Name,
-				Kind:   config.Targets[id].Spec.Kind,
+				Name:   config.Targets[id].Name,
+				Kind:   config.Targets[id].Kind,
 				Result: result.FAILURE,
 			})
+
 		c.Targets[id] = target.Target{
+			Spec:   config.Targets[id],
 			Result: result.FAILURE,
 		}
 	}

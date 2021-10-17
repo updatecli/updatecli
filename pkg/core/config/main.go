@@ -47,12 +47,12 @@ var (
 // Config contains cli configuration
 type Config struct {
 	Name       string
-	PipelineID string        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title      string        // Title is used for the full pipeline
-	Source     source.Source // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
-	Sources    map[string]source.Source
-	Conditions map[string]condition.Condition
-	Targets    map[string]target.Target
+	PipelineID string      // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	Title      string      // Title is used for the full pipeline
+	Source     source.Spec // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
+	Sources    map[string]source.Spec
+	Conditions map[string]condition.Spec
+	Targets    map[string]target.Spec
 }
 
 // Reset reset configuration
@@ -123,17 +123,17 @@ func (config *Config) Display() error {
 // Validate run various validation test on the configuration and update fields if necessary
 func (config *Config) Validate() error {
 
-	if config.Source.Spec.Kind != "" && (len(config.Sources) > 0) {
+	if config.Source.Kind != "" && (len(config.Sources) > 0) {
 		logrus.Errorf("Source and Sources can't be defined at the same time, please use the 'Sources' syntax")
 		return ErrBadConfig
 
-	} else if config.Source.Spec.Kind != "" && len(config.Sources) == 0 {
+	} else if config.Source.Kind != "" && len(config.Sources) == 0 {
 
 		logrus.Warning("Since version 0.2.0, the single source definition is **Deprecated**  and replaced by Sources. This parameter will be deleted in a future release")
 
-		config.Sources = make(map[string]source.Source)
+		config.Sources = make(map[string]source.Spec)
 		config.Sources[defaultSourceID] = config.Source
-		config.Source = source.Source{}
+		config.Source = source.Spec{}
 	}
 
 	for id := range config.Sources {
@@ -145,12 +145,12 @@ func (config *Config) Validate() error {
 
 	for id, c := range config.Conditions {
 		// Try to guess SourceID
-		if len(c.Spec.SourceID) == 0 && len(config.Sources) > 1 {
+		if len(c.SourceID) == 0 && len(config.Sources) > 1 {
 			logrus.Errorf("{empty 'sourceID' for condition '%s'", id)
 			return ErrBadConfig
-		} else if len(c.Spec.SourceID) == 0 && len(config.Sources) == 1 {
+		} else if len(c.SourceID) == 0 && len(config.Sources) == 1 {
 			for id := range config.Sources {
-				c.Spec.SourceID = id
+				c.SourceID = id
 			}
 		}
 
@@ -162,17 +162,17 @@ func (config *Config) Validate() error {
 	}
 
 	for id, t := range config.Targets {
-		if len(t.Spec.PipelineID) == 0 {
-			t.Spec.PipelineID = config.PipelineID
+		if len(t.PipelineID) == 0 {
+			t.PipelineID = config.PipelineID
 		}
 		// Try to guess SourceID
-		if len(t.Spec.SourceID) == 0 && len(config.Sources) > 1 {
+		if len(t.SourceID) == 0 && len(config.Sources) > 1 {
 
 			logrus.Errorf("{empty 'sourceID' for target '%s'", id)
 			return ErrBadConfig
-		} else if len(t.Spec.SourceID) == 0 && len(config.Sources) == 1 {
+		} else if len(t.SourceID) == 0 && len(config.Sources) == 1 {
 			for id := range config.Sources {
-				t.Spec.SourceID = id
+				t.SourceID = id
 			}
 		}
 
@@ -393,16 +393,16 @@ func (config *Config) GetChangelogTitle(ID string, fallback string) (title strin
 		title = fmt.Sprintf("[updatecli] %s",
 			config.Title)
 
-	} else if len(config.Targets) == 1 && len(config.Targets[ID].Spec.Name) > 0 {
+	} else if len(config.Targets) == 1 && len(config.Targets[ID].Name) > 0 {
 		// If we only have one target then we can use it as fallback.
 		// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
-		title = fmt.Sprintf("[updatecli] %s", config.Targets[ID].Spec.Name)
+		title = fmt.Sprintf("[updatecli] %s", config.Targets[ID].Name)
 	} else {
 		// At the moment, we don't have an easy way to describe what changed
 		// I am still thinking to a better solution.
 		logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
 		title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
-			config.Sources[config.Targets[ID].Spec.SourceID].Spec.Kind,
+			config.Sources[config.Targets[ID].SourceID].Kind,
 			fallback)
 	}
 	return title

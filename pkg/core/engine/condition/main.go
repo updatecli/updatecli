@@ -17,7 +17,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
 	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
-	"gopkg.in/yaml.v3"
 )
 
 // Condition defines which condition needs to be met
@@ -219,30 +218,4 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		return nil, fmt.Errorf("Don't support condition: %v", condition.Spec.Kind)
 	}
 	return conditioner, nil
-}
-
-// UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (c *Condition) UnmarshalYAML(value *yaml.Node) error {
-
-	var spec Spec
-
-	if err := value.Decode(&spec); err != nil {
-		logrus.Errorln(err)
-		return err
-	}
-
-	c.Spec = spec
-
-	return nil
-}
-
-// MarshalYAML implements the yaml.Unmarshaler interface.
-// https://github.com/go-yaml/yaml/issues/714
-func (c Condition) MarshalYAML() (interface{}, error) {
-	node := yaml.Node{}
-	err := node.Encode(c.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return node, nil
 }
