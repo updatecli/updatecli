@@ -13,7 +13,8 @@ var (
 	yamlIdent int = 2
 )
 
-// Yaml stores configuration about the file and the key value which needs to be updated.
+// Yaml defines a specification for a "yaml" resource
+// parsed from an updatecli manifest file
 type Yaml struct {
 	File  string
 	Key   string

@@ -7,9 +7,9 @@ func (e *ErrEmptyFilePath) Error() string {
 	return "Invalid spec for file resource: 'file' is empty."
 }
 
-//ErrLineNotFound is the error message when no matching line found
-type ErrLineNotFound struct{}
+// ErrNegativeLine is the validation error when the provided attribute is a negative number
+type ErrNegativeLine struct{}
 
-func (e *ErrLineNotFound) Error() string {
-	return "line not found in the specified file."
+func (e *ErrNegativeLine) Error() string {
+	return "Line cannot be negative for a file resource."
 }
