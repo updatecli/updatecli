@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 func TestShell_Condition(t *testing.T) {
@@ -44,8 +45,8 @@ func TestShell_Condition(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := mockCommandExecutor{
-				result: tt.commandResult,
+			mock := MockCommandExecutor{
+				Result: tt.commandResult,
 			}
 			s := Shell{
 				executor: &mock,
@@ -65,7 +66,7 @@ func TestShell_Condition(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantResult, gotResult)
 
-			assert.Equal(t, tt.wantCommand, mock.gotCommand.Cmd)
+			assert.Equal(t, tt.wantCommand, mock.GotCommand.Cmd)
 		})
 	}
 }
@@ -97,11 +98,11 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mce := mockCommandExecutor{
-				result: tt.commandResult,
+			mce := MockCommandExecutor{
+				Result: tt.commandResult,
 			}
-			ms := mockScm{
-				workingDir: tt.scmDir,
+			ms := scm.MockScm{
+				WorkingDir: tt.scmDir,
 			}
 			s := Shell{
 				executor: &mce,
@@ -121,8 +122,8 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantResult, gotResult)
 
-			assert.Equal(t, tt.wantCommand, mce.gotCommand.Cmd)
-			assert.Equal(t, tt.scmDir, mce.gotCommand.Dir)
+			assert.Equal(t, tt.wantCommand, mce.GotCommand.Cmd)
+			assert.Equal(t, tt.scmDir, mce.GotCommand.Dir)
 		})
 	}
 }

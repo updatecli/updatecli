@@ -122,7 +122,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 	case "file":
 		var targetSpec file.FileSpec
 
-		if err := mapstructure.Decode(target.Config.Spec, targetSpec); err != nil {
+		if err := mapstructure.Decode(target.Config.Spec, &targetSpec); err != nil {
 			return nil, err
 		}
 

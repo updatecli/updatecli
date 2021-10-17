@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 func TestShell_Target(t *testing.T) {
@@ -62,8 +63,8 @@ func TestShell_Target(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := mockCommandExecutor{
-				result: tt.commandResult,
+			mock := MockCommandExecutor{
+				Result: tt.commandResult,
 			}
 			s := Shell{
 				executor: &mock,
@@ -83,9 +84,9 @@ func TestShell_Target(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantChanged, gotChanged)
 
-			assert.Equal(t, tt.wantCommandInMock, mock.gotCommand.Cmd)
+			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
 			for _, wantEnv := range tt.commandEnv {
-				assert.Contains(t, mock.gotCommand.Env, wantEnv)
+				assert.Contains(t, mock.GotCommand.Env, wantEnv)
 			}
 		})
 	}
@@ -124,12 +125,12 @@ func TestShell_TargetFromSCM(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := mockCommandExecutor{
-				result: tt.commandResult,
+			mock := MockCommandExecutor{
+				Result: tt.commandResult,
 			}
-			ms := mockScm{
-				workingDir:   tt.scmDir,
-				changedFiles: tt.mockReturnedChangedFiles,
+			ms := scm.MockScm{
+				WorkingDir:   tt.scmDir,
+				ChangedFiles: tt.mockReturnedChangedFiles,
 			}
 			s := Shell{
 				executor: &mock,
@@ -152,9 +153,9 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			assert.Equal(t, tt.wantFilesChanged, gotFilesChanged)
 			assert.Equal(t, tt.wantMessage, gotMessage)
 
-			assert.Equal(t, tt.wantCommandInMock, mock.gotCommand.Cmd)
+			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
 			for _, wantEnv := range tt.commandEnv {
-				assert.Contains(t, mock.gotCommand.Env, wantEnv)
+				assert.Contains(t, mock.GotCommand.Env, wantEnv)
 			}
 		})
 	}

@@ -52,8 +52,8 @@ func TestShell_Source(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := mockCommandExecutor{
-				result: tt.commandResult,
+			mock := MockCommandExecutor{
+				Result: tt.commandResult,
 			}
 			s := Shell{
 				executor: &mock,
@@ -73,7 +73,7 @@ func TestShell_Source(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantSource, source)
 
-			assert.Equal(t, tt.wantCommand, mock.gotCommand.Cmd)
+			assert.Equal(t, tt.wantCommand, mock.GotCommand.Cmd)
 		})
 	}
 }
