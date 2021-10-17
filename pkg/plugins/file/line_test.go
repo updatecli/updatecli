@@ -3,6 +3,8 @@ package file
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -83,9 +85,7 @@ func TestContainsIncludedFailure(t *testing.T) {
 
 	_, err := line.ContainsIncluded(content)
 
-	if strings.Compare(err.Error(), ErrLineNotFound) != 0 {
-		t.Error(err)
-	}
+	assert.ErrorIs(t, err, &ErrLineNotFound{})
 }
 
 func TestContainsHasIncludedSuccess(t *testing.T) {
@@ -118,7 +118,5 @@ func TestContainsHasIncludedFailure(t *testing.T) {
 
 	_, err := line.HasIncluded(content)
 
-	if strings.Compare(err.Error(), ErrLineNotFound) != 0 {
-		t.Error(err)
-	}
+	assert.ErrorIs(t, err, &ErrLineNotFound{})
 }

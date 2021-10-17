@@ -1,16 +1,19 @@
 package shell
 
+// ShellSpec defines a specification for a "shell" resource
+// parsed from an updatecli manifest file
 type ShellSpec struct {
 	Command string
 }
 
+// Shell defines a resource of type "shell"
 type Shell struct {
 	executor commandExecutor
 	spec     ShellSpec
 }
 
-// New returns a reference to a newly initialized Shell object from a shellspec
-// or an error if the provided shellspec triggers a validation error.
+// New returns a reference to a newly initialized Shell object from a ShellSpec
+// or an error if the provided ShellSpec triggers a validation error.
 func New(spec ShellSpec) (*Shell, error) {
 	if spec.Command == "" {
 		return nil, &ErrEmptyCommand{}

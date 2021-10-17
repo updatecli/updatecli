@@ -182,15 +182,16 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		changelog = &g
 
 	case "file":
-		f := file.File{}
+		var sourceSpec file.FileSpec
 
-		err := mapstructure.Decode(s.Config.Spec, &f)
-
-		if err != nil {
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
 		}
 
-		sourcer = &f
+		sourcer, err = file.New(sourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
 
 	case "helmChart":
 		c := chart.Chart{}
