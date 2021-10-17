@@ -120,16 +120,16 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		targeter = &y
 
 	case "file":
-		f := file.File{}
+		var targetSpec file.FileSpec
 
-		err := mapstructure.Decode(target.Config.Spec, &f)
-
-		if err != nil {
-			logrus.Errorf("err - %s", err)
+		if err := mapstructure.Decode(target.Config.Spec, targetSpec); err != nil {
 			return nil, err
 		}
 
-		targeter = &f
+		targeter, err = file.New(targetSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "shell":
 		shellResourceSpec := shell.ShellSpec{}

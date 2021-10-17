@@ -1,7 +1,6 @@
 package file
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -13,11 +12,6 @@ type Line struct {
 	Includes    []string
 	Excludes    []string
 }
-
-const (
-	//ErrLineNotFound is the error message when no matching line found
-	ErrLineNotFound string = "line not found"
-)
 
 // ContainsIncluded return a content with only matching lines
 func (l *Line) ContainsIncluded(content string) (output string, err error) {
@@ -33,7 +27,7 @@ func (l *Line) ContainsIncluded(content string) (output string, err error) {
 		}
 		if !found {
 			logrus.Errorf("Line '%v', not found in content:\n%v\n", i, content)
-			return "", fmt.Errorf(ErrLineNotFound)
+			return "", &ErrLineNotFound{}
 		}
 	}
 	return output, nil
@@ -51,7 +45,7 @@ func (l *Line) HasIncluded(content string) (found bool, err error) {
 		}
 		if !found {
 			logrus.Errorf("Line '%v', not found in content:\n%v\n", i, content)
-			return found, fmt.Errorf(ErrLineNotFound)
+			return found, &ErrLineNotFound{}
 		}
 	}
 	return found, nil

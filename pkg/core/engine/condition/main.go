@@ -158,14 +158,16 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &d
 
 	case "file":
-		f := file.File{}
+		var fileResourceSpec file.FileSpec
 
-		err := mapstructure.Decode(condition.Config.Spec, &f)
-		if err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &fileResourceSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner = &f
+		conditioner, err = file.New(fileResourceSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "jenkins":
 		j := jenkins.Jenkins{}
