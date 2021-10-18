@@ -12,14 +12,6 @@ import (
 // Source retrieves a specific version tag from Github Releases.
 func (g *Github) Source(workingDir string) (value string, err error) {
 
-	errs := g.Check()
-	if len(errs) > 0 {
-		for _, e := range errs {
-			logrus.Errorf("%s\n", e)
-		}
-		return value, fmt.Errorf("wrong github configuration")
-	}
-
 	versions, err := g.SearchReleases()
 
 	if err != nil {
@@ -40,16 +32,16 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 		}
 	}
 
-	value, err = g.VersionFilter.Search(versions)
+	value, err = g.spec.VersionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
 
 	if len(value) == 0 {
-		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.VersionFilter.Pattern)
-		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.VersionFilter.Pattern)
+		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.spec.VersionFilter.Pattern)
+		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.spec.VersionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("\u2714 Github Release version %q found matching pattern %q", value, g.VersionFilter.Pattern)
+		logrus.Infof("\u2714 Github Release version %q found matching pattern %q", value, g.spec.VersionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in Github source")
 	}
@@ -101,8 +93,8 @@ func (g *Github) SearchTags() (tags []string, err error) {
 	}
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.Owner),
-		"repository": githubv4.String(g.Repository),
+		"owner":      githubv4.String(g.spec.Owner),
+		"repository": githubv4.String(g.spec.Repository),
 		"refPrefix":  githubv4.String("refs/tags/"),
 		"before":     (*githubv4.String)(nil),
 		"orderBy": githubv4.RefOrder{
@@ -185,8 +177,8 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 	client := g.NewClient()
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.Owner),
-		"repository": githubv4.String(g.Repository),
+		"owner":      githubv4.String(g.spec.Owner),
+		"repository": githubv4.String(g.spec.Repository),
 		"before":     (*githubv4.String)(nil),
 		"orderBy": githubv4.ReleaseOrder{
 			Field:     "CREATED_AT",

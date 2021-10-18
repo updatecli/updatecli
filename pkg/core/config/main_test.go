@@ -35,7 +35,7 @@ var (
 			ID: "1",
 			Config: Config{
 				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -51,7 +51,7 @@ var (
 			},
 			ExpectedConfig: Config{
 				Name: "jenkins - 2.289.2",
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -65,7 +65,7 @@ var (
 			ID: "1.1",
 			Config: Config{
 				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -81,7 +81,7 @@ var (
 			},
 			ExpectedConfig: Config{
 				Name: "jenkins - 2.289.2",
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -96,7 +96,7 @@ var (
 			ID: "2",
 			Config: Config{
 				Name: "jenkins - {{ pipeline \"sources.default.output\" }}",
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -112,7 +112,7 @@ var (
 			},
 			ExpectedConfig: Config{
 				Name: "jenkins - 2.289.2",
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -126,7 +126,7 @@ var (
 			ID: "2.1",
 			Config: Config{
 				Name: "jenkins - {{ source \"Default\" }}",
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -142,7 +142,7 @@ var (
 			},
 			ExpectedConfig: Config{
 				Name: "jenkins - 2.289.2",
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -157,7 +157,7 @@ var (
 			ID: "3",
 			Config: Config{
 				Name: `{{ pipeline "Source.kindd" }}`,
-				Source: source.Source{
+				Source: source.Config{
 					Name: "Get Version",
 					Kind: "jenkins",
 				},
@@ -178,7 +178,7 @@ var (
 			ID: "3.1",
 			Config: Config{
 				Name: `{{ pipeline "Source.kindd" }}`,
-				Source: source.Source{
+				Source: source.Config{
 					Name: "Get Version",
 					Kind: "jenkins",
 				},
@@ -200,7 +200,7 @@ var (
 			ID: "4",
 			Config: Config{
 				Name: `{{ pipeline Source.kind }}`,
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -221,7 +221,7 @@ var (
 			ID: "4.1",
 			Config: Config{
 				Name: `{{ source default }}`,
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -242,7 +242,7 @@ var (
 			ID: "6",
 			Config: Config{
 				Name: `{{ source "default" }}-jdk11`,
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					"default": {
 						Name: "Get Version",
 						Kind: "jenkins",
@@ -264,7 +264,7 @@ var (
 			ID: "7",
 			Config: Config{
 				Name: `lts-jenkins-jdk11`,
-				Sources: map[string]source.Source{
+				Sources: map[string]source.Config{
 					`{{ pipeline "Sources.default.output" }}`: {
 						Name: "Get Version",
 						Kind: "jenkins",

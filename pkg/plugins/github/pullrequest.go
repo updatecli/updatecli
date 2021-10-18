@@ -95,9 +95,9 @@ func (g *Github) UpdatePullRequest(ID string) error {
 
 	logrus.Debugf("Updating Github pull request")
 
-	title := g.PullRequestDescription.Title
+	title := g.pullRequestDescription.Title
 
-	bodyPR, err := SetBody(g.PullRequestDescription)
+	bodyPR, err := SetBody(g.pullRequestDescription)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (g *Github) OpenPullRequest() error {
 
 	logrus.Infof("Opening Pull Request")
 
-	title := g.PullRequestDescription.Title
+	title := g.pullRequestDescription.Title
 
 	repositoryID, err := g.queryRepositoryID()
 	if err != nil {
@@ -160,13 +160,13 @@ func (g *Github) OpenPullRequest() error {
 	maintainerCanModify := true
 	draft := false
 
-	bodyPR, err := SetBody(g.PullRequestDescription)
+	bodyPR, err := SetBody(g.pullRequestDescription)
 	if err != nil {
 		return err
 	}
 
 	input := githubv4.CreatePullRequestInput{
-		BaseRefName:         githubv4.String(g.Branch),
+		BaseRefName:         githubv4.String(g.spec.Branch),
 		RepositoryID:        githubv4.String(repositoryID),
 		HeadRefName:         githubv4.String(g.remoteBranch),
 		Title:               githubv4.String(title),
@@ -226,9 +226,9 @@ func (g *Github) IsPullRequest() (ID string, err error) {
 	}
 
 	variables := map[string]interface{}{
-		"owner":       githubv4.String(g.Owner),
-		"name":        githubv4.String(g.Repository),
-		"baseRefName": githubv4.String(g.Branch),
+		"owner":       githubv4.String(g.spec.Owner),
+		"name":        githubv4.String(g.spec.Repository),
+		"baseRefName": githubv4.String(g.spec.Branch),
 		"headRefName": githubv4.String(g.remoteBranch),
 	}
 
@@ -243,4 +243,11 @@ func (g *Github) IsPullRequest() (ID string, err error) {
 	}
 
 	return ID, err
+}
+
+// InitPullRequestDescription set internal github settings
+func (g *Github) InitPullRequestDescription(title, body, report string) {
+	g.pullRequestDescription.Description = body
+	g.pullRequestDescription.Report = report
+	g.pullRequestDescription.Title = title
 }

@@ -1,17 +1,16 @@
-package engine
+package pipeline
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/condition"
 	"github.com/updatecli/updatecli/pkg/core/engine/source"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
 )
 
 type SortedKeysData struct {
-	Conf                     config.Config
+	Conf                     Pipeline
 	ExpectedSourcesResult    []string
 	ExpectedConditionsResult []string
 	ExpectedTargetsResult    []string
@@ -25,43 +24,55 @@ type SortedKeysDataSet []SortedKeysData
 var (
 	sortedKeysDataset = SortedKeysDataSet{
 		{
-			Conf: config.Config{
+			Conf: Pipeline{
 				Sources: map[string]source.Source{
 					"1": {
-						DependsOn: []string{
-							"2",
-							"3",
+						Config: source.Config{
+							DependsOn: []string{
+								"2",
+								"3",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"3",
+						Config: source.Config{
+							DependsOn: []string{
+								"3",
+							},
 						},
 					},
 					"3": {},
 				},
 				Conditions: map[string]condition.Condition{
 					"1": {
-						DependsOn: []string{
-							"2",
+						Config: condition.Config{
+							DependsOn: []string{
+								"2",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"3",
+						Config: condition.Config{
+							DependsOn: []string{
+								"3",
+							},
 						},
 					},
 					"3": {},
 				},
 				Targets: map[string]target.Target{
 					"1": {
-						DependsOn: []string{
-							"2",
+						Config: target.Config{
+							DependsOn: []string{
+								"2",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"3",
+						Config: target.Config{
+							DependsOn: []string{
+								"3",
+							},
 						},
 					},
 					"3": {},
@@ -78,57 +89,76 @@ var (
 			},
 		},
 		{
-			Conf: config.Config{
+			Conf: Pipeline{
 				Sources: map[string]source.Source{
 					"1": {
-						DependsOn: []string{
-							"3",
+						Config: source.Config{
+							DependsOn: []string{
+								"3",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"4",
+						Config: source.Config{
+							DependsOn: []string{
+								"4",
+							},
 						},
 					},
 					"3": {
-						DependsOn: []string{
-							"2",
+						Config: source.Config{
+							DependsOn: []string{
+								"2",
+							},
 						},
 					},
 					"4": {},
 				},
 				Conditions: map[string]condition.Condition{
 					"1": {
-						DependsOn: []string{
-							"3",
+						Config: condition.Config{
+							DependsOn: []string{
+								"3",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"4",
+						Config: condition.Config{
+							DependsOn: []string{
+								"4",
+							},
 						},
 					},
 					"3": {
-						DependsOn: []string{
-							"2",
+						Config: condition.Config{
+							DependsOn: []string{
+
+								"2",
+							},
 						},
 					},
 					"4": {},
 				},
 				Targets: map[string]target.Target{
 					"1": {
-						DependsOn: []string{
-							"3",
+						Config: target.Config{
+							DependsOn: []string{
+								"3",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"4",
+						Config: target.Config{
+							DependsOn: []string{
+								"4",
+							},
 						},
 					},
 					"3": {
-						DependsOn: []string{
-							"2",
+						Config: target.Config{
+							DependsOn: []string{
+								"2",
+							},
 						},
 					},
 					"4": {},
@@ -145,25 +175,31 @@ var (
 			},
 		},
 		{
-			Conf: config.Config{
+			Conf: Pipeline{
 				Sources: map[string]source.Source{
 					"1": {
-						DependsOn: []string{
-							"2",
+						Config: source.Config{
+							DependsOn: []string{
+								"2",
+							},
 						},
 					},
 				},
 				Conditions: map[string]condition.Condition{
 					"2": {
-						DependsOn: []string{
-							"3",
+						Config: condition.Config{
+							DependsOn: []string{
+								"3",
+							},
 						},
 					},
 				},
 				Targets: map[string]target.Target{
 					"3": {
-						DependsOn: []string{
-							"4",
+						Config: target.Config{
+							DependsOn: []string{
+								"4",
+							},
 						},
 					},
 				},
@@ -176,40 +212,53 @@ var (
 			ExpectedTargetsErr:       ErrNotValidDependsOn,
 		},
 		{
-			Conf: config.Config{
+			Conf: Pipeline{
 				Sources: map[string]source.Source{
 					"1": {
-						DependsOn: []string{
-							"2",
+						Config: source.Config{
+							DependsOn: []string{
+
+								"2",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"1",
+						Config: source.Config{
+							DependsOn: []string{
+								"1",
+							},
 						},
 					},
 				},
 				Conditions: map[string]condition.Condition{
 					"1": {
-						DependsOn: []string{
-							"2",
+						Config: condition.Config{
+							DependsOn: []string{
+								"2",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"1",
+						Config: condition.Config{
+							DependsOn: []string{
+								"1",
+							},
 						},
 					},
 				},
 				Targets: map[string]target.Target{
 					"1": {
-						DependsOn: []string{
-							"2",
+						Config: target.Config{
+							DependsOn: []string{
+								"2",
+							},
 						},
 					},
 					"2": {
-						DependsOn: []string{
-							"1",
+						Config: target.Config{
+							DependsOn: []string{
+								"1",
+							},
 						},
 					},
 				},
