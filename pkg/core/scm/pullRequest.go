@@ -5,4 +5,5 @@ type PullRequest interface {
 	UpdatePullRequest(ID string) error
 	OpenPullRequest() error
 	IsPullRequest() (ID string, err error)
+	InitPullRequestDescription(title, body, report string)
 }
