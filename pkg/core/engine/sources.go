@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/context"
+	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -10,9 +10,9 @@ import (
 // RunSources iterates on every source definition to retrieve every information.
 func RunSources(
 	pipelineReport *reports.Report,
-	pipelineContext *context.Context) error {
+	p *pipeline.Pipeline) error {
 
-	sortedSourcesKeys, err := SortedSourcesKeys(&pipelineContext.Sources)
+	sortedSourcesKeys, err := SortedSourcesKeys(&p.Sources)
 	if err != nil {
 		logrus.Errorf("%s %v\n", result.FAILURE, err)
 		return err
@@ -21,8 +21,8 @@ func RunSources(
 	i := 0
 
 	for _, id := range sortedSourcesKeys {
-		source := pipelineContext.Sources[id]
-		source.Config = pipelineContext.Config.Sources[id]
+		source := p.Sources[id]
+		source.Config = p.Config.Sources[id]
 
 		rpt := pipelineReport.Sources[i]
 
@@ -34,7 +34,7 @@ func RunSources(
 
 		if err != nil {
 			logrus.Errorf("%s %v\n", result.FAILURE, err)
-			pipelineContext.Sources[id] = source
+			p.Sources[id] = source
 			pipelineReport.Sources[i] = rpt
 			i++
 			continue
@@ -42,7 +42,7 @@ func RunSources(
 
 		if len(source.Output) == 0 {
 			logrus.Infof("\n%s Something went wrong no value returned from Source", result.FAILURE)
-			pipelineContext.Sources[id] = source
+			p.Sources[id] = source
 			pipelineReport.Sources[i] = rpt
 			i++
 			continue
@@ -51,10 +51,10 @@ func RunSources(
 		source.Result = result.SUCCESS
 		rpt.Result = result.SUCCESS
 
-		pipelineContext.Sources[id] = source
+		p.Sources[id] = source
 		pipelineReport.Sources[i] = rpt
 
-		err = pipelineContext.Config.Update(pipelineContext)
+		err = p.Config.Update(p)
 		if err != nil {
 			return err
 		}

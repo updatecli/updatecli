@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/context"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
+	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -15,7 +15,7 @@ import (
 func RunTargets(
 	options *target.Options,
 	pipelineReport *reports.Report,
-	pipelineContext *context.Context) error {
+	p *pipeline.Pipeline) error {
 
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("Targets"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Targets")+1))
@@ -32,7 +32,7 @@ func RunTargets(
 	}
 
 	// Sort targets keys by building a dependency graph
-	sortedTargetsKeys, err := SortedTargetsKeys(&pipelineContext.Targets)
+	sortedTargetsKeys, err := SortedTargetsKeys(&p.Targets)
 	if err != nil {
 		pipelineReport.Result = result.FAILURE
 		return err
@@ -45,13 +45,13 @@ func RunTargets(
 
 	for _, id := range sortedTargetsKeys {
 		// Update pipeline before each target run
-		err = pipelineContext.Config.Update(pipelineContext)
+		err = p.Config.Update(p)
 		if err != nil {
 			return err
 		}
 
-		target := pipelineContext.Targets[id]
-		target.Config = pipelineContext.Config.Targets[id]
+		target := p.Targets[id]
+		target.Config = p.Config.Targets[id]
 
 		rpt := pipelineReport.Targets[i]
 
@@ -62,22 +62,22 @@ func RunTargets(
 		targetChanged := false
 
 		// Init target reporting
-		target.Changelog = pipelineContext.Sources[target.Config.SourceID].Changelog
+		target.Changelog = p.Sources[target.Config.SourceID].Changelog
 		target.ReportBody = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
-		target.ReportTitle = pipelineContext.Config.GetChangelogTitle(
+		target.ReportTitle = p.Config.GetChangelogTitle(
 			id,
-			pipelineContext.Sources[target.Config.SourceID].Result)
+			p.Sources[target.Config.SourceID].Result)
 
-		if target.Config.Prefix == "" && pipelineContext.Sources[target.Config.SourceID].Config.Prefix != "" {
-			target.Config.Prefix = pipelineContext.Sources[target.Config.SourceID].Config.Prefix
+		if target.Config.Prefix == "" && p.Sources[target.Config.SourceID].Config.Prefix != "" {
+			target.Config.Prefix = p.Sources[target.Config.SourceID].Config.Prefix
 		}
 
-		if target.Config.Postfix == "" && pipelineContext.Sources[target.Config.SourceID].Config.Postfix != "" {
-			target.Config.Postfix = pipelineContext.Sources[target.Config.SourceID].Config.Postfix
+		if target.Config.Postfix == "" && p.Sources[target.Config.SourceID].Config.Postfix != "" {
+			target.Config.Postfix = p.Sources[target.Config.SourceID].Config.Postfix
 		}
 
 		targetChanged, err = target.Run(
-			pipelineContext.Sources[target.Config.SourceID].Output,
+			p.Sources[target.Config.SourceID].Output,
 			options)
 
 		if err != nil {
@@ -89,7 +89,7 @@ func RunTargets(
 			rpt.Result = result.FAILURE
 			target.Result = result.FAILURE
 
-			pipelineContext.Targets[id] = target
+			p.Targets[id] = target
 			pipelineReport.Targets[i] = rpt
 			i++
 			continue
@@ -105,7 +105,7 @@ func RunTargets(
 			rpt.Result = result.SUCCESS
 		}
 
-		pipelineContext.Targets[id] = target
+		p.Targets[id] = target
 		pipelineReport.Targets[i] = rpt
 
 		i++
