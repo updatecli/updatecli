@@ -62,7 +62,7 @@ func TestSource(t *testing.T) {
 		got, err := data.github.Source("")
 
 		if err != nil {
-			t.Errorf("Something went wrong when retrieving tags: %q", err)
+			t.Errorf("Something went wrong when retrieving source: %q", err)
 		}
 
 		if strings.Compare(got, data.expectedSource) != 0 {
@@ -78,7 +78,7 @@ func TestSearchReleases(t *testing.T) {
 		releases, err := data.github.SearchReleases()
 
 		if err != nil {
-			t.Errorf("Something went wrong when retrieving tags: %q", err)
+			t.Errorf("Something went wrong when retrieving release: %q", err)
 		}
 
 		for id, release := range releases {

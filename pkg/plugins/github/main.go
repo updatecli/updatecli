@@ -22,8 +22,8 @@ type Spec struct {
 	Directory     string         // Directory specifies where the github repisotory is cloned on the local disk
 	Email         string         // Email specifies which emails to use when creating commits
 	Owner         string         // Owner specifies repository owner
-	Repository    string         // Repository specifies the name of a repositie for a specific owner
-	Version       string         // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a futur version
+	Repository    string         // Repository specifies the name of a repository for a specific owner
+	Version       string         // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a future version
 	VersionFilter version.Filter //VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	Token         string         // Token specifies the credential used to authenticate with
 	URL           string         // URL specifies the default github url in case of GitHub enterprise
@@ -112,12 +112,18 @@ func (g *Github) setDirectory() {
 
 //NewClient return a new client
 func (g *Github) NewClient() *githubv4.Client {
+
+	if err := g.spec.Validate(); err != nil {
+		logrus.Errorln(err)
+		return nil
+	}
+
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: g.spec.Token},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 
-	if strings.HasSuffix(g.spec.URL, "github.com") {
+	if g.spec.URL == "" || strings.HasSuffix(g.spec.URL, "github.com") {
 		return githubv4.NewClient(httpClient)
 	}
 
