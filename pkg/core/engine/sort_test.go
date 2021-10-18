@@ -28,7 +28,7 @@ var (
 			Conf: context.Context{
 				Sources: map[string]source.Source{
 					"1": {
-						Spec: source.Spec{
+						Config: source.Config{
 							DependsOn: []string{
 								"2",
 								"3",
@@ -36,7 +36,7 @@ var (
 						},
 					},
 					"2": {
-						Spec: source.Spec{
+						Config: source.Config{
 							DependsOn: []string{
 								"3",
 							},
@@ -46,14 +46,14 @@ var (
 				},
 				Conditions: map[string]condition.Condition{
 					"1": {
-						Spec: condition.Spec{
+						Config: condition.Config{
 							DependsOn: []string{
 								"2",
 							},
 						},
 					},
 					"2": {
-						Spec: condition.Spec{
+						Config: condition.Config{
 							DependsOn: []string{
 								"3",
 							},
@@ -63,14 +63,14 @@ var (
 				},
 				Targets: map[string]target.Target{
 					"1": {
-						Spec: target.Spec{
+						Config: target.Config{
 							DependsOn: []string{
 								"2",
 							},
 						},
 					},
 					"2": {
-						Spec: target.Spec{
+						Config: target.Config{
 							DependsOn: []string{
 								"3",
 							},
@@ -93,21 +93,21 @@ var (
 			Conf: context.Context{
 				Sources: map[string]source.Source{
 					"1": {
-						Spec: source.Spec{
+						Config: source.Config{
 							DependsOn: []string{
 								"3",
 							},
 						},
 					},
 					"2": {
-						Spec: source.Spec{
+						Config: source.Config{
 							DependsOn: []string{
 								"4",
 							},
 						},
 					},
 					"3": {
-						Spec: source.Spec{
+						Config: source.Config{
 							DependsOn: []string{
 								"2",
 							},
@@ -117,21 +117,21 @@ var (
 				},
 				Conditions: map[string]condition.Condition{
 					"1": {
-						Spec: condition.Spec{
+						Config: condition.Config{
 							DependsOn: []string{
 								"3",
 							},
 						},
 					},
 					"2": {
-						Spec: condition.Spec{
+						Config: condition.Config{
 							DependsOn: []string{
 								"4",
 							},
 						},
 					},
 					"3": {
-						Spec: condition.Spec{
+						Config: condition.Config{
 							DependsOn: []string{
 
 								"2",
@@ -142,21 +142,21 @@ var (
 				},
 				Targets: map[string]target.Target{
 					"1": {
-						Spec: target.Spec{
+						Config: target.Config{
 							DependsOn: []string{
 								"3",
 							},
 						},
 					},
 					"2": {
-						Spec: target.Spec{
+						Config: target.Config{
 							DependsOn: []string{
 								"4",
 							},
 						},
 					},
 					"3": {
-						Spec: target.Spec{
+						Config: target.Config{
 							DependsOn: []string{
 								"2",
 							},
@@ -179,7 +179,7 @@ var (
 			Conf: context.Context{
 				Sources: map[string]source.Source{
 					"1": {
-						Spec: source.Spec{
+						Config: source.Config{
 							DependsOn: []string{
 								"2",
 							},
@@ -188,7 +188,7 @@ var (
 				},
 				Conditions: map[string]condition.Condition{
 					"2": {
-						Spec: condition.Spec{
+						Config: condition.Config{
 							DependsOn: []string{
 								"3",
 							},
@@ -197,7 +197,7 @@ var (
 				},
 				Targets: map[string]target.Target{
 					"3": {
-						Spec: target.Spec{
+						Config: target.Config{
 							DependsOn: []string{
 								"4",
 							},
@@ -216,7 +216,7 @@ var (
 			Conf: context.Context{
 				Sources: map[string]source.Source{
 					"1": {
-						Spec: source.Spec{
+						Config: source.Config{
 							DependsOn: []string{
 
 								"2",
@@ -224,7 +224,7 @@ var (
 						},
 					},
 					"2": {
-						Spec: source.Spec{
+						Config: source.Config{
 							DependsOn: []string{
 								"1",
 							},
@@ -233,14 +233,14 @@ var (
 				},
 				Conditions: map[string]condition.Condition{
 					"1": {
-						Spec: condition.Spec{
+						Config: condition.Config{
 							DependsOn: []string{
 								"2",
 							},
 						},
 					},
 					"2": {
-						Spec: condition.Spec{
+						Config: condition.Config{
 							DependsOn: []string{
 								"1",
 							},
@@ -249,14 +249,14 @@ var (
 				},
 				Targets: map[string]target.Target{
 					"1": {
-						Spec: target.Spec{
+						Config: target.Config{
 							DependsOn: []string{
 								"2",
 							},
 						},
 					},
 					"2": {
-						Spec: target.Spec{
+						Config: target.Config{
 							DependsOn: []string{
 								"1",
 							},

@@ -23,11 +23,11 @@ import (
 // in order to update targets based on the source output
 type Condition struct {
 	Result string // Result store the condition result after a condition run. This variable can't be set by an updatecli configuration
-	Spec   Spec   // Spec defines condition input parameters
+	Config Config // Config defines condition input parameters
 }
 
-// Spec defines conditions input parameters
-type Spec struct {
+// Config defines conditions input parameters
+type Config struct {
 	DependsOn    []string `yaml:"depends_on"`
 	Name         string
 	Kind         string
@@ -54,31 +54,31 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 		return false, err
 	}
 
-	if len(c.Spec.Transformers) > 0 {
-		source, err = c.Spec.Transformers.Apply(source)
+	if len(c.Config.Transformers) > 0 {
+		source, err = c.Config.Transformers.Apply(source)
 		if err != nil {
 			return false, err
 		}
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(c.Spec.Prefix) > 0 {
+	if len(c.Config.Prefix) > 0 {
 		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(c.Spec.Postfix) > 0 {
+	if len(c.Config.Postfix) > 0 {
 		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
 	// If scm is defined then clone the repository
-	if len(c.Spec.Scm) > 0 {
-		s, _, err := scm.Unmarshal(c.Spec.Scm)
+	if len(c.Config.Scm) > 0 {
+		s, _, err := scm.Unmarshal(c.Config.Scm)
 		if err != nil {
 			return false, err
 		}
 
-		err = s.Init(c.Spec.Prefix+source+c.Spec.Postfix, c.Spec.Name)
+		err = s.Init(c.Config.Prefix+source+c.Config.Postfix, c.Config.Name)
 		if err != nil {
 			return false, err
 		}
@@ -88,18 +88,18 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 			return false, err
 		}
 
-		ok, err = spec.ConditionFromSCM(c.Spec.Prefix+source+c.Spec.Postfix, s)
+		ok, err = spec.ConditionFromSCM(c.Config.Prefix+source+c.Config.Postfix, s)
 		if err != nil {
 			return false, err
 		}
 
-	} else if len(c.Spec.Scm) == 0 {
-		ok, err = spec.Condition(c.Spec.Prefix + source + c.Spec.Postfix)
+	} else if len(c.Config.Scm) == 0 {
+		ok, err = spec.Condition(c.Config.Prefix + source + c.Config.Postfix)
 		if err != nil {
 			return false, err
 		}
 	} else {
-		return false, fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Spec.Scm)
+		return false, fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Config.Scm)
 	}
 
 	return ok, nil
@@ -109,12 +109,12 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 // Unmarshal decodes a condition struct
 func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 
-	switch condition.Spec.Kind {
+	switch condition.Config.Kind {
 
 	case "aws/ami":
 		a := ami.AMI{}
 
-		err := mapstructure.Decode(condition.Spec.Spec, &a.Spec)
+		err := mapstructure.Decode(condition.Config.Spec, &a.Spec)
 
 		if err != nil {
 			return nil, err
@@ -125,7 +125,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	case "dockerImage":
 		d := docker.Docker{}
 
-		err := mapstructure.Decode(condition.Spec.Spec, &d)
+		err := mapstructure.Decode(condition.Config.Spec, &d)
 		if err != nil {
 			return nil, err
 		}
@@ -135,7 +135,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	case "dockerfile":
 		d := dockerfile.Dockerfile{}
 
-		err := mapstructure.Decode(condition.Spec.Spec, &d)
+		err := mapstructure.Decode(condition.Config.Spec, &d)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +145,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	case "file":
 		f := file.File{}
 
-		err := mapstructure.Decode(condition.Spec.Spec, &f)
+		err := mapstructure.Decode(condition.Config.Spec, &f)
 		if err != nil {
 			return nil, err
 		}
@@ -155,7 +155,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	case "jenkins":
 		j := jenkins.Jenkins{}
 
-		err := mapstructure.Decode(condition.Spec.Spec, &j)
+		err := mapstructure.Decode(condition.Config.Spec, &j)
 		if err != nil {
 			return nil, err
 		}
@@ -165,7 +165,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	case "maven":
 		m := maven.Maven{}
 
-		err := mapstructure.Decode(condition.Spec.Spec, &m)
+		err := mapstructure.Decode(condition.Config.Spec, &m)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +174,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 
 	case "gitTag":
 		g := gitTag.Tag{}
-		err := mapstructure.Decode(condition.Spec.Spec, &g)
+		err := mapstructure.Decode(condition.Config.Spec, &g)
 
 		if err != nil {
 			return nil, err
@@ -185,7 +185,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	case "helmChart":
 		ch := chart.Chart{}
 
-		err := mapstructure.Decode(condition.Spec.Spec, &ch)
+		err := mapstructure.Decode(condition.Config.Spec, &ch)
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +195,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	case "yaml":
 		y := yml.Yaml{}
 
-		err := mapstructure.Decode(condition.Spec.Spec, &y)
+		err := mapstructure.Decode(condition.Config.Spec, &y)
 		if err != nil {
 			return nil, err
 		}
@@ -205,7 +205,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	case "shell":
 		var shellResourceSpec shell.ShellSpec
 
-		if err := mapstructure.Decode(condition.Spec.Spec, &shellResourceSpec); err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &shellResourceSpec); err != nil {
 			return nil, err
 		}
 
@@ -215,7 +215,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		}
 
 	default:
-		return nil, fmt.Errorf("Don't support condition: %v", condition.Spec.Kind)
+		return nil, fmt.Errorf("Don't support condition: %v", condition.Config.Kind)
 	}
 	return conditioner, nil
 }

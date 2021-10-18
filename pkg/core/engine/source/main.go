@@ -27,11 +27,11 @@ type Source struct {
 	Changelog string // Changelog hold the changelog description
 	Result    string // Result store the source result after a source run. This variable can't be set by an updatecli configuration
 	Output    string // Output contains the value retrieved from a source
-	Spec      Spec   // Spec defines a source specifications
+	Config    Config // Config defines a source specifications
 }
 
-// Spec struct defines a source specifications
-type Spec struct {
+// Config struct defines a source configuration
+type Config struct {
 	DependsOn    []string                 `yaml:"depends_on"` // DependsOn specify dag dependencies between sources
 	Name         string                   // Name contains a source name
 	Kind         string                   // Kind defines a source kind
@@ -62,9 +62,9 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 
 	workingDir := ""
 
-	if len(s.Spec.Scm) > 0 {
+	if len(s.Config.Scm) > 0 {
 
-		SCM, _, err := scm.Unmarshal(s.Spec.Scm)
+		SCM, _, err := scm.Unmarshal(s.Config.Scm)
 
 		if err != nil {
 			return output, changelogContent, err
@@ -84,7 +84,7 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 
 		workingDir = SCM.GetDirectory()
 
-	} else if len(s.Spec.Scm) == 0 {
+	} else if len(s.Config.Scm) == 0 {
 
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -110,20 +110,20 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 		return output, changelogContent, err
 	}
 
-	if len(s.Spec.Transformers) > 0 {
-		output, err = s.Spec.Transformers.Apply(output)
+	if len(s.Config.Transformers) > 0 {
+		output, err = s.Config.Transformers.Apply(output)
 		if err != nil {
 			return output, changelogContent, err
 		}
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(s.Spec.Prefix) > 0 {
+	if len(s.Config.Prefix) > 0 {
 		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release\n")
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(s.Spec.Postfix) > 0 {
+	if len(s.Config.Postfix) > 0 {
 		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release\n")
 	}
 
@@ -132,8 +132,8 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 	}
 
 	// Deprecated in favor of Transformers on 2021/01/3
-	if len(s.Spec.Replaces) > 0 {
-		args := s.Spec.Replaces.Unmarshal()
+	if len(s.Config.Replaces) > 0 {
+		args := s.Config.Replaces.Unmarshal()
 
 		r := strings.NewReplacer(args...)
 		output = (r.Replace(output))
@@ -152,11 +152,11 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 
 // Unmarshal decode a source spec and returned its typed content
 func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
-	switch s.Spec.Kind {
+	switch s.Config.Kind {
 	case "aws/ami":
 		a := ami.AMI{}
 
-		err := mapstructure.Decode(s.Spec.Spec, &a.Spec)
+		err := mapstructure.Decode(s.Config.Spec, &a.Spec)
 
 		if err != nil {
 			return nil, nil, err
@@ -167,7 +167,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 	case "githubRelease":
 		githubSpec := github.Spec{}
 
-		err := mapstructure.Decode(s.Spec.Spec, &githubSpec)
+		err := mapstructure.Decode(s.Config.Spec, &githubSpec)
 
 		if err != nil {
 			return nil, nil, err
@@ -185,7 +185,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 	case "file":
 		f := file.File{}
 
-		err := mapstructure.Decode(s.Spec.Spec, &f)
+		err := mapstructure.Decode(s.Config.Spec, &f)
 
 		if err != nil {
 			return nil, nil, err
@@ -195,7 +195,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 
 	case "helmChart":
 		c := chart.Chart{}
-		err := mapstructure.Decode(s.Spec.Spec, &c)
+		err := mapstructure.Decode(s.Config.Spec, &c)
 
 		if err != nil {
 			return nil, nil, err
@@ -207,7 +207,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 	case "jenkins":
 		j := jenkins.Jenkins{}
 
-		err := mapstructure.Decode(s.Spec.Spec, &j)
+		err := mapstructure.Decode(s.Config.Spec, &j)
 
 		if err != nil {
 			return nil, nil, err
@@ -218,7 +218,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 
 	case "maven":
 		m := maven.Maven{}
-		err := mapstructure.Decode(s.Spec.Spec, &m)
+		err := mapstructure.Decode(s.Config.Spec, &m)
 
 		if err != nil {
 			return nil, nil, err
@@ -228,7 +228,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 
 	case "gitTag":
 		g := gitTag.Tag{}
-		err := mapstructure.Decode(s.Spec.Spec, &g)
+		err := mapstructure.Decode(s.Config.Spec, &g)
 
 		if err != nil {
 			return nil, nil, err
@@ -238,7 +238,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 
 	case "dockerDigest":
 		d := docker.Docker{}
-		err := mapstructure.Decode(s.Spec.Spec, &d)
+		err := mapstructure.Decode(s.Config.Spec, &d)
 
 		if err != nil {
 			return nil, nil, err
@@ -248,7 +248,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 
 	case "yaml":
 		y := yml.Yaml{}
-		err := mapstructure.Decode(s.Spec.Spec, &y)
+		err := mapstructure.Decode(s.Config.Spec, &y)
 
 		if err != nil {
 			return nil, nil, err
@@ -259,7 +259,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 	case "shell":
 		shellResourceSpec := shell.ShellSpec{}
 
-		err := mapstructure.Decode(s.Spec.Spec, &shellResourceSpec)
+		err := mapstructure.Decode(s.Config.Spec, &shellResourceSpec)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -270,7 +270,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		}
 
 	default:
-		return nil, nil, fmt.Errorf("⚠ Don't support source kind: %v", s.Spec.Kind)
+		return nil, nil, fmt.Errorf("⚠ Don't support source kind: %v", s.Config.Kind)
 	}
 	return sourcer, changelog, nil
 

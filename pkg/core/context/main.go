@@ -54,7 +54,7 @@ func (c *Context) Init(config *config.Config) {
 
 		// Init Sources[id]
 		c.Sources[id] = source.Source{
-			Spec:   config.Sources[id],
+			Config: config.Sources[id],
 			Result: result.FAILURE,
 		}
 
@@ -71,7 +71,7 @@ func (c *Context) Init(config *config.Config) {
 			})
 
 		c.Conditions[id] = condition.Condition{
-			Spec:   config.Conditions[id],
+			Config: config.Conditions[id],
 			Result: result.FAILURE,
 		}
 	}
@@ -87,7 +87,7 @@ func (c *Context) Init(config *config.Config) {
 			})
 
 		c.Targets[id] = target.Target{
-			Spec:   config.Targets[id],
+			Config: config.Targets[id],
 			Result: result.FAILURE,
 		}
 	}

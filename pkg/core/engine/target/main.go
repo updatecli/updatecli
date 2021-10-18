@@ -20,14 +20,14 @@ import (
 // Target defines which file needs to be updated based on source output
 type Target struct {
 	Result      string // Result store the condition result after a target run. This variable can't be set by an updatecli configuration
-	Spec        Spec
+	Config      Config
 	ReportBody  string
 	ReportTitle string
 	Changelog   string
 }
 
-// Spec defines target parameters
-type Spec struct {
+// Config defines target parameters
+type Config struct {
 	DependsOn    []string `yaml:"depends_on"`
 	Name         string
 	PipelineID   string `yaml:"pipelineID"` // PipelineID references a uniq pipeline run that allows to groups targets
@@ -53,7 +53,7 @@ func (t *Target) Check() (bool, error) {
 	ok := true
 	required := []string{}
 
-	if t.Spec.Name == "" {
+	if t.Config.Name == "" {
 		required = append(required, "Name")
 	}
 
@@ -67,11 +67,11 @@ func (t *Target) Check() (bool, error) {
 
 // Unmarshal decodes a target struct
 func Unmarshal(target *Target) (targeter Targeter, err error) {
-	switch target.Spec.Kind {
+	switch target.Config.Kind {
 	case "helmChart":
 		ch := chart.Chart{}
 
-		err := mapstructure.Decode(target.Spec.Spec, &ch)
+		err := mapstructure.Decode(target.Config.Spec, &ch)
 
 		if err != nil {
 			logrus.Errorf("err - %s", err)
@@ -83,7 +83,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 	case "dockerfile":
 		d := dockerfile.Dockerfile{}
 
-		err := mapstructure.Decode(target.Spec.Spec, &d)
+		err := mapstructure.Decode(target.Config.Spec, &d)
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 			return nil, err
@@ -94,7 +94,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 	case "gitTag":
 		t := tag.Tag{}
 
-		err := mapstructure.Decode(target.Spec.Spec, &t)
+		err := mapstructure.Decode(target.Config.Spec, &t)
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 			return nil, err
@@ -105,7 +105,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 	case "yaml":
 		y := yml.Yaml{}
 
-		err := mapstructure.Decode(target.Spec.Spec, &y)
+		err := mapstructure.Decode(target.Config.Spec, &y)
 
 		if err != nil {
 			logrus.Errorf("err - %s", err)
@@ -117,7 +117,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 	case "file":
 		f := file.File{}
 
-		err := mapstructure.Decode(target.Spec.Spec, &f)
+		err := mapstructure.Decode(target.Config.Spec, &f)
 
 		if err != nil {
 			logrus.Errorf("err - %s", err)
@@ -129,7 +129,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 	case "shell":
 		shellResourceSpec := shell.ShellSpec{}
 
-		err := mapstructure.Decode(target.Spec.Spec, &shellResourceSpec)
+		err := mapstructure.Decode(target.Config.Spec, &shellResourceSpec)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +140,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 	default:
-		return nil, fmt.Errorf("⚠ Don't support target kind: %v", target.Spec.Kind)
+		return nil, fmt.Errorf("⚠ Don't support target kind: %v", target.Config.Kind)
 	}
 	return targeter, nil
 }
@@ -150,8 +150,8 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 
 	var pr scm.PullRequest
 
-	if len(t.Spec.Transformers) > 0 {
-		source, err = t.Spec.Transformers.Apply(source)
+	if len(t.Config.Transformers) > 0 {
+		source, err = t.Config.Transformers.Apply(source)
 		if err != nil {
 			logrus.Error(err)
 			return false, err
@@ -159,12 +159,12 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(t.Spec.Prefix) > 0 {
+	if len(t.Config.Prefix) > 0 {
 		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(t.Spec.Postfix) > 0 {
+	if len(t.Config.Postfix) > 0 {
 		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
@@ -183,9 +183,9 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		return false, err
 	}
 
-	if len(t.Spec.Scm) == 0 {
+	if len(t.Config.Scm) == 0 {
 
-		changed, err = spec.Target(t.Spec.Prefix+source+t.Spec.Postfix, o.DryRun)
+		changed, err = spec.Target(t.Config.Prefix+source+t.Config.Postfix, o.DryRun)
 		if err != nil {
 			return changed, err
 		}
@@ -202,12 +202,12 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		return false, err
 	}
 
-	s, pr, err = scm.Unmarshal(t.Spec.Scm)
+	s, pr, err = scm.Unmarshal(t.Config.Scm)
 	if err != nil {
 		return false, err
 	}
 
-	err = s.Init(source, t.Spec.PipelineID)
+	err = s.Init(source, t.Config.PipelineID)
 	if err != nil {
 		return false, err
 	}
@@ -217,7 +217,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		return false, err
 	}
 
-	changed, files, message, err = spec.TargetFromSCM(t.Spec.Prefix+source+t.Spec.Postfix, s, o.DryRun)
+	changed, files, message, err = spec.TargetFromSCM(t.Config.Prefix+source+t.Config.Postfix, s, o.DryRun)
 	if err != nil {
 		return changed, err
 	}
@@ -227,7 +227,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 			return changed, fmt.Errorf("Target has no change message")
 		}
 
-		if len(t.Spec.Scm) > 0 {
+		if len(t.Config.Scm) > 0 {
 
 			if len(files) == 0 {
 				logrus.Info("no changed files to commit")

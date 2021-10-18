@@ -28,18 +28,18 @@ func RunConditions(
 
 	for _, id := range sortedConditionsKeys {
 		condition := pipelineContext.Conditions[id]
-		condition.Spec = pipelineContext.Config.Conditions[id]
+		condition.Config = pipelineContext.Config.Conditions[id]
 
 		rpt := pipelineReport.Conditions[i]
 
-		rpt.Name = condition.Spec.Name
+		rpt.Name = condition.Config.Name
 		rpt.Result = result.FAILURE
-		rpt.Kind = condition.Spec.Kind
+		rpt.Kind = condition.Config.Kind
 
 		ok, err := condition.Run(
-			pipelineContext.Sources[condition.Spec.SourceID].Spec.Prefix +
-				pipelineContext.Sources[condition.Spec.SourceID].Output +
-				pipelineContext.Sources[condition.Spec.SourceID].Spec.Postfix)
+			pipelineContext.Sources[condition.Config.SourceID].Config.Prefix +
+				pipelineContext.Sources[condition.Config.SourceID].Output +
+				pipelineContext.Sources[condition.Config.SourceID].Config.Postfix)
 
 		if err != nil {
 			globalResult = false

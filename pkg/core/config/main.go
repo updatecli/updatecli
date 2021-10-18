@@ -47,12 +47,12 @@ var (
 // Config contains cli configuration
 type Config struct {
 	Name       string
-	PipelineID string      // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title      string      // Title is used for the full pipeline
-	Source     source.Spec // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
-	Sources    map[string]source.Spec
-	Conditions map[string]condition.Spec
-	Targets    map[string]target.Spec
+	PipelineID string        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	Title      string        // Title is used for the full pipeline
+	Source     source.Config // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
+	Sources    map[string]source.Config
+	Conditions map[string]condition.Config
+	Targets    map[string]target.Config
 }
 
 // Reset reset configuration
@@ -131,9 +131,9 @@ func (config *Config) Validate() error {
 
 		logrus.Warning("Since version 0.2.0, the single source definition is **Deprecated**  and replaced by Sources. This parameter will be deleted in a future release")
 
-		config.Sources = make(map[string]source.Spec)
+		config.Sources = make(map[string]source.Config)
 		config.Sources[defaultSourceID] = config.Source
-		config.Source = source.Spec{}
+		config.Source = source.Config{}
 	}
 
 	for id := range config.Sources {

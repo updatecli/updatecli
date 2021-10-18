@@ -22,13 +22,13 @@ func RunSources(
 
 	for _, id := range sortedSourcesKeys {
 		source := pipelineContext.Sources[id]
-		source.Spec = pipelineContext.Config.Sources[id]
+		source.Config = pipelineContext.Config.Sources[id]
 
 		rpt := pipelineReport.Sources[i]
 
-		rpt.Name = source.Spec.Name
+		rpt.Name = source.Config.Name
 		rpt.Result = result.FAILURE
-		rpt.Kind = source.Spec.Kind
+		rpt.Kind = source.Config.Kind
 
 		source.Output, source.Changelog, err = source.Execute()
 

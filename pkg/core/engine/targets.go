@@ -51,33 +51,33 @@ func RunTargets(
 		}
 
 		target := pipelineContext.Targets[id]
-		target.Spec = pipelineContext.Config.Targets[id]
+		target.Config = pipelineContext.Config.Targets[id]
 
 		rpt := pipelineReport.Targets[i]
 
-		rpt.Name = target.Spec.Name
+		rpt.Name = target.Config.Name
 		rpt.Result = result.FAILURE
-		rpt.Kind = target.Spec.Kind
+		rpt.Kind = target.Config.Kind
 
 		targetChanged := false
 
 		// Init target reporting
-		target.Changelog = pipelineContext.Sources[target.Spec.SourceID].Changelog
+		target.Changelog = pipelineContext.Sources[target.Config.SourceID].Changelog
 		target.ReportBody = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
 		target.ReportTitle = pipelineContext.Config.GetChangelogTitle(
 			id,
-			pipelineContext.Sources[target.Spec.SourceID].Result)
+			pipelineContext.Sources[target.Config.SourceID].Result)
 
-		if target.Spec.Prefix == "" && pipelineContext.Sources[target.Spec.SourceID].Spec.Prefix != "" {
-			target.Spec.Prefix = pipelineContext.Sources[target.Spec.SourceID].Spec.Prefix
+		if target.Config.Prefix == "" && pipelineContext.Sources[target.Config.SourceID].Config.Prefix != "" {
+			target.Config.Prefix = pipelineContext.Sources[target.Config.SourceID].Config.Prefix
 		}
 
-		if target.Spec.Postfix == "" && pipelineContext.Sources[target.Spec.SourceID].Spec.Postfix != "" {
-			target.Spec.Postfix = pipelineContext.Sources[target.Spec.SourceID].Spec.Postfix
+		if target.Config.Postfix == "" && pipelineContext.Sources[target.Config.SourceID].Config.Postfix != "" {
+			target.Config.Postfix = pipelineContext.Sources[target.Config.SourceID].Config.Postfix
 		}
 
 		targetChanged, err = target.Run(
-			pipelineContext.Sources[target.Spec.SourceID].Output,
+			pipelineContext.Sources[target.Config.SourceID].Output,
 			options)
 
 		if err != nil {

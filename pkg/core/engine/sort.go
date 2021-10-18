@@ -63,8 +63,8 @@ func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err 
 
 	// Update vertices dependencies based on depends_on
 	for key, s := range *sources {
-		if len(s.Spec.DependsOn) > 0 {
-			for _, dep := range s.Spec.DependsOn {
+		if len(s.Config.DependsOn) > 0 {
+			for _, dep := range s.Config.DependsOn {
 				if !isValidDependsOn(dep, index) {
 					logrus.Errorf("%s:%q", ErrNotValidDependsOn, dep)
 					return result, ErrNotValidDependsOn
@@ -141,8 +141,8 @@ func SortedConditionsKeys(conditions *map[string]condition.Condition) (result []
 
 	// Update vertices dependencies based on depends_on
 	for key, s := range *conditions {
-		if len(s.Spec.DependsOn) > 0 {
-			for _, dep := range s.Spec.DependsOn {
+		if len(s.Config.DependsOn) > 0 {
+			for _, dep := range s.Config.DependsOn {
 				if !isValidDependsOn(dep, index) {
 					logrus.Errorf("%s:%q", ErrNotValidDependsOn, dep)
 					return result, ErrNotValidDependsOn
@@ -218,8 +218,8 @@ func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err 
 
 	// Update vertices dependencies based on depends_on
 	for key, s := range *targets {
-		if len(s.Spec.DependsOn) > 0 {
-			for _, dep := range s.Spec.DependsOn {
+		if len(s.Config.DependsOn) > 0 {
+			for _, dep := range s.Config.DependsOn {
 				if !isValidDependsOn(dep, index) {
 					logrus.Errorf("%s: %q", ErrNotValidDependsOn, dep)
 					return result, ErrNotValidDependsOn
