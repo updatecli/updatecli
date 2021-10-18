@@ -1,16 +1,14 @@
-package engine
+package pipeline
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // RunSources iterates on every source definition to retrieve every information.
-func RunSources(
-	pipelineReport *reports.Report,
-	p *pipeline.Pipeline) error {
+func (p *Pipeline) RunSources(
+	pipelineReport *reports.Report) error {
 
 	sortedSourcesKeys, err := SortedSourcesKeys(&p.Sources)
 	if err != nil {

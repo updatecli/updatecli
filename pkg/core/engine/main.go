@@ -187,8 +187,8 @@ func (e *Engine) Run() (err error) {
 
 	for id, conf := range e.configurations {
 
-		pipeline := pipeline.Pipeline{}
-		pipeline.Init(&e.configurations[id])
+		currentPipeline := pipeline.Pipeline{}
+		currentPipeline.Init(&e.configurations[id])
 
 		currentReport := reports.Report{}
 		currentReport.Init(
@@ -208,47 +208,40 @@ func (e *Engine) Run() (err error) {
 			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 		}
 
-		err = RunSources(
-			&currentReport,
-			&pipeline)
+		err = currentPipeline.RunSources(&currentReport)
 
 		if err != nil {
 			logrus.Errorf("Error occurred while running sources - %q", err.Error())
 			e.Reports = append(e.Reports, currentReport)
-			e.Pipelines = append(e.Pipelines, pipeline)
+			e.Pipelines = append(e.Pipelines, currentPipeline)
 			continue
 		}
 
 		if len(conf.Conditions) > 0 {
 
-			ok, err := RunConditions(
-				&pipeline,
-				&currentReport)
+			ok, err := currentPipeline.RunConditions(&currentReport)
 
 			if err != nil {
 				logrus.Infof("\n%s error happened during condition evaluation\n\n", result.FAILURE)
 				e.Reports = append(e.Reports, currentReport)
-				e.Pipelines = append(e.Pipelines, pipeline)
+				e.Pipelines = append(e.Pipelines, currentPipeline)
 				continue
 			} else if !ok {
 				logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
 				e.Reports = append(e.Reports, currentReport)
-				e.Pipelines = append(e.Pipelines, pipeline)
+				e.Pipelines = append(e.Pipelines, currentPipeline)
 				continue
 			}
 
 		}
 
 		if len(conf.Targets) > 0 {
-			err := RunTargets(
-				&e.Options.Target,
-				&currentReport,
-				&pipeline)
+			err := currentPipeline.RunTargets(&e.Options.Target, &currentReport)
 
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, currentReport)
-				e.Pipelines = append(e.Pipelines, pipeline)
+				e.Pipelines = append(e.Pipelines, currentPipeline)
 				continue
 			}
 		}
@@ -258,7 +251,7 @@ func (e *Engine) Run() (err error) {
 		}
 
 		e.Reports = append(e.Reports, currentReport)
-		e.Pipelines = append(e.Pipelines, pipeline)
+		e.Pipelines = append(e.Pipelines, currentPipeline)
 	}
 
 	err = e.Reports.Show()

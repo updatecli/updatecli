@@ -11,10 +11,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Pipeline contains every context information gathered during an updatecli run
+// Pipeline represent an updatecli run for a specific configuration
 type Pipeline struct {
-	Name  string
-	ID    string // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	Name  string // Name defines a pipeline name, used to improve human visualization
+	ID    string // ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	Title string // Title is used for the full pipelin
 
 	Sources    map[string]source.Source
@@ -28,7 +28,7 @@ type Pipeline struct {
 	Config *config.Config
 }
 
-// Init initialize a updatecli context based on its bind configuration
+// Init initialize an updatecli context based on its configuration
 func (p *Pipeline) Init(config *config.Config) {
 
 	p.Title = config.Title

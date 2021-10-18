@@ -1,4 +1,4 @@
-package engine
+package pipeline
 
 import (
 	"fmt"
@@ -6,16 +6,14 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
-	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// RunTargets iterates on every target to update each them.
-func RunTargets(
+// RunTargets iterates on every target to update each of them.
+func (p *Pipeline) RunTargets(
 	options *target.Options,
-	pipelineReport *reports.Report,
-	p *pipeline.Pipeline) error {
+	pipelineReport *reports.Report) error {
 
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("Targets"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Targets")+1))

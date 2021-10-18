@@ -1,4 +1,4 @@
-package engine
+package pipeline
 
 import (
 	"strings"
@@ -7,11 +7,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/engine/condition"
 	"github.com/updatecli/updatecli/pkg/core/engine/source"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
-	"github.com/updatecli/updatecli/pkg/core/pipeline"
 )
 
 type SortedKeysData struct {
-	Conf                     pipeline.Pipeline
+	Conf                     Pipeline
 	ExpectedSourcesResult    []string
 	ExpectedConditionsResult []string
 	ExpectedTargetsResult    []string
@@ -25,7 +24,7 @@ type SortedKeysDataSet []SortedKeysData
 var (
 	sortedKeysDataset = SortedKeysDataSet{
 		{
-			Conf: pipeline.Pipeline{
+			Conf: Pipeline{
 				Sources: map[string]source.Source{
 					"1": {
 						Config: source.Config{
@@ -90,7 +89,7 @@ var (
 			},
 		},
 		{
-			Conf: pipeline.Pipeline{
+			Conf: Pipeline{
 				Sources: map[string]source.Source{
 					"1": {
 						Config: source.Config{
@@ -176,7 +175,7 @@ var (
 			},
 		},
 		{
-			Conf: pipeline.Pipeline{
+			Conf: Pipeline{
 				Sources: map[string]source.Source{
 					"1": {
 						Config: source.Config{
@@ -213,7 +212,7 @@ var (
 			ExpectedTargetsErr:       ErrNotValidDependsOn,
 		},
 		{
-			Conf: pipeline.Pipeline{
+			Conf: Pipeline{
 				Sources: map[string]source.Source{
 					"1": {
 						Config: source.Config{

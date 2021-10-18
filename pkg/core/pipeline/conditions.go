@@ -1,17 +1,15 @@
-package engine
+package pipeline
 
 import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // RunConditions run every conditions for a given configuration config.
-func RunConditions(
-	p *pipeline.Pipeline,
+func (p *Pipeline) RunConditions(
 	pipelineReport *reports.Report) (globalResult bool, err error) {
 
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("conditions"))
