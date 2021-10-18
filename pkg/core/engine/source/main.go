@@ -19,30 +19,33 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
-	"github.com/updatecli/updatecli/pkg/plugins/yaml"
+	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	DependsOn    []string `yaml:"depends_on"` // DependsOn specify dag dependencies between sources
-	Name         string
-	Kind         string
-	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
-	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
-	Transformers transformer.Transformers
-	Replaces     Replacers // Deprecated in favor of Transformers on 2021/01/3
+	Changelog string // Changelog hold the changelog description
+	Result    string // Result store the source result after a source run. This variable can't be set by an updatecli configuration
+	Output    string // Output contains the value retrieved from a source
+	Config    Config // Config defines a source specifications
+}
+
+// Config struct defines a source configuration
+type Config struct {
+	DependsOn    []string                 `yaml:"depends_on"` // DependsOn specify dag dependencies between sources
+	Name         string                   // Name contains a source name
+	Kind         string                   // Kind defines a source kind
+	Prefix       string                   // Deprecated in favor of Transformers on 2021/01/3
+	Postfix      string                   // Deprecated in favor of Transformers on 2021/01/3
+	Transformers transformer.Transformers // Transformers defines the list of transformers to apply to a source Output
+	Replaces     Replacers                // Deprecated in favor of Transformers on 2021/01/3
 	Spec         interface{}
 	Scm          map[string]interface{}
 }
 
-// Spec source is an interface to handle source spec
-type Spec interface {
+// Sourcer source is an interface to handle source spec
+type Sourcer interface {
 	Source(workingDir string) (string, error)
-}
-
-// Changelog is an interface to retrieve changelog description
-type Changelog interface {
-	Changelog(release string) (string, error)
 }
 
 // Execute execute actions defined by the source configuration
@@ -59,9 +62,9 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 
 	workingDir := ""
 
-	if len(s.Scm) > 0 {
+	if len(s.Config.Scm) > 0 {
 
-		SCM, _, err := scm.Unmarshal(s.Scm)
+		SCM, _, err := scm.Unmarshal(s.Config.Scm)
 
 		if err != nil {
 			return output, changelogContent, err
@@ -81,7 +84,7 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 
 		workingDir = SCM.GetDirectory()
 
-	} else if len(s.Scm) == 0 {
+	} else if len(s.Config.Scm) == 0 {
 
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -107,20 +110,20 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 		return output, changelogContent, err
 	}
 
-	if len(s.Transformers) > 0 {
-		output, err = s.Transformers.Apply(output)
+	if len(s.Config.Transformers) > 0 {
+		output, err = s.Config.Transformers.Apply(output)
 		if err != nil {
 			return output, changelogContent, err
 		}
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(s.Prefix) > 0 {
+	if len(s.Config.Prefix) > 0 {
 		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release\n")
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(s.Postfix) > 0 {
+	if len(s.Config.Postfix) > 0 {
 		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release\n")
 	}
 
@@ -129,8 +132,8 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 	}
 
 	// Deprecated in favor of Transformers on 2021/01/3
-	if len(s.Replaces) > 0 {
-		args := s.Replaces.Unmarshal()
+	if len(s.Config.Replaces) > 0 {
+		args := s.Config.Replaces.Unmarshal()
 
 		r := strings.NewReplacer(args...)
 		output = (r.Replace(output))
@@ -148,120 +151,127 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 }
 
 // Unmarshal decode a source spec and returned its typed content
-func (s *Source) Unmarshal() (spec Spec, changelog Changelog, err error) {
-	switch s.Kind {
+func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
+	switch s.Config.Kind {
 	case "aws/ami":
 		a := ami.AMI{}
 
-		err := mapstructure.Decode(s.Spec, &a.Spec)
+		err := mapstructure.Decode(s.Config.Spec, &a.Spec)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &a
+		sourcer = &a
 
 	case "githubRelease":
-		g := github.Github{}
-		err := mapstructure.Decode(s.Spec, &g)
+		githubSpec := github.Spec{}
+
+		err := mapstructure.Decode(s.Config.Spec, &githubSpec)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &g
+		g, err := github.New(githubSpec)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		sourcer = &g
 		changelog = &g
 
 	case "file":
 		f := file.File{}
 
-		err := mapstructure.Decode(s.Spec, &f)
+		err := mapstructure.Decode(s.Config.Spec, &f)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &f
+		sourcer = &f
 
 	case "helmChart":
 		c := chart.Chart{}
-		err := mapstructure.Decode(s.Spec, &c)
+		err := mapstructure.Decode(s.Config.Spec, &c)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &c
+		sourcer = &c
 		changelog = &c
 
 	case "jenkins":
 		j := jenkins.Jenkins{}
 
-		err := mapstructure.Decode(s.Spec, &j)
+		err := mapstructure.Decode(s.Config.Spec, &j)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &j
+		sourcer = &j
 		changelog = &j
 
 	case "maven":
 		m := maven.Maven{}
-		err := mapstructure.Decode(s.Spec, &m)
+		err := mapstructure.Decode(s.Config.Spec, &m)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &m
+		sourcer = &m
 
 	case "gitTag":
 		g := gitTag.Tag{}
-		err := mapstructure.Decode(s.Spec, &g)
+		err := mapstructure.Decode(s.Config.Spec, &g)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &g
+		sourcer = &g
 
 	case "dockerDigest":
 		d := docker.Docker{}
-		err := mapstructure.Decode(s.Spec, &d)
+		err := mapstructure.Decode(s.Config.Spec, &d)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &d
+		sourcer = &d
 
 	case "yaml":
-		y := yaml.Yaml{}
-		err := mapstructure.Decode(s.Spec, &y)
+		y := yml.Yaml{}
+		err := mapstructure.Decode(s.Config.Spec, &y)
 
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec = &y
+		sourcer = &y
 
 	case "shell":
 		shellResourceSpec := shell.ShellSpec{}
 
-		err := mapstructure.Decode(s.Spec, &shellResourceSpec)
+		err := mapstructure.Decode(s.Config.Spec, &shellResourceSpec)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		spec, err = shell.New(shellResourceSpec)
+		sourcer, err = shell.New(shellResourceSpec)
 		if err != nil {
 			return nil, nil, err
 		}
 
 	default:
-		return nil, nil, fmt.Errorf("⚠ Don't support source kind: %v", s.Kind)
+		return nil, nil, fmt.Errorf("⚠ Don't support source kind: %v", s.Config.Kind)
 	}
-	return spec, changelog, nil
+	return sourcer, changelog, nil
 
 }
