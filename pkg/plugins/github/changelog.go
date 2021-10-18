@@ -20,14 +20,6 @@ type Changelog struct {
 // Changelog returns a changelog description based on a release name
 func (g *Github) Changelog(name string) (string, error) {
 
-	errs := g.Check()
-	if len(errs) > 0 {
-		for _, e := range errs {
-			logrus.Errorf("%s\n", e)
-		}
-		return "", fmt.Errorf("wrong github configuration")
-	}
-
 	/*
 			https://developer.github.com/v4/explorer/
 		# Query
@@ -60,8 +52,8 @@ func (g *Github) Changelog(name string) (string, error) {
 	}
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.Owner),
-		"repository": githubv4.String(g.Repository),
+		"owner":      githubv4.String(g.spec.Owner),
+		"repository": githubv4.String(g.spec.Repository),
 		"tagName":    githubv4.String(name),
 	}
 
@@ -77,8 +69,8 @@ func (g *Github) Changelog(name string) (string, error) {
 	if len(query.Repository.Release.Url) == 0 {
 		changelog = fmt.Sprintf("No Github Release found for %s on https://github.com/%s/%s",
 			name,
-			g.Owner,
-			g.Repository)
+			g.spec.Owner,
+			g.spec.Repository)
 	} else {
 		changelog = fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v",
 			query.Repository.Release.PublishedAt.String(),

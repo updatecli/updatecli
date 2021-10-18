@@ -5,7 +5,9 @@ import (
 )
 
 var (
-	changelogWarning string = `
+	// ChangelogFallbackContent is returned when no Github credentials are provided as it's currently
+	// the only to retrieve Jenkins changelog from GitHub release.
+	ChangelogFallbackContent string = `
 Warning:
 ========
 We currently rely on Github Release to get Jenkins changelog 
@@ -25,16 +27,21 @@ source:
 // Changelog returns a changelog description based on a Jenkins version
 // retrieved from a GitHub Release
 func (j *Jenkins) Changelog(name string) (string, error) {
-	g := github.Github{
+	if len(j.Github.Token) == 0 || len(j.Github.Username) == 0 {
+		return ChangelogFallbackContent, nil
+	}
+
+	g, err := github.New(github.Spec{
 		Owner:      "jenkinsci",
 		Repository: "jenkins",
 		Token:      j.Github.Token,
-		Username:   j.Github.Username,
-	}
+		Username:   j.Github.Username})
 
-	if len(g.Token) == 0 || len(g.Username) == 0 {
-		return changelogWarning, nil
-	}
+	if err != nil {
+		return "", err
 
-	return g.Changelog("jenkins-" + name)
+	}
+	changelog, err := g.Changelog("jenkins-" + name)
+
+	return changelog, err
 }

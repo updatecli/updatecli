@@ -16,12 +16,18 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
-	"github.com/updatecli/updatecli/pkg/plugins/yaml"
+	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
+	Result string // Result store the condition result after a condition run. This variable can't be set by an updatecli configuration
+	Config Config // Config defines condition input parameters
+}
+
+// Config defines conditions input parameters
+type Config struct {
 	DependsOn    []string `yaml:"depends_on"`
 	Name         string
 	Kind         string
@@ -33,8 +39,8 @@ type Condition struct {
 	SourceID     string `yaml:"sourceID"`
 }
 
-// Spec is an interface that test if condition is met
-type Spec interface {
+// Conditioner is an interface that test if condition is met
+type Conditioner interface {
 	Condition(version string) (bool, error)
 	ConditionFromSCM(version string, scm scm.Scm) (bool, error)
 }
@@ -48,31 +54,31 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 		return false, err
 	}
 
-	if len(c.Transformers) > 0 {
-		source, err = c.Transformers.Apply(source)
+	if len(c.Config.Transformers) > 0 {
+		source, err = c.Config.Transformers.Apply(source)
 		if err != nil {
 			return false, err
 		}
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(c.Prefix) > 0 {
+	if len(c.Config.Prefix) > 0 {
 		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
 	// Announce deprecation on 2021/01/31
-	if len(c.Postfix) > 0 {
+	if len(c.Config.Postfix) > 0 {
 		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
 	}
 
 	// If scm is defined then clone the repository
-	if len(c.Scm) > 0 {
-		s, _, err := scm.Unmarshal(c.Scm)
+	if len(c.Config.Scm) > 0 {
+		s, _, err := scm.Unmarshal(c.Config.Scm)
 		if err != nil {
 			return false, err
 		}
 
-		err = s.Init(c.Prefix+source+c.Postfix, c.Name)
+		err = s.Init(c.Config.Prefix+source+c.Config.Postfix, c.Config.Name)
 		if err != nil {
 			return false, err
 		}
@@ -82,18 +88,18 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 			return false, err
 		}
 
-		ok, err = spec.ConditionFromSCM(c.Prefix+source+c.Postfix, s)
+		ok, err = spec.ConditionFromSCM(c.Config.Prefix+source+c.Config.Postfix, s)
 		if err != nil {
 			return false, err
 		}
 
-	} else if len(c.Scm) == 0 {
-		ok, err = spec.Condition(c.Prefix + source + c.Postfix)
+	} else if len(c.Config.Scm) == 0 {
+		ok, err = spec.Condition(c.Config.Prefix + source + c.Config.Postfix)
 		if err != nil {
 			return false, err
 		}
 	} else {
-		return false, fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Scm)
+		return false, fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Config.Scm)
 	}
 
 	return ok, nil
@@ -101,115 +107,115 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 }
 
 // Unmarshal decodes a condition struct
-func Unmarshal(condition *Condition) (spec Spec, err error) {
+func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 
-	switch condition.Kind {
+	switch condition.Config.Kind {
 
 	case "aws/ami":
 		a := ami.AMI{}
 
-		err := mapstructure.Decode(condition.Spec, &a.Spec)
+		err := mapstructure.Decode(condition.Config.Spec, &a.Spec)
 
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &a
+		conditioner = &a
 
 	case "dockerImage":
 		d := docker.Docker{}
 
-		err := mapstructure.Decode(condition.Spec, &d)
+		err := mapstructure.Decode(condition.Config.Spec, &d)
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &d
+		conditioner = &d
 
 	case "dockerfile":
 		d := dockerfile.Dockerfile{}
 
-		err := mapstructure.Decode(condition.Spec, &d)
+		err := mapstructure.Decode(condition.Config.Spec, &d)
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &d
+		conditioner = &d
 
 	case "file":
 		f := file.File{}
 
-		err := mapstructure.Decode(condition.Spec, &f)
+		err := mapstructure.Decode(condition.Config.Spec, &f)
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &f
+		conditioner = &f
 
 	case "jenkins":
 		j := jenkins.Jenkins{}
 
-		err := mapstructure.Decode(condition.Spec, &j)
+		err := mapstructure.Decode(condition.Config.Spec, &j)
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &j
+		conditioner = &j
 
 	case "maven":
 		m := maven.Maven{}
 
-		err := mapstructure.Decode(condition.Spec, &m)
+		err := mapstructure.Decode(condition.Config.Spec, &m)
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &m
+		conditioner = &m
 
 	case "gitTag":
 		g := gitTag.Tag{}
-		err := mapstructure.Decode(condition.Spec, &g)
+		err := mapstructure.Decode(condition.Config.Spec, &g)
 
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &g
+		conditioner = &g
 
 	case "helmChart":
 		ch := chart.Chart{}
 
-		err := mapstructure.Decode(condition.Spec, &ch)
+		err := mapstructure.Decode(condition.Config.Spec, &ch)
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &ch
+		conditioner = &ch
 
 	case "yaml":
-		y := yaml.Yaml{}
+		y := yml.Yaml{}
 
-		err := mapstructure.Decode(condition.Spec, &y)
+		err := mapstructure.Decode(condition.Config.Spec, &y)
 		if err != nil {
 			return nil, err
 		}
 
-		spec = &y
+		conditioner = &y
 
 	case "shell":
 		var shellResourceSpec shell.ShellSpec
 
-		if err := mapstructure.Decode(condition.Spec, &shellResourceSpec); err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &shellResourceSpec); err != nil {
 			return nil, err
 		}
 
-		spec, err = shell.New(shellResourceSpec)
+		conditioner, err = shell.New(shellResourceSpec)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		return nil, fmt.Errorf("Don't support condition: %v", condition.Kind)
+		return nil, fmt.Errorf("Don't support condition: %v", condition.Config.Kind)
 	}
-	return spec, nil
+	return conditioner, nil
 }
