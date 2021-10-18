@@ -8,7 +8,7 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/context"
+	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
@@ -21,7 +21,7 @@ import (
 // Engine defined parameters for a specific engine run.
 type Engine struct {
 	configurations []config.Config
-	Contexts       []context.Context
+	Pipelines      []pipeline.Pipeline
 	Options        Options
 	Reports        reports.Reports
 }
@@ -187,8 +187,8 @@ func (e *Engine) Run() (err error) {
 
 	for id, conf := range e.configurations {
 
-		currentContext := context.Context{}
-		currentContext.Init(&e.configurations[id])
+		currentPipeline := pipeline.Pipeline{}
+		currentPipeline.Init(&e.configurations[id])
 
 		currentReport := reports.Report{}
 		currentReport.Init(
@@ -208,50 +208,40 @@ func (e *Engine) Run() (err error) {
 			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
 		}
 
-		err = RunSources(
-			&e.configurations[id],
-			&currentReport,
-			&currentContext)
+		err = currentPipeline.RunSources(&currentReport)
 
 		if err != nil {
 			logrus.Errorf("Error occurred while running sources - %q", err.Error())
 			e.Reports = append(e.Reports, currentReport)
-			e.Contexts = append(e.Contexts, currentContext)
+			e.Pipelines = append(e.Pipelines, currentPipeline)
 			continue
 		}
 
 		if len(conf.Conditions) > 0 {
 
-			ok, err := RunConditions(
-				&e.configurations[id],
-				&currentContext,
-				&currentReport)
+			ok, err := currentPipeline.RunConditions(&currentReport)
 
 			if err != nil {
 				logrus.Infof("\n%s error happened during condition evaluation\n\n", result.FAILURE)
 				e.Reports = append(e.Reports, currentReport)
-				e.Contexts = append(e.Contexts, currentContext)
+				e.Pipelines = append(e.Pipelines, currentPipeline)
 				continue
 			} else if !ok {
 				logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
 				e.Reports = append(e.Reports, currentReport)
-				e.Contexts = append(e.Contexts, currentContext)
+				e.Pipelines = append(e.Pipelines, currentPipeline)
 				continue
 			}
 
 		}
 
 		if len(conf.Targets) > 0 {
-			err := RunTargets(
-				&e.configurations[id],
-				&e.Options.Target,
-				&currentReport,
-				&currentContext)
+			err := currentPipeline.RunTargets(&e.Options.Target, &currentReport)
 
 			if err != nil {
 				logrus.Errorf("%s %v\n", result.FAILURE, err)
 				e.Reports = append(e.Reports, currentReport)
-				e.Contexts = append(e.Contexts, currentContext)
+				e.Pipelines = append(e.Pipelines, currentPipeline)
 				continue
 			}
 		}
@@ -261,7 +251,7 @@ func (e *Engine) Run() (err error) {
 		}
 
 		e.Reports = append(e.Reports, currentReport)
-		e.Contexts = append(e.Contexts, currentContext)
+		e.Pipelines = append(e.Pipelines, currentPipeline)
 	}
 
 	err = e.Reports.Show()

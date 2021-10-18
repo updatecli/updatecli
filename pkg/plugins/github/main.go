@@ -16,51 +16,79 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// Spec represents the configuration input
+type Spec struct {
+	Branch        string         // Branch specifies which github branch to work on
+	Directory     string         // Directory specifies where the github repisotory is cloned on the local disk
+	Email         string         // Email specifies which emails to use when creating commits
+	Owner         string         // Owner specifies repository owner
+	Repository    string         // Repository specifies the name of a repository for a specific owner
+	Version       string         // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a future version
+	VersionFilter version.Filter //VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	Token         string         // Token specifies the credential used to authenticate with
+	URL           string         // URL specifies the default github url in case of GitHub enterprise
+	Username      string         // Username specifies the username used to authenticate with Github API
+	User          string         // User specific the user in git commit messages
+}
+
 // Github contains settings to interact with Github
 type Github struct {
-	Owner                  string
-	Description            string
-	PullRequestDescription Changelog
-	Repository             string
-	Username               string
-	Token                  string
-	URL                    string
-	Version                string         // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a futur version
-	VersionFilter          version.Filter //VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	Directory              string
-	Branch                 string
-	remoteBranch           string
-	User                   string
-	Email                  string
+	spec                   Spec          // Spec contains inputs coming from updatecli configuration
+	pullRequestDescription Changelog     // PullRequestDescription the changelog specified in Github PR
+	remoteBranch           string        // remoteBranch is used when creating a temporary branch before opening a PR
 	Force                  bool          // Force is used during the git push phase to run `git push --force`.
 	CommitMessage          commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
 }
 
-// Check verifies if mandatory Github parameters are provided and return false if not.
-func (g *Github) Check() (errs []error) {
+// New returns a new valid Github object.
+func New(s Spec) (Github, error) {
+	errs := s.Validate()
+
+	if len(errs) > 0 {
+		strErrs := []string{}
+		for _, err := range errs {
+			strErrs = append(strErrs, err.Error())
+		}
+		return Github{}, fmt.Errorf(strings.Join(strErrs, "\n"))
+	}
+
+	if s.Directory == "" {
+		s.Directory = path.Join(tmp.Directory, s.Owner, s.Repository)
+	}
+
+	if s.URL == "" {
+		s.URL = "github.com"
+	}
+
+	return Github{
+		spec: s}, nil
+}
+
+// Validate verifies if mandatory Github parameters are provided and return false if not.
+func (s *Spec) Validate() (errs []error) {
 	required := []string{}
 
-	if g.Token == "" {
+	if len(s.Token) == 0 {
 		required = append(required, "token")
 	}
 
-	if g.Owner == "" {
+	if len(s.Owner) == 0 {
 		required = append(required, "owner")
 	}
 
-	if g.Repository == "" {
+	if len(s.Repository) == 0 {
 		required = append(required, "repository")
 	}
 
-	if len(g.VersionFilter.Pattern) == 0 {
-		g.VersionFilter.Pattern = g.Version
+	if len(s.VersionFilter.Pattern) == 0 {
+		s.VersionFilter.Pattern = s.Version
 	}
 
-	if err := g.VersionFilter.Validate(); err != nil {
+	if err := s.VersionFilter.Validate(); err != nil {
 		errs = append(errs, err)
 	}
 
-	if len(g.Version) > 0 {
+	if len(s.Version) > 0 {
 		logrus.Warningln("**Deprecated** Field `version` from resource githubRelease is deprecated in favor of `versionFilter.pattern`, this field will be removed in the next major version")
 	}
 
@@ -72,13 +100,10 @@ func (g *Github) Check() (errs []error) {
 }
 
 func (g *Github) setDirectory() {
-	if g.Directory == "" {
-		g.Directory = path.Join(tmp.Directory, g.Owner, g.Repository)
-	}
 
-	if _, err := os.Stat(g.Directory); os.IsNotExist(err) {
+	if _, err := os.Stat(g.spec.Directory); os.IsNotExist(err) {
 
-		err := os.MkdirAll(g.Directory, 0755)
+		err := os.MkdirAll(g.spec.Directory, 0755)
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 		}
@@ -87,17 +112,22 @@ func (g *Github) setDirectory() {
 
 //NewClient return a new client
 func (g *Github) NewClient() *githubv4.Client {
+
+	if err := g.spec.Validate(); err != nil {
+		logrus.Errorln(err)
+		return nil
+	}
+
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: g.Token},
+		&oauth2.Token{AccessToken: g.spec.Token},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 
-	if g.URL == "" || strings.HasSuffix(g.URL, "github.com") {
+	if g.spec.URL == "" || strings.HasSuffix(g.spec.URL, "github.com") {
 		return githubv4.NewClient(httpClient)
-
 	}
 
-	return githubv4.NewEnterpriseClient(os.Getenv(g.Token), httpClient)
+	return githubv4.NewEnterpriseClient(os.Getenv(g.spec.Token), httpClient)
 }
 
 func (g *Github) queryRepositoryID() (string, error) {
@@ -118,8 +148,8 @@ func (g *Github) queryRepositoryID() (string, error) {
 	}
 
 	variables := map[string]interface{}{
-		"owner": githubv4.String(g.Owner),
-		"name":  githubv4.String(g.Repository),
+		"owner": githubv4.String(g.spec.Owner),
+		"name":  githubv4.String(g.spec.Repository),
 	}
 
 	err := client.Query(context.Background(), &query, variables)

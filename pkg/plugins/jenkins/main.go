@@ -16,9 +16,9 @@ import (
 // Jenkins defines parameters needed to retrieve latest Jenkins version
 // based on a specific release
 type Jenkins struct {
-	Release string        // Defines the release name like latest or weekly
-	Version string        // Defines a specific release version
-	Github  github.Github // Github Parameter used to retrieve a Jenkins changelog
+	Release string      // Defines the release name like latest or weekly
+	Version string      // Defines a specific release version
+	Github  github.Spec // Github Parameter used to retrieve a Jenkins changelog
 }
 
 const (
