@@ -33,9 +33,15 @@ func Unmarshal(scm map[string]interface{}) (Scm, PullRequest, error) {
 		switch key {
 		case "github":
 
-			var g github.Github
+			githubSpec := github.Spec{}
 
-			err := mapstructure.Decode(value, &g)
+			err := mapstructure.Decode(value, &githubSpec)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			g, err := github.New(githubSpec)
+
 			if err != nil {
 				return nil, nil, err
 			}
@@ -54,7 +60,6 @@ func Unmarshal(scm map[string]interface{}) (Scm, PullRequest, error) {
 			s = &g
 		default:
 			return nil, nil, fmt.Errorf("wrong scm type provided, accepted values [git,github]")
-
 		}
 	}
 	return s, pr, nil
