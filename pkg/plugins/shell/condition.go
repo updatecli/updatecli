@@ -27,7 +27,7 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 	}
 
 	if cmdResult.ExitCode != 0 {
-		logrus.Infof(errorMessage(cmdResult.ExitCode, s.appendSource(source), cmdResult.Stderr, cmdResult.Stdout))
+		logrus.Infof(errorMessage(cmdResult.ExitCode, s.appendSource(source), cmdResult.Stdout, cmdResult.Stderr))
 		return false, nil
 	}
 
