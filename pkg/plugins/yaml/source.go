@@ -2,11 +2,12 @@ package yaml
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/text"
 
-	"github.com/updatecli/updatecli/pkg/plugins/file"
 	"gopkg.in/yaml.v3"
 )
 
@@ -22,14 +23,14 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
-	data, err := file.Read(y.File, workingDir)
+	data, err := text.ReadAll(filepath.Join(y.File, workingDir))
 	if err != nil {
 		return "", err
 	}
 
 	var out yaml.Node
 
-	err = yaml.Unmarshal(data, &out)
+	err = yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
 		return "", fmt.Errorf("cannot unmarshal data: %v", err)
