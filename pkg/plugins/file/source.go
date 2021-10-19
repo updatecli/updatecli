@@ -2,20 +2,22 @@ package file
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
 // Source return a file content
 func (f *File) Source(workingDir string) (string, error) {
 
-	data, err := Read(f.File, workingDir)
+	data, err := text.ReadAll(filepath.Join(f.File, workingDir))
 	if err != nil {
 		return "", err
 	}
 
 	if len(f.Content) == 0 {
-		f.Content = string(data)
+		f.Content = data
 	}
 
 	if len(f.Line.Excludes) > 0 {

@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
 // Target creates or updates a file located locally.
@@ -20,18 +21,18 @@ func (f *File) Target(source string, dryRun bool) (changed bool, err error) {
 
 	// Test if target reference a file with a prefix like https:// or file://
 	// In that case we don't know how to update those files.
-	if HasPrefix(f.File, []string{"https://", "http://", "file://"}) {
+	if text.IsURL(f.File) {
 		return false, fmt.Errorf("Unsupported filename prefix")
 	}
 
 	changed = false
 
-	data, err := Read(f.File, "")
+	data, err := text.ReadAll(f.File)
 	if err != nil {
 		return false, err
 	}
 
-	content := string(data)
+	content := data
 
 	if len(f.Line.Excludes) > 0 {
 		f.Content, err = f.Line.ContainsExcluded(f.Content)
@@ -71,11 +72,11 @@ func (f *File) Target(source string, dryRun bool) (changed bool, err error) {
 
 	changed = true
 	logrus.Infof("\u2714 File content for '%v', updated. \n%s",
-		f.File, Diff(content, f.Content))
+		f.File, text.Diff(content, f.Content))
 
 	if !dryRun {
 
-		err := WriteToFile(f.Content, f.File)
+		err := text.WriteToFile(f.Content, f.File)
 		if err != nil {
 			return false, err
 		}
@@ -94,21 +95,21 @@ func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	// Test if target reference a file with a prefix like https:// or file://
 	// In that case we don't know how to update those files.
-	if HasPrefix(f.File, []string{"https://", "http://", "file://"}) {
+	if text.IsURL(f.File) {
 		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
 	changed = false
 
-	data, err := Read(f.File, scm.GetDirectory())
+	data, err := text.ReadAll(filepath.Join(f.File, scm.GetDirectory()))
 	if err != nil {
 		return changed, files, message, err
 	}
 
-	if strings.Compare(f.Content, string(data)) != 0 {
+	if strings.Compare(f.Content, data) != 0 {
 		changed = true
 		logrus.Infof("\u2714 File content for '%v', updated. \n%s",
-			f.File, Diff(string(data), f.Content))
+			f.File, text.Diff(data, f.Content))
 
 	} else {
 		logrus.Infof("\u2714 Content from file '%v' already up to date", f.File)
@@ -116,7 +117,7 @@ func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	if !dryRun {
 
-		err := WriteToFile(f.Content, filepath.Join(scm.GetDirectory(), f.File))
+		err := text.WriteToFile(f.Content, filepath.Join(scm.GetDirectory(), f.File))
 		if err != nil {
 			return false, files, message, err
 		}

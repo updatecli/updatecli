@@ -2,12 +2,13 @@ package yaml
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/file"
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
 )
 
@@ -18,14 +19,14 @@ func (y *Yaml) Condition(source string) (bool, error) {
 		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
-	data, err := file.Read(y.File, "")
+	data, err := text.ReadAll(y.File)
 	if err != nil {
 		return false, err
 	}
 
 	out := yaml.Node{}
 
-	err = yaml.Unmarshal(data, &out)
+	err = yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
 		return false, fmt.Errorf("cannot unmarshal data: %v", err)
@@ -60,14 +61,14 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
-	data, err := file.Read(y.File, scm.GetDirectory())
+	data, err := text.ReadAll(filepath.Join(y.File, scm.GetDirectory()))
 	if err != nil {
 		return false, err
 	}
 
 	out := yaml.Node{}
 
-	err = yaml.Unmarshal(data, &out)
+	err = yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
 		return false, fmt.Errorf("cannot unmarshal data: %v", err)

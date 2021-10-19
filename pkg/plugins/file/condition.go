@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
 // Condition test if a file content match the content provided via configuration.
@@ -19,12 +20,12 @@ func (f *File) Condition(source string) (bool, error) {
 		f.Content = source
 	}
 
-	data, err := Read(f.File, "")
+	data, err := text.ReadAll(f.File)
 	if err != nil {
 		return false, err
 	}
 
-	content := string(data)
+	content := data
 
 	if len(f.Line.Excludes) > 0 {
 		f.Content, err = f.Line.ContainsExcluded(f.Content)
@@ -63,7 +64,7 @@ func (f *File) Condition(source string) (bool, error) {
 	}
 
 	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s",
-		f.File, Diff(f.Content, content))
+		f.File, text.Diff(f.Content, content))
 
 	return false, nil
 }
@@ -78,18 +79,18 @@ func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 		f.Content = source
 	}
 
-	data, err := Read(f.File, scm.GetDirectory())
+	data, err := text.ReadAll(filepath.Join(f.File, scm.GetDirectory()))
 	if err != nil {
 		return false, err
 	}
 
-	if strings.Compare(f.Content, string(data)) == 0 {
+	if strings.Compare(f.Content, data) == 0 {
 		logrus.Infof("\u2714 Content from file '%v' is correct'", f.File)
 		return true, nil
 	}
 
 	logrus.Infof("\u2717 Wrong content from file '%v'. \n%s",
-		f.File, Diff(f.Content, string(data)))
+		f.File, text.Diff(f.Content, data))
 
 	return false, nil
 }
