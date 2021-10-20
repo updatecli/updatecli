@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/file"
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,20 +24,20 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 
 	// Test if target reference a file with a prefix like https:// or file://
 	// In that case we don't know how to update those files.
-	if file.HasPrefix(y.File, []string{"https://", "http://", "file://"}) {
+	if text.IsURL(y.File) {
 		return false, fmt.Errorf("unsupported filename prefix")
 	}
 
 	changed = false
 
-	data, err := file.Read(y.File, "")
+	data, err := text.ReadAll(y.File)
 	if err != nil {
 		return changed, err
 	}
 
 	out := yaml.Node{}
 
-	err = yaml.Unmarshal(data, &out)
+	err = yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
 		return changed, fmt.Errorf("cannot unmarshal data: %v", err)
@@ -109,7 +109,7 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	// Test if target reference a file with a prefix like https:// or file://
 	// In that case we don't know how to update those files.
-	if file.HasPrefix(y.File, []string{"https://", "http://", "file://"}) {
+	if text.IsURL(y.File) {
 		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
@@ -117,14 +117,14 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	changed = false
 
-	data, err := file.Read(y.File, scm.GetDirectory())
+	data, err := text.ReadAll(filepath.Join(y.File, scm.GetDirectory()))
 	if err != nil {
 		return changed, files, message, err
 	}
 
 	out := yaml.Node{}
 
-	err = yaml.Unmarshal(data, &out)
+	err = yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
 		return changed, files, message, fmt.Errorf("cannot unmarshal data: %v", err)
