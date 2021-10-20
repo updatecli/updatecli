@@ -22,7 +22,7 @@ var (
 			e.Options.ValuesFiles = valuesFiles
 			e.Options.SecretsFiles = secretsFiles
 
-			e.Options.Target.Clean = prepareClean
+			e.Options.Pipeline.Target.Clean = prepareClean
 
 			err := run("prepare")
 			if err != nil {

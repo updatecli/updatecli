@@ -13,22 +13,22 @@ const (
 	// CONDITIONREPORTTEMPLATE defines
 	CONDITIONREPORTTEMPLATE string = `
 {{- "\t" }}Condition:
-{{ range .Conditions }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range $ID, $condition := .Conditions }}
+{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name -}}({{- $condition.Kind -}}){{"\n"}}
 {{- end -}}
 `
 	// TARGETREPORTTEMPLATE ...
 	TARGETREPORTTEMPLATE string = `
 {{- "\t" -}}Target:
-{{ range .Targets }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range $ID, $target := .Targets }}
+{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}]  {{ $target.Name -}}({{- $target.Kind -}}){{"\n"}}
 {{- end }}
 `
 	// SOURCEREPORTTEMPLATE ...
 	SOURCEREPORTTEMPLATE string = `
 {{- "\t"}}Source:
-{{ range .Sources }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range $ID,$source := .Sources }}
+{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}]  {{ $source.Name -}}({{- $source.Kind -}}){{"\n"}}
 {{- end }}
 `
 
@@ -44,20 +44,20 @@ REPORTS:
 {{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
 {{- "\t"}}Source:
-{{ range .Sources }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range $ID, $source := .Sources }}
+{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name -}}({{- $source.Kind -}}){{"\n"}}
 {{- end }}
 
 {{- if .Conditions -}}
 {{- "\t" }}Condition:
-{{ range .Conditions }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range  $ID, $condition := .Conditions }}
+{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name -}}({{- $condition.Kind -}}){{"\n"}}
 {{- end -}}
 {{- end -}}
 
 {{- "\t" -}}Target:
-{{ range .Targets }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range $ID,$target := .Targets }}
+{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID}}] {{ $target.Name -}}({{- $target.Kind -}}){{"\n"}}
 {{- end }}
 {{ end }}
 `
@@ -68,9 +68,9 @@ type Report struct {
 	Name       string
 	Err        string
 	Result     string
-	Sources    []Stage
-	Conditions []Stage
-	Targets    []Stage
+	Sources    map[string]Stage
+	Conditions map[string]Stage
+	Targets    map[string]Stage
 }
 
 // Init init a new report for a specific configuration
@@ -80,9 +80,9 @@ func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 	r.Name = name
 	r.Result = result.FAILURE
 
-	r.Sources = make([]Stage, sourceNbr)
-	r.Conditions = make([]Stage, conditionNbr)
-	r.Targets = make([]Stage, targetNbr)
+	r.Sources = make(map[string]Stage, sourceNbr)
+	r.Conditions = make(map[string]Stage, conditionNbr)
+	r.Targets = make(map[string]Stage, targetNbr)
 }
 
 // String return a report as a string

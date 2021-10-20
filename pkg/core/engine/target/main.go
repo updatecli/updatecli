@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
@@ -24,6 +25,10 @@ type Target struct {
 	ReportBody  string
 	ReportTitle string
 	Changelog   string
+	Commit      bool
+	Push        bool
+	Clean       bool
+	DryRun      bool
 }
 
 // Config defines target parameters
@@ -146,15 +151,17 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 }
 
 // Run applies a specific target configuration
-func (t *Target) Run(source string, o *Options) (changed bool, err error) {
+func (t *Target) Run(source string, o *Options) (err error) {
 
 	var pr scm.PullRequest
+	var changed bool
 
 	if len(t.Config.Transformers) > 0 {
 		source, err = t.Config.Transformers.Apply(source)
 		if err != nil {
+			t.Result = result.FAILURE
 			logrus.Error(err)
-			return false, err
+			return err
 		}
 	}
 
@@ -169,27 +176,35 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 	}
 
 	if o.DryRun {
-
 		logrus.Infof("\n**Dry Run enabled**\n\n")
 	}
 
 	spec, err := Unmarshal(t)
 
 	if err != nil {
-		return false, err
+		t.Result = result.FAILURE
+		return err
 	}
 
 	if err != nil {
-		return false, err
+		t.Result = result.FAILURE
+		return err
 	}
 
 	if len(t.Config.Scm) == 0 {
 
 		changed, err = spec.Target(t.Config.Prefix+source+t.Config.Postfix, o.DryRun)
 		if err != nil {
-			return changed, err
+			t.Result = result.FAILURE
+			return err
 		}
-		return changed, nil
+
+		if changed {
+			t.Result = result.ATTENTION
+		} else {
+			t.Result = result.SUCCESS
+		}
+		return nil
 
 	}
 
@@ -199,56 +214,68 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 
 	_, err = t.Check()
 	if err != nil {
-		return false, err
+		t.Result = result.FAILURE
+		return err
 	}
 
 	s, pr, err = scm.Unmarshal(t.Config.Scm)
 	if err != nil {
-		return false, err
+		t.Result = result.FAILURE
+		return err
 	}
 
-	err = s.Init(source, t.Config.PipelineID)
-	if err != nil {
-		return false, err
+	if err = s.Init(source, t.Config.PipelineID); err != nil {
+		t.Result = result.FAILURE
+		return err
 	}
 
-	err = s.Checkout()
-	if err != nil {
-		return false, err
+	if err = s.Checkout(); err != nil {
+		t.Result = result.FAILURE
+		return err
 	}
 
 	changed, files, message, err = spec.TargetFromSCM(t.Config.Prefix+source+t.Config.Postfix, s, o.DryRun)
 	if err != nil {
-		return changed, err
+		t.Result = result.FAILURE
+		return err
+	}
+
+	if changed {
+		t.Result = result.ATTENTION
+	} else {
+		t.Result = result.SUCCESS
 	}
 
 	if changed && !o.DryRun {
+
 		if message == "" {
-			return changed, fmt.Errorf("Target has no change message")
+			t.Result = result.FAILURE
+			return fmt.Errorf("target has no change message")
 		}
 
 		if len(t.Config.Scm) > 0 {
 
 			if len(files) == 0 {
+				t.Result = result.FAILURE
 				logrus.Info("no changed files to commit")
-				return changed, nil
+				return nil
 			}
 
 			if o.Commit {
-				err := s.Add(files)
-				if err != nil {
-					return changed, err
+				if err := s.Add(files); err != nil {
+					t.Result = result.FAILURE
+					return err
 				}
 
-				err = s.Commit(message)
-				if err != nil {
-					return changed, err
+				if err = s.Commit(message); err != nil {
+					t.Result = result.FAILURE
+					return err
 				}
 			}
 			if o.Push {
-				err := s.Push()
-				if err != nil {
-					return changed, err
+				if err := s.Push(); err != nil {
+					t.Result = result.FAILURE
+					return err
 				}
 			}
 		}
@@ -267,13 +294,14 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		// We try to update the pullrequest even if nothing changed in the current run
 		// so we always update the pull request body if needed.
 		if err != nil {
-			return changed, err
+			t.Result = result.FAILURE
+			return err
 		} else if len(ID) == 0 && err == nil && changed {
 			// Something changed and no open pull request exist so we create it
 			logrus.Infof("Creating Pull Request\n")
 			err = pr.OpenPullRequest()
 			if err != nil {
-				return changed, err
+				return err
 			}
 
 		} else if len(ID) != 0 && err == nil {
@@ -282,7 +310,7 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 			logrus.Infof("Pull Request already exist, updating it\n")
 			err = pr.UpdatePullRequest(ID)
 			if err != nil {
-				return changed, err
+				return err
 			}
 			// No change and no pull request, nothing else to do
 		} else if len(ID) == 0 && err == nil && !changed {
@@ -292,5 +320,5 @@ func (t *Target) Run(source string, o *Options) (changed bool, err error) {
 		}
 	}
 
-	return changed, nil
+	return nil
 }

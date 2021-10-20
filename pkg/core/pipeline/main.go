@@ -2,7 +2,9 @@ package pipeline
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/condition"
 	"github.com/updatecli/updatecli/pkg/core/engine/source"
@@ -21,17 +23,24 @@ type Pipeline struct {
 	Conditions map[string]condition.Condition
 	Targets    map[string]target.Target
 
-	SourcesStageReport    []reports.Stage
-	ConditionsStageReport []reports.Stage
-	TargetsStageReport    []reports.Stage
+	Report reports.Report
+
+	Options Options
 
 	Config *config.Config
 }
 
 // Init initialize an updatecli context based on its configuration
-func (p *Pipeline) Init(config *config.Config) {
+func (p *Pipeline) Init(config *config.Config, options Options) {
 
-	p.Title = config.Title
+	if len(config.Title) > 0 {
+		p.Title = config.Title
+	} else {
+		p.Title = config.Name
+	}
+
+	p.Options = options
+
 	p.Name = config.Name
 	p.ID = config.PipelineID
 
@@ -42,55 +51,94 @@ func (p *Pipeline) Init(config *config.Config) {
 	p.Conditions = make(map[string]condition.Condition, len(config.Conditions))
 	p.Targets = make(map[string]target.Target, len(config.Targets))
 
+	// Init context resource size
+	p.Report.Sources = make(map[string]reports.Stage, len(config.Sources))
+	p.Report.Conditions = make(map[string]reports.Stage, len(config.Conditions))
+	p.Report.Targets = make(map[string]reports.Stage, len(config.Targets))
+	p.Report.Name = config.Name
+
 	// Init sources report
 	for id := range config.Sources {
-		p.SourcesStageReport = append(
-			p.SourcesStageReport,
-			reports.Stage{
-				Name:   config.Sources[id].Name,
-				Kind:   config.Sources[id].Kind,
-				Result: result.FAILURE,
-			})
-
 		// Init Sources[id]
 		p.Sources[id] = source.Source{
 			Config: config.Sources[id],
-			Result: result.FAILURE,
+			Result: result.SKIPPED,
+		}
+
+		p.Report.Sources[id] = reports.Stage{
+			Name:   config.Sources[id].Name,
+			Kind:   config.Sources[id].Kind,
+			Result: result.SKIPPED,
 		}
 
 	}
 
 	// Init conditions report
 	for id := range config.Conditions {
-		p.ConditionsStageReport = append(
-			p.ConditionsStageReport,
-			reports.Stage{
-				Name:   config.Conditions[id].Name,
-				Kind:   config.Conditions[id].Kind,
-				Result: result.FAILURE,
-			})
 
 		p.Conditions[id] = condition.Condition{
 			Config: config.Conditions[id],
-			Result: result.FAILURE,
+			Result: result.SKIPPED,
+		}
+
+		p.Report.Conditions[id] = reports.Stage{
+			Name:   config.Conditions[id].Name,
+			Kind:   config.Conditions[id].Kind,
+			Result: result.SKIPPED,
 		}
 	}
 
 	// Init target report
 	for id := range config.Targets {
-		p.TargetsStageReport = append(
-			p.TargetsStageReport,
-			reports.Stage{
-				Name:   config.Targets[id].Name,
-				Kind:   config.Targets[id].Kind,
-				Result: result.FAILURE,
-			})
 
 		p.Targets[id] = target.Target{
 			Config: config.Targets[id],
-			Result: result.FAILURE,
+			Result: result.SKIPPED,
+		}
+
+		p.Report.Targets[id] = reports.Stage{
+			Name:   config.Targets[id].Name,
+			Kind:   config.Targets[id].Kind,
+			Result: result.SKIPPED,
 		}
 	}
+
+}
+
+// Run execute an single pipeline
+func (p *Pipeline) Run() error {
+
+	logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Title)+4))
+	logrus.Infof("# %s #\n", strings.ToTitle(p.Title))
+	logrus.Infof("%s\n", strings.Repeat("#", len(p.Title)+4))
+
+	err := p.RunSources()
+
+	if err != nil {
+		return fmt.Errorf("sources stage:\t%q\n", err.Error())
+	}
+
+	if len(p.Conditions) > 0 {
+
+		ok, err := p.RunConditions()
+
+		if err != nil {
+			return fmt.Errorf("conditions stage:\t%q\n", err.Error())
+		} else if !ok {
+			logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
+			return nil
+		}
+
+	}
+
+	if len(p.Targets) > 0 {
+		err := p.RunTargets()
+
+		if err != nil {
+			return fmt.Errorf("targets stage:\t%q\n", err.Error())
+		}
+	}
+	return nil
 
 }
 
@@ -114,7 +162,7 @@ func (p *Pipeline) String() string {
 	}
 	result = result + fmt.Sprintf("%q:\n", "Targets")
 	for key, value := range p.Targets {
-		result = result + fmt.Sprintf("\t%q: %q\n", key, value)
+		result = result + fmt.Sprintf("\t%q: %q\n", key, value.ReportTitle)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
 	}
 

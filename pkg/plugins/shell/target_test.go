@@ -112,7 +112,7 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       true,
 			wantCommands:      []string{"change.sh 1.2.3"},
-			wantMessage:       result.CHANGED + " The shell 🐚 command \"change.sh 1.2.3\" ran successfully and reported the following change: \"Changed value from 1.2.2 to 1.2.3.\".",
+			wantMessage:       result.ATTENTION + " The shell 🐚 command \"change.sh 1.2.3\" ran successfully and reported the following change: \"Changed value from 1.2.2 to 1.2.3.\".",
 			wantErr:           false,
 			wantCommandInMock: "change.sh 1.2.3",
 			commandResult: commandResult{

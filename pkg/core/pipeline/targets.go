@@ -5,25 +5,21 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/engine/target"
-	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // RunTargets iterates on every target to update each of them.
-func (p *Pipeline) RunTargets(
-	options *target.Options,
-	pipelineReport *reports.Report) error {
+func (p *Pipeline) RunTargets() error {
 
-	logrus.Infof("\n\n%s:\n", strings.ToTitle("Targets"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Targets")+1))
+	logrus.Infof("\n\n%s\n", strings.ToTitle("Targets"))
+	logrus.Infof("%s\n", strings.Repeat("=", len("Targets")+1))
 
-	sourceReport, err := pipelineReport.String("sources")
+	sourceReport, err := p.Report.String("sources")
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
 	}
-	conditionReport, err := pipelineReport.String("conditions")
+	conditionReport, err := p.Report.String("conditions")
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
@@ -32,7 +28,7 @@ func (p *Pipeline) RunTargets(
 	// Sort targets keys by building a dependency graph
 	sortedTargetsKeys, err := SortedTargetsKeys(&p.Targets)
 	if err != nil {
-		pipelineReport.Result = result.FAILURE
+		p.Report.Result = result.FAILURE
 		return err
 	}
 
@@ -48,16 +44,13 @@ func (p *Pipeline) RunTargets(
 			return err
 		}
 
+		logrus.Infof("\n%s\n", id)
+		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
+
 		target := p.Targets[id]
 		target.Config = p.Config.Targets[id]
 
-		rpt := pipelineReport.Targets[i]
-
-		rpt.Name = target.Config.Name
-		rpt.Result = result.FAILURE
-		rpt.Kind = target.Config.Kind
-
-		targetChanged := false
+		rpt := p.Report.Targets[id]
 
 		// Init target reporting
 		target.Changelog = p.Sources[target.Config.SourceID].Changelog
@@ -74,9 +67,11 @@ func (p *Pipeline) RunTargets(
 			target.Config.Postfix = p.Sources[target.Config.SourceID].Config.Postfix
 		}
 
-		targetChanged, err = target.Run(
+		err = target.Run(
 			p.Sources[target.Config.SourceID].Output,
-			options)
+			&p.Options.Target)
+
+		rpt.Result = target.Result
 
 		if err != nil {
 			logrus.Errorf("Something went wrong in target \"%v\" :\n", id)
@@ -84,37 +79,27 @@ func (p *Pipeline) RunTargets(
 
 			isResultIsFailed = true
 
-			rpt.Result = result.FAILURE
-			target.Result = result.FAILURE
-
 			p.Targets[id] = target
-			pipelineReport.Targets[i] = rpt
+			p.Report.Targets[id] = rpt
 			i++
 			continue
+		}
 
-		} else if targetChanged {
+		if strings.Compare(target.Result, result.ATTENTION) == 0 {
 			isResultIsChanged = true
-
-			target.Result = result.CHANGED
-			rpt.Result = result.CHANGED
-
-		} else {
-			target.Result = result.SUCCESS
-			rpt.Result = result.SUCCESS
 		}
 
 		p.Targets[id] = target
-		pipelineReport.Targets[i] = rpt
+		p.Report.Targets[id] = rpt
 
-		i++
 	}
 
 	if isResultIsFailed {
-		pipelineReport.Result = result.FAILURE
+		p.Report.Result = result.FAILURE
 	} else if isResultIsChanged {
-		pipelineReport.Result = result.CHANGED
+		p.Report.Result = result.ATTENTION
 	} else {
-		pipelineReport.Result = result.SUCCESS
+		p.Report.Result = result.SUCCESS
 	}
 
 	return nil
