@@ -23,7 +23,7 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
 	}
 
-	data, err := text.ReadAll(filepath.Join(y.File, workingDir))
+	data, err := text.ReadAll(filepath.Join(workingDir, y.File))
 	if err != nil {
 		return "", err
 	}

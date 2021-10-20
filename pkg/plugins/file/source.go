@@ -11,7 +11,7 @@ import (
 // Source return a file content
 func (f *File) Source(workingDir string) (string, error) {
 
-	data, err := text.ReadAll(filepath.Join(f.File, workingDir))
+	data, err := text.ReadAll(filepath.Join(workingDir, f.File))
 	if err != nil {
 		return "", err
 	}

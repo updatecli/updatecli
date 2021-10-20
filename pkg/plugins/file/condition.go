@@ -59,7 +59,7 @@ func (f *File) Condition(source string) (bool, error) {
 	}
 
 	if strings.Compare(f.Content, content) == 0 {
-		logrus.Infof("\u2714 Content from file '%v' is correct'", filepath.Join(f.File))
+		logrus.Infof("\u2714 Content from file '%v' is correct'", f.File)
 		return true, nil
 	}
 
@@ -79,7 +79,7 @@ func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 		f.Content = source
 	}
 
-	data, err := text.ReadAll(filepath.Join(f.File, scm.GetDirectory()))
+	data, err := text.ReadAll(filepath.Join(scm.GetDirectory(), f.File))
 	if err != nil {
 		return false, err
 	}
