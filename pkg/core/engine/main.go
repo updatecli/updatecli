@@ -10,7 +10,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
-	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 
@@ -185,73 +184,24 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("+ %s +\n", strings.ToTitle("Run"))
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
 
-	for id, conf := range e.configurations {
+	for id := range e.configurations {
 
-		currentPipeline := pipeline.Pipeline{}
-		currentPipeline.Init(&e.configurations[id])
+		p := pipeline.Pipeline{}
+		p.Init(
+			&e.configurations[id],
+			e.Options.Pipeline)
 
-		currentReport := reports.Report{}
-		currentReport.Init(
-			e.configurations[id].Name,
-			len(e.configurations[id].Sources),
-			len(e.configurations[id].Conditions),
-			len(e.configurations[id].Targets))
+		err := p.Run()
 
-		if len(conf.Title) > 0 {
-			logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Title)+4))
-			logrus.Infof("# %s #\n", strings.ToTitle(conf.Title))
-			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Title)+4))
-
-		} else {
-			logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
-			logrus.Infof("# %s #\n", strings.ToTitle(conf.Name))
-			logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
-		}
-
-		err = currentPipeline.RunSources(&currentReport)
+		e.Reports = append(e.Reports, p.Report)
+		e.Pipelines = append(e.Pipelines, p)
 
 		if err != nil {
-			logrus.Errorf("Error occurred while running sources - %q", err.Error())
-			e.Reports = append(e.Reports, currentReport)
-			e.Pipelines = append(e.Pipelines, currentPipeline)
+			logrus.Printf("Pipeline %q failed\n", p.Title)
+			logrus.Printf("Skipping due to:\n\t%q\n", err)
+			logrus.Println(err)
 			continue
 		}
-
-		if len(conf.Conditions) > 0 {
-
-			ok, err := currentPipeline.RunConditions(&currentReport)
-
-			if err != nil {
-				logrus.Infof("\n%s error happened during condition evaluation\n\n", result.FAILURE)
-				e.Reports = append(e.Reports, currentReport)
-				e.Pipelines = append(e.Pipelines, currentPipeline)
-				continue
-			} else if !ok {
-				logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
-				e.Reports = append(e.Reports, currentReport)
-				e.Pipelines = append(e.Pipelines, currentPipeline)
-				continue
-			}
-
-		}
-
-		if len(conf.Targets) > 0 {
-			err := currentPipeline.RunTargets(&e.Options.Target, &currentReport)
-
-			if err != nil {
-				logrus.Errorf("%s %v\n", result.FAILURE, err)
-				e.Reports = append(e.Reports, currentReport)
-				e.Pipelines = append(e.Pipelines, currentPipeline)
-				continue
-			}
-		}
-
-		if err != nil {
-			logrus.Errorf("\n%s %s \n\n", result.FAILURE, err)
-		}
-
-		e.Reports = append(e.Reports, currentReport)
-		e.Pipelines = append(e.Pipelines, currentPipeline)
 	}
 
 	err = e.Reports.Show()

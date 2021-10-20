@@ -17,25 +17,25 @@ REPORTS:
 
 {{ range . }}
 {{ if  .Err }}
-{{- .Result }} {{ .Name -}}{{"\n"}}
+{{- .Result }} {{ .Name -}}:{{"\n"}}
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
-{{- .Result }} {{ .Name -}}{{"\n"}}
+{{- .Result }} {{ .Name -}}:{{"\n"}}
 {{- "\t"}}Sources:
-{{ range .Sources }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range $ID,$source := .Sources }}
+{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name -}}({{- $source.Kind -}}){{"\n"}}
 {{- end }}
 
 {{- if .Conditions -}}
 {{- "\t" }}Condition:
-{{ range .Conditions }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range $ID, $condition := .Conditions }}
+{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name -}}({{- $condition.Kind -}}){{"\n"}}
 {{- end -}}
 {{- end -}}
 
 {{- "\t" -}}Target:
-{{ range .Targets }}
-{{- "\t" }}{{"\t"}}{{- .Result }}  {{ .Name -}}({{- .Kind -}}){{"\n"}}
+{{ range $ID, $target := .Targets }}
+{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}]  {{ $target.Name -}}({{- $target.Kind -}}){{"\n"}}
 {{- end }}
 {{ end }}
 {{ end }}

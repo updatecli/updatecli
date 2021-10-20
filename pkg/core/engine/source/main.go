@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/aws/ami"
@@ -48,16 +49,14 @@ type Sourcer interface {
 	Source(workingDir string) (string, error)
 }
 
-// Execute execute actions defined by the source configuration
-func (s *Source) Execute() (output string, changelogContent string, err error) {
-
-	logrus.Infof("\n\n%s:\n", strings.ToTitle("Source"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Source")+1))
+// Run execute actions defined by the source configuration
+func (s *Source) Run() (err error) {
 
 	spec, changelog, err := s.Unmarshal()
 
 	if err != nil {
-		return output, changelogContent, err
+		s.Result = result.FAILURE
+		return err
 	}
 
 	workingDir := ""
@@ -67,19 +66,22 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 		SCM, _, err := scm.Unmarshal(s.Config.Scm)
 
 		if err != nil {
-			return output, changelogContent, err
+			s.Result = result.FAILURE
+			return err
 		}
 
 		err = SCM.Init("", workingDir)
 
 		if err != nil {
-			return output, changelogContent, err
+			s.Result = result.FAILURE
+			return err
 		}
 
 		err = SCM.Checkout()
 
 		if err != nil {
-			return output, changelogContent, err
+			s.Result = result.FAILURE
+			return err
 		}
 
 		workingDir = SCM.GetDirectory()
@@ -88,32 +90,37 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 
 		pwd, err := os.Getwd()
 		if err != nil {
-			return output, changelogContent, err
+			s.Result = result.FAILURE
+			return err
 		}
 
 		workingDir = pwd
 	}
 
-	output, err = spec.Source(workingDir)
+	s.Output, err = spec.Source(workingDir)
+	s.Result = result.SUCCESS
+
+	if err != nil {
+		s.Result = result.FAILURE
+		return err
+	}
 
 	// Retrieve changelog using default source output before
 	// modifying its value with the transformer
 	if changelog != nil {
-		changelogContent, err = changelog.Changelog(output)
+		s.Changelog, err = changelog.Changelog(s.Output)
 		if err != nil {
-			return output, changelogContent, err
+			s.Result = result.FAILURE
+			// Changelog information are not important enough to fail a pipeline
+			logrus.Errorln(err)
 		}
-	} else if changelog == nil {
-		changelogContent = "We couldn't identify a way to automatically retrieve changelog information"
-	} else {
-		err = fmt.Errorf("Something weird happened while setting changelog")
-		return output, changelogContent, err
 	}
 
 	if len(s.Config.Transformers) > 0 {
-		output, err = s.Config.Transformers.Apply(output)
+		s.Output, err = s.Config.Transformers.Apply(s.Output)
 		if err != nil {
-			return output, changelogContent, err
+			s.Result = result.FAILURE
+			return err
 		}
 	}
 
@@ -127,27 +134,19 @@ func (s *Source) Execute() (output string, changelogContent string, err error) {
 		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release\n")
 	}
 
-	if err != nil {
-		return output, changelogContent, err
-	}
-
 	// Deprecated in favor of Transformers on 2021/01/3
 	if len(s.Config.Replaces) > 0 {
 		args := s.Config.Replaces.Unmarshal()
 
 		r := strings.NewReplacer(args...)
-		output = (r.Replace(output))
+		s.Output = (r.Replace(s.Output))
 	}
 
-	if len(changelogContent) > 0 {
-		logrus.Infof("\n\n%s:\n", strings.ToTitle("Changelog"))
-		logrus.Infof("%s\n", strings.Repeat("=", len("Changelog")+1))
-
-		logrus.Infof("%s\n", changelogContent)
-
+	if len(s.Output) == 0 {
+		s.Result = result.CHANGED
 	}
 
-	return output, changelogContent, err
+	return err
 }
 
 // Unmarshal decode a source spec and returned its typed content
