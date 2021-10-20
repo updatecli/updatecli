@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/aws/ami"
@@ -46,18 +47,20 @@ type Conditioner interface {
 }
 
 // Run tests if a specific condition is true
-func (c *Condition) Run(source string) (ok bool, err error) {
-	ok = true
+func (c *Condition) Run(source string) (err error) {
+	ok := false
 
 	spec, err := Unmarshal(c)
 	if err != nil {
-		return false, err
+		c.Result = result.FAILURE
+		return err
 	}
 
 	if len(c.Config.Transformers) > 0 {
 		source, err = c.Config.Transformers.Apply(source)
 		if err != nil {
-			return false, err
+			c.Result = result.FAILURE
+			return err
 		}
 	}
 
@@ -75,34 +78,45 @@ func (c *Condition) Run(source string) (ok bool, err error) {
 	if len(c.Config.Scm) > 0 {
 		s, _, err := scm.Unmarshal(c.Config.Scm)
 		if err != nil {
-			return false, err
+			c.Result = result.FAILURE
+			return err
 		}
 
 		err = s.Init(c.Config.Prefix+source+c.Config.Postfix, c.Config.Name)
 		if err != nil {
-			return false, err
+			c.Result = result.FAILURE
+			return err
 		}
 
 		err = s.Checkout()
 		if err != nil {
-			return false, err
+			c.Result = result.FAILURE
+			return err
 		}
 
 		ok, err = spec.ConditionFromSCM(c.Config.Prefix+source+c.Config.Postfix, s)
 		if err != nil {
-			return false, err
+			c.Result = result.FAILURE
+			return err
 		}
 
 	} else if len(c.Config.Scm) == 0 {
 		ok, err = spec.Condition(c.Config.Prefix + source + c.Config.Postfix)
 		if err != nil {
-			return false, err
+			c.Result = result.FAILURE
+			return err
 		}
 	} else {
-		return false, fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Config.Scm)
+		return fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Config.Scm)
 	}
 
-	return ok, nil
+	if ok {
+		c.Result = result.SUCCESS
+	} else {
+		c.Result = result.FAILURE
+	}
+
+	return nil
 
 }
 
