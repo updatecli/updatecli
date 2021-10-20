@@ -29,15 +29,16 @@ type Condition struct {
 
 // Config defines conditions input parameters
 type Config struct {
-	DependsOn    []string `yaml:"depends_on"`
-	Name         string
-	Kind         string
-	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
-	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
-	Transformers transformer.Transformers
-	Spec         interface{}
-	Scm          map[string]interface{}
-	SourceID     string `yaml:"sourceID"`
+	DependsOn          []string `yaml:"depends_on"`
+	Name               string
+	Kind               string
+	Prefix             string // Deprecated in favor of Transformers on 2021/01/3
+	Postfix            string // Deprecated in favor of Transformers on 2021/01/3
+	Transformers       transformer.Transformers
+	Spec               interface{}
+	Scm                map[string]interface{}
+	SourceID           string `yaml:"sourceID"`
+	DisableSourceInput bool   `yaml:"disableSourceInput"`
 }
 
 // Conditioner is an interface that test if condition is met
