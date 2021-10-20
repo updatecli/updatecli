@@ -101,7 +101,7 @@ func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	changed = false
 
-	data, err := text.ReadAll(filepath.Join(f.File, scm.GetDirectory()))
+	data, err := text.ReadAll(filepath.Join(scm.GetDirectory(), f.File))
 	if err != nil {
 		return changed, files, message, err
 	}

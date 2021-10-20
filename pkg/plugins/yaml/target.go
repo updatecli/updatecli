@@ -117,7 +117,7 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 
 	changed = false
 
-	data, err := text.ReadAll(filepath.Join(y.File, scm.GetDirectory()))
+	data, err := text.ReadAll(filepath.Join(scm.GetDirectory(), y.File))
 	if err != nil {
 		return changed, files, message, err
 	}
