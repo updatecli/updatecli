@@ -85,7 +85,7 @@ func (p *Pipeline) RunTargets() error {
 			continue
 		}
 
-		if strings.Compare(target.Result, result.CHANGED) == 0 {
+		if strings.Compare(target.Result, result.ATTENTION) == 0 {
 			isResultIsChanged = true
 		}
 
@@ -97,7 +97,7 @@ func (p *Pipeline) RunTargets() error {
 	if isResultIsFailed {
 		p.Report.Result = result.FAILURE
 	} else if isResultIsChanged {
-		p.Report.Result = result.CHANGED
+		p.Report.Result = result.ATTENTION
 	} else {
 		p.Report.Result = result.SUCCESS
 	}

@@ -80,7 +80,7 @@ func (r *Reports) Summary() (int, int, int, error) {
 			successCounter++
 		} else if report.Result == result.FAILURE {
 			failedCounter++
-		} else if report.Result == result.CHANGED {
+		} else if report.Result == result.ATTENTION {
 			changedCounter++
 		} else {
 			logrus.Infof("Unknown report result '%s'", report.Result)

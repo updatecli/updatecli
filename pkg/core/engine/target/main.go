@@ -200,7 +200,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 
 		if changed {
-			t.Result = result.CHANGED
+			t.Result = result.ATTENTION
 		} else {
 			t.Result = result.SUCCESS
 		}
@@ -241,7 +241,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	if changed {
-		t.Result = result.CHANGED
+		t.Result = result.ATTENTION
 	} else {
 		t.Result = result.SUCCESS
 	}

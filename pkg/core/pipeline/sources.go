@@ -46,7 +46,7 @@ func (p *Pipeline) RunSources() error {
 			logrus.Errorf("%s %v\n", source.Result, err)
 		}
 
-		if strings.Compare(source.Result, result.CHANGED) == 0 {
+		if strings.Compare(source.Result, result.ATTENTION) == 0 {
 			logrus.Infof("\n%s empty source returned", source.Result)
 		}
 

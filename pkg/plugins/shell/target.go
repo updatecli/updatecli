@@ -50,7 +50,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (changed bool, co
 		return false, commands, message, nil
 	}
 
-	message = fmt.Sprintf("%v The shell 🐚 command %q ran successfully and reported the following change: %q.", result.CHANGED, s.appendSource(source), cmdResult.Stdout)
+	message = fmt.Sprintf("%v The shell 🐚 command %q ran successfully and reported the following change: %q.", result.ATTENTION, s.appendSource(source), cmdResult.Stdout)
 	logrus.Infof(message)
 
 	return true, commands, message, nil

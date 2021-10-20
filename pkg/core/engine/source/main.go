@@ -143,7 +143,7 @@ func (s *Source) Run() (err error) {
 	}
 
 	if len(s.Output) == 0 {
-		s.Result = result.CHANGED
+		s.Result = result.ATTENTION
 	}
 
 	return err
