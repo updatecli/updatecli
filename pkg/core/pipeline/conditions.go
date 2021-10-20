@@ -34,7 +34,7 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		rpt := p.Report.Conditions[id]
 
 		logrus.Infof("\n%s\n", id)
-		logrus.Infof("%s\n", strings.Repeat("-", len(id)+1))
+		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
 		err := condition.Run(
 			p.Sources[condition.Config.SourceID].Config.Prefix +

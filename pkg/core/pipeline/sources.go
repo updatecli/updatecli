@@ -31,7 +31,7 @@ func (p *Pipeline) RunSources() error {
 		rpt := p.Report.Sources[id]
 
 		logrus.Infof("\n%s\n", id)
-		logrus.Infof("%s\n", strings.Repeat("-", len(id)+1))
+		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
 		err = source.Run()
 		rpt.Result = source.Result

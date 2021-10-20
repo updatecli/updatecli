@@ -45,7 +45,7 @@ func (p *Pipeline) RunTargets() error {
 		}
 
 		logrus.Infof("\n%s\n", id)
-		logrus.Infof("%s\n", strings.Repeat("-", len(id)+1))
+		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
 		target := p.Targets[id]
 		target.Config = p.Config.Targets[id]
