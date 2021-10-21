@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"os"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -16,8 +15,6 @@ var (
 		Use:   "diff",
 		Short: "diff shows changes",
 		Run: func(cmd *cobra.Command, args []string) {
-			logrus.Infof("\n%s\n", strings.ToTitle("Diff"))
-
 			e.Options.File = cfgFile
 			e.Options.ValuesFiles = valuesFiles
 			e.Options.SecretsFiles = secretsFiles

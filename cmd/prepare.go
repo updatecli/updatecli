@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"os"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -16,8 +15,6 @@ var (
 		Use:   "prepare",
 		Short: "prepare run tasks needed for a run like `git clone`",
 		Run: func(cmd *cobra.Command, args []string) {
-			logrus.Infof("\n%s\n", strings.ToTitle("Prepare"))
-
 			e.Options.File = cfgFile
 			e.Options.ValuesFiles = valuesFiles
 			e.Options.SecretsFiles = secretsFiles

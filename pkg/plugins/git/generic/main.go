@@ -20,8 +20,10 @@ import (
 // Add run `git add`.
 func Add(files []string, workingDir string) error {
 
+	logrus.Debugf("stage: git-add\n\n")
+
 	for _, file := range files {
-		logrus.Infof("Adding file: %s", file)
+		logrus.Debugf("adding file: %s\n", file)
 
 		r, err := git.PlainOpen(workingDir)
 		if err != nil {
@@ -44,7 +46,9 @@ func Add(files []string, workingDir string) error {
 // Checkout create and then uses a temporary git branch.
 func Checkout(branch, remoteBranch, workingDir string) error {
 
-	logrus.Debugf("Checkout branch '%v', based on '%v' from directory '%v'",
+	logrus.Debugf("stage: git-checkout\n\n")
+
+	logrus.Debugf("checkout branch %q, based on %q to directory %q",
 		remoteBranch,
 		branch,
 		workingDir)
@@ -86,7 +90,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 	if err == plumbing.ErrReferenceNotFound {
 		// Checkout source branch without creating it yet
 
-		logrus.Debugf("Branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
+		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
 
 		err = w.Checkout(&git.CheckoutOptions{
 			Branch: plumbing.NewBranchReferenceName(branch),
@@ -96,7 +100,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		})
 
 		if err != nil {
-			logrus.Debugf("Branch: '%v' - \n\t%v", branch, err)
+			logrus.Debugf("branch: '%v' - \n\t%v", branch, err)
 			return err
 		}
 
@@ -108,7 +112,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 			Force:  true,
 		})
 
-		logrus.Debugf("Creating branch '%v'", remoteBranch)
+		logrus.Debugf("branch %q successfully created", remoteBranch)
 
 		if err != nil {
 			return err
@@ -136,7 +140,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		if !exists(
 			plumbing.NewBranchReferenceName(remoteBranch),
 			refs) {
-			logrus.Debugf("No remote name '%v'", remoteBranch)
+			logrus.Debugf("No remote name %q", remoteBranch)
 			return nil
 		}
 
@@ -187,7 +191,7 @@ func exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bool {
 // Commit run `git commit`.
 func Commit(user, email, message, workingDir string) error {
 
-	logrus.Infof("Commit changes")
+	logrus.Debugf("stage: git-commit\n\n")
 
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
@@ -203,7 +207,7 @@ func Commit(user, email, message, workingDir string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("%s", status)
+	logrus.Debugf("status: %q\n", status)
 
 	commit, err := w.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
@@ -219,7 +223,7 @@ func Commit(user, email, message, workingDir string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("%s", obj)
+	logrus.Debugf("git commit object:\n%s\n", obj)
 
 	return nil
 
@@ -227,6 +231,8 @@ func Commit(user, email, message, workingDir string) error {
 
 // Clone run `git clone`.
 func Clone(username, password, URL, workingDir string) error {
+
+	logrus.Debugf("stage: git-clone\n\n")
 
 	var repo *git.Repository
 
@@ -237,7 +243,7 @@ func Clone(username, password, URL, workingDir string) error {
 
 	var b bytes.Buffer
 
-	b.WriteString(fmt.Sprintf("Cloning git repository: %s in %s\n", URL, workingDir))
+	b.WriteString(fmt.Sprintf("cloning git repository: %s in %s\n", URL, workingDir))
 	repo, err := git.PlainClone(workingDir, false, &git.CloneOptions{
 		URL:               URL,
 		Auth:              &auth,
@@ -270,7 +276,7 @@ func Clone(username, password, URL, workingDir string) error {
 			Progress: &b,
 		})
 
-		logrus.Infof(b.String())
+		logrus.Debugln(b.String())
 
 		b.Reset()
 
@@ -292,7 +298,7 @@ func Clone(username, password, URL, workingDir string) error {
 		return err
 	}
 
-	b.WriteString("Fetching remote branches")
+	b.WriteString("fetching remote branches")
 	for _, r := range remotes {
 
 		err := r.Fetch(&git.FetchOptions{
@@ -302,7 +308,7 @@ func Clone(username, password, URL, workingDir string) error {
 			Force:    true,
 		})
 
-		logrus.Infof(b.String())
+		logrus.Debugln(b.String())
 
 		b.Reset()
 		if err != nil &&
@@ -318,12 +324,12 @@ func Clone(username, password, URL, workingDir string) error {
 // Push run `git push`.
 func Push(username string, password string, workingDir string, force bool) error {
 
+	logrus.Debugf("stage: git-push\n\n")
+
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything excepted an empty string
 		Password: password,
 	}
-
-	logrus.Infof("Push changes")
 
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
@@ -367,13 +373,11 @@ func Push(username string, password string, workingDir string, force bool) error
 		RefSpecs: []config.RefSpec{refspec},
 	})
 
-	fmt.Println(b.String())
+	logrus.Debugln(b.String())
 
 	if err != nil {
 		return err
 	}
-
-	logrus.Infof("")
 
 	return nil
 }
@@ -425,7 +429,7 @@ func Tags(workingDir string) (tags []string, err error) {
 		return tags, err
 	}
 
-	logrus.Debugf("Got tags: %v", tags)
+	logrus.Debugf("got tags: %v", tags)
 
 	if len(tags) == 0 {
 		err = errors.New("no tag found")
