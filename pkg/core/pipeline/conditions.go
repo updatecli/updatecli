@@ -26,6 +26,7 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		err = p.Config.Update(p)
 		if err != nil {
 			globalResult = false
+			return globalResult, err
 		}
 
 		condition := p.Conditions[id]
