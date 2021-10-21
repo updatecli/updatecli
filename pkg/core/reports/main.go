@@ -2,7 +2,6 @@ package reports
 
 import (
 	"bytes"
-	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -71,15 +70,21 @@ func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skip
 	reports := *r
 
 	for _, report := range reports {
-		if strings.Compare(report.Result, result.SUCCESS) == 0 {
+		switch report.Result {
+
+		case result.SUCCESS:
 			successCounter++
-		} else if strings.Compare(report.Result, result.FAILURE) == 0 {
+
+		case result.FAILURE:
 			failedCounter++
-		} else if strings.Compare(report.Result, result.ATTENTION) == 0 {
-			changedCounter++
-		} else if strings.Compare(report.Result, result.SKIPPED) == 0 {
+
+		case result.SKIPPED:
 			skippedCounter++
-		} else {
+
+		case result.ATTENTION:
+			changedCounter++
+
+		default:
 			logrus.Infof("Unknown report result %q with named %q.", report.Result, report.Name)
 		}
 	}
