@@ -38,7 +38,7 @@ type Config struct {
 	Spec               interface{}
 	Scm                map[string]interface{}
 	SourceID           string `yaml:"sourceID"`
-	DisableSourceInput bool   `yaml:"disableSourceInput"`
+	DisableSourceInput bool
 }
 
 // Conditioner is an interface that test if condition is met
