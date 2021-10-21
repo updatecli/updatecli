@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"os"
 	"sync"
 
@@ -210,19 +211,23 @@ func (e *Engine) Run() (err error) {
 	if err != nil {
 		return err
 	}
-	successCounter, changedCounter, failedCounter, err := e.Reports.Summary()
-	if err != nil {
-		return err
-	}
+	totalSuccessPipeline, totalChangedAppliedPipeline, totalFailedPipeline, totalSkippedPipeline := e.Reports.Summary()
+
+	totalPipeline := totalSuccessPipeline + totalChangedAppliedPipeline + totalFailedPipeline + totalSkippedPipeline
 
 	logrus.Infof("Run Summary")
-	logrus.Infof("===========")
-	logrus.Infof("%d job run", successCounter+changedCounter+failedCounter)
-	logrus.Infof("%d job succeed", successCounter)
-	logrus.Infof("%d job failed", failedCounter)
-	logrus.Infof("%d job applied changes", changedCounter)
+	logrus.Infof("===========\n")
+	logrus.Infof("Pipeline(s) run:")
+	logrus.Infof("  * Changed:\t%d", totalChangedAppliedPipeline)
+	logrus.Infof("  * Failed:\t%d", totalFailedPipeline)
+	logrus.Infof("  * Skipped:\t%d", totalSkippedPipeline)
+	logrus.Infof("  * Succeeded:\t%d", totalSuccessPipeline)
+	logrus.Infof("  * Total:\t%d", totalPipeline)
 
-	logrus.Infof("")
+	// Exit on error if at least one pipeline failed
+	if totalFailedPipeline > 0 {
+		return fmt.Errorf("%d over %d pipeline failed", totalFailedPipeline, totalPipeline)
+	}
 
 	return err
 }
