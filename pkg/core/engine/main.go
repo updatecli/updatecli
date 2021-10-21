@@ -219,8 +219,8 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("  * Changed:\t%d", totalChangedAppliedPipeline)
 	logrus.Infof("  * Failed:\t%d", totalFailedPipeline)
 	logrus.Infof("  * Skipped:\t%d", totalSkippedPipeline)
-	logrus.Infof("  * Succeed:\t%d", totalSuccessPipeline)
-	logrus.Infof("  * Total:\t%d", totalPipeline)
+	logrus.Infof("  * Succeeded:\t%d", totalSuccessPipeline)
+	logrus.Infof("  * Total:\t\t%d", totalPipeline)
 
 	// Exit on error if at least one pipeline failed
 	if totalFailedPipeline > 0 {
