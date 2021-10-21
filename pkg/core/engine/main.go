@@ -90,7 +90,7 @@ func (e *Engine) InitSCM() (err error) {
 			}
 		}
 	}
-	logrus.Infof("Repositories retrieved: %d\n", len(hashes))
+	logrus.Infof("Repository retrieved: %d\n", len(hashes))
 
 	return err
 }
