@@ -56,6 +56,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	p.Report.Conditions = make(map[string]reports.Stage, len(config.Conditions))
 	p.Report.Targets = make(map[string]reports.Stage, len(config.Targets))
 	p.Report.Name = config.Name
+	p.Report.Result = result.SKIPPED
 
 	// Init sources report
 	for id := range config.Sources {
@@ -115,6 +116,7 @@ func (p *Pipeline) Run() error {
 	err := p.RunSources()
 
 	if err != nil {
+		p.Report.Result = result.FAILURE
 		return fmt.Errorf("sources stage:\t%q\n", err.Error())
 	}
 
@@ -123,6 +125,7 @@ func (p *Pipeline) Run() error {
 		ok, err := p.RunConditions()
 
 		if err != nil {
+			p.Report.Result = result.FAILURE
 			return fmt.Errorf("conditions stage:\t%q\n", err.Error())
 		} else if !ok {
 			logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
@@ -135,9 +138,11 @@ func (p *Pipeline) Run() error {
 		err := p.RunTargets()
 
 		if err != nil {
+			p.Report.Result = result.FAILURE
 			return fmt.Errorf("targets stage:\t%q\n", err.Error())
 		}
 	}
+	p.Report.Result = result.SUCCESS
 	return nil
 
 }

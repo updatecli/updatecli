@@ -2,7 +2,7 @@ package reports
 
 import (
 	"bytes"
-	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -66,33 +66,23 @@ func (r *Reports) Show() error {
 }
 
 // Summary display a summary of
-func (r *Reports) Summary() (int, int, int, error) {
-	counter := 0
-	successCounter := 0
-	changedCounter := 0
-	failedCounter := 0
+func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skippedCounter int) {
 
 	reports := *r
 
 	for _, report := range reports {
-		counter++
-		if report.Result == result.SUCCESS {
+		if strings.Compare(report.Result, result.SUCCESS) == 0 {
 			successCounter++
-		} else if report.Result == result.FAILURE {
+		} else if strings.Compare(report.Result, result.FAILURE) == 0 {
 			failedCounter++
-		} else if report.Result == result.ATTENTION {
+		} else if strings.Compare(report.Result, result.ATTENTION) == 0 {
 			changedCounter++
+		} else if strings.Compare(report.Result, result.SKIPPED) == 0 {
+			skippedCounter++
 		} else {
-			logrus.Infof("Unknown report result '%s'", report.Result)
+			logrus.Infof("Unknown report result %q with named %q.", report.Result, report.Name)
 		}
 	}
 
-	if failedCounter > 0 {
-		return successCounter,
-			changedCounter,
-			failedCounter,
-			fmt.Errorf("%d/%d job(s) failed", failedCounter, counter)
-	}
-
-	return successCounter, changedCounter, failedCounter, nil
+	return successCounter, changedCounter, failedCounter, skippedCounter
 }
