@@ -1,8 +1,7 @@
 package shell
 
 type ShellSpec struct {
-	Command        string
-	SuppressSource bool
+	Command string
 }
 
 type Shell struct {
@@ -25,7 +24,7 @@ func New(spec ShellSpec) (*Shell, error) {
 // appendSource appends the source as last argument if not empty.
 func (s *Shell) appendSource(source string) string {
 	// Append the source as last argument if not empty
-	if source != "" && !s.spec.SuppressSource {
+	if source != "" {
 		return s.spec.Command + " " + source
 	}
 
