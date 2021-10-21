@@ -144,13 +144,17 @@ func (config *Config) Validate() error {
 	}
 
 	for id, c := range config.Conditions {
-		// Try to guess SourceID
-		if len(c.SourceID) == 0 && len(config.Sources) > 1 {
-			logrus.Errorf("{empty 'sourceID' for condition '%s'", id)
-			return ErrBadConfig
-		} else if len(c.SourceID) == 0 && len(config.Sources) == 1 {
-			for id := range config.Sources {
-				c.SourceID = id
+
+		// Only check/guess the sourceID if the user did not disable it (default is enabled)
+		if !c.DisableSourceInput {
+			// Try to guess SourceID
+			if len(c.SourceID) == 0 && len(config.Sources) > 1 {
+				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
+				return ErrBadConfig
+			} else if len(c.SourceID) == 0 && len(config.Sources) == 1 {
+				for id := range config.Sources {
+					c.SourceID = id
+				}
 			}
 		}
 
