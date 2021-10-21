@@ -90,6 +90,7 @@ func (e *Engine) InitSCM() (err error) {
 			}
 		}
 	}
+	logrus.Infof("Repository retrieved: %d\n", len(hashes))
 
 	return err
 }
@@ -131,6 +132,7 @@ func Clone(
 		<-channel
 
 	}
+
 	return nil
 }
 
@@ -180,9 +182,9 @@ func (e *Engine) ReadConfigurations() error {
 
 // Run run the full process one yaml file.
 func (e *Engine) Run() (err error) {
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Run")+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle("Run"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Run")+4))
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Pipeline")+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle("Pipeline"))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Pipeline")+4))
 
 	for id := range e.configurations {
 
