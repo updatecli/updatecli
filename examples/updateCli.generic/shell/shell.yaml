@@ -4,11 +4,22 @@ sources:
     kind: shell
     spec:
       command: "./examples/updateCli.generic/shell/source.sh"
-conditions:
-  default:
+  sayHello:
     kind: shell
     spec:
+      command: echo Hello
+conditions:
+  noSource:
+    kind: shell
+    disableSourceInput: true
+    spec:
       command: "./examples/updateCli.generic/shell/condition.sh"
+  withSource:
+    kind: shell
+    sourceID: default
+    spec:
+      command: echo
+
 targets:
   default:
     name: setGrepVersion
