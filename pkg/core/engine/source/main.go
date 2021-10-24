@@ -20,6 +20,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
+	"github.com/updatecli/updatecli/pkg/plugins/xml"
 	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
@@ -244,6 +245,20 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		}
 
 		sourcer = &d
+
+	case "xml":
+		xmlSpec := xml.Spec{}
+		err := mapstructure.Decode(s.Config.Spec, &xmlSpec)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		sourcer, err = xml.New(&xmlSpec)
+
+		if err != nil {
+			return nil, nil, err
+		}
 
 	case "yaml":
 		y := yml.Yaml{}

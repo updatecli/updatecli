@@ -17,6 +17,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
+	"github.com/updatecli/updatecli/pkg/plugins/xml"
 	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
@@ -225,6 +226,20 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		}
 
 		conditioner, err = shell.New(shellResourceSpec)
+		if err != nil {
+			return nil, err
+		}
+
+	case "xml":
+		xmlSpec := xml.Spec{}
+		err := mapstructure.Decode(s.Config.Spec, &xmlSpec)
+
+		if err != nil {
+			return nil, err
+		}
+
+		conditioner, err = xml.New(&xmlSpec)
+
 		if err != nil {
 			return nil, err
 		}
