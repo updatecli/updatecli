@@ -232,7 +232,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 
 	case "xml":
 		xmlSpec := xml.Spec{}
-		err := mapstructure.Decode(s.Config.Spec, &xmlSpec)
+		err := mapstructure.Decode(condition.Config.Spec, &xmlSpec)
 
 		if err != nil {
 			return nil, err
