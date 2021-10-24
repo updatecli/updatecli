@@ -13,15 +13,19 @@ var (
 	sourceDataset = SourceDataset{
 		{
 			data: XML{
-				File: "testdata/data_0.xml",
-				Key:  ".name.firstname",
+				spec: Spec{
+					File: "testdata/data_0.xml",
+					Key:  ".name.firstname",
+				},
 			},
 			expectedResult: "John",
 		},
 		{
 			data: XML{
-				File: "testdata/data_1.xml",
-				Key:  ".breakfast_menu.food.[0].name",
+				spec: Spec{
+					File: "testdata/data_1.xml",
+					Key:  ".breakfast_menu.food.[0].name",
+				},
 			},
 			expectedResult: "Belgian Waffles",
 		},

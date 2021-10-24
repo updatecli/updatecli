@@ -17,24 +17,30 @@ var (
 	conditionDataset = ConditionDataset{
 		{
 			data: XML{
-				File: "testdata/data_0.xml",
-				Key:  ".name.firstname",
+				spec: Spec{
+					File: "testdata/data_0.xml",
+					Key:  ".name.firstname",
+				},
 			},
 			expectedResult: false,
 		},
 		{
 			data: XML{
-				File:  "testdata/data_0.xml",
-				Key:   ".name.firstname",
-				Value: "John",
+				spec: Spec{
+					File:  "testdata/data_0.xml",
+					Key:   ".name.firstname",
+					Value: "John",
+				},
 			},
 			expectedResult: true,
 		},
 		{
 			data: XML{
-				File:  "testdata/data_0.xml",
-				Key:   ".name.firstname",
-				Value: "wrongValue",
+				spec: Spec{
+					File:  "testdata/data_0.xml",
+					Key:   ".name.firstname",
+					Value: "wrongValue",
+				},
 			},
 			expectedResult: false,
 		},
@@ -48,24 +54,30 @@ var (
 		//},
 		{
 			data: XML{
-				File: "testdata/data_1.xml",
-				Key:  ".breakfast_menu.food.[0].name",
+				spec: Spec{
+					File: "testdata/data_1.xml",
+					Key:  ".breakfast_menu.food.[0].name",
+				},
 			},
 			expectedResult: false,
 		},
 		{
 			data: XML{
-				File:  "testdata/data_1.xml",
-				Key:   ".breakfast_menu.food.[0].name",
-				Value: "Belgian Waffles",
+				spec: Spec{
+					File:  "testdata/data_1.xml",
+					Key:   ".breakfast_menu.food.[0].name",
+					Value: "Belgian Waffles",
+				},
 			},
 			expectedResult: true,
 		},
 		{
 			data: XML{
-				File:  "testdata/data_1.xml",
-				Key:   ".breakfast_menu.food.[0].name",
-				Value: "wrongValue",
+				spec: Spec{
+					File:  "testdata/data_1.xml",
+					Key:   ".breakfast_menu.food.[0].name",
+					Value: "wrongValue",
+				},
 			},
 			expectedResult: false,
 		},

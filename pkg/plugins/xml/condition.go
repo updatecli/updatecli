@@ -12,13 +12,13 @@ import (
 
 func (x *XML) Condition(source string) (bool, error) {
 
-	strData, err := text.ReadAll(x.File)
+	strData, err := text.ReadAll(x.spec.File)
 	if err != nil {
 		return false, err
 	}
 
-	if len(x.Value) == 0 {
-		x.Value = source
+	if len(x.spec.Value) == 0 {
+		x.spec.Value = source
 	}
 
 	data, err := mxj.NewMapXml([]byte(strData))
@@ -33,36 +33,36 @@ func (x *XML) Condition(source string) (bool, error) {
 		return false, ErrDaselFailedParsingXMLByteFormat
 	}
 
-	result, err := rootNode.Query(x.Key)
+	result, err := rootNode.Query(x.spec.Key)
 	if err != nil {
 		return false, err
 	}
 
-	if result.String() == x.Value {
+	if result.String() == x.spec.Value {
 		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'",
-			x.Key,
-			x.File,
-			x.Value)
+			x.spec.Key,
+			x.spec.File,
+			x.spec.Value)
 		return true, nil
 	}
 
 	logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
-		x.Key,
-		x.File,
+		x.spec.Key,
+		x.spec.File,
 		result.String(),
-		x.Value)
+		x.spec.Value)
 
 	return false, err
 }
 
 func (x *XML) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
-	strData, err := text.ReadAll(filepath.Join(scm.GetDirectory(), x.File))
+	strData, err := text.ReadAll(filepath.Join(scm.GetDirectory(), x.spec.File))
 	if err != nil {
 		return false, err
 	}
 
-	if len(x.Value) == 0 {
-		x.Value = source
+	if len(x.spec.Value) == 0 {
+		x.spec.Value = source
 	}
 
 	data, err := mxj.NewMapXml([]byte(strData))
@@ -77,23 +77,23 @@ func (x *XML) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 		return false, ErrDaselFailedParsingXMLByteFormat
 	}
 
-	result, err := rootNode.Query(x.Key)
+	result, err := rootNode.Query(x.spec.Key)
 	if err != nil {
 		return false, err
 	}
 
-	if result.String() == x.Value {
+	if result.String() == x.spec.Value {
 		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'",
-			x.Key,
-			x.File,
-			x.Value)
+			x.spec.Key,
+			x.spec.File,
+			x.spec.Value)
 		return true, nil
 	} else {
 		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
-			x.Key,
-			x.File,
+			x.spec.Key,
+			x.spec.File,
 			result.String(),
-			x.Value)
+			x.spec.Value)
 	}
 
 	return true, err

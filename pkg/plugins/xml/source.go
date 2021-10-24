@@ -10,7 +10,7 @@ import (
 
 func (x *XML) Source(workingDir string) (string, error) {
 
-	strData, err := text.ReadAll(filepath.Join(workingDir, x.File))
+	strData, err := text.ReadAll(filepath.Join(workingDir, x.spec.File))
 	if err != nil {
 		return "", err
 	}
@@ -27,7 +27,7 @@ func (x *XML) Source(workingDir string) (string, error) {
 		return "", ErrDaselFailedParsingXMLByteFormat
 	}
 
-	result, err := rootNode.Query(x.Key)
+	result, err := rootNode.Query(x.spec.Key)
 	if err != nil {
 		return "", err
 	}
