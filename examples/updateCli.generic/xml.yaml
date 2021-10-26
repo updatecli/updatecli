@@ -1,0 +1,56 @@
+title: Test xml configuration
+sources:
+  conventional-commits-plugin:
+    name: "Get jenkins version specified in conventional commit pom.xml"
+    kind: xml
+    spec:
+      file: pom.xml
+      key: 'project.properties.jenkins\.version'
+    scm:
+      github:
+        user: olblak
+        email: updatecli@olblak.com
+        owner: olblak
+        repository: conventional-commits-plugin
+        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        branch: "main"
+
+  jenkinsWeekly:
+    name: Get latest Jenkins weekly version
+    kind: jenkins
+conditions:
+  conventional-commits-plugin-pom:
+    name: "Test jenkins version specified in conventional commit pom.xml"
+    kind: xml
+    sourceID: jenkinsWeekly
+    spec:
+      file: pom.xml
+      key: 'project.properties.jenkins\.version'
+    scm:
+      github:
+        user: olblak
+        email: updatecli@olblak.com
+        owner: olblak
+        repository: conventional-commits-plugin
+        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        branch: "main"
+
+targets:
+  conventional-commits-plugin-pom:
+    name: "Update jenkins version specified in conventional commit pom.xml"
+    kind: xml
+    sourceID: jenkinsWeekly
+    spec:
+      file: pom.xml
+      key: 'project.properties.jenkins\.version'
+    scm:
+      github:
+        user: olblak
+        email: updatecli@olblak.com
+        owner: olblak
+        repository: conventional-commits-plugin
+        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        branch: "main"
