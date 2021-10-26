@@ -15,6 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
+	"github.com/updatecli/updatecli/pkg/plugins/xml"
 	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
@@ -140,6 +141,20 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 		targeter, err = shell.New(shellResourceSpec)
+		if err != nil {
+			return nil, err
+		}
+
+	case "xml":
+		xmlSpec := xml.Spec{}
+		err := mapstructure.Decode(target.Config.Spec, &xmlSpec)
+
+		if err != nil {
+			return nil, err
+		}
+
+		targeter, err = xml.New(&xmlSpec)
+
 		if err != nil {
 			return nil, err
 		}
