@@ -199,7 +199,11 @@ func (x *XML) TargetFromSCM(source string, repository scm.Scm, dryRun bool) (cha
 
 		defer newFile.Close()
 
-		newFile.Write(xmlVal)
+		_, err = newFile.Write(xmlVal)
+
+		if err != nil {
+			return changed, files, message, fmt.Errorf("unable to write to file %s: %w", targetFile, err)
+		}
 
 	}
 
