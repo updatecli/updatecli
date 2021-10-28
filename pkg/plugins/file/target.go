@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/sirupsen/logrus"
 
@@ -38,15 +39,8 @@ func (f *File) writeTargetFile(source string, dryRun bool) (bool, []string, stri
 		return false, files, message, validationError
 	}
 
-	//// Case 1: The attribute 'spec.line' is specified, we only want to change a specific line of the target file
+	// Case 1: The attribute 'spec.line' is specified, we only want to change a specific line of the target file
 	if f.spec.Line > 0 {
-		// Validate that users did not enable the "spec.forcecreate" while a "spec.line" is specified (makes no sense to only update a line of a non-existing file)
-		if f.spec.ForceCreate {
-			validationError := fmt.Errorf("Validation error in target of type 'file': the attributes `spec.forcecreate` and `spec.line` are mutually exclusive")
-			logrus.Errorf(validationError.Error())
-			return false, files, message, validationError
-		}
-
 		// Check that the specified exists or exit with error
 		if !f.contentRetriever.FileExists(f.spec.File) {
 			return false, files, message, os.ErrNotExist
@@ -106,6 +100,24 @@ func (f *File) writeTargetFile(source string, dryRun bool) (bool, []string, stri
 	newContent := source
 	if len(f.spec.Content) > 0 {
 		newContent = f.spec.Content
+	}
+	if len(f.spec.MatchPattern) > 0 {
+		// use source (or spec.content) as replace pattern if no spec.replacepattern is specified
+		replacePattern := newContent
+		if len(f.spec.ReplacePattern) > 0 {
+			replacePattern = f.spec.ReplacePattern
+		}
+
+		reg, err := regexp.Compile(f.spec.MatchPattern)
+		if err != nil {
+			logrus.Errorf("Validation error in target of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
+			return false, files, message, err
+		}
+		// Check if there is any match in the file
+		if !reg.MatchString(f.CurrentContent) {
+			return false, files, message, fmt.Errorf("No line matched in the file %q for the pattern %q", f.spec.File, f.spec.MatchPattern)
+		}
+		newContent = reg.ReplaceAllString(f.CurrentContent, replacePattern)
 	}
 
 	// Nothing to do if the line is the same as the input source value

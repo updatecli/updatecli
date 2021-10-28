@@ -68,6 +68,16 @@ func TestFile_Condition(t *testing.T) {
 			wantErr:          true,
 		},
 		{
+			name: "Validation Failure with specified ReplacePattern",
+			spec: FileSpec{
+				MatchPattern:   "maven_(.*)",
+				ReplacePattern: "gradle_$1",
+				File:           "/bar.txt",
+			},
+			inputSourceValue: "1.2.3",
+			wantErr:          true,
+		},
+		{
 			name: "Passing Case with no input source and only specified content",
 			spec: FileSpec{
 				Content: "Hello World",
@@ -183,6 +193,36 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 			wantMockState: text.MockTextRetriever{
 				Location: "/tmp/foo.txt",
 				Line:     3,
+			},
+		},
+		{
+			name: "Passing Case with matchPattern",
+			spec: FileSpec{
+				File:         "foo.txt",
+				MatchPattern: "current_version.*",
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			mockReturnedContent: "current_version=1.2.3",
+			wantResult:          true,
+			wantMockState: text.MockTextRetriever{
+				Location: "/tmp/foo.txt",
+			},
+		},
+		{
+			name: "Failing Case with matchPattern",
+			spec: FileSpec{
+				File:         "foo.txt",
+				MatchPattern: "notMatching.*",
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			mockReturnedContent: "current_version=1.2.3",
+			wantResult:          false,
+			wantMockState: text.MockTextRetriever{
+				Location: "/tmp/foo.txt",
 			},
 		},
 	}

@@ -3,6 +3,7 @@ package file
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 
 	"github.com/sirupsen/logrus"
 
@@ -26,7 +27,7 @@ func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 }
 
 func (f *File) checkFileCondition(source string) (bool, error) {
-	/////// Start by retrieving the specified file's content
+	// Start by retrieving the specified file's content
 	if err := f.Read(); err != nil {
 		return false, err
 	}
@@ -34,6 +35,23 @@ func (f *File) checkFileCondition(source string) (bool, error) {
 	logMessage := fmt.Sprintf("Content of the file %q", f.spec.File)
 	if f.spec.Line > 0 {
 		logMessage = fmt.Sprintf("Content of the file %q (line %d)", f.spec.File, f.spec.Line)
+	}
+
+	if len(f.spec.ReplacePattern) > 0 {
+		validationError := fmt.Errorf("Validation error in condition of type 'file': the attribute `spec.replacepattern` is only supported for targets.")
+		logrus.Errorf(validationError.Error())
+		return false, validationError
+	}
+
+	// If a matchPattern is specified, then return its result
+	if len(f.spec.MatchPattern) > 0 {
+		reg, err := regexp.Compile(f.spec.MatchPattern)
+		if err != nil {
+			logrus.Errorf("Validation error in condition of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
+			return false, err
+		}
+
+		return reg.MatchString(f.CurrentContent), nil
 	}
 
 	// When a source is provided, try to compare the file content with the source
@@ -61,7 +79,7 @@ func (f *File) checkFileCondition(source string) (bool, error) {
 
 	}
 
-	/////// No sourceID provided: the specified attribute must be used to determine which content to compare the file with
+	// No sourceID provided: the specified attribute must be used to determine which content to compare the file with
 	if len(f.spec.Content) == 0 && f.spec.Line > 0 {
 		// No content + no source input values means the user only want to check if the line "exists" (e.g. is not empty) and that's all
 		if f.CurrentContent == "" {
