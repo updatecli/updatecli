@@ -24,6 +24,36 @@ func TestFile_Target(t *testing.T) {
 		dryRun                bool
 	}{
 		{
+			name:             "Replace content with matchPattern and ReplacePattern",
+			inputSourceValue: "3.9.0",
+			spec: FileSpec{
+				File:           "foo.txt",
+				MatchPattern:   "maven_(.*)=.*",
+				ReplacePattern: "maven_$1= 3.9.0",
+			},
+			mockReturnsFileExists: true,
+			mockReturnedContent: `maven_version = "3.8.2"
+		git_version = "2.33.1"
+		jdk11_version = "11.0.12+7"
+		jdk17_version = "17+35"
+		jdk8_version = "8u302-b08"
+		maven_major_release = "3"
+		git_lfs_version = "3.0.1"
+		compose_version = "1.29.2"`,
+			wantResult: true,
+			wantMockState: text.MockTextRetriever{
+				Location: "foo.txt",
+				Content: `maven_version = 3.9.0
+		git_version = "2.33.1"
+		jdk11_version = "11.0.12+7"
+		jdk17_version = "17+35"
+		jdk8_version = "8u302-b08"
+		maven_major_release = 3.9.0
+		git_lfs_version = "3.0.1"
+		compose_version = "1.29.2"`,
+			},
+		},
+		{
 			name: "Passing Case with both input source and specified content but no line (specified content should be used)",
 			spec: FileSpec{
 				File:    "foo.txt",
@@ -58,16 +88,6 @@ func TestFile_Target(t *testing.T) {
 			name: "Validation failure with an https:// URL instead of a file",
 			spec: FileSpec{
 				File: "https://github.com/foo.txt",
-			},
-			wantResult: false,
-			wantErr:    true,
-		},
-		{
-			name: "Validation Error with both line and forceCreate set",
-			spec: FileSpec{
-				File:        "foo.txt",
-				ForceCreate: true,
-				Line:        3,
 			},
 			wantResult: false,
 			wantErr:    true,
@@ -175,6 +195,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		wantFiles             []string
 		name                  string
 		inputSourceValue      string
+		mockReturnedContent   string
 		mockReturnedError     error
 		scm                   scm.Scm
 		wantResult            bool
@@ -219,6 +240,29 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				Location: "/tmp/foo.txt",
 				Content:  "current_version=1.2.3",
 			},
+		},
+		{
+			name:             "No line matched with matchPattern and ReplacePattern defined",
+			inputSourceValue: "3.9.0",
+			spec: FileSpec{
+				File:           "foo.txt",
+				MatchPattern:   "notmatching=*",
+				ReplacePattern: "maven_version= 3.9.0",
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			mockReturnsFileExists: true,
+			mockReturnedContent: `maven_version = "3.8.2"
+		git_version = "2.33.1"
+		jdk11_version = "11.0.12+7"
+		jdk17_version = "17+35"
+		jdk8_version = "8u302-b08"
+		maven_major_release = "3"
+		git_lfs_version = "3.0.1"
+		compose_version = "1.29.2"`,
+			wantResult: false,
+			wantErr:    true,
 		},
 	}
 	for _, tt := range tests {

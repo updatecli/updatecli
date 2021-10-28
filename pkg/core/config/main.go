@@ -172,7 +172,7 @@ func (config *Config) Validate() error {
 		// Try to guess SourceID
 		if len(t.SourceID) == 0 && len(config.Sources) > 1 {
 
-			logrus.Errorf("empty 'sourceID' for target '%s'", id)
+			logrus.Errorf("empty 'sourceID' for target %q", id)
 			return ErrBadConfig
 		} else if len(t.SourceID) == 0 && len(config.Sources) == 1 {
 			for id := range config.Sources {
