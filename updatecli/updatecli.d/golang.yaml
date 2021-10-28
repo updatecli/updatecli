@@ -117,22 +117,3 @@ targets:
         token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
         username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
         branch: main
-  dockerFile:
-    name: 'Update Golang version in Dockerfile'
-    sourceID: latestGoVersion
-    kind: dockerfile
-    spec:
-      file: Dockerfile
-      instruction:
-        keyword: "ARG"
-        matcher: "GOLANG_VERSION"
-    scm:
-      github:
-        user: updatecli
-        email: me@olblak.com
-        owner: updatecli
-        repository: updatecli
-        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-        branch: main
-
