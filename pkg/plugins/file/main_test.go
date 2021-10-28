@@ -59,6 +59,42 @@ func TestFile_New(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "raises an error when both 'Line' and `ForceCreate=true` are specified",
+			spec: FileSpec{
+				File:        "/tmp/foo.txt",
+				ForceCreate: true,
+				Line:        12,
+			},
+			wantErr: true,
+		},
+		{
+			name: "raises an error when both 'Line' and `MatchPattern` are specified",
+			spec: FileSpec{
+				File:         "/tmp/foo.txt",
+				MatchPattern: "pattern=.*",
+				Line:         12,
+			},
+			wantErr: true,
+		},
+		{
+			name: "raises an error when both 'Line' and `ReplacePattern` are specified",
+			spec: FileSpec{
+				File:           "/tmp/foo.txt",
+				ReplacePattern: "pattern=.*",
+				Line:           13,
+			},
+			wantErr: true,
+		},
+		{
+			name: "raises an error when both 'Content' and `ReplacePattern` are specified",
+			spec: FileSpec{
+				File:           "/tmp/foo.txt",
+				ReplacePattern: "pattern=.*",
+				Content:        "Hello World",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
