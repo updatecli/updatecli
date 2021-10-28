@@ -93,33 +93,33 @@ func TestShell_Target(t *testing.T) {
 
 func TestShell_TargetFromSCM(t *testing.T) {
 	tests := []struct {
-		commandResult     commandResult
-		wantCommands      []string
-		commandEnv        []string
-		name              string
-		command           string
-		source            string
-		scmDir            string
-		wantMessage       string
-		wantCommandInMock string
-		dryrun            bool
-		wantChanged       bool
-		wantErr           bool
+		commandResult            commandResult
+		wantFilesChanged         []string
+		commandEnv               []string
+		name                     string
+		command                  string
+		source                   string
+		scmDir                   string
+		mockReturnedChangedFiles []string
+		wantMessage              string
+		wantCommandInMock        string
+		wantErr                  bool
+		dryrun                   bool
 	}{
 		{
-			name:              "runs a target that changes a value and no dryrun",
-			command:           "change.sh",
-			source:            "1.2.3",
-			wantChanged:       true,
-			wantCommands:      []string{"change.sh 1.2.3"},
-			wantMessage:       result.ATTENTION + " The shell 🐚 command \"change.sh 1.2.3\" ran successfully and reported the following change: \"Changed value from 1.2.2 to 1.2.3.\".",
-			wantErr:           false,
-			wantCommandInMock: "change.sh 1.2.3",
+			name:                     "runs a target that changes a value and no dryrun",
+			command:                  "change.sh",
+			source:                   "1.2.3",
+			mockReturnedChangedFiles: []string{"pom.xml"},
+			wantMessage:              result.ATTENTION + " The shell 🐚 command \"change.sh 1.2.3\" ran successfully and reported the following change: \"Changed value from 1.2.2 to 1.2.3.\".",
+			wantErr:                  false,
+			wantCommandInMock:        "change.sh 1.2.3",
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Changed value from 1.2.2 to 1.2.3.",
 			},
-			commandEnv: []string{"DRY_RUN=false"},
+			wantFilesChanged: []string{"pom.xml"},
+			commandEnv:       []string{"DRY_RUN=false"},
 		},
 	}
 	for _, tt := range tests {
@@ -128,7 +128,8 @@ func TestShell_TargetFromSCM(t *testing.T) {
 				result: tt.commandResult,
 			}
 			ms := mockScm{
-				workingDir: tt.scmDir,
+				workingDir:   tt.scmDir,
+				changedFiles: tt.mockReturnedChangedFiles,
 			}
 			s := Shell{
 				executor: &mock,
@@ -137,7 +138,7 @@ func TestShell_TargetFromSCM(t *testing.T) {
 				},
 			}
 
-			gotChanged, gotCommands, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)
+			gotChanged, gotFilesChanged, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -147,8 +148,8 @@ func TestShell_TargetFromSCM(t *testing.T) {
 
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.wantChanged, gotChanged)
-			assert.Equal(t, tt.wantCommands, gotCommands)
+			assert.Equal(t, len(tt.wantFilesChanged) > 0, gotChanged)
+			assert.Equal(t, tt.wantFilesChanged, gotFilesChanged)
 			assert.Equal(t, tt.wantMessage, gotMessage)
 
 			assert.Equal(t, tt.wantCommandInMock, mock.gotCommand.Cmd)

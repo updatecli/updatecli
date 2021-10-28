@@ -112,3 +112,7 @@ func (g *Github) PushTag(tag string) error {
 
 	return nil
 }
+
+func (g *Github) GetChangedFiles(workingDir string) ([]string, error) {
+	return git.GetChangedFiles(workingDir)
+}

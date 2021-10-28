@@ -26,11 +26,18 @@ func (mce *mockCommandExecutor) ExecuteCommand(cmd command) (commandResult, erro
 type mockScm struct {
 	scm.Scm
 
-	workingDir string
+	workingDir   string
+	changedFiles []string
+	err          error
 }
 
 func (m *mockScm) GetDirectory() (directory string) {
 	return m.workingDir
+}
+
+func (m *mockScm) GetChangedFiles(workingDir string) ([]string, error) {
+	m.workingDir = workingDir
+	return m.changedFiles, m.err
 }
 
 func TestShell_New(t *testing.T) {
