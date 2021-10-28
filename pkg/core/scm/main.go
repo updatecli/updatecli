@@ -19,6 +19,7 @@ type Scm interface {
 	Commit(message string) error
 	Clean() error
 	PushTag(tag string) error
+	GetChangedFiles(workingDir string) ([]string, error)
 }
 
 // Unmarshal parses a scm struct like git or github and returns a scm interface
