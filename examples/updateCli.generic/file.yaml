@@ -56,11 +56,10 @@ conditions:
       line: 3 # The line 3 of the file matches the source LineFromURL
   LocalFileHasLineMatchingSource:
     kind: file
-    disablesourceinput: true
-    sourceId: LineFromLocalFile
+    sourceID: LineFromLocalFile
     spec:
       file: LICENSE
-      line: 5 # The file './LICENSE' has a 5th line which is NOT empty and matches the source LineFromLocalFile
+      line: 3 # The file './LICENSE' has a 3rd line which is NOT empty and matches the source LineFromLocalFile
   LocalFileHasLineMatchingCustomContent:
     kind: file
     disablesourceinput: true
