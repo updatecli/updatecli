@@ -10,10 +10,20 @@ import (
 
 // Source return a file content
 func (f *File) Source(workingDir string) (string, error) {
+	var validationErrors []string
+
 	if len(f.spec.ReplacePattern) > 0 {
-		validationError := fmt.Errorf("Validation error in source of type 'file': the attribute `spec.replacepattern` is only supported for targets.")
-		logrus.Errorf(validationError.Error())
-		return "", validationError
+		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attribute `spec.replacepattern` is only supported for targets.")
+	}
+	if len(f.spec.Content) > 0 {
+		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attribute `spec.content` is only supported for conditions and targets.")
+	}
+	if f.spec.ForceCreate {
+		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attribute `spec.forcecreate` is only supported for targets.")
+	}
+	// Return all the validation errors if found any
+	if len(validationErrors) > 0 {
+		return "", fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	if err := f.Read(); err != nil {

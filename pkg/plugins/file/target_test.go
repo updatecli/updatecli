@@ -93,6 +93,27 @@ func TestFile_Target(t *testing.T) {
 			wantErr:    true,
 		},
 		{
+			name: "Validation failure with both line and forcecreate specified",
+			spec: FileSpec{
+				File:        "foo.txt",
+				ForceCreate: true,
+				Line:        2,
+			},
+			wantResult: false,
+			wantErr:    true,
+		},
+		{
+			name: "Validation Failure with invalid regexp for MatchPattern",
+			spec: FileSpec{
+				MatchPattern: "(d+:1",
+				File:         "/bar.txt",
+			},
+			mockReturnsFileExists: true,
+			mockReturnedContent:   `maven_version = "3.8.2"`,
+			wantResult:            false,
+			wantErr:               true,
+		},
+		{
 			name: "Error with file not existing (with line)",
 			spec: FileSpec{
 				File: "not_existing.txt",
