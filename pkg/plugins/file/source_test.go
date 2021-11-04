@@ -95,6 +95,30 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 			},
 			wantErr: true,
 		},
+		{
+			name: "Validation Failure with specified content",
+			spec: FileSpec{
+				Content: "Hello world",
+				File:    "/bar.txt",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation Failure with specified forcecreate",
+			spec: FileSpec{
+				ForceCreate: true,
+				File:        "/bar.txt",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation Failure with invalid regexp for MatchPattern",
+			spec: FileSpec{
+				MatchPattern: "(d+:1",
+				File:         "/bar.txt",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
