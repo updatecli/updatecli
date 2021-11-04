@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -27,6 +28,19 @@ func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 }
 
 func (f *File) checkFileCondition(source string) (bool, error) {
+	var validationErrors []string
+
+	if len(f.spec.ReplacePattern) > 0 {
+		validationErrors = append(validationErrors, "Validation error in condition of type 'file': the attribute `spec.replacepattern` is only supported for targets.")
+	}
+	if f.spec.ForceCreate {
+		validationErrors = append(validationErrors, "Validation error in condition of type 'file': the attribute `spec.forcecreate` is only supported for targets.")
+	}
+	// Return all the validation errors if found any
+	if len(validationErrors) > 0 {
+		return false, fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+	}
+
 	// Start by retrieving the specified file's content
 	if err := f.Read(); err != nil {
 		return false, err
@@ -37,12 +51,6 @@ func (f *File) checkFileCondition(source string) (bool, error) {
 		logMessage = fmt.Sprintf("Content of the file %q (line %d)", f.spec.File, f.spec.Line)
 	}
 
-	if len(f.spec.ReplacePattern) > 0 {
-		validationError := fmt.Errorf("Validation error in condition of type 'file': the attribute `spec.replacepattern` is only supported for targets.")
-		logrus.Errorf(validationError.Error())
-		return false, validationError
-	}
-
 	// If a matchPattern is specified, then return its result
 	if len(f.spec.MatchPattern) > 0 {
 		reg, err := regexp.Compile(f.spec.MatchPattern)
@@ -51,7 +59,16 @@ func (f *File) checkFileCondition(source string) (bool, error) {
 			return false, err
 		}
 
-		return reg.MatchString(f.CurrentContent), nil
+		if !reg.MatchString(f.CurrentContent) {
+			logrus.Infof(
+				"\u2717 %s did not match the pattern %q",
+				logMessage,
+				f.spec.MatchPattern,
+			)
+			return false, nil
+		}
+		logrus.Infof("\u2714 %s matched the pattern %q", logMessage, f.spec.MatchPattern)
+		return true, nil
 	}
 
 	// When a source is provided, try to compare the file content with the source

@@ -225,6 +225,18 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				Location: "/tmp/foo.txt",
 			},
 		},
+		{
+			name: "Validation Failure with forcecreate specified",
+			spec: FileSpec{
+				File:        "foo.txt",
+				ForceCreate: true,
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			inputSourceValue: "1.2.3",
+			wantErr:          true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
