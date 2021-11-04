@@ -3,6 +3,7 @@ package github
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"text/template"
 
 	"github.com/shurcooL/githubv4"
@@ -102,10 +103,21 @@ func (g *Github) UpdatePullRequest(ID string) error {
 		return err
 	}
 
+	labelsID := []githubv4.ID{}
+	err = g.getRepositoryLabelsInformation()
+	if err != nil {
+		return err
+	}
+
+	for _, label := range g.repositoryLabels {
+		labelsID = append(labelsID, githubv4.NewID(label.ID))
+	}
+
 	input := githubv4.UpdatePullRequestInput{
 		PullRequestID: githubv4.String(ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
+		LabelIDs:      &labelsID,
 	}
 
 	err = client.Mutate(context.Background(), &mutation, input, nil)
@@ -250,4 +262,118 @@ func (g *Github) InitPullRequestDescription(title, body, report string) {
 	g.pullRequestDescription.Description = body
 	g.pullRequestDescription.Report = report
 	g.pullRequestDescription.Title = title
+}
+
+func (g *Github) getRepositoryLabelsInformation() error {
+
+	/*
+		https://developer.github.com/v4/explorer/
+
+			query($owner: String!, $name: String!) {
+				rateLimit {
+					cost
+					remaining
+					resetAt
+				}
+				repository(owner: $owner, name: $name){
+					labels (last: 5, before: $before) {
+						totalCount
+						pageInfo {
+							hasNextPage
+							endCursor
+						}
+						edges {
+							node {
+								id
+								name
+								description
+							}
+							cursor
+						}
+					}
+				}
+			}
+
+	*/
+
+	// Early exit as no label information are needed
+	if len(g.repositoryLabels) == 0 {
+		return nil
+	}
+
+	client := g.NewClient()
+
+	variables := map[string]interface{}{
+		"owner":      githubv4.String(g.spec.Owner),
+		"repository": githubv4.String(g.spec.Repository),
+		"before":     (*githubv4.String)(nil),
+	}
+
+	var query struct {
+		RateLimit  RateLimit
+		Repository struct {
+			Labels struct {
+				TotalCount int
+				PageInfo   PageInfo
+				Edges      []struct {
+					Cursor string
+					Node   struct {
+						ID          string
+						Name        string
+						Description string
+					}
+				}
+			} `graphql:"labels(last: 5, before: $before)"`
+		} `graphql:"repository(owner: $owner, name: $repository)"`
+	}
+
+	expectedFound := 0
+	labelCounter := 0
+
+	for {
+		err := client.Query(context.Background(), &query, variables)
+
+		if err != nil {
+			logrus.Errorf("\t%s", err)
+			return err
+		}
+
+		query.RateLimit.Show()
+
+		for i := len(query.Repository.Labels.Edges) - 1; i >= 0; i-- {
+			labelCounter++
+			node := query.Repository.Labels.Edges[i]
+
+			for _, l := range g.spec.Labels {
+				if l == node.Node.Name {
+					g.repositoryLabels = append(
+						g.repositoryLabels,
+						repositoryLabel{
+							ID:          node.Node.ID,
+							Name:        node.Node.Name,
+							Description: node.Node.Description,
+						})
+					break
+
+				}
+			}
+
+		}
+
+		expectedFound = query.Repository.Labels.TotalCount
+
+		if !query.Repository.Labels.PageInfo.HasPreviousPage {
+			break
+		}
+
+		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Labels.PageInfo.StartCursor))
+	}
+
+	if expectedFound != labelCounter {
+		return fmt.Errorf("Something went wrong, found %d releases, expected %d", labelCounter, expectedFound)
+	}
+
+	logrus.Debugf("%d labels found", len(g.repositoryLabels))
+
+	return nil
 }
