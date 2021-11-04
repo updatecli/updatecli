@@ -41,6 +41,12 @@ func (f *File) writeTargetFile(source string, dryRun bool) (bool, []string, stri
 
 	// Case 1: The attribute 'spec.line' is specified, we only want to change a specific line of the target file
 	if f.spec.Line > 0 {
+		if f.spec.ForceCreate {
+			validationError := fmt.Errorf("Validation error in target of type 'file': 'spec.line' and 'spec.forcecreate' are mutually exclusive")
+			logrus.Errorf(validationError.Error())
+			return false, files, message, validationError
+		}
+
 		// Check that the specified exists or exit with error
 		if !f.contentRetriever.FileExists(f.spec.File) {
 			return false, files, message, os.ErrNotExist
