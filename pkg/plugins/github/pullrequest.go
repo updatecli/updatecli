@@ -3,7 +3,6 @@ package github
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"text/template"
 
 	"github.com/shurcooL/githubv4"
@@ -327,9 +326,6 @@ func (g *Github) getRepositoryLabelsInformation() error {
 		} `graphql:"repository(owner: $owner, name: $repository)"`
 	}
 
-	expectedFound := 0
-	labelCounter := 0
-
 	for {
 		err := client.Query(context.Background(), &query, variables)
 
@@ -340,12 +336,13 @@ func (g *Github) getRepositoryLabelsInformation() error {
 
 		query.RateLimit.Show()
 
-		for i := len(query.Repository.Labels.Edges) - 1; i >= 0; i-- {
-			labelCounter++
-			node := query.Repository.Labels.Edges[i]
+		for _, l := range g.spec.Labels {
+			found := false
+			for i := len(query.Repository.Labels.Edges) - 1; i >= 0; i-- {
+				node := query.Repository.Labels.Edges[i]
 
-			for _, l := range g.spec.Labels {
 				if l == node.Node.Name {
+					found = true
 					g.repositoryLabels = append(
 						g.repositoryLabels,
 						repositoryLabel{
@@ -357,20 +354,17 @@ func (g *Github) getRepositoryLabelsInformation() error {
 
 				}
 			}
+			if !found {
+				logrus.Debugf("Label %q not defined on repository %s/%s, ignoring it", l, g.spec.Owner, g.spec.Repository)
+			}
 
 		}
-
-		expectedFound = query.Repository.Labels.TotalCount
 
 		if !query.Repository.Labels.PageInfo.HasPreviousPage {
 			break
 		}
 
 		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Labels.PageInfo.StartCursor))
-	}
-
-	if expectedFound != labelCounter {
-		return fmt.Errorf("Something went wrong, found %d releases, expected %d", labelCounter, expectedFound)
 	}
 
 	logrus.Debugf("%d labels found", len(g.repositoryLabels))
