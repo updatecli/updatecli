@@ -103,12 +103,12 @@ func (g *Github) UpdatePullRequest(ID string) error {
 	}
 
 	labelsID := []githubv4.ID{}
-	err = g.getRepositoryLabelsInformation()
+	labels, err := g.getRepositoryLabelsInformation()
 	if err != nil {
 		return err
 	}
 
-	for _, label := range g.repositoryLabels {
+	for _, label := range labels {
 		labelsID = append(labelsID, githubv4.NewID(label.ID))
 	}
 
@@ -261,113 +261,4 @@ func (g *Github) InitPullRequestDescription(title, body, report string) {
 	g.pullRequestDescription.Description = body
 	g.pullRequestDescription.Report = report
 	g.pullRequestDescription.Title = title
-}
-
-func (g *Github) getRepositoryLabelsInformation() error {
-
-	/*
-		https://developer.github.com/v4/explorer/
-
-			query($owner: String!, $name: String!) {
-				rateLimit {
-					cost
-					remaining
-					resetAt
-				}
-				repository(owner: $owner, name: $name){
-					labels (last: 5, before: $before) {
-						totalCount
-						pageInfo {
-							hasNextPage
-							endCursor
-						}
-						edges {
-							node {
-								id
-								name
-								description
-							}
-							cursor
-						}
-					}
-				}
-			}
-
-	*/
-
-	// Early exit as no label information are needed
-	if len(g.repositoryLabels) == 0 {
-		return nil
-	}
-
-	client := g.NewClient()
-
-	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.spec.Owner),
-		"repository": githubv4.String(g.spec.Repository),
-		"before":     (*githubv4.String)(nil),
-	}
-
-	var query struct {
-		RateLimit  RateLimit
-		Repository struct {
-			Labels struct {
-				TotalCount int
-				PageInfo   PageInfo
-				Edges      []struct {
-					Cursor string
-					Node   struct {
-						ID          string
-						Name        string
-						Description string
-					}
-				}
-			} `graphql:"labels(last: 5, before: $before)"`
-		} `graphql:"repository(owner: $owner, name: $repository)"`
-	}
-
-	for {
-		err := client.Query(context.Background(), &query, variables)
-
-		if err != nil {
-			logrus.Errorf("\t%s", err)
-			return err
-		}
-
-		query.RateLimit.Show()
-
-		for _, l := range g.spec.Labels {
-			found := false
-			for i := len(query.Repository.Labels.Edges) - 1; i >= 0; i-- {
-				node := query.Repository.Labels.Edges[i]
-
-				if l == node.Node.Name {
-					found = true
-					g.repositoryLabels = append(
-						g.repositoryLabels,
-						repositoryLabel{
-							ID:          node.Node.ID,
-							Name:        node.Node.Name,
-							Description: node.Node.Description,
-						})
-					break
-
-				}
-			}
-			if !found {
-				logrus.Debugf("Label %q not defined on repository %s/%s, ignoring it", l, g.spec.Owner, g.spec.Repository)
-			}
-
-		}
-
-		if !query.Repository.Labels.PageInfo.HasPreviousPage {
-			break
-		}
-
-		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Labels.PageInfo.StartCursor))
-	}
-
-	logrus.Debugf("%d labels found", len(g.repositoryLabels))
-
-	return nil
 }

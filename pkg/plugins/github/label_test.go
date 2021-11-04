@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestGetRepositoryLabels(t *testing.T) {
+func TestGetRepositoryLabelsInformation(t *testing.T) {
 
 	g := Github{
 		spec: Spec{
@@ -21,23 +21,21 @@ func TestGetRepositoryLabels(t *testing.T) {
 		"duplicate",
 	}
 
-	err := g.getRepositoryLabelsInformation()
+	gotLabels, err := g.getRepositoryLabelsInformation()
 	if err != nil {
 		t.Errorf("unexpected error: %q", err.Error())
 	}
 
 	for _, expectedLabel := range expectedLabels {
 		found := false
-		for _, gotLabel := range g.repositoryLabels {
+		for _, gotLabel := range gotLabels {
 			if gotLabel.Name == expectedLabel {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Errorf("couldn't find label %q in %s", expectedLabel, g.repositoryLabels)
+			t.Errorf("couldn't find label %q in %s", expectedLabel, gotLabels)
 		}
 	}
-
-	g.getRepositoryLabels()
 }

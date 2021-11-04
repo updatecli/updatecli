@@ -32,21 +32,13 @@ type Spec struct {
 	Labels        []string       // Specify repository labels used for pull request
 }
 
-// repositoryLabel hold specific label information returned from Github API
-type repositoryLabel struct {
-	ID          string
-	Name        string
-	Description string
-}
-
 // Github contains settings to interact with Github
 type Github struct {
-	spec                   Spec              // Spec contains inputs coming from updatecli configuration
-	pullRequestDescription Changelog         // PullRequestDescription the changelog specified in Github PR
-	remoteBranch           string            // remoteBranch is used when creating a temporary branch before opening a PR
-	Force                  bool              // Force is used during the git push phase to run `git push --force`.
-	CommitMessage          commit.Commit     // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
-	repositoryLabels       []repositoryLabel // Contains available repository labels which can be used to assign to pullRequest
+	spec                   Spec          // Spec contains inputs coming from updatecli configuration
+	pullRequestDescription Changelog     // PullRequestDescription the changelog specified in Github PR
+	remoteBranch           string        // remoteBranch is used when creating a temporary branch before opening a PR
+	Force                  bool          // Force is used during the git push phase to run `git push --force`.
+	CommitMessage          commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
 }
 
 // New returns a new valid Github object.
