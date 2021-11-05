@@ -48,6 +48,7 @@ type PullRequest struct {
 	State       string
 	Title       string
 	Url         string
+	Number      int
 }
 
 // PullRequestSpec is a specific struct containing pullrequest settings provided
@@ -161,12 +162,18 @@ func (g *Github) updatePullRequest() error {
 	}
 
 	labelsID := []githubv4.ID{}
-	labels, err := g.getRepositoryLabelsInformation()
+	repolabels, err := g.getRepositoryLabelsInformation()
 	if err != nil {
 		return err
 	}
 
-	for _, label := range labels {
+	remotePRLabels, err := g.getPullRequestLabelsInformation()
+	if err != nil {
+		return err
+	}
+
+	// Build a list of labelID to update the pullrequest
+	for _, label := range mergeLabels(repolabels, remotePRLabels) {
 		labelsID = append(labelsID, githubv4.NewID(label.ID))
 	}
 
