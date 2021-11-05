@@ -44,6 +44,7 @@ type Github struct {
 		Description string
 		Report      string
 	}
+	remotePullRequest PullRequest
 }
 
 // New returns a new valid Github object.

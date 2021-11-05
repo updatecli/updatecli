@@ -14,8 +14,9 @@ type repositoryLabel struct {
 	Description string
 }
 
-// getRepositoryLabelsInformation query GitHub Api to retrieve every labels configured for a repository
-// then only return those matching label name specified via an updatecli configuration
+// getRepositoryLabelsInformation queries GitHub Api to retrieve every labels configured for a repository
+// then only return those matching label name specified via an updatecli configuration and those retrieve
+// from a an open pull request
 func (g *Github) getRepositoryLabelsInformation() ([]repositoryLabel, error) {
 
 	/*
@@ -52,7 +53,8 @@ func (g *Github) getRepositoryLabelsInformation() ([]repositoryLabel, error) {
 	if len(g.spec.PullRequest.Labels) == 0 {
 		return nil, nil
 	}
-	var labels []repositoryLabel
+	var matchingLabels []repositoryLabel
+	var repoLabels []repositoryLabel
 
 	client := g.NewClient()
 
@@ -90,26 +92,30 @@ func (g *Github) getRepositoryLabelsInformation() ([]repositoryLabel, error) {
 
 		query.RateLimit.Show()
 
-		for _, l := range g.spec.PullRequest.Labels {
-			found := false
-			for _, node := range query.Repository.Labels.Edges {
+		//// Merge remote pullrequest label and those provided via an updatecli spec
+		//upToDateLabels := g.spec.PullRequest.Labels
+		//for _, specLabel := range g.spec.PullRequest.Labels {
+		//	found := false
+		//	for _, remoteLabel := range g.remotePullRequest.Labels {
+		//		if specLabel == remoteLabel {
+		//			found = true
+		//			break
+		//		}
+		//	}
+		//	if !found {
+		//		upToDateLabels = append(upToDateLabels, specLabel)
+		//	}
+		//}
 
-				if l == node.Node.Name {
-					found = true
-					labels = append(
-						labels,
-						repositoryLabel{
-							ID:          node.Node.ID,
-							Name:        node.Node.Name,
-							Description: node.Node.Description,
-						})
-					break
-				}
-			}
-			if !found {
-				logrus.Debugf("Label %q not defined on repository %s/%s, ignoring it", l, g.spec.Owner, g.spec.Repository)
-			}
-
+		// Retrieve remote label information such as label ID, label name, labe description
+		for _, node := range query.Repository.Labels.Edges {
+			repoLabels = append(
+				repoLabels,
+				repositoryLabel{
+					ID:          node.Node.ID,
+					Name:        node.Node.Name,
+					Description: node.Node.Description,
+				})
 		}
 
 		if !query.Repository.Labels.PageInfo.HasPreviousPage {
@@ -119,7 +125,23 @@ func (g *Github) getRepositoryLabelsInformation() ([]repositoryLabel, error) {
 		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Labels.PageInfo.StartCursor))
 	}
 
-	logrus.Debugf("%d labels found over %d requested", len(labels), len(g.spec.PullRequest.Labels))
+	for _, l := range g.spec.PullRequest.Labels {
+		for _, repoLabel := range repoLabels {
 
-	return labels, nil
+			if l == repoLabel.Name {
+				matchingLabels = append(
+					matchingLabels,
+					repositoryLabel{
+						ID:          repoLabel.ID,
+						Name:        repoLabel.Name,
+						Description: repoLabel.Description,
+					})
+				break
+			}
+		}
+	}
+
+	logrus.Debugf("%d labels found over %d requested", len(matchingLabels), len(g.spec.PullRequest.Labels))
+
+	return matchingLabels, nil
 }
