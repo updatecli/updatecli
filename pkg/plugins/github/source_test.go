@@ -33,6 +33,11 @@ var (
 )
 
 func TestGetTags(t *testing.T) {
+	// Short mode also skip integration test that require credentials
+	if testing.Short() {
+		t.Skip("Skipping test in short mode when it requires specific credentials")
+		return
+	}
 
 	for _, data := range dataSet {
 		tags, err := data.github.SearchTags()
@@ -57,6 +62,11 @@ func TestGetTags(t *testing.T) {
 }
 
 func TestSource(t *testing.T) {
+	// Short mode also skip integration test that require credentials
+	if testing.Short() {
+		t.Skip("Skipping test in short mode when it requires specific credentials")
+		return
+	}
 
 	for _, data := range dataSet {
 		got, err := data.github.Source("")
@@ -73,6 +83,11 @@ func TestSource(t *testing.T) {
 }
 
 func TestSearchReleases(t *testing.T) {
+	// Short mode also skip integration test that require credentials
+	if testing.Short() {
+		t.Skip("Skipping test in short mode when it requires specific credentials")
+		return
+	}
 
 	for _, data := range dataSet {
 		releases, err := data.github.SearchReleases()
