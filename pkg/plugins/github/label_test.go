@@ -7,6 +7,12 @@ import (
 
 func TestGetRepositoryLabelsInformation(t *testing.T) {
 
+	// Short mode also skip integration test that require credentials
+	if testing.Short() {
+		t.Skip("Skipping test in short mode when it requires specific credentials")
+		return
+	}
+
 	g := Github{
 		spec: Spec{
 			Owner:      "olblak",
