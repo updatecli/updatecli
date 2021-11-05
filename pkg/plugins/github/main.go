@@ -29,16 +29,21 @@ type Spec struct {
 	URL           string         // URL specifies the default github url in case of GitHub enterprise
 	Username      string         // Username specifies the username used to authenticate with Github API
 	User          string         // User specific the user in git commit messages
-	Labels        []string       // Specify repository labels used for pull request
+	PullRequest   PullRequestSpec
 }
 
 // Github contains settings to interact with Github
 type Github struct {
-	spec                   Spec          // Spec contains inputs coming from updatecli configuration
-	pullRequestDescription Changelog     // PullRequestDescription the changelog specified in Github PR
-	remoteBranch           string        // remoteBranch is used when creating a temporary branch before opening a PR
-	Force                  bool          // Force is used during the git push phase to run `git push --force`.
-	CommitMessage          commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	spec          Spec          // Spec contains inputs coming from updatecli configuration
+	remoteBranch  string        // remoteBranch is used when creating a temporary branch before opening a PR
+	Force         bool          // Force is used during the git push phase to run `git push --force`.
+	CommitMessage commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	pullRequest   struct {      // pullRequest contain the pull request information
+		Title       string // Override default pull request title
+		LabelIDs    []string
+		Description string
+		Report      string
+	}
 }
 
 // New returns a new valid Github object.

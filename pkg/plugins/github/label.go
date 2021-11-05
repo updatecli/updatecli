@@ -49,7 +49,7 @@ func (g *Github) getRepositoryLabelsInformation() ([]repositoryLabel, error) {
 	*/
 
 	// Early exit as no label information are needed
-	if len(g.spec.Labels) == 0 {
+	if len(g.spec.PullRequest.Labels) == 0 {
 		return nil, nil
 	}
 	var labels []repositoryLabel
@@ -90,7 +90,7 @@ func (g *Github) getRepositoryLabelsInformation() ([]repositoryLabel, error) {
 
 		query.RateLimit.Show()
 
-		for _, l := range g.spec.Labels {
+		for _, l := range g.spec.PullRequest.Labels {
 			found := false
 			for _, node := range query.Repository.Labels.Edges {
 
@@ -119,7 +119,7 @@ func (g *Github) getRepositoryLabelsInformation() ([]repositoryLabel, error) {
 		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Labels.PageInfo.StartCursor))
 	}
 
-	logrus.Debugf("%d labels found over %d requested", len(labels), len(g.spec.Labels))
+	logrus.Debugf("%d labels found over %d requested", len(labels), len(g.spec.PullRequest.Labels))
 
 	return labels, nil
 }

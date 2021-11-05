@@ -12,6 +12,12 @@ import (
 // PULLREQUESTBODY is the pull request template used as pull request description
 // Please note that triple backticks are concatenated with the literals, as they cannot be escaped
 const PULLREQUESTBODY = `
+# {{ .Title }}
+
+{{ if .Introduction }}
+{{ .Introduction }}
+{{ end }}
+
 
 ## Report
 
@@ -44,23 +50,41 @@ type PullRequest struct {
 	Url         string
 }
 
-// SetBody generates the body pull request based on PULLREQUESTBODY
-func SetBody(changelog Changelog) (body string, err error) {
-	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
+// PullRequestSpec is a specific struct containing pullrequest settings provided
+// by an updatecli configuration
+type PullRequestSpec struct {
+	Title                  string   // Specify pull request title
+	Description            string   // Description contains user input description used during pull body creation
+	Labels                 []string // Specify repository labels used for pull request. !! They must already exist
+	Draft                  bool     // Define if a pull request is set to draft, default false
+	MaintainerCannotModify bool     // Define if maintainer can modify pullRequest
+}
 
-	body = ""
+// generatePullRequestBody generates the body pull request based on PULLREQUESTBODY
+func (g *Github) generatePullRequestBody() (string, error) {
+	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
 
 	buffer := new(bytes.Buffer)
 
-	err = t.Execute(buffer, changelog)
+	type params struct {
+		Introduction string
+		Title        string
+		Report       string
+		Description  string
+	}
+
+	err := t.Execute(buffer, params{
+		Introduction: g.spec.PullRequest.Description,
+		Description:  g.pullRequest.Description,
+		Report:       g.pullRequest.Report,
+		Title:        g.pullRequest.Title,
+	})
 
 	if err != nil {
 		return "", err
 	}
 
-	body = buffer.String()
-
-	return body, err
+	return buffer.String(), nil
 }
 
 // UpdatePullRequest updates an existing pull request.
@@ -95,9 +119,9 @@ func (g *Github) UpdatePullRequest(ID string) error {
 
 	logrus.Debugf("Updating Github pull request")
 
-	title := g.pullRequestDescription.Title
+	title := g.pullRequest.Title
 
-	bodyPR, err := SetBody(g.pullRequestDescription)
+	bodyPR, err := g.generatePullRequestBody()
 	if err != nil {
 		return err
 	}
@@ -160,18 +184,12 @@ func (g *Github) OpenPullRequest() error {
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
-	logrus.Infof("Opening Pull Request")
-
-	title := g.pullRequestDescription.Title
-
 	repositoryID, err := g.queryRepositoryID()
 	if err != nil {
 		return err
 	}
-	maintainerCanModify := true
-	draft := false
 
-	bodyPR, err := SetBody(g.pullRequestDescription)
+	bodyPR, err := g.generatePullRequestBody()
 	if err != nil {
 		return err
 	}
@@ -180,13 +198,19 @@ func (g *Github) OpenPullRequest() error {
 		BaseRefName:         githubv4.String(g.spec.Branch),
 		RepositoryID:        githubv4.String(repositoryID),
 		HeadRefName:         githubv4.String(g.remoteBranch),
-		Title:               githubv4.String(title),
+		Title:               githubv4.String(g.pullRequest.Title),
 		Body:                githubv4.NewString(githubv4.String(bodyPR)),
-		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(maintainerCanModify)),
-		Draft:               githubv4.NewBoolean(githubv4.Boolean(draft)),
+		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(!g.spec.PullRequest.MaintainerCannotModify)),
+		Draft:               githubv4.NewBoolean(githubv4.Boolean(g.spec.PullRequest.Draft)),
 	}
 
 	err = client.Mutate(context.Background(), &mutation, input, nil)
+	if err != nil {
+		return err
+	}
+
+	// Updating newly generated pull request so we can add labels
+	err = g.UpdatePullRequest(mutation.CreatePullRequest.PullRequest.ID)
 	if err != nil {
 		return err
 	}
@@ -258,7 +282,11 @@ func (g *Github) IsPullRequest() (ID string, err error) {
 
 // InitPullRequestDescription set internal github settings
 func (g *Github) InitPullRequestDescription(title, body, report string) {
-	g.pullRequestDescription.Description = body
-	g.pullRequestDescription.Report = report
-	g.pullRequestDescription.Title = title
+	g.pullRequest.Description = body
+	g.pullRequest.Report = report
+	g.pullRequest.Title = title
+
+	if len(g.spec.PullRequest.Title) > 0 {
+		g.pullRequest.Title = g.spec.PullRequest.Title
+	}
 }
