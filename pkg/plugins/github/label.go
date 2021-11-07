@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// repositoryLabel hold specific label information returned from Github API
+// repositoryLabel holds specific label informations returned from Github API
 type repositoryLabel struct {
 	ID          string
 	Name        string
