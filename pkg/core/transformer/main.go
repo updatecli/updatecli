@@ -94,6 +94,34 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 
 			output = found
 
+		case "findSubMatch":
+
+			val, ok := value.(string)
+
+			if !ok {
+				return "", fmt.Errorf("unknown value for findSubmatch: %v", val)
+			}
+
+			if len(val) == 0 {
+				return "", fmt.Errorf("no regex provided")
+			}
+
+			re, err := regexp.Compile(val)
+			if err != nil {
+				return "", err
+			}
+
+			found := re.FindStringSubmatch(output)
+
+			if len(found) == 0 {
+				logrus.Debugf("No result found after applying regex %q to %q", val, output)
+				return "", nil
+			}
+
+			fmt.Println(found)
+
+			output = found[0]
+
 		case "semverInc":
 			val, ok := value.(string)
 

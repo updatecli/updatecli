@@ -176,6 +176,16 @@ var (
 			expectedOutput: "terraform_0.14.5_freebsd_amd64.zip",
 			expectedErr:    nil,
 		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					"findSubMatch": `(\d*).(\d*)`,
+				},
+			},
+			expectedOutput: "1.17",
+			expectedErr:    nil,
+		},
 	}
 )
 
