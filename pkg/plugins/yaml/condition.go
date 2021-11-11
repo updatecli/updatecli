@@ -2,55 +2,48 @@ package yaml
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/scm"
-	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
 )
 
 // Condition checks if a key exists in a yaml file
 func (y *Yaml) Condition(source string) (bool, error) {
-
-	if len(y.Path) > 0 {
-		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
-	}
-
-	contentRetriever := &text.Text{}
-	data, err := contentRetriever.ReadAll(y.File)
-	if err != nil {
+	// Start by retrieving the specified file's content
+	if err := y.Read(); err != nil {
 		return false, err
 	}
+	data := y.CurrentContent
 
 	out := yaml.Node{}
 
-	err = yaml.Unmarshal([]byte(data), &out)
+	err := yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
 		return false, fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), y.Spec.Value, 1)
 
-	if valueFound && oldVersion == y.Value {
+	if valueFound && oldVersion == y.Spec.Value {
 		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'",
-			y.Key,
-			y.File,
-			y.Value)
+			y.Spec.Key,
+			y.Spec.File,
+			y.Spec.Value)
 		return true, nil
-	} else if valueFound && oldVersion != y.Value {
+	} else if valueFound && oldVersion != y.Spec.Value {
 		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
-			y.Key,
-			y.File,
+			y.Spec.Key,
+			y.Spec.File,
 			oldVersion,
-			y.Value)
+			y.Spec.Value)
 	} else {
 		logrus.Infof("\u2717 cannot find key '%s' from file '%s'",
-			y.Key,
-			y.File)
+			y.Spec.Key,
+			y.Spec.File)
 	}
 
 	return false, nil
@@ -58,42 +51,38 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
-	if len(y.Path) > 0 {
-		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
-	}
-
-	contentRetriever := &text.Text{}
-	data, err := contentRetriever.ReadAll(filepath.Join(scm.GetDirectory(), y.File))
-	if err != nil {
+	// Start by retrieving the specified file's content
+	if err := y.Read(); err != nil {
 		return false, err
 	}
+	data := y.CurrentContent
 
 	out := yaml.Node{}
 
-	err = yaml.Unmarshal([]byte(data), &out)
+	err := yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
 		return false, fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), y.Spec.Value, 1)
 
-	if valueFound && oldVersion == y.Value {
+	if valueFound && oldVersion == y.Spec.Value {
 		logrus.Infof("\u2714 Key '%s', from file '%v', is correctly set to %s'",
-			y.Key,
-			y.File,
-			y.Value)
+			y.Spec.Key,
+			y.Spec.File,
+			y.Spec.Value)
 		return true, nil
-	} else if valueFound && oldVersion != y.Value {
+	} else if valueFound && oldVersion != y.Spec.Value {
 		logrus.Infof("\u2717 Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
-			y.Key,
-			y.File,
+			y.Spec.Key,
+			y.Spec.File,
 			oldVersion,
-			y.Value)
+			y.Spec.Value)
 	} else {
 		logrus.Infof("\u2717 cannot find key '%s' from file '%s'",
-			y.Key,
-			y.File)
+			y.Spec.Key,
+			y.Spec.File)
 	}
 
 	return false, nil

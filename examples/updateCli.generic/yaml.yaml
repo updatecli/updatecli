@@ -6,18 +6,17 @@ sources:
     spec:
       file: examples/values.yaml
       key: "github.user"
+  fromExplicitFile:
+    kind: yaml
+    spec:
+      file: file://examples/values.yaml
+      key: "github.user"
   ## https://github.com/updatecli/updatecli/issues/357
-  # fromExplicitFile:
-  #   kind: yaml
-  #   spec:
-  #     file: file://examples/values.yaml
-  #     key: "github.user"
-  ## https://github.com/updatecli/updatecli/issues/357
-  # fromUrl:
-  #   kind: yaml
-  #   spec:
-  #     file: https://raw.githubusercontent.com/updatecli/updatecli/dc90759914718beee17101c693911088cfbf6deb/examples/values.yaml
-  #     key: "github.user"
+  fromUrl:
+    kind: yaml
+    spec:
+      file: https://raw.githubusercontent.com/updatecli/updatecli/dc90759914718beee17101c693911088cfbf6deb/examples/values.yaml
+      key: "github.user"
   ## Uncomment to test failing examples
   # noSuchFile:
   #   kind: yaml
