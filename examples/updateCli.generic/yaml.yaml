@@ -11,7 +11,6 @@ sources:
     spec:
       file: file://examples/values.yaml
       key: "github.user"
-  ## https://github.com/updatecli/updatecli/issues/357
   fromUrl:
     kind: yaml
     spec:
@@ -29,13 +28,12 @@ sources:
   #     file: examples/values.yaml
   #     key: "foo.bar"
 conditions:
-  ## https://github.com/updatecli/updatecli/issues/358
-  # checkGithubUsername:
-  #   kind: yaml
-  #   sourceID: default
-  #   spec:
-  #     file: examples/values.yaml
-  #     key: "github.user"
+  checkGithubUsername:
+    kind: yaml
+    sourceID: default
+    spec:
+      file: examples/values.yaml
+      key: "github.user"
   checkGithubRepository:
     kind: yaml
     disablesourceinput: true
