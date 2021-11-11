@@ -13,7 +13,7 @@ import (
 
 // Condition checks if a key exists in a yaml file
 func (y *Yaml) Condition(source string) (bool, error) {
-	return y.checkYamlCondition(source)
+	return y.condition(source)
 }
 
 // ConditionFromSCM checks if a key exists in a yaml file
@@ -21,10 +21,10 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	if !filepath.IsAbs(y.Spec.File) {
 		y.Spec.File = filepath.Join(scm.GetDirectory(), y.Spec.File)
 	}
-	return y.checkYamlCondition(source)
+	return y.condition(source)
 }
 
-func (y *Yaml) checkYamlCondition(source string) (bool, error) {
+func (y *Yaml) condition(source string) (bool, error) {
 	// Start by retrieving the specified file's content
 	if err := y.Read(); err != nil {
 		return false, err

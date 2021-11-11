@@ -62,11 +62,10 @@ targets:
     spec:
       file: examples/values.yaml
       key: "github.owner"
-  ## https://github.com/updatecli/updatecli/issues/359
-  # setGitHubRepository:
-  #   kind: yaml
-  #   sourceID: default
-  #   spec:
-  #     file: examples/values.yaml
-  #     key: "github.repository"
-  #     value: "charts"
+  setGitHubRepository:
+    kind: yaml
+    sourceID: default
+    spec:
+      file: examples/values.yaml
+      key: "github.repository"
+      value: "charts"

@@ -15,7 +15,7 @@ import (
 // Condition test if a file content match the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
 func (f *File) Condition(source string) (bool, error) {
-	return f.checkFileCondition(source)
+	return f.condition(source)
 }
 
 // ConditionFromSCM test if a file content from SCM match the content provided via configuration.
@@ -24,10 +24,10 @@ func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	if !filepath.IsAbs(f.spec.File) {
 		f.spec.File = filepath.Join(scm.GetDirectory(), f.spec.File)
 	}
-	return f.checkFileCondition(source)
+	return f.condition(source)
 }
 
-func (f *File) checkFileCondition(source string) (bool, error) {
+func (f *File) condition(source string) (bool, error) {
 	var validationErrors []string
 
 	if len(f.spec.ReplacePattern) > 0 {
