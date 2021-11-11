@@ -12,6 +12,12 @@ import (
 // PULLREQUESTBODY is the pull request template used as pull request description
 // Please note that triple backticks are concatenated with the literals, as they cannot be escaped
 const PULLREQUESTBODY = `
+# {{ .Title }}
+
+{{ if .Introduction }}
+{{ .Introduction }}
+{{ end }}
+
 
 ## Report
 
@@ -42,29 +48,82 @@ type PullRequest struct {
 	State       string
 	Title       string
 	Url         string
+	Number      int
 }
 
-// SetBody generates the body pull request based on PULLREQUESTBODY
-func SetBody(changelog Changelog) (body string, err error) {
-	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
+// PullRequestSpec is a specific struct containing pullrequest settings provided
+// by an updatecli configuration
+type PullRequestSpec struct {
+	Title                  string   // Specify pull request title
+	Description            string   // Description contains user input description used during pull body creation
+	Labels                 []string // Specify repository labels used for pull request. !! They must already exist
+	Draft                  bool     // Define if a pull request is set to draft, default false
+	MaintainerCannotModify bool     // Define if maintainer can modify pullRequest
+}
 
-	body = ""
+func (g *Github) CreatePullRequest(title, changelog, pipelineReport string) error {
+
+	g.pullRequest.Description = changelog
+	g.pullRequest.Report = pipelineReport
+	g.pullRequest.Title = title
+
+	if len(g.spec.PullRequest.Title) > 0 {
+		g.pullRequest.Title = g.spec.PullRequest.Title
+	}
+
+	err := g.getRemotePullRequest()
+	if err != nil {
+		return err
+	}
+
+	// No pullrequest ID so we first have to create the remote pullrequest
+	if len(g.remotePullRequest.ID) == 0 {
+		err = g.OpenPullRequest()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Once the remote pull request exist, we can than update it with additional information such as
+	// tags,assignee,etc.
+
+	err = g.updatePullRequest()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// generatePullRequestBody generates the body pull request based on PULLREQUESTBODY
+func (g *Github) generatePullRequestBody() (string, error) {
+	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
 
 	buffer := new(bytes.Buffer)
 
-	err = t.Execute(buffer, changelog)
+	type params struct {
+		Introduction string
+		Title        string
+		Report       string
+		Description  string
+	}
+
+	err := t.Execute(buffer, params{
+		Introduction: g.spec.PullRequest.Description,
+		Description:  g.pullRequest.Description,
+		Report:       g.pullRequest.Report,
+		Title:        g.pullRequest.Title,
+	})
 
 	if err != nil {
 		return "", err
 	}
 
-	body = buffer.String()
-
-	return body, err
+	return buffer.String(), nil
 }
 
-// UpdatePullRequest updates an existing pull request.
-func (g *Github) UpdatePullRequest(ID string) error {
+// updatePullRequest updates an existing pull request.
+func (g *Github) updatePullRequest() error {
 
 	/*
 				mutation($input: UpdatePullRequestInput!){
@@ -95,17 +154,37 @@ func (g *Github) UpdatePullRequest(ID string) error {
 
 	logrus.Debugf("Updating Github pull request")
 
-	title := g.pullRequestDescription.Title
+	title := g.pullRequest.Title
 
-	bodyPR, err := SetBody(g.pullRequestDescription)
+	bodyPR, err := g.generatePullRequestBody()
 	if err != nil {
 		return err
 	}
 
+	labelsID := []githubv4.ID{}
+	repolabels, err := g.getRepositoryLabelsInformation()
+	if err != nil {
+		return err
+	}
+
+	remotePRLabels, err := g.getPullRequestLabelsInformation()
+	if err != nil {
+		return err
+	}
+
+	// Build a list of labelID to update the pullrequest
+	for _, label := range mergeLabels(repolabels, remotePRLabels) {
+		labelsID = append(labelsID, githubv4.NewID(label.ID))
+	}
+
+	pullRequestUpdateStateOpen := githubv4.PullRequestUpdateStateOpen
+
 	input := githubv4.UpdatePullRequestInput{
-		PullRequestID: githubv4.String(ID),
+		PullRequestID: githubv4.String(g.remotePullRequest.ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
+		LabelIDs:      &labelsID,
+		State:         &pullRequestUpdateStateOpen,
 	}
 
 	err = client.Mutate(context.Background(), &mutation, input, nil)
@@ -118,7 +197,7 @@ func (g *Github) UpdatePullRequest(ID string) error {
 	return nil
 }
 
-// OpenPullRequest creates a new pull request.
+// OpenPullRequest creates a new pull request on Github.
 func (g *Github) OpenPullRequest() error {
 
 	/*
@@ -149,18 +228,12 @@ func (g *Github) OpenPullRequest() error {
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
-	logrus.Infof("Opening Pull Request")
-
-	title := g.pullRequestDescription.Title
-
 	repositoryID, err := g.queryRepositoryID()
 	if err != nil {
 		return err
 	}
-	maintainerCanModify := true
-	draft := false
 
-	bodyPR, err := SetBody(g.pullRequestDescription)
+	bodyPR, err := g.generatePullRequestBody()
 	if err != nil {
 		return err
 	}
@@ -169,10 +242,10 @@ func (g *Github) OpenPullRequest() error {
 		BaseRefName:         githubv4.String(g.spec.Branch),
 		RepositoryID:        githubv4.String(repositoryID),
 		HeadRefName:         githubv4.String(g.remoteBranch),
-		Title:               githubv4.String(title),
+		Title:               githubv4.String(g.pullRequest.Title),
 		Body:                githubv4.NewString(githubv4.String(bodyPR)),
-		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(maintainerCanModify)),
-		Draft:               githubv4.NewBoolean(githubv4.Boolean(draft)),
+		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(!g.spec.PullRequest.MaintainerCannotModify)),
+		Draft:               githubv4.NewBoolean(githubv4.Boolean(g.spec.PullRequest.Draft)),
 	}
 
 	err = client.Mutate(context.Background(), &mutation, input, nil)
@@ -180,14 +253,14 @@ func (g *Github) OpenPullRequest() error {
 		return err
 	}
 
-	logrus.Infof("\nPull Request available on =>\n\n\t%s\n\n", mutation.CreatePullRequest.PullRequest.Url)
+	g.remotePullRequest = mutation.CreatePullRequest.PullRequest
 
 	return nil
 
 }
 
-// IsPullRequest checks if a pull request already exist and is in the state 'open'.
-func (g *Github) IsPullRequest() (ID string, err error) {
+// getRemotePullRequest checks if a pull request already exist on GitHub and is in the state 'open' or 'closed'.
+func (g *Github) getRemotePullRequest() error {
 	/*
 			https://developer.github.com/v4/explorer/
 		# Query
@@ -221,7 +294,7 @@ func (g *Github) IsPullRequest() (ID string, err error) {
 		Repository struct {
 			PullRequests struct {
 				Nodes []PullRequest
-			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: OPEN)"`
+			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: [OPEN,CLOSED])"`
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
@@ -232,22 +305,16 @@ func (g *Github) IsPullRequest() (ID string, err error) {
 		"headRefName": githubv4.String(g.remoteBranch),
 	}
 
-	err = client.Query(context.Background(), &query, variables)
+	err := client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		return ID, err
+		return err
 	}
 
 	if len(query.Repository.PullRequests.Nodes) > 0 {
-		ID = query.Repository.PullRequests.Nodes[0].ID
+		g.remotePullRequest = query.Repository.PullRequests.Nodes[0]
+		return nil
 	}
 
-	return ID, err
-}
-
-// InitPullRequestDescription set internal github settings
-func (g *Github) InitPullRequestDescription(title, body, report string) {
-	g.pullRequestDescription.Description = body
-	g.pullRequestDescription.Report = report
-	g.pullRequestDescription.Title = title
+	return nil
 }
