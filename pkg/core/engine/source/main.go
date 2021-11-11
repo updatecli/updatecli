@@ -20,7 +20,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
-	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
+	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Source defines how a value is retrieved from a specific source
@@ -247,14 +247,16 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		sourcer = &d
 
 	case "yaml":
-		y := yml.Yaml{}
-		err := mapstructure.Decode(s.Config.Spec, &y)
+		var sourceSpec yaml.YamlSpec
 
-		if err != nil {
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
 		}
 
-		sourcer = &y
+		sourcer, err = yaml.New(sourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
 
 	case "shell":
 		shellResourceSpec := shell.ShellSpec{}

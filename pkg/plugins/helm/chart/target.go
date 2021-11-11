@@ -24,19 +24,22 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, err
 	}
 
-	Yaml := yaml.Yaml{
+	YamlResource, err := yaml.New(yaml.YamlSpec{
 		File: filepath.Join(c.Name, c.File),
 		Key:  c.Key,
+	})
+	if err != nil {
+		return false, err
 	}
 
 	if len(c.Value) == 0 {
-		Yaml.Value = source
+		YamlResource.Spec.Value = source
 		c.Value = source
 	} else {
-		Yaml.Value = c.Value
+		YamlResource.Spec.Value = c.Value
 	}
 
-	changed, err = Yaml.Target(source, dryRun)
+	changed, err = YamlResource.Target(source, dryRun)
 
 	if err != nil {
 		return false, err
@@ -74,19 +77,22 @@ func (c *Chart) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (
 
 	filename := filepath.Join(c.Name, c.File)
 
-	Yaml := yaml.Yaml{
+	YamlResource, err := yaml.New(yaml.YamlSpec{
 		File: filename,
 		Key:  c.Key,
+	})
+	if err != nil {
+		return false, files, message, err
 	}
 
 	if len(c.Value) == 0 {
-		Yaml.Value = source
+		YamlResource.Spec.Value = source
 		c.Value = source
 	} else {
-		Yaml.Value = c.Value
+		YamlResource.Spec.Value = c.Value
 	}
 
-	changed, files, message, err = Yaml.TargetFromSCM(source, scm, dryRun)
+	changed, files, message, err = YamlResource.TargetFromSCM(source, scm, dryRun)
 
 	if err != nil {
 		return false, files, message, err

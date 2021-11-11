@@ -1,5 +1,5 @@
 ---
-title: Generic Example for the shell resource
+title: Show a set of shell resources as a generic example
 sources:
   default:
     kind: shell

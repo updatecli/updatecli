@@ -7,5 +7,6 @@ github:
   token: "GITHUB_TOKEN"
   username: olblak
   branch: mirror-rsync
+  admin: asterix
   #branch: master
   #branch: azure-mirror
