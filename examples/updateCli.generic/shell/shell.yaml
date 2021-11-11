@@ -1,13 +1,16 @@
 ---
+title: Generic Example for the shell resource
 sources:
   default:
     kind: shell
     spec:
       command: "./examples/updateCli.generic/shell/source.sh"
-  sayHello:
-    kind: shell
-    spec:
-      command: echo Hello
+  ## Uncomment to test a failing source
+  # noDirectoryTiTi:
+  #   kind: shell
+  #   spec:
+  #     command: ls /titi
+
 conditions:
   noSource:
     kind: shell
@@ -19,11 +22,27 @@ conditions:
     sourceID: default
     spec:
       command: echo
+  ## Uncomment to check a failing condition
+  # noDirectoryTiTi:
+  #   kind: shell
+  #   disablesourceinput: true
+  #   spec:
+  #     command: "ls /titi"
 
 targets:
-  default:
-    name: setGrepVersion
+  changeGrepVersion:
     sourceID: default
     kind: shell
     spec:
-      command: "./examples/updateCli.generic/shell/target.sh"
+      command: "./examples/updateCli.generic/shell/target.sh change"
+  doesNotChangeAnything:
+    sourceID: default
+    kind: shell
+    spec:
+      command: "./examples/updateCli.generic/shell/target.sh do-not-change"
+  ## Uncomment to test a failing source
+  # noDirectoryTiTi:
+  #   kind: shell
+  #   sourceID: default
+  #   spec:
+  #     command: ls /titi

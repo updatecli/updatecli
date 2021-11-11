@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
@@ -34,31 +33,23 @@ func (s *Shell) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (bool, []
 //	- Any other exit code means "failed command with no change"
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
 func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, error) {
-	cmdResult, err := s.executor.ExecuteCommand(command{
+	s.executeCommand(command{
 		Cmd: s.appendSource(source),
 		Dir: workingDir,
+		// Provides the "DRY_RUN" environment variable to the shell command (true if "diff", false if "apply")
 		Env: []string{fmt.Sprintf("DRY_RUN=%v", dryRun)},
 	})
-	if err != nil {
-		return false, "", err
+
+	if s.result.ExitCode != 0 {
+		return false, "", &ExecutionFailedError{}
 	}
 
-	if cmdResult.ExitCode != 0 {
-		return false, "", &executionFailedError{
-			Command: s.appendSource(source),
-			ErrCode: cmdResult.ExitCode,
-			Stdout:  cmdResult.Stdout,
-			Stderr:  cmdResult.Stderr,
-		}
-	}
-
-	if cmdResult.Stdout == "" {
-		logrus.Infof("%v The shell 🐚 command %q ran successfully with no change.", result.SUCCESS, s.appendSource(source))
+	if s.result.Stdout == "" {
+		logrus.Info("No change detected")
 		return false, "", nil
 	}
 
-	message := fmt.Sprintf("%v The shell 🐚 command %q ran successfully and reported the following change: %q.", result.ATTENTION, s.appendSource(source), cmdResult.Stdout)
-	logrus.Infof(message)
+	commitMessage := fmt.Sprintf("ran shell command %q", s.appendSource(source))
 
-	return true, message, nil
+	return true, commitMessage, nil
 }

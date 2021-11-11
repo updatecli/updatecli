@@ -1,8 +1,6 @@
 package shell
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
@@ -17,21 +15,14 @@ func (s *Shell) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 }
 
 func (s *Shell) condition(source, workingDir string) (bool, error) {
-	cmdResult, err := s.executor.ExecuteCommand(command{
+	s.executeCommand(command{
 		Cmd: s.appendSource(source),
 		Dir: workingDir,
 	})
 
-	if err != nil {
-		return false, err
-	}
-
-	if cmdResult.ExitCode != 0 {
-		logrus.Infof(errorMessage(cmdResult.ExitCode, s.appendSource(source), cmdResult.Stdout, cmdResult.Stderr))
+	if s.result.ExitCode != 0 {
 		return false, nil
 	}
-
-	logrus.Infof("%v The shell 🐚 command %q successfully validated the condition.", result.SUCCESS, s.appendSource(source))
 
 	return true, nil
 }
