@@ -16,24 +16,19 @@ import (
 
 // Target updates a scm repository based on the modified yaml file.
 func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
-	y.Value = source
-
-	if len(y.Path) > 0 {
-		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
-	}
+	y.Spec.Value = source
 
 	// Test if target reference is an URL. In that case we don't know how to update.
-	if text.IsURL(y.File) {
+	if text.IsURL(y.Spec.File) {
 		return false, fmt.Errorf("unsupported filename prefix")
 	}
 
 	changed = false
 
-	contentRetriever := &text.Text{}
-	data, err := contentRetriever.ReadAll(y.File)
-	if err != nil {
-		return changed, err
+	if err := y.Read(); err != nil {
+		return false, err
 	}
+	data := y.CurrentContent
 
 	out := yaml.Node{}
 
@@ -43,35 +38,35 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 		return changed, fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), y.Spec.Value, 1)
 
 	if valueFound {
-		if oldVersion == y.Value {
+		if oldVersion == y.Spec.Value {
 			logrus.Infof("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done",
-				y.Key,
-				y.File,
-				y.Value)
+				y.Spec.Key,
+				y.Spec.File,
+				y.Spec.Value)
 			return changed, nil
 		}
 
 		changed = true
 		logrus.Infof("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'",
-			y.Key,
-			y.File,
+			y.Spec.Key,
+			y.Spec.File,
 			oldVersion,
-			y.Value)
+			y.Spec.Value)
 	} else {
-		logrus.Infof("\u2717 cannot find key '%s' from file '%s'", y.Key, y.File)
+		logrus.Infof("\u2717 cannot find key '%s' from file '%s'", y.Spec.Key, y.Spec.File)
 		return changed, nil
 	}
 
 	if !dryRun {
-		fileInfo, err := os.Stat(y.File)
+		fileInfo, err := os.Stat(y.Spec.File)
 		if err != nil {
 			logrus.Errorf("unable to get file info: %s", err)
 		}
 
-		logrus.Debugf("fileInfo for %s mode=%s", y.File, fileInfo.Mode().String())
+		logrus.Debugf("fileInfo for %s mode=%s", y.Spec.File, fileInfo.Mode().String())
 
 		user, err := user.Current()
 		if err != nil {
@@ -80,9 +75,9 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 
 		logrus.Debugf("user: username=%s, uid=%s, gid=%s", user.Username, user.Uid, user.Gid)
 
-		newFile, err := os.Create(y.File)
+		newFile, err := os.Create(y.Spec.File)
 		if err != nil {
-			return changed, fmt.Errorf("unable to write to file %s: %v", y.File, err)
+			return changed, fmt.Errorf("unable to write to file %s: %v", y.Spec.File, err)
 		}
 
 		defer newFile.Close()
@@ -102,26 +97,18 @@ func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
 func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error) {
-
-	if len(y.Path) > 0 {
-		logrus.Warnf("WARNING: Key 'Path' is obsolete and now directly retrieve from File")
-	}
-
-	// Test if target reference a file with a prefix like https:// or file://
-	// In that case we don't know how to update those files.
-	if text.IsURL(y.File) {
+	if text.IsURL(y.Spec.File) {
 		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
-	y.Value = source
+	y.Spec.Value = source
 
 	changed = false
 
-	contentRetriever := &text.Text{}
-	data, err := contentRetriever.ReadAll(filepath.Join(scm.GetDirectory(), y.File))
-	if err != nil {
-		return changed, files, message, err
+	if err := y.Read(); err != nil {
+		return false, files, message, err
 	}
+	data := y.CurrentContent
 
 	out := yaml.Node{}
 
@@ -131,31 +118,31 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 		return changed, files, message, fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), y.Spec.Value, 1)
 
 	if valueFound {
-		if oldVersion == y.Value {
+		if oldVersion == y.Spec.Value {
 			logrus.Infof("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done",
-				y.Key,
-				y.File,
-				y.Value)
+				y.Spec.Key,
+				y.Spec.File,
+				y.Spec.Value)
 			return changed, files, message, nil
 		}
 		changed = true
 		logrus.Infof("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'",
-			y.Key,
-			y.File,
+			y.Spec.Key,
+			y.Spec.File,
 			oldVersion,
-			y.Value)
+			y.Spec.Value)
 
 	} else {
-		logrus.Infof("\u2717 cannot find key '%s' from file '%s'", y.Key, y.File)
+		logrus.Infof("\u2717 cannot find key '%s' from file '%s'", y.Spec.Key, y.Spec.File)
 		return changed, files, message, nil
 	}
 
 	if !dryRun {
 
-		newFile, err := os.Create(filepath.Join(scm.GetDirectory(), y.File))
+		newFile, err := os.Create(filepath.Join(scm.GetDirectory(), y.Spec.File))
 		defer newFile.Close()
 
 		if err != nil {
@@ -172,9 +159,9 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 		}
 	}
 
-	files = append(files, y.File)
+	files = append(files, y.Spec.File)
 
-	message = fmt.Sprintf("Update key %q from file %q", y.Key, y.File)
+	message = fmt.Sprintf("Update key %q from file %q", y.Spec.Key, y.Spec.File)
 
 	return changed, files, message, nil
 }

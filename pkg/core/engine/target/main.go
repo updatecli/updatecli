@@ -15,7 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
-	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
+	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Target defines which file needs to be updated based on source output
@@ -108,16 +108,16 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		targeter = &t
 
 	case "yaml":
-		y := yml.Yaml{}
+		var targetSpec yaml.YamlSpec
 
-		err := mapstructure.Decode(target.Config.Spec, &y)
-
-		if err != nil {
-			logrus.Errorf("err - %s", err)
+		if err := mapstructure.Decode(target.Config.Spec, &targetSpec); err != nil {
 			return nil, err
 		}
 
-		targeter = &y
+		targeter, err = yaml.New(targetSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "file":
 		var targetSpec file.FileSpec

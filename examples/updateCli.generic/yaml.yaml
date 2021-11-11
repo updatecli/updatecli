@@ -1,0 +1,74 @@
+---
+title: Show a set of yaml resources as a generic example
+sources:
+  default:
+    kind: yaml
+    spec:
+      file: examples/values.yaml
+      key: "github.user"
+  fromExplicitFile:
+    kind: yaml
+    spec:
+      file: file://examples/values.yaml
+      key: "github.user"
+  ## https://github.com/updatecli/updatecli/issues/357
+  fromUrl:
+    kind: yaml
+    spec:
+      file: https://raw.githubusercontent.com/updatecli/updatecli/dc90759914718beee17101c693911088cfbf6deb/examples/values.yaml
+      key: "github.user"
+  ## Uncomment to test failing examples
+  # noSuchFile:
+  #   kind: yaml
+  #   spec:
+  #     file: /tmp/notexisting.yaml
+  #     key: "github.user"
+  # noSuchKey:
+  #   kind: yaml
+  #   spec:
+  #     file: examples/values.yaml
+  #     key: "foo.bar"
+conditions:
+  ## https://github.com/updatecli/updatecli/issues/358
+  # checkGithubUsername:
+  #   kind: yaml
+  #   sourceID: default
+  #   spec:
+  #     file: examples/values.yaml
+  #     key: "github.user"
+  checkGithubRepository:
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: examples/values.yaml
+      key: "github.repository"
+      value: "charts"
+  ## Uncomment to test a failing source
+  # checkGithubUsername:
+  #   kind: yaml
+  #   disablesourceinput: true
+  #   spec:
+  #     file: examples/values.yaml
+  #     key: "github.user"
+  #     value: "r2d2"
+targets:
+  setGitHubAdmin:
+    kind: yaml
+    sourceID: default
+    spec:
+      file: examples/values.yaml
+      key: "github.admin"
+  setGitHubOwner:
+    kind: yaml
+    sourceID: default
+    spec:
+      file: examples/values.yaml
+      key: "github.owner"
+  ## https://github.com/updatecli/updatecli/issues/359
+  # setGitHubRepository:
+  #   kind: yaml
+  #   sourceID: default
+  #   spec:
+  #     file: examples/values.yaml
+  #     key: "github.repository"
+  #     value: "charts"
