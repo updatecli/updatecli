@@ -121,13 +121,13 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 }
 
 var supportedKeywordsInitializers = map[string]keywords.Logic{
-	"from":        keywords.From{},
-	"run":         nil,
-	"cmd":         nil,
-	"label":       nil,
-	"maintainer":  nil,
-	"expose":      nil,
-	"env":         nil,
+	"from":       keywords.From{},
+	"run":        nil,
+	"cmd":        nil,
+	"label":      nil,
+	"maintainer": nil,
+	"expose":     nil,
+	//"env":         nil,
 	"add":         nil,
 	"copy":        nil,
 	"entrypoint":  nil,
@@ -135,6 +135,7 @@ var supportedKeywordsInitializers = map[string]keywords.Logic{
 	"user":        nil,
 	"workdir":     nil,
 	"arg":         keywords.Arg{},
+	"env":         keywords.Env{},
 	"onbuild":     nil,
 	"stopsignal":  nil,
 	"healthcheck": nil,
