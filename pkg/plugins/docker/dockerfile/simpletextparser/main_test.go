@@ -46,6 +46,20 @@ func TestInstruction_setKeywordLogic(t *testing.T) {
 			wantLogic: keywords.Arg{},
 		},
 		{
+			name: "'ENV' instruction",
+			parser: SimpleTextDockerfileParser{
+				Keyword: "ENV",
+			},
+			wantLogic: keywords.Env{},
+		},
+		{
+			name: "'env' instruction",
+			parser: SimpleTextDockerfileParser{
+				Keyword: "env",
+			},
+			wantLogic: keywords.Env{},
+		},
+		{
 			name: "Not supported (yet) instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "ONBUILD",
