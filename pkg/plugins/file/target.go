@@ -15,7 +15,7 @@ import (
 // Target creates or updates a file located locally.
 // The default content is the value retrieved from source
 func (f *File) Target(source string, dryRun bool) (bool, error) {
-	changed, _, _, err := f.writeTargetFile(source, dryRun)
+	changed, _, _, err := f.target(source, dryRun)
 	return changed, err
 }
 
@@ -25,10 +25,10 @@ func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (bool, []s
 	if !filepath.IsAbs(f.spec.File) {
 		f.spec.File = filepath.Join(scm.GetDirectory(), f.spec.File)
 	}
-	return f.writeTargetFile(source, dryRun)
+	return f.target(source, dryRun)
 }
 
-func (f *File) writeTargetFile(source string, dryRun bool) (bool, []string, string, error) {
+func (f *File) target(source string, dryRun bool) (bool, []string, string, error) {
 	var files []string
 	var message string
 
