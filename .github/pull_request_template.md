@@ -2,21 +2,23 @@
 
 Fix #XXX
 
-<!-- Description> -->
+<!-- Describe the changes introduced by this pull request -->
 
 ## Test
+
 To test this pull request, you can run the following commands:
 
-```
-  cp <to_package_directory>
-  go test
+```shell
+cp <to_package_directory>
+go test
 ```
 
-## Additionnal Information
+## Additional Information
+
 ### Tradeoff
 
-<!-- Please describe the tradeoff that you found acceptable in this pr -->
+<!-- Please describe, if any, the tradeoffs that you found acceptable in this pull request -->
 
 ### Potential improvement
 
-<!-- Please describe potential improvement that you are envisioning -->
+<!-- Please describe, if any, potential improvement that you are envisioning -->

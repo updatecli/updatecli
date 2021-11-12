@@ -66,6 +66,7 @@ func New(spec FileSpec) (*File, error) {
 	}, nil
 }
 
+// Read defines CurrentContent to the content of the file which path is specified in spec.File
 func (f *File) Read() error {
 	// Return the specified line if a positive number is specified by user in its manifest
 	if f.spec.Line > 0 {

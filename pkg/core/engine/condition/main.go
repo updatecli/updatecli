@@ -17,7 +17,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
-	yml "github.com/updatecli/updatecli/pkg/plugins/yaml"
+	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Condition defines which condition needs to be met
@@ -158,13 +158,13 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &d
 
 	case "file":
-		var fileResourceSpec file.FileSpec
+		var conditionSpec file.FileSpec
 
-		if err := mapstructure.Decode(condition.Config.Spec, &fileResourceSpec); err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner, err = file.New(fileResourceSpec)
+		conditioner, err = file.New(conditionSpec)
 		if err != nil {
 			return nil, err
 		}
@@ -210,23 +210,25 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &ch
 
 	case "yaml":
-		y := yml.Yaml{}
+		var conditionSpec yaml.YamlSpec
 
-		err := mapstructure.Decode(condition.Config.Spec, &y)
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
+			return nil, err
+		}
+
+		conditioner, err = yaml.New(conditionSpec)
 		if err != nil {
 			return nil, err
 		}
 
-		conditioner = &y
-
 	case "shell":
-		var shellResourceSpec shell.ShellSpec
+		var conditionSpec shell.ShellSpec
 
-		if err := mapstructure.Decode(condition.Config.Spec, &shellResourceSpec); err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner, err = shell.New(shellResourceSpec)
+		conditioner, err = shell.New(conditionSpec)
 		if err != nil {
 			return nil, err
 		}

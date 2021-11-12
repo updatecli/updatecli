@@ -17,6 +17,7 @@ type commandResult struct {
 	ExitCode int
 	Stdout   string
 	Stderr   string
+	Cmd      string
 }
 
 type commandExecutor interface {
@@ -45,6 +46,7 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 			ExitCode: ee.ExitCode(),
 			Stdout:   out,
 			Stderr:   stderr.String(),
+			Cmd:      inputCmd.Cmd,
 		}, nil
 	}
 	if err != nil {
@@ -55,5 +57,6 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 		ExitCode: 0,
 		Stdout:   out,
 		Stderr:   stderr.String(),
+		Cmd:      inputCmd.Cmd,
 	}, nil
 }

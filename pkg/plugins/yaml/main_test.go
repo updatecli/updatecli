@@ -1,10 +1,14 @@
 package yaml
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/text"
 
 	"gopkg.in/yaml.v3"
 )
@@ -34,7 +38,7 @@ image4:
 - g
 - h
 image5::tag: 1.17
-image6::tags: 
+image6::tags:
 - 1.17
 - 1.18
 image7@backend:
@@ -378,5 +382,145 @@ image4:
 
 	if !(reflect.DeepEqual(raw, []byte(outputData))) {
 		t.Errorf("Wrong Yaml output\nexpected:\t%#v\n\ngot:\t\t%#v\n", outputData, string(raw))
+	}
+}
+
+func Test_New(t *testing.T) {
+	tests := []struct {
+		name     string
+		spec     YamlSpec
+		wantErr  bool
+		wantYaml *Yaml
+	}{
+		{
+			name: "Normal case",
+			spec: YamlSpec{
+				File: "/tmp/test.yaml",
+				Key:  "foo.bar",
+			},
+			wantErr: false,
+			wantYaml: &Yaml{
+				contentRetriever: &text.Text{},
+				Spec: YamlSpec{
+					File: "/tmp/test.yaml",
+					Key:  "foo.bar",
+				},
+			},
+		},
+		{
+			name: "Normal case with a 'file://' prefix",
+			spec: YamlSpec{
+				File: "file:///tmp/bar.yaml",
+				Key:  "foo.bar",
+			},
+			wantErr: false,
+			wantYaml: &Yaml{
+				contentRetriever: &text.Text{},
+				Spec: YamlSpec{
+					File: "/tmp/bar.yaml",
+					Key:  "foo.bar",
+				},
+			},
+		},
+		{
+			name: "raises an error when 'File' is empty",
+			spec: YamlSpec{
+				File: "/tmp/test.yaml",
+				Key:  "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "raises an error when 'Key' is empty",
+			spec: YamlSpec{
+				File: "",
+				Key:  "foo.bar",
+			},
+			wantErr: true,
+		},
+		{
+			name: "raises an error when 'Path' is defined (deprecated)",
+			spec: YamlSpec{
+				Path: "/tmp/bar.yaml",
+				Key:  "foo.bar",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotYaml, gotErr := New(tt.spec)
+
+			if tt.wantErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+
+			assert.Equal(t, tt.wantYaml, gotYaml)
+		})
+	}
+}
+
+func Test_Read(t *testing.T) {
+	tests := []struct {
+		name                string
+		wantErr             bool
+		mockReturnedContent string
+		mockReturnedError   error
+		spec                YamlSpec
+		wantContent         string
+		wantMockState       text.MockTextRetriever
+	}{
+		{
+			name: "Normal case",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			spec: YamlSpec{
+				File: "test.yaml",
+			},
+			wantContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantMockState: text.MockTextRetriever{
+				Location: "test.yaml",
+			},
+		},
+		{
+			name:              "Yaml file does not exist",
+			mockReturnedError: fmt.Errorf("no such file or directory"),
+			spec: YamlSpec{
+				File: "/not_existing.txt",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockText := text.MockTextRetriever{
+				Content: tt.mockReturnedContent,
+				Err:     tt.mockReturnedError,
+			}
+			y := &Yaml{
+				Spec:             tt.spec,
+				contentRetriever: &mockText,
+			}
+			gotErr := y.Read()
+
+			if tt.wantErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+
+			assert.Equal(t, tt.wantContent, y.CurrentContent)
+			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
+			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
+		})
 	}
 }

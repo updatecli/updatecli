@@ -3,163 +3,91 @@ package yaml
 import (
 	"fmt"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, dryRun bool) (changed bool, err error) {
-	y.Value = source
-
-	if len(y.Path) > 0 {
-		logrus.Warnf("Key 'Path' is obsolete and now directly defined from file")
-	}
-
-	// Test if target reference is an URL. In that case we don't know how to update.
-	if text.IsURL(y.File) {
-		return false, fmt.Errorf("unsupported filename prefix")
-	}
-
-	changed = false
-
-	contentRetriever := &text.Text{}
-	data, err := contentRetriever.ReadAll(y.File)
-	if err != nil {
-		return changed, err
-	}
-
-	out := yaml.Node{}
-
-	err = yaml.Unmarshal([]byte(data), &out)
-
-	if err != nil {
-		return changed, fmt.Errorf("cannot unmarshal data: %v", err)
-	}
-
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
-
-	if valueFound {
-		if oldVersion == y.Value {
-			logrus.Infof("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done",
-				y.Key,
-				y.File,
-				y.Value)
-			return changed, nil
-		}
-
-		changed = true
-		logrus.Infof("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'",
-			y.Key,
-			y.File,
-			oldVersion,
-			y.Value)
-	} else {
-		logrus.Infof("\u2717 cannot find key '%s' from file '%s'", y.Key, y.File)
-		return changed, nil
-	}
-
-	if !dryRun {
-		fileInfo, err := os.Stat(y.File)
-		if err != nil {
-			logrus.Errorf("unable to get file info: %s", err)
-		}
-
-		logrus.Debugf("fileInfo for %s mode=%s", y.File, fileInfo.Mode().String())
-
-		user, err := user.Current()
-		if err != nil {
-			logrus.Errorf("unable to get user info: %s", err)
-		}
-
-		logrus.Debugf("user: username=%s, uid=%s, gid=%s", user.Username, user.Uid, user.Gid)
-
-		newFile, err := os.Create(y.File)
-		if err != nil {
-			return changed, fmt.Errorf("unable to write to file %s: %v", y.File, err)
-		}
-
-		defer newFile.Close()
-
-		encoder := yaml.NewEncoder(newFile)
-		defer encoder.Close()
-		encoder.SetIndent(yamlIdent)
-		err = encoder.Encode(&out)
-
-		if err != nil {
-			return changed, fmt.Errorf("something went wrong while encoding %v", err)
-		}
-	}
-
-	return changed, nil
+func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
+	changed, _, _, err := y.target(source, dryRun)
+	return changed, err
 }
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
-func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error) {
-
-	if len(y.Path) > 0 {
-		logrus.Warnf("WARNING: Key 'Path' is obsolete and now directly retrieve from File")
+func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (bool, []string, string, error) {
+	if !filepath.IsAbs(y.Spec.File) {
+		y.Spec.File = filepath.Join(scm.GetDirectory(), y.Spec.File)
 	}
+	return y.target(source, dryRun)
+}
 
-	// Test if target reference a file with a prefix like https:// or file://
-	// In that case we don't know how to update those files.
-	if text.IsURL(y.File) {
+func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error) {
+	var files []string
+	var message string
+
+	if text.IsURL(y.Spec.File) {
 		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
-	y.Value = source
-
-	changed = false
-
-	contentRetriever := &text.Text{}
-	data, err := contentRetriever.ReadAll(filepath.Join(scm.GetDirectory(), y.File))
-	if err != nil {
-		return changed, files, message, err
+	if err := y.Read(); err != nil {
+		return false, files, message, err
 	}
+	data := y.CurrentContent
 
 	out := yaml.Node{}
 
-	err = yaml.Unmarshal([]byte(data), &out)
+	err := yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
-		return changed, files, message, fmt.Errorf("cannot unmarshal data: %v", err)
+		return false, files, message, fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Key, "."), y.Value, 1)
+	valueToWrite := source
+	if y.Spec.Value != "" {
+		valueToWrite = y.Spec.Value
+		logrus.Info("INFO: Using spec.Value instead of source input value.")
+	}
+
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), valueToWrite, 1)
 
 	if valueFound {
-		if oldVersion == y.Value {
-			logrus.Infof("\u2714 Key '%s', from file '%v', already set to %s, nothing else need to be done",
-				y.Key,
-				y.File,
-				y.Value)
-			return changed, files, message, nil
+		if oldVersion == valueToWrite {
+			logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
+				result.SUCCESS,
+				y.Spec.Key,
+				y.Spec.File,
+				valueToWrite)
+			return false, files, message, nil
 		}
-		changed = true
-		logrus.Infof("\u2714 Key '%s', from file '%v', was updated from '%s' to '%s'",
-			y.Key,
-			y.File,
+		logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
+			result.ATTENTION,
+			y.Spec.Key,
+			y.Spec.File,
 			oldVersion,
-			y.Value)
+			valueToWrite)
 
 	} else {
-		logrus.Infof("\u2717 cannot find key '%s' from file '%s'", y.Key, y.File)
-		return changed, files, message, nil
+		logrus.Infof("%s cannot find key '%s' from file '%s'",
+			result.FAILURE,
+			y.Spec.Key,
+			y.Spec.File)
+		return false, files, message, nil
 	}
 
 	if !dryRun {
 
-		newFile, err := os.Create(filepath.Join(scm.GetDirectory(), y.File))
+		newFile, err := os.Create(y.Spec.File)
 		defer newFile.Close()
 
 		if err != nil {
-			return changed, files, message, nil
+			return false, files, message, nil
 		}
 
 		encoder := yaml.NewEncoder(newFile)
@@ -168,13 +96,13 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed b
 		err = encoder.Encode(&out)
 
 		if err != nil {
-			return changed, files, message, err
+			return false, files, message, err
 		}
 	}
 
-	files = append(files, y.File)
+	files = append(files, y.Spec.File)
 
-	message = fmt.Sprintf("Update key %q from file %q", y.Key, y.File)
+	message = fmt.Sprintf("Update key %q from file %q", y.Spec.Key, y.Spec.File)
 
-	return changed, files, message, nil
+	return true, files, message, nil
 }

@@ -1,10 +1,13 @@
 package yaml
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/text"
 
 	"gopkg.in/yaml.v3"
 )
@@ -15,11 +18,59 @@ var (
 
 // Yaml defines a specification for a "yaml" resource
 // parsed from an updatecli manifest file
-type Yaml struct {
-	File  string
-	Key   string
+type YamlSpec struct {
+	File string
+	Key  string
+	// Deprecated: use File instead
 	Path  string
 	Value string
+}
+
+// Yaml defines a resource of type "yaml"
+type Yaml struct {
+	Spec             YamlSpec
+	contentRetriever text.TextRetriever
+	CurrentContent   string
+}
+
+// New returns a reference to a newly initialized Yaml object from a YamlSpec
+// or an error if the provided YamlSpec triggers a validation error.
+func New(spec YamlSpec) (*Yaml, error) {
+	var validationErrors []string
+
+	// Check for all validation
+	if len(spec.Path) > 0 {
+		validationErrors = append(validationErrors, "Invalid spec for yaml resource: Key 'path' is deprecated, use 'file' instead.")
+	}
+	if spec.File == "" {
+		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'file' is empty.")
+	}
+	if spec.Key == "" {
+		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
+	}
+	// Return all the validation errors if found any
+	if len(validationErrors) > 0 {
+		return nil, fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+	}
+	if strings.HasPrefix(spec.File, "file://") {
+		spec.File = strings.TrimPrefix(spec.File, "file://")
+	}
+	return &Yaml{
+		Spec:             spec,
+		contentRetriever: &text.Text{},
+	}, nil
+}
+
+// Read defines CurrentContent to the content of the file which path is specified in Spec.File
+func (y *Yaml) Read() error {
+	// Otherwise return the textual content
+	textContent, err := y.contentRetriever.ReadAll(y.Spec.File)
+	if err != nil {
+		return err
+	}
+	y.CurrentContent = textContent
+
+	return nil
 }
 
 // isPositionKey checks if key use the array position like agents[0].
