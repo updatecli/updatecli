@@ -84,7 +84,7 @@ func (f *File) condition(source string) (bool, error) {
 			logrus.Infof(
 				"\u2717 %s is different than the input source value:\n%s",
 				logMessage,
-				text.Diff(f.CurrentContent, source),
+				text.Diff(f.spec.File, f.CurrentContent, source),
 			)
 
 			return false, nil
@@ -110,7 +110,7 @@ func (f *File) condition(source string) (bool, error) {
 
 	if f.spec.Content != f.CurrentContent {
 		logrus.Infof("\u2717 %s is different than the specified content: \n%s",
-			logMessage, text.Diff(f.CurrentContent, f.spec.Content))
+			logMessage, text.Diff(f.spec.File, f.CurrentContent, f.spec.Content))
 
 		return false, nil
 	}
