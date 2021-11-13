@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/git"
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )

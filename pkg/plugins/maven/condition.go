@@ -9,8 +9,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 // Condition tests if a specific version exist on the maven repository

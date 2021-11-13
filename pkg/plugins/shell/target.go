@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 func (s *Shell) Target(source string, dryRun bool) (bool, error) {

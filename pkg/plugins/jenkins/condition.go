@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 // Condition checks that a Jenkins version exists and that the version

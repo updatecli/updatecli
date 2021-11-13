@@ -9,7 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/helpers"
-	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Target updates a targeted Dockerfile

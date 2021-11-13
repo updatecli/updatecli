@@ -1,7 +1,7 @@
 package shell
 
 import (
-	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Condition tests if the provided command (concatenated with the source) is executed with success

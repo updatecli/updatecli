@@ -7,8 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 // Condition check if a specific chart version exist

@@ -10,9 +10,9 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 
 	"path/filepath"
