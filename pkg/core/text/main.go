@@ -2,6 +2,7 @@ package text
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -10,6 +11,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/hexops/gotextdiff"
+	"github.com/hexops/gotextdiff/myers"
+	"github.com/hexops/gotextdiff/span"
 )
 
 type TextRetriever interface {
@@ -140,19 +145,10 @@ func (t *Text) ReadLine(location string, line int) (string, error) {
 }
 
 // Diff return a diff like string, comparing string A and string B
-func Diff(a, b string) (result string) {
-
-	for _, line := range strings.Split(a, "\n") {
-		result = result + "< " + line + "\n"
-	}
-
-	result = result + "---\n"
-
-	for _, line := range strings.Split(b, "\n") {
-		result = result + "> " + line + "\n"
-	}
-	return result
-
+func Diff(filename, originalFileContent, newFileContent string) string {
+	edits := myers.ComputeEdits(span.URIFromPath(filename), originalFileContent, newFileContent)
+	diff := fmt.Sprint(gotextdiff.ToUnified(filename, filename, originalFileContent, edits))
+	return diff
 }
 
 // Show return a string where each line start with a tabulation

@@ -79,7 +79,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		files = append(files, f.spec.File)
 		message = fmt.Sprintf("changed line %d of file %q", f.spec.Line, f.spec.File)
 
-		logrus.Infof("\u2714 The line %d of the file %q was updated: \n\n%s\n", f.spec.Line, f.spec.File, text.Diff(currentLine, newContent))
+		logrus.Infof("\u2714 The line %d of the file %q was updated: \n\n%s\n", f.spec.Line, f.spec.File, text.Diff(f.spec.File, currentLine, newContent))
 
 		return true, files, message, nil
 
@@ -143,7 +143,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 	files = append(files, f.spec.File)
 	message = fmt.Sprintf("Updated the file %q\n", f.spec.File)
 
-	logrus.Infof("\u2714 File content for %q, updated. \n\n%s\n", f.spec.File, text.Diff(f.CurrentContent, newContent))
+	logrus.Infof("\u2714 File content for %q, updated. \n\n%s\n", f.spec.File, text.Diff(f.spec.File, f.CurrentContent, newContent))
 
 	return true, files, message, nil
 }
