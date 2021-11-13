@@ -117,7 +117,7 @@ func (p *Pipeline) Run() error {
 
 	if err != nil {
 		p.Report.Result = result.FAILURE
-		return fmt.Errorf("sources stage:\t%q\n", err.Error())
+		return fmt.Errorf("sources stage:\t%q", err.Error())
 	}
 
 	if len(p.Conditions) > 0 {
@@ -126,7 +126,7 @@ func (p *Pipeline) Run() error {
 
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			return fmt.Errorf("conditions stage:\t%q\n", err.Error())
+			return fmt.Errorf("conditions stage:\t%q", err.Error())
 		} else if !ok {
 			logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
 			return nil
@@ -139,7 +139,7 @@ func (p *Pipeline) Run() error {
 
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			return fmt.Errorf("targets stage:\t%q\n", err.Error())
+			return fmt.Errorf("targets stage:\t%q", err.Error())
 		}
 	}
 	p.Report.Result = result.SUCCESS
