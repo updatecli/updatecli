@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/updatecli/updatecli/pkg/core/engine/source"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 )
 
 // Mocking the context package
