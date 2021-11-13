@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -50,7 +51,17 @@ func Add(files []string, workingDir string) error {
 	logrus.Debugf("stage: git-add\n\n")
 
 	for _, file := range files {
-		logrus.Debugf("adding file: %s\n", file)
+		logrus.Debugf("adding file: %q\n", file)
+
+		// Strip working directory from file path if it's provided as an absolute path
+		if filepath.IsAbs(file) {
+			relativeFilePath, err := filepath.Rel(workingDir, file)
+			if err != nil {
+				return err
+			}
+			logrus.Debugf("absolute file path detected: %q converted to relative path %q\n", file, relativeFilePath)
+			file = relativeFilePath
+		}
 
 		r, err := git.PlainOpen(workingDir)
 		if err != nil {
