@@ -2,6 +2,7 @@ package text
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -10,7 +11,21 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/hexops/gotextdiff"
+	"github.com/hexops/gotextdiff/myers"
+	"github.com/hexops/gotextdiff/span"
 )
+
+type TextRetriever interface {
+	ReadLine(location string, line int) (string, error)
+	ReadAll(location string) (string, error)
+	WriteToFile(content string, location string) error
+	WriteLineToFile(lineContent, location string, lineNumber int) error
+	FileExists(location string) bool
+}
+
+type Text struct{}
 
 // readFromURL reads a text content from an http/https url
 func readFromURL(url string, line int) (string, error) {
@@ -78,7 +93,7 @@ func getLine(reader io.Reader, line int) string {
 // ReadAll reads text content from a location (URL or filepath).
 // The location accepts multiple input strings: starting with either "http://",
 // "https://", or file url "file://" or filepath (default)
-func ReadAll(location string) (string, error) {
+func (t *Text) ReadAll(location string) (string, error) {
 	if IsURL(location) {
 		content, err := readFromURL(location, 0)
 		if err != nil {
@@ -105,7 +120,7 @@ func ReadAll(location string) (string, error) {
 // ReadLine reads the specified line of text from the specified location (URL or filepath).
 // The location accepts multiple input strings: starting with either "http://",
 // "https://", or file url "file://" or filepath (default)
-func ReadLine(location string, line int) (string, error) {
+func (t *Text) ReadLine(location string, line int) (string, error) {
 	if IsURL(location) {
 		content, err := readFromURL(location, line)
 		if err != nil {
@@ -130,19 +145,10 @@ func ReadLine(location string, line int) (string, error) {
 }
 
 // Diff return a diff like string, comparing string A and string B
-func Diff(a, b string) (result string) {
-
-	for _, line := range strings.Split(a, "\n") {
-		result = result + "< " + line + "\n"
-	}
-
-	result = result + "---\n"
-
-	for _, line := range strings.Split(b, "\n") {
-		result = result + "> " + line + "\n"
-	}
-	return result
-
+func Diff(filename, originalFileContent, newFileContent string) string {
+	edits := myers.ComputeEdits(span.URIFromPath(filename), originalFileContent, newFileContent)
+	diff := fmt.Sprint(gotextdiff.ToUnified(filename, filename, originalFileContent, edits))
+	return diff
 }
 
 // Show return a string where each line start with a tabulation
@@ -185,18 +191,18 @@ func IsURL(location string) bool {
 }
 
 // WriteToFile write a string to a file
-func WriteToFile(content string, filename string) (err error) {
+func (t *Text) WriteToFile(content string, location string) error {
 
 	// If path is not absolute then we specify it to the current directory
-	if !filepath.IsAbs(filename) {
+	if !filepath.IsAbs(location) {
 		wd, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		filename = filepath.Join(wd, filename)
+		location = filepath.Join(wd, location)
 	}
 
-	file, err := os.Create(filename)
+	file, err := os.Create(location)
 	if err != nil {
 		return err
 	}
@@ -208,4 +214,52 @@ func WriteToFile(content string, filename string) (err error) {
 	}
 	return nil
 
+}
+
+// WriteLineToFile writes 'lineContent' to the line number 'lineNumber' in the file at 'location'
+func (t *Text) WriteLineToFile(lineContent, location string, lineNumber int) (err error) {
+
+	// Get actual content of the file
+	fileContent, err := t.ReadAll(location)
+	if err != nil {
+		return err
+	}
+
+	// Open the file
+	file, err := os.OpenFile(location, os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Create the "write" data buffer
+	datawriter := bufio.NewWriter(file)
+
+	// Iterate over the lines in a buffered text content
+	// until you find the correct line to write to
+	scanner := bufio.NewScanner(strings.NewReader(fileContent))
+	scanner.Split(bufio.ScanLines)
+
+	// Line number are 1-indexed
+	currentLine := 1
+	for scanner.Scan() {
+		if currentLine == lineNumber {
+			_, _ = datawriter.WriteString(lineContent + "\n")
+		} else {
+			_, _ = datawriter.WriteString(scanner.Text() + "\n")
+		}
+		currentLine++
+	}
+
+	datawriter.Flush()
+	return nil
+}
+
+func (t *Text) FileExists(location string) bool {
+	// Check that the specified exists or exit with error
+	if _, err := os.Stat(location); err != nil {
+		return false
+	}
+
+	return true
 }

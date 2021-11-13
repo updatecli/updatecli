@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -17,13 +18,50 @@ import (
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+func GetChangedFiles(workingDir string) ([]string, error) {
+	gitRepository, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return []string{}, err
+	}
+
+	gitWorktree, err := gitRepository.Worktree()
+	if err != nil {
+		return []string{}, err
+	}
+
+	gitStatus, err := gitWorktree.Status()
+	if err != nil {
+		return []string{}, err
+	}
+
+	// gitStatus is a list of changed (as per git definition) files in the provided workingDir
+	// We only retrieve the list of changed files without checking the file status (https://pkg.go.dev/github.com/go-git/go-git/v5@v5.4.2?utm_source=gopls#StatusCode)
+	// as we assume all changes have been done by the target and shall be added, even if already added
+	filesChanged := []string{}
+	for changedFile := range gitStatus {
+		filesChanged = append(filesChanged, changedFile)
+	}
+
+	return filesChanged, nil
+}
+
 // Add run `git add`.
 func Add(files []string, workingDir string) error {
 
 	logrus.Debugf("stage: git-add\n\n")
 
 	for _, file := range files {
-		logrus.Debugf("adding file: %s\n", file)
+		logrus.Debugf("adding file: %q\n", file)
+
+		// Strip working directory from file path if it's provided as an absolute path
+		if filepath.IsAbs(file) {
+			relativeFilePath, err := filepath.Rel(workingDir, file)
+			if err != nil {
+				return err
+			}
+			logrus.Debugf("absolute file path detected: %q converted to relative path %q\n", file, relativeFilePath)
+			file = relativeFilePath
+		}
 
 		r, err := git.PlainOpen(workingDir)
 		if err != nil {
