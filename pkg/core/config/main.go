@@ -14,9 +14,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/updatecli/updatecli/pkg/core/engine/condition"
 	"github.com/updatecli/updatecli/pkg/core/engine/source"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"gopkg.in/yaml.v3"
 )
 
