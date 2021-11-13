@@ -1,6 +1,6 @@
 package pipeline
 
-import "github.com/updatecli/updatecli/pkg/core/engine/target"
+import "github.com/updatecli/updatecli/pkg/core/pipeline/target"
 
 // Options hold target parameters
 
