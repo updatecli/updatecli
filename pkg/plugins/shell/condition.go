@@ -10,7 +10,7 @@ func (s *Shell) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM tests if the provided command (concatenated with the source) is executed with success from the SCM root directory
-func (s *Shell) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (s *Shell) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return s.condition(source, scm.GetDirectory())
 }
 

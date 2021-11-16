@@ -66,7 +66,7 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 
 // TargetFromSCM updates helm chart then push changed to a scm, it receives the default source value and dryrun flag
 // then return if it changed something or failed
-func (c *Chart) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (
+func (c *Chart) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (
 	changed bool, files []string, message string, err error) {
 
 	err = c.ValidateTarget()

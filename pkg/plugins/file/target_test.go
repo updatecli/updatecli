@@ -218,7 +218,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		inputSourceValue      string
 		mockReturnedContent   string
 		mockReturnedError     error
-		scm                   scm.Scm
+		scm                   scm.ScmHandler
 		wantResult            bool
 		wantErr               bool
 		mockReturnsFileExists bool

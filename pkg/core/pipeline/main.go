@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -23,6 +24,8 @@ type Pipeline struct {
 	Conditions map[string]condition.Condition
 	Targets    map[string]target.Target
 
+	SCMs map[string]scm.Scm
+
 	Report reports.Report
 
 	Options Options
@@ -31,7 +34,7 @@ type Pipeline struct {
 }
 
 // Init initialize an updatecli context based on its configuration
-func (p *Pipeline) Init(config *config.Config, options Options) {
+func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 	if len(config.Title) > 0 {
 		p.Title = config.Title
@@ -47,6 +50,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	p.Config = config
 
 	// Init context resource size
+	p.SCMs = make(map[string]scm.Scm, len(config.SCMs))
 	p.Sources = make(map[string]source.Source, len(config.Sources))
 	p.Conditions = make(map[string]condition.Condition, len(config.Conditions))
 	p.Targets = make(map[string]target.Target, len(config.Targets))
@@ -58,12 +62,35 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	p.Report.Name = config.Name
 	p.Report.Result = result.SKIPPED
 
+	// Init scm
+	for id, scmConfig := range config.SCMs {
+		// Init Sources[id]
+		var err error
+		p.SCMs[id], err = scm.New(&scmConfig)
+		if err != nil {
+			return err
+		}
+
+	}
+
 	// Init sources report
 	for id := range config.Sources {
+		// Set scm pointer
+		var scmPointer *scm.ScmHandler
+		if len(config.Sources[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Sources[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", config.Sources[id].SCMID)
+			}
+
+			scmPointer = &sc.Scm
+		}
+
 		// Init Sources[id]
 		p.Sources[id] = source.Source{
 			Config: config.Sources[id],
 			Result: result.SKIPPED,
+			Scm:    scmPointer,
 		}
 
 		p.Report.Sources[id] = reports.Stage{
@@ -77,9 +104,21 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	// Init conditions report
 	for id := range config.Conditions {
 
+		// Set scm pointer
+		var scmPointer *scm.ScmHandler
+		if len(config.Conditions[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Conditions[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", config.Conditions[id].SCMID)
+			}
+
+			scmPointer = &sc.Scm
+		}
+
 		p.Conditions[id] = condition.Condition{
 			Config: config.Conditions[id],
 			Result: result.SKIPPED,
+			Scm:    scmPointer,
 		}
 
 		p.Report.Conditions[id] = reports.Stage{
@@ -92,9 +131,20 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	// Init target report
 	for id := range config.Targets {
 
+		var scmPointer *scm.ScmHandler
+		if len(config.Targets[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Targets[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", config.Targets[id].SCMID)
+			}
+
+			scmPointer = &sc.Scm
+		}
+
 		p.Targets[id] = target.Target{
 			Config: config.Targets[id],
 			Result: result.SKIPPED,
+			Scm:    scmPointer,
 		}
 
 		p.Report.Targets[id] = reports.Stage{
@@ -103,6 +153,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 			Result: result.SKIPPED,
 		}
 	}
+	return nil
 
 }
 

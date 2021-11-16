@@ -15,6 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"gopkg.in/yaml.v3"
@@ -47,9 +48,10 @@ var (
 // Config contains cli configuration
 type Config struct {
 	Name       string
-	PipelineID string        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title      string        // Title is used for the full pipeline
-	Source     source.Config // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
+	PipelineID string                // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	Title      string                // Title is used for the full pipeline
+	Source     source.Config         // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
+	SCMs       map[string]scm.Config `yaml:"scms"`
 	Sources    map[string]source.Config
 	Conditions map[string]condition.Config
 	Targets    map[string]target.Config
@@ -117,6 +119,7 @@ func (config *Config) Display() error {
 		return err
 	}
 	logrus.Infof("%s", string(c))
+
 	return nil
 }
 
@@ -136,10 +139,40 @@ func (config *Config) Validate() error {
 		config.Source = source.Config{}
 	}
 
-	for id := range config.Sources {
+	for _, scm := range config.SCMs {
+		if err := scm.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for id, s := range config.Sources {
 		if IsTemplatedString(id) {
 			logrus.Errorf("sources key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
+		}
+
+		// Temporary code until we fully remove the old way to confgigure scm
+		// Introduce by https://github.com/updatecli/updatecli/issues/260
+		//if s.Scm != nil {
+		if len(s.Scm) > 0 {
+			logrus.Warningln("source.Scm is now deprecated. Please use the new syntax")
+			if len(s.SCMID) == 0 {
+				if _, ok := config.SCMs["source_"+id]; !ok {
+					for kind, spec := range s.Scm {
+						if config.SCMs == nil {
+							config.SCMs = make(map[string]scm.Config, 1)
+						}
+						config.SCMs["source_"+id] = scm.Config{
+							Kind: kind,
+							Spec: spec}
+					}
+				}
+				s.SCMID = "source_" + id
+				config.Sources[id] = s
+			} else {
+				logrus.Warning("source.SCMID is also defined, ignoring source.Scm")
+			}
+			s.Scm = map[string]interface{}{}
 		}
 	}
 
@@ -162,6 +195,34 @@ func (config *Config) Validate() error {
 			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
+
+		// Temporary code until we fully remove the old way to confgigure scm
+		// Introduce by https://github.com/updatecli/updatecli/issues/260
+		//if c.Scm != nil {
+		if len(c.Scm) > 0 {
+			logrus.Warningln("condition.Scm is now deprecated. Please use the new syntax")
+			if len(c.SCMID) == 0 {
+				if _, ok := config.SCMs["condition_"+id]; !ok {
+					for kind, spec := range c.Scm {
+
+						if config.SCMs == nil {
+							config.SCMs = make(map[string]scm.Config, 1)
+						}
+
+						config.SCMs["condition_"+id] = scm.Config{
+							Kind: kind,
+							Spec: spec}
+
+					}
+				}
+				c.SCMID = "condition_" + id
+				// Ensure we clean this deprecated variable
+			} else {
+				logrus.Warning("condition.SCMID is also defined, ignoring condition.Scm")
+			}
+			c.Scm = map[string]interface{}{}
+		}
+
 		config.Conditions[id] = c
 	}
 
@@ -184,6 +245,31 @@ func (config *Config) Validate() error {
 			logrus.Errorf("target key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
+
+		// Temporary code until we fully remove the old way to confgigure scm
+		// Introduce by https://github.com/updatecli/updatecli/issues/260
+		//if t.Scm != nil {
+		if len(t.Scm) > 0 {
+			logrus.Warningln("target.Scm is now deprecated. Please use the new syntax")
+			if len(t.SCMID) == 0 {
+				if _, ok := config.SCMs["target_"+id]; !ok {
+					for kind, spec := range t.Scm {
+						if config.SCMs == nil {
+							config.SCMs = make(map[string]scm.Config, 1)
+						}
+
+						config.SCMs["target_"+id] = scm.Config{
+							Kind: kind,
+							Spec: spec}
+					}
+				}
+				t.SCMID = "target_" + id
+			} else {
+				logrus.Warning("target.SCMID is also defined, ignoring target.Scm")
+			}
+			t.Scm = map[string]interface{}{}
+		}
+
 		config.Targets[id] = t
 	}
 

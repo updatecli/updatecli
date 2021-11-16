@@ -54,7 +54,7 @@ func (t *Tag) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM test if a tag exist from a git repository specific from SCM
-func (t *Tag) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (t *Tag) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	path := scm.GetDirectory()
 
 	if len(t.VersionFilter.Pattern) == 0 {

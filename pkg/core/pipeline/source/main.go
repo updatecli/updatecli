@@ -29,6 +29,7 @@ type Source struct {
 	Result    string // Result store the source result after a source run. This variable can't be set by an updatecli configuration
 	Output    string // Output contains the value retrieved from a source
 	Config    Config // Config defines a source specifications
+	Scm       *scm.ScmHandler
 }
 
 // Config struct defines a source configuration
@@ -41,7 +42,8 @@ type Config struct {
 	Transformers transformer.Transformers // Transformers defines the list of transformers to apply to a source Output
 	Replaces     Replacers                // Deprecated in favor of Transformers on 2021/01/3
 	Spec         interface{}
-	Scm          map[string]interface{}
+	Scm          map[string]interface{} // Deprecated field on version [x.y.z]
+	SCMID        string                 `yaml:"scmID"` // SCMID references a uniq scm configuration
 }
 
 // Sourcer source is an interface to handle source spec
@@ -61,9 +63,9 @@ func (s *Source) Run() (err error) {
 
 	workingDir := ""
 
-	if len(s.Config.Scm) > 0 {
+	if s.Scm != nil {
 
-		SCM, _, err := scm.Unmarshal(s.Config.Scm)
+		SCM := *s.Scm
 
 		if err != nil {
 			s.Result = result.FAILURE
@@ -86,7 +88,7 @@ func (s *Source) Run() (err error) {
 
 		workingDir = SCM.GetDirectory()
 
-	} else if len(s.Config.Scm) == 0 {
+	} else if s.Scm == nil {
 
 		pwd, err := os.Getwd()
 		if err != nil {

@@ -17,7 +17,7 @@ func (y *Yaml) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM checks if a key exists in a yaml file
-func (y *Yaml) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	if !filepath.IsAbs(y.Spec.File) {
 		y.Spec.File = filepath.Join(scm.GetDirectory(), y.Spec.File)
 	}

@@ -157,7 +157,7 @@ func Test_ConditionFromSCM(t *testing.T) {
 		wantMockState       text.MockTextRetriever
 		mockReturnedContent string
 		mockReturnedError   error
-		scm                 scm.Scm
+		scm                 scm.ScmHandler
 	}{
 		{
 			name: "Passing Case with no input source and only specified value",

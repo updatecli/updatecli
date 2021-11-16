@@ -25,6 +25,7 @@ import (
 type Condition struct {
 	Result string // Result store the condition result after a condition run. This variable can't be set by an updatecli configuration
 	Config Config // Config defines condition input parameters
+	Scm    *scm.ScmHandler
 }
 
 // Config defines conditions input parameters
@@ -36,15 +37,16 @@ type Config struct {
 	Postfix            string // Deprecated in favor of Transformers on 2021/01/3
 	Transformers       transformer.Transformers
 	Spec               interface{}
-	Scm                map[string]interface{}
-	SourceID           string `yaml:"sourceID"`
+	Scm                map[string]interface{} // Deprecated field on version [x.y.z]
+	SCMID              string                 `yaml:"scmID"` // SCMID references a uniq scm configuration
+	SourceID           string                 `yaml:"sourceID"`
 	DisableSourceInput bool
 }
 
 // Conditioner is an interface that test if condition is met
 type Conditioner interface {
 	Condition(version string) (bool, error)
-	ConditionFromSCM(version string, scm scm.Scm) (bool, error)
+	ConditionFromSCM(version string, scm scm.ScmHandler) (bool, error)
 }
 
 // Run tests if a specific condition is true
@@ -76,8 +78,8 @@ func (c *Condition) Run(source string) (err error) {
 	}
 
 	// If scm is defined then clone the repository
-	if len(c.Config.Scm) > 0 {
-		s, _, err := scm.Unmarshal(c.Config.Scm)
+	if c.Scm != nil {
+		s := *c.Scm
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
@@ -108,7 +110,7 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 	} else {
-		return fmt.Errorf("Something went wrong while looking at the scm configuration: %v", c.Config.Scm)
+		return fmt.Errorf("something went wrong while looking at the scm configuration: %v", c.Config.Scm)
 	}
 
 	if ok {

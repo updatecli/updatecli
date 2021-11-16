@@ -12,7 +12,7 @@ func (s *Shell) Target(source string, dryRun bool) (bool, error) {
 	return changed, err
 }
 
-func (s *Shell) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (bool, []string, string, error) {
+func (s *Shell) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
 	changed, message, err := s.target(source, scm.GetDirectory(), dryRun)
 	if err != nil {
 		return false, []string{}, "", err

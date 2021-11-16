@@ -57,6 +57,6 @@ func (c *Chart) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM returns an error because it's not supported
-func (c *Chart) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("SCM configuration is not supported for Helm chart condition, aborting")
 }

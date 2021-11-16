@@ -14,7 +14,7 @@ import (
 )
 
 // ConditionFromSCM returns an error because it's not supported
-func (d *Docker) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (d *Docker) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("SCM configuration is not supported for dockerRegistry condition, aborting")
 }
 

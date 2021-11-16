@@ -49,7 +49,7 @@ func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
 }
 
 // TargetFromSCM updates a targeted Dockerfile from source controle management system
-func (d *Dockerfile) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error) {
+func (d *Dockerfile) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
 	file := d.File
 	d.File = path.Join(scm.GetDirectory(), d.File)

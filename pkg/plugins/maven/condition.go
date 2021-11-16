@@ -63,6 +63,6 @@ func (m *Maven) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM returns an error because it's not supported
-func (m *Maven) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (m *Maven) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("SCM configuration is not supported for maven condition, aborting")
 }
