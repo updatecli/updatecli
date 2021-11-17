@@ -41,7 +41,7 @@ USER golang
 
 WORKDIR /home/updatecli
 
-COPY --from=golang --chown=updatecli:golang /go/src/app/dist/updateCli /usr/bin/golang
+COPY --from=golang --chown=updatecli:golang /go/src/app/dist/updatecli /usr/bin/golang
 
 ENTRYPOINT [ "/usr/bin/golang" ]
 
