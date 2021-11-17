@@ -63,7 +63,7 @@ github:
 			wantResult: false,
 		},
 		{
-			name: "Not passing: key does ot exist",
+			name: "Provided key does not exist",
 			spec: YamlSpec{
 				File:  "test.yaml",
 				Key:   "github.ship",
@@ -77,6 +77,24 @@ github:
   repository: charts
 `,
 			wantResult: false,
+			wantErr:    true,
+		},
+		{
+			name: "Invalid YAML file",
+			spec: YamlSpec{
+				File:  "test.yaml",
+				Key:   "github.ship",
+				Value: "obiwankenobi",
+			},
+			mockReturnsFileExists: true,
+			inputSourceValue:      "olblak",
+			mockReturnedContent: `---
+github-
+  owner: olblak
+  repository: charts
+`,
+			wantResult: false,
+			wantErr:    true,
 		},
 	}
 	for _, tt := range tests {
