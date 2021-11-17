@@ -240,14 +240,13 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	if changed {
-		t.Result = result.ATTENTION
-	} else {
+	if !changed {
 		t.Result = result.SUCCESS
+		return nil
 	}
 
-	if changed && !o.DryRun {
-
+	t.Result = result.ATTENTION
+	if !o.DryRun {
 		if message == "" {
 			t.Result = result.FAILURE
 			return fmt.Errorf("target has no change message")
@@ -277,20 +276,19 @@ func (t *Target) Run(source string, o *Options) (err error) {
 					t.Result = result.FAILURE
 					return err
 				}
+				if pr != nil {
+					err = pr.CreatePullRequest(
+						t.ReportTitle,
+						t.Changelog,
+						t.ReportBody,
+					)
+					if err != nil {
+						t.Result = result.FAILURE
+						return err
+					}
+				}
 			}
 		}
-	}
-	if pr != nil && !o.DryRun && o.Push {
-		err = pr.CreatePullRequest(
-			t.ReportTitle,
-			t.Changelog,
-			t.ReportBody,
-		)
-		if err != nil {
-			t.Result = result.FAILURE
-			return err
-		}
-
 	}
 
 	return nil
