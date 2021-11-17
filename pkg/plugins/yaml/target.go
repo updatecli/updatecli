@@ -55,31 +55,29 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		logrus.Info("INFO: Using spec.Value instead of source input value.")
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), valueToWrite, 1)
+	keyFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), valueToWrite, 1)
 
-	if valueFound {
-		if oldVersion == valueToWrite {
-			logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
-				result.SUCCESS,
-				y.Spec.Key,
-				y.Spec.File,
-				valueToWrite)
-			return false, files, message, nil
-		}
-		logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
-			result.ATTENTION,
-			y.Spec.Key,
-			y.Spec.File,
-			oldVersion,
-			valueToWrite)
-
-	} else {
-		logrus.Infof("%s cannot find key '%s' from file '%s'",
+	if !keyFound {
+		return false, files, message, fmt.Errorf("%s cannot find key '%s' from file '%s'",
 			result.FAILURE,
 			y.Spec.Key,
 			y.Spec.File)
+	}
+
+	if oldVersion == valueToWrite {
+		logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
+			result.SUCCESS,
+			y.Spec.Key,
+			y.Spec.File,
+			valueToWrite)
 		return false, files, message, nil
 	}
+	logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
+		result.ATTENTION,
+		y.Spec.Key,
+		y.Spec.File,
+		oldVersion,
+		valueToWrite)
 
 	if !dryRun {
 
