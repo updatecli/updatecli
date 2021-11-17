@@ -1,0 +1,30 @@
+---
+title: Show a set of dockerfile "coordinates" resources as a generic example
+sources:
+  ## Dummy source as Dockerfile does not support sources
+  lastVersion:
+    kind: shell
+    spec:
+      command: echo 1.2.3
+conditions:
+  isFirstARGKeySetToGoVersion:
+    # Is the 1st ARG instruction has a key "GO_VERSION"?
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction: "ARG[0][0]"
+      value: "GO_VERSION"
+  is3rdFromSet:
+    # Is there a 3rd FROm instruction (array -s zero-indexed)
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction: "FROM[2][0]"
+targets:
+  updateFirstENVGoVersion:
+    name: Update the 1st ENV instruction's value to the source input value
+    kind: dockerfile
+    sourceID: lastVersion
+    spec:
+      file: Dockerfile
+      Instruction: ENV[0][1]
