@@ -1,0 +1,45 @@
+---
+title: Show a set of dockerfile "coordinates" resources as a generic example
+sources:
+  ## Dummy source as Dockerfile does not support sources
+  lastVersion:
+    kind: shell
+    spec:
+      command: echo 1.2.3
+conditions:
+  isARGGoVersionExisting:
+    # Is the Dockerfile having any ARG instruction with a key "GO_VERSION" and a default value?
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: 'GO_VERSION='
+targets:
+  updateFROMJenkinsVersion:
+    name: Update all the "FROM jenkins/jenkins*" instructions
+    kind: dockerfile
+    sourceID: lastVersion
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: FROM
+        matcher: "jenkins/jenkins"
+  updateArgGoVersion:
+    name: Update all the "ARG GO_VERSION*" instructions
+    kind: dockerfile
+    sourceID: lastVersion
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: GO_VERSION
+  updateEnvJavaVersion:
+    name: Update all the "ENV JAVA_VERSION*" instructions
+    kind: dockerfile
+    sourceID: lastVersion
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: ENV
+        matcher: JAVA_VERSION
