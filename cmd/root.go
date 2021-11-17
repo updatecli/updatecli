@@ -20,10 +20,10 @@ var (
 	verbose      bool
 
 	rootCmd = &cobra.Command{
-		Use:   "updateCli",
+		Use:   "updatecli",
 		Short: "Updatecli is a tool used to define and apply file update strategies. ",
 		Long: `
-Updatecli is a tool uses to apply file update strategies.
+updatecli is a tool uses to apply file update strategies.
 It reads a yaml or a go template configuration file, then works into three stages:
 
 1. Source: Based on a rule fetch a value that will be injected in later stages.

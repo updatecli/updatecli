@@ -4,7 +4,7 @@ sources:
   default:
     kind: shell
     spec:
-      command: "./examples/updateCli.generic/shell/source.sh"
+      command: "./source.sh"
   ## Uncomment to test a failing source
   # noDirectoryTiTi:
   #   kind: shell
@@ -16,7 +16,7 @@ conditions:
     kind: shell
     disablesourceinput: true
     spec:
-      command: "./examples/updateCli.generic/shell/condition.sh"
+      command: "./condition.sh"
   withSource:
     kind: shell
     sourceID: default
@@ -34,12 +34,12 @@ targets:
     sourceID: default
     kind: shell
     spec:
-      command: "./examples/updateCli.generic/shell/target.sh change"
+      command: "./target.sh change"
   doesNotChangeAnything:
     sourceID: default
     kind: shell
     spec:
-      command: "./examples/updateCli.generic/shell/target.sh do-not-change"
+      command: "./target.sh do-not-change"
   ## Uncomment to test a failing source
   # noDirectoryTiTi:
   #   kind: shell
