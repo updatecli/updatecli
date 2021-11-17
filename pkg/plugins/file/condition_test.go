@@ -12,14 +12,12 @@ import (
 
 func TestFile_Condition(t *testing.T) {
 	tests := []struct {
-		name                string
-		spec                FileSpec
-		inputSourceValue    string
-		wantResult          bool
-		wantErr             bool
-		wantMockState       text.MockTextRetriever
-		mockReturnedContent string
-		mockReturnedError   error
+		name             string
+		spec             FileSpec
+		inputSourceValue string
+		wantResult       bool
+		wantErr          bool
+		mockTest         text.MockTextRetriever
 	}{
 		{
 			name: "Passing Case with Line",
@@ -27,23 +25,12 @@ func TestFile_Condition(t *testing.T) {
 				Line: 3,
 				File: "foo.txt",
 			},
-			inputSourceValue:    "current_version=1.2.3",
-			mockReturnedContent: "current_version=1.2.3",
-			wantResult:          true,
-			wantMockState: text.MockTextRetriever{
-				Line:     3,
-				Location: "foo.txt",
+			inputSourceValue: "current_version=1.2.3",
+			mockTest: text.MockTextRetriever{
+				Content: "current_version=1.2.3",
+				Exists:  true,
 			},
-		},
-		{
-			name: "File does not exist",
-			spec: FileSpec{
-				Line: 3,
-				File: "not_existing.txt",
-			},
-			mockReturnedError: fmt.Errorf("no such file or directory"),
-			wantResult:        false,
-			wantErr:           true,
+			wantResult: true,
 		},
 		{
 			name: "Failing Case with Line",
@@ -51,12 +38,11 @@ func TestFile_Condition(t *testing.T) {
 				Line: 5,
 				File: "/bar.txt",
 			},
-			inputSourceValue:    "current_version=1.2.3",
-			mockReturnedContent: "current_version=1.2.4",
-			wantMockState: text.MockTextRetriever{
-				Line:     5,
-				Location: "/bar.txt",
+			mockTest: text.MockTextRetriever{
+				Content: "current_version=1.2.4",
+				Exists:  true,
 			},
+			inputSourceValue: "current_version=1.2.3",
 		},
 		{
 			name: "Validation Failure with both source and specified content",
@@ -83,11 +69,11 @@ func TestFile_Condition(t *testing.T) {
 				Content: "Hello World",
 				File:    "foo.txt",
 			},
-			mockReturnedContent: "Hello World",
-			wantResult:          true,
-			wantMockState: text.MockTextRetriever{
-				Location: "foo.txt",
+			mockTest: text.MockTextRetriever{
+				Content: "Hello World",
+				Exists:  true,
 			},
+			wantResult: true,
 		},
 		{
 			name: "Case with no input source, no specified content but a specified line which is empty",
@@ -96,9 +82,10 @@ func TestFile_Condition(t *testing.T) {
 				File: "foo.txt",
 			},
 			wantResult: false,
-			wantMockState: text.MockTextRetriever{
-				Line:     11,
-				Location: "foo.txt",
+			mockTest: text.MockTextRetriever{
+				Line:    11,
+				Content: "",
+				Exists:  true,
 			},
 		},
 		{
@@ -107,24 +94,33 @@ func TestFile_Condition(t *testing.T) {
 				Line: 13,
 				File: "bar.txt",
 			},
-			mockReturnedContent: "Something On The Line",
-			wantResult:          true,
-			wantMockState: text.MockTextRetriever{
-				Line:     13,
-				Location: "bar.txt",
+			mockTest: text.MockTextRetriever{
+				Line:    13,
+				Content: "Something On The Line",
+				Exists:  true,
 			},
+			wantResult: true,
 		},
 		{
-			name: "Case with no input source but a specified content which matches the file content",
+			name: "Failing case with only file existence checking",
 			spec: FileSpec{
-				Content: "Hello World",
-				File:    "foo.txt",
+				File: "foo.txt",
 			},
-			mockReturnedContent: "Hello World",
-			wantResult:          true,
-			wantMockState: text.MockTextRetriever{
-				Location: "foo.txt",
+			mockTest: text.MockTextRetriever{
+				Exists: false,
 			},
+			wantResult: false,
+		},
+		{
+			name: "Failing case with only URL existence checking",
+			spec: FileSpec{
+				File: "https://do.not.exists/foo",
+			},
+			mockTest: text.MockTextRetriever{
+				Err: fmt.Errorf("URL %q not found or in error", "https://do.not.exists/foo"),
+			},
+			wantResult: false,
+			wantErr:    true,
 		},
 		{
 			name: "Failing case with no input source and a specified line that does not matches the file line content",
@@ -133,21 +129,16 @@ func TestFile_Condition(t *testing.T) {
 				Content: "Not In The File",
 				File:    "foo.txt",
 			},
-			inputSourceValue:    "",
-			mockReturnedContent: "Hello World",
-			wantResult:          false,
-			wantMockState: text.MockTextRetriever{
-				Location: "foo.txt",
-				Line:     11,
+			inputSourceValue: "",
+			mockTest: text.MockTextRetriever{
+				Content: "Hello World",
 			},
+			wantResult: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
-			}
+			mockText := tt.mockTest
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
@@ -160,8 +151,6 @@ func TestFile_Condition(t *testing.T) {
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantResult, gotResult)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
 		})
 	}
 }
@@ -230,6 +219,18 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 			spec: FileSpec{
 				File:        "foo.txt",
 				ForceCreate: true,
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			inputSourceValue: "1.2.3",
+			wantErr:          true,
+		},
+		{
+			name: "Validation Failure with invalid Regexp",
+			spec: FileSpec{
+				File:         "foo.txt",
+				MatchPattern: "^^[[[",
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",

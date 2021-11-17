@@ -24,6 +24,7 @@ func (f *File) Target(source string, dryRun bool) (bool, error) {
 func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (bool, []string, string, error) {
 	if !filepath.IsAbs(f.spec.File) {
 		f.spec.File = filepath.Join(scm.GetDirectory(), f.spec.File)
+		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", f.spec.File)
 	}
 	return f.target(source, dryRun)
 }
