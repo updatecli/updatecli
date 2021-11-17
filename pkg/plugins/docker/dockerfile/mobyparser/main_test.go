@@ -66,7 +66,7 @@ RUN \
   find /var/lib/apt/lists -type f -delete
 USER updatecli
 WORKDIR /home/updatecli
-COPY --from=builder --chown=updatecli:updatecli /go/src/app/dist/updateCli /usr/bin/updatecli
+COPY --from=builder --chown=updatecli:updatecli /go/src/app/dist/updatecli /usr/bin/updatecli
 ENTRYPOINT [ "/usr/bin/updatecli" ]
 CMD ["--help"]
 `
