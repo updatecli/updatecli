@@ -21,7 +21,7 @@ type Scm struct {
 
 var (
 	// ErrWrongConfig is returned when a scm has missing attributes which are mandatory
-	ErrWrongConfig = errors.New("wrong configuration")
+	ErrWrongConfig = errors.New("wrong scm configuration")
 )
 
 // Scm is an interface that offers common functions for a source control manager like git or github
@@ -105,12 +105,12 @@ func (c *Config) Validate() error {
 	errs := []error{}
 
 	if len(c.Kind) == 0 {
-		logrus.Errorln("Missing 'kind' values for scm")
-		errs = append(errs, errors.New("missing value for attribute 'kind'"))
+		logrus.Errorln("Missing 'kind' values")
+		errs = append(errs, errors.New("missing 'kind' value"))
 	}
 	if c.Spec == nil {
-		logrus.Errorln("Missing values for attribute 'spec'")
-		errs = append(errs, errors.New("missing value for attribute 'spec'"))
+		logrus.Errorln("Missing 'spec' value")
+		errs = append(errs, errors.New("missing 'spec' value"))
 	}
 
 	if len(errs) > 0 {
