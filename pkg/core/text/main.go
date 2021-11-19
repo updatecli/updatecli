@@ -37,7 +37,7 @@ func readFromURL(url string, line int) (string, error) {
 	}
 	logrus.Debugf("HTTP GET to %q got a response with code %d", url, resp.StatusCode)
 	if resp.StatusCode > 399 {
-		logrus.Debugf("Status code for URL %q is not in the 1XX, 2XX or 3XX ranges: %d", url, resp.StatusCode)
+		logrus.Debugf("HTTP return code %q for URL %q", resp.StatusCode, url)
 		return "", fmt.Errorf("URL %q not found or in error", url)
 	}
 
