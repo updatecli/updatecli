@@ -42,7 +42,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 
 	if len(source) > 0 {
 		if len(y.Spec.Value) > 0 {
-			validationError := fmt.Errorf("Validation error in condition of type 'yaml': the attributes `sourceID` and `spec.value` are mutually exclusive")
+			validationError := fmt.Errorf("Validation error in condition of type 'yaml': input source value detected, while `spec.value` specified. Add 'disablesourceinput: true' to your manifest to keep ``spec.value`.")
 			logrus.Errorf(validationError.Error())
 			return false, validationError
 		}
