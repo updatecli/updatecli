@@ -15,6 +15,7 @@ import (
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
+	"github.com/sirupsen/logrus"
 )
 
 type TextRetriever interface {
@@ -34,14 +35,22 @@ func readFromURL(url string, line int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	logrus.Debugf("HTTP GET to %q got a response with code %d", url, resp.StatusCode)
+	if resp.StatusCode > 399 {
+		logrus.Debugf("HTTP return code %q for URL %q", resp.StatusCode, url)
+		return "", fmt.Errorf("URL %q not found or in error", url)
+	}
+
 	defer resp.Body.Close()
 
 	// Only retrieve the specified line in memory if specified
 	if line > 0 {
+		logrus.Debugf("Reading line %d of the content returned from url %q", line, url)
 		return getLine(bufio.NewReader(resp.Body), line), nil
 	}
 
 	// Otherwise retrieve the whole file content. Can be heavy.
+	logrus.Debugf("Reading content returned from the url %q", url)
 	bodyContent, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
@@ -95,6 +104,7 @@ func getLine(reader io.Reader, line int) string {
 // "https://", or file url "file://" or filepath (default)
 func (t *Text) ReadAll(location string) (string, error) {
 	if IsURL(location) {
+		logrus.Debugf("URL detected for location %q", location)
 		content, err := readFromURL(location, 0)
 		if err != nil {
 			return "", err
@@ -171,7 +181,7 @@ func Show(content string) (result string) {
 func IsURL(location string) bool {
 	_, err := os.Stat(location)
 	if err == nil {
-		// If "location" exists is not an exitring file, then let's try an URL
+		// If "location" is not an existing file, then let's try an URL
 		// Note that we do not check error type: URL parsing will cover edge cases
 		return false
 	}
@@ -256,7 +266,16 @@ func (t *Text) WriteLineToFile(lineContent, location string, lineNumber int) (er
 }
 
 func (t *Text) FileExists(location string) bool {
-	// Check that the specified exists or exit with error
+	if IsURL(location) {
+		logrus.Debugf("URL detected for file %q", location)
+		// Try to only get the first line of the remote URL
+		_, err := readFromURL(location, 1)
+
+		// No error means that the remote URL exists (1XX, 2XX or 3XX)
+		return err == nil
+	}
+
+	// Not an URL: check that the specified exists or exit with error
 	if _, err := os.Stat(location); err != nil {
 		return false
 	}

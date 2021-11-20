@@ -35,6 +35,16 @@ conditions:
     sourceID: ContentFromLocalFile
     spec:
       file: LICENSE
+  LocalFileExists:
+    kind: file
+    disablesourceinput: true
+    spec:
+      file: LICENSE
+  RemoteFileExists:
+    kind: file
+    disablesourceinput: true
+    spec:
+      file: https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
   URLFileMatchesSpecifiedContent:
     kind: file
     disablesourceinput: true
