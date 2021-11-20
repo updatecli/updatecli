@@ -3,6 +3,8 @@ package jenkins
 import (
 	"fmt"
 	"strings"
+
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source return the latest Jenkins version based on release type
@@ -20,7 +22,7 @@ func (j *Jenkins) Source(workingDir string) (string, error) {
 	}
 
 	if strings.Compare(WEEKLY, j.Release) == 0 {
-		fmt.Printf("\u2714 Version %s found for the %s release", latest, WEEKLY)
+		fmt.Printf("%s Version %s found for the %s release", result.SUCCESS, latest, WEEKLY)
 		return latest, nil
 	}
 
@@ -29,12 +31,12 @@ func (j *Jenkins) Source(workingDir string) (string, error) {
 			v := NewVersion(s)
 			return v.Patch != ""
 		})
-		fmt.Printf("\u2714 Version %s found for the Jenkins %s release", found[len(found)-1], j.Release)
+		fmt.Printf("%s Version %s found for the Jenkins %s release", result.SUCCESS, found[len(found)-1], j.Release)
 		return found[len(found)-1], nil
 
 	}
 
-	fmt.Printf("\u2717 Unknown version %s found for the %s release", j.Version, j.Release)
+	fmt.Printf("%s Unknown version %s found for the %s release", result.FAILURE, j.Version, j.Release)
 
 	return "unknown", fmt.Errorf("Unknown Jenkins version found")
 }

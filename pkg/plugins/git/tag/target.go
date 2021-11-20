@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/git"
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
@@ -41,13 +42,13 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 
 	// A matching git tag has been found
 	if len(existingTag) != 0 {
-		logrus.Printf("\u2714 git tag %q already exist, nothing else todo", existingTag)
+		logrus.Printf("%s git tag %q already exist, nothing else todo", result.SUCCESS, existingTag)
 		return changed, nil
 	}
 
 	newTag := t.VersionFilter.Pattern
 
-	logrus.Printf("\u2714 git tag %q not found, will create it", newTag)
+	logrus.Printf("%s git tag %q not found, will create it", result.ATTENTION, newTag)
 
 	if dryRun {
 		return changed, err
@@ -58,7 +59,7 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 	if err != nil {
 		return changed, err
 	}
-	logrus.Printf("\u2714 git tag %q created", newTag)
+	logrus.Printf("%s git tag %q created", result.ATTENTION, newTag)
 
 	scm := git.Git{
 		Directory: t.Path,
@@ -71,7 +72,7 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 		return changed, err
 	}
 
-	logrus.Printf("\u2714 git tag %q pushed", newTag)
+	logrus.Printf("%s git tag %q pushed", result.ATTENTION, newTag)
 
 	return changed, err
 
@@ -113,14 +114,15 @@ func (t *Tag) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bo
 
 	// A matching git tag has been found
 	if len(existingTag) != 0 {
-		logrus.Printf("\u2714 git tag %q already exist, nothing else todo",
+		logrus.Printf("%s git tag %q already exist, nothing else todo",
+			result.SUCCESS,
 			existingTag)
 		return changed, files, message, err
 	}
 
 	newTag := t.VersionFilter.Pattern
 
-	logrus.Printf("\u2714 git tag %q not found, creating it", newTag)
+	logrus.Printf("%s git tag %q not found, creating it", result.ATTENTION, newTag)
 
 	if dryRun {
 		return changed, files, message, err
@@ -130,7 +132,7 @@ func (t *Tag) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bo
 	if err != nil {
 		return changed, files, message, err
 	}
-	logrus.Printf("\u2714 git tag %q created", newTag)
+	logrus.Printf("%s git tag %q created", result.ATTENTION, newTag)
 
 	err = scm.PushTag(newTag)
 
@@ -139,7 +141,7 @@ func (t *Tag) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bo
 		return changed, files, message, err
 	}
 
-	logrus.Printf("\u2714 git tag %q pushed", newTag)
+	logrus.Printf("%s git tag %q pushed", result.ATTENTION, newTag)
 
 	message = fmt.Sprintf("Git tag %q pushed", newTag)
 

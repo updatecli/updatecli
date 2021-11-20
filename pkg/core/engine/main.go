@@ -11,6 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 
@@ -36,7 +37,7 @@ func (e *Engine) Clean() (err error) {
 func GetFiles(root string) (files []string) {
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			logrus.Errorf("\n\u26A0 File %s: %s\n", path, err)
+			logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
 			os.Exit(1)
 		}
 		if info.Mode().IsRegular() {

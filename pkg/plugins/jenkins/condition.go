@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
@@ -52,15 +53,15 @@ func (j *Jenkins) Condition(source string) (bool, error) {
 		}
 	}
 	if !versionExist {
-		fmt.Printf("\u2717 Version '%v' doesn't exist\n", j.Version)
+		fmt.Printf("%s Version '%v' doesn't exist\n", result.FAILURE, j.Version)
 		return false, nil
 
 	} else if !validReleaseType {
-		fmt.Printf("\u2717 Wrong Release Type: %v for version %v\n", releaseType, j.Version)
+		fmt.Printf("%s Wrong Release Type: %v for version %v\n", result.FAILURE, releaseType, j.Version)
 		return false, nil
 	}
 
-	fmt.Printf("\u2714 %s release version '%s' available\n", releaseType, j.Version)
+	fmt.Printf("%s %s release version '%s' available\n", result.SUCCESS, releaseType, j.Version)
 
 	return true, nil
 }

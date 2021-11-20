@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source return a file content
@@ -30,7 +31,7 @@ func (f *File) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	result := f.CurrentContent
+	foundContent := f.CurrentContent
 	// If a matchPattern is specified, then retrieve the string matched and returns the (eventually) multi-line string
 	if len(f.spec.MatchPattern) > 0 {
 		reg, err := regexp.Compile(f.spec.MatchPattern)
@@ -45,10 +46,10 @@ func (f *File) Source(workingDir string) (string, error) {
 		}
 		matchedStrings := reg.FindAllString(f.CurrentContent, -1)
 
-		result = strings.Join(matchedStrings, "\n")
+		foundContent = strings.Join(matchedStrings, "\n")
 	}
 
-	logrus.Infof("\u2714 Content: found from file %q:\n%v", f.spec.File, result)
+	logrus.Infof("%s Content: found from file %q:\n%v", result.SUCCESS, f.spec.File, foundContent)
 
-	return result, nil
+	return foundContent, nil
 }

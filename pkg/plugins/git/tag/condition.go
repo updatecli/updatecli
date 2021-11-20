@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )
@@ -40,11 +41,12 @@ func (t *Tag) Condition(source string) (bool, error) {
 	}
 
 	if strings.Compare(tag, t.VersionFilter.Pattern) == 0 {
-		logrus.Printf("\u2714 git tag %q matching\n", t.VersionFilter.Pattern)
+		logrus.Printf("%s git tag %q matching\n", result.SUCCESS, t.VersionFilter.Pattern)
 		return true, nil
 	}
 
-	logrus.Printf("\u2717 git tag %q not matching %q\n",
+	logrus.Printf("%s git tag %q not matching %q\n",
+		result.FAILURE,
 		t.VersionFilter.Pattern,
 		tag)
 
@@ -85,10 +87,11 @@ func (t *Tag) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 	tag := t.foundVersion.ParsedVersion
 
 	if tag == t.VersionFilter.Pattern {
-		logrus.Printf("\u2714 Git Tag %q matching\n", t.VersionFilter.Pattern)
+		logrus.Printf("%s Git Tag %q matching\n", result.SUCCESS, t.VersionFilter.Pattern)
 		return true, nil
 	}
-	logrus.Printf("\u2717 Git Tag %q not matching %q\n",
+	logrus.Printf("%s Git Tag %q not matching %q\n",
+		result.FAILURE,
 		t.VersionFilter.Pattern,
 		tag)
 	return false, nil
