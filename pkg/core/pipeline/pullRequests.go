@@ -8,8 +8,10 @@ import (
 )
 
 func (p *Pipeline) RunPullRequests() error {
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Pull Requests"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("PullRequests")+1))
+	if len(p.PullRequests) > 0 {
+		logrus.Infof("\n\n%s\n", strings.ToTitle("Pull Requests"))
+		logrus.Infof("%s\n", strings.Repeat("=", len("PullRequests")+1))
+	}
 
 	for _, pr := range p.PullRequests {
 
