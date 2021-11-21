@@ -45,6 +45,7 @@ type Github struct {
 		Report      string
 	}
 	remotePullRequest PullRequest
+	foundVersion      version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
 }
 
 // New returns a new valid Github object.

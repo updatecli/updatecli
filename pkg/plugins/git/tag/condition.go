@@ -28,10 +28,11 @@ func (t *Tag) Condition(source string) (bool, error) {
 		return false, err
 	}
 
-	tag, err := t.VersionFilter.Search(tags)
+	err = t.VersionFilter.Search(tags)
 	if err != nil {
 		return false, err
 	}
+	tag := t.foundVersion.ParsedVersion
 
 	if len(tag) == 0 {
 		err = fmt.Errorf("no git tag matching pattern %q, found", t.VersionFilter.Pattern)
@@ -77,10 +78,11 @@ func (t *Tag) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 		return false, err
 	}
 
-	tag, err := t.VersionFilter.Search(tags)
+	err = t.VersionFilter.Search(tags)
 	if err != nil {
 		return false, err
 	}
+	tag := t.foundVersion.ParsedVersion
 
 	if tag == t.VersionFilter.Pattern {
 		logrus.Printf("\u2714 Git Tag %q matching\n", t.VersionFilter.Pattern)

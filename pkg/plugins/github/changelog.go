@@ -41,6 +41,9 @@ func (g *Github) Changelog(name string) (string, error) {
 
 	client := g.NewClient()
 
+	// Github Release needs the original version, because the "found" version can be modified (semantic version without the prefix, transformed version, etc.)
+	versionName := g.foundVersion.OriginalVersion
+
 	var query struct {
 		Repository struct {
 			Release struct {
@@ -54,7 +57,7 @@ func (g *Github) Changelog(name string) (string, error) {
 	variables := map[string]interface{}{
 		"owner":      githubv4.String(g.spec.Owner),
 		"repository": githubv4.String(g.spec.Repository),
-		"tagName":    githubv4.String(name),
+		"tagName":    githubv4.String(versionName),
 	}
 
 	err := client.Query(context.Background(), &query, variables)
@@ -68,7 +71,7 @@ func (g *Github) Changelog(name string) (string, error) {
 
 	if len(query.Repository.Release.Url) == 0 {
 		changelog = fmt.Sprintf("No Github Release found for %s on https://github.com/%s/%s",
-			name,
+			versionName,
 			g.spec.Owner,
 			g.spec.Repository)
 	} else {

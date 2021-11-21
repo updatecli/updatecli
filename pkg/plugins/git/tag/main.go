@@ -7,9 +7,10 @@ import (
 
 // Tag contains git tag information
 type Tag struct {
-	Path          string         // Path contains the git repository path
-	VersionFilter version.Filter // VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	Message       string         // Message associated to the git Tag
+	Path          string          // Path contains the git repository path
+	VersionFilter version.Filter  // VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	Message       string          // Message associated to the git Tag
+	foundVersion  version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
 }
 
 // Validate tests that tag struct is correctly configured

@@ -1,4 +1,4 @@
-package semver
+package version
 
 import (
 	"errors"
@@ -11,8 +11,9 @@ import (
 
 // Semver is an interface in front the masterminds/semver used across the updatecli project
 type Semver struct {
-	Constraint string
-	versions   []*sv.Version
+	Constraint   string
+	versions     []*sv.Version
+	FoundVersion Version
 }
 
 var (
@@ -47,39 +48,42 @@ func (s *Semver) Sort() {
 }
 
 // Search returns the version matching pattern from a sorted list.
-func (s *Semver) Search(versions []string) (version string, err error) {
+func (s *Semver) Search(versions []string) error {
 	// We need to be sure that at least one version exist
 	if len(versions) == 0 {
-		return "", ErrNoVersionsFound
+		return ErrNoVersionsFound
 
 	}
-	err = s.Init(versions)
+	err := s.Init(versions)
 	if err != nil {
 		logrus.Error(err)
-		return version, err
+		return err
 	}
 
 	s.Sort()
 
 	if len(s.Constraint) == 0 {
-		return s.versions[0].String(), err
+		s.FoundVersion.ParsedVersion = s.versions[0].String()
+		s.FoundVersion.OriginalVersion = s.versions[0].Original()
+		return nil
 	}
 
 	c, err := sv.NewConstraint(s.Constraint)
 	if err != nil {
-		return version, err
+		return err
 	}
 
 	for _, v := range s.versions {
 
 		if c.Check(v) {
-			version = v.String()
+			s.FoundVersion.ParsedVersion = v.String()
+			s.FoundVersion.OriginalVersion = v.Original()
 			break
 		}
 	}
-	if len(version) == 0 {
-		return "", ErrNoVersionFound
+	if len(s.FoundVersion.ParsedVersion) == 0 {
+		return ErrNoVersionFound
 	}
 
-	return version, err
+	return nil
 }
