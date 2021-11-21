@@ -20,16 +20,13 @@ import (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
-	Result      string // Result store the condition result after a target run. This variable can't be set by an updatecli configuration
-	Config      Config
-	ReportBody  string
-	ReportTitle string
-	Changelog   string
-	Commit      bool
-	Push        bool
-	Clean       bool
-	DryRun      bool
-	Scm         *scm.ScmHandler
+	Result string // Result store the condition result after a target run. This variable can't be set by an updatecli configuration
+	Config Config
+	Commit bool
+	Push   bool
+	Clean  bool
+	DryRun bool
+	Scm    *scm.ScmHandler
 }
 
 // Config defines target parameters
@@ -155,7 +152,6 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 // Run applies a specific target configuration
 func (t *Target) Run(source string, o *Options) (err error) {
 
-	var pr scm.PullRequest
 	var changed bool
 
 	if len(t.Config.Transformers) > 0 {
@@ -218,12 +214,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		t.Result = result.FAILURE
 		return err
 	}
-
-	//s, pr, err = scm.Unmarshal(t.Config.Scm)
-	//if err != nil {
-	//	t.Result = result.FAILURE
-	//	return err
-	//}
 
 	s := *t.Scm
 
