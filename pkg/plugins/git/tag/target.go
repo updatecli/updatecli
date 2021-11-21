@@ -33,10 +33,11 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, err
 	}
 
-	existingTag, err := t.VersionFilter.Search(tags)
+	err = t.VersionFilter.Search(tags)
 	if err != nil {
 		return false, err
 	}
+	existingTag := t.foundVersion.ParsedVersion
 
 	// A matching git tag has been found
 	if len(existingTag) != 0 {
@@ -104,10 +105,11 @@ func (t *Tag) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bo
 		return changed, files, message, err
 	}
 
-	existingTag, err := t.VersionFilter.Search(tags)
+	err = t.VersionFilter.Search(tags)
 	if err != nil {
 		return changed, files, message, err
 	}
+	existingTag := t.foundVersion.ParsedVersion
 
 	// A matching git tag has been found
 	if len(existingTag) != 0 {

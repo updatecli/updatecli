@@ -6,13 +6,20 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/version/semver"
 )
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
 type Filter struct {
-	Kind    string
-	Pattern string
+	Kind         string
+	Pattern      string
+	FoundVersion Version
+}
+
+// FoundVersions defines a version from a filter that holds both the original found version and the parsed version (depending on the kind of filter: semantic, text, etc.)
+// Keeping the original found versions is useful when checking for metadata around the version, such as the changelog
+type Version struct {
+	ParsedVersion   string
+	OriginalVersion string
 }
 
 const (
@@ -65,51 +72,55 @@ func (f *Filter) Validate() error {
 }
 
 // Search returns a value matching pattern
-func (f *Filter) Search(versions []string) (version string, err error) {
+func (f *Filter) Search(versions []string) error {
 
 	logrus.Infof("Searching for version matching pattern %q", f.Pattern)
 
 	switch f.Kind {
 	case LATESTVERSIONKIND:
 		if f.Pattern == LATESTVERSIONKIND {
-			version = versions[len(versions)-1]
+			f.FoundVersion.ParsedVersion = versions[len(versions)-1]
+			f.FoundVersion.OriginalVersion = f.FoundVersion.ParsedVersion
 		}
 		// Search for simple text matching
 		for i := len(versions) - 1; i >= 0; i-- {
 			if strings.Compare(f.Pattern, versions[i]) == 0 {
-				version = versions[i]
+				f.FoundVersion.ParsedVersion = versions[i]
+				f.FoundVersion.OriginalVersion = versions[i]
 				break
 			}
 		}
 	case REGEXVERSIONKIND:
 		re, err := regexp.Compile(f.Pattern)
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		// Parse version in by date publishing
 		// Oldest version appears first in array
 		for i := len(versions) - 1; i >= 0; i-- {
 			v := versions[i]
-			if re.Match([]byte(v)) {
-				version = v
+			if re.MatchString(v) {
+				f.FoundVersion.ParsedVersion = v
+				f.FoundVersion.OriginalVersion = v
 				break
 			}
 		}
 	case SEMVERVERSIONKIND:
-		s := semver.Semver{
+		s := Semver{
 			Constraint: f.Pattern,
 		}
 
-		version, err = s.Search(versions)
+		err := s.Search(versions)
 		if err != nil {
 			logrus.Error(err)
-			return version, err
+			return err
 		}
+		f.FoundVersion = s.FoundVersion
 	default:
-		return version, fmt.Errorf("Unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
+		return fmt.Errorf("Unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
 
 	}
 
-	return version, err
+	return nil
 }
