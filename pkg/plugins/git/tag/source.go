@@ -27,10 +27,11 @@ func (t *Tag) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	value, err := t.VersionFilter.Search(tags)
+	err = t.VersionFilter.Search(tags)
 	if err != nil {
 		return "", err
 	}
+	value := t.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
 		logrus.Infof("\u2717 No Git Tag found matching pattern %q", t.VersionFilter.Pattern)

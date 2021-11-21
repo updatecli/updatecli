@@ -1,0 +1,45 @@
+---
+title: Show a set of GitHub Releases resources as a generic example
+sources:
+  helm:
+    kind: githubRelease
+    name: Get the latest helm version
+    spec:
+      owner: "helm"
+      repository: "helm"
+      token: "{{ requiredEnv `GITHUB_TOKEN` }}" # export GITHUB_TOKEN=<Personal Access Token>
+      username: "{{ requiredEnv `GITHUB_USERNAME` }}" # export GITHUB_USERNAME=<username associated with the token>
+      versionFilter:
+        kind: semver
+        pattern: ~3.7
+  lastHugoVersion:
+    kind: githubRelease
+    name: Get the latest Hugo version
+    spec:
+      owner: "gohugoio"
+      repository: "hugo"
+      token: "{{ requiredEnv `GITHUB_TOKEN` }}" # export GITHUB_TOKEN=<Personal Access Token>
+      username: "{{ requiredEnv `GITHUB_USERNAME` }}" # export GITHUB_USERNAME=<username associated with the token>
+  lastJenkinsWiki:
+    kind: githubRelease
+    spec:
+      owner: "jenkins-infra"
+      repository: "jenkins-wiki-exporter"
+      token: "{{ requiredEnv `GITHUB_TOKEN` }}" # export GITHUB_TOKEN=<Personal Access Token>
+      username: "{{ requiredEnv `GITHUB_USERNAME` }}" # export GITHUB_USERNAME=<username associated with the token>
+      versioning:
+        kind: semver
+        pattern: "~1.10"
+    transformers:
+      - addPrefix: "v"
+  kubectl:
+    kind: githubRelease
+    spec:
+      owner: "kubernetes"
+      repository: "kubectl"
+      token: "{{ requiredEnv `GITHUB_TOKEN` }}" # export GITHUB_TOKEN=<Personal Access Token>
+      username: "{{ requiredEnv `GITHUB_USERNAME` }}" # export GITHUB_USERNAME=<username associated with the token>
+      versioning:
+        kind: text
+    transformers:
+      - trimPrefix: "kubernetes-"

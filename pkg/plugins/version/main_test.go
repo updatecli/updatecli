@@ -2,8 +2,9 @@ package version
 
 import (
 	"errors"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type SearchDataSet struct {
@@ -114,36 +115,21 @@ var (
 )
 
 func TestSearch(t *testing.T) {
-
 	for _, d := range searchDataSet {
 		err := d.Filter.Validate()
-		if err != nil {
-			t.Errorf("Unexpected err %q", err.Error())
-		}
-		got, err := d.Filter.Search(d.Versions)
-		if err != nil && d.ExpectedError != nil {
-			if strings.Compare(err.Error(), d.ExpectedError.Error()) != 0 {
-				t.Errorf("Expected %q, got %q", d.ExpectedError.Error(), err.Error())
-			}
-		} else if err != nil {
-			t.Errorf("Unexpected err %q", err.Error())
-		}
-		if got != d.ExpectedResult {
-			t.Errorf("Expected version %q, got %q", d.ExpectedResult, got)
-		}
-	}
+		assert.NoError(t, err)
 
+		err = d.Filter.Search(d.Versions)
+		assert.Equal(t, d.ExpectedError, err)
+
+		got := d.Filter.FoundVersion.ParsedVersion
+		assert.Equal(t, d.ExpectedResult, got)
+	}
 }
 
 func TestValidate(t *testing.T) {
 	for _, v := range validateDataSet {
 		err := v.Filter.Validate()
-		if err != nil && v.Err != nil {
-			if strings.Compare(err.Error(), v.Err.Error()) != 0 {
-				t.Errorf("Expected Error %q, got %q", v.Err, err)
-			}
-		} else if err != nil {
-			t.Errorf("Unexpected err %q", err.Error())
-		}
+		assert.Equal(t, v.Err, err)
 	}
 }

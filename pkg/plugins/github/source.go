@@ -32,10 +32,12 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 		}
 	}
 
-	value, err = g.spec.VersionFilter.Search(versions)
+	err = g.spec.VersionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
+	g.foundVersion = g.spec.VersionFilter.FoundVersion
+	value = g.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
 		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.spec.VersionFilter.Pattern)
