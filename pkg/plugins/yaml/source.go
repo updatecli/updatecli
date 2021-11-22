@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 
 	"gopkg.in/yaml.v3"
 )
@@ -34,11 +35,12 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	valueFound, value, _ := replace(&out, strings.Split(y.Spec.Key, "."), y.Spec.Value, 1)
 
 	if valueFound {
-		logrus.Infof("\u2714 Value '%v' found for key %v in the yaml file %v", value, y.Spec.Key, y.Spec.File)
+		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v", result.SUCCESS, value, y.Spec.Key, y.Spec.File)
 		return value, nil
 	}
 
-	logrus.Infof("\u2717 cannot find key '%s' from file '%s'",
+	logrus.Infof("%s cannot find key '%s' from file '%s'",
+		result.FAILURE,
 		y.Spec.Key,
 		y.Spec.File)
 	return "", nil

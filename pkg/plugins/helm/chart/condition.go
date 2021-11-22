@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
@@ -47,11 +48,11 @@ func (c *Chart) Condition(source string) (bool, error) {
 	}
 
 	if index.Has(c.Name, c.Version) {
-		logrus.Infof("\u2714 Helm Chart '%s' is available on %s%s", c.Name, c.URL, message)
+		logrus.Infof("%s Helm Chart '%s' is available on %s%s", result.SUCCESS, c.Name, c.URL, message)
 		return true, nil
 	}
 
-	logrus.Infof("\u2717 Helm Chart '%s' isn't available on %s%s", c.Name, c.URL, message)
+	logrus.Infof("%s Helm Chart '%s' isn't available on %s%s", result.FAILURE, c.Name, c.URL, message)
 	return false, nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 )
@@ -19,11 +20,11 @@ type SimpleTextDockerfileParser struct {
 
 func (s SimpleTextDockerfileParser) FindInstruction(dockerfileContent []byte) bool {
 	if found, originalLine := s.hasMatch(dockerfileContent); found {
-		logrus.Infof("\u2714 Line %q found, matching the keyword %q and the matcher %q.", originalLine, s.Keyword, s.Matcher)
+		logrus.Infof("%s Line %q found, matching the keyword %q and the matcher %q.", result.SUCCESS, originalLine, s.Keyword, s.Matcher)
 		return true
 	}
 
-	logrus.Infof("\u2717 No line found matching the keyword %q and the matcher %q.", s.Keyword, s.Matcher)
+	logrus.Infof("%s No line found matching the keyword %q and the matcher %q.", result.FAILURE, s.Keyword, s.Matcher)
 	return false
 }
 
@@ -48,7 +49,7 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 	changedLines := make(types.ChangedLines)
 
 	if found, _ := s.hasMatch(dockerfileContent); !found {
-		return dockerfileContent, changedLines, fmt.Errorf("\u2717 No line found matching the keyword %q and the matcher %q.", s.Keyword, s.Matcher)
+		return dockerfileContent, changedLines, fmt.Errorf("%s No line found matching the keyword %q and the matcher %q.", result.FAILURE, s.Keyword, s.Matcher)
 	}
 
 	var newDockerfile bytes.Buffer
@@ -66,7 +67,8 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 			newLine = s.KeywordLogic.ReplaceLine(sourceValue, originalLine, s.Matcher)
 
 			if newLine != originalLine {
-				logrus.Infof("\u2714 The line #%d, matched by the keyword %q and the matcher %q, is changed from %q to %q.",
+				logrus.Infof("%s The line #%d, matched by the keyword %q and the matcher %q, is changed from %q to %q.",
+					result.ATTENTION,
 					linePosition,
 					s.Keyword,
 					s.Matcher,
@@ -75,7 +77,8 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 				)
 				changedLines[linePosition] = types.LineDiff{Original: originalLine, New: newLine}
 			} else {
-				logrus.Infof("\u2714 The line #%d, matched by the keyword %q and the matcher %q, is correctly set to %q.",
+				logrus.Infof("%s The line #%d, matched by the keyword %q and the matcher %q, is correctly set to %q.",
+					result.SUCCESS,
 					linePosition,
 					s.Keyword,
 					s.Matcher,
@@ -144,11 +147,11 @@ var supportedKeywordsInitializers = map[string]keywords.Logic{
 func (s *SimpleTextDockerfileParser) setKeywordLogic() error {
 	keywordLogic, found := supportedKeywordsInitializers[strings.ToLower(s.Keyword)]
 	if !found {
-		return fmt.Errorf("\u2717 Unknown keyword %q provided for Dockerfile's instruction.", s.Keyword)
+		return fmt.Errorf("%s Unknown keyword %q provided for Dockerfile's instruction.", result.FAILURE, s.Keyword)
 	}
 
 	if keywordLogic == nil {
-		return fmt.Errorf("\u2717 Provided keyword %q not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation.", s.Keyword)
+		return fmt.Errorf("%s Provided keyword %q not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation.", result.FAILURE, s.Keyword)
 	}
 
 	s.KeywordLogic = keywordLogic

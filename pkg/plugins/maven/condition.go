@@ -9,6 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
@@ -51,13 +52,13 @@ func (m *Maven) Condition(source string) (bool, error) {
 
 	for _, version := range data.Versioning.Versions.Version {
 		if version == m.Version {
-			logrus.Infof("\u2713 Version %s is available on Maven Repository", m.Version)
+			logrus.Infof("%s Version %s is available on Maven Repository", result.SUCCESS, m.Version)
 			return true, nil
 		}
 
 	}
 
-	logrus.Infof("\u2716 Version %s is not available on Maven Repository", m.Version)
+	logrus.Infof("%s Version %s is not available on Maven Repository", result.FAILURE, m.Version)
 	return false, nil
 }
 

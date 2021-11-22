@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source return the latest version
@@ -46,7 +47,8 @@ func (c *Chart) Source(workingDir string) (string, error) {
 	}
 
 	if e.Version != "" {
-		logrus.Infof("\u2714 Helm Chart '%s' version '%v' is found from repository %s",
+		logrus.Infof("%s Helm Chart '%s' version '%v' is found from repository %s",
+			result.SUCCESS,
 			c.Name,
 			e.Version,
 			c.URL)

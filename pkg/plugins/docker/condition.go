@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerhub"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerregistry"
@@ -89,11 +90,11 @@ func (d *Docker) Condition(source string) (bool, error) {
 	}
 
 	if digest == "" {
-		logrus.Infof("\u2717 %s:%s doesn't exist on the Docker Registry", d.Image, d.Tag)
+		logrus.Infof("%s %s:%s doesn't exist on the Docker Registry", result.FAILURE, d.Image, d.Tag)
 		return false, nil
 	}
 
-	logrus.Infof("\u2714 %s:%s available on the Docker Registry", d.Image, d.Tag)
+	logrus.Infof("%s %s:%s available on the Docker Registry", result.SUCCESS, d.Image, d.Tag)
 
 	return true, nil
 
