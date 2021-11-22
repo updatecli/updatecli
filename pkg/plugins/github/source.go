@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 
 	"github.com/shurcooL/githubv4"
 )
@@ -20,7 +21,7 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 	}
 
 	if len(versions) == 0 {
-		logrus.Infof("\u26A0 No GitHub Release found. As fallback Looking at published git tags")
+		logrus.Infof("%s No GitHub Release found. As fallback Looking at published git tags", result.ATTENTION)
 		versions, err = g.SearchTags()
 		if err != nil {
 			logrus.Errorf("%s", err)
@@ -40,10 +41,10 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 	value = g.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
-		logrus.Infof("\u2717 No Github Release version found matching pattern %q", g.spec.VersionFilter.Pattern)
+		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, g.spec.VersionFilter.Pattern)
 		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.spec.VersionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("\u2714 Github Release version %q found matching pattern %q", value, g.spec.VersionFilter.Pattern)
+		logrus.Infof("%s Github Release version %q found matching pattern %q", result.SUCCESS, value, g.spec.VersionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in Github source")
 	}

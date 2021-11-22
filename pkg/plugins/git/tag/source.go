@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )
 
@@ -34,10 +35,10 @@ func (t *Tag) Source(workingDir string) (string, error) {
 	value := t.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
-		logrus.Infof("\u2717 No Git Tag found matching pattern %q", t.VersionFilter.Pattern)
+		logrus.Infof("%s No Git Tag found matching pattern %q", result.FAILURE, t.VersionFilter.Pattern)
 		return value, fmt.Errorf("no Git tag found matching pattern %q", t.VersionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("\u2714 Git Tag %q found, matching pattern %q", value, t.VersionFilter.Pattern)
+		logrus.Infof("%s Git Tag %q found, matching pattern %q", result.SUCCESS, value, t.VersionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in gitTag source")
 	}

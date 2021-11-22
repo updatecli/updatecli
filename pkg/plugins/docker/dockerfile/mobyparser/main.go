@@ -9,6 +9,7 @@ import (
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 )
 
@@ -39,18 +40,20 @@ func (m MobyParser) FindInstruction(dockerfileContent []byte) bool {
 	}
 
 	if !found {
-		logrus.Infof("\u2717 Instruction %q wasn't found", m.Instruction)
+		logrus.Infof("%s Instruction %q wasn't found", result.FAILURE, m.Instruction)
 		return false
 	}
 
 	if val == m.Value {
-		logrus.Infof("\u2714 Instruction %q is correctly set to %q",
+		logrus.Infof("%s Instruction %q is correctly set to %q",
+			result.SUCCESS,
 			m.Instruction,
 			m.Value)
 		return true
 	}
 
-	logrus.Infof("\u2717 Instruction %q found but incorrectly set to %q instead of %q",
+	logrus.Infof("%s Instruction %q found but incorrectly set to %q instead of %q",
+		result.FAILURE,
 		m.Instruction,
 		val,
 		m.Value)
@@ -74,17 +77,19 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue st
 	}
 
 	if !valueFound {
-		return dockerfileContent, changed, fmt.Errorf("\u2717 cannot find instruction %q", m.Instruction)
+		return dockerfileContent, changed, fmt.Errorf("%s cannot find instruction %q", result.FAILURE, m.Instruction)
 	}
 
 	if oldVersion == m.Value {
-		logrus.Infof("\u2714 Instruction %q already set to %q, nothing else need to be done",
+		logrus.Infof("%s Instruction %q already set to %q, nothing else need to be done",
+			result.SUCCESS,
 			m.Instruction,
 			m.Value)
 		return dockerfileContent, changed, nil
 	}
 
-	logrus.Infof("\u2714 Instruction %q, was updated from %q to %q",
+	logrus.Infof("%s Instruction %q, was updated from %q to %q",
+		result.ATTENTION,
 		m.Instruction,
 		oldVersion,
 		m.Value,

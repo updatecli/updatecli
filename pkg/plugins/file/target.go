@@ -8,6 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
@@ -80,7 +81,12 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		files = append(files, f.spec.File)
 		message = fmt.Sprintf("changed line %d of file %q", f.spec.Line, f.spec.File)
 
-		logrus.Infof("\u2714 The line %d of the file %q was updated: \n\n%s\n", f.spec.Line, f.spec.File, text.Diff(f.spec.File, currentLine, newContent))
+		logrus.Infof("%s The line %d of the file %q was updated: \n\n%s\n",
+			result.ATTENTION,
+			f.spec.Line,
+			f.spec.File,
+			text.Diff(f.spec.File, currentLine, newContent),
+		)
 
 		return true, files, message, nil
 
@@ -98,7 +104,8 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		}
 	} else {
 		if !f.spec.ForceCreate {
-			return false, files, message, fmt.Errorf("\u2717 The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'.\n", f.spec.File)
+			return false, files, message, fmt.Errorf("%s The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'.\n",
+				result.FAILURE, f.spec.File)
 		}
 		logrus.Infof("Creating a new file at %q", f.spec.File)
 	}
@@ -129,7 +136,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 
 	// Nothing to do if the line is the same as the input source value
 	if newContent == f.CurrentContent {
-		logrus.Infof("\u2714 Content from file %q already up to date", f.spec.File)
+		logrus.Infof("%s Content from file %q already up to date", result.SUCCESS, f.spec.File)
 		return false, files, message, nil
 	}
 
@@ -144,7 +151,11 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 	files = append(files, f.spec.File)
 	message = fmt.Sprintf("Updated the file %q\n", f.spec.File)
 
-	logrus.Infof("\u2714 File content for %q, updated. \n\n%s\n", f.spec.File, text.Diff(f.spec.File, f.CurrentContent, newContent))
+	logrus.Infof("%s File content for %q, updated. \n\n%s\n",
+		result.ATTENTION,
+		f.spec.File,
+		text.Diff(f.spec.File, f.CurrentContent, newContent),
+	)
 
 	return true, files, message, nil
 }

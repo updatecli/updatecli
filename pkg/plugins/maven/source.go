@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source return the latest version
@@ -43,10 +44,10 @@ func (m *Maven) Source(workingDir string) (string, error) {
 	}
 
 	if data.Versioning.Latest != "" {
-		logrus.Infof("\u2714 Latest version is %s on Maven Repository", data.Versioning.Latest)
+		logrus.Infof("%s Latest version is %s on Maven Repository", result.SUCCESS, data.Versioning.Latest)
 		return data.Versioning.Latest, nil
 	}
 
-	logrus.Infof("\u2717 No latest version on Maven Repository")
+	logrus.Infof("%s No latest version on Maven Repository", result.FAILURE)
 	return "", nil
 }

@@ -63,7 +63,7 @@ func (t *Target) Check() (bool, error) {
 	}
 
 	if len(required) > 0 {
-		err := fmt.Errorf("\u2717 Target parameter(s) required: [%v]", strings.Join(required, ","))
+		err := fmt.Errorf("%s Target parameter(s) required: [%v]", result.FAILURE, strings.Join(required, ","))
 		return false, err
 	}
 

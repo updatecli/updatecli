@@ -38,7 +38,7 @@ func Execute() {
 	logrus.SetFormatter(log.NewTextFormat())
 
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Errorf("\u26A0 %s", err)
+		logrus.Errorf("%s %s", result.FAILURE, err)
 		os.Exit(1)
 	}
 }

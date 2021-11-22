@@ -81,13 +81,14 @@ func (f *File) condition(source string) (bool, error) {
 
 		if !reg.MatchString(f.CurrentContent) {
 			logrus.Infof(
-				"\u2717 %s did not match the pattern %q",
+				"%s %s did not match the pattern %q",
+				result.FAILURE,
 				logMessage,
 				f.spec.MatchPattern,
 			)
 			return false, nil
 		}
-		logrus.Infof("\u2714 %s matched the pattern %q", logMessage, f.spec.MatchPattern)
+		logrus.Infof("%s %s matched the pattern %q", result.SUCCESS, logMessage, f.spec.MatchPattern)
 		return true, nil
 	}
 
@@ -103,7 +104,8 @@ func (f *File) condition(source string) (bool, error) {
 		// Compare the content of the file with the source's value
 		if f.CurrentContent != source {
 			logrus.Infof(
-				"\u2717 %s is different than the input source value:\n%s",
+				"%s %s is different than the input source value:\n%s",
+				result.FAILURE,
 				logMessage,
 				text.Diff(f.spec.File, f.CurrentContent, source),
 			)
@@ -111,7 +113,7 @@ func (f *File) condition(source string) (bool, error) {
 			return false, nil
 		}
 
-		logrus.Infof("\u2714 %s is the same as the input source value.", logMessage)
+		logrus.Infof("%s %s is the same as the input source value.", result.SUCCESS, logMessage)
 
 		return true, nil
 
@@ -124,11 +126,11 @@ func (f *File) condition(source string) (bool, error) {
 		// No content + no source input values means the user only want to check if the line "exists" (e.g. is not empty) and that's all
 		if f.spec.Line > 0 {
 			if f.CurrentContent == "" {
-				logrus.Infof("\u2717 %s is empty or the file does not exist.", logMessage)
+				logrus.Infof("%s %s is empty or the file does not exist.", result.FAILURE, logMessage)
 				return false, nil
 			}
 
-			logrus.Infof("\u2714 %s is not empty and the file exists.", logMessage)
+			logrus.Infof("%s %s is not empty and the file exists.", result.SUCCESS, logMessage)
 			return true, nil
 		}
 
@@ -139,12 +141,13 @@ func (f *File) condition(source string) (bool, error) {
 	logrus.Debug("Attribute `content` detected")
 
 	if f.spec.Content != f.CurrentContent {
-		logrus.Infof("\u2717 %s is different than the specified content: \n%s",
+		logrus.Infof("%s %s is different than the specified content: \n%s",
+			result.FAILURE,
 			logMessage, text.Diff(f.spec.File, f.CurrentContent, f.spec.Content))
 
 		return false, nil
 	}
 
-	logrus.Infof("\u2714 %s is the same as the specified content.", logMessage)
+	logrus.Infof("%s %s is the same as the specified content.", result.SUCCESS, logMessage)
 	return true, nil
 }

@@ -1,11 +1,13 @@
 package simpletextparser
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
 )
@@ -65,7 +67,7 @@ func TestInstruction_setKeywordLogic(t *testing.T) {
 				Keyword: "ONBUILD",
 			},
 			wantLogic:        nil,
-			wantErrorMessage: "\u2717 Provided keyword \"ONBUILD\" not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation.",
+			wantErrorMessage: fmt.Sprintf("%s Provided keyword \"ONBUILD\" not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation.", result.FAILURE),
 		},
 		{
 			name: "Unknown instruction",
@@ -73,7 +75,7 @@ func TestInstruction_setKeywordLogic(t *testing.T) {
 				Keyword: "QUACK",
 			},
 			wantLogic:        nil,
-			wantErrorMessage: "\u2717 Unknown keyword \"QUACK\" provided for Dockerfile's instruction.",
+			wantErrorMessage: fmt.Sprintf("%s Unknown keyword \"QUACK\" provided for Dockerfile's instruction.", result.FAILURE),
 		},
 	}
 	for _, tt := range tests {
@@ -223,7 +225,7 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 				"matcher": "HELM_VERSION",
 			},
 			expectedChanges:      types.ChangedLines{},
-			expectedErrorMessage: "\u2717 No line found matching the keyword \"ARG\" and the matcher \"HELM_VERSION\".",
+			expectedErrorMessage: fmt.Sprintf("%s No line found matching the keyword \"ARG\" and the matcher \"HELM_VERSION\".", result.FAILURE),
 		},
 		{
 			name:              "Instruction kept the same",
@@ -333,7 +335,7 @@ func TestNewSimpleTextDockerfileParser(t *testing.T) {
 				"keyword": "QUIK",
 				"matcher": "JENKINS_VERSION",
 			},
-			wantErrorMessage: "\u2717 Unknown keyword \"QUIK\" provided for Dockerfile's instruction.",
+			wantErrorMessage: fmt.Sprintf("%s Unknown keyword \"QUIK\" provided for Dockerfile's instruction.", result.FAILURE),
 		},
 	}
 	for _, tt := range tests {
