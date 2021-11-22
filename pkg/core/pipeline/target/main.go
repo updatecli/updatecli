@@ -269,17 +269,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 					t.Result = result.FAILURE
 					return err
 				}
-				if pr != nil {
-					err = pr.CreatePullRequest(
-						t.ReportTitle,
-						t.Changelog,
-						t.ReportBody,
-					)
-					if err != nil {
-						t.Result = result.FAILURE
-						return err
-					}
-				}
 			}
 		}
 	}
