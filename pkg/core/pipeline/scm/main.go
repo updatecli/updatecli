@@ -38,69 +38,6 @@ type ScmHandler interface {
 	GetChangedFiles(workingDir string) ([]string, error)
 }
 
-//// Implements the Unmarshaler interface of the yaml pkg.
-//func (c *Config) UnmarshalYAML(value *yaml.Node) error {
-//
-//	// Ensure we don't try to unmarshal a config indefinitely
-//	type rawConfig Config
-//	config := rawConfig{}
-//
-//	if err := value.Decode(&config); err != nil {
-//		return err
-//	}
-//
-//	c.Kind = config.Kind
-//	c.Spec = config.Spec
-//
-//	c.GenerateSCM()
-//
-//	return nil
-//}
-
-//// Unmarshal parses a scm struct like git or github and returns a scm interface
-//func Unmarshal(scm map[string]interface{}) (ScmHandler, PullRequest, error) {
-//	var s ScmHandler
-//	var pr PullRequest
-//	if len(scm) != 1 {
-//		return nil, nil, fmt.Errorf("target scm: only one scm can be provided between git and github")
-//	}
-//
-//	for key, value := range scm {
-//		switch key {
-//		case "github":
-//
-//			githubSpec := github.Spec{}
-//
-//			err := mapstructure.Decode(value, &githubSpec)
-//			if err != nil {
-//				return nil, nil, err
-//			}
-//
-//			g, err := github.New(githubSpec)
-//
-//			if err != nil {
-//				return nil, nil, err
-//			}
-//
-//			s = &g
-//			pr = &g
-//
-//		case "git":
-//			g := git.Git{}
-//
-//			err := mapstructure.Decode(value, &g)
-//			if err != nil {
-//				return nil, nil, err
-//			}
-//
-//			s = &g
-//		default:
-//			return nil, nil, fmt.Errorf("wrong scm type provided, accepted values [git,github]")
-//		}
-//	}
-//	return s, pr, nil
-//}
-
 func (c *Config) Validate() error {
 	errs := []error{}
 
