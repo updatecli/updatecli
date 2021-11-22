@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
@@ -47,18 +48,18 @@ func (a *AMI) Condition(source string) (bool, error) {
 		strings.TrimRight(
 			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n  "))
 
-	result, err := a.getLatestAmiID(svc)
+	foundAMI, err := a.getLatestAmiID(svc)
 
 	if err != nil {
 		return false, err
 	}
 
-	if len(result) > 0 {
-		logrus.Infof("\u2714 AMI %q found\n", result)
+	if len(foundAMI) > 0 {
+		logrus.Infof("%s AMI %q found\n", result.SUCCESS, foundAMI)
 		return true, nil
 	}
 
-	fmt.Printf("\u2717 No AMI found matching criteria for region %s\n", a.Spec.Region)
+	fmt.Printf("%s No AMI found matching criteria for region %s\n", result.FAILURE, a.Spec.Region)
 
 	return false, nil
 }
@@ -66,7 +67,7 @@ func (a *AMI) Condition(source string) (bool, error) {
 // ConditionFromSCM is a placeholder to validate the condition interface
 func (a *AMI) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
 
-	fmt.Printf("\u2717 Condition with SCM is not supported, please remove the scm block \n")
+	fmt.Printf("%s Condition with SCM is not supported, please remove the scm block \n", result.FAILURE)
 
 	return false, errors.New("condition with SCM is not supported")
 }
