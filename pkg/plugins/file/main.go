@@ -57,9 +57,9 @@ func New(spec FileSpec) (*File, error) {
 	if len(validationErrors) > 0 {
 		return nil, fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
-	if strings.HasPrefix(spec.File, "file://") {
-		spec.File = strings.TrimPrefix(spec.File, "file://")
-	}
+
+	spec.File = strings.TrimPrefix(spec.File, "file://")
+
 	return &File{
 		spec:             spec,
 		contentRetriever: &text.Text{},

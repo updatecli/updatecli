@@ -52,9 +52,9 @@ func New(spec YamlSpec) (*Yaml, error) {
 	if len(validationErrors) > 0 {
 		return nil, fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
-	if strings.HasPrefix(spec.File, "file://") {
-		spec.File = strings.TrimPrefix(spec.File, "file://")
-	}
+
+	spec.File = strings.TrimPrefix(spec.File, "file://")
+
 	return &Yaml{
 		Spec:             spec,
 		contentRetriever: &text.Text{},
