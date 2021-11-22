@@ -20,9 +20,10 @@ type PullRequestHandler interface {
 
 // Config define pullRequest provided via an updatecli configuration
 type Config struct {
-	Kind             string
-	Spec             interface{}
-	DependsOnTargets []string `yaml:"dependsOnTargets"`
+	Title            string      // Define the pullRequest Title
+	Kind             string      // Define the pullRequest kind
+	Spec             interface{} // Define specific parameters
+	DependsOnTargets []string    `yaml:"dependsOnTargets"` // DependsOnTargets defined a list of target related to the pullRequest
 }
 
 // PullRequest is a struct used by an updatecli pipeline.
@@ -59,6 +60,7 @@ func (c *Config) Validate() error {
 func New(config *Config) (PullRequest, error) {
 
 	p := PullRequest{
+		Title:  config.Title,
 		Config: config,
 	}
 
@@ -69,6 +71,18 @@ func New(config *Config) (PullRequest, error) {
 
 	return p, nil
 
+}
+
+// Update a pullRequest object based on its configuration
+func (p *PullRequest) Update() error {
+	p.Title = p.Config.Title
+
+	err := p.generatePullRequestHandler()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *PullRequest) generatePullRequestHandler() error {

@@ -13,16 +13,24 @@ func (p *Pipeline) RunPullRequests() error {
 		logrus.Infof("%s\n", strings.Repeat("=", len("PullRequests")+1))
 	}
 
-	for _, pr := range p.PullRequests {
+	for id, pr := range p.PullRequests {
+
+		err := pr.Update()
+		if err != nil {
+			return err
+		}
 
 		firstDependsOnTargetID := pr.Config.DependsOnTargets[0]
 		firstDependsOntTargetSourceID := p.Targets[firstDependsOnTargetID].Config.SourceID
 
-		// A new pullRequest title is based on the first target title
-		pr.Title = p.Config.GetChangelogTitle(
-			firstDependsOnTargetID,
-			p.Sources[firstDependsOntTargetSourceID].Result,
-		)
+		// If pr.Title is not set then we try to guess it
+		// based on the first target title
+		if len(pr.Title) == 0 {
+			pr.Title = p.Config.GetChangelogTitle(
+				firstDependsOnTargetID,
+				p.Sources[firstDependsOntTargetSourceID].Result,
+			)
+		}
 
 		sourcesReport, err := p.Report.String("sources")
 		if err != nil {
@@ -84,6 +92,8 @@ func (p *Pipeline) RunPullRequests() error {
 		if err != nil {
 			return err
 		}
+
+		p.PullRequests[id] = pr
 	}
 	return nil
 }
