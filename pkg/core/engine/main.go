@@ -153,9 +153,13 @@ func (e *Engine) LoadConfigurations() error {
 		}
 
 		newPipeline := pipeline.Pipeline{}
-		newPipeline.Init(
+		err = newPipeline.Init(
 			&loadedConfiguration,
 			e.Options.Pipeline)
+		if err != nil {
+			// Failing immediately as init. of the pipeline still fails even with a successful validation
+			return err
+		}
 
 		e.Pipelines = append(e.Pipelines, newPipeline)
 		e.configurations = append(e.configurations, loadedConfiguration)

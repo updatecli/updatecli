@@ -68,6 +68,10 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	for id, scmConfig := range config.SCMs {
 		// Init Sources[id]
 		var err error
+
+		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
+		scmConfig := scmConfig
+
 		p.SCMs[id], err = scm.New(&scmConfig)
 		if err != nil {
 			return err
@@ -78,6 +82,10 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	// Init pullrequests
 	for id, pullRequestConfig := range config.PullRequests {
 		var err error
+
+		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
+		pullRequestConfig := pullRequestConfig
+
 		p.PullRequests[id], err = pullRequest.New(&pullRequestConfig)
 		if err != nil {
 			return err
