@@ -74,11 +74,12 @@ func (p *Pipeline) RunPullRequests() error {
 		pr.Changelog = changelog
 
 		if p.Options.Target.DryRun {
-			logrus.Debugf("A Pull request of type %q, should be open with following information:\n=====\nTitle:\t%s\nChangelog:\n%s\nReport:\n%s\n\n=====\n",
+			pullRequestOutput := fmt.Sprintf("A Pull request of type %q, should be open with following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
 				pr.Config.Kind,
 				pr.Title,
 				pr.Changelog,
 				pr.PipelineReport)
+			logrus.Debugf(strings.ReplaceAll(pullRequestOutput, "\n", "\n\t|\t"))
 
 			return nil
 
