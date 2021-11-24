@@ -22,7 +22,7 @@ assignees: ''
 **Version**
 <!-- Please complete the following information -->
 - OS: [e.g. linux]
-- Version: [e.g. v0.15.0]
+- Updatecli version: [e.g. v0.15.0]
 
 **Additional context**
 <!-- Add any other context about the problem here -->
