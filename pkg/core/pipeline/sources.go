@@ -33,7 +33,16 @@ func (p *Pipeline) RunSources() error {
 		logrus.Infof("\n%s\n", id)
 		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
-		err = source.Run()
+		shouldRunSource := true
+		for _, parentSource := range source.Config.DependsOn {
+			if p.Sources[parentSource].Result != result.SUCCESS {
+				logrus.Warningf("Parent source[%q] did not succeed. Skipping execution of the source[%q]", parentSource, id)
+				shouldRunSource = false
+			}
+		}
+		if shouldRunSource {
+			err = source.Run()
+		}
 		rpt.Result = source.Result
 
 		if len(source.Changelog) > 0 {
