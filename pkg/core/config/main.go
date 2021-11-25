@@ -278,9 +278,9 @@ func (config *Config) Validate() error {
 								config.PullRequests = make(map[string]pullRequest.Config, 1)
 							}
 							config.PullRequests["target_"+id] = pullRequest.Config{
-								Kind:             kind,
-								Spec:             spec,
-								DependsOnTargets: []string{id},
+								Kind:    kind,
+								Spec:    spec,
+								Targets: []string{id},
 							}
 						}
 

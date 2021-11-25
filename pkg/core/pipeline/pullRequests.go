@@ -20,15 +20,15 @@ func (p *Pipeline) RunPullRequests() error {
 			return err
 		}
 
-		firstDependsOnTargetID := pr.Config.DependsOnTargets[0]
-		firstDependsOntTargetSourceID := p.Targets[firstDependsOnTargetID].Config.SourceID
+		firstTargetID := pr.Config.Targets[0]
+		firstTargetSourceID := p.Targets[firstTargetID].Config.SourceID
 
 		// If pr.Title is not set then we try to guess it
 		// based on the first target title
 		if len(pr.Title) == 0 {
 			pr.Title = p.Config.GetChangelogTitle(
-				firstDependsOnTargetID,
-				p.Sources[firstDependsOntTargetSourceID].Result,
+				firstTargetID,
+				p.Sources[firstTargetSourceID].Result,
 			)
 		}
 
@@ -58,7 +58,7 @@ func (p *Pipeline) RunPullRequests() error {
 		changelog := ""
 		processedSourceIDs := []string{}
 		// Ensure we don't add changelog from the same sourceID twice.
-		for _, targetID := range pr.Config.DependsOnTargets {
+		for _, targetID := range pr.Config.Targets {
 			sourceID := p.Targets[targetID].Config.SourceID
 			found := false
 			for _, proccessedSourceID := range processedSourceIDs {

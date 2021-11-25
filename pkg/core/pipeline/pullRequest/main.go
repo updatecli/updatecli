@@ -20,10 +20,10 @@ type PullRequestHandler interface {
 
 // Config define pullRequest provided via an updatecli configuration
 type Config struct {
-	Title            string      // Define the pullRequest Title
-	Kind             string      // Define the pullRequest kind
-	Spec             interface{} // Define specific parameters
-	DependsOnTargets []string    `yaml:"dependsOnTargets"` // DependsOnTargets defined a list of target related to the pullRequest
+	Title   string      // Define the pullRequest Title
+	Kind    string      // Define the pullRequest kind
+	Spec    interface{} // Define specific parameters
+	Targets []string    // DependsOnTargets defined a list of target related to the pullRequest
 }
 
 // PullRequest is a struct used by an updatecli pipeline.
@@ -48,9 +48,9 @@ func (c *Config) Validate() error {
 		errs = append(errs, errors.New("missing 'spec' value"))
 	}
 
-	if len(c.DependsOnTargets) == 0 {
-		logrus.Errorln("Missing at least one value in 'dependsOnTargets'")
-		errs = append(errs, errors.New("missing 'dependsOnTargets' value"))
+	if len(c.Targets) == 0 {
+		logrus.Errorln("Missing at least one value in 'Targets'")
+		errs = append(errs, errors.New("missing 'Targets' value"))
 	}
 
 	if len(errs) > 0 {
