@@ -207,7 +207,7 @@ func (config *Config) Validate() error {
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if c.Scm != nil {
 		if len(c.Scm) > 0 {
-			logrus.Warningf("conditions[%q].scm is now deprecated. Please use the new top level scms syntax", id)
+			logrus.Warningf("The directive 'scm' for the condition[%q] is now deprecated. Please use the new top level scms syntax", id)
 			if len(c.SCMID) == 0 {
 				if _, ok := config.SCMs["condition_"+id]; !ok {
 					for kind, spec := range c.Scm {
@@ -257,7 +257,7 @@ func (config *Config) Validate() error {
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if t.Scm != nil {
 		if len(t.Scm) > 0 {
-			logrus.Warningf("target[%q].scm is now deprecated. Please use the new top level scms syntax", id)
+			logrus.Warningf("The directive 'scm' for the target[%q] is now deprecated. Please use the new top level scms syntax", id)
 			if len(t.SCMID) == 0 {
 				if _, ok := config.SCMs["target_"+id]; !ok {
 					for kind, spec := range t.Scm {
