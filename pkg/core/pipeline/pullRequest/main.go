@@ -48,6 +48,11 @@ func (c *Config) Validate() error {
 		errs = append(errs, errors.New("missing 'spec' value"))
 	}
 
+	if len(c.DependsOnTargets) == 0 {
+		logrus.Errorln("Missing at least one value in 'dependsOnTargets'")
+		errs = append(errs, errors.New("missing 'dependsOnTargets' value"))
+	}
+
 	if len(errs) > 0 {
 		return ErrWrongConfig
 	}
