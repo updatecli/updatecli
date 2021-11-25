@@ -6,20 +6,7 @@ Thanks for your interest in this project, feel free to ask any questions you may
 
 == REQUIREMENTS
 
-To build the project, just ensure to have access to the correct golang version then just run `make build` which should return something like:
-
-```
-echo v0.0.15-6-g1e24f1d
-v0.0.15-6-g1e24f1d
-go build \
-	-ldflags "-w -s \
-        -X \"github.com/updatecli/updatecli/pkg/version.BuildTime=`date -R`\" \
-        -X \"github.com/updatecli/updatecli/pkg/version.GoVersion=go version go1.16.2 linux/amd64\" \
-        -X \"github.com/updatecli/updatecli/pkg/version.Version=v0.0.15-6-g1e24f1d\""\
-        -o bin/updatecli
-```
-
-or using docker
+To build the project, just ensure to have access to the correct golang version and link:https://goreleaser.com/install/[goreleaser installed], then just run `make build`, or use Docker:
 
 ```
 docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windows -e GOARCH=386 golang:1.16 go build -v
@@ -27,16 +14,16 @@ docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windo
 
 == CONTRIBUTE
 
-They are multiple ways to contribute which don't necessarily involve coding like providing feedback, improving documentation, processes.
-Here I'll just highlight some of them
+They are multiple ways to contribute which don't necessarily involve coding, like providing feedback, improving documentation, processes.
+Here I'll just highlight some of them:
 
 === FEEDBACK
 
-It significantly harder to build a solution that could be used by different people. It involves many different skills that are hard to master and it's easy to get stuck in local optimum. So feel free to reach out to say what's wrong and what could be improved.
+It's significantly harder to build a solution that could be used by different people. It involves many different skills hard to master and it's easy to get stuck in local optimum. So feel free to reach out to say what's wrong and what could be improved.
 
 === CODE
 
-The code is divided into two categories, core, and plugins. It says what it says. The core is designed to be independent and to provide the skeleton for the application while the plugins define how things are automated for a specific use-case. The easiest part is probably plugins as it allows you to contribute independently to the process you are looking to automate.
+The code is divided into two categories, core and plugins. The core is designed to be independent and to provide the skeleton for the application, while the plugins define how things are automated for a specific use-case. The easiest part is probably plugins as it allows you to contribute independently to the process you are looking to automate.
 
 ==== CORE
 
@@ -44,7 +31,7 @@ This section is still evolving as they are many areas that need attention.
 
 ==== PLUGINS
 
-Plugins can be easily added following this workflow:
+Plugins can be easily added by following this workflow:
 
 ===== 1. Define Package name
 
@@ -145,7 +132,7 @@ Each stage which can be configured using a yaml/go template has to bind a resour
 		spec = &p
 ```
 
-Now something like this, should be working:
+Now something like this should be working:
 
 config.value
 ```
@@ -169,5 +156,5 @@ targets:
 
 === DOCUMENTATION
 
-If you spot phrasing issues or just a lack of documentation, feel free to open an issue and/or a pull request with your contribution.
+If you spot phrasing issues or just a lack of documentation, feel free to open link:https://github.com/updatecli/updatecli/issues[an issue] and/or link:https://github.com/updatecli/updatecli/pulls[a pull request].
 https://github.com/updatecli/website[website]
