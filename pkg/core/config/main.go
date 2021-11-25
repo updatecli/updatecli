@@ -162,7 +162,7 @@ func (config *Config) Validate() error {
 		// Temporary code until we fully remove the old way to configure scm
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		if len(s.Scm) > 0 {
-			logrus.Warningln("source.Scm is now deprecated. Please use the new syntax")
+			logrus.Warningf("Sources[%q].scm is now deprecated. Please use the new top level scms syntax", id)
 			if len(s.SCMID) == 0 {
 				if _, ok := config.SCMs["source_"+id]; !ok {
 					for kind, spec := range s.Scm {
@@ -207,7 +207,7 @@ func (config *Config) Validate() error {
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if c.Scm != nil {
 		if len(c.Scm) > 0 {
-			logrus.Warningln("condition.Scm is now deprecated. Please use the new syntax")
+			logrus.Warningf("conditions[%q].scm is now deprecated. Please use the new top level scms syntax", id)
 			if len(c.SCMID) == 0 {
 				if _, ok := config.SCMs["condition_"+id]; !ok {
 					for kind, spec := range c.Scm {
@@ -257,7 +257,7 @@ func (config *Config) Validate() error {
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if t.Scm != nil {
 		if len(t.Scm) > 0 {
-			logrus.Warningln("target.Scm is now deprecated. Please use the new syntax")
+			logrus.Warningf("target[%q].scm is now deprecated. Please use the new top level scms syntax", id)
 			if len(t.SCMID) == 0 {
 				if _, ok := config.SCMs["target_"+id]; !ok {
 					for kind, spec := range t.Scm {
