@@ -17,6 +17,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/engine/condition"
 	"github.com/updatecli/updatecli/pkg/core/engine/source"
 	"github.com/updatecli/updatecli/pkg/core/engine/target"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"gopkg.in/yaml.v3"
 )
 
@@ -253,26 +254,27 @@ func (config *Config) Update(data interface{}) (err error) {
 				Retrieve the value of a third location key from
 				the updatecli contex.
 				It returns an error if a key doesn't exist
-				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
+				It returns {{ source "<key>" }} if a key exist but still set to zero value,
 				then we assume that the value will be set later in the run.
 				Otherwise it returns the value.
 				This func is design to constantly reevaluate if a configuration changed
 			*/
 
-			val, err := getFieldValueByQuery(
-				data, []string{"Sources", s, "Output"})
-
+			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result"})
 			if err != nil {
 				return "", err
 			}
 
-			if len(val) > 0 {
-				return val, nil
+			switch sourceResult {
+			case result.SUCCESS:
+				return getFieldValueByQuery(data, []string{"Sources", s, "Output"})
+			case result.FAILURE:
+				return "", fmt.Errorf("Parent source %q failed", s)
+			// If the result of the parent source execution is not SUCCESS or FAILURE, then it means it was either skipped or not already run.
+			// In this case, the function is return "as it" (literrally) to allow retry later (on a second configuration iteration)
+			default:
+				return fmt.Sprintf("{{ source %q }}", s), nil
 			}
-			// If we couldn't find a value, then we return the function so we can retry
-			// later on.
-			return fmt.Sprintf("{{ source %q }}", s), nil
-
 		},
 	}
 
