@@ -144,7 +144,12 @@ func (config *Config) Validate() error {
 	}
 
 	for id, c := range config.Conditions {
-
+		if len(c.SourceID) > 0 {
+			if _, ok := config.Sources[c.SourceID]; !ok {
+				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
+				return ErrBadConfig
+			}
+		}
 		// Only check/guess the sourceID if the user did not disable it (default is enabled)
 		if !c.DisableSourceInput {
 			// Try to guess SourceID
