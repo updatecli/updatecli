@@ -14,7 +14,7 @@ docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windo
 
 == CONTRIBUTE
 
-They are multiple ways to contribute which don't necessarily involve coding, like providing feedback, improving documentation, processes.
+They are multiple ways to contribute which don't necessarily involve coding, like providing feedback, improving documentation and processes.
 Here I'll just highlight some of them:
 
 === FEEDBACK
