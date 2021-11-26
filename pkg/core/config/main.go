@@ -174,6 +174,12 @@ func (config *Config) Validate() error {
 		if len(t.PipelineID) == 0 {
 			t.PipelineID = config.PipelineID
 		}
+		if len(t.SourceID) > 0 {
+			if _, ok := config.Sources[t.SourceID]; !ok {
+				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", t.SourceID)
+				return ErrBadConfig
+			}
+		}
 		// Try to guess SourceID
 		if len(t.SourceID) == 0 && len(config.Sources) > 1 {
 
