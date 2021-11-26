@@ -42,8 +42,13 @@ func New(spec YamlSpec) (*Yaml, error) {
 	if len(spec.Path) > 0 {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: Key 'path' is deprecated, use 'file' instead.")
 	}
+	contentRetriever := &text.Text{}
 	if spec.File == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'file' is empty.")
+	} else {
+		if !contentRetriever.FileExists(spec.File) {
+			validationErrors = append(validationErrors, "Invalid spec for yaml resource: the file at %q does not exist.")
+		}
 	}
 	if spec.Key == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
@@ -57,7 +62,7 @@ func New(spec YamlSpec) (*Yaml, error) {
 	}
 	return &Yaml{
 		Spec:             spec,
-		contentRetriever: &text.Text{},
+		contentRetriever: contentRetriever,
 	}, nil
 }
 
