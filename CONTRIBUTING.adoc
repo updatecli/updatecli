@@ -6,7 +6,7 @@ Thanks for your interest in this project, feel free to ask any questions you may
 
 == REQUIREMENTS
 
-To build the project, just ensure to have access to the correct golang version and link:https://goreleaser.com/install/[goreleaser installed], then just run `make build`, or use Docker:
+To build the project, make sure that you link:golang[https://go.dev/] installed, link:https://www.gnu.org/software/make/[GNU Make] and link:https://goreleaser.com/install/[goreleaser installed], then execute the command `make build`, or use Docker with:
 
 ```
 docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windows -e GOARCH=386 golang:1.16 go build -v
