@@ -9,12 +9,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-func TestFile_New(t *testing.T) {
+func Test_Validate(t *testing.T) {
 	tests := []struct {
-		name     string
-		spec     FileSpec
-		wantErr  bool
-		wantFile *File
+		name          string
+		spec          FileSpec
+		mockFileExist bool
+		wantErr       bool
 	}{
 		{
 			name: "Normal case",
@@ -22,34 +22,16 @@ func TestFile_New(t *testing.T) {
 				File: "/tmp/foo.txt",
 				Line: 12,
 			},
-			wantErr: false,
-			wantFile: &File{
-				contentRetriever: &text.Text{},
-				spec: FileSpec{
-					File: "/tmp/foo.txt",
-					Line: 12,
-				},
-			},
-		},
-		{
-			name: "Normal case with a 'file://' prefix",
-			spec: FileSpec{
-				File: "file:///tmp/bar.txt",
-			},
-			wantErr: false,
-			wantFile: &File{
-				contentRetriever: &text.Text{},
-				spec: FileSpec{
-					File: "/tmp/bar.txt",
-				},
-			},
+			mockFileExist: true,
+			wantErr:       false,
 		},
 		{
 			name: "raises an error when 'File' is empty",
 			spec: FileSpec{
 				File: "",
 			},
-			wantErr: true,
+			mockFileExist: true,
+			wantErr:       true,
 		},
 		{
 			name: "raises an error when 'Line' is negative",
@@ -57,7 +39,8 @@ func TestFile_New(t *testing.T) {
 				File: "/tmp/foo.txt",
 				Line: -1,
 			},
-			wantErr: true,
+			mockFileExist: true,
+			wantErr:       true,
 		},
 		{
 			name: "raises an error when both 'Line' and `ForceCreate=true` are specified",
@@ -66,7 +49,8 @@ func TestFile_New(t *testing.T) {
 				ForceCreate: true,
 				Line:        12,
 			},
-			wantErr: true,
+			mockFileExist: true,
+			wantErr:       true,
 		},
 		{
 			name: "raises an error when both 'Line' and `MatchPattern` are specified",
@@ -75,7 +59,8 @@ func TestFile_New(t *testing.T) {
 				MatchPattern: "pattern=.*",
 				Line:         12,
 			},
-			wantErr: true,
+			mockFileExist: true,
+			wantErr:       true,
 		},
 		{
 			name: "raises an error when both 'Line' and `ReplacePattern` are specified",
@@ -84,7 +69,8 @@ func TestFile_New(t *testing.T) {
 				ReplacePattern: "pattern=.*",
 				Line:           13,
 			},
-			wantErr: true,
+			mockFileExist: true,
+			wantErr:       true,
 		},
 		{
 			name: "raises an error when both 'Content' and `ReplacePattern` are specified",
@@ -93,12 +79,70 @@ func TestFile_New(t *testing.T) {
 				ReplacePattern: "pattern=.*",
 				Content:        "Hello World",
 			},
-			wantErr: true,
+			mockFileExist: true,
+			wantErr:       true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotFile, gotErr := New(tt.spec)
+			file := File{
+				spec: tt.spec,
+				contentRetriever: &text.MockTextRetriever{
+					Exists: tt.mockFileExist,
+				},
+			}
+			gotErr := file.Validate()
+			if tt.wantErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func Test_Normalize(t *testing.T) {
+	tests := []struct {
+		name     string
+		spec     FileSpec
+		wantErr  bool
+		wantFile File
+	}{
+		{
+			name: "Normal case",
+			spec: FileSpec{
+				File: "/tmp/test.yaml",
+			},
+			wantErr: false,
+			wantFile: File{
+				contentRetriever: &text.Text{},
+				spec: FileSpec{
+					File: "/tmp/test.yaml",
+				},
+			},
+		},
+		{
+			name: "Normal case with a 'file://' prefix",
+			spec: FileSpec{
+				File: "file:///tmp/bar.yaml",
+			},
+			wantErr: false,
+			wantFile: File{
+				contentRetriever: &text.Text{},
+				spec: FileSpec{
+					File: "/tmp/bar.yaml",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			file := File{
+				spec:             tt.spec,
+				contentRetriever: &text.Text{},
+			}
+
+			gotErr := file.Normalize()
 
 			if tt.wantErr {
 				require.Error(t, gotErr)
@@ -106,7 +150,7 @@ func TestFile_New(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantFile, gotFile)
+			assert.Equal(t, tt.wantFile, file)
 		})
 	}
 }
