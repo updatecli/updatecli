@@ -10,7 +10,7 @@ import (
 // Init set default Github parameters if not set.
 func (g *Github) Init(source string, pipelineID string) error {
 	g.spec.VersionFilter.Pattern = source
-	g.remoteBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
+	g.HeadBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
 	g.setDirectory()
 
 	return nil
@@ -45,8 +45,8 @@ func (g *Github) Clone() (string, error) {
 		return "", err
 	}
 
-	if len(g.remoteBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = git.Checkout(g.spec.Branch, g.remoteBranch, g.GetDirectory())
+	if len(g.HeadBranch) > 0 && len(g.GetDirectory()) > 0 {
+		err = git.Checkout(g.spec.Branch, g.HeadBranch, g.GetDirectory())
 	}
 
 	if err != nil {
@@ -74,7 +74,7 @@ func (g *Github) Commit(message string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() error {
-	err := git.Checkout(g.spec.Branch, g.remoteBranch, g.spec.Directory)
+	err := git.Checkout(g.spec.Branch, g.HeadBranch, g.spec.Directory)
 	if err != nil {
 		return err
 	}

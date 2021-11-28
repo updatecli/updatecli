@@ -241,7 +241,7 @@ func (g *Github) OpenPullRequest() error {
 	input := githubv4.CreatePullRequestInput{
 		BaseRefName:         githubv4.String(g.spec.Branch),
 		RepositoryID:        githubv4.String(repositoryID),
-		HeadRefName:         githubv4.String(g.remoteBranch),
+		HeadRefName:         githubv4.String(g.HeadBranch),
 		Title:               githubv4.String(g.pullRequest.Title),
 		Body:                githubv4.NewString(githubv4.String(bodyPR)),
 		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(!g.spec.PullRequest.MaintainerCannotModify)),
@@ -302,7 +302,7 @@ func (g *Github) getRemotePullRequest() error {
 		"owner":       githubv4.String(g.spec.Owner),
 		"name":        githubv4.String(g.spec.Repository),
 		"baseRefName": githubv4.String(g.spec.Branch),
-		"headRefName": githubv4.String(g.remoteBranch),
+		"headRefName": githubv4.String(g.HeadBranch),
 	}
 
 	err := client.Query(context.Background(), &query, variables)

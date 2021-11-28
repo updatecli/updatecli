@@ -35,7 +35,7 @@ type Spec struct {
 // Github contains settings to interact with Github
 type Github struct {
 	spec          Spec          // Spec contains inputs coming from updatecli configuration
-	remoteBranch  string        // remoteBranch is used when creating a temporary branch before opening a PR
+	HeadBranch    string        // remoteBranch is used when creating a temporary branch before opening a PR
 	Force         bool          // Force is used during the git push phase to run `git push --force`.
 	CommitMessage commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
 	pullRequest   struct {      // pullRequest contain the pull request information
