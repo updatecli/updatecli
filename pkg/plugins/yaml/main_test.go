@@ -1,7 +1,6 @@
 package yaml
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/text"
-
 	"gopkg.in/yaml.v3"
 )
 
@@ -385,12 +383,84 @@ image4:
 	}
 }
 
-func Test_New(t *testing.T) {
+func Test_Validate(t *testing.T) {
+	tests := []struct {
+		name          string
+		spec          YamlSpec
+		mockFileExist bool
+		wantErr       bool
+	}{
+		{
+			name: "Normal case",
+			spec: YamlSpec{
+				File: "/tmp/test.yaml",
+				Key:  "foo.bar",
+			},
+			mockFileExist: true,
+			wantErr:       false,
+		},
+		{
+			name: "raises an error when 'File' is empty",
+			spec: YamlSpec{
+				File: "",
+				Key:  "foo.bar",
+			},
+			mockFileExist: true,
+			wantErr:       true,
+		},
+		{
+			name: "raises an error when 'Key' is empty",
+			spec: YamlSpec{
+				File: "/tmp/toto.yaml",
+				Key:  "",
+			},
+			mockFileExist: true,
+			wantErr:       true,
+		},
+		{
+			name: "raises an error when 'Path' is defined (deprecated)",
+			spec: YamlSpec{
+				Path: "/tmp/bar.yaml",
+				File: "/tmp/toto.yaml",
+				Key:  "foo.bar",
+			},
+			mockFileExist: true,
+			wantErr:       true,
+		},
+		{
+			name: "raises an error when 'File' does not exist",
+			spec: YamlSpec{
+				File: "/tmp/toto.yaml",
+				Key:  "foo.bar",
+			},
+			mockFileExist: false,
+			wantErr:       true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			yaml := Yaml{
+				Spec: tt.spec,
+				contentRetriever: &text.MockTextRetriever{
+					Exists: tt.mockFileExist,
+				},
+			}
+			gotErr := yaml.Validate()
+			if tt.wantErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func Test_Normalize(t *testing.T) {
 	tests := []struct {
 		name     string
 		spec     YamlSpec
 		wantErr  bool
-		wantYaml *Yaml
+		wantYaml Yaml
 	}{
 		{
 			name: "Normal case",
@@ -399,7 +469,7 @@ func Test_New(t *testing.T) {
 				Key:  "foo.bar",
 			},
 			wantErr: false,
-			wantYaml: &Yaml{
+			wantYaml: Yaml{
 				contentRetriever: &text.Text{},
 				Spec: YamlSpec{
 					File: "/tmp/test.yaml",
@@ -414,7 +484,7 @@ func Test_New(t *testing.T) {
 				Key:  "foo.bar",
 			},
 			wantErr: false,
-			wantYaml: &Yaml{
+			wantYaml: Yaml{
 				contentRetriever: &text.Text{},
 				Spec: YamlSpec{
 					File: "/tmp/bar.yaml",
@@ -422,95 +492,15 @@ func Test_New(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "raises an error when 'File' is empty",
-			spec: YamlSpec{
-				File: "/tmp/test.yaml",
-				Key:  "",
-			},
-			wantErr: true,
-		},
-		{
-			name: "raises an error when 'Key' is empty",
-			spec: YamlSpec{
-				File: "",
-				Key:  "foo.bar",
-			},
-			wantErr: true,
-		},
-		{
-			name: "raises an error when 'Path' is defined (deprecated)",
-			spec: YamlSpec{
-				Path: "/tmp/bar.yaml",
-				Key:  "foo.bar",
-			},
-			wantErr: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotYaml, gotErr := New(tt.spec)
-
-			if tt.wantErr {
-				require.Error(t, gotErr)
-				return
-			}
-			require.NoError(t, gotErr)
-
-			assert.Equal(t, tt.wantYaml, gotYaml)
-		})
-	}
-}
-
-func Test_Read(t *testing.T) {
-	tests := []struct {
-		name                string
-		wantErr             bool
-		mockReturnedContent string
-		mockReturnedError   error
-		spec                YamlSpec
-		wantContent         string
-		wantMockState       text.MockTextRetriever
-	}{
-		{
-			name: "Normal case",
-			mockReturnedContent: `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			spec: YamlSpec{
-				File: "test.yaml",
-			},
-			wantContent: `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			wantMockState: text.MockTextRetriever{
-				Location: "test.yaml",
-			},
-		},
-		{
-			name:              "Yaml file does not exist",
-			mockReturnedError: fmt.Errorf("no such file or directory"),
-			spec: YamlSpec{
-				File: "/not_existing.txt",
-			},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
-			}
-			y := &Yaml{
+			yaml := Yaml{
 				Spec:             tt.spec,
-				contentRetriever: &mockText,
+				contentRetriever: &text.Text{},
 			}
-			gotErr := y.Read()
+
+			gotErr := yaml.Normalize()
 
 			if tt.wantErr {
 				require.Error(t, gotErr)
@@ -518,9 +508,7 @@ github:
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantContent, y.CurrentContent)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
+			assert.Equal(t, tt.wantYaml, yaml)
 		})
 	}
 }
