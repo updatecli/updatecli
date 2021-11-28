@@ -29,7 +29,7 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 		}
 		if len(versions) == 0 {
 			logrus.Infof("\t=> No release or git tags found, exiting")
-			return "", fmt.Errorf("No release or git tags found, exiting")
+			return "", fmt.Errorf("no release or git tags found, exiting")
 		}
 	}
 
@@ -132,7 +132,7 @@ func (g *Github) SearchTags() (tags []string, err error) {
 	}
 
 	if expectedFound != tagCounter {
-		return tags, fmt.Errorf("Something went wrong, find %d, expected %d", tagCounter, expectedFound)
+		return tags, fmt.Errorf("something went wrong, find %d, expected %d", tagCounter, expectedFound)
 	}
 
 	logrus.Debugf("%d tags found", len(tags))
@@ -239,7 +239,7 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 	}
 
 	if expectedFound != releaseCounter {
-		return releases, fmt.Errorf("Something went wrong, found %d releases, expected %d", releaseCounter, expectedFound)
+		return releases, fmt.Errorf("something went wrong, found %d releases, expected %d", releaseCounter, expectedFound)
 	}
 
 	logrus.Debugf("%d releases found", len(releases))
