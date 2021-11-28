@@ -5,7 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/updatecli/updatecli/pkg/core/engine/condition"
 	"github.com/updatecli/updatecli/pkg/core/engine/source"
+	"github.com/updatecli/updatecli/pkg/core/engine/target"
 )
 
 // Mocking the context package
@@ -283,6 +285,62 @@ var (
 			},
 			ExpectedUpdateErr:   ErrNotAllowedTemplatedKey,
 			ExpectedValidateErr: ErrNotAllowedTemplatedKey,
+		},
+		{
+			ID: "8",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+				Conditions: map[string]condition.Config{
+					"default": {
+						Name:     "Test SourceID",
+						Kind:     "shell",
+						SourceID: "ShouldNotExist",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
+		},
+		{
+			ID: "9",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+				Targets: map[string]target.Config{
+					"default": {
+						Name:     "Test SourceID",
+						Kind:     "shell",
+						SourceID: "ShouldNotExist",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
 		},
 	}
 )
