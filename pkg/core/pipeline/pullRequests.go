@@ -14,10 +14,23 @@ func (p *Pipeline) RunPullRequests() error {
 	}
 
 	for id, pr := range p.PullRequests {
+		if _, ok := p.SCMs[pr.Config.ScmID]; !ok {
+			return fmt.Errorf("scm id %q couldn't be found", pr.Config.ScmID)
+		}
+
+		inheritedSCM := p.SCMs[pr.Config.ScmID]
+		pr.Scm = &inheritedSCM
 
 		err := pr.Update()
 		if err != nil {
 			return err
+		}
+
+		if p.SCMs[pr.Config.ScmID].Config.Kind != pr.Config.Kind {
+			return fmt.Errorf("pullrequest of kind %q is not compatible with scm %q of kind %q",
+				pr.Config.Kind,
+				pr.Config.ScmID,
+				p.SCMs[pr.Config.ScmID].Config.Kind)
 		}
 
 		firstTargetID := pr.Config.Targets[0]

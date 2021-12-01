@@ -2,9 +2,11 @@ package pullRequest
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
 )
 
@@ -23,6 +25,7 @@ type Config struct {
 	Title   string      // Define the pullRequest Title
 	Kind    string      // Define the pullRequest kind
 	Spec    interface{} // Define specific parameters
+	ScmID   string      // Reference a scm configuration
 	Targets []string    // DependsOnTargets defined a list of target related to the pullRequest
 }
 
@@ -32,6 +35,7 @@ type PullRequest struct {
 	Changelog      string
 	PipelineReport string
 	Config         *Config
+	Scm            *scm.Scm
 	PullRequest    PullRequestHandler
 }
 
@@ -94,14 +98,31 @@ func (p *PullRequest) generatePullRequestHandler() error {
 
 	switch p.Config.Kind {
 	case "github":
-		githubSpec := github.Spec{}
+		pullRequestSpec := github.Spec{}
+		scmSpec := github.Spec{}
 
-		err := mapstructure.Decode(p.Config.Spec, &githubSpec)
+		if p.Scm.Config.Kind != "github" {
+			return fmt.Errorf("no compatible scm kind")
+		}
+
+		err := mapstructure.Decode(p.Config.Spec, &pullRequestSpec)
 		if err != nil {
 			return err
 		}
 
-		g, err := github.New(githubSpec)
+		err = mapstructure.Decode(p.Scm.Config.Spec, &scmSpec)
+		if err != nil {
+			return err
+		}
+
+		// Copy pullrequests fields from scm
+		pullRequestSpec.Branch = scmSpec.Branch
+		pullRequestSpec.Owner = scmSpec.Owner
+		pullRequestSpec.Repository = scmSpec.Repository
+		pullRequestSpec.Token = scmSpec.Token
+		pullRequestSpec.Username = scmSpec.Username
+
+		g, err := github.New(pullRequestSpec)
 
 		if err != nil {
 			return err
