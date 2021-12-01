@@ -15,8 +15,8 @@ type Config struct {
 }
 
 type Scm struct {
-	Config *Config
-	Scm    ScmHandler
+	Config  *Config
+	Handler ScmHandler
 }
 
 var (
@@ -88,7 +88,7 @@ func (s *Scm) GenerateSCM() error {
 			return err
 		}
 
-		s.Scm = &g
+		s.Handler = &g
 
 	case "git":
 		g := git.Git{}
@@ -98,7 +98,7 @@ func (s *Scm) GenerateSCM() error {
 			return err
 		}
 
-		s.Scm = &g
+		s.Handler = &g
 	default:
 		logrus.Errorf("scm kind %q not supported", s.Config.Kind)
 	}

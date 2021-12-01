@@ -64,8 +64,8 @@ func (e *Engine) InitSCM() (err error) {
 	for _, pipeline := range e.Pipelines {
 		for _, s := range pipeline.SCMs {
 
-			if s.Scm != nil {
-				err = Clone(&s.Scm, channel, &hashes, &wg)
+			if s.Handler != nil {
+				err = Clone(&s.Handler, channel, &hashes, &wg)
 				if err != nil {
 					return err
 				}

@@ -103,7 +103,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 				return fmt.Errorf("scm id %q doesn't exist", config.Sources[id].SCMID)
 			}
 
-			scmPointer = &sc.Scm
+			scmPointer = &sc.Handler
 		}
 
 		// Init Sources[id]
@@ -132,7 +132,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 				return fmt.Errorf("scm id %q doesn't exist", config.Conditions[id].SCMID)
 			}
 
-			scmPointer = &sc.Scm
+			scmPointer = &sc.Handler
 		}
 
 		p.Conditions[id] = condition.Condition{
@@ -158,7 +158,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 				return fmt.Errorf("scm id %q doesn't exist", config.Targets[id].SCMID)
 			}
 
-			scmPointer = &sc.Scm
+			scmPointer = &sc.Handler
 		}
 
 		p.Targets[id] = target.Target{
