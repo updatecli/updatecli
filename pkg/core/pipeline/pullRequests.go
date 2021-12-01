@@ -98,7 +98,7 @@ func (p *Pipeline) RunPullRequests() error {
 
 		}
 
-		err = pr.PullRequest.CreatePullRequest(
+		err = pr.Handler.CreatePullRequest(
 			pr.Title,
 			pr.Changelog,
 			pr.PipelineReport)

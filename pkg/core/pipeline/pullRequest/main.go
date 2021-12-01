@@ -36,7 +36,7 @@ type PullRequest struct {
 	PipelineReport string
 	Config         *Config
 	Scm            *scm.Scm
-	PullRequest    PullRequestHandler
+	Handler        PullRequestHandler
 }
 
 // Validate ensure that a pullRequest configuration has required parameters.
@@ -128,7 +128,7 @@ func (p *PullRequest) generatePullRequestHandler() error {
 			return err
 		}
 
-		p.PullRequest = &g
+		p.Handler = &g
 
 	default:
 		logrus.Errorf("scm kind %q not supported", p.Config.Kind)
