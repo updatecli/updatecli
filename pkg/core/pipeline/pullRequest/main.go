@@ -65,12 +65,13 @@ func (c *Config) Validate() error {
 
 }
 
-// New returns a new PullRequest object
-func New(config *Config) (PullRequest, error) {
+// New returns a new PullRequest based on a pullrequest config and an scm
+func New(config *Config, sourceControlManager *scm.Scm) (PullRequest, error) {
 
 	p := PullRequest{
 		Title:  config.Title,
 		Config: config,
+		Scm:    sourceControlManager,
 	}
 
 	err := p.generatePullRequestHandler()
@@ -98,11 +99,12 @@ func (p *PullRequest) generatePullRequestHandler() error {
 
 	switch p.Config.Kind {
 	case "github":
-		pullRequestSpec := github.Spec{}
-		scmSpec := github.Spec{}
+		pullRequestSpec := github.PullRequestSpec{}
 
 		if p.Scm.Config.Kind != "github" {
-			return fmt.Errorf("no compatible scm kind")
+			return fmt.Errorf("scm of kind %q is no compatible with pullrequest of kind %q",
+				p.Scm.Config.Kind,
+				p.Config.Kind)
 		}
 
 		err := mapstructure.Decode(p.Config.Spec, &pullRequestSpec)
@@ -110,19 +112,13 @@ func (p *PullRequest) generatePullRequestHandler() error {
 			return err
 		}
 
-		err = mapstructure.Decode(p.Scm.Config.Spec, &scmSpec)
-		if err != nil {
-			return err
+		gh, ok := p.Scm.Handler.(*github.Github)
+
+		if !ok {
+			return fmt.Errorf("scm is not a github type")
 		}
 
-		// Copy pullrequests fields from scm
-		pullRequestSpec.Branch = scmSpec.Branch
-		pullRequestSpec.Owner = scmSpec.Owner
-		pullRequestSpec.Repository = scmSpec.Repository
-		pullRequestSpec.Token = scmSpec.Token
-		pullRequestSpec.Username = scmSpec.Username
-
-		g, err := github.New(pullRequestSpec)
+		g, err := github.NewPullRequest(pullRequestSpec, gh)
 
 		if err != nil {
 			return err

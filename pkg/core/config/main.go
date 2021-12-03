@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -19,6 +20,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/plugins/github"
 	"gopkg.in/yaml.v3"
 )
 
@@ -270,16 +272,26 @@ func (config *Config) Validate() error {
 							Spec: spec,
 						}
 
-						// Temporary code until we fully deprecated the old pullRequest syntax
-						// at this stage we can only have github pullrequest so to not break backward
+						// Temporary code until we fully deprecated the old pullRequest syntax.
+						// At this stage we can only have github pullrequest so to not break backward
 						// compatibility, we automatically add a pullRequest configuration in case of github scm
+						// https://github.com/updatecli/updatecli/pull/388
 						if kind == "github" {
 							if config.PullRequests == nil {
 								config.PullRequests = make(map[string]pullRequest.Config, 1)
 							}
+
+							githubSpec := github.Spec{}
+
+							err := mapstructure.Decode(spec, &githubSpec)
+							if err != nil {
+								return err
+							}
+
 							config.PullRequests["target_"+id] = pullRequest.Config{
 								Kind:    kind,
-								Spec:    spec,
+								Spec:    githubSpec.PullRequest,
+								ScmID:   "target_" + id,
 								Targets: []string{id},
 							}
 						}

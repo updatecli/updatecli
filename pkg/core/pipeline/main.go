@@ -85,8 +85,12 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
 		pullRequestConfig := pullRequestConfig
+		SCM := p.SCMs[pullRequestConfig.ScmID]
 
-		p.PullRequests[id], err = pullRequest.New(&pullRequestConfig)
+		p.PullRequests[id], err = pullRequest.New(
+			&pullRequestConfig,
+			&SCM)
+
 		if err != nil {
 			return err
 		}
