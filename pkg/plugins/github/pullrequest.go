@@ -1,5 +1,16 @@
 package github
 
+/*
+	Keeping the pullrequest code under the github package to avoid cyclic dependencies between github <-> pullrequest
+	We need to completely refactor the github package to split the different component into specific sub packages
+
+		github/pullrequest
+		github/target
+		github/scm
+		github/source
+		github/condition
+*/
+
 import (
 	"bytes"
 	"context"
@@ -40,7 +51,7 @@ Please report any issues with this tool [here](https://github.com/updatecli/upda
 `
 
 // PullRequest contains multiple fields mapped to Github V4 api
-type PullRequest struct {
+type PullRequestApi struct {
 	BaseRefName string
 	Body        string
 	HeadRefName string
@@ -61,24 +72,37 @@ type PullRequestSpec struct {
 	MaintainerCannotModify bool     // Define if maintainer can modify pullRequest
 }
 
-func (g *Github) CreatePullRequest(title, changelog, pipelineReport string) error {
+type PullRequest struct {
+	gh                *Github
+	Description       string
+	Report            string
+	Title             string
+	spec              PullRequestSpec
+	remotePullRequest PullRequestApi
+}
 
-	g.pullRequest.Description = changelog
-	g.pullRequest.Report = pipelineReport
-	g.pullRequest.Title = title
+func NewPullRequest(spec PullRequestSpec, gh *Github) (PullRequest, error) {
+	return PullRequest{
+		gh:   gh,
+		spec: spec,
+	}, nil
+}
 
-	if len(g.spec.PullRequest.Title) > 0 {
-		g.pullRequest.Title = g.spec.PullRequest.Title
-	}
+func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string) error {
 
-	err := g.getRemotePullRequest()
+	p.Description = changelog
+	p.Report = pipelineReport
+	p.Title = title
+
+	// Check if there is already a pullRequest for current pipeline
+	err := p.getRemotePullRequest()
 	if err != nil {
 		return err
 	}
 
 	// No pullrequest ID so we first have to create the remote pullrequest
-	if len(g.remotePullRequest.ID) == 0 {
-		err = g.OpenPullRequest()
+	if len(p.remotePullRequest.ID) == 0 {
+		err = p.OpenPullRequest()
 		if err != nil {
 			return err
 		}
@@ -87,7 +111,7 @@ func (g *Github) CreatePullRequest(title, changelog, pipelineReport string) erro
 	// Once the remote pull request exist, we can than update it with additional information such as
 	// tags,assignee,etc.
 
-	err = g.updatePullRequest()
+	err = p.updatePullRequest()
 	if err != nil {
 		return err
 	}
@@ -96,7 +120,7 @@ func (g *Github) CreatePullRequest(title, changelog, pipelineReport string) erro
 }
 
 // generatePullRequestBody generates the body pull request based on PULLREQUESTBODY
-func (g *Github) generatePullRequestBody() (string, error) {
+func (p *PullRequest) generatePullRequestBody() (string, error) {
 	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
 
 	buffer := new(bytes.Buffer)
@@ -109,10 +133,10 @@ func (g *Github) generatePullRequestBody() (string, error) {
 	}
 
 	err := t.Execute(buffer, params{
-		Introduction: g.spec.PullRequest.Description,
-		Description:  g.pullRequest.Description,
-		Report:       g.pullRequest.Report,
-		Title:        g.pullRequest.Title,
+		Introduction: p.spec.Description,
+		Description:  p.Description,
+		Report:       p.Report,
+		Title:        p.Title,
 	})
 
 	if err != nil {
@@ -123,7 +147,7 @@ func (g *Github) generatePullRequestBody() (string, error) {
 }
 
 // updatePullRequest updates an existing pull request.
-func (g *Github) updatePullRequest() error {
+func (p *PullRequest) updatePullRequest() error {
 
 	/*
 				mutation($input: UpdatePullRequestInput!){
@@ -144,43 +168,43 @@ func (g *Github) updatePullRequest() error {
 				}
 	*/
 
-	client := g.NewClient()
+	client := p.gh.NewClient()
 
 	var mutation struct {
 		UpdatePullRequest struct {
-			PullRequest PullRequest
+			PullRequest PullRequestApi
 		} `graphql:"updatePullRequest(input: $input)"`
 	}
 
 	logrus.Debugf("Updating Github pull request")
 
-	title := g.pullRequest.Title
+	title := p.Title
 
-	bodyPR, err := g.generatePullRequestBody()
+	bodyPR, err := p.generatePullRequestBody()
 	if err != nil {
 		return err
 	}
 
 	labelsID := []githubv4.ID{}
-	repolabels, err := g.getRepositoryLabelsInformation()
+	repolabels, err := p.gh.GetRepositoryLabelsInformation()
 	if err != nil {
 		return err
 	}
 
-	remotePRLabels, err := g.getPullRequestLabelsInformation()
+	remotePRLabels, err := p.GetPullRequestLabelsInformation()
 	if err != nil {
 		return err
 	}
 
 	// Build a list of labelID to update the pullrequest
-	for _, label := range mergeLabels(repolabels, remotePRLabels) {
+	for _, label := range MergeLabels(repolabels, remotePRLabels) {
 		labelsID = append(labelsID, githubv4.NewID(label.ID))
 	}
 
 	pullRequestUpdateStateOpen := githubv4.PullRequestUpdateStateOpen
 
 	input := githubv4.UpdatePullRequestInput{
-		PullRequestID: githubv4.String(g.remotePullRequest.ID),
+		PullRequestID: githubv4.String(p.remotePullRequest.ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
 		LabelIDs:      &labelsID,
@@ -198,7 +222,7 @@ func (g *Github) updatePullRequest() error {
 }
 
 // OpenPullRequest creates a new pull request on Github.
-func (g *Github) OpenPullRequest() error {
+func (p *PullRequest) OpenPullRequest() error {
 
 	/*
 		mutation($input: CreatePullRequestInput!){
@@ -220,32 +244,32 @@ func (g *Github) OpenPullRequest() error {
 
 
 	*/
-	client := g.NewClient()
+	client := p.gh.NewClient()
 
 	var mutation struct {
 		CreatePullRequest struct {
-			PullRequest PullRequest
+			PullRequest PullRequestApi
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
-	repositoryID, err := g.queryRepositoryID()
+	repositoryID, err := p.gh.queryRepositoryID()
 	if err != nil {
 		return err
 	}
 
-	bodyPR, err := g.generatePullRequestBody()
+	bodyPR, err := p.generatePullRequestBody()
 	if err != nil {
 		return err
 	}
 
 	input := githubv4.CreatePullRequestInput{
-		BaseRefName:         githubv4.String(g.spec.Branch),
+		BaseRefName:         githubv4.String(p.gh.Spec.Branch),
 		RepositoryID:        githubv4.String(repositoryID),
-		HeadRefName:         githubv4.String(g.HeadBranch),
-		Title:               githubv4.String(g.pullRequest.Title),
+		HeadRefName:         githubv4.String(p.gh.HeadBranch),
+		Title:               githubv4.String(p.Title),
 		Body:                githubv4.NewString(githubv4.String(bodyPR)),
-		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(!g.spec.PullRequest.MaintainerCannotModify)),
-		Draft:               githubv4.NewBoolean(githubv4.Boolean(g.spec.PullRequest.Draft)),
+		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(!p.spec.MaintainerCannotModify)),
+		Draft:               githubv4.NewBoolean(githubv4.Boolean(p.spec.Draft)),
 	}
 
 	err = client.Mutate(context.Background(), &mutation, input, nil)
@@ -253,14 +277,14 @@ func (g *Github) OpenPullRequest() error {
 		return err
 	}
 
-	g.remotePullRequest = mutation.CreatePullRequest.PullRequest
+	p.remotePullRequest = mutation.CreatePullRequest.PullRequest
 
 	return nil
 
 }
 
 // getRemotePullRequest checks if a pull request already exist on GitHub and is in the state 'open' or 'closed'.
-func (g *Github) getRemotePullRequest() error {
+func (p *PullRequest) getRemotePullRequest() error {
 	/*
 			https://developer.github.com/v4/explorer/
 		# Query
@@ -288,21 +312,21 @@ func (g *Github) getRemotePullRequest() error {
 		}
 	*/
 
-	client := g.NewClient()
+	client := p.gh.NewClient()
 
 	var query struct {
 		Repository struct {
 			PullRequests struct {
-				Nodes []PullRequest
+				Nodes []PullRequestApi
 			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: [OPEN,CLOSED])"`
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
 	variables := map[string]interface{}{
-		"owner":       githubv4.String(g.spec.Owner),
-		"name":        githubv4.String(g.spec.Repository),
-		"baseRefName": githubv4.String(g.spec.Branch),
-		"headRefName": githubv4.String(g.HeadBranch),
+		"owner":       githubv4.String(p.gh.Spec.Owner),
+		"name":        githubv4.String(p.gh.Spec.Repository),
+		"baseRefName": githubv4.String(p.gh.Spec.Branch),
+		"headRefName": githubv4.String(p.gh.HeadBranch),
 	}
 
 	err := client.Query(context.Background(), &query, variables)
@@ -312,9 +336,99 @@ func (g *Github) getRemotePullRequest() error {
 	}
 
 	if len(query.Repository.PullRequests.Nodes) > 0 {
-		g.remotePullRequest = query.Repository.PullRequests.Nodes[0]
+		p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
 		return nil
 	}
 
 	return nil
+}
+
+// getPullRequestLabelsInformation queries GitHub Api to retrieve every labels assigned to a pullRequest
+func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, error) {
+
+	/*
+		query getPullRequests(
+			$owner: String!,
+			$name:String!,
+			$before:Int!){
+				repository(owner: $owner, name: $name) {
+					pullRequest(number: 4){
+		            labels(last: 5, before:$before){
+						totalCount
+									pageInfo {
+										hasNextPage
+										endCursor
+									}
+									edges {
+										node {
+											id
+											name
+											description
+										}
+										cursor
+									}
+		            }
+		          }
+						}
+					}
+	*/
+
+	client := p.gh.NewClient()
+
+	variables := map[string]interface{}{
+		"owner":      githubv4.String(p.gh.Spec.Owner),
+		"repository": githubv4.String(p.gh.Spec.Repository),
+		"number":     githubv4.Int(p.remotePullRequest.Number),
+		"before":     (*githubv4.String)(nil),
+	}
+
+	var query struct {
+		RateLimit  RateLimit
+		Repository struct {
+			PullRequest struct {
+				Labels struct {
+					TotalCount int
+					PageInfo   PageInfo
+					Edges      []struct {
+						Cursor string
+						Node   struct {
+							ID          string
+							Name        string
+							Description string
+						}
+					}
+				} `graphql:"labels(last: 5, before: $before)"`
+			} `graphql:"pullRequest(number: $number)"`
+		} `graphql:"repository(owner: $owner, name: $repository)"`
+	}
+
+	var pullRequestLabels []repositoryLabelApi
+	for {
+		err := client.Query(context.Background(), &query, variables)
+
+		if err != nil {
+			logrus.Errorf("\t%s", err)
+			return nil, err
+		}
+
+		query.RateLimit.Show()
+
+		// Retrieve remote label information such as label ID, label name, labe description
+		for _, node := range query.Repository.PullRequest.Labels.Edges {
+			pullRequestLabels = append(
+				pullRequestLabels,
+				repositoryLabelApi{
+					ID:          node.Node.ID,
+					Name:        node.Node.Name,
+					Description: node.Node.Description,
+				})
+		}
+
+		if !query.Repository.PullRequest.Labels.PageInfo.HasPreviousPage {
+			break
+		}
+
+		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.PullRequest.Labels.PageInfo.StartCursor))
+	}
+	return pullRequestLabels, nil
 }
