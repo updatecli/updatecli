@@ -85,7 +85,15 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
 		pullRequestConfig := pullRequestConfig
-		SCM := p.SCMs[pullRequestConfig.ScmID]
+
+		SCM, ok := p.SCMs[pullRequestConfig.ScmID]
+
+		// Validate that scm ID exists
+		if !ok {
+			return fmt.Errorf("scms ID %q referenced by pullrequest ID %q, doesn't exist",
+				pullRequestConfig.ScmID,
+				id)
+		}
 
 		p.PullRequests[id], err = pullRequest.New(
 			&pullRequestConfig,
@@ -104,7 +112,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		if len(config.Sources[id].SCMID) > 0 {
 			sc, ok := p.SCMs[config.Sources[id].SCMID]
 			if !ok {
-				return fmt.Errorf("scm id %q doesn't exist", config.Sources[id].SCMID)
+				return fmt.Errorf("scm ID %q from source ID %q doesn't exist",
+					config.Sources[id].SCMID,
+					id)
 			}
 
 			scmPointer = &sc.Handler
