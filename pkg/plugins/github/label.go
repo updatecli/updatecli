@@ -14,9 +14,8 @@ type repositoryLabelApi struct {
 	Description string
 }
 
-// getRepositoryLabelsInformation queries GitHub Api to retrieve every labels configured for a repository
-// then only return those matching label name specified via an updatecli configuration
-func (g *Github) GetRepositoryLabelsInformation() ([]repositoryLabelApi, error) {
+// GetRepositoryLabels queries GitHub Api to retrieve every labels configured for a repository
+func (g *Github) GetRepositoryLabels() ([]repositoryLabelApi, error) {
 
 	/*
 		https://developer.github.com/v4/explorer/
@@ -48,11 +47,7 @@ func (g *Github) GetRepositoryLabelsInformation() ([]repositoryLabelApi, error) 
 
 	*/
 
-	// Early exit as no label information are needed
-	if len(g.Spec.PullRequest.Labels) == 0 {
-		return nil, nil
-	}
-	var repoLabels []repositoryLabelApi
+	var repositoryLabels []repositoryLabelApi
 
 	client := g.NewClient()
 
@@ -92,8 +87,8 @@ func (g *Github) GetRepositoryLabelsInformation() ([]repositoryLabelApi, error) 
 
 		// Retrieve remote label information such as label ID, label name, labe description
 		for _, node := range query.Repository.Labels.Edges {
-			repoLabels = append(
-				repoLabels,
+			repositoryLabels = append(
+				repositoryLabels,
 				repositoryLabelApi{
 					ID:          node.Node.ID,
 					Name:        node.Node.Name,
@@ -108,16 +103,7 @@ func (g *Github) GetRepositoryLabelsInformation() ([]repositoryLabelApi, error) 
 		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Labels.PageInfo.StartCursor))
 	}
 
-	matchingLabels := []repositoryLabelApi{}
-	for _, l := range g.Spec.PullRequest.Labels {
-		for _, repoLabel := range repoLabels {
-			if l == repoLabel.Name {
-				matchingLabels = append(matchingLabels, repoLabel)
-			}
-		}
-	}
-
-	return matchingLabels, nil
+	return repositoryLabels, nil
 }
 
 func MergeLabels(a, b []repositoryLabelApi) []repositoryLabelApi {
