@@ -47,10 +47,6 @@ func (c *Config) Validate() error {
 		logrus.Errorln("Missing 'kind' values")
 		errs = append(errs, errors.New("missing 'kind ' value"))
 	}
-	if c.Spec == nil {
-		logrus.Errorln("Missing 'spec' value")
-		errs = append(errs, errors.New("missing 'spec' value"))
-	}
 
 	if len(c.Targets) == 0 {
 		logrus.Errorln("Missing at least one value in 'Targets'")
