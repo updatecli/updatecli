@@ -27,7 +27,7 @@ func TestGetRepositoryLabelsInformation(t *testing.T) {
 		"duplicate",
 	}
 
-	gotLabels, err := g.GetRepositoryLabelsInformation()
+	gotLabels, err := g.GetRepositoryLabels()
 	if err != nil {
 		t.Errorf("unexpected error: %q", err.Error())
 	}
