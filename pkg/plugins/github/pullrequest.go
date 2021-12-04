@@ -186,9 +186,18 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	labelsID := []githubv4.ID{}
-	repolabels, err := p.gh.GetRepositoryLabelsInformation()
+	repositoryLabels, err := p.gh.GetRepositoryLabels()
 	if err != nil {
 		return err
+	}
+
+	matchingLabels := []repositoryLabelApi{}
+	for _, l := range p.spec.Labels {
+		for _, repoLabel := range repositoryLabels {
+			if l == repoLabel.Name {
+				matchingLabels = append(matchingLabels, repoLabel)
+			}
+		}
 	}
 
 	remotePRLabels, err := p.GetPullRequestLabelsInformation()
@@ -197,7 +206,7 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	// Build a list of labelID to update the pullrequest
-	for _, label := range MergeLabels(repolabels, remotePRLabels) {
+	for _, label := range MergeLabels(matchingLabels, remotePRLabels) {
 		labelsID = append(labelsID, githubv4.NewID(label.ID))
 	}
 
