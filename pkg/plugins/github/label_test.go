@@ -15,8 +15,8 @@ func TestGetRepositoryLabelsInformation(t *testing.T) {
 
 	g := Github{
 		Spec: Spec{
-			Owner:      "olblak",
-			Repository: "nocode",
+			Owner:      "updatecli",
+			Repository: "updatecli",
 			Username:   os.Getenv("GITHUB_ACTOR"),
 			Token:      os.Getenv("GITHUB_TOKEN"),
 		},
