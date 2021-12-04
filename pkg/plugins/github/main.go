@@ -18,34 +18,27 @@ import (
 
 // Spec represents the configuration input
 type Spec struct {
-	Branch        string         // Branch specifies which github branch to work on
-	Directory     string         // Directory specifies where the github repisotory is cloned on the local disk
-	Email         string         // Email specifies which emails to use when creating commits
-	Owner         string         // Owner specifies repository owner
-	Repository    string         // Repository specifies the name of a repository for a specific owner
-	Version       string         // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a future version
-	VersionFilter version.Filter //VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	Token         string         // Token specifies the credential used to authenticate with
-	URL           string         // URL specifies the default github url in case of GitHub enterprise
-	Username      string         // Username specifies the username used to authenticate with Github API
-	User          string         // User specific the user in git commit messages
-	PullRequest   PullRequestSpec
+	Branch        string          // Branch specifies which github branch to work on
+	Directory     string          // Directory specifies where the github repisotory is cloned on the local disk
+	Email         string          // Email specifies which emails to use when creating commits
+	Owner         string          // Owner specifies repository owner
+	Repository    string          // Repository specifies the name of a repository for a specific owner
+	Version       string          // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a future version
+	VersionFilter version.Filter  //VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	Token         string          // Token specifies the credential used to authenticate with
+	URL           string          // URL specifies the default github url in case of GitHub enterprise
+	Username      string          // Username specifies the username used to authenticate with Github API
+	User          string          // User specific the user in git commit messages
+	PullRequest   PullRequestSpec // Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
 }
 
 // Github contains settings to interact with Github
 type Github struct {
-	Spec          Spec          // Spec contains inputs coming from updatecli configuration
-	HeadBranch    string        // remoteBranch is used when creating a temporary branch before opening a PR
-	Force         bool          // Force is used during the git push phase to run `git push --force`.
-	CommitMessage commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
-	pullRequest   struct {      // pullRequest contain the pull request information
-		Title       string // Override default pull request title
-		LabelIDs    []string
-		Description string
-		Report      string
-	}
-	//remotePullRequest PullRequestApi
-	foundVersion version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
+	Spec          Spec            // Spec contains inputs coming from updatecli configuration
+	HeadBranch    string          // remoteBranch is used when creating a temporary branch before opening a PR
+	Force         bool            // Force is used during the git push phase to run `git push --force`.
+	CommitMessage commit.Commit   // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	foundVersion  version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
 }
 
 // New returns a new valid Github object.
