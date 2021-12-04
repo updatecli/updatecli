@@ -115,7 +115,7 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: Parent source \"default\" failed"),
+			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: parent source \"default\" failed"),
 			ExpectedValidateErr: nil,
 		},
 		// Testing key case sensitive
