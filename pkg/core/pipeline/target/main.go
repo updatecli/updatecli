@@ -189,6 +189,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
+	// If no scm configuration provided then stop early
 	if t.Scm == nil {
 
 		changed, err = spec.Target(t.Config.Prefix+source+t.Config.Postfix, o.DryRun)
@@ -245,30 +246,27 @@ func (t *Target) Run(source string, o *Options) (err error) {
 			return fmt.Errorf("target has no change message")
 		}
 
-		if len(t.Config.Scm) > 0 {
+		if len(files) == 0 {
+			t.Result = result.FAILURE
+			logrus.Info("no changed files to commit")
+			return nil
+		}
 
-			if len(files) == 0 {
+		if o.Commit {
+			if err := s.Add(files); err != nil {
 				t.Result = result.FAILURE
-				logrus.Info("no changed files to commit")
-				return nil
+				return err
 			}
 
-			if o.Commit {
-				if err := s.Add(files); err != nil {
-					t.Result = result.FAILURE
-					return err
-				}
-
-				if err = s.Commit(message); err != nil {
-					t.Result = result.FAILURE
-					return err
-				}
+			if err = s.Commit(message); err != nil {
+				t.Result = result.FAILURE
+				return err
 			}
-			if o.Push {
-				if err := s.Push(); err != nil {
-					t.Result = result.FAILURE
-					return err
-				}
+		}
+		if o.Push {
+			if err := s.Push(); err != nil {
+				t.Result = result.FAILURE
+				return err
 			}
 		}
 	}
