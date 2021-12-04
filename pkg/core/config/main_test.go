@@ -5,12 +5,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Mocking the context package
 type mockSourceContext struct {
 	Output string
+	Result string
 }
 
 // Mocking the context package
@@ -76,6 +80,7 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
+						Result: result.SUCCESS,
 					},
 				},
 			},
@@ -89,6 +94,28 @@ var (
 				},
 			},
 			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
+		},
+		// Test a failed source
+		{
+			ID: "1.2",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Result: result.FAILURE,
+					},
+				},
+			},
+			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: Parent source \"default\" failed"),
 			ExpectedValidateErr: nil,
 		},
 		// Testing key case sensitive
@@ -137,6 +164,7 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
+						Result: result.SUCCESS,
 					},
 				},
 			},
@@ -253,6 +281,7 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
+						Result: result.SUCCESS,
 					},
 				},
 			},
@@ -284,6 +313,62 @@ var (
 			ExpectedUpdateErr:   ErrNotAllowedTemplatedKey,
 			ExpectedValidateErr: ErrNotAllowedTemplatedKey,
 		},
+		{
+			ID: "8",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+				Conditions: map[string]condition.Config{
+					"default": {
+						Name:     "Test SourceID",
+						Kind:     "shell",
+						SourceID: "ShouldNotExist",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
+		},
+		{
+			ID: "9",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+				Targets: map[string]target.Config{
+					"default": {
+						Name:     "Test SourceID",
+						Kind:     "shell",
+						SourceID: "ShouldNotExist",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
+		},
 	}
 )
 
@@ -298,6 +383,7 @@ func TestUpdate(t *testing.T) {
 					err.Error())
 				continue
 			}
+
 		} else if err != nil && data.ExpectedUpdateErr == nil {
 			t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
 				data.ID,

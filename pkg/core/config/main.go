@@ -20,6 +20,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
 	"gopkg.in/yaml.v3"
 )
@@ -186,7 +187,12 @@ func (config *Config) Validate() error {
 	}
 
 	for id, c := range config.Conditions {
-
+		if len(c.SourceID) > 0 {
+			if _, ok := config.Sources[c.SourceID]; !ok {
+				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
+				return ErrBadConfig
+			}
+		}
 		// Only check/guess the sourceID if the user did not disable it (default is enabled)
 		if !c.DisableSourceInput {
 			// Try to guess SourceID
@@ -238,6 +244,12 @@ func (config *Config) Validate() error {
 	for id, t := range config.Targets {
 		if len(t.PipelineID) == 0 {
 			t.PipelineID = config.PipelineID
+		}
+		if len(t.SourceID) > 0 {
+			if _, ok := config.Sources[t.SourceID]; !ok {
+				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", t.SourceID)
+				return ErrBadConfig
+			}
 		}
 		// Try to guess SourceID
 		if len(t.SourceID) == 0 && len(config.Sources) > 1 {
@@ -363,26 +375,27 @@ func (config *Config) Update(data interface{}) (err error) {
 				Retrieve the value of a third location key from
 				the updatecli contex.
 				It returns an error if a key doesn't exist
-				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
+				It returns {{ source "<key>" }} if a key exist but still set to zero value,
 				then we assume that the value will be set later in the run.
 				Otherwise it returns the value.
 				This func is design to constantly reevaluate if a configuration changed
 			*/
 
-			val, err := getFieldValueByQuery(
-				data, []string{"Sources", s, "Output"})
-
+			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result"})
 			if err != nil {
 				return "", err
 			}
 
-			if len(val) > 0 {
-				return val, nil
+			switch sourceResult {
+			case result.SUCCESS:
+				return getFieldValueByQuery(data, []string{"Sources", s, "Output"})
+			case result.FAILURE:
+				return "", fmt.Errorf("parent source %q failed", s)
+			// If the result of the parent source execution is not SUCCESS or FAILURE, then it means it was either skipped or not already run.
+			// In this case, the function is return "as it" (literrally) to allow retry later (on a second configuration iteration)
+			default:
+				return fmt.Sprintf("{{ source %q }}", s), nil
 			}
-			// If we couldn't find a value, then we return the function so we can retry
-			// later on.
-			return fmt.Sprintf("{{ source %q }}", s), nil
-
 		},
 	}
 

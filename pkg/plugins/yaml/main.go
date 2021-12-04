@@ -36,29 +36,58 @@ type Yaml struct {
 // New returns a reference to a newly initialized Yaml object from a YamlSpec
 // or an error if the provided YamlSpec triggers a validation error.
 func New(spec YamlSpec) (*Yaml, error) {
+	newYamlResource := &Yaml{
+		Spec:             spec,
+		contentRetriever: &text.Text{},
+	}
+	// TODO: generalize the Validate + Normalize as an interface to all resources
+	err := newYamlResource.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	err = newYamlResource.Normalize()
+	if err != nil {
+		return nil, err
+	}
+
+	return newYamlResource, nil
+
+}
+
+// Normalize ensures that the attributes of the object are following the expected conventions
+func (y *Yaml) Normalize() error {
+	if strings.HasPrefix(y.Spec.File, "file://") {
+		y.Spec.File = strings.TrimPrefix(y.Spec.File, "file://")
+	}
+
+	return nil
+}
+
+// Validate validates the object and returns an error (with all the failed validation messages) if it is not valid
+func (y *Yaml) Validate() error {
 	var validationErrors []string
 
 	// Check for all validation
-	if len(spec.Path) > 0 {
+	if len(y.Spec.Path) > 0 {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: Key 'path' is deprecated, use 'file' instead.")
 	}
-	if spec.File == "" {
+	if y.Spec.File == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'file' is empty.")
+	} else {
+		if !y.contentRetriever.FileExists(y.Spec.File) {
+			validationErrors = append(validationErrors, fmt.Sprintf("Invalid spec for yaml resource: the file %q does not exist.", y.Spec.File))
+		}
 	}
-	if spec.Key == "" {
+	if y.Spec.Key == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return nil, fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
-	spec.File = strings.TrimPrefix(spec.File, "file://")
-
-	return &Yaml{
-		Spec:             spec,
-		contentRetriever: &text.Text{},
-	}, nil
+	return nil
 }
 
 // Read defines CurrentContent to the content of the file which path is specified in Spec.File

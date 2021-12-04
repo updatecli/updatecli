@@ -56,6 +56,7 @@ func (c *Condition) Run(source string) (err error) {
 	spec, err := Unmarshal(c)
 	if err != nil {
 		c.Result = result.FAILURE
+		logrus.Errorf("%s", err)
 		return err
 	}
 
