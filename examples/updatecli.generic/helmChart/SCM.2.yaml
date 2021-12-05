@@ -1,0 +1,40 @@
+title: Bump Jenkins controller docker image tag
+scms:
+  olblak-chart:
+    kind: github
+    spec:
+      user: "updatecli"
+      email: "updatecli2@olblak.com"
+      owner: "olblak"
+      repository: "charts"
+      token: {{ requiredEnv .github.token }}
+      username: "olblak"
+      branch: "master"
+pullrequests:
+  chart:
+    kind: github
+    scmid: olblak-chart
+    targets:
+      - chartjenkins1 
+    spec:
+      labels:
+        - bug
+sources:
+  jenkins:
+    kind: jenkins
+    name: Get Latest Jenkins Stable version
+    spec:
+      release: stable
+      github:
+        token: {{ requiredEnv .github.token }}
+        username: {{ .github.username }}
+targets:
+  chartjenkins1:
+    name: Bump Jenkins controller docker image tag
+    kind: helmChart
+    scmID: olblak-chart
+    spec:
+      appVersion: true
+      Name: "charts/jenkins"
+      key: "jenkins.controller.tag"
+      versionincrement: "major"

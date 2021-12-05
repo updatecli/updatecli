@@ -8,7 +8,7 @@ source:
       token: {{ requiredEnv .github.token }}
       username: {{ .github.username }}
 targets:
-  chartjenkins:
+  chartjenkins2:
     name: Bump Jenkins controller docker image tag
     kind: helmChart
     spec:
@@ -25,3 +25,6 @@ targets:
         token: {{ requiredEnv .github.token }}
         username: "olblak"
         branch: "master"
+        pullrequest:
+          labels:
+            - dependencies
