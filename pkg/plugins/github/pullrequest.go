@@ -88,7 +88,7 @@ func NewPullRequest(spec PullRequestSpec, gh *Github) (PullRequest, error) {
 	}, nil
 }
 
-func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string) error {
+func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string, createPullRequest bool) error {
 
 	p.Description = changelog
 	p.Report = pipelineReport
@@ -100,8 +100,14 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 		return err
 	}
 
+	// We don't need to create a pullrequest and no pullrequest have been published yet so nothing to update
+	if p.remotePullRequest.Number == 0 && !createPullRequest {
+		logrus.Debugf("Nothing left to do skipping pullrequest creation. No pull request needs to be created or updated.")
+		return nil
+	}
+
 	// No pullrequest ID so we first have to create the remote pullrequest
-	if len(p.remotePullRequest.ID) == 0 {
+	if len(p.remotePullRequest.ID) == 0 && createPullRequest {
 		err = p.OpenPullRequest()
 		if err != nil {
 			return err
