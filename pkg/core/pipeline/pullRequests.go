@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func (p *Pipeline) RunPullRequests() error {
@@ -70,9 +71,17 @@ func (p *Pipeline) RunPullRequests() error {
 
 		changelog := ""
 		processedSourceIDs := []string{}
+		failingTargets := []string{}
 		// Ensure we don't add changelog from the same sourceID twice.
 		for _, targetID := range pr.Config.Targets {
 			sourceID := p.Targets[targetID].Config.SourceID
+
+			// Don't add failing target changelog to the pullrequest body
+			if p.Report.Targets[targetID].Result == result.FAILURE {
+				failingTargets = append(failingTargets, targetID)
+				continue
+			}
+
 			found := false
 			for _, proccessedSourceID := range processedSourceIDs {
 				if proccessedSourceID == sourceID {
@@ -85,6 +94,11 @@ func (p *Pipeline) RunPullRequests() error {
 			}
 		}
 		pr.Changelog = changelog
+
+		// Exit if target failed
+		if len(failingTargets) > 0 {
+			return fmt.Errorf("pullrequest [%s] skippped because depends on targets [%s] failed", id, strings.Join(failingTargets, ","))
+		}
 
 		if p.Options.Target.DryRun {
 			pullRequestOutput := fmt.Sprintf("A Pull request of type %q, should be opened with following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
