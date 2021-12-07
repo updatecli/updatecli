@@ -40,24 +40,21 @@ type PullRequest struct {
 }
 
 // Validate ensure that a pullRequest configuration has required parameters.
-func (c *Config) Validate() error {
-	errs := []error{}
+func (c *Config) Validate() (err error) {
 
 	if len(c.Kind) == 0 {
-		logrus.Errorln("Missing 'kind' values")
-		errs = append(errs, errors.New("missing 'kind ' value"))
+		err = fmt.Errorf("\tmissing 'kind' value")
 	}
 
 	if len(c.Targets) == 0 {
-		logrus.Errorln("Missing at least one value in 'Targets'")
-		errs = append(errs, errors.New("missing 'Targets' value"))
+		err = fmt.Errorf("%s\n\tmissing 'Targets' value", err)
 	}
 
-	if len(errs) > 0 {
-		return ErrWrongConfig
+	if len(c.ScmID) == 0 {
+		err = fmt.Errorf("%s\n\tmissing 'scmID' value", err)
 	}
 
-	return nil
+	return err
 
 }
 
