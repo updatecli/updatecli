@@ -81,6 +81,8 @@ func New(cfgFile string, valuesFiles, secretsFiles []string) (config Config, err
 		return config, err
 	}
 
+	logrus.Infof("Loading Pipeline %q", cfgFile)
+
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml":
 		t := Template{
