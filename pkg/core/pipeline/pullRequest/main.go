@@ -18,7 +18,7 @@ var (
 
 // PullRequestHandler interface defines required functions to be an pullRequest
 type PullRequestHandler interface {
-	CreatePullRequest(title, changelog, pipelineReport string) error
+	CreatePullRequest(title, changelog, pipelineReport string, createPullRequest bool) error
 }
 
 // Config define pullRequest provided via an updatecli configuration

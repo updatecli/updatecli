@@ -71,15 +71,21 @@ func (p *Pipeline) RunPullRequests() error {
 
 		changelog := ""
 		processedSourceIDs := []string{}
-		failingTargets := []string{}
+		failedTargets := []string{}
+		changedTargets := []string{}
+
 		// Ensure we don't add changelog from the same sourceID twice.
 		for _, targetID := range pr.Config.Targets {
 			sourceID := p.Targets[targetID].Config.SourceID
 
+			switch p.Report.Targets[targetID].Result {
 			// Don't add failing target changelog to the pullrequest body
-			if p.Report.Targets[targetID].Result == result.FAILURE {
-				failingTargets = append(failingTargets, targetID)
+			case result.FAILURE:
+				failedTargets = append(failedTargets, targetID)
 				continue
+			// Keep track of target which failed and should force a pull request creation
+			case result.ATTENTION:
+				changedTargets = append(changedTargets, targetID)
 			}
 
 			found := false
@@ -96,8 +102,8 @@ func (p *Pipeline) RunPullRequests() error {
 		pr.Changelog = changelog
 
 		// Exit if target failed
-		if len(failingTargets) > 0 {
-			return fmt.Errorf("pullrequest [%s] skippped because depends on targets [%s] failed", id, strings.Join(failingTargets, ","))
+		if len(failedTargets) > 0 {
+			return fmt.Errorf("pullrequest [%s] skippped because depends on targets [%s] failed", id, strings.Join(failedTargets, ","))
 		}
 
 		if p.Options.Target.DryRun {
@@ -115,7 +121,8 @@ func (p *Pipeline) RunPullRequests() error {
 		err = pr.Handler.CreatePullRequest(
 			pr.Title,
 			pr.Changelog,
-			pr.PipelineReport)
+			pr.PipelineReport,
+			len(changedTargets) > 0)
 
 		if err != nil {
 			return err
