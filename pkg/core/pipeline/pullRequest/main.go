@@ -3,6 +3,7 @@ package pullRequest
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -42,16 +43,22 @@ type PullRequest struct {
 // Validate ensure that a pullRequest configuration has required parameters.
 func (c *Config) Validate() (err error) {
 
+	missingParameters := []string{}
+
 	if len(c.Kind) == 0 {
-		err = fmt.Errorf("\tmissing 'kind' value")
+		missingParameters = append(missingParameters, "kind")
 	}
 
 	if len(c.Targets) == 0 {
-		err = fmt.Errorf("%s\n\tmissing 'Targets' value", err)
+		missingParameters = append(missingParameters, "targets")
 	}
 
 	if len(c.ScmID) == 0 {
-		err = fmt.Errorf("%s\n\tmissing 'scmID' value", err)
+		missingParameters = append(missingParameters, "scmID")
+	}
+
+	if len(missingParameters) > 0 {
+		err = fmt.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
 	}
 
 	return err

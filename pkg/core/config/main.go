@@ -144,14 +144,16 @@ func (config *Config) Validate() error {
 		config.Source = source.Config{}
 	}
 
-	for _, scm := range config.SCMs {
+	for id, scm := range config.SCMs {
 		if err := scm.Validate(); err != nil {
+			logrus.Errorf("bad parameter(s) for scmIDs %q", id)
 			return err
 		}
 	}
 
-	for _, p := range config.PullRequests {
+	for id, p := range config.PullRequests {
 		if err := p.Validate(); err != nil {
+			logrus.Errorf("bad parameters for pullrequest %q", id)
 			return err
 		}
 	}
