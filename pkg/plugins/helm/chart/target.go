@@ -75,7 +75,7 @@ func (c *Chart) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (
 		return false, files, message, err
 	}
 
-	filename := filepath.Join(c.Name, c.File)
+	filename := filepath.Join(scm.GetDirectory(), c.Name, c.File)
 
 	YamlResource, err := yaml.New(yaml.YamlSpec{
 		File: filename,
