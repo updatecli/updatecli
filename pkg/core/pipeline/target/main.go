@@ -184,11 +184,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	if err != nil {
-		t.Result = result.FAILURE
-		return err
-	}
-
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
 
