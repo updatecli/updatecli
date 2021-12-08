@@ -71,22 +71,28 @@ func (p *Pipeline) RunPullRequests() error {
 
 		changelog := ""
 		processedSourceIDs := []string{}
-		failedTargets := []string{}
-		changedTargets := []string{}
+
+		failedTargetIDs, attentionTargetIDs, successTargetIDs, skippedTargetIDs := p.GetTargetsIDByResult(pr.Config.Targets)
+
+		// No target changed so nothing left to do
+		if len(attentionTargetIDs) == 0 {
+			logrus.Debugf("Nothing left do as no target related to pullrequest %q changed", id)
+			return nil
+		}
+
+		// Ignoring failed targets
+		if len(failedTargetIDs) > 0 {
+			logrus.Debugf("%d target(s) (%s) failed for pullrequest %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
+		}
+
+		// Ignoring skipped targets
+		if len(skippedTargetIDs) > 0 {
+			return fmt.Errorf("%d  target(s) (%s) skipped for pullrequest %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
+		}
 
 		// Ensure we don't add changelog from the same sourceID twice.
-		for _, targetID := range pr.Config.Targets {
+		for _, targetID := range successTargetIDs {
 			sourceID := p.Targets[targetID].Config.SourceID
-
-			switch p.Report.Targets[targetID].Result {
-			// Don't add failing target changelog to the pullrequest body
-			case result.FAILURE:
-				failedTargets = append(failedTargets, targetID)
-				continue
-			// Keep track of target which failed and should force a pull request creation
-			case result.ATTENTION:
-				changedTargets = append(changedTargets, targetID)
-			}
 
 			found := false
 			for _, proccessedSourceID := range processedSourceIDs {
@@ -101,11 +107,6 @@ func (p *Pipeline) RunPullRequests() error {
 		}
 		pr.Changelog = changelog
 
-		// Exit if target failed
-		if len(failedTargets) > 0 {
-			return fmt.Errorf("pullrequest [%s] skippped because depends on targets [%s] failed", id, strings.Join(failedTargets, ","))
-		}
-
 		if p.Options.Target.DryRun {
 			pullRequestOutput := fmt.Sprintf("A Pull request of type %q, should be opened with following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
 				pr.Config.Kind,
@@ -115,14 +116,12 @@ func (p *Pipeline) RunPullRequests() error {
 			logrus.Debugf(strings.ReplaceAll(pullRequestOutput, "\n", "\n\t|\t"))
 
 			return nil
-
 		}
 
 		err = pr.Handler.CreatePullRequest(
 			pr.Title,
 			pr.Changelog,
-			pr.PipelineReport,
-			len(changedTargets) > 0)
+			pr.PipelineReport)
 
 		if err != nil {
 			return err
@@ -131,4 +130,28 @@ func (p *Pipeline) RunPullRequests() error {
 		p.PullRequests[id] = pr
 	}
 	return nil
+}
+
+// GetTargetsIDByResult return a list of target ID per result type
+func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
+	failedTargetsID, attentionTargetsID, successTargetsID, skippedTargetsID []string) {
+
+	for _, targetID := range targetIDs {
+
+		switch p.Report.Targets[targetID].Result {
+
+		case result.FAILURE:
+			failedTargetsID = append(failedTargetsID, targetID)
+
+		case result.ATTENTION:
+			attentionTargetsID = append(attentionTargetsID, targetID)
+
+		case result.SKIPPED:
+			skippedTargetsID = append(skippedTargetsID, targetID)
+
+		case result.SUCCESS:
+			successTargetsID = append(successTargetsID, targetID)
+		}
+	}
+	return failedTargetsID, attentionTargetsID, successTargetsID, skippedTargetsID
 }
