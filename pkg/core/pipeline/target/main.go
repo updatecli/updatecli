@@ -243,7 +243,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 		if len(files) == 0 {
 			t.Result = result.FAILURE
-			logrus.Info("no changed files to commit")
+			logrus.Info("no changed file to commit")
 			return nil
 		}
 
