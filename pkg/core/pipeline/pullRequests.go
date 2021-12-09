@@ -76,7 +76,7 @@ func (p *Pipeline) RunPullRequests() error {
 
 		// No target changed so nothing left to do
 		if len(attentionTargetIDs) == 0 {
-			logrus.Debugf("Nothing left do as no target related to pullrequest %q changed", id)
+			logrus.Debugf("Nothing left to do as no target related to pullrequest %q have changed", id)
 			return nil
 		}
 
