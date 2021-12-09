@@ -115,7 +115,7 @@ func (p *PullRequest) generatePullRequestHandler() error {
 		gh, ok := p.Scm.Handler.(*github.Github)
 
 		if !ok {
-			return fmt.Errorf("scm is not a github type")
+			return fmt.Errorf("scm type is not 'github'")
 		}
 
 		g, err := github.NewPullRequest(pullRequestSpec, gh)
