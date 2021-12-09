@@ -37,7 +37,7 @@ type Config struct {
 	Postfix            string // Deprecated in favor of Transformers on 2021/01/3
 	Transformers       transformer.Transformers
 	Spec               interface{}
-	Scm                map[string]interface{} // Deprecated field on version [x.y.z]
+	Scm                map[string]interface{} // Deprecated field on version [1.17.0]
 	SCMID              string                 `yaml:"scmID"` // SCMID references a uniq scm configuration
 	SourceID           string                 `yaml:"sourceID"`
 	DisableSourceInput bool
