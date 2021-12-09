@@ -132,7 +132,7 @@ func (g *Github) SearchTags() (tags []string, err error) {
 	}
 
 	if expectedFound != tagCounter {
-		return tags, fmt.Errorf("something went wrong, find %d, expected %d", tagCounter, expectedFound)
+		return tags, fmt.Errorf("something went wrong, found %d, expected %d", tagCounter, expectedFound)
 	}
 
 	logrus.Debugf("%d tags found", len(tags))
