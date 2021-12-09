@@ -33,8 +33,8 @@ type Target struct {
 type Config struct {
 	DependsOn    []string `yaml:"depends_on"`
 	Name         string
-	PipelineID   string `yaml:"pipelineID"` // PipelineID references a uniq pipeline run that allows to groups targets
-	SCMID        string `yaml:"scmID"`      // SCMID references a uniq scm configuration
+	PipelineID   string `yaml:"pipelineID"` // PipelineID references a unique pipeline run allowing to group targets
+	SCMID        string `yaml:"scmID"`      // SCMID references a unique scm configuration
 	Kind         string
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
 	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
