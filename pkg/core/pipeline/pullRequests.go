@@ -87,7 +87,7 @@ func (p *Pipeline) RunPullRequests() error {
 
 		// Ignoring skipped targets
 		if len(skippedTargetIDs) > 0 {
-			return fmt.Errorf("%d  target(s) (%s) skipped for pullrequest %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
+			return fmt.Errorf("%d target(s) (%s) skipped for pullrequest %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
 		}
 
 		// Ensure we don't add changelog from the same sourceID twice.
