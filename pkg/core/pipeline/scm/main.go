@@ -100,7 +100,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = &g
 	default:
-		logrus.Errorf("scm kind %q not supported", s.Config.Kind)
+		logrus.Errorf("scm of kind %q is not supported", s.Config.Kind)
 	}
 
 	return nil
