@@ -108,7 +108,7 @@ func (p *Pipeline) RunPullRequests() error {
 		pr.Changelog = changelog
 
 		if p.Options.Target.DryRun {
-			pullRequestOutput := fmt.Sprintf("A Pull request of type %q, should be opened with following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
+			pullRequestOutput := fmt.Sprintf("A Pull request of type %q, should be opened with the following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
 				pr.Config.Kind,
 				pr.Title,
 				pr.Changelog,
