@@ -102,7 +102,7 @@ func (p *PullRequest) generatePullRequestHandler() error {
 		pullRequestSpec := github.PullRequestSpec{}
 
 		if p.Scm.Config.Kind != "github" {
-			return fmt.Errorf("scm of kind %q is no compatible with pullrequest of kind %q",
+			return fmt.Errorf("scm of kind %q is not compatible with pullrequest of kind %q",
 				p.Scm.Config.Kind,
 				p.Config.Kind)
 		}
