@@ -127,7 +127,7 @@ func (p *PullRequest) generatePullRequestHandler() error {
 		p.Handler = &g
 
 	default:
-		logrus.Errorf("scm kind %q not supported", p.Config.Kind)
+		logrus.Errorf("scm of kind %q is not supported", p.Config.Kind)
 	}
 
 	return nil
