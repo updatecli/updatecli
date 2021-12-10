@@ -26,7 +26,7 @@ type Config struct {
 	Title   string      // Defines the pullRequest Title
 	Kind    string      // Defines the pullRequest kind
 	Spec    interface{} // Defines specific parameters
-	ScmID   string      // Reference a scm configuration
+	ScmID   string      `yaml:"scmID"` // References a scm configuration
 	Targets []string    // DependsOnTargets defines a list of target related to the pullRequest
 }
 
