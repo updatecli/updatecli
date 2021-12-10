@@ -150,22 +150,22 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 func (p *PullRequest) updatePullRequest() error {
 
 	/*
-				mutation($input: UpdatePullRequestInput!){
-					updatePullRequest(input:$input){
-						pullRequest{
-							url
-		          			title
-		          			body
-						}
-					}
-		    	}
+		  mutation($input: UpdatePullRequestInput!){
+			updatePullRequest(input:$input){
+			  pullRequest{
+				url
+			    title
+			    body
+			  }
+			}
+		  }
 
-				{
-		  			"input": {
-		  				"title":"xxx",
-		    			"pullRequestId" : "yyy
-					}
-				}
+		  {
+			"input": {
+			  "title":"xxx",
+			  "pullRequestId" : "yyy
+			}
+		  }
 	*/
 
 	client := p.gh.NewClient()
@@ -235,20 +235,21 @@ func (p *PullRequest) OpenPullRequest() error {
 
 	/*
 		mutation($input: CreatePullRequestInput!){
-			createPullRequest(input:$input){
-				pullRequest{
-					url
-				}
+		  createPullRequest(input:$input){
+			pullRequest{
+			  url
 			}
+		  }
 		}
-		{
 
-		"input":{
+		{
+		  "input":{
 			"baseRefName": "x" ,
 			"repositoryId":"y",
 			"headRefName": "z",
 			"title",
 			"body",
+		  }
 		}
 
 
