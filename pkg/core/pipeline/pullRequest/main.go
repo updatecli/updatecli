@@ -83,7 +83,7 @@ func New(config *Config, sourceControlManager *scm.Scm) (PullRequest, error) {
 
 }
 
-// Update a pullRequest object based on its configuration
+// Update updates a pullRequest object based on its configuration
 func (p *PullRequest) Update() error {
 	p.Title = p.Config.Title
 
