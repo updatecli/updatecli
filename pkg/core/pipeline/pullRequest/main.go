@@ -23,9 +23,9 @@ type PullRequestHandler interface {
 
 // Config define pullRequest provided via an updatecli configuration
 type Config struct {
-	Title   string      // Define the pullRequest Title
-	Kind    string      // Define the pullRequest kind
-	Spec    interface{} // Define specific parameters
+	Title   string      // Defines the pullRequest Title
+	Kind    string      // Defines the pullRequest kind
+	Spec    interface{} // Defines specific parameters
 	ScmID   string      // Reference a scm configuration
 	Targets []string    // DependsOnTargets defined a list of target related to the pullRequest
 }
