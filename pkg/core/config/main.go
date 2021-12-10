@@ -16,7 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullRequest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
@@ -55,7 +55,7 @@ type Config struct {
 	PipelineID   string                        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	Title        string                        // Title is used for the full pipeline
 	Source       source.Config                 // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
-	PullRequests map[string]pullRequest.Config // PullRequests defines the list of Pull Request configuration which need to be managed
+	PullRequests map[string]pullrequest.Config // PullRequests defines the list of Pull Request configuration which need to be managed
 	SCMs         map[string]scm.Config         `yaml:"scms"` // SCMs defines the list of repository configuration used to fetch content from.
 	Sources      map[string]source.Config      // Sources defines the list of source configuration
 	Conditions   map[string]condition.Config   // Conditions defines the list of condition configuration
@@ -294,7 +294,7 @@ func (config *Config) Validate() error {
 						// https://github.com/updatecli/updatecli/pull/388
 						if kind == "github" {
 							if config.PullRequests == nil {
-								config.PullRequests = make(map[string]pullRequest.Config, 1)
+								config.PullRequests = make(map[string]pullrequest.Config, 1)
 							}
 
 							githubSpec := github.Spec{}
@@ -304,7 +304,7 @@ func (config *Config) Validate() error {
 								return err
 							}
 
-							config.PullRequests["target_"+id] = pullRequest.Config{
+							config.PullRequests["target_"+id] = pullrequest.Config{
 								Kind:    kind,
 								Spec:    githubSpec.PullRequest,
 								ScmID:   "target_" + id,

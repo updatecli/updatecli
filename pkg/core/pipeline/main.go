@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullRequest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
@@ -25,7 +25,7 @@ type Pipeline struct {
 	Conditions   map[string]condition.Condition
 	Targets      map[string]target.Target
 	SCMs         map[string]scm.Scm
-	PullRequests map[string]pullRequest.PullRequest
+	PullRequests map[string]pullrequest.PullRequest
 
 	Report reports.Report
 
@@ -55,7 +55,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Sources = make(map[string]source.Source, len(config.Sources))
 	p.Conditions = make(map[string]condition.Condition, len(config.Conditions))
 	p.Targets = make(map[string]target.Target, len(config.Targets))
-	p.PullRequests = make(map[string]pullRequest.PullRequest, len(config.PullRequests))
+	p.PullRequests = make(map[string]pullrequest.PullRequest, len(config.PullRequests))
 
 	// Init context resource size
 	p.Report.Sources = make(map[string]reports.Stage, len(config.Sources))
@@ -95,7 +95,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 				id)
 		}
 
-		p.PullRequests[id], err = pullRequest.New(
+		p.PullRequests[id], err = pullrequest.New(
 			&pullRequestConfig,
 			&SCM)
 
