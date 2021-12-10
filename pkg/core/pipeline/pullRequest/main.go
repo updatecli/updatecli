@@ -27,7 +27,7 @@ type Config struct {
 	Kind    string      // Defines the pullRequest kind
 	Spec    interface{} // Defines specific parameters
 	ScmID   string      // Reference a scm configuration
-	Targets []string    // DependsOnTargets defined a list of target related to the pullRequest
+	Targets []string    // DependsOnTargets defines a list of target related to the pullRequest
 }
 
 // PullRequest is a struct used by an updatecli pipeline.
