@@ -40,7 +40,7 @@ type PullRequest struct {
 	Handler        PullRequestHandler
 }
 
-// Validate ensure that a pullRequest configuration has required parameters.
+// Validate ensures that a pullRequest configuration has required parameters.
 func (c *Config) Validate() (err error) {
 
 	missingParameters := []string{}
