@@ -11,7 +11,7 @@ import (
 func (p *Pipeline) RunPullRequests() error {
 	if len(p.PullRequests) > 0 {
 		logrus.Infof("\n\n%s\n", strings.ToTitle("Pull Requests"))
-		logrus.Infof("%s\n", strings.Repeat("=", len("PullRequests")+1))
+		logrus.Infof("%s\n\n", strings.Repeat("=", len("PullRequests")+1))
 	}
 
 	for id, pr := range p.PullRequests {
@@ -76,13 +76,13 @@ func (p *Pipeline) RunPullRequests() error {
 
 		// No target changed so nothing left to do
 		if len(attentionTargetIDs) == 0 {
-			logrus.Debugf("Nothing left to do as no target related to pullrequest %q have changed", id)
+			logrus.Infof("Nothing left to do as no target related to pullrequest %q have changed", id)
 			return nil
 		}
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
-			logrus.Debugf("%d target(s) (%s) failed for pullrequest %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
+			logrus.Errorf("%d target(s) (%s) failed for pullrequest %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
 		}
 
 		// Ignoring skipped targets
