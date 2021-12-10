@@ -357,29 +357,29 @@ func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, e
 
 	/*
 		query getPullRequests(
-			$owner: String!,
-			$name:String!,
-			$before:Int!){
-				repository(owner: $owner, name: $name) {
-					pullRequest(number: 4){
-		            labels(last: 5, before:$before){
-						totalCount
-									pageInfo {
-										hasNextPage
-										endCursor
-									}
-									edges {
-										node {
-											id
-											name
-											description
-										}
-										cursor
-									}
-		            }
-		          }
-						}
+		  $owner: String!,
+		  $name:String!,
+		  $before:Int!){
+			repository(owner: $owner, name: $name) {
+			  pullRequest(number: 4){
+				labels(last: 5, before:$before){
+				  totalCount
+				  pageInfo {
+					hasNextPage
+					endCursor
+				  }
+				  edges {
+					node {
+					  id
+					  name
+					  description
 					}
+					cursor
+				  }
+				}
+			  }
+			}
+		  }
 	*/
 
 	client := p.gh.NewClient()
