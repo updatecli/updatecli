@@ -1,4 +1,4 @@
-package pullRequest
+package pullrequest
 
 import (
 	"errors"
