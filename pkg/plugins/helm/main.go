@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"helm.sh/helm/v3/pkg/repo"
 	yml "sigs.k8s.io/yaml"
 )
@@ -57,7 +58,12 @@ type Chart struct {
 
 // New returns a reference to a newly initialized Chart object from a Spec
 // or an error if the provided YamlSpec triggers a validation error.
-func New(newSpec Spec) (*Chart, error) {
+func New(spec interface{}) (*Chart, error) {
+	newSpec := Spec{}
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return &Chart{}, err
+	}
 
 	newResource := &Chart{
 		spec: newSpec,

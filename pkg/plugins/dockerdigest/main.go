@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerregistry"
 )
@@ -28,7 +29,13 @@ type DockerDigest struct {
 
 // New returns a reference to a newly initialized DockerDigest object from a Spec
 // or an error if the provided Spec triggers a validation error.
-func New(newSpec Spec) (*DockerDigest, error) {
+func New(spec interface{}) (*DockerDigest, error) {
+	newSpec := Spec{}
+
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return nil, err
+	}
 
 	newImage, err := dockerimage.New(
 		// concatenate user-provided image name (that may contain registry and namespace along with the namespace) with the user-provided tag

@@ -8,7 +8,7 @@ import (
 )
 
 // Source retrieves a specific version tag from Github Releases.
-func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
+func (gr GitHubRelease) Source(workingDir string) (value string, err error) {
 
 	versions, err := gr.ghHandler.SearchReleases()
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
 
@@ -36,7 +37,13 @@ type Yaml struct {
 
 // New returns a reference to a newly initialized Yaml object from a Spec
 // or an error if the provided YamlSpec triggers a validation error.
-func New(newSpec Spec) (*Yaml, error) {
+func New(spec interface{}) (*Yaml, error) {
+	newSpec := Spec{}
+
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return nil, err
+	}
 
 	newResource := &Yaml{
 		spec:             newSpec,
@@ -45,7 +52,7 @@ func New(newSpec Spec) (*Yaml, error) {
 
 	newResource.spec.File = strings.TrimPrefix(newResource.spec.File, "file://")
 
-	err := newResource.Validate()
+	err = newResource.Validate()
 	if err != nil {
 		return nil, err
 	}

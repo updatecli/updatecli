@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
 	"github.com/updatecli/updatecli/pkg/plugins/mavenmetadata"
@@ -36,12 +37,19 @@ const (
 )
 
 // New returns a new valid GitHubRelease object.
-func New(newSpec Spec) (Jenkins, error) {
+func New(spec interface{}) (Jenkins, error) {
+	var newSpec Spec
+
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return Jenkins{}, err
+	}
+
 	if newSpec.Release == "" {
 		newSpec.Release = STABLE
 	}
 
-	err := newSpec.Validate()
+	err = newSpec.Validate()
 	if err != nil {
 		return Jenkins{}, err
 	}
