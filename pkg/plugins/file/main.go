@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -27,14 +28,19 @@ type File struct {
 
 // New returns a reference to a newly initialized File object from a Spec
 // or an error if the provided Filespec triggers a validation error.
-func New(spec Spec) (*File, error) {
+func New(spec interface{}) (*File, error) {
+	newSpec := Spec{}
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return nil, err
+	}
+
 	newResource := &File{
-		spec:             spec,
+		spec:             newSpec,
 		contentRetriever: &text.Text{},
 	}
 
-	// TODO: generalize the Validate + Normalize as an interface to all resources
-	err := newResource.Validate()
+	err = newResource.Validate()
 	if err != nil {
 		return nil, err
 	}

@@ -5,17 +5,9 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
-	"github.com/updatecli/updatecli/pkg/plugins/file"
-	"github.com/updatecli/updatecli/pkg/plugins/gittag"
-	"github.com/updatecli/updatecli/pkg/plugins/helm"
-	"github.com/updatecli/updatecli/pkg/plugins/shell"
-	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Target defines which file needs to be updated based on source output
@@ -38,12 +30,6 @@ type Config struct {
 	SourceID                string `yaml:"sourceID"`
 }
 
-// Targeter is an interface which offers common function to manipulate targets.
-type Targeter interface {
-	Target(source string, dryRun bool) (bool, error)
-	TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error)
-}
-
 // Check verifies if mandatory Targets parameters are provided and return false if not.
 func (t *Target) Check() (bool, error) {
 	ok := true
@@ -59,91 +45,6 @@ func (t *Target) Check() (bool, error) {
 	}
 
 	return ok, nil
-}
-
-// Unmarshal decodes a target struct
-func Unmarshal(target *Target) (targeter Targeter, err error) {
-	switch target.Config.Kind {
-	case "helmChart":
-		targetSpec := helm.Spec{}
-
-		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-		targeter, err = helm.New(targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "dockerfile":
-		targetSpec := dockerfile.Spec{}
-
-		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-		targeter, err = dockerfile.New(targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "gitTag":
-		targetSpec := gittag.Spec{}
-
-		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-		targeter, err = gittag.New(targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "yaml":
-		var targetSpec yaml.Spec
-
-		if err := mapstructure.Decode(target.Config.Spec, &targetSpec); err != nil {
-			return nil, err
-		}
-
-		targeter, err = yaml.New(targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "file":
-		var targetSpec file.Spec
-
-		if err := mapstructure.Decode(target.Config.Spec, &targetSpec); err != nil {
-			return nil, err
-		}
-
-		targeter, err = file.New(targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "shell":
-		targetSpec := shell.Spec{}
-
-		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-		targeter, err = shell.New(targetSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	default:
-		return nil, fmt.Errorf("⚠ Don't support target kind: %v", target.Config.Kind)
-	}
-	return targeter, nil
 }
 
 // Run applies a specific target configuration
@@ -173,7 +74,8 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		logrus.Infof("\n**Dry Run enabled**\n\n")
 	}
 
-	spec, err := Unmarshal(t)
+	// TODO-REFACTO: call unmarshal in a constructor
+	target, err := t.Config.ResourceConfig.Unmarshal()
 
 	if err != nil {
 		t.Result = result.FAILURE
@@ -183,7 +85,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
 
-		changed, err = spec.Target(t.Config.Prefix+source+t.Config.Postfix, o.DryRun)
+		changed, err = target.Target(t.Config.Prefix+source+t.Config.Postfix, o.DryRun)
 		if err != nil {
 			t.Result = result.FAILURE
 			return err
@@ -219,7 +121,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	changed, files, message, err = spec.TargetFromSCM(t.Config.Prefix+source+t.Config.Postfix, s, o.DryRun)
+	changed, files, message, err = target.TargetFromSCM(t.Config.Prefix+source+t.Config.Postfix, s, o.DryRun)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err

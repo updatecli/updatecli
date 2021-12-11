@@ -29,6 +29,7 @@ conditions:
     kind: aws/ami
     spec:
       region: eu-west-1
+
 targets:
   file:
     name: Update fictive file

@@ -3,6 +3,7 @@ package githubrelease
 import (
 	"path"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
 	"github.com/updatecli/updatecli/pkg/plugins/version"
@@ -15,7 +16,15 @@ type GitHubRelease struct {
 }
 
 // New returns a new valid GitHubRelease object.
-func New(newSpec github.Spec) (GitHubRelease, error) {
+func New(spec interface{}) (GitHubRelease, error) {
+
+	newSpec := github.Spec{}
+
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return GitHubRelease{}, err
+	}
+
 	if newSpec.Directory == "" {
 		newSpec.Directory = path.Join(tmp.Directory, newSpec.Owner, newSpec.Repository)
 	}

@@ -3,6 +3,7 @@ package dockerfile
 import (
 	"fmt"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/mobyparser"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/simpletextparser"
@@ -26,11 +27,19 @@ type Dockerfile struct {
 
 // New returns a reference to a newly initialized Dockerfile object from a Spec
 // or an error if the provided Spec triggers a validation error.
-func New(newSpec Spec) (*Dockerfile, error) {
+func New(spec interface{}) (*Dockerfile, error) {
+	newSpec := Spec{}
+
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return nil, err
+	}
+
 	newParser, err := getParser(newSpec)
 	if err != nil {
 		return nil, err
 	}
+
 	newResource := &Dockerfile{
 		spec:             newSpec,
 		parser:           newParser,

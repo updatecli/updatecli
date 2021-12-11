@@ -3,21 +3,10 @@ package condition
 import (
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/awsami"
-	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
-	"github.com/updatecli/updatecli/pkg/plugins/dockerimage"
-	"github.com/updatecli/updatecli/pkg/plugins/file"
-	"github.com/updatecli/updatecli/pkg/plugins/gittag"
-	"github.com/updatecli/updatecli/pkg/plugins/helm"
-	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
-	"github.com/updatecli/updatecli/pkg/plugins/maven"
-	"github.com/updatecli/updatecli/pkg/plugins/shell"
-	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
 // Condition defines which condition needs to be met
@@ -35,17 +24,12 @@ type Config struct {
 	DisableSourceInput      bool
 }
 
-// Conditioner is an interface that test if condition is met
-type Conditioner interface {
-	Condition(version string) (bool, error)
-	ConditionFromSCM(version string, scm scm.ScmHandler) (bool, error)
-}
-
 // Run tests if a specific condition is true
 func (c *Condition) Run(source string) (err error) {
 	ok := false
 
-	spec, err := Unmarshal(c)
+	// TODO-REFACTO: call unmarshal in a constructor
+	condition, err := c.Config.ResourceConfig.Unmarshal()
 	if err != nil {
 		c.Result = result.FAILURE
 		logrus.Errorf("%s", err)
@@ -90,14 +74,14 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		ok, err = spec.ConditionFromSCM(c.Config.Prefix+source+c.Config.Postfix, s)
+		ok, err = condition.ConditionFromSCM(c.Config.Prefix+source+c.Config.Postfix, s)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
 		}
 
 	} else if len(c.Config.Scm) == 0 {
-		ok, err = spec.Condition(c.Config.Prefix + source + c.Config.Postfix)
+		ok, err = condition.Condition(c.Config.Prefix + source + c.Config.Postfix)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
@@ -114,135 +98,4 @@ func (c *Condition) Run(source string) (err error) {
 
 	return nil
 
-}
-
-// Unmarshal decodes a condition struct
-func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
-
-	switch condition.Config.Kind {
-
-	case "aws/ami":
-		var conditionSpec awsami.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = awsami.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "dockerImage":
-		var conditionSpec dockerimage.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = dockerimage.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "dockerfile":
-		var conditionSpec dockerfile.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = dockerfile.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "file":
-		var conditionSpec file.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = file.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "jenkins":
-		var conditionSpec jenkins.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = jenkins.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "maven":
-		var conditionSpec maven.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = maven.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "gitTag":
-		var conditionSpec gittag.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = gittag.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "helmChart":
-		var conditionSpec helm.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = helm.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "yaml":
-		var conditionSpec yaml.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = yaml.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	case "shell":
-		var conditionSpec shell.Spec
-
-		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
-			return nil, err
-		}
-
-		conditioner, err = shell.New(conditionSpec)
-		if err != nil {
-			return nil, err
-		}
-
-	default:
-		return nil, fmt.Errorf("Don't support condition: %v", condition.Config.Kind)
-	}
-	return conditioner, nil
 }
