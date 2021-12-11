@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 )
@@ -28,16 +29,20 @@ var (
 				Sources: map[string]source.Source{
 					"1": {
 						Config: source.Config{
-							DependsOn: []string{
-								"2",
-								"3",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+									"3",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: source.Config{
-							DependsOn: []string{
-								"3",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"3",
+								},
 							},
 						},
 					},
@@ -46,15 +51,19 @@ var (
 				Conditions: map[string]condition.Condition{
 					"1": {
 						Config: condition.Config{
-							DependsOn: []string{
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: condition.Config{
-							DependsOn: []string{
-								"3",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"3",
+								},
 							},
 						},
 					},
@@ -63,15 +72,19 @@ var (
 				Targets: map[string]target.Target{
 					"1": {
 						Config: target.Config{
-							DependsOn: []string{
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: target.Config{
-							DependsOn: []string{
-								"3",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"3",
+								},
 							},
 						},
 					},
@@ -93,22 +106,28 @@ var (
 				Sources: map[string]source.Source{
 					"1": {
 						Config: source.Config{
-							DependsOn: []string{
-								"3",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"3",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: source.Config{
-							DependsOn: []string{
-								"4",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"4",
+								},
 							},
 						},
 					},
 					"3": {
 						Config: source.Config{
-							DependsOn: []string{
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
@@ -117,23 +136,28 @@ var (
 				Conditions: map[string]condition.Condition{
 					"1": {
 						Config: condition.Config{
-							DependsOn: []string{
-								"3",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"3",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: condition.Config{
-							DependsOn: []string{
-								"4",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"4",
+								},
 							},
 						},
 					},
 					"3": {
 						Config: condition.Config{
-							DependsOn: []string{
-
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
@@ -142,22 +166,28 @@ var (
 				Targets: map[string]target.Target{
 					"1": {
 						Config: target.Config{
-							DependsOn: []string{
-								"3",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"3",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: target.Config{
-							DependsOn: []string{
-								"4",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"4",
+								},
 							},
 						},
 					},
 					"3": {
 						Config: target.Config{
-							DependsOn: []string{
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
@@ -179,8 +209,10 @@ var (
 				Sources: map[string]source.Source{
 					"1": {
 						Config: source.Config{
-							DependsOn: []string{
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
@@ -188,8 +220,10 @@ var (
 				Conditions: map[string]condition.Condition{
 					"2": {
 						Config: condition.Config{
-							DependsOn: []string{
-								"3",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"3",
+								},
 							},
 						},
 					},
@@ -197,8 +231,10 @@ var (
 				Targets: map[string]target.Target{
 					"3": {
 						Config: target.Config{
-							DependsOn: []string{
-								"4",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"4",
+								},
 							},
 						},
 					},
@@ -216,16 +252,19 @@ var (
 				Sources: map[string]source.Source{
 					"1": {
 						Config: source.Config{
-							DependsOn: []string{
-
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: source.Config{
-							DependsOn: []string{
-								"1",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"1",
+								},
 							},
 						},
 					},
@@ -233,15 +272,19 @@ var (
 				Conditions: map[string]condition.Condition{
 					"1": {
 						Config: condition.Config{
-							DependsOn: []string{
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: condition.Config{
-							DependsOn: []string{
-								"1",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"1",
+								},
 							},
 						},
 					},
@@ -249,15 +292,19 @@ var (
 				Targets: map[string]target.Target{
 					"1": {
 						Config: target.Config{
-							DependsOn: []string{
-								"2",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"2",
+								},
 							},
 						},
 					},
 					"2": {
 						Config: target.Config{
-							DependsOn: []string{
-								"1",
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{
+									"1",
+								},
 							},
 						},
 					},

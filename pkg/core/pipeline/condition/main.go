@@ -5,9 +5,9 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/awsami"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerimage"
@@ -30,17 +30,9 @@ type Condition struct {
 
 // Config defines conditions input parameters
 type Config struct {
-	DependsOn          []string `yaml:"depends_on"`
-	Name               string
-	Kind               string
-	Prefix             string // Deprecated in favor of Transformers on 2021/01/3
-	Postfix            string // Deprecated in favor of Transformers on 2021/01/3
-	Transformers       transformer.Transformers
-	Spec               interface{}
-	Scm                map[string]interface{} // Deprecated field on version [1.17.0]
-	SCMID              string                 `yaml:"scmID"` // SCMID references a uniq scm configuration
-	SourceID           string                 `yaml:"sourceID"`
-	DisableSourceInput bool
+	resource.ResourceConfig `yaml:",inline"`
+	SourceID                string `yaml:"sourceID"`
+	DisableSourceInput      bool
 }
 
 // Conditioner is an interface that test if condition is met
