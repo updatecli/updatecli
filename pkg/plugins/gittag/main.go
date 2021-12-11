@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/version"
 )
 
@@ -23,10 +24,19 @@ type GitTag struct {
 
 // New returns a reference to a newly initialized GitTag object from a Spec
 // or an error if the provided Filespec triggers a validation error.
-func New(spec Spec) (*GitTag, error) {
-	return &GitTag{
-		spec: spec,
-	}, nil
+func New(spec interface{}) (*GitTag, error) {
+	newSpec := Spec{}
+
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	newResource := &GitTag{
+		spec: newSpec,
+	}
+
+	return newResource, nil
 }
 
 // Validate tests that tag struct is correctly configured

@@ -3,6 +3,7 @@ package shell
 import (
 	"fmt"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,7 +22,14 @@ type Shell struct {
 
 // New returns a reference to a newly initialized Shell object from a ShellSpec
 // or an error if the provided ShellSpec triggers a validation error.
-func New(newSpec Spec) (*Shell, error) {
+func New(spec interface{}) (*Shell, error) {
+	newSpec := Spec{}
+
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return nil, err
+	}
+
 	if newSpec.Command == "" {
 		return nil, &ErrEmptyCommand{}
 	}

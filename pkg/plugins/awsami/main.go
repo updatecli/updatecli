@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,8 +33,14 @@ type AMI struct {
 
 // New returns a reference to a newly initialized AMI object from an AMISpec
 // or an error if the provided AMISpec triggers a validation error.
-func New(spec Spec) (*AMI, error) {
-	errs := spec.Validate()
+func New(spec interface{}) (*AMI, error) {
+	newSpec := Spec{}
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	errs := newSpec.Validate()
 	if len(errs) > 0 {
 		logrus.Errorln("failed to validate aws/ami configuration")
 		for _, err := range errs {
@@ -43,10 +50,10 @@ func New(spec Spec) (*AMI, error) {
 	}
 
 	var newFilters []*ec2.Filter
-	for i := 0; i < len(spec.Filters); i++ {
+	for i := 0; i < len(newSpec.Filters); i++ {
 		filter := ec2.Filter{
-			Name:   aws.String(spec.Filters[i].Name),
-			Values: aws.StringSlice(strings.Split(spec.Filters[i].Values, ","))}
+			Name:   aws.String(newSpec.Filters[i].Name),
+			Values: aws.StringSlice(strings.Split(newSpec.Filters[i].Values, ","))}
 
 		newFilters = append(newFilters, &filter)
 	}
@@ -55,16 +62,16 @@ func New(spec Spec) (*AMI, error) {
 		CredentialsChainVerboseErrors: func(verbose bool) *bool {
 			return &verbose
 		}(true),
-		Region:   aws.String(spec.Region),
-		Endpoint: aws.String(spec.Endpoint),
+		Region:   aws.String(newSpec.Region),
+		Endpoint: aws.String(newSpec.Endpoint),
 		Credentials: credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{},
 				&credentials.StaticProvider{
 					Value: credentials.Value{
-						AccessKeyID:     spec.AccessKey,
-						SecretAccessKey: spec.SecretKey,
+						AccessKeyID:     newSpec.AccessKey,
+						SecretAccessKey: newSpec.SecretKey,
 					},
 				},
 			}),
@@ -77,7 +84,7 @@ func New(spec Spec) (*AMI, error) {
 	}
 
 	return &AMI{
-		Spec:       spec,
+		Spec:       newSpec,
 		ec2Filters: newFilters,
 		apiClient:  newClient,
 	}, nil

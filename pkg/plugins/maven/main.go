@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/mavenmetadata"
 )
 
@@ -25,15 +26,21 @@ type Maven struct {
 
 // New returns a reference to a newly initialized Maven object from a Spec
 // or an error if the provided Spec triggers a validation error.
-func New(spec Spec) (*Maven, error) {
+func New(spec interface{}) (*Maven, error) {
+	newSpec := Spec{}
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return &Maven{}, nil
+	}
+
 	newResource := &Maven{
-		spec: spec,
+		spec: newSpec,
 		metadataHandler: mavenmetadata.New(
 			fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
-				spec.URL,
-				spec.Repository,
-				strings.ReplaceAll(spec.GroupID, ".", "/"),
-				spec.ArtifactID),
+				newSpec.URL,
+				newSpec.Repository,
+				strings.ReplaceAll(newSpec.GroupID, ".", "/"),
+				newSpec.ArtifactID),
 		),
 	}
 
