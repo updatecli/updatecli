@@ -8,9 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/awsami"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerdigest"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
@@ -36,16 +36,9 @@ type Source struct {
 
 // Config struct defines a source configuration
 type Config struct {
-	DependsOn    []string                 `yaml:"depends_on"` // DependsOn specify dag dependencies between sources
-	Name         string                   // Name contains a source name
-	Kind         string                   // Kind defines a source kind
-	Prefix       string                   // Deprecated in favor of Transformers on 2021/01/3
-	Postfix      string                   // Deprecated in favor of Transformers on 2021/01/3
-	Transformers transformer.Transformers // Transformers defines the list of transformers to apply to a source Output
-	Replaces     Replacers                // Deprecated in favor of Transformers on 2021/01/3
-	Spec         interface{}
-	Scm          map[string]interface{} // Deprecated field on version [x.y.z]
-	SCMID        string                 `yaml:"scmID"` // SCMID references a uniq scm configuration
+	resource.ResourceConfig `yaml:",inline"`
+	// Deprecated in favor of Transformers on 2021/01/3
+	Replaces Replacers
 }
 
 // Sourcer source is an interface to handle source spec

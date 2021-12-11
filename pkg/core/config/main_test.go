@@ -7,6 +7,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -42,8 +43,10 @@ var (
 				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -58,8 +61,10 @@ var (
 				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -72,8 +77,10 @@ var (
 				Name: "jenkins - {{ source \"default\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -89,8 +96,10 @@ var (
 				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -104,8 +113,10 @@ var (
 				Name: "jenkins - {{ source \"default\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -126,8 +137,10 @@ var (
 				Name: "jenkins - {{ pipeline \"sources.default.output\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -142,8 +155,10 @@ var (
 				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -156,8 +171,10 @@ var (
 				Name: "jenkins - {{ source \"Default\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -173,8 +190,10 @@ var (
 				Name: "jenkins - 2.289.2",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -187,8 +206,10 @@ var (
 			Config: Config{
 				Name: `{{ pipeline "Source.kindd" }}`,
 				Source: source.Config{
-					Name: "Get Version",
-					Kind: "jenkins",
+					ResourceConfig: resource.ResourceConfig{
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
 				},
 			},
 			Context: context{
@@ -208,8 +229,10 @@ var (
 			Config: Config{
 				Name: `{{ pipeline "Source.kindd" }}`,
 				Source: source.Config{
-					Name: "Get Version",
-					Kind: "jenkins",
+					ResourceConfig: resource.ResourceConfig{
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
 				},
 			},
 			Context: context{
@@ -231,8 +254,10 @@ var (
 				Name: `{{ pipeline Source.kind }}`,
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -252,8 +277,10 @@ var (
 				Name: `{{ source default }}`,
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -273,8 +300,10 @@ var (
 				Name: `{{ source "default" }}-jdk11`,
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -296,8 +325,10 @@ var (
 				Name: `lts-jenkins-jdk11`,
 				Sources: map[string]source.Config{
 					`{{ pipeline "Sources.default.output" }}`: {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},
@@ -320,14 +351,18 @@ var (
 				Name: "jenkins - {{ source \"default\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 				Conditions: map[string]condition.Config{
 					"default": {
-						Name:     "Test SourceID",
-						Kind:     "shell",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Test SourceID",
+							Kind: "shell",
+						},
 						SourceID: "ShouldNotExist",
 					},
 				},
@@ -348,14 +383,18 @@ var (
 				Name: "jenkins - {{ source \"default\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 				Targets: map[string]target.Config{
 					"default": {
-						Name:     "Test SourceID",
-						Kind:     "shell",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Test SourceID",
+							Kind: "shell",
+						},
 						SourceID: "ShouldNotExist",
 					},
 				},
@@ -376,14 +415,18 @@ var (
 				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 				Targets: map[string]target.Config{
 					"updateDefault": {
-						Name: "Update Default Version",
-						Kind: "shell",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Update Default Version",
+							Kind: "shell",
+						},
 					},
 				},
 				PullRequests: map[string]pullrequest.Config{
@@ -411,14 +454,18 @@ var (
 				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 				Sources: map[string]source.Config{
 					"default": {
-						Name: "Get Version",
-						Kind: "jenkins",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 				Targets: map[string]target.Config{
 					"updateDefault": {
-						Name: "Update Default Version",
-						Kind: "shell",
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Update Default Version",
+							Kind: "shell",
+						},
 					},
 				},
 				PullRequests: map[string]pullrequest.Config{
