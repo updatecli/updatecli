@@ -7,9 +7,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	"github.com/updatecli/updatecli/pkg/plugins/gittag"
@@ -31,19 +31,11 @@ type Target struct {
 
 // Config defines target parameters
 type Config struct {
-	DependsOn    []string `yaml:"depends_on"`
-	Name         string
-	PipelineID   string `yaml:"pipelineID"` // PipelineID references a unique pipeline run allowing to group targets
-	SCMID        string `yaml:"scmID"`      // SCMID references a unique scm configuration
-	Kind         string
-	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
-	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
-	ReportTitle  string // ReportTitle contains the updatecli reports title for sources and conditions run
-	ReportBody   string // ReportBody contains the updatecli reports body for sources and conditions run
-	Transformers transformer.Transformers
-	Spec         interface{}
-	Scm          map[string]interface{} // Deprecated field on version [x.y.z]
-	SourceID     string                 `yaml:"sourceID"`
+	resource.ResourceConfig `yaml:",inline"`
+	PipelineID              string `yaml:"pipelineID"` // PipelineID references a unique pipeline run allowing to group targets
+	ReportTitle             string // ReportTitle contains the updatecli reports title for sources and conditions run
+	ReportBody              string // ReportBody contains the updatecli reports body for sources and conditions run
+	SourceID                string `yaml:"sourceID"`
 }
 
 // Targeter is an interface which offers common function to manipulate targets.
