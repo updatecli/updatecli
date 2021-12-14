@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
-	"github.com/updatecli/updatecli/pkg/plugins/aws/ami"
+	"github.com/updatecli/updatecli/pkg/plugins/awsami"
 	"github.com/updatecli/updatecli/pkg/plugins/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
@@ -130,7 +130,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	switch condition.Config.Kind {
 
 	case "aws/ami":
-		a := ami.AMI{}
+		a := awsami.AMI{}
 
 		err := mapstructure.Decode(condition.Config.Spec, &a.Spec)
 

@@ -1,4 +1,4 @@
-package ami
+package awsami
 
 import (
 	"errors"
