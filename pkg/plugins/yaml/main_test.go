@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
@@ -451,64 +450,6 @@ func Test_Validate(t *testing.T) {
 				return
 			}
 			require.NoError(t, gotErr)
-		})
-	}
-}
-
-func Test_Normalize(t *testing.T) {
-	tests := []struct {
-		name     string
-		spec     YamlSpec
-		wantErr  bool
-		wantYaml Yaml
-	}{
-		{
-			name: "Normal case",
-			spec: YamlSpec{
-				File: "/tmp/test.yaml",
-				Key:  "foo.bar",
-			},
-			wantErr: false,
-			wantYaml: Yaml{
-				contentRetriever: &text.Text{},
-				Spec: YamlSpec{
-					File: "/tmp/test.yaml",
-					Key:  "foo.bar",
-				},
-			},
-		},
-		{
-			name: "Normal case with a 'file://' prefix",
-			spec: YamlSpec{
-				File: "file:///tmp/bar.yaml",
-				Key:  "foo.bar",
-			},
-			wantErr: false,
-			wantYaml: Yaml{
-				contentRetriever: &text.Text{},
-				Spec: YamlSpec{
-					File: "/tmp/bar.yaml",
-					Key:  "foo.bar",
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			yaml := Yaml{
-				Spec:             tt.spec,
-				contentRetriever: &text.Text{},
-			}
-
-			gotErr := yaml.Normalize()
-
-			if tt.wantErr {
-				require.Error(t, gotErr)
-				return
-			}
-			require.NoError(t, gotErr)
-
-			assert.Equal(t, tt.wantYaml, yaml)
 		})
 	}
 }
