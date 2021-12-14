@@ -130,15 +130,16 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 	switch condition.Config.Kind {
 
 	case "aws/ami":
-		a := awsami.AMI{}
+		var conditionSpec awsami.Spec
 
-		err := mapstructure.Decode(condition.Config.Spec, &a.Spec)
-
-		if err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner = &a
+		conditioner, err = awsami.New(conditionSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "dockerImage":
 		d := docker.Docker{}

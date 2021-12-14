@@ -9,22 +9,11 @@ import (
 
 // Source returns the latest AMI matching filter(s)
 func (a *AMI) Source(workingDir string) (string, error) {
-
-	svc, err := a.Init()
-
-	if err != nil {
-		return "", err
-	}
-
-	if svc == nil {
-		return "", ErrWrongServiceConnection
-	}
-
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
 		strings.TrimRight(
 			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n  "))
 
-	foundAMI, err := a.getLatestAmiID(svc)
+	foundAMI, err := a.getLatestAmiID()
 
 	if err != nil {
 		return "", err

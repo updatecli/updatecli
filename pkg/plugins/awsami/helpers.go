@@ -7,18 +7,17 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/sirupsen/logrus"
 )
 
 // getLatestAmiID query the AWS API to return the newest AMI image id
-func (a *AMI) getLatestAmiID(svc ec2iface.EC2API) (string, error) {
+func (a *AMI) getLatestAmiID() (string, error) {
 	input := ec2.DescribeImagesInput{
 		DryRun:  &a.Spec.DryRun,
 		Filters: a.ec2Filters,
 	}
 
-	result, err := svc.DescribeImages(&input)
+	result, err := a.apiClient.DescribeImages(&input)
 
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {

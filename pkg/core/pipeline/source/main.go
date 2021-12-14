@@ -155,15 +155,16 @@ func (s *Source) Run() (err error) {
 func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 	switch s.Config.Kind {
 	case "aws/ami":
-		a := awsami.AMI{}
+		var sourceSpec awsami.Spec
 
-		err := mapstructure.Decode(s.Config.Spec, &a.Spec)
-
-		if err != nil {
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
 		}
 
-		sourcer = &a
+		sourcer, err = awsami.New(sourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
 
 	case "githubRelease":
 		githubSpec := github.Spec{}
