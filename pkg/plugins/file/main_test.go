@@ -101,60 +101,6 @@ func Test_Validate(t *testing.T) {
 	}
 }
 
-func Test_Normalize(t *testing.T) {
-	tests := []struct {
-		name     string
-		spec     FileSpec
-		wantErr  bool
-		wantFile File
-	}{
-		{
-			name: "Normal case",
-			spec: FileSpec{
-				File: "/tmp/test.yaml",
-			},
-			wantErr: false,
-			wantFile: File{
-				contentRetriever: &text.Text{},
-				spec: FileSpec{
-					File: "/tmp/test.yaml",
-				},
-			},
-		},
-		{
-			name: "Normal case with a 'file://' prefix",
-			spec: FileSpec{
-				File: "file:///tmp/bar.yaml",
-			},
-			wantErr: false,
-			wantFile: File{
-				contentRetriever: &text.Text{},
-				spec: FileSpec{
-					File: "/tmp/bar.yaml",
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			file := File{
-				spec:             tt.spec,
-				contentRetriever: &text.Text{},
-			}
-
-			gotErr := file.Normalize()
-
-			if tt.wantErr {
-				require.Error(t, gotErr)
-				return
-			}
-			require.NoError(t, gotErr)
-
-			assert.Equal(t, tt.wantFile, file)
-		})
-	}
-}
-
 func TestFile_Read(t *testing.T) {
 	tests := []struct {
 		name                string

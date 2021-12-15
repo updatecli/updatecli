@@ -46,20 +46,10 @@ func New(spec YamlSpec) (*Yaml, error) {
 		return nil, err
 	}
 
-	err = newYamlResource.Normalize()
-	if err != nil {
-		return nil, err
-	}
+	newYamlResource.Spec.File = strings.TrimPrefix(newYamlResource.Spec.File, "file://")
 
 	return newYamlResource, nil
 
-}
-
-// Normalize ensures that the attributes of the object are following the expected conventions
-func (y *Yaml) Normalize() error {
-	y.Spec.File = strings.TrimPrefix(y.Spec.File, "file://")
-
-	return nil
 }
 
 // Validate validates the object and returns an error (with all the failed validation messages) if it is not valid
