@@ -38,19 +38,9 @@ func New(spec FileSpec) (*File, error) {
 		return nil, err
 	}
 
-	err = newFileResource.Normalize()
-	if err != nil {
-		return nil, err
-	}
+	newFileResource.spec.File = strings.TrimPrefix(newFileResource.spec.File, "file://")
 
 	return newFileResource, nil
-}
-
-// Normalize ensures that the attributes of the object are following the expected conventions
-func (f *File) Normalize() error {
-	f.spec.File = strings.TrimPrefix(f.spec.File, "file://")
-
-	return nil
 }
 
 // Validate validates the object and returns an error (with all the failed validation messages) if it is not valid
