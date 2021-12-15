@@ -57,9 +57,7 @@ func New(spec YamlSpec) (*Yaml, error) {
 
 // Normalize ensures that the attributes of the object are following the expected conventions
 func (y *Yaml) Normalize() error {
-	if strings.HasPrefix(y.Spec.File, "file://") {
-		y.Spec.File = strings.TrimPrefix(y.Spec.File, "file://")
-	}
+	y.Spec.File = strings.TrimPrefix(y.Spec.File, "file://")
 
 	return nil
 }

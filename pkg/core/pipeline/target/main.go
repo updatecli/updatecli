@@ -7,8 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
@@ -20,22 +20,21 @@ import (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
-	Result      string // Result store the condition result after a target run. This variable can't be set by an updatecli configuration
-	Config      Config
-	ReportBody  string
-	ReportTitle string
-	Changelog   string
-	Commit      bool
-	Push        bool
-	Clean       bool
-	DryRun      bool
+	Result string // Result store the condition result after a target run. This variable can't be set by an updatecli configuration
+	Config Config
+	Commit bool
+	Push   bool
+	Clean  bool
+	DryRun bool
+	Scm    *scm.ScmHandler
 }
 
 // Config defines target parameters
 type Config struct {
 	DependsOn    []string `yaml:"depends_on"`
 	Name         string
-	PipelineID   string `yaml:"pipelineID"` // PipelineID references a uniq pipeline run that allows to groups targets
+	PipelineID   string `yaml:"pipelineID"` // PipelineID references a unique pipeline run allowing to group targets
+	SCMID        string `yaml:"scmID"`      // SCMID references a unique scm configuration
 	Kind         string
 	Prefix       string // Deprecated in favor of Transformers on 2021/01/3
 	Postfix      string // Deprecated in favor of Transformers on 2021/01/3
@@ -43,14 +42,14 @@ type Config struct {
 	ReportBody   string // ReportBody contains the updatecli reports body for sources and conditions run
 	Transformers transformer.Transformers
 	Spec         interface{}
-	Scm          map[string]interface{}
-	SourceID     string `yaml:"sourceID"`
+	Scm          map[string]interface{} // Deprecated field on version [x.y.z]
+	SourceID     string                 `yaml:"sourceID"`
 }
 
 // Targeter is an interface which offers common function to manipulate targets.
 type Targeter interface {
 	Target(source string, dryRun bool) (bool, error)
-	TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error)
+	TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error)
 }
 
 // Check verifies if mandatory Targets parameters are provided and return false if not.
@@ -153,7 +152,6 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 // Run applies a specific target configuration
 func (t *Target) Run(source string, o *Options) (err error) {
 
-	var pr scm.PullRequest
 	var changed bool
 
 	if len(t.Config.Transformers) > 0 {
@@ -186,12 +184,8 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	if err != nil {
-		t.Result = result.FAILURE
-		return err
-	}
-
-	if len(t.Config.Scm) == 0 {
+	// If no scm configuration provided then stop early
+	if t.Scm == nil {
 
 		changed, err = spec.Target(t.Config.Prefix+source+t.Config.Postfix, o.DryRun)
 		if err != nil {
@@ -210,7 +204,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	var message string
 	var files []string
-	var s scm.Scm
 
 	_, err = t.Check()
 	if err != nil {
@@ -218,11 +211,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	s, pr, err = scm.Unmarshal(t.Config.Scm)
-	if err != nil {
-		t.Result = result.FAILURE
-		return err
-	}
+	s := *t.Scm
 
 	if err = s.Init(source, t.Config.PipelineID); err != nil {
 		t.Result = result.FAILURE
@@ -252,41 +241,27 @@ func (t *Target) Run(source string, o *Options) (err error) {
 			return fmt.Errorf("target has no change message")
 		}
 
-		if len(t.Config.Scm) > 0 {
+		if len(files) == 0 {
+			t.Result = result.FAILURE
+			logrus.Info("no changed file to commit")
+			return nil
+		}
 
-			if len(files) == 0 {
+		if o.Commit {
+			if err := s.Add(files); err != nil {
 				t.Result = result.FAILURE
-				logrus.Info("no changed files to commit")
-				return nil
+				return err
 			}
 
-			if o.Commit {
-				if err := s.Add(files); err != nil {
-					t.Result = result.FAILURE
-					return err
-				}
-
-				if err = s.Commit(message); err != nil {
-					t.Result = result.FAILURE
-					return err
-				}
+			if err = s.Commit(message); err != nil {
+				t.Result = result.FAILURE
+				return err
 			}
-			if o.Push {
-				if err := s.Push(); err != nil {
-					t.Result = result.FAILURE
-					return err
-				}
-				if pr != nil {
-					err = pr.CreatePullRequest(
-						t.ReportTitle,
-						t.Changelog,
-						t.ReportBody,
-					)
-					if err != nil {
-						t.Result = result.FAILURE
-						return err
-					}
-				}
+		}
+		if o.Push {
+			if err := s.Push(); err != nil {
+				t.Result = result.FAILURE
+				return err
 			}
 		}
 	}

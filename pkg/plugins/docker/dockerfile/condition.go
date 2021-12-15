@@ -5,7 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/helpers"
-	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Condition test if the Dockerfile contains the correct key/value
@@ -29,7 +29,7 @@ func (d *Dockerfile) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM run based on a file from SCM
-func (d *Dockerfile) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (d *Dockerfile) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	d.File = path.Join(scm.GetDirectory(), d.File)
 
 	found, err := d.Condition(source)

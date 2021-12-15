@@ -6,15 +6,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerhub"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/dockerregistry"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/registry/quay"
 )
 
 // ConditionFromSCM returns an error because it's not supported
-func (d *Docker) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (d *Docker) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("SCM configuration is not supported for dockerRegistry condition, aborting")
 }
 

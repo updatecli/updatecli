@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -218,7 +218,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		inputSourceValue      string
 		mockReturnedContent   string
 		mockReturnedError     error
-		scm                   scm.Scm
+		scm                   scm.ScmHandler
 		wantResult            bool
 		wantErr               bool
 		mockReturnsFileExists bool

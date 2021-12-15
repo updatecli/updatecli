@@ -6,9 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/engine/condition"
-	"github.com/updatecli/updatecli/pkg/core/engine/source"
-	"github.com/updatecli/updatecli/pkg/core/engine/target"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -19,9 +21,11 @@ type Pipeline struct {
 	ID    string // ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	Title string // Title is used for the full pipelin
 
-	Sources    map[string]source.Source
-	Conditions map[string]condition.Condition
-	Targets    map[string]target.Target
+	Sources      map[string]source.Source
+	Conditions   map[string]condition.Condition
+	Targets      map[string]target.Target
+	SCMs         map[string]scm.Scm
+	PullRequests map[string]pullrequest.PullRequest
 
 	Report reports.Report
 
@@ -31,7 +35,7 @@ type Pipeline struct {
 }
 
 // Init initialize an updatecli context based on its configuration
-func (p *Pipeline) Init(config *config.Config, options Options) {
+func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 	if len(config.Title) > 0 {
 		p.Title = config.Title
@@ -47,9 +51,11 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	p.Config = config
 
 	// Init context resource size
+	p.SCMs = make(map[string]scm.Scm, len(config.SCMs))
 	p.Sources = make(map[string]source.Source, len(config.Sources))
 	p.Conditions = make(map[string]condition.Condition, len(config.Conditions))
 	p.Targets = make(map[string]target.Target, len(config.Targets))
+	p.PullRequests = make(map[string]pullrequest.PullRequest, len(config.PullRequests))
 
 	// Init context resource size
 	p.Report.Sources = make(map[string]reports.Stage, len(config.Sources))
@@ -58,12 +64,67 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	p.Report.Name = config.Name
 	p.Report.Result = result.SKIPPED
 
+	// Init scm
+	for id, scmConfig := range config.SCMs {
+		// Init Sources[id]
+		var err error
+
+		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
+		scmConfig := scmConfig
+
+		p.SCMs[id], err = scm.New(&scmConfig)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	// Init pullrequests
+	for id, pullRequestConfig := range config.PullRequests {
+		var err error
+
+		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
+		pullRequestConfig := pullRequestConfig
+
+		SCM, ok := p.SCMs[pullRequestConfig.ScmID]
+
+		// Validate that scm ID exists
+		if !ok {
+			return fmt.Errorf("scms ID %q referenced by pullrequest ID %q, doesn't exist",
+				pullRequestConfig.ScmID,
+				id)
+		}
+
+		p.PullRequests[id], err = pullrequest.New(
+			&pullRequestConfig,
+			&SCM)
+
+		if err != nil {
+			return err
+		}
+
+	}
+
 	// Init sources report
 	for id := range config.Sources {
+		// Set scm pointer
+		var scmPointer *scm.ScmHandler
+		if len(config.Sources[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Sources[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm ID %q from source ID %q doesn't exist",
+					config.Sources[id].SCMID,
+					id)
+			}
+
+			scmPointer = &sc.Handler
+		}
+
 		// Init Sources[id]
 		p.Sources[id] = source.Source{
 			Config: config.Sources[id],
 			Result: result.SKIPPED,
+			Scm:    scmPointer,
 		}
 
 		p.Report.Sources[id] = reports.Stage{
@@ -77,9 +138,21 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	// Init conditions report
 	for id := range config.Conditions {
 
+		// Set scm pointer
+		var scmPointer *scm.ScmHandler
+		if len(config.Conditions[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Conditions[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", config.Conditions[id].SCMID)
+			}
+
+			scmPointer = &sc.Handler
+		}
+
 		p.Conditions[id] = condition.Condition{
 			Config: config.Conditions[id],
 			Result: result.SKIPPED,
+			Scm:    scmPointer,
 		}
 
 		p.Report.Conditions[id] = reports.Stage{
@@ -92,9 +165,20 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 	// Init target report
 	for id := range config.Targets {
 
+		var scmPointer *scm.ScmHandler
+		if len(config.Targets[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Targets[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", config.Targets[id].SCMID)
+			}
+
+			scmPointer = &sc.Handler
+		}
+
 		p.Targets[id] = target.Target{
 			Config: config.Targets[id],
 			Result: result.SKIPPED,
+			Scm:    scmPointer,
 		}
 
 		p.Report.Targets[id] = reports.Stage{
@@ -103,6 +187,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) {
 			Result: result.SKIPPED,
 		}
 	}
+	return nil
 
 }
 
@@ -117,7 +202,7 @@ func (p *Pipeline) Run() error {
 
 	if err != nil {
 		p.Report.Result = result.FAILURE
-		return fmt.Errorf("sources stage:\t%q\n", err.Error())
+		return fmt.Errorf("sources stage:\t%q", err.Error())
 	}
 
 	if len(p.Conditions) > 0 {
@@ -126,7 +211,7 @@ func (p *Pipeline) Run() error {
 
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			return fmt.Errorf("conditions stage:\t%q\n", err.Error())
+			return fmt.Errorf("conditions stage:\t%q", err.Error())
 		} else if !ok {
 			logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
 			return nil
@@ -139,10 +224,20 @@ func (p *Pipeline) Run() error {
 
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			return fmt.Errorf("targets stage:\t%q\n", err.Error())
+			return fmt.Errorf("targets stage:\t%q", err.Error())
 		}
 	}
-	p.Report.Result = result.SUCCESS
+
+	if len(p.PullRequests) > 0 {
+		err := p.RunPullRequests()
+
+		if err != nil {
+			p.Report.Result = result.FAILURE
+			return fmt.Errorf("pull Request stage:\t%q", err.Error())
+		}
+
+	}
+
 	return nil
 
 }
@@ -167,7 +262,7 @@ func (p *Pipeline) String() string {
 	}
 	result = result + fmt.Sprintf("%q:\n", "Targets")
 	for key, value := range p.Targets {
-		result = result + fmt.Sprintf("\t%q: %q\n", key, value.ReportTitle)
+		result = result + fmt.Sprintf("\t%q:\n", key)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
 	}
 

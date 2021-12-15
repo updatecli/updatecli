@@ -8,8 +8,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -22,7 +22,7 @@ func (f *File) Target(source string, dryRun bool) (bool, error) {
 
 // TargetFromSCM creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
-func (f *File) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (bool, []string, string, error) {
+func (f *File) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
 	if !filepath.IsAbs(f.spec.File) {
 		f.spec.File = filepath.Join(scm.GetDirectory(), f.spec.File)
 		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", f.spec.File)

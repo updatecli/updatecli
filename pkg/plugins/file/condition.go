@@ -8,8 +8,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -21,7 +21,7 @@ func (f *File) Condition(source string) (bool, error) {
 
 // ConditionFromSCM test if a file content from SCM match the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
-func (f *File) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (f *File) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	if !filepath.IsAbs(f.spec.File) {
 		f.spec.File = filepath.Join(scm.GetDirectory(), f.spec.File)
 		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", f.spec.File)

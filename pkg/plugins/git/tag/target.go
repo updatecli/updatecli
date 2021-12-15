@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/git"
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )
@@ -79,7 +79,7 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 }
 
 // TargetFromSCM create and push a git tag based on the SCM configuration
-func (t *Tag) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error) {
+func (t *Tag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
 	if len(t.VersionFilter.Pattern) == 0 {
 		t.VersionFilter.Pattern = source

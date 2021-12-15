@@ -12,12 +12,16 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 
-	"github.com/updatecli/updatecli/pkg/core/engine/condition"
-	"github.com/updatecli/updatecli/pkg/core/engine/source"
-	"github.com/updatecli/updatecli/pkg/core/engine/target"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/github"
 	"gopkg.in/yaml.v3"
 )
 
@@ -47,13 +51,15 @@ var (
 
 // Config contains cli configuration
 type Config struct {
-	Name       string
-	PipelineID string        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title      string        // Title is used for the full pipeline
-	Source     source.Config // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
-	Sources    map[string]source.Config
-	Conditions map[string]condition.Config
-	Targets    map[string]target.Config
+	Name         string
+	PipelineID   string                        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	Title        string                        // Title is used for the full pipeline
+	Source       source.Config                 // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
+	PullRequests map[string]pullrequest.Config // PullRequests defines the list of Pull Request configuration which need to be managed
+	SCMs         map[string]scm.Config         `yaml:"scms"` // SCMs defines the list of repository configuration used to fetch content from.
+	Sources      map[string]source.Config      // Sources defines the list of source configuration
+	Conditions   map[string]condition.Config   // Conditions defines the list of condition configuration
+	Targets      map[string]target.Config      // Targets defines the list of target configuration
 }
 
 // Reset reset configuration
@@ -74,6 +80,8 @@ func New(cfgFile string, valuesFiles, secretsFiles []string) (config Config, err
 	if err != nil {
 		return config, err
 	}
+
+	logrus.Infof("Loading Pipeline %q", cfgFile)
 
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml":
@@ -118,6 +126,7 @@ func (config *Config) Display() error {
 		return err
 	}
 	logrus.Infof("%s", string(c))
+
 	return nil
 }
 
@@ -137,10 +146,47 @@ func (config *Config) Validate() error {
 		config.Source = source.Config{}
 	}
 
-	for id := range config.Sources {
+	for id, scm := range config.SCMs {
+		if err := scm.Validate(); err != nil {
+			logrus.Errorf("bad parameter(s) for scmIDs %q", id)
+			return err
+		}
+	}
+
+	for id, p := range config.PullRequests {
+		if err := p.Validate(); err != nil {
+			logrus.Errorf("bad parameters for pullrequest %q", id)
+			return err
+		}
+	}
+
+	for id, s := range config.Sources {
 		if IsTemplatedString(id) {
 			logrus.Errorf("sources key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
+		}
+
+		// Temporary code until we fully remove the old way to configure scm
+		// Introduce by https://github.com/updatecli/updatecli/issues/260
+		if len(s.Scm) > 0 {
+			logrus.Warningf("The directive 'scm' for the source[%q] is now deprecated. Please use the new top level scms syntax", id)
+			if len(s.SCMID) == 0 {
+				if _, ok := config.SCMs["source_"+id]; !ok {
+					for kind, spec := range s.Scm {
+						if config.SCMs == nil {
+							config.SCMs = make(map[string]scm.Config, 1)
+						}
+						config.SCMs["source_"+id] = scm.Config{
+							Kind: kind,
+							Spec: spec}
+					}
+				}
+				s.SCMID = "source_" + id
+			} else {
+				logrus.Warning("source.SCMID is also defined, ignoring source.Scm")
+			}
+			s.Scm = map[string]interface{}{}
+			config.Sources[id] = s
 		}
 	}
 
@@ -168,6 +214,34 @@ func (config *Config) Validate() error {
 			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
+
+		// Temporary code until we fully remove the old way to confgigure scm
+		// Introduce by https://github.com/updatecli/updatecli/issues/260
+		//if c.Scm != nil {
+		if len(c.Scm) > 0 {
+			logrus.Warningf("The directive 'scm' for the condition[%q] is now deprecated. Please use the new top level scms syntax", id)
+			if len(c.SCMID) == 0 {
+				if _, ok := config.SCMs["condition_"+id]; !ok {
+					for kind, spec := range c.Scm {
+
+						if config.SCMs == nil {
+							config.SCMs = make(map[string]scm.Config, 1)
+						}
+
+						config.SCMs["condition_"+id] = scm.Config{
+							Kind: kind,
+							Spec: spec}
+
+					}
+				}
+				c.SCMID = "condition_" + id
+				// Ensure we clean this deprecated variable
+			} else {
+				logrus.Warning("condition.SCMID is also defined, ignoring condition.Scm")
+			}
+			c.Scm = map[string]interface{}{}
+		}
+
 		config.Conditions[id] = c
 	}
 
@@ -196,6 +270,57 @@ func (config *Config) Validate() error {
 			logrus.Errorf("target key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
+
+		// Temporary code until we fully remove the old way to confgigure scm
+		// Introduce by https://github.com/updatecli/updatecli/issues/260
+		//if t.Scm != nil {
+		if len(t.Scm) > 0 {
+			logrus.Warningf("The directive 'scm' for the target[%q] is now deprecated. Please use the new top level scms syntax", id)
+			if len(t.SCMID) == 0 {
+				if _, ok := config.SCMs["target_"+id]; !ok {
+					for kind, spec := range t.Scm {
+						if config.SCMs == nil {
+							config.SCMs = make(map[string]scm.Config, 1)
+						}
+
+						config.SCMs["target_"+id] = scm.Config{
+							Kind: kind,
+							Spec: spec,
+						}
+
+						// Temporary code until we fully deprecated the old pullRequest syntax.
+						// At this stage we can only have github pullrequest so to not break backward
+						// compatibility, we automatically add a pullRequest configuration in case of github scm
+						// https://github.com/updatecli/updatecli/pull/388
+						if kind == "github" {
+							if config.PullRequests == nil {
+								config.PullRequests = make(map[string]pullrequest.Config, 1)
+							}
+
+							githubSpec := github.Spec{}
+
+							err := mapstructure.Decode(spec, &githubSpec)
+							if err != nil {
+								return err
+							}
+
+							config.PullRequests["target_"+id] = pullrequest.Config{
+								Kind:    kind,
+								Spec:    githubSpec.PullRequest,
+								ScmID:   "target_" + id,
+								Targets: []string{id},
+							}
+						}
+
+					}
+				}
+				t.SCMID = "target_" + id
+			} else {
+				logrus.Warning("target.SCMID is also defined, ignoring target.Scm")
+			}
+			t.Scm = map[string]interface{}{}
+		}
+
 		config.Targets[id] = t
 	}
 
@@ -269,7 +394,7 @@ func (config *Config) Update(data interface{}) (err error) {
 			case result.SUCCESS:
 				return getFieldValueByQuery(data, []string{"Sources", s, "Output"})
 			case result.FAILURE:
-				return "", fmt.Errorf("Parent source %q failed", s)
+				return "", fmt.Errorf("parent source %q failed", s)
 			// If the result of the parent source execution is not SUCCESS or FAILURE, then it means it was either skipped or not already run.
 			// In this case, the function is return "as it" (literrally) to allow retry later (on a second configuration iteration)
 			default:

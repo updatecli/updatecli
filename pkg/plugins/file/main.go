@@ -48,9 +48,7 @@ func New(spec FileSpec) (*File, error) {
 
 // Normalize ensures that the attributes of the object are following the expected conventions
 func (f *File) Normalize() error {
-	if strings.HasPrefix(f.spec.File, "file://") {
-		f.spec.File = strings.TrimPrefix(f.spec.File, "file://")
-	}
+	f.spec.File = strings.TrimPrefix(f.spec.File, "file://")
 
 	return nil
 }

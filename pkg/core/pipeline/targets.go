@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -13,17 +12,6 @@ func (p *Pipeline) RunTargets() error {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Targets"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Targets")+1))
-
-	sourceReport, err := p.Report.String("sources")
-
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-	}
-	conditionReport, err := p.Report.String("conditions")
-
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-	}
 
 	// Sort targets keys by building a dependency graph
 	sortedTargetsKeys, err := SortedTargetsKeys(&p.Targets)
@@ -51,13 +39,6 @@ func (p *Pipeline) RunTargets() error {
 		target.Config = p.Config.Targets[id]
 
 		rpt := p.Report.Targets[id]
-
-		// Init target reporting
-		target.Changelog = p.Sources[target.Config.SourceID].Changelog
-		target.ReportBody = fmt.Sprintf("%s \n %s", sourceReport, conditionReport)
-		target.ReportTitle = p.Config.GetChangelogTitle(
-			id,
-			p.Sources[target.Config.SourceID].Result)
 
 		if target.Config.Prefix == "" && p.Sources[target.Config.SourceID].Config.Prefix != "" {
 			target.Config.Prefix = p.Sources[target.Config.SourceID].Config.Prefix
