@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 // Condition checks that a Jenkins version exists and that the version
@@ -67,6 +67,6 @@ func (j *Jenkins) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM checks if a key exists in a yaml file
-func (j *Jenkins) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (j *Jenkins) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("SCM configuration is not supported for Jenkins condition, aborting")
 }

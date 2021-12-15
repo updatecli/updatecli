@@ -10,9 +10,9 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 
 	"path/filepath"
@@ -61,31 +61,11 @@ func (e *Engine) InitSCM() (err error) {
 	channel := make(chan int, 20)
 	defer wg.Wait()
 
-	for _, conf := range e.configurations {
-		for _, source := range conf.Sources {
+	for _, pipeline := range e.Pipelines {
+		for _, s := range pipeline.SCMs {
 
-			if len(source.Scm) > 0 {
-				err = Clone(&source.Scm, &hashes, channel, &wg)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		for _, condition := range conf.Conditions {
-			if len(condition.Scm) > 0 {
-
-				err = Clone(&condition.Scm, &hashes, channel, &wg)
-				if err != nil {
-					return err
-				}
-
-			}
-		}
-
-		for _, target := range conf.Targets {
-			if len(target.Scm) > 0 {
-
-				err = Clone(&target.Scm, &hashes, channel, &wg)
+			if s.Handler != nil {
+				err = Clone(&s.Handler, channel, &hashes, &wg)
 				if err != nil {
 					return err
 				}
@@ -99,12 +79,12 @@ func (e *Engine) InitSCM() (err error) {
 
 // Clone parses a scm configuration then clone the git repository if needed.
 func Clone(
-	SCM *map[string]interface{},
-	hashes *[]uint64,
+	s *scm.ScmHandler,
 	channel chan int,
+	hashes *[]uint64,
 	wg *sync.WaitGroup) error {
 
-	hash, err := hashstructure.Hash(SCM, nil)
+	hash, err := hashstructure.Hash(s, nil)
 	if err != nil {
 		return err
 	}
@@ -117,20 +97,16 @@ func Clone(
 	}
 
 	if !found {
-		s, _, err := scm.Unmarshal(*SCM)
-		if err != nil {
-			logrus.Errorf("err - %s", err)
-		}
 		*hashes = append(*hashes, hash)
 		wg.Add(1)
-		go func(s scm.Scm) {
+		go func(s scm.ScmHandler) {
 			channel <- 1
 			defer wg.Done()
 			_, err := s.Clone()
 			if err != nil {
 				logrus.Errorf("err - %s", err)
 			}
-		}(s)
+		}(*s)
 		<-channel
 
 	}
@@ -149,7 +125,7 @@ func (e *Engine) Prepare() (err error) {
 		return err
 	}
 
-	err = e.ReadConfigurations()
+	err = e.LoadConfigurations()
 	if err != nil {
 		return err
 	}
@@ -163,11 +139,11 @@ func (e *Engine) Prepare() (err error) {
 }
 
 // ReadConfigurations read every strategies configuration.
-func (e *Engine) ReadConfigurations() error {
+func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	for _, cfgFile := range GetFiles(e.Options.File) {
 
-		c, err := config.New(cfgFile, e.Options.ValuesFiles, e.Options.SecretsFiles)
+		loadedConfiguration, err := config.New(cfgFile, e.Options.ValuesFiles, e.Options.SecretsFiles)
 
 		if err != nil && err != config.ErrConfigFileTypeNotSupported {
 			logrus.Errorf("%s\n\n", err)
@@ -176,8 +152,19 @@ func (e *Engine) ReadConfigurations() error {
 			continue
 		}
 
-		e.configurations = append(e.configurations, c)
+		newPipeline := pipeline.Pipeline{}
+		err = newPipeline.Init(
+			&loadedConfiguration,
+			e.Options.Pipeline)
+		if err != nil {
+			// Failing immediately as init. of the pipeline still fails even with a successful validation
+			return err
+		}
+
+		e.Pipelines = append(e.Pipelines, newPipeline)
+		e.configurations = append(e.configurations, loadedConfiguration)
 	}
+
 	return nil
 
 }
@@ -188,20 +175,14 @@ func (e *Engine) Run() (err error) {
 	logrus.Infof("+ %s +\n", strings.ToTitle("Pipeline"))
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Pipeline")+4))
 
-	for id := range e.configurations {
+	for _, pipeline := range e.Pipelines {
 
-		p := pipeline.Pipeline{}
-		p.Init(
-			&e.configurations[id],
-			e.Options.Pipeline)
+		err := pipeline.Run()
 
-		err := p.Run()
-
-		e.Reports = append(e.Reports, p.Report)
-		e.Pipelines = append(e.Pipelines, p)
+		e.Reports = append(e.Reports, pipeline.Report)
 
 		if err != nil {
-			logrus.Printf("Pipeline %q failed\n", p.Title)
+			logrus.Printf("Pipeline %q failed\n", pipeline.Title)
 			logrus.Printf("Skipping due to:\n\t%q\n", err)
 			logrus.Println(err)
 			continue
@@ -236,19 +217,19 @@ func (e *Engine) Run() (err error) {
 // Show displays configurations that should be apply.
 func (e *Engine) Show() error {
 
-	err := e.ReadConfigurations()
+	err := e.LoadConfigurations()
 
 	if err != nil {
 		return err
 	}
 
-	for _, conf := range e.configurations {
+	for _, pipeline := range e.Pipelines {
 
-		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(conf.Name)+4))
-		logrus.Infof("# %s #\n", strings.ToTitle(conf.Name))
-		logrus.Infof("%s\n\n", strings.Repeat("#", len(conf.Name)+4))
+		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(pipeline.Config.Name)+4))
+		logrus.Infof("# %s #\n", strings.ToTitle(pipeline.Config.Name))
+		logrus.Infof("%s\n\n", strings.Repeat("#", len(pipeline.Config.Name)+4))
 
-		err = conf.Display()
+		err = pipeline.Config.Display()
 		if err != nil {
 			return err
 		}

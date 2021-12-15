@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -165,7 +165,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		wantMockState       text.MockTextRetriever
 		mockReturnedContent string
 		mockReturnedError   error
-		scm                 scm.Scm
+		scm                 scm.ScmHandler
 	}{
 		{
 			name: "Passing Case with no input source, but a specified line and content and a relative path to file",

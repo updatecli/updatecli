@@ -23,6 +23,7 @@ conditions:
   imageTag:
     name: "jenkins/jenkins docker image set"
     kind: yaml
+    disableSourceInput: true
     spec:
       file: "charts/jenkins/values.yaml"
       key: "jenkins.controller.image"

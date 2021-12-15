@@ -8,8 +8,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
 )
@@ -21,7 +21,7 @@ func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
 }
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
-func (y *Yaml) TargetFromSCM(source string, scm scm.Scm, dryRun bool) (bool, []string, string, error) {
+func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
 	if !filepath.IsAbs(y.Spec.File) {
 		y.Spec.File = filepath.Join(scm.GetDirectory(), y.Spec.File)
 	}

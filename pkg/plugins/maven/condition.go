@@ -9,8 +9,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/scm"
 )
 
 // Condition tests if a specific version exist on the maven repository
@@ -63,6 +63,6 @@ func (m *Maven) Condition(source string) (bool, error) {
 }
 
 // ConditionFromSCM returns an error because it's not supported
-func (m *Maven) ConditionFromSCM(source string, scm scm.Scm) (bool, error) {
+func (m *Maven) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("SCM configuration is not supported for maven condition, aborting")
 }

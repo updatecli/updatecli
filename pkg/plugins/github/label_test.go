@@ -14,9 +14,9 @@ func TestGetRepositoryLabelsInformation(t *testing.T) {
 	}
 
 	g := Github{
-		spec: Spec{
-			Owner:      "olblak",
-			Repository: "nocode",
+		Spec: Spec{
+			Owner:      "updatecli",
+			Repository: "updatecli",
 			Username:   os.Getenv("GITHUB_ACTOR"),
 			Token:      os.Getenv("GITHUB_TOKEN"),
 		},
@@ -27,7 +27,7 @@ func TestGetRepositoryLabelsInformation(t *testing.T) {
 		"duplicate",
 	}
 
-	gotLabels, err := g.getRepositoryLabelsInformation()
+	gotLabels, err := g.GetRepositoryLabels()
 	if err != nil {
 		t.Errorf("unexpected error: %q", err.Error())
 	}

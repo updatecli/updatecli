@@ -29,22 +29,22 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 		}
 		if len(versions) == 0 {
 			logrus.Infof("\t=> No release or git tags found, exiting")
-			return "", fmt.Errorf("No release or git tags found, exiting")
+			return "", fmt.Errorf("no release or git tags found, exiting")
 		}
 	}
 
-	err = g.spec.VersionFilter.Search(versions)
+	err = g.Spec.VersionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
-	g.foundVersion = g.spec.VersionFilter.FoundVersion
+	g.foundVersion = g.Spec.VersionFilter.FoundVersion
 	value = g.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
-		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, g.spec.VersionFilter.Pattern)
-		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.spec.VersionFilter.Pattern)
+		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, g.Spec.VersionFilter.Pattern)
+		return value, fmt.Errorf("no Github Release version found matching pattern %q", g.Spec.VersionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("%s Github Release version %q found matching pattern %q", result.SUCCESS, value, g.spec.VersionFilter.Pattern)
+		logrus.Infof("%s Github Release version %q found matching pattern %q", result.SUCCESS, value, g.Spec.VersionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in Github source")
 	}
@@ -96,8 +96,8 @@ func (g *Github) SearchTags() (tags []string, err error) {
 	}
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.spec.Owner),
-		"repository": githubv4.String(g.spec.Repository),
+		"owner":      githubv4.String(g.Spec.Owner),
+		"repository": githubv4.String(g.Spec.Repository),
 		"refPrefix":  githubv4.String("refs/tags/"),
 		"before":     (*githubv4.String)(nil),
 		"orderBy": githubv4.RefOrder{
@@ -132,7 +132,7 @@ func (g *Github) SearchTags() (tags []string, err error) {
 	}
 
 	if expectedFound != tagCounter {
-		return tags, fmt.Errorf("Something went wrong, find %d, expected %d", tagCounter, expectedFound)
+		return tags, fmt.Errorf("something went wrong, found %d, expected %d", tagCounter, expectedFound)
 	}
 
 	logrus.Debugf("%d tags found", len(tags))
@@ -180,8 +180,8 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 	client := g.NewClient()
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.spec.Owner),
-		"repository": githubv4.String(g.spec.Repository),
+		"owner":      githubv4.String(g.Spec.Owner),
+		"repository": githubv4.String(g.Spec.Repository),
 		"before":     (*githubv4.String)(nil),
 		"orderBy": githubv4.ReleaseOrder{
 			Field:     "CREATED_AT",
@@ -239,7 +239,7 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 	}
 
 	if expectedFound != releaseCounter {
-		return releases, fmt.Errorf("Something went wrong, found %d releases, expected %d", releaseCounter, expectedFound)
+		return releases, fmt.Errorf("something went wrong, found %d releases, expected %d", releaseCounter, expectedFound)
 	}
 
 	logrus.Debugf("%d releases found", len(releases))

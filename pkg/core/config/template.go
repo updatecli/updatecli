@@ -45,10 +45,11 @@ func (t *Template) Init(config *Config) error {
 
 	c, err := os.Open(t.CfgFile)
 
-	defer c.Close()
 	if err != nil {
 		return err
 	}
+
+	defer c.Close()
 
 	// Read every files containing yaml key/values
 	for _, valuesFile := range t.ValuesFiles {
@@ -120,10 +121,11 @@ func ReadFile(filename string, values *map[string]interface{}, encrypted bool) (
 	}
 
 	v, err := os.Open(filename)
-	defer v.Close()
 	if err != nil {
 		return err
 	}
+
+	defer v.Close()
 
 	content, err := ioutil.ReadAll(v)
 	if err != nil {

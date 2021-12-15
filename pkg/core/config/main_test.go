@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/updatecli/updatecli/pkg/core/engine/condition"
-	"github.com/updatecli/updatecli/pkg/core/engine/source"
-	"github.com/updatecli/updatecli/pkg/core/engine/target"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -115,7 +115,7 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: Parent source \"default\" failed"),
+			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: parent source \"default\" failed"),
 			ExpectedValidateErr: nil,
 		},
 		// Testing key case sensitive

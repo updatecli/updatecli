@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -157,7 +157,7 @@ func Test_ConditionFromSCM(t *testing.T) {
 		wantMockState       text.MockTextRetriever
 		mockReturnedContent string
 		mockReturnedError   error
-		scm                 scm.Scm
+		scm                 scm.ScmHandler
 	}{
 		{
 			name: "Passing Case with no input source and only specified value",

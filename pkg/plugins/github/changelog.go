@@ -55,8 +55,8 @@ func (g *Github) Changelog(name string) (string, error) {
 	}
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.spec.Owner),
-		"repository": githubv4.String(g.spec.Repository),
+		"owner":      githubv4.String(g.Spec.Owner),
+		"repository": githubv4.String(g.Spec.Repository),
 		"tagName":    githubv4.String(versionName),
 	}
 
@@ -72,8 +72,8 @@ func (g *Github) Changelog(name string) (string, error) {
 	if len(query.Repository.Release.Url) == 0 {
 		changelog = fmt.Sprintf("No Github Release found for %s on https://github.com/%s/%s",
 			versionName,
-			g.spec.Owner,
-			g.spec.Repository)
+			g.Spec.Owner,
+			g.Spec.Repository)
 	} else {
 		changelog = fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v",
 			query.Repository.Release.PublishedAt.String(),

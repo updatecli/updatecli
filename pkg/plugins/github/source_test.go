@@ -18,7 +18,7 @@ var (
 	dataSet = DataSet{
 		{
 			github: Github{
-				spec: Spec{
+				Spec: Spec{
 					Owner:      "olblak",
 					Repository: "nocode",
 					Token:      os.Getenv("GITHUB_TOKEN"),
