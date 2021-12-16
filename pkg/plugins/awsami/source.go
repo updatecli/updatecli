@@ -9,6 +9,10 @@ import (
 
 // Source returns the latest AMI matching filter(s)
 func (a *AMI) Source(workingDir string) (string, error) {
+	if len(a.ec2Filters) == 0 {
+		return "", ErrNoFilter
+	}
+
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
 		strings.TrimRight(
 			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n  "))
