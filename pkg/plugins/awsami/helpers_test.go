@@ -1,4 +1,4 @@
-package ami
+package awsami
 
 import (
 	"strings"
@@ -8,9 +8,10 @@ import (
 func TestGetLatestAmiID(t *testing.T) {
 
 	for id, d := range dataset {
-		got, err := d.ami.getLatestAmiID(
-			mockDescribeImagesOutput{
-				Resp: d.mockedResponse})
+		d.ami.apiClient = mockDescribeImagesOutput{
+			Resp: d.mockedResponse,
+		}
+		got, err := d.ami.getLatestAmiID()
 		if err != nil {
 			t.Errorf("Unexpected error: %q",
 				err)

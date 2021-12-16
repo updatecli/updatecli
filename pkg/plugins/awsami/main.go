@@ -1,4 +1,4 @@
-package ami
+package awsami
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,13 +27,13 @@ var (
 type AMI struct {
 	Spec       Spec
 	ec2Filters []*ec2.Filter
+	apiClient  ec2iface.EC2API
 }
 
-// Init run basic parameter initiation
-func (a *AMI) Init() (svc *ec2.EC2, err error) {
-
-	errs := a.Spec.Validate()
-
+// New returns a reference to a newly initialized AMI object from an AMISpec
+// or an error if the provided AMISpec triggers a validation error.
+func New(spec Spec) (*AMI, error) {
+	errs := spec.Validate()
 	if len(errs) > 0 {
 		logrus.Errorln("failed to validate aws/ami configuration")
 		for _, err := range errs {
@@ -41,29 +42,29 @@ func (a *AMI) Init() (svc *ec2.EC2, err error) {
 		return nil, ErrSpecNotValid
 	}
 
-	// Init ec2Filters
-	for i := 0; i < len(a.Spec.Filters); i++ {
+	var newFilters []*ec2.Filter
+	for i := 0; i < len(spec.Filters); i++ {
 		filter := ec2.Filter{
-			Name:   aws.String(a.Spec.Filters[i].Name),
-			Values: aws.StringSlice(strings.Split(a.Spec.Filters[i].Values, ","))}
+			Name:   aws.String(spec.Filters[i].Name),
+			Values: aws.StringSlice(strings.Split(spec.Filters[i].Values, ","))}
 
-		a.ec2Filters = append(a.ec2Filters, &filter)
+		newFilters = append(newFilters, &filter)
 	}
 
-	svc = ec2.New(session.New(), &aws.Config{
+	newClient := ec2.New(session.New(), &aws.Config{
 		CredentialsChainVerboseErrors: func(verbose bool) *bool {
 			return &verbose
 		}(true),
-		Region:   aws.String(a.Spec.Region),
-		Endpoint: aws.String(a.Spec.Endpoint),
+		Region:   aws.String(spec.Region),
+		Endpoint: aws.String(spec.Endpoint),
 		Credentials: credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{},
 				&credentials.StaticProvider{
 					Value: credentials.Value{
-						AccessKeyID:     a.Spec.AccessKey,
-						SecretAccessKey: a.Spec.SecretKey,
+						AccessKeyID:     spec.AccessKey,
+						SecretAccessKey: spec.SecretKey,
 					},
 				},
 			}),
@@ -71,5 +72,13 @@ func (a *AMI) Init() (svc *ec2.EC2, err error) {
 		MaxRetries: func(val int) *int { return &val }(3),
 	})
 
-	return svc, err
+	if newClient == nil {
+		return nil, ErrWrongServiceConnection
+	}
+
+	return &AMI{
+		Spec:       spec,
+		ec2Filters: newFilters,
+		apiClient:  newClient,
+	}, nil
 }

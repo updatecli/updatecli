@@ -1,4 +1,4 @@
-package ami
+package awsami
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
