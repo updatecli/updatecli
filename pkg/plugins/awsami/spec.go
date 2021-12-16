@@ -1,4 +1,4 @@
-package ami
+package awsami
 
 import (
 	"errors"
@@ -48,10 +48,6 @@ func (s *Spec) Validate() (errs []error) {
 
 	if len(s.Endpoint) == 0 {
 		s.Endpoint = fmt.Sprintf("https://ec2.%s.amazonaws.com", s.Region)
-	}
-
-	if len(s.Filters) == 0 {
-		errs = append(errs, ErrNoFilter)
 	}
 
 	if len(s.SortBy) > 0 {

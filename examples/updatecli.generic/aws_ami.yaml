@@ -32,7 +32,8 @@ conditions:
 targets:
   file:
     name: Update fictive file
-    sourceID: ami1
+    sourceID: opensuse202006
     kind: file
     spec:
       file: /tmp/updatecli_ci_test
+      forcecreate: true

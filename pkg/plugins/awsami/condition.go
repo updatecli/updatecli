@@ -1,4 +1,4 @@
-package ami
+package awsami
 
 import (
 	"errors"
@@ -38,17 +38,11 @@ func (a *AMI) Condition(source string) (bool, error) {
 		})
 	}
 
-	svc, err := a.Init()
-
-	if err != nil {
-		return false, err
-	}
-
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
 		strings.TrimRight(
 			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n  "))
 
-	foundAMI, err := a.getLatestAmiID(svc)
+	foundAMI, err := a.getLatestAmiID()
 
 	if err != nil {
 		return false, err

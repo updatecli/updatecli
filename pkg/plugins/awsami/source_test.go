@@ -1,4 +1,4 @@
-package ami
+package awsami
 
 import (
 	"errors"
@@ -14,6 +14,15 @@ func TestSource(t *testing.T) {
 	}
 
 	for id, d := range dataset {
+		// Do not run test for source if the spec is not valid
+		if d.expectedError == ErrSpecNotValid {
+			return
+		}
+
+		d.ami.apiClient = mockDescribeImagesOutput{
+			Resp: d.mockedResponse,
+		}
+
 		got, err := d.ami.Source("")
 
 		if !errors.Is(err, d.expectedError) {
