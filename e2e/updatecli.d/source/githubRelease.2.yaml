@@ -1,0 +1,14 @@
+---
+title: Test source githubRelease
+
+sources:
+  helm:
+    name: "Get Latest updatecli release version"
+    kind: "githubRelease"
+    spec:
+      owner: "updatecli"
+      repository: "updatecli"
+      token: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.token }}'
+      versionFilter:
+        kind: "latest"

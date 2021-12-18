@@ -24,3 +24,5 @@ dist/
 .vscode
 
 *.swp
+
+e2e/test_results.yaml
