@@ -7,6 +7,9 @@ DOCKER_TAG=$(shell git describe --tags)
 DOCKER_BUILDKIT=1
 export DOCKER_BUILDKIT
 
+VENOM_VAR_binpath=$(PWD)/dist/updatecli_linux_amd64
+export VENOM_VAR_binpath
+
 local_bin=./dist/updatecli_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)/updatecli
 
 clean: ## Clean go test cache
@@ -54,6 +57,10 @@ test: ## Execute the Golang's tests for updatecli
 
 test-short: ## Execute the Golang's tests for updatecli
 	go test ./... -short
+
+.PHONY: test-e2e
+test-e2e: ## Execute updatecli end to end tests
+	time venom run e2e/venom.d/* --output-dir ./e2e --format yaml
 
 .PHONY: lint
 lint: ## Execute the Golang's linters on updatecli's source code

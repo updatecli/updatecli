@@ -1,0 +1,15 @@
+---
+name: 'Updatecli Diff TestSuite'
+vars:
+  message:
+    warning: 'WARNING:'
+    error: 'ERROR:'
+testcases:
+  - name: "Test updatecli diff shouldn't fail"
+    steps:
+      - script: '{{ .binpath }}/updatecli diff --config  ../updatecli.d/ --values ../values.yaml'
+        type: 'exec'
+        assertions:
+          - 'result.code ShouldEqual 0'
+          - 'result.systemerr ShouldNotContainSubstring "{{ .message.warning }}"'
+          - 'result.systemerr ShouldNotContainSubstring "{{ .message.error }}"'
