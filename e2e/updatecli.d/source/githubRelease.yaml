@@ -1,0 +1,26 @@
+---
+title: Test source githubRelease
+
+scms:
+  updatecli:
+    kind: "github"
+    spec:
+      user: "updatecli"
+      email: "updatecli@olblak.com"
+      owner: "updatecli"
+      repository: "updatecli"
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      branch: "main"
+
+sources:
+  helm:
+    name: Get Latest helm release version
+    kind: githubRelease
+    spec:
+      owner: "updatecli"
+      repository: "updatecli"
+      token: {{ requiredEnv .github.token }}
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      versionFilter:
+        kind: latest
