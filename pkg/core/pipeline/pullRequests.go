@@ -90,8 +90,9 @@ func (p *Pipeline) RunPullRequests() error {
 			return fmt.Errorf("%d target(s) (%s) skipped for pullrequest %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
 		}
 
-		// Ensure we don't add changelog from the same sourceID twice.
-		for _, targetID := range successTargetIDs {
+		// Ensure we don't add changelog from the same sourceID twice
+		// Please note that the targets with both results (success and attention) need to be checked for changelog
+		for _, targetID := range append(successTargetIDs, attentionTargetIDs...) {
 			sourceID := p.Targets[targetID].Config.SourceID
 
 			found := false
