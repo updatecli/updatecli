@@ -38,7 +38,7 @@ const PULLREQUESTBODY = `
 
 <details><summary>Click to expand</summary>
 
-` + "```\n{{ .Description }}\n```" + `
+` + "````\n{{ .Description }}\n````" + `
 
 </details>
 
