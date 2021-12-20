@@ -328,7 +328,7 @@ func (p *PullRequest) getRemotePullRequest() error {
 		Repository struct {
 			PullRequests struct {
 				Nodes []PullRequestApi
-			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: [OPEN,CLOSED])"`
+			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: [OPEN])"`
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
