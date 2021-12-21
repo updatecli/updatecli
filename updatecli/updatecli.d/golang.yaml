@@ -8,9 +8,9 @@ sources:
       repository: go
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-    versionFilter:
-      kind: regex
-      pattern: 'go1\.(\d*)\.(\d*)$'
+      versionFilter:
+        kind: regex
+        pattern: 'go1\.(\d*)\.(\d*)$'
     transformers:
       - trimPrefix: go
   gomod:
