@@ -10,7 +10,7 @@ sources:
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
     versionFilter:
       kind: regex
-      pattern: 'go-1.(\d*).(\d*)$'
+      pattern: 'go1\.(\d*)\.(\d*)$'
     transformers:
       - trimPrefix: go
   gomod:
