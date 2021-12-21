@@ -225,7 +225,7 @@ func (p *PullRequest) updatePullRequest() error {
 		return err
 	}
 
-	logrus.Infof("\nPull Request available on:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
+	logrus.Infof("\nPull Request available at:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
 
 	return nil
 }
