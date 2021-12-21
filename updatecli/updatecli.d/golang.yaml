@@ -1,4 +1,17 @@
 title: Bump Golang Version
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: updatecli
+      email: me@olblak.com
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      branch: main
+
 sources:
   latestGoVersion:
     name: Get Latest Go Release
@@ -20,11 +33,12 @@ sources:
       - latestGoVersion
     spec:
       command: ./updatecli/scripts/updateGomodGoversion.sh ./go.mod {{ source "latestGoVersion" }}
+
 conditions:
   workflowrelease-sandbox:
     name: Ensure GA step is defined in Github Action named release-sandbox
     kind: yaml
-    sourceID: latestGoVersion
+    disablesourceinput: true
     spec:
       file: .github/workflows/release-sandbox.yaml
       key: jobs.build.steps[3].id
@@ -32,7 +46,7 @@ conditions:
   workflowrelease:
     name: Ensure GA step is defined in Github Action named release
     kind: yaml
-    sourceID: latestGoVersion
+    disablesourceinput: true
     spec:
       file: .github/workflows/release.yaml
       key: jobs.build.steps[3].id
@@ -40,7 +54,7 @@ conditions:
   workflowgo:
     name: Ensure GA step is defined in Github Action named go
     kind: yaml
-    sourceID: latestGoVersion
+    disablesourceinput: true
     spec:
       file: .github/workflows/go.yaml
       key: jobs.build.steps[0].id
@@ -61,15 +75,7 @@ targets:
     spec:
       file: .github/workflows/release.yaml
       key: jobs.build.steps[3].with.go-version
-    scm:
-      github:
-        user: updatecli
-        email: me@olblak.com
-        owner: updatecli
-        repository: updatecli
-        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-        branch: main
+    scmID: default
   release:
     name: '[release-sandbox.yaml] Update Golang version to {{ source "latestGoVersion" }}'
     sourceID: latestGoVersion
@@ -77,15 +83,7 @@ targets:
     spec:
       file: .github/workflows/release-sandbox.yaml
       key: jobs.build.steps[3].with.go-version
-    scm:
-      github:
-        user: updatecli
-        email: me@olblak.com
-        owner: updatecli
-        repository: updatecli
-        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-        branch: main
+    scmID: default
   workflowgo:
     name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
     kind: yaml
@@ -93,27 +91,25 @@ targets:
     spec:
       file: .github/workflows/go.yaml
       key: jobs.build.steps[0].with.go-version
-    scm:
-      github:
-        user: updatecli
-        email: me@olblak.com
-        owner: updatecli
-        repository: updatecli
-        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-        branch: main
+    scmID: default
   go.mod:
     name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
     sourceID: gomod
     kind: file
     spec:
       file: go.mod
-    scm:
-      github:
-        user: updatecli
-        email: me@olblak.com
-        owner: updatecli
-        repository: updatecli
-        token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-        username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-        branch: main
+    scmID: default
+
+pullrequests:
+  default:
+    title: '[updatecli] Bump Golang version to {{ source "latestGoVersion" }}'
+    kind: github
+    scmID: default
+    targets:
+      - release-sandbox
+      - release
+      - workflowgo
+      - go.mod
+    spec:
+      labels:
+        - chore
