@@ -74,12 +74,6 @@ func (p *Pipeline) RunPullRequests() error {
 
 		failedTargetIDs, attentionTargetIDs, successTargetIDs, skippedTargetIDs := p.GetTargetsIDByResult(pr.Config.Targets)
 
-		// No target changed so nothing left to do
-		if len(attentionTargetIDs) == 0 {
-			logrus.Infof("Nothing left to do as no target related to pullrequest %q have changed", id)
-			return nil
-		}
-
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
 			logrus.Errorf("%d target(s) (%s) failed for pullrequest %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
@@ -90,8 +84,9 @@ func (p *Pipeline) RunPullRequests() error {
 			return fmt.Errorf("%d target(s) (%s) skipped for pullrequest %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
 		}
 
-		// Ensure we don't add changelog from the same sourceID twice.
-		for _, targetID := range successTargetIDs {
+		// Ensure we don't add changelog from the same sourceID twice
+		// Please note that the targets with both results (success and attention) need to be checked for changelog
+		for _, targetID := range append(successTargetIDs, attentionTargetIDs...) {
 			sourceID := p.Targets[targetID].Config.SourceID
 
 			found := false
@@ -108,12 +103,13 @@ func (p *Pipeline) RunPullRequests() error {
 		pr.Changelog = changelog
 
 		if p.Options.Target.DryRun {
-			pullRequestOutput := fmt.Sprintf("A Pull request of kind %q, should be opened with the following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
-				pr.Config.Kind,
+			logrus.Infof("[Dry Run] A Pull Request is expected (with kind %q and title %q).", pr.Config.Kind, pr.Title)
+
+			pullRequestDebugOutput := fmt.Sprintf("The expected Pull Request would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
 				pr.Title,
 				pr.Changelog,
 				pr.PipelineReport)
-			logrus.Debugf(strings.ReplaceAll(pullRequestOutput, "\n", "\n\t|\t"))
+			logrus.Debugf(strings.ReplaceAll(pullRequestDebugOutput, "\n", "\n\t|\t"))
 
 			return nil
 		}

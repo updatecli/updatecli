@@ -38,7 +38,7 @@ const PULLREQUESTBODY = `
 
 <details><summary>Click to expand</summary>
 
-` + "```\n{{ .Description }}\n```" + `
+` + "````\n{{ .Description }}\n````" + `
 
 </details>
 
@@ -225,7 +225,7 @@ func (p *PullRequest) updatePullRequest() error {
 		return err
 	}
 
-	logrus.Infof("\nPull Request available on:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
+	logrus.Infof("\nPull Request available at:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
 
 	return nil
 }
@@ -328,7 +328,7 @@ func (p *PullRequest) getRemotePullRequest() error {
 		Repository struct {
 			PullRequests struct {
 				Nodes []PullRequestApi
-			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: [OPEN,CLOSED])"`
+			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: [OPEN])"`
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
