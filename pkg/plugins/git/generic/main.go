@@ -18,6 +18,36 @@ import (
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+// DiffBranch checks that the last commits of the two branches are similar then return
+// true if it's the case
+func DiffBranch(a, b, workingDir string) (bool, error) {
+
+	gitRepository, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return false, err
+	}
+
+	refA, err := gitRepository.Reference(plumbing.NewBranchReferenceName(a), true)
+	if err != nil {
+		logrus.Errorf("reference %q - %s", a, err)
+		return false, err
+	}
+
+	refB, err := gitRepository.Reference(plumbing.NewBranchReferenceName(b), true)
+
+	if err != nil {
+		logrus.Errorf("reference %q - %s", b, err)
+		return false, err
+	}
+
+	if refA.Hash().String() == refB.Hash().String() {
+		return true, nil
+	}
+
+	return false, nil
+
+}
+
 func GetChangedFiles(workingDir string) ([]string, error) {
 	gitRepository, err := git.PlainOpen(workingDir)
 	if err != nil {

@@ -1,10 +1,62 @@
 package generic
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+func TestDiffBranch(t *testing.T) {
+
+	type data struct {
+		branchA        string
+		branchB        string
+		workingDir     string
+		expectedResult bool
+		expectedError  error
+	}
+
+	type dataSet []data
+
+	dSet := dataSet{
+		{
+			branchA:        "main",
+			branchB:        "issue-285",
+			workingDir:     "../../../..",
+			expectedResult: false,
+			expectedError:  nil,
+		},
+		{
+			branchA:        "main",
+			branchB:        "main",
+			workingDir:     "../../../..",
+			expectedResult: true,
+			expectedError:  nil,
+		},
+		{
+			branchA:        "main",
+			branchB:        "doNotExist",
+			workingDir:     "../../../..",
+			expectedResult: true,
+			expectedError:  fmt.Errorf("reference not found"),
+		},
+	}
+
+	for _, d := range dSet {
+		got, err := DiffBranch(
+			d.branchA,
+			d.branchB,
+			d.workingDir)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		if got != d.expectedResult {
+			t.Errorf("Expected %v but got %v", d.expectedResult, got)
+		}
+	}
+}
 
 func TestSanitizeBranchName(t *testing.T) {
 	type dataSet struct {
