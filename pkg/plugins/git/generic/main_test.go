@@ -45,19 +45,24 @@ func TestIsSimilarBranch(t *testing.T) {
 		},
 	}
 
-	for _, d := range dSet {
+	for id, d := range dSet {
 		got, err := IsSimilarBranch(
 			d.branchA,
 			d.branchB,
 			d.workingDir)
 
 		if !assert.Equal(t, err, d.expectedError) {
-			t.Errorf("Expected error '%v' but got '%v'", d.expectedError, err)
-
+			t.Errorf("[%v] Expected error '%v' but got '%v'",
+				id,
+				d.expectedError,
+				err)
 		}
 
 		if !assert.Equal(t, got, d.expectedResult) {
-			t.Errorf("Expected result '%v' but got '%v'", d.expectedResult, got)
+			t.Errorf("[%v] Expected result '%v' but got '%v'",
+				id,
+				d.expectedResult,
+				got)
 		}
 	}
 }
