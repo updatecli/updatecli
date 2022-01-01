@@ -8,8 +8,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/simpletextparser/keywords"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/types"
 )
 
 type SimpleTextDockerfileParser struct {

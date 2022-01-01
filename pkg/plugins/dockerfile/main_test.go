@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/mobyparser"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/simpletextparser/keywords"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/mobyparser"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/simpletextparser"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/simpletextparser/keywords"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/types"
 )
 
 func TestDockerfile_SetParser(t *testing.T) {
