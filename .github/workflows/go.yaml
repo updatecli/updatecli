@@ -33,6 +33,7 @@ jobs:
           # Used for testing purposes
           # https://github.com/actions/checkout#fetch-all-history-for-all-tags-and-branches
           fetch-depth: 0
+          ref: ${{ github.ref }}
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2.5.2
         with:
