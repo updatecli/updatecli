@@ -107,7 +107,7 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 	}
 
 	if matchingBranch {
-		logrus.Debugln("Zero changes between branch %q and %q, skipping pullrequest creation",
+		logrus.Debugf("No changes detected between branches %q and %q, skipping pullrequest creation",
 			p.gh.HeadBranch,
 			p.gh.Spec.Branch)
 
