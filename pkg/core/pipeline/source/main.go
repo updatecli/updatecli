@@ -12,7 +12,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/awsami"
-	"github.com/updatecli/updatecli/pkg/plugins/docker"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerdigest"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	gitTag "github.com/updatecli/updatecli/pkg/plugins/git/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
@@ -166,6 +166,18 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 			return nil, nil, err
 		}
 
+	case "dockerDigest":
+		var sourceSpec dockerdigest.Spec
+
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
+			return nil, nil, err
+		}
+
+		sourcer, err = dockerdigest.New(sourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
+
 	case "githubRelease":
 		githubSpec := github.Spec{}
 
@@ -238,16 +250,6 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		}
 
 		sourcer = &g
-
-	case "dockerDigest":
-		d := docker.Docker{}
-		err := mapstructure.Decode(s.Config.Spec, &d)
-
-		if err != nil {
-			return nil, nil, err
-		}
-
-		sourcer = &d
 
 	case "yaml":
 		var sourceSpec yaml.Spec
