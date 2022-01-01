@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestDiffBranch(t *testing.T) {
+func TestIsSimilarBranch(t *testing.T) {
 
 	type data struct {
 		branchA        string
@@ -44,7 +44,7 @@ func TestDiffBranch(t *testing.T) {
 	}
 
 	for _, d := range dSet {
-		got, err := DiffBranch(
+		got, err := IsSimilarBranch(
 			d.branchA,
 			d.branchB,
 			d.workingDir)

@@ -18,9 +18,9 @@ import (
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
-// DiffBranch checks that the last commits of the two branches are similar then return
+// IsSimilarBranch checks that the last commits of the two branches are similar then return
 // true if it's the case
-func DiffBranch(a, b, workingDir string) (bool, error) {
+func IsSimilarBranch(a, b, workingDir string) (bool, error) {
 
 	gitRepository, err := git.PlainOpen(workingDir)
 	if err != nil {
