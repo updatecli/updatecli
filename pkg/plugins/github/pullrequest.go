@@ -16,6 +16,8 @@ import (
 	"context"
 	"text/template"
 
+	gitgeneric "github.com/updatecli/updatecli/pkg/plugins/git/generic"
+
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 )
@@ -94,8 +96,26 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 	p.Report = pipelineReport
 	p.Title = title
 
+	// Check if they are changes that need to be published otherwise exit
+	matchingBranch, err := gitgeneric.IsSimilarBranch(
+		p.gh.HeadBranch,
+		p.gh.Spec.Branch,
+		p.gh.GetDirectory())
+
+	if err != nil {
+		return err
+	}
+
+	if matchingBranch {
+		logrus.Debugln("Zero changes between branch %q and %q, skipping pullrequest creation",
+			p.gh.HeadBranch,
+			p.gh.Spec.Branch)
+
+		return nil
+	}
+
 	// Check if there is already a pullRequest for current pipeline
-	err := p.getRemotePullRequest()
+	err = p.getRemotePullRequest()
 	if err != nil {
 		return err
 	}
