@@ -10,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/helm"
