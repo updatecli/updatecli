@@ -10,7 +10,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/types"
 )
 
 type MobyParser struct {

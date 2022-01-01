@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile/types"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/types"
 )
 
 func TestDockerfile_Condition(t *testing.T) {
