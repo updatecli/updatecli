@@ -1,0 +1,36 @@
+---
+title: Show a set of dockerimage resources as a generic example
+sources:
+  latestVersion:
+    kind: shell
+    spec:
+      command: echo latest
+
+conditions:
+  isNginxAlpinePublished:
+    name: 'Is the latest Nginx-Alpine image published on the DockerHub?'
+    kind: dockerImage
+    disablesourceinput: true
+    spec:
+      image: nginx
+      tag: alpine
+      architecture: "amd64"
+  isQuayAnsibleRunnerPublished:
+    name: 'Is the latest latest ansible/ansible-runner image published on Quay.io?'
+    kind: dockerImage
+    sourceID: latestVersion
+    spec:
+      image: quay.io/ansible/ansible-runner
+      architecture: "amd64"
+      # tag comes from the input source
+  isGHCRUpdateCliPublished:
+    name: 'Is the latest latest updatecli/updatecli image published on GHCR?'
+    kind: dockerImage
+    sourceID: latestVersion
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: "arm64"
+      # tag comes from the input source
+      # Authentication is required on ghcr.io registry dduportal:$UPDATECLI_GITHUB_TOKEN
+      username: "dduportal"
+      password: "{{ requiredEnv `UPDATECLI_GITHUB_TOKEN` }}"
