@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsSimilarBranch(t *testing.T) {
@@ -38,7 +40,7 @@ func TestIsSimilarBranch(t *testing.T) {
 			branchA:        "main",
 			branchB:        "doNotExist",
 			workingDir:     "../../../..",
-			expectedResult: true,
+			expectedResult: false,
 			expectedError:  fmt.Errorf("reference not found"),
 		},
 	}
@@ -49,11 +51,13 @@ func TestIsSimilarBranch(t *testing.T) {
 			d.branchB,
 			d.workingDir)
 
-		if err != nil {
-			fmt.Println(err)
+		if !assert.Equal(t, err, d.expectedError) {
+			t.Errorf("Expected error '%v' but got '%v'", d.expectedError, err)
+
 		}
-		if got != d.expectedResult {
-			t.Errorf("Expected %v but got %v", d.expectedResult, got)
+
+		if !assert.Equal(t, got, d.expectedResult) {
+			t.Errorf("Expected result '%v' but got '%v'", d.expectedResult, got)
 		}
 	}
 }
