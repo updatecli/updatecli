@@ -13,7 +13,7 @@ import (
 func Test_Condition(t *testing.T) {
 	tests := []struct {
 		name                string
-		spec                YamlSpec
+		spec                Spec
 		inputSourceValue    string
 		wantResult          bool
 		wantErr             bool
@@ -23,7 +23,7 @@ func Test_Condition(t *testing.T) {
 	}{
 		{
 			name: "Passing Case",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
@@ -40,7 +40,7 @@ github:
 		},
 		{
 			name: "File does not exist",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "not_existing.txt",
 			},
 			mockReturnedError: fmt.Errorf("no such file or directory"),
@@ -49,7 +49,7 @@ github:
 		},
 		{
 			name: "Failing Case (key found but not the correct value)",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
@@ -66,7 +66,7 @@ github:
 		},
 		{
 			name: "Failing Case (key not found)",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.admin",
 			},
@@ -83,7 +83,7 @@ github:
 		},
 		{
 			name: "Validation Failure with both source and specified value",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
 				Value: "asterix",
@@ -93,7 +93,7 @@ github:
 		},
 		{
 			name: "Failure due to unvalid Yaml",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
@@ -107,7 +107,7 @@ github
 		},
 		{
 			name: "Passing Case with no input source and only specified value",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
 				Value: "olblak",
@@ -150,7 +150,7 @@ github:
 func Test_ConditionFromSCM(t *testing.T) {
 	tests := []struct {
 		name                string
-		spec                YamlSpec
+		spec                Spec
 		inputSourceValue    string
 		wantResult          bool
 		wantErr             bool
@@ -161,7 +161,7 @@ func Test_ConditionFromSCM(t *testing.T) {
 	}{
 		{
 			name: "Passing Case with no input source and only specified value",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
 				Value: "olblak",

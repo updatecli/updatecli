@@ -214,7 +214,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &ch
 
 	case "yaml":
-		var conditionSpec yaml.YamlSpec
+		var conditionSpec yaml.Spec
 
 		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err

@@ -24,7 +24,7 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, err
 	}
 
-	YamlResource, err := yaml.New(yaml.YamlSpec{
+	YamlResource, err := yaml.New(yaml.Spec{
 		File: filepath.Join(c.Name, c.File),
 		Key:  c.Key,
 	})
@@ -77,7 +77,7 @@ func (c *Chart) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (
 
 	filename := filepath.Join(scm.GetDirectory(), c.Name, c.File)
 
-	YamlResource, err := yaml.New(yaml.YamlSpec{
+	YamlResource, err := yaml.New(yaml.Spec{
 		File: filename,
 		Key:  c.Key,
 	})

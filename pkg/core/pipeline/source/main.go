@@ -250,7 +250,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		sourcer = &d
 
 	case "yaml":
-		var sourceSpec yaml.YamlSpec
+		var sourceSpec yaml.Spec
 
 		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err

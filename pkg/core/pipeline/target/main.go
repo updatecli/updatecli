@@ -107,7 +107,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		targeter = &t
 
 	case "yaml":
-		var targetSpec yaml.YamlSpec
+		var targetSpec yaml.Spec
 
 		if err := mapstructure.Decode(target.Config.Spec, &targetSpec); err != nil {
 			return nil, err
