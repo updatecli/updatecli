@@ -11,25 +11,31 @@ func TestCondition(t *testing.T) {
 	set := []dataSet{
 		{
 			chart: Chart{
-				URL:     "https://charts.jenkins.io",
-				Name:    "jenkins",
-				Version: "2.19.0",
+				spec: Spec{
+					URL:     "https://charts.jenkins.io",
+					Name:    "jenkins",
+					Version: "2.19.0",
+				},
 			},
 			expected: true,
 		},
 		{
 			chart: Chart{
-				URL:     "https://kubernetes-charts.storage.googleapis.com",
-				Name:    "jenkins",
-				Version: "999",
+				spec: Spec{
+					URL:     "https://kubernetes-charts.storage.googleapis.com",
+					Name:    "jenkins",
+					Version: "999",
+				},
 			},
 			expected: false,
 		},
 		{
 			chart: Chart{
-				URL:     "https://example.com",
-				Name:    "jenkins",
-				Version: "999",
+				spec: Spec{
+					URL:     "https://example.com",
+					Name:    "jenkins",
+					Version: "999",
+				},
 			},
 			expected: false,
 		},
@@ -39,7 +45,7 @@ func TestCondition(t *testing.T) {
 		got, _ := d.chart.Condition("")
 
 		if got != d.expected {
-			t.Errorf("%s Version %v is published! expected %v, got %v", d.chart.Name, d.chart.Version, d.expected, got)
+			t.Errorf("%s Version %v is published! expected %v, got %v", d.chart.spec.Name, d.chart.spec.Version, d.expected, got)
 		}
 
 	}
@@ -55,23 +61,29 @@ func TestSource(t *testing.T) {
 	set := []dataSet{
 		{
 			chart: Chart{
-				URL:  "https://stenic.github.io/helm-charts",
-				Name: "proxy",
+				spec: Spec{
+					URL:  "https://stenic.github.io/helm-charts",
+					Name: "proxy",
+				},
 			},
 			expected: "1.0.3",
 		},
 		{
 			chart: Chart{
-				URL:  "https://charts.jetstack.io",
-				Name: "tor-prox",
+				spec: Spec{
+					URL:  "https://charts.jetstack.io",
+					Name: "tor-prox",
+				},
 			},
 			expected: "",
 		},
 		{
 			chart: Chart{
-				URL:     "https://example.com",
-				Name:    "jenkins",
-				Version: "999",
+				spec: Spec{
+					URL:     "https://example.com",
+					Name:    "jenkins",
+					Version: "999",
+				},
 			},
 			expected: "",
 		},
@@ -81,7 +93,7 @@ func TestSource(t *testing.T) {
 		got, _ := d.chart.Source("")
 
 		if got != d.expected {
-			t.Errorf("%v is published! latest expected version %v, got %v", d.chart.Name, d.expected, got)
+			t.Errorf("%v is published! latest expected version %v, got %v", d.chart.spec.Name, d.expected, got)
 		}
 
 	}

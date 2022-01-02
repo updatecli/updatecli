@@ -13,12 +13,12 @@ import (
 
 // Condition check if a specific chart version exist
 func (c *Chart) Condition(source string) (bool, error) {
-	if c.Version != "" {
-		logrus.Infof("Version %v, already defined from configuration file", c.Version)
+	if c.spec.Version != "" {
+		logrus.Infof("Version %v, already defined from configuration file", c.spec.Version)
 	} else {
-		c.Version = source
+		c.spec.Version = source
 	}
-	URL := fmt.Sprintf("%s/index.yaml", c.URL)
+	URL := fmt.Sprintf("%s/index.yaml", c.spec.URL)
 
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
@@ -43,16 +43,16 @@ func (c *Chart) Condition(source string) (bool, error) {
 	}
 
 	message := ""
-	if c.Version != "" {
-		message = fmt.Sprintf(" for version '%s'", c.Version)
+	if c.spec.Version != "" {
+		message = fmt.Sprintf(" for version '%s'", c.spec.Version)
 	}
 
-	if index.Has(c.Name, c.Version) {
-		logrus.Infof("%s Helm Chart '%s' is available on %s%s", result.SUCCESS, c.Name, c.URL, message)
+	if index.Has(c.spec.Name, c.spec.Version) {
+		logrus.Infof("%s Helm Chart '%s' is available on %s%s", result.SUCCESS, c.spec.Name, c.spec.URL, message)
 		return true, nil
 	}
 
-	logrus.Infof("%s Helm Chart '%s' isn't available on %s%s", result.FAILURE, c.Name, c.URL, message)
+	logrus.Infof("%s Helm Chart '%s' isn't available on %s%s", result.FAILURE, c.spec.Name, c.spec.URL, message)
 	return false, nil
 }
 
