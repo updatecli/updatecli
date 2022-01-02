@@ -31,7 +31,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 	}
 	out := yaml.Node{}
 
-	err := yaml.Unmarshal([]byte(y.CurrentContent), &out)
+	err := yaml.Unmarshal([]byte(y.currentContent), &out)
 
 	if err != nil {
 		return false, fmt.Errorf("cannot unmarshal data: %v", err)

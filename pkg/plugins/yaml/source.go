@@ -22,7 +22,7 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	data := y.CurrentContent
+	data := y.currentContent
 
 	var out yaml.Node
 

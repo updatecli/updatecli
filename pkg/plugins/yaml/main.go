@@ -30,7 +30,7 @@ type Spec struct {
 type Yaml struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
-	CurrentContent   string
+	currentContent   string
 }
 
 // New returns a reference to a newly initialized Yaml object from a YamlSpec
@@ -86,7 +86,7 @@ func (y *Yaml) Read() error {
 	if err != nil {
 		return err
 	}
-	y.CurrentContent = textContent
+	y.currentContent = textContent
 
 	return nil
 }

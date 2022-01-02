@@ -39,7 +39,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 	if err := y.Read(); err != nil {
 		return false, files, message, err
 	}
-	data := y.CurrentContent
+	data := y.currentContent
 
 	out := yaml.Node{}
 
