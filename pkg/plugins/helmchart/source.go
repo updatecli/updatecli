@@ -1,4 +1,4 @@
-package chart
+package helmchart
 
 import (
 	"fmt"

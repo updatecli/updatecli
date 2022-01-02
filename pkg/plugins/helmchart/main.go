@@ -1,4 +1,4 @@
-package chart
+package helmchart
 
 import (
 	"helm.sh/helm/v3/pkg/repo"
