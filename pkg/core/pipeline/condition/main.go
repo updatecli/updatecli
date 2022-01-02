@@ -13,7 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	gitTag "github.com/updatecli/updatecli/pkg/plugins/git/tag"
-	"github.com/updatecli/updatecli/pkg/plugins/helmchart"
+	"github.com/updatecli/updatecli/pkg/plugins/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
@@ -204,7 +204,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &g
 
 	case "helmChart":
-		ch := helmchart.Chart{}
+		ch := helm.Chart{}
 
 		err := mapstructure.Decode(condition.Config.Spec, &ch)
 		if err != nil {

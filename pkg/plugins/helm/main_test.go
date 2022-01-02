@@ -1,4 +1,4 @@
-package helmchart
+package helm
 
 import "testing"
 
