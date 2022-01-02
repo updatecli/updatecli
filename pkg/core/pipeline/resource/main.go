@@ -2,6 +2,7 @@ package resource
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
@@ -39,10 +40,10 @@ type ResourceConfig struct {
 
 // Unmarshal decode a source spec and returned its typed content
 func (rs *ResourceConfig) Unmarshal() (resource Resource, err error) {
-	switch rs.Kind {
+	switch strings.ToLower(rs.Kind) {
 	case "aws/ami":
 		return awsami.New(rs.Spec)
-	case "dockerDigest":
+	case "dockerdigest":
 		return dockerdigest.New(rs.Spec)
 	case "dockerimage":
 		return dockerimage.New(rs.Spec)
