@@ -22,8 +22,9 @@ type Spec struct {
 	File string
 	Key  string
 	// Deprecated: use File instead
-	Path  string
-	Value string
+	Path    string
+	Value   string
+	KeyOnly bool // [condition] allow checking for only the existence of a key (not its value)
 }
 
 // Yaml defines a resource of kind "yaml"

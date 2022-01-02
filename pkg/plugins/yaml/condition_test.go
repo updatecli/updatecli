@@ -39,6 +39,62 @@ github:
 			},
 		},
 		{
+			name: "Passing Case with keyonly and input source",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "github.owner",
+				KeyOnly: true,
+			},
+			inputSourceValue: "olblak",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantResult: true,
+			wantMockState: text.MockTextRetriever{
+				Location: "test.yaml",
+			},
+		},
+		{
+			name: "Failing case with keyonly and input source",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "github.country",
+				KeyOnly: true,
+			},
+			inputSourceValue: "",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantResult: false,
+			wantMockState: text.MockTextRetriever{
+				Location: "test.yaml",
+			},
+		},
+		{
+			name: "Validation error with both keyonly and specified value",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "github.owner",
+				KeyOnly: true,
+				Value:   "olblak",
+			},
+			inputSourceValue: "",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantResult: false,
+			wantErr:    true,
+			wantMockState: text.MockTextRetriever{
+				Location: "test.yaml",
+			},
+		},
+		{
 			name: "File does not exist",
 			spec: Spec{
 				File: "not_existing.txt",
@@ -77,6 +133,7 @@ github:
   repository: charts
 `,
 			wantResult: false,
+			wantErr:    true,
 			wantMockState: text.MockTextRetriever{
 				Location: "test.yaml",
 			},
