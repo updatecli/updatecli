@@ -41,13 +41,13 @@ func New(newSpec Spec) (*Yaml, error) {
 		spec:             newSpec,
 		contentRetriever: &text.Text{},
 	}
-	// TODO: generalize the Validate + Normalize as an interface to all resources
+
+	newResource.spec.File = strings.TrimPrefix(newResource.spec.File, "file://")
+
 	err := newResource.Validate()
 	if err != nil {
 		return nil, err
 	}
-
-	newResource.spec.File = strings.TrimPrefix(newResource.spec.File, "file://")
 
 	return newResource, nil
 
