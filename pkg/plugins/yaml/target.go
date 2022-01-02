@@ -22,8 +22,8 @@ func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
 func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	if !filepath.IsAbs(y.Spec.File) {
-		y.Spec.File = filepath.Join(scm.GetDirectory(), y.Spec.File)
+	if !filepath.IsAbs(y.spec.File) {
+		y.spec.File = filepath.Join(scm.GetDirectory(), y.spec.File)
 	}
 	return y.target(source, dryRun)
 }
@@ -32,7 +32,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 	var files []string
 	var message string
 
-	if text.IsURL(y.Spec.File) {
+	if text.IsURL(y.spec.File) {
 		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
@@ -50,38 +50,38 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 	}
 
 	valueToWrite := source
-	if y.Spec.Value != "" {
-		valueToWrite = y.Spec.Value
+	if y.spec.Value != "" {
+		valueToWrite = y.spec.Value
 		logrus.Info("INFO: Using spec.Value instead of source input value.")
 	}
 
-	keyFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), valueToWrite, 1)
+	keyFound, oldVersion, _ := replace(&out, strings.Split(y.spec.Key, "."), valueToWrite, 1)
 
 	if !keyFound {
 		return false, files, message, fmt.Errorf("%s cannot find key '%s' from file '%s'",
 			result.FAILURE,
-			y.Spec.Key,
-			y.Spec.File)
+			y.spec.Key,
+			y.spec.File)
 	}
 
 	if oldVersion == valueToWrite {
 		logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
 			result.SUCCESS,
-			y.Spec.Key,
-			y.Spec.File,
+			y.spec.Key,
+			y.spec.File,
 			valueToWrite)
 		return false, files, message, nil
 	}
 	logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
 		result.ATTENTION,
-		y.Spec.Key,
-		y.Spec.File,
+		y.spec.Key,
+		y.spec.File,
 		oldVersion,
 		valueToWrite)
 
 	if !dryRun {
 
-		newFile, err := os.Create(y.Spec.File)
+		newFile, err := os.Create(y.spec.File)
 		defer newFile.Close()
 
 		if err != nil {
@@ -98,9 +98,9 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		}
 	}
 
-	files = append(files, y.Spec.File)
+	files = append(files, y.spec.File)
 
-	message = fmt.Sprintf("Update key %q from file %q", y.Spec.Key, y.Spec.File)
+	message = fmt.Sprintf("Update key %q from file %q", y.spec.Key, y.spec.File)
 
 	return true, files, message, nil
 }

@@ -105,7 +105,7 @@ github-
 				Exists:  tt.mockReturnsFileExists,
 			}
 			y := &Yaml{
-				Spec:             tt.spec,
+				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
 			gotResult, gotErr := y.Target(tt.inputSourceValue, tt.dryRun)

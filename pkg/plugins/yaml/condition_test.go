@@ -130,7 +130,7 @@ github:
 				Err:     tt.mockReturnedError,
 			}
 			y := &Yaml{
-				Spec:             tt.spec,
+				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
 			gotResult, gotErr := y.Condition(tt.inputSourceValue)
@@ -187,7 +187,7 @@ github:
 				Err:     tt.mockReturnedError,
 			}
 			y := &Yaml{
-				Spec:             tt.spec,
+				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
 			gotResult, gotErr := y.ConditionFromSCM(tt.inputSourceValue, tt.scm)

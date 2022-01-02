@@ -28,7 +28,7 @@ type Spec struct {
 
 // Yaml defines a resource of kind "yaml"
 type Yaml struct {
-	Spec             Spec
+	spec             Spec
 	contentRetriever text.TextRetriever
 	CurrentContent   string
 }
@@ -38,7 +38,7 @@ type Yaml struct {
 func New(newSpec Spec) (*Yaml, error) {
 
 	newResource := &Yaml{
-		Spec:             newSpec,
+		spec:             newSpec,
 		contentRetriever: &text.Text{},
 	}
 	// TODO: generalize the Validate + Normalize as an interface to all resources
@@ -47,7 +47,7 @@ func New(newSpec Spec) (*Yaml, error) {
 		return nil, err
 	}
 
-	newResource.Spec.File = strings.TrimPrefix(newResource.Spec.File, "file://")
+	newResource.spec.File = strings.TrimPrefix(newResource.spec.File, "file://")
 
 	return newResource, nil
 
@@ -58,17 +58,17 @@ func (y *Yaml) Validate() error {
 	var validationErrors []string
 
 	// Check for all validation
-	if len(y.Spec.Path) > 0 {
+	if len(y.spec.Path) > 0 {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: Key 'path' is deprecated, use 'file' instead.")
 	}
-	if y.Spec.File == "" {
+	if y.spec.File == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'file' is empty.")
 	} else {
-		if !y.contentRetriever.FileExists(y.Spec.File) {
-			validationErrors = append(validationErrors, fmt.Sprintf("Invalid spec for yaml resource: the file %q does not exist.", y.Spec.File))
+		if !y.contentRetriever.FileExists(y.spec.File) {
+			validationErrors = append(validationErrors, fmt.Sprintf("Invalid spec for yaml resource: the file %q does not exist.", y.spec.File))
 		}
 	}
-	if y.Spec.Key == "" {
+	if y.spec.Key == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
 	}
 	// Return all the validation errors if found any
@@ -82,7 +82,7 @@ func (y *Yaml) Validate() error {
 // Read defines CurrentContent to the content of the file which path is specified in Spec.File
 func (y *Yaml) Read() error {
 	// Otherwise return the textual content
-	textContent, err := y.contentRetriever.ReadAll(y.Spec.File)
+	textContent, err := y.contentRetriever.ReadAll(y.spec.File)
 	if err != nil {
 		return err
 	}

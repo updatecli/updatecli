@@ -439,7 +439,7 @@ func Test_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			yaml := Yaml{
-				Spec: tt.spec,
+				spec: tt.spec,
 				contentRetriever: &text.MockTextRetriever{
 					Exists: tt.mockFileExist,
 				},

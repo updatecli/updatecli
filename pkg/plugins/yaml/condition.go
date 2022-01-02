@@ -18,8 +18,8 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	if !filepath.IsAbs(y.Spec.File) {
-		y.Spec.File = filepath.Join(scm.GetDirectory(), y.Spec.File)
+	if !filepath.IsAbs(y.spec.File) {
+		y.spec.File = filepath.Join(scm.GetDirectory(), y.spec.File)
 	}
 	return y.condition(source)
 }
@@ -38,10 +38,10 @@ func (y *Yaml) condition(source string) (bool, error) {
 	}
 
 	// If a source is provided, then the key 'Value' cannot be specified
-	valueToCheck := y.Spec.Value
+	valueToCheck := y.spec.Value
 
 	if len(source) > 0 {
-		if len(y.Spec.Value) > 0 {
+		if len(y.spec.Value) > 0 {
 			validationError := fmt.Errorf("Validation error in condition of type 'yaml': input source value detected, while `spec.value` specified. Add 'disablesourceinput: true' to your manifest to keep ``spec.value`.")
 			logrus.Errorf(validationError.Error())
 			return false, validationError
@@ -50,27 +50,27 @@ func (y *Yaml) condition(source string) (bool, error) {
 		valueToCheck = source
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.Spec.Key, "."), valueToCheck, 1)
+	valueFound, oldVersion, _ := replace(&out, strings.Split(y.spec.Key, "."), valueToCheck, 1)
 
 	if valueFound && oldVersion == valueToCheck {
 		logrus.Infof("%s Key %q, in YAML file %q, is correctly set to %q",
 			result.SUCCESS,
-			y.Spec.Key,
-			y.Spec.File,
+			y.spec.Key,
+			y.spec.File,
 			valueToCheck)
 		return true, nil
 	} else if valueFound && oldVersion != valueToCheck {
 		logrus.Infof("%s Key %q, in YAML file %q, is incorrectly set to %s and should be %q",
 			result.FAILURE,
-			y.Spec.Key,
-			y.Spec.File,
+			y.spec.Key,
+			y.spec.File,
 			oldVersion,
 			valueToCheck)
 	} else {
 		logrus.Infof("%s cannot find key %q in the YAML file %q",
 			result.FAILURE,
-			y.Spec.Key,
-			y.Spec.File)
+			y.spec.Key,
+			y.spec.File)
 	}
 
 	return false, nil
