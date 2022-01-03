@@ -46,26 +46,21 @@ func TestIsSimilarBranch(t *testing.T) {
 	}
 
 	for id, d := range dSet {
-		got, err := IsSimilarBranch(
-			d.branchA,
-			d.branchB,
-			d.workingDir)
+		t.Run(fmt.Sprint(id), func(t *testing.T) {
+			got, err := IsSimilarBranch(
+				d.branchA,
+				d.branchB,
+				d.workingDir)
 
-		if !assert.Equal(t, err, d.expectedError) {
-			t.Errorf("[%v] Expected error '%v' but got '%v'",
-				id,
-				d.expectedError,
-				err)
-		}
+			if d.expectedError != nil {
+				assert.Equal(t, err, d.expectedError)
+				return
+			}
 
-		if !assert.Equal(t, got, d.expectedResult) {
-			t.Errorf("[%v] Expected result '%v' but got '%v'",
-				id,
-				d.expectedResult,
-				got)
-		}
+			require.NoError(t, err)
+			assert.Equal(t, got, d.expectedResult)
+		})
 	}
-}
 
 func TestSanitizeBranchName(t *testing.T) {
 	type dataSet struct {
