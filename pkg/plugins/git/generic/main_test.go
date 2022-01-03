@@ -6,6 +6,63 @@ import (
 	"testing"
 )
 
+// Based on this discussion,
+// https://github.com/updatecli/updatecli/pull/436#discussion_r777184192
+// I decided to comment the follow tests so we can start using this fix
+// func TestIsSimilarBranch(t *testing.T) {
+//
+// 	type data struct {
+// 		branchA        string
+// 		branchB        string
+// 		workingDir     string
+// 		expectedResult bool
+// 		expectedError  error
+// 	}
+//
+// 	type dataSet []data
+//
+// 	dSet := dataSet{
+// 		{
+// 			branchA:        "main",
+// 			branchB:        "issue-285",
+// 			workingDir:     "../../../..",
+// 			expectedResult: false,
+// 			expectedError:  nil,
+// 		},
+// 		{
+// 			branchA:        "main",
+// 			branchB:        "main",
+// 			workingDir:     "../../../..",
+// 			expectedResult: true,
+// 			expectedError:  nil,
+// 		},
+// 		{
+// 			branchA:        "main",
+// 			branchB:        "doNotExist",
+// 			workingDir:     "../../../..",
+// 			expectedResult: false,
+// 			expectedError:  fmt.Errorf("reference not found"),
+// 		},
+// 	}
+//
+// 	for id, d := range dSet {
+// 		t.Run(fmt.Sprint(id), func(t *testing.T) {
+// 			got, err := IsSimilarBranch(
+// 				d.branchA,
+// 				d.branchB,
+// 				d.workingDir)
+//
+// 			if d.expectedError != nil {
+// 				assert.Equal(t, err, d.expectedError)
+// 				return
+// 			}
+//
+// 			require.NoError(t, err)
+// 			assert.Equal(t, got, d.expectedResult)
+// 		})
+// 	}
+// }
+
 func TestSanitizeBranchName(t *testing.T) {
 	type dataSet struct {
 		branch   string
