@@ -19,7 +19,7 @@ sources:
       password: "{{ requiredEnv `DOCKERHUB_TOKEN` }}"
   nginxOfficialDockerHub:
     kind: dockerDigest
-    name: "Get digest of the latest jenkins/jenkins:lts image on the DockerHub"
+    name: "Get digest of the latest nginx:alpine image on the DockerHub"
     spec:
       image: nginx
       tag: alpine
