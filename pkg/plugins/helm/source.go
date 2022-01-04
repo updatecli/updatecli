@@ -1,4 +1,4 @@
-package chart
+package helm
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 // Source return the latest version
 func (c *Chart) Source(workingDir string) (string, error) {
 
-	URL := fmt.Sprintf("%s/index.yaml", c.URL)
+	URL := fmt.Sprintf("%s/index.yaml", c.spec.URL)
 
 	req, err := http.NewRequest("GET", URL, nil)
 
@@ -40,7 +40,7 @@ func (c *Chart) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	e, err := index.Get(c.Name, c.Version)
+	e, err := index.Get(c.spec.Name, c.spec.Version)
 
 	if err != nil {
 		return "", err
@@ -49,9 +49,9 @@ func (c *Chart) Source(workingDir string) (string, error) {
 	if e.Version != "" {
 		logrus.Infof("%s Helm Chart '%s' version '%v' is found from repository %s",
 			result.SUCCESS,
-			c.Name,
+			c.spec.Name,
 			e.Version,
-			c.URL)
+			c.spec.URL)
 	}
 
 	return e.Version, nil

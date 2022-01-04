@@ -1,4 +1,4 @@
-package chart
+package helm
 
 import (
 	"fmt"
@@ -24,22 +24,23 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, err
 	}
 
-	YamlResource, err := yaml.New(yaml.YamlSpec{
-		File: filepath.Join(c.Name, c.File),
-		Key:  c.Key,
-	})
+	yamlSpec := yaml.Spec{
+		File: filepath.Join(c.spec.Name, c.spec.File),
+		Key:  c.spec.Key,
+	}
+	if len(c.spec.Value) == 0 {
+		c.spec.Value = source
+		c.spec.Value = source
+	} else {
+		yamlSpec.Value = c.spec.Value
+	}
+
+	yamlResource, err := yaml.New(yamlSpec)
 	if err != nil {
 		return false, err
 	}
 
-	if len(c.Value) == 0 {
-		YamlResource.Spec.Value = source
-		c.Value = source
-	} else {
-		YamlResource.Spec.Value = c.Value
-	}
-
-	changed, err = YamlResource.Target(source, dryRun)
+	changed, err = yamlResource.Target(source, dryRun)
 
 	if err != nil {
 		return false, err
@@ -48,15 +49,15 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 	}
 
 	// Reset requirements.lock if we modified the file 'requirements.yaml'
-	if strings.Compare(c.File, "requirements.yaml") == 0 && !dryRun {
-		_, err := c.UpdateRequirements(filepath.Join(c.Name, "requirements.lock"))
+	if strings.Compare(c.spec.File, "requirements.yaml") == 0 && !dryRun {
+		_, err := c.UpdateRequirements(filepath.Join(c.spec.Name, "requirements.lock"))
 		if err != nil {
 			return false, err
 		}
 	}
 
 	// Update Chart.yaml file new Chart Version and appVersion if needed
-	err = c.UpdateMetadata(filepath.Join(c.Name, "Chart.yaml"), dryRun)
+	err = c.UpdateMetadata(filepath.Join(c.spec.Name, "Chart.yaml"), dryRun)
 	if err != nil {
 		return false, err
 	}
@@ -68,54 +69,50 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 // then return if it changed something or failed
 func (c *Chart) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (
 	changed bool, files []string, message string, err error) {
-
 	err = c.ValidateTarget()
-
 	if err != nil {
 		return false, files, message, err
 	}
 
-	filename := filepath.Join(scm.GetDirectory(), c.Name, c.File)
-
-	YamlResource, err := yaml.New(yaml.YamlSpec{
-		File: filename,
-		Key:  c.Key,
-	})
-	if err != nil {
-		return false, files, message, err
+	yamlSpec := yaml.Spec{
+		File: filepath.Join(c.spec.Name, c.spec.File),
+		Key:  c.spec.Key,
 	}
-
-	if len(c.Value) == 0 {
-		YamlResource.Spec.Value = source
-		c.Value = source
+	if len(c.spec.Value) == 0 {
+		c.spec.Value = source
+		c.spec.Value = source
 	} else {
-		YamlResource.Spec.Value = c.Value
+		yamlSpec.Value = c.spec.Value
 	}
 
-	changed, files, message, err = YamlResource.TargetFromSCM(source, scm, dryRun)
+	yamlResource, err := yaml.New(yamlSpec)
+	if err != nil {
+		return false, files, message, err
+	}
 
+	changed, files, message, err = yamlResource.TargetFromSCM(source, scm, dryRun)
 	if err != nil {
 		return false, files, message, err
 	} else if err == nil && !changed {
 		return false, files, message, nil
 	}
 
-	if strings.Compare(c.File, "requirements.yaml") == 0 {
-		found, err := c.UpdateRequirements(filepath.Join(scm.GetDirectory(), c.Name, "requirements.lock"))
+	if strings.Compare(c.spec.File, "requirements.yaml") == 0 {
+		found, err := c.UpdateRequirements(filepath.Join(scm.GetDirectory(), c.spec.Name, "requirements.lock"))
 		if err != nil {
 			return false, files, message, err
 		}
 		if found {
-			files = append(files, filepath.Join(c.Name, "requirements.lock"))
+			files = append(files, filepath.Join(c.spec.Name, "requirements.lock"))
 
 		}
 	}
 
-	err = c.UpdateMetadata(filepath.Join(scm.GetDirectory(), c.Name, "Chart.yaml"), dryRun)
+	err = c.UpdateMetadata(filepath.Join(scm.GetDirectory(), c.spec.Name, "Chart.yaml"), dryRun)
 	if err != nil {
 		return false, files, message, err
 	}
-	files = append(files, filepath.Join(c.Name, "Chart.yaml"))
+	files = append(files, filepath.Join(c.spec.Name, "Chart.yaml"))
 
 	return changed, files, message, err
 }
@@ -124,7 +121,7 @@ func (c *Chart) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (
 // if it's the case then we also have to delete and recreate the file
 // requirements.lock
 func (c *Chart) UpdateRequirements(lockFilename string) (bool, error) {
-	if strings.Compare(c.File, "requirements.yaml") != 0 {
+	if strings.Compare(c.spec.File, "requirements.yaml") != 0 {
 		return false, fmt.Errorf("No need to cleanup requirements.lock")
 	}
 
@@ -167,9 +164,9 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 		return err
 	}
 
-	if len(md.AppVersion) > 0 && c.AppVersion {
-		logrus.Debugf("Updating AppVersion from %s to %s\n", md.AppVersion, c.Value)
-		md.AppVersion = c.Value
+	if len(md.AppVersion) > 0 && c.spec.AppVersion {
+		logrus.Debugf("Updating AppVersion from %s to %s\n", md.AppVersion, c.spec.Value)
+		md.AppVersion = c.spec.Value
 	}
 
 	// Init Chart Version if not set yet
@@ -179,7 +176,7 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 
 	oldVersion := md.Version
 
-	for _, inc := range strings.Split(c.VersionIncrement, ",") {
+	for _, inc := range strings.Split(c.spec.VersionIncrement, ",") {
 		v, err := semver.NewVersion(md.Version)
 		if err != nil {
 			return err
@@ -227,23 +224,23 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 
 //ValidateTarget ensure that target required parameter are set
 func (c *Chart) ValidateTarget() error {
-	if len(c.File) == 0 {
-		c.File = "values.yaml"
+	if len(c.spec.File) == 0 {
+		c.spec.File = "values.yaml"
 	}
 
-	if len(c.Name) == 0 {
+	if len(c.spec.Name) == 0 {
 		return fmt.Errorf("Parameter name required")
 	}
 
-	if len(c.Key) == 0 {
+	if len(c.spec.Key) == 0 {
 		return fmt.Errorf("Parameter key required")
 	}
 
-	if len(c.VersionIncrement) == 0 {
-		c.VersionIncrement = MINORVERSION
+	if len(c.spec.VersionIncrement) == 0 {
+		c.spec.VersionIncrement = MINORVERSION
 	}
 
-	for _, inc := range strings.Split(c.VersionIncrement, ",") {
+	for _, inc := range strings.Split(c.spec.VersionIncrement, ",") {
 
 		if inc != MAJORVERSION &&
 			inc != MINORVERSION &&

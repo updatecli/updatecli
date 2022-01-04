@@ -13,7 +13,7 @@ import (
 func Test_Condition(t *testing.T) {
 	tests := []struct {
 		name                string
-		spec                YamlSpec
+		spec                Spec
 		inputSourceValue    string
 		wantResult          bool
 		wantErr             bool
@@ -23,7 +23,7 @@ func Test_Condition(t *testing.T) {
 	}{
 		{
 			name: "Passing Case",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
@@ -39,8 +39,64 @@ github:
 			},
 		},
 		{
+			name: "Passing Case with keyonly and input source",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "github.owner",
+				KeyOnly: true,
+			},
+			inputSourceValue: "olblak",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantResult: true,
+			wantMockState: text.MockTextRetriever{
+				Location: "test.yaml",
+			},
+		},
+		{
+			name: "Failing case with keyonly and input source",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "github.country",
+				KeyOnly: true,
+			},
+			inputSourceValue: "",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantResult: false,
+			wantMockState: text.MockTextRetriever{
+				Location: "test.yaml",
+			},
+		},
+		{
+			name: "Validation error with both keyonly and specified value",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "github.owner",
+				KeyOnly: true,
+				Value:   "olblak",
+			},
+			inputSourceValue: "",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantResult: false,
+			wantErr:    true,
+			wantMockState: text.MockTextRetriever{
+				Location: "test.yaml",
+			},
+		},
+		{
 			name: "File does not exist",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "not_existing.txt",
 			},
 			mockReturnedError: fmt.Errorf("no such file or directory"),
@@ -49,7 +105,7 @@ github:
 		},
 		{
 			name: "Failing Case (key found but not the correct value)",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
@@ -66,7 +122,7 @@ github:
 		},
 		{
 			name: "Failing Case (key not found)",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.admin",
 			},
@@ -77,13 +133,14 @@ github:
   repository: charts
 `,
 			wantResult: false,
+			wantErr:    true,
 			wantMockState: text.MockTextRetriever{
 				Location: "test.yaml",
 			},
 		},
 		{
 			name: "Validation Failure with both source and specified value",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
 				Value: "asterix",
@@ -93,7 +150,7 @@ github:
 		},
 		{
 			name: "Failure due to unvalid Yaml",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
@@ -107,7 +164,7 @@ github
 		},
 		{
 			name: "Passing Case with no input source and only specified value",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
 				Value: "olblak",
@@ -130,7 +187,7 @@ github:
 				Err:     tt.mockReturnedError,
 			}
 			y := &Yaml{
-				Spec:             tt.spec,
+				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
 			gotResult, gotErr := y.Condition(tt.inputSourceValue)
@@ -150,7 +207,7 @@ github:
 func Test_ConditionFromSCM(t *testing.T) {
 	tests := []struct {
 		name                string
-		spec                YamlSpec
+		spec                Spec
 		inputSourceValue    string
 		wantResult          bool
 		wantErr             bool
@@ -161,7 +218,7 @@ func Test_ConditionFromSCM(t *testing.T) {
 	}{
 		{
 			name: "Passing Case with no input source and only specified value",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
 				Value: "olblak",
@@ -187,7 +244,7 @@ github:
 				Err:     tt.mockReturnedError,
 			}
 			y := &Yaml{
-				Spec:             tt.spec,
+				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
 			gotResult, gotErr := y.ConditionFromSCM(tt.inputSourceValue, tt.scm)

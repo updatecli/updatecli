@@ -10,7 +10,7 @@ import (
 
 func Test_Target(t *testing.T) {
 	tests := []struct {
-		spec                  YamlSpec
+		spec                  Spec
 		wantMockState         text.MockTextRetriever
 		name                  string
 		inputSourceValue      string
@@ -23,7 +23,7 @@ func Test_Target(t *testing.T) {
 	}{
 		{
 			name: "Passing Case with both input source and specified value (specified value should be used)",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
 				Value: "obiwankenobi",
@@ -39,7 +39,7 @@ github:
 		},
 		{
 			name: "Validation failure with an https:// URL instead of a file",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "https://github.com/foo.yaml",
 				Key:   "github.owner",
 				Value: "obiwankenobi",
@@ -49,7 +49,7 @@ github:
 		},
 		{
 			name: "Not passing: file already up to date",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
@@ -64,7 +64,7 @@ github:
 		},
 		{
 			name: "Provided key does not exist",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.ship",
 				Value: "obiwankenobi",
@@ -81,7 +81,7 @@ github:
 		},
 		{
 			name: "Invalid YAML file",
-			spec: YamlSpec{
+			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.ship",
 				Value: "obiwankenobi",
@@ -105,7 +105,7 @@ github-
 				Exists:  tt.mockReturnsFileExists,
 			}
 			y := &Yaml{
-				Spec:             tt.spec,
+				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
 			gotResult, gotErr := y.Target(tt.inputSourceValue, tt.dryRun)

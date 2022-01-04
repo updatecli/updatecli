@@ -28,19 +28,33 @@ sources:
   #     file: examples/values.yaml
   #     key: "foo.bar"
 conditions:
-  checkGithubUsername:
+  checkGithubUsernameHasValueFromDefaultSource:
     kind: yaml
     sourceID: default
     spec:
       file: examples/values.yaml
       key: "github.user"
-  checkGithubRepository:
+  checkGithubRepositoryHasSpecifiedValue:
     kind: yaml
     disablesourceinput: true
     spec:
       file: examples/values.yaml
       key: "github.repository"
       value: "charts"
+  checkGithubUsernameKeyOnly:
+    kind: yaml
+    sourceID: default
+    spec:
+      file: examples/values.yaml
+      key: "github.user"
+      keyonly: true
+  checkGithubRepositoryKeyOnly:
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: examples/values.yaml
+      key: "github.repository"
+      keyonly: true
   ## Uncomment to test a failing source
   # checkGithubUsername:
   #   kind: yaml
@@ -49,6 +63,13 @@ conditions:
   #     file: examples/values.yaml
   #     key: "github.user"
   #     value: "r2d2"
+  # checkGithubCountryKeyOnly:
+  #   kind: yaml
+  #   sourceID: default
+  #   spec:
+  #     file: examples/values.yaml
+  #     key: "github.country"
+  #     keyonly: true
 targets:
   setGitHubAdmin:
     kind: yaml
