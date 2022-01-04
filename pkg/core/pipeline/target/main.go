@@ -13,7 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
-	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
+	"github.com/updatecli/updatecli/pkg/plugins/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
@@ -73,7 +73,7 @@ func (t *Target) Check() (bool, error) {
 func Unmarshal(target *Target) (targeter Targeter, err error) {
 	switch target.Config.Kind {
 	case "helmChart":
-		ch := chart.Chart{}
+		ch := helm.Chart{}
 
 		err := mapstructure.Decode(target.Config.Spec, &ch)
 
@@ -107,7 +107,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		targeter = &t
 
 	case "yaml":
-		var targetSpec yaml.YamlSpec
+		var targetSpec yaml.Spec
 
 		if err := mapstructure.Decode(target.Config.Spec, &targetSpec); err != nil {
 			return nil, err

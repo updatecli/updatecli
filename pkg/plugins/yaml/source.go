@@ -14,7 +14,7 @@ import (
 func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
 
-	if y.Spec.Value != "" {
+	if y.spec.Value != "" {
 		logrus.Warnf("Key 'Value' is not used by source YAML")
 	}
 
@@ -22,7 +22,7 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	data := y.CurrentContent
+	data := y.currentContent
 
 	var out yaml.Node
 
@@ -32,17 +32,17 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		return "", fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, value, _ := replace(&out, strings.Split(y.Spec.Key, "."), y.Spec.Value, 1)
+	valueFound, value, _ := replace(&out, strings.Split(y.spec.Key, "."), y.spec.Value, 1)
 
 	if valueFound {
-		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v", result.SUCCESS, value, y.Spec.Key, y.Spec.File)
+		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v", result.SUCCESS, value, y.spec.Key, y.spec.File)
 		return value, nil
 	}
 
 	logrus.Infof("%s cannot find key '%s' from file '%s'",
 		result.FAILURE,
-		y.Spec.Key,
-		y.Spec.File)
+		y.spec.Key,
+		y.spec.File)
 	return "", nil
 
 }
