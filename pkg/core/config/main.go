@@ -158,6 +158,14 @@ func (config *Config) Validate() error {
 			logrus.Errorf("bad parameters for pullrequest %q", id)
 			return err
 		}
+
+		// Validate references to other configuration objects
+		for _, target := range p.Targets {
+			if _, ok := config.Targets[target]; !ok {
+				logrus.Errorf("the specified target %q for the pull request %q does not exist", target, id)
+				return ErrBadConfig
+			}
+		}
 	}
 
 	for id, s := range config.Sources {

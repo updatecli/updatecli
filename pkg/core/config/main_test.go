@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -368,6 +369,75 @@ var (
 			},
 			ExpectedUpdateErr:   ErrBadConfig,
 			ExpectedValidateErr: ErrBadConfig,
+		},
+		{
+			ID: "10",
+			Config: Config{
+				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+				Targets: map[string]target.Config{
+					"updateDefault": {
+						Name: "Update Default Version",
+						Kind: "shell",
+					},
+				},
+				PullRequests: map[string]pullrequest.Config{
+					"default": {
+						Title:   "default PR",
+						Kind:    "github",
+						ScmID:   "default",
+						Targets: []string{"not_existing"},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
+		},
+		{
+			ID: "10.1",
+			Config: Config{
+				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						Name: "Get Version",
+						Kind: "jenkins",
+					},
+				},
+				Targets: map[string]target.Config{
+					"updateDefault": {
+						Name: "Update Default Version",
+						Kind: "shell",
+					},
+				},
+				PullRequests: map[string]pullrequest.Config{
+					"default": {
+						Title:   "default PR",
+						Kind:    "github",
+						Targets: []string{"not_existing"},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   fmt.Errorf("missing value for parameter(s) [\"scmID\"]"),
+			ExpectedValidateErr: fmt.Errorf("missing value for parameter(s) [\"scmID\"]"),
 		},
 	}
 )
