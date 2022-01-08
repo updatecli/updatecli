@@ -154,14 +154,16 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		}
 
 	case "dockerfile":
-		d := dockerfile.Dockerfile{}
+		var sourceSpec dockerfile.Spec
 
-		err := mapstructure.Decode(condition.Config.Spec, &d)
-		if err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &sourceSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner = &d
+		conditioner, err = dockerfile.New(sourceSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "file":
 		var conditionSpec file.Spec

@@ -85,15 +85,17 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		targeter = &ch
 
 	case "dockerfile":
-		d := dockerfile.Dockerfile{}
+		sourceSpec := dockerfile.Spec{}
 
-		err := mapstructure.Decode(target.Config.Spec, &d)
+		err := mapstructure.Decode(target.Config.Spec, &sourceSpec)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		targeter = &d
+		targeter, err = dockerfile.New(sourceSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "gitTag":
 		t := tag.Tag{}
