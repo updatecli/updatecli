@@ -3,6 +3,7 @@ package dockerfile
 import (
 	"fmt"
 
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/mobyparser"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/simpletextparser"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/types"
@@ -18,8 +19,9 @@ type Spec struct {
 
 // Dockerfile defines a resource of kind "dockerfile"
 type Dockerfile struct {
-	parser types.DockerfileParser
-	spec   Spec
+	parser           types.DockerfileParser
+	spec             Spec
+	contentRetriever text.TextRetriever
 }
 
 // New returns a reference to a newly initialized Dockerfile object from a Spec
@@ -30,8 +32,9 @@ func New(newSpec Spec) (*Dockerfile, error) {
 		return nil, err
 	}
 	newResource := &Dockerfile{
-		spec:   newSpec,
-		parser: newParser,
+		spec:             newSpec,
+		parser:           newParser,
+		contentRetriever: &text.Text{},
 	}
 
 	return newResource, nil

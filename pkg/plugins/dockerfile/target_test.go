@@ -1,29 +1,27 @@
 package dockerfile
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/updatecli/updatecli/pkg/core/helpers"
+	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/types"
 )
 
 func TestDockerfile_Target(t *testing.T) {
 	tests := []struct {
-		name   string
-		source string
-		spec   Spec
-		// file           string
-		// instruction    types.Instruction
-		// value string
-		dryRun         bool
-		wantChanged    bool
-		wantErrMessage string
-		wantDiff       types.ChangedLines
+		name                  string
+		source                string
+		spec                  Spec
+		mockReturnedContent   string
+		mockReturnedError     error
+		mockReturnsFileExists bool
+		dryRun                bool
+		wantChanged           bool
+		wantErr               error
+		wantDiff              types.ChangedLines
+		wantMockState         text.MockTextRetriever
 	}{
 		{
 			name:   "FROM with text parser and dryrun",
@@ -36,7 +34,9 @@ func TestDockerfile_Target(t *testing.T) {
 					"matcher": "golang",
 				},
 			},
-			wantChanged: true,
+			mockReturnedContent:   fromDockerfileFixture,
+			mockReturnsFileExists: true,
+			wantChanged:           true,
 		},
 		// {
 		// 	name:   "FROM with text parser",
@@ -92,72 +92,68 @@ func TestDockerfile_Target(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			newParser, err := getParser(tt.spec)
+			require.NoError(t, err)
 
-			// create a new empty temporary file in TMPDIR, which name starts with "tt.file"
-			tmpfile, err := ioutil.TempFile("", tt.spec.File)
-			if err != nil {
-				t.Fatal(err)
-			}
-			// clean up the temp file at the end of the test
-			defer os.Remove(tmpfile.Name())
-
-			// copy fixture file's content to temp file's content
-			fixtureContent, err := ioutil.ReadFile(filepath.Join(".", "test_fixtures", tt.spec.File))
-			if err != nil {
-				t.Fatal(err)
-			}
-			_, err = tmpfile.Write(fixtureContent)
-			if err != nil {
-				t.Fatal(err)
+			mockText := text.MockTextRetriever{
+				Content: tt.mockReturnedContent,
+				Err:     tt.mockReturnedError,
+				Exists:  tt.mockReturnsFileExists,
 			}
 
 			d := &Dockerfile{
-				spec: tt.spec,
-				// Spec{
-				// 	File:        tmpfile.Name(),
-				// 	Instruction: tt.instruction,
-				// 	Value:       tt.value,
-				// 	DryRun:      tt.dryRun,
-				// },
+				spec:             tt.spec,
+				contentRetriever: &mockText,
+				parser:           newParser,
 			}
 			gotChanged, gotErr := d.Target(tt.source, tt.dryRun)
-
-			if tt.wantErrMessage != "" {
-				assert.NotNil(t, gotErr)
-				assert.Equal(t, tt.wantErrMessage, gotErr.Error())
+			if tt.wantErr != nil {
+				assert.Equal(t, tt.wantErr, gotErr)
+				return
 			}
 
-			assert.Equal(t, tt.wantChanged, gotChanged)
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.wantResult, gotChanged)
+			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
+			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
+			assert.Equal(t, tt.wantMockState.Content, mockText.Content)
+
+			// if tt.wantErrMessage != nil {
+			// 	assert.NotNil(t, gotErr)
+			// 	assert.Equal(t, tt.wantErrMessage, gotErr.Error())
+			// }
+
+			// assert.Equal(t, tt.wantChanged, gotChanged)
 
 			// Verify current file's content
-			currentDockerfileContent, err := helpers.ReadFile(tmpfile.Name())
-			if err != nil {
-				t.Fatal(err)
-			}
-			// Perform validation between the 2 byte slices when file is written
-			if tt.dryRun {
-				// Actual temp file must not have changed (dry run enabled)
-				assert.Equal(t, fixtureContent, currentDockerfileContent)
-			} else {
-				fixtureLines := strings.Split(string(fixtureContent), "\n")
-				currentDockerfileLines := strings.Split(string(currentDockerfileContent), "\n")
+			// currentDockerfileContent, err := helpers.ReadFile(tmpfile.Name())
+			// if err != nil {
+			// 	t.Fatal(err)
+			// }
+			// // Perform validation between the 2 byte slices when file is written
+			// if tt.dryRun {
+			// 	// Actual temp file must not have changed (dry run enabled)
+			// 	assert.Equal(t, fixtureContent, currentDockerfileContent)
+			// } else {
+			// 	fixtureLines := strings.Split(string(fixtureContent), "\n")
+			// 	currentDockerfileLines := strings.Split(string(currentDockerfileContent), "\n")
 
-				// Both content should have the same number of line as only replacements are expected
-				assert.Equal(t, len(fixtureLines), len(currentDockerfileLines))
+			// 	// Both content should have the same number of line as only replacements are expected
+			// 	assert.Equal(t, len(fixtureLines), len(currentDockerfileLines))
 
-				// The diff between fixture and resulting tmpfile must match the tt.wantedChanges
-				for index, currentLine := range fixtureLines {
-					lineDiff, exists := tt.wantDiff[index+1]
-					if exists {
-						// current's line number found in wantDiff: currentLine should have been changed
-						assert.Equal(t, lineDiff.Original, currentLine)
-						assert.Equal(t, lineDiff.New, currentDockerfileLines[index])
-					} else {
-						// current's line number NOT found in wantDiff lines should be the same
-						assert.Equal(t, currentLine, currentDockerfileLines[index])
-					}
-				}
-			}
+			// 	// The diff between fixture and resulting tmpfile must match the tt.wantedChanges
+			// 	for index, currentLine := range fixtureLines {
+			// 		lineDiff, exists := tt.wantDiff[index+1]
+			// 		if exists {
+			// 			// current's line number found in wantDiff: currentLine should have been changed
+			// 			assert.Equal(t, lineDiff.Original, currentLine)
+			// 			assert.Equal(t, lineDiff.New, currentDockerfileLines[index])
+			// 		} else {
+			// 			// current's line number NOT found in wantDiff lines should be the same
+			// 			assert.Equal(t, currentLine, currentDockerfileLines[index])
+			// 		}
+			// 	}
+			// }
 
 		})
 	}

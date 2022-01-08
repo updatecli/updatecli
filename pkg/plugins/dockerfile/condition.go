@@ -1,24 +1,27 @@
 package dockerfile
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/helpers"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Condition test if the Dockerfile contains the correct key/value
 func (d *Dockerfile) Condition(source string) (bool, error) {
-	// read Dockerfile content
-	dockerfileContent, err := helpers.ReadFile(d.spec.File)
+
+	if !d.contentRetriever.FileExists(d.spec.File) {
+		return false, fmt.Errorf("The file %s does not exist.", d.spec.File)
+	}
+	dockerfileContent, err := d.contentRetriever.ReadAll(d.spec.File)
 	if err != nil {
 		return false, err
 	}
 
 	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.spec.File)
 
-	found := d.parser.FindInstruction(dockerfileContent)
+	found := d.parser.FindInstruction([]byte(dockerfileContent))
 
 	return found, nil
 }

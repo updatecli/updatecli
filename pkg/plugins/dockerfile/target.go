@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/helpers"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
@@ -27,14 +26,14 @@ func (d *Dockerfile) TargetFromSCM(source string, scm scm.ScmHandler, dryRun boo
 }
 
 func (d *Dockerfile) target(source string, dryRun bool) (changed bool, files []string, message string, err error) {
-	dockerfileContent, err := helpers.ReadFile(d.spec.File)
+	dockerfileContent, err := d.contentRetriever.ReadAll(d.spec.File)
 	if err != nil {
 		return false, files, message, err
 	}
 
 	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.spec.File)
 
-	newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions(dockerfileContent, source)
+	newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions([]byte(dockerfileContent), source)
 	if err != nil {
 		return false, files, message, err
 	}
