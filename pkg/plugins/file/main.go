@@ -51,10 +51,6 @@ func (f *File) Validate() error {
 	// Check for all validation
 	if f.spec.File == "" {
 		validationErrors = append(validationErrors, "Invalid spec for file resource: 'file' is empty.")
-	} else {
-		if !f.contentRetriever.FileExists(f.spec.File) {
-			validationErrors = append(validationErrors, fmt.Sprintf("Invalid spec for yaml resource: the file %q does not exist.", f.spec.File))
-		}
 	}
 	if f.spec.Line < 0 {
 		validationErrors = append(validationErrors, "Line cannot be negative for a file resource.")
