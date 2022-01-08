@@ -14,14 +14,12 @@ type Spec struct {
 	File        string            `yaml:"file"`
 	Instruction types.Instruction `yaml:"instruction"`
 	Value       string            `yaml:"value"`
-	DryRun      bool
 }
 
 // Dockerfile defines a resource of kind "dockerfile"
 type Dockerfile struct {
-	parser   types.DockerfileParser
-	messages []string
-	spec     Spec
+	parser types.DockerfileParser
+	spec   Spec
 }
 
 // New returns a reference to a newly initialized Dockerfile object from a Spec

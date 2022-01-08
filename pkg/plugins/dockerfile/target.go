@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"path"
-	"strings"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/helpers"
@@ -14,22 +13,43 @@ import (
 
 // Target updates a targeted Dockerfile
 func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
-	// read Dockerfile content
+	changed, _, _, err := d.target(source, dryRun)
+	return changed, err
+}
+
+// TargetFromSCM updates a targeted Dockerfile from source controle management system
+func (d *Dockerfile) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+	if !filepath.IsAbs(d.spec.File) {
+		d.spec.File = filepath.Join(scm.GetDirectory(), d.spec.File)
+		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", d.spec.File)
+	}
+	return d.target(source, dryRun)
+}
+
+func (d *Dockerfile) target(source string, dryRun bool) (changed bool, files []string, message string, err error) {
 	dockerfileContent, err := helpers.ReadFile(d.spec.File)
 	if err != nil {
-		return false, err
+		return false, files, message, err
 	}
 
 	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.spec.File)
 
 	newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions(dockerfileContent, source)
 	if err != nil {
-		return false, err
+		return false, files, message, err
 	}
 
 	if len(changedLines) == 0 {
-		return false, nil
+		return false, files, message, err
 	}
+
+	lines := []int{}
+	for idx := range changedLines {
+		lines = append(lines, idx)
+	}
+
+	message = fmt.Sprintf("changed lines %v of file %q", lines, d.spec.File)
+	files = append(files, d.spec.File)
 
 	if !dryRun {
 		// Write the new Dockerfile content from buffer to file
@@ -39,29 +59,5 @@ func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
 		}
 	}
 
-	return true, nil
-}
-
-// TargetFromSCM updates a targeted Dockerfile from source controle management system
-func (d *Dockerfile) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
-
-	file := d.spec.File
-	d.spec.File = path.Join(scm.GetDirectory(), d.spec.File)
-
-	changed, err = d.Target(source, d.spec.DryRun)
-	if err != nil {
-		return changed, files, message, err
-
-	}
-
-	files = append(files, file)
-
-	if changed {
-		// Generate a multiline string with one message per line (each message maps to a line changed by the parser)
-		messageList := strings.Join(d.messages, "\n")
-		// Generate a nice commit message with a first line title, and append the previous message list
-		message = fmt.Sprintf("Update Dockerfile instruction for %q\n%s\n", d.spec.File, messageList)
-	}
-
-	return changed, files, message, err
+	return true, files, message, err
 }
