@@ -10,18 +10,13 @@ import (
 
 // Condition test if the Dockerfile contains the correct key/value
 func (d *Dockerfile) Condition(source string) (bool, error) {
-
-	err := d.SetParser()
-	if err != nil {
-		return false, err
-	}
 	// read Dockerfile content
-	dockerfileContent, err := helpers.ReadFile(d.File)
+	dockerfileContent, err := helpers.ReadFile(d.spec.File)
 	if err != nil {
 		return false, err
 	}
 
-	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.File)
+	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.spec.File)
 
 	found := d.parser.FindInstruction(dockerfileContent)
 
@@ -30,7 +25,7 @@ func (d *Dockerfile) Condition(source string) (bool, error) {
 
 // ConditionFromSCM run based on a file from SCM
 func (d *Dockerfile) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	d.File = path.Join(scm.GetDirectory(), d.File)
+	d.spec.File = path.Join(scm.GetDirectory(), d.spec.File)
 
 	found, err := d.Condition(source)
 	if err != nil {

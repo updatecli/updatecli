@@ -14,19 +14,13 @@ import (
 
 // Target updates a targeted Dockerfile
 func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
-
-	err := d.SetParser()
-	if err != nil {
-		return false, err
-	}
-
 	// read Dockerfile content
-	dockerfileContent, err := helpers.ReadFile(d.File)
+	dockerfileContent, err := helpers.ReadFile(d.spec.File)
 	if err != nil {
 		return false, err
 	}
 
-	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.File)
+	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.spec.File)
 
 	newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions(dockerfileContent, source)
 	if err != nil {
@@ -39,7 +33,7 @@ func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
 
 	if !dryRun {
 		// Write the new Dockerfile content from buffer to file
-		err = ioutil.WriteFile(d.File, newDockerfileContent, 0600)
+		err = ioutil.WriteFile(d.spec.File, newDockerfileContent, 0600)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -51,10 +45,10 @@ func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
 // TargetFromSCM updates a targeted Dockerfile from source controle management system
 func (d *Dockerfile) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
-	file := d.File
-	d.File = path.Join(scm.GetDirectory(), d.File)
+	file := d.spec.File
+	d.spec.File = path.Join(scm.GetDirectory(), d.spec.File)
 
-	changed, err = d.Target(source, d.DryRun)
+	changed, err = d.Target(source, d.spec.DryRun)
 	if err != nil {
 		return changed, files, message, err
 
@@ -66,7 +60,7 @@ func (d *Dockerfile) TargetFromSCM(source string, scm scm.ScmHandler, dryRun boo
 		// Generate a multiline string with one message per line (each message maps to a line changed by the parser)
 		messageList := strings.Join(d.messages, "\n")
 		// Generate a nice commit message with a first line title, and append the previous message list
-		message = fmt.Sprintf("Update Dockerfile instruction for %q\n%s\n", d.File, messageList)
+		message = fmt.Sprintf("Update Dockerfile instruction for %q\n%s\n", d.spec.File, messageList)
 	}
 
 	return changed, files, message, err
