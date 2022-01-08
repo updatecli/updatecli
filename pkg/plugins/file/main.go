@@ -7,9 +7,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// FileSpec defines a specification for a "file" resource
+// Spec defines a specification for a "file" resource
 // parsed from an updatecli manifest file
-type FileSpec struct {
+type Spec struct {
 	File           string
 	Line           int
 	Content        string
@@ -18,29 +18,30 @@ type FileSpec struct {
 	ReplacePattern string
 }
 
-// File defines a resource of type "file"
+// File defines a resource of kind "file"
 type File struct {
-	spec             FileSpec
+	spec             Spec
 	contentRetriever text.TextRetriever
 	CurrentContent   string
 }
 
 // New returns a reference to a newly initialized File object from a Filespec
 // or an error if the provided Filespec triggers a validation error.
-func New(spec FileSpec) (*File, error) {
-	newFileResource := &File{
+func New(spec Spec) (*File, error) {
+	newResource := &File{
 		spec:             spec,
 		contentRetriever: &text.Text{},
 	}
+
 	// TODO: generalize the Validate + Normalize as an interface to all resources
-	err := newFileResource.Validate()
+	err := newResource.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	newFileResource.spec.File = strings.TrimPrefix(newFileResource.spec.File, "file://")
+	newResource.spec.File = strings.TrimPrefix(newResource.spec.File, "file://")
 
-	return newFileResource, nil
+	return newResource, nil
 }
 
 // Validate validates the object and returns an error (with all the failed validation messages) if it is not valid

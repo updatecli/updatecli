@@ -197,7 +197,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		changelog = &g
 
 	case "file":
-		var sourceSpec file.FileSpec
+		var sourceSpec file.Spec
 
 		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
