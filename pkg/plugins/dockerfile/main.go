@@ -41,9 +41,7 @@ func New(newSpec Spec) (*Dockerfile, error) {
 }
 
 func getParser(spec Spec) (types.DockerfileParser, error) {
-	var instruction interface{}
-
-	instruction = spec.Instruction
+	instruction := spec.Instruction
 	switch i := instruction.(type) {
 	default:
 		return nil, fmt.Errorf("Parsing Error: cannot determine instruction: %v.", i)

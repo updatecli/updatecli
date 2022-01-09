@@ -12,16 +12,16 @@ import (
 
 func TestDockerfile_Condition(t *testing.T) {
 	tests := []struct {
-		name        string
-		source      string
-		spec        Spec
-		wantChanged bool
-		wantErr     error
-		mockTest    text.MockTextRetriever
+		name             string
+		inputSourceValue string
+		spec             Spec
+		wantChanged      bool
+		wantErr          error
+		mockTest         text.MockTextRetriever
 	}{
 		{
-			name:   "Found FROM with text parser",
-			source: "1.16",
+			name:             "Found FROM with text parser",
+			inputSourceValue: "1.16",
 			spec: Spec{
 				File: "FROM.Dockerfile",
 				Instruction: map[string]string{
@@ -30,27 +30,27 @@ func TestDockerfile_Condition(t *testing.T) {
 				},
 			},
 			mockTest: text.MockTextRetriever{
-				Content: fromDockerfileFixture,
+				Content: dockerfileFixture,
 				Exists:  true,
 			},
 			wantChanged: true,
 		},
 		{
-			name:   "Not Found ARG with moby parser",
-			source: "golang:1.15",
+			name:             "Not Found ARG with moby parser",
+			inputSourceValue: "golang:1.15",
 			spec: Spec{
 				File:        "FROM.Dockerfile",
 				Instruction: "ARG[1][0]",
 			},
 			mockTest: text.MockTextRetriever{
-				Content: fromDockerfileFixture,
+				Content: dockerfileFixture,
 				Exists:  true,
 			},
 			wantChanged: false,
 		},
 		{
-			name:   "Non existent Dockerfile",
-			source: "1.16",
+			name:             "Non existent Dockerfile",
+			inputSourceValue: "1.16",
 			spec: Spec{
 				File: "NOTEXISTING.Dockerfile",
 				Instruction: map[string]string{
@@ -77,7 +77,7 @@ func TestDockerfile_Condition(t *testing.T) {
 				contentRetriever: &mockText,
 			}
 
-			gotChanged, gotErr := d.Condition(tt.source)
+			gotChanged, gotErr := d.Condition(tt.inputSourceValue)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
@@ -92,18 +92,18 @@ func TestDockerfile_Condition(t *testing.T) {
 
 func TestDockerfile_ConditionFromSCM(t *testing.T) {
 	tests := []struct {
-		name        string
-		source      string
-		file        string
-		spec        Spec
-		wantChanged bool
-		wantErr     error
-		scm         scm.ScmHandler
-		mockTest    text.MockTextRetriever
+		name             string
+		inputSourceValue string
+		file             string
+		spec             Spec
+		wantChanged      bool
+		wantErr          error
+		scm              scm.ScmHandler
+		mockTest         text.MockTextRetriever
 	}{
 		{
-			name:   "Found FROM with text parser",
-			source: "1.16",
+			name:             "Found FROM with text parser",
+			inputSourceValue: "1.16",
 			spec: Spec{
 				File: "FROM.Dockerfile",
 				Instruction: map[string]string{
@@ -112,7 +112,7 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 				},
 			},
 			mockTest: text.MockTextRetriever{
-				Content: fromDockerfileFixture,
+				Content: dockerfileFixture,
 				Exists:  true,
 			},
 			wantChanged: true,
@@ -121,8 +121,8 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 			},
 		},
 		{
-			name:   "Non existent Dockerfile",
-			source: "1.16",
+			name:             "Non existent Dockerfile",
+			inputSourceValue: "1.16",
 			spec: Spec{
 				File: "NOTEXISTING.Dockerfile",
 				Instruction: map[string]string{
@@ -152,7 +152,7 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 				contentRetriever: &mockText,
 			}
 
-			gotChanged, gotErr := d.ConditionFromSCM(tt.source, tt.scm)
+			gotChanged, gotErr := d.ConditionFromSCM(tt.inputSourceValue, tt.scm)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return

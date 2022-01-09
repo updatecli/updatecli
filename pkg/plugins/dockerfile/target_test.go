@@ -1,32 +1,31 @@
 package dockerfile
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/types"
 )
 
 func TestDockerfile_Target(t *testing.T) {
 	tests := []struct {
-		name                  string
-		source                string
-		spec                  Spec
-		mockReturnedContent   string
-		mockReturnedError     error
-		mockReturnsFileExists bool
-		dryRun                bool
-		wantChanged           bool
-		wantErr               error
-		wantDiff              types.ChangedLines
-		wantMockState         text.MockTextRetriever
+		name             string
+		inputSourceValue string
+		dryRun           bool
+		spec             Spec
+		mockFile         text.MockTextRetriever
+		wantChanged      bool
+		wantErr          error
+		wantMockState    text.MockTextRetriever
 	}{
 		{
-			name:   "FROM with text parser and dryrun",
-			source: "1.16",
-			dryRun: true,
+			name:             "FROM with text parser and dryrun",
+			inputSourceValue: "1.16",
+			dryRun:           true,
 			spec: Spec{
 				File: "FROM.Dockerfile",
 				Instruction: map[string]interface{}{
@@ -34,127 +33,191 @@ func TestDockerfile_Target(t *testing.T) {
 					"matcher": "golang",
 				},
 			},
-			mockReturnedContent:   fromDockerfileFixture,
-			mockReturnsFileExists: true,
-			wantChanged:           true,
+			mockFile: text.MockTextRetriever{
+				Content: dockerfileFixture,
+				Exists:  true,
+			},
+			wantChanged: true,
+			wantMockState: text.MockTextRetriever{
+				Location: "FROM.Dockerfile",
+				// dryRun is true: no change
+				Content: dockerfileFixture,
+			},
 		},
-		// {
-		// 	name:   "FROM with text parser",
-		// 	source: "1.16.0-alpine",
-		// 	file:   "FROM.Dockerfile",
-		// 	dryRun: false,
-		// 	instruction: map[string]interface{}{
-		// 		"keyword": "FROM",
-		// 		"matcher": "golang",
-		// 	},
-		// 	wantChanged: true,
-		// 	wantDiff: types.ChangedLines{
-		// 		1: types.LineDiff{
-		// 			Original: "FROM golang:1.15 AS builder",
-		// 			New:      "FROM golang:1.16.0-alpine AS builder",
-		// 		},
-		// 		11: types.LineDiff{
-		// 			Original: "FROM golang:1.15 as tester",
-		// 			New:      "FROM golang:1.16.0-alpine as tester",
-		// 		},
-		// 		15: types.LineDiff{
-		// 			Original: "FROM golang AS reporter",
-		// 			New:      "FROM golang:1.16.0-alpine AS reporter",
-		// 		},
-		// 		19: types.LineDiff{
-		// 			Original: "FROM golang",
-		// 			New:      "FROM golang:1.16.0-alpine",
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name:        "FROM with moby parser and dryrun",
-		// 	source:      "golang:1.16-alpine",
-		// 	file:        "FROM.Dockerfile",
-		// 	dryRun:      true,
-		// 	instruction: "FROM[1][0]",
-		// 	wantChanged: true,
-		// },
-		// {
-		// 	name:        "FROM with moby parser",
-		// 	source:      "golang:1.16-alpine",
-		// 	file:        "FROM.Dockerfile",
-		// 	dryRun:      true,
-		// 	instruction: "FROM[1][0]",
-		// 	wantChanged: true,
-		// 	wantDiff: types.ChangedLines{
-		// 		11: types.LineDiff{
-		// 			Original: "FROM golang:1.15 as tester",
-		// 			New:      "FROM golang:1.16-alpine as tester",
-		// 		},
-		// 	},
-		// },
+		{
+			name:             "FROM with text parser",
+			inputSourceValue: "1.16",
+			spec: Spec{
+				File: "FROM.Dockerfile",
+				Instruction: map[string]interface{}{
+					"keyword": "FROM",
+					"matcher": "golang",
+				},
+			},
+			mockFile: text.MockTextRetriever{
+				Content: dockerfileFixture,
+				Exists:  true,
+			},
+			wantChanged: true,
+			wantMockState: text.MockTextRetriever{
+				Location: "FROM.Dockerfile",
+				Content: `FROM golang:1.16 AS builder
+ARG golang=3.0.0
+COPY ./golang .
+RUN go get -d -v ./... && echo golang
+FROM golang:1.16
+WORKDIR /go/src/app
+FROM ubuntu:20.04 AS golang
+RUN apt-get update
+FROM ubuntu:20.04
+RUN apt-get update
+LABEL golang="${GOLANG_VERSION}"
+VOLUME /tmp / golang
+USER golang
+WORKDIR /home/updatecli
+COPY --from=golang --chown=updatecli:golang /go/src/app/dist/updatecli /usr/bin/golang
+ENTRYPOINT [ "/usr/bin/golang" ]
+CMD ["--help:golang"]
+`,
+			},
+		},
+		{
+			name:             "FROM with moby parser, dryrun, instruction not found",
+			inputSourceValue: "1.16",
+			dryRun:           true,
+			spec: Spec{
+				File:        "FROM.Dockerfile",
+				Instruction: "FROM[12][1]",
+			},
+			mockFile: text.MockTextRetriever{
+				Content: dockerfileFixture,
+				Exists:  true,
+			},
+			wantChanged: false,
+			wantMockState: text.MockTextRetriever{
+				Location: "FROM.Dockerfile",
+				// dryRun is true: no change
+				Content: dockerfileFixture,
+			},
+			wantErr: fmt.Errorf("%s cannot find instruction \"FROM[12][1]\"", result.FAILURE),
+		},
+		{
+			name:             "FROM with text parser, dryrun and no changed lines",
+			inputSourceValue: "20.04",
+			dryRun:           true,
+			spec: Spec{
+				File: "FROM.Dockerfile",
+				Instruction: map[string]interface{}{
+					"keyword": "FROM",
+					"matcher": "ubuntu",
+				},
+			},
+			mockFile: text.MockTextRetriever{
+				Content: dockerfileFixture,
+				Exists:  true,
+			},
+			wantChanged: false,
+			wantMockState: text.MockTextRetriever{
+				Location: "FROM.Dockerfile",
+				// dryRun is true: no change
+				Content: dockerfileFixture,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			newParser, err := getParser(tt.spec)
 			require.NoError(t, err)
 
-			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
-				Exists:  tt.mockReturnsFileExists,
-			}
+			mockFile := &tt.mockFile
 
 			d := &Dockerfile{
 				spec:             tt.spec,
-				contentRetriever: &mockText,
+				contentRetriever: mockFile,
 				parser:           newParser,
 			}
-			gotChanged, gotErr := d.Target(tt.source, tt.dryRun)
+			gotChanged, gotErr := d.Target(tt.inputSourceValue, tt.dryRun)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantResult, gotChanged)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
-			assert.Equal(t, tt.wantMockState.Content, mockText.Content)
+			assert.Equal(t, tt.wantChanged, gotChanged)
+			assert.Equal(t, tt.wantMockState.Location, mockFile.Location)
+			assert.Equal(t, tt.wantMockState.Line, mockFile.Line)
+			assert.Equal(t, tt.wantMockState.Content, mockFile.Content)
+		})
+	}
+}
 
-			// if tt.wantErrMessage != nil {
-			// 	assert.NotNil(t, gotErr)
-			// 	assert.Equal(t, tt.wantErrMessage, gotErr.Error())
-			// }
+func TestFile_TargetFromSCM(t *testing.T) {
+	tests := []struct {
+		name             string
+		inputSourceValue string
+		dryRun           bool
+		spec             Spec
+		mockFile         text.MockTextRetriever
+		wantChanged      bool
+		wantFiles        []string
+		wantMessage      string
+		wantErr          error
+		wantMockState    text.MockTextRetriever
+		scm              scm.ScmHandler
+	}{
+		{
+			name:             "FROM with text parser and dryrun",
+			inputSourceValue: "1.16",
+			dryRun:           true,
+			spec: Spec{
+				File: "FROM.Dockerfile",
+				Instruction: map[string]interface{}{
+					"keyword": "FROM",
+					"matcher": "golang",
+				},
+			},
+			mockFile: text.MockTextRetriever{
+				Content: dockerfileFixture,
+				Exists:  true,
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			wantChanged: true,
+			wantFiles:   []string{"/tmp/FROM.Dockerfile"},
+			wantMessage: "changed lines [1 5] of file \"/tmp/FROM.Dockerfile\"",
+			wantMockState: text.MockTextRetriever{
+				Location: "/tmp/FROM.Dockerfile",
+				// dryRun is true: no change
+				Content: dockerfileFixture,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			newParser, err := getParser(tt.spec)
+			require.NoError(t, err)
 
-			// assert.Equal(t, tt.wantChanged, gotChanged)
+			mockFile := &tt.mockFile
 
-			// Verify current file's content
-			// currentDockerfileContent, err := helpers.ReadFile(tmpfile.Name())
-			// if err != nil {
-			// 	t.Fatal(err)
-			// }
-			// // Perform validation between the 2 byte slices when file is written
-			// if tt.dryRun {
-			// 	// Actual temp file must not have changed (dry run enabled)
-			// 	assert.Equal(t, fixtureContent, currentDockerfileContent)
-			// } else {
-			// 	fixtureLines := strings.Split(string(fixtureContent), "\n")
-			// 	currentDockerfileLines := strings.Split(string(currentDockerfileContent), "\n")
+			d := &Dockerfile{
+				spec:             tt.spec,
+				contentRetriever: mockFile,
+				parser:           newParser,
+			}
+			gotChanged, gotFiles, gotMessage, gotErr := d.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
+			if tt.wantErr != nil {
+				assert.Equal(t, tt.wantErr, gotErr)
+				return
+			}
 
-			// 	// Both content should have the same number of line as only replacements are expected
-			// 	assert.Equal(t, len(fixtureLines), len(currentDockerfileLines))
-
-			// 	// The diff between fixture and resulting tmpfile must match the tt.wantedChanges
-			// 	for index, currentLine := range fixtureLines {
-			// 		lineDiff, exists := tt.wantDiff[index+1]
-			// 		if exists {
-			// 			// current's line number found in wantDiff: currentLine should have been changed
-			// 			assert.Equal(t, lineDiff.Original, currentLine)
-			// 			assert.Equal(t, lineDiff.New, currentDockerfileLines[index])
-			// 		} else {
-			// 			// current's line number NOT found in wantDiff lines should be the same
-			// 			assert.Equal(t, currentLine, currentDockerfileLines[index])
-			// 		}
-			// 	}
-			// }
-
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.wantChanged, gotChanged)
+			assert.Equal(t, tt.wantFiles, gotFiles)
+			assert.Equal(t, tt.wantMessage, gotMessage)
+			assert.Equal(t, tt.wantMockState.Location, mockFile.Location)
+			assert.Equal(t, tt.wantMockState.Line, mockFile.Line)
+			assert.Equal(t, tt.wantMockState.Content, mockFile.Content)
 		})
 	}
 }

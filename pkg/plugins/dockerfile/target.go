@@ -2,9 +2,8 @@ package dockerfile
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"path/filepath"
+	"sort"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -46,15 +45,16 @@ func (d *Dockerfile) target(source string, dryRun bool) (changed bool, files []s
 	for idx := range changedLines {
 		lines = append(lines, idx)
 	}
+	sort.Ints(lines)
 
 	message = fmt.Sprintf("changed lines %v of file %q", lines, d.spec.File)
 	files = append(files, d.spec.File)
 
 	if !dryRun {
 		// Write the new Dockerfile content from buffer to file
-		err = ioutil.WriteFile(d.spec.File, newDockerfileContent, 0600)
+		err := d.contentRetriever.WriteToFile(string(newDockerfileContent), d.spec.File)
 		if err != nil {
-			log.Fatal(err)
+			return false, files, message, err
 		}
 	}
 
