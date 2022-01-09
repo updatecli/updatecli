@@ -145,7 +145,7 @@ func TestSimpleTextDockerfileParser_FindInstruction(t *testing.T) {
 				t.Errorf("Error while calling NewSimpleTextDockerfileParser with argument %v.", tt.givenInstruction)
 			}
 
-			originalDockerfile, err := ioutil.ReadFile("../test_fixtures/" + tt.fixtureDockerfile)
+			originalDockerfile, err := ioutil.ReadFile("./test_fixtures/" + tt.fixtureDockerfile)
 			if err != nil {
 				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
 			}
@@ -245,7 +245,7 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 				t.Errorf("Error while calling NewSimpleTextDockerfileParser with argument %v.", tt.givenInstruction)
 			}
 
-			originalDockerfile, err := ioutil.ReadFile("../test_fixtures/" + tt.fixtureDockerfile)
+			originalDockerfile, err := ioutil.ReadFile("./test_fixtures/" + tt.fixtureDockerfile)
 			if err != nil {
 				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
 			}
