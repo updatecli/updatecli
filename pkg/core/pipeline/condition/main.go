@@ -164,7 +164,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &d
 
 	case "file":
-		var conditionSpec file.FileSpec
+		var conditionSpec file.Spec
 
 		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
