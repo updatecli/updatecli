@@ -13,7 +13,7 @@ import (
 func TestFile_Condition(t *testing.T) {
 	tests := []struct {
 		name             string
-		spec             FileSpec
+		spec             Spec
 		inputSourceValue string
 		wantResult       bool
 		wantErr          bool
@@ -21,7 +21,7 @@ func TestFile_Condition(t *testing.T) {
 	}{
 		{
 			name: "Passing Case with Line",
-			spec: FileSpec{
+			spec: Spec{
 				Line: 3,
 				File: "foo.txt",
 			},
@@ -34,7 +34,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Failing Case with Line",
-			spec: FileSpec{
+			spec: Spec{
 				Line: 5,
 				File: "/bar.txt",
 			},
@@ -46,7 +46,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Validation Failure with both source and specified content",
-			spec: FileSpec{
+			spec: Spec{
 				Content: "Hello World",
 				File:    "/bar.txt",
 			},
@@ -55,7 +55,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Validation Failure with specified ReplacePattern",
-			spec: FileSpec{
+			spec: Spec{
 				MatchPattern:   "maven_(.*)",
 				ReplacePattern: "gradle_$1",
 				File:           "/bar.txt",
@@ -65,7 +65,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Passing Case with no input source and only specified content",
-			spec: FileSpec{
+			spec: Spec{
 				Content: "Hello World",
 				File:    "foo.txt",
 			},
@@ -77,7 +77,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Case with no input source, no specified content but a specified line which is empty",
-			spec: FileSpec{
+			spec: Spec{
 				Line: 11,
 				File: "foo.txt",
 			},
@@ -90,7 +90,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Case with no input source, no specified content but the specified line exists and is not empty",
-			spec: FileSpec{
+			spec: Spec{
 				Line: 13,
 				File: "bar.txt",
 			},
@@ -103,7 +103,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Failing case with only file existence checking",
-			spec: FileSpec{
+			spec: Spec{
 				File: "foo.txt",
 			},
 			mockTest: text.MockTextRetriever{
@@ -113,7 +113,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Failing case with only URL existence checking",
-			spec: FileSpec{
+			spec: Spec{
 				File: "https://do.not.exists/foo",
 			},
 			mockTest: text.MockTextRetriever{
@@ -124,7 +124,7 @@ func TestFile_Condition(t *testing.T) {
 		},
 		{
 			name: "Failing case with no input source and a specified line that does not matches the file line content",
-			spec: FileSpec{
+			spec: Spec{
 				Line:    11,
 				Content: "Not In The File",
 				File:    "foo.txt",
@@ -158,7 +158,7 @@ func TestFile_Condition(t *testing.T) {
 func TestFile_ConditionFromSCM(t *testing.T) {
 	tests := []struct {
 		name                string
-		spec                FileSpec
+		spec                Spec
 		inputSourceValue    string
 		wantResult          bool
 		wantErr             bool
@@ -169,7 +169,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 	}{
 		{
 			name: "Passing Case with no input source, but a specified line and content and a relative path to file",
-			spec: FileSpec{
+			spec: Spec{
 				File:    "foo.txt",
 				Content: "current_version=1.2.3",
 				Line:    3,
@@ -186,7 +186,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		},
 		{
 			name: "Passing Case with matchPattern",
-			spec: FileSpec{
+			spec: Spec{
 				File:         "foo.txt",
 				MatchPattern: "current_version.*",
 			},
@@ -201,7 +201,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		},
 		{
 			name: "Failing Case with matchPattern",
-			spec: FileSpec{
+			spec: Spec{
 				File:         "foo.txt",
 				MatchPattern: "notMatching.*",
 			},
@@ -216,7 +216,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		},
 		{
 			name: "Validation Failure with forcecreate specified",
-			spec: FileSpec{
+			spec: Spec{
 				File:        "foo.txt",
 				ForceCreate: true,
 			},
@@ -228,7 +228,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		},
 		{
 			name: "Validation Failure with invalid Regexp",
-			spec: FileSpec{
+			spec: Spec{
 				File:         "foo.txt",
 				MatchPattern: "^^[[[",
 			},

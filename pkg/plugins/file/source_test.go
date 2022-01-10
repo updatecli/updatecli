@@ -12,7 +12,7 @@ import (
 func TestFile_Source(t *testing.T) {
 	tests := []struct {
 		name                string
-		spec                FileSpec
+		spec                Spec
 		wantSource          string
 		wantErr             bool
 		mockReturnedContent string
@@ -21,7 +21,7 @@ func TestFile_Source(t *testing.T) {
 	}{
 		{
 			name: "Normal Case",
-			spec: FileSpec{
+			spec: Spec{
 				File: "/home/ucli/foo.txt",
 			},
 			mockReturnedContent: "current_version=1.2.3",
@@ -32,7 +32,7 @@ func TestFile_Source(t *testing.T) {
 		},
 		{
 			name: "Normal Case with single-line matchPattern",
-			spec: FileSpec{
+			spec: Spec{
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*freebsd_386.*",
 			},
@@ -56,7 +56,7 @@ f8bf1fca0ef11a33955d225198d1211e15827d43488cc9174dcda14d1a7a1d19  terraform_0.14
 		},
 		{
 			name: "Normal Case with multi-line matchPattern",
-			spec: FileSpec{
+			spec: Spec{
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*terraform_.*_linux_.*",
 			},
@@ -88,7 +88,7 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 		},
 		{
 			name: "Validation Failure with specified ReplacePattern",
-			spec: FileSpec{
+			spec: Spec{
 				MatchPattern:   "maven_(.*)",
 				ReplacePattern: "gradle_$1",
 				File:           "/bar.txt",
@@ -97,7 +97,7 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 		},
 		{
 			name: "Validation Failure with specified content",
-			spec: FileSpec{
+			spec: Spec{
 				Content: "Hello world",
 				File:    "/bar.txt",
 			},
@@ -105,7 +105,7 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 		},
 		{
 			name: "Validation Failure with specified forcecreate",
-			spec: FileSpec{
+			spec: Spec{
 				ForceCreate: true,
 				File:        "/bar.txt",
 			},
@@ -113,7 +113,7 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 		},
 		{
 			name: "Validation Failure with invalid regexp for MatchPattern",
-			spec: FileSpec{
+			spec: Spec{
 				MatchPattern: "(d+:1",
 				File:         "/bar.txt",
 			},

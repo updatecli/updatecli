@@ -12,13 +12,13 @@ import (
 func Test_Validate(t *testing.T) {
 	tests := []struct {
 		name          string
-		spec          FileSpec
+		spec          Spec
 		mockFileExist bool
 		wantErr       bool
 	}{
 		{
 			name: "Normal case",
-			spec: FileSpec{
+			spec: Spec{
 				File: "/tmp/foo.txt",
 				Line: 12,
 			},
@@ -27,7 +27,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when 'File' is empty",
-			spec: FileSpec{
+			spec: Spec{
 				File: "",
 			},
 			mockFileExist: true,
@@ -35,7 +35,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when 'Line' is negative",
-			spec: FileSpec{
+			spec: Spec{
 				File: "/tmp/foo.txt",
 				Line: -1,
 			},
@@ -44,7 +44,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when both 'Line' and `ForceCreate=true` are specified",
-			spec: FileSpec{
+			spec: Spec{
 				File:        "/tmp/foo.txt",
 				ForceCreate: true,
 				Line:        12,
@@ -54,7 +54,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when both 'Line' and `MatchPattern` are specified",
-			spec: FileSpec{
+			spec: Spec{
 				File:         "/tmp/foo.txt",
 				MatchPattern: "pattern=.*",
 				Line:         12,
@@ -64,7 +64,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when both 'Line' and `ReplacePattern` are specified",
-			spec: FileSpec{
+			spec: Spec{
 				File:           "/tmp/foo.txt",
 				ReplacePattern: "pattern=.*",
 				Line:           13,
@@ -74,7 +74,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when both 'Content' and `ReplacePattern` are specified",
-			spec: FileSpec{
+			spec: Spec{
 				File:           "/tmp/foo.txt",
 				ReplacePattern: "pattern=.*",
 				Content:        "Hello World",
@@ -107,14 +107,14 @@ func TestFile_Read(t *testing.T) {
 		wantErr             bool
 		mockReturnedContent string
 		mockReturnedError   error
-		spec                FileSpec
+		spec                Spec
 		wantContent         string
 		wantMockState       text.MockTextRetriever
 	}{
 		{
 			name:                "Normal case with a line",
 			mockReturnedContent: "Hello World",
-			spec: FileSpec{
+			spec: Spec{
 				Line: 3,
 				File: "/foo.txt",
 			},
@@ -127,7 +127,7 @@ func TestFile_Read(t *testing.T) {
 		{
 			name:                "Normal case without a line",
 			mockReturnedContent: "Hello World",
-			spec: FileSpec{
+			spec: Spec{
 				File: "/bar.txt",
 			},
 			wantContent: "Hello World",
@@ -138,7 +138,7 @@ func TestFile_Read(t *testing.T) {
 		{
 			name:              "File does not exist with a line",
 			mockReturnedError: fmt.Errorf("no such file or directory"),
-			spec: FileSpec{
+			spec: Spec{
 				File: "/not_existing.txt",
 				Line: 15,
 			},
@@ -147,7 +147,7 @@ func TestFile_Read(t *testing.T) {
 		{
 			name:              "File does not exist without line",
 			mockReturnedError: fmt.Errorf("no such file or directory"),
-			spec: FileSpec{
+			spec: Spec{
 				File: "/not_existing.txt",
 			},
 			wantErr: true,

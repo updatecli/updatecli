@@ -12,7 +12,7 @@ import (
 
 func TestFile_Target(t *testing.T) {
 	tests := []struct {
-		spec                  FileSpec
+		spec                  Spec
 		wantMockState         text.MockTextRetriever
 		name                  string
 		inputSourceValue      string
@@ -26,7 +26,7 @@ func TestFile_Target(t *testing.T) {
 		{
 			name:             "Replace content with matchPattern and ReplacePattern",
 			inputSourceValue: "3.9.0",
-			spec: FileSpec{
+			spec: Spec{
 				File:           "foo.txt",
 				MatchPattern:   "maven_(.*)=.*",
 				ReplacePattern: "maven_$1= 3.9.0",
@@ -55,7 +55,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Passing Case with both input source and specified content but no line (specified content should be used)",
-			spec: FileSpec{
+			spec: Spec{
 				File:    "foo.txt",
 				Content: "Hello World",
 			},
@@ -69,7 +69,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Passing Case with an updated line from provided content",
-			spec: FileSpec{
+			spec: Spec{
 				File:    "foo.txt",
 				Content: "Hello World",
 				Line:    2,
@@ -86,7 +86,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Validation failure with an https:// URL instead of a file",
-			spec: FileSpec{
+			spec: Spec{
 				File: "https://github.com/foo.txt",
 			},
 			wantResult: false,
@@ -94,7 +94,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Validation failure with both line and forcecreate specified",
-			spec: FileSpec{
+			spec: Spec{
 				File:        "foo.txt",
 				ForceCreate: true,
 				Line:        2,
@@ -104,7 +104,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Validation Failure with invalid regexp for MatchPattern",
-			spec: FileSpec{
+			spec: Spec{
 				MatchPattern: "(d+:1",
 				File:         "/bar.txt",
 			},
@@ -115,7 +115,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Error with file not existing (with line)",
-			spec: FileSpec{
+			spec: Spec{
 				File: "not_existing.txt",
 				Line: 3,
 			},
@@ -124,7 +124,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Error with file not existing (with content)",
-			spec: FileSpec{
+			spec: Spec{
 				File:    "not_existing.txt",
 				Content: "Hello World",
 			},
@@ -133,7 +133,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Error while reading the line in file",
-			spec: FileSpec{
+			spec: Spec{
 				File: "not_existing.txt",
 				Line: 3,
 			},
@@ -144,7 +144,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Error while reading a full file",
-			spec: FileSpec{
+			spec: Spec{
 				File:    "not_existing.txt",
 				Content: "Hello World",
 			},
@@ -155,7 +155,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "Line in file not updated",
-			spec: FileSpec{
+			spec: Spec{
 				File: "foo.txt",
 				Line: 3,
 			},
@@ -171,7 +171,7 @@ func TestFile_Target(t *testing.T) {
 		},
 		{
 			name: "File not updated (input source, no specified line)",
-			spec: FileSpec{
+			spec: Spec{
 				File: "foo.txt",
 			},
 			mockReturnsFileExists: true,
@@ -212,7 +212,7 @@ func TestFile_Target(t *testing.T) {
 
 func TestFile_TargetFromSCM(t *testing.T) {
 	tests := []struct {
-		spec                  FileSpec
+		spec                  Spec
 		wantFiles             []string
 		name                  string
 		inputSourceValue      string
@@ -227,7 +227,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 	}{
 		{
 			name: "Passing Case with relative path",
-			spec: FileSpec{
+			spec: Spec{
 				File: "foo.txt",
 				Line: 3,
 			},
@@ -246,7 +246,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		},
 		{
 			name: "Passing Case with file created",
-			spec: FileSpec{
+			spec: Spec{
 				File:        "foo.txt",
 				ForceCreate: true,
 			},
@@ -265,7 +265,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		{
 			name:             "No line matched with matchPattern and ReplacePattern defined",
 			inputSourceValue: "3.9.0",
-			spec: FileSpec{
+			spec: Spec{
 				File:           "foo.txt",
 				MatchPattern:   "notmatching=*",
 				ReplacePattern: "maven_version= 3.9.0",
@@ -297,12 +297,13 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				contentRetriever: &mockText,
 			}
 			gotResult, gotFiles, _, gotErr := f.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
+
 			if tt.wantErr {
 				assert.Error(t, gotErr)
 				return
 			}
-
 			require.NoError(t, gotErr)
+
 			assert.Equal(t, tt.wantResult, gotResult)
 			assert.Equal(t, tt.wantFiles, gotFiles)
 			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
