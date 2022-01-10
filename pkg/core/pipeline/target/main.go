@@ -85,14 +85,14 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		targeter = &ch
 
 	case "dockerfile":
-		sourceSpec := dockerfile.Spec{}
+		targetSpec := dockerfile.Spec{}
 
-		err := mapstructure.Decode(target.Config.Spec, &sourceSpec)
+		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
 		if err != nil {
 			return nil, err
 		}
 
-		targeter, err = dockerfile.New(sourceSpec)
+		targeter, err = dockerfile.New(targetSpec)
 		if err != nil {
 			return nil, err
 		}
@@ -133,14 +133,14 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 	case "shell":
-		shellResourceSpec := shell.ShellSpec{}
+		targetSpec := shell.ShellSpec{}
 
-		err := mapstructure.Decode(target.Config.Spec, &shellResourceSpec)
+		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
 		if err != nil {
 			return nil, err
 		}
 
-		targeter, err = shell.New(shellResourceSpec)
+		targeter, err = shell.New(targetSpec)
 		if err != nil {
 			return nil, err
 		}
