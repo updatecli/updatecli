@@ -63,7 +63,7 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 		linePosition += 1
 
 		if s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
-			// if strings.HasPrefix(strings.ToLower(originalLine), strings.ToLower(d.Instruction.Keyword)) {
+			// if strings.HasPrefix(strings.ToLower(originalLine), strings.ToLower(d.spec.Instruction.Keyword)) {
 			newLine = s.KeywordLogic.ReplaceLine(sourceValue, originalLine, s.Matcher)
 
 			if newLine != originalLine {

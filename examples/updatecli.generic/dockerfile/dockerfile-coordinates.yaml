@@ -11,14 +11,14 @@ conditions:
     # Is the 1st ARG instruction has a key "GO_VERSION"?
     kind: dockerfile
     spec:
-      file: Dockerfile
+      file: ./examples/updatecli.generic/dockerfile/Dockerfile
       instruction: "ARG[0][0]"
       value: "GO_VERSION"
   is3rdFromSet:
     # Is there a 3rd FROm instruction (array -s zero-indexed)
     kind: dockerfile
     spec:
-      file: Dockerfile
+      file: ./examples/updatecli.generic/dockerfile/Dockerfile
       instruction: "FROM[2][0]"
 targets:
   updateFirstENVGoVersion:
@@ -26,5 +26,5 @@ targets:
     kind: dockerfile
     sourceID: lastVersion
     spec:
-      file: Dockerfile
+      file: ./examples/updatecli.generic/dockerfile/Dockerfile
       Instruction: ENV[0][1]

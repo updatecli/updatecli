@@ -3,38 +3,55 @@ package dockerfile
 import (
 	"fmt"
 
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/mobyparser"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/simpletextparser"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile/types"
 )
 
-// Dockerfile is struct that holds parameters for a "Dockerfile" kind from updatecli's parsing (YAML, command and flags)
-type Dockerfile struct {
+// Spec defines a specification for a "dockerfile" resource
+// parsed from an updatecli manifest file
+type Spec struct {
 	File        string            `yaml:"file"`
 	Instruction types.Instruction `yaml:"instruction"`
 	Value       string            `yaml:"value"`
-	parser      types.DockerfileParser
-	DryRun      bool
-	messages    []string
 }
 
-func (d *Dockerfile) SetParser() error {
-	var i interface{}
-	var err error
+// Dockerfile defines a resource of kind "dockerfile"
+type Dockerfile struct {
+	parser           types.DockerfileParser
+	spec             Spec
+	contentRetriever text.TextRetriever
+}
 
-	i = d.Instruction
-	switch i := i.(type) {
+// New returns a reference to a newly initialized Dockerfile object from a Spec
+// or an error if the provided Spec triggers a validation error.
+func New(newSpec Spec) (*Dockerfile, error) {
+	newParser, err := getParser(newSpec)
+	if err != nil {
+		return nil, err
+	}
+	newResource := &Dockerfile{
+		spec:             newSpec,
+		parser:           newParser,
+		contentRetriever: &text.Text{},
+	}
+
+	return newResource, nil
+}
+
+func getParser(spec Spec) (types.DockerfileParser, error) {
+	instruction := spec.Instruction
+	switch i := instruction.(type) {
 	default:
-		return fmt.Errorf("Parsing Error: cannot determine instruction: %v.", i)
+		return nil, fmt.Errorf("Parsing Error: cannot determine instruction: %v.", i)
 	case string:
-		d.parser = mobyparser.MobyParser{
+		return mobyparser.MobyParser{
 			Instruction: i,
-			Value:       d.Value,
-		}
-		return nil
+			Value:       spec.Value,
+		}, nil
 	case map[string]string:
-		d.parser, err = simpletextparser.NewSimpleTextDockerfileParser(i)
-		return err
+		return simpletextparser.NewSimpleTextDockerfileParser(i)
 	case map[string]interface{}:
 		// If the YAML parser is typing the map values weakly
 		// Then a new map with the correct type has to be constructed by copy
@@ -42,11 +59,10 @@ func (d *Dockerfile) SetParser() error {
 		for k, v := range i {
 			stringValue, ok := v.(string)
 			if !ok {
-				return fmt.Errorf("Parsing Error: cannot determine instruction: %v.", i)
+				return nil, fmt.Errorf("Parsing Error: cannot determine instruction: %v.", i)
 			}
 			parsedInstruction[k] = stringValue
 		}
-		d.parser, err = simpletextparser.NewSimpleTextDockerfileParser(parsedInstruction)
-		return err
+		return simpletextparser.NewSimpleTextDockerfileParser(parsedInstruction)
 	}
 }
