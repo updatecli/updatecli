@@ -11,17 +11,17 @@ conditions:
     # Is the Dockerfile having any ARG instruction with a key "GO_VERSION" and a default value?
     kind: dockerfile
     spec:
-      file: Dockerfile
+      file: ./examples/updatecli.generic/dockerfile/Dockerfile
       instruction:
         keyword: ARG
-        matcher: 'GO_VERSION='
+        matcher: 'GO_VERSION'
 targets:
   updateFROMJenkinsVersion:
     name: Update all the "FROM jenkins/jenkins*" instructions
     kind: dockerfile
     sourceID: lastVersion
     spec:
-      file: Dockerfile
+      file: ./examples/updatecli.generic/dockerfile/Dockerfile
       instruction:
         keyword: FROM
         matcher: "jenkins/jenkins"
@@ -30,7 +30,7 @@ targets:
     kind: dockerfile
     sourceID: lastVersion
     spec:
-      file: Dockerfile
+      file: ./examples/updatecli.generic/dockerfile/Dockerfile
       instruction:
         keyword: ARG
         matcher: GO_VERSION
@@ -39,7 +39,7 @@ targets:
     kind: dockerfile
     sourceID: lastVersion
     spec:
-      file: Dockerfile
+      file: ./examples/updatecli.generic/dockerfile/Dockerfile
       instruction:
         keyword: ENV
         matcher: JAVA_VERSION

@@ -1,36 +1,34 @@
 package dockerfile
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/helpers"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Condition test if the Dockerfile contains the correct key/value
 func (d *Dockerfile) Condition(source string) (bool, error) {
 
-	err := d.SetParser()
-	if err != nil {
-		return false, err
+	if !d.contentRetriever.FileExists(d.spec.File) {
+		return false, fmt.Errorf("The file %s does not exist.", d.spec.File)
 	}
-	// read Dockerfile content
-	dockerfileContent, err := helpers.ReadFile(d.File)
+	dockerfileContent, err := d.contentRetriever.ReadAll(d.spec.File)
 	if err != nil {
 		return false, err
 	}
 
-	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.File)
+	logrus.Infof("\n🐋 On (Docker)file %q:\n\n", d.spec.File)
 
-	found := d.parser.FindInstruction(dockerfileContent)
+	found := d.parser.FindInstruction([]byte(dockerfileContent))
 
 	return found, nil
 }
 
 // ConditionFromSCM run based on a file from SCM
 func (d *Dockerfile) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	d.File = path.Join(scm.GetDirectory(), d.File)
+	d.spec.File = path.Join(scm.GetDirectory(), d.spec.File)
 
 	found, err := d.Condition(source)
 	if err != nil {
