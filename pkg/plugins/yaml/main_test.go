@@ -385,13 +385,13 @@ image4:
 func Test_Validate(t *testing.T) {
 	tests := []struct {
 		name          string
-		spec          YamlSpec
+		spec          Spec
 		mockFileExist bool
 		wantErr       bool
 	}{
 		{
 			name: "Normal case",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "/tmp/test.yaml",
 				Key:  "foo.bar",
 			},
@@ -400,7 +400,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when 'File' is empty",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "",
 				Key:  "foo.bar",
 			},
@@ -409,7 +409,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when 'Key' is empty",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "/tmp/toto.yaml",
 				Key:  "",
 			},
@@ -418,7 +418,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when 'Path' is defined (deprecated)",
-			spec: YamlSpec{
+			spec: Spec{
 				Path: "/tmp/bar.yaml",
 				File: "/tmp/toto.yaml",
 				Key:  "foo.bar",
@@ -428,7 +428,7 @@ func Test_Validate(t *testing.T) {
 		},
 		{
 			name: "raises an error when 'File' does not exist",
-			spec: YamlSpec{
+			spec: Spec{
 				File: "/tmp/toto.yaml",
 				Key:  "foo.bar",
 			},
@@ -439,7 +439,7 @@ func Test_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			yaml := Yaml{
-				Spec: tt.spec,
+				spec: tt.spec,
 				contentRetriever: &text.MockTextRetriever{
 					Exists: tt.mockFileExist,
 				},

@@ -16,39 +16,41 @@ var (
 	yamlIdent int = 2
 )
 
-// Yaml defines a specification for a "yaml" resource
+// Spec defines a specification for a "yaml" resource
 // parsed from an updatecli manifest file
-type YamlSpec struct {
+type Spec struct {
 	File string
 	Key  string
 	// Deprecated: use File instead
-	Path  string
-	Value string
+	Path    string
+	Value   string
+	KeyOnly bool // [condition] allow checking for only the existence of a key (not its value)
 }
 
-// Yaml defines a resource of type "yaml"
+// Yaml defines a resource of kind "yaml"
 type Yaml struct {
-	Spec             YamlSpec
+	spec             Spec
 	contentRetriever text.TextRetriever
-	CurrentContent   string
+	currentContent   string
 }
 
 // New returns a reference to a newly initialized Yaml object from a YamlSpec
 // or an error if the provided YamlSpec triggers a validation error.
-func New(spec YamlSpec) (*Yaml, error) {
-	newYamlResource := &Yaml{
-		Spec:             spec,
+func New(newSpec Spec) (*Yaml, error) {
+
+	newResource := &Yaml{
+		spec:             newSpec,
 		contentRetriever: &text.Text{},
 	}
-	// TODO: generalize the Validate + Normalize as an interface to all resources
-	err := newYamlResource.Validate()
+
+	newResource.spec.File = strings.TrimPrefix(newResource.spec.File, "file://")
+
+	err := newResource.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	newYamlResource.Spec.File = strings.TrimPrefix(newYamlResource.Spec.File, "file://")
-
-	return newYamlResource, nil
+	return newResource, nil
 
 }
 
@@ -57,17 +59,17 @@ func (y *Yaml) Validate() error {
 	var validationErrors []string
 
 	// Check for all validation
-	if len(y.Spec.Path) > 0 {
+	if len(y.spec.Path) > 0 {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: Key 'path' is deprecated, use 'file' instead.")
 	}
-	if y.Spec.File == "" {
+	if y.spec.File == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'file' is empty.")
 	} else {
-		if !y.contentRetriever.FileExists(y.Spec.File) {
-			validationErrors = append(validationErrors, fmt.Sprintf("Invalid spec for yaml resource: the file %q does not exist.", y.Spec.File))
+		if !y.contentRetriever.FileExists(y.spec.File) {
+			validationErrors = append(validationErrors, fmt.Sprintf("Invalid spec for yaml resource: the file %q does not exist.", y.spec.File))
 		}
 	}
-	if y.Spec.Key == "" {
+	if y.spec.Key == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
 	}
 	// Return all the validation errors if found any
@@ -81,11 +83,11 @@ func (y *Yaml) Validate() error {
 // Read defines CurrentContent to the content of the file which path is specified in Spec.File
 func (y *Yaml) Read() error {
 	// Otherwise return the textual content
-	textContent, err := y.contentRetriever.ReadAll(y.Spec.File)
+	textContent, err := y.contentRetriever.ReadAll(y.spec.File)
 	if err != nil {
 		return err
 	}
-	y.CurrentContent = textContent
+	y.currentContent = textContent
 
 	return nil
 }

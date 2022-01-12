@@ -12,7 +12,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -21,7 +20,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/github"
 	"gopkg.in/yaml.v3"
 )
 
@@ -158,6 +156,14 @@ func (config *Config) Validate() error {
 			logrus.Errorf("bad parameters for pullrequest %q", id)
 			return err
 		}
+
+		// Validate references to other configuration objects
+		for _, target := range p.Targets {
+			if _, ok := config.Targets[target]; !ok {
+				logrus.Errorf("the specified target %q for the pull request %q does not exist", target, id)
+				return ErrBadConfig
+			}
+		}
 	}
 
 	for id, s := range config.Sources {
@@ -215,31 +221,11 @@ func (config *Config) Validate() error {
 			return ErrNotAllowedTemplatedKey
 		}
 
-		// Temporary code until we fully remove the old way to confgigure scm
+		// Temporary code until we fully remove the old way to configure scm
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if c.Scm != nil {
 		if len(c.Scm) > 0 {
-			logrus.Warningf("The directive 'scm' for the condition[%q] is now deprecated. Please use the new top level scms syntax", id)
-			if len(c.SCMID) == 0 {
-				if _, ok := config.SCMs["condition_"+id]; !ok {
-					for kind, spec := range c.Scm {
-
-						if config.SCMs == nil {
-							config.SCMs = make(map[string]scm.Config, 1)
-						}
-
-						config.SCMs["condition_"+id] = scm.Config{
-							Kind: kind,
-							Spec: spec}
-
-					}
-				}
-				c.SCMID = "condition_" + id
-				// Ensure we clean this deprecated variable
-			} else {
-				logrus.Warning("condition.SCMID is also defined, ignoring condition.Scm")
-			}
-			c.Scm = map[string]interface{}{}
+			generateScmFromLegacyCondition(id, c, config)
 		}
 
 		config.Conditions[id] = c
@@ -271,54 +257,14 @@ func (config *Config) Validate() error {
 			return ErrNotAllowedTemplatedKey
 		}
 
-		// Temporary code until we fully remove the old way to confgigure scm
+		// Temporary code until we fully remove the old way to configure scm
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if t.Scm != nil {
 		if len(t.Scm) > 0 {
-			logrus.Warningf("The directive 'scm' for the target[%q] is now deprecated. Please use the new top level scms syntax", id)
-			if len(t.SCMID) == 0 {
-				if _, ok := config.SCMs["target_"+id]; !ok {
-					for kind, spec := range t.Scm {
-						if config.SCMs == nil {
-							config.SCMs = make(map[string]scm.Config, 1)
-						}
-
-						config.SCMs["target_"+id] = scm.Config{
-							Kind: kind,
-							Spec: spec,
-						}
-
-						// Temporary code until we fully deprecated the old pullRequest syntax.
-						// At this stage we can only have github pullrequest so to not break backward
-						// compatibility, we automatically add a pullRequest configuration in case of github scm
-						// https://github.com/updatecli/updatecli/pull/388
-						if kind == "github" {
-							if config.PullRequests == nil {
-								config.PullRequests = make(map[string]pullrequest.Config, 1)
-							}
-
-							githubSpec := github.Spec{}
-
-							err := mapstructure.Decode(spec, &githubSpec)
-							if err != nil {
-								return err
-							}
-
-							config.PullRequests["target_"+id] = pullrequest.Config{
-								Kind:    kind,
-								Spec:    githubSpec.PullRequest,
-								ScmID:   "target_" + id,
-								Targets: []string{id},
-							}
-						}
-
-					}
-				}
-				t.SCMID = "target_" + id
-			} else {
-				logrus.Warning("target.SCMID is also defined, ignoring target.Scm")
+			err := generateScmFromLegacyTarget(id, t, config)
+			if err != nil {
+				return err
 			}
-			t.Scm = map[string]interface{}{}
 		}
 
 		config.Targets[id] = t

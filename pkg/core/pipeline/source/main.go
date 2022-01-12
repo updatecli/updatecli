@@ -12,11 +12,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/awsami"
-	"github.com/updatecli/updatecli/pkg/plugins/docker"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerdigest"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	gitTag "github.com/updatecli/updatecli/pkg/plugins/git/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
-	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
+	"github.com/updatecli/updatecli/pkg/plugins/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
@@ -166,6 +166,18 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 			return nil, nil, err
 		}
 
+	case "dockerDigest":
+		var sourceSpec dockerdigest.Spec
+
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
+			return nil, nil, err
+		}
+
+		sourcer, err = dockerdigest.New(sourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
+
 	case "githubRelease":
 		githubSpec := github.Spec{}
 
@@ -185,7 +197,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		changelog = &g
 
 	case "file":
-		var sourceSpec file.FileSpec
+		var sourceSpec file.Spec
 
 		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
@@ -197,7 +209,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		}
 
 	case "helmChart":
-		c := chart.Chart{}
+		c := helm.Chart{}
 		err := mapstructure.Decode(s.Config.Spec, &c)
 
 		if err != nil {
@@ -239,18 +251,8 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 
 		sourcer = &g
 
-	case "dockerDigest":
-		d := docker.Docker{}
-		err := mapstructure.Decode(s.Config.Spec, &d)
-
-		if err != nil {
-			return nil, nil, err
-		}
-
-		sourcer = &d
-
 	case "yaml":
-		var sourceSpec yaml.YamlSpec
+		var sourceSpec yaml.Spec
 
 		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err

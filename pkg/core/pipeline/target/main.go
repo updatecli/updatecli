@@ -10,10 +10,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
-	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
+	"github.com/updatecli/updatecli/pkg/plugins/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
@@ -73,7 +73,7 @@ func (t *Target) Check() (bool, error) {
 func Unmarshal(target *Target) (targeter Targeter, err error) {
 	switch target.Config.Kind {
 	case "helmChart":
-		ch := chart.Chart{}
+		ch := helm.Chart{}
 
 		err := mapstructure.Decode(target.Config.Spec, &ch)
 
@@ -85,15 +85,17 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		targeter = &ch
 
 	case "dockerfile":
-		d := dockerfile.Dockerfile{}
+		targetSpec := dockerfile.Spec{}
 
-		err := mapstructure.Decode(target.Config.Spec, &d)
+		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		targeter = &d
+		targeter, err = dockerfile.New(targetSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "gitTag":
 		t := tag.Tag{}
@@ -107,7 +109,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		targeter = &t
 
 	case "yaml":
-		var targetSpec yaml.YamlSpec
+		var targetSpec yaml.Spec
 
 		if err := mapstructure.Decode(target.Config.Spec, &targetSpec); err != nil {
 			return nil, err
@@ -119,7 +121,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 	case "file":
-		var targetSpec file.FileSpec
+		var targetSpec file.Spec
 
 		if err := mapstructure.Decode(target.Config.Spec, &targetSpec); err != nil {
 			return nil, err
@@ -131,14 +133,14 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 	case "shell":
-		shellResourceSpec := shell.ShellSpec{}
+		targetSpec := shell.ShellSpec{}
 
-		err := mapstructure.Decode(target.Config.Spec, &shellResourceSpec)
+		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
 		if err != nil {
 			return nil, err
 		}
 
-		targeter, err = shell.New(shellResourceSpec)
+		targeter, err = shell.New(targetSpec)
 		if err != nil {
 			return nil, err
 		}

@@ -9,11 +9,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/awsami"
-	"github.com/updatecli/updatecli/pkg/plugins/docker"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerfile"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
+	"github.com/updatecli/updatecli/pkg/plugins/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	gitTag "github.com/updatecli/updatecli/pkg/plugins/git/tag"
-	"github.com/updatecli/updatecli/pkg/plugins/helm/chart"
+	"github.com/updatecli/updatecli/pkg/plugins/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
@@ -142,27 +142,31 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		}
 
 	case "dockerImage":
-		d := docker.Docker{}
+		var conditionSpec dockerimage.Spec
 
-		err := mapstructure.Decode(condition.Config.Spec, &d)
-		if err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner = &d
+		conditioner, err = dockerimage.New(conditionSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "dockerfile":
-		d := dockerfile.Dockerfile{}
+		var conditionSpec dockerfile.Spec
 
-		err := mapstructure.Decode(condition.Config.Spec, &d)
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
+			return nil, err
+		}
+
+		conditioner, err = dockerfile.New(conditionSpec)
 		if err != nil {
 			return nil, err
 		}
 
-		conditioner = &d
-
 	case "file":
-		var conditionSpec file.FileSpec
+		var conditionSpec file.Spec
 
 		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
@@ -204,7 +208,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &g
 
 	case "helmChart":
-		ch := chart.Chart{}
+		ch := helm.Chart{}
 
 		err := mapstructure.Decode(condition.Config.Spec, &ch)
 		if err != nil {
@@ -214,7 +218,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &ch
 
 	case "yaml":
-		var conditionSpec yaml.YamlSpec
+		var conditionSpec yaml.Spec
 
 		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err

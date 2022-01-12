@@ -32,7 +32,7 @@ var (
 		},
 		{
 			Message:        "Bump updatecli version",
-			ExpectedOutput: "chore: Bump updatecli version\n\nMade with ❤️️  by updatecli",
+			ExpectedOutput: "chore: Bump updatecli version\n\nMade with ❤️️ by updatecli",
 			ExpectedError:  nil,
 			ExpectedBody:   "",
 			ExpectedTitle:  "Bump updatecli version",
