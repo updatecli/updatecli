@@ -50,9 +50,21 @@ type Spec struct {
 	AppVersion       bool   // [target] Boolean that define we must update the App Version
 }
 
-// Chart describe helm repository metadata
+// Chart defines a resource of kind "helmchart"
 type Chart struct {
 	spec Spec
+}
+
+// New returns a reference to a newly initialized Chart object from a Spec
+// or an error if the provided YamlSpec triggers a validation error.
+func New(newSpec Spec) (*Chart, error) {
+
+	newResource := &Chart{
+		spec: newSpec,
+	}
+
+	return newResource, nil
+
 }
 
 // loadIndex loads an index file and does minimal validity checking.
