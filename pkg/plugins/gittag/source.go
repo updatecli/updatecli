@@ -1,4 +1,4 @@
-package tag
+package gittag
 
 import (
 	"fmt"

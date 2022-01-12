@@ -14,8 +14,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/awsami"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerdigest"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
-	gitTag "github.com/updatecli/updatecli/pkg/plugins/git/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/gittag"
 	"github.com/updatecli/updatecli/pkg/plugins/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
@@ -245,7 +245,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		sourcer = &m
 
 	case "gitTag":
-		g := gitTag.Tag{}
+		g := gittag.Tag{}
 		err := mapstructure.Decode(s.Config.Spec, &g)
 
 		if err != nil {
