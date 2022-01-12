@@ -25,7 +25,7 @@ type File struct {
 	CurrentContent   string
 }
 
-// New returns a reference to a newly initialized File object from a Filespec
+// New returns a reference to a newly initialized File object from a Spec
 // or an error if the provided Filespec triggers a validation error.
 func New(spec Spec) (*File, error) {
 	newResource := &File{
