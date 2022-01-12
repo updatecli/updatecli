@@ -9,13 +9,13 @@ import (
 )
 
 // Source return the latest git tag based on create time
-func (t *Tag) Source(workingDir string) (string, error) {
+func (gt *GitTag) Source(workingDir string) (string, error) {
 
-	if len(t.Path) == 0 && len(workingDir) > 0 {
-		t.Path = workingDir
+	if len(gt.spec.Path) == 0 && len(workingDir) > 0 {
+		gt.spec.Path = workingDir
 	}
 
-	err := t.Validate()
+	err := gt.Validate()
 	if err != nil {
 		logrus.Errorln(err)
 		return "", err
@@ -28,17 +28,17 @@ func (t *Tag) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	err = t.VersionFilter.Search(tags)
+	err = gt.spec.VersionFilter.Search(tags)
 	if err != nil {
 		return "", err
 	}
-	value := t.foundVersion.ParsedVersion
+	value := gt.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
-		logrus.Infof("%s No Git Tag found matching pattern %q", result.FAILURE, t.VersionFilter.Pattern)
-		return value, fmt.Errorf("no Git tag found matching pattern %q", t.VersionFilter.Pattern)
+		logrus.Infof("%s No Git Tag found matching pattern %q", result.FAILURE, gt.spec.VersionFilter.Pattern)
+		return value, fmt.Errorf("no Git tag found matching pattern %q", gt.spec.VersionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("%s Git Tag %q found, matching pattern %q", result.SUCCESS, value, t.VersionFilter.Pattern)
+		logrus.Infof("%s Git Tag %q found, matching pattern %q", result.SUCCESS, value, gt.spec.VersionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in gitTag source")
 	}

@@ -198,7 +198,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &m
 
 	case "gitTag":
-		g := gittag.Tag{}
+		g := gittag.GitTag{}
 		err := mapstructure.Decode(condition.Config.Spec, &g)
 
 		if err != nil {

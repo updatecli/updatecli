@@ -99,7 +99,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 	case "gitTag":
-		t := gittag.Tag{}
+		t := gittag.GitTag{}
 
 		err := mapstructure.Decode(target.Config.Spec, &t)
 		if err != nil {

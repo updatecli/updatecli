@@ -11,34 +11,34 @@ import (
 )
 
 // Target create a tag if needed from a local git repository, without pushing the tag
-func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
-	if len(t.VersionFilter.Pattern) == 0 {
-		t.VersionFilter.Pattern = source
+func (gt *GitTag) Target(source string, dryRun bool) (changed bool, err error) {
+	if len(gt.spec.VersionFilter.Pattern) == 0 {
+		gt.spec.VersionFilter.Pattern = source
 	}
 
-	if len(t.Path) == 0 {
+	if len(gt.spec.Path) == 0 {
 		logrus.Errorf("At least path settings required")
 	}
 
-	err = t.Validate()
+	err = gt.Validate()
 
 	if err != nil {
 		logrus.Errorln(err)
 		return changed, err
 	}
 
-	tags, err := generic.Tags(t.Path)
+	tags, err := generic.Tags(gt.spec.Path)
 
 	if err != nil {
 		logrus.Errorln(err)
 		return false, err
 	}
 
-	err = t.VersionFilter.Search(tags)
+	err = gt.spec.VersionFilter.Search(tags)
 	if err != nil {
 		return false, err
 	}
-	existingTag := t.foundVersion.ParsedVersion
+	existingTag := gt.foundVersion.ParsedVersion
 
 	// A matching git tag has been found
 	if len(existingTag) != 0 {
@@ -46,7 +46,7 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 		return changed, nil
 	}
 
-	newTag := t.VersionFilter.Pattern
+	newTag := gt.spec.VersionFilter.Pattern
 
 	logrus.Printf("%s git tag %q not found, will create it", result.ATTENTION, newTag)
 
@@ -54,7 +54,7 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 		return changed, err
 	}
 
-	changed, err = generic.NewTag(newTag, t.Message, t.Path)
+	changed, err = generic.NewTag(newTag, gt.spec.Message, gt.spec.Path)
 
 	if err != nil {
 		return changed, err
@@ -62,7 +62,7 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 	logrus.Printf("%s git tag %q created", result.ATTENTION, newTag)
 
 	scm := git.Git{
-		Directory: t.Path,
+		Directory: gt.spec.Path,
 	}
 
 	err = scm.PushTag(newTag)
@@ -79,22 +79,22 @@ func (t *Tag) Target(source string, dryRun bool) (changed bool, err error) {
 }
 
 // TargetFromSCM create and push a git tag based on the SCM configuration
-func (t *Tag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+func (gt *GitTag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
-	if len(t.VersionFilter.Pattern) == 0 {
-		t.VersionFilter.Pattern = source
+	if len(gt.spec.VersionFilter.Pattern) == 0 {
+		gt.spec.VersionFilter.Pattern = source
 	}
 
-	err = t.Validate()
+	err = gt.Validate()
 
 	if err != nil {
 		logrus.Errorln(err)
 		return changed, files, message, err
 	}
 
-	if len(t.Path) > 0 {
+	if len(gt.spec.Path) > 0 {
 		logrus.Warningf("Path setting value %q ignored as it conflicts with %q from scm configuration",
-			t.Path,
+			gt.spec.Path,
 			scm.GetDirectory())
 	}
 	path := scm.GetDirectory()
@@ -106,11 +106,11 @@ func (t *Tag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 		return changed, files, message, err
 	}
 
-	err = t.VersionFilter.Search(tags)
+	err = gt.spec.VersionFilter.Search(tags)
 	if err != nil {
 		return changed, files, message, err
 	}
-	existingTag := t.foundVersion.ParsedVersion
+	existingTag := gt.foundVersion.ParsedVersion
 
 	// A matching git tag has been found
 	if len(existingTag) != 0 {
@@ -120,7 +120,7 @@ func (t *Tag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 		return changed, files, message, err
 	}
 
-	newTag := t.VersionFilter.Pattern
+	newTag := gt.spec.VersionFilter.Pattern
 
 	logrus.Printf("%s git tag %q not found, creating it", result.ATTENTION, newTag)
 
@@ -128,7 +128,7 @@ func (t *Tag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 		return changed, files, message, err
 	}
 
-	changed, err = generic.NewTag(newTag, t.Message, path)
+	changed, err = generic.NewTag(newTag, gt.spec.Message, path)
 	if err != nil {
 		return changed, files, message, err
 	}
