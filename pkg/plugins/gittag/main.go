@@ -19,6 +19,21 @@ type GitTag struct {
 	foundVersion version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
 }
 
+// New returns a reference to a newly initialized GitTag object from a Spec
+// or an error if the provided Filespec triggers a validation error.
+func New(spec Spec) (*GitTag, error) {
+	newResource := &GitTag{
+		spec: spec,
+	}
+
+	err := newResource.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return newResource, nil
+}
+
 // Validate tests that tag struct is correctly configured
 func (gt *GitTag) Validate() error {
 	err := gt.spec.VersionFilter.Validate()

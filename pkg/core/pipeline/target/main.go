@@ -99,15 +99,17 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 	case "gitTag":
-		t := gittag.GitTag{}
+		targetSpec := gittag.Spec{}
 
-		err := mapstructure.Decode(target.Config.Spec, &t)
+		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		targeter = &t
+		targeter, err = gittag.New(targetSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "yaml":
 		var targetSpec yaml.Spec

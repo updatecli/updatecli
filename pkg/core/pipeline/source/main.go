@@ -245,14 +245,16 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		sourcer = &m
 
 	case "gitTag":
-		g := gittag.GitTag{}
-		err := mapstructure.Decode(s.Config.Spec, &g)
+		var sourceSpec gittag.Spec
 
-		if err != nil {
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
 		}
 
-		sourcer = &g
+		sourcer, err = gittag.New(sourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
 
 	case "yaml":
 		var sourceSpec yaml.Spec

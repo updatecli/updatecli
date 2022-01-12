@@ -198,14 +198,16 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &m
 
 	case "gitTag":
-		g := gittag.GitTag{}
-		err := mapstructure.Decode(condition.Config.Spec, &g)
+		var conditionSpec gittag.Spec
 
-		if err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner = &g
+		conditioner, err = gittag.New(conditionSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "helmChart":
 		var conditionSpec helm.Spec
