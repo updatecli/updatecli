@@ -10,26 +10,26 @@ import (
 func TestShell_New(t *testing.T) {
 	tests := []struct {
 		name      string
-		spec      ShellSpec
+		spec      Spec
 		wantErr   bool
 		wantShell *Shell
 	}{
 		{
 			name: "Normal case",
-			spec: ShellSpec{
+			spec: Spec{
 				Command: "echo Hello",
 			},
 			wantErr: false,
 			wantShell: &Shell{
 				executor: &nativeCommandExecutor{},
-				spec: ShellSpec{
+				spec: Spec{
 					Command: "echo Hello",
 				},
 			},
 		},
 		{
 			name: "raises an error when command is empty",
-			spec: ShellSpec{
+			spec: Spec{
 				Command: "",
 			},
 			wantErr: true,

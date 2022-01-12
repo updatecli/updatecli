@@ -50,7 +50,7 @@ func TestShell_Condition(t *testing.T) {
 			}
 			s := Shell{
 				executor: &mock,
-				spec: ShellSpec{
+				spec: Spec{
 					Command: tt.command,
 				},
 			}
@@ -106,7 +106,7 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 			}
 			s := Shell{
 				executor: &mce,
-				spec: ShellSpec{
+				spec: Spec{
 					Command: tt.command,
 				},
 			}

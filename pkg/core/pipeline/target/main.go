@@ -133,7 +133,7 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 	case "shell":
-		targetSpec := shell.ShellSpec{}
+		targetSpec := shell.Spec{}
 
 		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
 		if err != nil {

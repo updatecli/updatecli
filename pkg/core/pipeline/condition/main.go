@@ -230,7 +230,7 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		}
 
 	case "shell":
-		var conditionSpec shell.ShellSpec
+		var conditionSpec shell.Spec
 
 		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
