@@ -71,13 +71,8 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
 
       - name: Run End to End tests
+        run: make test-e2e
         env:
           IS_TTY: true # https://github.com/ovh/venom#use-venom-in-ci
           # Access only to ec2 AMI api in read-only
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: make test-e2e
