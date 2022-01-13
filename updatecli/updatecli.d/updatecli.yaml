@@ -1,0 +1,45 @@
+title: Bump udpatecli version
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: updatecli
+      email: me@olblak.com
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      branch: main
+
+sources:
+  latestVersion:
+    name: Get latest updatecli release
+    kind: githubRelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+
+targets:
+  bugReport:
+    name: '[bug-report] Update updatecli version to {{ source "latestVersion" }}'
+    kind: file
+    spec:
+      file: .github/ISSUE_TEMPLATE/1-bug-report.yml
+      matchPattern: '\*\*updatecli\*\*: .*'
+      content: '**updatecli**: {{ source `latestVersion` }}'
+    scmID: default
+
+pullrequests:
+  default:
+    title: '[updatecli] Bump updatecli version to {{ source "latestVersion" }}'
+    kind: github
+    scmID: default
+    targets:
+      - bugReport
+    spec:
+      labels:
+        - chore
+        - skip-changelog
