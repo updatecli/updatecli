@@ -42,3 +42,4 @@ pullrequests:
     spec:
       labels:
         - chore
+        - skip-report
