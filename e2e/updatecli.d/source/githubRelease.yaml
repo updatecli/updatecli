@@ -9,8 +9,8 @@ scms:
       email: "updatecli@olblak.com"
       owner: "updatecli"
       repository: "updatecli"
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      token: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.username }}'
       branch: "main"
 
 sources:
@@ -20,7 +20,7 @@ sources:
     spec:
       owner: "updatecli"
       repository: "updatecli"
-      token: {{ requiredEnv .github.token }}
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      token: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.username }}'
       versionFilter:
         kind: latest

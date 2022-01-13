@@ -9,6 +9,6 @@ sources:
       owner: "updatecli"
       repository: "updatecli"
       token: '{{ requiredEnv .github.token }}'
-      username: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.username }}'
       versionFilter:
         kind: "latest"
