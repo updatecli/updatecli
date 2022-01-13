@@ -45,3 +45,5 @@ version-resolver:
       - 'bug'
       - 'chore'
   default: patch
+exclude-labels:
+  - 'skip-changelog'
