@@ -67,7 +67,7 @@ func TestShell_Target(t *testing.T) {
 			}
 			s := Shell{
 				executor: &mock,
-				spec: ShellSpec{
+				spec: Spec{
 					Command: tt.command,
 				},
 			}
@@ -133,7 +133,7 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			}
 			s := Shell{
 				executor: &mock,
-				spec: ShellSpec{
+				spec: Spec{
 					Command: tt.command,
 				},
 			}

@@ -267,7 +267,7 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		}
 
 	case "shell":
-		shellResourceSpec := shell.ShellSpec{}
+		shellResourceSpec := shell.Spec{}
 
 		err := mapstructure.Decode(s.Config.Spec, &shellResourceSpec)
 		if err != nil {
