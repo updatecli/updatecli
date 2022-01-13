@@ -6,28 +6,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ShellSpec defines a specification for a "shell" resource
+// Spec defines a specification for a "shell" resource
 // parsed from an updatecli manifest file
-type ShellSpec struct {
+type Spec struct {
 	Command string
 }
 
-// Shell defines a resource of type "shell"
+// Shell defines a resource of kind "shell"
 type Shell struct {
 	executor commandExecutor
-	spec     ShellSpec
+	spec     Spec
 	result   commandResult
 }
 
 // New returns a reference to a newly initialized Shell object from a ShellSpec
 // or an error if the provided ShellSpec triggers a validation error.
-func New(spec ShellSpec) (*Shell, error) {
-	if spec.Command == "" {
+func New(newSpec Spec) (*Shell, error) {
+	if newSpec.Command == "" {
 		return nil, &ErrEmptyCommand{}
 	}
 	return &Shell{
 		executor: &nativeCommandExecutor{},
-		spec:     spec,
+		spec:     newSpec,
 	}, nil
 }
 

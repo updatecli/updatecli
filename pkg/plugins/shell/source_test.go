@@ -57,7 +57,7 @@ func TestShell_Source(t *testing.T) {
 			}
 			s := Shell{
 				executor: &mock,
-				spec: ShellSpec{
+				spec: Spec{
 					Command: tt.command,
 				},
 			}
