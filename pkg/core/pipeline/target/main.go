@@ -73,16 +73,17 @@ func (t *Target) Check() (bool, error) {
 func Unmarshal(target *Target) (targeter Targeter, err error) {
 	switch target.Config.Kind {
 	case "helmChart":
-		ch := helm.Chart{}
+		targetSpec := helm.Spec{}
 
-		err := mapstructure.Decode(target.Config.Spec, &ch)
-
+		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		targeter = &ch
+		targeter, err = helm.New(targetSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "dockerfile":
 		targetSpec := dockerfile.Spec{}

@@ -34,7 +34,7 @@ type Yaml struct {
 	currentContent   string
 }
 
-// New returns a reference to a newly initialized Yaml object from a YamlSpec
+// New returns a reference to a newly initialized Yaml object from a Spec
 // or an error if the provided YamlSpec triggers a validation error.
 func New(newSpec Spec) (*Yaml, error) {
 

@@ -208,14 +208,16 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &g
 
 	case "helmChart":
-		ch := helm.Chart{}
+		var conditionSpec helm.Spec
 
-		err := mapstructure.Decode(condition.Config.Spec, &ch)
-		if err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner = &ch
+		conditioner, err = helm.New(conditionSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "yaml":
 		var conditionSpec yaml.Spec
