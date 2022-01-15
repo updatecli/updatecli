@@ -29,7 +29,7 @@ func (gt *GitTag) Condition(source string) (bool, error) {
 		return false, err
 	}
 
-	err = gt.spec.VersionFilter.Search(tags)
+	gt.foundVersion, err = gt.spec.VersionFilter.Search(tags)
 	if err != nil {
 		return false, err
 	}
@@ -80,7 +80,7 @@ func (gt *GitTag) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, err
 		return false, err
 	}
 
-	err = gt.spec.VersionFilter.Search(tags)
+	gt.foundVersion, err = gt.spec.VersionFilter.Search(tags)
 	if err != nil {
 		return false, err
 	}

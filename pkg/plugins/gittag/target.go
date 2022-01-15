@@ -34,7 +34,7 @@ func (gt *GitTag) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, err
 	}
 
-	err = gt.spec.VersionFilter.Search(tags)
+	gt.foundVersion, err = gt.spec.VersionFilter.Search(tags)
 	if err != nil {
 		return false, err
 	}
@@ -106,7 +106,7 @@ func (gt *GitTag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) 
 		return changed, files, message, err
 	}
 
-	err = gt.spec.VersionFilter.Search(tags)
+	gt.foundVersion, err = gt.spec.VersionFilter.Search(tags)
 	if err != nil {
 		return changed, files, message, err
 	}

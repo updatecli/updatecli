@@ -28,7 +28,7 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	err = gt.spec.VersionFilter.Search(tags)
+	gt.foundVersion, err = gt.spec.VersionFilter.Search(tags)
 	if err != nil {
 		return "", err
 	}

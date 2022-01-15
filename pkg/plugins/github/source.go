@@ -33,11 +33,10 @@ func (g *Github) Source(workingDir string) (value string, err error) {
 		}
 	}
 
-	err = g.Spec.VersionFilter.Search(versions)
+	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
-	g.foundVersion = g.Spec.VersionFilter.FoundVersion
 	value = g.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
