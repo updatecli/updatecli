@@ -1,0 +1,22 @@
+title: "Test new gitTag resource"
+
+scms:
+  updatecli:
+    kind: git
+    spec:
+      url: "https://github.com/updatecli/updatecli.git"
+      branch: "main"
+
+sources:
+  git:
+    name: Get Latest updatecli test
+    kind: gitTag
+    scmID: updatecli
+  githubRegex:
+    name: Get Latest updatecli test
+    kind: gitTag
+    spec:
+      versionFilter:
+        kind: semver
+        pattern: "~0.1"
+    scmID: updatecli
