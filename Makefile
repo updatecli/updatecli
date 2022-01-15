@@ -2,12 +2,11 @@
 GOVERSION=$(shell go version)
 export GOVERSION
 
-DOCKER_IMAGE=olblak/updatecli
-DOCKER_TAG=$(shell git describe --tags)
 DOCKER_BUILDKIT=1
 export DOCKER_BUILDKIT
 
-VENOM_VAR_binpath=$(PWD)/dist/updatecli_linux_amd64
+# Used by the test-e2e system
+VENOM_VAR_binpath=$(CURDIR)/dist/updatecli_$(shell go env GOOS)_$(shell GO env GOARCH)
 export VENOM_VAR_binpath
 
 local_bin=./dist/updatecli_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)/updatecli
@@ -47,10 +46,6 @@ apply: ## Run the "apply" updatecli's subcommand for smoke test
 version: ## Run the "version" updatecli's subcommand for smoke test
 	"$(local_bin)" version
 
-.PHONY: display
-display: ## Prints the current DOCKER_TAG
-	echo $(DOCKER_TAG)
-
 .PHONY: test
 test: ## Execute the Golang's tests for updatecli
 	go test ./...
@@ -60,6 +55,7 @@ test-short: ## Execute the Golang's tests for updatecli
 
 .PHONY: test-e2e
 test-e2e: ## Execute updatecli end to end tests
+	echo $$VENOM_VAR_binpath
 	time venom run e2e/venom.d/* --output-dir ./e2e --format yaml
 
 .PHONY: lint
