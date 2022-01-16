@@ -42,20 +42,22 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 				p.Sources[condition.Config.SourceID].Output +
 				p.Sources[condition.Config.SourceID].Config.Postfix)
 
+		if err != nil {
+			// Show error to end user
+			logrus.Error(err)
+			if condition.Result != result.SUCCESS {
+				globalResult = false
+			}
+		}
 		rpt.Result = condition.Result
 
+		// Update pipeline after each condition run
 		if err == nil {
-
-			// Update pipeline after each condition run
 			err = p.Config.Update(p)
 			if err != nil {
 				globalResult = false
 				return globalResult, err
 			}
-		}
-
-		if err != nil || strings.Compare(condition.Result, result.SUCCESS) != 0 {
-			globalResult = false
 		}
 
 		p.Conditions[id] = condition
