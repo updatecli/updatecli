@@ -37,13 +37,11 @@ func (gt *GitTag) condition(source string) (bool, error) {
 
 	err := gt.Validate()
 	if err != nil {
-		logrus.Errorln(err)
 		return false, err
 	}
 
 	tags, err := generic.Tags(gt.spec.Path)
 	if err != nil {
-		logrus.Errorln(err)
 		return false, err
 	}
 

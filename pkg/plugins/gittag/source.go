@@ -17,14 +17,12 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 
 	err := gt.Validate()
 	if err != nil {
-		logrus.Errorln(err)
 		return "", err
 	}
 
 	tags, err := generic.Tags(workingDir)
 
 	if err != nil {
-		logrus.Errorln(err)
 		return "", err
 	}
 
