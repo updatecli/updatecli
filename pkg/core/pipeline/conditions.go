@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // RunConditions run every conditions for a given configuration config.
@@ -43,22 +42,19 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 				p.Sources[condition.Config.SourceID].Config.Postfix)
 
 		if err != nil {
-			// Show error to end user
+			// Show error to end user if any
 			logrus.Error(err)
-			if condition.Result != result.SUCCESS {
-				globalResult = false
-			}
-		}
-		rpt.Result = condition.Result
-
-		// Update pipeline after each condition run
-		if err == nil {
+			// Fail globally (even though other conditions will be executed)
+			globalResult = false
+		} else {
+			// Update pipeline's configuration after each condition run
 			err = p.Config.Update(p)
 			if err != nil {
 				globalResult = false
 				return globalResult, err
 			}
 		}
+		rpt.Result = condition.Result
 
 		p.Conditions[id] = condition
 		p.Report.Conditions[id] = rpt
