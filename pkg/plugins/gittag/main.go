@@ -1,6 +1,9 @@
 package gittag
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/updatecli/updatecli/pkg/plugins/version"
 )
 
@@ -21,23 +24,26 @@ type GitTag struct {
 // New returns a reference to a newly initialized GitTag object from a Spec
 // or an error if the provided Filespec triggers a validation error.
 func New(spec Spec) (*GitTag, error) {
-	newResource := &GitTag{
+	return &GitTag{
 		spec: spec,
-	}
-
-	err := newResource.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	return newResource, nil
+	}, nil
 }
 
 // Validate tests that tag struct is correctly configured
 func (gt *GitTag) Validate() error {
+	validationErrors := []string{}
+	if gt.spec.Path == "" {
+		validationErrors = append(validationErrors, "Git working directory path is empty while it must be specified. Did you specify an `scmID` or a `spec.path`?")
+	}
+
 	err := gt.spec.VersionFilter.Validate()
 	if err != nil {
-		return err
+		validationErrors = append(validationErrors, err.Error())
+	}
+
+	// Return all the validation errors if found any
+	if len(validationErrors) > 0 {
+		return fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	return nil
