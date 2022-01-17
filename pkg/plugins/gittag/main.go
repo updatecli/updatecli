@@ -12,7 +12,7 @@ import (
 type Spec struct {
 	Path          string         // Path contains the git repository path
 	VersionFilter version.Filter // VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	Message       string         // Message associated to the git Tag
+	Message       string         // Message associated to the git tag
 }
 
 // GitTag defines a resource of kind "gittag"
@@ -43,7 +43,7 @@ func (gt *GitTag) Validate() error {
 
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("Validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	return nil

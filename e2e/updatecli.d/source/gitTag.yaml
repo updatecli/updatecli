@@ -9,11 +9,11 @@ scms:
 
 sources:
   git:
-    name: Get Latest updatecli test
+    name: Get latest updatecli test
     kind: gitTag
     scmID: updatecli
   githubRegex:
-    name: Get Latest updatecli test
+    name: Get latest updatecli test
     kind: gitTag
     spec:
       versionFilter:

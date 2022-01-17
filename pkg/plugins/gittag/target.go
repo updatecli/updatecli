@@ -9,14 +9,14 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )
 
-// Target create a tag if needed from a local git repository, without pushing the tag
+// Target creates a tag if needed from a local git repository, without pushing the tag
 func (gt *GitTag) Target(source string, dryRun bool) (changed bool, err error) {
 	changed, _, _, err = gt.target(source, dryRun)
 
 	return changed, err
 }
 
-// TargetFromSCM create and push a git tag based on the SCM configuration
+// TargetFromSCM creates and pushes a git tag based on the SCM configuration
 func (gt *GitTag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 	if len(gt.spec.Path) > 0 {
 		logrus.Warningf("Path setting value %q overridden by the scm configuration (value %q)",
@@ -35,7 +35,7 @@ func (gt *GitTag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) 
 		logrus.Errorf("Git push tag error: %s", err)
 		return changed, files, message, err
 	}
-	logrus.Infof("%s The Git Tag %q was pushed successfully to the specified remote.", result.ATTENTION, source)
+	logrus.Infof("%s The git tag %q was pushed successfully to the specified remote.", result.ATTENTION, source)
 	return changed, files, message, err
 }
 
@@ -62,7 +62,7 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 		return false, files, message, err
 	}
 
-	// Check if the provided tag (from source input value) already exist
+	// Check if the provided tag (from source input value) already exists
 	gt.spec.VersionFilter.Pattern = source
 	tags, err := generic.Tags(gt.spec.Path)
 	if err != nil {
@@ -81,12 +81,12 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 		return false, files, message, nil
 	}
 
-	// Otherwise proceed to creates this new tag
-	logrus.Printf("%s The Git Tag %q does not exist: creating it.", result.ATTENTION, source)
+	// Otherwise proceed to create this new tag
+	logrus.Printf("%s The git tag %q does not exist: creating it.", result.ATTENTION, source)
 
 	if dryRun {
 		// Dry run: no changes to apply.
-		// Return early without creating tag but notifies that a change should be made.
+		// Return early without creating tag but notify that a change should be made.
 		return true, files, message, nil
 	}
 
@@ -94,7 +94,7 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 	if err != nil {
 		return changed, files, message, err
 	}
-	logrus.Printf("%s The Git Tag %q was created.", result.ATTENTION, source)
+	logrus.Printf("%s The git tag %q has been created.", result.ATTENTION, source)
 
 	return changed, files, message, nil
 }

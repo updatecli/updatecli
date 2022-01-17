@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/git/generic"
 )
 
-// Source return the latest git tag based on create time
+// Source returns the latest git tag based on create time
 func (gt *GitTag) Source(workingDir string) (string, error) {
 
 	if len(gt.spec.Path) == 0 && len(workingDir) > 0 {
@@ -33,10 +33,10 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 	value := gt.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
-		logrus.Infof("%s No Git Tag found matching pattern %q", result.FAILURE, gt.spec.VersionFilter.Pattern)
-		return value, fmt.Errorf("no Git tag found matching pattern %q", gt.spec.VersionFilter.Pattern)
+		logrus.Infof("%s No git tag found matching pattern %q", result.FAILURE, gt.spec.VersionFilter.Pattern)
+		return value, fmt.Errorf("No git tag found matching pattern %q", gt.spec.VersionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("%s Git Tag %q found, matching pattern %q", result.SUCCESS, value, gt.spec.VersionFilter.Pattern)
+		logrus.Infof("%s Git tag %q found matching pattern %q", result.SUCCESS, value, gt.spec.VersionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in gitTag source")
 	}

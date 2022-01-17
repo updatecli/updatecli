@@ -31,7 +31,7 @@ func (gt *GitTag) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, err
 func (gt *GitTag) condition(source string) (bool, error) {
 	// If source input is empty, then it means that it was disabled by the user with `disablesourceinput: true`
 	if source != "" {
-		logrus.Infof("Source Input Value detected: using it as spec.versionfilter.pattern")
+		logrus.Infof("Source input value detected: using it as spec.versionfilter.pattern")
 		gt.spec.VersionFilter.Pattern = source
 	}
 
@@ -52,12 +52,12 @@ func (gt *GitTag) condition(source string) (bool, error) {
 	tag := gt.foundVersion.ParsedVersion
 
 	if len(tag) == 0 {
-		err = fmt.Errorf("No Git Tag matching pattern %q, found", gt.spec.VersionFilter.Pattern)
+		err = fmt.Errorf("No git tag matching pattern %q, found", gt.spec.VersionFilter.Pattern)
 		return false, err
 	}
 
 	if tag == gt.spec.VersionFilter.Pattern {
-		logrus.Printf("%s Git Tag %q matching\n", result.SUCCESS, gt.spec.VersionFilter.Pattern)
+		logrus.Printf("%s Git tag %q matching\n", result.SUCCESS, gt.spec.VersionFilter.Pattern)
 		return true, nil
 	}
 
