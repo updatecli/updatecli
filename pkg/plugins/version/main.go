@@ -10,9 +10,8 @@ import (
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
 type Filter struct {
-	Kind         string
-	Pattern      string
-	FoundVersion Version
+	Kind    string
+	Pattern string
 }
 
 // FoundVersions defines a version from a filter that holds both the original found version and the parsed version (depending on the kind of filter: semantic, text, etc.)
@@ -72,28 +71,31 @@ func (f *Filter) Validate() error {
 }
 
 // Search returns a value matching pattern
-func (f *Filter) Search(versions []string) error {
+func (f *Filter) Search(versions []string) (Version, error) {
 
 	logrus.Infof("Searching for version matching pattern %q", f.Pattern)
+
+	foundVersion := Version{}
 
 	switch f.Kind {
 	case LATESTVERSIONKIND:
 		if f.Pattern == LATESTVERSIONKIND {
-			f.FoundVersion.ParsedVersion = versions[len(versions)-1]
-			f.FoundVersion.OriginalVersion = f.FoundVersion.ParsedVersion
+			foundVersion.ParsedVersion = versions[len(versions)-1]
+			foundVersion.OriginalVersion = foundVersion.ParsedVersion
+			return foundVersion, nil
 		}
 		// Search for simple text matching
 		for i := len(versions) - 1; i >= 0; i-- {
 			if strings.Compare(f.Pattern, versions[i]) == 0 {
-				f.FoundVersion.ParsedVersion = versions[i]
-				f.FoundVersion.OriginalVersion = versions[i]
-				break
+				foundVersion.ParsedVersion = versions[i]
+				foundVersion.OriginalVersion = versions[i]
+				return foundVersion, nil
 			}
 		}
 	case REGEXVERSIONKIND:
 		re, err := regexp.Compile(f.Pattern)
 		if err != nil {
-			return err
+			return foundVersion, err
 		}
 
 		// Parse version in by date publishing
@@ -101,9 +103,9 @@ func (f *Filter) Search(versions []string) error {
 		for i := len(versions) - 1; i >= 0; i-- {
 			v := versions[i]
 			if re.MatchString(v) {
-				f.FoundVersion.ParsedVersion = v
-				f.FoundVersion.OriginalVersion = v
-				break
+				foundVersion.ParsedVersion = v
+				foundVersion.OriginalVersion = v
+				return foundVersion, nil
 			}
 		}
 	case SEMVERVERSIONKIND:
@@ -114,13 +116,12 @@ func (f *Filter) Search(versions []string) error {
 		err := s.Search(versions)
 		if err != nil {
 			logrus.Error(err)
-			return err
+			return foundVersion, err
 		}
-		f.FoundVersion = s.FoundVersion
+		return s.FoundVersion, nil
 	default:
-		return fmt.Errorf("Unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
-
+		return foundVersion, fmt.Errorf("Unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
 	}
 
-	return nil
+	return foundVersion, fmt.Errorf("No version found matching pattern %q", f.Pattern)
 }

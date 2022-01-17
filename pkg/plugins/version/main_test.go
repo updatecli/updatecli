@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type SearchDataSet struct {
@@ -117,13 +118,17 @@ var (
 func TestSearch(t *testing.T) {
 	for _, d := range searchDataSet {
 		err := d.Filter.Validate()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		err = d.Filter.Search(d.Versions)
-		assert.Equal(t, d.ExpectedError, err)
+		foundVersion, err := d.Filter.Search(d.Versions)
 
-		got := d.Filter.FoundVersion.ParsedVersion
-		assert.Equal(t, d.ExpectedResult, got)
+		if d.ExpectedError != nil {
+			assert.Equal(t, d.ExpectedError, err)
+			return
+		}
+
+		require.NoError(t, err)
+		assert.Equal(t, d.ExpectedResult, foundVersion.ParsedVersion)
 	}
 }
 

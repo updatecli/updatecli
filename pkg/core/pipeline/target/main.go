@@ -12,7 +12,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
-	"github.com/updatecli/updatecli/pkg/plugins/git/tag"
+	"github.com/updatecli/updatecli/pkg/plugins/gittag"
 	"github.com/updatecli/updatecli/pkg/plugins/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/yaml"
@@ -99,15 +99,17 @@ func Unmarshal(target *Target) (targeter Targeter, err error) {
 		}
 
 	case "gitTag":
-		t := tag.Tag{}
+		targetSpec := gittag.Spec{}
 
-		err := mapstructure.Decode(target.Config.Spec, &t)
+		err := mapstructure.Decode(target.Config.Spec, &targetSpec)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
 			return nil, err
 		}
 
-		targeter = &t
+		targeter, err = gittag.New(targetSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "yaml":
 		var targetSpec yaml.Spec

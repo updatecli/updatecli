@@ -1,12 +1,22 @@
 title: "Test new gitTag resource"
+
+scms:
+  updatecli:
+    kind: git
+    spec:
+      url: "https://github.com/updatecli/updatecli.git"
+      branch: "main"
+  nocode:
+    kind: git
+    spec:
+      url: "https://github.com/olblak/nocode.git"
+      branch: "master"
+
 sources:
-  git:
+  latestGit:
     name: Get Latest updatecli test
     kind: gitTag
-    scm:
-      git:
-        url: "git@github.com:updatecli/updatecli.git"
-        branch: "main"
+    scmID: updatecli
   githubRegex:
     name: Get Latest updatecli test
     kind: gitTag
@@ -14,66 +24,34 @@ sources:
       versionFilter:
         kind: semver
         pattern: "~0.1"
-    scm:
-      github:
-        user: "{{ .github.user }}" 
-        email: "{{ .github.email }}" 
-        owner: "updatecli" 
-        repository: "updatecli" 
-        token: "{{ requiredEnv .github.token }}" 
-        username: "{{ .github.username }}" 
-        branch: "main" 
+    scmID: updatecli
+
 conditions:
   gitRegex:
-    sourceID: default
-    name: Test Get Latest updatecli test
+    sourceID: latestGit
+    scmID: updatecli
+    name:  Is there a tag, in the SCM 'updatecli' that matches the regex which pattern is retrieved by the source 'latestGit'?
     kind: gitTag
     spec:
       versionFilter:
-        pattern: "v0.1.2"
-    scm:
-      git:
-        url: "git@github.com:updatecli/updatecli.git"
-        branch: "main"
-  githubRegex:
-    sourceID: default
-    name: Test Get Latest updatecli test
-    kind: gitTag
-    spec:
-      versionFilter:
-        pattern: "v0.1.2"
-    scm:
-      github:
-        user: "{{ .github.user }}" 
-        email: "{{ .github.email }}" 
-        owner: "updatecli" 
-        repository: "updatecli" 
-        token: "{{ requiredEnv .github.token }}" 
-        username: "{{ .github.username }}" 
-        branch: "main" 
+        kind: regex
+
 targets:
   github:
-    sourceID: git
+    sourceID: latestGit
     name: Publish tags updatecli test
     kind: gitTag
+    spec:
+      message: "Release"
     transformers:
       - addSuffix: "-github"
-    scm:
-      github:
-        user: "{{ .github.user }}" 
-        email: "{{ .github.email }}" 
-        owner: "olblak" 
-        repository: "nocode"
-        token: "{{ requiredEnv .github.token }}" 
-        username: "{{ .github.username }}" 
-        branch: "master" 
+    scmID: updatecli
   git:
     sourceID: githubRegex
     name: Publish tags updatecli test
     kind: gitTag
+    spec:
+      message: "Release"
     transformers:
       - addSuffix: "-git"
-    scm:
-      git:
-        url: "git@github.com:olblak/nocode.git"
-        branch: "master"
+    scmID: nocode

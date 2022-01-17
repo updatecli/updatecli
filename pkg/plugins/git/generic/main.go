@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -483,18 +484,55 @@ func Tags(workingDir string) (tags []string, err error) {
 	}
 
 	tagrefs, err := r.Tags()
-
 	if err != nil {
 		return tags, err
 	}
 
-	err = tagrefs.ForEach(func(t *plumbing.Reference) error {
-		tags = append(tags, t.Name().Short())
+	type DatedTag struct {
+		when time.Time
+		name string
+	}
+	listOfDatedTags := []DatedTag{}
+
+	err = tagrefs.ForEach(func(tagRef *plumbing.Reference) error {
+		revision := plumbing.Revision(tagRef.Name().String())
+		tagCommitHash, err := r.ResolveRevision(revision)
+		if err != nil {
+			return err
+		}
+
+		commit, err := r.CommitObject(*tagCommitHash)
+		if err != nil {
+			return err
+		}
+
+		listOfDatedTags = append(
+			listOfDatedTags,
+			DatedTag{
+				name: tagRef.Name().Short(),
+				when: commit.Committer.When,
+			},
+		)
+
 		return nil
 	})
-
 	if err != nil {
 		return tags, err
+	}
+
+	if len(listOfDatedTags) == 0 {
+		err = errors.New("no tag found")
+		return []string{}, err
+	}
+
+	// Sort tags by time
+	sort.Slice(listOfDatedTags, func(i, j int) bool {
+		return listOfDatedTags[i].when.Before(listOfDatedTags[j].when)
+	})
+
+	// Extract the list of tags names (ordered by time)
+	for _, datedTag := range listOfDatedTags {
+		tags = append(tags, datedTag.name)
 	}
 
 	logrus.Debugf("got tags: %v", tags)
