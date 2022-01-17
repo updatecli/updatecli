@@ -14,7 +14,7 @@ func (gt *GitTag) Condition(source string) (bool, error) {
 	return gt.condition(source)
 }
 
-// ConditionFromSCM test if a tag exist from a git repository specific from SCM
+// ConditionFromSCM test if a tag exists from a git repository specific from SCM
 func (gt *GitTag) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	path := scm.GetDirectory()
 
