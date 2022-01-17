@@ -36,7 +36,6 @@ version-resolver:
       - 'minor'
       - 'feature'
       - 'enhancement'
-      - 'dependencies'
   patch:
     labels:
       - 'patch'
@@ -44,6 +43,7 @@ version-resolver:
       - 'bugfix'
       - 'bug'
       - 'chore'
+      - 'dependencies'
   default: patch
 exclude-labels:
   - 'skip-changelog'
