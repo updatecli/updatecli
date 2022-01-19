@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/version"
-	"golang.org/x/oauth2"
 )
 
 // Spec represents the configuration input
@@ -34,11 +34,11 @@ type Spec struct {
 
 // Github contains settings to interact with Github
 type Github struct {
-	Spec          Spec            // Spec contains inputs coming from updatecli configuration
-	HeadBranch    string          // remoteBranch is used when creating a temporary branch before opening a PR
-	Force         bool            // Force is used during the git push phase to run `git push --force`.
-	CommitMessage commit.Commit   // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
-	foundVersion  version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
+	Spec          Spec          // Spec contains inputs coming from updatecli configuration
+	HeadBranch    string        // remoteBranch is used when creating a temporary branch before opening a PR
+	Force         bool          // Force is used during the git push phase to run `git push --force`.
+	CommitMessage commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	client        GitHubClient
 }
 
 // New returns a new valid Github object.
@@ -61,8 +61,23 @@ func New(s Spec) (Github, error) {
 		s.URL = "github.com"
 	}
 
+	// Initialize github client
+	src := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: s.Token},
+	)
+	httpClient := oauth2.NewClient(context.Background(), src)
+
+	if strings.HasSuffix(s.URL, "github.com") {
+		return Github{
+			Spec:   s,
+			client: githubv4.NewClient(httpClient),
+		}, nil
+	}
+
 	return Github{
-		Spec: s}, nil
+		Spec:   s,
+		client: githubv4.NewEnterpriseClient(os.Getenv(s.Token), httpClient),
+	}, nil
 }
 
 // Validate verifies if mandatory Github parameters are provided and return false if not.
@@ -111,26 +126,6 @@ func (g *Github) setDirectory() {
 	}
 }
 
-//NewClient return a new client
-func (g *Github) NewClient() *githubv4.Client {
-
-	if err := g.Spec.Validate(); err != nil {
-		logrus.Errorln(err)
-		return nil
-	}
-
-	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: g.Spec.Token},
-	)
-	httpClient := oauth2.NewClient(context.Background(), src)
-
-	if g.Spec.URL == "" || strings.HasSuffix(g.Spec.URL, "github.com") {
-		return githubv4.NewClient(httpClient)
-	}
-
-	return githubv4.NewEnterpriseClient(os.Getenv(g.Spec.Token), httpClient)
-}
-
 func (g *Github) queryRepositoryID() (string, error) {
 	/*
 		query($owner: String!, $name: String!) {
@@ -139,8 +134,6 @@ func (g *Github) queryRepositoryID() (string, error) {
 			}
 		}
 	*/
-
-	client := g.NewClient()
 
 	var query struct {
 		Repository struct {
@@ -153,7 +146,7 @@ func (g *Github) queryRepositoryID() (string, error) {
 		"name":  githubv4.String(g.Spec.Repository),
 	}
 
-	err := client.Query(context.Background(), &query, variables)
+	err := g.client.Query(context.Background(), &query, variables)
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)

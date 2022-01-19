@@ -8,10 +8,11 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/version"
 )
 
 // Changelog return any information available for a helm chart
-func (c *Chart) Changelog(name string) (string, error) {
+func (c *Chart) Changelog(release version.Version) (string, error) {
 	URL := fmt.Sprintf("%s/index.yaml", c.spec.URL)
 
 	req, err := http.NewRequest("GET", URL, nil)
