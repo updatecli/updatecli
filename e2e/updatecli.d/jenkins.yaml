@@ -1,0 +1,37 @@
+title: "Bump Jenkins stable version"
+
+sources:
+  getLatestJenkinsStable:
+    kind: jenkins
+  getLatestJenkinsWeekly:
+    kind: jenkins
+    spec:
+      release: weekly
+conditions:
+  checkIfThereIsSpecificReleaseVersion:
+    name: Check if 2.263.3 exists as a stable jenkins release
+    kind: jenkins
+    disablesourceinput: true
+    spec:
+      version: "2.263.3"
+  checkIfSourceIsLatestStable:
+    kind: jenkins
+    name: Check if the source value from 'getLatestJenkinsStable' is the latest Jenkins stable version
+    sourceID: getLatestJenkinsStable
+    spec:
+      release: stable
+  checkIfThereIsSpecificWeeklyVersion:
+    name: Check if 2.231 exists as a weekly jenkins release
+    kind: jenkins
+    disablesourceinput: true
+    spec:
+      version: "2.231"
+      release: weekly
+  checkIfSourceIsLatestWeekly:
+    kind: jenkins
+    name: Check if the source value from 'getLatestJenkinsWeekly' is the latest Jenkins weekly version
+    sourceID: getLatestJenkinsWeekly
+    spec:
+      release: weekly
+
+# No need for target
