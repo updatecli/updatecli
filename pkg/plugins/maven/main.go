@@ -3,7 +3,10 @@ package maven
 import (
 	"encoding/xml"
 	"fmt"
+	"net/http"
 	"strings"
+
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 // Spec defines a specification for a "maven" resource
@@ -19,6 +22,7 @@ type Spec struct {
 // Maven defines a resource of kind "maven"
 type Maven struct {
 	spec          Spec
+	webClient     httpclient.HTTPClient
 	RepositoryURL string
 }
 
@@ -26,7 +30,8 @@ type Maven struct {
 // or an error if the provided Spec triggers a validation error.
 func New(spec Spec) (*Maven, error) {
 	newResource := &Maven{
-		spec: spec,
+		spec:      spec,
+		webClient: http.DefaultClient,
 		RepositoryURL: fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
 			spec.URL,
 			spec.Repository,
