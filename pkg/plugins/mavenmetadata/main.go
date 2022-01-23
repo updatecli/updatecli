@@ -32,7 +32,7 @@ func (d *DefaultHandler) getMetadatas() (metadata, error) {
 		return metadata{}, err
 	}
 
-	logrus.Debugf("Sending HTTP request to the maven repository at %s", req.URL)
+	logrus.Debugf("Sending HTTP request to the maven repository at %s", d.metadataURL)
 	res, err := d.webClient.Do(req)
 	if err != nil {
 		return metadata{}, err
