@@ -187,9 +187,6 @@ func (p *PullRequest) updatePullRequest() error {
 			}
 		  }
 	*/
-
-	client := p.gh.NewClient()
-
 	var mutation struct {
 		UpdatePullRequest struct {
 			PullRequest PullRequestApi
@@ -206,7 +203,7 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	labelsID := []githubv4.ID{}
-	repositoryLabels, err := p.gh.GetRepositoryLabels()
+	repositoryLabels, err := p.gh.getRepositoryLabels()
 	if err != nil {
 		return err
 	}
@@ -226,7 +223,7 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	// Build a list of labelID to update the pullrequest
-	for _, label := range MergeLabels(matchingLabels, remotePRLabels) {
+	for _, label := range mergeLabels(matchingLabels, remotePRLabels) {
 		labelsID = append(labelsID, githubv4.NewID(label.ID))
 	}
 
@@ -240,7 +237,7 @@ func (p *PullRequest) updatePullRequest() error {
 		State:         &pullRequestUpdateStateOpen,
 	}
 
-	err = client.Mutate(context.Background(), &mutation, input, nil)
+	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
 		return err
 	}
@@ -274,8 +271,6 @@ func (p *PullRequest) OpenPullRequest() error {
 
 
 	*/
-	client := p.gh.NewClient()
-
 	var mutation struct {
 		CreatePullRequest struct {
 			PullRequest PullRequestApi
@@ -302,7 +297,7 @@ func (p *PullRequest) OpenPullRequest() error {
 		Draft:               githubv4.NewBoolean(githubv4.Boolean(p.spec.Draft)),
 	}
 
-	err = client.Mutate(context.Background(), &mutation, input, nil)
+	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
 		return err
 	}
@@ -342,8 +337,6 @@ func (p *PullRequest) getRemotePullRequest() error {
 		}
 	*/
 
-	client := p.gh.NewClient()
-
 	var query struct {
 		Repository struct {
 			PullRequests struct {
@@ -359,7 +352,7 @@ func (p *PullRequest) getRemotePullRequest() error {
 		"headRefName": githubv4.String(p.gh.HeadBranch),
 	}
 
-	err := client.Query(context.Background(), &query, variables)
+	err := p.gh.client.Query(context.Background(), &query, variables)
 
 	if err != nil {
 		return err
@@ -403,8 +396,6 @@ func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, e
 		  }
 	*/
 
-	client := p.gh.NewClient()
-
 	variables := map[string]interface{}{
 		"owner":      githubv4.String(p.gh.Spec.Owner),
 		"repository": githubv4.String(p.gh.Spec.Repository),
@@ -434,7 +425,7 @@ func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, e
 
 	var pullRequestLabels []repositoryLabelApi
 	for {
-		err := client.Query(context.Background(), &query, variables)
+		err := p.gh.client.Query(context.Background(), &query, variables)
 
 		if err != nil {
 			logrus.Errorf("\t%s", err)

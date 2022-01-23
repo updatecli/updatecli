@@ -2,6 +2,7 @@ package jenkins
 
 import (
 	"github.com/updatecli/updatecli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/version"
 )
 
 var (
@@ -10,7 +11,7 @@ var (
 	ChangelogFallbackContent string = `
 Warning:
 ========
-We currently rely on Github Release to get Jenkins changelog 
+We currently rely on Github Release to get Jenkins changelog
 which requires a github token and a github username as in the following example:
 ---
 source:
@@ -26,7 +27,7 @@ source:
 
 // Changelog returns a changelog description based on a Jenkins version
 // retrieved from a GitHub Release
-func (j *Jenkins) Changelog(name string) (string, error) {
+func (j *Jenkins) Changelog(release version.Version) (string, error) {
 	if len(j.Github.Token) == 0 || len(j.Github.Username) == 0 {
 		return ChangelogFallbackContent, nil
 	}
@@ -41,7 +42,9 @@ func (j *Jenkins) Changelog(name string) (string, error) {
 		return "", err
 
 	}
-	changelog, err := g.Changelog("jenkins-" + name)
+	changelog, err := g.Changelog(version.Version{
+		OriginalVersion: "jenkins-" + release.OriginalVersion,
+		ParsedVersion:   "jenkins-" + release.ParsedVersion})
 
 	return changelog, err
 }
