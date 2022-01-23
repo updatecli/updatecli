@@ -8,35 +8,28 @@ import (
 )
 
 // Source return the latest Jenkins version based on release type
-func (j *Jenkins) Source(workingDir string) (string, error) {
-	err := j.Validate()
-
-	if err != nil {
-		return "", err
-	}
-
+func (j Jenkins) Source(workingDir string) (string, error) {
 	latest, versions, err := GetVersions()
-
 	if err != nil {
 		return "", err
 	}
 
-	if strings.Compare(WEEKLY, j.Release) == 0 {
+	if strings.Compare(WEEKLY, j.spec.Release) == 0 {
 		fmt.Printf("%s Version %s found for the %s release", result.SUCCESS, latest, WEEKLY)
 		return latest, nil
 	}
 
-	if strings.Compare(STABLE, j.Release) == 0 {
+	if strings.Compare(STABLE, j.spec.Release) == 0 {
 		found := filter(versions, func(s string) bool {
 			v := NewVersion(s)
 			return v.Patch != ""
 		})
-		fmt.Printf("%s Version %s found for the Jenkins %s release", result.SUCCESS, found[len(found)-1], j.Release)
+		fmt.Printf("%s Version %s found for the Jenkins %s release", result.SUCCESS, found[len(found)-1], j.spec.Release)
 		return found[len(found)-1], nil
 
 	}
 
-	fmt.Printf("%s Unknown version %s found for the %s release", result.FAILURE, j.Version, j.Release)
+	fmt.Printf("%s Unknown version %s found for the %s release", result.FAILURE, j.spec.Version, j.spec.Release)
 
 	return "unknown", fmt.Errorf("Unknown Jenkins version found")
 }

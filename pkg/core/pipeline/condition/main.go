@@ -178,14 +178,16 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		}
 
 	case "jenkins":
-		j := jenkins.Jenkins{}
+		var conditionSpec jenkins.Spec
 
-		err := mapstructure.Decode(condition.Config.Spec, &j)
-		if err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner = &j
+		conditioner, err = jenkins.New(conditionSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "maven":
 		var conditionSpec maven.Spec
