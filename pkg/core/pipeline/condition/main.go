@@ -188,14 +188,16 @@ func Unmarshal(condition *Condition) (conditioner Conditioner, err error) {
 		conditioner = &j
 
 	case "maven":
-		m := maven.Maven{}
+		var conditionSpec maven.Spec
 
-		err := mapstructure.Decode(condition.Config.Spec, &m)
-		if err != nil {
+		if err := mapstructure.Decode(condition.Config.Spec, &conditionSpec); err != nil {
 			return nil, err
 		}
 
-		conditioner = &m
+		conditioner, err = maven.New(conditionSpec)
+		if err != nil {
+			return nil, err
+		}
 
 	case "gitTag":
 		var conditionSpec gittag.Spec

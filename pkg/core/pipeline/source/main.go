@@ -236,14 +236,17 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		changelog = &j
 
 	case "maven":
-		m := maven.Maven{}
-		err := mapstructure.Decode(s.Config.Spec, &m)
+		var sourceSpec maven.Spec
 
-		if err != nil {
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
 		}
 
-		sourcer = &m
+		mavenResource, err := maven.New(sourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
+		sourcer = mavenResource
 
 	case "gitTag":
 		var sourceSpec gittag.Spec

@@ -2,10 +2,8 @@ package maven
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -13,13 +11,8 @@ import (
 
 // Source return the latest version
 func (m *Maven) Source(workingDir string) (string, error) {
-	URL := fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
-		m.URL,
-		m.Repository,
-		strings.ReplaceAll(m.GroupID, ".", "/"),
-		m.ArtifactID)
 
-	req, err := http.NewRequest("GET", URL, nil)
+	req, err := http.NewRequest("GET", m.RepositoryURL, nil)
 	if err != nil {
 		return "", err
 	}

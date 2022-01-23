@@ -54,20 +54,17 @@ func (j *Jenkins) Validate() (err error) {
 
 // GetVersions fetch every jenkins version from the maven repository
 func GetVersions() (latest string, versions []string, err error) {
-	m := maven.Maven{
+	m, err := maven.New(maven.Spec{
 		URL:        "repo.jenkins-ci.org",
 		Repository: "releases",
 		GroupID:    "org.jenkins-ci.main",
 		ArtifactID: "jenkins-war",
+	})
+	if err != nil {
+		return "", []string{}, err
 	}
 
-	URL := fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
-		m.URL,
-		m.Repository,
-		strings.ReplaceAll(m.GroupID, ".", "/"),
-		m.ArtifactID)
-
-	req, err := http.NewRequest("GET", URL, nil)
+	req, err := http.NewRequest("GET", m.RepositoryURL, nil)
 
 	if err != nil {
 		return "", nil, err

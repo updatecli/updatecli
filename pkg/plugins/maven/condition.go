@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -15,18 +14,13 @@ import (
 
 // Condition tests if a specific version exist on the maven repository
 func (m *Maven) Condition(source string) (bool, error) {
-	if m.Version != "" {
-		logrus.Infof("Version %v, already defined from configuration file", m.Version)
+	if m.spec.Version != "" {
+		logrus.Infof("Version %v, already defined from configuration file", m.spec.Version)
 	} else {
-		m.Version = source
+		m.spec.Version = source
 	}
-	URL := fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
-		m.URL,
-		m.Repository,
-		strings.ReplaceAll(m.GroupID, ".", "/"),
-		m.ArtifactID)
 
-	req, err := http.NewRequest("GET", URL, nil)
+	req, err := http.NewRequest("GET", m.RepositoryURL, nil)
 	if err != nil {
 		return false, err
 	}
@@ -51,14 +45,14 @@ func (m *Maven) Condition(source string) (bool, error) {
 	}
 
 	for _, version := range data.Versioning.Versions.Version {
-		if version == m.Version {
-			logrus.Infof("%s Version %s is available on Maven Repository", result.SUCCESS, m.Version)
+		if version == m.spec.Version {
+			logrus.Infof("%s Version %s is available on Maven Repository", result.SUCCESS, m.spec.Version)
 			return true, nil
 		}
 
 	}
 
-	logrus.Infof("%s Version %s is not available on Maven Repository", result.FAILURE, m.Version)
+	logrus.Infof("%s Version %s is not available on Maven Repository", result.FAILURE, m.spec.Version)
 	return false, nil
 }
 

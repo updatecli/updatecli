@@ -2,10 +2,13 @@ package maven
 
 import (
 	"encoding/xml"
+	"fmt"
+	"strings"
 )
 
-// Maven hold maven repository information
-type Maven struct {
+// Spec defines a specification for a "maven" resource
+// parsed from an updatecli manifest file
+type Spec struct {
 	URL        string
 	Repository string
 	GroupID    string
@@ -13,7 +16,28 @@ type Maven struct {
 	Version    string
 }
 
-// Metadata hold maven repository metadata
+// Maven defines a resource of kind "maven"
+type Maven struct {
+	spec          Spec
+	RepositoryURL string
+}
+
+// New returns a reference to a newly initialized Maven object from a Spec
+// or an error if the provided Spec triggers a validation error.
+func New(spec Spec) (*Maven, error) {
+	newResource := &Maven{
+		spec: spec,
+		RepositoryURL: fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
+			spec.URL,
+			spec.Repository,
+			strings.ReplaceAll(spec.GroupID, ".", "/"),
+			spec.ArtifactID),
+	}
+
+	return newResource, nil
+}
+
+// Metadata hold maven repository Metadata
 type Metadata struct {
 	Metadata   xml.Name `xml:"metadata"`
 	GroupID    string   `xml:"groupId"`
@@ -21,7 +45,7 @@ type Metadata struct {
 	Versioning Version  `xml:"versioning"`
 }
 
-// Version hold version information
+// Version hold Version information
 type Version struct {
 	Versioning xml.Name `xml:"versioning"`
 	Latest     string   `xml:"latest"`
