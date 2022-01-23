@@ -7,6 +7,56 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// labelsQuery defines a github v4 API query to retrieve a list of labels defined for the repository with their name and descriptions
+/*
+https://developer.github.com/v4/explorer/
+
+query getLatestRelease{
+	rateLimit {
+		cost
+		remaining
+		resetAt
+	}
+	repository(owner: "updatecli", name: "updatecli"){
+		labels (last: 5) {
+			totalCount
+			pageInfo {
+				hasNextPage
+				endCursor
+			}
+			edges {
+				node {
+					id
+					name
+					description
+				}
+				cursor
+			}
+		}
+	}
+}
+*/
+type labelsQuery struct {
+	RateLimit  RateLimit
+	Repository struct {
+		Labels repositoryLabels `graphql:"labels(last: 5, before: $before)"`
+	} `graphql:"repository(owner: $owner, name: $repository)"`
+}
+type repositoryLabels struct {
+	TotalCount int
+	PageInfo   PageInfo
+	Edges      []labelEdge
+}
+type labelEdge struct {
+	Cursor string
+	Node   labelNode
+}
+type labelNode struct {
+	ID          string
+	Name        string
+	Description string
+}
+
 // repositoryLabelApi holds specific label informations returned from Github API
 type repositoryLabelApi struct {
 	ID          string
@@ -14,42 +64,9 @@ type repositoryLabelApi struct {
 	Description string
 }
 
-// GetRepositoryLabels queries GitHub Api to retrieve every labels configured for a repository
-func (g *Github) GetRepositoryLabels() ([]repositoryLabelApi, error) {
-
-	/*
-		https://developer.github.com/v4/explorer/
-
-			query($owner: String!, $name: String!) {
-				rateLimit {
-					cost
-					remaining
-					resetAt
-				}
-				repository(owner: $owner, name: $name){
-					labels (last: 5, before: $before) {
-						totalCount
-						pageInfo {
-							hasNextPage
-							endCursor
-						}
-						edges {
-							node {
-								id
-								name
-								description
-							}
-							cursor
-						}
-					}
-				}
-			}
-
-	*/
-
+// getRepositoryLabels queries GitHub Api to retrieve every labels configured for a repository
+func (g *Github) getRepositoryLabels() ([]repositoryLabelApi, error) {
 	var repositoryLabels []repositoryLabelApi
-
-	client := g.NewClient()
 
 	variables := map[string]interface{}{
 		"owner":      githubv4.String(g.Spec.Owner),
@@ -57,26 +74,10 @@ func (g *Github) GetRepositoryLabels() ([]repositoryLabelApi, error) {
 		"before":     (*githubv4.String)(nil),
 	}
 
-	var query struct {
-		RateLimit  RateLimit
-		Repository struct {
-			Labels struct {
-				TotalCount int
-				PageInfo   PageInfo
-				Edges      []struct {
-					Cursor string
-					Node   struct {
-						ID          string
-						Name        string
-						Description string
-					}
-				}
-			} `graphql:"labels(last: 5, before: $before)"`
-		} `graphql:"repository(owner: $owner, name: $repository)"`
-	}
+	var query labelsQuery
 
 	for {
-		err := client.Query(context.Background(), &query, variables)
+		err := g.client.Query(context.Background(), &query, variables)
 
 		if err != nil {
 			logrus.Errorf("\t%s", err)
@@ -106,7 +107,7 @@ func (g *Github) GetRepositoryLabels() ([]repositoryLabelApi, error) {
 	return repositoryLabels, nil
 }
 
-func MergeLabels(a, b []repositoryLabelApi) []repositoryLabelApi {
+func mergeLabels(a, b []repositoryLabelApi) []repositoryLabelApi {
 
 	result := b
 

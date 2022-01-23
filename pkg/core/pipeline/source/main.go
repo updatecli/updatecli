@@ -15,11 +15,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/dockerdigest"
 	"github.com/updatecli/updatecli/pkg/plugins/file"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/githubrelease"
 	"github.com/updatecli/updatecli/pkg/plugins/gittag"
 	"github.com/updatecli/updatecli/pkg/plugins/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/shell"
+	"github.com/updatecli/updatecli/pkg/plugins/version"
 	"github.com/updatecli/updatecli/pkg/plugins/yaml"
 )
 
@@ -110,7 +112,10 @@ func (s *Source) Run() (err error) {
 	// Retrieve changelog using default source output before
 	// modifying its value with the transformer
 	if changelog != nil {
-		s.Changelog, err = changelog.Changelog(s.Output)
+		s.Changelog, err = changelog.Changelog(version.Version{
+			OriginalVersion: s.Output,
+			ParsedVersion:   s.Output,
+		})
 		if err != nil {
 			s.Result = result.FAILURE
 			// Changelog information are not important enough to fail a pipeline
@@ -179,22 +184,18 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		}
 
 	case "githubRelease":
-		githubSpec := github.Spec{}
+		var sourceSpec github.Spec
 
-		err := mapstructure.Decode(s.Config.Spec, &githubSpec)
-
-		if err != nil {
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
 		}
 
-		g, err := github.New(githubSpec)
-
+		newGhrResource, err := githubrelease.New(sourceSpec)
 		if err != nil {
 			return nil, nil, err
 		}
-
-		sourcer = &g
-		changelog = &g
+		sourcer = &newGhrResource
+		changelog = &newGhrResource
 
 	case "file":
 		var sourceSpec file.Spec
