@@ -190,12 +190,12 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 			return nil, nil, err
 		}
 
-		grPrResource, err := githubrelease.New(sourceSpec)
+		newGhrResource, err := githubrelease.New(sourceSpec)
 		if err != nil {
 			return nil, nil, err
 		}
-		sourcer = &grPrResource
-		changelog = &grPrResource
+		sourcer = &newGhrResource
+		changelog = &newGhrResource
 
 	case "file":
 		var sourceSpec file.Spec
