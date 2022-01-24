@@ -25,8 +25,8 @@ func New(metadataURL string) *DefaultHandler {
 	}
 }
 
-// getMetadatas is an internal method that returns the parsed metadata object
-func (d *DefaultHandler) getMetadatas() (metadata, error) {
+// getMetadataFile is an internal method that returns the parsed metadata object
+func (d *DefaultHandler) getMetadataFile() (metadata, error) {
 	req, err := http.NewRequest("GET", d.metadataURL, nil)
 	if err != nil {
 		return metadata{}, err
@@ -62,7 +62,7 @@ func (d *DefaultHandler) getMetadatas() (metadata, error) {
 }
 
 func (d *DefaultHandler) GetLatestVersion() (string, error) {
-	data, err := d.getMetadatas()
+	data, err := d.getMetadataFile()
 	if err != nil {
 		return "", err
 	}
@@ -74,7 +74,7 @@ func (d *DefaultHandler) GetLatestVersion() (string, error) {
 }
 
 func (d *DefaultHandler) GetVersions() ([]string, error) {
-	data, err := d.getMetadatas()
+	data, err := d.getMetadataFile()
 	if err != nil {
 		return []string{}, err
 	}

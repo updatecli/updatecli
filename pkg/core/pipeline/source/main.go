@@ -242,11 +242,10 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 			return nil, nil, err
 		}
 
-		mavenResource, err := maven.New(sourceSpec)
+		sourcer, err = maven.New(sourceSpec)
 		if err != nil {
 			return nil, nil, err
 		}
-		sourcer = mavenResource
 
 	case "gitTag":
 		var sourceSpec gittag.Spec
