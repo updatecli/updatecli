@@ -20,7 +20,8 @@ type Spec struct {
 
 // Jenkins defines a resource of kind "githubrelease"
 type Jenkins struct {
-	spec Spec
+	spec             Spec
+	mavenMetaHandler mavenmetadata.Handler
 }
 
 const (
@@ -30,6 +31,8 @@ const (
 	WEEKLY string = "weekly"
 	// WRONG represents a bad release name
 	WRONG string = "unknown"
+	// URL of the default Jenkins Maven metadata file
+	jenkinsDefaultMetaURL string = "https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml"
 )
 
 // New returns a new valid GitHubRelease object.
@@ -44,7 +47,8 @@ func New(newSpec Spec) (Jenkins, error) {
 	}
 
 	return Jenkins{
-		spec: newSpec,
+		spec:             newSpec,
+		mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL),
 	}, nil
 }
 
@@ -71,15 +75,13 @@ func (s Spec) Validate() (err error) {
 }
 
 // GetVersions fetch every jenkins version from the maven repository
-func GetVersions() (latest string, versions []string, err error) {
-	m := mavenmetadata.New("https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml")
-
-	latest, err = m.GetLatestVersion()
+func (j *Jenkins) getVersions() (latest string, versions []string, err error) {
+	latest, err = j.mavenMetaHandler.GetLatestVersion()
 	if err != nil {
 		return "", nil, err
 	}
 
-	versions, err = m.GetVersions()
+	versions, err = j.mavenMetaHandler.GetVersions()
 	if err != nil {
 		return "", nil, err
 	}

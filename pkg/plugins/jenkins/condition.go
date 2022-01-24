@@ -2,7 +2,6 @@ package jenkins
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -12,52 +11,39 @@ import (
 // match a valid release type
 func (j Jenkins) Condition(source string) (bool, error) {
 
-	versionExist := false
-	validReleaseType := false
-
+	versionToCheck := j.spec.Version
 	// Override source input if version specified by parameter
-	if len(j.spec.Version) == 0 {
-		j.spec.Version = source
+	if versionToCheck == "" {
+		versionToCheck = source
 	}
 
-	releaseType, err := ReleaseType(j.spec.Version)
+	releaseType, err := ReleaseType(versionToCheck)
 	if err != nil {
 		return false, err
 	}
 
-	validReleaseType = true
-
-	if strings.Compare(releaseType, j.spec.Release) != 0 {
+	if releaseType != j.spec.Release {
 		return false, fmt.Errorf(
 			"Wrong Release Type '%s' detected : Jenkins version '%s' is a '%s' release",
-			j.spec.Release, j.spec.Version, releaseType)
+			j.spec.Release, versionToCheck, releaseType)
 	}
 
-	if len(j.spec.Version) > 0 {
-		_, versions, err := GetVersions()
-
+	if len(versionToCheck) > 0 {
+		_, versions, err := j.getVersions()
 		if err != nil {
 			return false, err
 		}
+
 		for _, v := range versions {
-			if strings.Compare(v, j.spec.Version) == 0 {
-				versionExist = true
-				break
+			if v == versionToCheck {
+				fmt.Printf("%s %s release version '%s' available\n", result.SUCCESS, releaseType, versionToCheck)
+				return true, nil
 			}
 		}
 	}
-	if !versionExist {
-		fmt.Printf("%s Version '%v' doesn't exist\n", result.FAILURE, j.spec.Version)
-		return false, nil
 
-	} else if !validReleaseType {
-		fmt.Printf("%s Wrong Release Type: %v for version %v\n", result.FAILURE, releaseType, j.spec.Version)
-		return false, nil
-	}
-
-	fmt.Printf("%s %s release version '%s' available\n", result.SUCCESS, releaseType, j.spec.Version)
-
-	return true, nil
+	fmt.Printf("%s Version '%v' doesn't exist\n", result.FAILURE, versionToCheck)
+	return false, nil
 }
 
 // ConditionFromSCM checks if a key exists in a yaml file
