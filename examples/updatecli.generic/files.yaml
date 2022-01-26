@@ -1,0 +1,12 @@
+---
+title: Show a set of file resources as a generic example
+targets:
+  setLineWithMatchAndReplacePatterns:
+    kind: file
+    spec:
+      file: LICENSE
+      # files:
+      #   - LICENCE
+      #   - LICENCE2
+      matchPattern: 'Copyright \(c\) (\d*) (.*)'
+      replacepattern: 'Copyright (c) 2022 $2'
