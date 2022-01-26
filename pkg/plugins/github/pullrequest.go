@@ -67,6 +67,7 @@ type PullRequestApi struct {
 // PullRequestSpec is a specific struct containing pullrequest settings provided
 // by an updatecli configuration
 type PullRequestSpec struct {
+	AutoMerge              bool     // Specify if automerge is enabled for the new pullrequest
 	Title                  string   // Specify pull request title
 	Description            string   // Description contains user input description used during pull body creation
 	Labels                 []string // Specify repository labels used for pull request. !! They must already exist
@@ -134,6 +135,13 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 	err = p.updatePullRequest()
 	if err != nil {
 		return err
+	}
+
+	if p.spec.AutoMerge {
+		err = p.EnablePullRequestAutoMerge()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -243,6 +251,30 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	logrus.Infof("\nPull Request available at:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
+
+	return nil
+}
+
+// EnablePullRequestAutoMerge updates an existing pullrequest with the flag automerge
+func (p *PullRequest) EnablePullRequestAutoMerge() error {
+
+	var mutation struct {
+		EnablePullRequestAutoMerge struct {
+			PullRequestApi PullRequestApi
+		} `graphql:"enablePullRequestAutoMerge(input: $input)"`
+	}
+
+	input := githubv4.EnablePullRequestAutoMergeInput{
+		PullRequestID: githubv4.String(p.remotePullRequest.ID),
+	}
+
+	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	if err != nil {
+		return err
+	}
+
+	logrus.Infof("\nAuto merge enabled for Pull Request at\n\n\t%s\n\n",
+		mutation.EnablePullRequestAutoMerge.PullRequestApi.Url)
 
 	return nil
 }
