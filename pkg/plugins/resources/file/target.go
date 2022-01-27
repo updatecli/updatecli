@@ -110,20 +110,16 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 	for filePath := range f.files {
 		var contentType string
 		var err error
-		if f.spec.Line > 0 {
-			if !dryRun {
-				err = f.contentRetriever.WriteLineToFile(f.files[filePath], filePath, f.spec.Line)
-				contentType = fmt.Sprintf("line %d", f.spec.Line)
-			} else {
-				contentType = fmt.Sprintf("(dry-run) line %d", f.spec.Line)
-			}
-		} else {
-			if !dryRun {
-				err = f.contentRetriever.WriteToFile(f.files[filePath], filePath)
-				contentType = "content"
-			} else {
-				contentType = "(dry-run) content"
-			}
+		if f.spec.Line > 0 && !dryRun {
+			err = f.contentRetriever.WriteLineToFile(f.files[filePath], filePath, f.spec.Line)
+			contentType = fmt.Sprintf("line %d", f.spec.Line)
+		}
+		if f.spec.Line == 0 && !dryRun {
+			err = f.contentRetriever.WriteToFile(f.files[filePath], filePath)
+			contentType = "content"
+		}
+		if dryRun {
+			contentType = fmt.Sprintf("(dry run) %s", contentType)
 		}
 		if err != nil {
 			return false, files, message.String(), err
