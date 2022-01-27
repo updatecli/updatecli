@@ -48,33 +48,24 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		}
 	}
 
-	if f.spec.Line > 0 {
-		// TODO:! check if 'line' could be compatible with multiple files (need to check if all files have this particular line, maybe in main.Read()?)
-		// Case 1: The attribute 'spec.line' is specified, we only want to change a specific line of the target file
-		// Implied here: no forceCreate, no regexp, (one file only?)
-		if err := f.Read(); err != nil {
-			return false, files, message.String(), err
-		}
-	} else {
-		// Retrieve the content of all files and create them if f.spec.ForceCreate is set to true
-		if err := f.ReadOrForceCreate(); err != nil {
-			return false, files, message.String(), err
-		}
+	// Retrieving content of file(s) in memory (nothing in case of spec.forceCreate)
+	if err := f.Read(); err != nil {
+		return false, files, message.String(), err
 	}
 
 	originalContents := make(map[string]string)
 
-	// Unless there is a content specified, the input source value is used to fill the file
-	input := source
+	// Unless there is a content specified, the inputContent source value is used to fill the file
+	inputContent := source
 	if len(f.spec.Content) > 0 {
-		input = f.spec.Content
+		inputContent = f.spec.Content
 	}
 
 	// If we're using a regexp for the target
 	if len(f.spec.MatchPattern) > 0 {
 		// use source (or spec.content) as replace pattern input if no spec.replacepattern is specified
 		if len(f.spec.ReplacePattern) > 0 {
-			input = f.spec.ReplacePattern
+			inputContent = f.spec.ReplacePattern
 		}
 
 		reg, err := regexp.Compile(f.spec.MatchPattern)
@@ -91,13 +82,13 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 			}
 			// Keep the original content for later comparison
 			originalContents[filePath] = f.files[filePath]
-			f.files[filePath] = reg.ReplaceAllString(f.files[filePath], input)
+			f.files[filePath] = reg.ReplaceAllString(f.files[filePath], inputContent)
 		}
 	} else {
 		for filePath := range f.files {
 			// Keep the original content for later comparison
 			originalContents[filePath] = f.files[filePath]
-			f.files[filePath] = input
+			f.files[filePath] = inputContent
 		}
 	}
 

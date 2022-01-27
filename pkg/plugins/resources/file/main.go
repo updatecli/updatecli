@@ -56,6 +56,7 @@ func New(spec interface{}) (*File, error) {
 	err = newResource.Validate()
 =======
 	// TODO:? shouldn't this validation be after the trim prefix?
+	// TODO:! validate spec instead of newResource
 	// TODO: generalize the Validate + Normalize as an interface to all resources
 	err := newResource.Validate()
 >>>>>>> 6d73233 (wip: implement 'spec.files' for 'kind: file' (first part: 'targets')):pkg/plugins/file/main.go
@@ -79,12 +80,14 @@ func New(spec interface{}) (*File, error) {
 	return newResource, nil
 }
 
+// TODO:! change sign by (s *Spec)
 // Validate validates the object and returns an error (with all the failed validation messages) if not valid
 func (f *File) Validate() error {
 	// TODO:! replace by a strings.Builder
 	var validationErrors []string
 
 	fileCount := len(f.spec.Files)
+	// TODO:! remove the possibility to combine 'spec.file' & 'spec.files'
 	if len(f.spec.File) > 0 {
 		fileCount++
 	}
@@ -127,37 +130,8 @@ func (f *File) Validate() error {
 	return nil
 }
 
-// TODO: to be superseded by ReadOrForceCreate
-// Read puts the content of the file(s) as value of the f.files map
+// Read puts the content of the file(s) as value of the f.files map if the file(s) exist(s) or log the non existence of the file
 func (f *File) Read() error {
-	var err error
-
-	// Retrieve files content
-	for filePath := range f.files {
-		if f.contentRetriever.FileExists(filePath) {
-			// Return the specified line if a positive number is specified by user in its manifest
-			// Note that in this case we're with a fileCount of 1 (as other cases wouldn't pass validation)
-			if f.spec.Line > 0 {
-				f.files[filePath], err = f.contentRetriever.ReadLine(filePath, f.spec.Line)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Otherwise return the textual content
-			f.files[filePath], err = f.contentRetriever.ReadAll(filePath)
-			if err != nil {
-				return err
-			}
-		} else {
-			return fmt.Errorf("%s The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'.\n", result.FAILURE, f.spec.File)
-		}
-	}
-	return nil
-}
-
-// Read puts the content of the file(s) as value of the f.files map if the file(s) exist(s) or else creates the file(s)
-func (f *File) ReadOrForceCreate() error {
 	var err error
 
 	// Retrieve files content
