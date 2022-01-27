@@ -4,9 +4,9 @@ targets:
   setLineWithMatchAndReplacePatterns:
     kind: file
     spec:
-      file: LICENSE
-      # files:
-      #   - LICENCE
-      #   - LICENCE2
+      # file: LICENSE
+      files:
+        - LICENSE
+        - LICENSE2
       matchPattern: 'Copyright \(c\) (\d*) (.*)'
       replacepattern: 'Copyright (c) 2022 $2'
