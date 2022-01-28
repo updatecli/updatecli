@@ -260,7 +260,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 
 	var mutation struct {
 		EnablePullRequestAutoMerge struct {
-			PullRequestApi PullRequestApi
+			PullRequest PullRequestApi
 		} `graphql:"enablePullRequestAutoMerge(input: $input)"`
 	}
 
@@ -269,12 +269,10 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 	}
 
 	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+
 	if err != nil {
 		return err
 	}
-
-	logrus.Infof("\nAuto merge enabled for Pull Request at\n\n\t%s\n\n",
-		mutation.EnablePullRequestAutoMerge.PullRequestApi.Url)
 
 	return nil
 }
