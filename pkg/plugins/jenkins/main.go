@@ -1,16 +1,13 @@
 package jenkins
 
 import (
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/github"
-	"github.com/updatecli/updatecli/pkg/plugins/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/mavenmetadata"
 )
 
 // Jenkins defines parameters needed to retrieve latest Jenkins version
@@ -54,51 +51,19 @@ func (j *Jenkins) Validate() (err error) {
 
 // GetVersions fetch every jenkins version from the maven repository
 func GetVersions() (latest string, versions []string, err error) {
-	m := maven.Maven{
-		URL:        "repo.jenkins-ci.org",
-		Repository: "releases",
-		GroupID:    "org.jenkins-ci.main",
-		ArtifactID: "jenkins-war",
-	}
+	m := mavenmetadata.New("https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml")
 
-	URL := fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
-		m.URL,
-		m.Repository,
-		strings.ReplaceAll(m.GroupID, ".", "/"),
-		m.ArtifactID)
-
-	req, err := http.NewRequest("GET", URL, nil)
-
+	latest, err = m.GetLatestVersion()
 	if err != nil {
 		return "", nil, err
 	}
 
-	res, err := http.DefaultClient.Do(req)
-
+	versions, err = m.GetVersions()
 	if err != nil {
 		return "", nil, err
 	}
 
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return "", nil, err
-	}
-
-	data := maven.Metadata{}
-
-	latest = data.Versioning.Latest
-	versions = data.Versioning.Versions.Version
-
-	err = xml.Unmarshal(body, &data)
-
-	if err != nil {
-		return "", nil, err
-	}
-
-	return data.Versioning.Latest, data.Versioning.Versions.Version, nil
+	return latest, versions, nil
 
 }
 
