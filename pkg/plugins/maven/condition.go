@@ -1,11 +1,7 @@
 package maven
 
 import (
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -15,50 +11,25 @@ import (
 
 // Condition tests if a specific version exist on the maven repository
 func (m *Maven) Condition(source string) (bool, error) {
-	if m.Version != "" {
-		logrus.Infof("Version %v, already defined from configuration file", m.Version)
-	} else {
-		m.Version = source
+	if m.spec.Version == "" {
+		m.spec.Version = source
 	}
-	URL := fmt.Sprintf("https://%s/%s/%s/%s/maven-metadata.xml",
-		m.URL,
-		m.Repository,
-		strings.ReplaceAll(m.GroupID, ".", "/"),
-		m.ArtifactID)
 
-	req, err := http.NewRequest("GET", URL, nil)
+	versions, err := m.metadataHandler.GetVersions()
 	if err != nil {
 		return false, err
 	}
 
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return false, err
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return false, err
-	}
-
-	data := Metadata{}
-
-	err = xml.Unmarshal(body, &data)
-	if err != nil {
-		return false, err
-	}
-
-	for _, version := range data.Versioning.Versions.Version {
-		if version == m.Version {
-			logrus.Infof("%s Version %s is available on Maven Repository", result.SUCCESS, m.Version)
+	for _, version := range versions {
+		if version == m.spec.Version {
+			logrus.Infof("%s Version %s is available on the Maven Repository (%s)",
+				result.SUCCESS, m.spec.Version, m.metadataHandler.GetMetadataURL())
 			return true, nil
 		}
-
 	}
 
-	logrus.Infof("%s Version %s is not available on Maven Repository", result.FAILURE, m.Version)
+	logrus.Infof("%s Version %s is not available on the Maven Repository (%s)",
+		result.FAILURE, m.spec.Version, m.metadataHandler.GetMetadataURL())
 	return false, nil
 }
 

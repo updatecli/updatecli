@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/plugins/docker/dockerimage"
-	"github.com/updatecli/updatecli/pkg/plugins/docker/dockermocks"
 )
 
 func Test_New(t *testing.T) {
@@ -170,7 +170,7 @@ func TestRegistry_Digest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sut := DockerGenericRegistry{
 				// Mocking the HTTP client with this function to control the responses and introspect generated requests
-				WebClient: &dockermocks.MockClient{
+				WebClient: &httpclient.MockClient{
 					DoFunc: func(req *http.Request) (*http.Response, error) {
 						// If a token service is called, then returns a mocked response with a token
 						// The token is ALWAYS the following: "bearertoken-<provided username>-<provided password>"
