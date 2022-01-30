@@ -119,6 +119,7 @@ func TestFile_Read(t *testing.T) {
 		mockReturnedContent string
 		mockReturnedError   error
 		spec                Spec
+		mockFileExist       bool
 		wantContent         string
 		wantMockState       text.MockTextRetriever
 	}{
@@ -134,6 +135,7 @@ func TestFile_Read(t *testing.T) {
 				Line:     3,
 				Location: "/foo.txt",
 			},
+			mockFileExist: true,
 		},
 		{
 			name:                "Normal case without a line",
@@ -145,6 +147,7 @@ func TestFile_Read(t *testing.T) {
 			wantMockState: text.MockTextRetriever{
 				Location: "/bar.txt",
 			},
+			mockFileExist: true,
 		},
 		{
 			name:              "File does not exist with a line",
@@ -153,7 +156,8 @@ func TestFile_Read(t *testing.T) {
 				File: "/not_existing.txt",
 				Line: 15,
 			},
-			wantErr: true,
+			wantErr:       true,
+			mockFileExist: false,
 		},
 		{
 			name:              "File does not exist without line",
@@ -161,7 +165,8 @@ func TestFile_Read(t *testing.T) {
 			spec: Spec{
 				File: "/not_existing.txt",
 			},
-			wantErr: true,
+			wantErr:       true,
+			mockFileExist: false,
 		},
 	}
 	for _, tt := range tests {
@@ -169,6 +174,7 @@ func TestFile_Read(t *testing.T) {
 			mockText := text.MockTextRetriever{
 				Content: tt.mockReturnedContent,
 				Err:     tt.mockReturnedError,
+				Exists:  tt.mockFileExist,
 			}
 			f := &File{
 				spec:             tt.spec,
