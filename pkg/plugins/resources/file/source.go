@@ -16,13 +16,6 @@ func (f *File) Source(workingDir string) (string, error) {
 	var validationErrors []string
 	var foundContent string
 
-	if len(f.spec.Files) == 0 && len(f.spec.File) == 0 {
-		// TODO: to be updated after 'file' deprecation
-		validationErrors = append(validationErrors, "Invalid spec for file resource: both 'file' and 'files' are empty.")
-	}
-	if len(f.spec.Files) > 0 && len(f.spec.File) > 0 {
-		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attributes `spec.file` and `spec.files` are mutually exclusive")
-	}
 	if len(f.spec.Files) > 1 {
 		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attributes `spec.files` can't contain more than one element for sources")
 	}
