@@ -224,16 +224,18 @@ func (s *Source) Unmarshal() (sourcer Sourcer, changelog Changelog, err error) {
 		changelog = helmChartResource
 
 	case "jenkins":
-		j := jenkins.Jenkins{}
+		var sourceSpec jenkins.Spec
 
-		err := mapstructure.Decode(s.Config.Spec, &j)
-
-		if err != nil {
+		if err := mapstructure.Decode(s.Config.Spec, &sourceSpec); err != nil {
 			return nil, nil, err
 		}
 
-		sourcer = &j
-		changelog = &j
+		jenkinsResource, err := jenkins.New(sourceSpec)
+		if err != nil {
+			return nil, nil, err
+		}
+		sourcer = &jenkinsResource
+		changelog = &jenkinsResource
 
 	case "maven":
 		var sourceSpec maven.Spec

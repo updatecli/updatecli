@@ -10,12 +10,18 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/mavenmetadata"
 )
 
-// Jenkins defines parameters needed to retrieve latest Jenkins version
-// based on a specific release
-type Jenkins struct {
+// Spec defines a specification for a "jenkins" resource
+// parsed from an updatecli manifest file
+type Spec struct {
 	Release string      // Defines the release name like latest or weekly
 	Version string      // Defines a specific release version
 	Github  github.Spec // Github Parameter used to retrieve a Jenkins changelog
+}
+
+// Jenkins defines a resource of kind "githubrelease"
+type Jenkins struct {
+	spec             Spec
+	mavenMetaHandler mavenmetadata.Handler
 }
 
 const (
@@ -25,40 +31,57 @@ const (
 	WEEKLY string = "weekly"
 	// WRONG represents a bad release name
 	WRONG string = "unknown"
+	// URL of the default Jenkins Maven metadata file
+	jenkinsDefaultMetaURL string = "https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml"
 )
 
+// New returns a new valid GitHubRelease object.
+func New(newSpec Spec) (Jenkins, error) {
+	if newSpec.Release == "" {
+		newSpec.Release = STABLE
+	}
+
+	err := newSpec.Validate()
+	if err != nil {
+		return Jenkins{}, err
+	}
+
+	return Jenkins{
+		spec:             newSpec,
+		mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL),
+	}, nil
+}
+
 // Validate run some validation on the Jenkins struct
-func (j *Jenkins) Validate() (err error) {
-	if len(j.Release) == 0 && len(j.Version) == 0 {
+func (s Spec) Validate() (err error) {
+	if len(s.Release) == 0 && len(s.Version) == 0 {
 		logrus.Debugln("Jenkins release type not defined, default set to stable")
-		j.Release = "stable"
-	} else if len(j.Release) == 0 && len(j.Version) != 0 {
-		j.Release, err = ReleaseType(j.Version)
-		logrus.Debugf("Jenkins release type not defined, guessing based on Version %s", j.Version)
+		s.Release = "stable"
+	} else if len(s.Release) == 0 && len(s.Version) != 0 {
+		s.Release, err = ReleaseType(s.Version)
+		logrus.Debugf("Jenkins release type not defined, guessing based on Version %s", s.Version)
 		if err != nil {
 			return err
 		}
 	}
 
-	if j.Release != WEEKLY &&
-		j.Release != STABLE {
+	if s.Release != WEEKLY &&
+		s.Release != STABLE {
 		return fmt.Errorf("wrong Jenkins release type '%s', accepted values ['%s','%s']",
-			j.Release, WEEKLY, STABLE)
+			s.Release, WEEKLY, STABLE)
 
 	}
 	return nil
 }
 
 // GetVersions fetch every jenkins version from the maven repository
-func GetVersions() (latest string, versions []string, err error) {
-	m := mavenmetadata.New("https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml")
-
-	latest, err = m.GetLatestVersion()
+func (j *Jenkins) getVersions() (latest string, versions []string, err error) {
+	latest, err = j.mavenMetaHandler.GetLatestVersion()
 	if err != nil {
 		return "", nil, err
 	}
 
-	versions, err = m.GetVersions()
+	versions, err = j.mavenMetaHandler.GetVersions()
 	if err != nil {
 		return "", nil, err
 	}
