@@ -16,10 +16,9 @@ func TestFile_Condition(t *testing.T) {
 		name             string
 		spec             Spec
 		inputSourceValue string
+		mockTest         text.MockTextRetriever
 		wantResult       bool
 		wantErr          bool
-		mockTest         text.MockTextRetriever
-		mockFileExist    bool
 	}{
 		{
 			name: "Passing Case with Line",
@@ -176,13 +175,13 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		name                string
 		spec                Spec
 		inputSourceValue    string
-		wantResult          bool
-		wantErr             bool
-		wantMockState       text.MockTextRetriever
+		scm                 scm.ScmHandler
 		mockReturnedContent string
 		mockReturnedError   error
 		mockFileExist       bool
-		scm                 scm.ScmHandler
+		wantMockState       text.MockTextRetriever
+		wantResult          bool
+		wantErr             bool
 	}{
 		{
 			name: "Passing Case with no input source, but a specified line and content and a relative path to file",

@@ -14,12 +14,12 @@ import (
 func TestFile_Target(t *testing.T) {
 	tests := []struct {
 		spec                Spec
-		wantMockState       text.MockTextRetriever
 		name                string
 		inputSourceValue    string
 		mockReturnedContent string
 		mockReturnedError   error
 		mockFileExists      bool
+		wantMockState       text.MockTextRetriever
 		wantResult          bool
 		wantErr             bool
 		dryRun              bool

@@ -143,58 +143,58 @@ func Test_Validate(t *testing.T) {
 func TestFile_Read(t *testing.T) {
 	tests := []struct {
 		name                string
-		wantErr             bool
+		spec                Spec
 		mockReturnedContent string
 		mockReturnedError   error
-		spec                Spec
 		mockFileExist       bool
 		wantContent         string
 		wantMockState       text.MockTextRetriever
+		wantErr             bool
 	}{
 		{
-			name:                "Normal case with a line",
-			mockReturnedContent: "Hello World",
+			name: "Normal case with a line",
 			spec: Spec{
 				Line: 3,
 				File: "/foo.txt",
 			},
-			wantContent: "Hello World",
+			mockReturnedContent: "Hello World",
+			mockFileExist:       true,
+			wantContent:         "Hello World",
 			wantMockState: text.MockTextRetriever{
 				Line:     3,
 				Location: "/foo.txt",
 			},
-			mockFileExist: true,
 		},
 		{
-			name:                "Normal case without a line",
-			mockReturnedContent: "Hello World",
+			name: "Normal case without a line",
 			spec: Spec{
 				File: "/bar.txt",
 			},
-			wantContent: "Hello World",
+			mockReturnedContent: "Hello World",
+			mockFileExist:       true,
+			wantContent:         "Hello World",
 			wantMockState: text.MockTextRetriever{
 				Location: "/bar.txt",
 			},
-			mockFileExist: true,
 		},
 		{
-			name:              "File does not exist with a line",
-			mockReturnedError: fmt.Errorf("no such file or directory"),
+			name: "File does not exist with a line",
 			spec: Spec{
 				File: "/not_existing.txt",
 				Line: 15,
 			},
-			wantErr:       true,
-			mockFileExist: false,
+			mockReturnedError: fmt.Errorf("no such file or directory"),
+			mockFileExist:     false,
+			wantErr:           true,
 		},
 		{
-			name:              "File does not exist without line",
-			mockReturnedError: fmt.Errorf("no such file or directory"),
+			name: "File does not exist without line",
 			spec: Spec{
 				File: "/not_existing.txt",
 			},
-			wantErr:       true,
-			mockFileExist: false,
+			mockReturnedError: fmt.Errorf("no such file or directory"),
+			mockFileExist:     false,
+			wantErr:           true,
 		},
 	}
 	for _, tt := range tests {

@@ -14,12 +14,12 @@ func TestFile_Source(t *testing.T) {
 	tests := []struct {
 		name                string
 		spec                Spec
-		wantSource          string
-		wantErr             bool
 		mockFileExist       bool
 		mockReturnedContent string
 		mockReturnedError   error
+		wantSource          string
 		wantMockState       text.MockTextRetriever
+		wantErr             bool
 	}{
 		{
 			name: "Normal Case with 'File'",
