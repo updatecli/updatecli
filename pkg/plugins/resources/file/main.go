@@ -135,9 +135,11 @@ func (f *File) Read() error {
 			}
 
 			// Otherwise return the textual content
-			f.files[filePath], err = f.contentRetriever.ReadAll(filePath)
-			if err != nil {
-				return err
+			if f.spec.Line == 0 {
+				f.files[filePath], err = f.contentRetriever.ReadAll(filePath)
+				if err != nil {
+					return err
+				}
 			}
 		} else {
 			if f.spec.ForceCreate {
