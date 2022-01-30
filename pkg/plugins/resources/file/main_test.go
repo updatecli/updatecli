@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -91,6 +92,16 @@ func Test_Validate(t *testing.T) {
 					Exists: tt.mockFileExist,
 				},
 			}
+			file.files = make(map[string]string)
+			if len(file.spec.File) > 0 {
+				file.files[strings.TrimPrefix(file.spec.File, "file://")] = ""
+			}
+			// files
+			for _, currentFile := range file.spec.Files {
+				// TODO:? warn if already in? (duplicates)
+				// TODO:! only add if not already in
+				file.files[strings.TrimPrefix(currentFile, "file://")] = ""
+			}
 			gotErr := file.Validate()
 			if tt.wantErr {
 				require.Error(t, gotErr)
@@ -163,6 +174,17 @@ func TestFile_Read(t *testing.T) {
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
+			f.files = make(map[string]string)
+			if len(f.spec.File) > 0 {
+				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
+			}
+			// files
+			for _, file := range f.spec.Files {
+				// TODO:? warn if already in? (duplicates)
+				// TODO:! only add if not already in
+				f.files[strings.TrimPrefix(file, "file://")] = ""
+			}
+
 			gotErr := f.Read()
 
 			if tt.wantErr {
@@ -171,7 +193,7 @@ func TestFile_Read(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantContent, f.CurrentContent)
+			assert.Equal(t, tt.wantContent, f.files[f.spec.File])
 			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
 			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
 		})
