@@ -35,7 +35,7 @@ func (mock *MockGitHubClient) Query(ctx context.Context, q interface{}, variable
 		*qt = *mt
 		return mock.mockedErr
 	default:
-		return fmt.Errorf("Mock error: unsupported type for the provided query (%v).", q)
+		return fmt.Errorf("mock error: unsupported type for the provided query (%v)", q)
 	}
 }
 
