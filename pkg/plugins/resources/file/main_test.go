@@ -17,7 +17,7 @@ func Test_Validate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Normal case",
+			name: "Normal case with 'File'",
 			spec: Spec{
 				File: "/tmp/foo.txt",
 				Line: 12,
@@ -25,9 +25,60 @@ func Test_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "raises an error when 'File' is empty",
+			name: "Normal case with 'Files' containing one element and a 'Line' is specified",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+				},
+				Line: 12,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Normal case with 'Files' containing more than one element and no 'Line' is specified",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+					"/tmp/bar.txt",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "raises and error when 'Files' containing duplicated values",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+					"/tmp/foo.txt",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "raises an error when 'File' and 'Files' are empty",
 			spec: Spec{
 				File: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "raises an error when 'File' and 'Files' are not empty",
+			spec: Spec{
+				File: "/tmp/foo.txt",
+				Files: []string{
+					"/tmp/bar.txt",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "raises an error when 'Files' contains more than one element and 'Line' is specified",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+					"/tmp/bar.txt",
+				},
+				Line: 12,
 			},
 			wantErr: true,
 		},
