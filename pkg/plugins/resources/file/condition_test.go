@@ -181,6 +181,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		wantMockState       text.MockTextRetriever
 		mockReturnedContent string
 		mockReturnedError   error
+		mockFileExist       bool
 		scm                 scm.ScmHandler
 	}{
 		{
@@ -194,6 +195,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				WorkingDir: "/tmp",
 			},
 			mockReturnedContent: "current_version=1.2.3",
+			mockFileExist:       true,
 			wantResult:          true,
 			wantMockState: text.MockTextRetriever{
 				Location: "/tmp/foo.txt",
@@ -210,6 +212,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				WorkingDir: "/tmp",
 			},
 			mockReturnedContent: "current_version=1.2.3",
+			mockFileExist:       true,
 			wantResult:          true,
 			wantMockState: text.MockTextRetriever{
 				Location: "/tmp/foo.txt",
@@ -225,6 +228,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				WorkingDir: "/tmp",
 			},
 			mockReturnedContent: "current_version=1.2.3",
+			mockFileExist:       true,
 			wantResult:          false,
 			wantMockState: text.MockTextRetriever{
 				Location: "/tmp/foo.txt",
@@ -260,11 +264,23 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 			mockText := text.MockTextRetriever{
 				Content: tt.mockReturnedContent,
 				Err:     tt.mockReturnedError,
+				Exists:  tt.mockFileExist,
 			}
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
+
+			f.files = make(map[string]string)
+			// File as unique element of f.files
+			if len(f.spec.File) > 0 {
+				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
+			}
+			// Files
+			for _, file := range f.spec.Files {
+				f.files[strings.TrimPrefix(file, "file://")] = ""
+			}
+
 			gotResult, gotErr := f.ConditionFromSCM(tt.inputSourceValue, tt.scm)
 			if tt.wantErr {
 				assert.Error(t, gotErr)
