@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
