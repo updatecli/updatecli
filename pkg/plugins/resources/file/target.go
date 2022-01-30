@@ -34,16 +34,14 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 	var files []string
 	var message strings.Builder
 
-	// TODO:? ref other todo:? comment in main.New() about the 'file://'
 	// Test if target reference a file with a prefix like https:// or file://, as we don't know how to update those files.
 	// We need to loop the files here before calling ReadOrForceCreate in case one of these file paths is an URL, not supported for a target
-	// TODO:! check if it's supported for sources and/or conditions
 	for filePath := range f.files {
+		// TODO:! don't
 		files = append(files, filePath)
 		if text.IsURL(filePath) {
 			validationError := fmt.Errorf("Validation error in target of type 'file': spec.files item value (%q) is an URL which is not supported for a target.", filePath)
 			logrus.Errorf(validationError.Error())
-			// TODO:? shouldn't files contain at least f.spec.File in the original code? Same for below, fixed (?) by filling files in one of the first new loops instead of just at the end
 			return false, files, message.String(), validationError
 		}
 	}

@@ -5,13 +5,14 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
 // TODO: deprecate `spec.file` & `kind: file`, to be replaced by `spec.files` & `kind: files`
 // TODO:! tests
 // TODO:! update doc
-// TODO:? rename `spec.files` to `spec.filePaths`?
 
 /* [Meta to be removed]
  * "TODO:": to be kept in code (?)
@@ -53,18 +54,11 @@ func New(spec interface{}) (*File, error) {
 	}
 
 	err = newResource.Validate()
-=======
-	// TODO:? shouldn't this validation be after the trim prefix?
-	// TODO:! validate spec instead of newResource
-	// TODO: generalize the Validate + Normalize as an interface to all resources
-	err := newResource.Validate()
->>>>>>> 6d73233 (wip: implement 'spec.files' for 'kind: file' (first part: 'targets')):pkg/plugins/file/main.go
 	if err != nil {
 		return nil, err
 	}
 
 	newResource.files = make(map[string]string)
-	// TODO:? where does this 'file://' comes from? Is it a common case? Should be tested/striped elsewhere IMO (hlm)
 	// file as simple item of files
 	if len(newResource.spec.File) > 0 {
 		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
