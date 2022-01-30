@@ -2,13 +2,10 @@ package jenkins
 
 import (
 	"fmt"
-
-	"github.com/updatecli/updatecli/pkg/plugins/version"
 )
 
-// Changelog returns a changelog description based on a Jenkins version
-// retrieved from a GitHub Release
-func (j *Jenkins) Changelog(release version.Version) (string, error) {
+// Changelog returns the link to the found Jenkins version's changelog
+func (j Jenkins) Changelog() string {
 	var changelogURI string
 	switch j.spec.Release {
 	case WEEKLY:
@@ -16,18 +13,18 @@ func (j *Jenkins) Changelog(release version.Version) (string, error) {
 	case STABLE:
 		changelogURI = "changelog-stable"
 	default:
-		return "", fmt.Errorf("Unknown Jenkins release type: %q", j.spec.Release)
+		return ""
 	}
 
-	if release.ParsedVersion == "" {
-		return "", fmt.Errorf("Empty Jenkins version: %q", release.ParsedVersion)
+	if j.foundVersion == "" {
+		return ""
 	}
 
 	changelog := fmt.Sprintf(
 		"Jenkins changelog is available at: https://www.jenkins.io/%s/#v%s\n",
 		changelogURI,
-		release.ParsedVersion,
+		j.foundVersion,
 	)
 
-	return changelog, nil
+	return changelog
 }

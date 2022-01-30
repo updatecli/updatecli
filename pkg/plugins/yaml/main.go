@@ -289,3 +289,8 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 
 	return valueFound, oldVersion, column
 }
+
+// Changelog returns the changelog for this resource, or an empty string if not supported
+func (y *Yaml) Changelog() string {
+	return ""
+}

@@ -78,13 +78,13 @@ func Test_New(t *testing.T) {
 	tests := []struct {
 		name    string
 		spec    Spec
-		want    Jenkins
+		want    *Jenkins
 		wantErr bool
 	}{
 		{
 			name: "Normal case with default arguments",
 			spec: Spec{},
-			want: Jenkins{
+			want: &Jenkins{
 				spec: Spec{
 					Release: STABLE,
 				},
@@ -96,7 +96,7 @@ func Test_New(t *testing.T) {
 			spec: Spec{
 				Release: WEEKLY,
 			},
-			want: Jenkins{
+			want: &Jenkins{
 				spec: Spec{
 					Release: WEEKLY,
 				},

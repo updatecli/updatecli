@@ -12,13 +12,13 @@ func Test_NewImage(t *testing.T) {
 		name         string
 		imageName    string
 		architecture string
-		want         Image
+		want         *Image
 		wantErr      bool
 	}{
 		{
 			name:      "User image on Docker Hub",
 			imageName: "user/jenkinsci",
-			want: Image{
+			want: &Image{
 				Namespace:    "user",
 				Registry:     "registry-1.docker.io",
 				Repository:   "jenkinsci",
@@ -29,7 +29,7 @@ func Test_NewImage(t *testing.T) {
 		{
 			name:      "User image on Docker Hub with tag",
 			imageName: "user/jenkinsci:alpine",
-			want: Image{
+			want: &Image{
 				Namespace:    "user",
 				Registry:     "registry-1.docker.io",
 				Repository:   "jenkinsci",
@@ -40,7 +40,7 @@ func Test_NewImage(t *testing.T) {
 		{
 			name:      "Official image on Docker Hub with tag",
 			imageName: "ubuntu:18.04",
-			want: Image{
+			want: &Image{
 				Namespace:    "library",
 				Registry:     "registry-1.docker.io",
 				Repository:   "ubuntu",
@@ -51,7 +51,7 @@ func Test_NewImage(t *testing.T) {
 		{
 			name:      "GHCR User image with explicit tag ",
 			imageName: "ghcr.io/olblak/updatecli:v0.16.0",
-			want: Image{
+			want: &Image{
 				Namespace:    "olblak",
 				Registry:     "ghcr.io",
 				Repository:   "updatecli",
@@ -63,7 +63,7 @@ func Test_NewImage(t *testing.T) {
 			name:         "Quay.io user image without tag and custom architecture",
 			imageName:    "quay.io/ansible/ansible-runner",
 			architecture: "s390x",
-			want: Image{
+			want: &Image{
 				Namespace:    "ansible",
 				Registry:     "quay.io",
 				Repository:   "ansible-runner",
@@ -74,7 +74,7 @@ func Test_NewImage(t *testing.T) {
 		{
 			name:      "Quay.io user image without architecture",
 			imageName: "quay.io/ansible/ansible-runner",
-			want: Image{
+			want: &Image{
 				Namespace:    "ansible",
 				Registry:     "quay.io",
 				Repository:   "ansible-runner",
@@ -85,7 +85,7 @@ func Test_NewImage(t *testing.T) {
 		{
 			name:      "Invalid image name provided",
 			imageName: "",
-			want:      Image{},
+			want:      &Image{},
 			wantErr:   true,
 		},
 	}

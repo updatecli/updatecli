@@ -93,3 +93,8 @@ func formatShellBlock(content string) string {
 
 	return message
 }
+
+// Changelog returns the changelog for this resource, or an empty string if not supported
+func (s *Shell) Changelog() string {
+	return ""
+}
