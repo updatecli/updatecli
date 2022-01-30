@@ -122,6 +122,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 			return false, files, message.String(), err
 		}
 		if dryRun {
+			// Only "dry run", no "content" nor "line"
 			contentType = "(dry run)"
 		}
 		logrus.Infof("%s updated the %s of the file %q\n\n%s\n",

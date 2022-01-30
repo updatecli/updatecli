@@ -7,6 +7,6 @@ targets:
       # file: LICENSE
       files:
         - LICENSE
-        - LICENSE2
+        - examples/updatecli.generic/LICENSE
       matchPattern: 'Copyright \(c\) (\d*) (.*)'
       replacepattern: 'Copyright (c) 2022 $2'
