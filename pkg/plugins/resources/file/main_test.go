@@ -209,13 +209,12 @@ func TestFile_Read(t *testing.T) {
 				contentRetriever: &mockText,
 			}
 			f.files = make(map[string]string)
+			// File as unique element of f.files
 			if len(f.spec.File) > 0 {
 				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
 			}
-			// files
+			// Files
 			for _, file := range f.spec.Files {
-				// TODO:? warn if already in? (duplicates)
-				// TODO:! only add if not already in
 				f.files[strings.TrimPrefix(file, "file://")] = ""
 			}
 			gotErr := f.Read()

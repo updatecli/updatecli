@@ -59,14 +59,12 @@ func New(spec interface{}) (*File, error) {
 	}
 
 	newResource.files = make(map[string]string)
-	// file as simple item of files
+	// File as unique element of newResource.files
 	if len(newResource.spec.File) > 0 {
 		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
 	}
-	// files
+	// Files
 	for _, file := range newResource.spec.Files {
-		// TODO:? warn if already in? (duplicates)
-		// TODO:! only add if not already in
 		newResource.files[strings.TrimPrefix(file, "file://")] = ""
 	}
 
@@ -84,7 +82,6 @@ func hasDupes(values []string) bool {
 
 // Validate validates the object and returns an error (with all the failed validation messages) if not valid
 func (s *Spec) Validate() error {
-	// TODO:! replace by a strings.Builder
 	var validationErrors []string
 
 	// Check for all validation
