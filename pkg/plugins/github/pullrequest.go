@@ -84,6 +84,14 @@ type PullRequest struct {
 	remotePullRequest PullRequestApi
 }
 
+// Graphql mutation used with GitHub api to enable automerge on a existing
+// pullrequest
+type mutationEnablePullRequestAutoMerge struct {
+	EnablePullRequestAutoMerge struct {
+		PullRequest PullRequestApi
+	} `graphql:"enablePullRequestAutoMerge(input: $input)"`
+}
+
 func NewPullRequest(spec PullRequestSpec, gh *Github) (PullRequest, error) {
 	return PullRequest{
 		gh:   gh,
@@ -258,11 +266,7 @@ func (p *PullRequest) updatePullRequest() error {
 // EnablePullRequestAutoMerge updates an existing pullrequest with the flag automerge
 func (p *PullRequest) EnablePullRequestAutoMerge() error {
 
-	var mutation struct {
-		EnablePullRequestAutoMerge struct {
-			PullRequest PullRequestApi
-		} `graphql:"enablePullRequestAutoMerge(input: $input)"`
-	}
+	var mutation mutationEnablePullRequestAutoMerge
 
 	input := githubv4.EnablePullRequestAutoMergeInput{
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
