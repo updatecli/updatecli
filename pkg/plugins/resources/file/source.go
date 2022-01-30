@@ -62,10 +62,10 @@ func (f *File) Source(workingDir string) (string, error) {
 			}
 
 			// Check if there is any match in the file
-			if !reg.MatchString(f.CurrentContent) {
+			if !reg.MatchString(f.files[filePath]) {
 				return "", fmt.Errorf("No line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
-			matchedStrings := reg.FindAllString(f.CurrentContent, -1)
+			matchedStrings := reg.FindAllString(f.files[filePath], -1)
 
 			foundContent = strings.Join(matchedStrings, "\n")
 		}
