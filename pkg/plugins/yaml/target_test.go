@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -109,6 +110,7 @@ github-
 				contentRetriever: &mockText,
 			}
 			gotResult, gotErr := y.Target(tt.inputSourceValue, tt.dryRun)
+			defer os.Remove(y.spec.File)
 			if tt.wantErr {
 				assert.Error(t, gotErr)
 				return
