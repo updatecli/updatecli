@@ -36,7 +36,6 @@ type File struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
 	files            map[string]string
-	CurrentContent   string // TODO:! to be removed, no need if we treat "file" as one occurrence of "fileList" (to be renamed "files")
 }
 
 // New returns a reference to a newly initialized File object from a Spec
