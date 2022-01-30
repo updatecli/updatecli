@@ -7,7 +7,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
-	"github.com/updatecli/updatecli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
 func generateScmFromLegacyCondition(id string, c condition.Config, config *Config) {

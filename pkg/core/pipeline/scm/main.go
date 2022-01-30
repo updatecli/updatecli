@@ -5,8 +5,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/git"
-	"github.com/updatecli/updatecli/pkg/plugins/github"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
 type Config struct {
