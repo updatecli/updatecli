@@ -92,16 +92,6 @@ func Test_Validate(t *testing.T) {
 					Exists: tt.mockFileExist,
 				},
 			}
-			file.files = make(map[string]string)
-			if len(file.spec.File) > 0 {
-				file.files[strings.TrimPrefix(file.spec.File, "file://")] = ""
-			}
-			// files
-			for _, currentFile := range file.spec.Files {
-				// TODO:? warn if already in? (duplicates)
-				// TODO:! only add if not already in
-				file.files[strings.TrimPrefix(currentFile, "file://")] = ""
-			}
 			gotErr := file.Validate()
 			if tt.wantErr {
 				require.Error(t, gotErr)
@@ -190,7 +180,6 @@ func TestFile_Read(t *testing.T) {
 				// TODO:! only add if not already in
 				f.files[strings.TrimPrefix(file, "file://")] = ""
 			}
-
 			gotErr := f.Read()
 
 			if tt.wantErr {
