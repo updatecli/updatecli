@@ -1,50 +1,33 @@
 package jenkins
 
 import (
-	"github.com/updatecli/updatecli/pkg/plugins/github"
-	"github.com/updatecli/updatecli/pkg/plugins/version"
-)
+	"fmt"
 
-var (
-	// ChangelogFallbackContent is returned when no Github credentials are provided as it's currently
-	// the only to retrieve Jenkins changelog from GitHub release.
-	ChangelogFallbackContent string = `
-Warning:
-========
-We currently rely on Github Release to get Jenkins changelog
-which requires a github token and a github username as in the following example:
----
-source:
-  kind: jenkins
-  spec:
-    release: stable
-    github:
-      token: {{ requiredEnv .github.token }}
-      username: {{ .github.username }}
----
-`
+	"github.com/updatecli/updatecli/pkg/plugins/version"
 )
 
 // Changelog returns a changelog description based on a Jenkins version
 // retrieved from a GitHub Release
 func (j *Jenkins) Changelog(release version.Version) (string, error) {
-	if len(j.Github.Token) == 0 || len(j.Github.Username) == 0 {
-		return ChangelogFallbackContent, nil
+	var changelogURI string
+	switch j.spec.Release {
+	case WEEKLY:
+		changelogURI = "changelog"
+	case STABLE:
+		changelogURI = "changelog-stable"
+	default:
+		return "", fmt.Errorf("Unknown Jenkins release type: %q", j.spec.Release)
 	}
 
-	g, err := github.New(github.Spec{
-		Owner:      "jenkinsci",
-		Repository: "jenkins",
-		Token:      j.Github.Token,
-		Username:   j.Github.Username})
-
-	if err != nil {
-		return "", err
-
+	if release.ParsedVersion == "" {
+		return "", fmt.Errorf("Empty Jenkins version: %q", release.ParsedVersion)
 	}
-	changelog, err := g.Changelog(version.Version{
-		OriginalVersion: "jenkins-" + release.OriginalVersion,
-		ParsedVersion:   "jenkins-" + release.ParsedVersion})
 
-	return changelog, err
+	changelog := fmt.Sprintf(
+		"Jenkins changelog is available at: https://www.jenkins.io/%s/#v%s\n",
+		changelogURI,
+		release.ParsedVersion,
+	)
+
+	return changelog, nil
 }
