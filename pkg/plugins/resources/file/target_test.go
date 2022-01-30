@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,16 +13,16 @@ import (
 
 func TestFile_Target(t *testing.T) {
 	tests := []struct {
-		spec                  Spec
-		wantMockState         text.MockTextRetriever
-		name                  string
-		inputSourceValue      string
-		mockReturnedContent   string
-		mockReturnedError     error
-		mockReturnsFileExists bool
-		wantResult            bool
-		wantErr               bool
-		dryRun                bool
+		spec                Spec
+		wantMockState       text.MockTextRetriever
+		name                string
+		inputSourceValue    string
+		mockReturnedContent string
+		mockReturnedError   error
+		mockFileExists      bool
+		wantResult          bool
+		wantErr             bool
+		dryRun              bool
 	}{
 		{
 			name:             "Replace content with matchPattern and ReplacePattern",
@@ -31,7 +32,7 @@ func TestFile_Target(t *testing.T) {
 				MatchPattern:   "maven_(.*)=.*",
 				ReplacePattern: "maven_$1= 3.9.0",
 			},
-			mockReturnsFileExists: true,
+			mockFileExists: true,
 			mockReturnedContent: `maven_version = "3.8.2"
 		git_version = "2.33.1"
 		jdk11_version = "11.0.12+7"
@@ -59,9 +60,9 @@ func TestFile_Target(t *testing.T) {
 				File:    "foo.txt",
 				Content: "Hello World",
 			},
-			mockReturnsFileExists: true,
-			inputSourceValue:      "current_version=1.2.3",
-			wantResult:            true,
+			mockFileExists:   true,
+			inputSourceValue: "current_version=1.2.3",
+			wantResult:       true,
 			wantMockState: text.MockTextRetriever{
 				Location: "foo.txt",
 				Content:  "Hello World",
@@ -74,10 +75,10 @@ func TestFile_Target(t *testing.T) {
 				Content: "Hello World",
 				Line:    2,
 			},
-			mockReturnsFileExists: true,
-			mockReturnedContent:   "Title\nGood Bye\nThe end",
-			inputSourceValue:      "current_version=1.2.3",
-			wantResult:            true,
+			mockFileExists:      true,
+			mockReturnedContent: "Title\nGood Bye\nThe end",
+			inputSourceValue:    "current_version=1.2.3",
+			wantResult:          true,
 			wantMockState: text.MockTextRetriever{
 				Location: "foo.txt",
 				Line:     2,
@@ -108,10 +109,10 @@ func TestFile_Target(t *testing.T) {
 				MatchPattern: "(d+:1",
 				File:         "/bar.txt",
 			},
-			mockReturnsFileExists: true,
-			mockReturnedContent:   `maven_version = "3.8.2"`,
-			wantResult:            false,
-			wantErr:               true,
+			mockFileExists:      true,
+			mockReturnedContent: `maven_version = "3.8.2"`,
+			wantResult:          false,
+			wantErr:             true,
 		},
 		{
 			name: "Error with file not existing (with line)",
@@ -137,10 +138,10 @@ func TestFile_Target(t *testing.T) {
 				File: "not_existing.txt",
 				Line: 3,
 			},
-			mockReturnsFileExists: true,
-			mockReturnedError:     fmt.Errorf("I/O error: file system too slow"),
-			wantResult:            false,
-			wantErr:               true,
+			mockFileExists:    true,
+			mockReturnedError: fmt.Errorf("I/O error: file system too slow"),
+			wantResult:        false,
+			wantErr:           true,
 		},
 		{
 			name: "Error while reading a full file",
@@ -148,10 +149,10 @@ func TestFile_Target(t *testing.T) {
 				File:    "not_existing.txt",
 				Content: "Hello World",
 			},
-			mockReturnsFileExists: true,
-			mockReturnedError:     fmt.Errorf("I/O error: file system too slow"),
-			wantResult:            false,
-			wantErr:               true,
+			mockFileExists:    true,
+			mockReturnedError: fmt.Errorf("I/O error: file system too slow"),
+			wantResult:        false,
+			wantErr:           true,
 		},
 		{
 			name: "Line in file not updated",
@@ -159,10 +160,10 @@ func TestFile_Target(t *testing.T) {
 				File: "foo.txt",
 				Line: 3,
 			},
-			mockReturnsFileExists: true,
-			mockReturnedContent:   "current_version=1.2.3",
-			inputSourceValue:      "current_version=1.2.3",
-			wantResult:            false,
+			mockFileExists:      true,
+			mockReturnedContent: "current_version=1.2.3",
+			inputSourceValue:    "current_version=1.2.3",
+			wantResult:          false,
 			wantMockState: text.MockTextRetriever{
 				Location: "foo.txt",
 				Line:     3,
@@ -174,10 +175,10 @@ func TestFile_Target(t *testing.T) {
 			spec: Spec{
 				File: "foo.txt",
 			},
-			mockReturnsFileExists: true,
-			mockReturnedContent:   "current_version=1.2.3",
-			inputSourceValue:      "current_version=1.2.3",
-			wantResult:            false,
+			mockFileExists:      true,
+			mockReturnedContent: "current_version=1.2.3",
+			inputSourceValue:    "current_version=1.2.3",
+			wantResult:          false,
 			wantMockState: text.MockTextRetriever{
 				Location: "foo.txt",
 				Content:  "current_version=1.2.3",
@@ -189,12 +190,23 @@ func TestFile_Target(t *testing.T) {
 			mockText := text.MockTextRetriever{
 				Content: tt.mockReturnedContent,
 				Err:     tt.mockReturnedError,
-				Exists:  tt.mockReturnsFileExists,
+				Exists:  tt.mockFileExists,
 			}
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
+
+			f.files = make(map[string]string)
+			// File as unique element of f.files
+			if len(f.spec.File) > 0 {
+				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
+			}
+			// Files
+			for _, file := range f.spec.Files {
+				f.files[strings.TrimPrefix(file, "file://")] = ""
+			}
+
 			gotResult, gotErr := f.Target(tt.inputSourceValue, tt.dryRun)
 			if tt.wantErr {
 				assert.Error(t, gotErr)
@@ -212,18 +224,18 @@ func TestFile_Target(t *testing.T) {
 
 func TestFile_TargetFromSCM(t *testing.T) {
 	tests := []struct {
-		spec                  Spec
-		wantFiles             []string
-		name                  string
-		inputSourceValue      string
-		mockReturnedContent   string
-		mockReturnedError     error
-		scm                   scm.ScmHandler
-		wantResult            bool
-		wantErr               bool
-		mockReturnsFileExists bool
-		dryRun                bool
-		wantMockState         text.MockTextRetriever
+		spec                Spec
+		wantFiles           []string
+		name                string
+		inputSourceValue    string
+		mockReturnedContent string
+		mockReturnedError   error
+		scm                 scm.ScmHandler
+		wantResult          bool
+		wantErr             bool
+		mockFileExists      bool
+		dryRun              bool
+		wantMockState       text.MockTextRetriever
 	}{
 		{
 			name: "Passing Case with relative path",
@@ -234,10 +246,10 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
-			mockReturnsFileExists: true,
-			inputSourceValue:      "current_version=1.2.3",
-			wantResult:            true,
-			wantFiles:             []string{"/tmp/foo.txt"},
+			mockFileExists:   true,
+			inputSourceValue: "current_version=1.2.3",
+			wantResult:       true,
+			wantFiles:        []string{"/tmp/foo.txt"},
 			wantMockState: text.MockTextRetriever{
 				Location: "/tmp/foo.txt",
 				Content:  "current_version=1.2.3",
@@ -253,10 +265,10 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
-			mockReturnsFileExists: false,
-			inputSourceValue:      "current_version=1.2.3",
-			wantResult:            true,
-			wantFiles:             []string{"/tmp/foo.txt"},
+			mockFileExists:   false,
+			inputSourceValue: "current_version=1.2.3",
+			wantResult:       true,
+			wantFiles:        []string{"/tmp/foo.txt"},
 			wantMockState: text.MockTextRetriever{
 				Location: "/tmp/foo.txt",
 				Content:  "current_version=1.2.3",
@@ -273,7 +285,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
-			mockReturnsFileExists: true,
+			mockFileExists: true,
 			mockReturnedContent: `maven_version = "3.8.2"
 		git_version = "2.33.1"
 		jdk11_version = "11.0.12+7"
@@ -290,12 +302,23 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockText := text.MockTextRetriever{
 				Err:    tt.mockReturnedError,
-				Exists: tt.mockReturnsFileExists,
+				Exists: tt.mockFileExists,
 			}
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
+
+			f.files = make(map[string]string)
+			// File as unique element of f.files
+			if len(f.spec.File) > 0 {
+				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
+			}
+			// Files
+			for _, file := range f.spec.Files {
+				f.files[strings.TrimPrefix(file, "file://")] = ""
+			}
+
 			gotResult, gotFiles, _, gotErr := f.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
 
 			if tt.wantErr {

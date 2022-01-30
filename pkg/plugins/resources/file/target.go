@@ -23,10 +23,17 @@ func (f *File) Target(source string, dryRun bool) (bool, error) {
 // TargetFromSCM creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
 func (f *File) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	if !filepath.IsAbs(f.spec.File) {
-		f.spec.File = filepath.Join(scm.GetDirectory(), f.spec.File)
-		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", f.spec.File)
+	absoluteFiles := make(map[string]string)
+	for filePath := range f.files {
+		absoluteFilePath := filePath
+		if !filepath.IsAbs(filePath) {
+			absoluteFilePath = filepath.Join(scm.GetDirectory(), filePath)
+			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
+		}
+		absoluteFiles[absoluteFilePath] = f.files[filePath]
 	}
+	f.files = absoluteFiles
+
 	return f.target(source, dryRun)
 }
 
@@ -34,11 +41,15 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 	var files []string
 	var message strings.Builder
 
+	if f.spec.Line > 0 && f.spec.ForceCreate {
+		validationError := fmt.Errorf("Validation error in target of type 'file': 'spec.line' and 'spec.forcecreate' are mutually exclusive")
+		logrus.Errorf(validationError.Error())
+		return false, files, message.String(), validationError
+	}
+
 	// Test if target reference a file with a prefix like https:// or file://, as we don't know how to update those files.
 	// We need to loop the files here before calling ReadOrForceCreate in case one of these file paths is an URL, not supported for a target
 	for filePath := range f.files {
-		// TODO:! don't
-		files = append(files, filePath)
 		if text.IsURL(filePath) {
 			validationError := fmt.Errorf("Validation error in target of type 'file': spec.files item value (%q) is an URL which is not supported for a target.", filePath)
 			logrus.Errorf(validationError.Error())
@@ -87,6 +98,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 			// Keep the original content for later comparison
 			originalContents[filePath] = f.files[filePath]
 			f.files[filePath] = inputContent
+			files = append(files, filePath)
 		}
 	}
 
