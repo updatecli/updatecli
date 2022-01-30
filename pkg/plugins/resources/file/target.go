@@ -86,7 +86,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		for filePath := range f.files {
 			// Check if there is any match in the file
 			if !reg.MatchString(f.files[filePath]) {
-				// TODO: add the possibility to match only some files? In that case, just a warning here
+				// We allow the possibility to match only some files. In that case, just a warning here
 				return false, files, message.String(), fmt.Errorf("No line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
 			// Keep the original content for later comparison

@@ -11,14 +11,6 @@ import (
 )
 
 // TODO: deprecate `spec.file` & `kind: file`, to be replaced by `spec.files` & `kind: files`
-// TODO:! tests
-// TODO:! update doc
-
-/* [Meta to be removed]
- * "TODO:": to be kept in code (?)
- * "TODO:!": personal todo for preparing the PR (to be removed from draft)
- * "TODO:?": questions for maitainers (to be removed after review)
- */
 
 // Spec defines a specification for a "file" resource
 // parsed from an updatecli manifest file
