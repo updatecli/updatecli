@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,29 +16,31 @@ func TestFile_Source(t *testing.T) {
 		spec                Spec
 		wantSource          string
 		wantErr             bool
-		workingDir          string
+		mockFileExist       bool
 		mockReturnedContent string
 		mockReturnedError   error
 		wantMockState       text.MockTextRetriever
 	}{
 		{
-			name: "Normal case with relative path for file",
-			spec: Spec{
-				File: "example.yaml",
-			},
-			workingDir: "/tmp/updatecli/",
-			wantErr:    false,
-			wantSource: "",
-			wantMockState: text.MockTextRetriever{
-				Location: "/tmp/updatecli/example.yaml",
-			},
-		},
-		{
-			name: "Normal case with absolute path for file",
+			name: "Normal Case with 'File'",
 			spec: Spec{
 				File: "/home/ucli/foo.txt",
 			},
-			workingDir:          "/tmp/updatecli/",
+			mockFileExist:       true,
+			mockReturnedContent: "current_version=1.2.3",
+			wantSource:          "current_version=1.2.3",
+			wantMockState: text.MockTextRetriever{
+				Location: "/home/ucli/foo.txt",
+			},
+		},
+		{
+			name: "Normal Case with 'Files'",
+			spec: Spec{
+				Files: []string{
+					"/home/ucli/foo.txt",
+				},
+			},
+			mockFileExist:       true,
 			mockReturnedContent: "current_version=1.2.3",
 			wantSource:          "current_version=1.2.3",
 			wantMockState: text.MockTextRetriever{
@@ -62,7 +65,7 @@ func TestFile_Source(t *testing.T) {
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*freebsd_386.*",
 			},
-			workingDir: "/tmp/updatecli/",
+			mockFileExist: true,
 			mockReturnedContent: `363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07  terraform_0.14.5_darwin_amd64.zip
 5a3e0c7873faa048f59d563a2a98caf7f04045967cbb5ad6cf05f5991e20b8d1  terraform_0.14.5_freebsd_386.zip
 4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip
@@ -87,7 +90,7 @@ f8bf1fca0ef11a33955d225198d1211e15827d43488cc9174dcda14d1a7a1d19  terraform_0.14
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*terraform_.*_linux_.*",
 			},
-			workingDir: "/tmp/updatecli/",
+			mockFileExist: true,
 			mockReturnedContent: `363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07  terraform_0.14.5_darwin_amd64.zip
 5a3e0c7873faa048f59d563a2a98caf7f04045967cbb5ad6cf05f5991e20b8d1  terraform_0.14.5_freebsd_386.zip
 4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip
@@ -111,9 +114,19 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 		},
 		{
 			name:              "File does not exists",
-			workingDir:        "/tmp/updatecli/",
+			mockFileExist:     false,
 			mockReturnedError: fmt.Errorf("no such file or directory"),
 			wantErr:           true,
+		},
+		{
+			name: "Validation Failure with specified Files containing more than one element",
+			spec: Spec{
+				Files: []string{
+					"/home/ucli/foo.txt",
+					"/home/ucli/bar.txt",
+				},
+			},
+			wantErr: true,
 		},
 		{
 			name: "Validation Failure with specified ReplacePattern",
@@ -158,21 +171,36 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 			mockText := text.MockTextRetriever{
 				Content: tt.mockReturnedContent,
 				Err:     tt.mockReturnedError,
+				Exists:  tt.mockFileExist,
 			}
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
-			source, gotErr := f.Source(tt.workingDir)
-			if tt.wantErr {
-				assert.Error(t, gotErr)
-				return
+
+			f.files = make(map[string]string)
+			// File as unique element of f.files
+			if len(f.spec.File) > 0 {
+				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
+			}
+			// Files
+			for _, file := range f.spec.Files {
+				f.files[strings.TrimPrefix(file, "file://")] = ""
 			}
 
-			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantSource, source)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
+			// Looping on the only filePath in 'files'
+			for filePath := range f.files {
+				source, gotErr := f.Source(filePath)
+				if tt.wantErr {
+					assert.Error(t, gotErr)
+					return
+				}
+
+				require.NoError(t, gotErr)
+				assert.Equal(t, tt.wantSource, source)
+				assert.Equal(t, tt.wantMockState.Location, mockText.Location)
+				assert.Equal(t, tt.wantMockState.Line, mockText.Line)
+			}
 		})
 	}
 }
