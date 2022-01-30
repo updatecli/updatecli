@@ -75,38 +75,38 @@ func New(spec interface{}) (*File, error) {
 
 // TODO:! change sign by (s *Spec)
 // Validate validates the object and returns an error (with all the failed validation messages) if not valid
-func (f *File) Validate() error {
+func (s *Spec) Validate() error {
 	// TODO:! replace by a strings.Builder
 	var validationErrors []string
 
 	// Check for all validation
-	if len(f.spec.Files) == 0 && len(f.spec.File) == 0 {
+	if len(s.Files) == 0 && len(s.File) == 0 {
 		// TODO: to be updated after 'file' deprecation
 		validationErrors = append(validationErrors, "Invalid spec for file resource: both 'file' and 'files' are empty.")
 	}
-	if len(f.spec.Files) > 0 && len(f.spec.File) > 0 {
+	if len(s.Files) > 0 && len(s.File) > 0 {
 		validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.file` and `spec.files` are mutually exclusive")
 	}
-	if len(f.spec.Files) > 1 && f.spec.Line != 0 {
+	if len(s.Files) > 1 && s.Line != 0 {
 		validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.files` and `spec.line` are mutually exclusive if there is more than one file")
 	}
-	if f.spec.Line < 0 {
+	if s.Line < 0 {
 		validationErrors = append(validationErrors, "Line cannot be negative for a file resource.")
 	}
-	if f.spec.Line > 0 {
-		if f.spec.ForceCreate {
+	if s.Line > 0 {
+		if s.ForceCreate {
 			validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.forcecreate` and `spec.line` are mutually exclusive")
 		}
 
-		if len(f.spec.MatchPattern) > 0 {
+		if len(s.MatchPattern) > 0 {
 			validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.matchpattern` and `spec.line` are mutually exclusive")
 		}
 
-		if len(f.spec.ReplacePattern) > 0 {
+		if len(s.ReplacePattern) > 0 {
 			validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.replacepattern` and `spec.line` are mutually exclusive")
 		}
 	}
-	if len(f.spec.Content) > 0 && len(f.spec.ReplacePattern) > 0 {
+	if len(s.Content) > 0 && len(s.ReplacePattern) > 0 {
 		validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.replacepattern` and `spec.line` are mutually exclusive")
 	}
 
