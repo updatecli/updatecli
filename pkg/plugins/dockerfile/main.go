@@ -75,3 +75,8 @@ func getParser(spec Spec) (types.DockerfileParser, error) {
 		return simpletextparser.NewSimpleTextDockerfileParser(parsedInstruction)
 	}
 }
+
+// Changelog returns the changelog for this resource, or an empty string if not supported
+func (df *Dockerfile) Changelog() string {
+	return ""
+}

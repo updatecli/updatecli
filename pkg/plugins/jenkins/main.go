@@ -15,7 +15,7 @@ import (
 // parsed from an updatecli manifest file
 type Spec struct {
 	Release string      // Defines the release name like latest or weekly
-	Version string      // Defines a specific release version
+	Version string      // Defines a specific release version (condition only)
 	Github  github.Spec // Github Parameter used to retrieve a Jenkins changelog
 }
 
@@ -23,6 +23,7 @@ type Spec struct {
 type Jenkins struct {
 	spec             Spec
 	mavenMetaHandler mavenmetadata.Handler
+	foundVersion     string
 }
 
 const (
@@ -37,12 +38,12 @@ const (
 )
 
 // New returns a new valid GitHubRelease object.
-func New(spec interface{}) (Jenkins, error) {
+func New(spec interface{}) (*Jenkins, error) {
 	var newSpec Spec
 
 	err := mapstructure.Decode(spec, &newSpec)
 	if err != nil {
-		return Jenkins{}, err
+		return &Jenkins{}, err
 	}
 
 	if newSpec.Release == "" {
@@ -51,10 +52,10 @@ func New(spec interface{}) (Jenkins, error) {
 
 	err = newSpec.Validate()
 	if err != nil {
-		return Jenkins{}, err
+		return &Jenkins{}, err
 	}
 
-	return Jenkins{
+	return &Jenkins{
 		spec:             newSpec,
 		mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL),
 	}, nil

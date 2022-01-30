@@ -21,7 +21,7 @@ type Image struct {
 
 // New returns an initialized Image object.
 // If it fails, then the returned Image is empty and an error is returned
-func New(imageFullName, architecture string) (Image, error) {
+func New(imageFullName, architecture string) (*Image, error) {
 	newImage := Image{
 		Namespace:    namespace(imageFullName),
 		Registry:     registry(imageFullName),
@@ -40,10 +40,10 @@ func New(imageFullName, architecture string) (Image, error) {
 
 	err := newImage.Validate()
 	if err != nil {
-		return Image{}, err
+		return &Image{}, err
 	}
 
-	return newImage, nil
+	return &newImage, nil
 }
 
 // Validate validates the object and returns an error (with all the failed validation messages) if it is not valid
