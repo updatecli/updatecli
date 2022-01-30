@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,7 @@ func TestFile_Condition(t *testing.T) {
 		wantResult       bool
 		wantErr          bool
 		mockTest         text.MockTextRetriever
+		mockFileExist    bool
 	}{
 		{
 			name: "Passing Case with Line",
@@ -110,6 +112,7 @@ func TestFile_Condition(t *testing.T) {
 				Exists: false,
 			},
 			wantResult: false,
+			wantErr:    true,
 		},
 		{
 			name: "Failing case with only URL existence checking",
@@ -117,7 +120,8 @@ func TestFile_Condition(t *testing.T) {
 				File: "https://do.not.exists/foo",
 			},
 			mockTest: text.MockTextRetriever{
-				Err: fmt.Errorf("URL %q not found or in error", "https://do.not.exists/foo"),
+				Err:    fmt.Errorf("URL %q not found or in error", "https://do.not.exists/foo"),
+				Exists: false,
 			},
 			wantResult: false,
 			wantErr:    true,
@@ -134,6 +138,7 @@ func TestFile_Condition(t *testing.T) {
 				Content: "Hello World",
 			},
 			wantResult: false,
+			wantErr:    true,
 		},
 	}
 	for _, tt := range tests {
@@ -143,6 +148,17 @@ func TestFile_Condition(t *testing.T) {
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
+
+			f.files = make(map[string]string)
+			// File as unique element of f.files
+			if len(f.spec.File) > 0 {
+				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
+			}
+			// Files
+			for _, file := range f.spec.Files {
+				f.files[strings.TrimPrefix(file, "file://")] = ""
+			}
+
 			gotResult, gotErr := f.Condition(tt.inputSourceValue)
 			if tt.wantErr {
 				assert.Error(t, gotErr)

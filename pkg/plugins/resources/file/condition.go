@@ -65,9 +65,9 @@ func (f *File) condition(source string) (bool, error) {
 	}
 
 	// Start by retrieving the specified file's content
-	logrus.Debugf("Reading file %q", f.spec.File)
+	logrus.Debugf("Reading file(s) %q", f.files)
 	if err := f.Read(); err != nil {
-		logrus.Debugf("Error while reading file: %q", err.Error())
+		logrus.Debugf("Error while reading file(s): %q", err.Error())
 		return false, err
 	}
 
