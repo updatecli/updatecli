@@ -55,7 +55,7 @@ func New(spec interface{}) (*DockerDigest, error) {
 	newResource := &DockerDigest{
 		spec:     newSpec,
 		registry: newRegistry,
-		image:    newImage,
+		image:    *newImage,
 	}
 
 	err = newResource.Validate()
@@ -88,4 +88,9 @@ func (ds *DockerDigest) Validate() error {
 	}
 
 	return nil
+}
+
+// Changelog returns the changelog for this resource, or an empty string if not supported
+func (d *DockerDigest) Changelog() string {
+	return ""
 }

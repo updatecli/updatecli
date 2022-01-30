@@ -42,7 +42,7 @@ type Github struct {
 }
 
 // New returns a new valid Github object.
-func New(s Spec) (Github, error) {
+func New(s Spec) (*Github, error) {
 	errs := s.Validate()
 
 	if len(errs) > 0 {
@@ -50,7 +50,7 @@ func New(s Spec) (Github, error) {
 		for _, err := range errs {
 			strErrs = append(strErrs, err.Error())
 		}
-		return Github{}, fmt.Errorf(strings.Join(strErrs, "\n"))
+		return &Github{}, fmt.Errorf(strings.Join(strErrs, "\n"))
 	}
 
 	if s.Directory == "" {
@@ -68,13 +68,13 @@ func New(s Spec) (Github, error) {
 	httpClient := oauth2.NewClient(context.Background(), src)
 
 	if strings.HasSuffix(s.URL, "github.com") {
-		return Github{
+		return &Github{
 			Spec:   s,
 			client: githubv4.NewClient(httpClient),
 		}, nil
 	}
 
-	return Github{
+	return &Github{
 		Spec:   s,
 		client: githubv4.NewEnterpriseClient(os.Getenv(s.Token), httpClient),
 	}, nil

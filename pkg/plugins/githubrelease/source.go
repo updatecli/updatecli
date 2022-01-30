@@ -8,7 +8,7 @@ import (
 )
 
 // Source retrieves a specific version tag from Github Releases.
-func (gr GitHubRelease) Source(workingDir string) (value string, err error) {
+func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 
 	versions, err := gr.ghHandler.SearchReleases()
 	if err != nil {
@@ -29,11 +29,11 @@ func (gr GitHubRelease) Source(workingDir string) (value string, err error) {
 		}
 	}
 
-	foundVersion, err := gr.versionFilter.Search(versions)
+	gr.foundVersion, err = gr.versionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
-	value = foundVersion.ParsedVersion
+	value = gr.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, gr.versionFilter.Pattern)

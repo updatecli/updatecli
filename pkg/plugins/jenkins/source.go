@@ -8,8 +8,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Source return the latest Jenkins version based on release type
-func (j Jenkins) Source(workingDir string) (string, error) {
+// Source returns the latest Jenkins version based on release type
+func (j *Jenkins) Source(workingDir string) (string, error) {
 	latest, versions, err := j.getVersions()
 	if err != nil {
 		return "", err
@@ -17,8 +17,7 @@ func (j Jenkins) Source(workingDir string) (string, error) {
 
 	switch j.spec.Release {
 	case WEEKLY:
-		fmt.Printf("%s Version %s found for the %s release", result.SUCCESS, latest, WEEKLY)
-		return latest, nil
+		j.foundVersion = latest
 	case STABLE:
 		vs := []*semver.Version{}
 		for _, r := range versions {
@@ -32,12 +31,12 @@ func (j Jenkins) Source(workingDir string) (string, error) {
 
 		sort.Sort(semver.Collection(vs))
 		found := vs[len(vs)-1]
-		versionFound := found.Original()
-
-		fmt.Printf("%s Version %s found for the Jenkins %s release", result.SUCCESS, versionFound, j.spec.Release)
-		return versionFound, nil
+		j.foundVersion = found.Original()
 	default:
 		fmt.Printf("%s Unknown version %s found for the %s release", result.FAILURE, j.spec.Version, j.spec.Release)
 		return "unknown", fmt.Errorf("Unknown Jenkins version found")
 	}
+
+	fmt.Printf("%s Version %s found for the Jenkins %s release", result.SUCCESS, j.foundVersion, j.spec.Release)
+	return j.foundVersion, nil
 }

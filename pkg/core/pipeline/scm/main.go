@@ -88,7 +88,7 @@ func (s *Scm) GenerateSCM() error {
 			return err
 		}
 
-		s.Handler = &g
+		s.Handler = g
 
 	case "git":
 		g := git.Git{}

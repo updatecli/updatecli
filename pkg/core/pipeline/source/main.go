@@ -13,8 +13,8 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	Changelog string // Changelog hold the changelog description
-	Result    string // Result store the source result after a source run. This variable can't be set by an updatecli configuration
+	Changelog string // Changelog holds the changelog description
+	Result    string // Result stores the source result after a source run. This variable can't be set by an updatecli configuration
 	Output    string // Output contains the value retrieved from a source
 	Config    Config // Config defines a source specifications
 	Scm       *scm.ScmHandler
@@ -29,12 +29,8 @@ type Config struct {
 
 // Run execute actions defined by the source configuration
 func (s *Source) Run() (err error) {
-	// TODO-REFACTO: manage changelog
-	// changelog := Changelog{}
-
 	// TODO-REFACTO: call unmarshal in a constructor
 	source, err := s.Config.ResourceConfig.Unmarshal()
-
 	if err != nil {
 		s.Result = result.FAILURE
 		return err
@@ -80,26 +76,17 @@ func (s *Source) Run() (err error) {
 
 	s.Output, err = source.Source(workingDir)
 	s.Result = result.SUCCESS
-
 	if err != nil {
 		s.Result = result.FAILURE
 		return err
 	}
 
-	// TODO-REFACTO: manage changelog
-	// Retrieve changelog using default source output before
-	// modifying its value with the transformer
-	// if changelog != nil {
-	// 	s.Changelog, err = changelog.Changelog(version.Version{
-	// 		OriginalVersion: s.Output,
-	// 		ParsedVersion:   s.Output,
-	// 	})
-	// 	if err != nil {
-	// 		s.Result = result.FAILURE
-	// 		// Changelog information are not important enough to fail a pipeline
-	// 		logrus.Errorln(err)
-	// 	}
-	// }
+	// Once the source is executed, then it can retrieve its changelog
+	// Any error means an empty changelog
+	s.Changelog = source.Changelog()
+	if s.Changelog == "" {
+		logrus.Debugf("empty changelog found for the source %v", s)
+	}
 
 	if len(s.Config.Transformers) > 0 {
 		s.Output, err = s.Config.Transformers.Apply(s.Output)

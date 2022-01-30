@@ -89,3 +89,8 @@ func New(spec interface{}) (*AMI, error) {
 		apiClient:  newClient,
 	}, nil
 }
+
+// Changelog returns the changelog for this resource, or an empty string if not supported
+func (a *AMI) Changelog() string {
+	return ""
+}

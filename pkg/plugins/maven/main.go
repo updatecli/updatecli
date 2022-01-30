@@ -46,3 +46,8 @@ func New(spec interface{}) (*Maven, error) {
 
 	return newResource, nil
 }
+
+// Changelog returns the changelog for this resource, or an empty string if not supported
+func (m *Maven) Changelog() string {
+	return ""
+}

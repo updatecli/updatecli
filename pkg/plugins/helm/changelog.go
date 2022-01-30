@@ -8,43 +8,37 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/version"
 )
 
-// Changelog return any information available for a helm chart
-func (c *Chart) Changelog(release version.Version) (string, error) {
+// Changelog returns a rendered template with the informations of this version of the chart
+func (c Chart) Changelog() string {
 	URL := fmt.Sprintf("%s/index.yaml", c.spec.URL)
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
-		return "", err
+		return ""
 	}
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
-		return "", err
+		return ""
 	}
 
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
-		return "", err
+		return ""
 	}
 
 	index, err := loadIndex(body)
-
 	if err != nil {
-		return "", err
+		return ""
 	}
 
 	e, err := index.Get(c.spec.Name, c.spec.Version)
-
 	if err != nil {
-		return "", err
+		return ""
 	}
 
 	t := template.Must(template.New("changelog").Parse(CHANGELOGTEMPLATE))
@@ -69,15 +63,14 @@ func (c *Chart) Changelog(release version.Version) (string, error) {
 		Created:     e.Created.String(),
 		URLs:        e.URLs,
 		Sources:     e.Sources})
-
 	if err != nil {
-		return "", err
+		return ""
 	}
 
 	changelog := buffer.String()
 
 	logrus.Infof(changelog)
 
-	return changelog, nil
+	return changelog
 
 }

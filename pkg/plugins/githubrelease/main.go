@@ -13,16 +13,17 @@ import (
 type GitHubRelease struct {
 	ghHandler     github.GithubHandler
 	versionFilter version.Filter
+	foundVersion  version.Version
 }
 
 // New returns a new valid GitHubRelease object.
-func New(spec interface{}) (GitHubRelease, error) {
+func New(spec interface{}) (*GitHubRelease, error) {
 
 	newSpec := github.Spec{}
 
 	err := mapstructure.Decode(spec, &newSpec)
 	if err != nil {
-		return GitHubRelease{}, err
+		return &GitHubRelease{}, err
 	}
 
 	if newSpec.Directory == "" {
@@ -35,11 +36,11 @@ func New(spec interface{}) (GitHubRelease, error) {
 
 	newHandler, err := github.New(newSpec)
 	if err != nil {
-		return GitHubRelease{}, err
+		return &GitHubRelease{}, err
 	}
 
-	return GitHubRelease{
-		ghHandler:     &newHandler,
+	return &GitHubRelease{
+		ghHandler:     newHandler,
 		versionFilter: newHandler.Spec.VersionFilter,
 	}, nil
 }

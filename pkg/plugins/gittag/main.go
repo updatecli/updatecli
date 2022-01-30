@@ -58,3 +58,8 @@ func (gt *GitTag) Validate() error {
 
 	return nil
 }
+
+// Changelog returns the changelog for this resource, or an empty string if not supported
+func (gt *GitTag) Changelog() string {
+	return ""
+}
