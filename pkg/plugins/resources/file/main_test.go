@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,6 +13,7 @@ func Test_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
 		spec    Spec
+		files   map[string]string
 		wantErr bool
 	}{
 		{
@@ -144,6 +144,7 @@ func TestFile_Read(t *testing.T) {
 	tests := []struct {
 		name                string
 		spec                Spec
+		files               map[string]string
 		mockReturnedContent string
 		mockReturnedError   error
 		mockFileExist       bool
@@ -156,6 +157,9 @@ func TestFile_Read(t *testing.T) {
 			spec: Spec{
 				Line: 3,
 				File: "/foo.txt",
+			},
+			files: map[string]string{
+				"/foo.txt": "",
 			},
 			mockReturnedContent: "Hello World",
 			mockFileExist:       true,
@@ -170,6 +174,9 @@ func TestFile_Read(t *testing.T) {
 			spec: Spec{
 				File: "/bar.txt",
 			},
+			files: map[string]string{
+				"/bar.txt": "",
+			},
 			mockReturnedContent: "Hello World",
 			mockFileExist:       true,
 			wantContent:         "Hello World",
@@ -183,6 +190,9 @@ func TestFile_Read(t *testing.T) {
 				File: "/not_existing.txt",
 				Line: 15,
 			},
+			files: map[string]string{
+				"/not_existing.txt": "",
+			},
 			mockReturnedError: fmt.Errorf("no such file or directory"),
 			mockFileExist:     false,
 			wantErr:           true,
@@ -191,6 +201,9 @@ func TestFile_Read(t *testing.T) {
 			name: "File does not exist without line",
 			spec: Spec{
 				File: "/not_existing.txt",
+			},
+			files: map[string]string{
+				"/not_existing.txt": "",
 			},
 			mockReturnedError: fmt.Errorf("no such file or directory"),
 			mockFileExist:     false,
@@ -207,18 +220,9 @@ func TestFile_Read(t *testing.T) {
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
-			}
-			f.files = make(map[string]string)
-			// File as unique element of f.files
-			if len(f.spec.File) > 0 {
-				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
-			}
-			// Files
-			for _, file := range f.spec.Files {
-				f.files[strings.TrimPrefix(file, "file://")] = ""
+				files:            tt.files,
 			}
 			gotErr := f.Read()
-
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return
