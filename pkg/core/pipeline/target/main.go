@@ -74,9 +74,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		logrus.Infof("\n**Dry Run enabled**\n\n")
 	}
 
-	// TODO-REFACTO: call unmarshal in a constructor
-	target, err := t.Config.ResourceConfig.Unmarshal()
-
+	target, err := resource.New(t.Config.ResourceConfig)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err

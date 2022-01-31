@@ -28,11 +28,9 @@ type Config struct {
 func (c *Condition) Run(source string) (err error) {
 	ok := false
 
-	// TODO-REFACTO: call unmarshal in a constructor
-	condition, err := c.Config.ResourceConfig.Unmarshal()
+	condition, err := resource.New(c.Config.ResourceConfig)
 	if err != nil {
 		c.Result = result.FAILURE
-		logrus.Errorf("%s", err)
 		return err
 	}
 
