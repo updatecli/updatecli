@@ -28,8 +28,7 @@ type Config struct {
 
 // Run execute actions defined by the source configuration
 func (s *Source) Run() (err error) {
-	// TODO-REFACTO: call unmarshal in a constructor
-	source, err := s.Config.ResourceConfig.Unmarshal()
+	source, err := resource.New(s.Config.ResourceConfig)
 	if err != nil {
 		s.Result = result.FAILURE
 		return err
