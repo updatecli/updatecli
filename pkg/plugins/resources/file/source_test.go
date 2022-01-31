@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,6 +13,7 @@ func TestFile_Source(t *testing.T) {
 	tests := []struct {
 		name                string
 		spec                Spec
+		files               map[string]string
 		mockFileExist       bool
 		mockReturnedContent string
 		mockReturnedError   error
@@ -22,9 +22,12 @@ func TestFile_Source(t *testing.T) {
 		wantErr             bool
 	}{
 		{
-			name: "Normal Case with 'File'",
+			name: "Passing case with 'File'",
 			spec: Spec{
 				File: "/home/ucli/foo.txt",
+			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
 			},
 			mockFileExist:       true,
 			mockReturnedContent: "current_version=1.2.3",
@@ -34,12 +37,15 @@ func TestFile_Source(t *testing.T) {
 			},
 		},
 		{
-			name: "Normal Case with 'Files'",
+			name: "Passing case with 'Files'",
 			spec: Spec{
 				Files: []string{
 					"/home/ucli/foo.txt",
 				},
 			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
+			},
 			mockFileExist:       true,
 			mockReturnedContent: "current_version=1.2.3",
 			wantSource:          "current_version=1.2.3",
@@ -48,22 +54,30 @@ func TestFile_Source(t *testing.T) {
 			},
 		},
 		{
-			name: "Normal case with URL path for file",
+			name: "Passing case with 'File' and 'Line' specified",
 			spec: Spec{
-				File: "https://github.com/updatecli/updatecli/blob/12bd7812833533f7c97d221684deb82a1ca9713b/LICENSE",
+				File: "/home/ucli/foo.txt",
+				Line: 3,
 			},
-			workingDir:          "/tmp/updatecli/",
-			mockReturnedContent: "MIT License",
-			wantSource:          "MIT License",
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
+			},
+			mockFileExist:       true,
+			mockReturnedContent: "current_version=1.2.3",
+			wantSource:          "current_version=1.2.3",
 			wantMockState: text.MockTextRetriever{
-				Location: "https://github.com/updatecli/updatecli/blob/12bd7812833533f7c97d221684deb82a1ca9713b/LICENSE",
+				Location: "/home/ucli/foo.txt",
+				Line:     3,
 			},
 		},
 		{
-			name: "Normal Case with single-line matchPattern",
+			name: "Passing case with single-line 'MatchPattern'",
 			spec: Spec{
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*freebsd_386.*",
+			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
 			},
 			mockFileExist: true,
 			mockReturnedContent: `363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07  terraform_0.14.5_darwin_amd64.zip
@@ -85,10 +99,13 @@ f8bf1fca0ef11a33955d225198d1211e15827d43488cc9174dcda14d1a7a1d19  terraform_0.14
 			},
 		},
 		{
-			name: "Normal Case with multi-line matchPattern",
+			name: "Passing case with multi-line 'MatchPattern'",
 			spec: Spec{
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*terraform_.*_linux_.*",
+			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
 			},
 			mockFileExist: true,
 			mockReturnedContent: `363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07  terraform_0.14.5_darwin_amd64.zip
@@ -113,57 +130,86 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 			},
 		},
 		{
-			name:              "File does not exists",
-			mockFileExist:     false,
-			mockReturnedError: fmt.Errorf("no such file or directory"),
-			wantErr:           true,
-		},
-		{
-			name: "Validation Failure with specified Files containing more than one element",
+			name: "Validation failure with more than one element in 'Files'",
 			spec: Spec{
 				Files: []string{
 					"/home/ucli/foo.txt",
 					"/home/ucli/bar.txt",
 				},
 			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
+				"/home/ucli/bar.txt": "",
+			},
 			wantErr: true,
 		},
 		{
-			name: "Validation Failure with specified ReplacePattern",
+			name: "Validation failure with 'ReplacePattern' specified",
 			spec: Spec{
 				MatchPattern:   "maven_(.*)",
 				ReplacePattern: "gradle_$1",
-				File:           "/bar.txt",
+				File:           "/home/ucli/foo.txt",
+			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
 			},
 			workingDir: "/tmp/updatecli/",
 			wantErr:    true,
 		},
 		{
-			name: "Validation Failure with specified content",
+			name: "Validation failure with 'Content' specified",
 			spec: Spec{
 				Content: "Hello world",
-				File:    "/bar.txt",
+				File:    "/home/ucli/foo.txt",
+			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
 			},
 			workingDir: "/tmp/updatecli/",
 			wantErr:    true,
 		},
 		{
-			name: "Validation Failure with specified forcecreate",
+			name: "Validation failure with 'ForceCreate' specified",
 			spec: Spec{
 				ForceCreate: true,
-				File:        "/bar.txt",
+				File:        "/home/ucli/foo.txt",
+			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
 			},
 			workingDir: "/tmp/updatecli/",
 			wantErr:    true,
 		},
 		{
-			name: "Validation Failure with invalid regexp for MatchPattern",
+			name: "Validation failure with invalid regexp 'MatchPattern' specified",
 			spec: Spec{
 				MatchPattern: "(d+:1",
-				File:         "/bar.txt",
+				File:         "/home/ucli/foo.txt",
+			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
 			},
 			workingDir: "/tmp/updatecli/",
 			wantErr:    true,
+		},
+		{
+			name:              "Failing case with non existant 'File'",
+			files:             map[string]string{},
+			mockFileExist:     false,
+			mockReturnedError: fmt.Errorf("no such file or directory"),
+			wantErr:           true,
+		},
+		{
+			name: "Passing case with 'File' and non existant 'Line' specified",
+			spec: Spec{
+				File: "/home/ucli/foo.txt",
+				Line: 3,
+			},
+			files: map[string]string{
+				"/home/ucli/foo.txt": "",
+			},
+			mockFileExist: false,
+			wantErr:       true,
 		},
 	}
 	for _, tt := range tests {
@@ -176,18 +222,8 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
+				files:            tt.files,
 			}
-
-			f.files = make(map[string]string)
-			// File as unique element of f.files
-			if len(f.spec.File) > 0 {
-				f.files[strings.TrimPrefix(f.spec.File, "file://")] = ""
-			}
-			// Files
-			for _, file := range f.spec.Files {
-				f.files[strings.TrimPrefix(file, "file://")] = ""
-			}
-
 			// Looping on the only filePath in 'files'
 			for filePath := range f.files {
 				source, gotErr := f.Source(filePath)

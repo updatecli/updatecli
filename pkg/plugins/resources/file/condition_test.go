@@ -22,21 +22,7 @@ func TestFile_Condition(t *testing.T) {
 		wantErr          bool
 	}{
 		{
-			name: "Failing case with more than one element in Files",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-					"bar.txt",
-				},
-			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
-			},
-			wantErr: true,
-		},
-		{
-			name: "Passing case with Line",
+			name: "Passing case with 'Line' specified",
 			spec: Spec{
 				Line: 3,
 				File: "foo.txt",
@@ -52,46 +38,7 @@ func TestFile_Condition(t *testing.T) {
 			wantResult: true,
 		},
 		{
-			name: "Failing case with non existant Line",
-			spec: Spec{
-				Line: 5,
-				File: "foo.txt",
-			},
-			files: map[string]string{
-				"foo.txt": "",
-			},
-			mockTest: text.MockTextRetriever{
-				Exists: false,
-			},
-			wantErr: true,
-		},
-		{
-			name: "Validation Failure with both source and specified content",
-			spec: Spec{
-				Content: "Hello World",
-				File:    "foo.txt",
-			},
-			files: map[string]string{
-				"foo.txt": "",
-			},
-			inputSourceValue: "1.2.3",
-			wantErr:          true,
-		},
-		{
-			name: "Validation Failure with specified ReplacePattern",
-			spec: Spec{
-				MatchPattern:   "maven_(.*)",
-				ReplacePattern: "gradle_$1",
-				File:           "foo.txt",
-			},
-			files: map[string]string{
-				"foo.txt": "",
-			},
-			inputSourceValue: "1.2.3",
-			wantErr:          true,
-		},
-		{
-			name: "Passing case with no input source and only specified content",
+			name: "Passing case with 'Content' specified and no source specified",
 			spec: Spec{
 				Content: "Hello World",
 				File:    "foo.txt",
@@ -106,7 +53,46 @@ func TestFile_Condition(t *testing.T) {
 			wantResult: true,
 		},
 		{
-			name: "Case with no input source, no specified content but a specified line which is empty",
+			name: "Validation failure with more than one element in 'Files'",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+					"bar.txt",
+				},
+			},
+			files: map[string]string{
+				"foo.txt": "",
+				"bar.txt": "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with both source and 'Content' specified",
+			spec: Spec{
+				Content: "Hello World",
+				File:    "foo.txt",
+			},
+			files: map[string]string{
+				"foo.txt": "",
+			},
+			inputSourceValue: "1.2.3",
+			wantErr:          true,
+		},
+		{
+			name: "Validation failure with 'ReplacePattern' specified",
+			spec: Spec{
+				MatchPattern:   "maven_(.*)",
+				ReplacePattern: "gradle_$1",
+				File:           "foo.txt",
+			},
+			files: map[string]string{
+				"foo.txt": "",
+			},
+			inputSourceValue: "1.2.3",
+			wantErr:          true,
+		},
+		{
+			name: "Case with empty 'Line' specified and no source nor 'Content' specified",
 			spec: Spec{
 				Line: 11,
 				File: "foo.txt",
@@ -122,7 +108,7 @@ func TestFile_Condition(t *testing.T) {
 			},
 		},
 		{
-			name: "Case with no input source, no specified content but the specified line exists and is not empty",
+			name: "Case with not empty 'Line' specified and no source nor 'Content' specified",
 			spec: Spec{
 				Line: 13,
 				File: "foo.txt",
@@ -138,7 +124,21 @@ func TestFile_Condition(t *testing.T) {
 			wantResult: true,
 		},
 		{
-			name: "Failing case with only file existence checking",
+			name: "Failing case with non existant 'Line' specified",
+			spec: Spec{
+				Line: 5,
+				File: "foo.txt",
+			},
+			files: map[string]string{
+				"foo.txt": "",
+			},
+			mockTest: text.MockTextRetriever{
+				Exists: false,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Failing case with non existant 'File'",
 			spec: Spec{
 				File: "foo.txt",
 			},
@@ -152,7 +152,7 @@ func TestFile_Condition(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "Failing case with only URL existence checking",
+			name: "Failing case with non existant URL as 'File'",
 			spec: Spec{
 				File: "https://do.not.exists/foo",
 			},
@@ -167,7 +167,7 @@ func TestFile_Condition(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "Failing case with no input source and a specified line that does not matches the file line content",
+			name: "Failing case with not empty 'Line' not matching the 'Content' of the 'File' at the 'Line' specified",
 			spec: Spec{
 				Line:    11,
 				Content: "Not In The File",
@@ -220,7 +220,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		wantErr             bool
 	}{
 		{
-			name: "Passing case with no input source, but a specified line and content and a relative path to file",
+			name: "Passing case with both 'Line' and 'Content' specified, 'File' with a relative path, and no source",
 			spec: Spec{
 				File:    "foo.txt",
 				Content: "current_version=1.2.3",
@@ -241,7 +241,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 			},
 		},
 		{
-			name: "Passing case with matchPattern",
+			name: "Passing case with 'MatchPattern' specified",
 			spec: Spec{
 				File:         "foo.txt",
 				MatchPattern: "current_version.*",
@@ -260,7 +260,37 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 			},
 		},
 		{
-			name: "Failing case with matchPattern",
+			name: "Validation failure with 'ForceCreate' specified",
+			spec: Spec{
+				File:        "foo.txt",
+				ForceCreate: true,
+			},
+			files: map[string]string{
+				"foo.txt": "",
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			inputSourceValue: "1.2.3",
+			wantErr:          true,
+		},
+		{
+			name: "Validation failure with invalid 'Regexp' specified",
+			spec: Spec{
+				File:         "foo.txt",
+				MatchPattern: "^^[[[",
+			},
+			files: map[string]string{
+				"foo.txt": "",
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			inputSourceValue: "1.2.3",
+			wantErr:          true,
+		},
+		{
+			name: "Failing case with non matching 'MatchPattern' specified",
 			spec: Spec{
 				File:         "foo.txt",
 				MatchPattern: "notMatching.*",
@@ -277,36 +307,6 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 			wantMockState: text.MockTextRetriever{
 				Location: "/tmp/foo.txt",
 			},
-		},
-		{
-			name: "Validation Failure with forcecreate specified",
-			spec: Spec{
-				File:        "foo.txt",
-				ForceCreate: true,
-			},
-			files: map[string]string{
-				"foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "1.2.3",
-			wantErr:          true,
-		},
-		{
-			name: "Validation Failure with invalid Regexp",
-			spec: Spec{
-				File:         "foo.txt",
-				MatchPattern: "^^[[[",
-			},
-			files: map[string]string{
-				"foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "1.2.3",
-			wantErr:          true,
 		},
 	}
 	for _, tt := range tests {

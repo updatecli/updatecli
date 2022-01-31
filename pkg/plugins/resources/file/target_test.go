@@ -105,7 +105,7 @@ func TestFile_Target(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "Validation Failure with invalid regexp for MatchPattern",
+			name: "Validation failure with invalid regexp for MatchPattern",
 			spec: Spec{
 				MatchPattern: "(d+:1",
 				File:         "/bar.txt",

@@ -17,7 +17,14 @@ func Test_Validate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Normal case with 'File'",
+			name: "Passing case",
+			spec: Spec{
+				File: "/tmp/foo.txt",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Passing case with 'Line'",
 			spec: Spec{
 				File: "/tmp/foo.txt",
 				Line: 12,
@@ -25,17 +32,7 @@ func Test_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Normal case with 'Files' containing one element and a 'Line' is specified",
-			spec: Spec{
-				Files: []string{
-					"/tmp/foo.txt",
-				},
-				Line: 12,
-			},
-			wantErr: false,
-		},
-		{
-			name: "Normal case with 'Files' containing more than one element and no 'Line' is specified",
+			name: "Passing case with 'Files' containing more than one element",
 			spec: Spec{
 				Files: []string{
 					"/tmp/foo.txt",
@@ -45,7 +42,17 @@ func Test_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "raises and error when 'Files' containing duplicated values",
+			name: "Passing case with 'Files' containing one element and a 'Line' is specified",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+				},
+				Line: 12,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Validation failure with 'Files' containing duplicated values",
 			spec: Spec{
 				Files: []string{
 					"/tmp/foo.txt",
@@ -55,14 +62,14 @@ func Test_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "raises an error when 'File' and 'Files' are empty",
+			name: "Validation failure with both 'File' and 'Files' empty",
 			spec: Spec{
 				File: "",
 			},
 			wantErr: true,
 		},
 		{
-			name: "raises an error when 'File' and 'Files' are not empty",
+			name: "Validation failure with both 'File' and 'Files' not empty",
 			spec: Spec{
 				File: "/tmp/foo.txt",
 				Files: []string{
@@ -72,7 +79,7 @@ func Test_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "raises an error when 'Files' contains more than one element and 'Line' is specified",
+			name: "Validation failure with 'Files' containing more than one element and 'Line' specified",
 			spec: Spec{
 				Files: []string{
 					"/tmp/foo.txt",
@@ -83,7 +90,7 @@ func Test_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "raises an error when 'Line' is negative",
+			name: "Validation failure with 'Line' negative",
 			spec: Spec{
 				File: "/tmp/foo.txt",
 				Line: -1,
@@ -91,7 +98,7 @@ func Test_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "raises an error when both 'Line' and `ForceCreate=true` are specified",
+			name: "Validation failure with both 'Line' and 'ForceCreate=true' specified",
 			spec: Spec{
 				File:        "/tmp/foo.txt",
 				ForceCreate: true,
@@ -100,7 +107,7 @@ func Test_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "raises an error when both 'Line' and `MatchPattern` are specified",
+			name: "Validation failure with both 'Line' and 'MatchPattern' specified",
 			spec: Spec{
 				File:         "/tmp/foo.txt",
 				MatchPattern: "pattern=.*",
@@ -109,7 +116,7 @@ func Test_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "raises an error when both 'Line' and `ReplacePattern` are specified",
+			name: "Validation failure with both 'Line' and 'ReplacePattern' specified",
 			spec: Spec{
 				File:           "/tmp/foo.txt",
 				ReplacePattern: "pattern=.*",
@@ -118,7 +125,7 @@ func Test_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "raises an error when both 'Content' and `ReplacePattern` are specified",
+			name: "Validation failure with both 'Content' and 'ReplacePattern' specified",
 			spec: Spec{
 				File:           "/tmp/foo.txt",
 				ReplacePattern: "pattern=.*",
@@ -153,7 +160,22 @@ func TestFile_Read(t *testing.T) {
 		wantErr             bool
 	}{
 		{
-			name: "Normal case with a line",
+			name: "Passing case",
+			spec: Spec{
+				File: "/bar.txt",
+			},
+			files: map[string]string{
+				"/bar.txt": "",
+			},
+			mockReturnedContent: "Hello World",
+			mockFileExist:       true,
+			wantContent:         "Hello World",
+			wantMockState: text.MockTextRetriever{
+				Location: "/bar.txt",
+			},
+		},
+		{
+			name: "Passing case with 'Line'",
 			spec: Spec{
 				Line: 3,
 				File: "/foo.txt",
@@ -170,25 +192,9 @@ func TestFile_Read(t *testing.T) {
 			},
 		},
 		{
-			name: "Normal case without a line",
-			spec: Spec{
-				File: "/bar.txt",
-			},
-			files: map[string]string{
-				"/bar.txt": "",
-			},
-			mockReturnedContent: "Hello World",
-			mockFileExist:       true,
-			wantContent:         "Hello World",
-			wantMockState: text.MockTextRetriever{
-				Location: "/bar.txt",
-			},
-		},
-		{
-			name: "File does not exist with a line",
+			name: "Failing case with non existant 'File'",
 			spec: Spec{
 				File: "/not_existing.txt",
-				Line: 15,
 			},
 			files: map[string]string{
 				"/not_existing.txt": "",
@@ -198,9 +204,10 @@ func TestFile_Read(t *testing.T) {
 			wantErr:           true,
 		},
 		{
-			name: "File does not exist without line",
+			name: "Failing case with non existant 'File' and a specified 'Line'",
 			spec: Spec{
 				File: "/not_existing.txt",
+				Line: 15,
 			},
 			files: map[string]string{
 				"/not_existing.txt": "",
