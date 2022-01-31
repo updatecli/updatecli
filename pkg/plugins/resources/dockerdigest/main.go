@@ -38,7 +38,7 @@ func New(spec interface{}) (*DockerDigest, error) {
 	}
 
 	newImage, err := dockerimage.New(
-		// concatenate user-provided image name (that may contain registry and namespace along with the namespace) with the user-provided tag
+		// concatenate user-provided image name (which may contains registry and namespace along with the namespace) with the user-provided tag
 		fmt.Sprintf("%s:%s", newSpec.Image, newSpec.Tag),
 		newSpec.Architecture,
 	)

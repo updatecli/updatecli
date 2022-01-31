@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Changelog returns a rendered template with the informations of this version of the chart
+// Changelog returns a rendered template with this chart version informations
 func (c Chart) Changelog() string {
 	URL := fmt.Sprintf("%s/index.yaml", c.spec.URL)
 
