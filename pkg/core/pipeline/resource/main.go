@@ -35,8 +35,8 @@ type ResourceConfig struct {
 	SCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
 }
 
-// Unmarshal decodes a source spec and returns its typed content
-func (rs *ResourceConfig) Unmarshal() (resource Resource, err error) {
+// New returns a newly initialized Resource or an error
+func New(rs ResourceConfig) (resource Resource, err error) {
 	switch strings.ToLower(rs.Kind) {
 	case "aws/ami":
 		return awsami.New(rs.Spec)
