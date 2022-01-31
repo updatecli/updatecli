@@ -11,6 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
+// TODO: find a way to test when there are multiple files but only some are changed
 func TestFile_Target(t *testing.T) {
 	tests := []struct {
 		spec                Spec
