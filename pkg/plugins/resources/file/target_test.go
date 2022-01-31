@@ -283,7 +283,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		mockReturnedContent string
 		mockReturnedError   error
 		wantFiles           []string
-		wantMockState       text.MockTextRetriever
+		wantMockState       map[string]text.MockTextRetriever
 		wantResult          bool
 		wantErr             bool
 		dryRun              bool
@@ -304,10 +304,12 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			inputSourceValue: "current_version=1.2.3",
 			mockFileExists:   true,
 			wantFiles:        []string{"/tmp/foo.txt"},
-			wantMockState: text.MockTextRetriever{
-				Location: "/tmp/foo.txt",
-				Content:  "current_version=1.2.3",
-				Line:     3,
+			wantMockState: map[string]text.MockTextRetriever{
+				"/tmp/foo.txt": {
+					Location: "/tmp/foo.txt",
+					Content:  "current_version=1.2.3",
+					Line:     3,
+				},
 			},
 			wantResult: true,
 		},
@@ -326,9 +328,11 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			inputSourceValue: "current_version=1.2.3",
 			mockFileExists:   false,
 			wantFiles:        []string{"/tmp/foo.txt"},
-			wantMockState: text.MockTextRetriever{
-				Location: "/tmp/foo.txt",
-				Content:  "current_version=1.2.3",
+			wantMockState: map[string]text.MockTextRetriever{
+				"/tmp/foo.txt": {
+					Location: "/tmp/foo.txt",
+					Content:  "current_version=1.2.3",
+				},
 			},
 			wantResult: true,
 		},
@@ -361,6 +365,10 @@ func TestFile_TargetFromSCM(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// mockTexts := make(map[string]text.TextRetriever)
+			// for filePath, _ := range tt.files {
+			// 	mockTexts[filePath] = tt.
+			// }
 			mockText := text.MockTextRetriever{
 				Err:    tt.mockReturnedError,
 				Exists: tt.mockFileExists,
@@ -381,9 +389,11 @@ func TestFile_TargetFromSCM(t *testing.T) {
 
 			assert.Equal(t, tt.wantResult, gotResult)
 			assert.Equal(t, tt.wantFiles, gotFiles)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
-			assert.Equal(t, tt.wantMockState.Content, mockText.Content)
+			for filePath := range f.files {
+				assert.Equal(t, tt.wantMockState[filePath].Location, mockText.Location[filePath])
+				assert.Equal(t, tt.wantMockState[filePath].Line, mockText[filePath].Line)
+				assert.Equal(t, tt.wantMockState[filePath].Content, mockText[filePath].Content)
+			}
 		})
 	}
 }
