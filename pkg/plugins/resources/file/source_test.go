@@ -193,14 +193,14 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 			wantErr:    true,
 		},
 		{
-			name:              "Failing case with non existant 'File'",
+			name:              "Failing case with non existent 'File'",
 			files:             map[string]string{},
 			mockFileExist:     false,
 			mockReturnedError: fmt.Errorf("no such file or directory"),
 			wantErr:           true,
 		},
 		{
-			name: "Passing case with 'File' and non existant 'Line' specified",
+			name: "Passing case with 'File' and non existent 'Line' specified",
 			spec: Spec{
 				File: "/home/ucli/foo.txt",
 				Line: 3,

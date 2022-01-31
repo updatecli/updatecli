@@ -19,7 +19,7 @@ type Spec struct {
 	Files          []string // Files contains the file path(s) to take in account
 	Line           int      // Line contains the line of the file(s) to take in account
 	Content        string   // Content specifies the content to take in account instead of the file content
-	ForceCreate    bool     // ForceCreate specifies if non existant file(s) should be created if they are targets
+	ForceCreate    bool     // ForceCreate specifies if non existent file(s) should be created if they are targets
 	MatchPattern   string   // MatchPattern specifies the regexp pattern to match on the file(s)
 	ReplacePattern string   // ReplacePattern specifies the regexp replace pattern to apply on the file(s) content
 }
