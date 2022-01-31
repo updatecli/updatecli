@@ -10,25 +10,25 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// TODO: deprecate `spec.file` & `kind: file`, to be replaced by `spec.files` & `kind: files`
+// TODO: replace `kind: file` by `kind: files`
 
 // Spec defines a specification for a "file" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	File           string
-	Files          []string
-	Line           int
-	Content        string
-	ForceCreate    bool
-	MatchPattern   string
-	ReplacePattern string
+	File           string   // **Deprecated** File is deprecated in favor of Files, this field will be removed in a future version
+	Files          []string // Files contains the file path(s) to take in account
+	Line           int      // Line contains the line of the file(s) to take in account
+	Content        string   // Content specifies the content to take in account instead of the file content
+	ForceCreate    bool     // ForceCreate specifies if non existant file(s) should be created if they are targets
+	MatchPattern   string   // MatchPattern specifies the regexp pattern to match on the file(s)
+	ReplacePattern string   // ReplacePattern specifies the regexp replace pattern to apply on the file(s) content
 }
 
 // File defines a resource of kind "file"
 type File struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
-	files            map[string]string
+	files            map[string]string // map of file paths to file contents
 }
 
 // New returns a reference to a newly initialized File object from a Spec
@@ -54,10 +54,12 @@ func New(spec interface{}) (*File, error) {
 	// File as unique element of newResource.files
 	if len(newResource.spec.File) > 0 {
 		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
+		// Deprecation warning (2022/01/31)
+		logrus.Warnf("**Deprecated** Spec field 'File' is deprecated in favor of the spec field 'Files', it will be delete in a future release")
 	}
 	// Files
-	for _, file := range newResource.spec.Files {
-		newResource.files[strings.TrimPrefix(file, "file://")] = ""
+	for _, filePath := range newResource.spec.Files {
+		newResource.files[strings.TrimPrefix(filePath, "file://")] = ""
 	}
 
 	return newResource, nil
