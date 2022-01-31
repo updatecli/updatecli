@@ -53,6 +53,9 @@ func (f *File) checkCondition(source string) (bool, error) {
 func (f *File) condition(source string) (bool, error) {
 	var validationErrors []string
 
+	if len(f.files) > 1 {
+		validationErrors = append(validationErrors, "Validation error in conditions of type 'file': the attributes `spec.files` can't contain more than one element for conditions")
+	}
 	if len(f.spec.ReplacePattern) > 0 {
 		validationErrors = append(validationErrors, "Validation error in condition of type 'file': the attribute `spec.replacepattern` is only supported for targets.")
 	}

@@ -63,7 +63,7 @@ func New(spec interface{}) (*File, error) {
 	return newResource, nil
 }
 
-func hasDupes(values []string) bool {
+func hasDuplicates(values []string) bool {
 	uniqueValues := make(map[string]string)
 	for _, v := range values {
 		uniqueValues[v] = ""
@@ -87,7 +87,7 @@ func (s *Spec) Validate() error {
 	if len(s.Files) > 1 && s.Line != 0 {
 		validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.files` and `spec.line` are mutually exclusive if there is more than one file")
 	}
-	if len(s.Files) > 1 && hasDupes(s.Files) {
+	if len(s.Files) > 1 && hasDuplicates(s.Files) {
 		validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.files` contains duplicated values")
 	}
 	if s.Line < 0 {
