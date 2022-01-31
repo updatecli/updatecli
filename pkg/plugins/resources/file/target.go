@@ -120,6 +120,12 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 	for filePath := range f.files {
 		var contentType string
 		var err error
+		if dryRun {
+			contentType = "[dry run] content"
+			if f.spec.Line > 0 {
+				contentType = fmt.Sprintf("[dry run] line %d", f.spec.Line)
+			}
+		}
 		if f.spec.Line == 0 && !dryRun {
 			err = f.contentRetriever.WriteToFile(f.files[filePath], filePath)
 			contentType = "content"
@@ -130,10 +136,6 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		}
 		if err != nil {
 			return false, files, message.String(), err
-		}
-		if dryRun {
-			// Only "dry run", no "content" nor "line"
-			contentType = "(dry run)"
 		}
 		logrus.Infof("%s updated the %s of the file %q\n\n%s\n",
 			result.ATTENTION,
