@@ -23,7 +23,7 @@ type Source struct {
 // Config struct defines a source configuration
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	Replaces Replacers // Deprecated in favor of Transformers on 2021/01/3
+	Replaces                Replacers // Deprecated in favor of Transformers on 2021/01/3
 }
 
 // Run execute actions defined by the source configuration
