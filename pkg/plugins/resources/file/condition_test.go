@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// TODO: find a way to test when there are multiple files but only some are successfull
+// TODO: find a way to test when there are multiple files but only some are successful
 func TestFile_Condition(t *testing.T) {
 	tests := []struct {
 		name             string
