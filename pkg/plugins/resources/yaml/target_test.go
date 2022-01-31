@@ -23,7 +23,7 @@ func Test_Target(t *testing.T) {
 		dryRun                bool
 	}{
 		{
-			name: "Passing Case with both input source and specified value (specified value should be used)",
+			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",

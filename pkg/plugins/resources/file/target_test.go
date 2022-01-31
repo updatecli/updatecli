@@ -56,7 +56,7 @@ func TestFile_Target(t *testing.T) {
 			},
 		},
 		{
-			name: "Passing Case with both input source and specified content but no line (specified content should be used)",
+			name: "Passing case with both input source and specified content but no line (specified content should be used)",
 			spec: Spec{
 				File:    "foo.txt",
 				Content: "Hello World",
@@ -70,7 +70,7 @@ func TestFile_Target(t *testing.T) {
 			},
 		},
 		{
-			name: "Passing Case with an updated line from provided content",
+			name: "Passing case with an updated line from provided content",
 			spec: Spec{
 				File:    "foo.txt",
 				Content: "Hello World",
@@ -239,7 +239,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		wantMockState       text.MockTextRetriever
 	}{
 		{
-			name: "Passing Case with relative path",
+			name: "Passing case with relative path",
 			spec: Spec{
 				File: "foo.txt",
 				Line: 3,
@@ -258,7 +258,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			},
 		},
 		{
-			name: "Passing Case with file created",
+			name: "Passing case with file created",
 			spec: Spec{
 				File:        "foo.txt",
 				ForceCreate: true,

@@ -39,7 +39,7 @@ github:
 			},
 		},
 		{
-			name: "Passing Case with keyonly and input source",
+			name: "Passing case with keyonly and input source",
 			spec: Spec{
 				File:    "test.yaml",
 				Key:     "github.owner",
@@ -104,7 +104,7 @@ github:
 			wantErr:           true,
 		},
 		{
-			name: "Failing Case (key found but not the correct value)",
+			name: "Failing case (key found but not the correct value)",
 			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
@@ -121,7 +121,7 @@ github:
 			},
 		},
 		{
-			name: "Failing Case (key not found)",
+			name: "Failing case (key not found)",
 			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.admin",
@@ -163,7 +163,7 @@ github
 			wantErr: true,
 		},
 		{
-			name: "Passing Case with no input source and only specified value",
+			name: "Passing case with no input source and only specified value",
 			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
@@ -218,7 +218,7 @@ func Test_ConditionFromSCM(t *testing.T) {
 		scm                 scm.ScmHandler
 	}{
 		{
-			name: "Passing Case with no input source and only specified value",
+			name: "Passing case with no input source and only specified value",
 			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
