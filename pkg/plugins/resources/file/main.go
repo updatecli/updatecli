@@ -146,6 +146,9 @@ func (f *File) Read() error {
 				// f.files[filePath] is already set to "", no need for more except logging
 				logrus.Infof("Creating a new file at %q", filePath)
 			} else {
+				if f.spec.Line > 0 {
+					return fmt.Errorf("%s The specified line %d of the file %q does not exist.\n", result.FAILURE, f.spec.Line, filePath)
+				}
 				return fmt.Errorf("%s The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'.\n", result.FAILURE, filePath)
 			}
 		}
