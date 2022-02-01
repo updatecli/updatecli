@@ -20,7 +20,7 @@ type Transformers []Transformer
 func (t *Transformer) Apply(input string) (output string, err error) {
 
 	if input == "" {
-		return "", fmt.Errorf("Validation error: input for transformer is empty.")
+		return "", fmt.Errorf("Validation error: transformer input is empty.")
 	}
 
 	output = input

@@ -194,7 +194,7 @@ var (
 				},
 			},
 			expectedOutput: "",
-			expectedErr:    fmt.Errorf("Validation error: input for transformer is empty."),
+			expectedErr:    fmt.Errorf("Validation error: transformer input is empty."),
 		},
 	}
 )
