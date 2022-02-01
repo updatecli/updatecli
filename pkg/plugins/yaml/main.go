@@ -218,7 +218,7 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 
 					positionIndex := position
 
-					if positionIndex > len(entry.Content[index+1].Content) {
+					if positionIndex >= len(entry.Content[index+1].Content) {
 						return false, "", 0
 					}
 
