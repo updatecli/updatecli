@@ -77,6 +77,19 @@ func TestDockerImage_Condition(t *testing.T) {
 			wantErr:                  true,
 			wantMockImageName:        "hub.docker.com/library/nginx:latest",
 		},
+		{
+			name:             "Error case with both source and tag empty",
+			inputSourceValue: "", // Default but in this case it's explicit
+			mockImg: dockerimage.Image{
+				Registry:     "hub.docker.com",
+				Namespace:    "library",
+				Repository:   "nginx",
+				Architecture: "amd64",
+				Tag:          "", // Default but in this case it's explicit
+			},
+			mockRegistryReturnDigest: "123456789",
+			wantErr:                  true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -19,6 +19,10 @@ type Transformers []Transformer
 // Apply applies a single transformation based on a key
 func (t *Transformer) Apply(input string) (output string, err error) {
 
+	if input == "" {
+		return "", fmt.Errorf("Validation error: transformer input is empty.")
+	}
+
 	output = input
 
 	for key, value := range *t {
@@ -169,7 +173,6 @@ func (t *Transformers) Apply(input string) (output string, err error) {
 		output, err = transformer.Apply(output)
 
 		if err != nil {
-			logrus.Error(err)
 			return "", err
 		}
 	}

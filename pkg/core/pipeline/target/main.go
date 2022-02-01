@@ -163,7 +163,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		source, err = t.Config.Transformers.Apply(source)
 		if err != nil {
 			t.Result = result.FAILURE
-			logrus.Error(err)
 			return err
 		}
 	}
