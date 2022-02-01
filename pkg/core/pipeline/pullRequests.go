@@ -103,7 +103,15 @@ func (p *Pipeline) RunPullRequests() error {
 		pr.Changelog = changelog
 
 		if p.Options.Target.DryRun {
-			logrus.Infof("[Dry Run] A Pull Request is expected (with kind %q and title %q).", pr.Config.Kind, pr.Title)
+			if len(attentionTargetIDs) > 0 {
+				logrus.Infof("[Dry Run] A pull request with kind %q and title %q is expected.", pr.Config.Kind, pr.Title)
+
+				pullRequestDebugOutput := fmt.Sprintf("The expected pull request would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
+					pr.Title,
+					pr.Changelog,
+					pr.PipelineReport)
+				logrus.Debugf(strings.ReplaceAll(pullRequestDebugOutput, "\n", "\n\t|\t"))
+			}
 
 			pullRequestDebugOutput := fmt.Sprintf("The expected Pull Request would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
 				pr.Title,
