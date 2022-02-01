@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
@@ -211,7 +212,7 @@ func TestReplace(t *testing.T) {
 
 	//https://github.com/go-yaml/yaml/issues/599
 
-	dataset := []dataSet{
+	dataset1 := []dataSet{
 		{
 			key:                []string{"image", "tag"},
 			expectedOldVersion: "1.17",
@@ -246,6 +247,11 @@ func TestReplace(t *testing.T) {
 			key:                []string{"image3[3]", "version"},
 			expectedOldVersion: "5.5",
 			expectedValueFound: true,
+		},
+		{
+			key:                []string{"image3[4]", "version"},
+			expectedOldVersion: "",
+			expectedValueFound: false,
 		},
 		{
 			key:                []string{"image5::tag"},
@@ -310,38 +316,24 @@ func TestReplace(t *testing.T) {
 	out := yaml.Node{}
 
 	err := yaml.Unmarshal([]byte(data), &out)
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-	}
+	require.NoError(t, err)
 
-	for _, d := range dataset {
+	for _, d := range dataset1 {
 		valueFound, oldVersion, _ := replace(&out, d.key, source, 1)
 
-		if valueFound != d.expectedValueFound {
-			t.Errorf("Value not found for key %v! expected %v, got %v", d.key, d.expectedValueFound, valueFound)
-		}
-
-		if oldVersion != d.expectedOldVersion {
-			t.Errorf("Old Version mismatch for key %v! expected %v, got %v", d.key, d.expectedOldVersion, oldVersion)
-		}
+		assert.Equal(t, d.expectedValueFound, valueFound)
+		assert.Equal(t, d.expectedOldVersion, oldVersion)
 	}
 
 	out2 := yaml.Node{}
 	err = yaml.Unmarshal([]byte(data2), &out2)
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-	}
+	require.NoError(t, err)
 
 	for _, d := range dataset2 {
 		valueFound, oldVersion, _ := replace(&out2, d.key, source, 1)
 
-		if valueFound != d.expectedValueFound {
-			t.Errorf("Value not found for key %v! expected %v, got %v", d.key, d.expectedValueFound, valueFound)
-		}
-
-		if oldVersion != d.expectedOldVersion {
-			t.Errorf("Old Version mismatch for key %v! expected %v, got %v", d.key, d.expectedOldVersion, oldVersion)
-		}
+		assert.Equal(t, d.expectedValueFound, valueFound)
+		assert.Equal(t, d.expectedOldVersion, oldVersion)
 	}
 }
 
