@@ -173,7 +173,6 @@ func (t *Transformers) Apply(input string) (output string, err error) {
 		output, err = transformer.Apply(output)
 
 		if err != nil {
-			logrus.Error(err)
 			return "", err
 		}
 	}
