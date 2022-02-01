@@ -186,6 +186,16 @@ var (
 			expectedOutput: "1.17",
 			expectedErr:    nil,
 		},
+		Data{
+			input: "", // explicit empty value
+			rules: Transformers{
+				Transformer{
+					"addPrefix": "alpha-",
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("Validation error: input for transformer is empty."),
+		},
 	}
 )
 

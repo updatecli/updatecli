@@ -19,6 +19,10 @@ type Transformers []Transformer
 // Apply applies a single transformation based on a key
 func (t *Transformer) Apply(input string) (output string, err error) {
 
+	if input == "" {
+		return "", fmt.Errorf("Validation error: input for transformer is empty.")
+	}
+
 	output = input
 
 	for key, value := range *t {
