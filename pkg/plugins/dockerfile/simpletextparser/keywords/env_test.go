@@ -15,9 +15,16 @@ func TestEnv_ReplaceLine(t *testing.T) {
 		want         string
 	}{
 		{
-			name:         "Match and change",
+			name:         "Match and change with equals sign",
 			source:       "{VERSION_TERRA}",
 			originalLine: "ENV TERRAFORM_VERSION={VERSIONTERRA}",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "ENV TERRAFORM_VERSION={VERSION_TERRA}",
+		},
+		{
+			name:         "Match and change without equals sign",
+			source:       "{VERSION_TERRA}",
+			originalLine: "ENV TERRAFORM_VERSION {VERSIONTERRA}",
 			matcher:      "TERRAFORM_VERSION",
 			want:         "ENV TERRAFORM_VERSION={VERSION_TERRA}",
 		},
