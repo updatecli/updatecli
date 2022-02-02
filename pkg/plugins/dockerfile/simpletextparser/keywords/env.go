@@ -1,6 +1,7 @@
 package keywords
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -14,6 +15,14 @@ func (a Env) ReplaceLine(source, originalLine, matcher string) string {
 
 	// With an ENV instruction, we only need to use the 2nd "word"
 	parsedLine := strings.Fields(originalLine)
+
+	// As per https://docs.docker.com/engine/reference/builder/#env
+	// syntax without an equal sign is still supported
+	// Let's check for presence of equal sign or not on the "parsed" key
+	if !strings.Contains(parsedLine[1], "=") {
+		// Legacy case: rewrite with new recommended syntax (by Docker)
+		return fmt.Sprintf("ENV %s=%s", parsedLine[1], source)
+	}
 
 	parsedLine[1] = matcher + "=" + source
 	return strings.Join(parsedLine, " ")
