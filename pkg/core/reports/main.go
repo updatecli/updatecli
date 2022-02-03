@@ -15,26 +15,26 @@ const reportsTpl string = `
 REPORTS:
 
 {{ range . }}
-{{ if  .Err }}
+{{ if .Err }}
 {{- .Result }} {{ .Name -}}:{{"\n"}}
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}:{{"\n"}}
 {{- "\t"}}Sources:
 {{ range $ID,$source := .Sources }}
-{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name -}}({{- $source.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }} (kind: {{ $source.Kind -}}){{"\n"}}
 {{- end }}
 
 {{- if .Conditions -}}
 {{- "\t" }}Condition:
 {{ range $ID, $condition := .Conditions }}
-{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name -}}({{- $condition.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name }} (kind: {{ $condition.Kind -}}){{"\n"}}
 {{- end -}}
 {{- end -}}
 
 {{- "\t" -}}Target:
 {{ range $ID, $target := .Targets }}
-{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}]  {{ $target.Name -}}({{- $target.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name }} (kind: {{ $target.Kind -}}){{"\n"}}
 {{- end }}
 {{ end }}
 {{ end }}

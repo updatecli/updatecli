@@ -6,9 +6,3 @@ type Stage struct {
 	Kind   string
 	Result string
 }
-
-// New init a new state object
-func (s *Stage) New(kind, result string) {
-	s.Kind = kind
-	s.Result = result
-}
