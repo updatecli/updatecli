@@ -32,6 +32,8 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		condition.Config = p.Config.Conditions[id]
 
 		rpt := p.Report.Conditions[id]
+		// Update report's name as the condition configuration might have been updated (templated values)
+		rpt.Name = condition.Config.Name
 
 		logrus.Infof("\n%s\n", id)
 		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
