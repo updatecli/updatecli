@@ -29,7 +29,7 @@ func (p *Pipeline) RunSources() error {
 		source.Config = p.Config.Sources[id]
 
 		rpt := p.Report.Sources[id]
-		// Update report's name as the source configuration might have been updated (templated values)
+		// Update report name as the source configuration might has been updated (templated values)
 		rpt.Name = source.Config.Name
 
 		logrus.Infof("\n%s\n", id)
