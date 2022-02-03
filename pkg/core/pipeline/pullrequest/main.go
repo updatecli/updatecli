@@ -35,7 +35,7 @@ type PullRequest struct {
 	Title          string
 	Changelog      string
 	PipelineReport string
-	Config         *Config
+	Config         Config
 	Scm            *scm.Scm
 	Handler        PullRequestHandler
 }
@@ -70,7 +70,7 @@ func New(config *Config, sourceControlManager *scm.Scm) (PullRequest, error) {
 
 	p := PullRequest{
 		Title:  config.Title,
-		Config: config,
+		Config: *config,
 		Scm:    sourceControlManager,
 	}
 
