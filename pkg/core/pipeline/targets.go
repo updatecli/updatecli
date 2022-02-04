@@ -39,6 +39,8 @@ func (p *Pipeline) RunTargets() error {
 		target.Config = p.Config.Targets[id]
 
 		rpt := p.Report.Targets[id]
+		// Update report name as the target configuration might has been updated (templated values)
+		rpt.Name = target.Config.Name
 
 		if target.Config.Prefix == "" && p.Sources[target.Config.SourceID].Config.Prefix != "" {
 			target.Config.Prefix = p.Sources[target.Config.SourceID].Config.Prefix

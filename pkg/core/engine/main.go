@@ -169,7 +169,7 @@ func (e *Engine) LoadConfigurations() error {
 
 }
 
-// Run run the full process one yaml file.
+// Run runs the full process for one yaml file.
 func (e *Engine) Run() (err error) {
 	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Pipeline")+4))
 	logrus.Infof("+ %s +\n", strings.ToTitle("Pipeline"))

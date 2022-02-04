@@ -21,14 +21,14 @@ const (
 	TARGETREPORTTEMPLATE string = `
 {{- "\t" -}}Target:
 {{ range $ID, $target := .Targets }}
-{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}]  {{ $target.Name -}}({{- $target.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name -}}({{- $target.Kind -}}){{"\n"}}
 {{- end }}
 `
 	// SOURCEREPORTTEMPLATE ...
 	SOURCEREPORTTEMPLATE string = `
 {{- "\t"}}Source:
 {{ range $ID,$source := .Sources }}
-{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}]  {{ $source.Name -}}({{- $source.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name -}}({{- $source.Kind -}}){{"\n"}}
 {{- end }}
 `
 
@@ -38,26 +38,26 @@ const (
 
 REPORTS:
 
-{{ if  .Err }}
+{{ if .Err }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
 {{- "\t"}}Source:
 {{ range $ID, $source := .Sources }}
-{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name -}}({{- $source.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }} (kind: {{ $source.Kind -}}){{"\n"}}
 {{- end }}
 
 {{- if .Conditions -}}
 {{- "\t" }}Condition:
-{{ range  $ID, $condition := .Conditions }}
-{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name -}}({{- $condition.Kind -}}){{"\n"}}
+{{ range $ID, $condition := .Conditions }}
+{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name }} (kind: {{ $condition.Kind -}}){{"\n"}}
 {{- end -}}
 {{- end -}}
 
 {{- "\t" -}}Target:
 {{ range $ID,$target := .Targets }}
-{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID}}] {{ $target.Name -}}({{- $target.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID}}] {{ $target.Name -}} (kind: {{ $target.Kind -}}){{"\n"}}
 {{- end }}
 {{ end }}
 `
@@ -73,7 +73,7 @@ type Report struct {
 	Targets    map[string]Stage
 }
 
-// Init init a new report for a specific configuration
+// Init initializes a new report for a specific configuration
 //func (config *Config) InitReport() (report *Report) {
 func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 
@@ -85,7 +85,7 @@ func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 	r.Targets = make(map[string]Stage, targetNbr)
 }
 
-// String return a report as a string
+// String returns a report as a string
 func (r *Report) String(mode string) (report string, err error) {
 	t := &template.Template{}
 
