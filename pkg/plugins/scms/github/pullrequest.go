@@ -14,6 +14,8 @@ package github
 import (
 	"bytes"
 	"context"
+	"errors"
+	"strings"
 	"text/template"
 
 	"github.com/shurcooL/githubv4"
@@ -51,6 +53,11 @@ Please report any issues with this tool [here](https://github.com/updatecli/upda
 
 `
 
+var (
+	ErrAutomergeNotAllowOnRepository = errors.New("automerge is not allowed on repository")
+	ErrBadMergeMethod                = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
+)
+
 // PullRequest contains multiple fields mapped to Github V4 api
 type PullRequestApi struct {
 	BaseRefName string
@@ -72,6 +79,7 @@ type PullRequestSpec struct {
 	Labels                 []string // Specify repository labels used for pull request. !! They must already exist
 	Draft                  bool     // Define if a pull request is set to draft, default false
 	MaintainerCannotModify bool     // Define if maintainer can modify pullRequest
+	MergeMethod            string   // MergeMethod defines which merge method is used to close pullRequest. Accept "merge", "sqash", "rebase", or ""
 }
 
 type PullRequest struct {
@@ -83,6 +91,27 @@ type PullRequest struct {
 	remotePullRequest PullRequestApi
 }
 
+// isMergeMethodValid ensure that we specified a valid merge method.
+func isMergeMethodValid(method string) (bool, error) {
+	if len(method) == 0 ||
+		strings.ToUpper(method) == "SQUASH" ||
+		strings.ToUpper(method) == "MERGE" ||
+		strings.ToUpper(method) == "REBASE" {
+		return true, nil
+	}
+	logrus.Debugf("%s - %s", method, ErrBadMergeMethod)
+	return false, ErrBadMergeMethod
+}
+
+// Validate ensure that a pullrequest spec contains validate fields
+func (s *PullRequestSpec) Validate() error {
+
+	if _, err := isMergeMethodValid(s.MergeMethod); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Graphql mutation used with GitHub api to enable automerge on a existing
 // pullrequest
 type mutationEnablePullRequestAutoMerge struct {
@@ -92,10 +121,12 @@ type mutationEnablePullRequestAutoMerge struct {
 }
 
 func NewPullRequest(spec PullRequestSpec, gh *Github) (PullRequest, error) {
+	err := spec.Validate()
+
 	return PullRequest{
 		gh:   gh,
 		spec: spec,
-	}, nil
+	}, err
 }
 
 func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string) error {
@@ -265,13 +296,25 @@ func (p *PullRequest) updatePullRequest() error {
 // EnablePullRequestAutoMerge updates an existing pullrequest with the flag automerge
 func (p *PullRequest) EnablePullRequestAutoMerge() error {
 
+	// Test that automerge feature is enabled on repository but only if we plan to use it
+	autoMergeAllowed, err := p.isAutoMergedEnabledOnRepository()
+	if err != nil {
+		return err
+	}
+
+	if !autoMergeAllowed {
+		return ErrAutomergeNotAllowOnRepository
+	}
+
 	var mutation mutationEnablePullRequestAutoMerge
+	mergeMethod := githubv4.PullRequestMergeMethod(p.spec.MergeMethod)
 
 	input := githubv4.EnablePullRequestAutoMergeInput{
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
+		MergeMethod:   &mergeMethod,
 	}
 
-	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 
 	if err != nil {
 		return err
@@ -338,6 +381,29 @@ func (p *PullRequest) OpenPullRequest() error {
 	p.remotePullRequest = mutation.CreatePullRequest.PullRequest
 
 	return nil
+
+}
+
+// isAutoMergedEnabledOnRepository checks if a remote repository allow automerge pull request
+func (p *PullRequest) isAutoMergedEnabledOnRepository() (bool, error) {
+
+	var query struct {
+		Repository struct {
+			AutoMergeAllowed bool
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	variables := map[string]interface{}{
+		"owner": githubv4.String(p.gh.Spec.Owner),
+		"name":  githubv4.String(p.gh.Spec.Repository),
+	}
+
+	err := p.gh.client.Query(context.Background(), &query, variables)
+
+	if err != nil {
+		return false, err
+	}
+	return query.Repository.AutoMergeAllowed, nil
 
 }
 
