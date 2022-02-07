@@ -79,7 +79,7 @@ type PullRequestSpec struct {
 	Labels                 []string // Specify repository labels used for pull request. !! They must already exist
 	Draft                  bool     // Define if a pull request is set to draft, default false
 	MaintainerCannotModify bool     // Define if maintainer can modify pullRequest
-	MergeMethod            string   // MergeMethod defines which merge method is used to close pullRequest. Accept "merge", "sqash", "rebase", or ""
+	MergeMethod            string   // Define which merge method is used to incorporate the pull request. Accept "merge", "squash", "rebase", or ""
 }
 
 type PullRequest struct {
