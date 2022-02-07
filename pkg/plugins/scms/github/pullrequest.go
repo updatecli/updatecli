@@ -384,7 +384,7 @@ func (p *PullRequest) OpenPullRequest() error {
 
 }
 
-// isAutoMergedEnabledOnRepository checks if a remote repository allow automerge pull request
+// isAutoMergedEnabledOnRepository checks if a remote repository allows automerging pull requests
 func (p *PullRequest) isAutoMergedEnabledOnRepository() (bool, error) {
 
 	var query struct {
