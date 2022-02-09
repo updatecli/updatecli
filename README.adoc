@@ -1,8 +1,5 @@
 = Updatecli
 
-CAUTION: Updatecli is an experiment to help keeping infrastructure as much up to date as possible.
-While a significant effort is done to avoid breaking changes, we can't guaranty stability.
-
 link:https://github.com/updatecli/updatecli/blob/main/LICENSE[image:https://img.shields.io/github/license/updatecli/updatecli[GitHub]]
 link:https://goreportcard.com/report/github.com/updatecli/updatecli[image:https://goreportcard.com/badge/github.com/updatecli/updatecli[Go Report Card]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/latest/total[GitHub Releases]]
