@@ -7,7 +7,7 @@ link:https://github.com/updatecli/updatecli/actions?query=workflow%3AGo[image:ht
 link:https://gitter.im/Updatecli/community#[image:https://img.shields.io/gitter/room/updatecli/community[Gitter]]
 
 
-_"Automatically open a PR on your GitOps repository when a third service publishes an updates"_
+_"Automatically open a PR on your GitOps repository when a third party service publishes an update"_
 
 Updatecli is a tool used to apply file update strategies. Designed to be used from everywhere, each application "run" detects if a value needs to be updated using a custom strategy then apply changes according to the strategy.
 
