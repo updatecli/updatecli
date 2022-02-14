@@ -312,7 +312,8 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
 	}
 
-	// Github Api expect merge method to be capital letter
+	// The Github Api expects the merge method to be capital letter and don't allows empty value
+	// hence the reason to set input.MergeMethod only if the value is not nil
 	if len(p.spec.MergeMethod) > 0 {
 		mergeMethod := githubv4.PullRequestMergeMethod(strings.ToUpper(p.spec.MergeMethod))
 		input.MergeMethod = &mergeMethod
