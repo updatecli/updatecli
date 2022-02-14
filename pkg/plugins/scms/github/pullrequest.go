@@ -307,11 +307,15 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 	}
 
 	var mutation mutationEnablePullRequestAutoMerge
-	mergeMethod := githubv4.PullRequestMergeMethod(p.spec.MergeMethod)
 
 	input := githubv4.EnablePullRequestAutoMergeInput{
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
-		MergeMethod:   &mergeMethod,
+	}
+
+	// Github Api expect merge method to be capital letter
+	if len(p.spec.MergeMethod) > 0 {
+		mergeMethod := githubv4.PullRequestMergeMethod(strings.ToUpper(p.spec.MergeMethod))
+		input.MergeMethod = &mergeMethod
 	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
