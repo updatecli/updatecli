@@ -84,6 +84,10 @@ func New(s Spec) (*Github, error) {
 func (s *Spec) Validate() (errs []error) {
 	required := []string{}
 
+	if err := s.PullRequest.Validate(); err != nil {
+		errs = append(errs, err)
+	}
+
 	if len(s.Token) == 0 {
 		required = append(required, "token")
 	}
