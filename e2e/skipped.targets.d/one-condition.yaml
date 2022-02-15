@@ -1,0 +1,24 @@
+title: Skip targets with only one (failing) condition
+
+sources:
+  default:
+    name: Default Source (dummy)
+    kind: shell
+    spec:
+      command: echo DUMMY
+
+conditions:
+  failingCondition:
+    name: This conditions always fail
+    sourceID: default
+    kind: shell
+    spec:
+      command: "false"
+
+targets:
+  shouldNeverRun:
+    name: This target should never run
+    sourceID: default
+    kind: shell
+    spec:
+      command: echo SHOULD NOT RUN
