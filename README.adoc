@@ -19,6 +19,8 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
 3. Target: Update and publish the target files based on a value retrieved from the source stage.
 
+**A Quick-start is available on link:https://www.updatecli.io/docs/prologue/quick-start/[www.updatecli.io/docs/prologue/quick-start]**
+
 == Feature
 
 * *Flexibility*: Easy to define tailored update strategies, you are just one yaml file to it.
@@ -29,9 +31,28 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 
 They are many projects out there, which can continuously update your files but they all have an opinionated way of doing it and they often want you to adopt a new platform. Building and distributing software is a difficult thing and good practices constantly evolve. Updatecli was built to work independently wherever you need, and combining whatever workflow you are using as you can see in the following section.
 
+== Installation
+
+Updatecli is a simple Go binary available for Linux, MacOS, Windows. It can be downloaded from the link:https://github.com/updatecli/updatecli/releases[release page]
+
 == Documentation
 
-Documentation for updatecli is available on link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io] but feel free to look at the next section to get an overview of how updatecli works.
+Documentation for updatecli is available on link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io] but feel free to look at the example section to get an overview of how updatecli works.
+
+== Contributing
+
+This is a community-oriented project, all contributions are greatly appreciated.
+
+Here is a non-exhaustive list of contributions:
+
+* ⭐️ this repository.
+* Propose a new feature request.
+* Highlight an existing feature request with :thumbsup:.
+* Contribute to any repository in the link:https://github.com/updatecli/[updatecli] organization
+* Share the love
+
+More information available on link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
+
 
 === Example
 In this example, we define an update strategy in "updatecli.yaml" then we run `updatecli apply --config updatecli.yaml`.
@@ -40,34 +61,58 @@ Our objective is to know if the Jenkins project published a new stable version, 
 [cols="2a,2a"]
 |===
 |```
-## updatecli.yaml
-sources:
+## updatecli.yamltitle: Update Jenkins Version
+
+scms:
   default:
+    kind: github
+    spec:
+      user: olblak
+      email: me@olblak.com
+      owner: "olblak"
+      repository: "charts"
+      token: mySecretTokenWhichShouldNeverUsedThisWay
+      username: olblak
+      branch: "main"
+
+sources:
+  jenkins:
+    name: Get latest Jenkins version
     kind: jenkins
     spec:
       release: weekly
+
 conditions:
   docker:
-    name: "Docker Image Published on Registry"
+    name: "Test if Docker Image Published on Registry"
+    sourceID: jenkins
     kind: dockerImage
     spec:
       image: "jenkins/jenkins"
+
 targets:
-  imageTag:
+  bumpJenkins:
     name: "jenkins/jenkins docker tag"
+    sourceID: jenkins
+    scmID: default
     kind: yaml
     spec:
       file: "charts/jenkins/values.yaml"
       key: "jenkins.controller.imageTag"
-    scm:
-      github:
-        user: olblak
-        email: me@olblak.com
-        owner: "olblak"
-        repository: "charts"
-        token: mySecretTokenWhichShouldNeverUsedThisWay
-        username: olblak
-        branch: "main"
+
+pullrequests:
+  default:
+    title: "Open pullrequest with new Jenkins version"
+    kind: github
+    scmID: default
+    target: 
+      - bumpJenkins
+    spec:
+      automerge: true
+      mergemethod: squash
+      labels:
+        - dependencies
+
 ```
 
 |What it says:
@@ -90,11 +135,6 @@ More information link:https://www.updatecli.io/docs/prologue/introduction/[here]
 
 
 ---
-
-== Contributing
-
-link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
-
 
 == Links
 
