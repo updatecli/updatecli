@@ -17,7 +17,7 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 
 1. Sources: Based on a rule, updatecli fetches a value that will be injected in later stages such as latest application version.
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
-3. Target: Update and publish the target files based on a value retrieved from the source stage.
+3. Targets: Update and publish the target files based on a value retrieved from the source stage.
 
 **A Quick-start is available on link:https://www.updatecli.io/docs/prologue/quick-start/[www.updatecli.io/docs/prologue/quick-start]**
 
