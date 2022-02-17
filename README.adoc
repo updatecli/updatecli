@@ -33,7 +33,7 @@ They are many projects out there which can continuously update your files, but t
 
 == Installation
 
-Updatecli is a simple Go binary available for Linux, MacOS, Windows. It can be downloaded from the link:https://github.com/updatecli/updatecli/releases[release page]
+Updatecli is a simple Go binary, available for Linux, MacOS, Windows. It can be downloaded from the link:https://github.com/updatecli/updatecli/releases[release page], or installed via link:https://www.updatecli.io/docs/prologue/installation/[other methods].
 
 == Documentation
 
