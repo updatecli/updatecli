@@ -61,7 +61,8 @@ Our objective is to know if the Jenkins project published a new stable version, 
 [cols="2a,2a"]
 |===
 |```
-## updatecli.yamltitle: Update Jenkins Version
+## updatecli.yaml
+title: Update Jenkins Version
 
 scms:
   default:
@@ -69,11 +70,11 @@ scms:
     spec:
       user: olblak
       email: me@olblak.com
-      owner: "olblak"
-      repository: "charts"
+      owner: olblak
+      repository: charts
       token: mySecretTokenWhichShouldNeverUsedThisWay
       username: olblak
-      branch: "main"
+      branch: main
 
 sources:
   jenkins:
@@ -88,21 +89,21 @@ conditions:
     sourceID: jenkins
     kind: dockerImage
     spec:
-      image: "jenkinsci/jenkins"
+      image: jenkins/jenkins
 
 targets:
   bumpJenkins:
-    name: "jenkinsci/jenkins docker tag"
+    name: jenkins/jenkins docker tag
     sourceID: jenkins
     scmID: default
     kind: yaml
     spec:
-      file: "charts/jenkins/values.yaml"
-      key: "jenkins.controller.imageTag"
+      file: charts/jenkins/values.yaml
+      key: jenkins.controller.imageTag
 
 pullrequests:
   default:
-    title: "Open pullrequest with new Jenkins version"
+    title: Open pullrequest with new Jenkins version
     kind: github
     scmID: default
     target: 
@@ -112,21 +113,20 @@ pullrequests:
       mergemethod: squash
       labels:
         - dependencies
-
 ```
 
 |What it says:
 
 . Sources: +
 What's the latest jenkins weekly version? +
-=> 2.264 +
+=> 2.335 +
 
 . Conditions: +
-Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.264" +
+Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.335" +
 => Yes then proceed otherwise abort +
 
 . Targets: +
-Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264"? +
+Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.335"? +
 => If yes then open a Github pull request to the branch "main"
 
 |===
