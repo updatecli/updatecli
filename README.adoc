@@ -43,7 +43,7 @@ The updatecli documentation is available on link:https://www.updatecli.io/docs/p
 
 As a community-oriented project, all contributions are greatly appreciated!
 
-Here is a non-exhaustive list of contributions:
+Here is a non-exhaustive list of possible contributions:
 
 * ⭐️ this repository.
 * Propose a new feature request.
