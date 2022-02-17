@@ -92,7 +92,7 @@ conditions:
 
 targets:
   bumpJenkins:
-    name: "jenkins/jenkins docker tag"
+    name: "jenkinsci/jenkins docker tag"
     sourceID: jenkins
     scmID: default
     kind: yaml
