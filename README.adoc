@@ -51,7 +51,7 @@ Here is a non-exhaustive list of possible contributions:
 * Contribute to any repository in the link:https://github.com/updatecli/[updatecli] organization
 * Share the love
 
-More information available on link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
+More information available at link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 
 
 === Example
