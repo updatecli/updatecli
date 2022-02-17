@@ -35,7 +35,7 @@ Updatecli was built to work independently of the underlying dependencies to upda
 
 == Installation
 
-Updatecli is a simple Go binary, available for Linux, MacOS, Windows. It can be downloaded from the link:https://github.com/updatecli/updatecli/releases[release page], or installed via link:https://www.updatecli.io/docs/prologue/installation/[other methods].
+Updatecli is a Go binary available for Linux, MacOS and Windows from the link:https://github.com/updatecli/updatecli/releases[release page] or installed via link:https://www.updatecli.io/docs/prologue/installation/[other methods].
 
 == Documentation
 
