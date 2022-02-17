@@ -37,7 +37,7 @@ Updatecli is a simple Go binary, available for Linux, MacOS, Windows. It can be 
 
 == Documentation
 
-Documentation for updatecli is available on link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io] but feel free to look at the example section to get an overview of how updatecli works.
+The updatecli documentation is available on link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io], but feel free to look at the example section to get an overview of how updatecli works.
 
 == Contributing
 
