@@ -2,28 +2,27 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema" ,
     "$id": "/schema/pipeline",
     "type": "object",
-    "descriptions": "Describe a Updatecli Pipeline",
+    "description": "Describe a Updatecli Pipeline",
     "properties": {
         "conditions": {
-            "type": "object",
+            "type": "array",
             "items": {
                 "oneOf": [
-                    { "$ref" : "/schema/resource/condition/jenkins" }
+                    { "$ref" : "/resource/condition/jenkins" }
                 ]
             }
         },
         "sources": {
-            "type": "object",
+            "type": "array",
             "items": {
                 "oneOf": [
-                    { "$ref" : "/schema/resource/source/jenkins" }
+                    { "$ref" : "/resource/source/jenkins" }
                 ]
             }
         },
         "title": {
             "description": "Set pipeline title",
             "type": "string"
-
         }
     },
     "required": [

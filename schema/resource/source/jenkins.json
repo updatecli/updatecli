@@ -1,6 +1,6 @@
 { 
     "$schema": "https://json-schema.org/draft/2020-12/schema" ,
-    "$id": "/schema/resource/source/jenkins",
+    "$id": "/resource/source/jenkins",
     "type": "object",
     "description": "Get latest Jenkins version",
     "required": [
@@ -11,8 +11,7 @@
     "properties": {
         "title": {
             "description": "Jenkins source title",
-            "type": "string",
-            "example": "Get latest Jenkins version"
+            "type": "string"
         },
         "kind": {
             "description": "Define source kind",
