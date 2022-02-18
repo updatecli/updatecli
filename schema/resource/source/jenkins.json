@@ -1,0 +1,57 @@
+{ 
+    "$schema": "https://json-schema.org/draft/2020-12/schema" ,
+    "$id": "/schema/jenkins",
+    "type": "object",
+    "descriptions": "Retrieve latest Jenkins version",
+    "properties": {
+        "release": {
+            "description": "Specify Jenkins release type",
+            "enum": [
+                "stable",
+                "weekly"
+            ]
+        },
+        "version": {
+            "type": "string",
+            "description": "Specify "
+        }
+    },
+    "required": [
+        "release"
+    ]
+}
+
+{ 
+    "$schema": "https://json-schema.org/draft/2020-12/schema" ,
+    "$id": "/schema/resource/source/jenkins",
+    "type": "object",
+    "required": [
+        "title",
+        "kind",
+        "spec"
+    ],
+    "properties": {
+        "title": {
+            "type": "string"
+        },
+        "kind": {
+            "enum": ["jenkins"] 
+        },
+        "spec" : {
+            "type": "object",
+            "properties": {
+                "release": {
+                    "description": "Define Jenkins release type",
+                    "enum": [
+                        "stable",
+                        "weekly"
+                    ]
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Specify "
+                }
+            } 
+        }
+    }
+}

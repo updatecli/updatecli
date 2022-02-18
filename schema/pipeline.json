@@ -1,0 +1,58 @@
+{ 
+    "$schema": "https://json-schema.org/draft/2020-12/schema" ,
+    "$id": "/schema/pipeline",
+    "type": "object",
+    "descriptions": "Describe a Updatecli Pipeline",
+    "properties": {
+        "sources": {
+            "type": "object",
+            "items": {
+                "oneOf": [
+                    { "$ref" : "/schema/resource/source/jenkins" }
+                ]
+            }
+        },
+        "title": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "title"
+    ],
+    "$defs": {
+        "jenkins": {
+            "type": "object",
+            "required": [
+                "kind",
+                "spec"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "kind": {
+                    "enum": ["jenkins"] 
+                },
+                "spec" : {
+                   "type": "object",
+                   "properties": {
+                        "release": {
+                            "description": "Define Jenkins release type",
+                            "enum": [
+                                "stable",
+                                "weekly"
+                            ]
+                        },
+                        "version": {
+                            "type": "string",
+                            "description": "Specify "
+                        }
+                    } 
+                }
+            }
+        }
+    }
+}
+
+
+https://mj-go.in/golang/embedding-files-in-go-binaries
