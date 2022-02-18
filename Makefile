@@ -62,6 +62,12 @@ test-e2e: ## Execute updatecli end to end tests
 lint: ## Execute the Golang's linters on updatecli's source code
 	golangci-lint run
 
+lint.schema: ## Execute Json schema validator
+	# npm install -g ajv-cli
+	ajv --spec=draft2020 compile -s schema/resource/condition/*
+	ajv --spec=draft2020 compile -s schema/resource/source/*
+	ajv --spec=draft2020 compile -s schema/pipeline.json
+
 .PHONY: help
 help: ## Show this Makefile's help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
