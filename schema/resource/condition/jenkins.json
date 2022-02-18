@@ -1,30 +1,8 @@
 { 
     "$schema": "https://json-schema.org/draft/2020-12/schema" ,
-    "$id": "/schema/jenkins",
+    "$id": "/schema/resource/condition/jenkins",
     "type": "object",
-    "descriptions": "Retrieve latest Jenkins version",
-    "properties": {
-        "release": {
-            "description": "Specify Jenkins release type",
-            "enum": [
-                "stable",
-                "weekly"
-            ]
-        },
-        "version": {
-            "type": "string",
-            "description": "Specify "
-        }
-    },
-    "required": [
-        "release"
-    ]
-}
-
-{ 
-    "$schema": "https://json-schema.org/draft/2020-12/schema" ,
-    "$id": "/schema/resource/source/jenkins",
-    "type": "object",
+    "description": "Test if a specific Jenkins version exist",
     "required": [
         "title",
         "kind",
@@ -32,12 +10,16 @@
     ],
     "properties": {
         "title": {
-            "type": "string"
+            "description": "Jenkins source title",
+            "type": "string",
+            "example": "Test if specified Jenkins version exist"
         },
         "kind": {
+            "description": "Define source kind",
             "enum": ["jenkins"] 
         },
         "spec" : {
+            "description": "Define Jenkins source parameters",
             "type": "object",
             "properties": {
                 "release": {
@@ -49,7 +31,7 @@
                 },
                 "version": {
                     "type": "string",
-                    "description": "Specify "
+                    "description": "Specify Jenkins version which should exist"
                 }
             } 
         }
