@@ -4,6 +4,14 @@
     "type": "object",
     "descriptions": "Describe a Updatecli Pipeline",
     "properties": {
+        "conditions": {
+            "type": "object",
+            "items": {
+                "oneOf": [
+                    { "$ref" : "/schema/resource/condition/jenkins" }
+                ]
+            }
+        },
         "sources": {
             "type": "object",
             "items": {
@@ -13,46 +21,12 @@
             }
         },
         "title": {
+            "description": "Set pipeline title",
             "type": "string"
+
         }
     },
     "required": [
         "title"
-    ],
-    "$defs": {
-        "jenkins": {
-            "type": "object",
-            "required": [
-                "kind",
-                "spec"
-            ],
-            "properties": {
-                "title": {
-                    "type": "string"
-                },
-                "kind": {
-                    "enum": ["jenkins"] 
-                },
-                "spec" : {
-                   "type": "object",
-                   "properties": {
-                        "release": {
-                            "description": "Define Jenkins release type",
-                            "enum": [
-                                "stable",
-                                "weekly"
-                            ]
-                        },
-                        "version": {
-                            "type": "string",
-                            "description": "Specify "
-                        }
-                    } 
-                }
-            }
-        }
-    }
+    ]
 }
-
-
-https://mj-go.in/golang/embedding-files-in-go-binaries
