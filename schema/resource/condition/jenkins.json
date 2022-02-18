@@ -10,11 +10,11 @@
     ],
     "properties": {
         "title": {
-            "description": "Jenkins source title",
+            "description": "Define condition title",
             "type": "string"
         },
         "kind": {
-            "description": "Define source kind",
+            "description": "Define condition kind",
             "enum": ["jenkins"] 
         },
         "spec" : {

@@ -10,7 +10,7 @@
     ],
     "properties": {
         "title": {
-            "description": "Jenkins source title",
+            "description": "Define source title",
             "type": "string"
         },
         "kind": {
@@ -27,10 +27,6 @@
                         "stable",
                         "weekly"
                     ]
-                },
-                "version": {
-                    "type": "string",
-                    "description": "Specify Jenkins version which should exist"
                 }
             } 
         }
