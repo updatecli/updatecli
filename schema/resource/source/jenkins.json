@@ -1,6 +1,6 @@
 { 
-    "$schema": "https://json-schema.org/draft/2020-12/schema" ,
-    "$id": "/resource/source/jenkins",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+     "$id": "/schema/resource/source/jenkins",
     "type": "object",
     "description": "Get latest Jenkins version",
     "required": [

@@ -1,6 +1,6 @@
 { 
-    "$schema": "https://json-schema.org/draft/2020-12/schema" ,
-    "$id": "/resource/condition/jenkins",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "/schema/resource/condition/jenkins",
     "type": "object",
     "description": "Test if a specific Jenkins version exist",
     "required": [
