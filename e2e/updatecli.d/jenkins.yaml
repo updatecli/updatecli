@@ -2,8 +2,12 @@ title: "Bump Jenkins stable version"
 
 sources:
   getLatestJenkinsStable:
+    name: Get latest jenkins stable version
     kind: jenkins
+    spec:
+      release: stable
   getLatestJenkinsWeekly:
+    name: Get latest jenkins weekly version
     kind: jenkins
     spec:
       release: weekly
