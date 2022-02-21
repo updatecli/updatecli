@@ -32,6 +32,11 @@ require (
 )
 
 require (
+	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
+	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
 	cloud.google.com/go v0.99.0 // indirect
 	filippo.io/age v1.0.0-beta7 // indirect
 	github.com/Azure/azure-sdk-for-go v56.3.0+incompatible // indirect
@@ -152,7 +157,6 @@ require (
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.23.1 // indirect
 	k8s.io/apimachinery v0.23.1 // indirect
 	k8s.io/cli-runtime v0.23.1 // indirect

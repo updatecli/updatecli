@@ -1,0 +1,13 @@
+{ 
+    "$id": "/resource/source_base",
+    "type": "object",
+    "required": [
+      "name"
+    ],
+    "properties": {
+        "name": {
+            "description": "Define source name",
+            "type": "string"
+        }
+    }
+}

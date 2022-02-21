@@ -1,0 +1,21 @@
+{ 
+    "$id": "/resource/condition_base",
+    "type": "object",
+    "required": [
+      "name"
+    ],
+    "properties": {
+        "name": {
+            "description": "Define source name",
+            "type": "string"
+        },
+        "disablesourceinput": {
+            "description": "Define source name",
+            "type": "boolean"
+        },
+        "sourceID": {
+            "description": "Define which source should be used for the default value",
+            "type": "string"
+        }
+    }
+}

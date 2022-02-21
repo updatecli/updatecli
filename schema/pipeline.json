@@ -1,23 +1,30 @@
 { 
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://www.updatecli.io/schema/pipeline",
+    "$id": "pipeline",
     "type": "object",
     "description": "Describe a Updatecli Pipeline",
+    "unevaluatedProperties": false,
     "properties": {
         "conditions": {
-            "type": "array",
-            "items": {
+            "type": "object",
+            "patternProperties": {
+              "^[A-Za-z_][A-Za-z0-9_]*$": {
+                "type": "object",
                 "oneOf": [
-                    { "$ref" : "/schema/resource/condition/jenkins" }
+                    { "$ref" : "/resource/condition/jenkins" }
                 ]
+              }
             }
         },
         "sources": {
-            "type": "array",
-            "items": {
+            "type": "object",
+            "patternProperties": {
+              "^[A-Za-z_][A-Za-z0-9_]*$": {
+                "type": "object",
                 "oneOf": [
-                    { "$ref" : "/schema/resource/source/jenkins" }
+                    { "$ref" : "/resource/source/jenkins" }
                 ]
+              }
             }
         },
         "title": {
@@ -25,7 +32,6 @@
             "type": "string"
         }
     },
-    "additionalProperties": false,
     "required": [
         "title"
     ]

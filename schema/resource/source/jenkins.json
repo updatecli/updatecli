@@ -1,18 +1,14 @@
 { 
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-     "$id": "/schema/resource/source/jenkins",
+    "$id": "/resource/source/jenkins",
     "type": "object",
     "description": "Get latest Jenkins version",
+    "unevaluatedProperties": false,
     "required": [
-        "title",
-        "kind",
-        "spec"
+      "kind",
+      "spec"
     ],
+    "allOf": [{ "$ref": "/resource/source_base" }],
     "properties": {
-        "title": {
-            "description": "Define source title",
-            "type": "string"
-        },
         "kind": {
             "description": "Define source kind",
             "enum": ["jenkins"] 
