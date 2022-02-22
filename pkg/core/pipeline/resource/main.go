@@ -63,7 +63,7 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "yaml":
 		return yaml.New(rs.Spec)
 	default:
-		return nil, fmt.Errorf("⚠ Don't support source kind: %v", rs.Kind)
+		return nil, fmt.Errorf("⚠ Don't support resource kind: %v", rs.Kind)
 	}
 }
 
