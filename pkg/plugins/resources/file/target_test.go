@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -272,6 +271,120 @@ func TestFile_Target(t *testing.T) {
 	}
 }
 
+// TODO: find a way to test when there are multiple files but only some are changed
+func TestFile_TargetMultiples(t *testing.T) {
+	tests := []struct {
+		name                string
+		spec                Spec
+		files               map[string]string
+		inputSourceValue    string
+		mockReturnedContent map[string]string
+		mockReturnedError   map[string]error
+		mockFileExists      map[string]bool
+		wantMockState       map[string]text.MockTextRetriever
+		wantResult          map[string]bool
+		wantErr             bool
+		dryRun              bool
+	}{
+		{
+			name:             "Replace content with matchPattern and ReplacePattern",
+			inputSourceValue: "3.9.0",
+			spec: Spec{
+				File:           "foo.txt",
+				MatchPattern:   "maven_(.*)=.*",
+				ReplacePattern: "maven_$1= 3.9.0",
+			},
+			files: map[string]string{
+				"foo.txt": "",
+			},
+			mockFileExists: map[string]bool{
+				"foo.txt": true,
+			},
+			mockReturnedContent: map[string]string{
+				"foo.txt": `maven_version = "3.8.2"
+				git_version = "2.33.1"
+				jdk11_version = "11.0.12+7"
+				jdk17_version = "17+35"
+				jdk8_version = "8u302-b08"
+				maven_major_release = "3"
+				git_lfs_version = "3.0.1"
+				compose_version = "1.29.2"`,
+			},
+			wantMockState: map[string]text.MockTextRetriever{
+				"foo.txt": {
+					Location: "foo.txt",
+					Content: `maven_version = 3.9.0
+						git_version = "2.33.1"
+						jdk11_version = "11.0.12+7"
+						jdk17_version = "17+35"
+						jdk8_version = "8u302-b08"
+						maven_major_release = 3.9.0
+						git_lfs_version = "3.0.1"
+						compose_version = "1.29.2"`,
+				},
+			},
+			wantResult: map[string]bool{
+				"foo.txt": true,
+			},
+		},
+		// {
+		// 	name: "Passing case with multiple 'Files' and both input source and specified content but no line (specified content should be used)",
+		// 	spec: Spec{
+		// 		Files: []string{
+		// 			"foo.txt",
+		// 			"bar.txt",
+		// 		},
+		// 		Content: "Hello World",
+		// 	},
+		// 	files: map[string]string{
+		// 		"foo.txt": "",
+		// 		"bar.txt": "",
+		// 	},
+		// 	mockFileExists:   true,
+		// 	inputSourceValue: "current_version=1.2.3",
+		// 	// TODO: check multiple locations
+		// 	// wantMockState: text.MockTextRetriever{
+		// 	// 	Location: "foo.txt",
+		// 	// 	Content:  "Hello World",
+		// 	// },
+		// 	wantResult: true,
+		// },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockTexts := make(map[string]text.MockTextRetriever)
+			for filePath := range tt.files {
+				mockTexts[filePath] = text.MockTextRetriever{
+					Content: tt.mockReturnedContent[filePath],
+					Err:     tt.mockReturnedError[filePath],
+					Exists:  tt.mockFileExists[filePath],
+				}
+			}
+			aMockText := mockTexts["foo.txt"]
+			f := &File{
+				spec:             tt.spec,
+				contentRetriever: &aMockText,
+				files:            tt.files,
+			}
+
+			gotResult, gotErr := f.Target(tt.inputSourceValue, tt.dryRun)
+			if tt.wantErr {
+				assert.Error(t, gotErr)
+				return
+			}
+
+			require.NoError(t, gotErr)
+			for filePath := range tt.files {
+				assert.Equal(t, tt.wantResult[filePath], gotResult)
+				assert.Equal(t, tt.wantMockState[filePath].Location, mockTexts[filePath].Location)
+				assert.Equal(t, tt.wantMockState[filePath].Line, mockTexts[filePath].Line)
+				assert.Equal(t, tt.wantMockState[filePath].Content, mockTexts[filePath].Content)
+			}
+		})
+	}
+}
+
+/*
 func TestFile_TargetFromSCM(t *testing.T) {
 	tests := []struct {
 		name                string
@@ -397,3 +510,4 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		})
 	}
 }
+*/

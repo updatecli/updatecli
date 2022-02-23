@@ -3,14 +3,22 @@ package text
 // MockTextRetriever is a stub implementation of the `TextRetriever` interface to be used in our unit test suites.
 // It stores the expected Content and Err
 type MockTextRetriever struct {
-	Content  string
-	Location string
-	Err      error
-	Line     int
-	Exists   bool
+	Content   string
+	Location  string
+	Err       error
+	Line      int
+	Exists    bool
+	Contents  map[string]string
+	Locations map[string]string
+	Errs      map[string]error
+	Lines     map[string]int
+	Existss   map[string]bool
 }
 
 func (mtr *MockTextRetriever) ReadLine(location string, line int) (string, error) {
+	if len(mtr.Locations) > 0 {
+		mtr.Location = location
+	}
 	mtr.Location = location
 	mtr.Line = line
 	return mtr.Content, mtr.Err
