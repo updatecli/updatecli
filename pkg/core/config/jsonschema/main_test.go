@@ -46,8 +46,10 @@ func readFile(file string) ([]byte, error) {
 // from the e2e directory.
 func TestValidate(t *testing.T) {
 
+	failingManifest := []string{}
+
 	for _, d := range TestDataset {
-		updatecliManifests, err := getFilesWithSuffix(d.updatecliManifest, "jenkins.yaml")
+		updatecliManifests, err := getFilesWithSuffix(d.updatecliManifest, ".yaml")
 		if err != nil {
 			t.Errorf("%s", err)
 		}
@@ -65,10 +67,18 @@ func TestValidate(t *testing.T) {
 					manifest, err)
 			}
 			if d.expectedResult != result {
+				failingManifest = append(failingManifest, manifest)
 				t.Errorf("Expecting file %q to be valid", manifest)
 			}
 		}
 
+	}
+
+	if len(failingManifest) > 0 {
+		t.Logf("%d updatecli manifests failed\n", len(failingManifest))
+		for _, m := range failingManifest {
+			t.Logf("\t%s\n", m)
+		}
 	}
 
 }
