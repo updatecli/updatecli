@@ -3,6 +3,7 @@ title: Show a set of maven resources as a generic example
 
 sources:
   getLatestJenkinsWarVersion:
+    name: Get latest Jenkins version from maven repository
     kind: maven
     spec:
       url: "repo.jenkins-ci.org"
@@ -10,6 +11,7 @@ sources:
       groupID: "org.jenkins-ci.main"
       artifactID: "jenkins-war"
   getLatestJunitVersion:
+    name: Get latest junit version from maven repository
     kind: maven
     spec:
       url: "repo.maven.apache.org"
