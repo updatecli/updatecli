@@ -11,7 +11,8 @@
               "^[A-Za-z_][A-Za-z0-9_]*$": {
                 "type": "object",
                 "oneOf": [
-                    { "$ref" : "/resource/condition/jenkins" }
+                    { "$ref" : "/resource/condition/jenkins" },
+                    { "$ref" : "/resource/condition/maven" }
                 ]
               }
             }
@@ -22,7 +23,8 @@
               "^[A-Za-z_][A-Za-z0-9_]*$": {
                 "type": "object",
                 "oneOf": [
-                    { "$ref" : "/resource/source/jenkins" }
+                    { "$ref" : "/resource/source/jenkins" },
+                    { "$ref" : "/resource/source/maven" }
                 ]
               }
             }
