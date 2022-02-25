@@ -60,7 +60,7 @@ In the `main.go`, you need to define the `struct` that you'll use to configure y
 ```
 type Capitalized_package_name struct {
 	Field1        string
-	Field2        string 
+	Field2        string
 	Field3        string
 	Field4        string
 }
@@ -153,6 +153,20 @@ targets:
       key:  "..."
 ```
 
+==== 5. Add Json Schema
+
+Every plugin configuration needs an associated manually written JSON schema.
+Depending on the stage, we must add the following files
+
+```
+schema/source/<pluginKind>.json
+schema/condition/<pluginKind>.json
+schema/target/<pluginKind>.json
+```
+
+We must update the main schema `schema/config.json` referencing the previously mentioned JSON schema
+
+Finally we must add an updatecli manifest example to `e2e/updatecli.d` to validate that our schema is working as expected
 
 === DOCUMENTATION
 
