@@ -15,7 +15,10 @@ import (
 )
 
 // jsconSchemaRootDir contains the path to access json schema from updatecli repository
-const jsonSchemaRootDir string = "../../../../schema"
+const (
+	jsonSchemaRootDir = "../../../../schema"
+	configSchema      = "config.json"
+)
 
 // getFilesWithSuffix search for every json schema from a root  directory
 func getFilesWithSuffix(root, suffix string) ([]string, error) {
@@ -81,9 +84,6 @@ func loadJsonSchema() (*jschema.Schema, error) {
 		jsID := strings.TrimPrefix(jsFile, jsonSchemaRootDir)
 		jsID = strings.TrimSuffix(jsID, ".json")
 
-		logrus.Debugf("Loading json schema %q", jsID)
-		fmt.Printf("Loading json schema %q from %q\n", jsID, jsFile)
-
 		file, err := os.Open(jsFile)
 
 		if err != nil {
@@ -99,7 +99,7 @@ func loadJsonSchema() (*jschema.Schema, error) {
 		}
 	}
 
-	return compiler.Compile(filepath.Join(jsonSchemaRootDir, "pipeline.json"))
+	return compiler.Compile(filepath.Join(jsonSchemaRootDir, configSchema))
 
 }
 

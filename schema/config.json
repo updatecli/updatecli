@@ -1,6 +1,6 @@
 { 
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "pipeline",
+    "$id": "config",
     "type": "object",
     "description": "Describe a Updatecli Pipeline",
     "unevaluatedProperties": false,
