@@ -17,21 +17,44 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 
 1. Sources: Based on a rule, updatecli fetches a value that will be injected in later stages such as latest application version.
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
-3. Target: Update and publish the target files based on a value retrieved from the source stage.
+3. Targets: Update and publish the target files based on a value retrieved from the source stage.
+
+**A Quick-start is available on link:https://www.updatecli.io/docs/prologue/quick-start/[www.updatecli.io/docs/prologue/quick-start]**
 
 == Feature
 
-* *Flexibility*: Easy to define tailored update strategies, you are just one yaml file to it.
+* *Flexibility*: Easy to define tailored update strategies, you are just one yaml file from it.
 * *Portability*: Easy to add to your workflow whatever it is. Just one command to run.  Of course, it's easy to remove.
 * *Extensibility*: Easy to add new go packages to support more workflows.
 
 == Why
 
-They are many projects out there, which can continuously update your files but they all have an opinionated way of doing it and they often want you to adopt a new platform. Building and distributing software is a difficult thing and good practices constantly evolve. Updatecli was built to work independently wherever you need, and combining whatever workflow you are using as you can see in the following section.
+There are already many projects out there which can continuously update your files, but they all have an opinionated way of doing it and they often want you to adopt a new platform. 
+Building and distributing software is a difficult task and good practices constantly evolve. 
+Updatecli was built to work independently of the underlying dependencies to update, wherever you need it and combining whatever workflow you are using, as you can see in the following section.
+
+== Installation
+
+Updatecli is a Go binary available for Linux, MacOS and Windows from the link:https://github.com/updatecli/updatecli/releases[release page] or installed via link:https://www.updatecli.io/docs/prologue/installation/[other methods].
 
 == Documentation
 
-Documentation for updatecli is available on link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io] but feel free to look at the next section to get an overview of how updatecli works.
+The documentation of Updatecli is available at link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io], but you can also look at the `examples` section to get an overview.
+
+== Contributing
+
+As a community-oriented project, all contributions are greatly appreciated!
+
+Here is a non-exhaustive list of possible contributions:
+
+* ⭐️ this repository.
+* Propose a new feature request.
+* Highlight an existing feature request with :thumbsup:.
+* Contribute to any repository in the link:https://github.com/updatecli/[updatecli] organization
+* Share the love
+
+More information available at link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
+
 
 === Example
 In this example, we define an update strategy in "updatecli.yaml" then we run `updatecli apply --config updatecli.yaml`.
@@ -41,47 +64,69 @@ Our objective is to know if the Jenkins project published a new stable version, 
 |===
 |```
 ## updatecli.yaml
-sources:
+title: Update Jenkins Version
+
+scms:
   default:
+    kind: github
+    spec:
+      user: olblak
+      email: me@olblak.com
+      owner: olblak
+      repository: charts
+      token: mySecretTokenWhichShouldNeverUsedThisWay
+      username: olblak
+      branch: main
+
+sources:
+  jenkins:
+    name: Get latest Jenkins version
     kind: jenkins
     spec:
       release: weekly
+
 conditions:
   docker:
-    name: "Docker Image Published on Registry"
+    name: "Test if Docker Image Published on Registry"
     kind: dockerImage
     spec:
-      image: "jenkins/jenkins"
+      image: jenkins/jenkins
+
 targets:
-  imageTag:
-    name: "jenkins/jenkins docker tag"
+  bumpJenkins:
+    name: jenkins/jenkins docker tag
+    scmID: default
     kind: yaml
     spec:
-      file: "charts/jenkins/values.yaml"
-      key: "jenkins.controller.imageTag"
-    scm:
-      github:
-        user: olblak
-        email: me@olblak.com
-        owner: "olblak"
-        repository: "charts"
-        token: mySecretTokenWhichShouldNeverUsedThisWay
-        username: olblak
-        branch: "main"
+      file: charts/jenkins/values.yaml
+      key: jenkins.controller.imageTag
+
+pullrequests:
+  default:
+    title: Open pullrequest with new Jenkins version
+    kind: github
+    scmID: default
+    target: 
+      - bumpJenkins
+    spec:
+      automerge: true
+      mergemethod: squash
+      labels:
+        - dependencies
 ```
 
 |What it says:
 
 . Sources: +
 What's the latest jenkins weekly version? +
-=> 2.264 +
+=> 2.335 +
 
 . Conditions: +
-Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.264" +
+Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.335" +
 => Yes then proceed otherwise abort +
 
 . Targets: +
-Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.264"? +
+Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.335"? +
 => If yes then open a Github pull request to the branch "main"
 
 |===
@@ -90,11 +135,6 @@ More information link:https://www.updatecli.io/docs/prologue/introduction/[here]
 
 
 ---
-
-== Contributing
-
-link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
-
 
 == Links
 
