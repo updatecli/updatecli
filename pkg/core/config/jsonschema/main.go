@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,13 +15,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// jsconSchemaRootDir contains the path to access json schema from updatecli repository
-const (
-	jsonSchemaRootDir = "../../../../schema"
-	configSchema      = "config.json"
-)
+// Config specify updatecli configuration for validating its manifest
+type Config struct {
+	// MainJsonSchema defines the principal Json schema file
+	// all relative schema will use the mainschema dirname
+	MainJsonSchema string
+	// UpdatecliConfiguration specifies an updatecli file, which could either
+	// a regular file or a directory
+	UpdatecliConfiguration string
+}
 
-// getFilesWithSuffix search for every json schema from a root  directory
+// getFilesWithSuffix searchs for every files with a matching suffix,
+// from a specified root directory. This function is both used to collection and json schema
+// and updatecli configuration file
 func getFilesWithSuffix(root, suffix string) ([]string, error) {
 
 	var files []string
@@ -45,32 +52,83 @@ func getFilesWithSuffix(root, suffix string) ([]string, error) {
 	return files, err
 }
 
-func Validate(manifest []byte) (bool, error) {
-	var m interface{}
-	err := yaml.Unmarshal(manifest, &m)
+// readFile return a file content.
+func readFile(file string) ([]byte, error) {
+	c, err := os.Open(file)
+
 	if err != nil {
-		return false, err
-	}
-	m, err = toStringKeys(m)
-	if err != nil {
-		return false, err
-	}
-	schema, err := loadJsonSchema()
-	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	if err := schema.Validate(m); err != nil {
-		fmt.Printf("%#v\n", err)
-		return false, err
+	defer c.Close()
+
+	content, err := ioutil.ReadAll(c)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
+// Validate tests that updatecli manifest respect updatecli JSON schema
+func (c *Config) Validate() (bool, error) {
+
+	updatecliManifests := []string{}
+	// Look for updatecli manifest matching suffix
+	for _, suffix := range []string{".yaml", ".yml", ".tpl"} {
+		m, err := getFilesWithSuffix(c.UpdatecliConfiguration, suffix)
+		if err != nil {
+			return false, err
+		}
+		updatecliManifests = append(updatecliManifests, m...)
+	}
+
+	for _, manifest := range updatecliManifests {
+		logrus.Infof("Validating file: %q", manifest)
+		m, err := readFile(manifest)
+		if err != nil {
+			return false, err
+		}
+		err = c.validateYAML(m)
+		if err != nil {
+			fmt.Printf("%#v\n", err)
+			return false, err
+		}
 	}
 
 	return true, nil
 }
 
-func loadJsonSchema() (*jschema.Schema, error) {
+func (c *Config) validateYAML(manifest []byte) error {
+	var m interface{}
+	err := yaml.Unmarshal(manifest, &m)
+	if err != nil {
+		return err
+	}
+	m, err = toStringKeys(m)
+	if err != nil {
+		return err
+	}
+	s, err := c.loadJsonSchema()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(s.String())
+
+	if err := s.Validate(m); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Config) loadJsonSchema() (*jschema.Schema, error) {
+
+	jsonSchemaRootDir := filepath.Dir(c.MainJsonSchema)
+	configSchema := filepath.Base(c.MainJsonSchema)
+
 	compiler := jschema.NewCompiler()
-	//compiler.Draft = jschema.Draft2020
 
 	jsonSchemaFiles, err := getFilesWithSuffix(jsonSchemaRootDir, ".json")
 	if err != nil {
@@ -97,6 +155,7 @@ func loadJsonSchema() (*jschema.Schema, error) {
 			logrus.Errorf("%q - %s", jsID, err)
 			continue
 		}
+
 	}
 
 	return compiler.Compile(filepath.Join(jsonSchemaRootDir, configSchema))

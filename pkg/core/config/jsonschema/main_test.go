@@ -11,21 +11,34 @@ type Dataset []Data
 // Data represent a single json schema test data
 type Data struct {
 	// name defines a test name
-	name                  string
-	updatecliManifestPath string
-	expectedErrMessage    error
-	expectedErr           bool
-	expectedResult        bool
+	name               string
+	config             Config
+	expectedErrMessage error
+	expectedErr        bool
+	expectedResult     bool
 }
 
 var (
 	TestDataset Dataset = Dataset{
 		{
-			name:                  "Test using e2e updateli manifest",
-			updatecliManifestPath: "../../../../e2e/updatecli.d",
-			expectedResult:        true,
-			expectedErrMessage:    nil,
-			expectedErr:           true,
+			name: "Test using e2e updateli manifest, jenkins.yaml",
+			config: Config{
+				MainJsonSchema:         "../../../../schema/config.json",
+				UpdatecliConfiguration: "../../../../e2e/updatecli.d/jenkins.yaml",
+			},
+			expectedResult:     true,
+			expectedErrMessage: nil,
+			expectedErr:        false,
+		},
+		{
+			name: "Test using e2e updateli manifest",
+			config: Config{
+				MainJsonSchema:         "../../../../schema/config.json",
+				UpdatecliConfiguration: "../../../../e2e/updatecli.d",
+			},
+			expectedResult:     true,
+			expectedErrMessage: nil,
+			expectedErr:        true,
 		},
 	}
 )
@@ -36,7 +49,7 @@ func TestValidate(t *testing.T) {
 
 	for _, d := range TestDataset {
 		t.Run(d.name, func(t *testing.T) {
-			gotResult, gotErr := Validate(d.updatecliManifestPath)
+			gotResult, gotErr := d.config.Validate()
 			if d.expectedErr {
 				require.Error(t, gotErr)
 			}
