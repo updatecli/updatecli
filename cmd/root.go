@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/config/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/engine"
@@ -55,6 +56,7 @@ func init() {
 		diffCmd,
 		prepareCmd,
 		showCmd,
+		validateCmd,
 		versionCmd,
 		docsCmd)
 }
@@ -115,6 +117,18 @@ func run(command string) error {
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 		}
+	case "validate":
+		config := jsonschema.Config{
+			UpdatecliConfiguration: validateConfig,
+			MainJsonSchema:         validateJsonSchema,
+		}
+
+		_, err := config.Validate()
+
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+		}
+		logrus.Infof("%s LGTM", result.SUCCESS)
 
 	case "show":
 		err := e.Show()
