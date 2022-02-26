@@ -114,8 +114,6 @@ func (c *Config) validateYAML(manifest []byte) error {
 		return err
 	}
 
-	fmt.Println(s.String())
-
 	if err := s.Validate(m); err != nil {
 		return err
 	}
