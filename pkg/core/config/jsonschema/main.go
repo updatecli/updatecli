@@ -25,7 +25,7 @@ type Config struct {
 	UpdatecliConfiguration string
 }
 
-// getFilesWithSuffix searchs for every files with a matching suffix,
+// getFilesWithSuffix searches for every files with a matching suffix,
 // from a specified root directory. This function is both used to collection and json schema
 // and updatecli configuration file
 func getFilesWithSuffix(root, suffix string) ([]string, error) {

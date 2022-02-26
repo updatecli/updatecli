@@ -11,11 +11,10 @@ type Dataset []Data
 // Data represent a single json schema test data
 type Data struct {
 	// name defines a test name
-	name               string
-	config             Config
-	expectedErrMessage error
-	expectedErr        bool
-	expectedResult     bool
+	name           string
+	config         Config
+	expectedErr    bool
+	expectedResult bool
 }
 
 var (
@@ -26,9 +25,8 @@ var (
 				MainJsonSchema:         "../../../../schema/config.json",
 				UpdatecliConfiguration: "../../../../e2e/updatecli.d/jenkins.yaml",
 			},
-			expectedResult:     true,
-			expectedErrMessage: nil,
-			expectedErr:        false,
+			expectedResult: true,
+			expectedErr:    false,
 		},
 		{
 			name: "Test using e2e updateli manifest",
@@ -36,9 +34,8 @@ var (
 				MainJsonSchema:         "../../../../schema/config.json",
 				UpdatecliConfiguration: "../../../../e2e/updatecli.d",
 			},
-			expectedResult:     true,
-			expectedErrMessage: nil,
-			expectedErr:        true,
+			expectedResult: true,
+			expectedErr:    true,
 		},
 	}
 )
