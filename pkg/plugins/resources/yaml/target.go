@@ -32,6 +32,11 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 	var files []string
 	var message string
 
+	// Test at runtime if a file exist
+	if !y.contentRetriever.FileExists(y.spec.File) {
+		return false, files, message, fmt.Errorf("the yaml file %q does not exist", y.spec.File)
+	}
+
 	if text.IsURL(y.spec.File) {
 		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
@@ -82,11 +87,12 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 	if !dryRun {
 
 		newFile, err := os.Create(y.spec.File)
-		defer newFile.Close()
 
 		if err != nil {
 			return false, files, message, nil
 		}
+
+		defer newFile.Close()
 
 		encoder := yaml.NewEncoder(newFile)
 		defer encoder.Close()

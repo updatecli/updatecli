@@ -71,17 +71,21 @@ func (y *Yaml) Validate() error {
 	}
 	if y.spec.File == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'file' is empty.")
-	} else {
-		if !y.contentRetriever.FileExists(y.spec.File) {
-			validationErrors = append(validationErrors, fmt.Sprintf("Invalid spec for yaml resource: the file %q does not exist.", y.spec.File))
-		}
+		// As explained on https://github.com/updatecli/updatecli/issues/410 , we can't always test if a file exists.
+		// There are situation where a first step is required such as cloning a git repository before validating that a file exists.
+		// Hence why I am commenting the following the code until https://github.com/updatecli/updatecli/issues/410 is fixed.
+		// And I am testing at runtime in source/condition/target that the file exist.
+		//	} else {
+		//		if !y.contentRetriever.FileExists(y.spec.File) {
+		//			validationErrors = append(validationErrors, fmt.Sprintf("Invalid spec for yaml resource: the file %q does not exist.", y.spec.File))
+		//		}
 	}
 	if y.spec.Key == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	return nil
