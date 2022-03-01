@@ -88,11 +88,13 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 
 		newFile, err := os.Create(y.spec.File)
 
+		// https://staticcheck.io/docs/checks/#SA5001
+		//lint:ignore SA5001 We want to defer the file closing before exiting the function
+		defer newFile.Close()
+
 		if err != nil {
 			return false, files, message, nil
 		}
-
-		defer newFile.Close()
 
 		encoder := yaml.NewEncoder(newFile)
 		defer encoder.Close()
