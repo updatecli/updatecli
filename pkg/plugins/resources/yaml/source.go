@@ -14,6 +14,11 @@ import (
 func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
 
+	// Test at runtime if a file exist
+	if !y.contentRetriever.FileExists(y.spec.File) {
+		return "", fmt.Errorf("the yaml file %q does not exist", y.spec.File)
+	}
+
 	if y.spec.Value != "" {
 		logrus.Warnf("Key 'Value' is not used by source YAML")
 	}
