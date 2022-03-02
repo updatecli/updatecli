@@ -418,15 +418,6 @@ func Test_Validate(t *testing.T) {
 			mockFileExist: true,
 			wantErr:       true,
 		},
-		{
-			name: "raises an error when 'File' does not exist",
-			spec: Spec{
-				File: "/tmp/toto.yaml",
-				Key:  "foo.bar",
-			},
-			mockFileExist: false,
-			wantErr:       true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
