@@ -25,6 +25,12 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 }
 
 func (y *Yaml) condition(source string) (bool, error) {
+
+	// Test at runtime if a file exist
+	if !y.contentRetriever.FileExists(y.spec.File) {
+		return false, fmt.Errorf("the yaml file %q does not exist", y.spec.File)
+	}
+
 	// Start by retrieving the specified file's content
 	if err := y.Read(); err != nil {
 		return false, err
