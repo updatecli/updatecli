@@ -185,6 +185,7 @@ github:
 			mockText := text.MockTextRetriever{
 				Content: tt.mockReturnedContent,
 				Err:     tt.mockReturnedError,
+				Exists:  true,
 			}
 			y := &Yaml{
 				spec:             tt.spec,
@@ -242,6 +243,7 @@ github:
 			mockText := text.MockTextRetriever{
 				Content: tt.mockReturnedContent,
 				Err:     tt.mockReturnedError,
+				Exists:  true,
 			}
 			y := &Yaml{
 				spec:             tt.spec,
