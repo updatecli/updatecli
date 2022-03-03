@@ -128,7 +128,7 @@ func TestTagsIntegration(t *testing.T) {
 		t.Errorf("Don't expect error: %q", err)
 	}
 
-	expectedTag := "untagged-902d9ce264ba6334c5d0"
+	expectedTag := "v0.0.1"
 	found := false
 
 	// Test that the first tag from array is also the oldest one
