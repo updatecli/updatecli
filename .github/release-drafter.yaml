@@ -15,6 +15,11 @@ categories:
     labels:
       - 'chore'
       - 'dependencies'
+  - title: '📝 Documentation'
+    labels:
+      - 'documentation'
+      - 'doc'
+      - 'docs'
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 
 template: |
@@ -44,6 +49,9 @@ version-resolver:
       - 'bug'
       - 'chore'
       - 'dependencies'
+      - 'documentation'
+      - 'doc'
+      - 'docs'
   default: patch
 exclude-labels:
   - 'skip-changelog'
