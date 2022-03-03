@@ -2,6 +2,7 @@ package transformer
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -100,31 +101,51 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 
 		case "findSubMatch":
 
-			val, ok := value.(string)
+			f := FindSubMatch{}
 
-			if !ok {
-				return "", fmt.Errorf("unknown value for findSubmatch: %v", val)
+			// Here I deal with 2 ways of providing the data within the yaml
+			// only one parameter in string which is the pattern
+			// considering 0 as the CaptureIndex default
+			// or receiving both parameter as a map.
+			if reflect.TypeOf(value).String() == "string" {
+				f.Pattern = value.(string)
+				f.CaptureIndex = 0
+			} else {
+				err := mapstructure.Decode(value, &f)
+				if err != nil {
+					fmt.Printf("Erreur de decodage %v\n", err)
+					return "", err
+				}
 			}
 
-			if len(val) == 0 {
+			// Here I check if I got a non empty Pattern for the RegExp
+			if len(f.Pattern) == 0 {
 				return "", fmt.Errorf("no regex provided")
 			}
 
-			re, err := regexp.Compile(val)
+			// Trying to compile the RegExp
+			re, err := regexp.Compile(f.Pattern)
 			if err != nil {
 				return "", err
 			}
 
+			// Using the FindStringSubmatch function
 			found := re.FindStringSubmatch(output)
 
+			// I check if nothing found
 			if len(found) == 0 {
-				logrus.Debugf("No result found after applying regex %q to %q", val, output)
+				logrus.Debugf("No result found after applying regex %q to %q", f.Pattern, output)
 				return "", nil
 			}
 
-			fmt.Println(found)
+			// I check if I got a capture with that index
+			if len(found) <= f.CaptureIndex {
+				logrus.Debugf("No capture found at position %v after applying regex %q to %q, full result with CaptureIndex 0 would be %v", f.CaptureIndex, f.Pattern, output, found)
+				return "", nil
+			}
 
-			output = found[0]
+			// here is the returned string
+			output = found[f.CaptureIndex]
 
 		case "semverInc":
 			val, ok := value.(string)
