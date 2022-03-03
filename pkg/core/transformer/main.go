@@ -2,7 +2,6 @@ package transformer
 
 import (
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -107,7 +106,7 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 			// only one parameter in string which is the pattern
 			// considering 0 as the CaptureIndex default
 			// or receiving both parameter as a map.
-			if reflect.TypeOf(value).String() == "string" {
+			if _, ok := value.(string); ok {
 				f.Pattern = value.(string)
 				f.CaptureIndex = 0
 			} else {
@@ -118,7 +117,6 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 				}
 			}
 
-			// Here I check if I got a non empty Pattern for the RegExp
 			if len(f.Pattern) == 0 {
 				return "", fmt.Errorf("no regex provided")
 			}
