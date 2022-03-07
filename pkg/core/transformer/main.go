@@ -128,7 +128,7 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 			// Using the FindStringSubmatch function
 			found := re.FindStringSubmatch(output)
 
-			// I check if nothing found
+			// Log if no match is found
 			if len(found) == 0 {
 				logrus.Debugf("No result found after applying regex %q to %q", f.Pattern, output)
 				return "", nil
