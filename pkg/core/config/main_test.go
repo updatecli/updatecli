@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
@@ -642,7 +642,7 @@ var (
 							},
 						},
 					},
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {
 							Title:   "default PR",
 							Kind:    "github/pullrequest",
@@ -695,7 +695,7 @@ var (
 							},
 						},
 					},
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {},
 					},
 				},
@@ -745,7 +745,7 @@ var (
 							},
 						},
 					},
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {
 							Title:   "default PR",
 							Kind:    "github/pullrequest",
@@ -800,7 +800,7 @@ var (
 							},
 						},
 					},
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {
 							Title:   "default PR",
 							Kind:    "github/pullrequest",

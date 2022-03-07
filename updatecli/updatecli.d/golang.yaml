@@ -119,7 +119,7 @@ targets:
       file: go.mod
     scmid: default
 
-pullrequests:
+actions:
   default:
     title: '[updatecli] Bump Golang version to {{ source "latestGoVersion" }}'
     kind: github

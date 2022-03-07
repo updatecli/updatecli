@@ -1,4 +1,4 @@
-package pullrequest
+package action
 
 import (
 	"errors"
@@ -14,20 +14,20 @@ import (
 )
 
 var (
-	// ErrWrongConfig is returned when a pullrequest has missing mandatory attributes.
+	// ErrWrongConfig is returned when an action has missing mandatory attributes.
 	ErrWrongConfig = errors.New("wrong pull request configuration")
 )
 
-// PullRequestHandler interface defines required functions to be an pullRequest
-type PullRequestHandler interface {
-	CreatePullRequest(title, changelog, pipelineReport string) error
+// ActionHandler interface defines required functions to be implemented by the action plugins
+type ActionHandler interface {
+	Create(title, changelog, pipelineReport string) error
 }
 
-// Config define pullRequest provided via an updatecli configuration
+// Config defines the attributes of an action provided via an updatecli configuration
 type Config struct {
-	// Title defines the pullRequest title
+	// Title defines the action title
 	Title string `yaml:",omitempty"`
-	// Kind defines the pullRequest `kind` which affects accepted "spec" values
+	// Kind defines the action `kind` which affects accepted "spec" values
 	Kind string `yaml:",omitempty"`
 	// Spec defines parameters for a specific "kind"
 	Spec interface{} `yaml:",omitempty"`
@@ -35,21 +35,21 @@ type Config struct {
 	ScmID string `yaml:",omitempty"`
 	// !Deprecated in favor for `scmid`
 	DeprecatedScmID string `yaml:"scmID,omitempty" jsonschema:"-"`
-	// Targets defines a list of target related to the pullRequest
+	// Targets defines a list of target related to the action
 	Targets []string `yaml:",omitempty"`
 }
 
-// PullRequest is a struct used by an updatecli pipeline.
-type PullRequest struct {
+// Action is a struct used by an updatecli pipeline.
+type Action struct {
 	Title          string
 	Changelog      string
 	PipelineReport string
 	Config         Config
 	Scm            *scm.Scm
-	Handler        PullRequestHandler
+	Handler        ActionHandler
 }
 
-// Validate ensures that a pullRequest configuration has required parameters.
+// Validate ensures that a action configuration has required parameters.
 func (c *Config) Validate() (err error) {
 
 	missingParameters := []string{}
@@ -95,29 +95,29 @@ func (c *Config) Validate() (err error) {
 
 }
 
-// New returns a new PullRequest based on a pullrequest config and an scm
-func New(config *Config, sourceControlManager *scm.Scm) (PullRequest, error) {
+// New returns a new action based on a "Config" and a "Scm"
+func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
 
-	p := PullRequest{
+	p := Action{
 		Title:  config.Title,
 		Config: *config,
 		Scm:    sourceControlManager,
 	}
 
-	err := p.generatePullRequestHandler()
+	err := p.generateHandler()
 	if err != nil {
-		return PullRequest{}, err
+		return Action{}, err
 	}
 
 	return p, nil
 
 }
 
-// Update updates a pullRequest object based on its configuration
-func (p *PullRequest) Update() error {
+// Update updates a action object based on its configuration
+func (p *Action) Update() error {
 	p.Title = p.Config.Title
 
-	err := p.generatePullRequestHandler()
+	err := p.generateHandler()
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (p *PullRequest) Update() error {
 	return nil
 }
 
-func (p *PullRequest) generatePullRequestHandler() error {
+func (p *Action) generateHandler() error {
 
 	switch p.Config.Kind {
 	case "github":

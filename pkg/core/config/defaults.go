@@ -57,23 +57,23 @@ func (config *Config) EnsureLocalScm() error {
 }
 
 func (config Config) needScm(requiredScmId string) bool {
-	for _, source := range config.Spec.Sources {
-		if source.SCMID == requiredScmId {
+	for _, sourceSpec := range config.Spec.Sources {
+		if sourceSpec.SCMID == requiredScmId {
 			return true
 		}
 	}
-	for _, condition := range config.Spec.Conditions {
-		if condition.SCMID == requiredScmId {
+	for _, conditionSpec := range config.Spec.Conditions {
+		if conditionSpec.SCMID == requiredScmId {
 			return true
 		}
 	}
-	for _, target := range config.Spec.Targets {
-		if target.SCMID == requiredScmId {
+	for _, targetSpec := range config.Spec.Targets {
+		if targetSpec.SCMID == requiredScmId {
 			return true
 		}
 	}
-	for _, pr := range config.Spec.PullRequests {
-		if pr.ScmID == requiredScmId {
+	for _, actionSpec := range config.Spec.Actions {
+		if actionSpec.ScmID == requiredScmId {
 			return true
 		}
 	}

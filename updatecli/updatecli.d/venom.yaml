@@ -36,7 +36,7 @@ targets:
       content: 'VENOM_VERSION: {{ source `latestVersion` }}'
     scmid: default
 
-pullrequests:
+actions:
   default:
     title: '[updatecli] Bump Venom version to {{ source "latestVersion" }}'
     kind: github

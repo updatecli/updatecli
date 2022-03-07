@@ -32,7 +32,7 @@ targets:
       content: '**updatecli**: {{ source `latestVersion` }}'
     scmid: default
 
-pullrequests:
+actions:
   default:
     title: '[updatecli] Bump updatecli version to {{ source "latestVersion" }}'
     kind: github

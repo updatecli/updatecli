@@ -12,8 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
@@ -49,8 +49,8 @@ type Spec struct {
 	PipelineID string `yaml:",omitempty"`
 	// Title is used for the full pipeline
 	Title string `yaml:",omitempty"`
-	// PullRequests defines the list of Pull Request configuration which need to be managed
-	PullRequests map[string]pullrequest.Config `yaml:",omitempty"`
+	// Actions defines the list of action configurations
+	Actions map[string]action.Config `yaml:",omitempty"`
 	// SCMs defines the list of repository configuration used to fetch content from.
 	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
 	// Sources defines the list of source configuration
@@ -263,23 +263,23 @@ func (config *Config) Display() error {
 	return nil
 }
 
-func (config *Config) validatePullRequests() error {
-	for id, p := range config.Spec.PullRequests {
-		if err := p.Validate(); err != nil {
-			logrus.Errorf("bad parameters for pullrequest %q", id)
+func (config *Config) validateActions() error {
+	for id, actionSpec := range config.Spec.Actions {
+		if err := actionSpec.Validate(); err != nil {
+			logrus.Errorf("bad parameters for actions %q", id)
 			return err
 		}
 
 		// Then validate that the pullrequest specifies an existing SCM
-		if len(p.ScmID) > 0 {
-			if _, ok := config.Spec.SCMs[p.ScmID]; !ok {
-				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, p.ScmID)
+		if len(actionSpec.ScmID) > 0 {
+			if _, ok := config.Spec.SCMs[actionSpec.ScmID]; !ok {
+				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, actionSpec.ScmID)
 				return ErrBadConfig
 			}
 		}
 
 		// Validate references to other configuration objects
-		for _, target := range p.Targets {
+		for _, target := range actionSpec.Targets {
 			if _, ok := config.Spec.Targets[target]; !ok {
 				logrus.Errorf("the specified target %q for the pull request %q does not exist", target, id)
 				return ErrBadConfig
@@ -287,14 +287,14 @@ func (config *Config) validatePullRequests() error {
 		}
 		// p.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.Spec.PullRequests[id] = p
+		config.Spec.Actions[id] = actionSpec
 	}
 	return nil
 }
 
 func (config *Config) validateSources() error {
-	for id, s := range config.Spec.Sources {
-		err := s.Validate()
+	for id, sourceSpec := range config.Spec.Sources {
+		err := sourceSpec.Validate()
 		if err != nil {
 			logrus.Errorf("bad parameters for source %q", id)
 			return ErrBadConfig
@@ -310,8 +310,8 @@ func (config *Config) validateSources() error {
 }
 
 func (config *Config) validateSCMs() error {
-	for id, scmConfig := range config.Spec.SCMs {
-		if err := scmConfig.Validate(); err != nil {
+	for id, scmSpec := range config.Spec.SCMs {
+		if err := scmSpec.Validate(); err != nil {
 			logrus.Errorf("bad parameter(s) for scm %q", id)
 			return err
 		}
@@ -321,31 +321,31 @@ func (config *Config) validateSCMs() error {
 
 func (config *Config) validateTargets() error {
 
-	for id, t := range config.Spec.Targets {
+	for id, targetSpec := range config.Spec.Targets {
 
-		err := t.Validate()
+		err := targetSpec.Validate()
 		if err != nil {
 			logrus.Errorf("bad parameters for target %q", id)
 			return ErrBadConfig
 		}
 
-		if len(t.SourceID) > 0 {
-			if _, ok := config.Spec.Sources[t.SourceID]; !ok {
-				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", t.SourceID)
+		if len(targetSpec.SourceID) > 0 {
+			if _, ok := config.Spec.Sources[targetSpec.SourceID]; !ok {
+				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", targetSpec.SourceID)
 				return ErrBadConfig
 			}
 		}
 
 		// Only check/guess the sourceID if the user did not disable it (default is enabled)
-		if !t.DisableSourceInput {
+		if !targetSpec.DisableSourceInput {
 			// Try to guess SourceID
-			if len(t.SourceID) == 0 && len(config.Spec.Sources) > 1 {
+			if len(targetSpec.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 
 				logrus.Errorf("empty 'sourceID' for target %q", id)
 				return ErrBadConfig
-			} else if len(t.SourceID) == 0 && len(config.Spec.Sources) == 1 {
+			} else if len(targetSpec.SourceID) == 0 && len(config.Spec.Sources) == 1 {
 				for id := range config.Spec.Sources {
-					t.SourceID = id
+					targetSpec.SourceID = id
 				}
 			}
 		}
@@ -357,34 +357,34 @@ func (config *Config) validateTargets() error {
 
 		// t.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.Spec.Targets[id] = t
+		config.Spec.Targets[id] = targetSpec
 	}
 	return nil
 }
 
 func (config *Config) validateConditions() error {
-	for id, c := range config.Spec.Conditions {
-		err := c.Validate()
+	for id, conditionSpec := range config.Spec.Conditions {
+		err := conditionSpec.Validate()
 		if err != nil {
 			logrus.Errorf("bad parameters for condition %q", id)
 			return ErrBadConfig
 		}
 
-		if len(c.SourceID) > 0 {
-			if _, ok := config.Spec.Sources[c.SourceID]; !ok {
-				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
+		if len(conditionSpec.SourceID) > 0 {
+			if _, ok := config.Spec.Sources[conditionSpec.SourceID]; !ok {
+				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", conditionSpec.SourceID)
 				return ErrBadConfig
 			}
 		}
 		// Only check/guess the sourceID if the user did not disable it (default is enabled)
-		if !c.DisableSourceInput {
+		if !conditionSpec.DisableSourceInput {
 			// Try to guess SourceID
-			if len(c.SourceID) == 0 && len(config.Spec.Sources) > 1 {
+			if len(conditionSpec.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
 				return ErrBadConfig
-			} else if len(c.SourceID) == 0 && len(config.Spec.Sources) == 1 {
+			} else if len(conditionSpec.SourceID) == 0 && len(config.Spec.Sources) == 1 {
 				for id := range config.Spec.Sources {
-					c.SourceID = id
+					conditionSpec.SourceID = id
 				}
 			}
 		}
@@ -394,7 +394,7 @@ func (config *Config) validateConditions() error {
 			return ErrNotAllowedTemplatedKey
 		}
 
-		config.Spec.Conditions[id] = c
+		config.Spec.Conditions[id] = conditionSpec
 	}
 	return nil
 }
@@ -417,7 +417,7 @@ func (config *Config) Validate() error {
 			fmt.Errorf("conditions validation error:\n%s", err))
 	}
 
-	err = config.validatePullRequests()
+	err = config.validateActions()
 	if err != nil {
 		errs = append(
 			errs,

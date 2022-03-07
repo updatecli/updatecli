@@ -10,12 +10,12 @@ scms:
       token: "{{ requiredEnv .github.token }}"
       username: "olblak"
       branch: "master"
-pullrequests:
+actions:
   chart:
     kind: "github"
     scmid: "olblak-chart"
     targets:
-      - "chartjenkins1"
+      - chartjenkins1
     spec:
       labels:
         - "bug"

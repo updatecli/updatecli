@@ -135,7 +135,7 @@ func NewPullRequest(spec PullRequestSpec, gh *Github) (PullRequest, error) {
 	}, err
 }
 
-func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string) error {
+func (p *PullRequest) Create(title, changelog, pipelineReport string) error {
 
 	p.Description = changelog
 	p.Report = pipelineReport
