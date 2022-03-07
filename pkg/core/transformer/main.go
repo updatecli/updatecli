@@ -138,7 +138,7 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 				return "", nil
 			}
 
-			// here is the returned string
+			// Output the submatch corresponding to the captureIndex
 			output = found[f.CaptureIndex]
 
 		case "semverInc":
