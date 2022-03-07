@@ -187,6 +187,58 @@ var (
 			expectedErr:    nil,
 		},
 		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					"findSubMatch": FindSubMatch{
+						Pattern:      `\d*.(\d*)`,
+						CaptureIndex: 1,
+					},
+				},
+			},
+			expectedOutput: "17",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					"findSubMatch": FindSubMatch{
+						Pattern:      `\d*.\d*`,
+						CaptureIndex: 1,
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					"findSubMatch": FindSubMatch{
+						Pattern:      `\d*.(\d*).(\d*)`,
+						CaptureIndex: 2,
+					},
+				},
+			},
+			expectedOutput: "0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					"findSubMatch": FindSubMatch{
+						Pattern:      `\d*.(\d*).(\d*)`,
+						CaptureIndex: 3,
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    nil,
+		},
+		Data{
 			input: "", // explicit empty value
 			rules: Transformers{
 				Transformer{
