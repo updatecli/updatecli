@@ -110,7 +110,6 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 			} else {
 				err := mapstructure.Decode(value, &f)
 				if err != nil {
-					fmt.Printf("Erreur de decodage %v\n", err)
 					return "", err
 				}
 			}
@@ -125,7 +124,6 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 				return "", err
 			}
 
-			// Using the FindStringSubmatch function
 			found := re.FindStringSubmatch(output)
 
 			// Log if no match is found
@@ -134,7 +132,7 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 				return "", nil
 			}
 
-			// I check if I got a capture with that index
+			// Log if there can't be a submatch corresponding to the captureIndex
 			if len(found) <= f.CaptureIndex {
 				logrus.Debugf("No capture found at position %v after applying regex %q to %q, full result with CaptureIndex 0 would be %v", f.CaptureIndex, f.Pattern, output, found)
 				return "", nil
