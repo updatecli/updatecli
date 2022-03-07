@@ -100,31 +100,46 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 
 		case "findSubMatch":
 
-			val, ok := value.(string)
+			f := FindSubMatch{}
 
-			if !ok {
-				return "", fmt.Errorf("unknown value for findSubmatch: %v", val)
+			// If the manifest value is only a string (the pattern), then 0 is the implied captureIndex value
+			// Otherwise, both pattern and captureIndex are retrieved from the map value of the manifest
+			if _, ok := value.(string); ok {
+				f.Pattern = value.(string)
+				f.CaptureIndex = 0
+			} else {
+				err := mapstructure.Decode(value, &f)
+				if err != nil {
+					return "", err
+				}
 			}
 
-			if len(val) == 0 {
+			if len(f.Pattern) == 0 {
 				return "", fmt.Errorf("no regex provided")
 			}
 
-			re, err := regexp.Compile(val)
+			// Check if the regular expression can be compiled
+			re, err := regexp.Compile(f.Pattern)
 			if err != nil {
 				return "", err
 			}
 
 			found := re.FindStringSubmatch(output)
 
+			// Log if no match is found
 			if len(found) == 0 {
-				logrus.Debugf("No result found after applying regex %q to %q", val, output)
+				logrus.Debugf("No result found after applying regex %q to %q", f.Pattern, output)
 				return "", nil
 			}
 
-			fmt.Println(found)
+			// Log if there can't be a submatch corresponding to the captureIndex
+			if len(found) <= f.CaptureIndex {
+				logrus.Debugf("No capture found at position %v after applying regex %q to %q, full result with CaptureIndex 0 would be %v", f.CaptureIndex, f.Pattern, output, found)
+				return "", nil
+			}
 
-			output = found[0]
+			// Output the submatch corresponding to the captureIndex
+			output = found[f.CaptureIndex]
 
 		case "semverInc":
 			val, ok := value.(string)
