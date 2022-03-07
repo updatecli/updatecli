@@ -102,10 +102,8 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 
 			f := FindSubMatch{}
 
-			// Here I deal with 2 ways of providing the data within the yaml
-			// only one parameter in string which is the pattern
-			// considering 0 as the CaptureIndex default
-			// or receiving both parameter as a map.
+			// If the manifest value is only a string (the pattern), then 0 is the implied captureIndex value
+			// Otherwise, both pattern and captureIndex are retrieved from the map value of the manifest
 			if _, ok := value.(string); ok {
 				f.Pattern = value.(string)
 				f.CaptureIndex = 0
