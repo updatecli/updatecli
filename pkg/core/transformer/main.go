@@ -119,7 +119,7 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 				return "", fmt.Errorf("no regex provided")
 			}
 
-			// Trying to compile the RegExp
+			// Check if the regular expression can be compiled
 			re, err := regexp.Compile(f.Pattern)
 			if err != nil {
 				return "", err
