@@ -38,8 +38,6 @@ type Spec struct {
 	Username string `yaml:",omitempty" jsonschema:"required"`
 	// User specifies the user of the git commit messages
 	User string `yaml:",omitempty"`
-	// Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
-	PullRequest PullRequestSpec `yaml:",omitempty"`
 	// GPG key and passphrased used for commit signing
 	GPG sign.GPGSpec `yaml:",omitempty"`
 	// Force is used during the git push phase to run `git push --force`.
@@ -55,7 +53,7 @@ type Github struct {
 	// HeadBranch is used when creating a temporary branch before opening a PR
 	HeadBranch       string
 	client           GitHubClient
-	nativeGitHandler gitgeneric.GitHandler
+	NativeGitHandler gitgeneric.GitHandler
 }
 
 // New returns a new valid Github object.
@@ -88,7 +86,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	g := Github{
 		Spec:             s,
 		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
-		nativeGitHandler: nativeGitHandler,
+		NativeGitHandler: nativeGitHandler,
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {
@@ -105,10 +103,6 @@ func New(s Spec, pipelineID string) (*Github, error) {
 // Validate verifies if mandatory Github parameters are provided and return false if not.
 func (s *Spec) Validate() (errs []error) {
 	required := []string{}
-
-	if err := s.PullRequest.Validate(); err != nil {
-		errs = append(errs, err)
-	}
 
 	if len(s.Token) == 0 {
 		required = append(required, "token")
@@ -250,11 +244,4 @@ func (g *Github) queryRepositoryID() (string, error) {
 
 	return query.Repository.ID, nil
 
-}
-
-// SpecToPullRequestSpec is a function that export the pullRequest spec from
-// a GithubSpec to a PullRequest.Spec. It's temporary function until we totally remove
-// the old scm configuration introduced by this https://github.com/updatecli/updatecli/pull/388
-func (s *Spec) SpecToPullRequestSpec() interface{} {
-	return s.PullRequest
 }

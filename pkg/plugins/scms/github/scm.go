@@ -28,14 +28,14 @@ func (g *Github) Clone() (string, error) {
 
 	g.setDirectory()
 
-	err := g.nativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
+	err := g.NativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
 
 	if err != nil {
 		return "", err
 	}
 
 	if len(g.HeadBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = g.nativeGitHandler.Checkout(g.Spec.Username, g.Spec.Token, g.Spec.Branch, g.HeadBranch, g.GetDirectory())
+		err = g.NativeGitHandler.Checkout(g.Spec.Username, g.Spec.Token, g.Spec.Branch, g.HeadBranch, g.GetDirectory())
 	}
 
 	if err != nil {
@@ -54,7 +54,7 @@ func (g *Github) Commit(message string) error {
 		return err
 	}
 
-	err = g.nativeGitHandler.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory(), g.Spec.GPG.SigningKey, g.Spec.GPG.Passphrase)
+	err = g.NativeGitHandler.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory(), g.Spec.GPG.SigningKey, g.Spec.GPG.Passphrase)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (g *Github) Commit(message string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() error {
-	err := g.nativeGitHandler.Checkout(g.Spec.Username, g.Spec.Token, g.Spec.Branch, g.HeadBranch, g.Spec.Directory)
+	err := g.NativeGitHandler.Checkout(g.Spec.Username, g.Spec.Token, g.Spec.Branch, g.HeadBranch, g.Spec.Directory)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (g *Github) Checkout() error {
 // Add run `git add`.
 func (g *Github) Add(files []string) error {
 
-	err := g.nativeGitHandler.Add(files, g.Spec.Directory)
+	err := g.NativeGitHandler.Add(files, g.Spec.Directory)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (g *Github) Add(files []string) error {
 // Push run `git push` then open a pull request on Github if not already created.
 func (g *Github) Push() error {
 
-	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
+	err := g.NativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (g *Github) Push() error {
 // PushTag push tags
 func (g *Github) PushTag(tag string) error {
 
-	err := g.nativeGitHandler.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
+	err := g.NativeGitHandler.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
 	if err != nil {
 		return err
 	}
@@ -103,5 +103,5 @@ func (g *Github) PushTag(tag string) error {
 }
 
 func (g *Github) GetChangedFiles(workingDir string) ([]string, error) {
-	return g.nativeGitHandler.GetChangedFiles(workingDir)
+	return g.NativeGitHandler.GetChangedFiles(workingDir)
 }

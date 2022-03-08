@@ -57,16 +57,16 @@ type labelNode struct {
 	Description string
 }
 
-// repositoryLabelApi holds specific label informations returned from Github API
-type repositoryLabelApi struct {
+// RepositoryLabelApi holds specific label informations returned from Github API
+type RepositoryLabelApi struct {
 	ID          string
 	Name        string
 	Description string
 }
 
-// getRepositoryLabels queries GitHub Api to retrieve every labels configured for a repository
-func (g *Github) getRepositoryLabels() ([]repositoryLabelApi, error) {
-	var repositoryLabels []repositoryLabelApi
+// GetRepositoryLabels queries GitHub Api to retrieve every labels configured for a repository
+func (g *Github) GetRepositoryLabels() ([]RepositoryLabelApi, error) {
+	var repositoryLabels []RepositoryLabelApi
 
 	variables := map[string]interface{}{
 		"owner":      githubv4.String(g.Spec.Owner),
@@ -90,7 +90,7 @@ func (g *Github) getRepositoryLabels() ([]repositoryLabelApi, error) {
 		for _, node := range query.Repository.Labels.Edges {
 			repositoryLabels = append(
 				repositoryLabels,
-				repositoryLabelApi{
+				RepositoryLabelApi{
 					ID:          node.Node.ID,
 					Name:        node.Node.Name,
 					Description: node.Node.Description,
@@ -107,7 +107,7 @@ func (g *Github) getRepositoryLabels() ([]repositoryLabelApi, error) {
 	return repositoryLabels, nil
 }
 
-func mergeLabels(a, b []repositoryLabelApi) []repositoryLabelApi {
+func MergeLabels(a, b []RepositoryLabelApi) []RepositoryLabelApi {
 
 	result := b
 

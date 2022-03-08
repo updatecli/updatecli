@@ -11,6 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/plugins/actions/githubpullrequest"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -131,8 +132,8 @@ func (p *Action) Update() error {
 func (p *Action) generateHandler() error {
 
 	switch p.Config.Kind {
-	case "github":
-		pullRequestSpec := github.PullRequestSpec{}
+	case "github/pullrequest":
+		pullRequestSpec := githubpullrequest.Spec{}
 
 		if p.Scm.Config.Kind != "github" {
 			return fmt.Errorf("scm of kind %q is not compatible with pullrequest of kind %q",
@@ -151,7 +152,7 @@ func (p *Action) generateHandler() error {
 			return fmt.Errorf("scm is not of kind 'github'")
 		}
 
-		g, err := github.NewPullRequest(pullRequestSpec, gh)
+		g, err := githubpullrequest.NewPullRequest(pullRequestSpec, gh)
 
 		if err != nil {
 			return err
