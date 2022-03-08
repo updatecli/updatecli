@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -21,6 +22,8 @@ var (
 // ActionHandler interface defines required functions to be implemented by the action plugins
 type ActionHandler interface {
 	Create(title, changelog, pipelineReport string) error
+	Run() error
+	RunTarget(target target.Target) error
 }
 
 // Config defines the attributes of an action provided via an updatecli configuration
