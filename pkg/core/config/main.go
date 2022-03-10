@@ -131,8 +131,6 @@ func (config *Config) Display() error {
 // Validate run various validation test on the configuration and update fields if necessary
 func (config *Config) Validate() error {
 
-	logrus.Infof("Validating %q", config.Name)
-
 	if config.Source.Kind != "" && (len(config.Sources) > 0) {
 		logrus.Errorf("Source and Sources can't be defined at the same time, please use the 'Sources' syntax")
 		return ErrBadConfig
