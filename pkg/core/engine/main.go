@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -72,7 +73,7 @@ func (e *Engine) InitSCM() (err error) {
 			}
 		}
 	}
-	logrus.Infof("Repository retrieved: %d\n", len(hashes))
+	logrus.Infof("\nSCM repository retrieved: %d", len(hashes))
 
 	return err
 }
@@ -126,14 +127,20 @@ func (e *Engine) Prepare() (err error) {
 	}
 
 	err = e.LoadConfigurations()
-	if err != nil {
-		return err
+
+	if len(e.Pipelines) == 0 {
+		logrus.Errorln(err)
+		return fmt.Errorf("no valid pipeline found")
 	}
 
-	err = e.InitSCM()
+	// Don't exit if we identify at least one valid pipeline configuration
 	if err != nil {
-		return err
+		logrus.Errorln(err)
+		logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
 	}
+
+	// If one git clone fails then we exit
+	err = e.InitSCM()
 
 	return err
 }
@@ -141,14 +148,17 @@ func (e *Engine) Prepare() (err error) {
 // ReadConfigurations read every strategies configuration.
 func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
+	errs := []error{}
+
 	for _, cfgFile := range GetFiles(e.Options.File) {
 
 		loadedConfiguration, err := config.New(cfgFile, e.Options.ValuesFiles, e.Options.SecretsFiles)
 
-		if err != nil && err != config.ErrConfigFileTypeNotSupported {
-			logrus.Errorf("%s\n\n", err)
+		if err == config.ErrConfigFileTypeNotSupported {
 			continue
-		} else if err == config.ErrConfigFileTypeNotSupported {
+		} else if err != nil && err != config.ErrConfigFileTypeNotSupported {
+			err = fmt.Errorf("%q - %s", cfgFile, err)
+			errs = append(errs, err)
 			continue
 		}
 
@@ -156,13 +166,26 @@ func (e *Engine) LoadConfigurations() error {
 		err = newPipeline.Init(
 			&loadedConfiguration,
 			e.Options.Pipeline)
-		if err != nil {
-			// Failing immediately as init. of the pipeline still fails even with a successful validation
-			return err
+
+		if err == nil {
+			e.Pipelines = append(e.Pipelines, newPipeline)
+			e.configurations = append(e.configurations, loadedConfiguration)
+		} else {
+			// don't initially fail as init. of the pipeline still fails even with a successful validation
+			err := fmt.Errorf("%q - %s", cfgFile, err)
+			errs = append(errs, err)
 		}
 
-		e.Pipelines = append(e.Pipelines, newPipeline)
-		e.configurations = append(e.configurations, loadedConfiguration)
+	}
+
+	if len(errs) > 0 {
+
+		e := errors.New("failed loading pipeline(s)")
+
+		for _, err := range errs {
+			e = fmt.Errorf("%s\n\t* %s", e.Error(), err)
+		}
+		return e
 	}
 
 	return nil
