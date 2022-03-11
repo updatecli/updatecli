@@ -19,7 +19,7 @@ func (g *Git) Add(files []string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Git) Checkout() error {
-	err := git.Checkout(g.Branch, g.remoteBranch, g.GetDirectory())
+	err := git.Checkout(g.Username, g.Password, g.Branch, g.remoteBranch, g.GetDirectory())
 	if err != nil {
 		return err
 	}

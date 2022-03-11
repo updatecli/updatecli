@@ -113,7 +113,7 @@ func Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func Checkout(branch, remoteBranch, workingDir string) error {
+func Checkout(username, password, branch, remoteBranch, workingDir string) error {
 
 	logrus.Debugf("stage: git-checkout\n\n")
 
@@ -135,7 +135,13 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 
 	b := bytes.Buffer{}
 
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything except an empty string
+		Password: password,
+	}
+
 	err = w.Pull(&git.PullOptions{
+		Auth:     &auth,
 		Force:    true,
 		Progress: &b,
 	})
@@ -200,7 +206,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		if err != nil {
 			return err
 		}
-		refs, err := remote.List(&git.ListOptions{})
+		refs, err := remote.List(&git.ListOptions{Auth: &auth})
 
 		if err != nil {
 			return err
