@@ -13,6 +13,7 @@ import (
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -30,6 +31,7 @@ type Spec struct {
 	Username      string          // Username specifies the username used to authenticate with Github API
 	User          string          // User specific the user in git commit messages
 	PullRequest   PullRequestSpec // Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
+	GPG           sign.GPGSpec    // GPG key and passphrased used for commit signing
 }
 
 // Github contains settings to interact with Github
