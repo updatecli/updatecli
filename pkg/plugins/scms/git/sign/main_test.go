@@ -12,7 +12,6 @@ type DataSet []Data
 type Data struct {
 	SigningKey    string
 	Passphrase    string
-	Enabled       bool
 	ExpectedError error
 }
 

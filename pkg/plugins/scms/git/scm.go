@@ -81,16 +81,13 @@ func (g *Git) Commit(message string) error {
 		return err
 	}
 
-	gpgSigningKey := g.GPG.SigningKey
-	gpgPassphrase := g.GPG.Passphrase
-
 	err = git.Commit(
 		g.User,
 		g.Email,
 		commitMessage,
 		g.GetDirectory(),
-		gpgSigningKey,
-		gpgPassphrase)
+		g.GPG.SigningKey,
+		g.GPG.Passphrase)
 
 	if err != nil {
 		return err

@@ -65,10 +65,7 @@ func (g *Github) Commit(message string) error {
 		return err
 	}
 
-	gpgSigningKey := g.Spec.GPG.SigningKey
-	gpgPassphrase := g.Spec.GPG.Passphrase
-
-	err = git.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory(), gpgSigningKey, gpgPassphrase)
+	err = git.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory(), g.Spec.GPG.SigningKey, g.Spec.GPG.Passphrase)
 	if err != nil {
 		return err
 	}
