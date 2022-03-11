@@ -102,8 +102,9 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 
 			f := FindSubMatch{}
 
-			// If the manifest value is only a string (the pattern), then 0 is the implied captureIndex value
+			// If the manifest contains only the `pattern` string, then `0` is the implied value of `captureIndex`
 			// Otherwise, both pattern and captureIndex are retrieved from the map value of the manifest
+			// Note also that a value of `0` for `captureIndex` returns all submatches, and individual submatch indexes start at `1`.
 			if _, ok := value.(string); ok {
 				f.Pattern = value.(string)
 				f.CaptureIndex = 0
