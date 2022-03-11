@@ -85,7 +85,9 @@ func (g *Git) Commit(message string) error {
 		g.User,
 		g.Email,
 		commitMessage,
-		g.GetDirectory())
+		g.GetDirectory(),
+		g.GPG.SigningKey,
+		g.GPG.Passphrase)
 
 	if err != nil {
 		return err

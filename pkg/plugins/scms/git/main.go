@@ -9,6 +9,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 )
 
 // Git contains settings to manipulate a git repository.
@@ -24,6 +25,7 @@ type Git struct {
 	Version       string
 	Force         bool          // Force is used during the git push phase to run `git push --force`.
 	CommitMessage commit.Commit // CommitMessage contains conventional commit metadata as type or scope, used to generate the final commit message.
+	GPG           sign.GPGSpec  // GPG key and passphrased used for commit signing
 }
 
 func newDirectory(URL string) (string, error) {
