@@ -106,10 +106,6 @@ func (s *Spec) Validate() (errs []error) {
 		s.VersionFilter.Pattern = s.Version
 	}
 
-	if len(s.GPG.SigningKey) == 0 && s.GPG.Enabled {
-		required = append(required, "gpg.signingKey")
-	}
-
 	if err := s.VersionFilter.Validate(); err != nil {
 		errs = append(errs, err)
 	}

@@ -9,7 +9,6 @@ import (
 type GPGSpec struct {
 	SigningKey string
 	Passphrase string
-	Enabled    bool
 }
 
 func GetCommitSignKey(armoredKeyRing string, keyPassphrase string) (*openpgp.Entity, error) {

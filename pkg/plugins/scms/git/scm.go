@@ -83,9 +83,6 @@ func (g *Git) Commit(message string) error {
 
 	gpgSigningKey := g.GPG.SigningKey
 	gpgPassphrase := g.GPG.Passphrase
-	if !g.GPG.Enabled {
-		gpgSigningKey = ""
-	}
 
 	err = git.Commit(
 		g.User,

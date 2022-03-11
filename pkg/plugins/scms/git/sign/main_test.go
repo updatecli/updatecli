@@ -105,7 +105,7 @@ woa!
 func TestParseMessage(t *testing.T) {
 
 	for id, data := range dataset {
-		gpg := GPGSpec{SigningKey: data.SigningKey, Passphrase: data.Passphrase, Enabled: true}
+		gpg := GPGSpec{SigningKey: data.SigningKey, Passphrase: data.Passphrase}
 
 		_, err := GetCommitSignKey(gpg.SigningKey, gpg.Passphrase)
 
