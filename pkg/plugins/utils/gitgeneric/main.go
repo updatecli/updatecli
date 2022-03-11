@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -264,7 +265,7 @@ func exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bool {
 }
 
 // Commit run `git commit`.
-func Commit(user, email, message, workingDir string) error {
+func Commit(user, email, message, workingDir string, signingKey string, passprase string) error {
 
 	logrus.Debugf("stage: git-commit\n\n")
 
@@ -282,15 +283,26 @@ func Commit(user, email, message, workingDir string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("status: %q\n", status)
 
-	commit, err := w.Commit(message, &git.CommitOptions{
+	commitOptions := git.CommitOptions{
 		Author: &object.Signature{
 			Name:  user,
 			Email: email,
 			When:  time.Now(),
 		},
-	})
+	}
+
+	logrus.Debugf("status: %q\n", status)
+
+	if len(signingKey) > 0 {
+		key, err := sign.GetCommitSignKey(signingKey, passprase)
+		if err != nil {
+			return err
+		}
+		commitOptions.SignKey = key
+	}
+
+	commit, err := w.Commit(message, &commitOptions)
 	if err != nil {
 		return err
 	}
