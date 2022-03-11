@@ -178,7 +178,6 @@ func (e *Engine) LoadConfigurations() error {
 			err := fmt.Errorf("%q - %s", cfgFile, err)
 			errs = append(errs, err)
 		}
-
 	}
 
 	if len(errs) > 0 {
