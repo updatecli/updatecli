@@ -7,7 +7,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/aws/aws-sdk-go v1.43.7
+	github.com/aws/aws-sdk-go v1.43.16
 	github.com/containerd/containerd v1.5.9 // indirect
 	github.com/fatih/color v1.13.0
 	github.com/go-git/go-git/v5 v5.4.2
@@ -31,6 +31,8 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
+require github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
+
 require (
 	cloud.google.com/go v0.99.0 // indirect
 	filippo.io/age v1.0.0-beta7 // indirect
@@ -44,7 +46,6 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
