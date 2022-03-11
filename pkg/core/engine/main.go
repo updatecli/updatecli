@@ -154,12 +154,14 @@ func (e *Engine) LoadConfigurations() error {
 
 		loadedConfiguration, err := config.New(cfgFile, e.Options.ValuesFiles, e.Options.SecretsFiles)
 
-		switch {
-		case err == config.ErrConfigFileTypeNotSupported:
+		switch err {
+		case config.ErrConfigFileTypeNotSupported:
 			// Updatecli accepts either a single configuration file or a directory containing multiple configurations.
 			// When browsing files from a directory, we don't want to record error due to unsupported files.
 			continue
-		case err != nil && err != config.ErrConfigFileTypeNotSupported:
+		case nil:
+			// nothing to do
+		default:
 			err = fmt.Errorf("%q - %s", cfgFile, err)
 			errs = append(errs, err)
 			continue
