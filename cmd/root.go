@@ -74,7 +74,7 @@ func run(command string) error {
 		err := e.Prepare()
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
-			logrus.Errorln("Continuing and trying to go as far as possible")
+			return err
 		}
 
 		err = e.Run()
@@ -94,7 +94,7 @@ func run(command string) error {
 		err := e.Prepare()
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
-			logrus.Errorln("Continuing and trying to go as far as possible")
+			return err
 		}
 
 		err = e.Run()
