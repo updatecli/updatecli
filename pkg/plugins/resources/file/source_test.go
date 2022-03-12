@@ -15,10 +15,23 @@ func TestFile_Source(t *testing.T) {
 		spec                Spec
 		wantSource          string
 		wantErr             bool
+		workingDir          string
 		mockReturnedContent string
 		mockReturnedError   error
 		wantMockState       text.MockTextRetriever
 	}{
+		{
+			name: "Relative file",
+			spec: Spec{
+				File: "example.yaml",
+			},
+			wantErr:    false,
+			workingDir: "/tmp/updatecli/",
+			wantSource: "",
+			wantMockState: text.MockTextRetriever{
+				Location: "/tmp/updatecli/example.yaml",
+			},
+		},
 		{
 			name: "Normal Case",
 			spec: Spec{
@@ -130,7 +143,7 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
-			source, gotErr := f.Source(f.spec.File)
+			source, gotErr := f.Source(tt.workingDir)
 			if tt.wantErr {
 				assert.Error(t, gotErr)
 				return
