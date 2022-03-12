@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -25,6 +26,12 @@ func (f *File) Source(workingDir string) (string, error) {
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
 		return "", fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+	}
+
+	// Relative path is used when an SCM is associated with the file resource: means the file is on a remote SCM (hence relative path)
+	if !filepath.IsAbs(f.spec.File) {
+		f.spec.File = filepath.Join(workingDir, f.spec.File)
+		logrus.Debugf("Relative path detected: changing to absolute path from working directory: %q", f.spec.File)
 	}
 
 	if err := f.Read(); err != nil {
