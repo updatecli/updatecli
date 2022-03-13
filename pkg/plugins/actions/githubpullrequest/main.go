@@ -5,8 +5,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 )
 
-func (p *PullRequest) Create(title, changelog, pipelineReport string) error {
-
+func (p *PullRequest) Run(title, changelog, pipelineReport string) error {
 	p.Description = changelog
 	p.Report = pipelineReport
 	p.Title = title
@@ -68,10 +67,6 @@ func (p *PullRequest) Create(title, changelog, pipelineReport string) error {
 		}
 	}
 
-	return nil
-}
-
-func (p *PullRequest) Run() error {
 	return nil
 }
 

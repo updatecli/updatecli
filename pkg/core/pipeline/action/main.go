@@ -22,8 +22,7 @@ var (
 
 // ActionHandler interface defines required functions to be implemented by the action plugins
 type ActionHandler interface {
-	Create(title, changelog, pipelineReport string) error
-	Run() error
+	Run(title, changelog, pipelineReport string) error
 	RunTarget(target target.Target) error
 }
 
