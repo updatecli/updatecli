@@ -9,6 +9,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/options"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/plugins/actions/githubpullrequest"
@@ -23,7 +24,7 @@ var (
 // ActionHandler interface defines required functions to be implemented by the action plugins
 type ActionHandler interface {
 	Run(title, changelog, pipelineReport string) error
-	RunTarget(target target.Target) error
+	RunTarget(target target.Target, o options.Pipeline) error
 }
 
 // Config defines the attributes of an action provided via an updatecli configuration
@@ -54,7 +55,6 @@ type Action struct {
 
 // Validate ensures that a action configuration has required parameters.
 func (c *Config) Validate() (err error) {
-
 	missingParameters := []string{}
 
 	if len(c.Kind) == 0 {
@@ -100,7 +100,6 @@ func (c *Config) Validate() (err error) {
 
 // New returns a new action based on a "Config" and a "Scm"
 func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
-
 	p := Action{
 		Title:  config.Title,
 		Config: *config,
@@ -129,7 +128,6 @@ func (p *Action) Update() error {
 }
 
 func (p *Action) generateHandler() error {
-
 	switch p.Config.Kind {
 	case "github/pullrequest":
 		pullRequestSpec := githubpullrequest.Spec{}

@@ -11,6 +11,7 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/options"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -156,7 +157,7 @@ func (e *Engine) LoadConfigurations() error {
 	for _, manifestFile := range GetFiles(e.Options.Config.ManifestFile) {
 
 		loadedConfiguration, err := config.New(
-			config.Option{
+			options.Config{
 				ManifestFile:      manifestFile,
 				SecretsFiles:      e.Options.Config.SecretsFiles,
 				ValuesFiles:       e.Options.Config.ValuesFiles,

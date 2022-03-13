@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
+	"github.com/updatecli/updatecli/pkg/core/options"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -63,18 +64,6 @@ type Spec struct {
 	Version string `yaml:",omitempty"`
 }
 
-// Option contains configuration options such as filepath located on disk,etc.
-type Option struct {
-	// ManifestFile contains the updatecli manifest full file path
-	ManifestFile string
-	// ValuesFiles contains the list of updatecli values full file path
-	ValuesFiles []string
-	// SecretsFiles contains the list of updatecli sops secrets full file path
-	SecretsFiles []string
-	// DisableTemplating specify if needs to be done
-	DisableTemplating bool
-}
-
 // Reset reset configuration
 func (config *Config) Reset() {
 	*config = Config{
@@ -83,7 +72,7 @@ func (config *Config) Reset() {
 }
 
 // New reads an updatecli configuration file
-func New(option Option) (config Config, err error) {
+func New(option options.Config) (config Config, err error) {
 
 	config.Reset()
 

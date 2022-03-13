@@ -67,7 +67,7 @@ func (p *Pipeline) RunTargets() error {
 			continue
 		}
 
-		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
+		err = target.Run(p.Sources[target.Config.SourceID].Output)
 
 		if err != nil {
 			p.Report.Result = result.FAILURE

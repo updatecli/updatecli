@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/options"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -29,13 +30,13 @@ type Pipeline struct {
 
 	Report reports.Report
 
-	Options Options
+	Options options.Pipeline
 
 	Config *config.Config
 }
 
 // Init initialize an updatecli context based on its configuration
-func (p *Pipeline) Init(config *config.Config, options Options) error {
+func (p *Pipeline) Init(config *config.Config, options options.Pipeline) error {
 
 	if len(config.Spec.Title) > 0 {
 		p.Title = config.Spec.Title

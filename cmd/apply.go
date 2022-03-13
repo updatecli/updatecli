@@ -21,10 +21,10 @@ var (
 			e.Options.Config.ValuesFiles = valuesFiles
 			e.Options.Config.SecretsFiles = secretsFiles
 
-			e.Options.Pipeline.Target.Commit = applyCommit
-			e.Options.Pipeline.Target.Push = applyPush
-			e.Options.Pipeline.Target.Clean = applyClean
-			e.Options.Pipeline.Target.DryRun = false
+			e.Options.Pipeline.Commit = applyCommit
+			e.Options.Pipeline.Push = applyPush
+			e.Options.Pipeline.Clean = applyClean
+			e.Options.Pipeline.DryRun = false
 
 			err := run("apply")
 			if err != nil {

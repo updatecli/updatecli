@@ -23,9 +23,6 @@ type Target struct {
 	// Result store the condition result after a target run.
 	Result string
 	Config Config
-	Commit bool
-	Push   bool
-	Clean  bool
 	DryRun bool
 	Scm    *scm.ScmHandler
 }
@@ -64,7 +61,7 @@ func (t *Target) Check() (bool, error) {
 }
 
 // Run applies a specific target configuration
-func (t *Target) Run(source string, o *Options) (err error) {
+func (t *Target) Run(source string) (err error) {
 
 	var changed bool
 
@@ -76,7 +73,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 	}
 
-	if o.DryRun {
+	if t.DryRun {
 		logrus.Infof("\n**Dry Run enabled**\n\n")
 	}
 
@@ -86,81 +83,48 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	// If no scm configuration provided then stop early
-	if t.Scm == nil {
-
-		changed, err = target.Target(source, o.DryRun)
-		if err != nil {
-			t.Result = result.FAILURE
-			return err
-		}
-
-		if changed {
-			t.Result = result.ATTENTION
-		} else {
-			t.Result = result.SUCCESS
-		}
-		return nil
-
-	}
-
-	var message string
-	var files []string
-
-	_, err = t.Check()
+	changed, err = target.Target(source, t.DryRun)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err
 	}
 
-	s := *t.Scm
-
-	if err = s.Checkout(); err != nil {
-		t.Result = result.FAILURE
-		return err
-	}
-
-	changed, files, message, err = target.TargetFromSCM(source, s, o.DryRun)
-	if err != nil {
-		t.Result = result.FAILURE
-		return err
-	}
-
-	if !changed {
+	if changed {
+		t.Result = result.ATTENTION
+	} else {
 		t.Result = result.SUCCESS
-		return nil
 	}
 
-	t.Result = result.ATTENTION
-	if !o.DryRun {
-		if message == "" {
-			t.Result = result.FAILURE
-			return fmt.Errorf("target has no change message")
-		}
+	// t.Result = result.ATTENTION
+	// if !o.DryRun {
+	// 	if message == "" {
+	// 		t.Result = result.FAILURE
+	// 		return fmt.Errorf("target has no change message")
+	// 	}
 
-		if len(files) == 0 {
-			t.Result = result.FAILURE
-			return fmt.Errorf("no changed file to commit")
-		}
+	// 	if len(files) == 0 {
+	// 		t.Result = result.FAILURE
+	// 		return fmt.Errorf("no changed file to commit")
+	// 	}
 
-		if o.Commit {
-			if err := s.Add(files); err != nil {
-				t.Result = result.FAILURE
-				return err
-			}
+	// 	if o.Commit {
+	// 		if err := s.Add(files); err != nil {
+	// 			t.Result = result.FAILURE
+	// 			return err
+	// 		}
 
-			if err = s.Commit(message); err != nil {
-				t.Result = result.FAILURE
-				return err
-			}
-		}
-		if o.Push {
-			if err := s.Push(); err != nil {
-				t.Result = result.FAILURE
-				return err
-			}
-		}
-	}
+	// 		if err = s.Commit(message); err != nil {
+	// 			t.Result = result.FAILURE
+	// 			return err
+	// 		}
+	// 	}
+	// 	if o.Push {
+	// 		if err := s.Push(); err != nil {
+	// 			t.Result = result.FAILURE
+	// 			return err
+	// 		}
+	// 	}
+	// }
 
 	return nil
 }

@@ -2,9 +2,11 @@ package githubpullrequest
 
 import (
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/options"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 )
 
+// Run creates (or updates) the pull request on GitHub
 func (p *PullRequest) Run(title, changelog, pipelineReport string) error {
 	p.Description = changelog
 	p.Report = pipelineReport
@@ -70,6 +72,53 @@ func (p *PullRequest) Run(title, changelog, pipelineReport string) error {
 	return nil
 }
 
-func (p *PullRequest) RunTarget(target target.Target) error {
+// RunTarget commits the change associated to the provided target
+func (p *PullRequest) RunTarget(t target.Target, o options.Pipeline) error {
+	// var message string
+	// var files []string
+
+	// changed, files, message, err = target.TargetFromSCM(t.Config.Prefix+source+t.Config.Postfix, s, o.DryRun)
+	// if err != nil {
+	// 	t.Result = result.FAILURE
+	// 	return err
+	// }
+
+	// if !changed {
+	// 	t.Result = result.SUCCESS
+	// 	return nil
+	// }
+
+	// t.Result = result.ATTENTION
+	// if !o.DryRun {
+	// 	if message == "" {
+	// 		t.Result = result.FAILURE
+	// 		return fmt.Errorf("target has no change message")
+	// 	}
+
+	// 	if len(files) == 0 {
+	// 		t.Result = result.FAILURE
+	// 		logrus.Info("no changed file to commit")
+	// 		return nil
+	// 	}
+
+	// 	if o.Commit {
+	// 		if err := s.Add(files); err != nil {
+	// 			t.Result = result.FAILURE
+	// 			return err
+	// 		}
+
+	// 		if err = s.Commit(message); err != nil {
+	// 			t.Result = result.FAILURE
+	// 			return err
+	// 		}
+	// 	}
+	// 	if o.Push {
+	// 		if err := s.Push(); err != nil {
+	// 			t.Result = result.FAILURE
+	// 			return err
+	// 		}
+	// 	}
+	// }
+
 	return nil
 }

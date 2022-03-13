@@ -19,7 +19,7 @@ var (
 			e.Options.Config.ValuesFiles = valuesFiles
 			e.Options.Config.SecretsFiles = secretsFiles
 
-			e.Options.Pipeline.Target.Clean = prepareClean
+			e.Options.Pipeline.Clean = prepareClean
 
 			err := run("prepare")
 			if err != nil {

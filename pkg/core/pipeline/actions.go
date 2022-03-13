@@ -25,6 +25,7 @@ func (p *Pipeline) RunActions() error {
 		action = p.Actions[id]
 		action.Config = p.Config.Spec.Actions[id]
 
+		// Update configuration (case of templating used within YAML manifest)
 		err := action.Update()
 		if err != nil {
 			return err
@@ -47,6 +48,14 @@ func (p *Pipeline) RunActions() error {
 				firstTargetID,
 				p.Sources[firstTargetSourceID].Result,
 			)
+		}
+
+		// Execute specific procedure on each target associated with this action
+		for _, targetID := range action.Config.Targets {
+			err = action.Handler.RunTarget(p.Targets[targetID], p.Options)
+			if err != nil {
+				return err
+			}
 		}
 
 		sourcesReport, err := p.Report.String("sources")
@@ -101,7 +110,7 @@ func (p *Pipeline) RunActions() error {
 		}
 		action.Changelog = changelog
 
-		if p.Options.Target.DryRun {
+		if p.Options.DryRun {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] A pull request with kind %q and title %q is expected.", action.Config.Kind, action.Title)
 

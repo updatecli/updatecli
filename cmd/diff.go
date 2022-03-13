@@ -19,10 +19,10 @@ var (
 			e.Options.Config.ValuesFiles = valuesFiles
 			e.Options.Config.SecretsFiles = secretsFiles
 
-			e.Options.Pipeline.Target.Commit = false
-			e.Options.Pipeline.Target.Push = false
-			e.Options.Pipeline.Target.Clean = diffClean
-			e.Options.Pipeline.Target.DryRun = true
+			e.Options.Pipeline.Commit = false
+			e.Options.Pipeline.Push = false
+			e.Options.Pipeline.Clean = diffClean
+			e.Options.Pipeline.DryRun = true
 
 			err := run("diff")
 			if err != nil {
