@@ -1,46 +1,31 @@
-{ 
+{
     "$id": "/resource/source/maven",
     "type": "object",
     "description": "Get latest Maven artifact version from maven repository",
     "unevaluatedProperties": false,
     "required": [
-      "kind",
-      "spec"
+        "artifactID",
+        "groupID",
+        "repository",
+        "url"
     ],
-    "allOf": [{ "$ref": "/resource/source_base" }],
     "properties": {
-        "kind": {
-            "description": "Define source maven",
-            "enum": ["maven"] 
+        "url": {
+            "description": "Define Maven repository url",
+            "type": "string"
         },
-        "spec" : {
-            "description": "Define Jenkins source parameters",
-            "type": "object",
-            "required": [
-                "artifactID",
-                "groupID",
-                "repository",
-                "url"
-            ],
-            "properties": {
-                "url": {
-                    "description": "Define Maven repository url",
-                    "type": "string"
-                },
-                "artifactID": {
-                    "description": "Define Maven artifact ID",
-                    "type": "string"
-                },
-                "groupID": {
-                    "description": "Define Maven groupID",
-                    "type": "string"
-                },
-                "repository": {
-                    "description": "Define Maven repository name",
-                    "type": "string"
-                }
-            } 
+        "artifactID": {
+            "description": "Define Maven artifact ID",
+            "type": "string"
+        },
+        "groupID": {
+            "description": "Define Maven groupID",
+            "type": "string"
+        },
+        "repository": {
+            "description": "Define Maven repository name",
+            "type": "string"
         }
-    }
+    } 
 }
 

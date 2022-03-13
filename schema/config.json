@@ -10,9 +10,53 @@
             "patternProperties": {
               "^[A-Za-z_][A-Za-z0-9_]*$": {
                 "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name" :{
+                    "type": "string"
+                  },
+                  "disablesourceinput": {
+                      "description": "Define source name",
+                      "type": "boolean"
+                  },
+                  "sourceID": {
+                      "description": "Define which source should be used for the default value",
+                      "type": "string"
+                  },
+                  "kind": {
+                      "type": "string"
+                  },
+                  "spec": {
+                      "type": "object"
+                  }
+                },
                 "oneOf": [
-                    { "$ref" : "/resource/condition/jenkins" },
-                    { "$ref" : "/resource/condition/maven" }
+                    {
+                      "type": "object",
+                      "required": ["kind"],
+                      "additionalProperties": true,
+                      "properties": {
+                        "kind": {
+                          "enum": ["jenkins"]
+                        },
+                        "spec": { 
+                          "$ref": "/resource/condition/jenkins"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": ["kind"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "enum": ["maven"]
+                        },
+                        "spec": { 
+                          "$ref": "/resource/condition/maven"
+                        }
+                      }
+                    }
                 ]
               }
             }
@@ -22,9 +66,42 @@
             "patternProperties": {
               "^[A-Za-z_][A-Za-z0-9_]*$": {
                 "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "description": "Define source name",
+                    "type": "string"
+                  }
+                },
                 "oneOf": [
-                    { "$ref" : "/resource/source/jenkins" },
-                    { "$ref" : "/resource/source/maven" }
+                    {
+                      "type": "object",
+                      "required": ["kind"],
+                      "additionalProperties": true,
+                      "properties": {
+                        "kind": {
+                          "enum": ["jenkins"]
+                        },
+                        "spec": { 
+                          "$ref": "/resource/source/jenkins"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": ["kind"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "enum": ["maven"]
+                        },
+                        "spec": { 
+                          "$ref": "/resource/source/maven"
+                        }
+                      }
+                    }
                 ]
               }
             }

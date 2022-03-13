@@ -1,50 +1,35 @@
-{ 
+{
     "$id": "/resource/condition/maven",
     "type": "object",
     "description": "Test if a specific Maven artifact version exists on a Maven repository",
     "unevaluatedProperties": false,
     "required": [
-      "kind",
-      "spec"
+        "artifactID",
+        "groupID",
+        "repository",
+        "url"
     ],
-    "allOf": [{ "$ref": "/resource/condition_base" }],
     "properties": {
-        "kind": {
-            "description": "Define resource Maven",
-            "enum": ["maven"] 
+        "artifactID": {
+            "description": "Define Maven artifact ID",
+            "type": "string"
         },
-        "spec" : {
-            "description": "Define Maven condition parameters",
-            "type": "object",
-            "required": [
-                "artifactID",
-                "groupID",
-                "repository",
-                "url"
-            ],
-            "properties": {
-                "artifactID": {
-                    "description": "Define Maven artifact ID",
-                    "type": "string"
-                },
-                "groupID": {
-                    "description": "Define Maven groupID",
-                    "type": "string"
-                },
-                "repository": {
-                    "description": "Define Maven repository name",
-                    "type": "string"
-                },
-                "url": {
-                    "description": "Define Maven repository url",
-                    "type": "string"
-                },
-                "version": {
-                    "description": "Define Maven artifact version",
-                    "type": "string"
-                }
-            } 
+        "groupID": {
+            "description": "Define Maven groupID",
+            "type": "string"
+        },
+        "repository": {
+            "description": "Define Maven repository name",
+            "type": "string"
+        },
+        "url": {
+            "description": "Define Maven repository url",
+            "type": "string"
+        },
+        "version": {
+            "description": "Define Maven artifact version",
+            "type": "string"
         }
-    }
+    } 
 }
 

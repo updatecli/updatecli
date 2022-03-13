@@ -1,34 +1,19 @@
-{ 
+{
     "$id": "/resource/condition/jenkins",
     "type": "object",
     "description": "Test if a specific Jenkins version exist",
     "unevaluatedProperties": false,
-    "required": [
-      "kind",
-      "spec"
-    ],
-    "allOf": [{ "$ref": "/resource/condition_base" }],
     "properties": {
-        "kind": {
-            "description": "Define condition kind",
-            "enum": ["jenkins"] 
+        "release": {
+            "description": "Define Jenkins release type",
+            "enum": [
+                "stable",
+                "weekly"
+            ]
         },
-        "spec" : {
-            "description": "Define Jenkins source parameters",
-            "type": "object",
-            "properties": {
-                "release": {
-                    "description": "Define Jenkins release type",
-                    "enum": [
-                        "stable",
-                        "weekly"
-                    ]
-                },
-                "version": {
-                    "type": "string",
-                    "description": "Specify Jenkins version which should exist"
-                }
-            } 
+        "version": {
+            "type": "string",
+            "description": "Specify Jenkins version which should exist"
         }
     }
 }
