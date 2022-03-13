@@ -1,9 +1,12 @@
 package githubpullrequest
 
 import (
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/options"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Run creates (or updates) the pull request on GitHub
@@ -74,51 +77,45 @@ func (p *PullRequest) Run(title, changelog, pipelineReport string) error {
 
 // RunTarget commits the change associated to the provided target
 func (p *PullRequest) RunTarget(t target.Target, o options.Pipeline) error {
-	// var message string
-	// var files []string
+	var message string
+	var files []string
 
-	// changed, files, message, err = target.TargetFromSCM(t.Config.Prefix+source+t.Config.Postfix, s, o.DryRun)
-	// if err != nil {
-	// 	t.Result = result.FAILURE
-	// 	return err
-	// }
+	// TODO: define files and messages at target level
 
-	// if !changed {
-	// 	t.Result = result.SUCCESS
-	// 	return nil
-	// }
+	// Scm is already initialized in the target run: no need to run s.Init() neither s.Checkout()
+	s := *t.Scm
 
-	// t.Result = result.ATTENTION
-	// if !o.DryRun {
-	// 	if message == "" {
-	// 		t.Result = result.FAILURE
-	// 		return fmt.Errorf("target has no change message")
-	// 	}
+	t.Result = result.ATTENTION
+	if !o.DryRun {
+		if message == "" {
+			t.Result = result.FAILURE
+			return fmt.Errorf("target has no change message")
+		}
 
-	// 	if len(files) == 0 {
-	// 		t.Result = result.FAILURE
-	// 		logrus.Info("no changed file to commit")
-	// 		return nil
-	// 	}
+		if len(files) == 0 {
+			t.Result = result.FAILURE
+			logrus.Info("no changed file to commit")
+			return nil
+		}
 
-	// 	if o.Commit {
-	// 		if err := s.Add(files); err != nil {
-	// 			t.Result = result.FAILURE
-	// 			return err
-	// 		}
+		if o.Commit {
+			if err := s.Add(files); err != nil {
+				t.Result = result.FAILURE
+				return err
+			}
 
-	// 		if err = s.Commit(message); err != nil {
-	// 			t.Result = result.FAILURE
-	// 			return err
-	// 		}
-	// 	}
-	// 	if o.Push {
-	// 		if err := s.Push(); err != nil {
-	// 			t.Result = result.FAILURE
-	// 			return err
-	// 		}
-	// 	}
-	// }
+			if err := s.Commit(message); err != nil {
+				t.Result = result.FAILURE
+				return err
+			}
+		}
+		if o.Push {
+			if err := s.Push(); err != nil {
+				t.Result = result.FAILURE
+				return err
+			}
+		}
+	}
 
 	return nil
 }
