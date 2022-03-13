@@ -6,26 +6,17 @@ import (
 	"sort"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Target updates a targeted Dockerfile
-func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
-	changed, _, _, err := d.target(source, dryRun)
-	return changed, err
-}
-
-// TargetFromSCM updates a targeted Dockerfile from source controle management system
-func (d *Dockerfile) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+func (d *Dockerfile) Target(source, workingDir string, dryRun bool) (changed bool, files []string, message string, err error) {
+	filePath := d.spec.File
 	if !filepath.IsAbs(d.spec.File) {
-		d.spec.File = filepath.Join(scm.GetDirectory(), d.spec.File)
-		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", d.spec.File)
+		filePath = filepath.Join(workingDir, d.spec.File)
+		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", filePath)
 	}
-	return d.target(source, dryRun)
-}
 
-func (d *Dockerfile) target(source string, dryRun bool) (changed bool, files []string, message string, err error) {
-	dockerfileContent, err := d.contentRetriever.ReadAll(d.spec.File)
+	dockerfileContent, err := d.contentRetriever.ReadAll(filePath)
 	if err != nil {
 		return false, files, message, err
 	}
@@ -52,7 +43,7 @@ func (d *Dockerfile) target(source string, dryRun bool) (changed bool, files []s
 
 	if !dryRun {
 		// Write the new Dockerfile content from buffer to file
-		err := d.contentRetriever.WriteToFile(string(newDockerfileContent), d.spec.File)
+		err := d.contentRetriever.WriteToFile(string(newDockerfileContent), filePath)
 		if err != nil {
 			return false, files, message, err
 		}

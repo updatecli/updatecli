@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -22,6 +21,9 @@ func TestFile_TargetMultiples(t *testing.T) {
 		wantedResult     bool
 		wantedErr        bool
 		dryRun           bool
+		workingDir       string
+		wantMockState    text.MockTextRetriever
+		wantFiles        []string
 	}{
 		{
 			name:             "(File) Replace content with matchPattern and ReplacePattern",
@@ -55,6 +57,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				compose_version = "1.29.2"`,
 			},
 			wantedResult: true,
+			wantFiles:    []string{"foo.txt"},
 		},
 		{
 			name:             "Replace content with matchPattern and ReplacePattern",
@@ -102,6 +105,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				some_stuff = "11.9.1"`,
 			},
 			wantedResult: true,
+			wantFiles:    []string{"bar.txt", "foo.txt"},
 		},
 		{
 			name: "(File) Passing case with both input source and specified content but no line (specified content should be used)",
@@ -120,6 +124,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "Be happy",
 			},
 			wantedResult: true,
+			wantFiles:    []string{"foo.txt"},
 		},
 		{
 			name: "Passing case with both input source and specified content but no line (specified content should be used)",
@@ -144,11 +149,12 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"bar.txt": "Be happy",
 			},
 			wantedResult: true,
+			wantFiles:    []string{"bar.txt", "foo.txt"},
 		},
 		{
 			name: "(File) Passing case with an updated line from provided content",
 			spec: Spec{
-				File:    "foo.txt",
+				File:    "bar/foo.txt",
 				Content: "Hello World",
 				Line:    2,
 			},
@@ -163,6 +169,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "Title\r\nHello World\r\nThe end",
 			},
 			wantedResult: true,
+			wantFiles:    []string{"foo.txt"},
 		},
 		{
 			name: "Passing case with an updated line from provided content",
@@ -188,6 +195,76 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"bar.txt": "Be happy\nHello World",
 			},
 			wantedResult: true,
+			wantFiles:    []string{"bar.txt", "foo.txt"},
+		},
+		{
+			name: "Passing case with 'ForceCreate' specified",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+					"bar.txt",
+				},
+				ForceCreate: true,
+			},
+			workingDir: "/tmp",
+			files: map[string]string{
+				"/tmp/foo.txt": "",
+				"/tmp/bar.txt": "",
+			},
+			inputSourceValue: "current_version=1.2.3",
+			// Note there isn't any "bar.txt" defined here
+			mockedContents: map[string]string{
+				"/tmp/foo.txt": "Title\r\nGood Bye\r\ncurrent_version=1.2.3",
+			},
+			// returned files are sorted
+			wantFiles: []string{
+				"/tmp/bar.txt",
+				"/tmp/foo.txt",
+			},
+			wantedContents: map[string]string{
+				"/tmp/foo.txt": "current_version=1.2.3",
+				"/tmp/bar.txt": "current_version=1.2.3",
+			},
+			wantedResult: true,
+		},
+		{
+			name: "No line matched with matchPattern and ReplacePattern defined",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+					"bar.txt",
+				},
+				MatchPattern:   "notmatching=*",
+				ReplacePattern: "maven_version= 3.9.0",
+			},
+			files: map[string]string{
+				"/tmp/bar.txt": "",
+				"/tmp/foo.txt": "",
+			},
+			workingDir:       "/tmp",
+			inputSourceValue: "3.9.0",
+			// Note there is a match in "bar.txt" here
+			mockedContents: map[string]string{
+				"/tmp/foo.txt": `maven_version = "3.8.2"
+						git_version = "2.33.1"
+						jdk11_version = "11.0.12+7"
+						jdk17_version = "17+35"
+						jdk8_version = "8u302-b08"
+						maven_major_release = "3"
+						git_lfs_version = "3.0.1"
+						compose_version = "1.29.2"`,
+
+				"/tmp/bar.txt": `maven_version = "3.8.2"
+						notmatching= "2.33.1"
+						jdk11_version = "11.0.12+7"
+						jdk17_version = "17+35"
+						jdk8_version = "8u302-b08"
+						maven_major_release = "3"
+						git_lfs_version = "3.0.1"
+						compose_version = "1.29.2"`,
+			},
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "(File) Validation failure with an https:// URL instead of a file",
@@ -371,7 +448,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, gotErr := f.Target(tt.inputSourceValue, tt.dryRun)
+			// TODO: check for change message
+			gotResult, gotFiles, _, gotErr := f.Target(tt.inputSourceValue, tt.workingDir, tt.dryRun)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -380,158 +458,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			assert.Equal(t, tt.wantedResult, gotResult)
+			assert.Equal(t, tt.wantFiles, gotFiles)
 			for filePath := range tt.files {
-				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
-			}
-		})
-	}
-}
-
-func TestFile_TargetFromSCM(t *testing.T) {
-	tests := []struct {
-		name             string
-		spec             Spec
-		files            map[string]string
-		scm              scm.ScmHandler
-		inputSourceValue string
-		mockedContents   map[string]string
-		mockedError      error
-		wantedFiles      []string
-		wantedContents   map[string]string
-		wantedResult     bool
-		wantedErr        bool
-		dryRun           bool
-	}{
-		{
-			name: "Passing case with 'Line' specified",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-					"bar.txt",
-				},
-				Line: 3,
-			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-				"/tmp/bar.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "current_version=1.2.3",
-			mockedContents: map[string]string{
-				"/tmp/foo.txt": "Title\r\nGood Bye\r\nThe End",
-				"/tmp/bar.txt": "Be happy\nDon't worry\nBe happy\nDon't worry",
-			},
-			// returned files are sorted
-			wantedFiles: []string{
-				"/tmp/bar.txt",
-				"/tmp/foo.txt",
-			},
-			wantedContents: map[string]string{
-				"/tmp/foo.txt": "Title\r\nGood Bye\r\ncurrent_version=1.2.3",
-				"/tmp/bar.txt": "Be happy\nDon't worry\ncurrent_version=1.2.3\nDon't worry",
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Passing case with 'ForceCreate' specified",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-					"bar.txt",
-				},
-				ForceCreate: true,
-			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-				"/tmp/bar.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "current_version=1.2.3",
-			// Note there isn't any "bar.txt" defined here
-			mockedContents: map[string]string{
-				"/tmp/foo.txt": "Title\r\nGood Bye\r\ncurrent_version=1.2.3",
-			},
-			// returned files are sorted
-			wantedFiles: []string{
-				"/tmp/bar.txt",
-				"/tmp/foo.txt",
-			},
-			wantedContents: map[string]string{
-				"/tmp/foo.txt": "current_version=1.2.3",
-				"/tmp/bar.txt": "current_version=1.2.3",
-			},
-			wantedResult: true,
-		},
-		{
-			name: "No line matched with matchPattern and ReplacePattern defined",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-					"bar.txt",
-				},
-				MatchPattern:   "notmatching=*",
-				ReplacePattern: "maven_version= 3.9.0",
-			},
-			files: map[string]string{
-				"/tmp/bar.txt": "",
-				"/tmp/foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "3.9.0",
-			// Note there is a match in "bar.txt" here
-			mockedContents: map[string]string{
-				"/tmp/foo.txt": `maven_version = "3.8.2"
-				git_version = "2.33.1"
-				jdk11_version = "11.0.12+7"
-				jdk17_version = "17+35"
-				jdk8_version = "8u302-b08"
-				maven_major_release = "3"
-				git_lfs_version = "3.0.1"
-				compose_version = "1.29.2"`,
-
-				"/tmp/bar.txt": `maven_version = "3.8.2"
-				notmatching= "2.33.1"
-				jdk11_version = "11.0.12+7"
-				jdk17_version = "17+35"
-				jdk8_version = "8u302-b08"
-				maven_major_release = "3"
-				git_lfs_version = "3.0.1"
-				compose_version = "1.29.2"`,
-			},
-			wantedResult: false,
-			wantedErr:    true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockedText := text.MockTextRetriever{
-				Contents: tt.mockedContents,
-				Err:      tt.mockedError,
-			}
-			f := &File{
-				spec:             tt.spec,
-				contentRetriever: &mockedText,
-				files:            tt.files,
-			}
-
-			gotResult, gotFiles, _, gotErr := f.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
-
-			if tt.wantedErr {
-				assert.Error(t, gotErr)
-				return
-			}
-			require.NoError(t, gotErr)
-
-			assert.Equal(t, tt.wantedResult, gotResult)
-			assert.Equal(t, tt.wantedFiles, gotFiles)
-
-			for filePath := range f.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
 			}
 		})

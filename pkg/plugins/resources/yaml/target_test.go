@@ -12,15 +12,18 @@ import (
 func Test_Target(t *testing.T) {
 	tests := []struct {
 		spec                  Spec
-		wantMockState         text.MockTextRetriever
 		name                  string
 		inputSourceValue      string
+		dryRun                bool
+		workingDir            string
 		mockReturnedContent   string
 		mockReturnedError     error
 		mockReturnsFileExists bool
 		wantResult            bool
+		wantFiles             []string
+		wantMessage           string
 		wantErr               bool
-		dryRun                bool
+		wantMockState         text.MockTextRetriever
 	}{
 		{
 			name: "Passing case with both input source and specified value (specified value should be used)",
@@ -31,12 +34,15 @@ func Test_Target(t *testing.T) {
 			},
 			mockReturnsFileExists: true,
 			inputSourceValue:      "olblak",
+			workingDir:            "/tmp",
 			mockReturnedContent: `---
 github:
   owner: olblak
   repository: charts
 `,
-			wantResult: true,
+			wantResult:  true,
+			wantFiles:   []string{"test.yaml"},
+			wantMessage: "Update the YAML key \"github.owner\" from file \"test.yaml\"",
 		},
 		{
 			name: "Validation failure with an https:// URL instead of a file",
@@ -109,7 +115,7 @@ github-
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 			}
-			gotResult, gotErr := y.Target(tt.inputSourceValue, tt.dryRun)
+			gotResult, gotFiles, gotMessage, gotErr := y.Target(tt.inputSourceValue, tt.workingDir, tt.dryRun)
 			defer os.Remove(y.spec.File)
 			if tt.wantErr {
 				assert.Error(t, gotErr)
@@ -118,6 +124,8 @@ github-
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantResult, gotResult)
+			assert.Equal(t, tt.wantFiles, gotFiles)
+			assert.Equal(t, tt.wantMessage, gotMessage)
 		})
 	}
 }

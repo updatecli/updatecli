@@ -20,7 +20,7 @@ import (
 type Pipeline struct {
 	Name  string // Name defines a pipeline name, used to improve human visualization
 	ID    string // ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title string // Title is used for the full pipelin
+	Title string // Title is used for the full pipeline
 
 	Sources    map[string]source.Source
 	Conditions map[string]condition.Condition
@@ -164,21 +164,10 @@ func (p *Pipeline) Init(config *config.Config, options options.Pipeline) error {
 
 	// Init target report
 	for id := range config.Spec.Targets {
-
-		var scmPointer *scm.ScmHandler
-		if len(config.Spec.Targets[id].SCMID) > 0 {
-			sc, ok := p.SCMs[config.Spec.Targets[id].SCMID]
-			if !ok {
-				return fmt.Errorf("scm id %q doesn't exist", config.Spec.Targets[id].SCMID)
-			}
-
-			scmPointer = &sc.Handler
-		}
-
 		p.Targets[id] = target.Target{
-			Config: config.Spec.Targets[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Config:     config.Spec.Targets[id],
+			Result:     result.SKIPPED,
+			WorkingDir: "", // TODO
 		}
 
 		p.Report.Targets[id] = reports.Stage{

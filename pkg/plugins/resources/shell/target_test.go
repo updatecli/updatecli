@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 func TestShell_Target(t *testing.T) {
@@ -13,10 +12,13 @@ func TestShell_Target(t *testing.T) {
 		name              string
 		command           string
 		source            string
+		workingDir        string
 		dryrun            bool
 		wantChanged       bool
 		wantErr           bool
+		wantMessage       string
 		wantCommandInMock string
+		wantFilesChanged  []string
 		commandResult     commandResult
 		commandEnv        []string
 	}{
@@ -39,6 +41,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       true,
 			wantErr:           false,
+			wantMessage:       "ran shell command \"change.sh 1.2.3\" which changed the files []",
 			wantCommandInMock: "change.sh 1.2.3",
 			commandResult: commandResult{
 				ExitCode: 0,
@@ -72,7 +75,8 @@ func TestShell_Target(t *testing.T) {
 				},
 			}
 
-			gotChanged, err := s.Target(tt.source, tt.dryrun)
+			// Changed files are not tested (need to mock the git package)
+			gotChanged, _, gotMessage, err := s.Target(tt.source, tt.workingDir, tt.dryrun)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -82,74 +86,6 @@ func TestShell_Target(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantChanged, gotChanged)
-
-			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
-			for _, wantEnv := range tt.commandEnv {
-				assert.Contains(t, mock.GotCommand.Env, wantEnv)
-			}
-		})
-	}
-}
-
-func TestShell_TargetFromSCM(t *testing.T) {
-	tests := []struct {
-		commandResult            commandResult
-		wantFilesChanged         []string
-		commandEnv               []string
-		name                     string
-		command                  string
-		source                   string
-		scmDir                   string
-		mockReturnedChangedFiles []string
-		wantMessage              string
-		wantCommandInMock        string
-		wantErr                  bool
-		dryrun                   bool
-	}{
-		{
-			name:                     "runs a target that changes a value and no dryrun",
-			command:                  "change.sh",
-			source:                   "1.2.3",
-			mockReturnedChangedFiles: []string{"pom.xml"},
-			wantMessage:              `ran shell command "change.sh 1.2.3"`,
-			wantErr:                  false,
-			wantCommandInMock:        "change.sh 1.2.3",
-			commandResult: commandResult{
-				ExitCode: 0,
-				Stdout:   "Changed value from 1.2.2 to 1.2.3.",
-			},
-			wantFilesChanged: []string{"pom.xml"},
-			commandEnv:       []string{"DRY_RUN=false"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock := MockCommandExecutor{
-				Result: tt.commandResult,
-			}
-			ms := scm.MockScm{
-				WorkingDir:   tt.scmDir,
-				ChangedFiles: tt.mockReturnedChangedFiles,
-			}
-			s := Shell{
-				executor: &mock,
-				spec: Spec{
-					Command: tt.command,
-				},
-			}
-
-			gotChanged, gotFilesChanged, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)
-
-			if tt.wantErr {
-				assert.Error(t, err)
-				assert.False(t, gotChanged)
-				return
-			}
-
-			require.NoError(t, err)
-
-			assert.Equal(t, len(tt.wantFilesChanged) > 0, gotChanged)
-			assert.Equal(t, tt.wantFilesChanged, gotFilesChanged)
 			assert.Equal(t, tt.wantMessage, gotMessage)
 
 			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
@@ -159,3 +95,72 @@ func TestShell_TargetFromSCM(t *testing.T) {
 		})
 	}
 }
+
+// func TestShell_TargetFromSCM(t *testing.T) {
+// 	tests := []struct {
+// 		commandResult            commandResult
+// 		wantFilesChanged         []string
+// 		commandEnv               []string
+// 		name                     string
+// 		command                  string
+// 		source                   string
+// 		scmDir                   string
+// 		mockReturnedChangedFiles []string
+// 		wantMessage              string
+// 		wantCommandInMock        string
+// 		wantErr                  bool
+// 		dryrun                   bool
+// 	}{
+// 		{
+// 			name:                     "runs a target that changes a value and no dryrun",
+// 			command:                  "change.sh",
+// 			source:                   "1.2.3",
+// 			mockReturnedChangedFiles: []string{"pom.xml"},
+// 			wantMessage:              `ran shell command "change.sh 1.2.3"`,
+// 			wantErr:                  false,
+// 			wantCommandInMock:        "change.sh 1.2.3",
+// 			commandResult: commandResult{
+// 				ExitCode: 0,
+// 				Stdout:   "Changed value from 1.2.2 to 1.2.3.",
+// 			},
+// 			wantFilesChanged: []string{"pom.xml"},
+// 			commandEnv:       []string{"DRY_RUN=false"},
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			mock := MockCommandExecutor{
+// 				Result: tt.commandResult,
+// 			}
+// 			ms := scm.MockScm{
+// 				WorkingDir:   tt.scmDir,
+// 				ChangedFiles: tt.mockReturnedChangedFiles,
+// 			}
+// 			s := Shell{
+// 				executor: &mock,
+// 				spec: Spec{
+// 					Command: tt.command,
+// 				},
+// 			}
+
+// 			gotChanged, gotFilesChanged, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)
+
+// 			if tt.wantErr {
+// 				assert.Error(t, err)
+// 				assert.False(t, gotChanged)
+// 				return
+// 			}
+
+// 			require.NoError(t, err)
+
+// 			assert.Equal(t, len(tt.wantFilesChanged) > 0, gotChanged)
+// 			assert.Equal(t, tt.wantFilesChanged, gotFilesChanged)
+// 			assert.Equal(t, tt.wantMessage, gotMessage)
+
+// 			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
+// 			for _, wantEnv := range tt.commandEnv {
+// 				assert.Contains(t, mock.GotCommand.Env, wantEnv)
+// 			}
+// 		})
+// 	}
+// }

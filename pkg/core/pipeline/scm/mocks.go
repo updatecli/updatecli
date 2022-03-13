@@ -11,8 +11,3 @@ type MockScm struct {
 func (m *MockScm) GetDirectory() (directory string) {
 	return m.WorkingDir
 }
-
-func (m *MockScm) GetChangedFiles(workingDir string) ([]string, error) {
-	m.WorkingDir = workingDir
-	return m.ChangedFiles, m.Err
-}

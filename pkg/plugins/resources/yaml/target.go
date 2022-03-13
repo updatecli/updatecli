@@ -8,36 +8,27 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
 )
 
-// Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
-	changed, _, _, err := y.target(source, dryRun)
-	return changed, err
-}
-
-// TargetFromSCM updates a scm repository based on the modified yaml file.
-func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
+// Target updates a yaml file
+func (y *Yaml) Target(source, workingDir string, dryRun bool) (bool, []string, string, error) {
+	filePath := y.spec.File
 	if !filepath.IsAbs(y.spec.File) {
-		y.spec.File = filepath.Join(scm.GetDirectory(), y.spec.File)
+		filePath = filepath.Join(workingDir, y.spec.File)
 	}
-	return y.target(source, dryRun)
-}
 
-func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error) {
 	var files []string
 	var message string
 
 	// Test at runtime if a file exist
-	if !y.contentRetriever.FileExists(y.spec.File) {
-		return false, files, message, fmt.Errorf("the yaml file %q does not exist", y.spec.File)
+	if !y.contentRetriever.FileExists(filePath) {
+		return false, files, message, fmt.Errorf("the yaml file %q does not exist", filePath)
 	}
 
-	if text.IsURL(y.spec.File) {
+	if text.IsURL(filePath) {
 		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
@@ -66,27 +57,27 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		return false, files, message, fmt.Errorf("%s cannot find key '%s' from file '%s'",
 			result.FAILURE,
 			y.spec.Key,
-			y.spec.File)
+			filePath)
 	}
 
 	if oldVersion == valueToWrite {
 		logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
 			result.SUCCESS,
 			y.spec.Key,
-			y.spec.File,
+			filePath,
 			valueToWrite)
 		return false, files, message, nil
 	}
 	logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
 		result.ATTENTION,
 		y.spec.Key,
-		y.spec.File,
+		filePath,
 		oldVersion,
 		valueToWrite)
 
 	if !dryRun {
 
-		newFile, err := os.Create(y.spec.File)
+		newFile, err := os.Create(filePath)
 
 		// https://staticcheck.io/docs/checks/#SA5001
 		//lint:ignore SA5001 We want to defer the file closing before exiting the function
@@ -108,7 +99,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 
 	files = append(files, y.spec.File)
 
-	message = fmt.Sprintf("Update key %q from file %q", y.spec.Key, y.spec.File)
+	message = fmt.Sprintf("Update the YAML key %q from file %q", y.spec.Key, y.spec.File)
 
 	return true, files, message, nil
 }

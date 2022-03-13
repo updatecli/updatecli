@@ -77,40 +77,32 @@ func (p *PullRequest) Run(title, changelog, pipelineReport string) error {
 
 // RunTarget commits the change associated to the provided target
 func (p *PullRequest) RunTarget(t target.Target, o options.Pipeline) error {
-	var message string
-	var files []string
-
-	// TODO: define files and messages at target level
-
-	// Scm is already initialized in the target run: no need to run s.Init() neither s.Checkout()
-	s := *t.Scm
-
 	t.Result = result.ATTENTION
 	if !o.DryRun {
-		if message == "" {
+		if t.Message == "" {
 			t.Result = result.FAILURE
 			return fmt.Errorf("target has no change message")
 		}
 
-		if len(files) == 0 {
+		if len(t.Files) == 0 {
 			t.Result = result.FAILURE
 			logrus.Info("no changed file to commit")
 			return nil
 		}
 
 		if o.Commit {
-			if err := s.Add(files); err != nil {
+			if err := p.scm.Add(t.Files); err != nil {
 				t.Result = result.FAILURE
 				return err
 			}
 
-			if err := s.Commit(message); err != nil {
+			if err := p.scm.Commit(t.Message); err != nil {
 				t.Result = result.FAILURE
 				return err
 			}
 		}
 		if o.Push {
-			if err := s.Push(); err != nil {
+			if err := p.scm.Push(); err != nil {
 				t.Result = result.FAILURE
 				return err
 			}

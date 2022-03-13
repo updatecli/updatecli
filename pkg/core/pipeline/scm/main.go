@@ -25,12 +25,11 @@ type ScmHandler interface {
 	Add(files []string) error
 	Clone() (string, error)
 	Checkout() error
-	GetDirectory() (directory string)
+	GetDirectory() string
 	Push() error
 	Commit(message string) error
 	Clean() error
 	PushTag(tag string) error
-	GetChangedFiles(workingDir string) ([]string, error)
 }
 
 func New(config *Config, pipelineID string) (Scm, error) {

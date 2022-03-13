@@ -123,7 +123,3 @@ func (g *Git) PushTag(tag string) error {
 
 	return nil
 }
-
-func (g *Git) GetChangedFiles(workingDir string) ([]string, error) {
-	return g.nativeGitHandler.GetChangedFiles(workingDir)
-}

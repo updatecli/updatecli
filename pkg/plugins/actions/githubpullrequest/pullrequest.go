@@ -18,6 +18,7 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -81,6 +82,7 @@ type PullRequest struct {
 	Title             string
 	spec              Spec
 	remotePullRequest github.PullRequestApi
+	scm               scm.ScmHandler
 }
 
 // isMergeMethodValid ensure that we specified a valid merge method.

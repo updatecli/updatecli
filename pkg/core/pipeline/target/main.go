@@ -9,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -22,9 +21,15 @@ var (
 type Target struct {
 	// Result store the condition result after a target run.
 	Result string
+	// Holds the updatecli configuration of this target (usually the parsed YAML manifest excerpt that might be templatized)
 	Config Config
-	DryRun bool
-	Scm    *scm.ScmHandler
+	// Holds the dry run status (should the target apply the changes or only simulate)
+	DryRun     bool
+	WorkingDir string
+	// Holds the change message (usually commit message associated to the target once run)
+	Message string
+	// Holds the list ofr changed files (usually to indicate SCM which files to stage/commit)
+	Files []string
 }
 
 // Config defines target parameters
@@ -62,7 +67,6 @@ func (t *Target) Check() (bool, error) {
 
 // Run applies a specific target configuration
 func (t *Target) Run(source string) (err error) {
-
 	var changed bool
 
 	if len(t.Config.Transformers) > 0 {
@@ -83,11 +87,14 @@ func (t *Target) Run(source string) (err error) {
 		return err
 	}
 
-	changed, err = target.Target(source, t.DryRun)
+	changed, changedFiles, changeMessage, err := target.Target(source, t.WorkingDir, t.DryRun)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err
 	}
+
+	t.Message = changeMessage
+	t.Files = changedFiles
 
 	if changed {
 		t.Result = result.ATTENTION
