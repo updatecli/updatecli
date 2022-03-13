@@ -304,32 +304,6 @@ func (config *Config) validateSources() error {
 			logrus.Errorf("sources key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
-
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		if len(s.Scm) > 0 {
-			logrus.Warningf("The directive 'scm' for the source[%q] is now deprecated. Please use the new top level scms syntax", id)
-			if len(s.SCMID) == 0 {
-				if _, ok := config.Spec.SCMs["source_"+id]; !ok {
-					for kind, spec := range s.Scm {
-						if config.Spec.SCMs == nil {
-							config.Spec.SCMs = make(map[string]scm.Config, 1)
-						}
-						config.Spec.SCMs["source_"+id] = scm.Config{
-							Kind: kind,
-							Spec: spec}
-					}
-				}
-				s.SCMID = "source_" + id
-			} else {
-				logrus.Warning("source.SCMID is also defined, ignoring source.Scm")
-			}
-			s.Scm = map[string]interface{}{}
-			config.Spec.Sources[id] = s
-		}
-		// s.Validate may modify the object during validation
-		// so we want to be sure that we save those modifications
-		config.Spec.Sources[id] = s
 	}
 	return nil
 
@@ -384,17 +358,6 @@ func (config *Config) validateTargets() error {
 		// t.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
 		config.Spec.Targets[id] = t
-
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		//if t.Scm != nil {
-		if len(t.Scm) > 0 {
-			err := generateScmFromLegacyTarget(id, config)
-			if err != nil {
-				return err
-			}
-		}
-
 	}
 	return nil
 }
@@ -432,14 +395,6 @@ func (config *Config) validateConditions() error {
 		}
 
 		config.Spec.Conditions[id] = c
-
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		//if c.Scm != nil {
-		if len(c.Scm) > 0 {
-			generateScmFromLegacyCondition(id, config)
-		}
-
 	}
 	return nil
 }
