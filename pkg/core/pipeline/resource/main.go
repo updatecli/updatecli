@@ -29,62 +29,10 @@ type ResourceConfig struct {
 	// Deprecated in favor of Transformers on 2021/01/3
 	Postfix      string
 	Transformers transformer.Transformers
-	Spec         interface{}
+	Spec         interface{} `jsonschema:"type=object"`
 	// Deprecated field on version [1.17.0]
 	Scm   map[string]interface{}
 	SCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
-}
-
-// Implements the Unmarshaler interface of the yaml pkg.
-func (r *ResourceConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	yamlResourceConfig := ResourceConfig{}
-	err := unmarshal(&yamlResourceConfig)
-	if err != nil {
-		return err
-	}
-
-	switch strings.ToLower(yamlResourceConfig.Kind) {
-	case "aws/ami":
-		a, err := awsami.New(yamlResourceConfig.Spec)
-
-		if err != nil {
-			return err
-		}
-
-		yamlResourceConfig.Spec = a.Spec
-
-	//case "dockerdigest":
-	//	return dockerdigest.New(rs.Spec)
-	//case "dockerfile":
-	//	return dockerfile.New(rs.Spec)
-	//case "dockerimage":
-	//	return dockerimage.New(rs.Spec)
-	//case "githubrelease":
-	//	return githubrelease.New(rs.Spec)
-	//case "gittag":
-	//	return gittag.New(rs.Spec)
-	//case "file":
-	//	return file.New(rs.Spec)
-	//case "helmchart":
-	//	return helm.New(rs.Spec)
-	//case "jenkins":
-	//	return jenkins.New(rs.Spec)
-	//case "maven":
-	//	return maven.New(rs.Spec)
-	//case "shell":
-	//	return shell.New(rs.Spec)
-	//case "yaml":
-	//	return yaml.New(rs.Spec)
-	default:
-		return fmt.Errorf("⚠ don't support source kind: %v", yamlResourceConfig.Kind)
-	}
-
-	//// make sure to dereference before assignment,
-	//// otherwise only the local variable will be overwritten
-	//// and not the value the pointer actually points to
-	*r = yamlResourceConfig
-
-	return nil
 }
 
 // New returns a newly initialized Resource or an error
