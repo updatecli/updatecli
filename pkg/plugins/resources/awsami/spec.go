@@ -14,13 +14,20 @@ var (
 
 // Spec contains updatecli configuration provided by users
 type Spec struct {
-	AccessKey string  // AWs access key
-	SecretKey string  // AWS secret key
-	Filters   Filters // AMI ID filters
-	Region    string  // AWS region to use when searching AMI
-	Endpoint  string  // Endpoint to use when searching AMI
-	DryRun    bool
-	SortBy    string // Specify the order of AMI-ID that will be used to retrieve the last element
+	// AWs access key
+	AccessKey string
+	// AWS secret key
+	SecretKey string
+	// AMI ID filters
+	Filters Filters
+	// AWS region to use when searching AMI
+	Region string
+	// Endpoint to use when searching AMI
+	Endpoint string
+	// Dryrun run AWS query in dryrun
+	DryRun bool
+	// Specify the order of AMI-ID that will be used to retrieve the last element
+	SortBy string
 }
 
 // String return Spec information as a string
