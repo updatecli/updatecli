@@ -1547,8 +1547,8 @@ go.etcd.io/etcd/server/v3 v3.5.0/go.mod h1:3Ah5ruV+M+7RZr0+Y/5mNLwC+eQlni+mQmOVd
 go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a h1:N7VD+PwpJME2ZfQT8+ejxwA4Ow10IkGbU0MGf94ll8k=
 go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a/go.mod h1:YDKUvO0b//78PaaEro6CAPH6NqohCmL2Cwju5XI2HoE=
 go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1/go.mod h1:SNgMg+EgDFwmvSmLRTNKC5fegJjB7v23qTQ0XLGUNHk=
-go.mozilla.org/sops/v3 v3.7.1 h1:8+hqYKtjqC1ODqBxJUZoJ0WIcv6VBwY4LGZOO1jONtk=
-go.mozilla.org/sops/v3 v3.7.1/go.mod h1:n1KOOXQUp7PbUIYr0yEExC6RWv2hjvQKLNufdWYLNQg=
+go.mozilla.org/sops/v3 v3.7.2 h1:LNThLKe/pb80eGyAOFiWKP1Znqp1GQO2hqvuQOCmy5o=
+go.mozilla.org/sops/v3 v3.7.2/go.mod h1:OUNXNSkIrbr2wq3+RbK8s/ZCG+GaUnh8EY8IhXHI+wc=
 go.opencensus.io v0.15.0/go.mod h1:UffZAU+4sDEINUGP/B7UfBBkq4fqLu9zXAX7ke6CHW0=
 go.opencensus.io v0.18.0/go.mod h1:vKdFvxhtzZ9onBp9VKHK8z/sRpBMnKAsufL7wlDrCOA=
 go.opencensus.io v0.19.1/go.mod h1:gug0GbSHa8Pafr0d2urOSgoXHZ6x/RUlaiT0d9pqb4A=
