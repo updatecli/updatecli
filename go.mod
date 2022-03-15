@@ -31,7 +31,11 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
+require (
+	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
+	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0
+	github.com/invopop/jsonschema v0.3.0
+)
 
 require (
 	cloud.google.com/go v0.99.0 // indirect
@@ -97,10 +101,8 @@ require (
 	github.com/hashicorp/vault/api v1.0.4 // indirect
 	github.com/hashicorp/vault/sdk v0.1.13 // indirect
 	github.com/howeyc/gopass v0.0.0-20170109162249-bf9dde6d0d2c // indirect
-	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/invopop/jsonschema v0.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
