@@ -126,6 +126,7 @@ func (ResourceConfig) JSONSchema() *jsonschema.Schema {
 	r.YAMLEmbeddedStructs = true
 	r.DoNotReference = true
 	r.RequiredFromJSONSchemaTags = true
+	r.KeyNamer = strings.ToLower
 
 	commentMap, err := commentmap.Get("../../../../pkg")
 
@@ -145,6 +146,7 @@ func (ResourceConfig) JSONSchema() *jsonschema.Schema {
 		r.DoNotReference = true
 		r.RequiredFromJSONSchemaTags = true
 		r.CommentMap = commentMap
+		r.KeyNamer = strings.ToLower
 
 		// schema we need a way to remove schema
 
