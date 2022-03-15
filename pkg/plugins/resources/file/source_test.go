@@ -21,26 +21,39 @@ func TestFile_Source(t *testing.T) {
 		wantMockState       text.MockTextRetriever
 	}{
 		{
-			name: "Relative file",
+			name: "Normal case with relative path for file",
 			spec: Spec{
 				File: "example.yaml",
 			},
-			wantErr:    false,
 			workingDir: "/tmp/updatecli/",
+			wantErr:    false,
 			wantSource: "",
 			wantMockState: text.MockTextRetriever{
 				Location: "/tmp/updatecli/example.yaml",
 			},
 		},
 		{
-			name: "Normal Case",
+			name: "Normal case with absolute path for file",
 			spec: Spec{
 				File: "/home/ucli/foo.txt",
 			},
+			workingDir:          "/tmp/updatecli/",
 			mockReturnedContent: "current_version=1.2.3",
 			wantSource:          "current_version=1.2.3",
 			wantMockState: text.MockTextRetriever{
 				Location: "/home/ucli/foo.txt",
+			},
+		},
+		{
+			name: "Normal case with URL path for file",
+			spec: Spec{
+				File: "https://github.com/updatecli/updatecli/blob/12bd7812833533f7c97d221684deb82a1ca9713b/LICENSE",
+			},
+			workingDir:          "/tmp/updatecli/",
+			mockReturnedContent: "MIT License",
+			wantSource:          "MIT License",
+			wantMockState: text.MockTextRetriever{
+				Location: "https://github.com/updatecli/updatecli/blob/12bd7812833533f7c97d221684deb82a1ca9713b/LICENSE",
 			},
 		},
 		{
@@ -49,6 +62,7 @@ func TestFile_Source(t *testing.T) {
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*freebsd_386.*",
 			},
+			workingDir: "/tmp/updatecli/",
 			mockReturnedContent: `363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07  terraform_0.14.5_darwin_amd64.zip
 5a3e0c7873faa048f59d563a2a98caf7f04045967cbb5ad6cf05f5991e20b8d1  terraform_0.14.5_freebsd_386.zip
 4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip
@@ -73,6 +87,7 @@ f8bf1fca0ef11a33955d225198d1211e15827d43488cc9174dcda14d1a7a1d19  terraform_0.14
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*terraform_.*_linux_.*",
 			},
+			workingDir: "/tmp/updatecli/",
 			mockReturnedContent: `363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07  terraform_0.14.5_darwin_amd64.zip
 5a3e0c7873faa048f59d563a2a98caf7f04045967cbb5ad6cf05f5991e20b8d1  terraform_0.14.5_freebsd_386.zip
 4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip
@@ -96,6 +111,7 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 		},
 		{
 			name:              "File does not exists",
+			workingDir:        "/tmp/updatecli/",
 			mockReturnedError: fmt.Errorf("no such file or directory"),
 			wantErr:           true,
 		},
@@ -106,7 +122,8 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 				ReplacePattern: "gradle_$1",
 				File:           "/bar.txt",
 			},
-			wantErr: true,
+			workingDir: "/tmp/updatecli/",
+			wantErr:    true,
 		},
 		{
 			name: "Validation Failure with specified content",
@@ -114,7 +131,8 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 				Content: "Hello world",
 				File:    "/bar.txt",
 			},
-			wantErr: true,
+			workingDir: "/tmp/updatecli/",
+			wantErr:    true,
 		},
 		{
 			name: "Validation Failure with specified forcecreate",
@@ -122,7 +140,8 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 				ForceCreate: true,
 				File:        "/bar.txt",
 			},
-			wantErr: true,
+			workingDir: "/tmp/updatecli/",
+			wantErr:    true,
 		},
 		{
 			name: "Validation Failure with invalid regexp for MatchPattern",
@@ -130,7 +149,8 @@ d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14
 				MatchPattern: "(d+:1",
 				File:         "/bar.txt",
 			},
-			wantErr: true,
+			workingDir: "/tmp/updatecli/",
+			wantErr:    true,
 		},
 	}
 	for _, tt := range tests {
