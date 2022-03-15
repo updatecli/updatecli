@@ -15,7 +15,7 @@ func TestGet(t *testing.T) {
 
 	expectedResult := false
 
-	for key, _ := range comments {
+	for key := range comments {
 		if strings.Contains(key, "github.com/updatecli/updatecli/") {
 			expectedResult = true
 			break
