@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
@@ -34,7 +35,12 @@ func initSchemaDir() error {
 // GenerateSchema generates updatecli json schema based the config struct
 func GenerateSchema() string {
 
-	var err error
+	err := initSchemaDir()
+
+	if err != nil {
+		logrus.Errorf(err.Error())
+		return ""
+	}
 
 	r := new(jsonschema.Reflector)
 
@@ -44,7 +50,8 @@ func GenerateSchema() string {
 	r.YAMLEmbeddedStructs = true
 	r.DoNotReference = true
 	r.RequiredFromJSONSchemaTags = true
-	r.ExpandedStruct = true
+
+	r.KeyNamer = strings.ToLower
 
 	r.CommentMap, err = commentmap.Get("../../../../pkg")
 
