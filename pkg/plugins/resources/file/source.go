@@ -8,6 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
 // Source return a file content
@@ -29,7 +30,7 @@ func (f *File) Source(workingDir string) (string, error) {
 	}
 
 	// Relative path is used when an SCM is associated with the file resource: means the file is on a remote SCM (hence relative path)
-	if !filepath.IsAbs(f.spec.File) {
+	if !text.IsURL(f.spec.File) && !filepath.IsAbs(f.spec.File) {
 		f.spec.File = filepath.Join(workingDir, f.spec.File)
 		logrus.Debugf("Relative path detected: changing to absolute path from working directory: %q", f.spec.File)
 	}
