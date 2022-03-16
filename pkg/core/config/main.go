@@ -73,11 +73,9 @@ func (config *Config) Reset() {
 
 // New reads an updatecli configuration file
 func New(option options.Config) (config Config, err error) {
-
 	config.Reset()
 
 	config.filename = option.ManifestFile
-
 	dirname, basename := filepath.Split(option.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
@@ -91,7 +89,6 @@ func New(option options.Config) (config Config, err error) {
 
 	// Load updatecli manifest no matter the file extension
 	c, err := os.Open(option.ManifestFile)
-
 	if err != nil {
 		return config, err
 	}
@@ -106,7 +103,6 @@ func New(option options.Config) (config Config, err error) {
 	if !option.DisableTemplating {
 		// Try to template manifest no matter the extension
 		// templated manifest must respect its extension before and after templating
-
 		t := Template{
 			CfgFile:      filepath.Join(dirname, basename),
 			ValuesFiles:  option.ValuesFiles,
@@ -121,7 +117,6 @@ func New(option options.Config) (config Config, err error) {
 	}
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml":
-
 		err = yaml.Unmarshal(content, &config.Spec)
 		if err != nil {
 			return config, err
@@ -132,14 +127,19 @@ func New(option options.Config) (config Config, err error) {
 		return config, ErrConfigFileTypeNotSupported
 	}
 
-	// config.PipelineID is required for config.Validate()
+	// Set up the default pipeline identifier
 	if len(config.Spec.PipelineID) == 0 {
 		config.Spec.PipelineID = pipelineID
 	}
 
-	// By default Set config.Version to the current updatecli version
+	// Set up the default updatecli version
 	if len(config.Spec.Version) == 0 {
 		config.Spec.Version = version.Version
+	}
+
+	// Set up the default pipeline name
+	if len(config.Spec.Name) == 0 {
+		config.Spec.Name = strings.ToTitle(basename)
 	}
 
 	// Ensure there is a local SCM defined as specified
@@ -147,13 +147,14 @@ func New(option options.Config) (config Config, err error) {
 		return config, err
 	}
 
-	err = config.Validate()
-	if err != nil {
+	// Set up defaults for conditions
+	if err = config.NormalizeConditions(); err != nil {
 		return config, err
 	}
 
-	if len(config.Spec.Name) == 0 {
-		config.Spec.Name = strings.ToTitle(basename)
+	// Set up defaults for targets
+	if err = config.NormalizeTargets(); err != nil {
+		return config, err
 	}
 
 	err = config.Validate()
@@ -252,36 +253,48 @@ func (config *Config) Display() error {
 	return nil
 }
 
-func (config *Config) validateActions() error {
-	for id, actionSpec := range config.Spec.Actions {
-		if err := actionSpec.Validate(); err != nil {
-			logrus.Errorf("bad parameters for actions %q", id)
+func (config Config) validateActions() error {
+	// Temporary variable used to validate the link between targets and actions
+	targetActions := make(map[string]string)
+
+	// Validate Actions
+	for actionId, actionConfig := range config.Spec.Actions {
+		// Start by validating the action standalone specified configuration
+		if err := actionConfig.Validate(); err != nil {
+			logrus.Errorf("bad parameters for actions %q", actionId)
 			return err
 		}
 
-		// Then validate that the pullrequest specifies an existing SCM
-		if len(actionSpec.ScmID) > 0 {
-			if _, ok := config.Spec.SCMs[actionSpec.ScmID]; !ok {
-				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, actionSpec.ScmID)
+		// Then validate that the action specifies an existing SCM
+		if len(actionConfig.ScmID) > 0 {
+			if _, ok := config.Spec.SCMs[actionConfig.ScmID]; !ok {
+				logrus.Errorf("The action %q specifies a scm id %q which does not exist", actionId, actionConfig.ScmID)
 				return ErrBadConfig
 			}
 		}
 
-		// Validate references to other configuration objects
-		for _, target := range actionSpec.Targets {
-			if _, ok := config.Spec.Targets[target]; !ok {
-				logrus.Errorf("the specified target %q for the pull request %q does not exist", target, id)
+		// Then validate that that the actions specifies existing targets with a valid 1:1 mapping
+		for _, targetId := range actionConfig.Targets {
+			// Target must exists in the configuration
+			if _, ok := config.Spec.Targets[targetId]; !ok {
+				logrus.Errorf("The specified target %q for the pull request %q does not exist", targetId, actionId)
 				return ErrBadConfig
 			}
+
+			// Target must not be referenced by another action
+			if _, ok := targetActions[targetId]; ok {
+				logrus.Errorf("The target %q is expected to be linked to only one action, while it is referenced by multiple: %s, %s",
+					targetId, targetActions[targetId], actionId,
+				)
+				return ErrBadConfig
+			}
+			targetActions[targetId] = actionId
 		}
-		// p.Validate may modify the object during validation
-		// so we want to be sure that we save those modifications
-		config.Spec.Actions[id] = actionSpec
 	}
 	return nil
 }
 
-func (config *Config) validateSources() error {
+func (config Config) validateSources() error {
 	for id, sourceSpec := range config.Spec.Sources {
 		err := sourceSpec.Validate()
 		if err != nil {
@@ -298,7 +311,7 @@ func (config *Config) validateSources() error {
 
 }
 
-func (config *Config) validateSCMs() error {
+func (config Config) validateSCMs() error {
 	for id, scmSpec := range config.Spec.SCMs {
 		if err := scmSpec.Validate(); err != nil {
 			logrus.Errorf("bad parameter(s) for scm %q", id)
@@ -308,10 +321,8 @@ func (config *Config) validateSCMs() error {
 	return nil
 }
 
-func (config *Config) validateTargets() error {
-
+func (config Config) validateTargets() error {
 	for id, targetSpec := range config.Spec.Targets {
-
 		err := targetSpec.Validate()
 		if err != nil {
 			logrus.Errorf("bad parameters for target %q", id)
@@ -332,10 +343,6 @@ func (config *Config) validateTargets() error {
 
 				logrus.Errorf("empty 'sourceID' for target %q", id)
 				return ErrBadConfig
-			} else if len(targetSpec.SourceID) == 0 && len(config.Spec.Sources) == 1 {
-				for id := range config.Spec.Sources {
-					targetSpec.SourceID = id
-				}
 			}
 		}
 
@@ -343,15 +350,11 @@ func (config *Config) validateTargets() error {
 			logrus.Errorf("target key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
-
-		// t.Validate may modify the object during validation
-		// so we want to be sure that we save those modifications
-		config.Spec.Targets[id] = targetSpec
 	}
 	return nil
 }
 
-func (config *Config) validateConditions() error {
+func (config Config) validateConditions() error {
 	for id, conditionSpec := range config.Spec.Conditions {
 		err := conditionSpec.Validate()
 		if err != nil {
@@ -371,10 +374,6 @@ func (config *Config) validateConditions() error {
 			if len(conditionSpec.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
 				return ErrBadConfig
-			} else if len(conditionSpec.SourceID) == 0 && len(config.Spec.Sources) == 1 {
-				for id := range config.Spec.Sources {
-					conditionSpec.SourceID = id
-				}
 			}
 		}
 
@@ -382,14 +381,12 @@ func (config *Config) validateConditions() error {
 			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
-
-		config.Spec.Conditions[id] = conditionSpec
 	}
 	return nil
 }
 
 // Validate run various validation test on the configuration and update fields if necessary
-func (config *Config) Validate() error {
+func (config Config) Validate() error {
 
 	var errs []error
 	err := config.ValidateManifestCompatibility()
@@ -448,7 +445,7 @@ func (config *Config) Validate() error {
 	return nil
 }
 
-func (config *Config) ValidateManifestCompatibility() error {
+func (config Config) ValidateManifestCompatibility() error {
 	isCompatibleUpdatecliVersion, err := version.IsGreaterThan(
 		version.Version,
 		config.Spec.Version)

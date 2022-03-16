@@ -820,6 +820,67 @@ var (
 			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
 			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
 		},
+		{
+			ID: "9.4",
+			Config: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+					SCMs: map[string]scm.Config{
+						"default": {
+							Kind: "github",
+							Spec: map[string]string{
+								"user":       "updatecli",
+								"email":      "me@olblak.com",
+								"owner":      "updatecli",
+								"repository": "updatecli",
+								"token":      "SuperSecret",
+								"username":   "olblak",
+								"branch":     "main",
+							},
+						},
+					},
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"updateDefault": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update Default Version",
+								Kind: "shell",
+							},
+						},
+					},
+					Actions: map[string]action.Config{
+						"default": {
+							Title:   "default PR",
+							Kind:    "github/pullrequest",
+							ScmID:   "default",
+							Targets: []string{"updateDefault"},
+						},
+						"secondary": {
+							Title:   "secondary PR",
+							Kind:    "github/pullrequest",
+							ScmID:   "default",
+							Targets: []string{"updateDefault"},
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
+		},
 	}
 )
 

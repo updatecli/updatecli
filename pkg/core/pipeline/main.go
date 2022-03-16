@@ -164,6 +164,12 @@ func (p *Pipeline) Init(config *config.Config, options options.Pipeline) error {
 
 	// Init target report
 	for id := range config.Spec.Targets {
+
+		// var scmPointer *scm.ScmHandler
+		if config.Spec.Targets[id].SCMID != "" {
+			logrus.Warnf("The target %q specifies an scm (scmID: %s) which is deprecated. Remove this directive and use an action to specify a scm.", id, config.Spec.Targets[id].SCMID)
+		}
+
 		p.Targets[id] = target.Target{
 			Config:     config.Spec.Targets[id],
 			Result:     result.SKIPPED,
@@ -224,7 +230,7 @@ func (p *Pipeline) Run() error {
 
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			return fmt.Errorf("pull Request stage:\t%q", err.Error())
+			return err
 		}
 
 	}

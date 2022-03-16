@@ -56,6 +56,42 @@ func (config *Config) EnsureLocalScm() error {
 	return nil
 }
 
+// NormalizeTargets ensures that any target specification of the provided Config object is set up with any default if required.
+func (config *Config) NormalizeTargets() error {
+	for id, targetSpec := range config.Spec.Targets {
+		// Automatically set sourceid if there is only 1 source (and source input is enabled)
+		if !targetSpec.DisableSourceInput && len(targetSpec.SourceID) == 0 && len(config.Spec.Sources) == 1 {
+			// Nifty trick to retrieve the key of the only element of the map
+			for id := range config.Spec.Sources {
+				targetSpec.SourceID = id
+			}
+			logrus.Debugf("setting sourceid to %q for target %q", targetSpec.SourceID, id)
+		}
+
+		// Assign the updated targetSpec in the config object
+		config.Spec.Targets[id] = targetSpec
+	}
+	return nil
+}
+
+// NormalizeConditions ensures that any condition specification of the provided Config object is set up with any default if required.
+func (config *Config) NormalizeConditions() error {
+	for id, conditionSpec := range config.Spec.Conditions {
+		// Automatically set sourceid if there is only 1 source (and source input is enabled)
+		if !conditionSpec.DisableSourceInput && len(conditionSpec.SourceID) == 0 && len(config.Spec.Sources) == 1 {
+			// Nifty trick to retrieve the key of the only element of the map
+			for id := range config.Spec.Sources {
+				conditionSpec.SourceID = id
+			}
+			logrus.Debugf("setting sourceid to %q for condition %q", conditionSpec.SourceID, id)
+		}
+
+		// Assign the updated conditionSpec in the config object
+		config.Spec.Conditions[id] = conditionSpec
+	}
+	return nil
+}
+
 func (config Config) needScm(requiredScmId string) bool {
 	for _, sourceSpec := range config.Spec.Sources {
 		if sourceSpec.SCMID == requiredScmId {

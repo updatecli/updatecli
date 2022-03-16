@@ -127,13 +127,20 @@ func (p *Action) Update() error {
 	return nil
 }
 
+const deprecatedGitHubPullRequestName = "github"
+
 func (p *Action) generateHandler() error {
 	switch p.Config.Kind {
-	case "github/pullrequest":
+	case "github/pullrequest", deprecatedGitHubPullRequestName:
+		if p.Config.Kind == deprecatedGitHubPullRequestName {
+			logrus.Warnf("the kind 'github' (action '%s') is deprecated. Please use 'github/pullrequest' instead.", p.Title)
+			p.Config.Kind = "github/pullrequest"
+		}
+
 		pullRequestSpec := githubpullrequest.Spec{}
 
-		if p.Scm.Config.Kind != "github" {
-			return fmt.Errorf("scm of kind %q is not compatible with pullrequest of kind %q",
+		if p.Scm.Config.Kind != deprecatedGitHubPullRequestName {
+			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				p.Scm.Config.Kind,
 				p.Config.Kind)
 		}
@@ -158,7 +165,7 @@ func (p *Action) generateHandler() error {
 		p.Handler = &g
 
 	default:
-		logrus.Errorf("scm of kind %q is not supported", p.Config.Kind)
+		return fmt.Errorf("action of kind %q is not supported", p.Config.Kind)
 	}
 
 	return nil
