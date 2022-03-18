@@ -43,12 +43,19 @@ func (p *Pipeline) RunActions() error {
 			)
 		}
 
-		// Execute specific procedure on each target associated with this action
-		for _, targetID := range action.Config.Targets {
-			err = action.Handler.RunTarget(p.Targets[targetID], p.Options)
-			if err != nil {
+		// Execute specific "action" procedure on each associated target
+		if !p.Options.DryRun {
+			// Creates the temporary branch once for all
+			if err = action.Scm.Handler.Checkout(); err != nil {
 				return err
 			}
+
+			// for _, targetID := range action.Config.Targets {
+			// 	err = action.Handler.RunTarget(p.Targets[targetID], p.Options)
+			// 	if err != nil {
+			// 		return err
+			// 	}
+			// }
 		}
 
 		sourcesReport, err := p.Report.String("sources")
@@ -103,29 +110,12 @@ func (p *Pipeline) RunActions() error {
 		}
 		action.Changelog = changelog
 
-		if p.Options.DryRun {
-			if len(attentionTargetIDs) > 0 {
-				logrus.Infof("[Dry Run] A pull request with kind %q and title %q is expected.", action.Config.Kind, action.Title)
-
-				actionDebugOutput := fmt.Sprintf("The expected pull request would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
-					action.Title,
-					action.Changelog,
-					action.PipelineReport)
-				logrus.Debugf(strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
+		// Execute the action if there is at least one changed target
+		if len(attentionTargetIDs) > 0 {
+			err = action.Handler.Run(action.Title, action.Changelog, action.PipelineReport)
+			if err != nil {
+				return err
 			}
-
-			actionDebugOutput := fmt.Sprintf("The expected Pull Request would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
-				action.Title,
-				action.Changelog,
-				action.PipelineReport)
-			logrus.Debugf(strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
-
-			return nil
-		}
-
-		err = action.Handler.Run(action.Title, action.Changelog, action.PipelineReport)
-		if err != nil {
-			return err
 		}
 
 		p.Actions[id] = action

@@ -15,20 +15,20 @@ import (
 
 // Target updates a yaml file
 func (y *Yaml) Target(source, workingDir string, dryRun bool) (bool, []string, string, error) {
-	filePath := y.spec.File
 	if !filepath.IsAbs(y.spec.File) {
-		filePath = filepath.Join(workingDir, y.spec.File)
+		y.spec.File = filepath.Join(workingDir, y.spec.File)
 	}
+	yamlFilePath := y.spec.File
 
 	var files []string
 	var message string
 
 	// Test at runtime if a file exist
-	if !y.contentRetriever.FileExists(filePath) {
-		return false, files, message, fmt.Errorf("the yaml file %q does not exist", filePath)
+	if !y.contentRetriever.FileExists(yamlFilePath) {
+		return false, files, message, fmt.Errorf("the yaml file %q does not exist", yamlFilePath)
 	}
 
-	if text.IsURL(filePath) {
+	if text.IsURL(yamlFilePath) {
 		return false, files, message, fmt.Errorf("unsupported filename prefix")
 	}
 
@@ -40,7 +40,6 @@ func (y *Yaml) Target(source, workingDir string, dryRun bool) (bool, []string, s
 	out := yaml.Node{}
 
 	err := yaml.Unmarshal([]byte(data), &out)
-
 	if err != nil {
 		return false, files, message, fmt.Errorf("cannot unmarshal data: %v", err)
 	}
@@ -57,27 +56,27 @@ func (y *Yaml) Target(source, workingDir string, dryRun bool) (bool, []string, s
 		return false, files, message, fmt.Errorf("%s cannot find key '%s' from file '%s'",
 			result.FAILURE,
 			y.spec.Key,
-			filePath)
+			yamlFilePath)
 	}
 
 	if oldVersion == valueToWrite {
 		logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
 			result.SUCCESS,
 			y.spec.Key,
-			filePath,
+			yamlFilePath,
 			valueToWrite)
 		return false, files, message, nil
 	}
 	logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
 		result.ATTENTION,
 		y.spec.Key,
-		filePath,
+		yamlFilePath,
 		oldVersion,
 		valueToWrite)
 
 	if !dryRun {
 
-		newFile, err := os.Create(filePath)
+		newFile, err := os.Create(yamlFilePath)
 
 		// https://staticcheck.io/docs/checks/#SA5001
 		//lint:ignore SA5001 We want to defer the file closing before exiting the function

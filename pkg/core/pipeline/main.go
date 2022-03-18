@@ -99,6 +99,7 @@ func (p *Pipeline) Init(config *config.Config, options options.Pipeline) error {
 		p.Actions[id], err = action.New(
 			&actionConfig,
 			&SCM,
+			p.Options,
 		)
 		if err != nil {
 			return err
@@ -163,22 +164,36 @@ func (p *Pipeline) Init(config *config.Config, options options.Pipeline) error {
 	}
 
 	// Init target report
-	for id := range config.Spec.Targets {
+	for targetId := range config.Spec.Targets {
 
-		// var scmPointer *scm.ScmHandler
-		if config.Spec.Targets[id].SCMID != "" {
-			logrus.Warnf("The target %q specifies an scm (scmID: %s) which is deprecated. Remove this directive and use an action to specify a scm.", id, config.Spec.Targets[id].SCMID)
+		if config.Spec.Targets[targetId].SCMID != "" {
+			logrus.Warnf(
+				"The target %q specifies an scm (scmID: %s) which is deprecated. Remove this directive and use an action to specify a scm.",
+				targetId,
+				config.Spec.Targets[targetId].SCMID,
+			)
 		}
 
-		p.Targets[id] = target.Target{
-			Config:     config.Spec.Targets[id],
-			Result:     result.SKIPPED,
-			WorkingDir: "", // TODO
+		var targetAction action.Action
+		for _, action := range p.Actions {
+			for _, tId := range action.Config.Targets {
+				if targetId == tId {
+					targetAction = action
+					break
+				}
+			}
 		}
 
-		p.Report.Targets[id] = reports.Stage{
-			Name:   config.Spec.Targets[id].Name,
-			Kind:   config.Spec.Targets[id].Kind,
+		p.Targets[targetId] = target.Target{
+			Config: config.Spec.Targets[targetId],
+			Result: result.SKIPPED,
+			DryRun: p.Options.DryRun,
+			Action: &targetAction,
+		}
+
+		p.Report.Targets[targetId] = reports.Stage{
+			Name:   config.Spec.Targets[targetId].Name,
+			Kind:   config.Spec.Targets[targetId].Kind,
 			Result: result.SKIPPED,
 		}
 	}

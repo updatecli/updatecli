@@ -3,11 +3,13 @@ package target
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -19,7 +21,7 @@ var (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
-	// Result store the condition result after a target run.
+	// Holds the condition result after a target run.
 	Result string
 	// Holds the updatecli configuration of this target (usually the parsed YAML manifest excerpt that might be templatized)
 	Config Config
@@ -28,8 +30,10 @@ type Target struct {
 	WorkingDir string
 	// Holds the change message (usually commit message associated to the target once run)
 	Message string
-	// Holds the list ofr changed files (usually to indicate SCM which files to stage/commit)
+	// Holds the list for changed files (usually to indicate SCM which files to stage/commit)
 	Files []string
+	// Holds the associated action
+	Action *action.Action
 }
 
 // Config defines target parameters
@@ -66,8 +70,14 @@ func (t *Target) Check() (bool, error) {
 }
 
 // Run applies a specific target configuration
-func (t *Target) Run(source string) (err error) {
+func (t *Target) Run(source string) error {
 	var changed bool
+
+	// TODO: prepare workingDir (1-copy)
+	workingDir, err := t.initWorkingDir()
+	if err != nil {
+		return err
+	}
 
 	if len(t.Config.Transformers) > 0 {
 		source, err = t.Config.Transformers.Apply(source)
@@ -81,13 +91,14 @@ func (t *Target) Run(source string) (err error) {
 		logrus.Infof("\n**Dry Run enabled**\n\n")
 	}
 
+	// Initialize the target resource based on its configuration
 	target, err := resource.New(t.Config.ResourceConfig)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err
 	}
 
-	changed, changedFiles, changeMessage, err := target.Target(source, t.WorkingDir, t.DryRun)
+	changed, changedFiles, changeMessage, err := target.Target(source, workingDir, t.DryRun)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err
@@ -102,43 +113,22 @@ func (t *Target) Run(source string) (err error) {
 		t.Result = result.SUCCESS
 	}
 
-	// t.Result = result.ATTENTION
-	// if !o.DryRun {
-	// 	if message == "" {
-	// 		t.Result = result.FAILURE
-	// 		return fmt.Errorf("target has no change message")
-	// 	}
+	// TODO: retrieve target diff/changed files
 
-	// 	if len(files) == 0 {
-	// 		t.Result = result.FAILURE
-	// 		return fmt.Errorf("no changed file to commit")
-	// 	}
-
-	// 	if o.Commit {
-	// 		if err := s.Add(files); err != nil {
-	// 			t.Result = result.FAILURE
-	// 			return err
-	// 		}
-
-	// 		if err = s.Commit(message); err != nil {
-	// 			t.Result = result.FAILURE
-	// 			return err
-	// 		}
-	// 	}
-	// 	if o.Push {
-	// 		if err := s.Push(); err != nil {
-	// 			t.Result = result.FAILURE
-	// 			return err
-	// 		}
-	// 	}
-	// }
+	// Execute the action's post-target step if needed
+	// E.g. when not in dry run AND there is an action associated with this target (not empty)
+	if !t.DryRun && t.Action != (&action.Action{}) {
+		t.Result, err = t.Action.Handler.RunTarget(t.Message, t.Files)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
 // JSONSchema implements the json schema interface to generate the "target" jsonschema.
 func (Config) JSONSchema() *jschema.Schema {
-
 	type configAlias Config
 
 	anyOfSpec := resource.GetResourceMapping()
@@ -210,4 +200,14 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+func (t Target) initWorkingDir() (string, error) {
+	// Delegate to the associated action if this target has one
+	// Otherwise it's the current working directory (dry run or no action)
+	if t.Action == (&action.Action{}) {
+		return os.Getwd()
+	}
+
+	return t.Action.InitWorkingDir()
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/options"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/plugins/actions/githubpullrequest"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
@@ -23,8 +22,9 @@ var (
 
 // ActionHandler interface defines required functions to be implemented by the action plugins
 type ActionHandler interface {
+	InitWorkingDir() (string, error)
 	Run(title, changelog, pipelineReport string) error
-	RunTarget(target target.Target, o options.Pipeline) error
+	RunTarget(message string, files []string) (string, error)
 }
 
 // Config defines the attributes of an action provided via an updatecli configuration
@@ -51,6 +51,9 @@ type Action struct {
 	Config         Config
 	Scm            *scm.Scm
 	Handler        ActionHandler
+	options        options.Pipeline
+	// empty until initialized
+	workingDir string
 }
 
 // Validate ensures that a action configuration has required parameters.
@@ -99,11 +102,12 @@ func (c *Config) Validate() (err error) {
 }
 
 // New returns a new action based on a "Config" and a "Scm"
-func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
+func New(config *Config, sourceControlManager *scm.Scm, opts options.Pipeline) (Action, error) {
 	p := Action{
-		Title:  config.Title,
-		Config: *config,
-		Scm:    sourceControlManager,
+		Title:   config.Title,
+		Config:  *config,
+		Scm:     sourceControlManager,
+		options: opts,
 	}
 
 	err := p.generateHandler()
@@ -116,10 +120,10 @@ func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
 }
 
 // Update updates a action object based on its configuration
-func (p *Action) Update() error {
-	p.Title = p.Config.Title
+func (a *Action) Update() error {
+	a.Title = a.Config.Title
 
-	err := p.generateHandler()
+	err := a.generateHandler()
 	if err != nil {
 		return err
 	}
@@ -129,43 +133,41 @@ func (p *Action) Update() error {
 
 const deprecatedGitHubPullRequestName = "github"
 
-func (p *Action) generateHandler() error {
-	switch p.Config.Kind {
+func (a *Action) generateHandler() error {
+	switch a.Config.Kind {
 	case "github/pullrequest", deprecatedGitHubPullRequestName:
-		if p.Config.Kind == deprecatedGitHubPullRequestName {
-			logrus.Warnf("the kind 'github' (action '%s') is deprecated. Please use 'github/pullrequest' instead.", p.Title)
-			p.Config.Kind = "github/pullrequest"
+		if a.Config.Kind == deprecatedGitHubPullRequestName {
+			logrus.Warnf("the kind 'github' (action '%s') is deprecated. Please use 'github/pullrequest' instead.", a.Title)
+			a.Config.Kind = "github/pullrequest"
 		}
 
 		pullRequestSpec := githubpullrequest.Spec{}
 
-		if p.Scm.Config.Kind != deprecatedGitHubPullRequestName {
+		if a.Scm.Config.Kind != deprecatedGitHubPullRequestName {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
-				p.Scm.Config.Kind,
-				p.Config.Kind)
+				a.Scm.Config.Kind,
+				a.Config.Kind)
 		}
 
-		err := mapstructure.Decode(p.Config.Spec, &pullRequestSpec)
+		err := mapstructure.Decode(a.Config.Spec, &pullRequestSpec)
 		if err != nil {
 			return err
 		}
 
-		gh, ok := p.Scm.Handler.(*github.Github)
-
+		gh, ok := a.Scm.Handler.(*github.Github)
 		if !ok {
 			return fmt.Errorf("scm is not of kind 'github'")
 		}
 
-		g, err := githubpullrequest.NewPullRequest(pullRequestSpec, gh)
-
+		g, err := githubpullrequest.NewPullRequest(pullRequestSpec, gh, a.options)
 		if err != nil {
 			return err
 		}
 
-		p.Handler = &g
+		a.Handler = &g
 
 	default:
-		return fmt.Errorf("action of kind %q is not supported", p.Config.Kind)
+		return fmt.Errorf("action of kind %q is not supported", a.Config.Kind)
 	}
 
 	return nil
@@ -173,7 +175,6 @@ func (p *Action) generateHandler() error {
 
 // JSONSchema implements the json schema interface to generate the "pullrequest" jsonschema
 func (Config) JSONSchema() *jschema.Schema {
-
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
@@ -181,4 +182,15 @@ func (Config) JSONSchema() *jschema.Schema {
 	}
 
 	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
+}
+
+func (a *Action) InitWorkingDir() (string, error) {
+	if a.workingDir != "" {
+		// Already initialized, returns it
+		return a.workingDir, nil
+	}
+
+	// Not initialized: delegate to underlying handler
+	return a.Handler.InitWorkingDir()
+
 }

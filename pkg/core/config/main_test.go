@@ -878,8 +878,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   ErrBadConfig,
-			ExpectedValidateErr: ErrBadConfig,
+			ExpectedUpdateErr:   fmt.Errorf("%s\n%s", "pullrequests validation error:", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("%s\n%s", "pullrequests validation error:", ErrBadConfig),
 		},
 	}
 )

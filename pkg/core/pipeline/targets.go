@@ -31,20 +31,20 @@ func (p *Pipeline) RunTargets() error {
 
 	errs := []error{}
 
-	for _, id := range sortedTargetsKeys {
+	for _, targetId := range sortedTargetsKeys {
 		// Update pipeline before each target run
 		err = p.Config.Update(p)
 		if err != nil {
 			return err
 		}
 
-		logrus.Infof("\n%s\n", id)
-		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
+		logrus.Infof("\n%s\n", targetId)
+		logrus.Infof("%s\n", strings.Repeat("-", len(targetId)))
 
-		target := p.Targets[id]
-		target.Config = p.Config.Spec.Targets[id]
+		target := p.Targets[targetId]
+		target.Config = p.Config.Spec.Targets[targetId]
 
-		report := p.Report.Targets[id]
+		report := p.Report.Targets[targetId]
 		// Update report name as the target configuration might has been updated (templated values)
 		report.Name = target.Config.Name
 
@@ -52,34 +52,33 @@ func (p *Pipeline) RunTargets() error {
 
 		for _, parentTarget := range target.Config.DependsOn {
 			if p.Targets[parentTarget].Result != result.SUCCESS {
-				logrus.Warningf("Parent target[%q] did not succeed. Skipping execution of the target[%q]", parentTarget, id)
+				logrus.Warningf("Parent target[%q] did not succeed. Skipping execution of the target[%q]", parentTarget, targetId)
 				shouldSkipTarget = true
 				target.Result = result.SKIPPED
 				report.Result = target.Result
 			}
-
 		}
 
 		// No need to run this target as one of its dependency failed
 		if shouldSkipTarget {
-			p.Targets[id] = target
-			p.Report.Targets[id] = report
+			p.Targets[targetId] = target
+			p.Report.Targets[targetId] = report
 			continue
 		}
 
 		err = target.Run(p.Sources[target.Config.SourceID].Output)
-
+		// TODO: retrieve target diff/changed files
 		if err != nil {
 			p.Report.Result = result.FAILURE
 			target.Result = result.FAILURE
 
-			errs = append(errs, fmt.Errorf("something went wrong in target %q : %q", id, err))
+			errs = append(errs, fmt.Errorf("something went wrong in target %q : %q", targetId, err))
 		}
 
 		report.Result = target.Result
 
-		p.Targets[id] = target
-		p.Report.Targets[id] = report
+		p.Targets[targetId] = target
+		p.Report.Targets[targetId] = report
 
 		if strings.Compare(target.Result, result.ATTENTION) == 0 {
 			isResultChanged = true

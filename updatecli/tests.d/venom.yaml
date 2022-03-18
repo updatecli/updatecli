@@ -1,0 +1,41 @@
+title: Bump pop version
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: dduportal
+      email: damien.duportal@gmail.com
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: dduportal
+      branch: main
+
+sources:
+  latestVersion:
+    name: Get latest Venom release
+    kind: shell
+    spec:
+      command: echo 1.2.3
+
+targets:
+  goWorkflow:
+    name: 'Bump Venom version to {{ source "latestVersion" }}'
+    kind: file
+    spec:
+      file: .github/workflows/go.yaml
+      matchPattern: 'POP_VERSION: .*'
+      content: 'POP_VERSION: {{ source `latestVersion` }}'
+
+actions:
+  default:
+    title: '[updatecli] Bump Venom version to {{ source "latestVersion" }}'
+    kind: github/pullrequest
+    scmID: default
+    targets:
+      - goWorkflow
+    spec:
+      labels:
+        - chore
+        - skip-changelog

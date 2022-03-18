@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var data = `
+const data = `
 image:
   repository: nginx
   tag: 1.17
@@ -43,6 +43,7 @@ image7@backend:
   - repository: golang
   - repository: nodejs
 `
+
 var data2 = `
 - image:
     repository: nginx
@@ -64,7 +65,7 @@ var data2 = `
 - 5
   `
 
-var source = "1.17"
+const source = "1.17"
 
 func TestGetPositionKeyValue(t *testing.T) {
 	type dataSet struct {
