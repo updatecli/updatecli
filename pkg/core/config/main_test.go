@@ -2,12 +2,14 @@ package config
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -36,7 +38,7 @@ type DataSet []Data
 
 var (
 	dataSet DataSet = DataSet{
-		// Testing that we get the correct value
+		// Testing that we get the correct values
 		{
 			ID: "1",
 			Config: Config{
@@ -222,30 +224,7 @@ var (
 			ExpectedConfig: Config{
 				Name: "jenkins",
 			},
-			ExpectedUpdateErr: ErrNoKeyDefined,
-		},
-		{
-			ID: "3.1",
-			Config: Config{
-				Name: `{{ pipeline "Source.kindd" }}`,
-				Source: source.Config{
-					ResourceConfig: resource.ResourceConfig{
-						Name: "Get Version",
-						Kind: "jenkins",
-					},
-				},
-			},
-			Context: context{
-				Sources: map[string]mockSourceContext{
-					"default": {
-						Output: "2.289.2",
-					},
-				},
-			},
-			ExpectedConfig: Config{
-				Name: "",
-			},
-			ExpectedUpdateErr: ErrNoKeyDefined,
+			ExpectedUpdateErr: fmt.Errorf(`template: cfg:1:10: executing "cfg" at <pipeline "Source.kindd">: error calling pipeline: key not defined in configuration`),
 		},
 		// Testing wrong function name
 		{
@@ -269,33 +248,10 @@ var (
 				},
 			},
 			ExpectedConfig:    Config{},
-			ExpectedUpdateErr: fmt.Errorf(`function "Source" not defined`),
+			ExpectedUpdateErr: fmt.Errorf(`template: cfg:1: function "Source" not defined`),
 		},
 		{
-			ID: "4.1",
-			Config: Config{
-				Name: `{{ source default }}`,
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
-						},
-					},
-				},
-			},
-			Context: context{
-				Sources: map[string]mockSourceContext{
-					"default": {
-						Output: "2.289.2",
-					},
-				},
-			},
-			ExpectedConfig:    Config{},
-			ExpectedUpdateErr: fmt.Errorf(`function "default" not defined`),
-		},
-		{
-			ID: "6",
+			ID: "5",
 			Config: Config{
 				Name: `{{ source "default" }}-jdk11`,
 				Sources: map[string]source.Config{
@@ -320,7 +276,7 @@ var (
 			},
 		},
 		{
-			ID: "7",
+			ID: "6",
 			Config: Config{
 				Name: `lts-jenkins-jdk11`,
 				Sources: map[string]source.Config{
@@ -346,7 +302,37 @@ var (
 			ExpectedValidateErr: ErrNotAllowedTemplatedKey,
 		},
 		{
-			ID: "8",
+			ID: "7",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+				},
+				Conditions: map[string]condition.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Test SourceID",
+							Kind: "shell",
+						},
+						SourceID: "default",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+		},
+		{
+			ID: "7.1",
 			Config: Config{
 				Name: "jenkins - {{ source \"default\" }}",
 				Sources: map[string]source.Config{
@@ -378,7 +364,103 @@ var (
 			ExpectedValidateErr: ErrBadConfig,
 		},
 		{
-			ID: "9",
+			ID: "7.2",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+				},
+				Conditions: map[string]condition.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Test SourceID",
+							Kind: "shell",
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+		},
+		{
+			ID: "7.3",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"one": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+					"two": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get text from shell",
+							Kind: "shell",
+						},
+					},
+				},
+				Conditions: map[string]condition.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Test SourceID",
+							Kind: "shell",
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
+		},
+		{
+			ID: "8",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+				},
+				Targets: map[string]target.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Test SourceID",
+							Kind: "shell",
+						},
+						SourceID: "default",
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+		},
+		{
+			ID: "8.1",
 			Config: Config{
 				Name: "jenkins - {{ source \"default\" }}",
 				Sources: map[string]source.Config{
@@ -410,9 +492,89 @@ var (
 			ExpectedValidateErr: ErrBadConfig,
 		},
 		{
-			ID: "10",
+			ID: "8.2",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+				},
+				Targets: map[string]target.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Test SourceID",
+							Kind: "shell",
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+		},
+		{
+			ID: "8.3",
+			Config: Config{
+				Name: "jenkins - {{ source \"default\" }}",
+				Sources: map[string]source.Config{
+					"one": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+					"two": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+				},
+				Targets: map[string]target.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Test SourceID",
+							Kind: "shell",
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
+		},
+		{
+			ID: "9",
 			Config: Config{
 				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+				SCMs: map[string]scm.Config{
+					"default": {
+						Kind: "github",
+						Spec: map[string]string{
+							"user":       "updatecli",
+							"email":      "me@olblak.com",
+							"owner":      "updatecli",
+							"repository": "updatecli",
+							"token":      "SuperSecret",
+							"username":   "olblak",
+							"branch":     "main",
+						},
+					},
+				},
 				Sources: map[string]source.Config{
 					"default": {
 						ResourceConfig: resource.ResourceConfig{
@@ -432,7 +594,159 @@ var (
 				PullRequests: map[string]pullrequest.Config{
 					"default": {
 						Title:   "default PR",
-						Kind:    "github",
+						Kind:    "github/pullrequest",
+						ScmID:   "default",
+						Targets: []string{"updateDefault"},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+		},
+		{
+			ID: "9.1",
+			Config: Config{
+				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+				SCMs: map[string]scm.Config{
+					"default": {
+						Kind: "github",
+						Spec: map[string]string{
+							"user":       "updatecli",
+							"email":      "me@olblak.com",
+							"owner":      "updatecli",
+							"repository": "updatecli",
+							"token":      "SuperSecret",
+							"username":   "olblak",
+							"branch":     "main",
+						},
+					},
+				},
+				Sources: map[string]source.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+				},
+				Targets: map[string]target.Config{
+					"updateDefault": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Update Default Version",
+							Kind: "shell",
+						},
+					},
+				},
+				PullRequests: map[string]pullrequest.Config{
+					"default": {},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   fmt.Errorf("missing value for parameter(s) [\"kind,targets,scmID\"]"),
+			ExpectedValidateErr: fmt.Errorf("missing value for parameter(s) [\"kind,targets,scmID\"]"),
+		},
+		{
+			ID: "9.2",
+			Config: Config{
+				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+				SCMs: map[string]scm.Config{
+					"default": {
+						Kind: "github",
+						Spec: map[string]string{
+							"user":       "updatecli",
+							"email":      "me@olblak.com",
+							"owner":      "updatecli",
+							"repository": "updatecli",
+							"token":      "SuperSecret",
+							"username":   "olblak",
+							"branch":     "main",
+						},
+					},
+				},
+				Sources: map[string]source.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+				},
+				Targets: map[string]target.Config{
+					"updateDefault": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Update Default Version",
+							Kind: "shell",
+						},
+					},
+				},
+				PullRequests: map[string]pullrequest.Config{
+					"default": {
+						Title:   "default PR",
+						Kind:    "github/pullrequest",
+						ScmID:   "not_existing",
+						Targets: []string{"updateDefault"},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+					},
+				},
+			},
+			ExpectedUpdateErr:   ErrBadConfig,
+			ExpectedValidateErr: ErrBadConfig,
+		},
+		{
+			ID: "9.3",
+			Config: Config{
+				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+				SCMs: map[string]scm.Config{
+					"default": {
+						Kind: "github",
+						Spec: map[string]string{
+							"user":       "updatecli",
+							"email":      "me@olblak.com",
+							"owner":      "updatecli",
+							"repository": "updatecli",
+							"token":      "SuperSecret",
+							"username":   "olblak",
+							"branch":     "main",
+						},
+					},
+				},
+				Sources: map[string]source.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
+					},
+				},
+				Targets: map[string]target.Config{
+					"updateDefault": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Update Default Version",
+							Kind: "shell",
+						},
+					},
+				},
+				PullRequests: map[string]pullrequest.Config{
+					"default": {
+						Title:   "default PR",
+						Kind:    "github/pullrequest",
 						ScmID:   "default",
 						Targets: []string{"not_existing"},
 					},
@@ -448,77 +762,22 @@ var (
 			ExpectedUpdateErr:   ErrBadConfig,
 			ExpectedValidateErr: ErrBadConfig,
 		},
-		{
-			ID: "10.1",
-			Config: Config{
-				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
-						},
-					},
-				},
-				Targets: map[string]target.Config{
-					"updateDefault": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Update Default Version",
-							Kind: "shell",
-						},
-					},
-				},
-				PullRequests: map[string]pullrequest.Config{
-					"default": {
-						Title:   "default PR",
-						Kind:    "github",
-						Targets: []string{"not_existing"},
-					},
-				},
-			},
-			Context: context{
-				Sources: map[string]mockSourceContext{
-					"default": {
-						Output: "2.289.2",
-					},
-				},
-			},
-			ExpectedUpdateErr:   fmt.Errorf("missing value for parameter(s) [\"scmID\"]"),
-			ExpectedValidateErr: fmt.Errorf("missing value for parameter(s) [\"scmID\"]"),
-		},
 	}
 )
 
 func TestUpdate(t *testing.T) {
 	for _, data := range dataSet {
-		err := data.Config.Update(data.Context)
-		if err != nil && data.ExpectedUpdateErr != nil {
-			if !strings.Contains(err.Error(), data.ExpectedUpdateErr.Error()) {
-				t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
-					data.ID,
-					data.ExpectedUpdateErr.Error(),
-					err.Error())
-				continue
+		t.Run(data.ID, func(t *testing.T) {
+			err := data.Config.Update(data.Context)
+
+			if data.ExpectedUpdateErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, data.ExpectedUpdateErr.Error(), err.Error())
+				return
 			}
 
-		} else if err != nil && data.ExpectedUpdateErr == nil {
-			t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
-				data.ID,
-				"nil",
-				err.Error())
-		} else if err == nil && data.ExpectedUpdateErr != nil {
-			t.Errorf("Wrong error expected for dataset ID %q:\n\tExpected:\t\t%q\n\tGot\t\t%q\n",
-				data.ID,
-				data.ExpectedUpdateErr.Error(),
-				"nil")
-		} else if err == nil && data.ExpectedUpdateErr == nil {
-			if strings.Compare(data.Config.Name, data.ExpectedConfig.Name) != 0 {
-				t.Errorf("\n\nWrong output expected for dataset ID %q:\n\tExpected:\t\t`%q`\n\tGot:\t\t\t`%q`\n",
-					data.ID,
-					data.ExpectedConfig.Name,
-					data.Config.Name)
-			}
-		}
+			require.NoError(t, err)
+		})
 	}
 }
 
@@ -526,34 +785,23 @@ func TestChecksum(t *testing.T) {
 	got, err := Checksum("./checksum.example")
 	expected := "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-	if err != nil {
-		t.Errorf("Got an unexpected error: %q", err.Error())
-	}
-
-	if got != expected {
-		t.Errorf("Got %q, expected %q", got, expected)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, expected, got)
 }
 
 func TestValidate(t *testing.T) {
 	for _, data := range dataSet {
-		err := data.Config.Validate()
-		if err != nil && data.ExpectedValidateErr == nil {
-			t.Errorf("Unexpected Validate Error result for data %q\n\tExpected:\t\t'nil'\n\tGot:\t\t\t%q",
-				data.ID,
-				err.Error())
+		t.Run(data.ID, func(t *testing.T) {
+			err := data.Config.Validate()
 
-		} else if err == nil && data.ExpectedValidateErr != nil {
-			t.Errorf("Unexpected Validate Error result for data %q\n\tExpected:\t\t%q\n\tGot:\t\t\t\"nil\"",
-				data.ID,
-				data.ExpectedValidateErr.Error())
-
-		} else if err != nil && data.ExpectedValidateErr != nil {
-			if strings.Compare(err.Error(), data.ExpectedValidateErr.Error()) != 0 {
-				t.Errorf("Unexpected Validate Error for data %q",
-					data.ID)
+			if data.ExpectedValidateErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, data.ExpectedValidateErr.Error(), err.Error())
+				return
 			}
-		}
+
+			require.NoError(t, err)
+		})
 	}
 }
 
@@ -576,8 +824,6 @@ func TestIsTemplatedString(t *testing.T) {
 
 	for _, data := range dataset {
 		got := IsTemplatedString(data.Key)
-		if got != data.ExpectedResult {
-			t.Errorf("Expected '%v' for key %q but got '%v' ", data.ExpectedResult, data.Key, got)
-		}
+		assert.Equal(t, data.ExpectedResult, got)
 	}
 }

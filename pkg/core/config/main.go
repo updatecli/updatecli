@@ -157,6 +157,14 @@ func (config *Config) Validate() error {
 			return err
 		}
 
+		// Then validate that the pullrequest specifies an existing SCM
+		if len(p.ScmID) > 0 {
+			if _, ok := config.SCMs[p.ScmID]; !ok {
+				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, p.ScmID)
+				return ErrBadConfig
+			}
+		}
+
 		// Validate references to other configuration objects
 		for _, target := range p.Targets {
 			if _, ok := config.Targets[target]; !ok {
@@ -276,7 +284,6 @@ func (config *Config) Validate() error {
 // Checksum return a file checksum using sha256.
 func Checksum(filename string) (string, error) {
 	file, err := os.Open(filename)
-
 	if err != nil {
 		logrus.Debugf("Can't open file %q", filename)
 		return "", err
@@ -307,7 +314,6 @@ func (config *Config) Update(data interface{}) (err error) {
 			*/
 
 			val, err := getFieldValueByQuery(data, strings.Split(s, "."))
-
 			if err != nil {
 				return "", err
 			}
@@ -350,19 +356,16 @@ func (config *Config) Update(data interface{}) (err error) {
 	}
 
 	content, err := yaml.Marshal(config)
-
 	if err != nil {
 		return err
 	}
 
 	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
-
 	if err != nil {
 		return err
 	}
 
 	b := bytes.Buffer{}
-
 	if err := tmpl.Execute(&b, &data); err != nil {
 		return err
 	}
@@ -378,7 +381,6 @@ func (config *Config) Update(data interface{}) (err error) {
 	}
 
 	return err
-
 }
 
 // IsTemplatedString test if a string contains go template information
