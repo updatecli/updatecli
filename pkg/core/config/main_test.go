@@ -207,10 +207,12 @@ var (
 			ID: "3",
 			Config: Config{
 				Name: `{{ pipeline "Source.kindd" }}`,
-				Source: source.Config{
-					ResourceConfig: resource.ResourceConfig{
-						Name: "Get Version",
-						Kind: "jenkins",
+				Sources: map[string]source.Config{
+					"default": {
+						ResourceConfig: resource.ResourceConfig{
+							Name: "Get Version",
+							Kind: "jenkins",
+						},
 					},
 				},
 			},

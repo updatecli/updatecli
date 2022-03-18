@@ -1,8 +1,9 @@
-source:
-  kind: helmChart
-  spec:
-    url: https://grafana.github.io/loki/charts
-    name: loki
+sources:
+  lastHelmRelease:
+    kind: helmChart
+    spec:
+      url: https://grafana.github.io/loki/charts
+      name: loki
 
 conditions:
   isKeyExistWithCorrectValue:

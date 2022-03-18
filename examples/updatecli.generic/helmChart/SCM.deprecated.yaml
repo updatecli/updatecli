@@ -1,12 +1,10 @@
 title: Bump Jenkins controller docker image tag
-source:
-  kind: jenkins
-  name: Get Latest Jenkins Stable version
-  spec:
-    release: stable
-    github:
-      token: {{ requiredEnv .github.token }}
-      username: {{ .github.username }}
+sources:
+  lastJenkinsStableVersion:
+    kind: jenkins
+    name: Get Latest Jenkins Stable version
+    spec:
+      release: stable
 targets:
   chartjenkins2:
     name: Bump Jenkins controller docker image tag
