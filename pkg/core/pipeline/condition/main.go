@@ -60,7 +60,7 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		err = s.Init(c.Config.Prefix+source+c.Config.Postfix, c.Config.Name)
+		err = s.Init(c.Config.Name)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
