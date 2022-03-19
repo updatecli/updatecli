@@ -26,17 +26,17 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	gt.foundVersion, err = gt.spec.VersionFilter.Search(tags)
+	gt.foundVersion, err = gt.versionFilter.Search(tags)
 	if err != nil {
 		return "", err
 	}
 	value := gt.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
-		logrus.Infof("%s No git tag found matching pattern %q", result.FAILURE, gt.spec.VersionFilter.Pattern)
-		return value, fmt.Errorf("No git tag found matching pattern %q", gt.spec.VersionFilter.Pattern)
+		logrus.Infof("%s No git tag found matching pattern %q", result.FAILURE, gt.versionFilter.Pattern)
+		return value, fmt.Errorf("No git tag found matching pattern %q", gt.versionFilter.Pattern)
 	} else if len(value) > 0 {
-		logrus.Infof("%s Git tag %q found matching pattern %q", result.SUCCESS, value, gt.spec.VersionFilter.Pattern)
+		logrus.Infof("%s Git tag %q found matching pattern %q", result.SUCCESS, value, gt.versionFilter.Pattern)
 	} else {
 		logrus.Errorf("Something unexpected happened in gitTag source")
 	}

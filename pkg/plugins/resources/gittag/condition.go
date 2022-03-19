@@ -32,7 +32,7 @@ func (gt *GitTag) condition(source string) (bool, error) {
 	// If source input is empty, then it means that it was disabled by the user with `disablesourceinput: true`
 	if source != "" {
 		logrus.Infof("Source input value detected: using it as spec.versionfilter.pattern")
-		gt.spec.VersionFilter.Pattern = source
+		gt.versionFilter.Pattern = source
 	}
 
 	err := gt.Validate()
@@ -45,25 +45,25 @@ func (gt *GitTag) condition(source string) (bool, error) {
 		return false, err
 	}
 
-	gt.foundVersion, err = gt.spec.VersionFilter.Search(tags)
+	gt.foundVersion, err = gt.versionFilter.Search(tags)
 	if err != nil {
 		return false, err
 	}
 	tag := gt.foundVersion.ParsedVersion
 
 	if len(tag) == 0 {
-		err = fmt.Errorf("No git tag matching pattern %q, found", gt.spec.VersionFilter.Pattern)
+		err = fmt.Errorf("No git tag matching pattern %q, found", gt.versionFilter.Pattern)
 		return false, err
 	}
 
-	if tag == gt.spec.VersionFilter.Pattern {
-		logrus.Printf("%s Git tag %q matching\n", result.SUCCESS, gt.spec.VersionFilter.Pattern)
+	if tag == gt.versionFilter.Pattern {
+		logrus.Printf("%s Git tag %q matching\n", result.SUCCESS, gt.versionFilter.Pattern)
 		return true, nil
 	}
 
 	logrus.Printf("%s Git Tag %q not matching %q\n",
 		result.FAILURE,
-		gt.spec.VersionFilter.Pattern,
+		gt.versionFilter.Pattern,
 		tag)
 
 	return false, nil

@@ -5,7 +5,8 @@ source:
     repository: updatecli
     token: {{ requiredEnv "GITHUB_TOKEN" }}
     username: olblak
-    version: latest
+    versionFilter:
+      kind: latest
 conditions:
   dockerFile:
     name: isDockerfileCorrect

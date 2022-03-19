@@ -14,24 +14,21 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Spec represents the configuration input
 type Spec struct {
-	Branch        string          // Branch specifies which github branch to work on
-	Directory     string          // Directory specifies where the github repisotory is cloned on the local disk
-	Email         string          // Email specifies which emails to use when creating commits
-	Owner         string          // Owner specifies repository owner
-	Repository    string          // Repository specifies the name of a repository for a specific owner
-	Version       string          // **Deprecated** Version is deprecated in favor of `versionFilter.pattern`, this field will be removed in a future version
-	VersionFilter version.Filter  //VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	Token         string          // Token specifies the credential used to authenticate with
-	URL           string          // URL specifies the default github url in case of GitHub enterprise
-	Username      string          // Username specifies the username used to authenticate with Github API
-	User          string          // User specific the user in git commit messages
-	PullRequest   PullRequestSpec // Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
-	GPG           sign.GPGSpec    // GPG key and passphrased used for commit signing
+	Branch      string          // Branch specifies which github branch to work on
+	Directory   string          // Directory specifies where the github repository is cloned on the local disk
+	Email       string          // Email specifies which emails to use when creating commits
+	Owner       string          // Owner specifies repository owner
+	Repository  string          // Repository specifies the name of a repository for a specific owner
+	Token       string          // Token specifies the credential used to authenticate with
+	URL         string          // URL specifies the default github url in case of GitHub enterprise
+	Username    string          // Username specifies the username used to authenticate with Github API
+	User        string          // User specifies the user of the git commit messages
+	PullRequest PullRequestSpec // Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
+	GPG         sign.GPGSpec    // GPG key and passphrased used for commit signing
 }
 
 // Github contains settings to interact with Github
@@ -100,18 +97,6 @@ func (s *Spec) Validate() (errs []error) {
 
 	if len(s.Repository) == 0 {
 		required = append(required, "repository")
-	}
-
-	if len(s.VersionFilter.Pattern) == 0 {
-		s.VersionFilter.Pattern = s.Version
-	}
-
-	if err := s.VersionFilter.Validate(); err != nil {
-		errs = append(errs, err)
-	}
-
-	if len(s.Version) > 0 {
-		logrus.Warningln("**Deprecated** Field `version` from resource githubRelease is deprecated in favor of `versionFilter.pattern`, this field will be removed in the next major version")
 	}
 
 	if len(required) > 0 {
