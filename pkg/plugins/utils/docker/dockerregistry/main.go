@@ -53,13 +53,6 @@ func New(hostname, username, password string) Registry {
 
 // Digest retrieves the digest of the provided docker image from the registry
 func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error) {
-
-	// // TODO: move this logic to dockerimage package
-	// if image.Architecture == "" {
-	// 	image.Architecture = docker.DefaultImageArchitecture
-	// 	logrus.Warningf("No architecture specified for the image %s. Using the default value %s.", image.FullName(), docker.DefaultImageArchitecture)
-	// }
-
 	endpoints := registryEndpoints(image)
 
 	URL := fmt.Sprintf("https://%s/v2/%s/%s/manifests/%s",
@@ -185,8 +178,9 @@ func (dgr DockerGenericRegistry) login(image dockerimage.Image) (string, error) 
 	// Even without username or password, DockerHub needs a token:
 	// an anonymous token can be generated (https://docs.docker.com/docker-hub/download-rate-limit/)
 	if dgr.Auth.Username != "" && dgr.Auth.Password != "" {
-		logrus.Warningf("No username/password specified: trying to retrieve a token as anonymous user might not be supported or could impact the rate limiting on your network.")
 		req.SetBasicAuth(dgr.Auth.Username, dgr.Auth.Password)
+	} else {
+		logrus.Warningf("No username and/or password specified: trying to retrieve a token as anonymous user might not be supported or could impact the rate limiting on your network.")
 	}
 
 	logrus.Debugf("Emitting a request to %s", URL)
