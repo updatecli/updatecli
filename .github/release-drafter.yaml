@@ -15,6 +15,9 @@ categories:
     labels:
       - 'chore'
       - 'dependencies'
+      - 'cleanup'
+      - 'deprecated'
+      - 'depreciation'
   - title: '📝 Documentation'
     labels:
       - 'documentation'
@@ -52,6 +55,9 @@ version-resolver:
       - 'documentation'
       - 'doc'
       - 'docs'
+      - 'cleanup'
+      - 'deprecated'
+      - 'depreciation'
   default: patch
 exclude-labels:
   - 'skip-changelog'
