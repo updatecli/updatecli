@@ -43,7 +43,7 @@ func (g *Git) Clean() error {
 // Clone run `git clone`.
 func (g *Git) Clone() (string, error) {
 
-	err := g.Init("", "")
+	err := g.Init("")
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
@@ -87,20 +87,17 @@ func (g *Git) Commit(message string) error {
 		commitMessage,
 		g.GetDirectory(),
 		g.GPG.SigningKey,
-		g.GPG.Passphrase)
-
+		g.GPG.Passphrase,
+	)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // Init set Git parameters if needed.
-func (g *Git) Init(source string, pipelineID string) (err error) {
-	if len(g.Version) == 0 && len(source) > 0 {
-		g.Version = source
-	}
-
+func (g *Git) Init(pipelineID string) (err error) {
 	if len(g.Directory) == 0 {
 		g.Directory, err = newDirectory(g.URL)
 		if err != nil {

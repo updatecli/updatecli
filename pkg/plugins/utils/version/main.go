@@ -24,7 +24,7 @@ type Version struct {
 const (
 	// REGEXVERSIONKIND represents versions as a simple string
 	REGEXVERSIONKIND string = "regex"
-	// SEMVERVERSIONKIND represents versions as a semantic versionning type
+	// SEMVERVERSIONKIND represents versions as a semantic versioning type
 	SEMVERVERSIONKIND string = "semver"
 	// LATESTVERSIONKIND specifies that we are looking for the latest version of an array
 	LATESTVERSIONKIND string = "latest"
@@ -39,9 +39,8 @@ var (
 	}
 )
 
-// Validate tests if our filter contains valid parameters
-func (f *Filter) Validate() error {
-
+// Init returns a new (copy) valid instanciated filter
+func (f Filter) Init() (Filter, error) {
 	// Set default kind value to "latest"
 	if len(f.Kind) == 0 {
 		f.Kind = LATESTVERSIONKIND
@@ -56,6 +55,11 @@ func (f *Filter) Validate() error {
 		f.Pattern = ".*"
 	}
 
+	return f, f.Validate()
+}
+
+// Validate tests if our filter contains valid parameters
+func (f Filter) Validate() error {
 	ok := false
 
 	for id := range SupportedKind {

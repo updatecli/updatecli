@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestNew(t *testing.T) {
@@ -37,10 +36,6 @@ func TestNew(t *testing.T) {
 					Username:   "joe",
 					Token:      "superSecretTOkenOfJoe",
 					URL:        "github.com",
-					VersionFilter: version.Filter{
-						Kind:    "latest",
-						Pattern: "latest",
-					},
 				},
 			},
 		},
@@ -63,10 +58,6 @@ func TestNew(t *testing.T) {
 					Token:      "superSecretTOkenOfJoe",
 					URL:        "github.com",
 					Directory:  path.Join(tmp.Directory, "updatecli", "updatecli"),
-					VersionFilter: version.Filter{
-						Kind:    "latest",
-						Pattern: "latest",
-					},
 				},
 			},
 		},
@@ -89,10 +80,6 @@ func TestNew(t *testing.T) {
 					Token:      "superSecretTOkenOfJoe",
 					URL:        "github.com",
 					Directory:  "/home/updatecli",
-					VersionFilter: version.Filter{
-						Kind:    "latest",
-						Pattern: "latest",
-					},
 				},
 			},
 		},

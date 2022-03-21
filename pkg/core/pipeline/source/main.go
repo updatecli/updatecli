@@ -43,7 +43,7 @@ func (s *Source) Run() (err error) {
 			return err
 		}
 
-		err = SCM.Init("", workingDir)
+		err = SCM.Init(workingDir)
 
 		if err != nil {
 			s.Result = result.FAILURE

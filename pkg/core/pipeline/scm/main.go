@@ -30,7 +30,7 @@ type ScmHandler interface {
 	Clone() (string, error)
 	Checkout() error
 	GetDirectory() (directory string)
-	Init(source string, pipelineID string) error
+	Init(pipelineID string) error
 	Push() error
 	Commit(message string) error
 	Clean() error

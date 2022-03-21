@@ -109,7 +109,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	s := *t.Scm
 
-	if err = s.Init(source, t.Config.PipelineID); err != nil {
+	if err = s.Init(t.Config.PipelineID); err != nil {
 		t.Result = result.FAILURE
 		return err
 	}
