@@ -1,9 +1,10 @@
-source:
-  name: "Get docker image digest for olblak/polls:latest"
-  kind: dockerDigest
-  spec:
-    image: "olblak/polls"
-    tag: "latest"
+sources:
+  lastDigest:
+    name: "Get docker image digest for olblak/polls:latest"
+    kind: dockerDigest
+    spec:
+      image: "olblak/polls"
+      tag: "latest"
 targets:
   imageTag:
     name: "updatecli docker image tag"

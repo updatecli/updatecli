@@ -1,9 +1,10 @@
-source:
-  kind: helmChart
-  name: "Get latest loki helm chart version"
-  spec:
-    url: https://grafana.github.io/loki/charts
-    name: loki
+sources:
+  lastHelmRelease:
+    kind: helmChart
+    name: "Get latest loki helm chart version"
+    spec:
+      url: https://grafana.github.io/loki/charts
+      name: loki
 
 conditions:
   exist:

@@ -1,9 +1,10 @@
-source:
-  kind: helmChart
-  name: "Get latest jenkins helm chart version"
-  spec:
-    url: https://charts.jenkins.io
-    name: jenkins
+sources:
+  lastHelmRelease:
+    kind: helmChart
+    name: "Get latest jenkins helm chart version"
+    spec:
+      url: https://charts.jenkins.io
+      name: jenkins
 
 conditions:
   exist:
