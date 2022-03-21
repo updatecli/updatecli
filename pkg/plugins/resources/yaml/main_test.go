@@ -408,16 +408,6 @@ func Test_Validate(t *testing.T) {
 			mockFileExist: true,
 			wantErr:       true,
 		},
-		{
-			name: "raises an error when 'Path' is defined (deprecated)",
-			spec: Spec{
-				Path: "/tmp/bar.yaml",
-				File: "/tmp/toto.yaml",
-				Key:  "foo.bar",
-			},
-			mockFileExist: true,
-			wantErr:       true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
