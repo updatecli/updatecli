@@ -1,9 +1,10 @@
-source:
-  kind: helmChart
-  name
-  spec:
-    name: prometheus
-    url: https://prometheus-community.github.io/helm-charts
+sources:
+  lastHelmRelease:
+    kind: helmChart
+    name
+    spec:
+      name: prometheus
+      url: https://prometheus-community.github.io/helm-charts
 conditions:
   isNamePrometheus:
     kind: yaml

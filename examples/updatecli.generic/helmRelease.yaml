@@ -30,11 +30,12 @@
 #
 ###
 
-source:
-  kind: helmChart
-  spec:
-    url: https://charts.jenkins.io
-    name: jenkins
+sources:
+  lastHelmRelease:
+    kind: helmChart
+    spec:
+      url: https://charts.jenkins.io
+      name: jenkins
 conditions:
   isPrometheuseHelmChartVersionAvailable:
     name: "Test if the prometheus helm chart is available"

@@ -1,13 +1,14 @@
-source:
-  kind: maven
-  name: "Get latest jenkins weekly version from maven repository"
-  postfix: "-jdk11"
-  spec:
-    owner: "maven"
-    url: "repo.jenkins-ci.org"
-    repository: "releases"
-    groupID: "org.jenkins-ci.main"
-    artifactID: "jenkins-war"
+sources:
+  lastMavenRelease:
+    kind: maven
+    name: "Get latest jenkins weekly version from maven repository"
+    postfix: "-jdk11"
+    spec:
+      owner: "maven"
+      url: "repo.jenkins-ci.org"
+      repository: "releases"
+      groupID: "org.jenkins-ci.main"
+      artifactID: "jenkins-war"
 conditions:
   docker:
     name: "Is Docker Image Published on Registry?"

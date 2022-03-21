@@ -1,13 +1,14 @@
-source:
-  kind: githubRelease
-  name: "Get latest pluginsite version"
-  spec:
-    owner: "jenkins-infra"
-    repository: "plugin-site-api"
-    token: {{ requiredEnv "GITHUB_TOKEN" }}
-    username: "olblak"
-    versionFilter:
-      kind: latest
+sources:
+  lastGitHubRelease:
+    kind: githubRelease
+    name: "Get latest pluginsite version"
+    spec:
+      owner: "jenkins-infra"
+      repository: "plugin-site-api"
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+      username: "olblak"
+      versionFilter:
+        kind: latest
 targets:
   imageTag:
     name: "Is Docker Image published on dockerhub"

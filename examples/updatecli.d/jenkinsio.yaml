@@ -1,9 +1,10 @@
-source:
-  kind: dockerDigest
-  name: "Get latest nginx:1.17 from dockerhub"
-  spec:
-    image: "library/nginx"
-    tag: "1.17"
+sources:
+  lastDockerDigest:
+    kind: dockerDigest
+    name: "Get latest nginx:1.17 from dockerhub"
+    spec:
+      image: "library/nginx"
+      tag: "1.17"
 targets:
   jenkinsio:
     name: "Update to latest nginx:1.17"

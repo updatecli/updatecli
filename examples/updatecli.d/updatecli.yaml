@@ -1,12 +1,13 @@
-source:
-  kind: githubRelease
-  spec:
-    owner: olblak
-    repository: updatecli
-    token: {{ requiredEnv "GITHUB_TOKEN" }}
-    username: olblak
-    versionFilter:
-      kind: latest
+sources:
+  lastGitHubRelease:
+    kind: githubRelease
+    spec:
+      owner: olblak
+      repository: updatecli
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+      username: olblak
+      versionFilter:
+        kind: latest
 conditions:
   dockerFile:
     name: isDockerfileCorrect

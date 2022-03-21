@@ -60,7 +60,7 @@ In the `main.go`, you need to define the `struct` that you'll use to configure y
 ```
 type Capitalized_package_name struct {
 	Field1        string
-	Field2        string 
+	Field2        string
 	Field3        string
 	Field4        string
 }
@@ -138,11 +138,12 @@ config.value
 ```
 # updatecli diff --config config.value
 
-source:
-  kind: packageName
-  spec:
-    field1: "value"
-    field3: "value"
+sources:
+  default:
+    kind: packageName
+    spec:
+      field1: "value"
+      field3: "value"
 targets:
   idName:
     name: "updatecli"
