@@ -6,7 +6,8 @@ source:
     repository: "plugin-site-api"
     token: {{ requiredEnv "GITHUB_TOKEN" }}
     username: "olblak"
-    version: "latest"
+    versionFilter:
+      kind: latest
 targets:
   imageTag:
     name: "Is Docker Image published on dockerhub"
@@ -29,7 +30,7 @@ targets:
     spec:
       file: "charts/plugin-site/Chart.yaml"
       key: appVersion
-    scm: 
+    scm:
       github:
         user: "{{ .github.user }}"
         email: "{{ .github.email }}"

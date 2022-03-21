@@ -6,7 +6,8 @@ source:
     repository: "jenkins-wiki-exporter"
     token: {{ requiredEnv "GITHUB_TOKEN" }}
     username: "olblak"
-    version: "latest"
+    versionFilter:
+      kind: latest
 conditions:
   docker:
     name: "Is Docker Image Published on Registry?"

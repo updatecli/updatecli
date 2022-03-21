@@ -9,7 +9,8 @@ sources:
       repository: "helm"
       token: {{ requiredEnv .github.token }}
       username: olblak
-      version: latest
+      versionFilter:
+      kind: latest
   helm2:
     name: Get Latest helm release version
     kind: githubRelease
@@ -18,7 +19,8 @@ sources:
       repository: "helm"
       token: {{ requiredEnv .github.token }}
       username: olblak
-      version: latest
+      versionFilter:
+      kind: latest
 conditions:
   isENVSet:
     sourceID: helm
