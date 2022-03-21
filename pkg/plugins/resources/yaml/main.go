@@ -20,10 +20,8 @@ var (
 // Spec defines a specification for a "yaml" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	File string
-	Key  string
-	// Deprecated: use File instead
-	Path    string
+	File    string
+	Key     string
 	Value   string
 	KeyOnly bool // [condition] allow checking for only the existence of a key (not its value)
 }
@@ -66,9 +64,6 @@ func (y *Yaml) Validate() error {
 	var validationErrors []string
 
 	// Check for all validation
-	if len(y.spec.Path) > 0 {
-		validationErrors = append(validationErrors, "Invalid spec for yaml resource: Key 'path' is deprecated, use 'file' instead.")
-	}
 	if y.spec.File == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'file' is empty.")
 	}

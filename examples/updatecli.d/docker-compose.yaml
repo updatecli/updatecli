@@ -10,7 +10,6 @@ targets:
     kind: "yaml"
     prefix: "olblak/polls@256:"
     spec:
-      #path: "/tt"
       #file: "/home/olblak/Project/Jenkins-infra/polls/docker-compose.yaml"
       file: "../../Jenkins-infra/polls/docker-compose.yamli"
       #file: "docker-compose.yamli"
