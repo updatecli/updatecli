@@ -21,13 +21,9 @@ import (
 )
 
 type ResourceConfig struct {
-	DependsOn []string `yaml:"depends_on"`
-	Name      string
-	Kind      string
-	// Deprecated in favor of Transformers on 2021/01/3
-	Prefix string
-	// Deprecated in favor of Transformers on 2021/01/3
-	Postfix      string
+	DependsOn    []string `yaml:"depends_on"`
+	Name         string
+	Kind         string
 	Transformers transformer.Transformers
 	Spec         interface{}
 	// Deprecated field on version [1.17.0]

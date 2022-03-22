@@ -60,16 +60,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 	}
 
-	// Announce deprecation on 2021/01/31
-	if len(t.Config.Prefix) > 0 {
-		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
-	}
-
-	// Announce deprecation on 2021/01/31
-	if len(t.Config.Postfix) > 0 {
-		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
-	}
-
 	if o.DryRun {
 		logrus.Infof("\n**Dry Run enabled**\n\n")
 	}
@@ -83,7 +73,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
 
-		changed, err = target.Target(t.Config.Prefix+source+t.Config.Postfix, o.DryRun)
+		changed, err = target.Target(source, o.DryRun)
 		if err != nil {
 			t.Result = result.FAILURE
 			return err
@@ -119,7 +109,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	changed, files, message, err = target.TargetFromSCM(t.Config.Prefix+source+t.Config.Postfix, s, o.DryRun)
+	changed, files, message, err = target.TargetFromSCM(source, s, o.DryRun)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err

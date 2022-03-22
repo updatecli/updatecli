@@ -148,10 +148,11 @@ targets:
   idName:
     name: "updatecli"
     kind: "yaml"
-    prefix: "olblak/polls@256:"
     spec:
       file: "..."
       key:  "..."
+    transformers:
+      - addPrefix: "olblak/polls@256:"
 ```
 
 

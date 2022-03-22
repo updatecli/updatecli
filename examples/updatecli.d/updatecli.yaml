@@ -30,12 +30,13 @@ targets:
   dockerFile:
     name: "isDockerfileCorrect"
     kind: dockerfile
-    prefix: "olblak/updatecli:"
     spec:
       file: Dockerfile
       Instruction:
         keyword: "FROM"
         matcher: "golang:1.14"
+    transformers:
+      - addPrefix: "olblak/updatecli:"
     scm:
       github:
         user: "updatecli"
