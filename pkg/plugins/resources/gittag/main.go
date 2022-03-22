@@ -18,8 +18,9 @@ type Spec struct {
 
 // GitTag defines a resource of kind "gittag"
 type GitTag struct {
-	spec         Spec
-	foundVersion version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
+	spec          Spec
+	foundVersion  version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
+	versionFilter version.Filter  // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 }
 
 // New returns a reference to a newly initialized GitTag object from a Spec
@@ -32,8 +33,14 @@ func New(spec interface{}) (*GitTag, error) {
 		return nil, err
 	}
 
+	newFilter, err := newSpec.VersionFilter.Init()
+	if err != nil {
+		return &GitTag{}, err
+	}
+
 	newResource := &GitTag{
-		spec: newSpec,
+		spec:          newSpec,
+		versionFilter: newFilter,
 	}
 
 	return newResource, nil
@@ -44,11 +51,6 @@ func (gt *GitTag) Validate() error {
 	validationErrors := []string{}
 	if gt.spec.Path == "" {
 		validationErrors = append(validationErrors, "Git working directory path is empty while it must be specified. Did you specify an `scmID` or a `spec.path`?")
-	}
-
-	err := gt.spec.VersionFilter.Validate()
-	if err != nil {
-		validationErrors = append(validationErrors, err.Error())
 	}
 
 	// Return all the validation errors if found any

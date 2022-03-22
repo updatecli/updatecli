@@ -2,7 +2,6 @@ package source
 
 import (
 	"os"
-	"strings"
 
 	"github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
@@ -25,7 +24,6 @@ type Source struct {
 // Config struct defines a source configuration
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	Replaces                Replacers // Deprecated in favor of Transformers on 2021/01/3
 }
 
 // Run execute actions defined by the source configuration
@@ -47,7 +45,7 @@ func (s *Source) Run() (err error) {
 			return err
 		}
 
-		err = SCM.Init("", workingDir)
+		err = SCM.Init(workingDir)
 
 		if err != nil {
 			s.Result = result.FAILURE
@@ -94,24 +92,6 @@ func (s *Source) Run() (err error) {
 			s.Result = result.FAILURE
 			return err
 		}
-	}
-
-	// Announce deprecation on 2021/01/31
-	if len(s.Config.Prefix) > 0 {
-		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release\n")
-	}
-
-	// Announce deprecation on 2021/01/31
-	if len(s.Config.Postfix) > 0 {
-		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release\n")
-	}
-
-	// Deprecated in favor of Transformers on 2021/01/3
-	if len(s.Config.Replaces) > 0 {
-		args := s.Config.Replaces.Unmarshal()
-
-		r := strings.NewReplacer(args...)
-		s.Output = (r.Replace(s.Output))
 	}
 
 	if len(s.Output) == 0 {

@@ -51,7 +51,7 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 	message := gt.spec.Message
 
 	// Fail if a pattern is specified
-	if gt.spec.VersionFilter.Pattern != "" {
+	if gt.versionFilter.Pattern != "" {
 		return false, files, message, fmt.Errorf("Target validation error: spec.versionfilter.pattern is not allowed for targets of type gittag.")
 	}
 
@@ -63,12 +63,12 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 	}
 
 	// Check if the provided tag (from source input value) already exists
-	gt.spec.VersionFilter.Pattern = source
+	gt.versionFilter.Pattern = source
 	tags, err := gitgeneric.Tags(gt.spec.Path)
 	if err != nil {
 		return false, files, message, err
 	}
-	gt.foundVersion, err = gt.spec.VersionFilter.Search(tags)
+	gt.foundVersion, err = gt.versionFilter.Search(tags)
 	if err != nil && err.Error() != fmt.Sprintf("No version found matching pattern %q", source) {
 		// Something went wrong during the tag search.
 		return false, files, message, err

@@ -39,10 +39,7 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		logrus.Infof("\n%s\n", id)
 		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
-		err := condition.Run(
-			p.Sources[condition.Config.SourceID].Config.Prefix +
-				p.Sources[condition.Config.SourceID].Output +
-				p.Sources[condition.Config.SourceID].Config.Postfix)
+		err := condition.Run(p.Sources[condition.Config.SourceID].Output)
 		if err != nil {
 			// Show error to end user if any but continue the flow execution
 			logrus.Error(err)

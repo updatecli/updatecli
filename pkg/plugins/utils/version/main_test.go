@@ -2,139 +2,306 @@ package version
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type SearchDataSet struct {
-	Filter         Filter
-	Versions       []string
-	ExpectedResult string
-	ExpectedError  error
-}
+// type SearchDataSet struct {
+// 	Filter         Filter
+// 	Versions       []string
+// 	want string
+// 	wantErr  error
+// }
 
-type ValidateDataSet struct {
-	Filter Filter
-	Err    error
-}
-
-var (
-	searchDataSet []SearchDataSet = []SearchDataSet{
-		{
-			Filter: Filter{
-				Kind:    "latest",
-				Pattern: "latest",
-			},
-			Versions:       []string{"1.0", "2.0", "3.0"},
-			ExpectedResult: "3.0",
-			ExpectedError:  nil,
-		},
-		{
-			Filter: Filter{
-				Kind: "latest",
-			},
-			Versions:       []string{"1.0", "2.0", "3.0"},
-			ExpectedResult: "3.0",
-			ExpectedError:  nil,
-		},
-		{
-			Filter:         Filter{},
-			Versions:       []string{"1.0", "2.0", "3.0"},
-			ExpectedResult: "3.0",
-			ExpectedError:  nil,
-		},
-		{
-			Filter: Filter{
-				Kind:    "semver",
-				Pattern: "~2",
-			},
-			Versions:       []string{"1.0", "2.0", "3.0"},
-			ExpectedResult: "2.0.0",
-			ExpectedError:  nil,
-		},
-		{
-			Filter: Filter{
-				Kind: "semver",
-			},
-			Versions:       []string{"1.0", "2.0", "3.0"},
-			ExpectedResult: "3.0.0",
-			ExpectedError:  nil,
-		},
-		{
-			Filter: Filter{
-				Kind:    "regex",
-				Pattern: "^updatecli-2.(\\d*)$",
-			},
-			Versions:       []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
-			ExpectedResult: "updatecli-2.0",
-			ExpectedError:  nil,
-		},
-		{
-			Filter: Filter{
-				Kind: "regex",
-			},
-			Versions:       []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
-			ExpectedResult: "updatecli-3.0",
-			ExpectedError:  nil,
-		},
-		{
-			Filter: Filter{
-				Kind:    "semver",
-				Pattern: "~2",
-			},
-			Versions:       []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
-			ExpectedResult: "",
-			ExpectedError:  errors.New("No valid semantic version found"),
-		},
-	}
-
-	validateDataSet []ValidateDataSet = []ValidateDataSet{
-		{
-			Filter: Filter{
-				Kind:    "semver",
-				Pattern: "~2",
-			},
-			Err: nil,
-		},
-		{
-			Filter: Filter{
-				Kind:    "regex",
-				Pattern: "~2",
-			},
-			Err: nil,
-		},
-		{
-			Filter: Filter{
-				Kind:    "noExist",
-				Pattern: "~2",
-			},
-			Err: errors.New(`Unsupported version kind "noExist"`),
-		},
-	}
-)
+// var (
+// 	searchDataSet []SearchDataSet = []SearchDataSet{
+// 		{
+// 			filter: Filter{
+// 				Kind:    "latest",
+// 				Pattern: "latest",
+// 			},
+// 			versions:       []string{"1.0", "2.0", "3.0"},
+// 			want: "3.0",
+// 			wantErr:  nil,
+// 		},
+// 		{
+// 			filter: Filter{
+// 				Kind: "latest",
+// 			},
+// 			versions:       []string{"1.0", "2.0", "3.0"},
+// 			want: "3.0",
+// 			wantErr:  nil,
+// 		},
+// 		{
+// 			filter:         Filter{},
+// 			versions:       []string{"1.0", "2.0", "3.0"},
+// 			want: "3.0",
+// 			wantErr:  nil,
+// 		},
+// 		{
+// 			filter: Filter{
+// 				Kind:    "semver",
+// 				Pattern: "~2",
+// 			},
+// 			versions:       []string{"1.0", "2.0", "3.0"},
+// 			want: "2.0.0",
+// 			wantErr:  nil,
+// 		},
+// 		{
+// 			filter: Filter{
+// 				Kind: "semver",
+// 			},
+// 			versions:       []string{"1.0", "2.0", "3.0"},
+// 			want: "3.0.0",
+// 			wantErr:  nil,
+// 		},
+// 		{
+// 			filter: Filter{
+// 				Kind:    "regex",
+// 				Pattern: "^updatecli-2.(\\d*)$",
+// 			},
+// 			versions:       []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
+// 			want: "updatecli-2.0",
+// 			wantErr:  nil,
+// 		},
+// 		{
+// 			filter: Filter{
+// 				Kind: "regex",
+// 			},
+// 			versions:       []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
+// 			want: "updatecli-3.0",
+// 			wantErr:  nil,
+// 		},
+// 		{
+// 			filter: Filter{
+// 				Kind:    "semver",
+// 				Pattern: "~2",
+// 			},
+// 			versions:       []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
+// 			want: "",
+// 			wantErr:  errors.New("No valid semantic version found"),
+// 		},
+// 	}
+// )
 
 func TestSearch(t *testing.T) {
-	for _, d := range searchDataSet {
-		err := d.Filter.Validate()
-		require.NoError(t, err)
+	tests := []struct {
+		name     string
+		filter   Filter
+		versions []string
+		want     Version
+		wantErr  error
+	}{
+		{
+			name: "Passing case with filter 'latest' and pattern 'latest'",
+			filter: Filter{
+				Kind:    LATESTVERSIONKIND,
+				Pattern: LATESTVERSIONKIND,
+			},
+			versions: []string{"1.0", "2.0", "3.0"},
+			want: Version{
+				ParsedVersion:   "3.0",
+				OriginalVersion: "3.0",
+			},
+		},
+		{
+			name: "Passing case with filter 'latest' but custom specified pattern",
+			filter: Filter{
+				Kind:    LATESTVERSIONKIND,
+				Pattern: "2.0",
+			},
+			versions: []string{"1.0", "2.0", "3.0"},
+			want: Version{
+				ParsedVersion:   "2.0",
+				OriginalVersion: "2.0",
+			},
+		},
+		{
+			name: "Passing case with filter semver and pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "~2",
+			},
+			versions: []string{"1.0", "2.0", "3.0"},
+			want: Version{
+				ParsedVersion:   "2.0.0",
+				OriginalVersion: "2.0",
+			},
+		},
+		{
+			name: "Passing case with filter semver but no pattern",
+			filter: Filter{
+				Kind: SEMVERVERSIONKIND,
+			},
+			versions: []string{"1.0", "2.0", "3.0"},
+			want: Version{
+				ParsedVersion:   "3.0.0",
+				OriginalVersion: "3.0",
+			},
+		},
+		{
+			name: "Failing case with no semver (+pattern) found",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "~2",
+			},
+			versions: []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
+			want:     Version{},
+			wantErr:  errors.New("No valid semantic version found"),
+		},
+		{
+			name: "Passing case with regexp filter and pattern",
+			filter: Filter{
+				Kind:    REGEXVERSIONKIND,
+				Pattern: "^updatecli-2.(\\d*)$",
+			},
+			versions: []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
+			want: Version{
+				ParsedVersion:   "updatecli-2.0",
+				OriginalVersion: "updatecli-2.0",
+			},
+		},
+		{
+			name: "Passing case with regexp filter but no pattern",
+			filter: Filter{
+				Kind: REGEXVERSIONKIND,
+			},
+			versions: []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
+			want: Version{
+				ParsedVersion:   "updatecli-3.0",
+				OriginalVersion: "updatecli-3.0",
+			},
+		},
+		{
+			name: "Failing case with regexp filter (+pattern)",
+			filter: Filter{
+				Kind:    REGEXVERSIONKIND,
+				Pattern: "^updatecli-4.(\\d*)$",
+			},
+			versions: []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
+			want:     Version{},
+			wantErr:  fmt.Errorf(`No version found matching pattern "^updatecli-4.(\\d*)$"`),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.filter.Search(tt.versions)
 
-		foundVersion, err := d.Filter.Search(d.Versions)
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tt.wantErr, err)
+				return
+			}
 
-		if d.ExpectedError != nil {
-			assert.Equal(t, d.ExpectedError, err)
-			return
-		}
-
-		require.NoError(t, err)
-		assert.Equal(t, d.ExpectedResult, foundVersion.ParsedVersion)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }
 
 func TestValidate(t *testing.T) {
-	for _, v := range validateDataSet {
-		err := v.Filter.Validate()
-		assert.Equal(t, v.Err, err)
+	tests := []struct {
+		name    string
+		filter  Filter
+		wantErr error
+	}{
+		{
+			name: "Valid semver filter",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "~2",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Valid regex filter",
+			filter: Filter{
+				Kind:    REGEXVERSIONKIND,
+				Pattern: "~2",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Invalid kind of filter",
+			filter: Filter{
+				Kind:    "noExist",
+				Pattern: "~2",
+			},
+			wantErr: errors.New(`Unsupported version kind "noExist"`),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.filter.Validate()
+
+			assert.Equal(t, tt.wantErr, err)
+		})
+	}
+}
+
+func TestNewFilter(t *testing.T) {
+	tests := []struct {
+		name    string
+		filter  Filter
+		want    Filter
+		wantErr bool
+	}{
+		{
+			name: "Case with latest version",
+			filter: Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			want: Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+		},
+		{
+			name:   "Case with empty arguments",
+			filter: Filter{},
+			want: Filter{
+				Kind:    LATESTVERSIONKIND,
+				Pattern: "latest",
+			},
+		},
+		{
+			name: "Case with empty pattern for semver",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "",
+			},
+			want: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "*",
+			},
+		},
+		{
+			name: "Case with empty pattern for regexp",
+			filter: Filter{
+				Kind:    REGEXVERSIONKIND,
+				Pattern: "",
+			},
+			want: Filter{
+				Kind:    REGEXVERSIONKIND,
+				Pattern: ".*",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.filter.Init()
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }

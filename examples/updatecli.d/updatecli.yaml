@@ -1,11 +1,13 @@
-source:
-  kind: githubRelease
-  spec:
-    owner: olblak
-    repository: updatecli
-    token: {{ requiredEnv "GITHUB_TOKEN" }}
-    username: olblak
-    version: latest
+sources:
+  lastGitHubRelease:
+    kind: githubRelease
+    spec:
+      owner: olblak
+      repository: updatecli
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+      username: olblak
+      versionFilter:
+        kind: latest
 conditions:
   dockerFile:
     name: isDockerfileCorrect
@@ -28,12 +30,13 @@ targets:
   dockerFile:
     name: "isDockerfileCorrect"
     kind: dockerfile
-    prefix: "olblak/updatecli:"
     spec:
       file: Dockerfile
       Instruction:
         keyword: "FROM"
         matcher: "golang:1.14"
+    transformers:
+      - addPrefix: "olblak/updatecli:"
     scm:
       github:
         user: "updatecli"

@@ -43,8 +43,6 @@ var (
 	// ErrNotAllowedTemplatedKey is returned when
 	// we are planning to template at runtime unauthorized keys such map key
 	ErrNotAllowedTemplatedKey = errors.New("not allowed templated key")
-
-	defaultSourceID = "default"
 )
 
 // Config contains cli configuration
@@ -52,7 +50,6 @@ type Config struct {
 	Name         string
 	PipelineID   string                        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	Title        string                        // Title is used for the full pipeline
-	Source       source.Config                 // **Deprecated** 2021/02/18 Is replaced by Sources, this setting will be deleted in a future release
 	PullRequests map[string]pullrequest.Config // PullRequests defines the list of Pull Request configuration which need to be managed
 	SCMs         map[string]scm.Config         `yaml:"scms"` // SCMs defines the list of repository configuration used to fetch content from.
 	Sources      map[string]source.Config      // Sources defines the list of source configuration
@@ -130,20 +127,6 @@ func (config *Config) Display() error {
 
 // Validate run various validation test on the configuration and update fields if necessary
 func (config *Config) Validate() error {
-
-	if config.Source.Kind != "" && (len(config.Sources) > 0) {
-		logrus.Errorf("Source and Sources can't be defined at the same time, please use the 'Sources' syntax")
-		return ErrBadConfig
-
-	} else if config.Source.Kind != "" && len(config.Sources) == 0 {
-
-		logrus.Warning("Since version 0.2.0, the single source definition is **Deprecated**  and replaced by Sources. This parameter will be deleted in a future release")
-
-		config.Sources = make(map[string]source.Config)
-		config.Sources[defaultSourceID] = config.Source
-		config.Source = source.Config{}
-	}
-
 	for id, scm := range config.SCMs {
 		if err := scm.Validate(); err != nil {
 			logrus.Errorf("bad parameter(s) for scmIDs %q", id)
@@ -155,6 +138,14 @@ func (config *Config) Validate() error {
 		if err := p.Validate(); err != nil {
 			logrus.Errorf("bad parameters for pullrequest %q", id)
 			return err
+		}
+
+		// Then validate that the pullrequest specifies an existing SCM
+		if len(p.ScmID) > 0 {
+			if _, ok := config.SCMs[p.ScmID]; !ok {
+				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, p.ScmID)
+				return ErrBadConfig
+			}
 		}
 
 		// Validate references to other configuration objects
@@ -276,7 +267,6 @@ func (config *Config) Validate() error {
 // Checksum return a file checksum using sha256.
 func Checksum(filename string) (string, error) {
 	file, err := os.Open(filename)
-
 	if err != nil {
 		logrus.Debugf("Can't open file %q", filename)
 		return "", err
@@ -307,7 +297,6 @@ func (config *Config) Update(data interface{}) (err error) {
 			*/
 
 			val, err := getFieldValueByQuery(data, strings.Split(s, "."))
-
 			if err != nil {
 				return "", err
 			}
@@ -350,19 +339,16 @@ func (config *Config) Update(data interface{}) (err error) {
 	}
 
 	content, err := yaml.Marshal(config)
-
 	if err != nil {
 		return err
 	}
 
 	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
-
 	if err != nil {
 		return err
 	}
 
 	b := bytes.Buffer{}
-
 	if err := tmpl.Execute(&b, &data); err != nil {
 		return err
 	}
@@ -378,7 +364,6 @@ func (config *Config) Update(data interface{}) (err error) {
 	}
 
 	return err
-
 }
 
 // IsTemplatedString test if a string contains go template information
@@ -475,7 +460,6 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 // GetChangelogTitle try to guess a specific target based on various information available for
 // a specific job
 func (config *Config) GetChangelogTitle(ID string, fallback string) (title string) {
-
 	if len(config.Title) > 0 {
 		// If a pipeline title has been defined, then use it for pull request title
 		title = fmt.Sprintf("[updatecli] %s",

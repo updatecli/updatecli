@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/invopop/jsonschema"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -46,16 +45,6 @@ func (c *Condition) Run(source string) (err error) {
 		}
 	}
 
-	// Announce deprecation on 2021/01/31
-	if len(c.Config.Prefix) > 0 {
-		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
-	}
-
-	// Announce deprecation on 2021/01/31
-	if len(c.Config.Postfix) > 0 {
-		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
-	}
-
 	// If scm is defined then clone the repository
 	if c.Scm != nil {
 		s := *c.Scm
@@ -64,7 +53,7 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		err = s.Init(c.Config.Prefix+source+c.Config.Postfix, c.Config.Name)
+		err = s.Init(c.Config.Name)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
@@ -76,14 +65,14 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		ok, err = condition.ConditionFromSCM(c.Config.Prefix+source+c.Config.Postfix, s)
+		ok, err = condition.ConditionFromSCM(source, s)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
 		}
 
 	} else if len(c.Config.Scm) == 0 {
-		ok, err = condition.Condition(c.Config.Prefix + source + c.Config.Postfix)
+		ok, err = condition.Condition(source)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err

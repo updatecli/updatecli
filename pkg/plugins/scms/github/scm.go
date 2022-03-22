@@ -8,8 +8,7 @@ import (
 )
 
 // Init set default Github parameters if not set.
-func (g *Github) Init(source string, pipelineID string) error {
-	g.Spec.VersionFilter.Pattern = source
+func (g *Github) Init(pipelineID string) error {
 	g.HeadBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
 	g.setDirectory()
 

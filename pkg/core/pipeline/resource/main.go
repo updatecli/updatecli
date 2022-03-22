@@ -21,16 +21,9 @@ import (
 )
 
 type ResourceConfig struct {
-	DependsOn []string `yaml:"depends_on"`
-	// Name defines a resource name
-	Name string
-	// Kind defines a resource kind such as yaml
-	Kind string
-	// **Deprecated** Please consider `Transformers`
-	Prefix string
-	// **Deprecated** Please consider `Transformers`
-	Postfix string
-	// Define a lit of Transformer
+	DependsOn    []string `yaml:"depends_on"`
+	Name         string
+	Kind         string
 	Transformers transformer.Transformers
 	// Define resource spec according its kind
 	Spec interface{} `jsonschema:"type=object"`

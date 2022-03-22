@@ -1,13 +1,15 @@
 ---
-source:
-  name: Get Latest helm release version
-  kind: githubRelease
-  spec:
-    owner: "helm"
-    repository: "helm"
-    token: {{ requiredEnv .github.token }}
-    username: olblak
-    version: latest
+sources:
+  lastHelmRelease:
+    name: Get Latest helm release version
+    kind: githubRelease
+    spec:
+      owner: "helm"
+      repository: "helm"
+      token: {{ requiredEnv .github.token }}
+      username: olblak
+      versionFilter:
+        kind: latest
 conditions:
   isENVSet:
     name: Is the 2nd ENV instruction having a "keyword" set to "HELM_VERSION"
