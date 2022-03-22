@@ -56,7 +56,8 @@ func init() {
 		prepareCmd,
 		showCmd,
 		versionCmd,
-		docsCmd)
+		docsCmd,
+		schemaCmd)
 }
 
 func run(command string) error {
@@ -118,6 +119,12 @@ func run(command string) error {
 
 	case "show":
 		err := e.Show()
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+	case "schema":
+		err := engine.GenerateSchema(schemaBaseID, schemaDirectory)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

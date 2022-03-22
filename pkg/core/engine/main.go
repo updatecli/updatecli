@@ -14,6 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/schema"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 
 	"path/filepath"
@@ -263,4 +264,9 @@ func (e *Engine) Show() error {
 
 	}
 	return nil
+}
+
+func GenerateSchema(baseSchemaID, schemaDir string) error {
+	s := schema.New(baseSchemaID, schemaDir)
+	return s.GenerateSchema(&config.Config{})
 }
