@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/iancoleman/orderedmap"
-	"github.com/invopop/jsonschema"
-	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config/jsonschema/commentmap"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/awsami"
@@ -46,7 +42,14 @@ type ResourceConfig struct {
 
 // New returns a newly initialized Resource or an error
 func New(rs ResourceConfig) (resource Resource, err error) {
-	switch strings.ToLower(rs.Kind) {
+
+	kind := strings.ToLower(rs.Kind)
+
+	if _, ok := GetResourceMapping()[kind]; !ok {
+		return nil, fmt.Errorf("⚠ Don't support resource kind: %v", rs.Kind)
+	}
+
+	switch kind {
 	case "aws/ami":
 		return awsami.New(rs.Spec)
 	case "dockerdigest":
@@ -87,85 +90,18 @@ type Resource interface {
 }
 
 // Need to do reflect of ResourceConfig
-func (ResourceConfig) JSONSchema() *jsonschema.Schema {
+func GetResourceMapping() map[string]interface{} {
 
-	type Resource struct {
-		Kind string
-		Spec interface{}
+	return map[string]interface{}{
+		"aws/ami":     &awsami.Spec{},
+		"jenkins":     &jenkins.Spec{},
+		"shell":       &shell.Spec{},
+		"gittag":      &gittag.Spec{},
+		"dockerfile":  &dockerfile.Spec{},
+		"file":        &file.Spec{},
+		"helmchart":   &helm.Spec{},
+		"maven":       &maven.Spec{},
+		"yaml":        &yaml.Spec{},
+		"dockerimage": &dockerimage.Spec{},
 	}
-
-	type ResourceConfigSchema ResourceConfig
-
-	type Resources []Resource
-
-	// SchemaResources contains list of every resource mapping
-	var SchemaResources Resources = Resources{
-		Resource{
-			Kind: "jenkins",
-			Spec: &jenkins.Spec{},
-		},
-		Resource{
-			Kind: "file",
-			Spec: &file.Spec{},
-		},
-		Resource{
-			Kind: "yaml",
-			Spec: &yaml.Spec{},
-		},
-		Resource{
-			Kind: "aws/ami",
-			Spec: &awsami.Spec{},
-		},
-	}
-
-	var err error
-
-	r := new(jsonschema.Reflector)
-
-	r.Anonymous = true
-	r.YAMLEmbeddedStructs = true
-	r.DoNotReference = true
-	r.RequiredFromJSONSchemaTags = true
-	r.KeyNamer = strings.ToLower
-
-	commentMap, err := commentmap.Get("../../../../pkg")
-
-	if err != nil {
-		logrus.Errorf(err.Error())
-		return nil
-	}
-
-	resourceSchema := r.Reflect(ResourceConfigSchema{})
-
-	for _, updatecliResource := range SchemaResources {
-		r := new(jsonschema.Reflector)
-
-		r.Anonymous = true
-		r.PreferYAMLSchema = true
-		r.YAMLEmbeddedStructs = true
-		r.DoNotReference = true
-		r.RequiredFromJSONSchemaTags = true
-		r.CommentMap = commentMap
-		r.KeyNamer = strings.ToLower
-
-		// schema we need a way to remove schema
-
-		// Main resource type schema such as source or condition
-		s := r.Reflect(updatecliResource.Spec)
-		s.ContentSchema = nil
-
-		var spec jsonschema.Schema
-
-		spec.Type = "object"
-		spec.Required = []string{"kind"}
-		spec.Properties = orderedmap.New()
-		spec.Properties.Set("spec", s.Properties)
-		spec.Properties.Set("kind", jsonschema.Schema{
-			Enum: []interface{}{updatecliResource.Kind}})
-
-		resourceSchema.OneOf = append(resourceSchema.OneOf, &spec)
-
-	}
-
-	return resourceSchema
 }

@@ -4,11 +4,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/schema"
 )
 
 // Source defines how a value is retrieved from a specific source
@@ -117,4 +119,12 @@ func (s *Source) Run() (err error) {
 	}
 
 	return err
+}
+
+// JSONSchema implements the json schema interface to generate source json schema.
+func (Config) JSONSchema() *jsonschema.Schema {
+
+	anyOfSpec := resource.GetResourceMapping()
+
+	return schema.GenerateJsonSchema(Config{}, anyOfSpec)
 }

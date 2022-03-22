@@ -3,10 +3,12 @@ package condition
 import (
 	"fmt"
 
+	"github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/schema"
 )
 
 // Condition defines which condition needs to be met
@@ -20,8 +22,10 @@ type Condition struct {
 // Config defines conditions input parameters
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	SourceID                string `yaml:"sourceID"`
-	DisableSourceInput      bool
+	// SourceID defines which source is used to retrieve the default value
+	SourceID string `yaml:"sourceID"`
+	// DisableSourceInput allows to not retrieve default source value.
+	DisableSourceInput bool
 }
 
 // Run tests if a specific condition is true
@@ -96,4 +100,12 @@ func (c *Condition) Run(source string) (err error) {
 
 	return nil
 
+}
+
+// JSONSchema implements the json schema interface to generate condition json schema.
+func (c Config) JSONSchema() *jsonschema.Schema {
+
+	anyOfSpec := resource.GetResourceMapping()
+
+	return schema.GenerateJsonSchema(Config{}, anyOfSpec)
 }

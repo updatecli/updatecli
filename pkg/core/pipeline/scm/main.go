@@ -3,8 +3,10 @@ package scm
 import (
 	"errors"
 
+	"github.com/invopop/jsonschema"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/schema"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
@@ -104,4 +106,15 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	return nil
+}
+
+// JSONSchema implements the json schema interface to generate scm json schema
+func (Config) JSONSchema() *jsonschema.Schema {
+
+	anyOfSpec := map[string]interface{}{
+		"git":    &git.Git{},
+		"github": &github.Spec{},
+	}
+
+	return schema.GenerateJsonSchema(Config{}, anyOfSpec)
 }
