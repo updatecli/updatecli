@@ -144,15 +144,6 @@ func (f *File) condition(source string) (bool, error) {
 		logrus.Debug("Attribute `content` detected")
 
 		if f.spec.Content != f.files[filePath] {
-			// validationError := fmt.Errorf("%s %s is different than the specified content: \n%s",
-			// 	result.FAILURE,
-			// 	logMessage,
-			// 	text.Diff(filePath, f.files[filePath], f.spec.Content),
-			// )
-
-			// // The actual content in the file at the specified line is different than what's expected, we return an error
-			// return false, validationError
-
 			logrus.Infof("%s %s is different than the specified content: \n%s",
 				result.FAILURE,
 				logMessage,
