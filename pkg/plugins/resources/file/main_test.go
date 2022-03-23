@@ -149,15 +149,16 @@ func Test_Validate(t *testing.T) {
 
 func TestFile_Read(t *testing.T) {
 	tests := []struct {
-		name                string
-		spec                Spec
-		files               map[string]string
-		mockReturnedContent string
-		mockReturnedError   error
-		mockFileExist       bool
-		wantContent         string
-		wantMockState       text.MockTextRetriever
-		wantErr             bool
+		name           string
+		spec           Spec
+		files          map[string]string
+		mockedContents map[string]string
+		mockedLines    map[string]int
+		mockedError    error
+		wantedContents map[string]string
+		wantedLines    map[string]int
+		wantedResult   bool
+		wantedErr      bool
 	}{
 		{
 			name: "Passing case",
@@ -167,12 +168,13 @@ func TestFile_Read(t *testing.T) {
 			files: map[string]string{
 				"/bar.txt": "",
 			},
-			mockReturnedContent: "Hello World",
-			mockFileExist:       true,
-			wantContent:         "Hello World",
-			wantMockState: text.MockTextRetriever{
-				Location: "/bar.txt",
+			mockedContents: map[string]string{
+				"/bar.txt": "Hello World",
 			},
+			wantedContents: map[string]string{
+				"/bar.txt": "Hello World",
+			},
+			wantedResult: true,
 		},
 		{
 			name: "Passing case with 'Line'",
@@ -183,28 +185,44 @@ func TestFile_Read(t *testing.T) {
 			files: map[string]string{
 				"/foo.txt": "",
 			},
-			mockReturnedContent: "Hello World",
-			mockFileExist:       true,
-			wantContent:         "Hello World",
-			wantMockState: text.MockTextRetriever{
-				Line:     3,
-				Location: "/foo.txt",
+			mockedContents: map[string]string{
+				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
 			},
+			wantedContents: map[string]string{
+				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedResult: true,
 		},
 		{
-			name: "Failing case with non existent 'File'",
+			name: "Failing case with non existing 'Line'",
+			spec: Spec{
+				Line: 5,
+				File: "/foo.txt",
+			},
+			files: map[string]string{
+				"/foo.txt": "",
+			},
+			mockedContents: map[string]string{
+				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedContents: map[string]string{
+				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedErr: true,
+		},
+		{
+			name: "Failing case with non existing 'File'",
 			spec: Spec{
 				File: "/not_existing.txt",
 			},
 			files: map[string]string{
 				"/not_existing.txt": "",
 			},
-			mockReturnedError: fmt.Errorf("no such file or directory"),
-			mockFileExist:     false,
-			wantErr:           true,
+			mockedError: fmt.Errorf("no such file or directory"),
+			wantedErr:   true,
 		},
 		{
-			name: "Failing case with non existent 'File' and a specified 'Line'",
+			name: "Failing case with non existing 'File' and a specified 'Line'",
 			spec: Spec{
 				File: "/not_existing.txt",
 				Line: 15,
@@ -212,33 +230,34 @@ func TestFile_Read(t *testing.T) {
 			files: map[string]string{
 				"/not_existing.txt": "",
 			},
-			mockReturnedError: fmt.Errorf("no such file or directory"),
-			mockFileExist:     false,
-			wantErr:           true,
+			mockedError: fmt.Errorf("no such file or directory"),
+			wantedErr:   true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
-				Exists:  tt.mockFileExist,
+				Contents: tt.mockedContents,
+				Err:      tt.mockedError,
 			}
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
 				files:            tt.files,
 			}
+
 			gotErr := f.Read()
-			if tt.wantErr {
+
+			if tt.wantedErr {
 				require.Error(t, gotErr)
 				return
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantContent, f.files[f.spec.File])
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
+			for filePath := range tt.files {
+				assert.Equal(t, tt.wantedContents[filePath], mockText.Contents[filePath])
+				assert.Equal(t, tt.wantedLines[filePath], mockText.Lines[filePath])
+			}
 		})
 	}
 }

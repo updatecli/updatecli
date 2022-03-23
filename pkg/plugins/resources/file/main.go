@@ -45,7 +45,7 @@ func New(spec interface{}) (*File, error) {
 		contentRetriever: &text.Text{},
 	}
 
-	err = newResource.Validate()
+	err = newResource.spec.Validate()
 	if err != nil {
 		return nil, err
 	}
