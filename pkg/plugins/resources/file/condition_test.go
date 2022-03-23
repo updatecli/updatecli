@@ -99,7 +99,7 @@ func TestFile_Condition(t *testing.T) {
 			wantedErr:        true,
 		},
 		{
-			name: "Case with empty 'Line' specified and no source nor 'Content' specified",
+			name: "Failing case with empty 'Line' specified and no source nor 'Content' specified",
 			spec: Spec{
 				Files: []string{
 					"foo.txt",
@@ -112,7 +112,7 @@ func TestFile_Condition(t *testing.T) {
 			mockedContents: map[string]string{
 				"foo.txt": "",
 			},
-			wantedResult: false,
+			wantedErr: true,
 		},
 		{
 			name: "Case with not empty 'Line' specified and no source nor 'Content' specified",
@@ -131,7 +131,7 @@ func TestFile_Condition(t *testing.T) {
 			wantedResult: true,
 		},
 		{
-			name: "Failing case with non existent 'Line' specified",
+			name: "Failing case with non existing 'Line' specified",
 			spec: Spec{
 				Files: []string{
 					"foo.txt",
@@ -144,7 +144,7 @@ func TestFile_Condition(t *testing.T) {
 			wantedErr: true,
 		},
 		{
-			name: "Failing case with non existent 'Files'",
+			name: "Failing case with non existing 'Files'",
 			spec: Spec{
 				Files: []string{
 					"foo.txt",
@@ -156,7 +156,7 @@ func TestFile_Condition(t *testing.T) {
 			wantedErr: true,
 		},
 		{
-			name: "Failing case with non existent URL as 'Files'",
+			name: "Failing case with non existing URL as 'Files'",
 			spec: Spec{
 				Files: []string{
 					"https://do.not.exists/foo",

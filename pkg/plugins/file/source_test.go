@@ -190,13 +190,13 @@ func TestFile_Source(t *testing.T) {
 			wantedErr: true,
 		},
 		{
-			name:        "Failing case with non existent 'File'",
+			name:        "Failing case with non existing 'File'",
 			files:       map[string]string{},
 			mockedError: fmt.Errorf("no such file or directory"),
 			wantedErr:   true,
 		},
 		{
-			name: "Passing case with 'File' and non existent 'Line' specified",
+			name: "Failing case with 'File' and non existing 'Line' specified",
 			spec: Spec{
 				File: "/home/ucli/foo.txt",
 				Line: 3,
@@ -207,7 +207,7 @@ func TestFile_Source(t *testing.T) {
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": "Don't worry\r\nBe happy",
 			},
-			wantedErr: false,
+			wantedErr: true,
 		},
 	}
 	for _, tt := range tests {

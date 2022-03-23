@@ -1,6 +1,9 @@
 package text
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // MockTextRetriever is a stub implementation of the `TextRetriever` interface to be used in our unit test suites.
 // It stores the expected Content and Err
@@ -16,7 +19,7 @@ func (mtr *MockTextRetriever) ReadLine(location string, line int) (string, error
 		"\n",
 	)
 	if len(contentLines) < line {
-		return "", mtr.Err
+		return "", fmt.Errorf("I/O error: The file %q only contains %d, less than the specified line %d", location, len(contentLines), line)
 	}
 	return contentLines[line-1], mtr.Err
 }
