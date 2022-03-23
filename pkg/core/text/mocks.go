@@ -3,45 +3,32 @@ package text
 // MockTextRetriever is a stub implementation of the `TextRetriever` interface to be used in our unit test suites.
 // It stores the expected Content and Err
 type MockTextRetriever struct {
-	Content   string
-	Location  string
-	Err       error
-	Line      int
-	Exists    bool
-	Contents  map[string]string
-	Locations map[string]string
-	Errs      map[string]error
-	Lines     map[string]int
-	Existss   map[string]bool
+	Errs     map[string]error
+	Lines    map[string][]int
+	Contents map[string]string
 }
 
 func (mtr *MockTextRetriever) ReadLine(location string, line int) (string, error) {
-	if len(mtr.Locations) > 0 {
-		mtr.Location = location
-	}
-	mtr.Location = location
-	mtr.Line = line
-	return mtr.Content, mtr.Err
+	mtr.Lines[location] = append(mtr.Lines[location], line)
+	return mtr.Contents[location], mtr.Errs[location]
 }
 
 func (mtr *MockTextRetriever) ReadAll(location string) (string, error) {
-	mtr.Location = location
-	return mtr.Content, mtr.Err
+	return mtr.Contents[location], mtr.Errs[location]
 }
 
 func (mtr *MockTextRetriever) WriteLineToFile(lineContent, location string, lineNumber int) error {
-	mtr.Location = location
-	mtr.Line = lineNumber
-	mtr.Content = lineContent
-	return mtr.Err
+	mtr.Lines[location] = append(mtr.Lines[location], lineNumber)
+	mtr.Contents[location] = lineContent
+	return mtr.Errs[location]
 }
 
 func (mtr *MockTextRetriever) WriteToFile(content string, location string) error {
-	mtr.Location = location
-	mtr.Content = content
-	return mtr.Err
+	mtr.Contents[location] = content
+	return mtr.Errs[location]
 }
 
 func (mtr *MockTextRetriever) FileExists(location string) bool {
-	return mtr.Exists
+	_, exists := mtr.Contents[location]
+	return exists
 }
