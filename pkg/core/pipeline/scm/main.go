@@ -108,13 +108,15 @@ func (s *Scm) GenerateSCM() error {
 	return nil
 }
 
-// JSONSchema implements the json schema interface to generate scm json schema
+// JSONSchema implements the json schema interface to generate the "scm" jsonschema
 func (Config) JSONSchema() *jsonschema.Schema {
+
+	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
 		"git":    &git.Git{},
 		"github": &github.Spec{},
 	}
 
-	return schema.GenerateJsonSchema(Config{}, anyOfSpec)
+	return schema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }

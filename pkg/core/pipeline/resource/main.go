@@ -23,7 +23,7 @@ import (
 type ResourceConfig struct {
 	DependsOn    []string `yaml:"depends_on"`
 	Name         string
-	Kind         string
+	Kind         string `jsonschema:"required"`
 	Transformers transformer.Transformers
 	// Define resource spec according its kind
 	Spec interface{} `jsonschema:"type=object"`

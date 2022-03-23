@@ -101,10 +101,12 @@ func (s *Source) Run() (err error) {
 	return err
 }
 
-// JSONSchema implements the json schema interface to generate source json schema.
+// JSONSchema implements the json schema interface to generate the "source" jsonschema.
 func (Config) JSONSchema() *jsonschema.Schema {
+
+	type configAlias Config
 
 	anyOfSpec := resource.GetResourceMapping()
 
-	return schema.GenerateJsonSchema(Config{}, anyOfSpec)
+	return schema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }

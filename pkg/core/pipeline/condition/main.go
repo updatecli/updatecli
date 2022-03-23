@@ -91,10 +91,12 @@ func (c *Condition) Run(source string) (err error) {
 
 }
 
-// JSONSchema implements the json schema interface to generate condition json schema.
+// JSONSchema implements the json schema interface to generate the "condition" jsonschema.
 func (c Config) JSONSchema() *jsonschema.Schema {
+
+	type configAlias Config
 
 	anyOfSpec := resource.GetResourceMapping()
 
-	return schema.GenerateJsonSchema(Config{}, anyOfSpec)
+	return schema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }
