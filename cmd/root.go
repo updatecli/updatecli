@@ -57,7 +57,7 @@ func init() {
 		showCmd,
 		versionCmd,
 		docsCmd,
-		schemaCmd)
+		jsonschemaCmd)
 }
 
 func run(command string) error {
@@ -123,8 +123,8 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
-	case "schema":
-		err := engine.GenerateSchema(schemaBaseID, schemaDirectory)
+	case "jsonschema":
+		err := engine.GenerateSchema(jsonschemaBaseID, jsonschemaDirectory)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
