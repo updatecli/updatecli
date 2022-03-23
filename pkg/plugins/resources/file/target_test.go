@@ -17,13 +17,13 @@ func TestFile_TargetMultiples(t *testing.T) {
 		spec             Spec
 		files            map[string]string
 		inputSourceValue string
-		mockContents     map[string]string
-		mockLines        map[string]int
-		mockError        error
-		wantMockContents map[string]string
-		wantMockLines    map[string]int
-		wantResult       bool
-		wantErr          bool
+		mockedContents   map[string]string
+		mockedLines      map[string]int
+		mockedError      error
+		wantedContents   map[string]string
+		wantedLines      map[string]int
+		wantedResult     bool
+		wantedErr        bool
 		dryRun           bool
 	}{
 		{
@@ -37,7 +37,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"foo.txt": "",
 			},
-			mockContents: map[string]string{
+			mockedContents: map[string]string{
 				"foo.txt": `maven_version = "3.8.2"
 				git_version = "2.33.1"
 				jdk11_version = "11.0.12+7"
@@ -47,7 +47,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				git_lfs_version = "3.0.1"
 				compose_version = "1.29.2"`,
 			},
-			wantMockContents: map[string]string{
+			wantedContents: map[string]string{
 				"foo.txt": `maven_version = 3.9.0
 				git_version = "2.33.1"
 				jdk11_version = "11.0.12+7"
@@ -57,7 +57,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				git_lfs_version = "3.0.1"
 				compose_version = "1.29.2"`,
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
 			name:             "Replace content with matchPattern and ReplacePattern",
@@ -74,7 +74,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "",
 				"bar.txt": "",
 			},
-			mockContents: map[string]string{
+			mockedContents: map[string]string{
 				"foo.txt": `maven_version = "3.8.2"
 				git_version = "2.33.1"
 				jdk11_version = "11.0.12+7"
@@ -89,7 +89,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				maven_version = "3.1.2"
 				some_stuff = "11.9.1"`,
 			},
-			wantMockContents: map[string]string{
+			wantedContents: map[string]string{
 				"foo.txt": `maven_version = 3.9.0
 				git_version = "2.33.1"
 				jdk11_version = "11.0.12+7"
@@ -104,7 +104,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				maven_version = 3.9.0
 				some_stuff = "11.9.1"`,
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
 			name: "(File) Passing case with both input source and specified content but no line (specified content should be used)",
@@ -116,13 +116,13 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "",
 			},
 			inputSourceValue: "current_version=1.2.3",
-			mockContents: map[string]string{
+			mockedContents: map[string]string{
 				"foo.txt": "Hello World",
 			},
-			wantMockContents: map[string]string{
+			wantedContents: map[string]string{
 				"foo.txt": "Be happy",
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
 			name: "Passing case with both input source and specified content but no line (specified content should be used)",
@@ -138,15 +138,15 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"bar.txt": "",
 			},
 			inputSourceValue: "current_version=1.2.3",
-			mockContents: map[string]string{
+			mockedContents: map[string]string{
 				"foo.txt": "Hello World",
 				"bar.txt": "Another content",
 			},
-			wantMockContents: map[string]string{
+			wantedContents: map[string]string{
 				"foo.txt": "Be happy",
 				"bar.txt": "Be happy",
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
 			name: "(File) Passing case with an updated line from provided content",
@@ -158,22 +158,20 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"foo.txt": "",
 			},
-			mockContents: map[string]string{
-				"foo.txt": `Title
-				Good Bye
-				The end`,
+			mockedContents: map[string]string{
+				"foo.txt": "Title\r\nGood Bye\r\nThe end",
 			},
-			mockLines: map[string]int{
+			mockedLines: map[string]int{
 				"foo.txt": 2,
 			},
 			inputSourceValue: "current_version=1.2.3",
-			wantMockContents: map[string]string{
-				"foo.txt": "Hello World",
+			wantedContents: map[string]string{
+				"foo.txt": "Title\r\nHello World\r\nThe end",
 			},
-			wantMockLines: map[string]int{
+			wantedLines: map[string]int{
 				"foo.txt": 2,
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
 			name: "Passing case with an updated line from provided content",
@@ -189,27 +187,24 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "",
 				"bar.txt": "",
 			},
-			mockContents: map[string]string{
-				"foo.txt": `Title
-					Good Bye
-					The end`,
-
-				"bar.txt": "Be happy", // Note: no error here even if the file is only one line long! TODO: fix it
+			mockedContents: map[string]string{
+				"foo.txt": "Title\r\nGood Bye\r\nThe end",
+				"bar.txt": "Be happy\nDon't worry",
 			},
-			mockLines: map[string]int{
+			mockedLines: map[string]int{
 				"foo.txt": 2,
 				"bar.txt": 2,
 			},
 			inputSourceValue: "current_version=1.2.3",
-			wantMockContents: map[string]string{
-				"foo.txt": "Hello World",
-				"bar.txt": "Hello World",
+			wantedContents: map[string]string{
+				"foo.txt": "Title\r\nHello World\r\nThe end",
+				"bar.txt": "Be happy\nHello World",
 			},
-			wantMockLines: map[string]int{
+			wantedLines: map[string]int{
 				"foo.txt": 2,
 				"bar.txt": 2,
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
 			name: "(File) Validation failure with an https:// URL instead of a file",
@@ -219,8 +214,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"https://github.com/foo.txt": "",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "Validation failure with an https:// URL instead of a file",
@@ -234,8 +229,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt":                    "",
 				"https://github.com/bar.txt": "",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "Validation failure with both line and forcecreate specified",
@@ -249,8 +244,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"foo.txt": "",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "Validation failure with invalid regexp for MatchPattern",
@@ -263,8 +258,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"foo.txt": "",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "Error with file not existing (with line)",
@@ -277,8 +272,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"not_existing.txt": "",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "Error with file not existing (with content)",
@@ -291,8 +286,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"not_existing.txt": "",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "Error while reading the line in file",
@@ -305,12 +300,12 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"foo.txt": "",
 			},
-			mockContents: map[string]string{
+			mockedContents: map[string]string{
 				"foo.txt": "Be happy",
 			},
-			mockError:  fmt.Errorf("I/O error: file system too slow"),
-			wantResult: false,
-			wantErr:    true,
+			mockedError:  fmt.Errorf("I/O error: file system too slow"),
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "Error while reading a full file",
@@ -323,15 +318,15 @@ func TestFile_TargetMultiples(t *testing.T) {
 			files: map[string]string{
 				"foo.txt": "",
 			},
-			mockContents: map[string]string{
+			mockedContents: map[string]string{
 				"foo.txt": "Be happy",
 			},
-			mockError: fmt.Errorf("I/O error: file system too slow"),
-			wantMockContents: map[string]string{
+			mockedError: fmt.Errorf("I/O error: file system too slow"),
+			wantedContents: map[string]string{
 				"foo.txt": "current_version=1.2.3",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedResult: false,
+			wantedErr:    true,
 		},
 		{
 			name: "Line in files not updated",
@@ -346,24 +341,24 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "",
 				"bar.txt": "",
 			},
-			inputSourceValue: "current_version=1.2.3",
-			mockContents: map[string]string{
-				"foo.txt": "current_version=1.2.3",
-				"bar.txt": "current_version=1.2.3",
+			inputSourceValue: "Be happy",
+			mockedContents: map[string]string{
+				"foo.txt": "Title\r\nGood Bye\r\nBe happy",
+				"bar.txt": "Be happy\nDon't worry\nBe happy\nDon't worry",
 			},
-			mockLines: map[string]int{
-				"foo.txt": 3,
-				"bar.txt": 3,
+			mockedLines: map[string]int{
+				"foo.txt": 2,
+				"bar.txt": 2,
 			},
-			wantMockContents: map[string]string{
-				"foo.txt": "current_version=1.2.3",
-				"bar.txt": "current_version=1.2.3",
+			wantedContents: map[string]string{
+				"foo.txt": "Title\r\nGood Bye\r\nBe happy",
+				"bar.txt": "Be happy\nDon't worry\nBe happy\nDon't worry",
 			},
-			wantMockLines: map[string]int{
-				"foo.txt": 3,
-				"bar.txt": 3,
+			wantedLines: map[string]int{
+				"foo.txt": 2,
+				"bar.txt": 2,
 			},
-			wantResult: false,
+			wantedResult: false,
 		},
 		{
 			name: "Files not updated (input source, no specified line)",
@@ -378,50 +373,50 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"bar.txt": "",
 			},
 			inputSourceValue: "current_version=1.2.3",
-			mockContents: map[string]string{
+			mockedContents: map[string]string{
 				"foo.txt": "current_version=1.2.3",
 				"bar.txt": "current_version=1.2.3",
 			},
-			mockLines: map[string]int{
+			mockedLines: map[string]int{
 				"foo.txt": 3,
 				"bar.txt": 3,
 			},
-			wantMockContents: map[string]string{
+			wantedContents: map[string]string{
 				"foo.txt": "current_version=1.2.3",
 				"bar.txt": "current_version=1.2.3",
 			},
-			wantMockLines: map[string]int{
+			wantedLines: map[string]int{
 				"foo.txt": 3,
 				"bar.txt": 3,
 			},
-			wantResult: false,
+			wantedResult: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockText := text.MockTextRetriever{
-				Contents: tt.mockContents,
-				Lines:    tt.mockLines,
-				Err:      tt.mockError,
+			mockedText := text.MockTextRetriever{
+				Contents: tt.mockedContents,
+				Lines:    tt.mockedLines,
+				Err:      tt.mockedError,
 			}
 			f := &File{
 				spec:             tt.spec,
-				contentRetriever: &mockText,
+				contentRetriever: &mockedText,
 				files:            tt.files,
 			}
 
 			gotResult, gotErr := f.Target(tt.inputSourceValue, tt.dryRun)
 
-			if tt.wantErr {
+			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantResult, gotResult)
+			assert.Equal(t, tt.wantedResult, gotResult)
 			for filePath := range tt.files {
-				assert.Equal(t, tt.wantMockContents[filePath], mockText.Contents[filePath])
-				assert.Equal(t, tt.wantMockLines[filePath], mockText.Lines[filePath])
+				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
+				assert.Equal(t, tt.wantedLines[filePath], mockedText.Lines[filePath])
 			}
 		})
 	}
@@ -434,14 +429,14 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		files            map[string]string
 		scm              scm.ScmHandler
 		inputSourceValue string
-		mockContents     map[string]string
-		mockLines        map[string]int
-		mockError        error
-		wantFiles        []string
-		wantMockContents map[string]string
-		wantMockLines    map[string]int
-		wantResult       bool
-		wantErr          bool
+		mockedContents   map[string]string
+		mockedLines      map[string]int
+		mockedError      error
+		wantedFiles      []string
+		wantedContents   map[string]string
+		wantedLines      map[string]int
+		wantedResult     bool
+		wantedErr        bool
 		dryRun           bool
 	}{
 		{
@@ -461,30 +456,27 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				WorkingDir: "/tmp",
 			},
 			inputSourceValue: "current_version=1.2.3",
-			mockContents: map[string]string{
-				"/tmp/foo.txt": `Title
-					Good Bye
-					The end`,
-
-				"/tmp/bar.txt": "",
+			mockedContents: map[string]string{
+				"/tmp/foo.txt": "Title\r\nGood Bye\r\nThe End",
+				"/tmp/bar.txt": "Be happy\nDon't worry\nBe happy\nDon't worry",
 			},
-			mockLines: map[string]int{
+			mockedLines: map[string]int{
 				"/tmp/foo.txt": 3,
 				"/tmp/bar.txt": 3,
 			},
-			wantFiles: []string{
+			wantedFiles: []string{
 				"/tmp/foo.txt",
 				"/tmp/bar.txt",
 			},
-			wantMockContents: map[string]string{
-				"/tmp/foo.txt": "current_version=1.2.3",
-				"/tmp/bar.txt": "current_version=1.2.3",
+			wantedContents: map[string]string{
+				"/tmp/foo.txt": "Title\r\nGood Bye\r\ncurrent_version=1.2.3",
+				"/tmp/bar.txt": "Be happy\nDon't worry\ncurrent_version=1.2.3\nDon't worry",
 			},
-			wantMockLines: map[string]int{
+			wantedLines: map[string]int{
 				"/tmp/foo.txt": 3,
 				"/tmp/bar.txt": 3,
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
 			name: "Passing case with 'ForceCreate' specified",
@@ -504,20 +496,18 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			},
 			inputSourceValue: "current_version=1.2.3",
 			// Note there isn't any "bar.txt" defined here
-			mockContents: map[string]string{
-				"/tmp/foo.txt": `Title
-					Good Bye
-					The end`,
+			mockedContents: map[string]string{
+				"/tmp/foo.txt": "Title\r\nGood Bye\r\ncurrent_version=1.2.3",
 			},
-			wantFiles: []string{
+			wantedFiles: []string{
 				"/tmp/foo.txt",
 				"/tmp/bar.txt",
 			},
-			wantMockContents: map[string]string{
+			wantedContents: map[string]string{
 				"/tmp/foo.txt": "current_version=1.2.3",
 				"/tmp/bar.txt": "current_version=1.2.3",
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
 			name: "No line matched with matchPattern and ReplacePattern defined",
@@ -538,7 +528,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			},
 			inputSourceValue: "3.9.0",
 			// Note there is a match in "bar.txt" here
-			mockContents: map[string]string{
+			mockedContents: map[string]string{
 				"/tmp/foo.txt": `maven_version = "3.8.2"
 				git_version = "2.33.1"
 				jdk11_version = "11.0.12+7"
@@ -557,40 +547,40 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				git_lfs_version = "3.0.1"
 				compose_version = "1.29.2"`,
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedResult: false,
+			wantedErr:    true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockText := text.MockTextRetriever{
-				Contents: tt.mockContents,
-				Lines:    tt.mockLines,
-				Err:      tt.mockError,
+			mockedText := text.MockTextRetriever{
+				Contents: tt.mockedContents,
+				Lines:    tt.mockedLines,
+				Err:      tt.mockedError,
 			}
 			f := &File{
 				spec:             tt.spec,
-				contentRetriever: &mockText,
+				contentRetriever: &mockedText,
 				files:            tt.files,
 			}
 
 			gotResult, gotFiles, _, gotErr := f.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
 
-			if tt.wantErr {
+			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantResult, gotResult)
+			assert.Equal(t, tt.wantedResult, gotResult)
 
-			sort.Strings(tt.wantFiles)
+			sort.Strings(tt.wantedFiles)
 			sort.Strings(gotFiles)
-			assert.Equal(t, tt.wantFiles, gotFiles)
+			assert.Equal(t, tt.wantedFiles, gotFiles)
 
 			for filePath := range f.files {
-				assert.Equal(t, tt.wantMockContents[filePath], mockText.Contents[filePath])
-				assert.Equal(t, tt.wantMockLines[filePath], mockText.Lines[filePath])
+				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
+				assert.Equal(t, tt.wantedLines[filePath], mockedText.Lines[filePath])
 			}
 		})
 	}
