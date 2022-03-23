@@ -5,26 +5,27 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// // TODO: find a way to test when there are multiple files but only some are changed
-// func TestFile_Target(t *testing.T) {
+// func TestFile_TargetMultiples(t *testing.T) {
 // 	tests := []struct {
-// 		name                string
-// 		spec                Spec
-// 		files               map[string]string
-// 		inputSourceValue    string
-// 		mockReturnedContent string
-// 		mockReturnedError   error
-// 		mockFileExists      bool
-// 		wantMockState       text.MockTextRetriever
-// 		wantResult          bool
-// 		wantErr             bool
-// 		dryRun              bool
+// 		name                 string
+// 		spec                 Spec
+// 		files                map[string]string
+// 		inputSourceValue     string
+// 		mockReturnedContents map[string]string
+// 		mockReturnedLines    map[string]int
+// 		mockReturnedError    error
+// 		wantMockContents     map[string]string
+// 		wantMockLines        map[string]int
+// 		wantResult           bool
+// 		wantErr              bool
+// 		dryRun               bool
 // 	}{
 // 		{
-// 			name:             "Replace content with matchPattern and ReplacePattern",
+// 			name:             "(File) Replace content with matchPattern and ReplacePattern",
 // 			inputSourceValue: "3.9.0",
 // 			spec: Spec{
 // 				File:           "foo.txt",
@@ -34,69 +35,119 @@ import (
 // 			files: map[string]string{
 // 				"foo.txt": "",
 // 			},
-// 			mockFileExists: true,
-// 			mockReturnedContent: `maven_version = "3.8.2"
-// 		git_version = "2.33.1"
-// 		jdk11_version = "11.0.12+7"
-// 		jdk17_version = "17+35"
-// 		jdk8_version = "8u302-b08"
-// 		maven_major_release = "3"
-// 		git_lfs_version = "3.0.1"
-// 		compose_version = "1.29.2"`,
-// 			wantMockState: text.MockTextRetriever{
-// 				Location: "foo.txt",
-// 				Content: `maven_version = 3.9.0
-// 		git_version = "2.33.1"
-// 		jdk11_version = "11.0.12+7"
-// 		jdk17_version = "17+35"
-// 		jdk8_version = "8u302-b08"
-// 		maven_major_release = 3.9.0
-// 		git_lfs_version = "3.0.1"
-// 		compose_version = "1.29.2"`,
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": `maven_version = "3.8.2"
+// 				git_version = "2.33.1"
+// 				jdk11_version = "11.0.12+7"
+// 				jdk17_version = "17+35"
+// 				jdk8_version = "8u302-b08"
+// 				maven_major_release = "3"
+// 				git_lfs_version = "3.0.1"
+// 				compose_version = "1.29.2"`,
+// 			},
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": `maven_version = 3.9.0
+// 				git_version = "2.33.1"
+// 				jdk11_version = "11.0.12+7"
+// 				jdk17_version = "17+35"
+// 				jdk8_version = "8u302-b08"
+// 				maven_major_release = 3.9.0
+// 				git_lfs_version = "3.0.1"
+// 				compose_version = "1.29.2"`,
+// 			},
+// 			wantResult: true,
+// 		},
+// 		{
+// 			name:             "Replace content with matchPattern and ReplacePattern",
+// 			inputSourceValue: "3.9.0",
+// 			spec: Spec{
+// 				Files: []string{
+// 					"foo.txt",
+// 					"bar.txt",
+// 				},
+// 				MatchPattern:   "maven_(.*)=.*",
+// 				ReplacePattern: "maven_$1= 3.9.0",
+// 			},
+// 			files: map[string]string{
+// 				"foo.txt": "",
+// 				"bar.txt": "",
+// 			},
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": `maven_version = "3.8.2"
+// 				git_version = "2.33.1"
+// 				jdk11_version = "11.0.12+7"
+// 				jdk17_version = "17+35"
+// 				jdk8_version = "8u302-b08"
+// 				maven_major_release = "3"
+// 				git_lfs_version = "3.0.1"
+// 				compose_version = "1.29.2"`,
+
+// 				"bar.txt": `another_param=9.8.7
+// 				maven_major_release = "2"
+// 				maven_version = "3.1.2"
+// 				some_stuff = "11.9.1"`,
+// 			},
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": `maven_version = 3.9.0
+// 				git_version = "2.33.1"
+// 				jdk11_version = "11.0.12+7"
+// 				jdk17_version = "17+35"
+// 				jdk8_version = "8u302-b08"
+// 				maven_major_release = 3.9.0
+// 				git_lfs_version = "3.0.1"
+// 				compose_version = "1.29.2"`,
+
+// 				"bar.txt": `another_param=9.8.7
+// 				maven_major_release = 3.9.0
+// 				maven_version = 3.9.0
+// 				some_stuff = "11.9.1"`,
+// 			},
+// 			wantResult: true,
+// 		},
+// 		{
+// 			name: "(File) Passing case with both input source and specified content but no line (specified content should be used)",
+// 			spec: Spec{
+// 				File:    "foo.txt",
+// 				Content: "Be happy",
+// 			},
+// 			files: map[string]string{
+// 				"foo.txt": "",
+// 			},
+// 			inputSourceValue: "current_version=1.2.3",
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": "Hello World",
+// 			},
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": "Be happy",
 // 			},
 // 			wantResult: true,
 // 		},
 // 		{
 // 			name: "Passing case with both input source and specified content but no line (specified content should be used)",
 // 			spec: Spec{
-// 				File:    "foo.txt",
-// 				Content: "Hello World",
+// 				Files: []string{
+// 					"foo.txt",
+// 					"bar.txt",
+// 				},
+// 				Content: "Be happy",
 // 			},
 // 			files: map[string]string{
 // 				"foo.txt": "",
+// 				"bar.txt": "",
 // 			},
-// 			mockFileExists:   true,
 // 			inputSourceValue: "current_version=1.2.3",
-// 			wantMockState: text.MockTextRetriever{
-// 				Location: "foo.txt",
-// 				Content:  "Hello World",
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": "Hello World",
+// 				"bar.txt": "Another content",
+// 			},
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": "Be happy",
+// 				"bar.txt": "Be happy",
 // 			},
 // 			wantResult: true,
 // 		},
-// 		// {
-// 		// 	name: "Passing case with multiple 'Files' and both input source and specified content but no line (specified content should be used)",
-// 		// 	spec: Spec{
-// 		// 		Files: []string{
-// 		// 			"foo.txt",
-// 		// 			"bar.txt",
-// 		// 		},
-// 		// 		Content: "Hello World",
-// 		// 	},
-// 		// 	files: map[string]string{
-// 		// 		"foo.txt": "",
-// 		// 		"bar.txt": "",
-// 		// 	},
-// 		// 	mockFileExists:   true,
-// 		// 	inputSourceValue: "current_version=1.2.3",
-// 		// 	// TODO: check multiple locations
-// 		// 	// wantMockState: text.MockTextRetriever{
-// 		// 	// 	Location: "foo.txt",
-// 		// 	// 	Content:  "Hello World",
-// 		// 	// },
-// 		// 	wantResult: true,
-// 		// },
 // 		{
-// 			name: "Passing case with an updated line from provided content",
+// 			name: "(File) Passing case with an updated line from provided content",
 // 			spec: Spec{
 // 				File:    "foo.txt",
 // 				Content: "Hello World",
@@ -105,18 +156,61 @@ import (
 // 			files: map[string]string{
 // 				"foo.txt": "",
 // 			},
-// 			mockFileExists:      true,
-// 			mockReturnedContent: "Title\nGood Bye\nThe end",
-// 			inputSourceValue:    "current_version=1.2.3",
-// 			wantMockState: text.MockTextRetriever{
-// 				Location: "foo.txt",
-// 				Line:     2,
-// 				Content:  "Hello World",
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": `Title
+// 				Good Bye
+// 				The end`,
+// 			},
+// 			mockReturnedLines: map[string]int{
+// 				"foo.txt": 2,
+// 			},
+// 			inputSourceValue: "current_version=1.2.3",
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": "Hello World",
+// 			},
+// 			wantMockLines: map[string]int{
+// 				"foo.txt": 2,
 // 			},
 // 			wantResult: true,
 // 		},
 // 		{
-// 			name: "Validation failure with an https:// URL instead of a file",
+// 			name: "Passing case with an updated line from provided content",
+// 			spec: Spec{
+// 				Files: []string{
+// 					"foo.txt",
+// 					"bar.txt",
+// 				},
+// 				Content: "Hello World",
+// 				Line:    2,
+// 			},
+// 			files: map[string]string{
+// 				"foo.txt": "",
+// 				"bar.txt": "",
+// 			},
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": `Title
+// 					Good Bye
+// 					The end`,
+
+// 				"bar.txt": "Be happy", // Note: no error here even if the file is only one line long! TODO: fix it
+// 			},
+// 			mockReturnedLines: map[string]int{
+// 				"foo.txt": 2,
+// 				"bar.txt": 2,
+// 			},
+// 			inputSourceValue: "current_version=1.2.3",
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": "Hello World",
+// 				"bar.txt": "Hello World",
+// 			},
+// 			wantMockLines: map[string]int{
+// 				"foo.txt": 2,
+// 				"bar.txt": 2,
+// 			},
+// 			wantResult: true,
+// 		},
+// 		{
+// 			name: "(File) Validation failure with an https:// URL instead of a file",
 // 			spec: Spec{
 // 				File: "https://github.com/foo.txt",
 // 			},
@@ -127,9 +221,26 @@ import (
 // 			wantErr:    true,
 // 		},
 // 		{
+// 			name: "Validation failure with an https:// URL instead of a file",
+// 			spec: Spec{
+// 				Files: []string{
+// 					"foo.txt",
+// 					"https://github.com/bar.txt",
+// 				},
+// 			},
+// 			files: map[string]string{
+// 				"foo.txt":                    "",
+// 				"https://github.com/bar.txt": "",
+// 			},
+// 			wantResult: false,
+// 			wantErr:    true,
+// 		},
+// 		{
 // 			name: "Validation failure with both line and forcecreate specified",
 // 			spec: Spec{
-// 				File:        "foo.txt",
+// 				Files: []string{
+// 					"foo.txt",
+// 				},
 // 				ForceCreate: true,
 // 				Line:        2,
 // 			},
@@ -142,21 +253,23 @@ import (
 // 		{
 // 			name: "Validation failure with invalid regexp for MatchPattern",
 // 			spec: Spec{
+// 				Files: []string{
+// 					"foo.txt",
+// 				},
 // 				MatchPattern: "(d+:1",
-// 				File:         "foo.txt",
 // 			},
 // 			files: map[string]string{
 // 				"foo.txt": "",
 // 			},
-// 			mockFileExists:      true,
-// 			mockReturnedContent: `maven_version = "3.8.2"`,
-// 			wantResult:          false,
-// 			wantErr:             true,
+// 			wantResult: false,
+// 			wantErr:    true,
 // 		},
 // 		{
 // 			name: "Error with file not existing (with line)",
 // 			spec: Spec{
-// 				File: "not_existing.txt",
+// 				Files: []string{
+// 					"not_existing.txt",
+// 				},
 // 				Line: 3,
 // 			},
 // 			files: map[string]string{
@@ -168,7 +281,9 @@ import (
 // 		{
 // 			name: "Error with file not existing (with content)",
 // 			spec: Spec{
-// 				File:    "not_existing.txt",
+// 				Files: []string{
+// 					"not_existing.txt",
+// 				},
 // 				Content: "Hello World",
 // 			},
 // 			files: map[string]string{
@@ -180,13 +295,17 @@ import (
 // 		{
 // 			name: "Error while reading the line in file",
 // 			spec: Spec{
-// 				File: "not_existing.txt",
+// 				Files: []string{
+// 					"foo.txt",
+// 				},
 // 				Line: 3,
 // 			},
 // 			files: map[string]string{
-// 				"not_existing.txt": "",
+// 				"foo.txt": "",
 // 			},
-// 			mockFileExists:    true,
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": "Be happy",
+// 			},
 // 			mockReturnedError: fmt.Errorf("I/O error: file system too slow"),
 // 			wantResult:        false,
 // 			wantErr:           true,
@@ -194,50 +313,84 @@ import (
 // 		{
 // 			name: "Error while reading a full file",
 // 			spec: Spec{
-// 				File:    "not_existing.txt",
+// 				Files: []string{
+// 					"foo.txt",
+// 				},
 // 				Content: "Hello World",
 // 			},
 // 			files: map[string]string{
-// 				"not_existing.txt": "",
+// 				"foo.txt": "",
 // 			},
-// 			mockFileExists:    true,
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": "Be happy",
+// 			},
 // 			mockReturnedError: fmt.Errorf("I/O error: file system too slow"),
-// 			wantResult:        false,
-// 			wantErr:           true,
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": "current_version=1.2.3",
+// 			},
+// 			wantResult: false,
+// 			wantErr:    true,
 // 		},
 // 		{
-// 			name: "Line in file not updated",
+// 			name: "Line in files not updated",
 // 			spec: Spec{
-// 				File: "foo.txt",
+// 				Files: []string{
+// 					"foo.txt",
+// 					"bar.txt",
+// 				},
 // 				Line: 3,
 // 			},
 // 			files: map[string]string{
 // 				"foo.txt": "",
+// 				"bar.txt": "",
 // 			},
-// 			inputSourceValue:    "current_version=1.2.3",
-// 			mockFileExists:      true,
-// 			mockReturnedContent: "current_version=1.2.3",
-// 			wantMockState: text.MockTextRetriever{
-// 				Location: "foo.txt",
-// 				Line:     3,
-// 				Content:  "current_version=1.2.3",
+// 			inputSourceValue: "current_version=1.2.3",
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": "current_version=1.2.3",
+// 				"bar.txt": "current_version=1.2.3",
+// 			},
+// 			mockReturnedLines: map[string]int{
+// 				"foo.txt": 3,
+// 				"bar.txt": 3,
+// 			},
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": "current_version=1.2.3",
+// 				"bar.txt": "current_version=1.2.3",
+// 			},
+// 			wantMockLines: map[string]int{
+// 				"foo.txt": 3,
+// 				"bar.txt": 3,
 // 			},
 // 			wantResult: false,
 // 		},
 // 		{
-// 			name: "File not updated (input source, no specified line)",
+// 			name: "Files not updated (input source, no specified line)",
 // 			spec: Spec{
-// 				File: "foo.txt",
+// 				Files: []string{
+// 					"foo.txt",
+// 					"bar.txt",
+// 				},
 // 			},
 // 			files: map[string]string{
 // 				"foo.txt": "",
+// 				"bar.txt": "",
 // 			},
-// 			inputSourceValue:    "current_version=1.2.3",
-// 			mockFileExists:      true,
-// 			mockReturnedContent: "current_version=1.2.3",
-// 			wantMockState: text.MockTextRetriever{
-// 				Location: "foo.txt",
-// 				Content:  "current_version=1.2.3",
+// 			inputSourceValue: "current_version=1.2.3",
+// 			mockReturnedContents: map[string]string{
+// 				"foo.txt": "current_version=1.2.3",
+// 				"bar.txt": "current_version=1.2.3",
+// 			},
+// 			mockReturnedLines: map[string]int{
+// 				"foo.txt": 3,
+// 				"bar.txt": 3,
+// 			},
+// 			wantMockContents: map[string]string{
+// 				"foo.txt": "current_version=1.2.3",
+// 				"bar.txt": "current_version=1.2.3",
+// 			},
+// 			wantMockLines: map[string]int{
+// 				"foo.txt": 3,
+// 				"bar.txt": 3,
 // 			},
 // 			wantResult: false,
 // 		},
@@ -245,9 +398,9 @@ import (
 // 	for _, tt := range tests {
 // 		t.Run(tt.name, func(t *testing.T) {
 // 			mockText := text.MockTextRetriever{
-// 				Content: tt.mockReturnedContent,
-// 				Err:     tt.mockReturnedError,
-// 				Exists:  tt.mockFileExists,
+// 				Contents: tt.mockReturnedContents,
+// 				Lines:    tt.mockReturnedLines,
+// 				Err:      tt.mockReturnedError,
 // 			}
 // 			f := &File{
 // 				spec:             tt.spec,
@@ -256,210 +409,119 @@ import (
 // 			}
 
 // 			gotResult, gotErr := f.Target(tt.inputSourceValue, tt.dryRun)
+
 // 			if tt.wantErr {
 // 				assert.Error(t, gotErr)
 // 				return
 // 			}
-
 // 			require.NoError(t, gotErr)
+
 // 			assert.Equal(t, tt.wantResult, gotResult)
-// 			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
-// 			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
-// 			assert.Equal(t, tt.wantMockState.Content, mockText.Content)
+// 			for filePath := range tt.files {
+// 				assert.Equal(t, tt.wantMockContents[filePath], mockText.Contents[filePath])
+// 				assert.Equal(t, tt.wantMockLines[filePath], mockText.Lines[filePath])
+// 			}
 // 		})
 // 	}
 // }
 
-// TODO: find a way to test when there are multiple files but only some are changed
-func TestFile_TargetMultiples(t *testing.T) {
-	tests := []struct {
-		name                string
-		spec                Spec
-		files               map[string]string
-		inputSourceValue    string
-		mockReturnedContent map[string]string
-		mockReturnedError   map[string]error
-		wantMockContents    map[string]string
-		wantResult          map[string]bool
-		wantErr             bool
-		dryRun              bool
-	}{
-		{
-			name:             "Replace content with matchPattern and ReplacePattern",
-			inputSourceValue: "3.9.0",
-			spec: Spec{
-				File:           "foo.txt",
-				MatchPattern:   "maven_(.*)=.*",
-				ReplacePattern: "maven_$1= 3.9.0",
-			},
-			files: map[string]string{
-				"foo.txt": "",
-			},
-			mockReturnedContent: map[string]string{
-				"foo.txt": `maven_version = "3.8.2"
-				git_version = "2.33.1"
-				jdk11_version = "11.0.12+7"
-				jdk17_version = "17+35"
-				jdk8_version = "8u302-b08"
-				maven_major_release = "3"
-				git_lfs_version = "3.0.1"
-				compose_version = "1.29.2"`,
-			},
-			wantMockContents: map[string]string{
-				"foo.txt": `maven_version = 3.9.0
-				git_version = "2.33.1"
-				jdk11_version = "11.0.12+7"
-				jdk17_version = "17+35"
-				jdk8_version = "8u302-b08"
-				maven_major_release = 3.9.0
-				git_lfs_version = "3.0.1"
-				compose_version = "1.29.2"`,
-			},
-			wantResult: map[string]bool{
-				"foo.txt": true,
-			},
-		},
-		// {
-		// 	name: "Passing case with multiple 'Files' and both input source and specified content but no line (specified content should be used)",
-		// 	spec: Spec{
-		// 		Files: []string{
-		// 			"foo.txt",
-		// 			"bar.txt",
-		// 		},
-		// 		Content: "Hello World",
-		// 	},
-		// 	files: map[string]string{
-		// 		"foo.txt": "",
-		// 		"bar.txt": "",
-		// 	},
-		// 	mockFileExists:   true,
-		// 	inputSourceValue: "current_version=1.2.3",
-		// 	// TODO: check multiple locations
-		// 	// wantMockState: text.MockTextRetriever{
-		// 	// 	Location: "foo.txt",
-		// 	// 	Content:  "Hello World",
-		// 	// },
-		// 	wantResult: true,
-		// },
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockText := text.MockTextRetriever{
-				Contents: tt.mockReturnedContent,
-				Errs:     tt.mockReturnedError,
-			}
-			f := &File{
-				spec:             tt.spec,
-				contentRetriever: &mockText,
-				files:            tt.files,
-			}
-
-			gotResult, gotErr := f.Target(tt.inputSourceValue, tt.dryRun)
-			if tt.wantErr {
-				assert.Error(t, gotErr)
-				return
-			}
-
-			require.NoError(t, gotErr)
-			for filePath := range tt.files {
-				assert.Equal(t, tt.wantResult[filePath], gotResult)
-				assert.Equal(t, tt.wantMockContents[filePath], mockText.Contents[filePath])
-			}
-		})
-	}
-}
-
-/*
 func TestFile_TargetFromSCM(t *testing.T) {
 	tests := []struct {
-		name                string
-		spec                Spec
-		files               map[string]string
-		scm                 scm.ScmHandler
-		inputSourceValue    string
-		mockFileExists      bool
-		mockReturnedContent string
-		mockReturnedError   error
-		wantFiles           []string
-		wantMockState       map[string]text.MockTextRetriever
-		wantResult          bool
-		wantErr             bool
-		dryRun              bool
+		name                 string
+		spec                 Spec
+		files                map[string]string
+		wantFiles            []string
+		scm                  scm.ScmHandler
+		inputSourceValue     string
+		mockReturnedContents map[string]string
+		mockReturnedLines    map[string]int
+		mockReturnedError    error
+		wantMockContents     map[string]string
+		wantMockLines        map[string]int
+		wantResult           bool
+		wantErr              bool
+		dryRun               bool
 	}{
-		// TODO: test with multiples files, same blocking 'location' issue as above, will probably need to keep track of all files in the mock
 		{
 			name: "Passing case with 'Line' specified",
 			spec: Spec{
-				File: "foo.txt",
+				Files: []string{
+					"foo.txt",
+				},
 				Line: 3,
 			},
 			files: map[string]string{
-				"foo.txt": "",
+				"/tmp/foo.txt": "",
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
 			inputSourceValue: "current_version=1.2.3",
-			mockFileExists:   true,
-			wantFiles:        []string{"/tmp/foo.txt"},
-			wantMockState: map[string]text.MockTextRetriever{
-				"/tmp/foo.txt": {
-					Location: "/tmp/foo.txt",
-					Content:  "current_version=1.2.3",
-					Line:     3,
-				},
+			mockReturnedContents: map[string]string{
+				"/tmp/foo.txt": `Title
+					Good Bye
+					The end`,
+			},
+			mockReturnedLines: map[string]int{
+				"/tmp/foo.txt": 3,
+			},
+			wantFiles: []string{
+				"/tmp/foo.txt",
+			},
+			wantMockContents: map[string]string{
+				"/tmp/foo.txt": "current_version=1.2.3",
 			},
 			wantResult: true,
 		},
-		{
-			name: "Passing case with 'ForceCreate' specified",
-			spec: Spec{
-				File:        "foo.txt",
-				ForceCreate: true,
-			},
-			files: map[string]string{
-				"foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "current_version=1.2.3",
-			mockFileExists:   false,
-			wantFiles:        []string{"/tmp/foo.txt"},
-			wantMockState: map[string]text.MockTextRetriever{
-				"/tmp/foo.txt": {
-					Location: "/tmp/foo.txt",
-					Content:  "current_version=1.2.3",
-				},
-			},
-			wantResult: true,
-		},
-		{
-			name: "No line matched with matchPattern and ReplacePattern defined",
-			spec: Spec{
-				File:           "foo.txt",
-				MatchPattern:   "notmatching=*",
-				ReplacePattern: "maven_version= 3.9.0",
-			},
-			files: map[string]string{
-				"foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "3.9.0",
-			mockFileExists:   true,
-			mockReturnedContent: `maven_version = "3.8.2"
-		git_version = "2.33.1"
-		jdk11_version = "11.0.12+7"
-		jdk17_version = "17+35"
-		jdk8_version = "8u302-b08"
-		maven_major_release = "3"
-		git_lfs_version = "3.0.1"
-		compose_version = "1.29.2"`,
-			wantResult: false,
-			wantErr:    true,
-		},
+		// {
+		// 	name: "Passing case with 'ForceCreate' specified",
+		// 	spec: Spec{
+		// 		File:        "foo.txt",
+		// 		ForceCreate: true,
+		// 	},
+		// 	files: map[string]string{
+		// 		"foo.txt": "",
+		// 	},
+		// 	scm: &scm.MockScm{
+		// 		WorkingDir: "/tmp",
+		// 	},
+		// 	inputSourceValue: "current_version=1.2.3",
+		// 	mockFileExists:   false,
+		// 	wantFiles:        []string{"/tmp/foo.txt"},
+		// 	wantMockState: map[string]text.MockTextRetriever{
+		// 		"/tmp/foo.txt": {
+		// 			Location: "/tmp/foo.txt",
+		// 			Content:  "current_version=1.2.3",
+		// 		},
+		// 	},
+		// 	wantResult: true,
+		// },
+		// {
+		// 	name: "No line matched with matchPattern and ReplacePattern defined",
+		// 	spec: Spec{
+		// 		File:           "foo.txt",
+		// 		MatchPattern:   "notmatching=*",
+		// 		ReplacePattern: "maven_version= 3.9.0",
+		// 	},
+		// 	files: map[string]string{
+		// 		"foo.txt": "",
+		// 	},
+		// 	scm: &scm.MockScm{
+		// 		WorkingDir: "/tmp",
+		// 	},
+		// 	inputSourceValue: "3.9.0",
+		// 	mockFileExists:   true,
+		// 	mockReturnedContent: `maven_version = "3.8.2"
+		// git_version = "2.33.1"
+		// jdk11_version = "11.0.12+7"
+		// jdk17_version = "17+35"
+		// jdk8_version = "8u302-b08"
+		// maven_major_release = "3"
+		// git_lfs_version = "3.0.1"
+		// compose_version = "1.29.2"`,
+		// 	wantResult: false,
+		// 	wantErr:    true,
+		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -468,8 +530,9 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			// 	mockTexts[filePath] = tt.
 			// }
 			mockText := text.MockTextRetriever{
-				Err:    tt.mockReturnedError,
-				Exists: tt.mockFileExists,
+				Contents: tt.mockReturnedContents,
+				Lines:    tt.mockReturnedLines,
+				Err:      tt.mockReturnedError,
 			}
 			f := &File{
 				spec:             tt.spec,
@@ -488,11 +551,9 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			assert.Equal(t, tt.wantResult, gotResult)
 			assert.Equal(t, tt.wantFiles, gotFiles)
 			for filePath := range f.files {
-				assert.Equal(t, tt.wantMockState[filePath].Location, mockText.Location[filePath])
-				assert.Equal(t, tt.wantMockState[filePath].Line, mockText[filePath].Line)
-				assert.Equal(t, tt.wantMockState[filePath].Content, mockText[filePath].Content)
+				assert.Equal(t, tt.wantMockContents[filePath], mockText.Contents[filePath])
+				assert.Equal(t, tt.wantMockLines[filePath], mockText.Lines[filePath])
 			}
 		})
 	}
 }
-*/
