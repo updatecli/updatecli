@@ -38,12 +38,12 @@ func (f *File) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 func (f *File) checkCondition(source string) (bool, error) {
 	passing, err := f.condition(source)
 	if err != nil {
-		logrus.Infof("%s Condition on file %q errored", result.FAILURE, f.spec.File)
+		logrus.Infof("%s Condition on file errored: %s", result.FAILURE, err.Error())
 	} else {
 		if passing {
-			logrus.Infof("%s Condition on file %q passed", result.SUCCESS, f.spec.File)
+			logrus.Infof("%s Condition on file %q passed", result.SUCCESS, f.spec.Files)
 		} else {
-			logrus.Infof("%s Condition on file %q did not pass", result.FAILURE, f.spec.File)
+			logrus.Infof("%s Condition on file %q did not pass", result.FAILURE, f.spec.Files)
 		}
 	}
 
@@ -144,11 +144,14 @@ func (f *File) condition(source string) (bool, error) {
 		logrus.Debug("Attribute `content` detected")
 
 		if f.spec.Content != f.files[filePath] {
-			logrus.Infof("%s %s is different than the specified content: \n%s",
+			validationError := fmt.Errorf("%s %s is different than the specified content: \n%s",
 				result.FAILURE,
-				logMessage, text.Diff(filePath, f.files[filePath], f.spec.Content))
+				logMessage,
+				text.Diff(filePath, f.files[filePath], f.spec.Content),
+			)
 
-			return false, nil
+			// The actual content in the file at the specified line is different than what's expected, we return an error
+			return false, validationError
 		}
 		logrus.Infof("%s %s is the same as the specified content.", result.SUCCESS, logMessage)
 	}
