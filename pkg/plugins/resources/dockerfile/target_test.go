@@ -2,6 +2,7 @@ package dockerfile
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -150,7 +151,7 @@ CMD ["--help:golang"]
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantChanged, gotChanged)
-			assert.Equal(t, tt.wantMockState.Contents["FROM.Dockerfile"], mockFile.Contents["FROM.Dockerfile"])
+			assert.Equal(t, tt.wantMockState.Contents[tt.spec.File], mockFile.Contents[tt.spec.File])
 		})
 	}
 }
@@ -203,6 +204,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			filePath := filepath.Join(tt.scm.GetDirectory(), tt.spec.File)
 			newParser, err := getParser(tt.spec)
 			require.NoError(t, err)
 
@@ -223,7 +225,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			assert.Equal(t, tt.wantChanged, gotChanged)
 			assert.Equal(t, tt.wantFiles, gotFiles)
 			assert.Equal(t, tt.wantMessage, gotMessage)
-			assert.Equal(t, tt.wantMockState.Contents["/tmp/FROM.Dockerfile"], mockFile.Contents["/tmp/FROM.Dockerfile"])
+			assert.Equal(t, tt.wantMockState.Contents[filePath], mockFile.Contents[filePath])
 		})
 	}
 }

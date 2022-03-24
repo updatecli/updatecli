@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -249,9 +250,10 @@ github:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			filePath := filepath.Join(tt.scm.GetDirectory(), tt.spec.File)
 			mockText := text.MockTextRetriever{
 				Contents: map[string]string{
-					"/tmp/test.yaml": tt.mockReturnedContent,
+					filePath: tt.mockReturnedContent,
 				},
 				Err: tt.mockReturnedError,
 			}
@@ -267,7 +269,7 @@ github:
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantResult, gotResult)
-			assert.Equal(t, tt.wantMockState.Contents["/tmp/test.yaml"], mockText.Contents["/tmp/test.yaml"])
+			assert.Equal(t, tt.wantMockState.Contents[filePath], mockText.Contents[filePath])
 		})
 	}
 }
