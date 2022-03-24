@@ -47,14 +47,21 @@ var (
 
 // Config contains cli configuration
 type Config struct {
-	Name         string
-	PipelineID   string                        // PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title        string                        // Title is used for the full pipeline
-	PullRequests map[string]pullrequest.Config // PullRequests defines the list of Pull Request configuration which need to be managed
-	SCMs         map[string]scm.Config         `yaml:"scms"` // SCMs defines the list of repository configuration used to fetch content from.
-	Sources      map[string]source.Config      // Sources defines the list of source configuration
-	Conditions   map[string]condition.Config   // Conditions defines the list of condition configuration
-	Targets      map[string]target.Config      // Targets defines the list of target configuration
+	Name string
+	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	PipelineID string
+	// Title is used for the full pipeline
+	Title string
+	// PullRequests defines the list of Pull Request configuration which need to be managed
+	PullRequests map[string]pullrequest.Config
+	// SCMs defines the list of repository configuration used to fetch content from.
+	SCMs map[string]scm.Config `yaml:"scms"`
+	// Sources defines the list of source configuration
+	Sources map[string]source.Config
+	// Conditions defines the list of condition configuration
+	Conditions map[string]condition.Config
+	// Targets defines the list of target configuration
+	Targets map[string]target.Config
 }
 
 // Reset reset configuration
