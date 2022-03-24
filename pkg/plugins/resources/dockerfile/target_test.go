@@ -34,14 +34,15 @@ func TestDockerfile_Target(t *testing.T) {
 				},
 			},
 			mockFile: text.MockTextRetriever{
-				Content: dockerfileFixture,
-				Exists:  true,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 			wantChanged: true,
 			wantMockState: text.MockTextRetriever{
-				Location: "FROM.Dockerfile",
-				// dryRun is true: no change
-				Content: dockerfileFixture,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 		},
 		{
@@ -55,13 +56,14 @@ func TestDockerfile_Target(t *testing.T) {
 				},
 			},
 			mockFile: text.MockTextRetriever{
-				Content: dockerfileFixture,
-				Exists:  true,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 			wantChanged: true,
 			wantMockState: text.MockTextRetriever{
-				Location: "FROM.Dockerfile",
-				Content: `FROM golang:1.16 AS builder
+				Contents: map[string]string{
+					"FROM.Dockerfile": `FROM golang:1.16 AS builder
 ARG golang=3.0.0
 COPY ./golang .
 RUN go get -d -v ./... && echo golang
@@ -79,6 +81,7 @@ COPY --from=golang --chown=updatecli:golang /go/src/app/dist/updatecli /usr/bin/
 ENTRYPOINT [ "/usr/bin/golang" ]
 CMD ["--help:golang"]
 `,
+				},
 			},
 		},
 		{
@@ -90,14 +93,15 @@ CMD ["--help:golang"]
 				Instruction: "FROM[12][1]",
 			},
 			mockFile: text.MockTextRetriever{
-				Content: dockerfileFixture,
-				Exists:  true,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 			wantChanged: false,
 			wantMockState: text.MockTextRetriever{
-				Location: "FROM.Dockerfile",
-				// dryRun is true: no change
-				Content: dockerfileFixture,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 			wantErr: fmt.Errorf("%s cannot find instruction \"FROM[12][1]\"", result.FAILURE),
 		},
@@ -113,14 +117,16 @@ CMD ["--help:golang"]
 				},
 			},
 			mockFile: text.MockTextRetriever{
-				Content: dockerfileFixture,
-				Exists:  true,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 			wantChanged: false,
 			wantMockState: text.MockTextRetriever{
-				Location: "FROM.Dockerfile",
 				// dryRun is true: no change
-				Content: dockerfileFixture,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 		},
 	}
@@ -144,9 +150,7 @@ CMD ["--help:golang"]
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantChanged, gotChanged)
-			assert.Equal(t, tt.wantMockState.Location, mockFile.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockFile.Line)
-			assert.Equal(t, tt.wantMockState.Content, mockFile.Content)
+			assert.Equal(t, tt.wantMockState.Contents["FROM.Dockerfile"], mockFile.Contents["FROM.Dockerfile"])
 		})
 	}
 }
@@ -176,20 +180,24 @@ func TestFile_TargetFromSCM(t *testing.T) {
 					"matcher": "golang",
 				},
 			},
-			mockFile: text.MockTextRetriever{
-				Content: dockerfileFixture,
-				Exists:  true,
-			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
+			mockFile: text.MockTextRetriever{
+				Contents: map[string]string{
+					"/tmp/FROM.Dockerfile": dockerfileFixture,
+				},
+			},
 			wantChanged: true,
-			wantFiles:   []string{"/tmp/FROM.Dockerfile"},
+			wantFiles: []string{
+				"/tmp/FROM.Dockerfile",
+			},
 			wantMessage: "changed lines [1 5] of file \"/tmp/FROM.Dockerfile\"",
 			wantMockState: text.MockTextRetriever{
-				Location: "/tmp/FROM.Dockerfile",
 				// dryRun is true: no change
-				Content: dockerfileFixture,
+				Contents: map[string]string{
+					"/tmp/FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 		},
 	}
@@ -198,11 +206,11 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			newParser, err := getParser(tt.spec)
 			require.NoError(t, err)
 
-			mockFile := &tt.mockFile
+			mockFile := tt.mockFile
 
 			d := &Dockerfile{
 				spec:             tt.spec,
-				contentRetriever: mockFile,
+				contentRetriever: &mockFile,
 				parser:           newParser,
 			}
 			gotChanged, gotFiles, gotMessage, gotErr := d.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
@@ -215,9 +223,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			assert.Equal(t, tt.wantChanged, gotChanged)
 			assert.Equal(t, tt.wantFiles, gotFiles)
 			assert.Equal(t, tt.wantMessage, gotMessage)
-			assert.Equal(t, tt.wantMockState.Location, mockFile.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockFile.Line)
-			assert.Equal(t, tt.wantMockState.Content, mockFile.Content)
+			assert.Equal(t, tt.wantMockState.Contents["/tmp/FROM.Dockerfile"], mockFile.Contents["/tmp/FROM.Dockerfile"])
 		})
 	}
 }
