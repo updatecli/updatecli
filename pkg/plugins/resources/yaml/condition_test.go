@@ -69,21 +69,30 @@ github:
 				},
 			},
 		},
-		// 		{
-		// 			name: "Failing case with keyonly and input source",
-		// 			spec: Spec{
-		// 				File:    "test.yaml",
-		// 				Key:     "github.country",
-		// 				KeyOnly: true,
-		// 			},
-		// 			inputSourceValue: "",
-		// 			mockReturnedContent: `---
-		// github:
-		//   owner: olblak
-		//   repository: charts
-		// `,
-		// 			wantErr: true,
-		// 		},
+		{
+			name: "'No result' case with keyonly and input source",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "github.country",
+				KeyOnly: true,
+			},
+			inputSourceValue: "",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantMockState: text.MockTextRetriever{
+				Contents: map[string]string{
+					"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				},
+			},
+			wantResult: false,
+		},
 		{
 			name: "Validation error with both keyonly and specified value",
 			spec: Spec{
@@ -108,20 +117,29 @@ github:
 			mockReturnedError: fmt.Errorf("no such file or directory"),
 			wantErr:           true,
 		},
-		// 		{
-		// 			name: "Failing case (key found but not the correct value)",
-		// 			spec: Spec{
-		// 				File: "test.yaml",
-		// 				Key:  "github.owner",
-		// 			},
-		// 			inputSourceValue: "asterix",
-		// 			mockReturnedContent: `---
-		// github:
-		//   owner: olblak
-		//   repository: charts
-		// `,
-		// 			wantErr: true,
-		// 		},
+		{
+			name: "'No result' case (key found but not the correct value)",
+			spec: Spec{
+				File: "test.yaml",
+				Key:  "github.owner",
+			},
+			inputSourceValue: "asterix",
+			mockReturnedContent: `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			wantMockState: text.MockTextRetriever{
+				Contents: map[string]string{
+					"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				},
+			},
+			wantResult: false,
+		},
 		{
 			name: "Failing case (key not found)",
 			spec: Spec{
