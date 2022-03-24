@@ -86,15 +86,17 @@ type Resource interface {
 func GetResourceMapping() map[string]interface{} {
 
 	return map[string]interface{}{
-		"aws/ami":     &awsami.Spec{},
-		"jenkins":     &jenkins.Spec{},
-		"shell":       &shell.Spec{},
-		"gittag":      &gittag.Spec{},
-		"dockerfile":  &dockerfile.Spec{},
-		"file":        &file.Spec{},
-		"helmchart":   &helm.Spec{},
-		"maven":       &maven.Spec{},
-		"yaml":        &yaml.Spec{},
-		"dockerimage": &dockerimage.Spec{},
+		"aws/ami":       &awsami.Spec{},
+		"jenkins":       &jenkins.Spec{},
+		"shell":         &shell.Spec{},
+		"gittag":        &gittag.Spec{},
+		"githubrelease": &githubrelease.Spec{},
+		"dockerdigest":  &dockerdigest.Spec{},
+		"dockerfile":    &dockerfile.Spec{},
+		"dockerimage":   &dockerimage.Spec{},
+		"file":          &file.Spec{},
+		"helmchart":     &helm.Spec{},
+		"maven":         &maven.Spec{},
+		"yaml":          &yaml.Spec{},
 	}
 }
