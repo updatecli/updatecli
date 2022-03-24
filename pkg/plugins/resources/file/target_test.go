@@ -18,10 +18,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 		files            map[string]string
 		inputSourceValue string
 		mockedContents   map[string]string
-		mockedLines      map[string]int
 		mockedError      error
 		wantedContents   map[string]string
-		wantedLines      map[string]int
 		wantedResult     bool
 		wantedErr        bool
 		dryRun           bool
@@ -161,15 +159,9 @@ func TestFile_TargetMultiples(t *testing.T) {
 			mockedContents: map[string]string{
 				"foo.txt": "Title\r\nGood Bye\r\nThe end",
 			},
-			mockedLines: map[string]int{
-				"foo.txt": 2,
-			},
 			inputSourceValue: "current_version=1.2.3",
 			wantedContents: map[string]string{
 				"foo.txt": "Title\r\nHello World\r\nThe end",
-			},
-			wantedLines: map[string]int{
-				"foo.txt": 2,
 			},
 			wantedResult: true,
 		},
@@ -191,18 +183,10 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "Title\r\nGood Bye\r\nThe end",
 				"bar.txt": "Be happy\nDon't worry",
 			},
-			mockedLines: map[string]int{
-				"foo.txt": 2,
-				"bar.txt": 2,
-			},
 			inputSourceValue: "current_version=1.2.3",
 			wantedContents: map[string]string{
 				"foo.txt": "Title\r\nHello World\r\nThe end",
 				"bar.txt": "Be happy\nHello World",
-			},
-			wantedLines: map[string]int{
-				"foo.txt": 2,
-				"bar.txt": 2,
 			},
 			wantedResult: true,
 		},
@@ -346,17 +330,9 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "Title\r\nGood Bye\r\nBe happy",
 				"bar.txt": "Be happy\nDon't worry\nBe happy\nDon't worry",
 			},
-			mockedLines: map[string]int{
-				"foo.txt": 2,
-				"bar.txt": 2,
-			},
 			wantedContents: map[string]string{
 				"foo.txt": "Title\r\nGood Bye\r\nBe happy",
 				"bar.txt": "Be happy\nDon't worry\nBe happy\nDon't worry",
-			},
-			wantedLines: map[string]int{
-				"foo.txt": 2,
-				"bar.txt": 2,
 			},
 			wantedResult: false,
 		},
@@ -377,17 +353,9 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "current_version=1.2.3",
 				"bar.txt": "current_version=1.2.3",
 			},
-			mockedLines: map[string]int{
-				"foo.txt": 3,
-				"bar.txt": 3,
-			},
 			wantedContents: map[string]string{
 				"foo.txt": "current_version=1.2.3",
 				"bar.txt": "current_version=1.2.3",
-			},
-			wantedLines: map[string]int{
-				"foo.txt": 3,
-				"bar.txt": 3,
 			},
 			wantedResult: false,
 		},
@@ -396,7 +364,6 @@ func TestFile_TargetMultiples(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockedText := text.MockTextRetriever{
 				Contents: tt.mockedContents,
-				Lines:    tt.mockedLines,
 				Err:      tt.mockedError,
 			}
 			f := &File{
@@ -416,7 +383,6 @@ func TestFile_TargetMultiples(t *testing.T) {
 			assert.Equal(t, tt.wantedResult, gotResult)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
-				assert.Equal(t, tt.wantedLines[filePath], mockedText.Lines[filePath])
 			}
 		})
 	}
@@ -430,11 +396,9 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		scm              scm.ScmHandler
 		inputSourceValue string
 		mockedContents   map[string]string
-		mockedLines      map[string]int
 		mockedError      error
 		wantedFiles      []string
 		wantedContents   map[string]string
-		wantedLines      map[string]int
 		wantedResult     bool
 		wantedErr        bool
 		dryRun           bool
@@ -460,10 +424,6 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				"/tmp/foo.txt": "Title\r\nGood Bye\r\nThe End",
 				"/tmp/bar.txt": "Be happy\nDon't worry\nBe happy\nDon't worry",
 			},
-			mockedLines: map[string]int{
-				"/tmp/foo.txt": 3,
-				"/tmp/bar.txt": 3,
-			},
 			wantedFiles: []string{
 				"/tmp/foo.txt",
 				"/tmp/bar.txt",
@@ -471,10 +431,6 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			wantedContents: map[string]string{
 				"/tmp/foo.txt": "Title\r\nGood Bye\r\ncurrent_version=1.2.3",
 				"/tmp/bar.txt": "Be happy\nDon't worry\ncurrent_version=1.2.3\nDon't worry",
-			},
-			wantedLines: map[string]int{
-				"/tmp/foo.txt": 3,
-				"/tmp/bar.txt": 3,
 			},
 			wantedResult: true,
 		},
@@ -555,7 +511,6 @@ func TestFile_TargetFromSCM(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockedText := text.MockTextRetriever{
 				Contents: tt.mockedContents,
-				Lines:    tt.mockedLines,
 				Err:      tt.mockedError,
 			}
 			f := &File{
@@ -580,7 +535,6 @@ func TestFile_TargetFromSCM(t *testing.T) {
 
 			for filePath := range f.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
-				assert.Equal(t, tt.wantedLines[filePath], mockedText.Lines[filePath])
 			}
 		})
 	}
