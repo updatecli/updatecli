@@ -387,8 +387,7 @@ func Test_Validate(t *testing.T) {
 				File: "/tmp/test.yaml",
 				Key:  "foo.bar",
 			},
-			mockFileExist: true,
-			wantErr:       false,
+			wantErr: false,
 		},
 		{
 			name: "raises an error when 'File' is empty",
@@ -396,8 +395,7 @@ func Test_Validate(t *testing.T) {
 				File: "",
 				Key:  "foo.bar",
 			},
-			mockFileExist: true,
-			wantErr:       true,
+			wantErr: true,
 		},
 		{
 			name: "raises an error when 'Key' is empty",
@@ -405,17 +403,14 @@ func Test_Validate(t *testing.T) {
 				File: "/tmp/toto.yaml",
 				Key:  "",
 			},
-			mockFileExist: true,
-			wantErr:       true,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			yaml := Yaml{
-				spec: tt.spec,
-				contentRetriever: &text.MockTextRetriever{
-					Exists: tt.mockFileExist,
-				},
+				spec:             tt.spec,
+				contentRetriever: &text.MockTextRetriever{},
 			}
 			gotErr := yaml.Validate()
 			if tt.wantErr {
