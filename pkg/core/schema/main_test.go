@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -37,32 +38,44 @@ type mockConfig struct {
 
 func TestGenerateSchema(t *testing.T) {
 	s := New("", "")
-	schema := s.GenerateSchema(&mockConfig{})
 
-	t.Errorf("Error: %v", schema)
+	err := s.GenerateSchema(&mockConfig{})
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+
+	}
+
 }
 
 func TestGetPackageComments(t *testing.T) {
-	comments, err := GetPackageComments("")
+	for _, path := range []string{"../../.."} {
+		comments, err := GetPackageComments(path)
 
-	if err != nil {
-		t.Errorf("Unexpected Error: %v", err)
+		if err != nil {
+			t.Errorf("Unexpected Error for path %q: %v", path, err)
+		}
 
-	}
+		expectedResult := false
 
-	expectedResult := false
+		for key := range comments {
+			// Testing arbitrary comment that should exist
+			if strings.HasPrefix(key, "github.com/updatecli/updatecli/pkg/core/config.Config") {
+				expectedResult = true
+				break
+			}
+		}
 
-	for key := range comments {
-		if strings.HasPrefix(key, "github.com/updatecli/updatecli/pkg/core") {
-			expectedResult = true
-			break
+		if !expectedResult {
+			for key := range comments {
+				// For simplifying error messag only show comments related to our test case
+				if strings.HasPrefix(key, "github.com/updatecli/updatecli/pkg/core/config") {
+					fmt.Printf("Debugging %q\n", key)
+				}
+			}
+			t.Errorf("Unexpected result for path %q", path)
 		}
 	}
-
-	if !expectedResult {
-		t.Errorf("Unexpected result: %v", comments)
-	}
-
 }
 
 func TestGenerateJsonSchema(t *testing.T) {

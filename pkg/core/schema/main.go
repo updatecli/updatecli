@@ -2,11 +2,14 @@ package schema
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/iancoleman/orderedmap"
 	"github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
@@ -19,11 +22,17 @@ var (
 	defaultBaseSchemaID string = "https://www.updatecli.io/schema"
 	// Set base package name
 	updatecliPackageName string = "github.com/updatecli/updatecli/"
+
+	// commentDir defines the temporary directory where
+	commentDir string = path.Join(os.TempDir(), "updatecli/")
+	// commentURL defines the updatecli git url
+	commentURL string = "https://github.com/updatecli/updatecli.git"
 )
 
 type Schema struct {
 	SchemaDir    string
 	BaseSchemaID string
+	JsonSchema   jsonschema.Schema
 }
 
 func New(baseSchemaID, schemaDirectory string) *Schema {
@@ -74,66 +83,24 @@ func (s *Schema) GenerateSchema(object interface{}) error {
 
 	r.KeyNamer = strings.ToLower
 
-	r.CommentMap, err = GetPackageComments("../../../pkg")
+	r.CommentMap, err = GetPackageComments(commentDir)
 
 	if err != nil {
 		return err
 	}
 
-	u, err := json.MarshalIndent(r.Reflect(object), "", "    ")
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filepath.Join(s.SchemaDir, "config.json"), u, 0644)
-	if err != nil {
-		return err
-	}
+	s.JsonSchema = *r.Reflect(object)
 
 	return nil
 }
 
-// GetPackageComments retrieves all updatecli code comments
-func GetPackageComments(rootPackagePath string) (map[string]string, error) {
-
-	// It appears that the path change based on where we call the function
-	// so we need to parametrize it
-	if rootPackagePath == "" {
-		rootPackagePath = "../../../pkg"
-	}
-	r := new(jsonschema.Reflector)
-
-	r.Anonymous = true
-	r.YAMLEmbeddedStructs = true
-	r.DoNotReference = true
-	r.RequiredFromJSONSchemaTags = true
-
-	if err := r.AddGoComments(
-		updatecliPackageName,
-		rootPackagePath); err != nil {
-		return nil, err
-	}
-
-	for key, value := range r.CommentMap {
-		newkey := strings.TrimLeft(key, "./")
-		newkey = updatecliPackageName + newkey
-		r.CommentMap[newkey] = value
-	}
-
-	return r.CommentMap, nil
-}
-
-//type ResourceConfigSchema Config
-
 func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]interface{}) *jsonschema.Schema {
-
-	// schemaResources contains list of every resource mapping
 
 	var err error
 	var commentMap map[string]string
 
 	// Retrieve Updatecli code comments
-	commentMap, err = GetPackageComments("../../../pkg")
+	commentMap, err = GetPackageComments(commentDir)
 
 	if err != nil {
 		logrus.Errorf(err.Error())
@@ -148,11 +115,6 @@ func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]inter
 	r.RequiredFromJSONSchemaTags = true
 	r.KeyNamer = strings.ToLower
 	r.CommentMap = commentMap
-
-	if len(commentMap) == 0 {
-		logrus.Errorf("no comments retrieved for package %s", updatecliPackageName)
-		return nil
-	}
 
 	resourceSchema := r.Reflect(resourceConfigSchema)
 
@@ -169,14 +131,12 @@ func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]inter
 
 		// schema we need a way to remove schema
 
-		// Main resource type schema such as source or condition
 		s := r.Reflect(spec)
 		s.ContentSchema = nil
 
 		var spec jsonschema.Schema
 
 		spec.Type = "object"
-		spec.Required = []string{"kind"}
 		spec.Properties = orderedmap.New()
 		spec.Properties.Set("spec", s.Properties)
 		spec.Properties.Set("kind", jsonschema.Schema{
@@ -187,4 +147,99 @@ func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]inter
 	}
 	return resourceSchema
 
+}
+
+// Save export a jsonschema to a local file
+func (s *Schema) Save() error {
+	err := ioutil.WriteFile(filepath.Join(s.SchemaDir, "config.json"), []byte(s.String()), 0600)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// String implements the string interface
+func (s *Schema) String() string {
+	indentedJsonSchema, err := json.MarshalIndent(s.JsonSchema, "", "    ")
+	if err != nil {
+		logrus.Errorf(err.Error())
+	}
+
+	return string(indentedJsonSchema)
+}
+
+// GetPackageComments retrieves all updatecli code comments
+func GetPackageComments(rootPackagePath string) (map[string]string, error) {
+
+	r := new(jsonschema.Reflector)
+
+	r.Anonymous = true
+	r.YAMLEmbeddedStructs = true
+	r.DoNotReference = true
+	r.RequiredFromJSONSchemaTags = true
+
+	if err := r.AddGoComments(
+		updatecliPackageName,
+		rootPackagePath); err != nil {
+		return nil, err
+	}
+
+	for key, value := range r.CommentMap {
+
+		newkey := key
+		for _, element := range strings.Split(newkey, "/") {
+			if element == "pkg" {
+				break
+			}
+			newkey = strings.TrimLeft(newkey, "./")
+			newkey = strings.TrimPrefix(newkey, element)
+		}
+
+		if !strings.HasPrefix(newkey, updatecliPackageName) {
+			newkey = filepath.Join(updatecliPackageName, newkey)
+			if newkey != key {
+				r.CommentMap[newkey] = value
+				delete(r.CommentMap, key)
+			}
+		}
+	}
+
+	if len(r.CommentMap) == 0 {
+		return nil, fmt.Errorf("no comments retrieved for package %s", updatecliPackageName)
+	}
+
+	return r.CommentMap, nil
+}
+
+// CloneCommentDirectory clones the updatecli git repository in a
+// temporary location so we can parse comments
+func CloneCommentDirectory() error {
+
+	// Clone the given repository to the given directory
+	logrus.Debugf("git clone %s %s --recursive", commentURL, commentDir)
+
+	_, err := git.PlainClone(commentDir, false, &git.CloneOptions{
+		URL:               commentURL,
+		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+	})
+
+	switch err {
+	case git.ErrRepositoryAlreadyExists:
+		return nil
+	case nil:
+		return nil
+	default:
+		return err
+	}
+}
+
+// CleanCommentDirectory will remove the main temporary directory used by updatecli.
+func CleanCommentDirectory() error {
+	err := os.RemoveAll(commentDir)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
