@@ -39,13 +39,42 @@ type mockConfig struct {
 func TestGenerateSchema(t *testing.T) {
 	s := New("", "")
 
-	err := s.GenerateSchema(&mockConfig{})
+	err := CloneCommentDirectory()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+
+	}
+
+	err = s.GenerateSchema(&mockConfig{})
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 
 	}
 
+	err = CleanCommentDirectory()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+
+	}
+
+}
+
+func TestGenerateJsonSchema(t *testing.T) {
+
+	anyOfSpec := map[string]interface{}{
+		"jenkins": mockJenkinsSpec{},
+	}
+
+	schema := GenerateJsonSchema(mockConditionConfig{}, anyOfSpec)
+
+	u, err := json.MarshalIndent(schema, "", "    ")
+
+	if err != nil {
+		logrus.Errorf(err.Error())
+	}
+
+	t.Error(string(u))
 }
 
 func TestGetPackageComments(t *testing.T) {
@@ -76,21 +105,4 @@ func TestGetPackageComments(t *testing.T) {
 			t.Errorf("Unexpected result for path %q", path)
 		}
 	}
-}
-
-func TestGenerateJsonSchema(t *testing.T) {
-
-	anyOfSpec := map[string]interface{}{
-		"jenkins": mockJenkinsSpec{},
-	}
-
-	schema := GenerateJsonSchema(mockConditionConfig{}, anyOfSpec)
-
-	u, err := json.MarshalIndent(schema, "", "    ")
-
-	if err != nil {
-		logrus.Errorf(err.Error())
-	}
-
-	t.Error(string(u))
 }
