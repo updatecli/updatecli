@@ -11,7 +11,7 @@ import (
 var (
 	jsonschemaCmd = &cobra.Command{
 		Use:   "jsonschema",
-		Short: "Export Json Schema to file",
+		Short: "**Experimental** Export JsonSchema to file",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			err := run("jsonschema")
