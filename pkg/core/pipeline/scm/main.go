@@ -13,7 +13,7 @@ import (
 
 type Config struct {
 	Kind string
-	Spec interface{}
+	Spec interface{} `jsonschema:"type=object"`
 }
 
 type Scm struct {
