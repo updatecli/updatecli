@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/awsami"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerdigest"
@@ -68,7 +69,7 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "yaml":
 		return yaml.New(rs.Spec)
 	default:
-		return nil, fmt.Errorf("⚠ Don't support resource kind: %v", rs.Kind)
+		return nil, fmt.Errorf("%s Don't support resource kind: %v", result.FAILURE, rs.Kind)
 	}
 }
 
