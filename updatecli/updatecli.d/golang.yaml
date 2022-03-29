@@ -61,7 +61,7 @@ conditions:
       value: go
   dockerTag:
     name: 'Is docker image golang:{{ source "latestGoVersion" }} published'
-    sourceid: latestGoVersion
+    sourceID: latestGoVersion
     kind: dockerImage
     spec:
       image: golang
@@ -70,7 +70,7 @@ conditions:
 targets:
   release-sandbox:
     name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceid: latestGoVersion
+    sourceID: latestGoVersion
     kind: yaml
     spec:
       file: .github/workflows/release.yaml
@@ -78,7 +78,7 @@ targets:
     scmid: default
   release:
     name: '[release-sandbox.yaml] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceid: latestGoVersion
+    sourceID: latestGoVersion
     kind: yaml
     spec:
       file: .github/workflows/release-sandbox.yaml
@@ -87,14 +87,14 @@ targets:
   workflowgo:
     name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
     kind: yaml
-    sourceid: latestGoVersion
+    sourceID: latestGoVersion
     spec:
       file: .github/workflows/go.yaml
       key: jobs.build.steps[0].with.go-version
     scmid: default
   go.mod:
     name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceid: gomod
+    sourceID: gomod
     kind: file
     spec:
       file: go.mod
