@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/iancoleman/orderedmap"
 	"github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 )
@@ -107,16 +106,7 @@ func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]inter
 		return nil
 	}
 
-	r := new(jsonschema.Reflector)
-
-	r.Anonymous = true
-	r.YAMLEmbeddedStructs = true
-	r.DoNotReference = true
-	r.RequiredFromJSONSchemaTags = true
-	r.KeyNamer = strings.ToLower
-	r.CommentMap = commentMap
-
-	resourceSchema := r.Reflect(resourceConfigSchema)
+	resourceSchema := jsonschema.Schema{}
 
 	for id, spec := range anyOf {
 		r := new(jsonschema.Reflector)
@@ -131,21 +121,18 @@ func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]inter
 
 		// schema we need a way to remove schema
 
-		s := r.Reflect(spec)
-		s.ContentSchema = nil
+		resourceConfig := r.Reflect(resourceConfigSchema)
 
-		var spec jsonschema.Schema
+		spec := r.Reflect(spec)
 
-		spec.Type = "object"
-		spec.Properties = orderedmap.New()
-		spec.Properties.Set("spec", s.Properties)
-		spec.Properties.Set("kind", jsonschema.Schema{
+		resourceConfig.Properties.Set("spec", spec)
+		resourceConfig.Properties.Set("kind", jsonschema.Schema{
 			Enum: []interface{}{id}})
 
-		resourceSchema.OneOf = append(resourceSchema.OneOf, &spec)
+		resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
 
 	}
-	return resourceSchema
+	return &resourceSchema
 
 }
 
