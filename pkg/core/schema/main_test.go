@@ -39,6 +39,47 @@ type mockConfig struct {
 }
 
 func TestGenerateSchema(t *testing.T) {
+	expectedJsonSchema := `{
+    "$schema": "http://json-schema.org/draft/2020-12/schema",
+    "$id": "https://www.updatecli.io/schema/mock-config",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "pipelineid": {
+            "type": "string"
+        },
+        "title": {
+            "type": "string"
+        },
+        "conditions": {
+            "patternProperties": {
+                ".*": {
+                    "properties": {
+                        "sourceid": {
+                            "type": "string"
+                        },
+                        "disablesourceinput": {
+                            "type": "boolean"
+                        },
+                        "spec": true,
+                        "kind": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                        "kind"
+                    ]
+                }
+            },
+            "type": "object"
+        }
+    },
+    "additionalProperties": false,
+    "type": "object"
+}`
 	s := New("", "")
 
 	err := CloneCommentDirectory()
@@ -46,15 +87,24 @@ func TestGenerateSchema(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
+	defer func() error {
+		err := CleanCommentDirectory()
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		return nil
+	}()
+
 	err = s.GenerateSchema(&mockConfig{})
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	err = CleanCommentDirectory()
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+	if expectedJsonSchema != s.String() {
+		t.Errorf("Expected Jsonschema:\n%s\nGot:%s",
+			expectedJsonSchema,
+			string(s.String()))
 	}
 
 }
@@ -95,6 +145,18 @@ func TestGenerateJsonSchema(t *testing.T) {
         }
     ]
 }`
+	err := CloneCommentDirectory()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	defer func() error {
+		err := CleanCommentDirectory()
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		return nil
+	}()
 
 	anyOfSpec := map[string]interface{}{
 		"jenkins": mockJenkinsSpec{},
