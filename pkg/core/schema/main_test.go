@@ -44,20 +44,17 @@ func TestGenerateSchema(t *testing.T) {
 	err := CloneCommentDirectory()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
-
 	}
 
 	err = s.GenerateSchema(&mockConfig{})
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
-
 	}
 
 	err = CleanCommentDirectory()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
-
 	}
 
 }
