@@ -87,12 +87,11 @@ func TestGenerateSchema(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	defer func() error {
+	defer func() {
 		err := CleanCommentDirectory()
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("unexpected error while cleaning comment directory: %v", err)
 		}
-		return nil
 	}()
 
 	err = s.GenerateSchema(&mockConfig{})
@@ -104,7 +103,7 @@ func TestGenerateSchema(t *testing.T) {
 	if expectedJsonSchema != s.String() {
 		t.Errorf("Expected Jsonschema:\n%s\nGot:%s",
 			expectedJsonSchema,
-			string(s.String()))
+			s.String())
 	}
 
 }
@@ -150,12 +149,11 @@ func TestGenerateJsonSchema(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	defer func() error {
+	defer func() {
 		err := CleanCommentDirectory()
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("unexpected error while cleaning comment directory: %v", err)
 		}
-		return nil
 	}()
 
 	anyOfSpec := map[string]interface{}{
