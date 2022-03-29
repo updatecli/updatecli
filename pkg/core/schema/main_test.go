@@ -17,6 +17,8 @@ type mockConditionConfig struct {
 	SourceID string `yaml:"sourceID"`
 	// DisableSourceInput allows to not retrieve default source value.
 	DisableSourceInput bool
+	Spec               interface{}
+	Kind               string `jsonschema:"required"`
 }
 
 type mockJenkinsSpec struct {
@@ -61,6 +63,41 @@ func TestGenerateSchema(t *testing.T) {
 }
 
 func TestGenerateJsonSchema(t *testing.T) {
+	expectedJsonSchema := `{
+    "oneOf": [
+        {
+            "$schema": "http://json-schema.org/draft/2020-12/schema",
+            "properties": {
+                "sourceid": {
+                    "type": "string"
+                },
+                "disablesourceinput": {
+                    "type": "boolean"
+                },
+                "spec": {
+                    "$schema": "http://json-schema.org/draft/2020-12/schema",
+                    "properties": {
+                        "release": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "type": "object"
+                },
+                "kind": {
+                    "enum": [
+                        "jenkins"
+                    ]
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "kind"
+            ]
+        }
+    ]
+}`
 
 	anyOfSpec := map[string]interface{}{
 		"jenkins": mockJenkinsSpec{},
@@ -68,13 +105,17 @@ func TestGenerateJsonSchema(t *testing.T) {
 
 	schema := GenerateJsonSchema(mockConditionConfig{}, anyOfSpec)
 
-	u, err := json.MarshalIndent(schema, "", "    ")
+	gotJsonSchema, err := json.MarshalIndent(schema, "", "    ")
 
 	if err != nil {
 		logrus.Errorf(err.Error())
 	}
 
-	t.Error(string(u))
+	if expectedJsonSchema != string(gotJsonSchema) {
+		t.Errorf("Expected Jsonschema:\n%s\nGot:%s",
+			expectedJsonSchema,
+			gotJsonSchema)
+	}
 }
 
 func TestGetPackageComments(t *testing.T) {
