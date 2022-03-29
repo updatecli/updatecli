@@ -1,0 +1,97 @@
+---
+title: "Test Git scm"
+
+scms:
+  scenario-1:
+    kind: github
+    spec:
+      owner: updatecli
+      repository: updatecli
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      email: "info@updatecli.io"
+      user: "updatecli-bot"
+      branch: "main"
+      gpg:
+        signingkey: | 
+          -----BEGIN PGP PRIVATE KEY BLOCK-----
+
+          lIYEYitSPBYJKwYBBAHaRw8BAQdAR3mMGagDsa1P2HziXehsurCBw5ak58aNnfPP
+          uRQtcq7+BwMChGdseiaZfSP4FGTxgLaBHGEWmDCKQ4amNGTltUomLDlQoOB96MsG
+          Q8U2okm6n+gQpGXdNSfBcShMknv+VGyTCbEp2EP74wiZqNy+7Tn6hrRKVXBkYXRl
+          Y2xpIFRlc3RpbmcgS2V5IChVc2UgZm9yIHRlc3RpbmcgY29tbWl0IHNpZ25pbmcp
+          IDxpbmZvQHVwZGF0ZWNsaS5pbz6IjwQTFgoANxYhBJ9usT+MGXb+PI0/XOn+rQLg
+          PAKwBQJiK1I8AhsDBQsJCAcDBBUKCQgFFgMCAQACHgUCF4AACgkQ6f6tAuA8ArBs
+          XAEAuDO6x1yKpNlW/NNP8wb1G1troU9RRH/elmfS3mZitPgBANCMGKlQ1Y7BDpPu
+          14Em6plLaEVTqgwO/1xLOM2OvFACnIsEYitSPBIKKwYBBAGXVQEFAQEHQIAqn2sZ
+          2jYmiM9Oer8jZmo/HxjJ0JM8MpDNEa/nhtIOAwEIB/4HAwJRSL8Z+5NBWvgT7mi0
+          bw6OhGx+wOuousIr5yafc00NdixKcchZaHCjPPzoNryxhP4hDw4k97vQuzGHdUjk
+          rOEAjHZneWeYE4JNGYr7YHAviHgEGBYKACAWIQSfbrE/jBl2/jyNP1zp/q0C4DwC
+          sAUCYitSPAIbDAAKCRDp/q0C4DwCsHx9AP9mZgqZrhjeIKxvFCcAGwh86207lleO
+          ekdpOvjMSjIg5gEA+aToMfl7ND18s68TkoaaboecJYQdMTLMeImSZkXMzw0=
+          =X2cF
+          -----END PGP PRIVATE KEY BLOCK-----
+        passphrase: updatecli
+
+  scenario-2:
+    kind: git
+    spec:
+      url: "https://github.com/updatecli/updatecli.git"
+      branch: "main"
+      email: "info@updatecli.io"
+      user: "updatecli-bot"
+      gpg:
+        signingkey: | 
+          -----BEGIN PGP PRIVATE KEY BLOCK-----
+
+          lIYEYitSPBYJKwYBBAHaRw8BAQdAR3mMGagDsa1P2HziXehsurCBw5ak58aNnfPP
+          uRQtcq7+BwMChGdseiaZfSP4FGTxgLaBHGEWmDCKQ4amNGTltUomLDlQoOB96MsG
+          Q8U2okm6n+gQpGXdNSfBcShMknv+VGyTCbEp2EP74wiZqNy+7Tn6hrRKVXBkYXRl
+          Y2xpIFRlc3RpbmcgS2V5IChVc2UgZm9yIHRlc3RpbmcgY29tbWl0IHNpZ25pbmcp
+          IDxpbmZvQHVwZGF0ZWNsaS5pbz6IjwQTFgoANxYhBJ9usT+MGXb+PI0/XOn+rQLg
+          PAKwBQJiK1I8AhsDBQsJCAcDBBUKCQgFFgMCAQACHgUCF4AACgkQ6f6tAuA8ArBs
+          XAEAuDO6x1yKpNlW/NNP8wb1G1troU9RRH/elmfS3mZitPgBANCMGKlQ1Y7BDpPu
+          14Em6plLaEVTqgwO/1xLOM2OvFACnIsEYitSPBIKKwYBBAGXVQEFAQEHQIAqn2sZ
+          2jYmiM9Oer8jZmo/HxjJ0JM8MpDNEa/nhtIOAwEIB/4HAwJRSL8Z+5NBWvgT7mi0
+          bw6OhGx+wOuousIr5yafc00NdixKcchZaHCjPPzoNryxhP4hDw4k97vQuzGHdUjk
+          rOEAjHZneWeYE4JNGYr7YHAviHgEGBYKACAWIQSfbrE/jBl2/jyNP1zp/q0C4DwC
+          sAUCYitSPAIbDAAKCRDp/q0C4DwCsHx9AP9mZgqZrhjeIKxvFCcAGwh86207lleO
+          ekdpOvjMSjIg5gEA+aToMfl7ND18s68TkoaaboecJYQdMTLMeImSZkXMzw0=
+          =X2cF
+          -----END PGP PRIVATE KEY BLOCK-----
+        passphrase: updatecli
+
+sources:
+  scenario-1:
+    name: "Scenario 1"
+    kind: file
+    scmID: scenario-1
+    spec:
+      file: README.adoc
+  scenario-2:
+    name: "Scenario 2"
+    kind: file
+    scmID: scenario-2
+    spec:
+      file: README.adoc
+
+targets:
+  scenario-1:
+    name: "Scenario 1"
+    kind: file
+    scmID: scenario-1
+    sourceid: scenario-1
+    transformers:
+      - addPrefix: "Generated from Venom"
+    spec:
+      file: README.adoc
+
+  scenario-2:
+    name: "Scenario 2"
+    kind: file
+    scmID: scenario-2
+    sourceid: scenario-2
+    transformers:
+      - addPrefix: "Generated from Venom"
+    spec:
+      file: README.adoc
