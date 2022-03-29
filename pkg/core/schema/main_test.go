@@ -111,7 +111,7 @@ func TestGenerateJsonSchema(t *testing.T) {
 	if expectedJsonSchema != string(gotJsonSchema) {
 		t.Errorf("Expected Jsonschema:\n%s\nGot:%s",
 			expectedJsonSchema,
-			gotJsonSchema)
+			string(gotJsonSchema))
 	}
 }
 
