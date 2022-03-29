@@ -65,13 +65,13 @@ sources:
   scenario-1:
     name: "Scenario 1"
     kind: file
-    scmID: scenario-1
+    scmid: scenario-1
     spec:
       file: README.adoc
   scenario-2:
     name: "Scenario 2"
     kind: file
-    scmID: scenario-2
+    scmid: scenario-2
     spec:
       file: README.adoc
 
@@ -79,7 +79,7 @@ targets:
   scenario-1:
     name: "Scenario 1"
     kind: file
-    scmID: scenario-1
+    scmid: scenario-1
     sourceid: scenario-1
     transformers:
       - addPrefix: "Generated from Venom"
@@ -89,7 +89,7 @@ targets:
   scenario-2:
     name: "Scenario 2"
     kind: file
-    scmID: scenario-2
+    scmid: scenario-2
     sourceid: scenario-2
     transformers:
       - addPrefix: "Generated from Venom"
