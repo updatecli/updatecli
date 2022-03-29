@@ -34,13 +34,13 @@ targets:
       file: .github/workflows/go.yaml
       matchPattern: 'VENOM_VERSION: .*'
       content: 'VENOM_VERSION: {{ source `latestVersion` }}'
-    scmID: default
+    scmid: default
 
 pullrequests:
   default:
     title: '[updatecli] Bump Venom version to {{ source "latestVersion" }}'
     kind: github
-    scmID: default
+    scmid: default
     targets:
       - goWorkflow
     spec:

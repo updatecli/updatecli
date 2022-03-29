@@ -75,7 +75,7 @@ targets:
     spec:
       file: .github/workflows/release.yaml
       key: jobs.build.steps[3].with.go-version
-    scmID: default
+    scmid: default
   release:
     name: '[release-sandbox.yaml] Update Golang version to {{ source "latestGoVersion" }}'
     sourceID: latestGoVersion
@@ -83,7 +83,7 @@ targets:
     spec:
       file: .github/workflows/release-sandbox.yaml
       key: jobs.build.steps[3].with.go-version
-    scmID: default
+    scmid: default
   workflowgo:
     name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
     kind: yaml
@@ -91,20 +91,20 @@ targets:
     spec:
       file: .github/workflows/go.yaml
       key: jobs.build.steps[0].with.go-version
-    scmID: default
+    scmid: default
   go.mod:
     name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
     sourceID: gomod
     kind: file
     spec:
       file: go.mod
-    scmID: default
+    scmid: default
 
 pullrequests:
   default:
     title: '[updatecli] Bump Golang version to {{ source "latestGoVersion" }}'
     kind: github
-    scmID: default
+    scmid: default
     targets:
       - release-sandbox
       - release

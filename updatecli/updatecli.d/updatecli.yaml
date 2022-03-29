@@ -30,13 +30,13 @@ targets:
       file: .github/ISSUE_TEMPLATE/1-bug-report.yml
       matchPattern: '\*\*updatecli\*\*: .*'
       content: '**updatecli**: {{ source `latestVersion` }}'
-    scmID: default
+    scmid: default
 
 pullrequests:
   default:
     title: '[updatecli] Bump updatecli version to {{ source "latestVersion" }}'
     kind: github
-    scmID: default
+    scmid: default
     targets:
       - bugReport
     spec:
