@@ -141,7 +141,7 @@ func (Config) JSONSchema() *jsonschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
-		"github": &github.Spec{},
+		"github": &github.PullRequestSpec{},
 	}
 
 	return schema.GenerateJsonSchema(configAlias{}, anyOfSpec)
