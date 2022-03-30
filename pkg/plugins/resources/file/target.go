@@ -111,7 +111,6 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		}
 	}
 	if notChanged == len(f.files) {
-		// TODO: change message after depreciation of 'file'
 		logrus.Infof("%s All contents from 'file' and 'files' combined already up to date", result.SUCCESS)
 		return false, files, message.String(), nil
 	}

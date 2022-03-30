@@ -10,8 +10,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// TODO: replace `kind: file` by `kind: files`
-
 // Spec defines a specification for a "file" resource
 // parsed from an updatecli manifest file
 type Spec struct {
@@ -54,8 +52,6 @@ func New(spec interface{}) (*File, error) {
 	// File as unique element of newResource.files
 	if len(newResource.spec.File) > 0 {
 		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
-		// Deprecation warning (2022/01/31)
-		logrus.Warnf("**Deprecated** Spec field 'File' is deprecated in favor of the spec field 'Files', it will be delete in a future release")
 	}
 	// Files
 	for _, filePath := range newResource.spec.Files {
@@ -80,7 +76,6 @@ func (s *Spec) Validate() error {
 
 	// Check for all validation
 	if len(s.Files) == 0 && len(s.File) == 0 {
-		// TODO: to be updated after 'file' deprecation
 		validationErrors = append(validationErrors, "Invalid spec for file resource: both 'file' and 'files' are empty.")
 	}
 	if len(s.Files) > 0 && len(s.File) > 0 {
