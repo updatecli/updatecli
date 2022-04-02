@@ -15,6 +15,8 @@ import (
 func (f *File) Source(workingDir string) (string, error) {
 	var validationErrors []string
 	var foundContent string
+	var oldFilePath string
+	var newFilePath string
 
 	if len(f.spec.Files) > 1 {
 		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attributes `spec.files` can't contain more than one element for sources")
@@ -33,10 +35,19 @@ func (f *File) Source(workingDir string) (string, error) {
 		return "", fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
-	// Relative path is used when an SCM is associated with the file resource: means the file is on a remote SCM (hence relative path)
-	if !text.IsURL(f.spec.File) && !filepath.IsAbs(f.spec.File) {
-		f.spec.File = filepath.Join(workingDir, f.spec.File)
-		logrus.Debugf("Relative path detected: changing to absolute path from working directory: %q", f.spec.File)
+	// Looping on the only filePath in 'files'
+	for filePath := range f.files {
+		// Relative path is used when an SCM is associated with the file resource: means the file is on a remote SCM (hence relative path)
+		if !text.IsURL(filePath) && !filepath.IsAbs(filePath) {
+			newFilePath = filepath.Join(workingDir, filePath)
+			oldFilePath = filePath
+			logrus.Debugf("Relative path detected: changing to absolute path from working directory: %q", filePath)
+		}
+	}
+	// Replace old file path
+	if newFilePath != "" {
+		delete(f.files, oldFilePath)
+		f.files[newFilePath] = ""
 	}
 
 	if err := f.Read(); err != nil {
