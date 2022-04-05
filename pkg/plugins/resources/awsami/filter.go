@@ -2,9 +2,11 @@ package awsami
 
 import "fmt"
 
-// Filter represents the updatecli configuration which describes AMI filters
+// Filter represents the updatecli configuration which describes AMI filters.
 type Filter struct {
-	Name   string
+	// Name specifies a filter name.
+	Name string
+	// Values specifies a filter value for a specific filter name.
 	Values string
 }
 
