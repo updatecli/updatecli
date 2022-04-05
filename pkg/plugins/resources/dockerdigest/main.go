@@ -9,15 +9,20 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
 )
 
-// Spec defines a specification for a "dockerDigest" resource
-// parsed from an updatecli manifest file
+// Spec defines a specification for a "dockerdigest" resource parsed from an updatecli manifest file
 type Spec struct {
+	// Architecture specifies the container image architecture such as `amd64`
 	Architecture string
-	Image        string
-	Tag          string
-	Username     string
-	Password     string
-	Token        string
+	// Image specifies the container image such as `updatecli/updatecli`
+	Image string
+	// Tag specifies the container image tag such as `latest`
+	Tag string
+	// Username specifies the container registry username to use for authentication. Not compatible with token
+	Username string
+	// Password specifies the container registry password to use for authentication. Not compatible with token
+	Password string
+	// Token specifies the container registry token to use for authentication. Not compatible with username/password
+	Token string
 }
 
 // DockerDigest defines a resource of kind "dockerDigest" to interact with a docker registry
@@ -84,7 +89,7 @@ func (ds *DockerDigest) Validate() error {
 
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	return nil

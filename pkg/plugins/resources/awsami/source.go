@@ -11,7 +11,7 @@ import (
 func (a *AMI) Source(workingDir string) (string, error) {
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
 		strings.TrimRight(
-			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n  "))
+			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n "))
 
 	foundAMI, err := a.getLatestAmiID()
 
