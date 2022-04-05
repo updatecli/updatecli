@@ -12,11 +12,15 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	Changelog string // Changelog holds the changelog description
-	Result    string // Result stores the source result after a source run. This variable can't be set by an updatecli configuration
-	Output    string // Output contains the value retrieved from a source
-	Config    Config // Config defines a source specifications
-	Scm       *scm.ScmHandler
+	// Changelog holds the changelog description
+	Changelog string
+	// Result stores the source result after a source run.
+	Result string
+	// Output contains the value retrieved from a source
+	Output string
+	// Config defines a source specifications
+	Config Config
+	Scm    *scm.ScmHandler
 }
 
 // Config struct defines a source configuration
@@ -97,4 +101,21 @@ func (s *Source) Run() (err error) {
 	}
 
 	return err
+}
+
+func (c *Config) Validate() error {
+	// Handle scmID deprecation
+	if len(c.DeprecatedSCMID) > 0 {
+		switch len(c.SCMID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			c.SCMID = c.DeprecatedSCMID
+			c.DeprecatedSCMID = ""
+		default:
+			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+				"scmID", "scmid", "scmID")
+		}
+	}
+
+	return nil
 }
