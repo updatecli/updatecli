@@ -10,19 +10,19 @@ sources:
 conditions:
   condition1:
     name: This conditions always succeed
-    sourceID: default
+    sourceid: default
     kind: shell
     spec:
       command: "true"
   condition2:
     name: This conditions always fail
-    sourceID: default
+    sourceid: default
     kind: shell
     spec:
       command: "false"
   condition3:
     name: This conditions always succeed
-    sourceID: default
+    sourceid: default
     kind: shell
     spec:
       command: "true"
@@ -30,7 +30,7 @@ conditions:
 targets:
   shouldNeverRun:
     name: This target should never run
-    sourceID: default
+    sourceid: default
     kind: shell
     spec:
       command: echo SHOULD NOT RUN

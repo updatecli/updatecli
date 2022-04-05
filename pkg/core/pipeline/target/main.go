@@ -12,7 +12,8 @@ import (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
-	Result string // Result store the condition result after a target run. This variable can't be set by an updatecli configuration
+	// Result store the condition result after a target run.
+	Result string
 	Config Config
 	Commit bool
 	Push   bool
@@ -24,10 +25,17 @@ type Target struct {
 // Config defines target parameters
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	PipelineID              string `yaml:"pipelineID"` // PipelineID references a unique pipeline run allowing to group targets
-	ReportTitle             string // ReportTitle contains the updatecli reports title for sources and conditions run
-	ReportBody              string // ReportBody contains the updatecli reports body for sources and conditions run
-	SourceID                string `yaml:"sourceID"`
+	// PipelineID references a unique pipeline run allowing to group targets
+	PipelineID string
+	// ReportTitle contains the updatecli reports title for sources and conditions run
+	ReportTitle string
+	// ReportBody contains the updatecli reports body for sources and conditions run
+	ReportBody string
+	// ! Deprecated - please use all lowercase `sourceid`
+	DeprecatedSourceID string `yaml:"sourceID"`
+	// sourceid specifies where retrieving the default value
+	SourceID string
+	// disablesourceinput
 }
 
 // Check verifies if mandatory Targets parameters are provided and return false if not.
@@ -149,6 +157,36 @@ func (t *Target) Run(source string, o *Options) (err error) {
 				t.Result = result.FAILURE
 				return err
 			}
+		}
+	}
+
+	return nil
+}
+
+func (c *Config) Validate() error {
+	// Handle scmID deprecation
+	if len(c.DeprecatedSCMID) > 0 {
+		switch len(c.SCMID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			c.SCMID = c.DeprecatedSCMID
+			c.DeprecatedSCMID = ""
+		default:
+			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+				"scmID", "scmid", "scmID")
+		}
+	}
+
+	// Handle sourceID deprecation
+	if len(c.DeprecatedSourceID) > 0 {
+		switch len(c.SourceID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "sourceID", "sourceid")
+			c.SourceID = c.DeprecatedSourceID
+			c.DeprecatedSourceID = ""
+		default:
+			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+				"sourceID", "sourceid", "sourceID")
 		}
 	}
 
