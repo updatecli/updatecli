@@ -47,6 +47,7 @@ var (
 
 // Config contains cli configuration
 type Config struct {
+	// Name defines a pipeline name
 	Name string
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	PipelineID string
@@ -136,9 +137,12 @@ func (config *Config) Display() error {
 func (config *Config) Validate() error {
 	for id, scm := range config.SCMs {
 		if err := scm.Validate(); err != nil {
-			logrus.Errorf("bad parameter(s) for scmIDs %q", id)
+			logrus.Errorf("bad parameter(s) for scm %q", id)
 			return err
 		}
+		// scm.Validate may modify the object during validation
+		// so we want to be sure that we save those modification
+		config.SCMs[id] = scm
 	}
 
 	for id, p := range config.PullRequests {
@@ -162,9 +166,18 @@ func (config *Config) Validate() error {
 				return ErrBadConfig
 			}
 		}
+		// p.Validate may modify the object during validation
+		// so we want to be sure that we save those modifications
+		config.PullRequests[id] = p
 	}
 
 	for id, s := range config.Sources {
+		err := s.Validate()
+		if err != nil {
+			logrus.Errorf("bad parameters for source %q", id)
+			return ErrBadConfig
+		}
+
 		if IsTemplatedString(id) {
 			logrus.Errorf("sources key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
@@ -192,9 +205,18 @@ func (config *Config) Validate() error {
 			s.Scm = map[string]interface{}{}
 			config.Sources[id] = s
 		}
+		// s.Validate may modify the object during validation
+		// so we want to be sure that we save those modifications
+		config.Sources[id] = s
 	}
 
 	for id, c := range config.Conditions {
+		err := c.Validate()
+		if err != nil {
+			logrus.Errorf("bad parameters for condition %q", id)
+			return ErrBadConfig
+		}
+
 		if len(c.SourceID) > 0 {
 			if _, ok := config.Sources[c.SourceID]; !ok {
 				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
@@ -230,6 +252,13 @@ func (config *Config) Validate() error {
 	}
 
 	for id, t := range config.Targets {
+
+		err := t.Validate()
+		if err != nil {
+			logrus.Errorf("bad parameters for target %q", id)
+			return ErrBadConfig
+		}
+
 		if len(t.PipelineID) == 0 {
 			t.PipelineID = config.PipelineID
 		}
@@ -265,6 +294,8 @@ func (config *Config) Validate() error {
 			}
 		}
 
+		// t.Validate may modify the object during validation
+		// so we want to be sure that we save those modifications
 		config.Targets[id] = t
 	}
 

@@ -22,16 +22,22 @@ import (
 )
 
 type ResourceConfig struct {
-	DependsOn    []string `yaml:"depends_on"`
-	Name         string
-	Kind         string `jsonschema:"required"`
+	// depends_on specifies which resources must be executed before the current one
+	DependsOn []string `yaml:"depends_on"`
+	// name specifies the resource name
+	Name string
+	// kind specifies the resource kind which defines accepted spec value
+	Kind string
+	// transformers defines how the default input value need to be transformed
 	Transformers transformer.Transformers
-	// Define resource spec according its kind
-	Spec interface{} `jsonschema:"type=object"`
-	// **Deprecated** Please look in the top scms resource
+	// spec specifies parameters for a specific resource kind
+	Spec interface{}
+	// Deprecated field on version [1.17.0]
 	Scm map[string]interface{}
-	// Define which scm resource is linked to the current resource
-	SCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
+	// scmid specifies the scm configuration key associated to the current resource
+	SCMID string // SCMID references a uniq scm configuration
+	// !deprecated, please use scmid
+	DeprecatedSCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
 }
 
 // New returns a newly initialized Resource or an error
