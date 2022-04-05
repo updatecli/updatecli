@@ -40,7 +40,7 @@ type mockConfig struct {
 
 func TestGenerateSchema(t *testing.T) {
 	expectedJsonSchema := `{
-    "$schema": "http://json-schema.org/draft/2020-12/schema",
+    "$schema": "http://json-schema.org/draft-04/schema",
     "$id": "https://www.updatecli.io/schema/mock-config",
     "properties": {
         "name": {
@@ -112,7 +112,7 @@ func TestGenerateJsonSchema(t *testing.T) {
 	expectedJsonSchema := `{
     "oneOf": [
         {
-            "$schema": "http://json-schema.org/draft/2020-12/schema",
+            "$schema": "http://json-schema.org/draft-04/schema",
             "properties": {
                 "sourceid": {
                     "type": "string"
@@ -121,7 +121,7 @@ func TestGenerateJsonSchema(t *testing.T) {
                     "type": "boolean"
                 },
                 "spec": {
-                    "$schema": "http://json-schema.org/draft/2020-12/schema",
+                    "$schema": "http://json-schema.org/draft-04/schema",
                     "properties": {
                         "release": {
                             "type": "string"
