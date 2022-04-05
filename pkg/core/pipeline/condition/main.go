@@ -3,6 +3,7 @@ package condition
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -11,16 +12,22 @@ import (
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
-	Result string // Result store the condition result after a condition run. This variable can't be set by an updatecli configuration
-	Config Config // Config defines condition input parameters
+	// Result stores the condition result after a condition run.
+	Result string
+	// Config defines condition input parameters
+	Config Config
 	Scm    *scm.ScmHandler
 }
 
 // Config defines conditions input parameters
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	SourceID                string `yaml:"sourceID"`
-	DisableSourceInput      bool
+	// ! Deprecated - please use all lowercase `sourceid`
+	DeprecatedSourceID string `yaml:"sourceID"`
+	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
+	SourceID string
+	// disablesourceinput disable the mechanism to retrieve a default value from a source.
+	DisableSourceInput bool
 }
 
 // Run tests if a specific condition is true
@@ -85,4 +92,34 @@ func (c *Condition) Run(source string) (err error) {
 
 	return nil
 
+}
+
+func (c *Config) Validate() error {
+	// Handle scmID deprecation
+	if len(c.DeprecatedSCMID) > 0 {
+		switch len(c.SCMID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			c.SCMID = c.DeprecatedSCMID
+			c.DeprecatedSCMID = ""
+		default:
+			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+				"scmID", "scmid", "scmID")
+		}
+	}
+
+	// Handle sourceID deprecation
+	if len(c.DeprecatedSourceID) > 0 {
+		switch len(c.SourceID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "sourceID", "sourceid")
+			c.SourceID = c.DeprecatedSourceID
+			c.DeprecatedSourceID = ""
+		default:
+			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+				"sourceID", "sourceid", "sourceID")
+		}
+	}
+
+	return nil
 }
