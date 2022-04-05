@@ -13,9 +13,12 @@ import (
 // Spec defines a specification for a "dockerfile" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	File        string            `yaml:"file"`
+	// File specifies the dockerimage file such as Dockerfile
+	File string `yaml:"file"`
+	// Instruction specifies a DockerImage instruction such as ENV
 	Instruction types.Instruction `yaml:"instruction"`
-	Value       string            `yaml:"value"`
+	// Value specifies the value for a specified Dockerfile instruction.
+	Value string `yaml:"value"`
 }
 
 // Dockerfile defines a resource of kind "dockerfile"
