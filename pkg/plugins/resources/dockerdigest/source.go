@@ -20,7 +20,7 @@ func (ds *DockerDigest) Source(workingDir string) (string, error) {
 	}
 
 	if digest == "" {
-		return "", fmt.Errorf("%s No Digest found for the docker image %s",
+		return "", fmt.Errorf("%s No digest found for the docker image %s",
 			result.FAILURE,
 			ds.image.FullName(),
 		)
