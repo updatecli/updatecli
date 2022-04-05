@@ -21,7 +21,7 @@ func (di *DockerImage) Condition(source string) (bool, error) {
 
 	// Errors if both source input value and specified Tag are empty
 	if di.image.Tag == "" && source == "" {
-		return false, fmt.Errorf("condition validation error for the image %q: source input is empty and no explicit tag is specified.", di.spec.Image)
+		return false, fmt.Errorf("condition validation error for the image %q: source input is empty and no explicit tag is specified", di.spec.Image)
 	}
 
 	// An empty input source value means that the attribute disablesourceinput is set to true
