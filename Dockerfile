@@ -6,7 +6,16 @@
 # hadolint ignore=DL3029
 FROM --platform=${BUILDPLATFORM} debian:stable-slim
 
-LABEL maintainer="Olblak <me@olblak.com>"
+LABEL maintainer="Olivier Vernin <me@olblak.com>, Damien DUPORTAL <damien.duportal@gmail.com>"
+
+# Dynamic labels are defined from the goreleaser configuration ".goreleaser.yaml"
+LABEL org.opencontainers.image.authors="Olivier Vernin<me@olblak.com>, Damien DUPORTAL <damien.duportal@gmail.com>"
+LABEL org.opencontainers.image.url="https://github.com/updatecli/updatecli/pkgs/container/updatecli"
+LABEL org.opencontainers.image.documentation="https://www.updatecli.io/docs/prologue/introduction/"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.title="Updatecli"
+LABEL org.opencontainers.image.description="The gitops automation engine"
+LABEL org.opencontainers.image.base.name="ghcr.io/updatecli/updatecli"
 
 # /tmp is used by updatecli to store git repository so it's better
 # to define a volume
