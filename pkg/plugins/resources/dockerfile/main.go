@@ -71,7 +71,7 @@ func getParser(spec Spec) (types.DockerfileParser, error) {
 		for k, v := range i {
 			stringValue, ok := v.(string)
 			if !ok {
-				return nil, fmt.Errorf("parsing Error: cannot determine instruction: %v", i)
+				return nil, fmt.Errorf("parsing error: cannot determine instruction: %v", i)
 			}
 			parsedInstruction[k] = stringValue
 		}
