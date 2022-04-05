@@ -12,7 +12,7 @@ import (
 func (d *Dockerfile) Condition(source string) (bool, error) {
 
 	if !d.contentRetriever.FileExists(d.spec.File) {
-		return false, fmt.Errorf("the file %s does not exist.", d.spec.File)
+		return false, fmt.Errorf("the file %s does not exist", d.spec.File)
 	}
 	dockerfileContent, err := d.contentRetriever.ReadAll(d.spec.File)
 	if err != nil {
