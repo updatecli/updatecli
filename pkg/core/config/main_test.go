@@ -655,8 +655,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   fmt.Errorf("missing value for parameter(s) [\"kind,targets,scmID\"]"),
-			ExpectedValidateErr: fmt.Errorf("missing value for parameter(s) [\"kind,targets,scmID\"]"),
+			ExpectedUpdateErr:   fmt.Errorf("missing value for parameter(s) [\"kind,targets,scmid\"]"),
+			ExpectedValidateErr: fmt.Errorf("missing value for parameter(s) [\"kind,targets,scmid\"]"),
 		},
 		{
 			ID: "9.2",

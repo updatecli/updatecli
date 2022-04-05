@@ -17,7 +17,7 @@ conditions:
   checkIfSourceIsLatestStable:
     kind: jenkins
     name: Check if the source value from 'getLatestJenkinsStable' is the latest Jenkins stable version
-    sourceID: getLatestJenkinsStable
+    sourceid: getLatestJenkinsStable
     spec:
       release: stable
   checkIfThereIsSpecificWeeklyVersion:
@@ -30,7 +30,7 @@ conditions:
   checkIfSourceIsLatestWeekly:
     kind: jenkins
     name: Check if the source value from 'getLatestJenkinsWeekly' is the latest Jenkins weekly version
-    sourceID: getLatestJenkinsWeekly
+    sourceid: getLatestJenkinsWeekly
     spec:
       release: weekly
 
