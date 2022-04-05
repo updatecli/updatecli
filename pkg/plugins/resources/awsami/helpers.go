@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// getLatestAmiID query the AWS API to return the newest AMI image id
+// getLatestAmiID queries the AWS API to return the newest AMI image id.
 func (a *AMI) getLatestAmiID() (string, error) {
 	input := ec2.DescribeImagesInput{
 		DryRun:  &a.Spec.DryRun,

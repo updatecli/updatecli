@@ -61,7 +61,7 @@ func TestDockerfile_Condition(t *testing.T) {
 			mockTest: text.MockTextRetriever{
 				Exists: false,
 			},
-			wantErr: fmt.Errorf("The file NOTEXISTING.Dockerfile does not exist."),
+			wantErr: fmt.Errorf("the file NOTEXISTING.Dockerfile does not exist"),
 		},
 	}
 	for _, tt := range tests {
@@ -136,7 +136,7 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 			scm: &scm.MockScm{
 				WorkingDir: "/foo",
 			},
-			wantErr: fmt.Errorf("The file /foo/NOTEXISTING.Dockerfile does not exist."),
+			wantErr: fmt.Errorf("the file /foo/NOTEXISTING.Dockerfile does not exist"),
 		},
 	}
 	for _, tt := range tests {
