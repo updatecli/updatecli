@@ -9,7 +9,6 @@ import (
 // It stores the expected Content and Err
 type MockTextRetriever struct {
 	Err      error
-	Lines    map[string]int
 	Contents map[string]string
 }
 
@@ -29,8 +28,6 @@ func (mtr *MockTextRetriever) ReadAll(location string) (string, error) {
 }
 
 func (mtr *MockTextRetriever) WriteLineToFile(lineContent, location string, lineNumber int) error {
-	mtr.Lines[location] = lineNumber
-
 	// No "\r\n" to "\n" replacements here as we want to obtain a joined string with the same line delimiter as before
 	contentLines := strings.Split(
 		mtr.Contents[location],
