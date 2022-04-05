@@ -56,7 +56,7 @@ func getParser(spec Spec) (types.DockerfileParser, error) {
 	instruction := spec.Instruction
 	switch i := instruction.(type) {
 	default:
-		return nil, fmt.Errorf("parsing Error: cannot determine instruction: %v", i)
+		return nil, fmt.Errorf("parsing error: cannot determine instruction: %v", i)
 	case string:
 		return mobyparser.MobyParser{
 			Instruction: i,
