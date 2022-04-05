@@ -58,7 +58,12 @@ func New(spec interface{}) (*AMI, error) {
 		newFilters = append(newFilters, &filter)
 	}
 
-	newClient := ec2.New(session.New(), &aws.Config{
+	newSession, err := session.NewSession()
+	if err != nil {
+		return nil, err
+	}
+
+	newClient := ec2.New(newSession, &aws.Config{
 		CredentialsChainVerboseErrors: func(verbose bool) *bool {
 			return &verbose
 		}(true),
