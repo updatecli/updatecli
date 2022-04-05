@@ -89,7 +89,7 @@ func (ds *DockerDigest) Validate() error {
 
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	return nil
