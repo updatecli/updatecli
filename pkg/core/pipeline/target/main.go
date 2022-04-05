@@ -34,6 +34,7 @@ type Config struct {
 	// ReportBody contains the updatecli reports body for sources and conditions run
 	ReportBody string
 	// ! Deprecated - please use all lowercase `sourceid`
+	// sourceid specifies where retrieving the default value
 	DeprecatedSourceID string `yaml:"sourceID"`
 	// sourceid specifies where retrieving the default value
 	SourceID string

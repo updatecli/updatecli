@@ -24,7 +24,8 @@ type Condition struct {
 // Config defines conditions input parameters
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	// ! Deprecated - please use all lowercase `sourceid`
+	// ! Deprecated in favor of sourceID
+	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
 	DeprecatedSourceID string `yaml:"sourceID"`
 	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
 	SourceID string

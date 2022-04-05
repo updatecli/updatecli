@@ -34,6 +34,7 @@ type Config struct {
 	// scmid references an scm configuration defined within the updatecli manifest
 	ScmID string
 	// !Deprecated in favor for `scmid`
+	// scmid references an scm configuration defined within the updatecli manifest
 	DeprecatedScmID string `yaml:"scmID"`
 	// Targets defines a list of target related to the pullRequest
 	Targets []string

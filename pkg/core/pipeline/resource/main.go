@@ -37,6 +37,7 @@ type ResourceConfig struct {
 	// scmid specifies the scm configuration key associated to the current resource
 	SCMID string // SCMID references a uniq scm configuration
 	// !deprecated, please use scmid
+	// scmid specifies the scm configuration key associated to the current resource
 	DeprecatedSCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
 }
 
