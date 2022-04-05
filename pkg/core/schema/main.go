@@ -14,6 +14,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	schemaVersionDraft04 string = "http://json-schema.org/draft-04/schema"
+)
+
 var (
 	// defaultSchemaDir defines the schema root directory
 	defaultSchemaDir string = "../../../../schema"
@@ -35,6 +39,9 @@ type Schema struct {
 }
 
 func New(baseSchemaID, schemaDirectory string) *Schema {
+
+	jsonschema.Version = schemaVersionDraft04
+
 	s := Schema{
 		SchemaDir:    defaultSchemaDir,
 		BaseSchemaID: defaultBaseSchemaID,
