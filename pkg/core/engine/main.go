@@ -10,11 +10,11 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/schema"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 
 	"path/filepath"
@@ -272,20 +272,20 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 	logrus.Infof("+ %s +\n", strings.ToTitle("Json Schema"))
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Json Schema")+4))
 
-	err := schema.CloneCommentDirectory()
+	err := jsonschema.CloneCommentDirectory()
 
 	if err != nil {
 		return err
 	}
 
 	defer func() {
-		tmperr := schema.CleanCommentDirectory()
+		tmperr := jsonschema.CleanCommentDirectory()
 		if err != nil {
 			err = fmt.Errorf("%s\n%s", err, tmperr)
 		}
 	}()
 
-	s := schema.New(baseSchemaID, schemaDir)
+	s := jsonschema.New(baseSchemaID, schemaDir)
 	err = s.GenerateSchema(&config.Config{})
 	if err != nil {
 		return err

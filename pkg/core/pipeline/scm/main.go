@@ -3,10 +3,10 @@ package scm
 import (
 	"errors"
 
-	"github.com/invopop/jsonschema"
+	jschema "github.com/invopop/jsonschema"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/schema"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
@@ -109,7 +109,7 @@ func (s *Scm) GenerateSCM() error {
 }
 
 // JSONSchema implements the json schema interface to generate the "scm" jsonschema
-func (Config) JSONSchema() *jsonschema.Schema {
+func (Config) JSONSchema() *jschema.Schema {
 
 	type configAlias Config
 
@@ -118,5 +118,5 @@ func (Config) JSONSchema() *jsonschema.Schema {
 		"github": &github.Spec{},
 	}
 
-	return schema.GenerateJsonSchema(configAlias{}, anyOfSpec)
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }

@@ -1,4 +1,4 @@
-package schema
+package jsonschema
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/invopop/jsonschema"
+	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,12 +35,12 @@ var (
 type Schema struct {
 	SchemaDir    string
 	BaseSchemaID string
-	JsonSchema   jsonschema.Schema
+	JsonSchema   jschema.Schema
 }
 
 func New(baseSchemaID, schemaDirectory string) *Schema {
 
-	jsonschema.Version = schemaVersionDraft04
+	jschema.Version = schemaVersionDraft04
 
 	s := Schema{
 		SchemaDir:    defaultSchemaDir,
@@ -78,7 +78,7 @@ func (s *Schema) GenerateSchema(object interface{}) error {
 		return err
 	}
 
-	r := new(jsonschema.Reflector)
+	r := new(jschema.Reflector)
 
 	r.SetBaseSchemaID(s.BaseSchemaID)
 
@@ -100,7 +100,7 @@ func (s *Schema) GenerateSchema(object interface{}) error {
 	return nil
 }
 
-func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]interface{}) *jsonschema.Schema {
+func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]interface{}) *jschema.Schema {
 
 	var err error
 	var commentMap map[string]string
@@ -113,10 +113,10 @@ func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]inter
 		return nil
 	}
 
-	resourceSchema := jsonschema.Schema{}
+	resourceSchema := jschema.Schema{}
 
 	for id, spec := range anyOf {
-		r := new(jsonschema.Reflector)
+		r := new(jschema.Reflector)
 
 		r.Anonymous = true
 		r.PreferYAMLSchema = true
@@ -133,7 +133,7 @@ func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]inter
 		spec := r.Reflect(spec)
 
 		resourceConfig.Properties.Set("spec", spec)
-		resourceConfig.Properties.Set("kind", jsonschema.Schema{
+		resourceConfig.Properties.Set("kind", jschema.Schema{
 			Enum: []interface{}{id}})
 
 		resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
@@ -165,7 +165,7 @@ func (s *Schema) String() string {
 // GetPackageComments retrieves all updatecli code comments
 func GetPackageComments(rootPackagePath string) (map[string]string, error) {
 
-	r := new(jsonschema.Reflector)
+	r := new(jschema.Reflector)
 
 	r.Anonymous = true
 	r.YAMLEmbeddedStructs = true

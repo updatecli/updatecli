@@ -3,13 +3,13 @@ package source
 import (
 	"os"
 
-	"github.com/invopop/jsonschema"
+	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/schema"
 )
 
 // Source defines how a value is retrieved from a specific source
@@ -102,11 +102,11 @@ func (s *Source) Run() (err error) {
 }
 
 // JSONSchema implements the json schema interface to generate the "source" jsonschema.
-func (Config) JSONSchema() *jsonschema.Schema {
+func (Config) JSONSchema() *jschema.Schema {
 
 	type configAlias Config
 
 	anyOfSpec := resource.GetResourceMapping()
 
-	return schema.GenerateJsonSchema(configAlias{}, anyOfSpec)
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }

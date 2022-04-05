@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/invopop/jsonschema"
+	jschema "github.com/invopop/jsonschema"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/schema"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -136,7 +136,7 @@ func (p *PullRequest) generatePullRequestHandler() error {
 }
 
 // JSONSchema implements the json schema interface to generate the "pullrequest" jsonschema
-func (Config) JSONSchema() *jsonschema.Schema {
+func (Config) JSONSchema() *jschema.Schema {
 
 	type configAlias Config
 
@@ -144,5 +144,5 @@ func (Config) JSONSchema() *jsonschema.Schema {
 		"github": &github.PullRequestSpec{},
 	}
 
-	return schema.GenerateJsonSchema(configAlias{}, anyOfSpec)
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }
