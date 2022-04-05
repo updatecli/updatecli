@@ -153,10 +153,8 @@ func TestFile_Read(t *testing.T) {
 		spec           Spec
 		files          map[string]string
 		mockedContents map[string]string
-		mockedLines    map[string]int
 		mockedError    error
 		wantedContents map[string]string
-		wantedLines    map[string]int
 		wantedResult   bool
 		wantedErr      bool
 	}{
@@ -256,7 +254,6 @@ func TestFile_Read(t *testing.T) {
 
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockText.Contents[filePath])
-				assert.Equal(t, tt.wantedLines[filePath], mockText.Lines[filePath])
 			}
 		})
 	}

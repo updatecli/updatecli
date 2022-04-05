@@ -239,10 +239,8 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		scm              scm.ScmHandler
 		inputSourceValue string
 		mockedContents   map[string]string
-		mockedLines      map[string]int
 		mockedError      error
 		wantedContents   map[string]string
-		wantedLines      map[string]int
 		wantedResult     bool
 		wantedErr        bool
 	}{
@@ -352,7 +350,6 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockedText := text.MockTextRetriever{
 				Contents: tt.mockedContents,
-				Lines:    tt.mockedLines,
 			}
 			f := &File{
 				spec:             tt.spec,
@@ -370,7 +367,6 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 			assert.Equal(t, tt.wantedResult, gotResult)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
-				assert.Equal(t, tt.wantedLines[filePath], mockedText.Lines[filePath])
 			}
 		})
 	}
