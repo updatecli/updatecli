@@ -11,7 +11,7 @@ sources:
   git:
     name: Get latest updatecli test
     kind: gitTag
-    scmID: updatecli
+    scmid: updatecli
   githubRegex:
     name: Get latest updatecli test
     kind: gitTag
@@ -19,4 +19,4 @@ sources:
       versionFilter:
         kind: semver
         pattern: "~0.1"
-    scmID: updatecli
+    scmid: updatecli

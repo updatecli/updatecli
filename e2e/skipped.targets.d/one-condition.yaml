@@ -10,7 +10,7 @@ sources:
 conditions:
   failingCondition:
     name: This conditions always fail
-    sourceID: default
+    sourceid: default
     kind: shell
     spec:
       command: "false"
@@ -18,7 +18,7 @@ conditions:
 targets:
   shouldNeverRun:
     name: This target should never run
-    sourceID: default
+    sourceid: default
     kind: shell
     spec:
       command: echo SHOULD NOT RUN
