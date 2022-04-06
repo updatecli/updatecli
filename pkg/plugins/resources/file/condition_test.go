@@ -10,255 +10,364 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
+// TODO: find a way to test when there are multiple files but only some are successful
 func TestFile_Condition(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
+		files            map[string]string
 		inputSourceValue string
-		wantResult       bool
-		wantErr          bool
-		mockTest         text.MockTextRetriever
+		mockedContents   map[string]string
+		mockedError      error
+		wantedResult     bool
+		wantedErr        bool
 	}{
 		{
-			name: "Passing Case with Line",
+			name: "Passing case with 'Line' specified",
 			spec: Spec{
+				Files: []string{
+					"foo.txt",
+				},
 				Line: 3,
-				File: "foo.txt",
+			},
+			files: map[string]string{
+				"foo.txt": "",
 			},
 			inputSourceValue: "current_version=1.2.3",
-			mockTest: text.MockTextRetriever{
-				Content: "current_version=1.2.3",
-				Exists:  true,
+			mockedContents: map[string]string{
+				"foo.txt": "Hello World\r\nAnother line\r\ncurrent_version=1.2.3",
 			},
-			wantResult: true,
+			wantedResult: true,
 		},
 		{
-			name: "Failing Case with Line",
+			name: "Passing case with 'Content' specified and no source specified",
 			spec: Spec{
-				Line: 5,
-				File: "/bar.txt",
-			},
-			mockTest: text.MockTextRetriever{
-				Content: "current_version=1.2.4",
-				Exists:  true,
-			},
-			inputSourceValue: "current_version=1.2.3",
-		},
-		{
-			name: "Validation Failure with both source and specified content",
-			spec: Spec{
+				Files: []string{
+					"foo.txt",
+				},
 				Content: "Hello World",
-				File:    "/bar.txt",
+			},
+			files: map[string]string{
+				"foo.txt": "",
+			},
+			mockedContents: map[string]string{
+				"foo.txt": "Hello World",
+			},
+			wantedResult: true,
+		},
+		{
+			name: "Validation failure with more than one element in 'Files'",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+					"bar.txt",
+				},
+			},
+			files: map[string]string{
+				"foo.txt": "",
+				"bar.txt": "",
+			},
+			wantedErr: true,
+		},
+		{
+			name: "Validation failure with both source and 'Content' specified",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+				},
+				Content: "Hello World",
+			},
+			files: map[string]string{
+				"foo.txt": "",
 			},
 			inputSourceValue: "1.2.3",
-			wantErr:          true,
+			wantedErr:        true,
 		},
 		{
-			name: "Validation Failure with specified ReplacePattern",
+			name: "Validation failure with 'ReplacePattern' specified",
 			spec: Spec{
+				Files: []string{
+					"foo.txt",
+				},
 				MatchPattern:   "maven_(.*)",
 				ReplacePattern: "gradle_$1",
-				File:           "/bar.txt",
+			},
+			files: map[string]string{
+				"foo.txt": "",
 			},
 			inputSourceValue: "1.2.3",
-			wantErr:          true,
+			wantedErr:        true,
 		},
 		{
-			name: "Passing Case with no input source and only specified content",
+			name: "Failing case with empty 'Line' specified and no source nor 'Content' specified",
 			spec: Spec{
-				Content: "Hello World",
-				File:    "foo.txt",
-			},
-			mockTest: text.MockTextRetriever{
-				Content: "Hello World",
-				Exists:  true,
-			},
-			wantResult: true,
-		},
-		{
-			name: "Case with no input source, no specified content but a specified line which is empty",
-			spec: Spec{
+				Files: []string{
+					"foo.txt",
+				},
 				Line: 11,
-				File: "foo.txt",
 			},
-			wantResult: false,
-			mockTest: text.MockTextRetriever{
-				Line:    11,
-				Content: "",
-				Exists:  true,
+			files: map[string]string{
+				"foo.txt": "",
 			},
+			mockedContents: map[string]string{
+				"foo.txt": "",
+			},
+			wantedErr: true,
 		},
 		{
-			name: "Case with no input source, no specified content but the specified line exists and is not empty",
+			name: "Case with not empty 'Line' specified and no source nor 'Content' specified",
 			spec: Spec{
-				Line: 13,
-				File: "bar.txt",
+				Files: []string{
+					"foo.txt",
+				},
+				Line: 3,
 			},
-			mockTest: text.MockTextRetriever{
-				Line:    13,
-				Content: "Something On The Line",
-				Exists:  true,
+			files: map[string]string{
+				"foo.txt": "",
 			},
-			wantResult: true,
+			mockedContents: map[string]string{
+				"foo.txt": "A first line\r\nAnother line\r\nSomething On The Specified Line",
+			},
+			wantedResult: true,
 		},
 		{
-			name: "Failing case with only file existence checking",
+			name: "Failing case with non existing 'Line' specified",
 			spec: Spec{
-				File: "foo.txt",
+				Files: []string{
+					"foo.txt",
+				},
+				Line: 5,
 			},
-			mockTest: text.MockTextRetriever{
-				Exists: false,
+			files: map[string]string{
+				"foo.txt": "",
 			},
-			wantResult: false,
+			wantedErr: true,
 		},
 		{
-			name: "Failing case with only URL existence checking",
+			name: "Failing case with non existing 'Files'",
 			spec: Spec{
-				File: "https://do.not.exists/foo",
+				Files: []string{
+					"foo.txt",
+				},
 			},
-			mockTest: text.MockTextRetriever{
-				Err: fmt.Errorf("URL %q not found or in error", "https://do.not.exists/foo"),
+			files: map[string]string{
+				"foo.txt": "",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantedErr: true,
 		},
 		{
-			name: "Failing case with no input source and a specified line that does not matches the file line content",
+			name: "Failing case with non existing URL as 'Files'",
 			spec: Spec{
-				Line:    11,
-				Content: "Not In The File",
-				File:    "foo.txt",
+				Files: []string{
+					"https://do.not.exists/foo",
+				},
+			},
+			files: map[string]string{
+				"https://do.not.exists/foo": "",
+			},
+			mockedError: fmt.Errorf("URL %q not found or in error", "https://do.not.exists/foo"),
+			wantedErr:   true,
+		},
+		{
+			name: "'No result' case with not empty 'Line' not matching the 'Content' of the 'Files' at the 'Line' specified",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+				},
+				Line:    2,
+				Content: "Not In All Files",
+			},
+			files: map[string]string{
+				"foo.txt": "",
 			},
 			inputSourceValue: "",
-			mockTest: text.MockTextRetriever{
-				Content: "Hello World",
+			mockedContents: map[string]string{
+				"foo.txt": "Title\r\nGood Bye\r\nThe End",
 			},
-			wantResult: false,
+			wantedResult: false,
+			wantedErr:    false,
+		},
+		{
+			name: "Failing case with more than one 'Files'",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+					"bar.txt",
+				},
+				Line:    2,
+				Content: "Not In All Files",
+			},
+			files: map[string]string{
+				"foo.txt": "",
+				"bar.txt": "",
+			},
+			inputSourceValue: "",
+			mockedContents: map[string]string{
+				"foo.txt": "Title\r\nGood Bye\r\nThe End",
+				"bar.txt": "Title\r\nNot In All Files\r\nThe End",
+			},
+			wantedErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockText := tt.mockTest
+			mockedText := text.MockTextRetriever{
+				Contents: tt.mockedContents,
+			}
 			f := &File{
 				spec:             tt.spec,
-				contentRetriever: &mockText,
+				contentRetriever: &mockedText,
+				files:            tt.files,
 			}
+
 			gotResult, gotErr := f.Condition(tt.inputSourceValue)
-			if tt.wantErr {
+			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return
 			}
-
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantResult, gotResult)
+			assert.Equal(t, tt.wantedResult, gotResult)
 		})
 	}
 }
 
 func TestFile_ConditionFromSCM(t *testing.T) {
 	tests := []struct {
-		name                string
-		spec                Spec
-		inputSourceValue    string
-		wantResult          bool
-		wantErr             bool
-		wantMockState       text.MockTextRetriever
-		mockReturnedContent string
-		mockReturnedError   error
-		scm                 scm.ScmHandler
+		name             string
+		spec             Spec
+		files            map[string]string
+		scm              scm.ScmHandler
+		inputSourceValue string
+		mockedContents   map[string]string
+		mockedError      error
+		wantedContents   map[string]string
+		wantedResult     bool
+		wantedErr        bool
 	}{
 		{
-			name: "Passing Case with no input source, but a specified line and content and a relative path to file",
+			name: "Passing case with both 'Line' and 'Content' specified, 'Files' with a relative path, and no source",
 			spec: Spec{
-				File:    "foo.txt",
+				Files: []string{
+					"foo.txt",
+				},
 				Content: "current_version=1.2.3",
 				Line:    3,
 			},
+			files: map[string]string{
+				"/tmp/foo.txt": "",
+			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
-			mockReturnedContent: "current_version=1.2.3",
-			wantResult:          true,
-			wantMockState: text.MockTextRetriever{
-				Location: "/tmp/foo.txt",
-				Line:     3,
+			mockedContents: map[string]string{
+				"/tmp/foo.txt": "Title\nGood Bye\ncurrent_version=1.2.3",
 			},
+			wantedContents: map[string]string{
+				"/tmp/foo.txt": "Title\nGood Bye\ncurrent_version=1.2.3",
+			},
+			wantedResult: true,
 		},
 		{
-			name: "Passing Case with matchPattern",
+			name: "Passing case with 'MatchPattern' specified",
 			spec: Spec{
-				File:         "foo.txt",
+				Files: []string{
+					"foo.txt",
+				},
 				MatchPattern: "current_version.*",
 			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			mockReturnedContent: "current_version=1.2.3",
-			wantResult:          true,
-			wantMockState: text.MockTextRetriever{
-				Location: "/tmp/foo.txt",
-			},
-		},
-		{
-			name: "Failing Case with matchPattern",
-			spec: Spec{
-				File:         "foo.txt",
-				MatchPattern: "notMatching.*",
+			files: map[string]string{
+				"/tmp/foo.txt": "",
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
-			mockReturnedContent: "current_version=1.2.3",
-			wantResult:          false,
-			wantMockState: text.MockTextRetriever{
-				Location: "/tmp/foo.txt",
+			mockedContents: map[string]string{
+				"/tmp/foo.txt": "Title\nGood Bye\ncurrent_version=1.2.3",
 			},
+			wantedContents: map[string]string{
+				"/tmp/foo.txt": "Title\nGood Bye\ncurrent_version=1.2.3",
+			},
+			wantedResult: true,
 		},
 		{
-			name: "Validation Failure with forcecreate specified",
+			name: "Validation failure with 'ForceCreate' specified",
 			spec: Spec{
-				File:        "foo.txt",
+				Files: []string{
+					"foo.txt",
+				},
 				ForceCreate: true,
 			},
+			files: map[string]string{
+				"/tmp/foo.txt": "",
+			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
 			inputSourceValue: "1.2.3",
-			wantErr:          true,
+			wantedErr:        true,
 		},
 		{
-			name: "Validation Failure with invalid Regexp",
+			name: "Validation failure with invalid 'Regexp' specified",
 			spec: Spec{
-				File:         "foo.txt",
+				Files: []string{
+					"foo.txt",
+				},
 				MatchPattern: "^^[[[",
+			},
+			files: map[string]string{
+				"/tmp/foo.txt": "",
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
 			},
 			inputSourceValue: "1.2.3",
-			wantErr:          true,
+			wantedErr:        true,
+		},
+		{
+			name: "Failing case with non matching 'MatchPattern' specified",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+				},
+				MatchPattern: "notMatching.*",
+			},
+			files: map[string]string{
+				"/tmp/foo.txt": "",
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp",
+			},
+			mockedContents: map[string]string{
+				"/tmp/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedContents: map[string]string{
+				"/tmp/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedResult: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
+			mockedText := text.MockTextRetriever{
+				Contents: tt.mockedContents,
 			}
 			f := &File{
 				spec:             tt.spec,
-				contentRetriever: &mockText,
+				contentRetriever: &mockedText,
+				files:            tt.files,
 			}
+
 			gotResult, gotErr := f.ConditionFromSCM(tt.inputSourceValue, tt.scm)
-			if tt.wantErr {
+			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantResult, gotResult)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
+			assert.Equal(t, tt.wantedResult, gotResult)
+			for filePath := range tt.files {
+				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
+			}
 		})
 	}
 }

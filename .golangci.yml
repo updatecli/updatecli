@@ -105,6 +105,7 @@ issues:
     - path: _test\.go
       linters:
         - gomnd
+        - funlen
     - path: _expansion_test\.go
       linters:
         - testpackage

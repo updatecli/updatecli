@@ -4,84 +4,99 @@ sources:
   ContentFromLocalFile:
     kind: file
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
   ContentFromURL:
     kind: file
     spec:
-      file: https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
+      files:
+      - https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
   LineFromLocalFile:
     kind: file
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
       line: 3
   LineFromURL:
     kind: file
     spec:
-      file: https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
+      files:
+      - https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
       line: 3
   SingleLineFromFileWithPattern:
     kind: file
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
       matchPattern: 'Copyright.*' # Returns a single line
   MultipleLinesFromURLWithPattern:
     kind: file
     spec:
-      file: https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
+      files:
+      - https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
       matchPattern: '.*terraform_.*_linux.*' # Returns a multi-line content as multiple lines are matched
 conditions:
   LocalFileHasSameContentAsSource:
     kind: file
     sourceID: ContentFromLocalFile
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
   LocalFileExists:
     kind: file
     disablesourceinput: true
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
   RemoteFileExists:
     kind: file
     disablesourceinput: true
     spec:
-      file: https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
+      files:
+      - https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
   URLFileMatchesSpecifiedContent:
     kind: file
     disablesourceinput: true
     spec:
-      file: https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
+      files:
+      - https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
       content: |
         53378d8de087395ece3876795111a8077f2451f080ec6150d777cc3105214520  helm-v3.5.0-darwin-amd64.tar.gz
   LocalFileHasLine:
     kind: file
     disablesourceinput: true
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
       line: 5 # The file './LICENSE' has a 5th line which is NOT empty
   URLFileHasLineMatchingSource:
     kind: file
     sourceID: LineFromURL
     spec:
-      file: https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
+      files:
+      - https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
       line: 3 # The line 3 of the file matches the source LineFromURL
   LocalFileHasLineMatchingSource:
     kind: file
     sourceID: LineFromLocalFile
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
       line: 3 # The file './LICENSE' has a 3rd line which is NOT empty and matches the source LineFromLocalFile
   LocalFileHasLineMatchingCustomContent:
     kind: file
     disablesourceinput: true
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
       line: 3
       content: '{{ source `LineFromLocalFile` }}'
   LocalFileMatchesPattern:
     kind: file
     disablesourceinput: true
     spec:
-      file: "LICENSE"
+      files:
+      - "LICENSE"
       matchPattern: 'Copyright \(c\) (\d*) Olblak'
   ######## Expected Failures
   ## Should fail condition if uncommented
@@ -89,26 +104,30 @@ conditions:
   #   kind: file
   #   sourceID: ContentFromURL
   #   spec:
-  #     file: LICENSE
+  #     files:
+  #     - LICENSE
   # URLFileDifferentThanSpecifiedContent:
   #   kind: file
   #   disablesourceinput: true
   #   spec:
-  #     file: https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
+  #     files:
+  #     - https://releases.hashicorp.com/terraform/0.14.5/terraform_0.14.5_SHA256SUMS
   #     content: |
   #       53378d8de087395ece3876795111a8077f2451f080ec6150d777cc3105214520  helm-v3.5.0-darwin-amd64.tar.gz
   # LocalFileDoesNotHasLine:
   #   kind: file
   #   disablesourceinput: true
   #   spec:
-  #     file: LICENSE
+  #     files:
+  #     - LICENSE
   #     line: 12345 # The file './LICENSE' does NOT have a 12345th line
   ## Should fail validation if uncommented
   # FailsToValidateBecauseMutuallyExclusiveAttributes:
   #   kind: file
   #   sourceID: ContentFromLocalFile
   #   spec:
-  #     file: https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
+  #     files:
+  #     - https://get.helm.sh/helm-v3.5.0-darwin-amd64.tar.gz.sha256sum
   #     content: |
   #       53378d8de087395ece3876795111a8077f2451f080ec6150d777cc3105214520  helm-v3.5.0-darwin-amd64.tar.gz
 targets:
@@ -116,38 +135,47 @@ targets:
     kind: file
     sourceID: ContentFromURL
     spec:
-      file: terraform_0.14.5_SHA256SUMS
+      files:
+      - terraform_0.14.5_SHA256SUMS
       forcecreate: true
   setLineOfFile:
     kind: file
     sourceID: LineFromLocalFile
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
       line: 5
   setLineOfFileWithContent:
     kind: file
     sourceID: LineFromLocalFile
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
       line: 3
       content: oldline was "{{ source `LineFromLocalFile` }}"
   setFileContentWithMatchAndReplacePatterns:
     kind: file
     sourceID: ContentFromURL
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
+      - examples/updatecli.generic/LICENSE
       matchPattern: 'Copyright \(c\) (\d*) (.*)'
       replacepattern: 'Copyright (c) 2021 $2'
   setFileContentWithMatchAndContent:
     kind: file
     sourceID: ContentFromURL
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
+      - examples/updatecli.generic/LICENSE
       matchPattern: 'Copyright \(c\) (\d*) (.*)'
       content: 'Copyright (c) 2021 FooBar'
   setFileContentWithMatchAndSource:
     kind: file
     sourceID: ContentFromURL
     spec:
-      file: LICENSE
+      files:
+      - LICENSE
+      - examples/updatecli.generic/LICENSE
       matchPattern: 'Copyright \(c\) (\d*) (.*)'

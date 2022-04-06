@@ -23,7 +23,7 @@ func Test_Target(t *testing.T) {
 		dryRun                bool
 	}{
 		{
-			name: "Passing Case with both input source and specified value (specified value should be used)",
+			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
@@ -101,9 +101,9 @@ github-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
-				Exists:  tt.mockReturnsFileExists,
+				Contents: map[string]string{
+					tt.spec.File: tt.mockReturnedContent,
+				},
 			}
 			y := &Yaml{
 				spec:             tt.spec,
