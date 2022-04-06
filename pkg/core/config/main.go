@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -116,6 +117,34 @@ func New(cfgFile string, valuesFiles, secretsFiles []string) (config Config, err
 
 	return config, err
 
+}
+
+// SaveOnDisk save an updatecli manifest on disk
+func (c *Config) SaveOnDisk(filename string) error {
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			logrus.Errorln(err)
+		}
+
+	}()
+
+	_, err = file.WriteString(string(data))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Display shows updatecli configuration including secrets !
