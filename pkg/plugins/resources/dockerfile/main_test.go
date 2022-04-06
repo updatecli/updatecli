@@ -63,7 +63,7 @@ func TestDockerfile_New(t *testing.T) {
 			spec: Spec{
 				Instruction: []string{"ARG", "TERRAFORM_VERSION"},
 			},
-			wantErr: fmt.Errorf("Parsing Error: cannot determine instruction: [ARG TERRAFORM_VERSION]."),
+			wantErr: fmt.Errorf("parsing error: cannot determine instruction: [ARG TERRAFORM_VERSION]"),
 		},
 		{
 			name: "Simple Text Parser with weak typing and mixed types",
@@ -73,7 +73,7 @@ func TestDockerfile_New(t *testing.T) {
 					"matcher": 123,
 				},
 			},
-			wantErr: fmt.Errorf("Parsing Error: cannot determine instruction: map[keyword:ARG matcher:123]."),
+			wantErr: fmt.Errorf("parsing error: cannot determine instruction: map[keyword:ARG matcher:123]"),
 		},
 	}
 	for _, tt := range tests {
