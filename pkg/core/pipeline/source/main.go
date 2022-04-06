@@ -3,8 +3,10 @@ package source
 import (
 	"os"
 
+	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -101,6 +103,16 @@ func (s *Source) Run() (err error) {
 	}
 
 	return err
+}
+
+// JSONSchema implements the json schema interface to generate the "source" jsonschema.
+func (Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+
+	anyOfSpec := resource.GetResourceMapping()
+
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }
 
 func (c *Config) Validate() error {

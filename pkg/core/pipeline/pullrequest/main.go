@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	jschema "github.com/invopop/jsonschema"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
@@ -32,6 +34,7 @@ type Config struct {
 	// scmid references an scm configuration defined within the updatecli manifest
 	ScmID string
 	// !Deprecated in favor for `scmid`
+	// scmid references an scm configuration defined within the updatecli manifest
 	DeprecatedScmID string `yaml:"scmID"`
 	// Targets defines a list of target related to the pullRequest
 	Targets []string
@@ -153,4 +156,16 @@ func (p *PullRequest) generatePullRequestHandler() error {
 	}
 
 	return nil
+}
+
+// JSONSchema implements the json schema interface to generate the "pullrequest" jsonschema
+func (Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+
+	anyOfSpec := map[string]interface{}{
+		"github": &github.PullRequestSpec{},
+	}
+
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }

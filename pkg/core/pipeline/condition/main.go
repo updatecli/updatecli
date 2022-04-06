@@ -3,7 +3,9 @@ package condition
 import (
 	"fmt"
 
+	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -22,7 +24,8 @@ type Condition struct {
 // Config defines conditions input parameters
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	// ! Deprecated - please use all lowercase `sourceid`
+	// ! Deprecated in favor of sourceID
+	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
 	DeprecatedSourceID string `yaml:"sourceID"`
 	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
 	SourceID string
@@ -92,6 +95,15 @@ func (c *Condition) Run(source string) (err error) {
 
 	return nil
 
+}
+
+// JSONSchema implements the json schema interface to generate the "condition" jsonschema.
+func (c Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+	anyOfSpec := resource.GetResourceMapping()
+
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }
 
 func (c *Config) Validate() error {
