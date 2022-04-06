@@ -60,7 +60,7 @@ func TestDockerfile_Condition(t *testing.T) {
 					"matcher": "golang",
 				},
 			},
-			wantErr: fmt.Errorf("The file NOTEXISTING.Dockerfile does not exist."),
+			wantErr: fmt.Errorf("the file NOTEXISTING.Dockerfile does not exist"),
 		},
 	}
 	for _, tt := range tests {
