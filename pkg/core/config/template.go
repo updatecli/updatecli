@@ -51,33 +51,26 @@ func (t *Template) Init(config *Config) error {
 
 	defer c.Close()
 
-	// Read every files containing yaml key/values
-	for _, valuesFile := range t.ValuesFiles {
-		err = ReadFile(valuesFile, &t.Values, false)
-
-		if err != nil {
-			return err
-		}
+	content, err := ioutil.ReadAll(c)
+	if err != nil {
+		return err
 	}
 
-	// Read every files containing sops secrets using the yaml format
-	// Order matter, last element always override
-	for _, secretsFile := range t.SecretsFiles {
-		err = ReadFile(secretsFile, &t.Secrets, true)
+	err = t.readValuesFiles()
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
+
+	err = t.readSecretsFiles()
+
+	if err != nil {
+		return err
 	}
 
 	// Merge yaml configuration and sops secrets into one configuration
 	// Deepmerge is not supported so a secrets override unencrypted values
 	templateValues := Merge(t.Values, t.Secrets)
-
-	content, err := ioutil.ReadAll(c)
-	if err != nil {
-		return err
-	}
 
 	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
 
@@ -96,6 +89,35 @@ func (t *Template) Init(config *Config) error {
 		return err
 	}
 
+	return nil
+}
+
+func (t *Template) readValuesFiles() error {
+	// Read every files containing yaml key/values
+	for _, valuesFile := range t.ValuesFiles {
+		err := ReadFile(valuesFile, &t.Values, false)
+
+		// Stop early, no need to lead more values files
+		// if something went wrong with at least one
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *Template) readSecretsFiles() error {
+	// Read every files containing sops secrets using the yaml format
+	// Order matter, last element always override
+	for _, secretsFile := range t.SecretsFiles {
+		err := ReadFile(secretsFile, &t.Secrets, true)
+
+		// Stop early, no need to lead more secrets files
+		// if something went wrong with at least one.
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
