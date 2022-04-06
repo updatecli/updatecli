@@ -37,12 +37,20 @@ type ResourceConfig struct {
 	// scmid specifies the scm configuration key associated to the current resource
 	SCMID string // SCMID references a uniq scm configuration
 	// !deprecated, please use scmid
+	// scmid specifies the scm configuration key associated to the current resource
 	DeprecatedSCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
 }
 
 // New returns a newly initialized Resource or an error
 func New(rs ResourceConfig) (resource Resource, err error) {
-	switch strings.ToLower(rs.Kind) {
+
+	kind := strings.ToLower(rs.Kind)
+
+	if _, ok := GetResourceMapping()[kind]; !ok {
+		return nil, fmt.Errorf("⚠ Don't support resource kind: %v", rs.Kind)
+	}
+
+	switch kind {
 	case "aws/ami":
 		return awsami.New(rs.Spec)
 	case "dockerdigest":
@@ -80,4 +88,23 @@ type Resource interface {
 	Target(source string, dryRun bool) (bool, error)
 	TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error)
 	Changelog() string
+}
+
+// Need to do reflect of ResourceConfig
+func GetResourceMapping() map[string]interface{} {
+
+	return map[string]interface{}{
+		"aws/ami":       &awsami.Spec{},
+		"jenkins":       &jenkins.Spec{},
+		"shell":         &shell.Spec{},
+		"gittag":        &gittag.Spec{},
+		"githubrelease": &githubrelease.Spec{},
+		"dockerdigest":  &dockerdigest.Spec{},
+		"dockerfile":    &dockerfile.Spec{},
+		"dockerimage":   &dockerimage.Spec{},
+		"file":          &file.Spec{},
+		"helmchart":     &helm.Spec{},
+		"maven":         &maven.Spec{},
+		"yaml":          &yaml.Spec{},
+	}
 }
