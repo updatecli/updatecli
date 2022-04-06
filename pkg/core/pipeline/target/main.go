@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -32,6 +34,7 @@ type Config struct {
 	// ReportBody contains the updatecli reports body for sources and conditions run
 	ReportBody string
 	// ! Deprecated - please use all lowercase `sourceid`
+	// sourceid specifies where retrieving the default value
 	DeprecatedSourceID string `yaml:"sourceID"`
 	// sourceid specifies where retrieving the default value
 	SourceID string
@@ -161,6 +164,16 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	return nil
+}
+
+// JSONSchema implements the json schema interface to generate the "target" jsonschema.
+func (Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+
+	anyOfSpec := resource.GetResourceMapping()
+
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }
 
 func (c *Config) Validate() error {

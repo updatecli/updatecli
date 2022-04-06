@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	// ErrWrongSortByValue is returned if we use the wrong sortBy value
 	ErrWrongSortByValue error = errors.New("wrong value for key 'sortBy'")
 )
 

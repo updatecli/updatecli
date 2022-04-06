@@ -3,15 +3,17 @@ package scm
 import (
 	"errors"
 
+	jschema "github.com/invopop/jsonschema"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
 type Config struct {
 	Kind string
-	Spec interface{}
+	Spec interface{} `jsonschema:"type=object"`
 }
 
 type Scm struct {
@@ -104,4 +106,17 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	return nil
+}
+
+// JSONSchema implements the json schema interface to generate the "scm" jsonschema
+func (Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+
+	anyOfSpec := map[string]interface{}{
+		"git":    &git.Git{},
+		"github": &github.Spec{},
+	}
+
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }
