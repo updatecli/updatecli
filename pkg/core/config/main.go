@@ -158,18 +158,7 @@ func (config *Config) Display() error {
 	return nil
 }
 
-// Validate run various validation test on the configuration and update fields if necessary
-func (config *Config) Validate() error {
-	for id, scm := range config.SCMs {
-		if err := scm.Validate(); err != nil {
-			logrus.Errorf("bad parameter(s) for scm %q", id)
-			return err
-		}
-		// scm.Validate may modify the object during validation
-		// so we want to be sure that we save those modification
-		config.SCMs[id] = scm
-	}
-
+func (config *Config) validatePullRequests() error {
 	for id, p := range config.PullRequests {
 		if err := p.Validate(); err != nil {
 			logrus.Errorf("bad parameters for pullrequest %q", id)
@@ -195,7 +184,10 @@ func (config *Config) Validate() error {
 		// so we want to be sure that we save those modifications
 		config.PullRequests[id] = p
 	}
+	return nil
+}
 
+func (config *Config) validateSources() error {
 	for id, s := range config.Sources {
 		err := s.Validate()
 		if err != nil {
@@ -234,47 +226,24 @@ func (config *Config) Validate() error {
 		// so we want to be sure that we save those modifications
 		config.Sources[id] = s
 	}
+	return nil
 
-	for id, c := range config.Conditions {
-		err := c.Validate()
-		if err != nil {
-			logrus.Errorf("bad parameters for condition %q", id)
-			return ErrBadConfig
-		}
+}
 
-		if len(c.SourceID) > 0 {
-			if _, ok := config.Sources[c.SourceID]; !ok {
-				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
-				return ErrBadConfig
-			}
+func (config *Config) validateSCMs() error {
+	for id, scm := range config.SCMs {
+		if err := scm.Validate(); err != nil {
+			logrus.Errorf("bad parameter(s) for scm %q", id)
+			return err
 		}
-		// Only check/guess the sourceID if the user did not disable it (default is enabled)
-		if !c.DisableSourceInput {
-			// Try to guess SourceID
-			if len(c.SourceID) == 0 && len(config.Sources) > 1 {
-				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
-				return ErrBadConfig
-			} else if len(c.SourceID) == 0 && len(config.Sources) == 1 {
-				for id := range config.Sources {
-					c.SourceID = id
-				}
-			}
-		}
-
-		if IsTemplatedString(id) {
-			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
-			return ErrNotAllowedTemplatedKey
-		}
-
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		//if c.Scm != nil {
-		if len(c.Scm) > 0 {
-			generateScmFromLegacyCondition(id, c, config)
-		}
-
-		config.Conditions[id] = c
+		// scm.Validate may modify the object during validation
+		// so we want to be sure that we save those modification
+		config.SCMs[id] = scm
 	}
+	return nil
+}
+
+func (config *Config) validateTargets() error {
 
 	for id, t := range config.Targets {
 
@@ -322,6 +291,103 @@ func (config *Config) Validate() error {
 		// t.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
 		config.Targets[id] = t
+	}
+	return nil
+}
+
+func (config *Config) validateConditions() error {
+	for id, c := range config.Conditions {
+		err := c.Validate()
+		if err != nil {
+			logrus.Errorf("bad parameters for condition %q", id)
+			return ErrBadConfig
+		}
+
+		if len(c.SourceID) > 0 {
+			if _, ok := config.Sources[c.SourceID]; !ok {
+				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
+				return ErrBadConfig
+			}
+		}
+		// Only check/guess the sourceID if the user did not disable it (default is enabled)
+		if !c.DisableSourceInput {
+			// Try to guess SourceID
+			if len(c.SourceID) == 0 && len(config.Sources) > 1 {
+				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
+				return ErrBadConfig
+			} else if len(c.SourceID) == 0 && len(config.Sources) == 1 {
+				for id := range config.Sources {
+					c.SourceID = id
+				}
+			}
+		}
+
+		if IsTemplatedString(id) {
+			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
+			return ErrNotAllowedTemplatedKey
+		}
+
+		// Temporary code until we fully remove the old way to configure scm
+		// Introduce by https://github.com/updatecli/updatecli/issues/260
+		//if c.Scm != nil {
+		if len(c.Scm) > 0 {
+			generateScmFromLegacyCondition(id, c, config)
+		}
+
+		config.Conditions[id] = c
+	}
+	return nil
+}
+
+// Validate run various validation test on the configuration and update fields if necessary
+func (config *Config) Validate() error {
+
+	var errs []error
+
+	err := config.validateConditions()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("conditions validation error:\n%s", err))
+	}
+
+	err = config.validatePullRequests()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("pullrequests validation error:\n%s", err))
+	}
+
+	err = config.validateSCMs()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("scms validation error:\n%s", err))
+	}
+
+	err = config.validateSources()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("sources validation error:\n%s", err))
+	}
+
+	err = config.validateTargets()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("targets validation error:\n%s", err))
+	}
+
+	// Concatenate error message
+	if len(errs) > 0 {
+		err = errs[0]
+		for i := range errs {
+			if i > 1 {
+				err = fmt.Errorf("%s\n%s", err, errs[i])
+			}
+		}
+		return err
 	}
 
 	return nil
