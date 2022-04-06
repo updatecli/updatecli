@@ -30,8 +30,9 @@ func TestDockerfile_Condition(t *testing.T) {
 				},
 			},
 			mockTest: text.MockTextRetriever{
-				Content: dockerfileFixture,
-				Exists:  true,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 			wantChanged: true,
 		},
@@ -43,8 +44,9 @@ func TestDockerfile_Condition(t *testing.T) {
 				Instruction: "ARG[1][0]",
 			},
 			mockTest: text.MockTextRetriever{
-				Content: dockerfileFixture,
-				Exists:  true,
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 			wantChanged: false,
 		},
@@ -57,9 +59,6 @@ func TestDockerfile_Condition(t *testing.T) {
 					"keyword": "FROM",
 					"matcher": "golang",
 				},
-			},
-			mockTest: text.MockTextRetriever{
-				Exists: false,
 			},
 			wantErr: fmt.Errorf("the file NOTEXISTING.Dockerfile does not exist"),
 		},
@@ -94,7 +93,6 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 	tests := []struct {
 		name             string
 		inputSourceValue string
-		file             string
 		spec             Spec
 		wantChanged      bool
 		wantErr          error
@@ -112,8 +110,9 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 				},
 			},
 			mockTest: text.MockTextRetriever{
-				Content: dockerfileFixture,
-				Exists:  true,
+				Contents: map[string]string{
+					"/tmp/FROM.Dockerfile": dockerfileFixture,
+				},
 			},
 			wantChanged: true,
 			scm: &scm.MockScm{
@@ -129,9 +128,6 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 					"keyword": "FROM",
 					"matcher": "golang",
 				},
-			},
-			mockTest: text.MockTextRetriever{
-				Exists: false,
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/foo",
