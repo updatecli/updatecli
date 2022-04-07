@@ -27,7 +27,7 @@ var (
 	updatecliPackageName string = "github.com/updatecli/updatecli/"
 
 	// commentDir defines the temporary directory where
-	commentDir string = path.Join(os.TempDir(), "updatecli/")
+	commentDir string = path.Join(os.TempDir(), "updatecli", "_comments")
 	// commentURL defines the updatecli git url
 	commentURL string = "https://github.com/updatecli/updatecli.git"
 )
