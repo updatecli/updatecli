@@ -26,7 +26,8 @@ var (
 	// Set base package name
 	updatecliPackageName string = "github.com/updatecli/updatecli/"
 
-	// commentDir defines the temporary directory where
+	// commentDir defines the temporary directory where updatecli git repository is cloned to retrieve code comments
+	// it is used to populate jsonschema field "description"
 	commentDir string = path.Join(os.TempDir(), "updatecli", "_comments")
 	// commentURL defines the updatecli git url
 	commentURL string = "https://github.com/updatecli/updatecli.git"
