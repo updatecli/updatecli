@@ -1,6 +1,6 @@
 sources:
   lastDockerDigest:
-    kind: dockerDigest
+    kind: dockerdigest
     name: "Get latest nginx:1.17 from dockerhub"
     spec:
       image: "library/nginx"
