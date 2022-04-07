@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Diff
-        uses: updatecli/updatecli-action@v1.28.0
+        uses: updatecli/updatecli-action@v1.30.0
         with:
           command: diff
           flags: "--config ./updatecli/updatecli.d"
@@ -32,7 +32,7 @@ jobs:
           app_id: ${{ secrets.UPDATECLIBOT_APP_ID }}
           private_key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
       - name: Apply
-        uses: updatecli/updatecli-action@v1.28.0
+        uses: updatecli/updatecli-action@v1.30.0
         if: github.ref == 'refs/heads/main'
         with:
           command: apply
