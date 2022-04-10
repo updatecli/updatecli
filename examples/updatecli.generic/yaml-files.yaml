@@ -1,0 +1,98 @@
+---
+title: Show a set of yaml resources as a generic example
+sources:
+  default:
+    kind: yaml
+    spec:
+      file: examples/values.yaml
+      key: "github.user"
+  fromExplicitFile:
+    kind: yaml
+    spec:
+      file: file://examples/values.yaml
+      key: "github.user"
+  fromUrl:
+    kind: yaml
+    spec:
+      file: https://raw.githubusercontent.com/updatecli/updatecli/dc90759914718beee17101c693911088cfbf6deb/examples/values.yaml
+      key: "github.user"
+  ## Uncomment to test failing examples
+  # noSuchFile:
+  #   kind: yaml
+  #   spec:
+  #     file: /tmp/notexisting.yaml
+  #     key: "github.user"
+  # noSuchKey:
+  #   kind: yaml
+  #   spec:
+  #     file: examples/values.yaml
+  #     key: "foo.bar"
+conditions:
+  checkGithubUsernameHasValueFromDefaultSource:
+    kind: yaml
+    sourceID: default
+    spec:
+      file: examples/values.yaml
+      key: "github.user"
+  checkGithubRepositoryHasSpecifiedValue:
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: examples/values.yaml
+      key: "github.repository"
+      value: "charts"
+  checkGithubUsernameKeyOnly:
+    kind: yaml
+    sourceID: default
+    spec:
+      file: examples/values.yaml
+      key: "github.user"
+      keyonly: true
+  checkGithubRepositoryKeyOnly:
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: examples/values.yaml
+      key: "github.repository"
+      keyonly: true
+  ## Uncomment to test a failing source
+  # checkGithubUsername:
+  #   kind: yaml
+  #   disablesourceinput: true
+  #   spec:
+  #     file: examples/values.yaml
+  #     key: "github.user"
+  #     value: "r2d2"
+  # checkGithubCountryKeyOnly:
+  #   kind: yaml
+  #   sourceID: default
+  #   spec:
+  #     file: examples/values.yaml
+  #     key: "github.country"
+  #     keyonly: true
+targets:
+  setGitHubAdmin:
+    kind: yaml
+    sourceID: default
+    spec:
+      files:
+      - examples/values.yaml
+      - examples/another-values.yaml
+      key: "github.admin"
+  setGitHubOwner:
+    kind: yaml
+    sourceID: default
+    spec:
+      files:
+      - examples/values.yaml
+      - examples/another-values.yaml
+      key: "github.owner"
+  setGitHubRepository:
+    kind: yaml
+    sourceID: default
+    spec:
+      files:
+      - examples/values.yaml
+      - examples/another-values.yaml
+      key: "github.repository"
+      value: "charts"

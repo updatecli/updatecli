@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -14,6 +15,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var (
+	yamlIndent int = 2
+)
+
 // Target updates a scm repository based on the modified yaml file.
 func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
 	changed, _, _, err := y.target(source, dryRun)
@@ -22,36 +27,37 @@ func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
 func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	if !filepath.IsAbs(y.spec.File) {
-		y.spec.File = filepath.Join(scm.GetDirectory(), y.spec.File)
+	absoluteFiles := make(map[string]string)
+	for filePath := range y.files {
+		absoluteFilePath := filePath
+		if !filepath.IsAbs(filePath) {
+			absoluteFilePath = filepath.Join(scm.GetDirectory(), filePath)
+			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
+		}
+		absoluteFiles[absoluteFilePath] = y.files[filePath]
 	}
+	y.files = absoluteFiles
+
 	return y.target(source, dryRun)
 }
 
 func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error) {
 	var files []string
-	var message string
+	var message strings.Builder
 
-	// Test at runtime if a file exist
-	if !y.contentRetriever.FileExists(y.spec.File) {
-		return false, files, message, fmt.Errorf("the yaml file %q does not exist", y.spec.File)
-	}
-
-	if text.IsURL(y.spec.File) {
-		return false, files, message, fmt.Errorf("unsupported filename prefix")
+	// Test if target reference a file with a prefix like https:// or file://, as we don't know how to update those files.
+	for filePath := range y.files {
+		if text.IsURL(filePath) {
+			return false, files, message.String(), fmt.Errorf("unsupported filename prefix for %s", filePath)
+		}
+		// Test at runtime if a file exist (no ForceCreate for kind: yaml)
+		if !y.contentRetriever.FileExists(filePath) {
+			return false, files, message.String(), fmt.Errorf("the yaml file %q does not exist", filePath)
+		}
 	}
 
 	if err := y.Read(); err != nil {
-		return false, files, message, err
-	}
-	data := y.currentContent
-
-	out := yaml.Node{}
-
-	err := yaml.Unmarshal([]byte(data), &out)
-
-	if err != nil {
-		return false, files, message, fmt.Errorf("cannot unmarshal data: %v", err)
+		return false, files, message.String(), err
 	}
 
 	valueToWrite := source
@@ -60,55 +66,89 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		logrus.Info("INFO: Using spec.Value instead of source input value.")
 	}
 
-	keyFound, oldVersion, _ := replace(&out, strings.Split(y.spec.Key, "."), valueToWrite, 1)
+	// loop over file(s)
+	notChanged := 0
+	originalContents := make(map[string]string)
+	for filePath := range y.files {
+		originalContents[filePath] = y.files[filePath]
 
-	if !keyFound {
-		return false, files, message, fmt.Errorf("%s cannot find key '%s' from file '%s'",
-			result.FAILURE,
-			y.spec.Key,
-			y.spec.File)
-	}
+		out := yaml.Node{}
 
-	if oldVersion == valueToWrite {
-		logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
-			result.SUCCESS,
-			y.spec.Key,
-			y.spec.File,
-			valueToWrite)
-		return false, files, message, nil
-	}
-	logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
-		result.ATTENTION,
-		y.spec.Key,
-		y.spec.File,
-		oldVersion,
-		valueToWrite)
-
-	if !dryRun {
-
-		newFile, err := os.Create(y.spec.File)
-
-		// https://staticcheck.io/docs/checks/#SA5001
-		//lint:ignore SA5001 We want to defer the file closing before exiting the function
-		defer newFile.Close()
+		err := yaml.Unmarshal([]byte(y.files[filePath]), &out)
 
 		if err != nil {
-			return false, files, message, nil
+			return false, files, message.String(), fmt.Errorf("cannot unmarshal content of file %s: %v", filePath, err)
 		}
 
-		encoder := yaml.NewEncoder(newFile)
-		defer encoder.Close()
-		encoder.SetIndent(yamlIdent)
-		err = encoder.Encode(&out)
+		keyFound, oldVersion, _ := replace(&out, strings.Split(y.spec.Key, "."), valueToWrite, 1)
 
-		if err != nil {
-			return false, files, message, err
+		if !keyFound {
+			return false, files, message.String(), fmt.Errorf("%s cannot find key '%s' from file '%s'",
+				result.FAILURE,
+				y.spec.Key,
+				filePath)
 		}
+
+		if oldVersion == valueToWrite {
+			logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
+				result.SUCCESS,
+				y.spec.Key,
+				filePath,
+				valueToWrite)
+			notChanged++
+		} else {
+			newFileContent, err := yaml.Marshal(&out)
+			if err != nil {
+				return false, files, message.String(), err
+			}
+			y.files[filePath] = string(newFileContent)
+
+			files = append(files, filePath)
+
+			logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
+				result.ATTENTION,
+				y.spec.Key,
+				filePath,
+				oldVersion,
+				valueToWrite)
+		}
+
+		if !dryRun {
+
+			newFile, err := os.Create(filePath)
+
+			// https://staticcheck.io/docs/checks/#SA5001
+			//lint:ignore SA5001 We want to defer the file closing before exiting the function
+			defer newFile.Close()
+
+			if err != nil {
+				return false, files, message.String(), nil
+			}
+
+			encoder := yaml.NewEncoder(newFile)
+			defer encoder.Close()
+			encoder.SetIndent(yamlIndent)
+			err = encoder.Encode(&out)
+			if err != nil {
+				return false, files, message.String(), err
+			}
+			// TODO: check if all this encoder stuff is needed, and why yamlIndent isn't respected
+			err = y.contentRetriever.WriteToFile(y.files[filePath], filePath)
+			if err != nil {
+				return false, files, message.String(), err
+			}
+		}
+		message.WriteString(fmt.Sprintf("Update key %q from file %q", y.spec.Key, filePath))
+
 	}
 
-	files = append(files, y.spec.File)
+	// If no file was updated, return an error
+	// TODO: why?
+	if notChanged == len(y.files) {
+		return false, files, message.String(), fmt.Errorf("no file was updated")
+	}
 
-	message = fmt.Sprintf("Update key %q from file %q", y.spec.Key, y.spec.File)
+	sort.Strings(files)
 
-	return true, files, message, nil
+	return true, files, message.String(), nil
 }
