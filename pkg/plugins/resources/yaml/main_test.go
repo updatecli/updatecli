@@ -379,31 +379,65 @@ func Test_Validate(t *testing.T) {
 		name          string
 		spec          Spec
 		mockFileExist bool
-		wantErr       bool
+		isErrorWanted bool
 	}{
 		{
-			name: "Normal case",
+			name: "Validation error when both 'File' and 'Files' are empty",
 			spec: Spec{
-				File: "/tmp/test.yaml",
-				Key:  "foo.bar",
+				File:  "",
+				Files: []string{},
+				Key:   "foo.bar",
 			},
-			wantErr: false,
+			isErrorWanted: true,
 		},
 		{
-			name: "raises an error when 'File' is empty",
-			spec: Spec{
-				File: "",
-				Key:  "foo.bar",
-			},
-			wantErr: true,
-		},
-		{
-			name: "raises an error when 'Key' is empty",
+			name: "Validation error when 'Key' is empty",
 			spec: Spec{
 				File: "/tmp/toto.yaml",
 				Key:  "",
 			},
-			wantErr: true,
+			isErrorWanted: true,
+		},
+		{
+			name: "Validation error when both 'File' and 'Files' are specified",
+			spec: Spec{
+				File: "test.yaml",
+				Files: []string{
+					"bar.yaml",
+				},
+				Key: "foo.bar",
+			},
+			isErrorWanted: true,
+		},
+		{
+			name: "Validation error when 'Files' contains duplicates",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+					"test.yaml",
+				},
+				Key: "foo.bar",
+			},
+			isErrorWanted: true,
+		},
+		{
+			name: "Normal case with 'File'",
+			spec: Spec{
+				File: "/tmp/test.yaml",
+				Key:  "foo.bar",
+			},
+			isErrorWanted: false,
+		},
+		{
+			name: "Normal case with more than one 'Files'",
+			spec: Spec{
+				Files: []string{
+					"/tmp/test.yaml",
+					"/tmp/bar.yaml",
+				},
+				Key: "foo.bar",
+			},
+			isErrorWanted: false,
 		},
 	}
 	for _, tt := range tests {
@@ -412,8 +446,8 @@ func Test_Validate(t *testing.T) {
 				spec:             tt.spec,
 				contentRetriever: &text.MockTextRetriever{},
 			}
-			gotErr := yaml.Validate()
-			if tt.wantErr {
+			gotErr := yaml.spec.Validate()
+			if tt.isErrorWanted {
 				require.Error(t, gotErr)
 				return
 			}

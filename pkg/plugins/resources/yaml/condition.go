@@ -18,17 +18,28 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	if !filepath.IsAbs(y.spec.File) {
-		y.spec.File = filepath.Join(scm.GetDirectory(), y.spec.File)
+	absoluteFiles := make(map[string]string)
+	for filePath := range y.files {
+		absoluteFilePath := filePath
+		if !filepath.IsAbs(filePath) {
+			absoluteFilePath = filepath.Join(scm.GetDirectory(), filePath)
+			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
+		}
+		absoluteFiles[absoluteFilePath] = y.files[filePath]
 	}
+	y.files = absoluteFiles
+
 	return y.condition(source)
 }
 
 func (y *Yaml) condition(source string) (bool, error) {
+	var fileContent string
+	var filePath string
 
-	// Test at runtime if a file exist
-	if !y.contentRetriever.FileExists(y.spec.File) {
-		return false, fmt.Errorf("the yaml file %q does not exist", y.spec.File)
+	if len(y.files) > 1 {
+		validationError := fmt.Errorf("Validation error in conditions of type 'yaml': the attributes `spec.files` can't contain more than one element for conditions")
+		logrus.Errorf(validationError.Error())
+		return false, validationError
 	}
 
 	// Start by retrieving the specified file's content
@@ -37,7 +48,12 @@ func (y *Yaml) condition(source string) (bool, error) {
 	}
 	out := yaml.Node{}
 
-	err := yaml.Unmarshal([]byte(y.currentContent), &out)
+	// loop over the only file
+	for theFilePath := range y.files {
+		fileContent = y.files[theFilePath]
+		filePath = theFilePath
+	}
+	err := yaml.Unmarshal([]byte(fileContent), &out)
 
 	if err != nil {
 		return false, fmt.Errorf("cannot unmarshal data: %v", err)
@@ -80,7 +96,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 			logrus.Infof("%s Key %q, in YAML file %q, is correctly set to %q",
 				result.SUCCESS,
 				y.spec.Key,
-				y.spec.File,
+				filePath,
 				valueToCheck)
 			return true, nil
 		}
@@ -88,14 +104,13 @@ func (y *Yaml) condition(source string) (bool, error) {
 		logrus.Infof("%s Key %q, in YAML file %q, is incorrectly set to %s and should be %q",
 			result.FAILURE,
 			y.spec.Key,
-			y.spec.File,
+			filePath,
 			oldVersion,
 			valueToCheck)
 		return false, nil
 	}
-
 	return false, fmt.Errorf("%s cannot find key %q in the YAML file %q",
 		result.FAILURE,
 		y.spec.Key,
-		y.spec.File)
+		filePath)
 }

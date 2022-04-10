@@ -8,29 +8,32 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 
 	"gopkg.in/yaml.v3"
 )
 
-var (
-	yamlIdent int = 2
-)
-
 // Spec defines a specification for a "yaml" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	File    string
-	Key     string
-	Value   string
-	KeyOnly bool // [condition] allow checking for only the existence of a key (not its value)
+	// File contains the file path to take in account
+	File string
+	// Files contains the file path(s) to take in account
+	Files []string
+	// Key is the YAML key to retrieve
+	Key string
+	// Value is the YAML value to set
+	Value string
+	// [condition] allow checking for only the existence of a key (not its value)
+	KeyOnly bool // TODO: add in documentation
 }
 
 // Yaml defines a resource of kind "yaml"
 type Yaml struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
-	currentContent   string
+	files            map[string]string // map of file paths to file contents
 }
 
 // New returns a reference to a newly initialized Yaml object from a Spec
@@ -48,27 +51,49 @@ func New(spec interface{}) (*Yaml, error) {
 		contentRetriever: &text.Text{},
 	}
 
-	newResource.spec.File = strings.TrimPrefix(newResource.spec.File, "file://")
-
-	err = newResource.Validate()
+	err = newResource.spec.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	return newResource, nil
+	newResource.files = make(map[string]string)
+	// File as unique element of newResource.files
+	if len(newResource.spec.File) > 0 {
+		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
+	}
+	// Files
+	for _, filePath := range newResource.spec.Files {
+		newResource.files[strings.TrimPrefix(filePath, "file://")] = ""
+	}
 
+	return newResource, nil
+}
+
+func hasDuplicates(values []string) bool {
+	uniqueValues := make(map[string]string)
+	for _, v := range values {
+		uniqueValues[v] = ""
+	}
+
+	return len(values) != len(uniqueValues)
 }
 
 // Validate validates the object and returns an error (with all the failed validation messages) if it is not valid
-func (y *Yaml) Validate() error {
+func (s *Spec) Validate() error {
 	var validationErrors []string
 
 	// Check for all validation
-	if y.spec.File == "" {
-		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'file' is empty.")
+	if len(s.Files) == 0 && len(s.File) == 0 {
+		validationErrors = append(validationErrors, "Invalid spec for yaml resource: both 'file' and 'files' are empty.")
 	}
-	if y.spec.Key == "" {
+	if s.Key == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
+	}
+	if len(s.Files) > 0 && len(s.File) > 0 {
+		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attributes `spec.file` and `spec.files` are mutually exclusive")
+	}
+	if len(s.Files) > 1 && hasDuplicates(s.Files) {
+		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attributes `spec.files` contains duplicated values")
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
@@ -78,15 +103,21 @@ func (y *Yaml) Validate() error {
 	return nil
 }
 
-// Read defines CurrentContent to the content of the file which path is specified in Spec.File
+// Read puts the content of the file(s) as value of the y.files map if the file(s) exist(s) or log the non existence of the file
 func (y *Yaml) Read() error {
-	// Otherwise return the textual content
-	textContent, err := y.contentRetriever.ReadAll(y.spec.File)
-	if err != nil {
-		return err
-	}
-	y.currentContent = textContent
+	var err error
 
+	// Retrieve files content
+	for filePath := range y.files {
+		if y.contentRetriever.FileExists(filePath) {
+			y.files[filePath], err = y.contentRetriever.ReadAll(filePath)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("%s The specified file %q does not exist.\n", result.FAILURE, filePath)
+		}
+	}
 	return nil
 }
 
