@@ -21,7 +21,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 		mockedError      error
 		wantedContents   map[string]string
 		wantedResult     bool
-		wantedErr        bool
+		wantedError      bool
 		dryRun           bool
 	}{
 		{
@@ -199,7 +199,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"https://github.com/foo.txt": "",
 			},
 			wantedResult: false,
-			wantedErr:    true,
+			wantedError:  true,
 		},
 		{
 			name: "Validation failure with an https:// URL instead of a file",
@@ -214,7 +214,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"https://github.com/bar.txt": "",
 			},
 			wantedResult: false,
-			wantedErr:    true,
+			wantedError:  true,
 		},
 		{
 			name: "Validation failure with both line and forcecreate specified",
@@ -229,7 +229,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "",
 			},
 			wantedResult: false,
-			wantedErr:    true,
+			wantedError:  true,
 		},
 		{
 			name: "Validation failure with invalid regexp for MatchPattern",
@@ -243,7 +243,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "",
 			},
 			wantedResult: false,
-			wantedErr:    true,
+			wantedError:  true,
 		},
 		{
 			name: "Error with file not existing (with line)",
@@ -257,7 +257,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"not_existing.txt": "",
 			},
 			wantedResult: false,
-			wantedErr:    true,
+			wantedError:  true,
 		},
 		{
 			name: "Error with file not existing (with content)",
@@ -271,7 +271,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"not_existing.txt": "",
 			},
 			wantedResult: false,
-			wantedErr:    true,
+			wantedError:  true,
 		},
 		{
 			name: "Error while reading the line in file",
@@ -289,7 +289,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 			},
 			mockedError:  fmt.Errorf("I/O error: file system too slow"),
 			wantedResult: false,
-			wantedErr:    true,
+			wantedError:  true,
 		},
 		{
 			name: "Error while reading a full file",
@@ -310,7 +310,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				"foo.txt": "current_version=1.2.3",
 			},
 			wantedResult: false,
-			wantedErr:    true,
+			wantedError:  true,
 		},
 		{
 			name: "Line in files not updated",
@@ -374,7 +374,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 
 			gotResult, gotErr := f.Target(tt.inputSourceValue, tt.dryRun)
 
-			if tt.wantedErr {
+			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
 			}

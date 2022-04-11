@@ -230,6 +230,7 @@ func TestFile_Source(t *testing.T) {
 				}
 
 				require.NoError(t, gotErr)
+				assert.Equal(t, tt.wantedResult, (source != ""))
 				assert.Equal(t, tt.wantedContents[filePath], source)
 			}
 		})

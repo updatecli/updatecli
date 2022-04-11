@@ -92,6 +92,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 			// Keep the original content for later comparison
 			originalContents[filePath] = f.files[filePath]
 			f.files[filePath] = reg.ReplaceAllString(f.files[filePath], inputContent)
+			files = append(files, filePath)
 		}
 	} else {
 		for filePath := range f.files {
