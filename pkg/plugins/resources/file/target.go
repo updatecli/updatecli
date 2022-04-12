@@ -98,7 +98,6 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 			// Keep the original content for later comparison
 			originalContents[filePath] = f.files[filePath]
 			f.files[filePath] = inputContent
-			files = append(files, filePath)
 		}
 	}
 
