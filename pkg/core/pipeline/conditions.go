@@ -10,8 +10,10 @@ import (
 // RunConditions run every conditions for a given configuration config.
 func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 
-	logrus.Infof("\n\n%s:\n", strings.ToTitle("conditions"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("conditions")+1))
+	if len(p.Conditions) > 0 {
+		logrus.Infof("\n\n%s:\n", strings.ToTitle("conditions"))
+		logrus.Infof("%s\n", strings.Repeat("=", len("conditions")+1))
+	}
 
 	// Sort conditions keys by building a dependency graph
 	sortedConditionsKeys, err := SortedConditionsKeys(&p.Conditions)

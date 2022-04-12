@@ -10,8 +10,10 @@ import (
 // RunTargets iterates on every target to update each of them.
 func (p *Pipeline) RunTargets() error {
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Targets"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Targets")+1))
+	if len(p.Targets) > 0 {
+		logrus.Infof("\n\n%s\n", strings.ToTitle("Targets"))
+		logrus.Infof("%s\n", strings.Repeat("=", len("Targets")+1))
+	}
 
 	// Sort targets keys by building a dependency graph
 	sortedTargetsKeys, err := SortedTargetsKeys(&p.Targets)
