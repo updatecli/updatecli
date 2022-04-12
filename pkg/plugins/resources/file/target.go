@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -98,7 +99,6 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 			// Keep the original content for later comparison
 			originalContents[filePath] = f.files[filePath]
 			f.files[filePath] = inputContent
-			files = append(files, filePath)
 		}
 	}
 
@@ -108,13 +108,15 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		if f.files[filePath] == originalContents[filePath] {
 			notChanged++
 			logrus.Infof("%s Content from file %q already up to date", result.SUCCESS, filePath)
+		} else {
+			files = append(files, filePath)
 		}
 	}
 	if notChanged == len(f.files) {
 		logrus.Infof("%s All contents from 'file' and 'files' combined already up to date", result.SUCCESS)
 		return false, files, message.String(), nil
 	}
-
+	sort.Strings(files)
 	// Otherwise write the new content to the file(s), or nothing but logs if dry run is enabled
 	for filePath := range f.files {
 		var contentType string
