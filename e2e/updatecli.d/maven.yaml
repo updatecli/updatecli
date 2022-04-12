@@ -7,15 +7,15 @@ sources:
     spec:
       url: "repo.jenkins-ci.org"
       repository: "releases"
-      groupID: "org.jenkins-ci.main"
-      artifactID: "jenkins-war"
+      groupid: "org.jenkins-ci.main"
+      artifactid: "jenkins-war"
   getLatestJunitVersion:
     kind: maven
     spec:
       url: "repo.maven.apache.org"
       repository: "maven2"
-      groupID: "junit"
-      artifactID: "junit"
+      groupid: "junit"
+      artifactid: "junit"
 
 conditions:
   checkIfOlderJunitExist:
@@ -25,6 +25,6 @@ conditions:
     spec:
       url: "repo.maven.apache.org"
       repository: "maven2"
-      groupID: "junit"
-      artifactID: "junit"
+      groupid: "junit"
+      artifactid: "junit"
       version: "4.3.1"

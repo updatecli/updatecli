@@ -15,36 +15,35 @@ scms:
 sources:
   latestVersion:
     name: Get latest Venom release
-    kind: githubRelease
+    kind: githubrelease
     spec:
       owner: ovh
       repository: venom
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      versioning:
+      versionfilter:
         kind: semver
-      transformers:
-        - addPrefix: "v"
-
+    transformers:
+      - addPrefix: "v"
+    
 targets:
   goWorkflow:
     name: 'Bump Venom version to {{ source "latestVersion" }}'
     kind: file
     spec:
       file: .github/workflows/go.yaml
-      matchPattern: 'VENOM_VERSION: .*'
+      matchpattern: 'VENOM_VERSION: .*'
       content: 'VENOM_VERSION: {{ source `latestVersion` }}'
-    scmID: default
+    scmid: default
 
 pullrequests:
   default:
     title: '[updatecli] Bump Venom version to {{ source "latestVersion" }}'
     kind: github
-    scmID: default
+    scmid: default
     targets:
       - goWorkflow
     spec:
       labels:
         - chore
         - skip-changelog
-

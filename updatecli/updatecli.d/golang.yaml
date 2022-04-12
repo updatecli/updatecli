@@ -15,13 +15,13 @@ scms:
 sources:
   latestGoVersion:
     name: Get Latest Go Release
-    kind: githubRelease
+    kind: githubrelease
     spec:
       owner: golang
       repository: go
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      versionFilter:
+      versionfilter:
         kind: regex
         pattern: 'go1\.(\d*)\.(\d*)$'
     transformers:
@@ -61,8 +61,8 @@ conditions:
       value: go
   dockerTag:
     name: 'Is docker image golang:{{ source "latestGoVersion" }} published'
-    sourceID: latestGoVersion
-    kind: dockerImage
+    sourceid: latestGoVersion
+    kind: dockerimage
     spec:
       image: golang
       tag: '{{ source "latestGoVersion" }}'
@@ -70,41 +70,41 @@ conditions:
 targets:
   release-sandbox:
     name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceID: latestGoVersion
+    sourceid: latestGoVersion
     kind: yaml
     spec:
       file: .github/workflows/release.yaml
       key: jobs.build.steps[3].with.go-version
-    scmID: default
+    scmid: default
   release:
     name: '[release-sandbox.yaml] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceID: latestGoVersion
+    sourceid: latestGoVersion
     kind: yaml
     spec:
       file: .github/workflows/release-sandbox.yaml
       key: jobs.build.steps[3].with.go-version
-    scmID: default
+    scmid: default
   workflowgo:
     name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
     kind: yaml
-    sourceID: latestGoVersion
+    sourceid: latestGoVersion
     spec:
       file: .github/workflows/go.yaml
       key: jobs.build.steps[0].with.go-version
-    scmID: default
+    scmid: default
   go.mod:
     name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceID: gomod
+    sourceid: gomod
     kind: file
     spec:
       file: go.mod
-    scmID: default
+    scmid: default
 
 pullrequests:
   default:
     title: '[updatecli] Bump Golang version to {{ source "latestGoVersion" }}'
     kind: github
-    scmID: default
+    scmid: default
     targets:
       - release-sandbox
       - release
