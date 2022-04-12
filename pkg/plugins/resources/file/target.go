@@ -108,6 +108,8 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		if f.files[filePath] == originalContents[filePath] {
 			notChanged++
 			logrus.Infof("%s Content from file %q already up to date", result.SUCCESS, filePath)
+		} else {
+			files = append(files, filePath)
 		}
 	}
 	if notChanged == len(f.files) {
