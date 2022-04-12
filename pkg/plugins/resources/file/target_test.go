@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -424,9 +423,10 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				"/tmp/foo.txt": "Title\r\nGood Bye\r\nThe End",
 				"/tmp/bar.txt": "Be happy\nDon't worry\nBe happy\nDon't worry",
 			},
+			// returned files are sorted
 			wantedFiles: []string{
-				"/tmp/foo.txt",
 				"/tmp/bar.txt",
+				"/tmp/foo.txt",
 			},
 			wantedContents: map[string]string{
 				"/tmp/foo.txt": "Title\r\nGood Bye\r\ncurrent_version=1.2.3",
@@ -455,9 +455,10 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			mockedContents: map[string]string{
 				"/tmp/foo.txt": "Title\r\nGood Bye\r\ncurrent_version=1.2.3",
 			},
+			// returned files are sorted
 			wantedFiles: []string{
-				"/tmp/foo.txt",
 				"/tmp/bar.txt",
+				"/tmp/foo.txt",
 			},
 			wantedContents: map[string]string{
 				"/tmp/foo.txt": "current_version=1.2.3",
@@ -528,9 +529,6 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			assert.Equal(t, tt.wantedResult, gotResult)
-
-			sort.Strings(tt.wantedFiles)
-			sort.Strings(gotFiles)
 			assert.Equal(t, tt.wantedFiles, gotFiles)
 
 			for filePath := range f.files {
