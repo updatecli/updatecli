@@ -1,7 +1,7 @@
 sources:
   lastDigest:
     name: "Get docker image digest for olblak/polls:latest"
-    kind: dockerDigest
+    kind: dockerdigest
     spec:
       image: "olblak/polls"
       tag: "latest"
