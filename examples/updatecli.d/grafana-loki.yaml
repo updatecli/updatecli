@@ -1,6 +1,9 @@
+
+title: "Update grafana/loki Helm Chart to latest version"
+
 sources:
   lastHelmRelease:
-    kind: helmChart
+    kind: helmchart
     name: "Get latest loki helm chart version"
     spec:
       url: https://grafana.github.io/loki/charts
@@ -9,7 +12,7 @@ sources:
 conditions:
   exist:
     name: "Is Loki helm chart available on Registry?"
-    kind: helmChart
+    kind: helmchart
     spec:
       url: https://grafana.github.io/loki/charts
       name: loki

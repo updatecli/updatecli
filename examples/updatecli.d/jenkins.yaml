@@ -3,17 +3,16 @@ sources:
     kind: maven
     name: "Get latest jenkins weekly version from maven repository"
     spec:
-      owner: "maven"
       url: "repo.jenkins-ci.org"
       repository: "releases"
-      groupID: "org.jenkins-ci.main"
-      artifactID: "jenkins-war"
+      groupid: "org.jenkins-ci.main"
+      artifactid: "jenkins-war"
     transformers:
       - addSuffix: "-jdk11"
 conditions:
   docker:
     name: "Is Docker Image Published on Registry?"
-    kind: dockerImage
+    kind: dockerimage
     spec:
       image: "jenkins/jenkins"
 targets:

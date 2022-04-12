@@ -3,33 +3,33 @@ title: Bump jenkinsciinfra/helmfile image
 sources:
   helm1:
     name: Get Latest helm release version
-    kind: githubRelease
+    kind: githubrelease
     spec:
       owner: "helm"
       repository: "helm"
-      token: {{ requiredEnv .github.token }}
+      token: '{{ requiredEnv .github.token }}'
       username: olblak
-      versionFilter:
-      kind: latest
+      versionfilter:
+        kind: latest
   helm2:
     name: Get Latest helm release version
-    kind: githubRelease
+    kind: githubrelease
     spec:
       owner: "helm"
       repository: "helm"
-      token: {{ requiredEnv .github.token }}
+      token: '{{ requiredEnv .github.token }}'
       username: olblak
-      versionFilter:
-      kind: latest
+      versionfilter:
+        kind: latest
 conditions:
   isENVSet:
-    sourceID: helm
+    sourceid: helm
     name: Is the 2nd ENV instruction having a "keyword" set to "HELM_VERSION"
     kind: dockerfile
     spec:
       file: docker/Dockerfile
-      Instruction: "ENV[1][0]"
-      Value: "HELM_VERSION"
+      instruction: "ENV[1][0]"
+      value: "HELM_VERSION"
     scm:
       github:
         user: "updatecli"
@@ -42,11 +42,11 @@ conditions:
 targets:
   updateHelm:
     name: Update the 2nd element of the 2nd ENV instruction to the source value
-    sourceID: helm
+    sourceid: helm
     kind: dockerfile
     spec:
       file: docker/Dockerfile
-      Instruction: ENV[1][1]
+      instruction: ENV[1][1]
     scm:
       github:
         user: "updatecli"
@@ -58,11 +58,11 @@ targets:
         branch: "master"
   updateChecksum:
     name: Update Helm checksum
-    sourceID: checksum
+    sourceid: checksum
     kind: dockerfile
     spec:
       file: docker/Dockerfile
-      Instruction: ENV[5][1]
+      instruction: ENV[5][1]
     scm:
       github:
         user: "updatecli"
