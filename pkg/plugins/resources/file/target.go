@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -115,7 +116,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 		logrus.Infof("%s All contents from 'file' and 'files' combined already up to date", result.SUCCESS)
 		return false, files, message.String(), nil
 	}
-
+	sort.Strings(files)
 	// Otherwise write the new content to the file(s), or nothing but logs if dry run is enabled
 	for filePath := range f.files {
 		var contentType string
