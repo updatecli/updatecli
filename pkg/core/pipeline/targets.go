@@ -43,7 +43,7 @@ func (p *Pipeline) RunTargets() error {
 		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			return fmt.Errorf("Something went wrong in target \"%v\" :\n%v\n\n", id, err)
+			return fmt.Errorf("something went wrong in target \"%v\" :\n%v\n\n", id, err)
 		}
 
 		report.Result = target.Result
