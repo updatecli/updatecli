@@ -41,14 +41,13 @@ func (p *Pipeline) RunTargets() error {
 		report.Name = target.Config.Name
 
 		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
+		p.Targets[id] = target
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			p.Targets[id] = target
 			return fmt.Errorf("something went wrong in target \"%v\" :\n%v\n\n", id, err)
 		}
 
 		report.Result = target.Result
-		p.Targets[id] = target
 		p.Report.Targets[id] = report
 
 		if strings.Compare(target.Result, result.ATTENTION) == 0 {
