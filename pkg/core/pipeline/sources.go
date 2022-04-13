@@ -10,10 +10,13 @@ import (
 // RunSources iterates on every source definition to retrieve every information.
 func (p *Pipeline) RunSources() error {
 
-	if len(p.Sources) > 0 {
-		logrus.Infof("\n\n%s\n", strings.ToTitle("Sources"))
-		logrus.Infof("%s\n", strings.Repeat("=", len("Source")+1))
+	if len(p.Sources) == 0 {
+		logrus.Debugln("No sources to run")
+		return nil
 	}
+
+	logrus.Infof("\n\n%s\n", strings.ToTitle("Sources"))
+	logrus.Infof("%s\n", strings.Repeat("=", len("Source")+1))
 
 	sortedSourcesKeys, err := SortedSourcesKeys(&p.Sources)
 	if err != nil {
