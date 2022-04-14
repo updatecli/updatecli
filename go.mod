@@ -32,7 +32,7 @@ require (
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
-	github.com/invopop/jsonschema v0.3.0
+	github.com/invopop/jsonschema v0.4.0
 )
 
 require (
