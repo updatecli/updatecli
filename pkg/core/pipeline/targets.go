@@ -1,11 +1,17 @@
 package pipeline
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+)
+
+var (
+	// ErrRunTargets is return when at least one error happened during targets execution
+	ErrRunTargets error = errors.New("something went wrong during target execution")
 )
 
 // RunTargets iterates on every target to update each of them.
@@ -22,6 +28,8 @@ func (p *Pipeline) RunTargets() error {
 
 	isResultChanged := false
 	p.Report.Result = result.SUCCESS
+
+	errs := []error{}
 
 	for _, id := range sortedTargetsKeys {
 		// Update pipeline before each target run
@@ -41,18 +49,33 @@ func (p *Pipeline) RunTargets() error {
 		report.Name = target.Config.Name
 
 		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
-		p.Targets[id] = target
+
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			return fmt.Errorf("something went wrong in target \"%v\" :\n%v\n\n", id, err)
+			target.Result = result.FAILURE
+
+			errs = append(errs, fmt.Errorf("something went wrong in target %q : %q", id, err))
 		}
 
 		report.Result = target.Result
+
+		p.Targets[id] = target
 		p.Report.Targets[id] = report
 
 		if strings.Compare(target.Result, result.ATTENTION) == 0 {
 			isResultChanged = true
 		}
+	}
+
+	if len(errs) > 0 {
+		logrus.Infof("\n")
+		for _, e := range errs {
+			logrus.Errorln(e)
+		}
+		logrus.Infof("\n")
+
+		p.Report.Result = result.FAILURE
+		return ErrRunTargets
 	}
 
 	if isResultChanged {
