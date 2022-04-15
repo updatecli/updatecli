@@ -48,20 +48,26 @@ func (p *Pipeline) RunTargets() error {
 		// Update report name as the target configuration might has been updated (templated values)
 		report.Name = target.Config.Name
 
-		shouldRunTarget := true
+		shouldSkipTarget := false
 
 		for _, parentTarget := range target.Config.DependsOn {
 			if p.Targets[parentTarget].Result != result.SUCCESS {
 				logrus.Warningf("Parent target[%q] did not succeed. Skipping execution of the target[%q]", parentTarget, id)
-				shouldRunTarget = false
+				shouldSkipTarget = true
 				target.Result = result.SKIPPED
-				break
+				report.Result = target.Result
 			}
+
 		}
 
-		if shouldRunTarget {
-			err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
+		// No need to run this target as one of its dependency failed
+		if shouldSkipTarget {
+			p.Targets[id] = target
+			p.Report.Targets[id] = report
+			continue
 		}
+
+		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
 
 		if err != nil {
 			p.Report.Result = result.FAILURE
