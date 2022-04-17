@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	jschema "github.com/invopop/jsonschema"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
@@ -23,11 +25,19 @@ type PullRequestHandler interface {
 
 // Config define pullRequest provided via an updatecli configuration
 type Config struct {
-	Title   string      // Defines the pullRequest Title
-	Kind    string      // Defines the pullRequest kind
-	Spec    interface{} // Defines specific parameters
-	ScmID   string      `yaml:"scmID"` // References a scm configuration
-	Targets []string    // DependsOnTargets defines a list of target related to the pullRequest
+	// Title defines the pullRequest title
+	Title string
+	// Kind defines the pullRequest `kind` which affects accepted "spec" values
+	Kind string
+	// Spec defines parameters for a specific "kind"
+	Spec interface{}
+	// scmid references an scm configuration defined within the updatecli manifest
+	ScmID string
+	// !Deprecated in favor for `scmid`
+	// scmid references an scm configuration defined within the updatecli manifest
+	DeprecatedScmID string `yaml:"scmID"`
+	// Targets defines a list of target related to the pullRequest
+	Targets []string
 }
 
 // PullRequest is a struct used by an updatecli pipeline.
@@ -53,8 +63,23 @@ func (c *Config) Validate() (err error) {
 		missingParameters = append(missingParameters, "targets")
 	}
 
+	if len(c.DeprecatedScmID) > 0 {
+
+		switch len(c.ScmID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			c.ScmID = c.DeprecatedScmID
+			c.DeprecatedScmID = ""
+		default:
+			logrus.Warningf("DeprecatedscmID: %q", c.DeprecatedScmID)
+			logrus.Warningf("scmid: %q", c.ScmID)
+			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
+				"scmID", "scmid", "scmID")
+		}
+	}
+
 	if len(c.ScmID) == 0 {
-		missingParameters = append(missingParameters, "scmID")
+		missingParameters = append(missingParameters, "scmid")
 	}
 
 	if len(missingParameters) > 0 {
@@ -131,4 +156,16 @@ func (p *PullRequest) generatePullRequestHandler() error {
 	}
 
 	return nil
+}
+
+// JSONSchema implements the json schema interface to generate the "pullrequest" jsonschema
+func (Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+
+	anyOfSpec := map[string]interface{}{
+		"github": &github.PullRequestSpec{},
+	}
+
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }

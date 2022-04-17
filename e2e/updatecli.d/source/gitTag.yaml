@@ -10,13 +10,13 @@ scms:
 sources:
   git:
     name: Get latest updatecli test
-    kind: gitTag
-    scmID: updatecli
+    kind: gittag
+    scmid: updatecli
   githubRegex:
     name: Get latest updatecli test
-    kind: gitTag
+    kind: gittag
     spec:
-      versionFilter:
+      versionfilter:
         kind: semver
         pattern: "~0.1"
-    scmID: updatecli
+    scmid: updatecli

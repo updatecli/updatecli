@@ -26,3 +26,5 @@ dist/
 *.swp
 
 e2e/test_results.yaml
+
+schema/*

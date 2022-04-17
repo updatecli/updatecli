@@ -56,7 +56,8 @@ func init() {
 		prepareCmd,
 		showCmd,
 		versionCmd,
-		docsCmd)
+		docsCmd,
+		jsonschemaCmd)
 }
 
 func run(command string) error {
@@ -74,7 +75,7 @@ func run(command string) error {
 		err := e.Prepare()
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
-			logrus.Errorln("Continuing and trying to go as far as possible")
+			return err
 		}
 
 		err = e.Run()
@@ -94,7 +95,7 @@ func run(command string) error {
 		err := e.Prepare()
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
-			logrus.Errorln("Continuing and trying to go as far as possible")
+			return err
 		}
 
 		err = e.Run()
@@ -118,6 +119,12 @@ func run(command string) error {
 
 	case "show":
 		err := e.Show()
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+	case "jsonschema":
+		err := engine.GenerateSchema(jsonschemaBaseID, jsonschemaDirectory)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

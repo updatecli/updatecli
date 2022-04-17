@@ -1,14 +1,15 @@
-source:
-  kind: helmChart
-  name: "Get latest jenkins helm chart version"
-  spec:
-    url: https://charts.jenkins.io
-    name: jenkins
+sources:
+  lastHelmRelease:
+    kind: helmchart
+    name: "Get latest jenkins helm chart version"
+    spec:
+      url: https://charts.jenkins.io
+      name: jenkins
 
 conditions:
   exist:
     name: "Is Jenkins helm chart available on Registry?"
-    kind: helmChart
+    kind: helmchart
     spec:
       url: https://kubernetes-charts.storage.googleapis.com
       name: jenkins

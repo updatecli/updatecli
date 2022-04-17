@@ -8,8 +8,7 @@ import (
 )
 
 // Init set default Github parameters if not set.
-func (g *Github) Init(source string, pipelineID string) error {
-	g.Spec.VersionFilter.Pattern = source
+func (g *Github) Init(pipelineID string) error {
 	g.HeadBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
 	g.setDirectory()
 
@@ -46,7 +45,7 @@ func (g *Github) Clone() (string, error) {
 	}
 
 	if len(g.HeadBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = git.Checkout(g.Spec.Branch, g.HeadBranch, g.GetDirectory())
+		err = git.Checkout(g.Spec.Username, g.Spec.Token, g.Spec.Branch, g.HeadBranch, g.GetDirectory())
 	}
 
 	if err != nil {
@@ -65,7 +64,7 @@ func (g *Github) Commit(message string) error {
 		return err
 	}
 
-	err = git.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory())
+	err = git.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory(), g.Spec.GPG.SigningKey, g.Spec.GPG.Passphrase)
 	if err != nil {
 		return err
 	}
@@ -74,7 +73,7 @@ func (g *Github) Commit(message string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() error {
-	err := git.Checkout(g.Spec.Branch, g.HeadBranch, g.Spec.Directory)
+	err := git.Checkout(g.Spec.Username, g.Spec.Token, g.Spec.Branch, g.HeadBranch, g.Spec.Directory)
 	if err != nil {
 		return err
 	}

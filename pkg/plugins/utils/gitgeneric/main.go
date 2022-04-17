@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -113,7 +114,7 @@ func Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func Checkout(branch, remoteBranch, workingDir string) error {
+func Checkout(username, password, branch, remoteBranch, workingDir string) error {
 
 	logrus.Debugf("stage: git-checkout\n\n")
 
@@ -135,7 +136,13 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 
 	b := bytes.Buffer{}
 
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything except an empty string
+		Password: password,
+	}
+
 	err = w.Pull(&git.PullOptions{
+		Auth:     &auth,
 		Force:    true,
 		Progress: &b,
 	})
@@ -200,7 +207,7 @@ func Checkout(branch, remoteBranch, workingDir string) error {
 		if err != nil {
 			return err
 		}
-		refs, err := remote.List(&git.ListOptions{})
+		refs, err := remote.List(&git.ListOptions{Auth: &auth})
 
 		if err != nil {
 			return err
@@ -258,7 +265,7 @@ func exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bool {
 }
 
 // Commit run `git commit`.
-func Commit(user, email, message, workingDir string) error {
+func Commit(user, email, message, workingDir string, signingKey string, passprase string) error {
 
 	logrus.Debugf("stage: git-commit\n\n")
 
@@ -276,15 +283,26 @@ func Commit(user, email, message, workingDir string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("status: %q\n", status)
 
-	commit, err := w.Commit(message, &git.CommitOptions{
+	commitOptions := git.CommitOptions{
 		Author: &object.Signature{
 			Name:  user,
 			Email: email,
 			When:  time.Now(),
 		},
-	})
+	}
+
+	logrus.Debugf("status: %q\n", status)
+
+	if len(signingKey) > 0 {
+		key, err := sign.GetCommitSignKey(signingKey, passprase)
+		if err != nil {
+			return err
+		}
+		commitOptions.SignKey = key
+	}
+
+	commit, err := w.Commit(message, &commitOptions)
 	if err != nil {
 		return err
 	}

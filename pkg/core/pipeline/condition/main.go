@@ -3,7 +3,9 @@ package condition
 import (
 	"fmt"
 
+	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -12,16 +14,23 @@ import (
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
-	Result string // Result store the condition result after a condition run. This variable can't be set by an updatecli configuration
-	Config Config // Config defines condition input parameters
+	// Result stores the condition result after a condition run.
+	Result string
+	// Config defines condition input parameters
+	Config Config
 	Scm    *scm.ScmHandler
 }
 
 // Config defines conditions input parameters
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	SourceID                string `yaml:"sourceID"`
-	DisableSourceInput      bool
+	// ! Deprecated in favor of sourceID
+	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
+	DeprecatedSourceID string `yaml:"sourceID"`
+	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
+	SourceID string
+	// disablesourceinput disable the mechanism to retrieve a default value from a source.
+	DisableSourceInput bool
 }
 
 // Run tests if a specific condition is true
@@ -42,16 +51,6 @@ func (c *Condition) Run(source string) (err error) {
 		}
 	}
 
-	// Announce deprecation on 2021/01/31
-	if len(c.Config.Prefix) > 0 {
-		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release")
-	}
-
-	// Announce deprecation on 2021/01/31
-	if len(c.Config.Postfix) > 0 {
-		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release")
-	}
-
 	// If scm is defined then clone the repository
 	if c.Scm != nil {
 		s := *c.Scm
@@ -60,7 +59,7 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		err = s.Init(c.Config.Prefix+source+c.Config.Postfix, c.Config.Name)
+		err = s.Init(c.Config.Name)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
@@ -72,14 +71,14 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		ok, err = condition.ConditionFromSCM(c.Config.Prefix+source+c.Config.Postfix, s)
+		ok, err = condition.ConditionFromSCM(source, s)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
 		}
 
 	} else if len(c.Config.Scm) == 0 {
-		ok, err = condition.Condition(c.Config.Prefix + source + c.Config.Postfix)
+		ok, err = condition.Condition(source)
 		if err != nil {
 			c.Result = result.FAILURE
 			return err
@@ -96,4 +95,43 @@ func (c *Condition) Run(source string) (err error) {
 
 	return nil
 
+}
+
+// JSONSchema implements the json schema interface to generate the "condition" jsonschema.
+func (c Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+	anyOfSpec := resource.GetResourceMapping()
+
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
+}
+
+func (c *Config) Validate() error {
+	// Handle scmID deprecation
+	if len(c.DeprecatedSCMID) > 0 {
+		switch len(c.SCMID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			c.SCMID = c.DeprecatedSCMID
+			c.DeprecatedSCMID = ""
+		default:
+			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+				"scmID", "scmid", "scmID")
+		}
+	}
+
+	// Handle sourceID deprecation
+	if len(c.DeprecatedSourceID) > 0 {
+		switch len(c.SourceID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "sourceID", "sourceid")
+			c.SourceID = c.DeprecatedSourceID
+			c.DeprecatedSourceID = ""
+		default:
+			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+				"sourceID", "sourceid", "sourceID")
+		}
+	}
+
+	return nil
 }

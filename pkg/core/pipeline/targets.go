@@ -1,15 +1,21 @@
 package pipeline
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+var (
+	// ErrRunTargets is return when at least one error happened during targets execution
+	ErrRunTargets error = errors.New("something went wrong during target execution")
+)
+
 // RunTargets iterates on every target to update each of them.
 func (p *Pipeline) RunTargets() error {
-
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Targets"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Targets")+1))
 
@@ -20,10 +26,10 @@ func (p *Pipeline) RunTargets() error {
 		return err
 	}
 
-	i := 0
+	isResultChanged := false
+	p.Report.Result = result.SUCCESS
 
-	isResultIsChanged := false
-	isResultIsFailed := false
+	errs := []error{}
 
 	for _, id := range sortedTargetsKeys {
 		// Update pipeline before each target run
@@ -38,51 +44,61 @@ func (p *Pipeline) RunTargets() error {
 		target := p.Targets[id]
 		target.Config = p.Config.Targets[id]
 
-		rpt := p.Report.Targets[id]
+		report := p.Report.Targets[id]
 		// Update report name as the target configuration might has been updated (templated values)
-		rpt.Name = target.Config.Name
+		report.Name = target.Config.Name
 
-		if target.Config.Prefix == "" && p.Sources[target.Config.SourceID].Config.Prefix != "" {
-			target.Config.Prefix = p.Sources[target.Config.SourceID].Config.Prefix
+		shouldSkipTarget := false
+
+		for _, parentTarget := range target.Config.DependsOn {
+			if p.Targets[parentTarget].Result != result.SUCCESS {
+				logrus.Warningf("Parent target[%q] did not succeed. Skipping execution of the target[%q]", parentTarget, id)
+				shouldSkipTarget = true
+				target.Result = result.SKIPPED
+				report.Result = target.Result
+			}
+
 		}
 
-		if target.Config.Postfix == "" && p.Sources[target.Config.SourceID].Config.Postfix != "" {
-			target.Config.Postfix = p.Sources[target.Config.SourceID].Config.Postfix
-		}
-
-		err = target.Run(
-			p.Sources[target.Config.SourceID].Output,
-			&p.Options.Target)
-
-		rpt.Result = target.Result
-
-		if err != nil {
-			logrus.Errorf("Something went wrong in target \"%v\" :\n", id)
-			logrus.Errorf("%v\n\n", err)
-
-			isResultIsFailed = true
-
+		// No need to run this target as one of its dependency failed
+		if shouldSkipTarget {
 			p.Targets[id] = target
-			p.Report.Targets[id] = rpt
-			i++
+			p.Report.Targets[id] = report
 			continue
 		}
 
-		if strings.Compare(target.Result, result.ATTENTION) == 0 {
-			isResultIsChanged = true
+		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
+
+		if err != nil {
+			p.Report.Result = result.FAILURE
+			target.Result = result.FAILURE
+
+			errs = append(errs, fmt.Errorf("something went wrong in target %q : %q", id, err))
 		}
 
-		p.Targets[id] = target
-		p.Report.Targets[id] = rpt
+		report.Result = target.Result
 
+		p.Targets[id] = target
+		p.Report.Targets[id] = report
+
+		if strings.Compare(target.Result, result.ATTENTION) == 0 {
+			isResultChanged = true
+		}
 	}
 
-	if isResultIsFailed {
+	if len(errs) > 0 {
+		logrus.Infof("\n")
+		for _, e := range errs {
+			logrus.Errorln(e)
+		}
+		logrus.Infof("\n")
+
 		p.Report.Result = result.FAILURE
-	} else if isResultIsChanged {
+		return ErrRunTargets
+	}
+
+	if isResultChanged {
 		p.Report.Result = result.ATTENTION
-	} else {
-		p.Report.Result = result.SUCCESS
 	}
 
 	return nil

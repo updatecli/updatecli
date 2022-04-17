@@ -9,18 +9,26 @@ import (
 )
 
 var (
+	// ErrWrongSortByValue is returned if we use the wrong sortBy value
 	ErrWrongSortByValue error = errors.New("wrong value for key 'sortBy'")
 )
 
-// Spec contains updatecli configuration provided by users
+// Spec contains the updatecli configuration provided by users.
 type Spec struct {
-	AccessKey string  // AWs access key
-	SecretKey string  // AWS secret key
-	Filters   Filters // AMI ID filters
-	Region    string  // AWS region to use when searching AMI
-	Endpoint  string  // Endpoint to use when searching AMI
-	DryRun    bool
-	SortBy    string // Specify the order of AMI-ID that will be used to retrieve the last element
+	// accesskey specifies the aws access key which combined with `secretkey`, is one of the way to authenticate
+	AccessKey string
+	// secretkey specifies the aws secret key which combined with `accesskey`, is one of the way to authenticate
+	SecretKey string
+	// Filters specifies a list of AMI filters
+	Filters Filters
+	// Region specifies the AWS region to use when looking for AMI
+	Region string
+	// Endpoint specifies the AWS endpoin to use when looking for AMI
+	Endpoint string
+	// Dryrun allows to Check whether you have the required permissions for the action.
+	DryRun bool
+	// Sortby specifies the order of AMI-ID that will be used to retrieve the last element such as `creationdateasc`
+	SortBy string //
 }
 
 // String return Spec information as a string

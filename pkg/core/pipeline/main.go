@@ -198,11 +198,13 @@ func (p *Pipeline) Run() error {
 	logrus.Infof("# %s #\n", strings.ToTitle(p.Title))
 	logrus.Infof("%s\n", strings.Repeat("#", len(p.Title)+4))
 
-	err := p.RunSources()
+	if len(p.Sources) > 0 {
+		err := p.RunSources()
 
-	if err != nil {
-		p.Report.Result = result.FAILURE
-		return fmt.Errorf("sources stage:\t%q", err.Error())
+		if err != nil {
+			p.Report.Result = result.FAILURE
+			return fmt.Errorf("sources stage:\t%q", err.Error())
+		}
 	}
 
 	if len(p.Conditions) > 0 {

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/awsami"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerdigest"
@@ -21,23 +22,35 @@ import (
 )
 
 type ResourceConfig struct {
+	// depends_on specifies which resources must be executed before the current one
 	DependsOn []string `yaml:"depends_on"`
-	Name      string
-	Kind      string
-	// Deprecated in favor of Transformers on 2021/01/3
-	Prefix string
-	// Deprecated in favor of Transformers on 2021/01/3
-	Postfix      string
+	// name specifies the resource name
+	Name string
+	// kind specifies the resource kind which defines accepted spec value
+	Kind string
+	// transformers defines how the default input value need to be transformed
 	Transformers transformer.Transformers
-	Spec         interface{}
+	// spec specifies parameters for a specific resource kind
+	Spec interface{}
 	// Deprecated field on version [1.17.0]
-	Scm   map[string]interface{}
-	SCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
+	Scm map[string]interface{}
+	// scmid specifies the scm configuration key associated to the current resource
+	SCMID string // SCMID references a uniq scm configuration
+	// !deprecated, please use scmid
+	// scmid specifies the scm configuration key associated to the current resource
+	DeprecatedSCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
 }
 
 // New returns a newly initialized Resource or an error
 func New(rs ResourceConfig) (resource Resource, err error) {
-	switch strings.ToLower(rs.Kind) {
+
+	kind := strings.ToLower(rs.Kind)
+
+	if _, ok := GetResourceMapping()[kind]; !ok {
+		return nil, fmt.Errorf("⚠ Don't support resource kind: %v", rs.Kind)
+	}
+
+	switch kind {
 	case "aws/ami":
 		return awsami.New(rs.Spec)
 	case "dockerdigest":
@@ -63,7 +76,7 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "yaml":
 		return yaml.New(rs.Spec)
 	default:
-		return nil, fmt.Errorf("⚠ Don't support resource kind: %v", rs.Kind)
+		return nil, fmt.Errorf("%s Don't support resource kind: %v", result.FAILURE, rs.Kind)
 	}
 }
 
@@ -75,4 +88,23 @@ type Resource interface {
 	Target(source string, dryRun bool) (bool, error)
 	TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error)
 	Changelog() string
+}
+
+// Need to do reflect of ResourceConfig
+func GetResourceMapping() map[string]interface{} {
+
+	return map[string]interface{}{
+		"aws/ami":       &awsami.Spec{},
+		"jenkins":       &jenkins.Spec{},
+		"shell":         &shell.Spec{},
+		"gittag":        &gittag.Spec{},
+		"githubrelease": &githubrelease.Spec{},
+		"dockerdigest":  &dockerdigest.Spec{},
+		"dockerfile":    &dockerfile.Spec{},
+		"dockerimage":   &dockerimage.Spec{},
+		"file":          &file.Spec{},
+		"helmchart":     &helm.Spec{},
+		"maven":         &maven.Spec{},
+		"yaml":          &yaml.Spec{},
+	}
 }

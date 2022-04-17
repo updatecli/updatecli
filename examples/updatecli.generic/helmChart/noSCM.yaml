@@ -1,11 +1,12 @@
 # To work
-# cd /tmp 
+# cd /tmp
 # git clone https://github.com/jenkinsci/helm-charts.git
 
-source:
-  kind: jenkins
-  spec:
-    release: stable
+sources:
+  lastJenkinsStableVersion:
+    kind: jenkins
+    spec:
+      release: stable
 targets:
   chartjenkins:
     name: "jenkinsci/jenkins Helm Chart"

@@ -1,10 +1,11 @@
 title: Bump Jenkins Upstream Chart Version
-source:
-  kind: helmChart
-  name: Get official Jenkins Chart Version
-  spec:
-    url: https://charts.jenkins.io
-    name: jenkins
+sources:
+  lastHelmRelease:
+    kind: helmChart
+    name: Get official Jenkins Chart Version
+    spec:
+      url: https://charts.jenkins.io
+      name: jenkins
 targets:
   chartjenkins:
     name: Bump Jenkins Upstream Chart Version

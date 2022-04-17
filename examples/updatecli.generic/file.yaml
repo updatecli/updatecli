@@ -131,21 +131,21 @@ targets:
       file: LICENSE
       line: 3
       content: oldline was "{{ source `LineFromLocalFile` }}"
-  setLineWithMatchAndReplacePatterns:
+  setFileContentWithMatchAndReplacePatterns:
     kind: file
     sourceID: ContentFromURL
     spec:
       file: LICENSE
       matchPattern: 'Copyright \(c\) (\d*) (.*)'
       replacepattern: 'Copyright (c) 2021 $2'
-  setLineWithMatchAndContent:
+  setFileContentWithMatchAndContent:
     kind: file
     sourceID: ContentFromURL
     spec:
       file: LICENSE
       matchPattern: 'Copyright \(c\) (\d*) (.*)'
       content: 'Copyright (c) 2021 FooBar'
-  setLineWithMatchAndSource:
+  setFileContentWithMatchAndSource:
     kind: file
     sourceID: ContentFromURL
     spec:

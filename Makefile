@@ -6,7 +6,7 @@ DOCKER_BUILDKIT=1
 export DOCKER_BUILDKIT
 
 # Used by the test-e2e system
-VENOM_VAR_binpath=$(CURDIR)/dist/updatecli_$(shell go env GOOS)_$(shell go env GOARCH)
+VENOM_VAR_binpath ?= $(CURDIR)/dist/updatecli_$(shell go env GOOS)_$(shell go env GOARCH)_v1
 export VENOM_VAR_binpath
 
 local_bin=./dist/updatecli_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)/updatecli
@@ -57,6 +57,7 @@ test-short: ## Execute the Golang's tests for updatecli
 test-e2e: ## Execute updatecli end to end tests
 	echo $$VENOM_VAR_binpath
 	time venom run e2e/venom.d/* --output-dir ./e2e --format yaml
+
 
 .PHONY: lint
 lint: ## Execute the Golang's linters on updatecli's source code

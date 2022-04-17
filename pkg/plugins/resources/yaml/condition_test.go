@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,11 +36,17 @@ github:
 `,
 			wantResult: true,
 			wantMockState: text.MockTextRetriever{
-				Location: "test.yaml",
+				Contents: map[string]string{
+					"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				},
 			},
 		},
 		{
-			name: "Passing Case with keyonly and input source",
+			name: "Passing case with keyonly and input source",
 			spec: Spec{
 				File:    "test.yaml",
 				Key:     "github.owner",
@@ -53,11 +60,17 @@ github:
 `,
 			wantResult: true,
 			wantMockState: text.MockTextRetriever{
-				Location: "test.yaml",
+				Contents: map[string]string{
+					"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				},
 			},
 		},
 		{
-			name: "Failing case with keyonly and input source",
+			name: "'No result' case with keyonly and input source",
 			spec: Spec{
 				File:    "test.yaml",
 				Key:     "github.country",
@@ -69,10 +82,16 @@ github:
   owner: olblak
   repository: charts
 `,
-			wantResult: false,
 			wantMockState: text.MockTextRetriever{
-				Location: "test.yaml",
+				Contents: map[string]string{
+					"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				},
 			},
+			wantResult: false,
 		},
 		{
 			name: "Validation error with both keyonly and specified value",
@@ -88,11 +107,7 @@ github:
   owner: olblak
   repository: charts
 `,
-			wantResult: false,
-			wantErr:    true,
-			wantMockState: text.MockTextRetriever{
-				Location: "test.yaml",
-			},
+			wantErr: true,
 		},
 		{
 			name: "File does not exist",
@@ -100,11 +115,10 @@ github:
 				File: "not_existing.txt",
 			},
 			mockReturnedError: fmt.Errorf("no such file or directory"),
-			wantResult:        false,
 			wantErr:           true,
 		},
 		{
-			name: "Failing Case (key found but not the correct value)",
+			name: "'No result' case (key found but not the correct value)",
 			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
@@ -115,13 +129,19 @@ github:
   owner: olblak
   repository: charts
 `,
-			wantResult: false,
 			wantMockState: text.MockTextRetriever{
-				Location: "test.yaml",
+				Contents: map[string]string{
+					"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				},
 			},
+			wantResult: false,
 		},
 		{
-			name: "Failing Case (key not found)",
+			name: "Failing case (key not found)",
 			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.admin",
@@ -132,11 +152,7 @@ github:
   owner: olblak
   repository: charts
 `,
-			wantResult: false,
-			wantErr:    true,
-			wantMockState: text.MockTextRetriever{
-				Location: "test.yaml",
-			},
+			wantErr: true,
 		},
 		{
 			name: "Validation Failure with both source and specified value",
@@ -163,7 +179,7 @@ github
 			wantErr: true,
 		},
 		{
-			name: "Passing Case with no input source and only specified value",
+			name: "Passing case with no input source and only specified value",
 			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
@@ -176,16 +192,23 @@ github:
 `,
 			wantResult: true,
 			wantMockState: text.MockTextRetriever{
-				Location: "test.yaml",
+				Contents: map[string]string{
+					"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
-				Exists:  true,
+				Contents: map[string]string{
+					tt.spec.File: tt.mockReturnedContent,
+				},
+				Err: tt.mockReturnedError,
 			}
 			y := &Yaml{
 				spec:             tt.spec,
@@ -199,8 +222,7 @@ github:
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantResult, gotResult)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
+			assert.Equal(t, tt.wantMockState.Contents[tt.spec.File], mockText.Contents[tt.spec.File])
 		})
 	}
 }
@@ -218,7 +240,7 @@ func Test_ConditionFromSCM(t *testing.T) {
 		scm                 scm.ScmHandler
 	}{
 		{
-			name: "Passing Case with no input source and only specified value",
+			name: "Passing case with no input source and only specified value",
 			spec: Spec{
 				File:  "test.yaml",
 				Key:   "github.owner",
@@ -234,16 +256,24 @@ github:
 			},
 			wantResult: true,
 			wantMockState: text.MockTextRetriever{
-				Location: "/tmp/test.yaml",
+				Contents: map[string]string{
+					"/tmp/test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			filePath := filepath.Join(tt.scm.GetDirectory(), tt.spec.File)
 			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
-				Exists:  true,
+				Contents: map[string]string{
+					filePath: tt.mockReturnedContent,
+				},
+				Err: tt.mockReturnedError,
 			}
 			y := &Yaml{
 				spec:             tt.spec,
@@ -257,8 +287,7 @@ github:
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantResult, gotResult)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
+			assert.Equal(t, tt.wantMockState.Contents[filePath], mockText.Contents[filePath])
 		})
 	}
 }

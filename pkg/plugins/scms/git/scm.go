@@ -19,7 +19,7 @@ func (g *Git) Add(files []string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Git) Checkout() error {
-	err := git.Checkout(g.Branch, g.remoteBranch, g.GetDirectory())
+	err := git.Checkout(g.Username, g.Password, g.Branch, g.remoteBranch, g.GetDirectory())
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (g *Git) Clean() error {
 // Clone run `git clone`.
 func (g *Git) Clone() (string, error) {
 
-	err := g.Init("", "")
+	err := g.Init("")
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
@@ -85,20 +85,19 @@ func (g *Git) Commit(message string) error {
 		g.User,
 		g.Email,
 		commitMessage,
-		g.GetDirectory())
-
+		g.GetDirectory(),
+		g.GPG.SigningKey,
+		g.GPG.Passphrase,
+	)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // Init set Git parameters if needed.
-func (g *Git) Init(source string, pipelineID string) (err error) {
-	if len(g.Version) == 0 && len(source) > 0 {
-		g.Version = source
-	}
-
+func (g *Git) Init(pipelineID string) (err error) {
 	if len(g.Directory) == 0 {
 		g.Directory, err = newDirectory(g.URL)
 		if err != nil {

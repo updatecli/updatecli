@@ -1,16 +1,18 @@
-source:
-  kind: githubRelease
-  name: "Get jenkins-wiki-exporter latest version"
-  spec:
-    owner: "jenkins-infra"
-    repository: "jenkins-wiki-exporter"
-    token: {{ requiredEnv "GITHUB_TOKEN" }}
-    username: "olblak"
-    version: "latest"
+sources:
+  lastRelease:
+    kind: githubrelease
+    name: "Get jenkins-wiki-exporter latest version"
+    spec:
+      owner: "jenkins-infra"
+      repository: "jenkins-wiki-exporter"
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: "olblak"
+      versionfilter:
+        kind: latest
 conditions:
   docker:
     name: "Is Docker Image Published on Registry?"
-    kind: dockerImage
+    kind: dockerimage
     spec:
       image: "halkeye/jenkins-wiki-exporter"
 targets:

@@ -1,45 +1,46 @@
-source:
-  kind: githubRelease
-  spec:
-    owner: olblak
-    repository: updatecli
-    token: {{ requiredEnv "GITHUB_TOKEN" }}
-    username: olblak
-    version: latest
+sources:
+  lastGitHubRelease:
+    kind: githubrelease
+    spec:
+      owner: olblak
+      repository: updatecli
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: olblak
+      versionfilter:
+        kind: latest
+
 conditions:
   dockerFile:
     name: isDockerfileCorrect
     kind: dockerfile
     spec:
       file: Dockerfile
-      Instruction:
+      instruction:
         keyword: "FROM"
         matcher: "golang:1.14"
-    scm:
-      github:
-        user: "updatecli"
-        email: "updatecli@olblak.com"
-        owner: "olblak"
-        repository: "updatecli"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: main
+    scmid: default
+
 targets:
   dockerFile:
     name: "isDockerfileCorrect"
     kind: dockerfile
-    prefix: "olblak/updatecli:"
     spec:
       file: Dockerfile
-      Instruction:
+      instruction:
         keyword: "FROM"
         matcher: "golang:1.14"
-    scm:
-      github:
-        user: "updatecli"
-        owner: "olblak"
-        repository: "updatecli"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
-        username: "olblak"
-        branch: main
-        email: "update-bot@olblak.com"
+    transformers:
+      - addPrefix: "olblak/updatecli:"
+    scmid: default
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "updatecli"
+      owner: "olblak"
+      repository: "updatecli"
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: "olblak"
+      branch: main
+      email: "update-bot@olblak.com"

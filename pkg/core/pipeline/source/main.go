@@ -2,10 +2,11 @@ package source
 
 import (
 	"os"
-	"strings"
 
+	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -13,17 +14,20 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	Changelog string // Changelog holds the changelog description
-	Result    string // Result stores the source result after a source run. This variable can't be set by an updatecli configuration
-	Output    string // Output contains the value retrieved from a source
-	Config    Config // Config defines a source specifications
-	Scm       *scm.ScmHandler
+	// Changelog holds the changelog description
+	Changelog string
+	// Result stores the source result after a source run.
+	Result string
+	// Output contains the value retrieved from a source
+	Output string
+	// Config defines a source specifications
+	Config Config
+	Scm    *scm.ScmHandler
 }
 
 // Config struct defines a source configuration
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	Replaces                Replacers // Deprecated in favor of Transformers on 2021/01/3
 }
 
 // Run execute actions defined by the source configuration
@@ -45,7 +49,7 @@ func (s *Source) Run() (err error) {
 			return err
 		}
 
-		err = SCM.Init("", workingDir)
+		err = SCM.Init(workingDir)
 
 		if err != nil {
 			s.Result = result.FAILURE
@@ -94,27 +98,36 @@ func (s *Source) Run() (err error) {
 		}
 	}
 
-	// Announce deprecation on 2021/01/31
-	if len(s.Config.Prefix) > 0 {
-		logrus.Warnf("Key 'prefix' deprecated in favor of 'transformers', it will be delete in a future release\n")
-	}
-
-	// Announce deprecation on 2021/01/31
-	if len(s.Config.Postfix) > 0 {
-		logrus.Warnf("Key 'postfix' deprecated in favor of 'transformers', it will be delete in a future release\n")
-	}
-
-	// Deprecated in favor of Transformers on 2021/01/3
-	if len(s.Config.Replaces) > 0 {
-		args := s.Config.Replaces.Unmarshal()
-
-		r := strings.NewReplacer(args...)
-		s.Output = (r.Replace(s.Output))
-	}
-
 	if len(s.Output) == 0 {
 		s.Result = result.ATTENTION
 	}
 
 	return err
+}
+
+// JSONSchema implements the json schema interface to generate the "source" jsonschema.
+func (Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+
+	anyOfSpec := resource.GetResourceMapping()
+
+	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
+}
+
+func (c *Config) Validate() error {
+	// Handle scmID deprecation
+	if len(c.DeprecatedSCMID) > 0 {
+		switch len(c.SCMID) {
+		case 0:
+			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			c.SCMID = c.DeprecatedSCMID
+			c.DeprecatedSCMID = ""
+		default:
+			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+				"scmID", "scmid", "scmID")
+		}
+	}
+
+	return nil
 }

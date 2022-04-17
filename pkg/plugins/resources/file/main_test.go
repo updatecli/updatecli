@@ -11,87 +11,133 @@ import (
 
 func Test_Validate(t *testing.T) {
 	tests := []struct {
-		name          string
-		spec          Spec
-		mockFileExist bool
-		wantErr       bool
+		name    string
+		spec    Spec
+		files   map[string]string
+		wantErr bool
 	}{
 		{
-			name: "Normal case",
+			name: "Passing case",
+			spec: Spec{
+				File: "/tmp/foo.txt",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Passing case with 'Line'",
 			spec: Spec{
 				File: "/tmp/foo.txt",
 				Line: 12,
 			},
-			mockFileExist: true,
-			wantErr:       false,
+			wantErr: false,
 		},
 		{
-			name: "raises an error when 'File' is empty",
+			name: "Passing case with 'Files' containing more than one element",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+					"/tmp/bar.txt",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Passing case with 'Files' containing one element and a 'Line' is specified",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+				},
+				Line: 12,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Validation failure with 'Files' containing duplicated values",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+					"/tmp/foo.txt",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with both 'File' and 'Files' empty",
 			spec: Spec{
 				File: "",
 			},
-			mockFileExist: true,
-			wantErr:       true,
+			wantErr: true,
 		},
 		{
-			name: "raises an error when 'Line' is negative",
+			name: "Validation failure with both 'File' and 'Files' not empty",
+			spec: Spec{
+				File: "/tmp/foo.txt",
+				Files: []string{
+					"/tmp/bar.txt",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with 'Files' containing more than one element and 'Line' specified",
+			spec: Spec{
+				Files: []string{
+					"/tmp/foo.txt",
+					"/tmp/bar.txt",
+				},
+				Line: 12,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with 'Line' negative",
 			spec: Spec{
 				File: "/tmp/foo.txt",
 				Line: -1,
 			},
-			mockFileExist: true,
-			wantErr:       true,
+			wantErr: true,
 		},
 		{
-			name: "raises an error when both 'Line' and `ForceCreate=true` are specified",
+			name: "Validation failure with both 'Line' and 'ForceCreate=true' specified",
 			spec: Spec{
 				File:        "/tmp/foo.txt",
 				ForceCreate: true,
 				Line:        12,
 			},
-			mockFileExist: true,
-			wantErr:       true,
+			wantErr: true,
 		},
 		{
-			name: "raises an error when both 'Line' and `MatchPattern` are specified",
+			name: "Validation failure with both 'Line' and 'MatchPattern' specified",
 			spec: Spec{
 				File:         "/tmp/foo.txt",
 				MatchPattern: "pattern=.*",
 				Line:         12,
 			},
-			mockFileExist: true,
-			wantErr:       true,
+			wantErr: true,
 		},
 		{
-			name: "raises an error when both 'Line' and `ReplacePattern` are specified",
+			name: "Validation failure with both 'Line' and 'ReplacePattern' specified",
 			spec: Spec{
 				File:           "/tmp/foo.txt",
 				ReplacePattern: "pattern=.*",
 				Line:           13,
 			},
-			mockFileExist: true,
-			wantErr:       true,
+			wantErr: true,
 		},
 		{
-			name: "raises an error when both 'Content' and `ReplacePattern` are specified",
+			name: "Validation failure with both 'Content' and 'ReplacePattern' specified",
 			spec: Spec{
 				File:           "/tmp/foo.txt",
 				ReplacePattern: "pattern=.*",
 				Content:        "Hello World",
 			},
-			mockFileExist: true,
-			wantErr:       true,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			file := File{
-				spec: tt.spec,
-				contentRetriever: &text.MockTextRetriever{
-					Exists: tt.mockFileExist,
-				},
-			}
-			gotErr := file.Validate()
+			spec := tt.spec
+			gotErr := spec.Validate()
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return
@@ -103,77 +149,112 @@ func Test_Validate(t *testing.T) {
 
 func TestFile_Read(t *testing.T) {
 	tests := []struct {
-		name                string
-		wantErr             bool
-		mockReturnedContent string
-		mockReturnedError   error
-		spec                Spec
-		wantContent         string
-		wantMockState       text.MockTextRetriever
+		name           string
+		spec           Spec
+		files          map[string]string
+		mockedContents map[string]string
+		mockedError    error
+		wantedContents map[string]string
+		wantedResult   bool
+		wantedErr      bool
 	}{
 		{
-			name:                "Normal case with a line",
-			mockReturnedContent: "Hello World",
+			name: "Passing case",
+			spec: Spec{
+				File: "/bar.txt",
+			},
+			files: map[string]string{
+				"/bar.txt": "",
+			},
+			mockedContents: map[string]string{
+				"/bar.txt": "Hello World",
+			},
+			wantedContents: map[string]string{
+				"/bar.txt": "Hello World",
+			},
+			wantedResult: true,
+		},
+		{
+			name: "Passing case with 'Line'",
 			spec: Spec{
 				Line: 3,
 				File: "/foo.txt",
 			},
-			wantContent: "Hello World",
-			wantMockState: text.MockTextRetriever{
-				Line:     3,
-				Location: "/foo.txt",
+			files: map[string]string{
+				"/foo.txt": "",
 			},
+			mockedContents: map[string]string{
+				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedContents: map[string]string{
+				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedResult: true,
 		},
 		{
-			name:                "Normal case without a line",
-			mockReturnedContent: "Hello World",
+			name: "Failing case with non existing 'Line'",
 			spec: Spec{
-				File: "/bar.txt",
+				Line: 5,
+				File: "/foo.txt",
 			},
-			wantContent: "Hello World",
-			wantMockState: text.MockTextRetriever{
-				Location: "/bar.txt",
+			files: map[string]string{
+				"/foo.txt": "",
 			},
+			mockedContents: map[string]string{
+				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedContents: map[string]string{
+				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
+			},
+			wantedErr: true,
 		},
 		{
-			name:              "File does not exist with a line",
-			mockReturnedError: fmt.Errorf("no such file or directory"),
+			name: "Failing case with non existing 'File'",
+			spec: Spec{
+				File: "/not_existing.txt",
+			},
+			files: map[string]string{
+				"/not_existing.txt": "",
+			},
+			mockedError: fmt.Errorf("no such file or directory"),
+			wantedErr:   true,
+		},
+		{
+			name: "Failing case with non existing 'File' and a specified 'Line'",
 			spec: Spec{
 				File: "/not_existing.txt",
 				Line: 15,
 			},
-			wantErr: true,
-		},
-		{
-			name:              "File does not exist without line",
-			mockReturnedError: fmt.Errorf("no such file or directory"),
-			spec: Spec{
-				File: "/not_existing.txt",
+			files: map[string]string{
+				"/not_existing.txt": "",
 			},
-			wantErr: true,
+			mockedError: fmt.Errorf("no such file or directory"),
+			wantedErr:   true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockText := text.MockTextRetriever{
-				Content: tt.mockReturnedContent,
-				Err:     tt.mockReturnedError,
+				Contents: tt.mockedContents,
+				Err:      tt.mockedError,
 			}
 			f := &File{
 				spec:             tt.spec,
 				contentRetriever: &mockText,
+				files:            tt.files,
 			}
+
 			gotErr := f.Read()
 
-			if tt.wantErr {
+			if tt.wantedErr {
 				require.Error(t, gotErr)
 				return
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantContent, f.CurrentContent)
-			assert.Equal(t, tt.wantMockState.Line, mockText.Line)
-			assert.Equal(t, tt.wantMockState.Location, mockText.Location)
+			for filePath := range tt.files {
+				assert.Equal(t, tt.wantedContents[filePath], mockText.Contents[filePath])
+			}
 		})
 	}
 }
