@@ -211,8 +211,7 @@ func (e *Engine) Run() (err error) {
 
 		if err != nil {
 			logrus.Printf("Pipeline %q failed\n", pipeline.Title)
-			logrus.Printf("Skipping due to:\n\t%q\n", err)
-			logrus.Println(err)
+			logrus.Printf("Skipping due to:\n\t%s\n", err)
 			continue
 		}
 	}
