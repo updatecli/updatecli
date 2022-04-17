@@ -1,6 +1,6 @@
 module github.com/updatecli/updatecli
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.7 // indirect
@@ -32,7 +32,7 @@ require (
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
-	github.com/invopop/jsonschema v0.3.0
+	github.com/invopop/jsonschema v0.4.0
 )
 
 require (

@@ -75,7 +75,7 @@ func New(s Spec) (*Github, error) {
 
 	return &Github{
 		Spec:   s,
-		client: githubv4.NewEnterpriseClient(os.Getenv(s.Token), httpClient),
+		client: githubv4.NewEnterpriseClient(os.Getenv(s.URL), httpClient),
 	}, nil
 }
 
