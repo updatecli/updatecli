@@ -34,7 +34,7 @@ Updatecli was built to work independently of the underlying dependencies to upda
 
 == Demo
 
-link:https://asciinema.org/a/B5qIkTojFb5Yoy3vlqUFvu5BO[image:https://asciinema.org/a/B5qIkTojFb5Yoy3vlqUFvu5BO.svg[Asciinema]]
+link:https://asciinema.org/a/CR5DIxyTLnvtt8NllEeYAx83U[image:https://asciinema.org/a/CR5DIxyTLnvtt8NllEeYAx83U.svg[Asciinema]]
 
 **The Quick-start is available on link:https://www.updatecli.io/docs/prologue/quick-start/[www.updatecli.io/docs/prologue/quick-start]**
 
@@ -45,6 +45,90 @@ Updatecli is a Go binary available for Linux, MacOS and Windows from the link:ht
 == Documentation
 
 The documentation of Updatecli is available at link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io], but you can also look at the `examples` section to get an overview.
+
+=== Example
+
+This example is copy of the quickstart. You can also find it on link:https://www.updatecli.io/docs/prologue/quick-start/[www.updatecli.io/docs/prologue/quick-start]
+
+We define an update strategy in "updatecli.yaml" then we run `updatecli apply --config updatecli.yaml`.
+Our objective is to know if the Jenkins project published a new stable version, if they build an appropriated docker image specifically for jdk11 and automatically update our infrastructure accordingly.
+
+[cols="2a,2a"]
+|===
+|```
+## updatecli.yaml
+title: Update Jenkins Version
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: olblak
+      email: me@olblak.com
+      owner: olblak
+      repository: charts
+      token: mySecretTokenWhichShouldNeverUsedThisWay
+      username: olblak
+      branch: main
+
+sources:
+  jenkins:
+    name: Get latest Jenkins version
+    kind: jenkins
+    spec:
+      release: weekly
+
+conditions:
+  docker:
+    name: "Test if Docker Image Published on Registry"
+    kind: dockerimage
+    spec:
+      image: jenkins/jenkins
+      architecture: amd64
+
+targets:
+  bumpJenkins:
+    name: jenkins/jenkins docker tag
+    scmID: default
+    kind: yaml
+    spec:
+      file: charts/jenkins/values.yaml
+      key: jenkins.controller.imageTag
+
+pullrequests:
+  default:
+    title: Open pullrequest with new Jenkins version
+    kind: github
+    scmID: default
+    target:
+      - bumpJenkins
+    spec:
+      automerge: true
+      mergemethod: squash
+      labels:
+        - dependencies
+```
+
+|What it says:
+
+. Sources: +
+What's the latest jenkins weekly version? +
+=> 2.335 +
+
+. Conditions: +
+Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.335" +
+=> Yes then proceed otherwise abort +
+
+. Targets: +
+Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.335"? +
+=> If yes then open a Github pull request to the branch "main"
+
+|===
+
+More information link:https://www.updatecli.io/docs/prologue/introduction/[here]
+
+
+---
 
 == Contributing
 
