@@ -68,7 +68,7 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 	}
 
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
 
 	// Retrieve a bearer token to authenticate further requests
 	token, err := dgr.login(image)
@@ -114,12 +114,9 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 	}
 
 	switch res.Header.Get("content-type") {
-	// Case of images not having a multi-architecture manifest, or wrapping a v1 API answer (backward compatible registries).
-	// For instance: quay.io
-	case "application/vnd.docker.distribution.manifest.v2+json":
-		// Note that there are no check against the image's architecture
-		return strings.TrimPrefix(res.Header.Get("Docker-Content-Digest"), "sha256:"), nil
-
+	// Newer registries that are OCI compliant
+	case "application/vnd.oci.image.index.v1+json":
+		fallthrough
 	// Standard Registry v2 API (nominal case) such as DockerHub or GHCR
 	case "application/vnd.docker.distribution.manifest.list.v2+json":
 		type response struct {
