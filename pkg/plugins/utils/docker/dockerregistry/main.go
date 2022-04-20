@@ -67,8 +67,13 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 		return "", err
 	}
 
+	// Provide the registry with a list of content types that we support:
+	//  * Docker Registry V2 manifest list
+	//  * List of OCI manifests (multiple architectures provided by the registry)
+	//  * Standalone OCI manifest (only one architecture provided by the registry)
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
 	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
+	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
 
 	// Retrieve a bearer token to authenticate further requests
 	token, err := dgr.login(image)
@@ -114,7 +119,15 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 	}
 
 	switch res.Header.Get("content-type") {
-	// Newer registries that are OCI compliant
+	// Standalone OCI manifest (only one architecture provided by the registry)
+	case "application/vnd.oci.image.manifest.v1+json":
+		// Note that there are no check against the image's architecture
+		// since the image architecture is stored in the configuration layer
+		// and it would require another HTTP request to fetch it.
+		return strings.TrimPrefix(res.Header.Get("Docker-Content-Digest"), "sha256:"), nil
+	// Newer registries that are OCI compliant can return a list of OCI
+	// manifests (a container image is supplied for multiple architectures).
+	// This format is backward compatible with the Docker Registry V2.
 	case "application/vnd.oci.image.index.v1+json":
 		fallthrough
 	// Standard Registry v2 API (nominal case) such as DockerHub or GHCR
