@@ -72,6 +72,7 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 	//  * List of OCI manifests (multiple architectures provided by the registry)
 	//  * Standalone OCI manifest (only one architecture provided by the registry)
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
+	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
 	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
 
@@ -120,7 +121,10 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 
 	switch res.Header.Get("content-type") {
 	// Standalone OCI manifest (only one architecture provided by the registry)
-	case "application/vnd.oci.image.manifest.v1+json":
+	// OCI compatibility matrix
+	// https://github.com/opencontainers/image-spec/blob/v1.0.1/media-types.md#applicationvndociimageindexv1json
+	case "application/vnd.oci.image.manifest.v1+json",
+		"application/vnd.docker.distribution.manifest.v2+json":
 		// Note that there are no check against the image's architecture
 		// since the image architecture is stored in the configuration layer
 		// and it would require another HTTP request to fetch it.
@@ -128,9 +132,11 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 	// Newer registries that are OCI compliant can return a list of OCI
 	// manifests (a container image is supplied for multiple architectures).
 	// This format is backward compatible with the Docker Registry V2.
-	case "application/vnd.oci.image.index.v1+json":
+
+	case "application/vnd.oci.image.index.v1+json",
 		fallthrough
 	// Standard Registry v2 API (nominal case) such as DockerHub or GHCR
+
 	case "application/vnd.docker.distribution.manifest.list.v2+json":
 		type response struct {
 			Manifests []struct {
@@ -155,6 +161,7 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 				return digest, nil
 			}
 		}
+
 	default:
 		logrus.Debugf("Returned response body:\n%v", string(body)) // Shows answer in debug mode to help diagnostics
 	}
