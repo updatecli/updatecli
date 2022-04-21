@@ -133,7 +133,7 @@ func (dgr DockerGenericRegistry) Digest(image dockerimage.Image) (string, error)
 	// manifests (a container image is supplied for multiple architectures).
 	// This format is backward compatible with the Docker Registry V2.
 
-	case "application/vnd.oci.image.index.v1+json",
+	case "application/vnd.oci.image.index.v1+json":
 		fallthrough
 	// Standard Registry v2 API (nominal case) such as DockerHub or GHCR
 
