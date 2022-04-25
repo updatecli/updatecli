@@ -34,9 +34,9 @@ type Transformer struct {
 	Replacers Replacers
 	// Replacer specifies what value needs to be changed and how
 	Replacer Replacer
-	// Find searchs for a specific value if it exists and return false if it doesn't
+	// Find searches for a specific value if it exists and return false if it doesn't
 	Find string
-	// Find searchs for a specific value if it exists then return the value using regular expression
+	// Find searches for a specific value if it exists then return the value using regular expression
 	FindSubMatch           FindSubMatch
 	DeprecatedFindSubMatch interface{} `yaml:"findSubMatch" jsonschema:"-"`
 	// SemvVerInc specifies a  comma separated list semantic versioning component that needs to be upgraded.
