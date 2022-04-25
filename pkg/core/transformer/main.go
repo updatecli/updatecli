@@ -20,16 +20,16 @@ var (
 type Transformer struct {
 	// AddPrefix adds a prefix to the transformer input value
 	AddPrefix           string
-	DeprecatedAddPrefix string `yaml:"addPrefix"`
+	DeprecatedAddPrefix string `yaml:"addPrefix" jsonschema:"-"`
 	// AddSuffix adds a suffix to the transformer input value
 	AddSuffix           string
-	DeprecatedAddSuffix string `yaml:"addSuffix"`
+	DeprecatedAddSuffix string `yaml:"addSuffix" jsonschema:"-"`
 	// TrimPrefix removes a prefix to the transformer input value
 	TrimPrefix           string
-	DeprecatedTrimPrefix string `yaml:"trimPrefix"`
+	DeprecatedTrimPrefix string `yaml:"trimPrefix" jsonschema:"-"`
 	// TrimSuffix removes the suffix from the transformer input value
 	TrimSuffix           string
-	DeprecatedTrimSuffix string `yaml:"trimSuffix"`
+	DeprecatedTrimSuffix string `yaml:"trimSuffix" jsonschema:"-"`
 	// Replacers specifies a list of replacer instruction
 	Replacers Replacers
 	// Replacer specifies what value needs to be changed and how
@@ -38,10 +38,10 @@ type Transformer struct {
 	Find string
 	// Find searchs for a specific value if it exists then return the value using regular expression
 	FindSubMatch           FindSubMatch
-	DeprecatedFindSubMatch interface{} `yaml:"findSubMatch"`
+	DeprecatedFindSubMatch interface{} `yaml:"findSubMatch" jsonschema:"-"`
 	// SemvVerInc specifies a  comma separated list semantic versioning component that needs to be upgraded.
 	SemVerInc           string
-	DeprecatedSemVerInc string `yaml:"semverInc"`
+	DeprecatedSemVerInc string `yaml:"semverInc" jsonschema:"-"`
 }
 
 //Transformers defines a list of transformer applied in order
