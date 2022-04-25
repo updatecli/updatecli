@@ -341,6 +341,33 @@ var (
 			rules: Transformers{
 				Transformer{
 					FindSubMatch: FindSubMatch{
+						Pattern:                `\d*.(\d*).(\d*)`,
+						DeprecatedCaptureIndex: 2,
+					},
+				},
+			},
+			expectedOutput: "0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					FindSubMatch: FindSubMatch{
+						Pattern:                `\d*.(\d*).(\d*)`,
+						CaptureIndex:           2,
+						DeprecatedCaptureIndex: 1,
+					},
+				},
+			},
+			expectedOutput: "0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					FindSubMatch: FindSubMatch{
 						Pattern:      `\d*.(\d*).(\d*)`,
 						CaptureIndex: 3,
 					},

@@ -50,14 +50,18 @@ func (f *FindSubMatch) Apply(input string) (string, error) {
 }
 
 func (f *FindSubMatch) Validate() error {
-	if f.DeprecatedCaptureIndex != 0 && f.CaptureIndex != 0 {
+	if f.DeprecatedCaptureIndex != 0 {
 		logrus.Warningln("captureIndex is deprecated in favor of captureindex")
-		logrus.Warningf("Both findsubmatch.captureIndex and findsubmatch.captureindex are defined, ignoring first one")
+
+		switch f.CaptureIndex {
+		case 0:
+			f.CaptureIndex = f.DeprecatedCaptureIndex
+		default:
+			logrus.Warningf("Both captureIndex and captureindex are defined, ignoring the first one")
+		}
+
 		f.DeprecatedCaptureIndex = 0
 	}
 
-	if f.DeprecatedCaptureIndex != 0 {
-		f.CaptureIndex = f.DeprecatedCaptureIndex
-	}
 	return nil
 }
