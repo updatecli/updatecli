@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -83,15 +84,38 @@ func New(cfgFile string, valuesFiles, secretsFiles []string) (config Config, err
 
 	logrus.Infof("Loading Pipeline %q", cfgFile)
 
+	// Load updatecli manifest no matter the file extension
+	c, err := os.Open(cfgFile)
+
+	if err != nil {
+		return config, err
+	}
+
+	defer c.Close()
+
+	content, err := ioutil.ReadAll(c)
+	if err != nil {
+		return config, err
+	}
+
+	// Try to template manifest no matter the extension
+	// templated manifest must respect its extension before and after templating
+
+	t := Template{
+		CfgFile:      filepath.Join(dirname, basename),
+		ValuesFiles:  valuesFiles,
+		SecretsFiles: secretsFiles,
+	}
+
+	tmpl, err := t.New(content)
+	if err != nil {
+		return config, err
+	}
+
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml":
-		t := Template{
-			CfgFile:      filepath.Join(dirname, basename),
-			ValuesFiles:  valuesFiles,
-			SecretsFiles: secretsFiles,
-		}
 
-		err := t.Init(&config)
+		err = yaml.Unmarshal(tmpl, &config)
 		if err != nil {
 			return config, err
 		}

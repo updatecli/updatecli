@@ -25,7 +25,7 @@ type Template struct {
 }
 
 // Init parses a golang template then return an updatecli configuration as a struct
-func (t *Template) Init(config *Config) error {
+func (t *Template) New(content []byte) ([]byte, error) {
 	funcMap := template.FuncMap{
 		// Retrieve value from environment variable, return error if not found
 		"requiredEnv": func(s string) (string, error) {
@@ -43,29 +43,16 @@ func (t *Template) Init(config *Config) error {
 		},
 	}
 
-	c, err := os.Open(t.CfgFile)
+	err := t.readValuesFiles()
 
 	if err != nil {
-		return err
-	}
-
-	defer c.Close()
-
-	content, err := ioutil.ReadAll(c)
-	if err != nil {
-		return err
-	}
-
-	err = t.readValuesFiles()
-
-	if err != nil {
-		return err
+		return []byte{}, err
 	}
 
 	err = t.readSecretsFiles()
 
 	if err != nil {
-		return err
+		return []byte{}, err
 	}
 
 	// Merge yaml configuration and sops secrets into one configuration
@@ -75,21 +62,16 @@ func (t *Template) Init(config *Config) error {
 	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
 
 	if err != nil {
-		return err
+		return []byte{}, err
 	}
 
 	b := bytes.Buffer{}
 
 	if err := tmpl.Execute(&b, templateValues); err != nil {
-		return err
+		return []byte{}, err
 	}
 
-	err = yaml.Unmarshal(b.Bytes(), &config)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return b.Bytes(), nil
 }
 
 func (t *Template) readValuesFiles() error {
