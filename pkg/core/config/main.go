@@ -71,6 +71,8 @@ type Option struct {
 	ValuesFiles []string
 	// SecretsFiles contains the list of updatecli sops secrets full file path
 	SecretsFiles []string
+	// DisableTemplating specify if needs to be done
+	DisableTemplating bool
 }
 
 // Reset reset configuration
@@ -79,23 +81,23 @@ func (config *Config) Reset() {
 }
 
 // New reads an updatecli configuration file
-func New(options Option) (config Config, err error) {
+func New(option Option) (config Config, err error) {
 
 	config.Reset()
 
-	dirname, basename := filepath.Split(options.ManifestFile)
+	dirname, basename := filepath.Split(option.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
 	// templates values as in some situation those values changes for each run
-	pipelineID, err := Checksum(options.ManifestFile)
+	pipelineID, err := Checksum(option.ManifestFile)
 	if err != nil {
 		return config, err
 	}
 
-	logrus.Infof("Loading Pipeline %q", options.ManifestFile)
+	logrus.Infof("Loading Pipeline %q", option.ManifestFile)
 
 	// Load updatecli manifest no matter the file extension
-	c, err := os.Open(options.ManifestFile)
+	c, err := os.Open(option.ManifestFile)
 
 	if err != nil {
 		return config, err
@@ -108,24 +110,26 @@ func New(options Option) (config Config, err error) {
 		return config, err
 	}
 
-	// Try to template manifest no matter the extension
-	// templated manifest must respect its extension before and after templating
+	if !option.DisableTemplating {
+		// Try to template manifest no matter the extension
+		// templated manifest must respect its extension before and after templating
 
-	t := Template{
-		CfgFile:      filepath.Join(dirname, basename),
-		ValuesFiles:  options.ValuesFiles,
-		SecretsFiles: options.SecretsFiles,
+		t := Template{
+			CfgFile:      filepath.Join(dirname, basename),
+			ValuesFiles:  option.ValuesFiles,
+			SecretsFiles: option.SecretsFiles,
+		}
+
+		content, err = t.New(content)
+		if err != nil {
+			return config, err
+		}
+
 	}
-
-	tmpl, err := t.New(content)
-	if err != nil {
-		return config, err
-	}
-
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml":
 
-		err = yaml.Unmarshal(tmpl, &config)
+		err = yaml.Unmarshal(content, &config)
 		if err != nil {
 			return config, err
 		}
