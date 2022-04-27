@@ -146,18 +146,46 @@ func (e *Engine) Prepare() (err error) {
 	return err
 }
 
+// ManifestUpgrade load Updatecli Manifest to update them then written them back on disk
+func (e *Engine) ManifestUpgrade() (err error) {
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Prepare")+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle("Manifest Upgrade"))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Prepare")+4))
+
+	err = e.LoadConfigurations()
+
+	if len(e.Pipelines) == 0 {
+		logrus.Errorln(err)
+		return fmt.Errorf("no valid pipeline found")
+	}
+
+	// Don't exit if we identify at least one valid pipeline configuration
+	if err != nil {
+		logrus.Errorln(err)
+		logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
+	}
+
+	for _, pipeline := range e.Pipelines {
+		pipeline.Config.Display()
+		// pipeline.Config.SaveOnDisk("/tmp/test.yaml")
+	}
+
+	return err
+}
+
 // ReadConfigurations read every strategies configuration.
 func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
 
-	for _, manifestFile := range GetFiles(e.Options.File) {
+	for _, manifestFile := range GetFiles(e.Options.Config.ManifestFile) {
 
 		loadedConfiguration, err := config.New(
-			config.Options{
-				ManifestFile: manifestFile,
-				SecretsFiles: e.Options.SecretsFiles,
-				ValuesFiles:  e.Options.ValuesFiles,
+			config.Option{
+				ManifestFile:      manifestFile,
+				SecretsFiles:      e.Options.Config.SecretsFiles,
+				ValuesFiles:       e.Options.Config.ValuesFiles,
+				DisableTemplating: e.Options.Config.DisableTemplating,
 			})
 
 		switch err {
