@@ -151,9 +151,14 @@ func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
 
-	for _, cfgFile := range GetFiles(e.Options.File) {
+	for _, manifestFile := range GetFiles(e.Options.File) {
 
-		loadedConfiguration, err := config.New(cfgFile, e.Options.ValuesFiles, e.Options.SecretsFiles)
+		loadedConfiguration, err := config.New(
+			config.Options{
+				ManifestFile: manifestFile,
+				SecretsFiles: e.Options.SecretsFiles,
+				ValuesFiles:  e.Options.ValuesFiles,
+			})
 
 		switch err {
 		case config.ErrConfigFileTypeNotSupported:
@@ -163,7 +168,7 @@ func (e *Engine) LoadConfigurations() error {
 		case nil:
 			// nothing to do
 		default:
-			err = fmt.Errorf("%q - %s", cfgFile, err)
+			err = fmt.Errorf("%q - %s", manifestFile, err)
 			errs = append(errs, err)
 			continue
 		}
@@ -178,7 +183,7 @@ func (e *Engine) LoadConfigurations() error {
 			e.configurations = append(e.configurations, loadedConfiguration)
 		} else {
 			// don't initially fail as init. of the pipeline still fails even with a successful validation
-			err := fmt.Errorf("%q - %s", cfgFile, err)
+			err := fmt.Errorf("%q - %s", manifestFile, err)
 			errs = append(errs, err)
 		}
 	}

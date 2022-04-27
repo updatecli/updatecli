@@ -63,29 +63,39 @@ type Config struct {
 	Targets map[string]target.Config
 }
 
+// Option contains configuration options such as filepath located on disk,etc.
+type Option struct {
+	// ManifestFile contains the updatecli manifest full file path
+	ManifestFile string
+	// ValuesFiles contains the list of updatecli values full file path
+	ValuesFiles []string
+	// SecretsFiles contains the list of updatecli sops secrets full file path
+	SecretsFiles []string
+}
+
 // Reset reset configuration
 func (config *Config) Reset() {
 	*config = Config{}
 }
 
 // New reads an updatecli configuration file
-func New(cfgFile string, valuesFiles, secretsFiles []string) (config Config, err error) {
+func New(options Option) (config Config, err error) {
 
 	config.Reset()
 
-	dirname, basename := filepath.Split(cfgFile)
+	dirname, basename := filepath.Split(options.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
 	// templates values as in some situation those values changes for each run
-	pipelineID, err := Checksum(cfgFile)
+	pipelineID, err := Checksum(options.ManifestFile)
 	if err != nil {
 		return config, err
 	}
 
-	logrus.Infof("Loading Pipeline %q", cfgFile)
+	logrus.Infof("Loading Pipeline %q", options.ManifestFile)
 
 	// Load updatecli manifest no matter the file extension
-	c, err := os.Open(cfgFile)
+	c, err := os.Open(options.ManifestFile)
 
 	if err != nil {
 		return config, err
@@ -103,8 +113,8 @@ func New(cfgFile string, valuesFiles, secretsFiles []string) (config Config, err
 
 	t := Template{
 		CfgFile:      filepath.Join(dirname, basename),
-		ValuesFiles:  valuesFiles,
-		SecretsFiles: secretsFiles,
+		ValuesFiles:  options.ValuesFiles,
+		SecretsFiles: options.SecretsFiles,
 	}
 
 	tmpl, err := t.New(content)
