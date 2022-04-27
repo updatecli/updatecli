@@ -33,12 +33,12 @@ type ResourceConfig struct {
 	// spec specifies parameters for a specific resource kind
 	Spec interface{}
 	// Deprecated field on version [1.17.0]
-	Scm map[string]interface{}
+	Scm map[string]interface{} `yaml:",omitempty"`
 	// scmid specifies the scm configuration key associated to the current resource
 	SCMID string // SCMID references a uniq scm configuration
 	// !deprecated, please use scmid
 	// scmid specifies the scm configuration key associated to the current resource
-	DeprecatedSCMID string `yaml:"scmID"` // SCMID references a uniq scm configuration
+	DeprecatedSCMID string `yaml:"scmID,omitempty"` // SCMID references a uniq scm configuration
 }
 
 // New returns a newly initialized Resource or an error

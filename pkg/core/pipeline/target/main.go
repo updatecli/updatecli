@@ -35,7 +35,7 @@ type Config struct {
 	ReportBody string
 	// ! Deprecated - please use all lowercase `sourceid`
 	// sourceid specifies where retrieving the default value
-	DeprecatedSourceID string `yaml:"sourceID"`
+	DeprecatedSourceID string `yaml:"sourceID,omitempty"`
 	// sourceid specifies where retrieving the default value
 	SourceID string
 	// disablesourceinput

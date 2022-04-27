@@ -26,7 +26,7 @@ type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
 	// ! Deprecated in favor of sourceID
 	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
-	DeprecatedSourceID string `yaml:"sourceID"`
+	DeprecatedSourceID string `yaml:"sourceID,omitempty"`
 	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
 	SourceID string
 	// disablesourceinput disable the mechanism to retrieve a default value from a source.
