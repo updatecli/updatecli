@@ -174,7 +174,7 @@ func (c *Config) SaveOnDisk() error {
 		return err
 	}
 
-	file, err := os.Open(c.filename)
+	file, err := os.OpenFile(c.filename, os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
 	}
