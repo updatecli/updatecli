@@ -37,35 +37,35 @@ type Pipeline struct {
 // Init initialize an updatecli context based on its configuration
 func (p *Pipeline) Init(config *config.Config, options Options) error {
 
-	if len(config.Title) > 0 {
-		p.Title = config.Title
+	if len(config.Spec.Title) > 0 {
+		p.Title = config.Spec.Title
 	} else {
-		p.Title = config.Name
+		p.Title = config.Spec.Name
 	}
 
 	p.Options = options
 
-	p.Name = config.Name
-	p.ID = config.PipelineID
+	p.Name = config.Spec.Name
+	p.ID = config.Spec.PipelineID
 
 	p.Config = config
 
 	// Init context resource size
-	p.SCMs = make(map[string]scm.Scm, len(config.SCMs))
-	p.Sources = make(map[string]source.Source, len(config.Sources))
-	p.Conditions = make(map[string]condition.Condition, len(config.Conditions))
-	p.Targets = make(map[string]target.Target, len(config.Targets))
-	p.PullRequests = make(map[string]pullrequest.PullRequest, len(config.PullRequests))
+	p.SCMs = make(map[string]scm.Scm, len(config.Spec.SCMs))
+	p.Sources = make(map[string]source.Source, len(config.Spec.Sources))
+	p.Conditions = make(map[string]condition.Condition, len(config.Spec.Conditions))
+	p.Targets = make(map[string]target.Target, len(config.Spec.Targets))
+	p.PullRequests = make(map[string]pullrequest.PullRequest, len(config.Spec.PullRequests))
 
 	// Init context resource size
-	p.Report.Sources = make(map[string]reports.Stage, len(config.Sources))
-	p.Report.Conditions = make(map[string]reports.Stage, len(config.Conditions))
-	p.Report.Targets = make(map[string]reports.Stage, len(config.Targets))
-	p.Report.Name = config.Name
+	p.Report.Sources = make(map[string]reports.Stage, len(config.Spec.Sources))
+	p.Report.Conditions = make(map[string]reports.Stage, len(config.Spec.Conditions))
+	p.Report.Targets = make(map[string]reports.Stage, len(config.Spec.Targets))
+	p.Report.Name = config.Spec.Name
 	p.Report.Result = result.SKIPPED
 
 	// Init scm
-	for id, scmConfig := range config.SCMs {
+	for id, scmConfig := range config.Spec.SCMs {
 		// Init Sources[id]
 		var err error
 
@@ -80,7 +80,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	}
 
 	// Init pullrequests
-	for id, pullRequestConfig := range config.PullRequests {
+	for id, pullRequestConfig := range config.Spec.PullRequests {
 		var err error
 
 		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
@@ -106,14 +106,14 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	}
 
 	// Init sources report
-	for id := range config.Sources {
+	for id := range config.Spec.Sources {
 		// Set scm pointer
 		var scmPointer *scm.ScmHandler
-		if len(config.Sources[id].SCMID) > 0 {
-			sc, ok := p.SCMs[config.Sources[id].SCMID]
+		if len(config.Spec.Sources[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Spec.Sources[id].SCMID]
 			if !ok {
 				return fmt.Errorf("scm ID %q from source ID %q doesn't exist",
-					config.Sources[id].SCMID,
+					config.Spec.Sources[id].SCMID,
 					id)
 			}
 
@@ -122,68 +122,68 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		// Init Sources[id]
 		p.Sources[id] = source.Source{
-			Config: config.Sources[id],
+			Config: config.Spec.Sources[id],
 			Result: result.SKIPPED,
 			Scm:    scmPointer,
 		}
 
 		p.Report.Sources[id] = reports.Stage{
-			Name:   config.Sources[id].Name,
-			Kind:   config.Sources[id].Kind,
+			Name:   config.Spec.Sources[id].Name,
+			Kind:   config.Spec.Sources[id].Kind,
 			Result: result.SKIPPED,
 		}
 
 	}
 
 	// Init conditions report
-	for id := range config.Conditions {
+	for id := range config.Spec.Conditions {
 
 		// Set scm pointer
 		var scmPointer *scm.ScmHandler
-		if len(config.Conditions[id].SCMID) > 0 {
-			sc, ok := p.SCMs[config.Conditions[id].SCMID]
+		if len(config.Spec.Conditions[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Spec.Conditions[id].SCMID]
 			if !ok {
-				return fmt.Errorf("scm id %q doesn't exist", config.Conditions[id].SCMID)
+				return fmt.Errorf("scm id %q doesn't exist", config.Spec.Conditions[id].SCMID)
 			}
 
 			scmPointer = &sc.Handler
 		}
 
 		p.Conditions[id] = condition.Condition{
-			Config: config.Conditions[id],
+			Config: config.Spec.Conditions[id],
 			Result: result.SKIPPED,
 			Scm:    scmPointer,
 		}
 
 		p.Report.Conditions[id] = reports.Stage{
-			Name:   config.Conditions[id].Name,
-			Kind:   config.Conditions[id].Kind,
+			Name:   config.Spec.Conditions[id].Name,
+			Kind:   config.Spec.Conditions[id].Kind,
 			Result: result.SKIPPED,
 		}
 	}
 
 	// Init target report
-	for id := range config.Targets {
+	for id := range config.Spec.Targets {
 
 		var scmPointer *scm.ScmHandler
-		if len(config.Targets[id].SCMID) > 0 {
-			sc, ok := p.SCMs[config.Targets[id].SCMID]
+		if len(config.Spec.Targets[id].SCMID) > 0 {
+			sc, ok := p.SCMs[config.Spec.Targets[id].SCMID]
 			if !ok {
-				return fmt.Errorf("scm id %q doesn't exist", config.Targets[id].SCMID)
+				return fmt.Errorf("scm id %q doesn't exist", config.Spec.Targets[id].SCMID)
 			}
 
 			scmPointer = &sc.Handler
 		}
 
 		p.Targets[id] = target.Target{
-			Config: config.Targets[id],
+			Config: config.Spec.Targets[id],
 			Result: result.SKIPPED,
 			Scm:    scmPointer,
 		}
 
 		p.Report.Targets[id] = reports.Stage{
-			Name:   config.Targets[id].Name,
-			Kind:   config.Targets[id].Kind,
+			Name:   config.Spec.Targets[id].Name,
+			Kind:   config.Spec.Targets[id].Kind,
 			Result: result.SKIPPED,
 		}
 	}

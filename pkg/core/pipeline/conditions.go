@@ -30,7 +30,7 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		}
 
 		condition := p.Conditions[id]
-		condition.Config = p.Config.Conditions[id]
+		condition.Config = p.Config.Spec.Conditions[id]
 
 		rpt := p.Report.Conditions[id]
 		// Update report name as the condition configuration might has been updated (templated values)

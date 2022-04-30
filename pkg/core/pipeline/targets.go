@@ -42,7 +42,7 @@ func (p *Pipeline) RunTargets() error {
 		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
 		target := p.Targets[id]
-		target.Config = p.Config.Targets[id]
+		target.Config = p.Config.Spec.Targets[id]
 
 		report := p.Report.Targets[id]
 		// Update report name as the target configuration might has been updated (templated values)

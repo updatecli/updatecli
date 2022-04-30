@@ -42,12 +42,14 @@ var (
 		{
 			ID: "1",
 			Config: Config{
-				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -60,12 +62,14 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Name: "jenkins - 2.289.2",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - 2.289.2",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -76,12 +80,14 @@ var (
 		{
 			ID: "1.1",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -95,12 +101,14 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Name: "jenkins - 2.289.2",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - 2.289.2",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -112,12 +120,14 @@ var (
 		{
 			ID: "1.2",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -136,12 +146,14 @@ var (
 		{
 			ID: "2",
 			Config: Config{
-				Name: "jenkins - {{ pipeline \"sources.default.output\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ pipeline \"sources.default.output\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -154,12 +166,14 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Name: "jenkins - 2.289.2",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - 2.289.2",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -170,12 +184,14 @@ var (
 		{
 			ID: "2.1",
 			Config: Config{
-				Name: "jenkins - {{ source \"Default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"Default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -189,12 +205,14 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Name: "jenkins - 2.289.2",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - 2.289.2",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -206,12 +224,14 @@ var (
 		{
 			ID: "3",
 			Config: Config{
-				Name: `{{ pipeline "Source.kindd" }}`,
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: `{{ pipeline "Source.kindd" }}`,
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -224,7 +244,9 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Name: "jenkins",
+				Spec{
+					Name: "jenkins",
+				},
 			},
 			ExpectedUpdateErr: fmt.Errorf(`template: cfg:1:10: executing "cfg" at <pipeline "Source.kindd">: error calling pipeline: key not defined in configuration`),
 		},
@@ -232,12 +254,14 @@ var (
 		{
 			ID: "4",
 			Config: Config{
-				Name: `{{ pipeline Source.kind }}`,
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: `{{ pipeline Source.kind }}`,
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -255,12 +279,14 @@ var (
 		{
 			ID: "5",
 			Config: Config{
-				Name: `{{ source "default" }}-jdk11`,
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: `{{ source "default" }}-jdk11`,
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -274,18 +300,22 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Name: "2.289.2-jdk11",
+				Spec{
+					Name: "2.289.2-jdk11",
+				},
 			},
 		},
 		{
 			ID: "6",
 			Config: Config{
-				Name: `lts-jenkins-jdk11`,
-				Sources: map[string]source.Config{
-					`{{ pipeline "Sources.default.output" }}`: {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: `lts-jenkins-jdk11`,
+					Sources: map[string]source.Config{
+						`{{ pipeline "Sources.default.output" }}`: {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
 				},
@@ -298,7 +328,9 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Name: "lts-jenkins-jdk11",
+				Spec{
+					Name: "lts-jenkins-jdk11",
+				},
 			},
 			ExpectedUpdateErr:   ErrNotAllowedTemplatedKey,
 			ExpectedValidateErr: ErrNotAllowedTemplatedKey,
@@ -306,22 +338,24 @@ var (
 		{
 			ID: "7",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Conditions: map[string]condition.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Test SourceID",
-							Kind: "shell",
+					Conditions: map[string]condition.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Test SourceID",
+								Kind: "shell",
+							},
+							SourceID: "default",
 						},
-						SourceID: "default",
 					},
 				},
 			},
@@ -336,22 +370,24 @@ var (
 		{
 			ID: "7.1",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Conditions: map[string]condition.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Test SourceID",
-							Kind: "shell",
+					Conditions: map[string]condition.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Test SourceID",
+								Kind: "shell",
+							},
+							SourceID: "ShouldNotExist",
 						},
-						SourceID: "ShouldNotExist",
 					},
 				},
 			},
@@ -368,20 +404,22 @@ var (
 		{
 			ID: "7.2",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Conditions: map[string]condition.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Test SourceID",
-							Kind: "shell",
+					Conditions: map[string]condition.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Test SourceID",
+								Kind: "shell",
+							},
 						},
 					},
 				},
@@ -397,26 +435,28 @@ var (
 		{
 			ID: "7.3",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"one": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"one": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+						"two": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get text from shell",
+								Kind: "shell",
+							},
 						},
 					},
-					"two": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get text from shell",
-							Kind: "shell",
-						},
-					},
-				},
-				Conditions: map[string]condition.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Test SourceID",
-							Kind: "shell",
+					Conditions: map[string]condition.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Test SourceID",
+								Kind: "shell",
+							},
 						},
 					},
 				},
@@ -434,22 +474,24 @@ var (
 		{
 			ID: "8",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Targets: map[string]target.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Test SourceID",
-							Kind: "shell",
+					Targets: map[string]target.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Test SourceID",
+								Kind: "shell",
+							},
+							SourceID: "default",
 						},
-						SourceID: "default",
 					},
 				},
 			},
@@ -464,22 +506,24 @@ var (
 		{
 			ID: "8.1",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Targets: map[string]target.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Test SourceID",
-							Kind: "shell",
+					Targets: map[string]target.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Test SourceID",
+								Kind: "shell",
+							},
+							SourceID: "ShouldNotExist",
 						},
-						SourceID: "ShouldNotExist",
 					},
 				},
 			},
@@ -496,20 +540,22 @@ var (
 		{
 			ID: "8.2",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Targets: map[string]target.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Test SourceID",
-							Kind: "shell",
+					Targets: map[string]target.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Test SourceID",
+								Kind: "shell",
+							},
 						},
 					},
 				},
@@ -525,26 +571,28 @@ var (
 		{
 			ID: "8.3",
 			Config: Config{
-				Name: "jenkins - {{ source \"default\" }}",
-				Sources: map[string]source.Config{
-					"one": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+				Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"one": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+						"two": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-					"two": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
-						},
-					},
-				},
-				Targets: map[string]target.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Test SourceID",
-							Kind: "shell",
+					Targets: map[string]target.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Test SourceID",
+								Kind: "shell",
+							},
 						},
 					},
 				},
@@ -562,43 +610,45 @@ var (
 		{
 			ID: "9",
 			Config: Config{
-				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
-				SCMs: map[string]scm.Config{
-					"default": {
-						Kind: "github",
-						Spec: map[string]string{
-							"user":       "updatecli",
-							"email":      "me@olblak.com",
-							"owner":      "updatecli",
-							"repository": "updatecli",
-							"token":      "SuperSecret",
-							"username":   "olblak",
-							"branch":     "main",
+				Spec{
+					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+					SCMs: map[string]scm.Config{
+						"default": {
+							Kind: "github",
+							Spec: map[string]string{
+								"user":       "updatecli",
+								"email":      "me@olblak.com",
+								"owner":      "updatecli",
+								"repository": "updatecli",
+								"token":      "SuperSecret",
+								"username":   "olblak",
+								"branch":     "main",
+							},
 						},
 					},
-				},
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Targets: map[string]target.Config{
-					"updateDefault": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Update Default Version",
-							Kind: "shell",
+					Targets: map[string]target.Config{
+						"updateDefault": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update Default Version",
+								Kind: "shell",
+							},
 						},
 					},
-				},
-				PullRequests: map[string]pullrequest.Config{
-					"default": {
-						Title:   "default PR",
-						Kind:    "github/pullrequest",
-						ScmID:   "default",
-						Targets: []string{"updateDefault"},
+					PullRequests: map[string]pullrequest.Config{
+						"default": {
+							Title:   "default PR",
+							Kind:    "github/pullrequest",
+							ScmID:   "default",
+							Targets: []string{"updateDefault"},
+						},
 					},
 				},
 			},
@@ -613,39 +663,41 @@ var (
 		{
 			ID: "9.1",
 			Config: Config{
-				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
-				SCMs: map[string]scm.Config{
-					"default": {
-						Kind: "github",
-						Spec: map[string]string{
-							"user":       "updatecli",
-							"email":      "me@olblak.com",
-							"owner":      "updatecli",
-							"repository": "updatecli",
-							"token":      "SuperSecret",
-							"username":   "olblak",
-							"branch":     "main",
+				Spec{
+					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+					SCMs: map[string]scm.Config{
+						"default": {
+							Kind: "github",
+							Spec: map[string]string{
+								"user":       "updatecli",
+								"email":      "me@olblak.com",
+								"owner":      "updatecli",
+								"repository": "updatecli",
+								"token":      "SuperSecret",
+								"username":   "olblak",
+								"branch":     "main",
+							},
 						},
 					},
-				},
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Targets: map[string]target.Config{
-					"updateDefault": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Update Default Version",
-							Kind: "shell",
+					Targets: map[string]target.Config{
+						"updateDefault": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update Default Version",
+								Kind: "shell",
+							},
 						},
 					},
-				},
-				PullRequests: map[string]pullrequest.Config{
-					"default": {},
+					PullRequests: map[string]pullrequest.Config{
+						"default": {},
+					},
 				},
 			},
 			Context: context{
@@ -661,43 +713,45 @@ var (
 		{
 			ID: "9.2",
 			Config: Config{
-				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
-				SCMs: map[string]scm.Config{
-					"default": {
-						Kind: "github",
-						Spec: map[string]string{
-							"user":       "updatecli",
-							"email":      "me@olblak.com",
-							"owner":      "updatecli",
-							"repository": "updatecli",
-							"token":      "SuperSecret",
-							"username":   "olblak",
-							"branch":     "main",
+				Spec{
+					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+					SCMs: map[string]scm.Config{
+						"default": {
+							Kind: "github",
+							Spec: map[string]string{
+								"user":       "updatecli",
+								"email":      "me@olblak.com",
+								"owner":      "updatecli",
+								"repository": "updatecli",
+								"token":      "SuperSecret",
+								"username":   "olblak",
+								"branch":     "main",
+							},
 						},
 					},
-				},
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Targets: map[string]target.Config{
-					"updateDefault": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Update Default Version",
-							Kind: "shell",
+					Targets: map[string]target.Config{
+						"updateDefault": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update Default Version",
+								Kind: "shell",
+							},
 						},
 					},
-				},
-				PullRequests: map[string]pullrequest.Config{
-					"default": {
-						Title:   "default PR",
-						Kind:    "github/pullrequest",
-						ScmID:   "not_existing",
-						Targets: []string{"updateDefault"},
+					PullRequests: map[string]pullrequest.Config{
+						"default": {
+							Title:   "default PR",
+							Kind:    "github/pullrequest",
+							ScmID:   "not_existing",
+							Targets: []string{"updateDefault"},
+						},
 					},
 				},
 			},
@@ -714,43 +768,45 @@ var (
 		{
 			ID: "9.3",
 			Config: Config{
-				Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
-				SCMs: map[string]scm.Config{
-					"default": {
-						Kind: "github",
-						Spec: map[string]string{
-							"user":       "updatecli",
-							"email":      "me@olblak.com",
-							"owner":      "updatecli",
-							"repository": "updatecli",
-							"token":      "SuperSecret",
-							"username":   "olblak",
-							"branch":     "main",
+				Spec{
+					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
+					SCMs: map[string]scm.Config{
+						"default": {
+							Kind: "github",
+							Spec: map[string]string{
+								"user":       "updatecli",
+								"email":      "me@olblak.com",
+								"owner":      "updatecli",
+								"repository": "updatecli",
+								"token":      "SuperSecret",
+								"username":   "olblak",
+								"branch":     "main",
+							},
 						},
 					},
-				},
-				Sources: map[string]source.Config{
-					"default": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Get Version",
-							Kind: "jenkins",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
 						},
 					},
-				},
-				Targets: map[string]target.Config{
-					"updateDefault": {
-						ResourceConfig: resource.ResourceConfig{
-							Name: "Update Default Version",
-							Kind: "shell",
+					Targets: map[string]target.Config{
+						"updateDefault": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update Default Version",
+								Kind: "shell",
+							},
 						},
 					},
-				},
-				PullRequests: map[string]pullrequest.Config{
-					"default": {
-						Title:   "default PR",
-						Kind:    "github/pullrequest",
-						ScmID:   "default",
-						Targets: []string{"not_existing"},
+					PullRequests: map[string]pullrequest.Config{
+						"default": {
+							Title:   "default PR",
+							Kind:    "github/pullrequest",
+							ScmID:   "default",
+							Targets: []string{"not_existing"},
+						},
 					},
 				},
 			},

@@ -23,7 +23,7 @@ func (p *Pipeline) RunPullRequests() error {
 		pr.Scm = &inheritedSCM
 
 		pr = p.PullRequests[id]
-		pr.Config = p.Config.PullRequests[id]
+		pr.Config = p.Config.Spec.PullRequests[id]
 
 		err := pr.Update()
 		if err != nil {

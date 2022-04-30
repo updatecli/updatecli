@@ -45,6 +45,11 @@ var (
 
 // Config contains cli configuration
 type Config struct {
+	Spec Spec
+}
+
+// Spec contains pipeline configuration
+type Spec struct {
 	// Name defines a pipeline name
 	Name string
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
@@ -129,7 +134,7 @@ func New(option Option) (config Config, err error) {
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml":
 
-		err = yaml.Unmarshal(content, &config)
+		err = yaml.Unmarshal(content, &config.Spec)
 		if err != nil {
 			return config, err
 		}
@@ -140,15 +145,15 @@ func New(option Option) (config Config, err error) {
 	}
 
 	// config.PipelineID is required for config.Validate()
-	config.PipelineID = pipelineID
+	config.Spec.PipelineID = pipelineID
 
 	err = config.Validate()
 	if err != nil {
 		return config, err
 	}
 
-	if len(config.Name) == 0 {
-		config.Name = strings.ToTitle(basename)
+	if len(config.Spec.Name) == 0 {
+		config.Spec.Name = strings.ToTitle(basename)
 	}
 
 	err = config.Validate()
@@ -197,7 +202,7 @@ func (config *Config) Display() error {
 }
 
 func (config *Config) validatePullRequests() error {
-	for id, p := range config.PullRequests {
+	for id, p := range config.Spec.PullRequests {
 		if err := p.Validate(); err != nil {
 			logrus.Errorf("bad parameters for pullrequest %q", id)
 			return err
@@ -205,7 +210,7 @@ func (config *Config) validatePullRequests() error {
 
 		// Then validate that the pullrequest specifies an existing SCM
 		if len(p.ScmID) > 0 {
-			if _, ok := config.SCMs[p.ScmID]; !ok {
+			if _, ok := config.Spec.SCMs[p.ScmID]; !ok {
 				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, p.ScmID)
 				return ErrBadConfig
 			}
@@ -213,20 +218,20 @@ func (config *Config) validatePullRequests() error {
 
 		// Validate references to other configuration objects
 		for _, target := range p.Targets {
-			if _, ok := config.Targets[target]; !ok {
+			if _, ok := config.Spec.Targets[target]; !ok {
 				logrus.Errorf("the specified target %q for the pull request %q does not exist", target, id)
 				return ErrBadConfig
 			}
 		}
 		// p.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.PullRequests[id] = p
+		config.Spec.PullRequests[id] = p
 	}
 	return nil
 }
 
 func (config *Config) validateSources() error {
-	for id, s := range config.Sources {
+	for id, s := range config.Spec.Sources {
 		err := s.Validate()
 		if err != nil {
 			logrus.Errorf("bad parameters for source %q", id)
@@ -243,12 +248,12 @@ func (config *Config) validateSources() error {
 		if len(s.Scm) > 0 {
 			logrus.Warningf("The directive 'scm' for the source[%q] is now deprecated. Please use the new top level scms syntax", id)
 			if len(s.SCMID) == 0 {
-				if _, ok := config.SCMs["source_"+id]; !ok {
+				if _, ok := config.Spec.SCMs["source_"+id]; !ok {
 					for kind, spec := range s.Scm {
-						if config.SCMs == nil {
-							config.SCMs = make(map[string]scm.Config, 1)
+						if config.Spec.SCMs == nil {
+							config.Spec.SCMs = make(map[string]scm.Config, 1)
 						}
-						config.SCMs["source_"+id] = scm.Config{
+						config.Spec.SCMs["source_"+id] = scm.Config{
 							Kind: kind,
 							Spec: spec}
 					}
@@ -258,32 +263,32 @@ func (config *Config) validateSources() error {
 				logrus.Warning("source.SCMID is also defined, ignoring source.Scm")
 			}
 			s.Scm = map[string]interface{}{}
-			config.Sources[id] = s
+			config.Spec.Sources[id] = s
 		}
 		// s.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.Sources[id] = s
+		config.Spec.Sources[id] = s
 	}
 	return nil
 
 }
 
 func (config *Config) validateSCMs() error {
-	for id, scm := range config.SCMs {
+	for id, scm := range config.Spec.SCMs {
 		if err := scm.Validate(); err != nil {
 			logrus.Errorf("bad parameter(s) for scm %q", id)
 			return err
 		}
 		// scm.Validate may modify the object during validation
 		// so we want to be sure that we save those modification
-		config.SCMs[id] = scm
+		config.Spec.SCMs[id] = scm
 	}
 	return nil
 }
 
 func (config *Config) validateTargets() error {
 
-	for id, t := range config.Targets {
+	for id, t := range config.Spec.Targets {
 
 		err := t.Validate()
 		if err != nil {
@@ -292,21 +297,21 @@ func (config *Config) validateTargets() error {
 		}
 
 		if len(t.PipelineID) == 0 {
-			t.PipelineID = config.PipelineID
+			t.PipelineID = config.Spec.PipelineID
 		}
 		if len(t.SourceID) > 0 {
-			if _, ok := config.Sources[t.SourceID]; !ok {
+			if _, ok := config.Spec.Sources[t.SourceID]; !ok {
 				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", t.SourceID)
 				return ErrBadConfig
 			}
 		}
 		// Try to guess SourceID
-		if len(t.SourceID) == 0 && len(config.Sources) > 1 {
+		if len(t.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 
 			logrus.Errorf("empty 'sourceID' for target %q", id)
 			return ErrBadConfig
-		} else if len(t.SourceID) == 0 && len(config.Sources) == 1 {
-			for id := range config.Sources {
+		} else if len(t.SourceID) == 0 && len(config.Spec.Sources) == 1 {
+			for id := range config.Spec.Sources {
 				t.SourceID = id
 			}
 		}
@@ -328,13 +333,13 @@ func (config *Config) validateTargets() error {
 
 		// t.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.Targets[id] = t
+		config.Spec.Targets[id] = t
 	}
 	return nil
 }
 
 func (config *Config) validateConditions() error {
-	for id, c := range config.Conditions {
+	for id, c := range config.Spec.Conditions {
 		err := c.Validate()
 		if err != nil {
 			logrus.Errorf("bad parameters for condition %q", id)
@@ -342,7 +347,7 @@ func (config *Config) validateConditions() error {
 		}
 
 		if len(c.SourceID) > 0 {
-			if _, ok := config.Sources[c.SourceID]; !ok {
+			if _, ok := config.Spec.Sources[c.SourceID]; !ok {
 				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
 				return ErrBadConfig
 			}
@@ -350,11 +355,11 @@ func (config *Config) validateConditions() error {
 		// Only check/guess the sourceID if the user did not disable it (default is enabled)
 		if !c.DisableSourceInput {
 			// Try to guess SourceID
-			if len(c.SourceID) == 0 && len(config.Sources) > 1 {
+			if len(c.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
 				return ErrBadConfig
-			} else if len(c.SourceID) == 0 && len(config.Sources) == 1 {
-				for id := range config.Sources {
+			} else if len(c.SourceID) == 0 && len(config.Spec.Sources) == 1 {
+				for id := range config.Spec.Sources {
 					c.SourceID = id
 				}
 			}
@@ -372,7 +377,7 @@ func (config *Config) validateConditions() error {
 			generateScmFromLegacyCondition(id, c, config)
 		}
 
-		config.Conditions[id] = c
+		config.Spec.Conditions[id] = c
 	}
 	return nil
 }
@@ -488,7 +493,7 @@ func (config *Config) Update(data interface{}) (err error) {
 		},
 	}
 
-	content, err := yaml.Marshal(config)
+	content, err := yaml.Marshal(config.Spec)
 	if err != nil {
 		return err
 	}
@@ -503,7 +508,7 @@ func (config *Config) Update(data interface{}) (err error) {
 		return err
 	}
 
-	err = yaml.Unmarshal(b.Bytes(), &config)
+	err = yaml.Unmarshal(b.Bytes(), &config.Spec)
 	if err != nil {
 		return err
 	}
@@ -519,21 +524,21 @@ func (config *Config) Update(data interface{}) (err error) {
 // GetChangelogTitle try to guess a specific target based on various information available for
 // a specific job
 func (config *Config) GetChangelogTitle(ID string, fallback string) (title string) {
-	if len(config.Title) > 0 {
+	if len(config.Spec.Title) > 0 {
 		// If a pipeline title has been defined, then use it for pull request title
 		title = fmt.Sprintf("[updatecli] %s",
-			config.Title)
+			config.Spec.Title)
 
-	} else if len(config.Targets) == 1 && len(config.Targets[ID].Name) > 0 {
+	} else if len(config.Spec.Targets) == 1 && len(config.Spec.Targets[ID].Name) > 0 {
 		// If we only have one target then we can use it as fallback.
 		// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
-		title = fmt.Sprintf("[updatecli] %s", config.Targets[ID].Name)
+		title = fmt.Sprintf("[updatecli] %s", config.Spec.Targets[ID].Name)
 	} else {
 		// At the moment, we don't have an easy way to describe what changed
 		// I am still thinking to a better solution.
 		logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
 		title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
-			config.Sources[config.Targets[ID].SourceID].Kind,
+			config.Spec.Sources[config.Spec.Targets[ID].SourceID].Kind,
 			fallback)
 	}
 	return title

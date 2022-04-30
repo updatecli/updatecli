@@ -13,14 +13,14 @@ import (
 func generateScmFromLegacyCondition(id string, c condition.Config, config *Config) {
 	logrus.Warningf("The directive 'scm' for the condition[%q] is now deprecated. Please use the new top level scms syntax", id)
 	if len(c.SCMID) == 0 {
-		if _, ok := config.SCMs["condition_"+id]; !ok {
+		if _, ok := config.Spec.SCMs["condition_"+id]; !ok {
 			for kind, spec := range c.Scm {
 
-				if config.SCMs == nil {
-					config.SCMs = make(map[string]scm.Config, 1)
+				if config.Spec.SCMs == nil {
+					config.Spec.SCMs = make(map[string]scm.Config, 1)
 				}
 
-				config.SCMs["condition_"+id] = scm.Config{
+				config.Spec.SCMs["condition_"+id] = scm.Config{
 					Kind: kind,
 					Spec: spec}
 
@@ -37,13 +37,13 @@ func generateScmFromLegacyCondition(id string, c condition.Config, config *Confi
 func generateScmFromLegacyTarget(id string, t target.Config, config *Config) error {
 	logrus.Warningf("The directive 'scm' for the target[%q] is now deprecated. Please use the new top level scms syntax", id)
 	if len(t.SCMID) == 0 {
-		if _, ok := config.SCMs["target_"+id]; !ok {
+		if _, ok := config.Spec.SCMs["target_"+id]; !ok {
 			for kind, spec := range t.Scm {
-				if config.SCMs == nil {
-					config.SCMs = make(map[string]scm.Config, 1)
+				if config.Spec.SCMs == nil {
+					config.Spec.SCMs = make(map[string]scm.Config, 1)
 				}
 
-				config.SCMs["target_"+id] = scm.Config{
+				config.Spec.SCMs["target_"+id] = scm.Config{
 					Kind: kind,
 					Spec: spec,
 				}
@@ -53,8 +53,8 @@ func generateScmFromLegacyTarget(id string, t target.Config, config *Config) err
 				// compatibility, we automatically add a pullRequest configuration in case of github scm
 				// https://github.com/updatecli/updatecli/pull/388
 				if kind == "github" {
-					if config.PullRequests == nil {
-						config.PullRequests = make(map[string]pullrequest.Config, 1)
+					if config.Spec.PullRequests == nil {
+						config.Spec.PullRequests = make(map[string]pullrequest.Config, 1)
 					}
 
 					githubSpec := github.Spec{}
@@ -64,7 +64,7 @@ func generateScmFromLegacyTarget(id string, t target.Config, config *Config) err
 						return err
 					}
 
-					config.PullRequests["target_"+id] = pullrequest.Config{
+					config.Spec.PullRequests["target_"+id] = pullrequest.Config{
 						Kind:    kind,
 						Spec:    githubSpec.PullRequest,
 						ScmID:   "target_" + id,
