@@ -21,6 +21,7 @@ var (
 			e.Options.Config.ManifestFile = cfgFile
 			e.Options.Config.ValuesFiles = valuesFiles
 			e.Options.Config.SecretsFiles = secretsFiles
+			e.Options.Config.DisableTemplating = true
 
 			err := run("manifest/upgrade")
 			if err != nil {
