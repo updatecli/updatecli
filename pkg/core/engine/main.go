@@ -166,8 +166,15 @@ func (e *Engine) ManifestUpgrade() (err error) {
 	}
 
 	for _, pipeline := range e.Pipelines {
-		pipeline.Config.Display()
-		// pipeline.Config.SaveOnDisk("/tmp/test.yaml")
+		err = pipeline.Config.Display()
+		if err != nil {
+			logrus.Errorln(err)
+		}
+
+		err = pipeline.Config.SaveOnDisk()
+		if err != nil {
+			logrus.Errorln(err)
+		}
 	}
 
 	return err
