@@ -42,7 +42,7 @@ var (
 		{
 			ID: "1",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -62,7 +62,7 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - 2.289.2",
 					Sources: map[string]source.Config{
 						"default": {
@@ -80,7 +80,7 @@ var (
 		{
 			ID: "1.1",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -101,7 +101,7 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - 2.289.2",
 					Sources: map[string]source.Config{
 						"default": {
@@ -120,7 +120,7 @@ var (
 		{
 			ID: "1.2",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -146,7 +146,7 @@ var (
 		{
 			ID: "2",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ pipeline \"sources.default.output\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -166,7 +166,7 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - 2.289.2",
 					Sources: map[string]source.Config{
 						"default": {
@@ -184,7 +184,7 @@ var (
 		{
 			ID: "2.1",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"Default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -205,7 +205,7 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - 2.289.2",
 					Sources: map[string]source.Config{
 						"default": {
@@ -224,7 +224,7 @@ var (
 		{
 			ID: "3",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: `{{ pipeline "Source.kindd" }}`,
 					Sources: map[string]source.Config{
 						"default": {
@@ -244,7 +244,7 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins",
 				},
 			},
@@ -254,7 +254,7 @@ var (
 		{
 			ID: "4",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: `{{ pipeline Source.kind }}`,
 					Sources: map[string]source.Config{
 						"default": {
@@ -279,7 +279,7 @@ var (
 		{
 			ID: "5",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: `{{ source "default" }}-jdk11`,
 					Sources: map[string]source.Config{
 						"default": {
@@ -300,7 +300,7 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Spec{
+				Spec: Spec{
 					Name: "2.289.2-jdk11",
 				},
 			},
@@ -308,7 +308,7 @@ var (
 		{
 			ID: "6",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: `lts-jenkins-jdk11`,
 					Sources: map[string]source.Config{
 						`{{ pipeline "Sources.default.output" }}`: {
@@ -328,7 +328,7 @@ var (
 				},
 			},
 			ExpectedConfig: Config{
-				Spec{
+				Spec: Spec{
 					Name: "lts-jenkins-jdk11",
 				},
 			},
@@ -338,7 +338,7 @@ var (
 		{
 			ID: "7",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -370,7 +370,7 @@ var (
 		{
 			ID: "7.1",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -404,7 +404,7 @@ var (
 		{
 			ID: "7.2",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -435,7 +435,7 @@ var (
 		{
 			ID: "7.3",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"one": {
@@ -474,7 +474,7 @@ var (
 		{
 			ID: "8",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -506,7 +506,7 @@ var (
 		{
 			ID: "8.1",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -540,7 +540,7 @@ var (
 		{
 			ID: "8.2",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"default": {
@@ -571,7 +571,7 @@ var (
 		{
 			ID: "8.3",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
 					Sources: map[string]source.Config{
 						"one": {
@@ -610,7 +610,7 @@ var (
 		{
 			ID: "9",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 					SCMs: map[string]scm.Config{
 						"default": {
@@ -663,7 +663,7 @@ var (
 		{
 			ID: "9.1",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 					SCMs: map[string]scm.Config{
 						"default": {
@@ -713,7 +713,7 @@ var (
 		{
 			ID: "9.2",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 					SCMs: map[string]scm.Config{
 						"default": {
@@ -768,7 +768,7 @@ var (
 		{
 			ID: "9.3",
 			Config: Config{
-				Spec{
+				Spec: Spec{
 					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
 					SCMs: map[string]scm.Config{
 						"default": {
