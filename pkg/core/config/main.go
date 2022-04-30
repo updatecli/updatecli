@@ -45,6 +45,9 @@ var (
 
 // Config contains cli configuration
 type Config struct {
+	// filename contains the updatecli manifest filename
+	filename string
+	// Spec describe an updatecli manifest
 	Spec Spec
 }
 
@@ -89,6 +92,8 @@ func (config *Config) Reset() {
 func New(option Option) (config Config, err error) {
 
 	config.Reset()
+
+	config.filename = option.ManifestFile
 
 	dirname, basename := filepath.Split(option.ManifestFile)
 
@@ -140,7 +145,7 @@ func New(option Option) (config Config, err error) {
 		}
 
 	default:
-		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, filepath.Join(dirname, basename))
+		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, config.filename)
 		return config, ErrConfigFileTypeNotSupported
 	}
 
@@ -163,13 +168,13 @@ func New(option Option) (config Config, err error) {
 }
 
 // SaveOnDisk save an updatecli manifest on disk
-func (c *Config) SaveOnDisk(filename string) error {
-	data, err := yaml.Marshal(c)
+func (c *Config) SaveOnDisk() error {
+	data, err := yaml.Marshal(c.Spec)
 	if err != nil {
 		return err
 	}
 
-	file, err := os.Open(filename)
+	file, err := os.Open(c.filename)
 	if err != nil {
 		return err
 	}
