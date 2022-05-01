@@ -28,7 +28,7 @@ type Config struct {
 	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
 	DeprecatedSourceID string `yaml:"sourceID,omitempty"`
 	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
-	SourceID string
+	SourceID string `yaml:",omitempty"`
 	// disablesourceinput disable the mechanism to retrieve a default value from a source.
 	DisableSourceInput bool
 }

@@ -23,19 +23,19 @@ import (
 
 type ResourceConfig struct {
 	// depends_on specifies which resources must be executed before the current one
-	DependsOn []string `yaml:"depends_on"`
+	DependsOn []string `yaml:"depends_on,omitempty"`
 	// name specifies the resource name
 	Name string
 	// kind specifies the resource kind which defines accepted spec value
 	Kind string
 	// transformers defines how the default input value need to be transformed
-	Transformers transformer.Transformers
+	Transformers transformer.Transformers `yaml:",omitempty"`
 	// spec specifies parameters for a specific resource kind
 	Spec interface{}
 	// Deprecated field on version [1.17.0]
 	Scm map[string]interface{} `yaml:",omitempty"`
 	// scmid specifies the scm configuration key associated to the current resource
-	SCMID string // SCMID references a uniq scm configuration
+	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 	// !deprecated, please use scmid
 	// scmid specifies the scm configuration key associated to the current resource
 	DeprecatedSCMID string `yaml:"scmID,omitempty"` // SCMID references a uniq scm configuration

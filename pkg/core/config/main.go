@@ -60,15 +60,15 @@ type Spec struct {
 	// Title is used for the full pipeline
 	Title string
 	// PullRequests defines the list of Pull Request configuration which need to be managed
-	PullRequests map[string]pullrequest.Config
+	PullRequests map[string]pullrequest.Config `yaml:",omitempty"`
 	// SCMs defines the list of repository configuration used to fetch content from.
-	SCMs map[string]scm.Config `yaml:"scms"`
+	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
 	// Sources defines the list of source configuration
-	Sources map[string]source.Config
+	Sources map[string]source.Config `yaml:",omitempty"`
 	// Conditions defines the list of condition configuration
-	Conditions map[string]condition.Config
+	Conditions map[string]condition.Config `yaml:",omitempty"`
 	// Targets defines the list of target configuration
-	Targets map[string]target.Config
+	Targets map[string]target.Config `yaml:",omitempty"`
 }
 
 // Option contains configuration options such as filepath located on disk,etc.

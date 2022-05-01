@@ -30,14 +30,14 @@ type Config struct {
 	// PipelineID references a unique pipeline run allowing to group targets
 	PipelineID string
 	// ReportTitle contains the updatecli reports title for sources and conditions run
-	ReportTitle string
+	ReportTitle string `yaml:",omitempty"`
 	// ReportBody contains the updatecli reports body for sources and conditions run
-	ReportBody string
+	ReportBody string `yaml:",omitempty"`
 	// ! Deprecated - please use all lowercase `sourceid`
 	// sourceid specifies where retrieving the default value
 	DeprecatedSourceID string `yaml:"sourceID,omitempty"`
 	// sourceid specifies where retrieving the default value
-	SourceID string
+	SourceID string `yaml:",omitempty"`
 	// disablesourceinput
 }
 
