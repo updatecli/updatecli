@@ -165,7 +165,7 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 	}
 
 	if len(md.AppVersion) > 0 && c.spec.AppVersion {
-		logrus.Debugf("Updating AppVersion from %s to %s\n", md.AppVersion, c.spec.Value)
+		logrus.Infof("AppVersion updated from %s to %s\n", md.AppVersion, c.spec.Value)
 		md.AppVersion = c.spec.Value
 	}
 
@@ -194,7 +194,7 @@ func (c *Chart) UpdateMetadata(metadataFilename string, dryRun bool) error {
 		}
 	}
 
-	logrus.Debugf("Update Chart version from %q to %q\n", oldVersion, md.Version)
+	logrus.Infof("Chart Version updated from %q to %q\n", oldVersion, md.Version)
 
 	if err != nil {
 		return err
