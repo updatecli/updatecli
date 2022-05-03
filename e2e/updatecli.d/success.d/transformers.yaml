@@ -35,7 +35,7 @@ sources:
     spec:
         command: echo v1.0.0
     transformers:
-      - trimPrefix: v
+      - trimprefix: v
       - findsubmatch:
           pattern: '^(\d*).(\d*)'
           captureindex: 0
@@ -55,7 +55,6 @@ conditions:
     disablesourceinput: true
     spec:
       command: '[ "{{ source "add" }}" == "v1.0.0-alpha" ]'
-      # command: '[ "v1.0.0-alpha" != "v1.0.0-alpha" ]'
   trim: 
     name: "Expected"
     kind: shell
