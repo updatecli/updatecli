@@ -1,6 +1,7 @@
 package target
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+)
+
+var (
+	// ErrWrongConfig is returned when a target spec has missing attributes which are mandatory
+	ErrWrongConfig = errors.New("wrong target configuration")
 )
 
 // Target defines which file needs to be updated based on source output
@@ -36,6 +42,8 @@ type Config struct {
 	// ! Deprecated - please use all lowercase `sourceid`
 	// sourceid specifies where retrieving the default value
 	DeprecatedSourceID string `yaml:"sourceID"`
+	// disablesourceinput disables the mechanism to retrieve a default value from a source.
+	DisableSourceInput bool
 	// sourceid specifies where retrieving the default value
 	SourceID string
 	// disablesourceinput
@@ -167,7 +175,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 // JSONSchema implements the json schema interface to generate the "target" jsonschema.
 func (Config) JSONSchema() *jschema.Schema {
-
+	
 	type configAlias Config
 
 	anyOfSpec := resource.GetResourceMapping()
@@ -177,6 +185,9 @@ func (Config) JSONSchema() *jschema.Schema {
 
 func (c *Config) Validate() error {
 	// Handle scmID deprecation
+
+	gotError := false
+
 	if len(c.DeprecatedSCMID) > 0 {
 		switch len(c.SCMID) {
 		case 0:
@@ -205,6 +216,13 @@ func (c *Config) Validate() error {
 	err := c.Transformers.Validate()
 	if err != nil {
 		return err
+	if len(c.SourceID) > 0 && c.DisableSourceInput {
+		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
+		gotError = true
+	}
+
+	if gotError {
+		return ErrWrongConfig
 	}
 
 	return nil
