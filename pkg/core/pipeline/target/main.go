@@ -175,7 +175,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 // JSONSchema implements the json schema interface to generate the "target" jsonschema.
 func (Config) JSONSchema() *jschema.Schema {
-	
+
 	type configAlias Config
 
 	anyOfSpec := resource.GetResourceMapping()
@@ -216,6 +216,8 @@ func (c *Config) Validate() error {
 	err := c.Transformers.Validate()
 	if err != nil {
 		return err
+	}
+
 	if len(c.SourceID) > 0 && c.DisableSourceInput {
 		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
 		gotError = true

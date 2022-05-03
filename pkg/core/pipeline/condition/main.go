@@ -144,6 +144,8 @@ func (c *Config) Validate() error {
 	err := c.Transformers.Validate()
 	if err != nil {
 		return err
+	}
+
 	if len(c.SourceID) > 0 && c.DisableSourceInput {
 		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
 		gotError = true
@@ -155,4 +157,3 @@ func (c *Config) Validate() error {
 
 	return nil
 }
-
