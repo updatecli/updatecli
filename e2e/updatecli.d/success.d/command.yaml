@@ -7,25 +7,25 @@ targets:
     spec:
       command: "true"
 
-  2: 
-    name: Should be failling
-    kind: shell
-    spec:
-      command: "false"
-
-  3: 
-    name: Should be failling
-    kind: shell
-    spec:
-      command: "false"
-
-  4: 
-    name: Should be skipped
-    depends_on:
-      - "2"
-    kind: shell
-    spec:
-      command: "false"
+#  2: 
+#    name: Should be failling
+#    kind: shell
+#    spec:
+#      command: "false"
+#
+#  3: 
+#    name: Should be failling
+#    kind: shell
+#    spec:
+#      command: "false"
+#
+#  4: 
+#    name: Should be skipped
+#    depends_on:
+#      - "2"
+#    kind: shell
+#    spec:
+#      command: "false"
 
   5: 
     name: Should be succeeding
