@@ -129,5 +129,10 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	err := c.Transformers.Validate()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

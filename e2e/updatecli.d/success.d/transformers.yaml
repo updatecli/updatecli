@@ -1,0 +1,82 @@
+name: "Test transformers"
+
+sources:
+  add:
+    name: Get latest Jenkins version
+    kind: shell
+    spec:
+        command: 'echo 1.0.0'
+    transformers:
+      - addsuffix: -alpha
+      - addprefix: v
+
+  trim:
+    name: Get latest Jenkins version
+    kind: shell
+    spec:
+        command: echo v1.0.0-alpha
+    transformers:
+      - trimsuffix: -alpha
+      - trimprefix: v
+  replacers:
+    name: Get Version
+    kind: shell
+    spec:
+        command: echo v1.0.0-alpha
+    transformers:
+      - replacers:
+          - from: "v1"
+            to: "1"
+          - from: "-alpha"
+            to: ""
+  findsubmatch:
+    name: Get Version
+    kind: shell
+    spec:
+        command: echo v1.0.0
+    transformers:
+      - trimprefix: v
+      - findsubmatch:
+          pattern: '^(\d*).(\d*)'
+          captureindex: 0
+
+  semverinc:
+    name: Get Version
+    kind: shell
+    spec:
+        command: echo 1.0.0
+    transformers:
+      - semverinc: major
+
+conditions:
+  add: 
+    name: "Expected"
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: '[ "{{ source "add" }}" == "v1.0.0-alpha" ]'
+  trim: 
+    name: "Expected"
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: '[ "{{ source "trim" }}" == "1.0.0" ]'
+  replacers: 
+    name: "Expected"
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: '[ "{{ source "replacers" }}" == "1.0.0" ]'
+  findsubmatch: 
+    name: "Expected"
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: '[ "{{ source "findsubmatch" }}" == "1.0" ]'
+  semverinc: 
+    name: "Expected"
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: '[ "{{ source "semverinc" }}" == "2.0.0" ]'
+
