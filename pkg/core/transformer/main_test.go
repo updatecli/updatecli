@@ -21,7 +21,7 @@ var (
 			input: "2.263",
 			rules: Transformers{
 				Transformer{
-					"addPrefix": "alpha-",
+					AddPrefix: "alpha-",
 				},
 			},
 			expectedOutput: "alpha-2.263",
@@ -30,27 +30,26 @@ var (
 			input: "2.263",
 			rules: Transformers{
 				Transformer{
-					"wrong": "xxx",
+					AddPrefix:           "alpha-",
+					DeprecatedAddPrefix: "beta-",
 				},
 			},
-			expectedOutput: "",
-			expectedErr:    fmt.Errorf("key 'wrong' not supported"),
+			expectedOutput: "alpha-2.263",
 		},
 		Data{
 			input: "2.263",
 			rules: Transformers{
 				Transformer{
-					"semverInc": "",
+					DeprecatedAddPrefix: "beta-",
 				},
 			},
-			expectedOutput: "",
-			expectedErr:    fmt.Errorf("no incremental semantic versioning rule, accept comma separated list of major,minor,patch"),
+			expectedOutput: "beta-2.263",
 		},
 		Data{
 			input: "1.0.0",
 			rules: Transformers{
 				Transformer{
-					"semverInc": "wrong",
+					SemVerInc: "wrong",
 				},
 			},
 			expectedOutput: "",
@@ -60,7 +59,7 @@ var (
 			input: "1.x.y",
 			rules: Transformers{
 				Transformer{
-					"semverInc": "major",
+					SemVerInc: "major",
 				},
 			},
 			expectedOutput: "",
@@ -70,26 +69,87 @@ var (
 			input: "1.0.0",
 			rules: Transformers{
 				Transformer{
-					"semverInc": "major,minor,patch",
+					SemVerInc:           "major,minor,patch",
+					DeprecatedSemVerInc: "major",
 				},
 			},
 			expectedOutput: "2.1.1",
 		},
 		Data{
+			input: "1.0.0",
+			rules: Transformers{
+				Transformer{
+					SemVerInc: "major,minor,patch",
+				},
+			},
+			expectedOutput: "2.1.1",
+		},
+		Data{
+			input: "1.0.0",
+			rules: Transformers{
+				Transformer{
+					DeprecatedSemVerInc: "major",
+				},
+			},
+			expectedOutput: "2.0.0",
+		},
+		Data{
 			input: "2.263",
 			rules: Transformers{
 				Transformer{
-					"addSuffix": "-jdk11",
+					AddSuffix: "-jdk11",
 				},
 			},
 			expectedOutput: "2.263-jdk11",
 			expectedErr:    nil,
 		},
 		Data{
+			input: "2.263",
+			rules: Transformers{
+				Transformer{
+					AddSuffix:           "-jdk11",
+					DeprecatedAddSuffix: "-jdk12",
+				},
+			},
+			expectedOutput: "2.263-jdk11",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "2.263",
+			rules: Transformers{
+				Transformer{
+					DeprecatedAddSuffix: "-jdk12",
+				},
+			},
+			expectedOutput: "2.263-jdk12",
+			expectedErr:    nil,
+		},
+		Data{
 			input: "alpha-2.263",
 			rules: Transformers{
 				Transformer{
-					"trimPrefix": "alpha-",
+					TrimPrefix:           "alpha-",
+					DeprecatedTrimPrefix: "al",
+				},
+			},
+			expectedOutput: "2.263",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "alpha-2.263",
+			rules: Transformers{
+				Transformer{
+					DeprecatedTrimPrefix: "al",
+				},
+			},
+			expectedOutput: "pha-2.263",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "alpha-2.263",
+			rules: Transformers{
+				Transformer{
+					TrimPrefix: "alpha-",
 				},
 			},
 			expectedOutput: "2.263",
@@ -99,7 +159,28 @@ var (
 			input: "2.263-jdk11",
 			rules: Transformers{
 				Transformer{
-					"trimSuffix": "-jdk11",
+					TrimSuffix:           "-jdk11",
+					DeprecatedTrimSuffix: "11",
+				},
+			},
+			expectedOutput: "2.263",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "2.263-jdk11",
+			rules: Transformers{
+				Transformer{
+					DeprecatedTrimSuffix: "11",
+				},
+			},
+			expectedOutput: "2.263-jdk",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "2.263-jdk11",
+			rules: Transformers{
+				Transformer{
+					TrimSuffix: "-jdk11",
 				},
 			},
 			expectedOutput: "2.263",
@@ -109,10 +190,10 @@ var (
 			input: "alpha-2.263",
 			rules: Transformers{
 				Transformer{
-					"trimPrefix": "alpha-",
+					TrimPrefix: "alpha-",
 				},
 				Transformer{
-					"trimPrefix": "2.",
+					TrimPrefix: "2.",
 				},
 			},
 			expectedOutput: "263",
@@ -122,7 +203,7 @@ var (
 			input: "alpha-2.263",
 			rules: Transformers{
 				Transformer{
-					"replacers": Replacers{
+					Replacers: Replacers{
 						Replacer{
 							From: "alpha",
 							To:   "beta",
@@ -137,9 +218,15 @@ var (
 			input: "alpha-2.263",
 			rules: Transformers{
 				Transformer{
-					"replacer": Replacer{
-						From: "alpha",
-						To:   "beta",
+					Replacer: Replacer{
+						From: "al",
+						To:   "be",
+					},
+				},
+				Transformer{
+					Replacer: Replacer{
+						From: "pha",
+						To:   "ta",
 					},
 				},
 			},
@@ -150,7 +237,7 @@ var (
 			input: "4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip",
 			rules: Transformers{
 				Transformer{
-					"find": "terraform_(.*)$",
+					Find: "terraform_(.*)$",
 				},
 			},
 			expectedOutput: "terraform_0.14.5_freebsd_amd64.zip",
@@ -160,7 +247,7 @@ var (
 			input: "4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip",
 			rules: Transformers{
 				Transformer{
-					"find": `^\S*`,
+					Find: `^\S*`,
 				},
 			},
 			expectedOutput: "4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d",
@@ -170,40 +257,64 @@ var (
 			input: "4b7f2b878a9854652493b2c94ac586586f2ab53f93e3baa55fc2199ccd5a042d  terraform_0.14.5_freebsd_amd64.zip",
 			rules: Transformers{
 				Transformer{
-					"find": `\S*$`,
+					Find: `\S*$`,
 				},
 			},
 			expectedOutput: "terraform_0.14.5_freebsd_amd64.zip",
 			expectedErr:    nil,
 		},
 		Data{
-			input: "1.17.0",
+			input: "1.18.0",
 			rules: Transformers{
 				Transformer{
-					"findSubMatch": `(\d*).(\d*)`,
+					DeprecatedFindSubMatch: `(\d*).(\d*)`,
 				},
 			},
-			expectedOutput: "1.17",
+			expectedOutput: "1.18",
 			expectedErr:    nil,
 		},
 		Data{
-			input: "1.17.0",
+			input: "1.18.0",
 			rules: Transformers{
 				Transformer{
-					"findSubMatch": FindSubMatch{
+					DeprecatedFindSubMatch: `(\d*).(\d*)`,
+					FindSubMatch: FindSubMatch{
 						Pattern:      `\d*.(\d*)`,
 						CaptureIndex: 1,
 					},
 				},
 			},
-			expectedOutput: "17",
+			expectedOutput: "18",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "noalphanumericvalue",
+			rules: Transformers{
+				Transformer{
+					DeprecatedFindSubMatch: `\d.*`,
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.19.0",
+			rules: Transformers{
+				Transformer{
+					FindSubMatch: FindSubMatch{
+						Pattern:      `\d*.(\d*)`,
+						CaptureIndex: 1,
+					},
+				},
+			},
+			expectedOutput: "19",
 			expectedErr:    nil,
 		},
 		Data{
 			input: "1.17.0",
 			rules: Transformers{
 				Transformer{
-					"findSubMatch": FindSubMatch{
+					FindSubMatch: FindSubMatch{
 						Pattern:      `\d*.\d*`,
 						CaptureIndex: 1,
 					},
@@ -216,7 +327,7 @@ var (
 			input: "1.17.0",
 			rules: Transformers{
 				Transformer{
-					"findSubMatch": FindSubMatch{
+					FindSubMatch: FindSubMatch{
 						Pattern:      `\d*.(\d*).(\d*)`,
 						CaptureIndex: 2,
 					},
@@ -229,7 +340,34 @@ var (
 			input: "1.17.0",
 			rules: Transformers{
 				Transformer{
-					"findSubMatch": FindSubMatch{
+					FindSubMatch: FindSubMatch{
+						Pattern:                `\d*.(\d*).(\d*)`,
+						DeprecatedCaptureIndex: 2,
+					},
+				},
+			},
+			expectedOutput: "0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					FindSubMatch: FindSubMatch{
+						Pattern:                `\d*.(\d*).(\d*)`,
+						CaptureIndex:           2,
+						DeprecatedCaptureIndex: 1,
+					},
+				},
+			},
+			expectedOutput: "0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					FindSubMatch: FindSubMatch{
 						Pattern:      `\d*.(\d*).(\d*)`,
 						CaptureIndex: 3,
 					},
@@ -242,29 +380,30 @@ var (
 			input: "", // explicit empty value
 			rules: Transformers{
 				Transformer{
-					"addPrefix": "alpha-",
+					AddPrefix: "alpha-",
 				},
 			},
 			expectedOutput: "",
-			expectedErr:    fmt.Errorf("Validation error: transformer input is empty."),
+			expectedErr:    fmt.Errorf("validation error: transformer input is empty"),
 		},
 	}
 )
 
 func TestApply(t *testing.T) {
-	for _, d := range dataSet {
+	for i, d := range dataSet {
 		got, err := d.rules.Apply(d.input)
 		if err != nil &&
 			strings.Compare(
 				d.expectedErr.Error(),
 				err.Error()) != 0 {
-			t.Errorf("Error:\n\tExpected:\t%q\n\tGot:\t\t%q\n",
+			t.Errorf("Error [%d]:\n\tExpected:\t%q\n\tGot:\t\t%q\n",
+				i,
 				d.expectedErr,
 				err)
 		}
 
 		if got != d.expectedOutput {
-			t.Errorf("Expected Output '%v', got '%v'", d.expectedOutput, got)
+			t.Errorf("[%d]Expected Output '%v', got '%v'", i, d.expectedOutput, got)
 		}
 
 	}

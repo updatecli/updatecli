@@ -2,8 +2,10 @@ package transformer
 
 // Replacer is struct used to feed strings.Replacer
 type Replacer struct {
+	// From defines the source value which need to be replaced
 	From string
-	To   string
+	// To defines the "to what" a "from" value needs to be replaced
+	To string
 }
 
 // Replacers is an array of Replacer
