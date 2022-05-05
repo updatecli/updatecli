@@ -285,6 +285,10 @@ func Commit(user, email, message, workingDir string, signingKey string, passpras
 	}
 
 	commitOptions := git.CommitOptions{
+		// Several plugin
+		// We assume that updatecli is working from a clean worktree and can add all files that need to be tracked by git
+		// Hence why we run git commit -A
+		All: true,
 		Author: &object.Signature{
 			Name:  user,
 			Email: email,
