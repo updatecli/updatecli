@@ -2,8 +2,6 @@ package helm
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"helm.sh/helm/v3/pkg/repo"
-	yml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -71,22 +69,4 @@ func New(spec interface{}) (*Chart, error) {
 
 	return newResource, nil
 
-}
-
-// loadIndex loads an index file and does minimal validity checking.
-// This will fail if API Version is not set (ErrNoAPIVersion) or if the unmarshal fails.
-func loadIndex(data []byte) (repo.IndexFile, error) {
-	i := repo.IndexFile{}
-
-	if err := yml.Unmarshal(data, &i); err != nil {
-		return i, err
-	}
-
-	i.SortEntries()
-
-	if i.APIVersion == "" {
-		return i, repo.ErrNoAPIVersion
-	}
-
-	return i, nil
 }
