@@ -1,0 +1,13 @@
+---
+name: 'Updatecli Diff TestSuite'
+vars:
+  message:
+    deprecated: 'is deprecated'
+testcases:
+  - name: "Test updatecli diff shouldn't fail"
+    steps:
+      - script: '{{ .binpath }}/updatecli diff --config  ../updatecli.d/deprecated.d --values ../values.yaml'
+        type: 'exec'
+        assertions:
+          - 'result.code ShouldEqual 0'
+          - 'result.systemerr ShouldContainSubstring "{{ .message.deprecated }}"'

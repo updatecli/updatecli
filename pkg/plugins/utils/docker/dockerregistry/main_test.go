@@ -87,7 +87,7 @@ func TestRegistry_Digest(t *testing.T) {
 			want:     "c74f1b1166784193ea6c8f9440263b9be6cae07dfe35e32a5df7a31358ac2060",
 		},
 		{
-			name: "Normal case with no architecture support (quay.io)",
+			name: "Normal case on quay.io (new OCI format: manifest list)",
 			image: dockerimage.Image{
 				Registry:     "quay.io",
 				Namespace:    "ansible",
@@ -96,7 +96,21 @@ func TestRegistry_Digest(t *testing.T) {
 				Architecture: "arm64",
 			},
 			mockAPIResHeaders: http.Header{
-				"Content-Type":          {"application/vnd.docker.distribution.manifest.v2+json"},
+				"Content-Type": {"application/vnd.oci.image.index.v1+json"},
+			},
+			want: "c74f1b1166784193ea6c8f9440263b9be6cae07dfe35e32a5df7a31358ac2060",
+		},
+		{
+			name: "Normal case on quay.io (new OCI format: standalone manifest)",
+			image: dockerimage.Image{
+				Registry:     "quay.io",
+				Namespace:    "ansible",
+				Repository:   "ansible-runner",
+				Tag:          "latest",
+				Architecture: "arm64",
+			},
+			mockAPIResHeaders: http.Header{
+				"Content-Type":          {"application/vnd.oci.image.manifest.v1+json"},
 				"Docker-Content-Digest": {"sha256:abb5ef7d2825f8ca4927f406cce339ca3b66d29f6267c26234255546680642c3"},
 			},
 			want: "abb5ef7d2825f8ca4927f406cce339ca3b66d29f6267c26234255546680642c3",

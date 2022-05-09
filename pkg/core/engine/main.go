@@ -86,7 +86,9 @@ func Clone(
 	hashes *[]uint64,
 	wg *sync.WaitGroup) error {
 
-	hash, err := hashstructure.Hash(s, nil)
+	scmhandler := *s
+
+	hash, err := hashstructure.Hash(scmhandler.GetDirectory(), nil)
 	if err != nil {
 		return err
 	}
@@ -108,7 +110,7 @@ func Clone(
 			if err != nil {
 				logrus.Errorf("err - %s", err)
 			}
-		}(*s)
+		}(scmhandler)
 		<-channel
 
 	}
@@ -211,8 +213,7 @@ func (e *Engine) Run() (err error) {
 
 		if err != nil {
 			logrus.Printf("Pipeline %q failed\n", pipeline.Title)
-			logrus.Printf("Skipping due to:\n\t%q\n", err)
-			logrus.Println(err)
+			logrus.Printf("Skipping due to:\n\t%s\n", err)
 			continue
 		}
 	}

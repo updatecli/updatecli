@@ -2,8 +2,6 @@ package helm
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/sirupsen/logrus"
 
@@ -18,26 +16,8 @@ func (c *Chart) Condition(source string) (bool, error) {
 	} else {
 		c.spec.Version = source
 	}
-	URL := fmt.Sprintf("%s/index.yaml", c.spec.URL)
 
-	req, err := http.NewRequest("GET", URL, nil)
-	if err != nil {
-		return false, err
-	}
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return false, err
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return false, err
-	}
-
-	index, err := loadIndex(body)
+	index, err := c.GetRepoIndexFile()
 	if err != nil {
 		return false, err
 	}
@@ -59,4 +39,5 @@ func (c *Chart) Condition(source string) (bool, error) {
 // ConditionFromSCM returns an error because it's not supported
 func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("SCM configuration is not supported for Helm chart condition, aborting")
+
 }

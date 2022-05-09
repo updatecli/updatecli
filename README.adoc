@@ -20,8 +20,6 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
 3. Targets: Update and publish the target files based on a value retrieved from the source stage.
 
-**A Quick-start is available on link:https://www.updatecli.io/docs/prologue/quick-start/[www.updatecli.io/docs/prologue/quick-start]**
-
 == Feature
 
 * *Flexibility*: Easy to define tailored update strategies, you are just one yaml file from it.
@@ -34,6 +32,12 @@ There are already many projects out there which can continuously update your fil
 Building and distributing software is a difficult task and good practices constantly evolve. 
 Updatecli was built to work independently of the underlying dependencies to update, wherever you need it and combining whatever workflow you are using, as you can see in the following section.
 
+== Demo
+
+link:https://asciinema.org/a/CR5DIxyTLnvtt8NllEeYAx83U[image:https://asciinema.org/a/CR5DIxyTLnvtt8NllEeYAx83U.svg[Asciinema]]
+
+**The Quick-start is available on link:https://www.updatecli.io/docs/prologue/quick-start/[www.updatecli.io/docs/prologue/quick-start]**
+
 == Installation
 
 Updatecli is a Go binary available for Linux, MacOS and Windows from the link:https://github.com/updatecli/updatecli/releases[release page] or installed via link:https://www.updatecli.io/docs/prologue/installation/[other methods].
@@ -42,23 +46,11 @@ Updatecli is a Go binary available for Linux, MacOS and Windows from the link:ht
 
 The documentation of Updatecli is available at link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io], but you can also look at the `examples` section to get an overview.
 
-== Contributing
-
-As a community-oriented project, all contributions are greatly appreciated!
-
-Here is a non-exhaustive list of possible contributions:
-
-* ⭐️ this repository.
-* Propose a new feature request.
-* Highlight an existing feature request with :thumbsup:.
-* Contribute to any repository in the link:https://github.com/updatecli/[updatecli] organization
-* Share the love
-
-More information available at link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
-
-
 === Example
-In this example, we define an update strategy in "updatecli.yaml" then we run `updatecli apply --config updatecli.yaml`.
+
+This example is copy of the quickstart. You can also find it on link:https://www.updatecli.io/docs/prologue/quick-start/[www.updatecli.io/docs/prologue/quick-start]
+
+We define an update strategy in "updatecli.yaml" then we run `updatecli apply --config updatecli.yaml`.
 Our objective is to know if the Jenkins project published a new stable version, if they build an appropriated docker image specifically for jdk11 and automatically update our infrastructure accordingly.
 
 [cols="2a,2a"]
@@ -89,9 +81,10 @@ sources:
 conditions:
   docker:
     name: "Test if Docker Image Published on Registry"
-    kind: dockerImage
+    kind: dockerimage
     spec:
       image: jenkins/jenkins
+      architecture: amd64
 
 targets:
   bumpJenkins:
@@ -107,7 +100,7 @@ pullrequests:
     title: Open pullrequest with new Jenkins version
     kind: github
     scmID: default
-    target: 
+    target:
       - bumpJenkins
     spec:
       automerge: true
@@ -136,6 +129,20 @@ More information link:https://www.updatecli.io/docs/prologue/introduction/[here]
 
 
 ---
+
+== Contributing
+
+As a community-oriented project, all contributions are greatly appreciated!
+
+Here is a non-exhaustive list of possible contributions:
+
+* ⭐️ this repository.
+* Propose a new feature request.
+* Highlight an existing feature request with :thumbsup:.
+* Contribute to any repository in the link:https://github.com/updatecli/[updatecli] organization
+* Share the love
+
+More information available at link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 
 == Links
 
