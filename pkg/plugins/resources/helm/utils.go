@@ -123,8 +123,10 @@ func (c *Chart) MetadataUpdate(chartPath string, dryRun bool) error {
 	}
 
 	if len(md.AppVersion) > 0 && c.spec.AppVersion {
-		logrus.Infof("\tAppVersion updated from %s to %s\n", md.AppVersion, c.spec.Value)
-		md.AppVersion = c.spec.Value
+		if md.AppVersion != c.spec.Value {
+			logrus.Infof("\tAppVersion updated from %s to %s\n", md.AppVersion, c.spec.Value)
+			md.AppVersion = c.spec.Value
+		}
 	}
 
 	// Init Chart Version if not set yet
@@ -134,6 +136,7 @@ func (c *Chart) MetadataUpdate(chartPath string, dryRun bool) error {
 
 	oldVersion := md.Version
 
+forLoop:
 	for _, inc := range strings.Split(c.spec.VersionIncrement, ",") {
 		v, err := semver.NewVersion(md.Version)
 		if err != nil {
@@ -147,12 +150,18 @@ func (c *Chart) MetadataUpdate(chartPath string, dryRun bool) error {
 			md.Version = v.IncMinor().String()
 		case PATCHVERSION:
 			md.Version = v.IncPatch().String()
+		case NOINCREMENT:
+			// Reset Version to its initial value
+			md.Version = oldVersion
+			break forLoop
 		default:
-			logrus.Errorf("Wrong increment rule %q.", inc)
+			logrus.Warningf("Wrong increment rule %q, ignoring", inc)
 		}
 	}
 
-	logrus.Infof("\tChart Version updated from %q to %q\n", oldVersion, md.Version)
+	if oldVersion != md.Version {
+		logrus.Infof("\tChart Version updated from %q to %q\n", oldVersion, md.Version)
+	}
 
 	if err != nil {
 		return err

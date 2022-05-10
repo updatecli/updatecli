@@ -39,10 +39,11 @@ func (c *Chart) ValidateTarget() error {
 
 		if inc != MAJORVERSION &&
 			inc != MINORVERSION &&
+			inc != NOINCREMENT &&
 			inc != PATCHVERSION &&
 			inc != "" {
 			gotErr = true
-			logrus.Errorf("unrecognized increment rule %q. accepted values are a comma separated list of [major,minor,patch]", inc)
+			logrus.Errorf("unrecognized increment rule %q. accepted values are a comma separated list of [major,minor,patch], or 'none' to disable version increment", inc)
 		}
 	}
 

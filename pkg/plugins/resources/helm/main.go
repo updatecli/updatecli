@@ -34,19 +34,30 @@ URL:
 	MAJORVERSION = "major"
 	// PATCHVERSION defines patch version identifier
 	PATCHVERSION = "patch"
+	// NOINCREMENT defines if a chart version need to be updated
+	NOINCREMENT = "none"
 )
 
 // Spec defines a specification for an "helmchart" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	File             string // [target] Define file to update
-	Key              string // [target] Define Key to update
-	Name             string // [source][condition][target] Define Chart name path like "stable/chart"
-	URL              string // [source][condition] Define the chart location
-	Value            string // [target] Define value to set
-	Version          string // [source][condition]
-	VersionIncrement string // [target] Define the rule to incremental the Chart version, accept a list of rules
-	AppVersion       bool   // [target] Boolean that define we must update the App Version
+
+	// Defines the Helm Chart file to update, only for "target"
+	File string
+	// Defines the key within the file that need to be updated, only for "target"
+	Key string
+	// Defines the Chart name path like "stable/chart", only for "target"
+	Name string
+	// Defines the chart location URL, only for source and condition
+	URL string
+	// Defines the value to set for a key, only for "target"
+	Value string
+	// Defines the Chart version, only for "source" and "condition", default value set based on sourceinput value
+	Version string // [source][condition]
+	// Defines if a Chart change, triggers a Chart version update, target only, accept values is a comma separated list of "none,major,minor,patch"
+	VersionIncrement string
+	// Defines if AppVersion must be updated as well, only for "target"
+	AppVersion bool
 }
 
 // Chart defines a resource of kind "helmchart"
