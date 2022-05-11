@@ -29,13 +29,13 @@ URL:
 {{ end }}
 `
 	// MINORVERSION defines minor version identifier
-	MINORVERSION = "minor"
+	MINORVERSION string = "minor"
 	// MAJORVERSION defines major version identifier
-	MAJORVERSION = "major"
+	MAJORVERSION string = "major"
 	// PATCHVERSION defines patch version identifier
-	PATCHVERSION = "patch"
+	PATCHVERSION string = "patch"
 	// NOINCREMENT defines if a chart version doesn't need to be incremented
-	NOINCREMENT = "none"
+	NOINCREMENT string = "none"
 )
 
 // Spec defines a specification for an "helmchart" resource

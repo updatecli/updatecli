@@ -122,13 +122,6 @@ func (c *Chart) MetadataUpdate(chartPath string, dryRun bool) error {
 		return err
 	}
 
-	if len(md.AppVersion) > 0 && c.spec.AppVersion {
-		if md.AppVersion != c.spec.Value {
-			logrus.Infof("\tAppVersion updated from %s to %s\n", md.AppVersion, c.spec.Value)
-			md.AppVersion = c.spec.Value
-		}
-	}
-
 	// Init Chart Version if not set yet
 	if len(md.Version) == 0 {
 		md.Version = "0.0.0"
@@ -161,6 +154,13 @@ forLoop:
 
 	if oldVersion != md.Version {
 		logrus.Infof("\tChart Version updated from %q to %q\n", oldVersion, md.Version)
+	}
+
+	if len(md.AppVersion) > 0 && c.spec.AppVersion {
+		if md.AppVersion != c.spec.Value {
+			logrus.Infof("\tAppVersion updated from %s to %s\n", md.AppVersion, c.spec.Value)
+			md.AppVersion = c.spec.Value
+		}
 	}
 
 	if err != nil {
