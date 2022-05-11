@@ -32,10 +32,6 @@ func (c *Chart) ValidateTarget() error {
 		errs = append(errs, errors.New("parameter key required"))
 	}
 
-	if len(c.spec.VersionIncrement) == 0 {
-		c.spec.VersionIncrement = MINORVERSION
-	}
-
 	if len(errs) > 0 {
 		for _, e := range errs {
 			logrus.Errorln(e)
@@ -48,6 +44,12 @@ func (c *Chart) ValidateTarget() error {
 
 func (c *Chart) validateVersionInc() []error {
 	var errs []error
+
+	// Set default value to minor
+	if len(c.spec.VersionIncrement) == 0 {
+		c.spec.VersionIncrement = MINORVERSION
+		return nil
+	}
 
 	// Checks one many time a string appears in a list of string
 	isNotDuplicated := func(rules []string, rule string) error {
