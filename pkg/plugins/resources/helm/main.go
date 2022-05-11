@@ -34,7 +34,7 @@ URL:
 	MAJORVERSION = "major"
 	// PATCHVERSION defines patch version identifier
 	PATCHVERSION = "patch"
-	// NOINCREMENT defines if a chart version need to be updated
+	// NOINCREMENT defines if a chart version doesn't need to be incremented
 	NOINCREMENT = "none"
 )
 
