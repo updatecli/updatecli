@@ -54,7 +54,7 @@ type Spec struct {
 	Value string
 	// Defines the Chart version, only for "source" and "condition", default value set based on sourceinput value
 	Version string // [source][condition]
-	// Defines if a Chart change, triggers a Chart version update, target only, accept values is a comma separated list of "none,major,minor,patch"
+	// Defines if a Chart changes, triggers (or not) a Chart version update, target only, accepted values is a comma separated list of "none,major,minor,patch"
 	VersionIncrement string
 	// Defines if AppVersion must be updated as well, only for "target"
 	AppVersion bool
