@@ -42,21 +42,21 @@ URL:
 // parsed from an updatecli manifest file
 type Spec struct {
 
-	// Defines the Helm Chart file to update, only for "target"
+	// [target] Defines the Helm Chart file to update.
 	File string
-	// Defines the key within the file that need to be updated, only for "target"
+	// [target] Defines the key within the file that need to be updated.
 	Key string
-	// Defines the Chart name path like "stable/chart", only for "target"
+	// [target] Defines the Chart name path like "stable/chart".
 	Name string
-	// Defines the chart location URL, only for source and condition
+	// [source,condition] Defines the chart location URL.
 	URL string
-	// Defines the value to set for a key, only for "target"
+	// [target] Defines the value to set for a key
 	Value string
-	// Defines the Chart version, only for "source" and "condition", default value set based on sourceinput value
-	Version string // [source][condition]
-	// Defines if a Chart changes, triggers (or not) a Chart version update, target only, accepted values is a comma separated list of "none,major,minor,patch"
+	// [source,condition] Defines the Chart version, default value set based on sourceinput value
+	Version string
+	// [target] Defines if a Chart changes, triggers (or not) a Chart version update, accepted values is a comma separated list of "none,major,minor,patch"
 	VersionIncrement string
-	// Defines if AppVersion must be updated as well, only for "target"
+	// [target] Defines if AppVersion must be updated as well
 	AppVersion bool
 }
 
