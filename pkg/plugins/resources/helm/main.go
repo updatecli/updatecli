@@ -41,7 +41,6 @@ URL:
 // Spec defines a specification for an "helmchart" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-
 	// [target] Defines the Helm Chart file to update.
 	File string
 	// [target] Defines the key within the file that need to be updated.
