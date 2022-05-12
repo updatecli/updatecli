@@ -1,0 +1,63 @@
+name: "Test yaml resource"
+
+sources:
+  testFiles:
+    name: Test three yaml file
+    kind: yaml
+    spec:
+      files:
+        - "e2e/updatecli.d/success.d/yamlExample.yaml"
+        - "e2e/updatecli.d/success.d/yamlExample.2.yaml"
+        - "e2e/updatecli.d/success.d/yamlExample.3.yaml"
+      key: "name"
+
+  testFile:
+    name: Test yaml file
+    kind: yaml
+    spec:
+      file: "e2e/updatecli.d/success.d/yamlExample.yaml"
+      key: "name"
+
+conditions:
+  testFiles:
+    name: Test three yaml file
+    kind: yaml
+    sourceid: testFiles
+    spec:
+      files:
+        - "e2e/updatecli.d/success.d/yamlExample.yaml"
+        - "e2e/updatecli.d/success.d/yamlExample.2.yaml"
+        - "e2e/updatecli.d/success.d/yamlExample.3.yaml"
+      key: "name"
+      value: "Test yaml resource"
+
+  testFile:
+    name: Test yaml file
+    kind: yaml
+    sourceid: testFile
+    spec:
+      file: "e2e/updatecli.d/success.d/yamlExample.yaml"
+      key: "name"
+      value: "Test yaml resource"
+
+targets:
+  testFiles:
+    name: Test three yaml file
+    kind: yaml
+    sourceid: testFiles
+    spec:
+      files:
+        - "e2e/updatecli.d/success.d/yamlExample.yaml"
+        - "e2e/updatecli.d/success.d/yamlExample.2.yaml"
+        - "e2e/updatecli.d/success.d/yamlExample.3.yaml"
+      key: "name"
+      value: "Test yaml resource change"
+
+  testFile:
+    name: Test yaml file
+    kind: yaml
+    sourceid: testFile
+    spec:
+      file: "e2e/updatecli.d/success.d/yamlExample.yaml"
+      key: "name"
+      value: "Test yaml resource change"

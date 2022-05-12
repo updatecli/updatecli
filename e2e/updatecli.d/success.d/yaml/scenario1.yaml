@@ -1,0 +1,65 @@
+name: "Test yaml resource"
+
+sources:
+  testFiles:
+    name: Test three yaml file
+    kind: yaml
+    spec:
+      files:
+        - "e2e/updatecli.d/success.d/yaml/scenario1.yaml"
+# Multiple files is not supported for sources
+#        - "e2e/updatecli.d/success.d/yaml/scenario2.yaml"
+#        - "e2e/updatecli.d/success.d/yaml/scenario3.yaml"
+      key: "name"
+
+  testFile:
+    name: Test yaml file
+    kind: yaml
+    spec:
+      file: "e2e/updatecli.d/success.d/yaml/scenario1.yaml"
+      key: "name"
+
+conditions:
+  testFiles:
+    name: Test three yaml file
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      files:
+        - "e2e/updatecli.d/success.d/yaml/scenario1.yaml"
+# Multiple files is not supported for conditions
+#        - "e2e/updatecli.d/success.d/yaml/scenario2.yaml"
+#        - "e2e/updatecli.d/success.d/yaml/scenario3.yaml"
+      key: "name"
+      value: "Test yaml resource"
+
+  testFile:
+    name: Test yaml file
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: "e2e/updatecli.d/success.d/yaml/scenario1.yaml"
+      key: "name"
+      value: "Test yaml resource"
+
+targets:
+  testFiles:
+    name: Test three yaml file
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      files:
+        - "e2e/updatecli.d/success.d/yaml/scenario1.yaml"
+        - "e2e/updatecli.d/success.d/yaml/scenario2.yaml"
+        - "e2e/updatecli.d/success.d/yaml/scenario3.yaml"
+      key: "name"
+      value: "Test yaml resource change"
+
+  testFile:
+    name: Test yaml file
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: "e2e/updatecli.d/success.d/yaml/scenario1.yaml"
+      key: "name"
+      value: "Test yaml resource change"
