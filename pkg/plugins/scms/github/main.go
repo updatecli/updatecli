@@ -14,6 +14,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
+
+	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Spec represents the configuration input
@@ -41,7 +43,7 @@ type Github struct {
 }
 
 // New returns a new valid Github object.
-func New(s Spec) (*Github, error) {
+func New(s Spec, pipelineID string) (*Github, error) {
 	errs := s.Validate()
 
 	if len(errs) > 0 {
@@ -73,10 +75,15 @@ func New(s Spec) (*Github, error) {
 		}, nil
 	}
 
-	return &Github{
-		Spec:   s,
-		client: githubv4.NewEnterpriseClient(os.Getenv(s.URL), httpClient),
-	}, nil
+	g := Github{
+		Spec:       s,
+		client:     githubv4.NewEnterpriseClient(os.Getenv(s.URL), httpClient),
+		HeadBranch: git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+	}
+
+	g.setDirectory()
+
+	return &g, nil
 }
 
 // Validate verifies if mandatory Github parameters are provided and return false if not.

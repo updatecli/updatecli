@@ -118,11 +118,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	s := *t.Scm
 
-	if err = s.Init(t.Config.PipelineID); err != nil {
-		t.Result = result.FAILURE
-		return err
-	}
-
 	if err = s.Checkout(); err != nil {
 		t.Result = result.FAILURE
 		return err

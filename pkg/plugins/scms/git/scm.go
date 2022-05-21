@@ -43,14 +43,7 @@ func (g *Git) Clean() error {
 // Clone run `git clone`.
 func (g *Git) Clone() (string, error) {
 
-	err := g.Init("")
-
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-		return "", err
-	}
-
-	err = git.Clone(
+	err := git.Clone(
 		g.Username,
 		g.Password,
 		g.URL,
@@ -91,24 +84,6 @@ func (g *Git) Commit(message string) error {
 	)
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// Init set Git parameters if needed.
-func (g *Git) Init(pipelineID string) (err error) {
-	if len(g.Directory) == 0 {
-		g.Directory, err = newDirectory(g.URL)
-		if err != nil {
-			return err
-		}
-	}
-
-	g.remoteBranch = git.SanitizeBranchName(g.Branch)
-
-	if len(g.Branch) == 0 {
-		g.Branch = "main"
 	}
 
 	return nil

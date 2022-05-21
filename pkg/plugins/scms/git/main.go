@@ -10,6 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
+	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Git contains settings to manipulate a git repository.
@@ -28,6 +29,23 @@ type Git struct {
 	GPG           sign.GPGSpec  // GPG key and passphrased used for commit signing
 }
 
+func New(g Git) (*Git, error) {
+	var err error
+	if len(g.Directory) == 0 {
+		g.Directory, err = newDirectory(g.URL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(g.Branch) == 0 {
+		g.Branch = "main"
+	}
+
+	g.remoteBranch = git.SanitizeBranchName(g.Branch)
+	return &g, nil
+
+}
 func newDirectory(URL string) (string, error) {
 
 	directory := path.Join(

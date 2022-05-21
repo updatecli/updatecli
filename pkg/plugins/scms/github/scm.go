@@ -7,14 +7,6 @@ import (
 	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
-// Init set default Github parameters if not set.
-func (g *Github) Init(pipelineID string) error {
-	g.HeadBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
-	g.setDirectory()
-
-	return nil
-}
-
 // GetDirectory returns the local git repository path.
 func (g *Github) GetDirectory() (directory string) {
 	return g.Spec.Directory
