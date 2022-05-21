@@ -20,25 +20,40 @@ import (
 
 // Spec represents the configuration input
 type Spec struct {
-	Branch      string          // Branch specifies which github branch to work on
-	Directory   string          // Directory specifies where the github repository is cloned on the local disk
-	Email       string          // Email specifies which emails to use when creating commits
-	Owner       string          // Owner specifies repository owner
-	Repository  string          // Repository specifies the name of a repository for a specific owner
-	Token       string          // Token specifies the credential used to authenticate with
-	URL         string          // URL specifies the default github url in case of GitHub enterprise
-	Username    string          // Username specifies the username used to authenticate with Github API
-	User        string          // User specifies the user of the git commit messages
-	PullRequest PullRequestSpec // Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
-	GPG         sign.GPGSpec    // GPG key and passphrased used for commit signing
+	// Branch specifies which github branch to work on
+	Branch string
+	// Directory specifies where the github repository is cloned on the local disk
+	Directory string
+	// Email specifies which emails to use when creating commits
+	Email string
+	// Owner specifies repository owner
+	Owner string
+	// Repository specifies the name of a repository for a specific owner
+	Repository string
+	// Token specifies the credential used to authenticate with
+	Token string
+	// URL specifies the default github url in case of GitHub enterprise
+	URL string
+	// Username specifies the username used to authenticate with Github API
+	Username string
+	// User specifies the user of the git commit messages
+	User string
+	// Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
+	PullRequest PullRequestSpec
+	// GPG key and passphrased used for commit signing
+	GPG sign.GPGSpec
 }
 
 // Github contains settings to interact with Github
 type Github struct {
-	Spec          Spec          // Spec contains inputs coming from updatecli configuration
-	HeadBranch    string        // remoteBranch is used when creating a temporary branch before opening a PR
-	Force         bool          // Force is used during the git push phase to run `git push --force`.
-	CommitMessage commit.Commit // CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	// Spec contains inputs coming from updatecli configuration
+	Spec Spec
+	// HeadBranch is used when creating a temporary branch before opening a PR
+	HeadBranch string
+	// Force is used during the git push phase to run `git push --force`.
+	Force bool
+	// CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	CommitMessage commit.Commit
 	client        GitHubClient
 }
 
