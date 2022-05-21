@@ -42,6 +42,10 @@ type Spec struct {
 	PullRequest PullRequestSpec
 	// GPG key and passphrased used for commit signing
 	GPG sign.GPGSpec
+	// Force is used during the git push phase to run `git push --force`.
+	Force bool
+	// CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	CommitMessage commit.Commit
 }
 
 // Github contains settings to interact with Github
@@ -50,11 +54,7 @@ type Github struct {
 	Spec Spec
 	// HeadBranch is used when creating a temporary branch before opening a PR
 	HeadBranch string
-	// Force is used during the git push phase to run `git push --force`.
-	Force bool
-	// CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
-	CommitMessage commit.Commit
-	client        GitHubClient
+	client     GitHubClient
 }
 
 // New returns a new valid Github object.
