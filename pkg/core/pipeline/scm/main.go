@@ -94,7 +94,7 @@ func (s *Scm) GenerateSCM() error {
 		s.Handler = g
 
 	case "git":
-		gitSpec := git.Git{}
+		gitSpec := git.Spec{}
 
 		err := mapstructure.Decode(s.Config.Spec, &gitSpec)
 		if err != nil {
@@ -121,7 +121,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
-		"git":    &git.Git{},
+		"git":    &git.Spec{},
 		"github": &github.Spec{},
 	}
 
