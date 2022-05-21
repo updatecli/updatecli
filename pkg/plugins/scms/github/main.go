@@ -27,15 +27,15 @@ type Spec struct {
 	// Email specifies which emails to use when creating commits
 	Email string
 	// Owner specifies repository owner
-	Owner string
+	Owner string `jsonschema:"required"`
 	// Repository specifies the name of a repository for a specific owner
-	Repository string
+	Repository string `jsonschema:"required"`
 	// Token specifies the credential used to authenticate with
-	Token string
+	Token string `jsonschema:"required"`
 	// URL specifies the default github url in case of GitHub enterprise
 	URL string
 	// Username specifies the username used to authenticate with Github API
-	Username string
+	Username string `jsonschema:"required"`
 	// User specifies the user of the git commit messages
 	User string
 	// Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
