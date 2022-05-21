@@ -16,7 +16,7 @@ import (
 // Spec contains settings to manipulate a git repository.
 type Spec struct {
 	// URL specifies the git url
-	URL string
+	URL string `jsonschema:"required"`
 	// Username specifies the username for http authentication
 	Username string
 	// Password specifies the password for http authentication
