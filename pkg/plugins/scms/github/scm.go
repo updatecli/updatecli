@@ -7,14 +7,6 @@ import (
 	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
-// Init set default Github parameters if not set.
-func (g *Github) Init(pipelineID string) error {
-	g.HeadBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID))
-	g.setDirectory()
-
-	return nil
-}
-
 // GetDirectory returns the local git repository path.
 func (g *Github) GetDirectory() (directory string) {
 	return g.Spec.Directory
@@ -59,7 +51,7 @@ func (g *Github) Clone() (string, error) {
 func (g *Github) Commit(message string) error {
 
 	// Generate the conventional commit message
-	commitMessage, err := g.CommitMessage.Generate(message)
+	commitMessage, err := g.Spec.CommitMessage.Generate(message)
 	if err != nil {
 		return err
 	}
@@ -93,7 +85,7 @@ func (g *Github) Add(files []string) error {
 // Push run `git push` then open a pull request on Github if not already created.
 func (g *Github) Push() error {
 
-	err := git.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Force)
+	err := git.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
 	if err != nil {
 		return err
 	}
@@ -104,7 +96,7 @@ func (g *Github) Push() error {
 // PushTag push tags
 func (g *Github) PushTag(tag string) error {
 
-	err := git.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Force)
+	err := git.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
 	if err != nil {
 		return err
 	}

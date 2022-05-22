@@ -49,13 +49,6 @@ func (s *Source) Run() (err error) {
 			return err
 		}
 
-		err = SCM.Init(workingDir)
-
-		if err != nil {
-			s.Result = result.FAILURE
-			return err
-		}
-
 		err = SCM.Checkout()
 
 		if err != nil {
