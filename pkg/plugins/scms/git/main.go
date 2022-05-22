@@ -10,22 +10,57 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
+	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
-// Git contains settings to manipulate a git repository.
+// Spec contains settings to manipulate a git repository.
+type Spec struct {
+	// URL specifies the git url
+	URL string `jsonschema:"required"`
+	// Username specifies the username for http authentication
+	Username string
+	// Password specifies the password for http authentication
+	Password string
+	// Branch specifies the git branch
+	Branch string
+	// User specifies the git commit author
+	User string
+	// Email specifies the git commit email
+	Email string
+	// Directory specifies the directory to use for cloning the repository
+	Directory string
+	// Force is used during the git push phase to run `git push --force`.
+	Force bool
+	// CommitMessage contains conventional commit metadata as type or scope, used to generate the final commit message.
+	CommitMessage commit.Commit
+	// GPG key and passphrased used for commit signing
+	GPG sign.GPGSpec
+}
+
 type Git struct {
-	URL           string
-	Username      string
-	Password      string
-	Branch        string
-	remoteBranch  string
-	User          string
-	Email         string
-	Directory     string
-	Version       string
-	Force         bool          // Force is used during the git push phase to run `git push --force`.
-	CommitMessage commit.Commit // CommitMessage contains conventional commit metadata as type or scope, used to generate the final commit message.
-	GPG           sign.GPGSpec  // GPG key and passphrased used for commit signing
+	spec         Spec
+	remoteBranch string
+}
+
+// New returns a new git object
+func New(s Spec) (*Git, error) {
+	var err error
+	if len(s.Directory) == 0 {
+		s.Directory, err = newDirectory(s.URL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(s.Branch) == 0 {
+		s.Branch = "main"
+	}
+
+	return &Git{
+		spec:         s,
+		remoteBranch: git.SanitizeBranchName(s.Branch),
+	}, nil
+
 }
 
 func newDirectory(URL string) (string, error) {
