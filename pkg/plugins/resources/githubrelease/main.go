@@ -39,7 +39,7 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		Token:      newSpec.Token,
 		URL:        newSpec.URL,
 		Username:   newSpec.Username,
-	})
+	}, "")
 	if err != nil {
 		return &GitHubRelease{}, err
 	}

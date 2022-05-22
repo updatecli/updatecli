@@ -65,12 +65,6 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		err = s.Init(c.Config.Name)
-		if err != nil {
-			c.Result = result.FAILURE
-			return err
-		}
-
 		err = s.Checkout()
 		if err != nil {
 			c.Result = result.FAILURE
