@@ -33,7 +33,7 @@ jobs:
       - name: Show Venom version
         run: venom version
       - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           install-only: true
       - name: Show GoReleaser version
