@@ -1,0 +1,66 @@
+name: Helm Chart Integration Test
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/epinio/helm-charts.git 
+
+sources:
+  default:
+    name: Retrieve Version
+    kind: helmchart
+    spec:
+      url: https://charts.min.io/
+      name: minio
+
+conditions:
+  default:
+    name: Retrieve Version
+    kind: helmchart
+    spec:
+      url: https://charts.min.io/
+      name: minio
+      version: 3.6.2
+
+targets:
+  default: 
+    name: Test Chart Update
+    scmid: default
+    kind: helmchart
+    spec:
+      name: chart/epinio
+      file: Chart.yaml
+      key:  dependencies[0].version
+
+  fakeAppVersion: 
+    name: Test Chart Update
+    scmid: default
+    kind: helmchart
+    spec:
+      name: chart/epinio
+      file: Chart.yaml
+      appversion: true
+      key:  dependencies[1].version
+      versionincrement: minor
+
+  fakeVersionInc: 
+    name: Test Chart Update
+    scmid: default
+    kind: helmchart
+    spec:
+      name: chart/epinio
+      file: Chart.yaml
+      appversion: true
+      key:  dependencies[2].version
+      versionincrement: minor,major
+  noVersionInc: 
+    name: Test Chart Update
+    scmid: default
+    kind: helmchart
+    spec:
+      name: chart/epinio
+      file: Chart.yaml
+      appversion: true
+      key:  dependencies[2].version
+      versionincrement: none
