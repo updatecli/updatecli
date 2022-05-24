@@ -14,29 +14,29 @@ jobs:
   updatecli:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: "Checkout"
+        uses: "actions/checkout@v3"
 
-      - name: Diff
-        uses: updatecli/updatecli-action@v2.0.0
-        with:
-          command: diff
-          flags: "--config ./updatecli/updatecli.d"
+      - name: "Setup updatecli"
+        uses: "updatecli/updatecli-action@v2.0.0"
+
+      - name: "Run updatecli in dryrun"
+        run: "updatecli diff --config ./updatecli/updatecli.d"
         env:
           UPDATECLI_GITHUB_ACTOR: ${{ github.actor }}
           UPDATECLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: tibdex/github-app-token@v1.5
         id: generate_token
         if: github.ref == 'refs/heads/main'
         with:
           app_id: ${{ secrets.UPDATECLIBOT_APP_ID }}
           private_key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
-      - name: Apply
-        uses: updatecli/updatecli-action@v2.0.0
+
+      - name: "Run updatecli"
         if: github.ref == 'refs/heads/main'
-        with:
-          command: apply
-          flags: "--config ./updatecli/updatecli.d"
+        run: "updatecli apply --config ./updatecli/updatecli.d"
         env:
           UPDATECLI_GITHUB_ACTOR: ${{ secrets.UPDATECLI_BOT_GITHUB_ACTOR }}
           UPDATECLI_GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
