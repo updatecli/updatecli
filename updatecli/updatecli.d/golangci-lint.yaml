@@ -14,7 +14,7 @@ scms:
 
 sources:
   default:
-    name: Get latest updatecli release
+    name: Get latest golangci-lint version
     kind: githubrelease
     spec:
       owner: golangci
@@ -25,7 +25,7 @@ sources:
 
 conditions:
   default:
-    name: 'Update updatecli version to {{ source "default" }}'
+    name: 'Test golangci-lint is used in workflow go.yaml'
     kind: yaml
     disablesourceinput: true
     spec:
@@ -36,7 +36,7 @@ conditions:
 
 targets:
   default:
-    name: 'Update updatecli version to {{ source "default" }}'
+    name: 'Update Golangci-lint version to {{ source "default" }}'
     kind: yaml
     spec:
       file: .github/workflows/go.yaml
@@ -46,7 +46,7 @@ targets:
     # and must be specified without patch version:
     # we always use the latest patch version.
     transformers:
-      - findSubMatch:
+      - findsubmatch:
           pattern: 'v(\d*)\.(\d*)'
 
 pullrequests:
@@ -61,4 +61,3 @@ pullrequests:
         - chore
         - dependencies
         - skip-changelog
-
