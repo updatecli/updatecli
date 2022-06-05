@@ -84,7 +84,9 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 	} else {
-		return fmt.Errorf("something went wrong while looking at the scm configuration: %s", c.Config.Scm.ToString())
+		var i interface{} = c.Config.Scm
+		scm := i.(scm.ScmHandler)
+		return fmt.Errorf("something went wrong while looking at the scm configuration: %s", scm.ToString())
 	}
 
 	if ok {
