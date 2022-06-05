@@ -17,7 +17,7 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	var filePath string
 
 	if len(y.files) > 1 {
-		validationError := fmt.Errorf("Validation error in conditions of type 'yaml': the attributes `spec.files` can't contain more than one element for conditions")
+		validationError := fmt.Errorf("Validation error in sources of type 'yaml': the attributes `spec.files` can't contain more than one element for conditions")
 		logrus.Errorf(validationError.Error())
 		return "", validationError
 	}

@@ -17,13 +17,13 @@ import (
 // Spec defines a specification for a "yaml" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// File contains the file path to take in account
+	// [source,condition,target] File contains the file path to take in account
 	File string
-	// Files contains the file path(s) to take in account
+	// [condition,target] Files contains the file path(s) to take in account
 	Files []string
-	// Key is the YAML key to retrieve
+	// [source,condition,target] Key is the YAML key to retrieve
 	Key string
-	// Value is the YAML value to set
+	// [source,condition,target] Value is the YAML value to set
 	Value string
 	// [condition] allow checking for only the existence of a key (not its value)
 	KeyOnly bool // TODO: add in documentation
