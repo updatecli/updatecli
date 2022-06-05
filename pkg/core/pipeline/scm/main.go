@@ -38,6 +38,7 @@ type ScmHandler interface {
 	Clean() error
 	PushTag(tag string) error
 	GetChangedFiles(workingDir string) ([]string, error)
+	ToString() string
 }
 
 func (c *Config) Validate() error {

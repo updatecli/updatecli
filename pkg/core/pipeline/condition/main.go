@@ -2,7 +2,6 @@ package condition
 
 import (
 	"fmt"
-	"reflect"
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
@@ -85,25 +84,7 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 	} else {
-		var scmKind string
-		for key := range c.Config.Scm {
-			scmKind = key
-		}
-		switch scmKind {
-		case "github":
-			interf := reflect.ValueOf(c.Config.Scm["github"]).Interface()
-			redacted := interf.(map[string]interface{})
-			redacted["token"] = "********"
-			return fmt.Errorf("something went wrong while looking at the scm configuration: %+v", redacted)
-		case "git":
-			interf := reflect.ValueOf(c.Config.Scm["git"]).Interface()
-			redacted := interf.(map[string]interface{})
-			redacted["password"] = "********"
-			return fmt.Errorf("something went wrong while looking at the scm configuration: %+v", redacted)
-		default:
-			logrus.Errorf("scm of kind %q is not supported", scmKind)
-			return fmt.Errorf("something went wrong while looking at the scm configuration: %+v", c.Config.Scm)
-		}
+		return fmt.Errorf("something went wrong while looking at the scm configuration: %s", c.Config.Scm.ToString())
 	}
 
 	if ok {

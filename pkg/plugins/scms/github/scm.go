@@ -115,3 +115,21 @@ func (g *Github) PushTag(tag string) error {
 func (g *Github) GetChangedFiles(workingDir string) ([]string, error) {
 	return git.GetChangedFiles(workingDir)
 }
+
+func (g *Github) ToString() string {
+	redacted := Spec{
+		Branch:      g.Spec.Branch,
+		Directory:   g.Spec.Directory,
+		Email:       g.Spec.Email,
+		Owner:       g.Spec.Owner,
+		Repository:  g.Spec.Repository,
+		Token:       "******",
+		URL:         g.Spec.URL,
+		Username:    g.Spec.Username,
+		User:        g.Spec.User,
+		PullRequest: g.Spec.PullRequest,
+		GPG:         g.Spec.GPG,
+	}
+
+	return fmt.Sprintf("%+v", redacted)
+}

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -143,4 +144,23 @@ func (g *Git) PushTag(tag string) error {
 
 func (g *Git) GetChangedFiles(workingDir string) ([]string, error) {
 	return git.GetChangedFiles(workingDir)
+}
+
+func (g *Git) ToString() string {
+	redacted := Git{
+		URL:           g.URL,
+		Username:      g.Username,
+		Password:      "******",
+		Branch:        g.Branch,
+		remoteBranch:  g.remoteBranch,
+		User:          g.User,
+		Email:         g.Email,
+		Directory:     g.Directory,
+		Version:       g.Version,
+		Force:         g.Force,
+		CommitMessage: g.CommitMessage,
+		GPG:           g.GPG,
+	}
+
+	return fmt.Sprintf("%+v", redacted)
 }
