@@ -10,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
-	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Spec contains settings to manipulate a git repository.
@@ -38,8 +38,9 @@ type Spec struct {
 }
 
 type Git struct {
-	spec         Spec
-	remoteBranch string
+	spec             Spec
+	remoteBranch     string
+	nativeGitHandler gitgeneric.GitHandler
 }
 
 // New returns a new git object
@@ -56,9 +57,12 @@ func New(s Spec) (*Git, error) {
 		s.Branch = "main"
 	}
 
+	nativeGitHandler := gitgeneric.GoGit{}
+
 	return &Git{
-		spec:         s,
-		remoteBranch: git.SanitizeBranchName(s.Branch),
+		spec:             s,
+		remoteBranch:     nativeGitHandler.SanitizeBranchName(s.Branch),
+		nativeGitHandler: nativeGitHandler,
 	}, nil
 
 }

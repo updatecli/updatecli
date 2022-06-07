@@ -20,7 +20,6 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // PULLREQUESTBODY is the pull request template used as pull request description
@@ -143,7 +142,7 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 	p.Title = title
 
 	// Check if they are changes that need to be published otherwise exit
-	matchingBranch, err := gitgeneric.IsSimilarBranch(
+	matchingBranch, err := p.gh.nativeGitHandler.IsSimilarBranch(
 		p.gh.HeadBranch,
 		p.gh.Spec.Branch,
 		p.gh.GetDirectory())

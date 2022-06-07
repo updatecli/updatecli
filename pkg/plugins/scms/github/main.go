@@ -15,7 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 
-	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Spec represents the configuration input
@@ -53,8 +53,9 @@ type Github struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
 	// HeadBranch is used when creating a temporary branch before opening a PR
-	HeadBranch string
-	client     GitHubClient
+	HeadBranch       string
+	client           GitHubClient
+	nativeGitHandler gitgeneric.GitHandler
 }
 
 // New returns a new valid Github object.
@@ -82,10 +83,12 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		&oauth2.Token{AccessToken: s.Token},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
+	nativeGitHandler := gitgeneric.GoGit{}
 
 	g := Github{
-		Spec:       s,
-		HeadBranch: git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		Spec:             s,
+		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		nativeGitHandler: nativeGitHandler,
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {

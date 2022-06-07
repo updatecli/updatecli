@@ -4,6 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Based on this discussion,
@@ -103,9 +106,9 @@ func TestSanitizeBranchName(t *testing.T) {
 			expected: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		},
 	}
-
+	g := GoGit{}
 	for _, d := range datasets {
-		got := SanitizeBranchName(d.branch)
+		got := g.SanitizeBranchName(d.branch)
 		if got != d.expected {
 			t.Errorf("Branch name isn't correctly got %s, expected %s", got, d.expected)
 		}
@@ -115,15 +118,15 @@ func TestSanitizeBranchName(t *testing.T) {
 // Test that we can correctly retrieve a list of tags from a remote git repository
 // and that it's correctly ordered, starting with the oldest tag
 func TestTagsIntegration(t *testing.T) {
-
+	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
-	err := Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir)
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
 	defer os.RemoveAll(workingDir)
 
-	tags, err := Tags(workingDir)
+	tags, err := g.Tags(workingDir)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -140,4 +143,46 @@ func TestTagsIntegration(t *testing.T) {
 		t.Errorf("Expected tag %q to be found in %q", expectedTag, tags)
 	}
 	os.Remove(workingDir)
+}
+
+func TestGoGit_RemoteURLs(t *testing.T) {
+	cwd, _ := os.Getwd()
+
+	tests := []struct {
+		name       string
+		workingDir string
+		wantErr    bool
+	}{
+		{
+			name:       "passing test with the current working directory",
+			workingDir: cwd,
+		},
+		{
+			name:       "failing test with existing directory with no git in it",
+			workingDir: "/tmp",
+			wantErr:    true,
+		},
+		{
+			name:       "failing test with non-existing directory",
+			workingDir: "/notexisting",
+			wantErr:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := GoGit{}
+			gotRemotes, gotErr := g.RemoteURLs(tt.workingDir)
+
+			if tt.wantErr {
+				require.Error(t, gotErr)
+				return
+			}
+
+			require.NoError(t, gotErr)
+			// Only testing that there is an "origin" remote with a non empty URL.
+			// Because origin's URL, as well as other remotes, depend on the user or CI configuration and is not deterministic.
+			assert.Contains(t, gotRemotes, "origin")
+			assert.NotEmpty(t, gotRemotes["origin"])
+		})
+	}
 }
