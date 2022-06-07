@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -64,7 +65,68 @@ func New(s Spec) (*Git, error) {
 		remoteBranch:     nativeGitHandler.SanitizeBranchName(s.Branch),
 		nativeGitHandler: nativeGitHandler,
 	}, nil
+}
 
+// Merge returns nil if it successfully merges the child Spec into target receiver.
+// Please note that child attributes always overrides receiver's
+func (gs *Spec) Merge(child interface{}) error {
+	childGHSpec, ok := child.(Spec)
+	if !ok {
+		return fmt.Errorf("unable to merge GitHub spec with unknown object type.")
+	}
+
+	if childGHSpec.Branch != "" {
+		gs.Branch = childGHSpec.Branch
+	}
+	if childGHSpec.CommitMessage != (commit.Commit{}) {
+		gs.CommitMessage = childGHSpec.CommitMessage
+	}
+	if childGHSpec.Directory != "" {
+		gs.Directory = childGHSpec.Directory
+	}
+	if childGHSpec.Email != "" {
+		gs.Email = childGHSpec.Email
+	}
+	if childGHSpec.Force {
+		gs.Force = childGHSpec.Force
+	}
+	if childGHSpec.GPG != (sign.GPGSpec{}) {
+		gs.GPG = childGHSpec.GPG
+	}
+	if childGHSpec.URL != "" {
+		gs.URL = childGHSpec.URL
+	}
+	if childGHSpec.User != "" {
+		gs.User = childGHSpec.User
+	}
+	if childGHSpec.Username != "" {
+		gs.Username = childGHSpec.Username
+	}
+
+	return nil
+}
+
+// MergeFromEnv updates the target receiver with the "non zero-ed" environment variables
+func (gs *Spec) MergeFromEnv(envPrefix string) {
+	prefix := fmt.Sprintf("%s_", envPrefix)
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "BRANCH")) != "" {
+		gs.Branch = os.Getenv(fmt.Sprintf("%s%s", prefix, "BRANCH"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "DIRECTORY")) != "" {
+		gs.Directory = os.Getenv(fmt.Sprintf("%s%s", prefix, "DIRECTORY"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "EMAIL")) != "" {
+		gs.Email = os.Getenv(fmt.Sprintf("%s%s", prefix, "EMAIL"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "URL")) != "" {
+		gs.URL = os.Getenv(fmt.Sprintf("%s%s", prefix, "URL"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "USERNAME")) != "" {
+		gs.Username = os.Getenv(fmt.Sprintf("%s%s", prefix, "USERNAME"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "USER")) != "" {
+		gs.User = os.Getenv(fmt.Sprintf("%s%s", prefix, "USER"))
+	}
 }
 
 func newDirectory(URL string) (string, error) {

@@ -55,9 +55,10 @@ test-short: ## Execute the Golang's tests for updatecli
 
 .PHONY: test-e2e
 test-e2e: ## Execute updatecli end to end tests
-	echo $$VENOM_VAR_binpath
+	@echo "==\nUsing the following updatecli binary (from variable 'VENOM_VAR_binpath'): $(VENOM_VAR_binpath)/updatecli\n=="
+	@test -n "$$GITHUB_TOKEN" || { echo "Undefined required variable 'GITHUB_TOKEN'"; exit 1; }
+	@test -n "$$GITHUB_ACTOR" || { echo "Undefined required variable 'GITHUB_ACTOR'"; exit 1; }
 	time venom run e2e/venom.d/* --output-dir ./e2e --format yaml
-
 
 .PHONY: lint
 lint: ## Execute the Golang's linters on updatecli's source code

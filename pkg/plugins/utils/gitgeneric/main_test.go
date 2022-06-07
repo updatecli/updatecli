@@ -180,7 +180,7 @@ func TestGoGit_RemoteURLs(t *testing.T) {
 
 			require.NoError(t, gotErr)
 			// Only testing that there is an "origin" remote with a non empty URL.
-			// Because origin's URL, as well as other remotes, depend on the user or CI configuration and is not deterministic.
+			// Because origin's URL, as well as other remotes, depends on the user or CI configuration and is not deterministic.
 			assert.Contains(t, gotRemotes, "origin")
 			assert.NotEmpty(t, gotRemotes["origin"])
 		})

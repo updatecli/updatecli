@@ -26,7 +26,8 @@ type GitTag struct {
 	// Holds both parsed version and original version (to allow retrieving metadata such as changelog)
 	foundVersion version.Version
 	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
-	versionFilter    version.Filter
+	versionFilter version.Filter
+	// nativeGitHandler holds a git client implementation to manipulate git SCMs
 	nativeGitHandler gitgeneric.GitHandler
 }
 
