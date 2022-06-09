@@ -24,7 +24,7 @@ sources:
       versionfilter:
         kind: semver
     transformers:
-      - addPrefix: "v"
+      - addprefix: "v"
     
 targets:
   goWorkflow:

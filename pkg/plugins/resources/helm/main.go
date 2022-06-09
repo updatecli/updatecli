@@ -2,8 +2,6 @@ package helm
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"helm.sh/helm/v3/pkg/repo"
-	yml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -31,24 +29,34 @@ URL:
 {{ end }}
 `
 	// MINORVERSION defines minor version identifier
-	MINORVERSION = "minor"
+	MINORVERSION string = "minor"
 	// MAJORVERSION defines major version identifier
-	MAJORVERSION = "major"
+	MAJORVERSION string = "major"
 	// PATCHVERSION defines patch version identifier
-	PATCHVERSION = "patch"
+	PATCHVERSION string = "patch"
+	// NOINCREMENT defines if a chart version doesn't need to be incremented
+	NOINCREMENT string = "none"
 )
 
 // Spec defines a specification for an "helmchart" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	File             string // [target] Define file to update
-	Key              string // [target] Define Key to update
-	Name             string // [source][condition][target] Define Chart name path like "stable/chart"
-	URL              string // [source][condition] Define the chart location
-	Value            string // [target] Define value to set
-	Version          string // [source][condition]
-	VersionIncrement string // [target] Define the rule to incremental the Chart version, accept a list of rules
-	AppVersion       bool   // [target] Boolean that define we must update the App Version
+	// [target] Defines the Helm Chart file to update.
+	File string
+	// [target] Defines the key within the file that need to be updated.
+	Key string
+	// [target] Defines the Chart name path like "stable/chart".
+	Name string
+	// [source,condition] Defines the chart location URL.
+	URL string
+	// [target] Defines the value to set for a key
+	Value string
+	// [source,condition] Defines the Chart version, default value set based on sourceinput value
+	Version string
+	// [target] Defines if a Chart changes, triggers (or not) a Chart version update, accepted values is a comma separated list of "none,major,minor,patch"
+	VersionIncrement string
+	// [target] Defines if AppVersion must be updated as well
+	AppVersion bool
 }
 
 // Chart defines a resource of kind "helmchart"
@@ -71,22 +79,4 @@ func New(spec interface{}) (*Chart, error) {
 
 	return newResource, nil
 
-}
-
-// loadIndex loads an index file and does minimal validity checking.
-// This will fail if API Version is not set (ErrNoAPIVersion) or if the unmarshal fails.
-func loadIndex(data []byte) (repo.IndexFile, error) {
-	i := repo.IndexFile{}
-
-	if err := yml.Unmarshal(data, &i); err != nil {
-		return i, err
-	}
-
-	i.SortEntries()
-
-	if i.APIVersion == "" {
-		return i, repo.ErrNoAPIVersion
-	}
-
-	return i, nil
 }

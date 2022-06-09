@@ -310,14 +310,18 @@ func (config *Config) validateTargets() error {
 				return ErrBadConfig
 			}
 		}
-		// Try to guess SourceID
-		if len(t.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 
-			logrus.Errorf("empty 'sourceID' for target %q", id)
-			return ErrBadConfig
-		} else if len(t.SourceID) == 0 && len(config.Spec.Sources) == 1 {
-			for id := range config.Spec.Sources {
-				t.SourceID = id
+		// Only check/guess the sourceID if the user did not disable it (default is enabled)
+		if !t.DisableSourceInput {
+			// Try to guess SourceID
+			if len(t.SourceID) == 0 && len(config.Sources) > 1 {
+
+				logrus.Errorf("empty 'sourceID' for target %q", id)
+				return ErrBadConfig
+			} else if len(t.SourceID) == 0 && len(config.Sources) == 1 {
+				for id := range config.Sources {
+					t.SourceID = id
+				}
 			}
 		}
 

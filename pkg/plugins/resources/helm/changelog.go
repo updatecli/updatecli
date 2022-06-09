@@ -2,36 +2,15 @@ package helm
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/sirupsen/logrus"
 )
 
 // Changelog returns a rendered template with this chart version informations
 func (c Chart) Changelog() string {
-	URL := fmt.Sprintf("%s/index.yaml", c.spec.URL)
+	index, err := c.GetRepoIndexFile()
 
-	req, err := http.NewRequest("GET", URL, nil)
-	if err != nil {
-		return ""
-	}
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return ""
-	}
-
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return ""
-	}
-
-	index, err := loadIndex(body)
 	if err != nil {
 		return ""
 	}
@@ -63,6 +42,7 @@ func (c Chart) Changelog() string {
 		Created:     e.Created.String(),
 		URLs:        e.URLs,
 		Sources:     e.Sources})
+
 	if err != nil {
 		return ""
 	}

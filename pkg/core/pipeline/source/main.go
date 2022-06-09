@@ -49,13 +49,6 @@ func (s *Source) Run() (err error) {
 			return err
 		}
 
-		err = SCM.Init(workingDir)
-
-		if err != nil {
-			s.Result = result.FAILURE
-			return err
-		}
-
 		err = SCM.Checkout()
 
 		if err != nil {
@@ -127,6 +120,11 @@ func (c *Config) Validate() error {
 			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
 				"scmID", "scmid", "scmID")
 		}
+	}
+
+	err := c.Transformers.Validate()
+	if err != nil {
+		return err
 	}
 
 	return nil

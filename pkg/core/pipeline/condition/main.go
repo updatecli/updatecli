@@ -1,6 +1,7 @@
 package condition
 
 import (
+	"errors"
 	"fmt"
 
 	jschema "github.com/invopop/jsonschema"
@@ -9,6 +10,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+)
+
+var (
+	// ErrWrongConfig is returned when a condition spec has missing attributes which are mandatory
+	ErrWrongConfig = errors.New("wrong condition configuration")
 )
 
 // Condition defines which condition needs to be met
@@ -59,12 +65,6 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		err = s.Init(c.Config.Name)
-		if err != nil {
-			c.Result = result.FAILURE
-			return err
-		}
-
 		err = s.Checkout()
 		if err != nil {
 			c.Result = result.FAILURE
@@ -107,6 +107,8 @@ func (c Config) JSONSchema() *jschema.Schema {
 }
 
 func (c *Config) Validate() error {
+	gotError := false
+
 	// Handle scmID deprecation
 	if len(c.DeprecatedSCMID) > 0 {
 		switch len(c.SCMID) {
@@ -131,6 +133,20 @@ func (c *Config) Validate() error {
 			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
 				"sourceID", "sourceid", "sourceID")
 		}
+	}
+
+	err := c.Transformers.Validate()
+	if err != nil {
+		return err
+	}
+
+	if len(c.SourceID) > 0 && c.DisableSourceInput {
+		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
+		gotError = true
+	}
+
+	if gotError {
+		return ErrWrongConfig
 	}
 
 	return nil

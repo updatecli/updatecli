@@ -7,14 +7,14 @@ vars:
 testcases:
   - name: "Test that all the manifests in skipped.targets.d have at least a target named shouldNeverRun"
     steps:
-      - script: 'find ../skipped.targets.d -type f -name "*yaml" -exec cat {} \;'
+      - script: 'find ../updatecli.d/skipped.targets.d -type f -name "*yaml" -exec cat {} \;'
         type: 'exec'
         assertions:
           - 'result.code ShouldEqual 0'
           - 'result.systemout ShouldContainSubstring "shouldNeverRun:"'
   - name: "Test that no target is ever run in this set of updatecli manifests"
     steps:
-      - script: '{{ .binpath }}/updatecli diff --config  ../skipped.targets.d/ --values ../values.yaml'
+      - script: '{{ .binpath }}/updatecli diff --config  ../updatecli.d/skipped.targets.d/ --values ../values.yaml'
         type: 'exec'
         assertions:
           - 'result.code ShouldEqual 0'
