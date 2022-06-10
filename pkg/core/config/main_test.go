@@ -332,8 +332,8 @@ var (
 					Name: "lts-jenkins-jdk11",
 				},
 			},
-			ExpectedUpdateErr:   ErrNotAllowedTemplatedKey,
-			ExpectedValidateErr: ErrNotAllowedTemplatedKey,
+			ExpectedUpdateErr:   fmt.Errorf("sources validation error:\n%s", ErrNotAllowedTemplatedKey),
+			ExpectedValidateErr: fmt.Errorf("sources validation error:\n%s", ErrNotAllowedTemplatedKey),
 		},
 		{
 			ID: "7",
@@ -398,8 +398,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   ErrBadConfig,
-			ExpectedValidateErr: ErrBadConfig,
+			ExpectedUpdateErr:   fmt.Errorf("conditions validation error:\n%s", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("conditions validation error:\n%s", ErrBadConfig),
 		},
 		{
 			ID: "7.2",
@@ -468,8 +468,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   ErrBadConfig,
-			ExpectedValidateErr: ErrBadConfig,
+			ExpectedUpdateErr:   fmt.Errorf("conditions validation error:\n%s", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("conditions validation error:\n%s", ErrBadConfig),
 		},
 		{
 			ID: "8",
@@ -534,8 +534,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   ErrBadConfig,
-			ExpectedValidateErr: ErrBadConfig,
+			ExpectedUpdateErr:   fmt.Errorf("targets validation error:\n%s", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("targets validation error:\n%s", ErrBadConfig),
 		},
 		{
 			ID: "8.2",
@@ -604,8 +604,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   ErrBadConfig,
-			ExpectedValidateErr: ErrBadConfig,
+			ExpectedUpdateErr:   fmt.Errorf("targets validation error:\n%s", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("targets validation error:\n%s", ErrBadConfig),
 		},
 		{
 			ID: "9",
@@ -707,8 +707,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   fmt.Errorf("missing value for parameter(s) [\"kind,targets,scmid\"]"),
-			ExpectedValidateErr: fmt.Errorf("missing value for parameter(s) [\"kind,targets,scmid\"]"),
+			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\nmissing value for parameter(s) [\"kind,targets,scmid\"]"),
+			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\nmissing value for parameter(s) [\"kind,targets,scmid\"]"),
 		},
 		{
 			ID: "9.2",
@@ -762,8 +762,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   ErrBadConfig,
-			ExpectedValidateErr: ErrBadConfig,
+			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
 		},
 		{
 			ID: "9.3",
@@ -817,8 +817,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   ErrBadConfig,
-			ExpectedValidateErr: ErrBadConfig,
+			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
 		},
 	}
 )
