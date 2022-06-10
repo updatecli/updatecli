@@ -33,8 +33,6 @@ type Target struct {
 // Config defines target parameters
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	// PipelineID references a unique pipeline run allowing to group targets
-	PipelineID string `yaml:",omitempty"`
 	// ReportTitle contains the updatecli reports title for sources and conditions run
 	ReportTitle string `yaml:",omitempty"`
 	// ReportBody contains the updatecli reports body for sources and conditions run

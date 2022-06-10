@@ -309,9 +309,6 @@ func (config *Config) validateTargets() error {
 			return ErrBadConfig
 		}
 
-		if len(t.PipelineID) == 0 {
-			t.PipelineID = config.Spec.PipelineID
-		}
 		if len(t.SourceID) > 0 {
 			if _, ok := config.Spec.Sources[t.SourceID]; !ok {
 				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", t.SourceID)
