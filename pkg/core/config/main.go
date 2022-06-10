@@ -403,8 +403,14 @@ func (config *Config) validateConditions() error {
 func (config *Config) Validate() error {
 
 	var errs []error
+	err := config.ValidateManifestCompatibility()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("Updatecli version compatibility error:\n%s", err))
+	}
 
-	err := config.validateConditions()
+	err = config.validateConditions()
 	if err != nil {
 		errs = append(
 			errs,
@@ -448,6 +454,23 @@ func (config *Config) Validate() error {
 			}
 		}
 		return err
+	}
+
+	return nil
+}
+
+func (config *Config) ValidateManifestCompatibility() error {
+	isCompatibleUpdatecliVersion, err := version.IsGreaterThan(
+		version.Version,
+		config.Spec.Version)
+
+	if err != nil {
+		return fmt.Errorf("pipeline %q - %q", config.Spec.Name, err)
+	}
+
+	// Ensure that the current updatecli version is compatible with the manifest
+	if !isCompatibleUpdatecliVersion {
+		return fmt.Errorf("pipeline %q requires Updatecli version greater than %q, skipping", config.Spec.Name, config.Spec.Version)
 	}
 
 	return nil

@@ -16,7 +16,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
-	"github.com/updatecli/updatecli/pkg/core/version"
 
 	"path/filepath"
 	"strings"
@@ -169,21 +168,6 @@ func (e *Engine) ManifestUpgrade() (err error) {
 	}
 
 	for _, pipeline := range e.Pipelines {
-
-		isCompatibleUpdatecliVersion, err := version.IsGreaterThan(
-			version.Version,
-			pipeline.Config.Spec.Version)
-
-		if err != nil {
-			logrus.Errorf("pipeline %q - %q", pipeline.Name, err)
-			continue
-		}
-
-		// Ensure that the current updatecli version is compatible with the manifest
-		if !isCompatibleUpdatecliVersion {
-			logrus.Errorf("pipeline %q requires Updatecli version greater than %q, skipping", pipeline.Name, pipeline.Config.Spec.Version)
-			continue
-		}
 
 		err = pipeline.Config.Display()
 		if err != nil {
