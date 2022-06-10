@@ -18,6 +18,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/version"
 	"gopkg.in/yaml.v3"
 )
 
@@ -54,11 +55,11 @@ type Config struct {
 // Spec contains pipeline configuration
 type Spec struct {
 	// Name defines a pipeline name
-	Name string
+	Name string `yaml:",omitempty"`
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	PipelineID string
+	PipelineID string `yaml:",omitempty"`
 	// Title is used for the full pipeline
-	Title string
+	Title string `yaml:",omitempty"`
 	// PullRequests defines the list of Pull Request configuration which need to be managed
 	PullRequests map[string]pullrequest.Config `yaml:",omitempty"`
 	// SCMs defines the list of repository configuration used to fetch content from.
@@ -69,6 +70,8 @@ type Spec struct {
 	Conditions map[string]condition.Config `yaml:",omitempty"`
 	// Targets defines the list of target configuration
 	Targets map[string]target.Config `yaml:",omitempty"`
+	// Version specifies the mininum updatecli version compatible with the manifest
+	Version string `yaml:",omitempty"`
 }
 
 // Option contains configuration options such as filepath located on disk,etc.
@@ -151,6 +154,11 @@ func New(option Option) (config Config, err error) {
 
 	// config.PipelineID is required for config.Validate()
 	config.Spec.PipelineID = pipelineID
+
+	// By default Set config.Version to the current updatecli version
+	if len(config.Spec.Version) == 0 {
+		config.Spec.Version = version.Version
+	}
 
 	err = config.Validate()
 	if err != nil {
