@@ -19,8 +19,6 @@ var (
 		Short: "upgrade executes manifest upgrade task",
 		Run: func(cmd *cobra.Command, args []string) {
 			e.Options.Config.ManifestFile = cfgFile
-			e.Options.Config.ValuesFiles = valuesFiles
-			e.Options.Config.SecretsFiles = secretsFiles
 			e.Options.Config.DisableTemplating = true
 
 			err := run("manifest/upgrade")
@@ -34,8 +32,6 @@ var (
 
 func init() {
 	manifestUpgradeCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updatecli.yaml", "Sets config file or directory. (default: './updatecli.yaml')")
-	manifestUpgradeCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
-	manifestUpgradeCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 
 	manifestCmd.AddCommand(manifestUpgradeCmd)
 }
