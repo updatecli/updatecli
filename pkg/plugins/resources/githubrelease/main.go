@@ -10,15 +10,15 @@ import (
 // parsed from an updatecli manifest file
 type Spec struct {
 	// Owner specifies repository owner
-	Owner string `yaml:",omitempty"`
+	Owner string `yaml:",omitempty" jsonschema:"required"`
 	// Repository specifies the name of a repository for a specific owner
-	Repository string `yaml:",omitempty"`
+	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// Token specifies the credential used to authenticate with
-	Token string `yaml:",omitempty"`
+	Token string `yaml:",omitempty" jsonschema:"required"`
 	// URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
 	// Username specifies the username used to authenticate with Github API
-	Username string `yaml:",omitempty"`
+	Username string `yaml:",omitempty" jsonschema:"required"`
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
 }

@@ -55,7 +55,7 @@ type Config struct {
 // Spec contains pipeline configuration
 type Spec struct {
 	// Name defines a pipeline name
-	Name string `yaml:",omitempty"`
+	Name string `yaml:",omitempty" jsonschema:"required"`
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	PipelineID string `yaml:",omitempty"`
 	// Title is used for the full pipeline
@@ -407,7 +407,7 @@ func (config *Config) Validate() error {
 	if err != nil {
 		errs = append(
 			errs,
-			fmt.Errorf("Updatecli version compatibility error:\n%s", err))
+			fmt.Errorf("updatecli version compatibility error:\n%s", err))
 	}
 
 	err = config.validateConditions()

@@ -11,7 +11,7 @@ import (
 // parsed from an updatecli manifest file
 type Spec struct {
 	// Specifies the shell command
-	Command string `yaml:",omitempty"`
+	Command string `yaml:",omitempty" jsonschema:"required"`
 }
 
 // Shell defines a resource of kind "shell"

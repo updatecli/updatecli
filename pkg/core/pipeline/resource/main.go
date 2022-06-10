@@ -25,9 +25,9 @@ type ResourceConfig struct {
 	// depends_on specifies which resources must be executed before the current one
 	DependsOn []string `yaml:"depends_on,omitempty"`
 	// name specifies the resource name
-	Name string `yaml:",omitempty"`
+	Name string `yaml:",omitempty" jsonschema:"required"`
 	// kind specifies the resource kind which defines accepted spec value
-	Kind string `yaml:",omitempty"`
+	Kind string `yaml:",omitempty" jsonschema:"required"`
 	// transformers defines how the default input value need to be transformed
 	Transformers transformer.Transformers `yaml:",omitempty"`
 	// spec specifies parameters for a specific resource kind
