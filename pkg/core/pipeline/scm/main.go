@@ -12,8 +12,10 @@ import (
 )
 
 type Config struct {
-	Kind string
-	Spec interface{} `jsonschema:"type=object"`
+	// Kind specifies the scm kind
+	Kind string `yaml:",omitempty"`
+	// Spec specifies the scm specification
+	Spec interface{} `jsonschema:"type=object" yaml:",omitempty"`
 }
 
 type Scm struct {

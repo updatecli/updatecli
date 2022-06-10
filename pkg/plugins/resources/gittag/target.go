@@ -52,7 +52,7 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 
 	// Fail if a pattern is specified
 	if gt.versionFilter.Pattern != "" {
-		return false, files, message, fmt.Errorf("Target validation error: spec.versionfilter.pattern is not allowed for targets of type gittag.")
+		return false, files, message, fmt.Errorf("target validation error: spec.versionfilter.pattern is not allowed for targets of type gittag")
 	}
 
 	// Fail if the git tag resource cannot be validated

@@ -34,7 +34,7 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 
 	if len(value) == 0 {
 		logrus.Infof("%s No git tag found matching pattern %q", result.FAILURE, gt.versionFilter.Pattern)
-		return value, fmt.Errorf("No git tag found matching pattern %q", gt.versionFilter.Pattern)
+		return value, fmt.Errorf("no git tag found matching pattern %q", gt.versionFilter.Pattern)
 	} else if len(value) > 0 {
 		logrus.Infof("%s Git tag %q found matching pattern %q", result.SUCCESS, value, gt.versionFilter.Pattern)
 	} else {

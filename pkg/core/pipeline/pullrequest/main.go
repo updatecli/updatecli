@@ -26,18 +26,17 @@ type PullRequestHandler interface {
 // Config define pullRequest provided via an updatecli configuration
 type Config struct {
 	// Title defines the pullRequest title
-	Title string
+	Title string `yaml:",omitempty"`
 	// Kind defines the pullRequest `kind` which affects accepted "spec" values
-	Kind string
+	Kind string `yaml:",omitempty"`
 	// Spec defines parameters for a specific "kind"
-	Spec interface{}
+	Spec interface{} `yaml:",omitempty"`
 	// scmid references an scm configuration defined within the updatecli manifest
-	ScmID string
+	ScmID string `yaml:",omitempty"`
 	// !Deprecated in favor for `scmid`
-	// scmid references an scm configuration defined within the updatecli manifest
-	DeprecatedScmID string `yaml:"scmID,omitempty"`
+	DeprecatedScmID string `yaml:"scmID,omitempty" jsonschema:"-"`
 	// Targets defines a list of target related to the pullRequest
-	Targets []string
+	Targets []string `yaml:",omitempty"`
 }
 
 // PullRequest is a struct used by an updatecli pipeline.

@@ -19,29 +19,29 @@ var (
 //Transformer holds a tranformer rule
 type Transformer struct {
 	// AddPrefix adds a prefix to the transformer input value
-	AddPrefix           string
-	DeprecatedAddPrefix string `yaml:"addPrefix" jsonschema:"-"`
+	AddPrefix           string `yaml:",omitempty"`
+	DeprecatedAddPrefix string `yaml:"addPrefix,omitempty" jsonschema:"-"`
 	// AddSuffix adds a suffix to the transformer input value
-	AddSuffix           string
-	DeprecatedAddSuffix string `yaml:"addSuffix" jsonschema:"-"`
+	AddSuffix           string `yaml:",omitempty"`
+	DeprecatedAddSuffix string `yaml:"addSuffix,omitempty" jsonschema:"-"`
 	// TrimPrefix removes a prefix to the transformer input value
-	TrimPrefix           string
-	DeprecatedTrimPrefix string `yaml:"trimPrefix" jsonschema:"-"`
+	TrimPrefix           string `yaml:",omitempty"`
+	DeprecatedTrimPrefix string `yaml:"trimPrefix,omitempty" jsonschema:"-"`
 	// TrimSuffix removes the suffix from the transformer input value
-	TrimSuffix           string
-	DeprecatedTrimSuffix string `yaml:"trimSuffix" jsonschema:"-"`
+	TrimSuffix           string `yaml:",omitempty"`
+	DeprecatedTrimSuffix string `yaml:"trimSuffix,omitempty" jsonschema:"-"`
 	// Replacers specifies a list of replacer instruction
-	Replacers Replacers
+	Replacers Replacers `yaml:",omitempty"`
 	// Replacer specifies what value needs to be changed and how
-	Replacer Replacer
+	Replacer Replacer `yaml:",omitempty"`
 	// Find searches for a specific value if it exists and return false if it doesn't
-	Find string
+	Find string `yaml:",omitempty"`
 	// Find searches for a specific value if it exists then return the value using regular expression
-	FindSubMatch           FindSubMatch
-	DeprecatedFindSubMatch interface{} `yaml:"findSubMatch" jsonschema:"-"`
+	FindSubMatch           FindSubMatch `yaml:",omitempty"`
+	DeprecatedFindSubMatch interface{}  `yaml:"findSubMatch,omitempty" jsonschema:"-"`
 	// SemvVerInc specifies a  comma separated list semantic versioning component that needs to be upgraded.
-	SemVerInc           string
-	DeprecatedSemVerInc string `yaml:"semverInc" jsonschema:"-"`
+	SemVerInc           string `yaml:",omitempty"`
+	DeprecatedSemVerInc string `yaml:"semverInc,omitempty" jsonschema:"-"`
 }
 
 //Transformers defines a list of transformer applied in order

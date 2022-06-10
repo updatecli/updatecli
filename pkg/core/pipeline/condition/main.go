@@ -29,14 +29,13 @@ type Condition struct {
 
 // Config defines conditions input parameters
 type Config struct {
-	resource.ResourceConfig `yaml:",inline"`
+	resource.ResourceConfig `yaml:",inline,omitempty"`
 	// ! Deprecated in favor of sourceID
-	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
-	DeprecatedSourceID string `yaml:"sourceID,omitempty"`
+	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
 	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
 	SourceID string `yaml:",omitempty"`
 	// disablesourceinput disable the mechanism to retrieve a default value from a source.
-	DisableSourceInput bool
+	DisableSourceInput bool `yaml:",omitempty"`
 }
 
 // Run tests if a specific condition is true

@@ -16,19 +16,19 @@ var (
 // Spec contains the updatecli configuration provided by users.
 type Spec struct {
 	// accesskey specifies the aws access key which combined with `secretkey`, is one of the way to authenticate
-	AccessKey string
+	AccessKey string `yaml:",omitempty"`
 	// secretkey specifies the aws secret key which combined with `accesskey`, is one of the way to authenticate
-	SecretKey string
+	SecretKey string `yaml:",omitempty"`
 	// Filters specifies a list of AMI filters
-	Filters Filters
+	Filters Filters `yaml:",omitempty"`
 	// Region specifies the AWS region to use when looking for AMI
-	Region string
+	Region string `yaml:",omitempty"`
 	// Endpoint specifies the AWS endpoin to use when looking for AMI
-	Endpoint string
+	Endpoint string `yaml:",omitempty"`
 	// Dryrun allows to Check whether you have the required permissions for the action.
-	DryRun bool
+	DryRun bool `yaml:",omitempty"`
 	// Sortby specifies the order of AMI-ID that will be used to retrieve the last element such as `creationdateasc`
-	SortBy string //
+	SortBy string `yaml:",omitempty"`
 }
 
 // String return Spec information as a string

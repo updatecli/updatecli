@@ -50,7 +50,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 	if y.spec.KeyOnly {
 		// Then there must not be any specified Value
 		if y.spec.Value != "" {
-			validationError := fmt.Errorf("Validation error in condition of type 'yaml': both `spec.value` and `spec.keyonly` specified while mutually exclusive. Remove one of these 2 directives.")
+			validationError := fmt.Errorf("validation error in condition of type 'yaml': both `spec.value` and `spec.keyonly` specified while mutually exclusive. Remove one of these 2 directives")
 			logrus.Errorf(validationError.Error())
 			return false, validationError
 		}
@@ -64,7 +64,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 	if source != "" {
 		// Then there must not be any specified Value
 		if y.spec.Value != "" {
-			validationError := fmt.Errorf("Validation error in condition of type 'yaml': input source value detected, while `spec.value` specified. Add 'disablesourceinput: true' to your manifest to keep ``spec.value`.")
+			validationError := fmt.Errorf("validation error in condition of type 'yaml': input source value detected, while `spec.value` specified. Add 'disablesourceinput: true' to your manifest to keep ``spec.value`")
 			logrus.Errorf(validationError.Error())
 			return false, validationError
 		}

@@ -14,9 +14,12 @@ import (
 // Spec defines a specification for a "jenkins" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	Release string      // Defines the release name like latest or weekly
-	Version string      // Defines a specific release version (condition only)
-	Github  github.Spec // Github Parameter used to retrieve a Jenkins changelog
+	// Defines the release name like latest or weekly
+	Release string `yaml:",omitempty"`
+	// Defines a specific release version (condition only)
+	Version string `yaml:",omitempty"`
+	// Github Parameter used to retrieve a Jenkins changelog
+	Github github.Spec `yaml:",omitempty"`
 }
 
 // Jenkins defines a resource of kind "githubrelease"
@@ -104,7 +107,7 @@ func ReleaseType(version string) (string, error) {
 	components := strings.Split(version, ".")
 	for _, component := range components {
 		if _, err := strconv.Atoi(component); err != nil {
-			return WRONG, fmt.Errorf("In version '%v', component '%v' is not a valid integer",
+			return WRONG, fmt.Errorf("in version '%v', component '%v' is not a valid integer",
 				version, component)
 		}
 	}
@@ -114,5 +117,5 @@ func ReleaseType(version string) (string, error) {
 	} else if len(components) == 3 {
 		return STABLE, nil
 	}
-	return WRONG, fmt.Errorf("Version %v contains %v component(s) which doesn't correspond to any valid release type", version, len(components))
+	return WRONG, fmt.Errorf("version %v contains %v component(s) which doesn't correspond to any valid release type", version, len(components))
 }

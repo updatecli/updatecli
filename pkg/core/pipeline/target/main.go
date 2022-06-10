@@ -34,16 +34,15 @@ type Target struct {
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
 	// PipelineID references a unique pipeline run allowing to group targets
-	PipelineID string
+	PipelineID string `yaml:",omitempty"`
 	// ReportTitle contains the updatecli reports title for sources and conditions run
 	ReportTitle string `yaml:",omitempty"`
 	// ReportBody contains the updatecli reports body for sources and conditions run
 	ReportBody string `yaml:",omitempty"`
 	// ! Deprecated - please use all lowercase `sourceid`
-	// sourceid specifies where retrieving the default value
-	DeprecatedSourceID string `yaml:"sourceID"`
+	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
 	// disablesourceinput disables the mechanism to retrieve a default value from a source.
-	DisableSourceInput bool
+	DisableSourceInput bool `yaml:",omitempty"`
 	// sourceid specifies where retrieving the default value
 	SourceID string `yaml:",omitempty"`
 	// disablesourceinput
