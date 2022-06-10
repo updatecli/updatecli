@@ -7,13 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -23,7 +20,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/version"
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -563,98 +559,6 @@ func (config *Config) Update(data interface{}) (err error) {
 	}
 
 	return err
-}
-
-// IsTemplatedString test if a string contains go template information
-func IsTemplatedString(s string) bool {
-	if len(s) == 0 {
-		return false
-	}
-
-	leftDelimiterFound := false
-
-	for _, val := range strings.SplitAfter(s, "{{") {
-		if strings.Contains(val, "{{") {
-			leftDelimiterFound = true
-			continue
-		}
-		if strings.Contains(val, "}}") && leftDelimiterFound {
-			return true
-		}
-	}
-
-	return false
-}
-
-func getFieldValueByQuery(conf interface{}, query []string) (value string, err error) {
-	ValueIface := reflect.ValueOf(conf)
-
-	Field := reflect.Value{}
-	titleCaser := cases.Title(language.English, cases.NoLower)
-
-	// We want to be able to use case insensitive key
-	insensitiveQuery := []string{
-		query[0],
-		strings.ToLower(query[0]),
-		titleCaser.String(strings.ToLower(query[0])),
-		titleCaser.String(query[0]),
-		strings.ToTitle(query[0]),
-	}
-
-	switch ValueIface.Kind() {
-	case reflect.Ptr:
-		// Check if the passed interface is a pointer
-		// Create a new type of Iface's Type, so we have a pointer to work with
-		// 'dereference' with Elem() and get the field by name
-		//Field = ValueIface.Elem().FieldByName(query[0])
-
-		for _, q := range insensitiveQuery {
-			Field = ValueIface.Elem().FieldByName(q)
-			if Field.IsValid() {
-				query[0] = q
-				break
-			}
-		}
-	case reflect.Map:
-		// We want to be able to use case insensitive key
-		for _, q := range insensitiveQuery {
-			Field = ValueIface.MapIndex(reflect.ValueOf(q))
-			if Field.IsValid() {
-				query[0] = q
-				break
-			}
-		}
-	case reflect.Struct:
-		// We want to be able to use case insensitive key
-		for _, q := range insensitiveQuery {
-			Field = ValueIface.FieldByName(q)
-			if Field.IsValid() {
-				break
-			}
-		}
-	}
-
-	// Means that despite the different case sensitive key, we couldn't find it
-	if !Field.IsValid() {
-		logrus.Debugf(
-			"Configuration `%s` does not have the field `%s`",
-			ValueIface.Type(),
-			query[0])
-		return "", ErrNoKeyDefined
-	}
-
-	if len(query) > 1 {
-		value, err = getFieldValueByQuery(Field.Interface(), query[1:])
-		if err != nil {
-			return "", err
-		}
-
-	} else if len(query) == 1 {
-		return Field.String(), nil
-	}
-
-	return value, nil
-
 }
 
 // GetChangelogTitle try to guess a specific target based on various information available for

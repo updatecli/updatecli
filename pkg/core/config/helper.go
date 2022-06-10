@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Checksum returns sha256 checksum based on a file content.
@@ -53,13 +55,14 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 	ValueIface := reflect.ValueOf(conf)
 
 	Field := reflect.Value{}
+	titleCaser := cases.Title(language.English, cases.NoLower)
 
 	// We want to be able to use case insensitive key
 	insensitiveQuery := []string{
 		query[0],
 		strings.ToLower(query[0]),
-		strings.Title(strings.ToLower(query[0])),
-		strings.Title(query[0]),
+		titleCaser.String(strings.ToLower(query[0])),
+		titleCaser.String(query[0]),
 		strings.ToTitle(query[0]),
 	}
 
