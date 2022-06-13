@@ -20,6 +20,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/version"
+
+	"github.com/hexops/gotextdiff"
+	"github.com/hexops/gotextdiff/myers"
+	"github.com/hexops/gotextdiff/span"
 )
 
 var (
@@ -102,7 +106,7 @@ func New(option Option) (config Config, err error) {
 
 	// We need to be sure to generate a file checksum before we inject
 	// templates values as in some situation those values changes for each run
-	pipelineID, err := Checksum(option.ManifestFile)
+	pipelineID, err := FileChecksum(option.ManifestFile)
 	if err != nil {
 		return config, err
 	}
@@ -153,7 +157,9 @@ func New(option Option) (config Config, err error) {
 	}
 
 	// config.PipelineID is required for config.Validate()
-	config.Spec.PipelineID = pipelineID
+	if len(config.Spec.PipelineID) == 0 {
+		config.Spec.PipelineID = pipelineID
+	}
 
 	// By default Set config.Version to the current updatecli version
 	if len(config.Spec.Version) == 0 {
@@ -175,7 +181,33 @@ func New(option Option) (config Config, err error) {
 
 }
 
-// SaveOnDisk save an updatecli manifest on disk
+// IsManifestDifferentThanOnDisk checks if an Updatecli manifest in memory is the same than the one on disk
+func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
+	data, err := yaml.Marshal(c.Spec)
+	if err != nil {
+		return false, err
+	}
+
+	onDiskData, err := ioutil.ReadFile(c.filename)
+	if err != nil {
+		return false, err
+	}
+
+	if string(onDiskData) == string(data) {
+		logrus.Infof("%s No Updatecli manifest change required", result.SUCCESS)
+		return false, nil
+	}
+
+	edits := myers.ComputeEdits(span.URIFromPath(c.filename), string(onDiskData), string(data))
+	diff := fmt.Sprint(gotextdiff.ToUnified(c.filename+"(old)", c.filename+"(new)", string(data), edits))
+
+	logrus.Debugf("%s Updatecli manifest change required\n%s", result.ATTENTION, diff)
+
+	return true, nil
+
+}
+
+// SaveOnDisk saves an updatecli manifest to disk
 func (c *Config) SaveOnDisk() error {
 	data, err := yaml.Marshal(c.Spec)
 	if err != nil {
@@ -192,7 +224,6 @@ func (c *Config) SaveOnDisk() error {
 		if err != nil {
 			logrus.Errorln(err)
 		}
-
 	}()
 
 	_, err = file.WriteString(string(data))

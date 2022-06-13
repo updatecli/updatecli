@@ -150,9 +150,9 @@ func (e *Engine) Prepare() (err error) {
 
 // ManifestUpgrade load Updatecli Manifest to update them then written them back on disk
 func (e *Engine) ManifestUpgrade() (err error) {
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Prepare")+4))
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Manifest Upgrade")+4))
 	logrus.Infof("+ %s +\n", strings.ToTitle("Manifest Upgrade"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Prepare")+4))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Manifest Upgrade")+4))
 
 	err = e.LoadConfigurations()
 
@@ -169,14 +169,18 @@ func (e *Engine) ManifestUpgrade() (err error) {
 
 	for _, pipeline := range e.Pipelines {
 
-		err = pipeline.Config.Display()
+		isManifestDifferentThanOnDisk, err := pipeline.Config.IsManifestDifferentThanOnDisk()
+
 		if err != nil {
 			logrus.Errorln(err)
 		}
 
-		err = pipeline.Config.SaveOnDisk()
-		if err != nil {
-			logrus.Errorln(err)
+		if isManifestDifferentThanOnDisk {
+			err = pipeline.Config.SaveOnDisk()
+			if err != nil {
+				logrus.Errorln(err)
+			}
+
 		}
 	}
 
