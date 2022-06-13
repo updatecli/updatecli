@@ -19,9 +19,9 @@ type Config struct {
 }
 
 type Scm struct {
-	Config      *Config
-	Handler     ScmHandler
-	PipeplineID *string
+	Config     *Config
+	Handler    ScmHandler
+	PipelineID string
 }
 
 var (
@@ -60,11 +60,11 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func New(config *Config, pipelineID *string) (Scm, error) {
+func New(config *Config, pipelineID string) (Scm, error) {
 
 	s := Scm{
-		Config:      config,
-		PipeplineID: pipelineID,
+		Config:     config,
+		PipelineID: pipelineID,
 	}
 
 	err := s.GenerateSCM()
@@ -87,7 +87,7 @@ func (s *Scm) GenerateSCM() error {
 			return err
 		}
 
-		g, err := github.New(githubSpec, *s.PipeplineID)
+		g, err := github.New(githubSpec, s.PipelineID)
 
 		if err != nil {
 			return err

@@ -83,17 +83,15 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 
-	if strings.HasSuffix(s.URL, "github.com") {
-		return &Github{
-			Spec:   s,
-			client: githubv4.NewClient(httpClient),
-		}, nil
-	}
-
 	g := Github{
 		Spec:       s,
-		client:     githubv4.NewEnterpriseClient(os.Getenv(s.URL), httpClient),
 		HeadBranch: git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+	}
+
+	if strings.HasSuffix(s.URL, "github.com") {
+		g.client = githubv4.NewClient(httpClient)
+	} else {
+		g.client = githubv4.NewEnterpriseClient(os.Getenv(s.URL), httpClient)
 	}
 
 	g.setDirectory()
