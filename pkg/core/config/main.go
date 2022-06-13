@@ -199,7 +199,7 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 	}
 
 	edits := myers.ComputeEdits(span.URIFromPath(c.filename), string(onDiskData), string(data))
-	diff := fmt.Sprint(gotextdiff.ToUnified(c.filename+"(old)", c.filename+"(new)", string(data), edits))
+	diff := fmt.Sprint(gotextdiff.ToUnified(c.filename+"(old)", c.filename+"(new)", string(onDiskData), edits))
 
 	logrus.Debugf("%s Updatecli manifest change required\n%s", result.ATTENTION, diff)
 
