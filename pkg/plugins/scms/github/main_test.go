@@ -11,13 +11,15 @@ import (
 
 func TestNew(t *testing.T) {
 	tests := []struct {
-		name    string
-		spec    Spec
-		want    Github
-		wantErr bool
+		name       string
+		spec       Spec
+		pipelineID string
+		want       Github
+		wantErr    bool
 	}{
 		{
-			name: "Nominal case",
+			name:       "Nominal case",
+			pipelineID: "12345",
 			spec: Spec{
 				Branch:     "main",
 				Repository: "updatecli",
@@ -28,6 +30,7 @@ func TestNew(t *testing.T) {
 				URL:        "github.com",
 			},
 			want: Github{
+				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -40,7 +43,8 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name: "Nominal case with empty directory",
+			name:       "Nominal case with empty directory",
+			pipelineID: "12345",
 			spec: Spec{
 				Branch:     "main",
 				Repository: "updatecli",
@@ -50,6 +54,7 @@ func TestNew(t *testing.T) {
 				URL:        "github.com",
 			},
 			want: Github{
+				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -62,7 +67,8 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name: "Nominal case with empty URL",
+			name:       "Nominal case with empty URL",
+			pipelineID: "12345",
 			spec: Spec{
 				Branch:     "main",
 				Repository: "updatecli",
@@ -72,6 +78,7 @@ func TestNew(t *testing.T) {
 				Directory:  "/home/updatecli",
 			},
 			want: Github{
+				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -84,7 +91,8 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name: "Validation Error (missing token)",
+			name:       "Validation Error (missing token)",
+			pipelineID: "12345",
 			spec: Spec{
 				Branch:     "main",
 				Repository: "updatecli",
@@ -97,7 +105,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.spec, "")
+			got, err := New(tt.spec, tt.pipelineID)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -105,6 +113,7 @@ func TestNew(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.want.Spec, got.Spec)
+			assert.Equal(t, tt.want.HeadBranch, got.HeadBranch)
 			assert.NotNil(t, got.client)
 		})
 	}
