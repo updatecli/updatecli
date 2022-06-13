@@ -13,8 +13,8 @@ import (
 	"golang.org/x/text/language"
 )
 
-// Checksum returns sha256 checksum based on a file content.
-func Checksum(filename string) (string, error) {
+// FileChecksum returns sha256 checksum based on a file content.
+func FileChecksum(filename string) (string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		logrus.Debugf("Can't open file %q", filename)
@@ -28,6 +28,11 @@ func Checksum(filename string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
+// Checksum returns sha256 checksum based on a file content.
+func Checksum(content string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(content)))
 }
 
 // IsTemplatedString test if a string contains go template information
