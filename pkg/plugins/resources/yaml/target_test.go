@@ -147,7 +147,7 @@ github:
 			wantedError:  true,
 		},
 		{
-			name: "Not passing: file already up to date",
+			name: "Passing: file already up to date",
 			spec: Spec{
 				File: "test.yaml",
 				Key:  "github.owner",
@@ -157,20 +157,19 @@ github:
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
-				"test.yaml": `---
-github:
+				"test.yaml": `github:
   owner: olblak
   repository: charts
 `,
 			},
 			wantedContents: map[string]string{
 				"test.yaml": `github:
-    owner: olblak
-    repository: charts
+  owner: olblak
+  repository: charts
 `,
 			},
 			wantedResult: false,
-			wantedError:  true,
+			wantedError:  false,
 		},
 		{
 			name: "Provided key does not exist",

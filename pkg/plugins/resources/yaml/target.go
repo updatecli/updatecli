@@ -142,10 +142,9 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 
 	}
 
-	// If no file was updated, return an error
-	// TODO: why?
+	// If no file was updated, don't return an error
 	if notChanged == len(y.files) {
-		return false, files, message.String(), fmt.Errorf("no file was updated")
+		return false, files, message.String(), nil
 	}
 
 	sort.Strings(files)
