@@ -30,7 +30,7 @@ sources:
 conditions:
   checkGithubUsernameHasValueFromDefaultSource:
     kind: yaml
-    sourceID: default
+    sourceid: default
     spec:
       file: examples/values.yaml
       key: "github.user"
@@ -43,7 +43,7 @@ conditions:
       value: "charts"
   checkGithubUsernameKeyOnly:
     kind: yaml
-    sourceID: default
+    sourceid: default
     spec:
       file: examples/values.yaml
       key: "github.user"
@@ -65,7 +65,7 @@ conditions:
   #     value: "r2d2"
   # checkGithubCountryKeyOnly:
   #   kind: yaml
-  #   sourceID: default
+  #   sourceid: default
   #   spec:
   #     file: examples/values.yaml
   #     key: "github.country"
@@ -73,7 +73,7 @@ conditions:
 targets:
   setGitHubAdmin:
     kind: yaml
-    sourceID: default
+    sourceid: default
     spec:
       files:
       - examples/values.yaml
@@ -81,7 +81,7 @@ targets:
       key: "github.admin"
   setGitHubOwner:
     kind: yaml
-    sourceID: default
+    sourceid: default
     spec:
       files:
       - examples/values.yaml
@@ -89,7 +89,7 @@ targets:
       key: "github.owner"
   setGitHubRepository:
     kind: yaml
-    sourceID: default
+    sourceid: default
     spec:
       files:
       - examples/values.yaml
