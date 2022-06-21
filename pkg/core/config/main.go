@@ -13,6 +13,9 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+	"gopkg.in/yaml.v3"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
@@ -20,7 +23,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -433,13 +435,14 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 	ValueIface := reflect.ValueOf(conf)
 
 	Field := reflect.Value{}
+	titleCaser := cases.Title(language.English, cases.NoLower)
 
 	// We want to be able to use case insensitive key
 	insensitiveQuery := []string{
 		query[0],
 		strings.ToLower(query[0]),
-		strings.Title(strings.ToLower(query[0])),
-		strings.Title(query[0]),
+		titleCaser.String(strings.ToLower(query[0])),
+		titleCaser.String(query[0]),
 		strings.ToTitle(query[0]),
 	}
 

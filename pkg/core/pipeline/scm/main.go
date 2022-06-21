@@ -17,8 +17,9 @@ type Config struct {
 }
 
 type Scm struct {
-	Config  *Config
-	Handler ScmHandler
+	Config     *Config
+	Handler    ScmHandler
+	PipelineID string
 }
 
 var (
@@ -32,7 +33,6 @@ type ScmHandler interface {
 	Clone() (string, error)
 	Checkout() error
 	GetDirectory() (directory string)
-	Init(pipelineID string) error
 	Push() error
 	Commit(message string) error
 	Clean() error
@@ -58,10 +58,11 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func New(config *Config) (Scm, error) {
+func New(config *Config, pipelineID string) (Scm, error) {
 
 	s := Scm{
-		Config: config,
+		Config:     config,
+		PipelineID: pipelineID,
 	}
 
 	err := s.GenerateSCM()
@@ -84,7 +85,7 @@ func (s *Scm) GenerateSCM() error {
 			return err
 		}
 
-		g, err := github.New(githubSpec)
+		g, err := github.New(githubSpec, s.PipelineID)
 
 		if err != nil {
 			return err
@@ -93,14 +94,20 @@ func (s *Scm) GenerateSCM() error {
 		s.Handler = g
 
 	case "git":
-		g := git.Git{}
+		gitSpec := git.Spec{}
 
-		err := mapstructure.Decode(s.Config.Spec, &g)
+		err := mapstructure.Decode(s.Config.Spec, &gitSpec)
 		if err != nil {
 			return err
 		}
 
-		s.Handler = &g
+		g, err := git.New(gitSpec)
+
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
 	default:
 		logrus.Errorf("scm of kind %q is not supported", s.Config.Kind)
 	}
@@ -114,7 +121,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
-		"git":    &git.Git{},
+		"git":    &git.Spec{},
 		"github": &github.Spec{},
 	}
 

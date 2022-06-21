@@ -19,7 +19,12 @@ func (g *Git) Add(files []string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Git) Checkout() error {
-	err := git.Checkout(g.Username, g.Password, g.Branch, g.remoteBranch, g.GetDirectory())
+	err := git.Checkout(
+		g.spec.Username,
+		g.spec.Password,
+		g.spec.Branch,
+		g.remoteBranch,
+		g.GetDirectory())
 	if err != nil {
 		return err
 	}
@@ -28,12 +33,12 @@ func (g *Git) Checkout() error {
 
 // GetDirectory returns the working git directory.
 func (g *Git) GetDirectory() (directory string) {
-	return g.Directory
+	return g.spec.Directory
 }
 
 // Clean removes the current git repository from local storage.
 func (g *Git) Clean() error {
-	err := os.RemoveAll(g.Directory) // clean up
+	err := os.RemoveAll(g.spec.Directory) // clean up
 	if err != nil {
 		return err
 	}
@@ -43,17 +48,10 @@ func (g *Git) Clean() error {
 // Clone run `git clone`.
 func (g *Git) Clone() (string, error) {
 
-	err := g.Init("")
-
-	if err != nil {
-		logrus.Errorf("err - %s", err)
-		return "", err
-	}
-
-	err = git.Clone(
-		g.Username,
-		g.Password,
-		g.URL,
+	err := git.Clone(
+		g.spec.Username,
+		g.spec.Password,
+		g.spec.URL,
 		g.GetDirectory())
 
 	if err != nil {
@@ -69,25 +67,25 @@ func (g *Git) Clone() (string, error) {
 		}
 	}
 
-	return g.Directory, nil
+	return g.spec.Directory, nil
 }
 
 // Commit run `git commit`.
 func (g *Git) Commit(message string) error {
 
 	// Generate the conventional commit message
-	commitMessage, err := g.CommitMessage.Generate(message)
+	commitMessage, err := g.spec.CommitMessage.Generate(message)
 	if err != nil {
 		return err
 	}
 
 	err = git.Commit(
-		g.User,
-		g.Email,
+		g.spec.User,
+		g.spec.Email,
 		commitMessage,
 		g.GetDirectory(),
-		g.GPG.SigningKey,
-		g.GPG.Passphrase,
+		g.spec.GPG.SigningKey,
+		g.spec.GPG.Passphrase,
 	)
 	if err != nil {
 		return err
@@ -96,31 +94,13 @@ func (g *Git) Commit(message string) error {
 	return nil
 }
 
-// Init set Git parameters if needed.
-func (g *Git) Init(pipelineID string) (err error) {
-	if len(g.Directory) == 0 {
-		g.Directory, err = newDirectory(g.URL)
-		if err != nil {
-			return err
-		}
-	}
-
-	g.remoteBranch = git.SanitizeBranchName(g.Branch)
-
-	if len(g.Branch) == 0 {
-		g.Branch = "main"
-	}
-
-	return nil
-}
-
 // Push run `git push`.
 func (g *Git) Push() error {
 	err := git.Push(
-		g.Username,
-		g.Password,
+		g.spec.Username,
+		g.spec.Password,
 		g.GetDirectory(),
-		g.Force)
+		g.spec.Force)
 
 	if err != nil {
 		return err
@@ -133,7 +113,12 @@ func (g *Git) Push() error {
 // PushTag push tags
 func (g *Git) PushTag(tag string) error {
 
-	err := git.PushTag(tag, g.Username, g.Password, g.GetDirectory(), g.Force)
+	err := git.PushTag(
+		tag,
+		g.spec.Username,
+		g.spec.Password,
+		g.GetDirectory(),
+		g.spec.Force)
 	if err != nil {
 		return err
 	}

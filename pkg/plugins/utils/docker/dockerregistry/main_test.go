@@ -210,7 +210,7 @@ func TestRegistry_Digest(t *testing.T) {
 						}
 
 						headers := tt.mockAPIResHeaders
-						if headers == nil || len(headers) == 0 {
+						if len(headers) == 0 {
 							headers = http.Header{"Content-Type": {"application/vnd.docker.distribution.manifest.list.v2+json"}}
 						}
 
