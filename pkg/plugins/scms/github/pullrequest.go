@@ -49,7 +49,7 @@ const PULLREQUESTBODY = `
 
 This pull request was automatically created using [Updatecli](https://www.updatecli.io).
 
-Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/new)
+Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/)
 
 `
 
