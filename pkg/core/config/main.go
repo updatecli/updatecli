@@ -209,10 +209,6 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 
 // SaveOnDisk saves an updatecli manifest to disk
 func (c *Config) SaveOnDisk() error {
-	data, err := yaml.Marshal(c.Spec)
-	if err != nil {
-		return err
-	}
 
 	file, err := os.OpenFile(c.filename, os.O_WRONLY, os.ModePerm)
 	if err != nil {
@@ -226,7 +222,18 @@ func (c *Config) SaveOnDisk() error {
 		}
 	}()
 
-	_, err = file.WriteString(string(data))
+	encoder := yaml.NewEncoder(file)
+
+	defer func() {
+		err = encoder.Close()
+		if err != nil {
+			logrus.Errorln(err)
+		}
+	}()
+
+	encoder.SetIndent(2)
+	err = encoder.Encode(c.Spec)
+
 	if err != nil {
 		return err
 	}
