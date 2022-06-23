@@ -14,6 +14,8 @@ var (
 		Short: "manifest executes specific manifest task such as upgrade",
 	}
 
+	manifestUpgradeInPlace bool
+
 	manifestUpgradeCmd = &cobra.Command{
 		Use:   "upgrade",
 		Short: "upgrade executes manifest upgrade task",
@@ -32,6 +34,7 @@ var (
 
 func init() {
 	manifestUpgradeCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updatecli.yaml", "Sets config file or directory. (default: './updatecli.yaml')")
+	manifestUpgradeCmd.Flags().BoolVarP(&manifestUpgradeInPlace, "in-place", "i", false, "Write updated Updatecli manifest back to the same file instead of stdout")
 
 	manifestCmd.AddCommand(manifestUpgradeCmd)
 }
