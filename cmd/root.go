@@ -119,7 +119,7 @@ func run(command string) error {
 		}
 
 	case "manifest/upgrade":
-		err := e.ManifestUpgrade()
+		err := e.ManifestUpgrade(manifestUpgradeInPlace)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
