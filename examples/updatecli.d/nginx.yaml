@@ -18,6 +18,6 @@ targets:
         email: "update-bot@olblak.com"
         owner: "jenkins-infra"
         repository: "charts"
-        token: ""
+        token: "x"
         username: "olblak"
         branch: "master"

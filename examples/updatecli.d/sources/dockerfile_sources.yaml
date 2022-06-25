@@ -23,9 +23,9 @@ sources:
         kind: latest
 conditions:
   isENVSet:
-    sourceid: helm
-    name: Is the 2nd ENV instruction having a "keyword" set to "HELM_VERSION"
-    kind: dockerfile
+    sourceid: "helm1"
+    name: 'Is the 2nd ENV instruction having a "keyword" set to "HELM_VERSION"'
+    kind: "dockerfile"
     spec:
       file: docker/Dockerfile
       instruction: "ENV[1][0]"
@@ -36,13 +36,13 @@ conditions:
         email: "updatecli@olblak.com"
         owner: "olblak"
         repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        token: '{{ requiredEnv "GITHUB_TOKEN" }}'
         username: "olblak"
         branch: "master"
 targets:
   updateHelm:
     name: Update the 2nd element of the 2nd ENV instruction to the source value
-    sourceid: helm
+    sourceid: helm1
     kind: dockerfile
     spec:
       file: docker/Dockerfile
@@ -53,12 +53,12 @@ targets:
         email: "updatecli@olblak.com"
         owner: "olblak"
         repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        token: '{{ requiredEnv "GITHUB_TOKEN" }}'
         username: "olblak"
         branch: "master"
   updateChecksum:
     name: Update Helm checksum
-    sourceid: checksum
+    sourceid: helm1
     kind: dockerfile
     spec:
       file: docker/Dockerfile
@@ -69,6 +69,6 @@ targets:
         email: "updatecli@olblak.com"
         owner: "olblak"
         repository: "charts"
-        token: {{ requiredEnv "GITHUB_TOKEN" }}
+        token: '{{ requiredEnv "GITHUB_TOKEN" }}'
         username: "olblak"
         branch: "master"
