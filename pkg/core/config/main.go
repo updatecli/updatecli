@@ -226,7 +226,7 @@ func (c *Config) SaveOnDisk() error {
 	}()
 
 	// Must be set to 4 so we align with the default behavior when
-	// we marshalled the inmemory yaml to compare with the one from disk
+	// we marshaled the inmemory yaml to compare with the one from disk
 	encoder.SetIndent(YAMLSetIdent)
 	err = encoder.Encode(c.Spec)
 
@@ -373,7 +373,9 @@ func (config *Config) validateTargets() error {
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if t.Scm != nil {
 		if len(t.Scm) > 0 {
-			err := generateScmFromLegacyTarget(id, &t, config)
+			// Save back before generateScmFromLegacy
+			config.Spec.Targets[id] = t
+			err := generateScmFromLegacyTarget(id, config)
 			if err != nil {
 				return err
 			}
@@ -422,7 +424,10 @@ func (config *Config) validateConditions() error {
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if c.Scm != nil {
 		if len(c.Scm) > 0 {
-			generateScmFromLegacyCondition(id, &c, config)
+
+			// Save back from generateScmFromLegacyCondition
+			config.Spec.Conditions[id] = c
+			generateScmFromLegacyCondition(id, config)
 		}
 
 		config.Spec.Conditions[id] = c

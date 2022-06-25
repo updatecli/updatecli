@@ -3,14 +3,15 @@ package config
 import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
-func generateScmFromLegacyCondition(id string, c *condition.Config, config *Config) {
+func generateScmFromLegacyCondition(id string, config *Config) {
+
+	c := config.Spec.Conditions[id]
+
 	logrus.Warningf("The directive 'scm' for the condition[%q] is now deprecated. Please use the new top level scms syntax", id)
 	if len(c.SCMID) == 0 {
 		if _, ok := config.Spec.SCMs["condition_"+id]; !ok {
@@ -34,7 +35,9 @@ func generateScmFromLegacyCondition(id string, c *condition.Config, config *Conf
 	c.Scm = map[string]interface{}{}
 }
 
-func generateScmFromLegacyTarget(id string, t *target.Config, config *Config) error {
+func generateScmFromLegacyTarget(id string, config *Config) error {
+	t := config.Spec.Targets[id]
+
 	logrus.Warningf("The directive 'scm' for the target[%q] is now deprecated. Please use the new top level scms syntax", id)
 	if len(t.SCMID) == 0 {
 		if _, ok := config.Spec.SCMs["target_"+id]; !ok {
