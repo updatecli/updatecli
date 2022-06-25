@@ -65,7 +65,7 @@ conditions:
     disablesourceinput: true
     spec:
       file: .github/workflows/updatecli.yaml
-      key: jobs.build.steps[2].id
+      key: jobs.updatecli.steps[2].id
       value: go
     scmid: default
   dockerTag:
@@ -107,7 +107,7 @@ targets:
     sourceid: latestGoVersion
     spec:
       file: .github/workflows/updatecli.yaml
-      key: jobs.build.steps[2].with.go-version
+      key: jobs.updatecli.steps[2].with.go-version
     scmid: default
   go.mod:
     name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
