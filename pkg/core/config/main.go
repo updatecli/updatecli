@@ -183,10 +183,27 @@ func New(option Option) (config Config, err error) {
 
 // IsManifestDifferentThanOnDisk checks if an Updatecli manifest in memory is the same than the one on disk
 func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
-	data, err := yaml.Marshal(c.Spec)
+
+	buf := bytes.NewBufferString("")
+
+	encoder := yaml.NewEncoder(buf)
+
+	defer func() {
+		err := encoder.Close()
+		if err != nil {
+			logrus.Errorln(err)
+		}
+	}()
+
+	encoder.SetIndent(YAMLSetIdent)
+
+	err := encoder.Encode(c.Spec)
+
 	if err != nil {
 		return false, err
 	}
+
+	data := buf.Bytes()
 
 	onDiskData, err := ioutil.ReadFile(c.filename)
 	if err != nil {
@@ -231,7 +248,9 @@ func (c *Config) SaveOnDisk() error {
 		}
 	}()
 
-	encoder.SetIndent(2)
+	// Must be set to 4 so we align with the default behavior when
+	// we marshalled the inmemory yaml to compare with the one from disk
+	encoder.SetIndent(YAMLSetIdent)
 	err = encoder.Encode(c.Spec)
 
 	if err != nil {
