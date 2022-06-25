@@ -377,7 +377,7 @@ func (config *Config) validateTargets() error {
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if t.Scm != nil {
 		if len(t.Scm) > 0 {
-			err := generateScmFromLegacyTarget(id, t, config)
+			err := generateScmFromLegacyTarget(id, &t, config)
 			if err != nil {
 				return err
 			}
@@ -426,7 +426,7 @@ func (config *Config) validateConditions() error {
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if c.Scm != nil {
 		if len(c.Scm) > 0 {
-			generateScmFromLegacyCondition(id, c, config)
+			generateScmFromLegacyCondition(id, &c, config)
 		}
 
 		config.Spec.Conditions[id] = c

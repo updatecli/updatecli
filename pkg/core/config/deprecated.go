@@ -10,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
-func generateScmFromLegacyCondition(id string, c condition.Config, config *Config) {
+func generateScmFromLegacyCondition(id string, c *condition.Config, config *Config) {
 	logrus.Warningf("The directive 'scm' for the condition[%q] is now deprecated. Please use the new top level scms syntax", id)
 	if len(c.SCMID) == 0 {
 		if _, ok := config.Spec.SCMs["condition_"+id]; !ok {
@@ -34,7 +34,7 @@ func generateScmFromLegacyCondition(id string, c condition.Config, config *Confi
 	c.Scm = map[string]interface{}{}
 }
 
-func generateScmFromLegacyTarget(id string, t target.Config, config *Config) error {
+func generateScmFromLegacyTarget(id string, t *target.Config, config *Config) error {
 	logrus.Warningf("The directive 'scm' for the target[%q] is now deprecated. Please use the new top level scms syntax", id)
 	if len(t.SCMID) == 0 {
 		if _, ok := config.Spec.SCMs["target_"+id]; !ok {
