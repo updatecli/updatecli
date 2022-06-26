@@ -58,6 +58,12 @@ func (c *Config) Validate() (err error) {
 		missingParameters = append(missingParameters, "kind")
 	}
 
+	// Ensure kind is lowercase
+	if c.Kind != strings.ToLower(c.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		c.Kind = strings.ToLower(c.Kind)
+	}
+
 	if len(c.Targets) == 0 {
 		missingParameters = append(missingParameters, "targets")
 	}

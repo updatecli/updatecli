@@ -180,6 +180,19 @@ func (c *Config) Validate() error {
 
 	gotError := false
 
+	missingParameters := []string{}
+
+	// Validate that kind is set
+	if len(c.Kind) == 0 {
+		missingParameters = append(missingParameters, "kind")
+	}
+
+	// Ensure kind is lowercase
+	if c.Kind != strings.ToLower(c.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		c.Kind = strings.ToLower(c.Kind)
+	}
+
 	if len(c.DeprecatedSCMID) > 0 {
 		switch len(c.SCMID) {
 		case 0:
@@ -207,11 +220,17 @@ func (c *Config) Validate() error {
 
 	err := c.Transformers.Validate()
 	if err != nil {
-		return err
+		logrus.Errorln(err)
+		gotError = true
 	}
 
 	if len(c.SourceID) > 0 && c.DisableSourceInput {
 		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
+		gotError = true
+	}
+
+	if len(missingParameters) > 0 {
+		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
 		gotError = true
 	}
 
