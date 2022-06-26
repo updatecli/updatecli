@@ -32,7 +32,9 @@ func generateScmFromLegacyCondition(id string, config *Config) {
 	} else {
 		logrus.Warning("condition.SCMID is also defined, ignoring condition.Scm")
 	}
+
 	c.Scm = map[string]interface{}{}
+	config.Spec.Conditions[id] = c
 }
 
 func generateScmFromLegacyTarget(id string, config *Config) error {
@@ -82,6 +84,7 @@ func generateScmFromLegacyTarget(id string, config *Config) error {
 		logrus.Warning("target.SCMID is also defined, ignoring target.Scm")
 	}
 	t.Scm = map[string]interface{}{}
+	config.Spec.Targets[id] = t
 
 	return nil
 }

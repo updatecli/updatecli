@@ -369,21 +369,20 @@ func (config *Config) validateTargets() error {
 			return ErrNotAllowedTemplatedKey
 		}
 
+		// t.Validate may modify the object during validation
+		// so we want to be sure that we save those modifications
+		config.Spec.Targets[id] = t
+
 		// Temporary code until we fully remove the old way to configure scm
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if t.Scm != nil {
 		if len(t.Scm) > 0 {
-			// Save back before generateScmFromLegacy
-			config.Spec.Targets[id] = t
 			err := generateScmFromLegacyTarget(id, config)
 			if err != nil {
 				return err
 			}
 		}
 
-		// t.Validate may modify the object during validation
-		// so we want to be sure that we save those modifications
-		config.Spec.Targets[id] = t
 	}
 	return nil
 }
@@ -420,17 +419,15 @@ func (config *Config) validateConditions() error {
 			return ErrNotAllowedTemplatedKey
 		}
 
+		config.Spec.Conditions[id] = c
+
 		// Temporary code until we fully remove the old way to configure scm
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if c.Scm != nil {
 		if len(c.Scm) > 0 {
-
-			// Save back from generateScmFromLegacyCondition
-			config.Spec.Conditions[id] = c
 			generateScmFromLegacyCondition(id, config)
 		}
 
-		config.Spec.Conditions[id] = c
 	}
 	return nil
 }
