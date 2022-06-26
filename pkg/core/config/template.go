@@ -104,9 +104,8 @@ func ReadFile(filename string, values *map[string]interface{}, encrypted bool) (
 
 	baseFilename := filepath.Base(filename)
 
-	if extension := filepath.Ext(baseFilename); strings.Compare(extension, ".yaml") != 0 ||
-		strings.Compare(extension, ".yml") != 0 &&
-			strings.Compare(extension, ".yaml") != 0 {
+	if extension := filepath.Ext(baseFilename); strings.Compare(extension, ".yml") != 0 &&
+		strings.Compare(extension, ".yaml") != 0 {
 		err = fmt.Errorf("wrong file extension %q for file %q", extension, baseFilename)
 		logrus.Errorln(err)
 		return err
