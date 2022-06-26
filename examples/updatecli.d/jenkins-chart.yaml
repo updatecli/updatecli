@@ -1,21 +1,21 @@
 sources:
   lastHelmRelease:
-    kind: helmchart
+    kind: "helmchart"
     name: "Get latest jenkins helm chart version"
     spec:
-      url: https://charts.jenkins.io
-      name: jenkins
+      url: "https://charts.jenkins.io"
+      name: "jenkins"
 
 conditions:
   exist:
     name: "Is Jenkins helm chart available on Registry?"
-    kind: helmchart
+    kind: "helmchart"
     spec:
-      url: https://kubernetes-charts.storage.googleapis.com
-      name: jenkins
+      url: "https://kubernetes-charts.storage.googleapis.com"
+      name: "jenkins"
   chartDependencyIsJenkins:
     name: "Is Jenkins dependency correclty set?"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "charts/jenkins/requirements.yaml"
       key: "dependencies[0].name"
@@ -33,7 +33,7 @@ conditions:
 targets:
   imageTag:
     name: "Update required Jenkins helm chart version"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "charts/jenkins/requirements.yaml"
       key: "dependencies[0].version"

@@ -1,6 +1,6 @@
 sources:
   lastMavenRelease:
-    kind: maven
+    kind: "maven"
     name: "Get latest jenkins weekly version from maven repository"
     spec:
       url: "repo.jenkins-ci.org"
@@ -12,13 +12,13 @@ sources:
 conditions:
   docker:
     name: "Is Docker Image Published on Registry?"
-    kind: dockerimage
+    kind: "dockerimage"
     spec:
       image: "jenkins/jenkins"
 targets:
   imageTag:
     name: "Update Jenkins docker image tag"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "charts/jenkins/values.yaml"
       key: "jenkins.controller.imageTag"

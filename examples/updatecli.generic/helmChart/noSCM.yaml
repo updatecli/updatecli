@@ -4,15 +4,15 @@
 
 sources:
   lastJenkinsStableVersion:
-    kind: jenkins
+    kind: "jenkins"
     spec:
-      release: stable
+      release: "stable"
 targets:
   chartjenkins:
     name: "jenkinsci/jenkins Helm Chart"
-    kind: helmChart
+    kind: "helmChart"
     spec:
-      appVersion: true
+      appVersion: "true"
       Name: "/tmp/helm-charts/charts/jenkins"
       file: "values.yaml"
       key: "controller.tag"

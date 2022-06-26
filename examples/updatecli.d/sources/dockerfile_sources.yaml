@@ -1,33 +1,33 @@
 ---
-title: Bump jenkinsciinfra/helmfile image
+title: "Bump jenkinsciinfra/helmfile image"
 sources:
   helm1:
-    name: Get Latest helm release version
-    kind: githubrelease
+    name: "Get Latest helm release version"
+    kind: "githubrelease"
     spec:
       owner: "helm"
       repository: "helm"
       token: '{{ requiredEnv .github.token }}'
-      username: olblak
+      username: "olblak"
       versionfilter:
-        kind: latest
+        kind: "latest"
   helm2:
-    name: Get Latest helm release version
-    kind: githubrelease
+    name: "Get Latest helm release version"
+    kind: "githubrelease"
     spec:
       owner: "helm"
       repository: "helm"
       token: '{{ requiredEnv .github.token }}'
-      username: olblak
+      username: "olblak"
       versionfilter:
-        kind: latest
+        kind: "latest"
 conditions:
   isENVSet:
     sourceid: "helm1"
     name: 'Is the 2nd ENV instruction having a "keyword" set to "HELM_VERSION"'
     kind: "dockerfile"
     spec:
-      file: docker/Dockerfile
+      file: "docker/Dockerfile"
       instruction: "ENV[1][0]"
       value: "HELM_VERSION"
     scm:
@@ -41,12 +41,12 @@ conditions:
         branch: "master"
 targets:
   updateHelm:
-    name: Update the 2nd element of the 2nd ENV instruction to the source value
-    sourceid: helm1
-    kind: dockerfile
+    name: "Update the 2nd element of the 2nd ENV instruction to the source value"
+    sourceid: "helm1"
+    kind: "dockerfile"
     spec:
-      file: docker/Dockerfile
-      instruction: ENV[1][1]
+      file: "docker/Dockerfile"
+      instruction: "ENV[1][1]"
     scm:
       github:
         user: "updatecli"
@@ -57,12 +57,12 @@ targets:
         username: "olblak"
         branch: "master"
   updateChecksum:
-    name: Update Helm checksum
-    sourceid: helm1
-    kind: dockerfile
+    name: "Update Helm checksum"
+    sourceid: "helm1"
+    kind: "dockerfile"
     spec:
-      file: docker/Dockerfile
-      instruction: ENV[5][1]
+      file: "docker/Dockerfile"
+      instruction: "ENV[5][1]"
     scm:
       github:
         user: "updatecli"
