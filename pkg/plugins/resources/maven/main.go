@@ -11,11 +11,16 @@ import (
 // Spec defines a specification for a "maven" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	URL        string
-	Repository string
-	GroupID    string
-	ArtifactID string
-	Version    string
+	// Specifies the maven repository URL
+	URL string `yaml:",omitempty"`
+	// Specifies the maven repository name
+	Repository string `yaml:",omitempty"`
+	// Specifies the maven artifact groupID
+	GroupID string `yaml:",omitempty"`
+	// Specifies the maven artifact artifactID
+	ArtifactID string `yaml:",omitempty"`
+	// Specifies the maven artifact version
+	Version string `yaml:",omitempty"`
 }
 
 // Maven defines a resource of kind "maven"

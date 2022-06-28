@@ -1,7 +1,7 @@
 sources:
   lastJenkinsWeeklyVersion:
     name: "Get latest jenkins weekly version"
-    kind: jenkins
+    kind: "jenkins"
     transformers:
       - addPrefix: "alpha-"
       - addSuffix: "-jdk11"
@@ -14,10 +14,10 @@ sources:
           - from: "-jdk15"
             to: "-jdk17"
     spec:
-      release: weekly
+      release: "weekly"
 targets:
   targetID:
     name: "Update file file"
-    kind: file
+    kind: "file"
     spec:
-      file: TODO
+      file: "TODO"

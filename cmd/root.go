@@ -54,6 +54,7 @@ func init() {
 		applyCmd,
 		diffCmd,
 		prepareCmd,
+		manifestCmd,
 		showCmd,
 		versionCmd,
 		docsCmd,
@@ -117,12 +118,20 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 		}
 
+	case "manifest/upgrade":
+		err := e.ManifestUpgrade(manifestUpgradeInPlace)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
 	case "show":
 		err := e.Show()
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
+
 	case "jsonschema":
 		err := engine.GenerateSchema(jsonschemaBaseID, jsonschemaDirectory)
 		if err != nil {

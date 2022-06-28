@@ -13,8 +13,8 @@ import (
 )
 
 type SimpleTextDockerfileParser struct {
-	Keyword      string `yaml:"keyword"`
-	Matcher      string `yaml:"matcher"`
+	Keyword      string `yaml:"keyword,omitempty"`
+	Matcher      string `yaml:"matcher,omitempty"`
 	KeywordLogic keywords.Logic
 }
 

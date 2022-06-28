@@ -1,8 +1,8 @@
 ---
 sources:
   lastHelmRelease:
-    name: Get Latest helm release version
-    kind: githubRelease
+    name: "Get Latest helm release version"
+    kind: "githubRelease"
     spec:
       owner: "helm"
       repository: "helm"

@@ -1,6 +1,6 @@
 sources:
   lastDockerDigest:
-    kind: dockerdigest
+    kind: "dockerdigest"
     name: "Get latest nginx:1.17 from dockerhub"
     spec:
       image: "library/nginx"
@@ -8,10 +8,10 @@ sources:
 targets:
   jenkinsio:
     name: "Update to latest nginx:1.17"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "charts/jenkinsio/values.yaml"
-      key: image.tag
+      key: "image.tag"
     scm:
       github:
         user: "{{ .github.user }}"

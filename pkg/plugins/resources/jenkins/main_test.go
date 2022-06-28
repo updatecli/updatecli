@@ -30,17 +30,17 @@ var (
 		},
 		{
 			version:     "2",
-			err:         fmt.Errorf("Version 2 contains 1 component(s) which doesn't correspond to any valid release type"),
+			err:         fmt.Errorf("version 2 contains 1 component(s) which doesn't correspond to any valid release type"),
 			releaseType: WRONG,
 		},
 		{
 			version:     "2.249.3.4",
-			err:         fmt.Errorf("Version 2.249.3.4 contains 4 component(s) which doesn't correspond to any valid release type"),
+			err:         fmt.Errorf("version 2.249.3.4 contains 4 component(s) which doesn't correspond to any valid release type"),
 			releaseType: WRONG,
 		},
 		{
 			version:     "2.249.3-rc",
-			err:         fmt.Errorf("In version '2.249.3-rc', component '3-rc' is not a valid integer"),
+			err:         fmt.Errorf("in version '2.249.3-rc', component '3-rc' is not a valid integer"),
 			releaseType: WRONG,
 		},
 	}

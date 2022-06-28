@@ -1,6 +1,6 @@
 sources:
   lastGitHubRelease:
-    kind: githubrelease
+    kind: "githubrelease"
     name: "Get latest pluginsite version"
     spec:
       owner: "jenkins-infra"
@@ -8,27 +8,27 @@ sources:
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: "olblak"
       versionfilter:
-        kind: latest
+        kind: "latest"
 targets:
   imageTag:
     name: "Is Docker Image published on dockerhub"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "charts/plugin-site/values.yaml"
       key: "backend.image.tag"
-    scmid: default
+    scmid: "default"
 
   appVersion:
     name: "Update Chart appVersion"
-    kind: yaml
-    scmid: default
+    kind: "yaml"
+    scmid: "default"
     spec:
       file: "charts/plugin-site/Chart.yaml"
-      key: appVersion
+      key: "appVersion"
 
 scms:
   default:
-    kind: github
+    kind: "github"
     spec:
       user: "{{ .github.user }}"
       email: "{{ .github.email }}"

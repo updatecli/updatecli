@@ -12,17 +12,17 @@ import (
 // Spec defines a specification for a "dockerdigest" resource parsed from an updatecli manifest file
 type Spec struct {
 	// Architecture specifies the container image architecture such as `amd64`
-	Architecture string
+	Architecture string `yaml:",omitempty"`
 	// Image specifies the container image such as `updatecli/updatecli`
-	Image string
+	Image string `yaml:",omitempty"`
 	// Tag specifies the container image tag such as `latest`
-	Tag string
+	Tag string `yaml:",omitempty"`
 	// Username specifies the container registry username to use for authentication. Not compatible with token
-	Username string
+	Username string `yaml:",omitempty"`
 	// Password specifies the container registry password to use for authentication. Not compatible with token
-	Password string
+	Password string `yaml:",omitempty"`
 	// Token specifies the container registry token to use for authentication. Not compatible with username/password
-	Token string
+	Token string `yaml:",omitempty"`
 }
 
 // DockerDigest defines a resource of kind "dockerDigest" to interact with a docker registry

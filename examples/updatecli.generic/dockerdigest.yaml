@@ -1,33 +1,33 @@
 ---
-title: Show a set of dockerimage resources as a generic example
+title: "Show a set of dockerimage resources as a generic example"
 sources:
   jenkinsAnonymousDockerHub:
-    kind: dockerDigest
+    kind: "dockerDigest"
     name: "Get digest of the latest jenkins/jenkins image on the DockerHub"
     spec:
-      image: jenkins/jenkins
-      tag: latest
+      image: "jenkins/jenkins"
+      tag: "latest"
       architecture: "amd64"
   jenkinsDockerHub:
-    kind: dockerDigest
+    kind: "dockerDigest"
     name: "Get digest of the latest jenkins/jenkins:lts image on the DockerHub"
     spec:
-      image: jenkins/jenkins
-      tag: lts
+      image: "jenkins/jenkins"
+      tag: "lts"
       architecture: "amd64"
       username: "dduportal"
       password: "{{ requiredEnv `DOCKERHUB_TOKEN` }}"
   nginxOfficialDockerHub:
-    kind: dockerDigest
+    kind: "dockerDigest"
     name: "Get digest of the latest nginx:alpine image on the DockerHub"
     spec:
-      image: nginx
-      tag: alpine
+      image: "nginx"
+      tag: "alpine"
       architecture: "amd64"
       username: "dduportal"
       password: "{{ requiredEnv `DOCKERHUB_TOKEN` }}"
   digestOfLatestUpdateCliARMDockerHub:
-    kind: dockerDigest
+    kind: "dockerDigest"
     name: "Get digest of the latest updatecli/updatecli image on the DockerHub"
     spec:
       hostname: "index.docker.io"
@@ -35,13 +35,13 @@ sources:
       tag: "latest"
       architecture: "arm64"
   digestOfLatestQuayAnsibleRunner:
-    kind: dockerDigest
+    kind: "dockerDigest"
     name: "Get digest of the latest quay.io/ansible/ansible-runner image on Quay.io"
     spec:
       image: "quay.io/ansible/ansible-runner"
       tag: "latest"
   digestOfLatestUpdateCliOnGhcr:
-    kind: dockerDigest
+    kind: "dockerDigest"
     name: "Get digest of the latest updatecli/updatecli image on ghcr.io"
     spec:
       image: "ghcr.io/updatecli/updatecli"

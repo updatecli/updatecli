@@ -13,13 +13,20 @@ import (
 // Spec defines a specification for a "file" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	File           string   // **Deprecated** File is deprecated in favor of Files, this field will be removed in a future version
-	Files          []string // Files contains the file path(s) to take in account
-	Line           int      // Line contains the line of the file(s) to take in account
-	Content        string   // Content specifies the content to take in account instead of the file content
-	ForceCreate    bool     // ForceCreate specifies if non existing file(s) should be created if they are targets
-	MatchPattern   string   // MatchPattern specifies the regexp pattern to match on the file(s)
-	ReplacePattern string   // ReplacePattern specifies the regexp replace pattern to apply on the file(s) content
+	// File contains the file path(s) to take in account and is incompatible with Files
+	File string `yaml:",omitempty"`
+	// Files contains the file path(s) to take in account and is incompatible with File
+	Files []string `yaml:",omitempty"`
+	// Line contains the line of the file(s) to take in account
+	Line int `yaml:",omitempty"`
+	// Content specifies the content to take in account instead of the file content
+	Content string `yaml:",omitempty"`
+	// ForceCreate specifies if non existing file(s) should be created if they are targets
+	ForceCreate bool `yaml:",omitempty"`
+	// MatchPattern specifies the regexp pattern to match on the file(s)
+	MatchPattern string `yaml:",omitempty"`
+	// ReplacePattern specifies the regexp replace pattern to apply on the file(s) content
+	ReplacePattern string `yaml:",omitempty"`
 }
 
 // File defines a resource of kind "file"
