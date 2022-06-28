@@ -10,7 +10,8 @@ import (
 // Spec defines a specification for a "shell" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	Command string
+	// Specifies the shell command
+	Command string `yaml:",omitempty" jsonschema:"required"`
 }
 
 // Shell defines a resource of kind "shell"

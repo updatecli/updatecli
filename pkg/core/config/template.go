@@ -25,7 +25,7 @@ type Template struct {
 }
 
 // Init parses a golang template then return an updatecli configuration as a struct
-func (t *Template) Init(config *Config) error {
+func (t *Template) New(content []byte) ([]byte, error) {
 	funcMap := template.FuncMap{
 		// Retrieve value from environment variable, return error if not found
 		"requiredEnv": func(s string) (string, error) {
@@ -43,59 +43,63 @@ func (t *Template) Init(config *Config) error {
 		},
 	}
 
-	c, err := os.Open(t.CfgFile)
+	err := t.readValuesFiles()
 
 	if err != nil {
-		return err
+		return []byte{}, err
 	}
 
-	defer c.Close()
+	err = t.readSecretsFiles()
 
-	// Read every files containing yaml key/values
-	for _, valuesFile := range t.ValuesFiles {
-		err = ReadFile(valuesFile, &t.Values, false)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	// Read every files containing sops secrets using the yaml format
-	// Order matter, last element always override
-	for _, secretsFile := range t.SecretsFiles {
-		err = ReadFile(secretsFile, &t.Secrets, true)
-
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return []byte{}, err
 	}
 
 	// Merge yaml configuration and sops secrets into one configuration
 	// Deepmerge is not supported so a secrets override unencrypted values
 	templateValues := Merge(t.Values, t.Secrets)
 
-	content, err := ioutil.ReadAll(c)
-	if err != nil {
-		return err
-	}
-
 	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
 
 	if err != nil {
-		return err
+		return []byte{}, err
 	}
 
 	b := bytes.Buffer{}
 
 	if err := tmpl.Execute(&b, templateValues); err != nil {
-		return err
+		return []byte{}, err
 	}
 
-	err = yaml.Unmarshal(b.Bytes(), &config)
-	if err != nil {
-		return err
-	}
+	return b.Bytes(), nil
+}
 
+func (t *Template) readValuesFiles() error {
+	// Read every files containing yaml key/values
+	for _, valuesFile := range t.ValuesFiles {
+		err := ReadFile(valuesFile, &t.Values, false)
+
+		// Stop early, no need to lead more values files
+		// if something went wrong with at least one
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *Template) readSecretsFiles() error {
+	// Read every files containing sops secrets using the yaml format
+	// Order matter, last element always override
+	for _, secretsFile := range t.SecretsFiles {
+		err := ReadFile(secretsFile, &t.Secrets, true)
+
+		// Stop early, no need to lead more secrets files
+		// if something went wrong with at least one.
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

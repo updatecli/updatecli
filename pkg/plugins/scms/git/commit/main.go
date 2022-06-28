@@ -25,12 +25,18 @@ var (
 // More information on what is conventional commits
 // -> https://www.conventionalcommits.org/en/v1.0.0/#summary
 type Commit struct {
-	Type       string // Define commit type, like chore, fix, etc
-	Scope      string // Define commit type scope
-	Footers    string // Define commit footer
-	Title      string // Define commit title
-	Body       string // Define commit body
-	HideCredit bool   // Display updatecli credits inside commit message body
+	// Define commit type, like chore, fix, etc
+	Type string `yaml:",omitempty"`
+	// Define commit type scope
+	Scope string `yaml:",omitempty"`
+	// Define commit footer
+	Footers string `yaml:",omitempty"`
+	// Define commit title
+	Title string `yaml:",omitempty"`
+	// Define commit body
+	Body string `yaml:",omitempty"`
+	// Display updatecli credits inside commit message body
+	HideCredit bool `yaml:",omitempty"`
 }
 
 // Generate generates the conventional commit

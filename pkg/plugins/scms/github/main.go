@@ -21,31 +21,31 @@ import (
 // Spec represents the configuration input
 type Spec struct {
 	// Branch specifies which github branch to work on
-	Branch string
+	Branch string `yaml:",omitempty"`
 	// Directory specifies where the github repository is cloned on the local disk
-	Directory string
+	Directory string `yaml:",omitempty"`
 	// Email specifies which emails to use when creating commits
-	Email string
+	Email string `yaml:",omitempty"`
 	// Owner specifies repository owner
-	Owner string `jsonschema:"required"`
+	Owner string `yaml:",omitempty" jsonschema:"required"`
 	// Repository specifies the name of a repository for a specific owner
-	Repository string `jsonschema:"required"`
+	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// Token specifies the credential used to authenticate with
-	Token string `jsonschema:"required"`
+	Token string `yaml:",omitempty" jsonschema:"required"`
 	// URL specifies the default github url in case of GitHub enterprise
-	URL string
+	URL string `yaml:",omitempty"`
 	// Username specifies the username used to authenticate with Github API
-	Username string `jsonschema:"required"`
+	Username string `yaml:",omitempty" jsonschema:"required"`
 	// User specifies the user of the git commit messages
-	User string
+	User string `yaml:",omitempty"`
 	// Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
-	PullRequest PullRequestSpec
+	PullRequest PullRequestSpec `yaml:",omitempty"`
 	// GPG key and passphrased used for commit signing
-	GPG sign.GPGSpec
+	GPG sign.GPGSpec `yaml:",omitempty"`
 	// Force is used during the git push phase to run `git push --force`.
-	Force bool
+	Force bool `yaml:",omitempty"`
 	// CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
-	CommitMessage commit.Commit
+	CommitMessage commit.Commit `yaml:",omitempty"`
 }
 
 // Github contains settings to interact with Github

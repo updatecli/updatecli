@@ -1,46 +1,46 @@
 sources:
   lastGitHubRelease:
-    kind: githubrelease
+    kind: "githubrelease"
     spec:
-      owner: olblak
-      repository: updatecli
+      owner: "olblak"
+      repository: "updatecli"
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: olblak
+      username: "olblak"
       versionfilter:
-        kind: latest
+        kind: "latest"
 
 conditions:
   dockerFile:
-    name: isDockerfileCorrect
-    kind: dockerfile
+    name: "isDockerfileCorrect"
+    kind: "dockerfile"
     spec:
-      file: Dockerfile
+      file: "Dockerfile"
       instruction:
         keyword: "FROM"
         matcher: "golang:1.14"
-    scmid: default
+    scmid: "default"
 
 targets:
   dockerFile:
     name: "isDockerfileCorrect"
-    kind: dockerfile
+    kind: "dockerfile"
     spec:
-      file: Dockerfile
+      file: "Dockerfile"
       instruction:
         keyword: "FROM"
         matcher: "golang:1.14"
     transformers:
       - addPrefix: "olblak/updatecli:"
-    scmid: default
+    scmid: "default"
 
 scms:
   default:
-    kind: github
+    kind: "github"
     spec:
       user: "updatecli"
       owner: "olblak"
       repository: "updatecli"
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: "olblak"
-      branch: main
+      branch: "main"
       email: "update-bot@olblak.com"

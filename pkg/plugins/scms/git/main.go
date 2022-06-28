@@ -16,25 +16,25 @@ import (
 // Spec contains settings to manipulate a git repository.
 type Spec struct {
 	// URL specifies the git url
-	URL string `jsonschema:"required"`
+	URL string `yaml:",omitempty" jsonschema:"required"`
 	// Username specifies the username for http authentication
-	Username string
+	Username string `yaml:",omitempty"`
 	// Password specifies the password for http authentication
-	Password string
+	Password string `yaml:",omitempty"`
 	// Branch specifies the git branch
-	Branch string
+	Branch string `yaml:",omitempty"`
 	// User specifies the git commit author
-	User string
+	User string `yaml:",omitempty"`
 	// Email specifies the git commit email
-	Email string
+	Email string `yaml:",omitempty"`
 	// Directory specifies the directory to use for cloning the repository
-	Directory string
+	Directory string `yaml:",omitempty"`
 	// Force is used during the git push phase to run `git push --force`.
-	Force bool
+	Force bool `yaml:",omitempty"`
 	// CommitMessage contains conventional commit metadata as type or scope, used to generate the final commit message.
-	CommitMessage commit.Commit
+	CommitMessage commit.Commit `yaml:",omitempty"`
 	// GPG key and passphrased used for commit signing
-	GPG sign.GPGSpec
+	GPG sign.GPGSpec `yaml:",omitempty"`
 }
 
 type Git struct {

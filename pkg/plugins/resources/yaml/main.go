@@ -20,10 +20,14 @@ var (
 // Spec defines a specification for a "yaml" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	File    string
-	Key     string
-	Value   string
-	KeyOnly bool // [condition] allow checking for only the existence of a key (not its value)
+	// Specifies the YAML file
+	File string `yaml:",omitempty"`
+	// Specifies the YAML key
+	Key string `yaml:",omitempty"`
+	// Specifies the YAML value
+	Value string `yaml:",omitempty"`
+	// [condition] allow checking for only the existence of a key (not its value)
+	KeyOnly bool `yaml:",omitempty"`
 }
 
 // Yaml defines a resource of kind "yaml"

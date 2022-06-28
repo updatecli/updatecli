@@ -1,16 +1,16 @@
-title: Bump Jenkins controller docker image tag
+title: "Bump Jenkins controller docker image tag"
 sources:
   lastJenkinsStableVersion:
-    kind: jenkins
-    name: Get Latest Jenkins Stable version
+    kind: "jenkins"
+    name: "Get Latest Jenkins Stable version"
     spec:
-      release: stable
+      release: "stable"
 targets:
   chartjenkins2:
-    name: Bump Jenkins controller docker image tag
-    kind: helmChart
+    name: "Bump Jenkins controller docker image tag"
+    kind: "helmChart"
     spec:
-      appVersion: true
+      appVersion: "true"
       Name: "charts/jenkins"
       key: "jenkins.controller.tag"
       versionincrement: "major"
@@ -20,9 +20,9 @@ targets:
         email: "updatecli@olblak.com"
         owner: "olblak"
         repository: "charts"
-        token: {{ requiredEnv .github.token }}
+        token: "{{ requiredEnv .github.token }}"
         username: "olblak"
         branch: "master"
         pullrequest:
           labels:
-            - dependencies
+            - "dependencies"

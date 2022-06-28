@@ -1,15 +1,15 @@
-title: Bump Jenkins Upstream Chart Version
+title: "Bump Jenkins Upstream Chart Version"
 sources:
   lastHelmRelease:
-    kind: helmChart
-    name: Get official Jenkins Chart Version
+    kind: "helmChart"
+    name: "Get official Jenkins Chart Version"
     spec:
-      url: https://charts.jenkins.io
-      name: jenkins
+      url: "https://charts.jenkins.io"
+      name: "jenkins"
 targets:
   chartjenkins:
-    name: Bump Jenkins Upstream Chart Version
-    kind: helmChart
+    name: "Bump Jenkins Upstream Chart Version"
+    kind: "helmChart"
     spec:
       Name: "charts/jenkins"
       file: "requirements.yaml"
@@ -21,6 +21,6 @@ targets:
         email: "updatecli@olblak.com"
         owner: "olblak"
         repository: "charts"
-        token: {{ requiredEnv .github.token }}
+        token: "{{ requiredEnv .github.token }}"
         username: "olblak"
         branch: "master"

@@ -2,6 +2,7 @@ package scm
 
 import (
 	"errors"
+	"strings"
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/mitchellh/mapstructure"
@@ -12,8 +13,10 @@ import (
 )
 
 type Config struct {
-	Kind string
-	Spec interface{} `jsonschema:"type=object"`
+	// Kind specifies the scm kind
+	Kind string `yaml:",omitempty"`
+	// Spec specifies the scm specification
+	Spec interface{} `jsonschema:"type=object" yaml:",omitempty"`
 }
 
 type Scm struct {
@@ -41,18 +44,30 @@ type ScmHandler interface {
 }
 
 func (c *Config) Validate() error {
-	errs := []error{}
+	gotError := false
+	missingParameters := []string{}
 
+	// Validate that kind is set
 	if len(c.Kind) == 0 {
-		logrus.Errorln("Missing 'kind' values")
-		errs = append(errs, errors.New("missing 'kind' value"))
-	}
-	if c.Spec == nil {
-		logrus.Errorln("Missing 'spec' value")
-		errs = append(errs, errors.New("missing 'spec' value"))
+		missingParameters = append(missingParameters, "kind")
 	}
 
-	if len(errs) > 0 {
+	if c.Spec == nil {
+		missingParameters = append(missingParameters, "spec")
+	}
+
+	// Ensure kind is lowercase
+	if c.Kind != strings.ToLower(c.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		c.Kind = strings.ToLower(c.Kind)
+	}
+
+	if len(missingParameters) > 0 {
+		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
+		gotError = true
+	}
+
+	if gotError {
 		return ErrWrongConfig
 	}
 	return nil

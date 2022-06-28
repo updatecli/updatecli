@@ -153,9 +153,15 @@ func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
 
-	for _, cfgFile := range GetFiles(e.Options.File) {
+	for _, manifestFile := range GetFiles(e.Options.Config.ManifestFile) {
 
-		loadedConfiguration, err := config.New(cfgFile, e.Options.ValuesFiles, e.Options.SecretsFiles)
+		loadedConfiguration, err := config.New(
+			config.Option{
+				ManifestFile:      manifestFile,
+				SecretsFiles:      e.Options.Config.SecretsFiles,
+				ValuesFiles:       e.Options.Config.ValuesFiles,
+				DisableTemplating: e.Options.Config.DisableTemplating,
+			})
 
 		switch err {
 		case config.ErrConfigFileTypeNotSupported:
@@ -165,7 +171,7 @@ func (e *Engine) LoadConfigurations() error {
 		case nil:
 			// nothing to do
 		default:
-			err = fmt.Errorf("%q - %s", cfgFile, err)
+			err = fmt.Errorf("%q - %s", manifestFile, err)
 			errs = append(errs, err)
 			continue
 		}
@@ -180,7 +186,7 @@ func (e *Engine) LoadConfigurations() error {
 			e.configurations = append(e.configurations, loadedConfiguration)
 		} else {
 			// don't initially fail as init. of the pipeline still fails even with a successful validation
-			err := fmt.Errorf("%q - %s", cfgFile, err)
+			err := fmt.Errorf("%q - %s", manifestFile, err)
 			errs = append(errs, err)
 		}
 	}
@@ -254,9 +260,9 @@ func (e *Engine) Show() error {
 
 	for _, pipeline := range e.Pipelines {
 
-		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(pipeline.Config.Name)+4))
-		logrus.Infof("# %s #\n", strings.ToTitle(pipeline.Config.Name))
-		logrus.Infof("%s\n\n", strings.Repeat("#", len(pipeline.Config.Name)+4))
+		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(pipeline.Config.Spec.Name)+4))
+		logrus.Infof("# %s #\n", strings.ToTitle(pipeline.Config.Spec.Name))
+		logrus.Infof("%s\n\n", strings.Repeat("#", len(pipeline.Config.Spec.Name)+4))
 
 		err = pipeline.Config.Display()
 		if err != nil {

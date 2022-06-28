@@ -7,8 +7,10 @@ import (
 )
 
 type GPGSpec struct {
-	SigningKey string
-	Passphrase string
+	// Defines the gpg key
+	SigningKey string `yaml:",omitempty"`
+	// Define the gpg passphrase
+	Passphrase string `yaml:",omitempty"`
 }
 
 func GetCommitSignKey(armoredKeyRing string, keyPassphrase string) (*openpgp.Entity, error) {

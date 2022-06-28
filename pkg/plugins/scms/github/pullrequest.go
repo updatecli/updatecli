@@ -73,13 +73,20 @@ type PullRequestApi struct {
 // PullRequestSpec is a specific struct containing pullrequest settings provided
 // by an updatecli configuration
 type PullRequestSpec struct {
-	AutoMerge              bool     // Specify if automerge is enabled for the new pullrequest
-	Title                  string   // Specify pull request title
-	Description            string   // Description contains user input description used during pull body creation
-	Labels                 []string // Specify repository labels used for pull request. !! They must already exist
-	Draft                  bool     // Define if a pull request is set to draft, default false
-	MaintainerCannotModify bool     // Define if maintainer can modify pullRequest
-	MergeMethod            string   // Define which merge method is used to incorporate the pull request. Accept "merge", "squash", "rebase", or ""
+	// Specifies if automerge is enabled for the new pullrequest
+	AutoMerge bool `yaml:",omitempty"`
+	// Specifies pull request title
+	Title string `yaml:",omitempty"`
+	// Specifies user input description used during pull body creation
+	Description string `yaml:",omitempty"`
+	// Specifies repository labels used for pull request. !! Labels must already exist on the repository
+	Labels []string `yaml:",omitempty"`
+	// Specifies if a pull request is set to draft, default false
+	Draft bool `yaml:",omitempty"`
+	// Specifies if maintainer can modify pullRequest
+	MaintainerCannotModify bool `yaml:",omitempty"`
+	// Specifies which merge method is used to incorporate the pull request. Accept "merge", "squash", "rebase", or ""
+	MergeMethod string `yaml:",omitempty"`
 }
 
 type PullRequest struct {

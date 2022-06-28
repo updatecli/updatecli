@@ -33,19 +33,16 @@ type Target struct {
 // Config defines target parameters
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	// PipelineID references a unique pipeline run allowing to group targets
-	PipelineID string
 	// ReportTitle contains the updatecli reports title for sources and conditions run
-	ReportTitle string
+	ReportTitle string `yaml:",omitempty"`
 	// ReportBody contains the updatecli reports body for sources and conditions run
-	ReportBody string
+	ReportBody string `yaml:",omitempty"`
 	// ! Deprecated - please use all lowercase `sourceid`
-	// sourceid specifies where retrieving the default value
-	DeprecatedSourceID string `yaml:"sourceID"`
+	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
 	// disablesourceinput disables the mechanism to retrieve a default value from a source.
-	DisableSourceInput bool
+	DisableSourceInput bool `yaml:",omitempty"`
 	// sourceid specifies where retrieving the default value
-	SourceID string
+	SourceID string `yaml:",omitempty"`
 	// disablesourceinput
 }
 
@@ -183,6 +180,19 @@ func (c *Config) Validate() error {
 
 	gotError := false
 
+	missingParameters := []string{}
+
+	// Validate that kind is set
+	if len(c.Kind) == 0 {
+		missingParameters = append(missingParameters, "kind")
+	}
+
+	// Ensure kind is lowercase
+	if c.Kind != strings.ToLower(c.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		c.Kind = strings.ToLower(c.Kind)
+	}
+
 	if len(c.DeprecatedSCMID) > 0 {
 		switch len(c.SCMID) {
 		case 0:
@@ -210,11 +220,17 @@ func (c *Config) Validate() error {
 
 	err := c.Transformers.Validate()
 	if err != nil {
-		return err
+		logrus.Errorln(err)
+		gotError = true
 	}
 
 	if len(c.SourceID) > 0 && c.DisableSourceInput {
 		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
+		gotError = true
+	}
+
+	if len(missingParameters) > 0 {
+		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
 		gotError = true
 	}
 

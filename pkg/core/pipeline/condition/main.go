@@ -3,6 +3,7 @@ package condition
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
@@ -29,14 +30,13 @@ type Condition struct {
 
 // Config defines conditions input parameters
 type Config struct {
-	resource.ResourceConfig `yaml:",inline"`
+	resource.ResourceConfig `yaml:",inline,omitempty"`
 	// ! Deprecated in favor of sourceID
+	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
 	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
-	DeprecatedSourceID string `yaml:"sourceID"`
-	// sourceid specifies which "source", based on its ID, is used to retrieve the default value.
-	SourceID string
+	SourceID string `yaml:",omitempty"`
 	// disablesourceinput disable the mechanism to retrieve a default value from a source.
-	DisableSourceInput bool
+	DisableSourceInput bool `yaml:",omitempty"`
 }
 
 // Run tests if a specific condition is true
@@ -108,6 +108,18 @@ func (c Config) JSONSchema() *jschema.Schema {
 
 func (c *Config) Validate() error {
 	gotError := false
+	missingParameters := []string{}
+
+	// Validate that kind is set
+	if len(c.Kind) == 0 {
+		missingParameters = append(missingParameters, "kind")
+	}
+
+	// Ensure kind is lowercase
+	if c.Kind != strings.ToLower(c.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		c.Kind = strings.ToLower(c.Kind)
+	}
 
 	// Handle scmID deprecation
 	if len(c.DeprecatedSCMID) > 0 {
@@ -142,6 +154,11 @@ func (c *Config) Validate() error {
 
 	if len(c.SourceID) > 0 && c.DisableSourceInput {
 		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
+		gotError = true
+	}
+
+	if len(missingParameters) > 0 {
+		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
 		gotError = true
 	}
 
