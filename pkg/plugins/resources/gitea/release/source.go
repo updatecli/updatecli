@@ -23,15 +23,13 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 		}
 	}
 
-	fmt.Printf("Releases found: %v", versions)
-
 	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
 	value := g.foundVersion.ParsedVersion
 
-	fmt.Printf("Latest Release found: %v", g.foundVersion.ParsedVersion)
+	logrus.Infof("Latest Release found: %v", g.foundVersion.ParsedVersion)
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Gitea Release version found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
