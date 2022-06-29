@@ -79,7 +79,7 @@ func TestSource(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.spec, "pipelineID")
+			g, _ := New(tt.spec)
 			gotResult, gotErr := g.Source("")
 
 			if tt.wantErr {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/drone/go-scm/scm"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -45,8 +46,14 @@ type Gitea struct {
 }
 
 // New returns a new valid Github object.
-func New(s Spec, pipelineID string) (*Gitea, error) {
-	err := s.Validate()
+func New(spec interface{}) (*Gitea, error) {
+	s := Spec{}
+	err := mapstructure.Decode(spec, &s)
+	if err != nil {
+		return &Gitea{}, nil
+	}
+
+	err = s.Validate()
 
 	if err != nil {
 		return &Gitea{}, err

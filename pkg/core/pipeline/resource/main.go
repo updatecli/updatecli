@@ -12,6 +12,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/file"
+	giteaBranch "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/branch"
+	giteaRelease "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/release"
+	giteaTag "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/githubrelease"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gittag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
@@ -62,6 +65,12 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return githubrelease.New(rs.Spec)
 	case "gittag":
 		return gittag.New(rs.Spec)
+	case "gitea/branch":
+		return giteaBranch.New(rs.Spec)
+	case "gitea/tag":
+		return giteaTag.New(rs.Spec)
+	case "gitea/release":
+		return giteaRelease.New(rs.Spec)
 	case "file":
 		return file.New(rs.Spec)
 	case "helmchart":

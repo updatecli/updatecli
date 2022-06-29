@@ -96,7 +96,7 @@ func TestCondition(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.spec, "pipelineID")
+			g, _ := New(tt.spec)
 			gotResult, gotErr := g.Condition("")
 
 			if tt.wantErr {
