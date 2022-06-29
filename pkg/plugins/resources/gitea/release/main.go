@@ -104,7 +104,6 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 
 	results := []string{}
 	for i := len(releases) - 1; i >= 0; i-- {
-		fmt.Printf("Title: %q\n", releases[i].Title)
 		if !releases[i].Draft {
 			results = append(results, releases[i].Tag)
 		}
