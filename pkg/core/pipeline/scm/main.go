@@ -116,7 +116,7 @@ func (s *Scm) GenerateSCM() error {
 			return err
 		}
 
-		g, err := git.New(gitSpec)
+		g, err := git.New(gitSpec, s.PipelineID)
 
 		if err != nil {
 			return err

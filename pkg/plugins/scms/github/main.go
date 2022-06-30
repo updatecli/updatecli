@@ -32,6 +32,8 @@ type Spec struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// Token specifies the credential used to authenticate with
 	Token string `yaml:",omitempty" jsonschema:"required"`
+	// DisableWorkingBranch disables temporary working branch such as updatecli_xxx
+	DisableWorkingBranch bool `yaml:",omitempty"`
 	// URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
 	// Username specifies the username used to authenticate with Github API
@@ -84,8 +86,14 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	httpClient := oauth2.NewClient(context.Background(), src)
 
 	g := Github{
-		Spec:       s,
-		HeadBranch: git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		Spec: s,
+	}
+
+	switch s.DisableWorkingBranch {
+	case true:
+		g.HeadBranch = git.SanitizeBranchName(s.Branch)
+	case false:
+		g.HeadBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%s", pipelineID))
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {

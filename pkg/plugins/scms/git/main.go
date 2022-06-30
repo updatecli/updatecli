@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -23,6 +24,8 @@ type Spec struct {
 	Password string `yaml:",omitempty"`
 	// Branch specifies the git branch
 	Branch string `yaml:",omitempty"`
+	// DisableWorkingBranch disables temporary working branch such as updatecli_xxx
+	DisableWorkingBranch bool `yaml:",omitempty"`
 	// User specifies the git commit author
 	User string `yaml:",omitempty"`
 	// Email specifies the git commit email
@@ -38,12 +41,12 @@ type Spec struct {
 }
 
 type Git struct {
-	spec         Spec
-	remoteBranch string
+	spec       Spec
+	HeadBranch string
 }
 
 // New returns a new git object
-func New(s Spec) (*Git, error) {
+func New(s Spec, pipelineID string) (*Git, error) {
 	var err error
 	if len(s.Directory) == 0 {
 		s.Directory, err = newDirectory(s.URL)
@@ -56,10 +59,18 @@ func New(s Spec) (*Git, error) {
 		s.Branch = "main"
 	}
 
-	return &Git{
-		spec:         s,
-		remoteBranch: git.SanitizeBranchName(s.Branch),
-	}, nil
+	g := Git{
+		spec: s,
+	}
+
+	switch s.DisableWorkingBranch {
+	case true:
+		g.HeadBranch = git.SanitizeBranchName(s.Branch)
+	case false:
+		g.HeadBranch = git.SanitizeBranchName(fmt.Sprintf("updatecli_%s", pipelineID))
+	}
+
+	return &g, nil
 
 }
 
