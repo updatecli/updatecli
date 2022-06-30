@@ -330,6 +330,12 @@ func (config *Config) validateSCMs() error {
 		// so we want to be sure that we save those modification
 		config.Spec.SCMs[id] = scm
 	}
+
+	err := config.migrateToGitTmpWorkingBranch()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -5,8 +5,54 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
+
+// If an scm of kind "git" is used alone, so without pullrequest referencing it
+// Then we disable the ability to use temporary working branch such as updatecli_xxx
+// The motivation is to give enough time to manifest to migrate to the new default behavior
+// more context is available on https://github.com/updatecli/updatecli/pull/745
+func (c *Config) migrateToGitTmpWorkingBranch() error {
+	gitScmIDs := []string{}
+
+	for id, s := range c.Spec.SCMs {
+		if s.Kind == "git" {
+			gitScmIDs = append(gitScmIDs, id)
+		}
+	}
+
+	if len(gitScmIDs) == 0 {
+		return nil
+	}
+
+	for _, gitScmID := range gitScmIDs {
+		shouldGitTmpWorkingBranchBeDisabled := true
+
+		for _, s := range c.Spec.PullRequests {
+			if s.ScmID == gitScmID {
+				shouldGitTmpWorkingBranchBeDisabled = false
+			}
+		}
+		if shouldGitTmpWorkingBranchBeDisabled {
+			gitSpec := git.Spec{}
+
+			err := mapstructure.Decode(c.Spec.SCMs[gitScmID], &gitSpec)
+			if err != nil {
+				return err
+			}
+			gitSpec.DisableWorkingBranch = true
+			s := c.Spec.SCMs[gitScmID]
+			s.Spec = gitSpec
+			c.Spec.SCMs[gitScmID] = s
+			break
+		}
+
+	}
+
+	return nil
+
+}
 
 func generateScmFromLegacyCondition(id string, config *Config) {
 
