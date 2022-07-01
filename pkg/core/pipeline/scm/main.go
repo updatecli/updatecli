@@ -94,14 +94,7 @@ func (s *Scm) GenerateSCM() error {
 
 	switch s.Config.Kind {
 	case "gitea":
-		giteaSpec := gitea.Spec{}
-
-		err := mapstructure.Decode(s.Config.Spec, &giteaSpec)
-		if err != nil {
-			return err
-		}
-
-		g, err := gitea.New(giteaSpec, s.PipelineID)
+		g, err := gitea.New(s.Config.Spec, s.PipelineID)
 
 		if err != nil {
 			return err

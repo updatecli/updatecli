@@ -3,12 +3,14 @@ package gitea
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/drone/go-scm/scm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
@@ -50,8 +52,19 @@ type Gitea struct {
 
 // New returns a new valid Gitea object.
 func New(spec interface{}, pipelineID string) (*Gitea, error) {
-	s := Spec{}
-	err := mapstructure.Decode(spec, &s)
+	var s Spec
+	var clientSpec client.Spec
+
+	// mapsestructure.Decode cannot handle embedded fiels
+	// hence we decode it in two steps
+	err := mapstructure.Decode(spec, &clientSpec)
+	if err != nil {
+		return &Gitea{}, err
+	}
+
+	s.Spec = clientSpec
+
+	err = mapstructure.Decode(spec, &s)
 	if err != nil {
 		return &Gitea{}, nil
 	}
@@ -62,10 +75,16 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		return &Gitea{}, err
 	}
 
-	c, err := client.New(client.Spec{
-		URL:   s.URL,
-		Token: s.Token,
-	})
+	if s.Directory == "" {
+		s.Directory = path.Join(tmp.Directory, "gitea", s.Owner, s.Repository)
+	}
+
+	if len(s.Branch) == 0 {
+		logrus.Warningf("no git branch specified, fallback to %q", "main")
+		s.Branch = "main"
+	}
+
+	c, err := client.New(clientSpec)
 
 	if err != nil {
 		return &Gitea{}, err
@@ -76,6 +95,8 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		client:     c,
 		HeadBranch: git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
 	}
+
+	g.setDirectory()
 
 	return &g, nil
 
