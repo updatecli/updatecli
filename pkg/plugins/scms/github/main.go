@@ -70,7 +70,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	}
 
 	if s.Directory == "" {
-		s.Directory = path.Join(tmp.Directory, s.Owner, s.Repository)
+		s.Directory = path.Join(tmp.Directory, "github", s.Owner, s.Repository)
 	}
 
 	if s.URL == "" {
