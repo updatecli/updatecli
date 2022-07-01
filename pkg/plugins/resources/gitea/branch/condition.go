@@ -9,38 +9,38 @@ import (
 )
 
 func (g *Gitea) Condition(source string) (bool, error) {
-	versions, err := g.SearchBranches()
+	if len(g.Spec.Branch) == 0 {
+		g.Spec.Branch = source
+	}
+
+	branches, err := g.SearchBranches()
+
+	if len(g.Spec.Branch) == 0 {
+		g.Spec.Branch = source
+	}
 
 	if err != nil {
 		logrus.Error(err)
 		return false, err
 	}
 
-	if len(versions) == 0 {
-		logrus.Infof("%s No Gitea branches found.", result.ATTENTION)
-		if len(versions) == 0 {
-			logrus.Infof("\t=> No Gitea branches found, exiting")
-			return false, fmt.Errorf("no Gitea branches found, exiting")
+	if len(branches) == 0 {
+		logrus.Infof("%s No Gitea branch found.", result.ATTENTION)
+		if len(branches) == 0 {
+			logrus.Infof("\t=> No Gitea branch found, exiting")
+			return false, fmt.Errorf("no Gitea branch found, exiting")
 		}
 	}
 
-	g.foundVersion, err = g.versionFilter.Search(versions)
-	if err != nil {
-		return false, err
-	}
-	value := g.foundVersion.ParsedVersion
-
-	if len(value) == 0 {
-		logrus.Infof("%s No Gitea Tags version found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return false, nil
-	} else if len(value) > 0 {
-		logrus.Infof("%s Gitea Tags version %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
-		return true, nil
+	for _, branch := range branches {
+		if branch == g.Spec.Branch {
+			logrus.Infof("%s Gitea branch %q found", result.SUCCESS, branch)
+			return true, nil
+		}
 	}
 
-	err = fmt.Errorf("something unexpected happened in Github source")
-	return false, err
-
+	logrus.Infof("%s No Gitea branch found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
+	return false, nil
 }
 
 func (g *Gitea) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {

@@ -16,16 +16,14 @@ import (
 // Spec defines settings used to interact with Gitea release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C][T] Owner specifies repository owner
+	// [S][C] Owner specifies repository owner
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T] Repository specifies the name of a repository for a specific owner
+	// [S][C] Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [T] Sha specifies the branch sha
-	Sha string `yaml:",omitempty"`
-	// [T] Name specifies the branch name
-	Name string `yaml:",omitempty"`
+	// [C] Branch specifies the branch name
+	Branch string `yaml:",omitempty"`
 }
 
 // Gittea contains information to interact with Gitea api
@@ -55,6 +53,12 @@ func New(spec interface{}) (*Gitea, error) {
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
 		return &Gitea{}, nil
+	}
+
+	err = clientSpec.ValidateClient()
+
+	if err != nil {
+		return &Gitea{}, err
 	}
 
 	s.Spec = clientSpec
