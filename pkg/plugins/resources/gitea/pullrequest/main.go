@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/drone/go-scm/scm"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
@@ -39,32 +40,46 @@ type Gitea struct {
 }
 
 // New returns a new valid Gitea object.
-func New(s Spec) (*Gitea, error) {
-	err := s.Validate()
+func New(spec interface{}) (*Gitea, error) {
+
+	var clientSpec client.Spec
+	var s Spec
+
+	// mapstructure.Decode cannot handle embedded fields
+	// hence we decode it in two steps
+	err := mapstructure.Decode(spec, &clientSpec)
+	if err != nil {
+		return &Gitea{}, err
+	}
+
+	err = mapstructure.Decode(spec, &s)
+	if err != nil {
+		return &Gitea{}, nil
+	}
+
+	s.Spec = clientSpec
+
+	if len(s.TargetBranch) == 0 {
+		logrus.Warningf("no git branch specified, fallback to %q", "main")
+		s.TargetBranch = "main"
+	}
+
+	err = s.Validate()
 
 	if err != nil {
 		return &Gitea{}, err
 	}
 
-	c, err := client.New(client.Spec{
-		URL:   s.URL,
-		Token: s.Token,
-	})
+	c, err := client.New(clientSpec)
 
 	if err != nil {
 		return &Gitea{}, err
 	}
 
-	g := Gitea{
+	return &Gitea{
 		Spec:   s,
 		client: c,
-	}
-
-	if len(g.Spec.TargetBranch) == 0 {
-		g.Spec.TargetBranch = "main"
-	}
-
-	return &g, nil
+	}, nil
 
 }
 

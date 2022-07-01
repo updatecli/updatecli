@@ -55,19 +55,19 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 	var s Spec
 	var clientSpec client.Spec
 
-	// mapsestructure.Decode cannot handle embedded fiels
+	// mapstructure.Decode cannot handle embedded fields
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
 		return &Gitea{}, err
 	}
 
-	s.Spec = clientSpec
-
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
 		return &Gitea{}, nil
 	}
+
+	s.Spec = clientSpec
 
 	err = s.Validate()
 
