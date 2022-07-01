@@ -1,0 +1,27 @@
+name: "Test Gitea branch"
+
+sources:
+  default:
+    kind: "gitea/branch"
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-test"
+        
+conditions:
+  default:
+    kind: "gitea/branch"
+    disablesourceinput: true
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-test"
+      branch: "main"
+
+  sourcedefault:
+    kind: "gitea/branch"
+    sourceid: "default"
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-test"
