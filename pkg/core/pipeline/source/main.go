@@ -87,7 +87,7 @@ func (s *Source) Run() (err error) {
 	// Any error means an empty changelog
 	s.Changelog = source.Changelog()
 	if s.Changelog == "" {
-		logrus.Debugf("empty changelog found for the source %v", s)
+		logrus.Debugln("empty changelog found for the source")
 	}
 
 	if len(s.Config.Transformers) > 0 {
