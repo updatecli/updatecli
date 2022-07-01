@@ -108,7 +108,7 @@ func GetResourceMapping() map[string]interface{} {
 		"gittag":        &gittag.Spec{},
 		"gitea/branch":  &giteaBranch.Spec{},
 		"gitea/release": &giteaRelease.Spec{},
-		"gitea/tags":    &giteaTag.Spec{},
+		"gitea/tag":     &giteaTag.Spec{},
 		"githubrelease": &githubrelease.Spec{},
 		"dockerdigest":  &dockerdigest.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
