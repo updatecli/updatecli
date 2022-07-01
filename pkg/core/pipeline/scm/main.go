@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -92,6 +93,22 @@ func New(config *Config, pipelineID string) (Scm, error) {
 func (s *Scm) GenerateSCM() error {
 
 	switch s.Config.Kind {
+	case "gitea":
+		giteaSpec := gitea.Spec{}
+
+		err := mapstructure.Decode(s.Config.Spec, &giteaSpec)
+		if err != nil {
+			return err
+		}
+
+		g, err := gitea.New(giteaSpec, s.PipelineID)
+
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
+
 	case "github":
 		githubSpec := github.Spec{}
 
@@ -138,6 +155,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	anyOfSpec := map[string]interface{}{
 		"git":    &git.Spec{},
 		"github": &github.Spec{},
+		"gitea":  &gitea.Spec{},
 	}
 
 	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
