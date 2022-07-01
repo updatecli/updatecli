@@ -37,6 +37,7 @@ type Spec struct {
 }
 
 const (
+	// #nosec g101
 	// updatecliCredits contains the message displayed at the end of a newly credit release
 	updatecliCredits string = "Made with ❤️️ by updatecli"
 )
