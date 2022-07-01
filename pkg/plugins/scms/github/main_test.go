@@ -62,7 +62,7 @@ func TestNew(t *testing.T) {
 					Username:   "joe",
 					Token:      "superSecretTOkenOfJoe",
 					URL:        "github.com",
-					Directory:  path.Join(tmp.Directory, "updatecli", "updatecli"),
+					Directory:  path.Join(tmp.Directory, "github", "updatecli", "updatecli"),
 				},
 			},
 		},
