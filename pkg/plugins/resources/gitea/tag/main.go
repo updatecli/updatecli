@@ -16,13 +16,14 @@ import (
 // Spec defines settings used to interact with Gitea release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C][T] Owner specifies repository owner
+	// [S][C] Owner specifies repository owner
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T] Repository specifies the name of a repository for a specific owner
+	// [S][C] Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S][C] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S][C][T] Title defines the Gitea release title.
+	// [S] Tag defines the Gitea tag .
+	Tag string `yaml:",omitempty"`
 }
 
 // Gittea contains information to interact with Gitea api
