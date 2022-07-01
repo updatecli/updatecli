@@ -15,12 +15,12 @@ import (
 // Target ensure that a specific release exist on gitea, otherwise creates it
 func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 
-	if len(g.Spec.Title) == 0 {
-		g.Spec.Title = source
-	}
-
 	if len(g.Spec.Tag) == 0 {
 		g.Spec.Tag = source
+	}
+
+	if len(g.Spec.Title) == 0 {
+		g.Spec.Title = g.Spec.Tag
 	}
 
 	// Ensure that a release doesn't exist yet
@@ -47,10 +47,19 @@ func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 	}
 
 	for _, r := range releases {
-		if r.Title == g.Spec.Title {
-			logrus.Infof("%s Release Title %q already exist, nothing else to do", result.SUCCESS, g.Spec.Title)
+		if r.Tag == g.Spec.Tag {
+			logrus.Infof("%s Release Tag %q already exist, nothing else to do", result.SUCCESS, g.Spec.Tag)
 			return false, nil
 		}
+	}
+
+	if dryRun {
+		logrus.Infof("%s Release Tag %q doesn't exist, we need to create it", result.SUCCESS, g.Spec.Tag)
+		return true, nil
+	}
+
+	if len(g.Spec.Token) == 0 {
+		return true, fmt.Errorf("wrong configuration, missing parameter %q", "token")
 	}
 
 	// Create a new release as it doesn't exist yet
@@ -64,26 +73,22 @@ func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 		ctx,
 		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
 		&goscm.ReleaseInput{
-			Title:      g.Spec.Title,
-			Tag:        g.Spec.Tag,
-			Commitish:  g.Spec.Commitish,
-			Draft:      false,
-			Prerelease: false,
+			Title:       g.Spec.Title,
+			Description: g.Spec.Drescription + "\n" + updatecliCredits,
+			Tag:         g.Spec.Tag,
+			Commitish:   g.Spec.Commitish,
+			Draft:       g.Spec.Draft,
+			Prerelease:  g.Spec.Prerelease,
 		},
 	)
 
 	if err != nil {
-		logrus.Debugf("Gitea Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
 		return false, err
 	}
 
 	if resp.Status >= 400 {
-		return false, fmt.Errorf("something went wrong on gitea server side")
-	}
-
-	if resp.Status >= 400 {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-		return false, fmt.Errorf("error from gitea api: %v", resp.Status)
+		return false, fmt.Errorf("error from Gitea api: %v", resp.Status)
 	}
 
 	logrus.Infof("Gitea Release %q successfully open on %q", release.Title, release.Link)
@@ -92,5 +97,5 @@ func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 }
 
 func (g Gitea) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	return false, []string{}, "", fmt.Errorf("target not supported for the plugin GitHub Release")
+	return false, []string{}, "", fmt.Errorf("target not supported for the plugin Gitea Release")
 }

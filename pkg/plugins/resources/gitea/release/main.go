@@ -20,19 +20,26 @@ type Spec struct {
 	Owner string `yaml:",omitempty" jsonschema:"required"`
 	// [S][C][T]Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// [T] Title defines the Gitea release title.
 	Title string `yaml:",omitempty"`
-	// [T] Tag defines the Gitea release tag.
+	// [C][T] Tag defines the Gitea release tag.
 	Tag string `yaml:",omitempty"`
 	// [T] Commitish defines the commit-ish such as `main`
 	Commitish string `yaml:",omitempty"`
+	// [T] Drescription defines if the new release description
+	Drescription string `yaml:",omitempty"`
 	// [T] Draft defines if the release is a draft release
 	Draft bool `yaml:",omitempty"`
 	// [T] Prerelease defines if the release is a pre-release release
 	Prerelease bool `yaml:",omitempty"`
 }
+
+const (
+	// updatecliCredits contains the message displayed at the end of a newly credit release
+	updatecliCredits string = "Made with ❤️️ by updatecli"
+)
 
 // Gittea contains information to interact with Gitea api
 type Gitea struct {
@@ -119,7 +126,7 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 	}
 
 	if resp.Status > 400 {
-		logrus.Debugf("Gitea Api Response: %v", resp)
+		logrus.Debugf("Gitea Api Response:\n%+v", resp)
 	}
 
 	results := []string{}
@@ -163,6 +170,7 @@ func (s *Spec) Validate() error {
 	}
 
 	if len(s.Commitish) == 0 {
+		logrus.Warningf("No commitish provided, fallback to branch %q\n", "main")
 		s.Commitish = "main"
 	}
 
