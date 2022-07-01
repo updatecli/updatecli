@@ -24,7 +24,7 @@ func (g *Gitea) Clean() error {
 // Clone run `git clone`.
 func (g *Gitea) Clone() (string, error) {
 
-	URL := fmt.Sprintf("https://%v/%v/%v.git",
+	URL := fmt.Sprintf("%v/%v/%v.git",
 		g.Spec.URL,
 		g.Spec.Owner,
 		g.Spec.Repository)
