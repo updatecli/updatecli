@@ -62,15 +62,15 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		return &Gitea{}, err
 	}
 
-	err = mapstructure.Decode(spec, &s)
-	if err != nil {
-		return &Gitea{}, nil
-	}
-
-	err = s.ValidateClient()
+	err = clientSpec.ValidateClient()
 
 	if err != nil {
 		return &Gitea{}, err
+	}
+
+	err = mapstructure.Decode(spec, &s)
+	if err != nil {
+		return &Gitea{}, nil
 	}
 
 	s.Spec = clientSpec
