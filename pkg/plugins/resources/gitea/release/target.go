@@ -23,6 +23,11 @@ func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 		g.Spec.Title = g.Spec.Tag
 	}
 
+	if len(g.Spec.Commitish) == 0 {
+		logrus.Warningf("No commitish provided, fallback to branch %q\n", "main")
+		g.Spec.Commitish = "main"
+	}
+
 	// Ensure that a release doesn't exist yet
 
 	ctx := context.Background()

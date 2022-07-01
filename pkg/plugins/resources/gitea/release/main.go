@@ -169,10 +169,5 @@ func (s *Spec) Validate() error {
 		return fmt.Errorf("wrong gitea configuration")
 	}
 
-	if len(s.Commitish) == 0 {
-		logrus.Warningf("No commitish provided, fallback to branch %q\n", "main")
-		s.Commitish = "main"
-	}
-
 	return nil
 }
