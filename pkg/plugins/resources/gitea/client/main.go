@@ -56,8 +56,10 @@ func (s *Spec) ValidateClient() (err error) {
 		logrus.Errorf("missing %q parameter", "url")
 		return fmt.Errorf("wrong configuration")
 	}
+
 	if !strings.HasPrefix(s.URL, "https://") && !strings.HasPrefix(s.URL, "http://") {
 		s.URL = "https://" + s.URL
 	}
+
 	return nil
 }

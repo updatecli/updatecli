@@ -57,6 +57,12 @@ func New(spec interface{}) (*Gitea, error) {
 		return &Gitea{}, nil
 	}
 
+	err = s.ValidateClient()
+
+	if err != nil {
+		return &Gitea{}, err
+	}
+
 	s.Spec = clientSpec
 
 	if len(s.TargetBranch) == 0 {
@@ -116,8 +122,11 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	)
 
 	if err != nil {
-		logrus.Debugf("Gitea Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
 		return err
+	}
+
+	if resp.Status > 400 {
+		logrus.Debugf("Gitea Api Response: %v", resp)
 	}
 
 	for _, p := range pullrequests {
@@ -129,8 +138,6 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 			return nil
 		}
 	}
-
-	fmt.Println("xxx")
 
 	opts := scm.PullRequestInput{
 		Title:  g.Spec.Title,
@@ -167,12 +174,6 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 func (s *Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
-
-	err := s.ValidateClient()
-
-	if err != nil {
-		gotError = true
-	}
 
 	if len(s.Owner) == 0 {
 		gotError = true

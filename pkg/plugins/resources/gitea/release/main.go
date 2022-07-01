@@ -62,6 +62,11 @@ func New(spec interface{}) (*Gitea, error) {
 		return &Gitea{}, nil
 	}
 
+	err = clientSpec.ValidateClient()
+	if err != nil {
+		return &Gitea{}, err
+	}
+
 	s.Spec = clientSpec
 
 	err = s.Validate()
@@ -109,12 +114,12 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 		},
 	)
 
-	if resp.Status > 400 {
-		logrus.Debugf("Gitea Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
-	}
-
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.Status > 400 {
+		logrus.Debugf("Gitea Api Response: %v", resp)
 	}
 
 	results := []string{}
@@ -130,12 +135,6 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 func (s *Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
-
-	err := s.ValidateClient()
-
-	if err != nil {
-		gotError = true
-	}
 
 	if len(s.Owner) == 0 {
 		gotError = true

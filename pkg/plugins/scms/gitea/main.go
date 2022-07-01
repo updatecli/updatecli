@@ -67,6 +67,12 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		return &Gitea{}, nil
 	}
 
+	err = s.ValidateClient()
+
+	if err != nil {
+		return &Gitea{}, err
+	}
+
 	s.Spec = clientSpec
 
 	err = s.Validate()
@@ -138,12 +144,6 @@ func (g *Gitea) SearchTags() (tags []string, err error) {
 func (s *Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
-
-	err := s.ValidateClient()
-
-	if err != nil {
-		gotError = true
-	}
 
 	if len(s.Owner) == 0 {
 		gotError = true

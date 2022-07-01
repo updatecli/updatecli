@@ -53,6 +53,12 @@ func New(spec interface{}) (*Gitea, error) {
 		return &Gitea{}, nil
 	}
 
+	err = clientSpec.ValidateClient()
+
+	if err != nil {
+		return &Gitea{}, err
+	}
+
 	s.Spec = clientSpec
 	err = s.Validate()
 
@@ -117,12 +123,6 @@ func (g *Gitea) SearchTags() (tags []string, err error) {
 func (s *Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
-
-	err := s.ValidateClient()
-
-	if err != nil {
-		gotError = true
-	}
 
 	if (s.VersionFilter == version.Filter{}) {
 		newFilter, err := s.VersionFilter.Init()
