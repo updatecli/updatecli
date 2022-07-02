@@ -5,56 +5,72 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestCondition(t *testing.T) {
 
 	tests := []struct {
-		name       string
-		spec       Spec
+		name     string
+		manifest struct {
+			URL        string
+			Token      string
+			Owner      string
+			Repository string
+			Branch     string
+		}
 		wantResult bool
 		wantErr    bool
 	}{
 		{
 			name: "repository olblak/updatecli should not exist",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Branch     string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
+				Branch:     "v1",
 			},
 			wantResult: false,
 			wantErr:    true,
 		},
 		{
-			name: "repository olblak/updatecli-mirror should exist with tags",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			name: "repository olblak/updatecli-mirror should exist with branches",
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Branch     string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-mirror",
+				Branch:     "main",
 			},
 			wantResult: true,
 			wantErr:    false,
 		},
 		{
 			name: "v1 should exist",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Branch     string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-test",
-				VersionFilter: version.Filter{
-					Pattern: "v1",
-				},
+				Branch:     "v1",
 			},
 			wantResult: true,
 			wantErr:    false,
@@ -65,7 +81,7 @@ func TestCondition(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.spec)
+			g, _ := New(tt.manifest)
 			gotResult, gotErr := g.Condition("")
 
 			if tt.wantErr {
