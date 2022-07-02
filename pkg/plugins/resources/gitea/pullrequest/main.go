@@ -57,10 +57,10 @@ func New(spec interface{}) (*Gitea, error) {
 		return &Gitea{}, nil
 	}
 
-	err = s.ValidateClient()
+	err = clientSpec.ValidateClient()
 
 	if err != nil {
-		return &Gitea{}, err
+		return &Gitea{}, nil
 	}
 
 	s.Spec = clientSpec

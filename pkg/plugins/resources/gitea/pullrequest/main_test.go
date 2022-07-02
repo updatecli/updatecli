@@ -4,24 +4,35 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 )
 
 func TestSource(t *testing.T) {
 
 	tests := []struct {
-		name       string
-		spec       Spec
+		name     string
+		manifest struct {
+			URL          string
+			Token        string
+			Owner        string
+			Repository   string
+			SourceBranch string
+			TargetBranch string
+		}
 		wantResult string
 		wantErr    bool
 	}{
 		{
 			name: "pullrequest shouldn't be created on olblak/updatecli should not exist",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL          string
+				Token        string
+				Owner        string
+				Repository   string
+				SourceBranch string
+				TargetBranch string
+			}{
+				URL:          "try.gitea.io",
+				Token:        "",
 				Owner:        "olblak",
 				Repository:   "updatecli-test",
 				SourceBranch: "v1",
@@ -36,7 +47,7 @@ func TestSource(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.spec)
+			g, _ := New(tt.manifest)
 			gotErr := g.CreatePullRequest(
 				"Bump version to x.y.z",
 				"This is a changelog",
