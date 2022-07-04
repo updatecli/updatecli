@@ -105,6 +105,7 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
+	github.com/goware/urlx v0.3.1 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect

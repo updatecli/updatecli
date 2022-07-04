@@ -1,6 +1,8 @@
 title: "Test new gitTag resource"
 
 scms:
+  local:
+    disabled: true
   updatecli:
     kind: git
     spec:

@@ -2,22 +2,12 @@ package scm
 
 import (
 	"errors"
-	"strings"
+	"fmt"
 
-	jschema "github.com/invopop/jsonschema"
 	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
-
-type Config struct {
-	// Kind specifies the scm kind
-	Kind string `yaml:",omitempty"`
-	// Spec specifies the scm specification
-	Spec interface{} `jsonschema:"type=object" yaml:",omitempty"`
-}
 
 type Scm struct {
 	Config     *Config
@@ -30,7 +20,7 @@ var (
 	ErrWrongConfig = errors.New("wrong scm configuration")
 )
 
-// Scm is an interface that offers common functions for a source control manager like git or github
+// ScmHandler is an interface offering common functions for a source control manager like git or github
 type ScmHandler interface {
 	Add(files []string) error
 	Clone() (string, error)
@@ -41,36 +31,6 @@ type ScmHandler interface {
 	Clean() error
 	PushTag(tag string) error
 	GetChangedFiles(workingDir string) ([]string, error)
-}
-
-func (c *Config) Validate() error {
-	gotError := false
-	missingParameters := []string{}
-
-	// Validate that kind is set
-	if len(c.Kind) == 0 {
-		missingParameters = append(missingParameters, "kind")
-	}
-
-	if c.Spec == nil {
-		missingParameters = append(missingParameters, "spec")
-	}
-
-	// Ensure kind is lowercase
-	if c.Kind != strings.ToLower(c.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.Kind)
-		c.Kind = strings.ToLower(c.Kind)
-	}
-
-	if len(missingParameters) > 0 {
-		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
-		gotError = true
-	}
-
-	if gotError {
-		return ErrWrongConfig
-	}
-	return nil
 }
 
 func New(config *Config, pipelineID string) (Scm, error) {
@@ -86,10 +46,14 @@ func New(config *Config, pipelineID string) (Scm, error) {
 	}
 
 	return s, nil
-
 }
 
+// GenerateSCM populates the receiver's attribute "s.Handler" with the SCM implementation
+// based on the "s.Conf" content
 func (s *Scm) GenerateSCM() error {
+	if s.Config.Disabled {
+		return nil
+	}
 
 	switch s.Config.Kind {
 	case "github":
@@ -124,21 +88,8 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 	default:
-		logrus.Errorf("scm of kind %q is not supported", s.Config.Kind)
+		return fmt.Errorf("scm of kind %q is not supported", s.Config.Kind)
 	}
 
 	return nil
-}
-
-// JSONSchema implements the json schema interface to generate the "scm" jsonschema
-func (Config) JSONSchema() *jschema.Schema {
-
-	type configAlias Config
-
-	anyOfSpec := map[string]interface{}{
-		"git":    &git.Spec{},
-		"github": &github.Spec{},
-	}
-
-	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
 }

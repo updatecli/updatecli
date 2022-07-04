@@ -1,6 +1,10 @@
 ---
 title: Test source githubRelease
 
+scms:
+  local:
+    disabled: true
+
 sources:
   helm:
     name: "Get Latest updatecli release version"
@@ -8,7 +12,7 @@ sources:
     spec:
       owner: "updatecli"
       repository: "updatecli"
-      token: '{{ requiredEnv .github.token }}'
-      username: '{{ requiredEnv .github.username }}'
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       versionfilter:
         kind: "latest"

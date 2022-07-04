@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -26,6 +27,8 @@ type GitTag struct {
 	foundVersion version.Version
 	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
+	// nativeGitHandler holds a git client implementation to manipulate git SCMs
+	nativeGitHandler gitgeneric.GitHandler
 }
 
 // New returns a reference to a newly initialized GitTag object from a Spec
@@ -44,8 +47,9 @@ func New(spec interface{}) (*GitTag, error) {
 	}
 
 	newResource := &GitTag{
-		spec:          newSpec,
-		versionFilter: newFilter,
+		spec:             newSpec,
+		versionFilter:    newFilter,
+		nativeGitHandler: gitgeneric.GoGit{},
 	}
 
 	return newResource, nil
