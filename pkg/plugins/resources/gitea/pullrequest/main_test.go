@@ -47,8 +47,10 @@ func TestSource(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.manifest)
-			gotErr := g.CreatePullRequest(
+			g, gotErr := New(tt.manifest)
+			require.NoError(t, gotErr)
+
+			gotErr = g.CreatePullRequest(
 				"Bump version to x.y.z",
 				"This is a changelog",
 				"This is a report")

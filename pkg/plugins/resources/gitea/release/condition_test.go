@@ -5,25 +5,33 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestCondition(t *testing.T) {
 
 	tests := []struct {
-		name       string
-		spec       Spec
+		name     string
+		manifest struct {
+			URL        string
+			Token      string
+			Owner      string
+			Repository string
+			Tag        string
+		}
 		wantResult bool
 		wantErr    bool
 	}{
 		{
 			name: "repository olblak/updatecli should not exist",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
 			},
@@ -32,11 +40,15 @@ func TestCondition(t *testing.T) {
 		},
 		{
 			name: "repository olblak/updatecli-mirror should exist but no release",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-mirror",
 			},
@@ -44,48 +56,37 @@ func TestCondition(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "repository should exist with release 0.0.1",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			name: "repository should exist with no release 2.0.0",
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-test",
+				Tag:        "2.0.0",
 			},
-			wantResult: true,
+			wantResult: false,
 			wantErr:    false,
 		},
 		{
-			name: "repository should exist with no release 1.0.0",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			name: "repository should exist with release 0.0.1",
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-test",
-				VersionFilter: version.Filter{
-					Kind:    "semver",
-					Pattern: "1.0.0",
-				},
-			},
-			wantResult: false,
-			wantErr:    true,
-		},
-		{
-			name: "repository should exist with no release 1.0.0",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
-				Owner:      "olblak",
-				Repository: "updatecli-test",
-				VersionFilter: version.Filter{
-					Kind:    "semver",
-					Pattern: "0.0.1",
-				},
+				Tag:        "0.0.1",
 			},
 			wantResult: true,
 			wantErr:    false,
@@ -96,7 +97,9 @@ func TestCondition(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.spec)
+			g, gotErr := New(tt.manifest)
+			require.NoError(t, gotErr)
+
 			gotResult, gotErr := g.Condition("")
 
 			if tt.wantErr {

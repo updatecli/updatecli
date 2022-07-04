@@ -5,25 +5,34 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestSource(t *testing.T) {
 
 	tests := []struct {
-		name       string
-		spec       Spec
+		name     string
+		manifest struct {
+			URL           string
+			Token         string
+			Owner         string
+			Repository    string
+			VersionFilter version.Filter
+		}
 		wantResult string
 		wantErr    bool
 	}{
 		{
 			name: "repository olblak/updatecli should not exist",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
 			},
@@ -32,11 +41,15 @@ func TestSource(t *testing.T) {
 		},
 		{
 			name: "repository olblak/updatecli-mirror should exist but no release",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-mirror",
 				VersionFilter: version.Filter{
@@ -44,29 +57,37 @@ func TestSource(t *testing.T) {
 				},
 			},
 			// For some reason, it sort the list of version alphabetically instead of by tag creation
-			wantResult: "0.29.0",
+			wantResult: "0.27.0",
 			wantErr:    false,
 		},
 		{
 			name: "repository should exist with release 0.0.3",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-test",
 			},
-			wantResult: "0.0.3",
+			wantResult: "1.0.1",
 			wantErr:    false,
 		},
 		{
 			name: "repository should exist with no release 1.0.0",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "",
-				},
+			manifest: struct {
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-test",
 				VersionFilter: version.Filter{
@@ -83,7 +104,9 @@ func TestSource(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.spec)
+			g, gotErr := New(tt.manifest)
+			require.NoError(t, gotErr)
+
 			gotResult, gotErr := g.Source("")
 
 			if tt.wantErr {

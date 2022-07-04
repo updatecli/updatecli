@@ -5,25 +5,36 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 )
 
 func TestTarget(t *testing.T) {
 
 	tests := []struct {
-		name       string
-		spec       Spec
+		name     string
+		manifest struct {
+			URL        string
+			Token      string
+			Owner      string
+			Repository string
+			Tag        string
+			Title      string
+		}
 		wantResult bool
 		wantErr    bool
 	}{
 		// No token provided should error
 		{
 			name: "repository should exist with no release 1.0.0",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "tokenRequired",
-				},
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+				Title      string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-test",
 				Title:      "0.0.2",
@@ -35,11 +46,16 @@ func TestTarget(t *testing.T) {
 		},
 		{
 			name: "repository should exist with no release 1.0.0",
-			spec: Spec{
-				Spec: client.Spec{
-					URL:   "try.gitea.io",
-					Token: "tokenRequired",
-				},
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+				Title      string
+			}{
+				URL:        "try.gitea.io",
+				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-test",
 				Title:      "0.0.3",
@@ -55,7 +71,9 @@ func TestTarget(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.spec)
+			g, gotErr := New(tt.manifest)
+			require.NoError(t, gotErr)
+
 			gotResult, gotErr := g.Target("", false)
 
 			if tt.wantErr {

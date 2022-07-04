@@ -81,7 +81,9 @@ func TestCondition(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, _ := New(tt.manifest)
+			g, gotErr := New(tt.manifest)
+			require.NoError(t, gotErr)
+
 			gotResult, gotErr := g.Condition("")
 
 			if tt.wantErr {

@@ -75,7 +75,8 @@ func TestSource(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Init gitea object
-			g, _ := New(tt.manifest)
+			g, gotErr := New(tt.manifest)
+			require.NoError(t, gotErr)
 
 			gotResult, gotErr := g.Source("")
 
