@@ -6,7 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Condition checks that a git tag exists
@@ -40,7 +39,7 @@ func (gt *GitTag) condition(source string) (bool, error) {
 		return false, err
 	}
 
-	tags, err := gitgeneric.Tags(gt.spec.Path)
+	tags, err := gt.nativeGitHandler.Tags(gt.spec.Path)
 	if err != nil {
 		return false, err
 	}

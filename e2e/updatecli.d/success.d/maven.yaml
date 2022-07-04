@@ -1,6 +1,10 @@
 ---
 title: Show a set of maven resources as a generic example
 
+scms:
+  local:
+    disabled: true
+
 sources:
   getLatestJenkinsWarVersion:
     kind: maven

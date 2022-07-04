@@ -1,4 +1,0 @@
-github:
-  token: "GITHUB_TOKEN"
-  username: "GITHUB_ACTOR"
-  branch: main

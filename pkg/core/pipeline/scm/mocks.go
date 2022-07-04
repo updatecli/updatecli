@@ -1,7 +1,6 @@
 package scm
 
-// MockScm is a stub implementation of the `Scm` interface to be used in our unit test suites.
-// It stores the expected WorkingDir
+// MockScm is a stub implementation of the `ScmHandler` interface to be used in our unit test suites.
 type MockScm struct {
 	ScmHandler
 	WorkingDir   string
