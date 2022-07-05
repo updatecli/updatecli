@@ -9,7 +9,7 @@ import (
 
 type Environments []Environment
 
-func (e *Environments) ToStringArray() []string {
+func (e Environments) ToStringArray() []string {
 	result := make([]string, len(*e))
 
 	for i, environment := range *e {
