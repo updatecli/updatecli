@@ -41,8 +41,8 @@ func (e *Environments) isDuplicate() bool {
 
 }
 
+// Ensures that we don't have duplicated value for a variable and that the user is not attempting to override the DRY_RUN reserved variable.
 func (e *Environments) Validate() error {
-	// Ensure we don't have duplicated value for a variable
 
 	gotErr := false
 	for _, environment := range *e {
