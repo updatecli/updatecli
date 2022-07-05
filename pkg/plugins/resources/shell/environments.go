@@ -10,10 +10,10 @@ import (
 type Environments []Environment
 
 func (e *Environments) ToStringArray() []string {
-	result := []string{}
+	result := make([]string, len(*e))
 
-	for _, environment := range *e {
-		result = append(result, environment.String())
+	for i, environment := range *e {
+		result[i] = environment.String()
 	}
 
 	return result
