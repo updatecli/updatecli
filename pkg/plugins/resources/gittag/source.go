@@ -5,7 +5,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Source returns the latest git tag based on create time
@@ -20,7 +19,7 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	tags, err := gitgeneric.Tags(workingDir)
+	tags, err := gt.nativeGitHandler.Tags(workingDir)
 
 	if err != nil {
 		return "", err

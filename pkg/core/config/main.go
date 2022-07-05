@@ -23,6 +23,12 @@ import (
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+)
+
+const (
+	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
+	LOCALSCMIDENTIFIER string = "local"
 )
 
 // Config contains cli configuration
@@ -31,6 +37,8 @@ type Config struct {
 	filename string
 	// Spec describe an updatecli manifest
 	Spec Spec
+	// gitHandler holds a git client implementation to manipulate git SCMs
+	gitHandler gitgeneric.GitHandler
 }
 
 // Spec contains pipeline configuration
@@ -69,7 +77,9 @@ type Option struct {
 
 // Reset reset configuration
 func (config *Config) Reset() {
-	*config = Config{}
+	*config = Config{
+		gitHandler: gitgeneric.GoGit{},
+	}
 }
 
 // New reads an updatecli configuration file
@@ -141,6 +151,11 @@ func New(option Option) (config Config, err error) {
 	// By default Set config.Version to the current updatecli version
 	if len(config.Spec.Version) == 0 {
 		config.Spec.Version = version.Version
+	}
+
+	// Ensure there is a local SCM defined as specified
+	if err = config.EnsureLocalScm(); err != nil {
+		return config, err
 	}
 
 	err = config.Validate()
@@ -321,14 +336,11 @@ func (config *Config) validateSources() error {
 }
 
 func (config *Config) validateSCMs() error {
-	for id, scm := range config.Spec.SCMs {
-		if err := scm.Validate(); err != nil {
+	for id, scmConfig := range config.Spec.SCMs {
+		if err := scmConfig.Validate(); err != nil {
 			logrus.Errorf("bad parameter(s) for scm %q", id)
 			return err
 		}
-		// scm.Validate may modify the object during validation
-		// so we want to be sure that we save those modification
-		config.Spec.SCMs[id] = scm
 	}
 	return nil
 }
@@ -592,27 +604,4 @@ func (config *Config) Update(data interface{}) (err error) {
 	}
 
 	return err
-}
-
-// GetChangelogTitle try to guess a specific target based on various information available for
-// a specific job
-func (config *Config) GetChangelogTitle(ID string, fallback string) (title string) {
-	if len(config.Spec.Title) > 0 {
-		// If a pipeline title has been defined, then use it for pull request title
-		title = fmt.Sprintf("[updatecli] %s",
-			config.Spec.Title)
-
-	} else if len(config.Spec.Targets) == 1 && len(config.Spec.Targets[ID].Name) > 0 {
-		// If we only have one target then we can use it as fallback.
-		// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
-		title = fmt.Sprintf("[updatecli] %s", config.Spec.Targets[ID].Name)
-	} else {
-		// At the moment, we don't have an easy way to describe what changed
-		// I am still thinking to a better solution.
-		logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
-		title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
-			config.Spec.Sources[config.Spec.Targets[ID].SourceID].Kind,
-			fallback)
-	}
-	return title
 }

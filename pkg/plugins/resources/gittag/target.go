@@ -6,7 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Target creates a tag if needed from a local git repository, without pushing the tag
@@ -64,7 +63,7 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 
 	// Check if the provided tag (from source input value) already exists
 	gt.versionFilter.Pattern = source
-	tags, err := gitgeneric.Tags(gt.spec.Path)
+	tags, err := gt.nativeGitHandler.Tags(gt.spec.Path)
 	if err != nil {
 		return false, files, message, err
 	}
@@ -90,7 +89,7 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 		return true, files, message, nil
 	}
 
-	changed, err := gitgeneric.NewTag(source, gt.spec.Message, gt.spec.Path)
+	changed, err := gt.nativeGitHandler.NewTag(source, gt.spec.Message, gt.spec.Path)
 	if err != nil {
 		return changed, files, message, err
 	}

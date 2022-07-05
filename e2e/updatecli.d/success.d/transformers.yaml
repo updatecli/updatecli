@@ -1,5 +1,9 @@
 name: "Test transformers"
 
+scms:
+  local:
+    disabled: true
+
 sources:
   add:
     name: Get latest Jenkins version
@@ -49,34 +53,33 @@ sources:
       - semverinc: major
 
 conditions:
-  add: 
+  add:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "add" }}" == "v1.0.0-alpha" ]'
-  trim: 
+  trim:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "trim" }}" == "1.0.0" ]'
-  replacers: 
+  replacers:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "replacers" }}" == "1.0.0" ]'
-  findsubmatch: 
+  findsubmatch:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "findsubmatch" }}" == "1.0" ]'
-  semverinc: 
+  semverinc:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "semverinc" }}" == "2.0.0" ]'
-

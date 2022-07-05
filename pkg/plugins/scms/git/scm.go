@@ -4,13 +4,11 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-
-	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Add run `git add`.
 func (g *Git) Add(files []string) error {
-	err := git.Add(files, g.GetDirectory())
+	err := g.nativeGitHandler.Add(files, g.GetDirectory())
 	if err != nil {
 		return err
 	}
@@ -19,7 +17,7 @@ func (g *Git) Add(files []string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Git) Checkout() error {
-	err := git.Checkout(
+	err := g.nativeGitHandler.Checkout(
 		g.spec.Username,
 		g.spec.Password,
 		g.spec.Branch,
@@ -48,7 +46,7 @@ func (g *Git) Clean() error {
 // Clone run `git clone`.
 func (g *Git) Clone() (string, error) {
 
-	err := git.Clone(
+	err := g.nativeGitHandler.Clone(
 		g.spec.Username,
 		g.spec.Password,
 		g.spec.URL,
@@ -79,7 +77,7 @@ func (g *Git) Commit(message string) error {
 		return err
 	}
 
-	err = git.Commit(
+	err = g.nativeGitHandler.Commit(
 		g.spec.User,
 		g.spec.Email,
 		commitMessage,
@@ -96,7 +94,7 @@ func (g *Git) Commit(message string) error {
 
 // Push run `git push`.
 func (g *Git) Push() error {
-	err := git.Push(
+	err := g.nativeGitHandler.Push(
 		g.spec.Username,
 		g.spec.Password,
 		g.GetDirectory(),
@@ -113,7 +111,7 @@ func (g *Git) Push() error {
 // PushTag push tags
 func (g *Git) PushTag(tag string) error {
 
-	err := git.PushTag(
+	err := g.nativeGitHandler.PushTag(
 		tag,
 		g.spec.Username,
 		g.spec.Password,
@@ -127,5 +125,5 @@ func (g *Git) PushTag(tag string) error {
 }
 
 func (g *Git) GetChangedFiles(workingDir string) ([]string, error) {
-	return git.GetChangedFiles(workingDir)
+	return g.nativeGitHandler.GetChangedFiles(workingDir)
 }
