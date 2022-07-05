@@ -7,7 +7,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/aws/aws-sdk-go v1.44.43
+	github.com/aws/aws-sdk-go v1.44.47
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/fatih/color v1.13.0
 	github.com/go-git/go-git/v5 v5.4.2
@@ -32,7 +32,7 @@ require (
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5
-	github.com/goware/urlx v0.3.1
+	github.com/goware/urlx v0.3.2
 	github.com/invopop/jsonschema v0.4.0
 	golang.org/x/text v0.3.7
 )
