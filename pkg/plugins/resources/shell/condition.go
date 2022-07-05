@@ -18,6 +18,7 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 	s.executeCommand(command{
 		Cmd: s.appendSource(source),
 		Dir: workingDir,
+		Env: s.spec.Environments.ToStringArray(),
 	})
 
 	if s.result.ExitCode != 0 {

@@ -12,6 +12,8 @@ import (
 type Spec struct {
 	// Specifies the shell command
 	Command string `yaml:",omitempty" jsonschema:"required"`
+	// Environments allows to pass environment variable to the shell script
+	Environments Environments `yaml:",omitempty"`
 }
 
 // Shell defines a resource of kind "shell"
@@ -34,6 +36,12 @@ func New(spec interface{}) (*Shell, error) {
 	if newSpec.Command == "" {
 		return nil, &ErrEmptyCommand{}
 	}
+
+	err = newSpec.Environments.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Shell{
 		executor: &nativeCommandExecutor{},
 		spec:     newSpec,

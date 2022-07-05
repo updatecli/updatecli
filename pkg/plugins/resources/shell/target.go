@@ -33,11 +33,17 @@ func (s *Shell) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (b
 //	- Any other exit code means "failed command with no change"
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
 func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, error) {
+
+	// Provides the "DRY_RUN" environment variable to the shell command (true if "diff", false if "apply")
+	env := append(s.spec.Environments, Environment{
+		Name:  DryRunVariableName,
+		Value: fmt.Sprintf("%v", dryRun),
+	})
+
 	s.executeCommand(command{
 		Cmd: s.appendSource(source),
 		Dir: workingDir,
-		// Provides the "DRY_RUN" environment variable to the shell command (true if "diff", false if "apply")
-		Env: []string{fmt.Sprintf("DRY_RUN=%v", dryRun)},
+		Env: env.ToStringArray(),
 	})
 
 	if s.result.ExitCode != 0 {
