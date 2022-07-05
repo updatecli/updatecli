@@ -1,0 +1,53 @@
+name: Shell example using environment variable
+
+sources:
+  default:
+    name: Test source shell
+    kind: shell
+    spec:
+      command: ./examples/scripts.d/env.sh
+
+  default2:
+    name: Test source shell
+    kind: shell
+    spec:
+      command: ./examples/scripts.d/env.sh
+      environments:
+        - name: PATH
+          inherit: true
+
+conditions:
+  default:
+    name: Test source shell
+    disablesourceinput: true
+    kind: shell
+    spec:
+      command: ./examples/scripts.d/env.sh
+
+  default2:
+    name: Test source shell
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: ./examples/scripts.d/env.sh
+      environments:
+        - name: PATH
+          inherit: true
+
+targets:
+  default:
+    name: Test source shell
+    disablesourceinput: true
+    kind: shell
+    spec:
+      command: ./examples/scripts.d/env.sh
+
+  default2:
+    name: Test source shell
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: ./examples/scripts.d/env.sh
+      environments:
+        - name: PATH
+          inherit: true
