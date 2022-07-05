@@ -21,7 +21,7 @@ func (e *Environments) ToStringArray() []string {
 }
 
 func (e *Environments) isDuplicate() bool {
-	foundName := map[string]string{}
+	foundName := map[string]struct{}{}
 	foundDuplicatedName := []string{}
 
 	for _, env := range *e {
@@ -29,7 +29,8 @@ func (e *Environments) isDuplicate() bool {
 			foundDuplicatedName = append(foundDuplicatedName, env.Name)
 			continue
 		}
-		foundName[env.Name] = env.Value
+		
+		foundName[env.Name] = struct{}{}
 	}
 
 	if len(foundDuplicatedName) > 0 {
@@ -38,7 +39,6 @@ func (e *Environments) isDuplicate() bool {
 	}
 
 	return false
-
 }
 
 // Ensures that we don't have duplicated value for a variable and that the user is not attempting to override the DRY_RUN reserved variable.
