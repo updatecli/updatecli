@@ -10,9 +10,9 @@ import (
 type Environments []Environment
 
 func (e Environments) ToStringArray() []string {
-	result := make([]string, len(*e))
+	result := make([]string, len(e))
 
-	for i, environment := range *e {
+	for i, environment := range e {
 		result[i] = environment.String()
 	}
 
@@ -29,7 +29,7 @@ func (e *Environments) isDuplicate() bool {
 			foundDuplicatedName = append(foundDuplicatedName, env.Name)
 			continue
 		}
-		
+
 		foundName[env.Name] = struct{}{}
 	}
 
