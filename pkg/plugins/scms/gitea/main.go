@@ -15,7 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 
-	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Spec defines settings used to interact with Gitea release
@@ -46,8 +46,9 @@ type Gitea struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
 	// client handle the api authentication
-	client     client.Client
-	HeadBranch string
+	client           client.Client
+	HeadBranch       string
+	nativeGitHandler gitgeneric.GitHandler
 }
 
 // New returns a new valid Gitea object.
@@ -96,10 +97,12 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		return &Gitea{}, err
 	}
 
+	nativeGitHandler := gitgeneric.GoGit{}
 	g := Gitea{
-		Spec:       s,
-		client:     c,
-		HeadBranch: git.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		Spec:             s,
+		client:           c,
+		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		nativeGitHandler: nativeGitHandler,
 	}
 
 	g.setDirectory()
