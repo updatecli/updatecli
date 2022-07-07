@@ -9,7 +9,7 @@ import (
 
 type Environments []Environment
 
-func (e Environments) ToStringArray() []string {
+func (e Environments) ToStringSlice() []string {
 	result := make([]string, len(e))
 
 	for i, environment := range e {
@@ -20,11 +20,11 @@ func (e Environments) ToStringArray() []string {
 
 }
 
-func (e *Environments) isDuplicate() bool {
+func (e Environments) isDuplicate() bool {
 	foundName := map[string]struct{}{}
 	foundDuplicatedName := []string{}
 
-	for _, env := range *e {
+	for _, env := range e {
 		if _, ok := foundName[env.Name]; ok {
 			foundDuplicatedName = append(foundDuplicatedName, env.Name)
 			continue
@@ -42,11 +42,11 @@ func (e *Environments) isDuplicate() bool {
 }
 
 // Ensures that we don't have duplicated value for a variable and that the user is not attempting to override the DRY_RUN reserved variable.
-func (e *Environments) Validate() error {
+func (e Environments) Validate() error {
 
 	gotErr := false
-	for _, environment := range *e {
-		err := environment.Validate()
+	for _, environment := range e {
+		err := environment.Update()
 		if err != nil {
 			logrus.Errorf("validating environment variable %q", environment.Name)
 			gotErr = true

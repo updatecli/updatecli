@@ -34,8 +34,17 @@ func (s *Shell) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (b
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
 func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, error) {
 
-	// Provides the "DRY_RUN" environment variable to the shell command (true if "diff", false if "apply")
+	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "target"
+	// It's only purpose is to have at least one environment variable
+	// so we don't fallback to use the current process environment as explained
+	// on https://pkg.go.dev/os/exec#Cmd
 	env := append(s.spec.Environments, Environment{
+		Name:  CurrentStageVariableName,
+		Value: "target",
+	})
+
+	// Provides the "DRY_RUN" environment variable to the shell command (true if "diff", false if "apply")
+	env = append(env, Environment{
 		Name:  DryRunVariableName,
 		Value: fmt.Sprintf("%v", dryRun),
 	})
@@ -43,7 +52,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 	s.executeCommand(command{
 		Cmd: s.appendSource(source),
 		Dir: workingDir,
-		Env: env.ToStringArray(),
+		Env: env.ToStringSlice(),
 	})
 
 	if s.result.ExitCode != 0 {

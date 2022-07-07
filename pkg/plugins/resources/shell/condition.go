@@ -15,10 +15,19 @@ func (s *Shell) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error
 }
 
 func (s *Shell) condition(source, workingDir string) (bool, error) {
+	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "condition"
+	// It's only purpose is to have at least one environment variable
+	// so we don't fallback to use the current process environment as explained
+	// on https://pkg.go.dev/os/exec#Cmd
+	env := append(s.spec.Environments, Environment{
+		Name:  CurrentStageVariableName,
+		Value: "condition",
+	})
+
 	s.executeCommand(command{
 		Cmd: s.appendSource(source),
 		Dir: workingDir,
-		Env: s.spec.Environments.ToStringArray(),
+		Env: env.ToStringSlice(),
 	})
 
 	if s.result.ExitCode != 0 {

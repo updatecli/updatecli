@@ -10,6 +10,8 @@ import (
 const (
 	// DryRunVariableName specifies the environment variable used within shell script to detect if we are in dryrun mode
 	DryRunVariableName = "DRY_RUN"
+	// CurrentStageVariableName is the environment variable containing the current pipeline stage such as source, condition, target
+	CurrentStageVariableName = "UPDATECLI_PIPELINE_STAGE"
 )
 
 type Environment struct {
@@ -23,11 +25,12 @@ func (e Environment) String() string {
 	return fmt.Sprintf("%s=%s", e.Name, e.Value)
 }
 
-func (e *Environment) Validate() error {
+// Update updates the environment value based on Updatecli environment variables, if the value is not defined yet
+func (e *Environment) Update() error {
 	gotErr := false
 
-	// If an environment variable name is specified without value
-	// then it inherits the value from Updatecli environment
+	// If an environment variable name is specified and specified without value
+	// then it inherits the value from Updatecli process environment
 	if len(e.Value) == 0 && len(e.Value) > 0 {
 		value, found := os.LookupEnv(e.Name)
 
