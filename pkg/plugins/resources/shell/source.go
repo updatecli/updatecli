@@ -7,7 +7,7 @@ func (s *Shell) Source(workingDir string) (string, error) {
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
-	err := s.spec.Environments.Update()
+	err := s.spec.Environments.Load()
 	if err != nil {
 		return "", &ExecutionFailedError{}
 	}

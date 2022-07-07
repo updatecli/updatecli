@@ -9,6 +9,7 @@ import (
 
 type Environments []Environment
 
+// ToStringSlice return all environment variable key=value as a slice of string
 func (e Environments) ToStringSlice() []string {
 	result := make([]string, len(e))
 
@@ -20,6 +21,7 @@ func (e Environments) ToStringSlice() []string {
 
 }
 
+// isDuplicate test if we specified multiple time the same environment variable
 func (e Environments) isDuplicate() bool {
 	foundName := map[string]struct{}{}
 	foundDuplicatedName := []string{}
@@ -41,7 +43,7 @@ func (e Environments) isDuplicate() bool {
 	return false
 }
 
-// Ensures that we don't have duplicated value for a variable and that the user is not attempting to override the DRY_RUN reserved variable.
+// Validate ensures that we don't have duplicated value for a variable and that the user is not attempting to override the DRY_RUN reserved variable.
 func (e Environments) Validate() error {
 
 	gotErr := false
@@ -69,10 +71,11 @@ func (e Environments) Validate() error {
 	return nil
 }
 
-func (e *Environments) Update() error {
+// Load updates all environment value based on Updatecli environment variables, at the condition that the value is not defined yet
+func (e *Environments) Load() error {
 	environments := *e
 	for id := range environments {
-		err := environments[id].Update()
+		err := environments[id].Load()
 		if err != nil {
 			logrus.Errorln(err)
 		}

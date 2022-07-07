@@ -12,6 +12,7 @@ const (
 	CurrentStageVariableName = "UPDATECLI_PIPELINE_STAGE"
 )
 
+// Environment is a struct containing information for an environment variable such as its name and its value
 type Environment struct {
 	// Name defines the environment variable name
 	Name string `yaml:",omitempty" jsonschema:"required"`
@@ -23,8 +24,8 @@ func (e Environment) String() string {
 	return fmt.Sprintf("%s=%s", e.Name, e.Value)
 }
 
-// Update updates the environment value based on Updatecli environment variables, if the value is not defined yet
-func (e *Environment) Update() error {
+// Load updates the environment value based on Updatecli environment variables, if the value is not defined yet
+func (e *Environment) Load() error {
 	err := e.Validate()
 	if err != nil {
 		return err
@@ -43,6 +44,7 @@ func (e *Environment) Update() error {
 	return nil
 }
 
+// Validate ensures that required parameter are set
 func (e *Environment) Validate() error {
 
 	if len(e.Name) == 0 {
