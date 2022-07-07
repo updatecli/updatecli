@@ -46,10 +46,10 @@ func (e Environments) Validate() error {
 
 	gotErr := false
 	for _, environment := range e {
-		err := environment.Update()
+		err := environment.Validate()
 		if err != nil {
-			logrus.Errorf("validating environment variable %q", environment.Name)
 			gotErr = true
+			logrus.Errorf("error with environment variable %q - %q", environment.Name, err)
 		}
 
 		if environment.Name == DryRunVariableName {
