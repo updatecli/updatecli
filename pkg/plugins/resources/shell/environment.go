@@ -27,7 +27,7 @@ func (e *Environment) Validate() error {
 	gotErr := false
 
 	// If an environment variable name is specified without value
-	// then inherit the value from Updatecli environment
+	// then it inherits the value from Updatecli environment
 	if len(e.Value) == 0 && len(e.Value) > 0 {
 		value, found := os.LookupEnv(e.Name)
 
