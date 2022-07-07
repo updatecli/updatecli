@@ -12,7 +12,7 @@ import (
 type Spec struct {
 	// Specifies the shell command
 	Command string `yaml:",omitempty" jsonschema:"required"`
-	// Environments allows to pass environment variable to the shell script
+	// Environments allows to pass environment variable(s) to the shell script
 	Environments Environments `yaml:",omitempty"`
 }
 
