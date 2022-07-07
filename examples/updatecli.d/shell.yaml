@@ -1,53 +1,57 @@
 name: Shell example using environment variable
 
 sources:
-  default:
-    name: Test source shell
-    kind: shell
-    spec:
-      command: ./examples/scripts.d/env.sh
+  # Should fail as PATH is not provided
+  # and therefor the env command should fail
+  #scenario1:
+  #  name: Test source shell
+  #  kind: shell
+  #  spec:
+  #    command: ./examples/scripts.d/env.sh
 
-  default2:
-    name: Test source shell
+  scenario2:
+    name: Test that only PATH is set
     kind: shell
     spec:
       command: ./examples/scripts.d/env.sh
       environments:
         - name: PATH
-          inherit: true
 
 conditions:
-  default:
-    name: Test source shell
-    disablesourceinput: true
-    kind: shell
-    spec:
-      command: ./examples/scripts.d/env.sh
+  # Should fail as PATH is not provided
+  # and therefor the env command should fail
+  #scenario1:
+  #  name: Test source shell
+  #  disablesourceinput: true
+  #  kind: shell
+  #  spec:
+  #    command: ./examples/scripts.d/env.sh
 
-  default2:
-    name: Test source shell
+  scenario2:
+    name: Test that only PATH is set
     kind: shell
     disablesourceinput: true
     spec:
       command: ./examples/scripts.d/env.sh
       environments:
         - name: PATH
-          inherit: true
 
 targets:
-  default:
-    name: Test source shell
-    disablesourceinput: true
-    kind: shell
-    spec:
-      command: ./examples/scripts.d/env.sh
+  # Should fail as PATH is not provided
+  # and therefor the env command should fail
+  #scenario1:
+  #  name: Test source shell
+  #  disablesourceinput: true
+  #  kind: shell
+  #  spec:
+  #    command: ./examples/scripts.d/env.sh
 
-  default2:
-    name: Test source shell
+  scenario2:
+    name: Test that only PATH is set
     kind: shell
     disablesourceinput: true
     spec:
       command: ./examples/scripts.d/env.sh
       environments:
         - name: PATH
-          inherit: true
+
