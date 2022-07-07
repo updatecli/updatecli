@@ -2,9 +2,9 @@ name: Test Gitea scm
 
 scms:
   gitea:
-    kind: gitea 
+    kind: gitea
     spec:
-      url: "try.gitea.io"  
+      url: "try.gitea.io"
       owner: "olblak"
       repository: "updatecli-mirror"
 
