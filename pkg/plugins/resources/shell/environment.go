@@ -17,28 +17,26 @@ type Environment struct {
 	Name string `yaml:",omitempty"`
 	// Value defines the environment variable value
 	Value string `yaml:",omitempty"`
-	// Inherit is boolean which if the environment value is inherited from the Updatecli environment
-	Inherit bool `yaml:",omitempty"`
 }
 
 func (e *Environment) String() string {
-	if !e.Inherit {
-		return fmt.Sprintf("%s=%s", e.Name, e.Value)
-	}
-
-	value, found := os.LookupEnv(e.Name)
-	if !found {
-		logrus.Warningf("environment variable %q not found, skipping", e.Name)
-		return ""
-	}
-
-	return fmt.Sprintf("%s=%s", e.Name, value)
+	return fmt.Sprintf("%s=%s", e.Name, e.Value)
 }
 
 func (e *Environment) Validate() error {
 	gotErr := false
-	if e.Inherit && len(e.Value) > 0 {
-		gotErr = true
+
+	// If a environment variable name specified without value
+	// then inherit the value from Updatecli environment
+	if len(e.Value) == 0 && len(e.Value) > 0 {
+		value, found := os.LookupEnv(e.Name)
+
+		if !found {
+			logrus.Warningf("environment variable %q not found, skipping", e.Name)
+			gotErr = true
+		}
+		e.Value = value
+
 	}
 	if gotErr {
 		return fmt.Errorf("wrong configuration")
