@@ -82,8 +82,10 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:   "try.gitea.io",
-				Token: "",
+				URL:        "try.gitea.io",
+				Token:      "",
+				Owner:      "olblak",
+				Repository: "updatecli-test",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "1.0.0",
