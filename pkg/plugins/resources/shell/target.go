@@ -34,6 +34,14 @@ func (s *Shell) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (b
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
 func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, error) {
 
+	// Ensure environment variable(s) are up to date
+	// either it already has a value specified, or it retrieves
+	// the value from the Updatecli process
+	err := s.spec.Environments.Update()
+	if err != nil {
+		return false, "", nil
+	}
+
 	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "target"
 	// It's only purpose is to have at least one environment variable
 	// so we don't fallback to use the current process environment as explained

@@ -3,8 +3,6 @@ package shell
 import (
 	"fmt"
 	"os"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -16,7 +14,7 @@ const (
 
 type Environment struct {
 	// Name defines the environment variable name
-	Name string `yaml:",omitempty"`
+	Name string `yaml:",omitempty" jsonschema:"required"`
 	// Value defines the environment variable value
 	Value string `yaml:",omitempty"`
 }
@@ -27,22 +25,28 @@ func (e Environment) String() string {
 
 // Update updates the environment value based on Updatecli environment variables, if the value is not defined yet
 func (e *Environment) Update() error {
-	gotErr := false
+	err := e.Validate()
+	if err != nil {
+		return err
+	}
 
 	// If an environment variable name is specified and specified without value
 	// then it inherits the value from Updatecli process environment
-	if len(e.Value) == 0 && len(e.Value) > 0 {
+	if len(e.Value) == 0 && len(e.Name) > 0 {
 		value, found := os.LookupEnv(e.Name)
 
 		if !found {
-			logrus.Warningf("environment variable %q not found, skipping", e.Name)
-			gotErr = true
+			return fmt.Errorf("environment variable %q not found, skipping", e.Name)
 		}
 		e.Value = value
-
 	}
-	if gotErr {
-		return fmt.Errorf("wrong configuration")
+	return nil
+}
+
+func (e *Environment) Validate() error {
+
+	if len(e.Name) == 0 {
+		return fmt.Errorf("parameter %q is required", "name")
 	}
 	return nil
 }

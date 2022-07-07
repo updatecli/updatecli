@@ -68,3 +68,14 @@ func (e Environments) Validate() error {
 	}
 	return nil
 }
+
+func (e *Environments) Update() error {
+	environments := *e
+	for id := range environments {
+		err := environments[id].Update()
+		if err != nil {
+			logrus.Errorln(err)
+		}
+	}
+	return nil
+}

@@ -4,6 +4,14 @@ package shell
 // otherwise an error is returned with the content of stderr
 func (s *Shell) Source(workingDir string) (string, error) {
 
+	// Ensure environment variable(s) are up to date
+	// either it already has a value specified, or it retrieves
+	// the value from the Updatecli process
+	err := s.spec.Environments.Update()
+	if err != nil {
+		return "", &ExecutionFailedError{}
+	}
+
 	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "source"
 	// It's only purpose is to have at least one environment variable
 	// so we don't fallback to use the current process environment as explained
