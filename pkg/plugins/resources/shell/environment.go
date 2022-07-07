@@ -19,7 +19,7 @@ type Environment struct {
 	Value string `yaml:",omitempty"`
 }
 
-func (e *Environment) String() string {
+func (e Environment) String() string {
 	return fmt.Sprintf("%s=%s", e.Name, e.Value)
 }
 
