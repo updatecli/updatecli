@@ -39,7 +39,7 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 	command.Env = append(command.Env, inputCmd.Env...)
 	err := command.Run()
 
-	// Display environment variable in debug mode
+	// Display environment variables in debug mode
 	logrus.Debugf("Environment variables\n")
 	for _, env := range command.Env {
 		logrus.Debugf("\t* %s\n", env)
