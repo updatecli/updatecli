@@ -34,6 +34,104 @@ func TestShell_New(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Missing env name despite env value specified",
+			spec: Spec{
+				Command: "echo Hello",
+				Environments: Environments{
+					Environment{
+						Value: "xxx",
+					},
+				},
+			},
+			wantErr: true,
+			wantShell: &Shell{
+				executor: &nativeCommandExecutor{},
+				spec: Spec{
+					Command: "echo Hello",
+					Environments: Environments{
+						Environment{
+							Value: "xxx",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Inherit PATH environment variable",
+			spec: Spec{
+				Command: "echo Hello",
+				Environments: Environments{
+					Environment{
+						Name: "PATH",
+					},
+				},
+			},
+			wantErr: false,
+			wantShell: &Shell{
+				executor: &nativeCommandExecutor{},
+				spec: Spec{
+					Command: "echo Hello",
+					Environments: Environments{
+						Environment{
+							Name: "PATH",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "can't specify PATH environment variable multiple times",
+			spec: Spec{
+				Command: "echo Hello",
+				Environments: Environments{
+					Environment{
+						Name: "PATH",
+					},
+					Environment{
+						Name: "PATH",
+					},
+				},
+			},
+			wantErr: true,
+			wantShell: &Shell{
+				executor: &nativeCommandExecutor{},
+				spec: Spec{
+					Command: "echo Hello",
+					Environments: Environments{
+						Environment{
+							Name: "PATH",
+						},
+						Environment{
+							Name: "PATH",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Not allowed to specify DRY_RUN environment variable",
+			spec: Spec{
+				Command: "echo Hello",
+				Environments: Environments{
+					Environment{
+						Name: "DRY_RUN",
+					},
+				},
+			},
+			wantErr: true,
+			wantShell: &Shell{
+				executor: &nativeCommandExecutor{},
+				spec: Spec{
+					Command: "echo Hello",
+					Environments: Environments{
+						Environment{
+							Name: "PATH",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
