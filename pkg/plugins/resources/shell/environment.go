@@ -45,7 +45,7 @@ func (e *Environment) Load() error {
 }
 
 // Validate ensures that required parameter are set
-func (e *Environment) Validate() error {
+func (e Environment) Validate() error {
 
 	if len(e.Name) == 0 {
 		return fmt.Errorf("parameter %q is required", "name")
