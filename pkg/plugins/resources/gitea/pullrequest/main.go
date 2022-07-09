@@ -57,7 +57,7 @@ func New(spec interface{}) (*Gitea, error) {
 		return &Gitea{}, nil
 	}
 
-	err = clientSpec.ValidateClient()
+	err = clientSpec.Validate()
 
 	if err != nil {
 		return &Gitea{}, nil
@@ -171,9 +171,16 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	return nil
 }
 
-func (s *Spec) Validate() error {
+func (s Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
+
+	err := s.Spec.Validate()
+
+	if err != nil {
+		logrus.Errorln(err)
+		gotError = true
+	}
 
 	if len(s.Owner) == 0 {
 		gotError = true

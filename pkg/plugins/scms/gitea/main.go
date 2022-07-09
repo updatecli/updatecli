@@ -63,7 +63,7 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		return &Gitea{}, err
 	}
 
-	err = clientSpec.ValidateClient()
+	err = clientSpec.Validate()
 
 	if err != nil {
 		return &Gitea{}, err

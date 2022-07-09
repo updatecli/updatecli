@@ -50,7 +50,7 @@ func New(s Spec) (Client, error) {
 
 }
 
-func (s *Spec) ValidateClient() (err error) {
+func (s *Spec) Validate() (err error) {
 
 	if len(s.URL) == 0 {
 		logrus.Errorf("missing %q parameter", "url")

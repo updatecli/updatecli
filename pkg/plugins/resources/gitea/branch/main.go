@@ -55,7 +55,7 @@ func New(spec interface{}) (*Gitea, error) {
 		return &Gitea{}, nil
 	}
 
-	err = clientSpec.ValidateClient()
+	err = clientSpec.Validate()
 
 	if err != nil {
 		return &Gitea{}, err
@@ -79,6 +79,7 @@ func New(spec interface{}) (*Gitea, error) {
 	if err != nil {
 		return &Gitea{}, err
 	}
+	s.VersionFilter = newFilter
 
 	g := Gitea{
 		Spec:          s,
@@ -128,18 +129,10 @@ func (s *Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
 
-	err := s.ValidateClient()
+	err := s.Spec.Validate()
 
 	if err != nil {
 		gotError = true
-	}
-
-	if (s.VersionFilter == version.Filter{}) {
-		newFilter, err := s.VersionFilter.Init()
-		if err != nil {
-			return err
-		}
-		s.VersionFilter = newFilter
 	}
 
 	if len(s.Owner) == 0 {
