@@ -53,7 +53,7 @@ func TestCondition(t *testing.T) {
 				Repository: "updatecli-mirror",
 			},
 			wantResult: false,
-			wantErr:    true,
+			wantErr:    false,
 		},
 		{
 			name: "repository should exist with no release 2.0.0",
