@@ -50,12 +50,19 @@ func New(s Spec) (Client, error) {
 
 }
 
-func (s *Spec) Validate() (err error) {
+// Validate validates that a spec contains good content
+func (s Spec) Validate() (err error) {
 
 	if len(s.URL) == 0 {
 		logrus.Errorf("missing %q parameter", "url")
 		return fmt.Errorf("wrong configuration")
 	}
+
+	return nil
+}
+
+// Sanitize parse and update if needed a spec content
+func (s *Spec) Sanitize() (err error) {
 
 	if !strings.HasPrefix(s.URL, "https://") && !strings.HasPrefix(s.URL, "http://") {
 		s.URL = "https://" + s.URL

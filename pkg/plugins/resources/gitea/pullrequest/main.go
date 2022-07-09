@@ -57,6 +57,11 @@ func New(spec interface{}) (*Gitea, error) {
 		return &Gitea{}, nil
 	}
 
+	err = clientSpec.Sanitize()
+	if err != nil {
+		return &Gitea{}, err
+	}
+
 	err = clientSpec.Validate()
 
 	if err != nil {

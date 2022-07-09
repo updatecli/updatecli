@@ -63,6 +63,11 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		return &Gitea{}, err
 	}
 
+	err = clientSpec.Sanitize()
+	if err != nil {
+		return &Gitea{}, err
+	}
+
 	err = clientSpec.Validate()
 
 	if err != nil {
