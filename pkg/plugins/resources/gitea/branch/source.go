@@ -11,13 +11,12 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 	versions, err := g.SearchBranches()
 
 	if err != nil {
-		logrus.Error(err)
 		return "", err
 	}
 
 	if len(versions) == 0 {
 		logrus.Infof("%s No Gitea branches found", result.ATTENTION)
-		return "", fmt.Errorf("no Gitea branches found, exiting")
+		return "", nil
 	}
 
 	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)
@@ -28,7 +27,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Gitea branches found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", fmt.Errorf("no Gitea branches found matching pattern %q", g.versionFilter.Pattern)
+		return "", nil
 	} else if len(value) > 0 {
 		logrus.Infof("%s Gitea branches %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
 		return value, nil

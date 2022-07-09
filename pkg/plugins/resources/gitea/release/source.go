@@ -30,7 +30,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Gitea Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", fmt.Errorf("no Gitea Release tag found matching pattern %q", g.versionFilter.Pattern)
+		return "", nil
 	} else if len(value) > 0 {
 		logrus.Infof("%s Gitea Release tag %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
 		return value, nil

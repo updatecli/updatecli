@@ -17,7 +17,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 
 	if len(versions) == 0 {
 		logrus.Infof("%s No Gitea Tags found", result.ATTENTION)
-		return "", fmt.Errorf("no Gitea tags found, exiting")
+		return "", nil
 	}
 
 	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)
@@ -28,7 +28,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Gitea tags found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", fmt.Errorf("no Gitea tags found matching pattern %q", g.versionFilter.Pattern)
+		return "", nil
 	} else if len(value) > 0 {
 		logrus.Infof("%s Gitea tags %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
 		return value, nil

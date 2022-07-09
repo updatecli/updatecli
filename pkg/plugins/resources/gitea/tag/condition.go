@@ -23,7 +23,7 @@ func (g *Gitea) Condition(source string) (bool, error) {
 
 	if len(tags) == 0 {
 		logrus.Infof("%s No Gitea Tags found.", result.ATTENTION)
-		return false, fmt.Errorf("no Gitea tags found, exiting")
+		return false, nil
 	}
 
 	for _, tag := range tags {

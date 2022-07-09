@@ -22,7 +22,7 @@ func (g *Gitea) Condition(source string) (bool, error) {
 
 	if len(releases) == 0 {
 		logrus.Infof("%s No Gitea release found. As a fallback you may be looking for git tags", result.ATTENTION)
-		return false, fmt.Errorf("no release found, exiting")
+		return false, nil
 	}
 
 	for _, release := range releases {
