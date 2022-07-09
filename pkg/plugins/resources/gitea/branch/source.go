@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func (g *Gitea) Source(workingDir string) (string, error) {
@@ -20,9 +21,17 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 	}
 
 	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)
+
 	if err != nil {
-		return "", err
+		switch err {
+		case version.ErrNoVersionFound:
+			logrus.Infof("%s No Gitea branches found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
+			return "", nil
+		default:
+			return "", err
+		}
 	}
+
 	value := g.foundVersion.ParsedVersion
 
 	if len(value) == 0 {
