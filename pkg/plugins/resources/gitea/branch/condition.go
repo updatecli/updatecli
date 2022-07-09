@@ -26,10 +26,7 @@ func (g *Gitea) Condition(source string) (bool, error) {
 
 	if len(branches) == 0 {
 		logrus.Infof("%s No Gitea branch found.", result.ATTENTION)
-		if len(branches) == 0 {
-			logrus.Infof("\t=> No Gitea branch found, exiting")
-			return false, fmt.Errorf("no Gitea branch found, exiting")
-		}
+		return false, fmt.Errorf("no Gitea branch found")
 	}
 
 	for _, branch := range branches {

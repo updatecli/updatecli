@@ -17,10 +17,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 
 	if len(versions) == 0 {
 		logrus.Infof("%s No Gitea branches found", result.ATTENTION)
-		if len(versions) == 0 {
-			logrus.Infof("\t=> No Gitea branches found, exiting")
-			return "", fmt.Errorf("no Gitea branches found, exiting")
-		}
+		return "", fmt.Errorf("no Gitea branches found, exiting")
 	}
 
 	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)

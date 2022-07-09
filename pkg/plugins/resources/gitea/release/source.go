@@ -17,10 +17,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 
 	if len(versions) == 0 {
 		logrus.Infof("%s No Gitea Release found. As a fallback you may be looking for git tags", result.ATTENTION)
-		if len(versions) == 0 {
-			logrus.Infof("\t=> No release found, exiting")
-			return "", fmt.Errorf("no release found, exiting")
-		}
+		return "", fmt.Errorf("no release found, exiting")
 	}
 
 	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)
