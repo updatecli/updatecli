@@ -96,7 +96,7 @@ func TestSource(t *testing.T) {
 				},
 			},
 			wantResult: "",
-			wantErr:    false,
+			wantErr:    true,
 		},
 	}
 

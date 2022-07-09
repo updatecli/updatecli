@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 
 	if len(versions) == 0 {
 		logrus.Infof("%s No Gitea Tags found", result.ATTENTION)
-		return "", nil
+		return "", errors.New("no result found")
 	}
 
 	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)
@@ -27,7 +28,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 		switch err {
 		case version.ErrNoVersionFound:
 			logrus.Infof("%s No Gitea tags found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-			return "", nil
+			return "", errors.New("no result found")
 		default:
 			return "", err
 		}
@@ -37,7 +38,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Gitea tags found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", nil
+		return "", errors.New("no result found")
 	} else if len(value) > 0 {
 		logrus.Infof("%s Gitea tags %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
 		return value, nil
