@@ -121,7 +121,6 @@ func (f *Filter) Search(versions []string) (Version, error) {
 
 		err := s.Search(versions)
 		if err != nil {
-			logrus.Error(err)
 			return foundVersion, err
 		}
 		return s.FoundVersion, nil
