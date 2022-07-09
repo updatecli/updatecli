@@ -55,7 +55,6 @@ func (p *Pipeline) RunTargets() error {
 				logrus.Warningf("Parent target[%q] did not succeed. Skipping execution of the target[%q]", parentTarget, id)
 				shouldSkipTarget = true
 				target.Result = result.SKIPPED
-				report.Result = target.Result
 			}
 
 		}
@@ -75,8 +74,6 @@ func (p *Pipeline) RunTargets() error {
 
 			errs = append(errs, fmt.Errorf("something went wrong in target %q : %q", id, err))
 		}
-
-		report.Result = target.Result
 
 		p.Targets[id] = target
 		p.Report.Targets[id] = report

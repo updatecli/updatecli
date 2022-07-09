@@ -240,6 +240,8 @@ func (p *Pipeline) Run() error {
 
 	}
 
+	p.Report.Result = result.SUCCESS
+
 	return nil
 
 }
