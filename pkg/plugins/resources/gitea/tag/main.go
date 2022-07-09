@@ -127,7 +127,7 @@ func (g *Gitea) SearchTags() (tags []string, err error) {
 	return tags, nil
 }
 
-func (s *Spec) Validate() error {
+func (s Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
 

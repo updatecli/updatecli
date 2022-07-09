@@ -129,7 +129,7 @@ func (g *Gitea) SearchBranches() (tags []string, err error) {
 	return results, nil
 }
 
-func (s *Spec) Validate() error {
+func (s Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
 
