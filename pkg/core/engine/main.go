@@ -10,6 +10,7 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/config/builder"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -145,6 +146,8 @@ func (e *Engine) Prepare() (err error) {
 	// If one git clone fails then we exit
 	err = e.InitSCM()
 
+	e.LoadPipelinesDetection()
+
 	return err
 }
 
@@ -258,6 +261,12 @@ func (e *Engine) Show() error {
 		return err
 	}
 
+	err = e.LoadPipelinesDetection()
+
+	if err != nil {
+		return err
+	}
+
 	for _, pipeline := range e.Pipelines {
 
 		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(pipeline.Config.Spec.Name)+4))
@@ -306,4 +315,64 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 	}
 
 	return s.GenerateSchema(&config.Config{})
+}
+
+// LoadPipelinesDetection will try to guess available pipelines based on specific directory
+func (e *Engine) LoadPipelinesDetection() error {
+
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Json Schema")+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle("Auto Pipelines"))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Json Schema")+4))
+
+	logrus.Infof("\nTrying to guess available pipeline(s)...\n")
+
+	b, err := builder.New(builder.Spec{})
+
+	if err != nil {
+		logrus.Errorln(err)
+		return err
+	}
+
+	errs := []error{}
+
+	manifests, err := b.Run()
+
+	if err != nil {
+		logrus.Errorln(err)
+		return err
+	}
+
+	if len(manifests) == 0 {
+		logrus.Infof("nothing detected")
+	}
+
+	for i := range manifests {
+		logrus.Info("%v. %s", i, manifests[i].Name)
+
+		newConfig := config.Config{
+			Spec: manifests[i],
+		}
+
+		newPipeline := pipeline.Pipeline{}
+		err = newPipeline.Init(&newConfig, e.Options.Pipeline)
+
+		if err == nil {
+			e.Pipelines = append(e.Pipelines, newPipeline)
+			e.configurations = append(e.configurations, newConfig)
+		} else {
+			// don't initially fail as init. of the pipeline still fails even with a successful validation
+			err := fmt.Errorf("%q - %s", manifests[i].Name, err)
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		logrus.Errorf("Errors happend while generating Updatecli pipeline")
+		for i := range errs {
+			logrus.Errorf("%v", errs[i])
+		}
+	}
+
+	return nil
+
 }
