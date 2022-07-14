@@ -21,6 +21,11 @@ import (
 	goyaml "gopkg.in/yaml.v3"
 )
 
+const (
+	// DefaultSCMID is the default scm id name
+	DefaultSCMID string = "default"
+)
+
 var (
 	// ChartValidFiles specifies accepted Helm chart metadata file name
 	ChartValidFiles [2]string = [2]string{"Chart.yaml", "Chart.yml"}
@@ -244,18 +249,18 @@ func (h Helm) Manifests(scmSpec *scm.Config) ([]config.Spec, error) {
 			//// Set scmID configuration
 			if scmSpec != nil {
 				manifest.SCMs = make(map[string]scm.Config)
-				manifest.SCMs["default"] = *scmSpec
+				manifest.SCMs[DefaultSCMID] = *scmSpec
 
 				s := manifest.Sources[dependency.Name]
-				s.SCMID = "default"
+				s.SCMID = DefaultSCMID
 				manifest.Sources[dependency.Name] = s
 
 				c := manifest.Conditions[dependency.Name]
-				c.SCMID = "default"
+				c.SCMID = DefaultSCMID
 				manifest.Conditions[dependency.Name] = c
 
 				t := manifest.Targets[dependency.Name]
-				t.SCMID = "default"
+				t.SCMID = DefaultSCMID
 				manifest.Targets[dependency.Name] = t
 			}
 
