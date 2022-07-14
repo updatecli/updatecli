@@ -146,7 +146,11 @@ func (e *Engine) Prepare() (err error) {
 	// If one git clone fails then we exit
 	err = e.InitSCM()
 
-	e.LoadPipelinesDetection()
+	if err != nil {
+		return err
+	}
+
+	err = e.LoadPipelinesDetection()
 
 	return err
 }
@@ -367,7 +371,7 @@ func (e *Engine) LoadPipelinesDetection() error {
 	}
 
 	if len(errs) > 0 {
-		logrus.Errorf("Errors happend while generating Updatecli pipeline")
+		logrus.Errorf("Error(s) happened while generating Updatecli pipeline manifest")
 		for i := range errs {
 			logrus.Errorf("%v", errs[i])
 		}
