@@ -50,8 +50,6 @@ func New(spec Spec) (*Generator, error) {
 		return &Generator{}, err
 	}
 
-	logrus.Info("SCM: %v", s.Scm)
-
 	if len(s.genericSpecs) == 0 {
 		s.genericSpecs = defaultSpecs.genericSpecs
 	}
@@ -78,7 +76,7 @@ func New(spec Spec) (*Generator, error) {
 			g.builders = append(g.builders, helm)
 
 		default:
-			logrus.Info("Builder of type %q not supported", kind)
+			logrus.Infof("Builder of type %q not supported", kind)
 		}
 	}
 

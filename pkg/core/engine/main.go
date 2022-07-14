@@ -351,7 +351,7 @@ func (e *Engine) LoadPipelinesDetection() error {
 	}
 
 	for i := range manifests {
-		logrus.Info("%v. %s", i, manifests[i].Name)
+		logrus.Infof("%v. %s", i, manifests[i].Name)
 
 		newConfig := config.Config{
 			Spec: manifests[i],
