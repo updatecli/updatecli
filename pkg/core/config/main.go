@@ -295,6 +295,18 @@ func (config *Config) validatePullRequests() error {
 	return nil
 }
 
+func (config *Config) validateAutodiscovery() error {
+	// Then validate that the pullrequest specifies an existing SCM
+	if len(config.Spec.AutoDiscovery.ScmId) > 0 {
+		if _, ok := config.Spec.SCMs[config.Spec.AutoDiscovery.ScmId]; !ok {
+			logrus.Errorf("The autodiscovery specifies a scm id %q which does not exist",
+				config.Spec.AutoDiscovery.ScmId)
+			return ErrBadConfig
+		}
+	}
+	return nil
+}
+
 func (config *Config) validateSources() error {
 	for id, s := range config.Spec.Sources {
 		err := s.Validate()
@@ -470,6 +482,13 @@ func (config *Config) Validate() error {
 		errs = append(
 			errs,
 			fmt.Errorf("pullrequests validation error:\n%s", err))
+	}
+
+	err = config.validateAutodiscovery()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("autodiscovery validation error:\n%s", err))
 	}
 
 	err = config.validateSCMs()
