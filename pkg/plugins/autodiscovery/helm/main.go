@@ -48,15 +48,17 @@ type chartMetadata struct {
 type Spec struct {
 	// RootDir defines the root directory used to recursively search for Helm Chart
 	RootDir string `yaml:",omitempty"`
+	Disable bool
 }
 
 // Helm hold all information needed to generate helm manifest.
 type Helm struct {
-	spec Spec
+	spec    Spec
+	rootDir string
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}) (Helm, error) {
+func New(spec interface{}, rootDir string) (Helm, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -64,18 +66,21 @@ func New(spec interface{}) (Helm, error) {
 		return Helm{}, err
 	}
 
+	dir := rootDir
+	if len(s.RootDir) > 0 {
+		dir = s.RootDir
+	}
+
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
-	if len(s.RootDir) == 0 {
-		dir, err := os.Getwd()
-		if err != nil {
-			return Helm{}, err
-		}
-		s.RootDir = dir
+	if len(dir) == 0 {
+		logrus.Errorln("no error working directrory defined")
+		return Helm{}, err
 	}
 
 	return Helm{
-		spec: s,
+		spec:    s,
+		rootDir: dir,
 	}, nil
 
 }
@@ -157,12 +162,12 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 	return &chart, nil
 }
 
-func (h Helm) Manifests(scmSpec *scm.Config) ([]config.Spec, error) {
+func (h Helm) DiscoverManifests(scmSpec *scm.Config) ([]config.Spec, error) {
 
 	var manifests []config.Spec
 
 	foundChartFiles, err := searchChartMetadataFiles(
-		h.spec.RootDir,
+		h.rootDir,
 		[]string{"Chart.yaml", "Chart.yml"})
 
 	if err != nil {
@@ -184,7 +189,7 @@ func (h Helm) Manifests(scmSpec *scm.Config) ([]config.Spec, error) {
 		}
 
 		//relativeFoundChartFile := strings.TrimPrefix(filepath.Dir(foundChartFile), h.spec.RootDir)
-		relativeFoundChartFile, err := filepath.Rel(h.spec.RootDir, foundChartFile)
+		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundChartFile)
 		if err != nil {
 			return nil, err
 		}
@@ -271,4 +276,9 @@ func (h Helm) Manifests(scmSpec *scm.Config) ([]config.Spec, error) {
 	}
 
 	return manifests, nil
+}
+
+// RunDisabled returns a bool saying if a run could done
+func (h Helm) Enabled() bool {
+	return !h.spec.Disable
 }

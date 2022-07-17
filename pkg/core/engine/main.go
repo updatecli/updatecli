@@ -10,9 +10,9 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/config/builder"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -150,7 +150,7 @@ func (e *Engine) Prepare() (err error) {
 		return err
 	}
 
-	err = e.LoadPipelinesDetection()
+	err = e.LoadAutoDiscovery()
 
 	return err
 }
@@ -265,7 +265,7 @@ func (e *Engine) Show() error {
 		return err
 	}
 
-	err = e.LoadPipelinesDetection()
+	err = e.LoadAutoDiscovery()
 
 	if err != nil {
 		return err
@@ -321,60 +321,88 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 	return s.GenerateSchema(&config.Config{})
 }
 
-// LoadPipelinesDetection will try to guess available pipelines based on specific directory
-func (e *Engine) LoadPipelinesDetection() error {
+// LoadAutoDiscovery will try to guess available pipelines based on specific directory
+func (e *Engine) LoadAutoDiscovery() error {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Json Schema")+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle("Auto Pipelines"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Json Schema")+4))
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Auto Discovery")+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle("Auto Discovery"))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Auto Discovery")+4))
 
-	logrus.Infof("\nTrying to guess available pipeline(s)...\n")
+	var autoDiscoveryPipelines []pipeline.Pipeline
 
-	b, err := builder.New(builder.Spec{})
-
-	if err != nil {
-		logrus.Errorln(err)
-		return err
-	}
-
-	errs := []error{}
-
-	manifests, err := b.Run()
-
-	if err != nil {
-		logrus.Errorln(err)
-		return err
-	}
-
-	if len(manifests) == 0 {
-		logrus.Infof("nothing detected")
-	}
-
-	for i := range manifests {
-		logrus.Infof("%v. %s", i, manifests[i].Name)
-
-		newConfig := config.Config{
-			Spec: manifests[i],
-		}
-
-		newPipeline := pipeline.Pipeline{}
-		err = newPipeline.Init(&newConfig, e.Options.Pipeline)
-
-		if err == nil {
-			e.Pipelines = append(e.Pipelines, newPipeline)
-			e.configurations = append(e.configurations, newConfig)
-		} else {
-			// don't initially fail as init. of the pipeline still fails even with a successful validation
-			err := fmt.Errorf("%q - %s", manifests[i].Name, err)
-			errs = append(errs, err)
+	for _, p := range e.Pipelines {
+		if p.Config.Spec.AutoDiscovery.Crawlers != nil {
+			autoDiscoveryPipelines = append(autoDiscoveryPipelines, p)
 		}
 	}
 
-	if len(errs) > 0 {
-		logrus.Errorf("Error(s) happened while generating Updatecli pipeline manifest")
-		for i := range errs {
-			logrus.Errorf("%v", errs[i])
+	// At least run once
+	// Failing
+	//autoDiscoveryPipelines = append(autoDiscoveryPipelines, pipeline.Pipeline{})
+
+	for _, p := range autoDiscoveryPipelines {
+
+		var sc scm.Config
+		var autodiscoveryScm scm.Scm
+		var found bool
+
+		if len(p.Config.Spec.AutoDiscovery.ScmId) > 0 {
+			autodiscoveryScm, found = p.SCMs[p.Config.Spec.AutoDiscovery.ScmId]
+
+			if found {
+				sc = *autodiscoveryScm.Config
+			}
 		}
+
+		c, err := autodiscovery.New(
+			p.Config.Spec.AutoDiscovery,
+			autodiscoveryScm.Handler,
+			&sc)
+
+		if err != nil {
+			logrus.Errorln(err)
+			return err
+		}
+
+		errs := []error{}
+
+		manifests, err := c.Run()
+
+		if err != nil {
+			logrus.Errorln(err)
+			return err
+		}
+
+		if len(manifests) == 0 {
+			logrus.Infof("nothing detected")
+		}
+
+		for i := range manifests {
+			logrus.Infof("%v. %s", i, manifests[i].Name)
+
+			newConfig := config.Config{
+				Spec: manifests[i],
+			}
+
+			newPipeline := pipeline.Pipeline{}
+			err = newPipeline.Init(&newConfig, e.Options.Pipeline)
+
+			if err == nil {
+				e.Pipelines = append(e.Pipelines, newPipeline)
+				e.configurations = append(e.configurations, newConfig)
+			} else {
+				// don't initially fail as init. of the pipeline still fails even with a successful validation
+				err := fmt.Errorf("%q - %s", manifests[i].Name, err)
+				errs = append(errs, err)
+			}
+			if len(errs) > 0 {
+				logrus.Errorf("Error(s) happened while generating Updatecli pipeline manifest")
+				for i := range errs {
+					logrus.Errorf("%v", errs[i])
+				}
+			}
+		}
+
 	}
 
 	return nil

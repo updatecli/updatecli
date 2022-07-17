@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
+	autodiscovery "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -47,6 +48,8 @@ type Spec struct {
 	Name string `yaml:",omitempty" jsonschema:"required"`
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	PipelineID string `yaml:",omitempty"`
+	// AutoDiscovery defines parameters to the autodiscover feature
+	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
 	// Title is used for the full pipeline
 	Title string `yaml:",omitempty"`
 	// PullRequests defines the list of Pull Request configuration which need to be managed
