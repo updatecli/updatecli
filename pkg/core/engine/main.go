@@ -150,9 +150,14 @@ func (e *Engine) Prepare() (err error) {
 		return err
 	}
 
-	err = e.LoadAutoDiscovery()
+	if !e.Options.Pipeline.AutoDiscovery.Disabled {
+		err = e.LoadAutoDiscovery()
+		if err != nil {
+			return err
+		}
+	}
 
-	return err
+	return nil
 }
 
 // ReadConfigurations read every strategies configuration.
@@ -265,10 +270,11 @@ func (e *Engine) Show() error {
 		return err
 	}
 
-	err = e.LoadAutoDiscovery()
-
-	if err != nil {
-		return err
+	if !e.Options.Pipeline.AutoDiscovery.Disabled {
+		err = e.LoadAutoDiscovery()
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, pipeline := range e.Pipelines {

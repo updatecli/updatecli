@@ -21,6 +21,9 @@ var (
 	}
 )
 
+type Options struct {
+	Disabled bool
+}
 type Crawler interface {
 	DiscoverManifests(scmSpec *scm.Config) ([]config.Spec, error)
 	Enabled() bool

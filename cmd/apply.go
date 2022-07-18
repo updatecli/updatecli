@@ -25,6 +25,7 @@ var (
 			e.Options.Pipeline.Target.Push = applyPush
 			e.Options.Pipeline.Target.Clean = applyClean
 			e.Options.Pipeline.Target.DryRun = false
+			e.Options.Pipeline.AutoDiscovery.Disabled = autoDiscoveryDisabled
 
 			err := run("apply")
 			if err != nil {
@@ -43,4 +44,7 @@ func init() {
 	applyCmd.Flags().BoolVarP(&applyCommit, "commit", "", true, "Record changes to the repository, '--commit=false' (default: true)")
 	applyCmd.Flags().BoolVarP(&applyPush, "push", "", true, "Update remote refs '--push=false' (default: true)")
 	applyCmd.Flags().BoolVarP(&applyClean, "clean", "", true, "Remove updatecli working directory like '--clean=false '(default: true)")
+
+	applyCmd.Flags().BoolVar(&autoDiscoveryDisabled, "autodiscovery-disable", false, "Discovery automatically available Updatecli manifest")
+
 }

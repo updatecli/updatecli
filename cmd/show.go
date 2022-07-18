@@ -17,6 +17,7 @@ var (
 			e.Options.Config.ManifestFile = cfgFile
 			e.Options.Config.ValuesFiles = valuesFiles
 			e.Options.Config.SecretsFiles = secretsFiles
+			e.Options.Pipeline.AutoDiscovery.Disabled = autoDiscoveryDisabled
 
 			err := run("show")
 			if err != nil {
@@ -31,4 +32,5 @@ func init() {
 	showCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updatecli.yaml", "Sets config file or directory. (default: './updatecli.yaml')")
 	showCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	showCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
+	diffCmd.Flags().BoolVar(&autoDiscoveryDisabled, "autodiscovery-disable", false, "Discovery automatically available Updatecli manifest")
 }
