@@ -30,6 +30,10 @@ import (
 const (
 	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
 	LOCALSCMIDENTIFIER string = "local"
+	// DefaultConfigFilename defines the default updatecli configuration filename
+	DefaultConfigFilename string = "updatecli.yaml"
+	// DefaultConfigDirname defines the default updatecli manifest directory
+	DefaultConfigDirname string = "updatecli.d"
 )
 
 // Config contains cli configuration

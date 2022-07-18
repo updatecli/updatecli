@@ -38,6 +38,27 @@ func (e *Engine) Clean() (err error) {
 
 // GetFiles return an array with every valid files.
 func GetFiles(root string) (files []string) {
+	if root == "" {
+		// If no manifest have been provided then we try to see if the file
+		// updatecli.yaml exist. If it's then we try to see if the directory updatecli.d
+		// if it's still not the case then we return no manifest files.
+		_, err := os.Stat(config.DefaultConfigFilename)
+		if !errors.Is(err, os.ErrNotExist) {
+			logrus.Debugf("Default Updatecli manifest detected %q", config.DefaultConfigFilename)
+			return []string{config.DefaultConfigFilename}
+		}
+
+		fs, err := os.Stat(config.DefaultConfigDirname)
+		if errors.Is(err, os.ErrNotExist) {
+			return []string{}
+		}
+
+		if fs.IsDir() {
+			logrus.Debugf("Default Updatecli manifest directory detected %q", config.DefaultConfigDirname)
+			root = config.DefaultConfigDirname
+		}
+	}
+
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
@@ -132,11 +153,6 @@ func (e *Engine) Prepare() (err error) {
 
 	err = e.LoadConfigurations()
 
-	if len(e.Pipelines) == 0 {
-		logrus.Errorln(err)
-		return fmt.Errorf("no valid pipeline found")
-	}
-
 	// Don't exit if we identify at least one valid pipeline configuration
 	if err != nil {
 		logrus.Errorln(err)
@@ -155,6 +171,11 @@ func (e *Engine) Prepare() (err error) {
 		if err != nil {
 			return err
 		}
+	}
+
+	if len(e.Pipelines) == 0 {
+		logrus.Errorln(err)
+		return fmt.Errorf("no valid pipeline found")
 	}
 
 	return nil
