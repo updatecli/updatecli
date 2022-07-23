@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	//// defaultGenericsSpecs defines the default builder that we want to run
-	defaultCrawlerSpecs = discoveryConfig.Config{
+	// DefaultGenericsSpecs defines the default builder that we want to run
+	DefaultCrawlerSpecs = discoveryConfig.Config{
 		Crawlers: map[string]interface{}{
 			"helm": helm.Spec{},
 		},
@@ -48,7 +48,7 @@ func New(spec discoveryConfig.Config,
 		return &AutoDiscovery{}, err
 	}
 
-	tmpCrawlers := defaultCrawlerSpecs.Crawlers
+	tmpCrawlers := DefaultCrawlerSpecs.Crawlers
 
 	for id, crawlerSpec := range s.Crawlers {
 		tmpCrawlers[id] = crawlerSpec
@@ -65,7 +65,7 @@ func New(spec discoveryConfig.Config,
 		g.scmConfig = scmConfig
 	}
 
-	for kind := range defaultCrawlerSpecs.Crawlers {
+	for kind := range DefaultCrawlerSpecs.Crawlers {
 
 		// Init workDir based on process running directory
 		workDir, err := os.Getwd()
@@ -116,8 +116,6 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 		}
 
 		discoveredManifests, err := crawler.DiscoverManifests(g.scmConfig)
-
-		logrus.Infof("Discoverd manifest: %+v", discoveredManifests)
 
 		if err != nil {
 			logrus.Errorln(err)

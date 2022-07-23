@@ -166,11 +166,9 @@ func (e *Engine) Prepare() (err error) {
 		return err
 	}
 
-	if !e.Options.Pipeline.AutoDiscovery.Disabled {
-		err = e.LoadAutoDiscovery()
-		if err != nil {
-			return err
-		}
+	err = e.LoadAutoDiscovery()
+	if err != nil {
+		return err
 	}
 
 	if len(e.Pipelines) == 0 {
@@ -291,11 +289,9 @@ func (e *Engine) Show() error {
 		return err
 	}
 
-	if !e.Options.Pipeline.AutoDiscovery.Disabled {
-		err = e.LoadAutoDiscovery()
-		if err != nil {
-			return err
-		}
+	err = e.LoadAutoDiscovery()
+	if err != nil {
+		return err
 	}
 
 	for _, pipeline := range e.Pipelines {
@@ -351,11 +347,22 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 // LoadAutoDiscovery will try to guess available pipelines based on specific directory
 func (e *Engine) LoadAutoDiscovery() error {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Auto Discovery")+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle("Auto Discovery"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Auto Discovery")+4))
-
 	var autoDiscoveryPipelines []pipeline.Pipeline
+
+	// Default Autodiscovery pipeline
+	if !e.Options.Pipeline.AutoDiscovery.Disabled {
+		var defaultPipeline pipeline.Pipeline
+		defaultPipeline.Init(
+			&config.Config{
+				Spec: config.Spec{
+					Name:          "Default AutoDiscovery",
+					AutoDiscovery: autodiscovery.DefaultCrawlerSpecs,
+				},
+			},
+			pipeline.Options{},
+		)
+		autoDiscoveryPipelines = append(autoDiscoveryPipelines, defaultPipeline)
+	}
 
 	for _, p := range e.Pipelines {
 		if p.Config.Spec.AutoDiscovery.Crawlers != nil {
@@ -363,9 +370,14 @@ func (e *Engine) LoadAutoDiscovery() error {
 		}
 	}
 
-	// At least run once
-	// Failing
-	//autoDiscoveryPipelines = append(autoDiscoveryPipelines, pipeline.Pipeline{})
+	// Exit if no autodiscover pipeline
+	if len(autoDiscoveryPipelines) == 0 {
+		return nil
+	}
+
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Auto Discovery")+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle("Auto Discovery"))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Auto Discovery")+4))
 
 	for _, p := range autoDiscoveryPipelines {
 
