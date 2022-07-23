@@ -352,7 +352,7 @@ func (e *Engine) LoadAutoDiscovery() error {
 	// Default Autodiscovery pipeline
 	if !e.Options.Pipeline.AutoDiscovery.Disabled {
 		var defaultPipeline pipeline.Pipeline
-		defaultPipeline.Init(
+		err := defaultPipeline.Init(
 			&config.Config{
 				Spec: config.Spec{
 					Name:          "Default AutoDiscovery",
@@ -361,7 +361,13 @@ func (e *Engine) LoadAutoDiscovery() error {
 			},
 			pipeline.Options{},
 		)
-		autoDiscoveryPipelines = append(autoDiscoveryPipelines, defaultPipeline)
+
+		if err != nil {
+			logrus.Errorln(err)
+		} else {
+			autoDiscoveryPipelines = append(autoDiscoveryPipelines, defaultPipeline)
+		}
+
 	}
 
 	for _, p := range e.Pipelines {

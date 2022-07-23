@@ -4,6 +4,6 @@ package config
 type Config struct {
 	// Crawlers specifies crawler configuration
 	Crawlers map[string]interface{} `yaml:",omitempty"`
-	// ScmID specifies a scmid configuration to use to generate the manfiest
+	// ScmID specifies a scmid configuration to use to generate the manifest
 	ScmId string `yaml:",omitempty"`
 }
