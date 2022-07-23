@@ -33,6 +33,8 @@ sources:
       - latestGoVersion
     spec:
       command: ./updatecli/scripts/updateGomodGoversion.sh ./go.mod {{ source "latestGoVersion" }}
+      environments:
+        - name: PATH
 
 conditions:
   workflowrelease-sandbox:
