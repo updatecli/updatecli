@@ -70,7 +70,7 @@ func New(spec discoveryConfig.Config,
 		// Init workDir based on process running directory
 		workDir, err := os.Getwd()
 		if err != nil {
-			logrus.Errorf("skipping crawler %q due to: %s", err)
+			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
 		}
 
