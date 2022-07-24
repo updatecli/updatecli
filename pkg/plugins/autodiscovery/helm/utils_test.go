@@ -6,21 +6,28 @@ import (
 
 func TestSearchFiles(t *testing.T) {
 
-	_, err := searchChartMetadataFiles(
-		"/home/olblak/Projects/Epinio/helm-charts",
+	gotFiles, err := searchChartMetadataFiles(
+		"testdata/chart",
 		[]string{"Chart.yaml", "Chart.yml"})
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	t.Fail()
+
+	expectedFile := "testdata/chart/epinio/Chart.yaml"
+	if gotFiles[0] != expectedFile {
+		t.Errorf("Expecting file %q but got %q", expectedFile, gotFiles[0])
+	}
 }
 
 func TestListChartDependency(t *testing.T) {
 
-	_, err := getChartMetadata(
-		"/home/olblak/Projects/Epinio/helm-charts/chart/epinio/Chart.yaml")
+	gotChartMetadata, err := getChartMetadata(
+		"testdata/chart/epinio/Chart.yaml")
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	t.Fail()
+	expectedChartName := "epinio"
+	if gotChartMetadata.Name != expectedChartName {
+		t.Errorf("Expecting Chart Name %q but got %q", expectedChartName, gotChartMetadata.Name)
+	}
 }
