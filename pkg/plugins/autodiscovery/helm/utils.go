@@ -50,7 +50,7 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 	var chart chartMetadata
 
 	chartName := filepath.Base(filepath.Dir(filename))
-	logrus.Infof("Chart found: %q", chartName)
+	logrus.Infof("Chart %q found in %q", chartName, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return &chartMetadata{}, err
