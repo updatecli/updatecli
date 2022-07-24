@@ -11,7 +11,7 @@ dependencies:
   version: 4.0.2
 - condition: kubed.enabled, global.kubed.enabled
   name: kubed
-  repository: https://charts.appscode.com/stable/
+  repository: https://charts.appscode.com/stable
   tags:
   - kubed
   version: 0.13.2
@@ -34,3 +34,4 @@ name: epinio
 sources:
 - https://github.com/epinio/epinio
 version: 1.0.1
+
