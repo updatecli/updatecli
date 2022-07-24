@@ -44,7 +44,7 @@ sources:
         kind: helmchart
         spec:
             name: kubed
-            url: https://charts.appscode.com/stable/
+            url: https://charts.appscode.com/stable
 conditions:
     kubed:
         name: Ensure dependency "kubed" is specified
