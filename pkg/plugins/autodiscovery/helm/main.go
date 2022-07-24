@@ -73,7 +73,7 @@ func New(spec interface{}, rootDir string) (Helm, error) {
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Errorln("no error working directrory defined")
+		logrus.Errorln("no working directrory defined")
 		return Helm{}, err
 	}
 
