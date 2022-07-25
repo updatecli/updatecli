@@ -24,7 +24,7 @@ func (j Jenkins) Condition(source string) (bool, error) {
 
 	if releaseType != j.spec.Release {
 		return false, fmt.Errorf(
-			"Wrong Release Type '%s' detected : Jenkins version '%s' is a '%s' release",
+			"wrong Release Type '%s' detected : Jenkins version '%s' is a '%s' release",
 			j.spec.Release, versionToCheck, releaseType)
 	}
 

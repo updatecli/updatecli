@@ -20,9 +20,27 @@ import (
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+type GitHandler interface {
+	Add(files []string, workingDir string) error
+	Checkout(username, password, branch, remoteBranch, workingDir string) error
+	Clone(username, password, URL, workingDir string) error
+	Commit(user, email, message, workingDir string, signingKey string, passprase string) error
+	GetChangedFiles(workingDir string) ([]string, error)
+	IsSimilarBranch(a, b, workingDir string) (bool, error)
+	NewTag(tag, message, workingDir string) (bool, error)
+	Push(username string, password string, workingDir string, force bool) error
+	PushTag(tag string, username string, password string, workingDir string, force bool) error
+	RemoteURLs(workingDir string) (map[string]string, error)
+	SanitizeBranchName(branch string) string
+	Tags(workingDir string) (tags []string, err error)
+}
+
+type GoGit struct {
+}
+
 // IsSimilarBranch checks that the last commits of the two branches are similar then return
 // true if it's the case
-func IsSimilarBranch(a, b, workingDir string) (bool, error) {
+func (g GoGit) IsSimilarBranch(a, b, workingDir string) (bool, error) {
 
 	gitRepository, err := git.PlainOpen(workingDir)
 	if err != nil {
@@ -50,7 +68,7 @@ func IsSimilarBranch(a, b, workingDir string) (bool, error) {
 
 }
 
-func GetChangedFiles(workingDir string) ([]string, error) {
+func (g GoGit) GetChangedFiles(workingDir string) ([]string, error) {
 	gitRepository, err := git.PlainOpen(workingDir)
 	if err != nil {
 		return []string{}, err
@@ -78,7 +96,7 @@ func GetChangedFiles(workingDir string) ([]string, error) {
 }
 
 // Add run `git add`.
-func Add(files []string, workingDir string) error {
+func (g GoGit) Add(files []string, workingDir string) error {
 
 	logrus.Debugf("stage: git-add\n\n")
 
@@ -114,7 +132,7 @@ func Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func Checkout(username, password, branch, remoteBranch, workingDir string) error {
+func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir string) error {
 
 	logrus.Debugf("stage: git-checkout\n\n")
 
@@ -213,7 +231,7 @@ func Checkout(username, password, branch, remoteBranch, workingDir string) error
 			return err
 		}
 
-		if !exists(
+		if !g.exists(
 			plumbing.NewBranchReferenceName(remoteBranch),
 			refs) {
 			logrus.Debugf("No remote name %q", remoteBranch)
@@ -255,7 +273,7 @@ func Checkout(username, password, branch, remoteBranch, workingDir string) error
 	return nil
 }
 
-func exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bool {
+func (g GoGit) exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bool {
 	for _, ref2 := range refs {
 		if ref.String() == ref2.Name().String() {
 			return true
@@ -265,7 +283,7 @@ func exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bool {
 }
 
 // Commit run `git commit`.
-func Commit(user, email, message, workingDir string, signingKey string, passprase string) error {
+func (g GoGit) Commit(user, email, message, workingDir string, signingKey string, passprase string) error {
 
 	logrus.Debugf("stage: git-commit\n\n")
 
@@ -321,7 +339,7 @@ func Commit(user, email, message, workingDir string, signingKey string, passpras
 }
 
 // Clone run `git clone`.
-func Clone(username, password, URL, workingDir string) error {
+func (g GoGit) Clone(username, password, URL, workingDir string) error {
 
 	logrus.Debugf("stage: git-clone\n\n")
 
@@ -413,7 +431,7 @@ func Clone(username, password, URL, workingDir string) error {
 }
 
 // Push run `git push`.
-func Push(username string, password string, workingDir string, force bool) error {
+func (g GoGit) Push(username string, password string, workingDir string, force bool) error {
 
 	logrus.Debugf("stage: git-push\n\n")
 
@@ -474,7 +492,7 @@ func Push(username string, password string, workingDir string, force bool) error
 }
 
 // SanitizeBranchName replace wrong character in the branch name
-func SanitizeBranchName(branch string) string {
+func (g GoGit) SanitizeBranchName(branch string) string {
 
 	removedCharacter := []string{
 		":", "=", "+", "$", "&", "#", "!", "@", "*", " ",
@@ -498,7 +516,7 @@ func SanitizeBranchName(branch string) string {
 }
 
 // Tags return a list of git tags ordered by creation time
-func Tags(workingDir string) (tags []string, err error) {
+func (g GoGit) Tags(workingDir string) (tags []string, err error) {
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
 		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
@@ -570,7 +588,7 @@ func Tags(workingDir string) (tags []string, err error) {
 
 // NewTag create a tag then return a boolean to indicate if
 // the tag was created or not.
-func NewTag(tag, message, workingDir string) (bool, error) {
+func (g GoGit) NewTag(tag, message, workingDir string) (bool, error) {
 
 	r, err := git.PlainOpen(workingDir)
 
@@ -596,7 +614,7 @@ func NewTag(tag, message, workingDir string) (bool, error) {
 }
 
 // PushTag publish a single tag created locally
-func PushTag(tag string, username string, password string, workingDir string, force bool) error {
+func (g GoGit) PushTag(tag string, username string, password string, workingDir string, force bool) error {
 
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything except an empty string
@@ -638,4 +656,25 @@ func PushTag(tag string, username string, password string, workingDir string, fo
 	}
 
 	return nil
+}
+
+// RemoteURLs returns the list of remote URLs
+func (g GoGit) RemoteURLs(workingDir string) (map[string]string, error) {
+	remoteList := make(map[string]string)
+
+	gitRepository, err := git.PlainOpenWithOptions(workingDir, &git.PlainOpenOptions{DetectDotGit: true})
+	if err != nil {
+		return remoteList, err
+	}
+
+	list, err := gitRepository.Remotes()
+	if err != nil {
+		return remoteList, err
+	}
+
+	for _, r := range list {
+		remoteList[r.Config().Name] = r.Config().URLs[0]
+	}
+
+	return remoteList, nil
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Condition checks that a git tag exists
@@ -40,7 +39,7 @@ func (gt *GitTag) condition(source string) (bool, error) {
 		return false, err
 	}
 
-	tags, err := gitgeneric.Tags(gt.spec.Path)
+	tags, err := gt.nativeGitHandler.Tags(gt.spec.Path)
 	if err != nil {
 		return false, err
 	}
@@ -52,7 +51,7 @@ func (gt *GitTag) condition(source string) (bool, error) {
 	tag := gt.foundVersion.ParsedVersion
 
 	if len(tag) == 0 {
-		err = fmt.Errorf("No git tag matching pattern %q, found", gt.versionFilter.Pattern)
+		err = fmt.Errorf("no git tag matching pattern %q, found", gt.versionFilter.Pattern)
 		return false, err
 	}
 

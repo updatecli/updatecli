@@ -1,31 +1,31 @@
 sources:
   lastHelmRelease:
-    kind: helmchart
+    kind: "helmchart"
     spec:
-      name: prometheus
-      url: https://prometheus-community.github.io/helm-charts
+      name: "prometheus"
+      url: "https://prometheus-community.github.io/helm-charts"
 
 conditions:
   isNamePrometheus:
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "helmfile.d/prometheus.yaml"
       key: "releases[0].name"
       value: "prometheus"
-    scmid: default
+    scmid: "default"
 
 targets:
   chartVersion:
     name: "Update Prometheus Helm Chart version"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "helmfile.d/prometheus.yaml"
       key: "releases[0].version"
-    scmid: default
+    scmid: "default"
 
 scms:
   default: 
-    kind: github
+    kind: "github"
     spec:
       user: '{{ .github.user }}'
       email: '{{ .github.email }}'

@@ -5,7 +5,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Source returns the latest git tag based on create time
@@ -20,7 +19,7 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	tags, err := gitgeneric.Tags(workingDir)
+	tags, err := gt.nativeGitHandler.Tags(workingDir)
 
 	if err != nil {
 		return "", err
@@ -34,7 +33,7 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 
 	if len(value) == 0 {
 		logrus.Infof("%s No git tag found matching pattern %q", result.FAILURE, gt.versionFilter.Pattern)
-		return value, fmt.Errorf("No git tag found matching pattern %q", gt.versionFilter.Pattern)
+		return value, fmt.Errorf("no git tag found matching pattern %q", gt.versionFilter.Pattern)
 	} else if len(value) > 0 {
 		logrus.Infof("%s Git tag %q found matching pattern %q", result.SUCCESS, value, gt.versionFilter.Pattern)
 	} else {

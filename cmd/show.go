@@ -14,9 +14,9 @@ var (
 		Short: "Print the configuration that will be executed",
 		Run: func(cmd *cobra.Command, args []string) {
 
-			e.Options.File = cfgFile
-			e.Options.ValuesFiles = valuesFiles
-			e.Options.SecretsFiles = secretsFiles
+			e.Options.Config.ManifestFile = cfgFile
+			e.Options.Config.ValuesFiles = valuesFiles
+			e.Options.Config.SecretsFiles = secretsFiles
 
 			err := run("show")
 			if err != nil {

@@ -32,21 +32,21 @@
 
 sources:
   lastHelmRelease:
-    kind: helmChart
+    kind: "helmChart"
     spec:
-      url: https://charts.jenkins.io
-      name: jenkins
+      url: "https://charts.jenkins.io"
+      name: "jenkins"
 conditions:
   isPrometheuseHelmChartVersionAvailable:
     name: "Test if the prometheus helm chart is available"
-    kind: helmChart
+    kind: "helmChart"
     spec:
-      url: https://prometheus-community.github.io/helm-charts
-      name: prometheus
-      version: 11.16.5
+      url: "https://prometheus-community.github.io/helm-charts"
+      name: "prometheus"
+      version: "11.16.5"
   chartVersion:
     name: "jenkinsci/jenkins Helm Chart used"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "charts/jenkins/requirements.yaml"
       key: "dependencies[0].name"
@@ -63,7 +63,7 @@ conditions:
 targets:
   chartVersion:
     name: "jenkinsci/jenkins Helm Chart"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "charts/jenkins/requirements.yaml"
       key: "dependencies[0].version"

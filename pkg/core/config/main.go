@@ -2,19 +2,14 @@ package config
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"errors"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -23,105 +18,238 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/version"
+
+	"github.com/hexops/gotextdiff"
+	"github.com/hexops/gotextdiff/myers"
+	"github.com/hexops/gotextdiff/span"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
-var (
-	// ErrConfigFileTypeNotSupported is returned when updatecli try to read
-	// an unsupported file type.
-	ErrConfigFileTypeNotSupported = errors.New("file extension not supported")
-
-	// ErrBadConfig is returned when updatecli try to read
-	// a wrong configuration.
-	ErrBadConfig = errors.New("wrong updatecli configuration")
-
-	// ErrNoEnvironmentVariableSet is returned when during the templating process,
-	// it tries to access en environment variable not set.
-	ErrNoEnvironmentVariableSet = errors.New("environment variable doesn't exist")
-
-	// ErrNoKeyDefined is returned when during the templating process, it tries to
-	// retrieve a key value which is not defined in the configuration
-	ErrNoKeyDefined = errors.New("key not defined in configuration")
-
-	// ErrNotAllowedTemplatedKey is returned when
-	// we are planning to template at runtime unauthorized keys such map key
-	ErrNotAllowedTemplatedKey = errors.New("not allowed templated key")
+const (
+	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
+	LOCALSCMIDENTIFIER string = "local"
 )
 
 // Config contains cli configuration
 type Config struct {
+	// filename contains the updatecli manifest filename
+	filename string
+	// Spec describe an updatecli manifest
+	Spec Spec
+	// gitHandler holds a git client implementation to manipulate git SCMs
+	gitHandler gitgeneric.GitHandler
+}
+
+// Spec contains pipeline configuration
+type Spec struct {
 	// Name defines a pipeline name
-	Name string
+	Name string `yaml:",omitempty" jsonschema:"required"`
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	PipelineID string
+	PipelineID string `yaml:",omitempty"`
 	// Title is used for the full pipeline
-	Title string
+	Title string `yaml:",omitempty"`
 	// PullRequests defines the list of Pull Request configuration which need to be managed
-	PullRequests map[string]pullrequest.Config
+	PullRequests map[string]pullrequest.Config `yaml:",omitempty"`
 	// SCMs defines the list of repository configuration used to fetch content from.
-	SCMs map[string]scm.Config `yaml:"scms"`
+	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
 	// Sources defines the list of source configuration
-	Sources map[string]source.Config
+	Sources map[string]source.Config `yaml:",omitempty"`
 	// Conditions defines the list of condition configuration
-	Conditions map[string]condition.Config
+	Conditions map[string]condition.Config `yaml:",omitempty"`
 	// Targets defines the list of target configuration
-	Targets map[string]target.Config
+	Targets map[string]target.Config `yaml:",omitempty"`
+	// Version specifies the mininum updatecli version compatible with the manifest
+	Version string `yaml:",omitempty"`
+}
+
+// Option contains configuration options such as filepath located on disk,etc.
+type Option struct {
+	// ManifestFile contains the updatecli manifest full file path
+	ManifestFile string
+	// ValuesFiles contains the list of updatecli values full file path
+	ValuesFiles []string
+	// SecretsFiles contains the list of updatecli sops secrets full file path
+	SecretsFiles []string
+	// DisableTemplating specify if needs to be done
+	DisableTemplating bool
 }
 
 // Reset reset configuration
 func (config *Config) Reset() {
-	*config = Config{}
+	*config = Config{
+		gitHandler: gitgeneric.GoGit{},
+	}
 }
 
 // New reads an updatecli configuration file
-func New(cfgFile string, valuesFiles, secretsFiles []string) (config Config, err error) {
+func New(option Option) (config Config, err error) {
 
 	config.Reset()
 
-	dirname, basename := filepath.Split(cfgFile)
+	config.filename = option.ManifestFile
+
+	dirname, basename := filepath.Split(option.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
 	// templates values as in some situation those values changes for each run
-	pipelineID, err := Checksum(cfgFile)
+	pipelineID, err := FileChecksum(option.ManifestFile)
 	if err != nil {
 		return config, err
 	}
 
-	logrus.Infof("Loading Pipeline %q", cfgFile)
+	logrus.Infof("Loading Pipeline %q", option.ManifestFile)
 
-	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl", ".yaml", ".yml":
+	// Load updatecli manifest no matter the file extension
+	c, err := os.Open(option.ManifestFile)
+
+	if err != nil {
+		return config, err
+	}
+
+	defer c.Close()
+
+	content, err := ioutil.ReadAll(c)
+	if err != nil {
+		return config, err
+	}
+
+	if !option.DisableTemplating {
+		// Try to template manifest no matter the extension
+		// templated manifest must respect its extension before and after templating
+
 		t := Template{
 			CfgFile:      filepath.Join(dirname, basename),
-			ValuesFiles:  valuesFiles,
-			SecretsFiles: secretsFiles,
+			ValuesFiles:  option.ValuesFiles,
+			SecretsFiles: option.SecretsFiles,
 		}
 
-		err := t.Init(&config)
+		content, err = t.New(content)
+		if err != nil {
+			return config, err
+		}
+
+	}
+	switch extension := filepath.Ext(basename); extension {
+	case ".tpl", ".tmpl", ".yaml", ".yml":
+
+		err = yaml.Unmarshal(content, &config.Spec)
 		if err != nil {
 			return config, err
 		}
 
 	default:
-		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, filepath.Join(dirname, basename))
+		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, config.filename)
 		return config, ErrConfigFileTypeNotSupported
 	}
 
 	// config.PipelineID is required for config.Validate()
-	config.PipelineID = pipelineID
+	if len(config.Spec.PipelineID) == 0 {
+		config.Spec.PipelineID = pipelineID
+	}
+
+	// By default Set config.Version to the current updatecli version
+	if len(config.Spec.Version) == 0 {
+		config.Spec.Version = version.Version
+	}
+
+	// Ensure there is a local SCM defined as specified
+	if err = config.EnsureLocalScm(); err != nil {
+		return config, err
+	}
 
 	err = config.Validate()
 	if err != nil {
 		return config, err
 	}
 
-	if len(config.Name) == 0 {
-		config.Name = strings.ToTitle(basename)
+	if len(config.Spec.Name) == 0 {
+		config.Spec.Name = strings.ToTitle(basename)
 	}
 
 	err = config.Validate()
 
 	return config, err
 
+}
+
+// IsManifestDifferentThanOnDisk checks if an Updatecli manifest in memory is the same than the one on disk
+func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
+
+	buf := bytes.NewBufferString("")
+
+	encoder := yaml.NewEncoder(buf)
+
+	defer func() {
+		err := encoder.Close()
+		if err != nil {
+			logrus.Errorln(err)
+		}
+	}()
+
+	encoder.SetIndent(YAMLSetIdent)
+
+	err := encoder.Encode(c.Spec)
+
+	if err != nil {
+		return false, err
+	}
+
+	data := buf.Bytes()
+
+	onDiskData, err := ioutil.ReadFile(c.filename)
+	if err != nil {
+		return false, err
+	}
+
+	if string(onDiskData) == string(data) {
+		logrus.Infof("%s No Updatecli manifest change required", result.SUCCESS)
+		return false, nil
+	}
+
+	edits := myers.ComputeEdits(span.URIFromPath(c.filename), string(onDiskData), string(data))
+	diff := fmt.Sprint(gotextdiff.ToUnified(c.filename+"(old)", c.filename+"(updated)", string(onDiskData), edits))
+
+	logrus.Infof("%s Updatecli manifest change required\n%s", result.ATTENTION, diff)
+
+	return true, nil
+
+}
+
+// SaveOnDisk saves an updatecli manifest to disk
+func (c *Config) SaveOnDisk() error {
+
+	file, err := os.OpenFile(c.filename, os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			logrus.Errorln(err)
+		}
+	}()
+
+	encoder := yaml.NewEncoder(file)
+
+	defer func() {
+		err = encoder.Close()
+		if err != nil {
+			logrus.Errorln(err)
+		}
+	}()
+
+	// Must be set to 4 so we align with the default behavior when
+	// we marshaled the inmemory yaml to compare with the one from disk
+	encoder.SetIndent(YAMLSetIdent)
+	err = encoder.Encode(c.Spec)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Display shows updatecli configuration including secrets !
@@ -135,19 +263,8 @@ func (config *Config) Display() error {
 	return nil
 }
 
-// Validate run various validation test on the configuration and update fields if necessary
-func (config *Config) Validate() error {
-	for id, scm := range config.SCMs {
-		if err := scm.Validate(); err != nil {
-			logrus.Errorf("bad parameter(s) for scm %q", id)
-			return err
-		}
-		// scm.Validate may modify the object during validation
-		// so we want to be sure that we save those modification
-		config.SCMs[id] = scm
-	}
-
-	for id, p := range config.PullRequests {
+func (config *Config) validatePullRequests() error {
+	for id, p := range config.Spec.PullRequests {
 		if err := p.Validate(); err != nil {
 			logrus.Errorf("bad parameters for pullrequest %q", id)
 			return err
@@ -155,7 +272,7 @@ func (config *Config) Validate() error {
 
 		// Then validate that the pullrequest specifies an existing SCM
 		if len(p.ScmID) > 0 {
-			if _, ok := config.SCMs[p.ScmID]; !ok {
+			if _, ok := config.Spec.SCMs[p.ScmID]; !ok {
 				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, p.ScmID)
 				return ErrBadConfig
 			}
@@ -163,17 +280,20 @@ func (config *Config) Validate() error {
 
 		// Validate references to other configuration objects
 		for _, target := range p.Targets {
-			if _, ok := config.Targets[target]; !ok {
+			if _, ok := config.Spec.Targets[target]; !ok {
 				logrus.Errorf("the specified target %q for the pull request %q does not exist", target, id)
 				return ErrBadConfig
 			}
 		}
 		// p.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.PullRequests[id] = p
+		config.Spec.PullRequests[id] = p
 	}
+	return nil
+}
 
-	for id, s := range config.Sources {
+func (config *Config) validateSources() error {
+	for id, s := range config.Spec.Sources {
 		err := s.Validate()
 		if err != nil {
 			logrus.Errorf("bad parameters for source %q", id)
@@ -190,12 +310,12 @@ func (config *Config) Validate() error {
 		if len(s.Scm) > 0 {
 			logrus.Warningf("The directive 'scm' for the source[%q] is now deprecated. Please use the new top level scms syntax", id)
 			if len(s.SCMID) == 0 {
-				if _, ok := config.SCMs["source_"+id]; !ok {
+				if _, ok := config.Spec.SCMs["source_"+id]; !ok {
 					for kind, spec := range s.Scm {
-						if config.SCMs == nil {
-							config.SCMs = make(map[string]scm.Config, 1)
+						if config.Spec.SCMs == nil {
+							config.Spec.SCMs = make(map[string]scm.Config, 1)
 						}
-						config.SCMs["source_"+id] = scm.Config{
+						config.Spec.SCMs["source_"+id] = scm.Config{
 							Kind: kind,
 							Spec: spec}
 					}
@@ -205,55 +325,29 @@ func (config *Config) Validate() error {
 				logrus.Warning("source.SCMID is also defined, ignoring source.Scm")
 			}
 			s.Scm = map[string]interface{}{}
-			config.Sources[id] = s
+			config.Spec.Sources[id] = s
 		}
 		// s.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.Sources[id] = s
+		config.Spec.Sources[id] = s
 	}
+	return nil
 
-	for id, c := range config.Conditions {
-		err := c.Validate()
-		if err != nil {
-			logrus.Errorf("bad parameters for condition %q", id)
-			return ErrBadConfig
-		}
+}
 
-		if len(c.SourceID) > 0 {
-			if _, ok := config.Sources[c.SourceID]; !ok {
-				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
-				return ErrBadConfig
-			}
+func (config *Config) validateSCMs() error {
+	for id, scmConfig := range config.Spec.SCMs {
+		if err := scmConfig.Validate(); err != nil {
+			logrus.Errorf("bad parameter(s) for scm %q", id)
+			return err
 		}
-		// Only check/guess the sourceID if the user did not disable it (default is enabled)
-		if !c.DisableSourceInput {
-			// Try to guess SourceID
-			if len(c.SourceID) == 0 && len(config.Sources) > 1 {
-				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
-				return ErrBadConfig
-			} else if len(c.SourceID) == 0 && len(config.Sources) == 1 {
-				for id := range config.Sources {
-					c.SourceID = id
-				}
-			}
-		}
-
-		if IsTemplatedString(id) {
-			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
-			return ErrNotAllowedTemplatedKey
-		}
-
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		//if c.Scm != nil {
-		if len(c.Scm) > 0 {
-			generateScmFromLegacyCondition(id, c, config)
-		}
-
-		config.Conditions[id] = c
 	}
+	return nil
+}
 
-	for id, t := range config.Targets {
+func (config *Config) validateTargets() error {
+
+	for id, t := range config.Spec.Targets {
 
 		err := t.Validate()
 		if err != nil {
@@ -261,11 +355,8 @@ func (config *Config) Validate() error {
 			return ErrBadConfig
 		}
 
-		if len(t.PipelineID) == 0 {
-			t.PipelineID = config.PipelineID
-		}
 		if len(t.SourceID) > 0 {
-			if _, ok := config.Sources[t.SourceID]; !ok {
+			if _, ok := config.Spec.Sources[t.SourceID]; !ok {
 				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", t.SourceID)
 				return ErrBadConfig
 			}
@@ -274,12 +365,12 @@ func (config *Config) Validate() error {
 		// Only check/guess the sourceID if the user did not disable it (default is enabled)
 		if !t.DisableSourceInput {
 			// Try to guess SourceID
-			if len(t.SourceID) == 0 && len(config.Sources) > 1 {
+			if len(t.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 
 				logrus.Errorf("empty 'sourceID' for target %q", id)
 				return ErrBadConfig
-			} else if len(t.SourceID) == 0 && len(config.Sources) == 1 {
-				for id := range config.Sources {
+			} else if len(t.SourceID) == 0 && len(config.Spec.Sources) == 1 {
+				for id := range config.Spec.Sources {
 					t.SourceID = id
 				}
 			}
@@ -290,39 +381,144 @@ func (config *Config) Validate() error {
 			return ErrNotAllowedTemplatedKey
 		}
 
+		// t.Validate may modify the object during validation
+		// so we want to be sure that we save those modifications
+		config.Spec.Targets[id] = t
+
 		// Temporary code until we fully remove the old way to configure scm
 		// Introduce by https://github.com/updatecli/updatecli/issues/260
 		//if t.Scm != nil {
 		if len(t.Scm) > 0 {
-			err := generateScmFromLegacyTarget(id, t, config)
+			err := generateScmFromLegacyTarget(id, config)
 			if err != nil {
 				return err
 			}
 		}
 
-		// t.Validate may modify the object during validation
-		// so we want to be sure that we save those modifications
-		config.Targets[id] = t
+	}
+	return nil
+}
+
+func (config *Config) validateConditions() error {
+	for id, c := range config.Spec.Conditions {
+		err := c.Validate()
+		if err != nil {
+			logrus.Errorf("bad parameters for condition %q", id)
+			return ErrBadConfig
+		}
+
+		if len(c.SourceID) > 0 {
+			if _, ok := config.Spec.Sources[c.SourceID]; !ok {
+				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
+				return ErrBadConfig
+			}
+		}
+		// Only check/guess the sourceID if the user did not disable it (default is enabled)
+		if !c.DisableSourceInput {
+			// Try to guess SourceID
+			if len(c.SourceID) == 0 && len(config.Spec.Sources) > 1 {
+				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
+				return ErrBadConfig
+			} else if len(c.SourceID) == 0 && len(config.Spec.Sources) == 1 {
+				for id := range config.Spec.Sources {
+					c.SourceID = id
+				}
+			}
+		}
+
+		if IsTemplatedString(id) {
+			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
+			return ErrNotAllowedTemplatedKey
+		}
+
+		config.Spec.Conditions[id] = c
+
+		// Temporary code until we fully remove the old way to configure scm
+		// Introduce by https://github.com/updatecli/updatecli/issues/260
+		//if c.Scm != nil {
+		if len(c.Scm) > 0 {
+			generateScmFromLegacyCondition(id, config)
+		}
+
+	}
+	return nil
+}
+
+// Validate run various validation test on the configuration and update fields if necessary
+func (config *Config) Validate() error {
+
+	var errs []error
+	err := config.ValidateManifestCompatibility()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("updatecli version compatibility error:\n%s", err))
+	}
+
+	err = config.validateConditions()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("conditions validation error:\n%s", err))
+	}
+
+	err = config.validatePullRequests()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("pullrequests validation error:\n%s", err))
+	}
+
+	err = config.validateSCMs()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("scms validation error:\n%s", err))
+	}
+
+	err = config.validateSources()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("sources validation error:\n%s", err))
+	}
+
+	err = config.validateTargets()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("targets validation error:\n%s", err))
+	}
+
+	// Concatenate error message
+	if len(errs) > 0 {
+		err = errs[0]
+		for i := range errs {
+			if i > 1 {
+				err = fmt.Errorf("%s\n%s", err, errs[i])
+			}
+		}
+		return err
 	}
 
 	return nil
 }
 
-// Checksum return a file checksum using sha256.
-func Checksum(filename string) (string, error) {
-	file, err := os.Open(filename)
+func (config *Config) ValidateManifestCompatibility() error {
+	isCompatibleUpdatecliVersion, err := version.IsGreaterThan(
+		version.Version,
+		config.Spec.Version)
+
 	if err != nil {
-		logrus.Debugf("Can't open file %q", filename)
-		return "", err
+		return fmt.Errorf("pipeline %q - %q", config.Spec.Name, err)
 	}
 
-	defer file.Close()
-	hash := sha256.New()
-
-	if _, err := io.Copy(hash, file); err != nil {
-		return "", err
+	// Ensure that the current updatecli version is compatible with the manifest
+	if !isCompatibleUpdatecliVersion {
+		return fmt.Errorf("pipeline %q requires Updatecli version greater than %q, skipping", config.Spec.Name, config.Spec.Version)
 	}
-	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+
+	return nil
 }
 
 // Update updates its own configuration file
@@ -382,7 +578,7 @@ func (config *Config) Update(data interface{}) (err error) {
 		},
 	}
 
-	content, err := yaml.Marshal(config)
+	content, err := yaml.Marshal(config.Spec)
 	if err != nil {
 		return err
 	}
@@ -397,7 +593,7 @@ func (config *Config) Update(data interface{}) (err error) {
 		return err
 	}
 
-	err = yaml.Unmarshal(b.Bytes(), &config)
+	err = yaml.Unmarshal(b.Bytes(), &config.Spec)
 	if err != nil {
 		return err
 	}
@@ -408,119 +604,4 @@ func (config *Config) Update(data interface{}) (err error) {
 	}
 
 	return err
-}
-
-// IsTemplatedString test if a string contains go template information
-func IsTemplatedString(s string) bool {
-	if len(s) == 0 {
-		return false
-	}
-
-	leftDelimiterFound := false
-
-	for _, val := range strings.SplitAfter(s, "{{") {
-		if strings.Contains(val, "{{") {
-			leftDelimiterFound = true
-			continue
-		}
-		if strings.Contains(val, "}}") && leftDelimiterFound {
-			return true
-		}
-	}
-
-	return false
-}
-
-func getFieldValueByQuery(conf interface{}, query []string) (value string, err error) {
-	ValueIface := reflect.ValueOf(conf)
-
-	Field := reflect.Value{}
-	titleCaser := cases.Title(language.English, cases.NoLower)
-
-	// We want to be able to use case insensitive key
-	insensitiveQuery := []string{
-		query[0],
-		strings.ToLower(query[0]),
-		titleCaser.String(strings.ToLower(query[0])),
-		titleCaser.String(query[0]),
-		strings.ToTitle(query[0]),
-	}
-
-	switch ValueIface.Kind() {
-	case reflect.Ptr:
-		// Check if the passed interface is a pointer
-		// Create a new type of Iface's Type, so we have a pointer to work with
-		// 'dereference' with Elem() and get the field by name
-		//Field = ValueIface.Elem().FieldByName(query[0])
-
-		for _, q := range insensitiveQuery {
-			Field = ValueIface.Elem().FieldByName(q)
-			if Field.IsValid() {
-				query[0] = q
-				break
-			}
-		}
-	case reflect.Map:
-		// We want to be able to use case insensitive key
-		for _, q := range insensitiveQuery {
-			Field = ValueIface.MapIndex(reflect.ValueOf(q))
-			if Field.IsValid() {
-				query[0] = q
-				break
-			}
-		}
-	case reflect.Struct:
-		// We want to be able to use case insensitive key
-		for _, q := range insensitiveQuery {
-			Field = ValueIface.FieldByName(q)
-			if Field.IsValid() {
-				break
-			}
-		}
-	}
-
-	// Means that despite the different case sensitive key, we couldn't find it
-	if !Field.IsValid() {
-		logrus.Debugf(
-			"Configuration `%s` does not have the field `%s`",
-			ValueIface.Type(),
-			query[0])
-		return "", ErrNoKeyDefined
-	}
-
-	if len(query) > 1 {
-		value, err = getFieldValueByQuery(Field.Interface(), query[1:])
-		if err != nil {
-			return "", err
-		}
-
-	} else if len(query) == 1 {
-		return Field.String(), nil
-	}
-
-	return value, nil
-
-}
-
-// GetChangelogTitle try to guess a specific target based on various information available for
-// a specific job
-func (config *Config) GetChangelogTitle(ID string, fallback string) (title string) {
-	if len(config.Title) > 0 {
-		// If a pipeline title has been defined, then use it for pull request title
-		title = fmt.Sprintf("[updatecli] %s",
-			config.Title)
-
-	} else if len(config.Targets) == 1 && len(config.Targets[ID].Name) > 0 {
-		// If we only have one target then we can use it as fallback.
-		// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
-		title = fmt.Sprintf("[updatecli] %s", config.Targets[ID].Name)
-	} else {
-		// At the moment, we don't have an easy way to describe what changed
-		// I am still thinking to a better solution.
-		logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
-		title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
-			config.Sources[config.Targets[ID].SourceID].Kind,
-			fallback)
-	}
-	return title
 }

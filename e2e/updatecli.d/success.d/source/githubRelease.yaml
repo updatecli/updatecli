@@ -2,16 +2,8 @@
 title: Test source githubRelease
 
 scms:
-  updatecli:
-    kind: "github"
-    spec:
-      user: "updatecli"
-      email: "updatecli@olblak.com"
-      owner: "updatecli"
-      repository: "updatecli"
-      token: '{{ requiredEnv .github.token }}'
-      username: '{{ requiredEnv .github.username }}'
-      branch: "main"
+  local:
+    disabled: true
 
 sources:
   helm:
@@ -20,7 +12,7 @@ sources:
     spec:
       owner: "updatecli"
       repository: "updatecli"
-      token: '{{ requiredEnv .github.token }}'
-      username: '{{ requiredEnv .github.username }}'
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       versionfilter:
         kind: latest

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -10,36 +11,37 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
-	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // Spec contains settings to manipulate a git repository.
 type Spec struct {
 	// URL specifies the git url
-	URL string `jsonschema:"required"`
+	URL string `yaml:",omitempty" jsonschema:"required"`
 	// Username specifies the username for http authentication
-	Username string
+	Username string `yaml:",omitempty"`
 	// Password specifies the password for http authentication
-	Password string
+	Password string `yaml:",omitempty"`
 	// Branch specifies the git branch
-	Branch string
+	Branch string `yaml:",omitempty"`
 	// User specifies the git commit author
-	User string
+	User string `yaml:",omitempty"`
 	// Email specifies the git commit email
-	Email string
+	Email string `yaml:",omitempty"`
 	// Directory specifies the directory to use for cloning the repository
-	Directory string
+	Directory string `yaml:",omitempty"`
 	// Force is used during the git push phase to run `git push --force`.
-	Force bool
+	Force bool `yaml:",omitempty"`
 	// CommitMessage contains conventional commit metadata as type or scope, used to generate the final commit message.
-	CommitMessage commit.Commit
+	CommitMessage commit.Commit `yaml:",omitempty"`
 	// GPG key and passphrased used for commit signing
-	GPG sign.GPGSpec
+	GPG sign.GPGSpec `yaml:",omitempty"`
 }
 
 type Git struct {
-	spec         Spec
-	remoteBranch string
+	spec             Spec
+	remoteBranch     string
+	nativeGitHandler gitgeneric.GitHandler
 }
 
 // New returns a new git object
@@ -56,11 +58,75 @@ func New(s Spec) (*Git, error) {
 		s.Branch = "main"
 	}
 
-	return &Git{
-		spec:         s,
-		remoteBranch: git.SanitizeBranchName(s.Branch),
-	}, nil
+	nativeGitHandler := gitgeneric.GoGit{}
 
+	return &Git{
+		spec:             s,
+		remoteBranch:     nativeGitHandler.SanitizeBranchName(s.Branch),
+		nativeGitHandler: nativeGitHandler,
+	}, nil
+}
+
+// Merge returns nil if it successfully merges the child Spec into target receiver.
+// Please note that child attributes always overrides receiver's
+func (gs *Spec) Merge(child interface{}) error {
+	childGHSpec, ok := child.(Spec)
+	if !ok {
+		return fmt.Errorf("unable to merge GitHub spec with unknown object type.")
+	}
+
+	if childGHSpec.Branch != "" {
+		gs.Branch = childGHSpec.Branch
+	}
+	if childGHSpec.CommitMessage != (commit.Commit{}) {
+		gs.CommitMessage = childGHSpec.CommitMessage
+	}
+	if childGHSpec.Directory != "" {
+		gs.Directory = childGHSpec.Directory
+	}
+	if childGHSpec.Email != "" {
+		gs.Email = childGHSpec.Email
+	}
+	if childGHSpec.Force {
+		gs.Force = childGHSpec.Force
+	}
+	if childGHSpec.GPG != (sign.GPGSpec{}) {
+		gs.GPG = childGHSpec.GPG
+	}
+	if childGHSpec.URL != "" {
+		gs.URL = childGHSpec.URL
+	}
+	if childGHSpec.User != "" {
+		gs.User = childGHSpec.User
+	}
+	if childGHSpec.Username != "" {
+		gs.Username = childGHSpec.Username
+	}
+
+	return nil
+}
+
+// MergeFromEnv updates the target receiver with the "non zero-ed" environment variables
+func (gs *Spec) MergeFromEnv(envPrefix string) {
+	prefix := fmt.Sprintf("%s_", envPrefix)
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "BRANCH")) != "" {
+		gs.Branch = os.Getenv(fmt.Sprintf("%s%s", prefix, "BRANCH"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "DIRECTORY")) != "" {
+		gs.Directory = os.Getenv(fmt.Sprintf("%s%s", prefix, "DIRECTORY"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "EMAIL")) != "" {
+		gs.Email = os.Getenv(fmt.Sprintf("%s%s", prefix, "EMAIL"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "URL")) != "" {
+		gs.URL = os.Getenv(fmt.Sprintf("%s%s", prefix, "URL"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "USERNAME")) != "" {
+		gs.Username = os.Getenv(fmt.Sprintf("%s%s", prefix, "USERNAME"))
+	}
+	if os.Getenv(fmt.Sprintf("%s%s", prefix, "USER")) != "" {
+		gs.User = os.Getenv(fmt.Sprintf("%s%s", prefix, "USER"))
+	}
 }
 
 func newDirectory(URL string) (string, error) {

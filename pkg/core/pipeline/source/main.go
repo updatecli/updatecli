@@ -1,7 +1,9 @@
 package source
 
 import (
+	"errors"
 	"os"
+	"strings"
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
@@ -29,6 +31,11 @@ type Source struct {
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
 }
+
+var (
+	// ErrWrongConfig is returned when a condition spec has missing attributes which are mandatory
+	ErrWrongConfig = errors.New("wrong source configuration")
+)
 
 // Run execute actions defined by the source configuration
 func (s *Source) Run() (err error) {
@@ -80,7 +87,7 @@ func (s *Source) Run() (err error) {
 	// Any error means an empty changelog
 	s.Changelog = source.Changelog()
 	if s.Changelog == "" {
-		logrus.Debugf("empty changelog found for the source %v", s)
+		logrus.Debugln("empty changelog found for the source")
 	}
 
 	if len(s.Config.Transformers) > 0 {
@@ -109,6 +116,10 @@ func (Config) JSONSchema() *jschema.Schema {
 }
 
 func (c *Config) Validate() error {
+	gotError := false
+
+	missingParameters := []string{}
+
 	// Handle scmID deprecation
 	if len(c.DeprecatedSCMID) > 0 {
 		switch len(c.SCMID) {
@@ -122,9 +133,30 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	// Validate that kind is set
+	if len(c.Kind) == 0 {
+		missingParameters = append(missingParameters, "kind")
+	}
+
+	// Ensure kind is lowercase
+	if c.Kind != strings.ToLower(c.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		c.Kind = strings.ToLower(c.Kind)
+	}
+
 	err := c.Transformers.Validate()
 	if err != nil {
-		return err
+		logrus.Errorln(err)
+		gotError = true
+	}
+
+	if len(missingParameters) > 0 {
+		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
+		gotError = true
+	}
+
+	if gotError {
+		return ErrWrongConfig
 	}
 
 	return nil

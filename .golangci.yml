@@ -90,8 +90,10 @@ linters:
     - misspell
     - nakedret
     - nolintlint
-    - rowserrcheck
-    - structcheck
+    # Disabled until fixed for go1.18 - https://github.com/golangci/golangci-lint/issues/2649
+    # - rowserrcheck
+    # Disabled until fixed for go1.18 - https://github.com/golangci/golangci-lint/issues/2649
+    #- structcheck
     # - stylecheck
     - typecheck
     - unconvert

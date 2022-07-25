@@ -1,10 +1,12 @@
 name: Helm Chart Integration Test
 
 scms:
+  local:
+    disabled: true
   default:
     kind: git
     spec:
-      url: https://github.com/epinio/helm-charts.git 
+      url: https://github.com/epinio/helm-charts.git
 
 sources:
   default:
@@ -24,7 +26,7 @@ conditions:
       version: 3.6.2
 
 targets:
-  default: 
+  default:
     name: Test Chart Update
     scmid: default
     kind: helmchart
@@ -33,7 +35,7 @@ targets:
       file: Chart.yaml
       key:  dependencies[0].version
 
-  fakeAppVersion: 
+  fakeAppVersion:
     name: Test Chart Update
     scmid: default
     kind: helmchart
@@ -44,7 +46,7 @@ targets:
       key:  dependencies[1].version
       versionincrement: minor
 
-  fakeVersionInc: 
+  fakeVersionInc:
     name: Test Chart Update
     scmid: default
     kind: helmchart
@@ -54,7 +56,7 @@ targets:
       appversion: true
       key:  dependencies[2].version
       versionincrement: minor,major
-  noVersionInc: 
+  noVersionInc:
     name: Test Chart Update
     scmid: default
     kind: helmchart

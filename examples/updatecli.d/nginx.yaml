@@ -1,6 +1,6 @@
 sources:
   lastDockerDigest:
-    kind: dockerdigest
+    kind: "dockerdigest"
     name: "Get latest nginx:1.17 from dockerhub"
     spec:
       image: "library/nginx"
@@ -8,16 +8,16 @@ sources:
 targets:
   jenkinsioNginxDigest:
     name: "Jenkins.io nginx"
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "charts/jenkins.io/values.yaml"
-      key: image.tag
+      key: "image.tag"
     scm:
       github:
         user: "update-bot"
         email: "update-bot@olblak.com"
         owner: "jenkins-infra"
         repository: "charts"
-        token: ""
+        token: "x"
         username: "olblak"
         branch: "master"

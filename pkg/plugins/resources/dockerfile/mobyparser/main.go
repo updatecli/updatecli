@@ -14,8 +14,10 @@ import (
 )
 
 type MobyParser struct {
-	Instruction string
-	Value       string
+	// Specifies the Dockerfile instruction such as ENV
+	Instruction string `yaml:",omitempty"`
+	// Specifies the Dockerfile value for the instruction
+	Value string `yaml:",omitempty"`
 }
 
 var (

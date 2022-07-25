@@ -20,10 +20,12 @@ REPORTS:
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}:{{"\n"}}
-{{- "\t"}}Sources:
+{{- if .Sources -}}
+{{- "\t"}}Source:
 {{ range $ID,$source := .Sources }}
 {{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }} (kind: {{ $source.Kind -}}){{"\n"}}
-{{- end }}
+{{- end -}}
+{{- end -}}
 
 {{- if .Conditions -}}
 {{- "\t" }}Condition:
@@ -31,12 +33,13 @@ REPORTS:
 {{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name }} (kind: {{ $condition.Kind -}}){{"\n"}}
 {{- end -}}
 {{- end -}}
-
+{{- if .Targets -}}
 {{- "\t" -}}Target:
 {{ range $ID, $target := .Targets }}
 {{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name }} (kind: {{ $target.Kind -}}){{"\n"}}
 {{- end }}
 {{ end }}
+{{- end -}}
 {{ end }}
 `
 

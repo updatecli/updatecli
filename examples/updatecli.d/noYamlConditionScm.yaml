@@ -1,25 +1,25 @@
 sources:
   lastHelmRelease:
-    kind: helmchart
+    kind: "helmchartr"
     spec:
-      url: https://grafana.github.io/loki/charts
-      name: loki
+      url: "https://grafana.github.io/loki/charts"
+      name: "loki"
 
 conditions:
   isKeyExistWithCorrectValue:
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "updatecli.d/jenkins.yaml"
       key: "targets.imageTag.kind"
       value: "yaml"
   isKeyExistWithWrongValue:
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "updatecli.d/jenkins.yaml"
       key: "targets.imageTag.kind"
       value: "wrongValueTest"
   isKeyExistDoesntExist:
-    kind: yaml
+    kind: "yaml"
     spec:
       file: "updatecli.d/jenkins.yaml"
       key: "targets.imageTag.kindkindkind"

@@ -10,7 +10,10 @@ import (
 // Spec defines a specification for a "shell" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	Command string
+	// Specifies the shell command
+	Command string `yaml:",omitempty" jsonschema:"required"`
+	// Environments allows to pass environment variable(s) to the shell script
+	Environments Environments `yaml:",omitempty"`
 }
 
 // Shell defines a resource of kind "shell"
@@ -33,6 +36,12 @@ func New(spec interface{}) (*Shell, error) {
 	if newSpec.Command == "" {
 		return nil, &ErrEmptyCommand{}
 	}
+
+	err = newSpec.Environments.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Shell{
 		executor: &nativeCommandExecutor{},
 		spec:     newSpec,

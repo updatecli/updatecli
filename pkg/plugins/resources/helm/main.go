@@ -42,21 +42,21 @@ URL:
 // parsed from an updatecli manifest file
 type Spec struct {
 	// [target] Defines the Helm Chart file to update.
-	File string
+	File string `yaml:",omitempty"`
 	// [target] Defines the key within the file that need to be updated.
-	Key string
+	Key string `yaml:",omitempty"`
 	// [target] Defines the Chart name path like "stable/chart".
-	Name string
+	Name string `yaml:",omitempty"`
 	// [source,condition] Defines the chart location URL.
-	URL string
+	URL string `yaml:",omitempty"`
 	// [target] Defines the value to set for a key
-	Value string
+	Value string `yaml:",omitempty"`
 	// [source,condition] Defines the Chart version, default value set based on sourceinput value
-	Version string
+	Version string `yaml:",omitempty"`
 	// [target] Defines if a Chart changes, triggers (or not) a Chart version update, accepted values is a comma separated list of "none,major,minor,patch"
-	VersionIncrement string
+	VersionIncrement string `yaml:",omitempty"`
 	// [target] Defines if AppVersion must be updated as well
-	AppVersion bool
+	AppVersion bool `yaml:",omitempty"`
 }
 
 // Chart defines a resource of kind "helmchart"

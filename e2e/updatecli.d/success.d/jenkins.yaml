@@ -1,5 +1,9 @@
 title: "Bump Jenkins stable version"
 
+scms:
+  local:
+    disabled: true
+
 sources:
   getLatestJenkinsStable:
     kind: jenkins

@@ -1,5 +1,9 @@
 title: Skip targets with only one (failing) condition
 
+scms:
+  local:
+    disabled: true
+
 sources:
   default:
     name: Default Source (dummy)

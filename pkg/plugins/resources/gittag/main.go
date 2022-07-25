@@ -5,22 +5,30 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Spec defines a specification for a "gittag" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	Path          string         // Path contains the git repository path
-	VersionFilter version.Filter // VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	Message       string         // Message associated to the git tag
+	// Path contains the git repository path
+	Path string `yaml:",omitempty"`
+	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
+	// Message associated to the git tag
+	Message string `yaml:",omitempty"`
 }
 
 // GitTag defines a resource of kind "gittag"
 type GitTag struct {
-	spec          Spec
-	foundVersion  version.Version // Holds both parsed version and original version (to allow retrieving metadata such as changelog)
-	versionFilter version.Filter  // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
+	spec Spec
+	// Holds both parsed version and original version (to allow retrieving metadata such as changelog)
+	foundVersion version.Version
+	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
+	versionFilter version.Filter
+	// nativeGitHandler holds a git client implementation to manipulate git SCMs
+	nativeGitHandler gitgeneric.GitHandler
 }
 
 // New returns a reference to a newly initialized GitTag object from a Spec
@@ -39,8 +47,9 @@ func New(spec interface{}) (*GitTag, error) {
 	}
 
 	newResource := &GitTag{
-		spec:          newSpec,
-		versionFilter: newFilter,
+		spec:             newSpec,
+		versionFilter:    newFilter,
+		nativeGitHandler: gitgeneric.GoGit{},
 	}
 
 	return newResource, nil
@@ -55,7 +64,7 @@ func (gt *GitTag) Validate() error {
 
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return fmt.Errorf("Validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	return nil

@@ -15,9 +15,9 @@ var (
 		Use:   "prepare",
 		Short: "prepare run tasks needed for a run like `git clone`",
 		Run: func(cmd *cobra.Command, args []string) {
-			e.Options.File = cfgFile
-			e.Options.ValuesFiles = valuesFiles
-			e.Options.SecretsFiles = secretsFiles
+			e.Options.Config.ManifestFile = cfgFile
+			e.Options.Config.ValuesFiles = valuesFiles
+			e.Options.Config.SecretsFiles = secretsFiles
 
 			e.Options.Pipeline.Target.Clean = prepareClean
 

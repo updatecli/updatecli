@@ -5,9 +5,9 @@ import "fmt"
 // Filter represents the updatecli configuration describing AMI filters.
 type Filter struct {
 	// Name specifies a filter name.
-	Name string
+	Name string `yaml:",omitempty"`
 	// Values specifies a filter value for a specific filter name.
-	Values string
+	Values string `yaml:",omitempty"`
 }
 
 // Filters represent a list of Filter

@@ -10,8 +10,10 @@ import (
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
 type Filter struct {
-	Kind    string
-	Pattern string
+	// Specifies the version kind such as semver, regex, or latest
+	Kind string `yaml:",omitempty"`
+	// Specifies the version pattern according the version kind
+	Pattern string `yaml:",omitempty"`
 }
 
 // FoundVersions defines a version from a filter that holds both the original found version and the parsed version (depending on the kind of filter: semantic, text, etc.)

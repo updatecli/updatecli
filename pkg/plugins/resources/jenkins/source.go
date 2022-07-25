@@ -34,7 +34,7 @@ func (j *Jenkins) Source(workingDir string) (string, error) {
 		j.foundVersion = found.Original()
 	default:
 		fmt.Printf("%s Unknown version %s found for the %s release", result.FAILURE, j.spec.Version, j.spec.Release)
-		return "unknown", fmt.Errorf("Unknown Jenkins version found")
+		return "unknown", fmt.Errorf("unknown Jenkins version found")
 	}
 
 	fmt.Printf("%s Version %s found for the Jenkins %s release", result.SUCCESS, j.foundVersion, j.spec.Release)
