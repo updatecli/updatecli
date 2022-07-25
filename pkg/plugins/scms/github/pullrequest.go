@@ -15,6 +15,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"text/template"
 
@@ -86,6 +87,8 @@ type PullRequestSpec struct {
 	MaintainerCannotModify bool `yaml:",omitempty"`
 	// Specifies which merge method is used to incorporate the pull request. Accept "merge", "squash", "rebase", or ""
 	MergeMethod string `yaml:",omitempty"`
+	// Specifies to use pull request title when using auto merge, only works for "squash" or "rebase"
+	UseTitleForAutoMerge bool `yaml:",omitempty"`
 }
 
 type PullRequest struct {
@@ -323,6 +326,14 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 	if len(p.spec.MergeMethod) > 0 {
 		mergeMethod := githubv4.PullRequestMergeMethod(strings.ToUpper(p.spec.MergeMethod))
 		input.MergeMethod = &mergeMethod
+	}
+
+	if p.spec.UseTitleForAutoMerge {
+		if strings.EqualFold(p.spec.MergeMethod, "squash") {
+			input.CommitHeadline = githubv4.NewString(githubv4.String(fmt.Sprintf("%s (#%s)", p.spec.Title, p.remotePullRequest.ID)))
+		} else if strings.EqualFold(p.spec.MergeMethod, "rebase") {
+			input.CommitHeadline = githubv4.NewString(githubv4.String(p.spec.Title))
+		}
 	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
