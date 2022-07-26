@@ -330,9 +330,9 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 
 	if p.spec.UseTitleForAutoMerge {
 		if strings.EqualFold(p.spec.MergeMethod, "squash") {
-			input.CommitHeadline = githubv4.NewString(githubv4.String(fmt.Sprintf("%s (#%s)", p.spec.Title, p.remotePullRequest.ID)))
+			input.CommitHeadline = githubv4.NewString(githubv4.String(fmt.Sprintf("%s (#%d)", p.Title, p.remotePullRequest.Number)))
 		} else if strings.EqualFold(p.spec.MergeMethod, "rebase") {
-			input.CommitHeadline = githubv4.NewString(githubv4.String(p.spec.Title))
+			input.CommitHeadline = githubv4.NewString(githubv4.String(p.Title))
 		}
 	}
 
