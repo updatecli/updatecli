@@ -30,7 +30,7 @@ type Spec struct {
 	Body string `yaml:",inline,omitempty"`
 }
 
-// Gittea contains information to interact with Gitea api
+// Gitea contains information to interact with Gitea api
 type Gitea struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec

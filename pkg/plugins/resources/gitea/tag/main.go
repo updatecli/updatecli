@@ -26,7 +26,7 @@ type Spec struct {
 	Tag string `yaml:",omitempty"`
 }
 
-// Gittea contains information to interact with Gitea api
+// Gitea contains information to interact with Gitea api
 type Gitea struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
