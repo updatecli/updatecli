@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
-	giteascm "github.com/updatecli/updatecli/pkg/plugins/scm/gitea"
+	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -147,7 +147,7 @@ func (p *PullRequest) generatePullRequestHandler() error {
 		ge, ok := p.Scm.Handler.(*giteascm.Gitea)
 
 		if !ok {
-			return fmt.Errorf("scm is not of kind 'github'")
+			return fmt.Errorf("scm is not of kind 'gitea'")
 		}
 
 		g, err := gitea.New(pullRequestSpec, ge)

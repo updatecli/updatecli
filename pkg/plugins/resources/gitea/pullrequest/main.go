@@ -2,6 +2,7 @@ package pullrequest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -11,6 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
+
+	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 )
 
 // Spec defines settings used to interact with Gitea pullrequest
@@ -35,12 +38,12 @@ type Gitea struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
 	// client handle the api authentication
-	client     client.Client
-	HeadBranch string
+	client client.Client
+	ge     *giteascm.Gitea
 }
 
 // New returns a new valid Gitea object.
-func New(spec interface{}) (*Gitea, error) {
+func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 
 	var clientSpec client.Spec
 	var s Spec
@@ -49,23 +52,33 @@ func New(spec interface{}) (*Gitea, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return &Gitea{}, err
+		return Gitea{}, err
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return &Gitea{}, nil
+		return Gitea{}, nil
 	}
 
 	err = clientSpec.Sanitize()
 	if err != nil {
-		return &Gitea{}, err
+		return Gitea{}, err
 	}
 
-	err = clientSpec.Validate()
+	if len(clientSpec.Token) == 0 && len(ge.Spec.Token) > 0 {
+		clientSpec.Token = ge.Spec.Token
+	}
 
-	if err != nil {
-		return &Gitea{}, nil
+	if len(clientSpec.URL) == 0 && len(ge.Spec.URL) > 0 {
+		clientSpec.URL = ge.Spec.URL
+	}
+
+	if len(clientSpec.URL) == 0 {
+		return Gitea{}, errors.New("error gitea server url not found")
+	}
+
+	if len(clientSpec.Username) == 0 && len(ge.Spec.Username) > 0 {
+		clientSpec.Username = ge.Spec.Username
 	}
 
 	s.Spec = clientSpec
@@ -75,21 +88,16 @@ func New(spec interface{}) (*Gitea, error) {
 		s.TargetBranch = "main"
 	}
 
-	err = s.Validate()
-
-	if err != nil {
-		return &Gitea{}, err
-	}
-
 	c, err := client.New(clientSpec)
 
 	if err != nil {
-		return &Gitea{}, err
+		return Gitea{}, err
 	}
 
-	return &Gitea{
+	return Gitea{
 		Spec:   s,
 		client: c,
+		ge:     ge,
 	}, nil
 
 }
@@ -105,7 +113,7 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	}
 
 	if len(g.Spec.SourceBranch) == 0 {
-		g.Spec.SourceBranch = g.HeadBranch
+		g.Spec.SourceBranch = g.ge.HeadBranch
 	}
 
 	ctx := context.Background()
@@ -172,38 +180,6 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	}
 
 	logrus.Infof("Gitea pullrequest successfully open on %q", pr.Link)
-
-	return nil
-}
-
-func (s Spec) Validate() error {
-	gotError := false
-	missingParameters := []string{}
-
-	err := s.Spec.Validate()
-
-	if err != nil {
-		logrus.Errorln(err)
-		gotError = true
-	}
-
-	if len(s.Owner) == 0 {
-		gotError = true
-		missingParameters = append(missingParameters, "owner")
-	}
-
-	if len(s.Repository) == 0 {
-		gotError = true
-		missingParameters = append(missingParameters, "repository")
-	}
-
-	if len(missingParameters) > 0 {
-		logrus.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
-	}
-
-	if gotError {
-		return fmt.Errorf("wrong gitea configuration")
-	}
 
 	return nil
 }

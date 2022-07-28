@@ -47,7 +47,7 @@ func TestSource(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, gotErr := New(tt.manifest)
+			g, gotErr := New(tt.manifest, nil)
 			require.NoError(t, gotErr)
 
 			gotErr = g.CreatePullRequest(
