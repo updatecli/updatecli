@@ -165,11 +165,15 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	}
 
 	for _, p := range pullrequests {
-		if p.Source == pullrequestSourceBranch && p.Target == pullrequestTargetBranch {
-			logrus.Infof("%s A pullrequest from branch %q to branch %q is already opened, nothing else to do",
+		if p.Source == pullrequestSourceBranch &&
+			p.Target == pullrequestTargetBranch &&
+			!p.Closed &&
+			!p.Merged {
+
+			logrus.Infof("%s Nothing else to do, A pullrequest is already opened at:\n\t%s",
 				result.SUCCESS,
-				pullrequestSourceBranch,
-				pullrequestTargetBranch)
+				p.Link)
+
 			return nil
 		}
 	}
