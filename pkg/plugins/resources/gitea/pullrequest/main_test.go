@@ -9,6 +9,11 @@ import (
 
 func TestCreatePullRequest(t *testing.T) {
 
+	// Disable source testing with running short tes
+	if testing.Short() {
+		return
+	}
+
 	tests := []struct {
 		name     string
 		manifest struct {
