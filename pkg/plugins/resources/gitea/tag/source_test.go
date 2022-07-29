@@ -40,27 +40,6 @@ func TestSource(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "repository olblak/updatecli-mirror should exist but no release",
-			manifest: struct {
-				URL           string
-				Token         string
-				Owner         string
-				Repository    string
-				VersionFilter version.Filter
-			}{
-				URL:        "try.gitea.io",
-				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-mirror",
-				VersionFilter: version.Filter{
-					Kind: "semver",
-				},
-			},
-			// For some reason, it sort the list of version alphabetically instead of by tag creation
-			wantResult: "0.27.0",
-			wantErr:    false,
-		},
-		{
 			name: "repository should exist with release 0.0.3",
 			manifest: struct {
 				URL           string
