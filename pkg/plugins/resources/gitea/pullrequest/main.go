@@ -83,11 +83,6 @@ func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 
 	s.Spec = clientSpec
 
-	if len(s.TargetBranch) == 0 {
-		logrus.Warningf("no git branch specified, fallback to %q", "main")
-		s.TargetBranch = "main"
-	}
-
 	c, err := client.New(clientSpec)
 
 	if err != nil {
@@ -104,16 +99,25 @@ func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 
 func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error {
 
-	if len(g.Spec.Body) == 0 {
-		g.Spec.Body = changelog + "\n" + pipelineReport
+	pullrequestBody := changelog + "\n" + pipelineReport
+	pullrequestTitle := title
+	pullrequestSourceBranch := g.ge.HeadBranch
+	pullrequestTargetBranch := g.ge.Spec.Branch
+
+	if len(g.Spec.Body) > 0 {
+		pullrequestBody = g.Spec.Body
 	}
 
-	if len(g.Spec.Title) == 0 {
-		g.Spec.Title = title
+	if len(g.Spec.Title) > 0 {
+		pullrequestTitle = g.Spec.Title
 	}
 
-	if len(g.Spec.SourceBranch) == 0 {
-		g.Spec.SourceBranch = g.ge.HeadBranch
+	if len(g.Spec.SourceBranch) > 0 {
+		pullrequestSourceBranch = g.Spec.SourceBranch
+	}
+
+	if len(g.Spec.TargetBranch) > 0 {
+		pullrequestTargetBranch = g.Spec.TargetBranch
 	}
 
 	ctx := context.Background()
@@ -153,10 +157,10 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	}
 
 	opts := scm.PullRequestInput{
-		Title:  g.Spec.Title,
-		Body:   g.Spec.Body,
-		Source: g.Spec.SourceBranch,
-		Target: g.Spec.TargetBranch,
+		Title:  pullrequestTitle,
+		Body:   pullrequestBody,
+		Source: pullrequestSourceBranch,
+		Target: pullrequestTargetBranch,
 	}
 
 	// Timeout api query after 30sec
