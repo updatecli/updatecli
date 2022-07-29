@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSource(t *testing.T) {
+func TestCreatePullRequest(t *testing.T) {
 
 	tests := []struct {
 		name     string

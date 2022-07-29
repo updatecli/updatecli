@@ -2,8 +2,6 @@ package pullrequest
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -60,28 +58,26 @@ func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 		return Gitea{}, nil
 	}
 
+	if ge != nil {
+
+		if len(clientSpec.Token) == 0 && len(ge.Spec.Token) > 0 {
+			clientSpec.Token = ge.Spec.Token
+		}
+
+		if len(clientSpec.URL) == 0 && len(ge.Spec.URL) > 0 {
+			clientSpec.URL = ge.Spec.URL
+		}
+
+		if len(clientSpec.Username) == 0 && len(ge.Spec.Username) > 0 {
+			clientSpec.Username = ge.Spec.Username
+		}
+	}
+
+	// Sanitize modifies the clientSpec so must done one once initialization is finished
 	err = clientSpec.Sanitize()
 	if err != nil {
 		return Gitea{}, err
 	}
-
-	if len(clientSpec.Token) == 0 && len(ge.Spec.Token) > 0 {
-		clientSpec.Token = ge.Spec.Token
-	}
-
-	if len(clientSpec.URL) == 0 && len(ge.Spec.URL) > 0 {
-		clientSpec.URL = ge.Spec.URL
-	}
-
-	if len(clientSpec.URL) == 0 {
-		return Gitea{}, errors.New("error gitea server url not found")
-	}
-
-	if len(clientSpec.Username) == 0 && len(ge.Spec.Username) > 0 {
-		clientSpec.Username = ge.Spec.Username
-	}
-
-	s.Spec = clientSpec
 
 	c, err := client.New(clientSpec)
 
@@ -99,10 +95,22 @@ func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 
 func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error {
 
-	pullrequestBody := changelog + "\n" + pipelineReport
-	pullrequestTitle := title
-	pullrequestSourceBranch := g.ge.HeadBranch
-	pullrequestTargetBranch := g.ge.Spec.Branch
+	var pullrequestBody string
+	var pullrequestTitle string
+	var pullrequestSourceBranch string
+	var pullrequestTargetBranch string
+	var pullrequestRepositoryOwner string
+	var pullrequestRepositoryName string
+
+	pullrequestBody = changelog + "\n" + pipelineReport
+	pullrequestTitle = title
+
+	if g.ge != nil {
+		pullrequestSourceBranch = g.ge.HeadBranch
+		pullrequestTargetBranch = g.ge.Spec.Branch
+		pullrequestRepositoryOwner = g.ge.Spec.Owner
+		pullrequestRepositoryName = g.ge.Spec.Repository
+	}
 
 	if len(g.Spec.Body) > 0 {
 		pullrequestBody = g.Spec.Body
@@ -120,6 +128,14 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 		pullrequestTargetBranch = g.Spec.TargetBranch
 	}
 
+	if len(g.Spec.Owner) > 0 {
+		pullrequestRepositoryOwner = g.Spec.Owner
+	}
+
+	if len(g.Spec.Repository) > 0 {
+		pullrequestRepositoryName = g.Spec.Repository
+	}
+
 	ctx := context.Background()
 	// Timeout api query after 30sec
 	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
@@ -134,7 +150,9 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 
 	pullrequests, resp, err := g.client.PullRequests.List(
 		ctx,
-		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
+		strings.Join([]string{
+			pullrequestRepositoryOwner,
+			pullrequestRepositoryName}, "/"),
 		optsSearch,
 	)
 
@@ -147,11 +165,11 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	}
 
 	for _, p := range pullrequests {
-		if p.Source == g.Spec.SourceBranch && p.Target == g.Spec.TargetBranch {
+		if p.Source == pullrequestSourceBranch && p.Target == pullrequestTargetBranch {
 			logrus.Infof("%s A pullrequest from branch %q to branch %q is already opened, nothing else to do",
 				result.SUCCESS,
-				g.Spec.SourceBranch,
-				g.Spec.TargetBranch)
+				pullrequestSourceBranch,
+				pullrequestTargetBranch)
 			return nil
 		}
 	}
@@ -163,6 +181,14 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 		Target: pullrequestTargetBranch,
 	}
 
+	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
+		pullrequestTitle,
+		pullrequestBody,
+		pullrequestSourceBranch,
+		pullrequestTargetBranch)
+
+	logrus.Debugf("Repository:\t%s:%s", pullrequestRepositoryOwner, pullrequestRepositoryName)
+
 	// Timeout api query after 30sec
 	ctx = context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -170,17 +196,18 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 
 	pr, resp, err := g.client.PullRequests.Create(
 		ctx,
-		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
+		strings.Join([]string{
+			pullrequestRepositoryOwner,
+			pullrequestRepositoryName}, "/"),
 		&opts,
 	)
 
-	if err != nil {
-		return err
-	}
-
 	if resp.Status > 400 {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-		return fmt.Errorf("error from api: %v", resp.Status)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	logrus.Infof("Gitea pullrequest successfully open on %q", pr.Link)
