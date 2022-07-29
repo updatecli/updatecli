@@ -1,6 +1,7 @@
 package pullrequest
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,7 +33,7 @@ func TestCreatePullRequest(t *testing.T) {
 				TargetBranch string
 			}{
 				URL:          "try.gitea.io",
-				Token:        "",
+				Token:        os.Getenv("UPDATECLI_GITEA_TOKEN"),
 				Owner:        "olblak",
 				Repository:   "updatecli-test",
 				SourceBranch: "v1",
