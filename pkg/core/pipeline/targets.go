@@ -56,7 +56,6 @@ func (p *Pipeline) RunTargets() error {
 				shouldSkipTarget = true
 				target.Result = result.SKIPPED
 			}
-
 		}
 
 		// No need to run this target as one of its dependency failed
@@ -74,6 +73,8 @@ func (p *Pipeline) RunTargets() error {
 
 			errs = append(errs, fmt.Errorf("something went wrong in target %q : %q", id, err))
 		}
+
+		report.Result = target.Result
 
 		p.Targets[id] = target
 		p.Report.Targets[id] = report
