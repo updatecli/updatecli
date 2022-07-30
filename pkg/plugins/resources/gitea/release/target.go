@@ -15,17 +15,17 @@ import (
 // Target ensure that a specific release exist on gitea, otherwise creates it
 func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 
-	if len(g.Spec.Tag) == 0 {
-		g.Spec.Tag = source
+	if len(g.spec.Tag) == 0 {
+		g.spec.Tag = source
 	}
 
-	if len(g.Spec.Title) == 0 {
-		g.Spec.Title = g.Spec.Tag
+	if len(g.spec.Title) == 0 {
+		g.spec.Title = g.spec.Tag
 	}
 
-	if len(g.Spec.Commitish) == 0 {
+	if len(g.spec.Commitish) == 0 {
 		logrus.Warningf("No commitish provided, fallback to branch %q\n", "main")
-		g.Spec.Commitish = "main"
+		g.spec.Commitish = "main"
 	}
 
 	// Ensure that a release doesn't exist yet
@@ -37,7 +37,7 @@ func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 
 	releases, resp, err := g.client.Releases.List(
 		ctx,
-		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
+		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 		goscm.ReleaseListOptions{
 			Page:   1,
 			Size:   30,
@@ -52,18 +52,18 @@ func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 	}
 
 	for _, r := range releases {
-		if r.Tag == g.Spec.Tag {
-			logrus.Infof("%s Release Tag %q already exist, nothing else to do", result.SUCCESS, g.Spec.Tag)
+		if r.Tag == g.spec.Tag {
+			logrus.Infof("%s Release Tag %q already exist, nothing else to do", result.SUCCESS, g.spec.Tag)
 			return false, nil
 		}
 	}
 
 	if dryRun {
-		logrus.Infof("%s Release Tag %q doesn't exist, we need to create it", result.SUCCESS, g.Spec.Tag)
+		logrus.Infof("%s Release Tag %q doesn't exist, we need to create it", result.SUCCESS, g.spec.Tag)
 		return true, nil
 	}
 
-	if len(g.Spec.Token) == 0 {
+	if len(g.spec.Token) == 0 {
 		return true, fmt.Errorf("wrong configuration, missing parameter %q", "token")
 	}
 
@@ -76,14 +76,14 @@ func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 
 	release, resp, err := g.client.Releases.Create(
 		ctx,
-		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
+		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 		&goscm.ReleaseInput{
-			Title:       g.Spec.Title,
-			Description: g.Spec.Drescription + "\n" + updatecliCredits,
-			Tag:         g.Spec.Tag,
-			Commitish:   g.Spec.Commitish,
-			Draft:       g.Spec.Draft,
-			Prerelease:  g.Spec.Prerelease,
+			Title:       g.spec.Title,
+			Description: g.spec.Drescription + "\n" + updatecliCredits,
+			Tag:         g.spec.Tag,
+			Commitish:   g.spec.Commitish,
+			Draft:       g.spec.Draft,
+			Prerelease:  g.spec.Prerelease,
 		},
 	)
 

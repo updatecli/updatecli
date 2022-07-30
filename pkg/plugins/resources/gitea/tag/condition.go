@@ -10,8 +10,8 @@ import (
 
 func (g *Gitea) Condition(source string) (bool, error) {
 
-	if len(g.Spec.Tag) == 0 {
-		g.Spec.Tag = source
+	if len(g.spec.Tag) == 0 {
+		g.spec.Tag = source
 	}
 
 	tags, err := g.SearchTags()
@@ -27,7 +27,7 @@ func (g *Gitea) Condition(source string) (bool, error) {
 	}
 
 	for _, tag := range tags {
-		if tag == g.Spec.Tag {
+		if tag == g.spec.Tag {
 			logrus.Infof("%s Gitea tag %q found", result.SUCCESS, tag)
 			return true, nil
 		}

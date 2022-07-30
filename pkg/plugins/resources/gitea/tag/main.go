@@ -28,11 +28,10 @@ type Spec struct {
 
 // Gitea contains information to interact with Gitea api
 type Gitea struct {
-	// Spec contains inputs coming from updatecli configuration
-	Spec Spec
+	// spec contains inputs coming from updatecli configuration
+	spec Spec
 	// client handle the api authentication
 	client        client.Client
-	HeadBranch    string
 	foundVersion  version.Version
 	versionFilter version.Filter
 }
@@ -85,7 +84,7 @@ func New(spec interface{}) (*Gitea, error) {
 	s.VersionFilter = newFilter
 
 	g := Gitea{
-		Spec:          s,
+		spec:          s,
 		client:        c,
 		versionFilter: newFilter,
 	}
@@ -104,9 +103,9 @@ func (g *Gitea) SearchTags() (tags []string, err error) {
 
 	references, resp, err := g.client.Git.ListTags(
 		ctx,
-		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
+		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 		scm.ListOptions{
-			URL:  g.Spec.URL,
+			URL:  g.spec.URL,
 			Page: 1,
 			Size: 30,
 		},

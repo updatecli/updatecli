@@ -44,8 +44,8 @@ const (
 
 // Gitea contains information to interact with Gitea api
 type Gitea struct {
-	// Spec contains inputs coming from updatecli configuration
-	Spec Spec
+	// spec contains inputs coming from updatecli configuration
+	spec Spec
 	// client handle the api authentication
 	client       client.Client
 	foundVersion version.Version
@@ -101,7 +101,7 @@ func New(spec interface{}) (*Gitea, error) {
 	s.VersionFilter = newFilter
 
 	g := Gitea{
-		Spec:          s,
+		spec:          s,
 		client:        c,
 		versionFilter: newFilter,
 	}
@@ -119,7 +119,7 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 
 	releases, resp, err := g.client.Releases.List(
 		ctx,
-		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
+		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 		scm.ReleaseListOptions{
 			Page:   1,
 			Size:   30,

@@ -11,8 +11,8 @@ import (
 func (g *Gitea) Condition(source string) (bool, error) {
 	releases, err := g.SearchReleases()
 
-	if len(g.Spec.Tag) == 0 {
-		g.Spec.Tag = source
+	if len(g.spec.Tag) == 0 {
+		g.spec.Tag = source
 	}
 
 	if err != nil {
@@ -26,7 +26,7 @@ func (g *Gitea) Condition(source string) (bool, error) {
 	}
 
 	for _, release := range releases {
-		if release == g.Spec.Tag {
+		if release == g.spec.Tag {
 			logrus.Infof("%s Gitea Release tag %q found", result.SUCCESS, release)
 			return true, nil
 		}

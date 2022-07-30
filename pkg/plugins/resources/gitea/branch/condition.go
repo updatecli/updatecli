@@ -9,14 +9,14 @@ import (
 )
 
 func (g *Gitea) Condition(source string) (bool, error) {
-	if len(g.Spec.Branch) == 0 {
-		g.Spec.Branch = source
+	if len(g.spec.Branch) == 0 {
+		g.spec.Branch = source
 	}
 
 	branches, err := g.SearchBranches()
 
-	if len(g.Spec.Branch) == 0 {
-		g.Spec.Branch = source
+	if len(g.spec.Branch) == 0 {
+		g.spec.Branch = source
 	}
 
 	if err != nil {
@@ -30,7 +30,7 @@ func (g *Gitea) Condition(source string) (bool, error) {
 	}
 
 	for _, branch := range branches {
-		if branch == g.Spec.Branch {
+		if branch == g.spec.Branch {
 			logrus.Infof("%s Gitea branch %q found", result.SUCCESS, branch)
 			return true, nil
 		}

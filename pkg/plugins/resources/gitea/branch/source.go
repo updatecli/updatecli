@@ -21,7 +21,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 		return "", errors.New("no result found")
 	}
 
-	g.foundVersion, err = g.Spec.VersionFilter.Search(versions)
+	g.foundVersion, err = g.spec.VersionFilter.Search(versions)
 
 	if err != nil {
 		switch err {

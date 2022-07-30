@@ -33,8 +33,8 @@ type Spec struct {
 
 // Gitea contains information to interact with Gitea api
 type Gitea struct {
-	// Spec contains inputs coming from updatecli configuration
-	Spec Spec
+	// spec contains inputs coming from updatecli configuration
+	spec Spec
 	// client handle the api authentication
 	client client.Client
 	ge     *giteascm.Gitea
@@ -86,7 +86,7 @@ func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 	}
 
 	return Gitea{
-		Spec:   s,
+		spec:   s,
 		client: c,
 		ge:     ge,
 	}, nil
@@ -110,28 +110,28 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 		repository = g.ge.Spec.Repository
 	}
 
-	if len(g.Spec.Body) > 0 {
-		body = g.Spec.Body
+	if len(g.spec.Body) > 0 {
+		body = g.spec.Body
 	}
 
-	if len(g.Spec.Title) > 0 {
-		title = g.Spec.Title
+	if len(g.spec.Title) > 0 {
+		title = g.spec.Title
 	}
 
-	if len(g.Spec.SourceBranch) > 0 {
-		sourceBranch = g.Spec.SourceBranch
+	if len(g.spec.SourceBranch) > 0 {
+		sourceBranch = g.spec.SourceBranch
 	}
 
-	if len(g.Spec.TargetBranch) > 0 {
-		targetBranch = g.Spec.TargetBranch
+	if len(g.spec.TargetBranch) > 0 {
+		targetBranch = g.spec.TargetBranch
 	}
 
-	if len(g.Spec.Owner) > 0 {
-		owner = g.Spec.Owner
+	if len(g.spec.Owner) > 0 {
+		owner = g.spec.Owner
 	}
 
-	if len(g.Spec.Repository) > 0 {
-		repository = g.Spec.Repository
+	if len(g.spec.Repository) > 0 {
+		repository = g.spec.Repository
 	}
 
 	ctx := context.Background()
