@@ -16,7 +16,7 @@ import (
 type Spec struct {
 	// [S][C][T] URL specifies the default github url in case of Gitea enterprise
 	URL string `yaml:",omitempty" jsonschema:"required"`
-	// Username specifies the username used to authenticate with Gitea API
+	// [S][C][T] Username specifies the username used to authenticate with Gitea API
 	Username string `yaml:",omitempty"`
 	// [S][C][T] Token specifies the credential used to authenticate with
 	Token string `yaml:",omitempty"`
