@@ -95,45 +95,43 @@ func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 
 func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error {
 
-	var pullrequestBody string
-	var pullrequestTitle string
-	var pullrequestSourceBranch string
-	var pullrequestTargetBranch string
-	var pullrequestRepositoryOwner string
-	var pullrequestRepositoryName string
+	var body string
+	var sourceBranch string
+	var targetBranch string
+	var owner string
+	var repository string
 
-	pullrequestBody = changelog + "\n" + pipelineReport
-	pullrequestTitle = title
+	body = changelog + "\n" + pipelineReport
 
 	if g.ge != nil {
-		pullrequestSourceBranch = g.ge.HeadBranch
-		pullrequestTargetBranch = g.ge.Spec.Branch
-		pullrequestRepositoryOwner = g.ge.Spec.Owner
-		pullrequestRepositoryName = g.ge.Spec.Repository
+		sourceBranch = g.ge.HeadBranch
+		targetBranch = g.ge.Spec.Branch
+		owner = g.ge.Spec.Owner
+		repository = g.ge.Spec.Repository
 	}
 
 	if len(g.Spec.Body) > 0 {
-		pullrequestBody = g.Spec.Body
+		body = g.Spec.Body
 	}
 
 	if len(g.Spec.Title) > 0 {
-		pullrequestTitle = g.Spec.Title
+		title = g.Spec.Title
 	}
 
 	if len(g.Spec.SourceBranch) > 0 {
-		pullrequestSourceBranch = g.Spec.SourceBranch
+		sourceBranch = g.Spec.SourceBranch
 	}
 
 	if len(g.Spec.TargetBranch) > 0 {
-		pullrequestTargetBranch = g.Spec.TargetBranch
+		targetBranch = g.Spec.TargetBranch
 	}
 
 	if len(g.Spec.Owner) > 0 {
-		pullrequestRepositoryOwner = g.Spec.Owner
+		owner = g.Spec.Owner
 	}
 
 	if len(g.Spec.Repository) > 0 {
-		pullrequestRepositoryName = g.Spec.Repository
+		repository = g.Spec.Repository
 	}
 
 	ctx := context.Background()
@@ -151,8 +149,8 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	pullrequests, resp, err := g.client.PullRequests.List(
 		ctx,
 		strings.Join([]string{
-			pullrequestRepositoryOwner,
-			pullrequestRepositoryName}, "/"),
+			owner,
+			repository}, "/"),
 		optsSearch,
 	)
 
@@ -165,8 +163,8 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	}
 
 	for _, p := range pullrequests {
-		if p.Source == pullrequestSourceBranch &&
-			p.Target == pullrequestTargetBranch &&
+		if p.Source == sourceBranch &&
+			p.Target == targetBranch &&
 			!p.Closed &&
 			!p.Merged {
 
@@ -179,19 +177,19 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	}
 
 	opts := scm.PullRequestInput{
-		Title:  pullrequestTitle,
-		Body:   pullrequestBody,
-		Source: pullrequestSourceBranch,
-		Target: pullrequestTargetBranch,
+		Title:  title,
+		Body:   body,
+		Source: sourceBranch,
+		Target: targetBranch,
 	}
 
 	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
-		pullrequestTitle,
-		pullrequestBody,
-		pullrequestSourceBranch,
-		pullrequestTargetBranch)
+		title,
+		body,
+		sourceBranch,
+		targetBranch)
 
-	logrus.Debugf("Repository:\t%s:%s", pullrequestRepositoryOwner, pullrequestRepositoryName)
+	logrus.Debugf("Repository:\t%s:%s", owner, repository)
 
 	// Timeout api query after 30sec
 	ctx = context.Background()
@@ -201,8 +199,8 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	pr, resp, err := g.client.PullRequests.Create(
 		ctx,
 		strings.Join([]string{
-			pullrequestRepositoryOwner,
-			pullrequestRepositoryName}, "/"),
+			owner,
+			repository}, "/"),
 		&opts,
 	)
 
