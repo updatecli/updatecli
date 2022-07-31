@@ -7,7 +7,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
 )
 
@@ -18,8 +17,6 @@ type Spec struct {
 	Release string `yaml:",omitempty"`
 	// Defines a specific release version (condition only)
 	Version string `yaml:",omitempty"`
-	// Github Parameter used to retrieve a Jenkins changelog
-	Github github.Spec `yaml:",omitempty"`
 }
 
 // Jenkins defines a resource of kind "githubrelease"
