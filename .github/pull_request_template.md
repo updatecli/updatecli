@@ -1,5 +1,3 @@
-# Title
-
 Fix #XXX
 
 <!-- Describe the changes introduced by this pull request -->
