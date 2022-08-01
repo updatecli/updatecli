@@ -46,6 +46,10 @@ type Spec struct {
 	RootDir string `yaml:",omitempty"`
 	// Disable allows to disable the helm chart crawler
 	Disable bool `yaml:",omitempty"`
+	// Ignore allows to specify rule to ignore autodiscovery a specific Helm based on a rule
+	Ignore MatchingRules
+	// Only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
+	Only MatchingRules
 }
 
 // Helm hold all information needed to generate helm manifest.
@@ -97,6 +101,36 @@ func (h Helm) DiscoverManifests(scmSpec *scm.Config) ([]config.Spec, error) {
 	}
 
 	for _, foundChartFile := range foundChartFiles {
+
+		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundChartFile)
+		if err != nil {
+			// Let's try the next chart if one fail
+			logrus.Errorln(err)
+			continue
+		}
+
+		chartRelativeMetadataPath := filepath.Dir(relativeFoundChartFile)
+		metadataFilename := filepath.Base(foundChartFile)
+		chartName := filepath.Base(chartRelativeMetadataPath)
+
+		// Test if the ignore rule based on path is respected
+		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundChartFile) {
+			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
+				chartName,
+				chartRelativeMetadataPath)
+			continue
+		}
+
+		// Test if the only rule based on path is respected
+		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundChartFile) {
+			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
+				chartName,
+				chartRelativeMetadataPath)
+			continue
+		}
+
+		// Retrieve chart dependencies for each chart
+
 		dependencies, err := getChartMetadata(foundChartFile)
 		if err != nil {
 			return nil, err
@@ -109,18 +143,6 @@ func (h Helm) DiscoverManifests(scmSpec *scm.Config) ([]config.Spec, error) {
 		if len(dependencies.Dependencies) == 0 {
 			continue
 		}
-
-		//relativeFoundChartFile := strings.TrimPrefix(filepath.Dir(foundChartFile), h.spec.RootDir)
-		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundChartFile)
-		if err != nil {
-			return nil, err
-		}
-		chartRelativeMetadataPath := filepath.Dir(relativeFoundChartFile)
-		metadataFilename := filepath.Base(foundChartFile)
-		chartName := filepath.Base(chartRelativeMetadataPath)
-
-		logrus.Debugf("Relative Metadata Path %q", relativeFoundChartFile)
-		logrus.Debugf("Chart Relative Metadata Path %q", chartRelativeMetadataPath)
 
 		deps := *dependencies
 		for i, dependency := range deps.Dependencies {
