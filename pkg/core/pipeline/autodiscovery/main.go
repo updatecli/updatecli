@@ -83,7 +83,7 @@ func New(spec discoveryConfig.Config,
 		switch kind {
 		case "helm":
 
-			helmCrawler, err := helm.New(s.Crawlers, workDir)
+			helmCrawler, err := helm.New(g.spec.Crawlers[kind], workDir)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
