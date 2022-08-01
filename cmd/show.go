@@ -32,5 +32,5 @@ func init() {
 	showCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Sets config file or directory.")
 	showCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	showCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
-	showCmd.Flags().BoolVar(&autoDiscoveryDisabled, "autodiscovery-disable", false, "Discovery automatically available Updatecli manifest")
+	showCmd.Flags().BoolVar(&autoDiscoveryDisabled, "disable-local-autodiscovery", false, "Discovery automatically available Updatecli manifest")
 }
