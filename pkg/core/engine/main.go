@@ -284,24 +284,13 @@ func (e *Engine) Run() (err error) {
 // Show displays configurations that should be apply.
 func (e *Engine) Show() error {
 
-	err := e.LoadConfigurations()
-
-	if err != nil {
-		return err
-	}
-
-	err = e.LoadAutoDiscovery()
-	if err != nil {
-		return err
-	}
-
 	for _, pipeline := range e.Pipelines {
 
 		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(pipeline.Config.Spec.Name)+4))
 		logrus.Infof("# %s #\n", strings.ToTitle(pipeline.Config.Spec.Name))
 		logrus.Infof("%s\n\n", strings.Repeat("#", len(pipeline.Config.Spec.Name)+4))
 
-		err = pipeline.Config.Display()
+		err := pipeline.Config.Display()
 		if err != nil {
 			return err
 		}
