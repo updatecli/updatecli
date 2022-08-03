@@ -107,7 +107,7 @@ func TestDiscoverManifests(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 
-	pipelines, err := helm.DiscoverManifests(nil)
+	pipelines, err := helm.DiscoverManifests(nil, nil)
 
 	if err != nil {
 		t.Errorf("%v", err)

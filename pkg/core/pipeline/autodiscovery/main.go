@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 )
@@ -25,20 +26,22 @@ type Options struct {
 	Disabled bool
 }
 type Crawler interface {
-	DiscoverManifests(scmSpec *scm.Config) ([]config.Spec, error)
+	DiscoverManifests(scmSpec *scm.Config, pullRequestSpec *pullrequest.Config) ([]config.Spec, error)
 	Enabled() bool
 }
 
 type AutoDiscovery struct {
-	scmConfig *scm.Config
-	spec      discoveryConfig.Config
-	crawlers  []Crawler
+	scmConfig         *scm.Config
+	pullrequestConfig *pullrequest.Config
+	spec              discoveryConfig.Config
+	crawlers          []Crawler
 }
 
 //
 func New(spec discoveryConfig.Config,
 	scmHandler scm.ScmHandler,
-	scmConfig *scm.Config) (*AutoDiscovery, error) {
+	scmConfig *scm.Config,
+	pullrequestConfig *pullrequest.Config) (*AutoDiscovery, error) {
 
 	var errs []error
 	var s discoveryConfig.Config
@@ -63,6 +66,10 @@ func New(spec discoveryConfig.Config,
 	// Init scm configuration if one is specified
 	if len(scmConfig.Kind) > 0 {
 		g.scmConfig = scmConfig
+	}
+
+	if len(pullrequestConfig.Kind) > 0 {
+		g.pullrequestConfig = pullrequestConfig
 	}
 
 	for kind := range DefaultCrawlerSpecs.Crawlers {
@@ -115,7 +122,9 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 			continue
 		}
 
-		discoveredManifests, err := crawler.DiscoverManifests(g.scmConfig)
+		discoveredManifests, err := crawler.DiscoverManifests(
+			g.scmConfig,
+			g.pullrequestConfig)
 
 		if err != nil {
 			logrus.Errorln(err)

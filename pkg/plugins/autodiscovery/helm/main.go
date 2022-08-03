@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
@@ -88,7 +89,7 @@ func New(spec interface{}, rootDir string) (Helm, error) {
 
 }
 
-func (h Helm) DiscoverManifests(scmSpec *scm.Config) ([]config.Spec, error) {
+func (h Helm) DiscoverManifests(scmSpec *scm.Config, pullrequestSpec *pullrequest.Config) ([]config.Spec, error) {
 
 	var manifests []config.Spec
 
@@ -211,6 +212,13 @@ func (h Helm) DiscoverManifests(scmSpec *scm.Config) ([]config.Spec, error) {
 				t := manifest.Targets[dependency.Name]
 				t.SCMID = DefaultSCMID
 				manifest.Targets[dependency.Name] = t
+			}
+
+			if pullrequestSpec != nil {
+				manifest.PullRequests = make(map[string]pullrequest.Config)
+				pullrequestSpec.ScmID = DefaultSCMID
+				pullrequestSpec.Targets = []string{dependency.Name}
+				manifest.PullRequests[DefaultSCMID] = *pullrequestSpec
 			}
 
 			manifests = append(manifests, manifest)

@@ -13,6 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -388,9 +389,12 @@ func (e *Engine) LoadAutoDiscovery() error {
 	for _, p := range autoDiscoveryPipelines {
 
 		var sc scm.Config
+		var pr pullrequest.Config
 		var autodiscoveryScm scm.Scm
+		var autodiscoveryPullrequest pullrequest.PullRequest
 		var found bool
 
+		// Retrieve scm spec if it exists
 		if len(p.Config.Spec.AutoDiscovery.ScmId) > 0 {
 			autodiscoveryScm, found = p.SCMs[p.Config.Spec.AutoDiscovery.ScmId]
 
@@ -399,10 +403,20 @@ func (e *Engine) LoadAutoDiscovery() error {
 			}
 		}
 
+		// Retrieve pullrequest spec if it exists
+		if len(p.Config.Spec.AutoDiscovery.PullrequestId) > 0 {
+			autodiscoveryPullrequest, found = p.PullRequests[p.Config.Spec.AutoDiscovery.PullrequestId]
+
+			if found {
+				pr = autodiscoveryPullrequest.Config
+			}
+		}
+
 		c, err := autodiscovery.New(
 			p.Config.Spec.AutoDiscovery,
 			autodiscoveryScm.Handler,
-			&sc)
+			&sc,
+			&pr)
 
 		if err != nil {
 			logrus.Errorln(err)
