@@ -14,7 +14,7 @@ var (
 
 	showCmd = &cobra.Command{
 		Use:   "show",
-		Short: "Print the configuration that will be executed",
+		Short: "**Deprecated in favor of updatecli manifest show** Print the configuration that will be executed",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			e.Options.Config.ManifestFile = cfgFile
@@ -22,6 +22,8 @@ var (
 			e.Options.Config.SecretsFiles = secretsFiles
 			e.Options.Pipeline.AutoDiscovery.Disabled = autoDiscoveryDisabled
 			e.Options.Pipeline.Target.Clean = showClean
+
+			logrus.Warningln("Deprecated command, please instead use `updatecli manifest show`")
 
 			err := run("show")
 			if err != nil {
