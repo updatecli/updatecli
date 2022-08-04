@@ -217,7 +217,6 @@ func (h Helm) DiscoverManifests(scmSpec *scm.Config, pullrequestSpec *pullreques
 			if pullrequestSpec != nil {
 				manifest.PullRequests = make(map[string]pullrequest.Config)
 				pullrequestSpec.ScmID = DefaultSCMID
-				pullrequestSpec.Targets = []string{dependency.Name}
 				manifest.PullRequests[DefaultSCMID] = *pullrequestSpec
 			}
 

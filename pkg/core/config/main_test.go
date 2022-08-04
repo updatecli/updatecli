@@ -644,10 +644,9 @@ var (
 					},
 					PullRequests: map[string]pullrequest.Config{
 						"default": {
-							Title:   "default PR",
-							Kind:    "github/pullrequest",
-							ScmID:   "default",
-							Targets: []string{"updateDefault"},
+							Title: "default PR",
+							Kind:  "github/pullrequest",
+							ScmID: "default",
 						},
 					},
 				},
@@ -747,10 +746,9 @@ var (
 					},
 					PullRequests: map[string]pullrequest.Config{
 						"default": {
-							Title:   "default PR",
-							Kind:    "github/pullrequest",
-							ScmID:   "not_existing",
-							Targets: []string{"updateDefault"},
+							Title: "default PR",
+							Kind:  "github/pullrequest",
+							ScmID: "not_existing",
 						},
 					},
 				},
@@ -802,10 +800,9 @@ var (
 					},
 					PullRequests: map[string]pullrequest.Config{
 						"default": {
-							Title:   "default PR",
-							Kind:    "github/pullrequest",
-							ScmID:   "default",
-							Targets: []string{"not_existing"},
+							Title: "default PR",
+							Kind:  "github/pullrequest",
+							ScmID: "default",
 						},
 					},
 				},
