@@ -285,13 +285,6 @@ func (config *Config) validatePullRequests() error {
 			}
 		}
 
-		// Validate references to other configuration objects
-		for _, target := range p.Targets {
-			if _, ok := config.Spec.Targets[target]; !ok {
-				logrus.Errorf("the specified target %q for the pull request %q does not exist", target, id)
-				return ErrBadConfig
-			}
-		}
 		// p.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
 		config.Spec.PullRequests[id] = p

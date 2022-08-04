@@ -70,10 +70,9 @@ func generateScmFromLegacyTarget(id string, config *Config) error {
 					}
 
 					config.Spec.PullRequests["target_"+id] = pullrequest.Config{
-						Kind:    kind,
-						Spec:    githubSpec.PullRequest,
-						ScmID:   "target_" + id,
-						Targets: []string{id},
+						Kind:  kind,
+						Spec:  githubSpec.PullRequest,
+						ScmID: "target_" + id,
 					}
 				}
 
