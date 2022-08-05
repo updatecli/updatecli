@@ -26,7 +26,11 @@ type Options struct {
 	Disabled bool
 }
 type Crawler interface {
-	DiscoverManifests(scmSpec *scm.Config, pullRequestSpec *pullrequest.Config) ([]config.Spec, error)
+	DiscoverManifests(
+		scmSpec *scm.Config,
+		scmID string,
+		pullRequestSpec *pullrequest.Config,
+		pullrequestID string) ([]config.Spec, error)
 	Enabled() bool
 }
 
@@ -124,7 +128,9 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 
 		discoveredManifests, err := crawler.DiscoverManifests(
 			g.scmConfig,
-			g.pullrequestConfig)
+			g.spec.ScmId,
+			g.pullrequestConfig,
+			g.spec.PullrequestId)
 
 		if err != nil {
 			logrus.Errorln(err)

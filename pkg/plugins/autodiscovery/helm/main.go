@@ -18,11 +18,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
-const (
-	// DefaultSCMID is the default scm id name
-	DefaultSCMID string = "default"
-)
-
 var (
 	// ChartValidFiles specifies accepted Helm chart metadata file name
 	ChartValidFiles [2]string = [2]string{"Chart.yaml", "Chart.yml"}
@@ -89,7 +84,11 @@ func New(spec interface{}, rootDir string) (Helm, error) {
 
 }
 
-func (h Helm) DiscoverManifests(scmSpec *scm.Config, pullrequestSpec *pullrequest.Config) ([]config.Spec, error) {
+func (h Helm) DiscoverManifests(
+	scmSpec *scm.Config,
+	scmID string,
+	pullrequestSpec *pullrequest.Config,
+	pullrequestID string) ([]config.Spec, error) {
 
 	var manifests []config.Spec
 
@@ -199,25 +198,24 @@ func (h Helm) DiscoverManifests(scmSpec *scm.Config, pullrequestSpec *pullreques
 			//// Set scmID configuration
 			if scmSpec != nil {
 				manifest.SCMs = make(map[string]scm.Config)
-				manifest.SCMs[DefaultSCMID] = *scmSpec
+				manifest.SCMs[scmID] = *scmSpec
 
 				s := manifest.Sources[dependency.Name]
-				s.SCMID = DefaultSCMID
+				s.SCMID = scmID
 				manifest.Sources[dependency.Name] = s
 
 				c := manifest.Conditions[dependency.Name]
-				c.SCMID = DefaultSCMID
+				c.SCMID = scmID
 				manifest.Conditions[dependency.Name] = c
 
 				t := manifest.Targets[dependency.Name]
-				t.SCMID = DefaultSCMID
+				t.SCMID = scmID
 				manifest.Targets[dependency.Name] = t
 			}
 
 			if pullrequestSpec != nil {
 				manifest.PullRequests = make(map[string]pullrequest.Config)
-				pullrequestSpec.ScmID = DefaultSCMID
-				manifest.PullRequests[DefaultSCMID] = *pullrequestSpec
+				manifest.PullRequests[pullrequestID] = *pullrequestSpec
 			}
 
 			manifests = append(manifests, manifest)
