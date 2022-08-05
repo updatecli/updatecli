@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"path"
@@ -90,6 +91,16 @@ func (c *Chart) GetRepoIndexFile() (repo.IndexFile, error) {
 	}
 
 	defer res.Body.Close()
+
+	if res.StatusCode >= 400 {
+		body, err := httputil.DumpResponse(res, false)
+
+		logrus.Errorf("something went wrong while contacting %q\n", URL)
+		logrus.Debugf("\n%v\n", URL, string(body))
+
+		return *repo.NewIndexFile(), err
+
+	}
 
 	data, err := ioutil.ReadAll(res.Body)
 
