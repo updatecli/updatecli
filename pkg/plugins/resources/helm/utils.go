@@ -96,7 +96,7 @@ func (c *Chart) GetRepoIndexFile() (repo.IndexFile, error) {
 		body, err := httputil.DumpResponse(res, false)
 
 		logrus.Errorf("something went wrong while contacting %q\n", URL)
-		logrus.Debugf("\n%v\n", URL, string(body))
+		logrus.Debugf("\n%v\n", string(body))
 
 		return *repo.NewIndexFile(), err
 
