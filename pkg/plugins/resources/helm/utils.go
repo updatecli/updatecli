@@ -2,10 +2,12 @@ package helm
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -61,7 +63,20 @@ func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
 // GetRepoIndexFile loads an index file and does minimal validity checking.
 // This will fail if API Version is not set (ErrNoAPIVersion) or if the unmarshal fails.
 func (c *Chart) GetRepoIndexFile() (repo.IndexFile, error) {
-	URL := fmt.Sprintf("%s/index.yaml", c.spec.URL)
+
+	u, err := url.Parse(c.spec.URL)
+	if err != nil {
+		return repo.IndexFile{}, err
+	}
+
+	u.Path = path.Join(u.Path, "index.yaml")
+	URL := u.String()
+
+	// Waiting for Golang 1.19 to be released
+	// URL, err := url.JoinPath(c.spec.URL, "index.yaml")
+	// if err != nil {
+	// 	return repo.IndexFile{}, err
+	// }
 
 	req, err := http.NewRequest("GET", URL, nil)
 
@@ -76,6 +91,16 @@ func (c *Chart) GetRepoIndexFile() (repo.IndexFile, error) {
 	}
 
 	defer res.Body.Close()
+
+	if res.StatusCode >= 400 {
+		body, err := httputil.DumpResponse(res, false)
+
+		logrus.Errorf("something went wrong while contacting %q\n", URL)
+		logrus.Debugf("\n%v\n", string(body))
+
+		return *repo.NewIndexFile(), err
+
+	}
 
 	data, err := ioutil.ReadAll(res.Body)
 
