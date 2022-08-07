@@ -38,9 +38,12 @@ searchTag:
 
 		// Todo: validate that result is valid for architecture
 
-		tag = di.foundVersion.ParsedVersion
+		tag = di.foundVersion.OriginalVersion
 
-		digest, err := di.registry.Digest(di.image)
+		img := di.image
+		img.Tag = tag
+
+		digest, err := di.registry.Digest(img)
 		if err != nil {
 			return "", err
 		}
