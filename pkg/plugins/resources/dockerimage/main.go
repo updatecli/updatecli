@@ -7,23 +7,26 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// Architecture specifies the container image architecture such as `amd64`
+	// [S][C][T]Architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
-	// Image specifies the container image such as `updatecli/updatecli`
+	// [S][C][T]Image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
-	// Tag specifies the container image tag such as `latest`
+	// [C][T]Tag specifies the container image tag such as `latest`
 	Tag string `yaml:",omitempty"`
-	// Username specifies the container registry username to use for authentication. Not compatible with token
+	// [S][C][T]Username specifies the container registry username to use for authentication. Not compatible with token
 	Username string `yaml:",omitempty"`
-	// Password specifies the container registry password to use for authentication. Not compatible with token
+	// [S][C][T]Password specifies the container registry password to use for authentication. Not compatible with token
 	Password string `yaml:",omitempty"`
-	// Token specifies the container registry token to use for authentication. Not compatible with username/password
+	// [S][C][T]Token specifies the container registry token to use for authentication. Not compatible with username/password
 	Token string `yaml:",omitempty"`
+	// [S]VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
 // DockerImage defines a resource of type "dockerimage"
@@ -31,6 +34,9 @@ type DockerImage struct {
 	spec     Spec
 	registry dockerregistry.Registry
 	image    dockerimage.Image
+	// versionFilter holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
+	versionFilter version.Filter
+	foundVersion  version.Version
 }
 
 // New returns a reference to a newly initialized DockerImage object from a dockerimage.Spec
@@ -53,6 +59,11 @@ func New(spec interface{}) (*DockerImage, error) {
 		return nil, err
 	}
 
+	newFilter, err := newSpec.VersionFilter.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	newRegistry := dockerregistry.New(
 		newImage.Registry,
 		newSpec.Username,
@@ -60,9 +71,10 @@ func New(spec interface{}) (*DockerImage, error) {
 	)
 
 	newResource := &DockerImage{
-		spec:     newSpec,
-		registry: newRegistry,
-		image:    *newImage,
+		spec:          newSpec,
+		registry:      newRegistry,
+		image:         *newImage,
+		versionFilter: newFilter,
 	}
 
 	err = newResource.Validate()
