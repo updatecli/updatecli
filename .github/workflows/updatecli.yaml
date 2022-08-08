@@ -14,11 +14,11 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v3"
       - name: "Setup updatecli"
-        uses: "updatecli/updatecli-action@v2.1.0"
+        uses: "updatecli/updatecli-action@v2.3.0"
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18.4
+          go-version: 1.18.5
         id: go
       - name: "Run updatecli in dryrun"
         run: "updatecli diff --config ./updatecli/updatecli.d"
