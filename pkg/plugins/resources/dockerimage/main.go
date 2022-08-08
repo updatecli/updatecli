@@ -13,19 +13,19 @@ import (
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [S][C][T]Architecture specifies the container image architecture such as `amd64`
+	// [S][C][T] Architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
-	// [S][C][T]Image specifies the container image such as `updatecli/updatecli`
+	// [S][C][T] Image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
-	// [C][T]Tag specifies the container image tag such as `latest`
+	// [C][T] Tag specifies the container image tag such as `latest`
 	Tag string `yaml:",omitempty"`
-	// [S][C][T]Username specifies the container registry username to use for authentication. Not compatible with token
+	// [S][C][T] Username specifies the container registry username to use for authentication. Not compatible with token
 	Username string `yaml:",omitempty"`
-	// [S][C][T]Password specifies the container registry password to use for authentication. Not compatible with token
+	// [S][C][T] Password specifies the container registry password to use for authentication. Not compatible with token
 	Password string `yaml:",omitempty"`
-	// [S][C][T]Token specifies the container registry token to use for authentication. Not compatible with username/password
+	// [S][C][T] Token specifies the container registry token to use for authentication. Not compatible with username/password
 	Token string `yaml:",omitempty"`
-	// [S]VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

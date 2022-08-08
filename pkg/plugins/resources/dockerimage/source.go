@@ -68,7 +68,7 @@ searchTag:
 	} else if len(tag) > 0 {
 		logrus.Infof("%s Docker Image Tag %q found matching pattern %q", result.SUCCESS, tag, di.versionFilter.Pattern)
 	} else {
-		logrus.Errorf("Something unexpected happened in Github source")
+		logrus.Errorf("Something unexpected happened in GitHub source")
 	}
 
 	return tag, nil

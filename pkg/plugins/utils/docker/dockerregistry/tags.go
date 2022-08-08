@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/link"
 )
 
-// Tags retrieves the all tags of the provided docker image from the registry
+// Tags retrieves all tags of the provided docker image from the registry
 func (dgr DockerGenericRegistry) Tags(image dockerimage.Image) ([]string, error) {
 	var tags []string
 
