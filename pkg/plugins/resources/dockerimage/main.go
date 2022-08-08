@@ -21,7 +21,7 @@ type Spec struct {
 	Tag string `yaml:",omitempty"`
 	// [S][C][T] Username specifies the container registry username to use for authentication. Not compatible with token
 	Username string `yaml:",omitempty"`
-	// [S][C][T]Password specifies the container registry password to use for authentication. Not compatible with token
+	// [S][C][T] Password specifies the container registry password to use for authentication. Not compatible with token
 	Password string `yaml:",omitempty"`
 	// [S][C][T] Token specifies the container registry token to use for authentication. Not compatible with username/password
 	Token string `yaml:",omitempty"`
