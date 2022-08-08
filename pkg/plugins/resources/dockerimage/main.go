@@ -17,7 +17,7 @@ type Spec struct {
 	Architecture string `yaml:",omitempty"`
 	// [S][C][T] Image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
-	// [C][T]Tag specifies the container image tag such as `latest`
+	// [C][T] Tag specifies the container image tag such as `latest`
 	Tag string `yaml:",omitempty"`
 	// [S][C][T]Username specifies the container registry username to use for authentication. Not compatible with token
 	Username string `yaml:",omitempty"`
