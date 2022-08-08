@@ -54,12 +54,14 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, err
 	}
 
-	err = c.DependencyUpdate(&out, "")
+	if !dryRun {
+		err = c.DependencyUpdate(&out, c.spec.Name)
 
-	logrus.Infof("%s", out.String())
+		logrus.Debugf("%s", out.String())
 
-	if err != nil {
-		return false, err
+		if err != nil {
+			return false, err
+		}
 	}
 
 	return true, nil
@@ -110,13 +112,16 @@ func (c *Chart) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (
 		return false, files, message, err
 	}
 
-	err = c.DependencyUpdate(&out, chartPath)
+	if !dryRun {
+		err = c.DependencyUpdate(&out, chartPath)
 
-	if err != nil {
-		return false, files, message, err
+		logrus.Debug(out.String())
+
+		if err != nil {
+			return false, files, message, err
+		}
+
 	}
-
-	logrus.Debug(out.String())
 
 	files = append(files, chartPath)
 
