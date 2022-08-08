@@ -13,7 +13,7 @@ import (
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [S][C][T]Architecture specifies the container image architecture such as `amd64`
+	// [S][C][T] Architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
 	// [S][C][T]Image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
