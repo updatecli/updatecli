@@ -9,6 +9,11 @@ import (
 	"testing"
 )
 
+const (
+	exampleURL string = "https://example.com/?page=2"
+	exampleRel string = "next"
+)
+
 func TestLinkString(t *testing.T) {
 	l := Parse(`<https://example.com/?page=2>; rel="next"; title="foo"`)["next"]
 
@@ -31,11 +36,11 @@ func TestParseRequest(t *testing.T) {
 		t.Fatalf(`g["next"] == nil`)
 	}
 
-	if got, want := g["next"].URI, "https://example.com/?page=2"; got != want {
+	if got, want := g[exampleRel].URI, exampleURL; got != want {
 		t.Fatalf(`g["next"].URI = %q, want %q`, got, want)
 	}
 
-	if got, want := g["next"].Rel, "next"; got != want {
+	if got, want := g[exampleRel].Rel, "next"; got != want {
 		t.Fatalf(`g["next"].Rel = %q, want %q`, got, want)
 	}
 
@@ -58,11 +63,11 @@ func TestParseResponse(t *testing.T) {
 		t.Fatalf(`g["next"] == nil`)
 	}
 
-	if got, want := g["next"].URI, "https://example.com/?page=2"; got != want {
+	if got, want := g[exampleRel].URI, exampleURL; got != want {
 		t.Fatalf(`g["next"].URI = %q, want %q`, got, want)
 	}
 
-	if got, want := g["next"].Rel, "next"; got != want {
+	if got, want := g[exampleRel].Rel, exampleRel; got != want {
 		t.Fatalf(`g["next"].Rel = %q, want %q`, got, want)
 	}
 
@@ -81,15 +86,15 @@ func TestParseHeader_single(t *testing.T) {
 		t.Fatalf(`len(g) = %d, want %d`, got, want)
 	}
 
-	if g["next"] == nil {
+	if g[exampleRel] == nil {
 		t.Fatalf(`g["next"] == nil`)
 	}
 
-	if got, want := g["next"].URI, "https://example.com/?page=2"; got != want {
+	if got, want := g[exampleRel].URI, exampleURL; got != want {
 		t.Fatalf(`g["next"].URI = %q, want %q`, got, want)
 	}
 
-	if got, want := g["next"].Rel, "next"; got != want {
+	if got, want := g[exampleRel].Rel, "next"; got != want {
 		t.Fatalf(`g["next"].Rel = %q, want %q`, got, want)
 	}
 }
@@ -104,15 +109,15 @@ func TestParseHeader_multiple(t *testing.T) {
 		t.Fatalf(`len(g) = %d, want %d`, got, want)
 	}
 
-	if g["next"] == nil {
+	if g[exampleRel] == nil {
 		t.Fatalf(`g["next"] == nil`)
 	}
 
-	if got, want := g["next"].URI, "https://example.com/?page=2"; got != want {
+	if got, want := g[exampleRel].URI, exampleURL; got != want {
 		t.Fatalf(`g["next"].URI = %q, want %q`, got, want)
 	}
 
-	if got, want := g["next"].Rel, "next"; got != want {
+	if got, want := g[exampleRel].Rel, exampleRel; got != want {
 		t.Fatalf(`g["next"].Rel = %q, want %q`, got, want)
 	}
 
@@ -148,7 +153,7 @@ func TestParseHeader_multiple_headers(t *testing.T) {
 		t.Fatalf(`g["bar"].URI = %q, want %q`, got, want)
 	}
 
-	if got, want := g["next"].Rel, "next"; got != want {
+	if got, want := g[exampleRel].Rel, exampleRel; got != want {
 		t.Fatalf(`g["next"].Rel = %q, want %q`, got, want)
 	}
 
@@ -175,11 +180,11 @@ func TestParseHeader_extra(t *testing.T) {
 		t.Fatalf(`len(g) = %d, want %d`, got, want)
 	}
 
-	if g["next"] == nil {
+	if g[exampleRel] == nil {
 		t.Fatalf(`g["next"] == nil`)
 	}
 
-	if got, want := g["next"].Extra["title"], "foo"; got != want {
+	if got, want := g[exampleRel].Extra["title"], "foo"; got != want {
 		t.Fatalf(`g["next"].Extra["title"] = %q, want %q`, got, want)
 	}
 }
