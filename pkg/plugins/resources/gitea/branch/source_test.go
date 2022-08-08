@@ -37,22 +37,6 @@ func TestSource(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "repository olblak/updatecli-mirror should exist but no release",
-			manifest: struct {
-				URL        string
-				Token      string
-				Owner      string
-				Repository string
-			}{
-				URL:        "try.gitea.io",
-				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-mirror",
-			},
-			wantResult: "updatecli_012c5c9cec4df4969325e5d428775a5b7d9e6726cb6a9ef0402f61ea102cd2b3",
-			wantErr:    false,
-		},
-		{
 			name: "repository should exist with latest branch v3",
 			manifest: struct {
 				URL        string
