@@ -23,7 +23,7 @@ type Spec struct {
 	Username string `yaml:",omitempty"`
 	// [S][C][T]Password specifies the container registry password to use for authentication. Not compatible with token
 	Password string `yaml:",omitempty"`
-	// [S][C][T]Token specifies the container registry token to use for authentication. Not compatible with username/password
+	// [S][C][T] Token specifies the container registry token to use for authentication. Not compatible with username/password
 	Token string `yaml:",omitempty"`
 	// [S]VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
