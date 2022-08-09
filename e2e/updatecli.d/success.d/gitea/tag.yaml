@@ -1,0 +1,42 @@
+name: "Test Gitea tag"
+
+sources:
+  default:
+    kind: "gitea/tag"
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-test"
+      versionfilter:
+        kind: "semver"
+        pattern: "~0.0"
+  latest:
+    kind: "gitea/tag"
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-test"
+        
+conditions:
+  default:
+    kind: "gitea/tag"
+    disablesourceinput: true
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-test"
+      tag: "0.0.2"
+  sourcedefault:
+    kind: "gitea/tag"
+    sourceid: "default"
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-test"
+  latest:
+    kind: "gitea/tag"
+    sourceid: "latest"
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-test"

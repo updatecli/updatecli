@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
@@ -153,6 +154,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	anyOfSpec := map[string]interface{}{
 		"git":    &git.Spec{},
 		"github": &github.Spec{},
+		"gitea":  &gitea.Spec{},
 	}
 
 	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
