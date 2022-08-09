@@ -18,9 +18,9 @@ type Semver struct {
 
 var (
 	// ErrNoVersionFound return a error when no version couldn't be found
-	ErrNoVersionFound error = errors.New("No version found")
+	ErrNoVersionFound error = errors.New("no version found")
 	// ErrNoVersionsFound return a error when the versions list is empty
-	ErrNoVersionsFound error = errors.New("Versions list empty")
+	ErrNoVersionsFound error = errors.New("versions list empty")
 )
 
 // Init creates a new semver object
@@ -39,7 +39,7 @@ func (s *Semver) Init(versions []string) error {
 		return nil
 	}
 
-	return fmt.Errorf("No valid semantic version found")
+	return fmt.Errorf("no valid semantic version found")
 }
 
 // Sort re-order a list of versions with the newest version first

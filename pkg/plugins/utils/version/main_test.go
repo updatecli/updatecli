@@ -150,7 +150,7 @@ func TestSearch(t *testing.T) {
 			},
 			versions: []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
 			want:     Version{},
-			wantErr:  errors.New("No valid semantic version found"),
+			wantErr:  errors.New("no valid semantic version found"),
 		},
 		{
 			name: "Passing case with regexp filter and pattern",
@@ -183,7 +183,7 @@ func TestSearch(t *testing.T) {
 			},
 			versions: []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
 			want:     Version{},
-			wantErr:  fmt.Errorf(`No version found matching pattern "^updatecli-4.(\\d*)$"`),
+			wantErr:  fmt.Errorf(`no version found matching pattern "^updatecli-4.(\\d*)$"`),
 		},
 	}
 	for _, tt := range tests {
@@ -230,7 +230,7 @@ func TestValidate(t *testing.T) {
 				Kind:    "noExist",
 				Pattern: "~2",
 			},
-			wantErr: errors.New(`Unsupported version kind "noExist"`),
+			wantErr: errors.New(`unsupported version kind "noExist"`),
 		},
 	}
 	for _, tt := range tests {

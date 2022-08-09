@@ -71,7 +71,7 @@ func (f Filter) Validate() error {
 		}
 	}
 	if !ok {
-		return fmt.Errorf("Unsupported version kind %q", f.Kind)
+		return fmt.Errorf("unsupported version kind %q", f.Kind)
 	}
 	return nil
 }
@@ -121,13 +121,12 @@ func (f *Filter) Search(versions []string) (Version, error) {
 
 		err := s.Search(versions)
 		if err != nil {
-			logrus.Error(err)
 			return foundVersion, err
 		}
 		return s.FoundVersion, nil
 	default:
-		return foundVersion, fmt.Errorf("Unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
+		return foundVersion, fmt.Errorf("unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
 	}
 
-	return foundVersion, fmt.Errorf("No version found matching pattern %q", f.Pattern)
+	return foundVersion, fmt.Errorf("no version found matching pattern %q", f.Pattern)
 }
