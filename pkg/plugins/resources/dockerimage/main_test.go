@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestNew(t *testing.T) {
@@ -47,6 +48,10 @@ func TestNew(t *testing.T) {
 						Password: "SuperSecretPass",
 					},
 					WebClient: http.DefaultClient,
+				},
+				versionFilter: version.Filter{
+					Kind:    "latest",
+					Pattern: "latest",
 				},
 			},
 		},
