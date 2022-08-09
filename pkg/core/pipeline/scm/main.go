@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -56,6 +57,15 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	switch s.Config.Kind {
+	case "gitea":
+		g, err := gitea.New(s.Config.Spec, s.PipelineID)
+
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
+
 	case "github":
 		githubSpec := github.Spec{}
 

@@ -1,0 +1,56 @@
+name: Test Gitea scm
+
+scms:
+  gitea:
+    kind: gitea
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-mirror"
+      branch: main
+
+sources:
+  license:
+    name: Retrieve license file content
+    kind: file
+    scmid: gitea
+    spec:
+      file: LICENSE
+  readme:
+    name: Retrieve license file content
+    kind: file
+    scmid: gitea
+    spec:
+      file: README.adoc
+
+conditions:
+  license:
+    name: Retrieve license file content
+    kind: file
+    scmid: gitea
+    sourceid: license
+    spec:
+      file: LICENSE
+  readme:
+    name: Retrieve license file content
+    kind: file
+    sourceid: readme
+    scmid: gitea
+    spec:
+      file: README.adoc
+
+targets:
+  license:
+    name: Retrieve license file content
+    kind: file
+    scmid: gitea
+    sourceid: license
+    spec:
+      file: LICENSE
+  readme:
+    name: Retrieve license file content
+    kind: file
+    sourceid: readme
+    scmid: gitea
+    spec:
+      file: README.adoc
