@@ -21,7 +21,7 @@ func (di *DockerImage) Source(workingDir string) (string, error) {
 	logrus.Debugf("%d Docker image tag(s) found", len(tags))
 
 	for i, t := range tags {
-		logrus.Printf("%d\t%q\n", i, t)
+		logrus.Debugf("%d\t%q\n", i, t)
 	}
 
 	found := false
