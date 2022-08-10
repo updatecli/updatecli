@@ -1,0 +1,15 @@
+---
+name: 'Updatecli Show Warning TestSuite'
+vars:
+  message:
+    warning: 'WARNING:'
+    error: 'ERROR:'
+testcases:
+  - name: "Test updatecli working but show warning"
+    steps:
+      - script: '{{ .binpath }}/updatecli diff --config  ../updatecli.d/warning.d'
+        type: 'exec'
+        assertions:
+          - 'result.code ShouldEqual 0'
+          - 'result.systemerr ShouldContainSubstring "{{ .message.warning }}"'
+          - 'result.systemerr ShouldNotContainSubstring "{{ .message.error }}"'
