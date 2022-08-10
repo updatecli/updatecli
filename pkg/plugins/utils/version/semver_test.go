@@ -47,7 +47,7 @@ var (
 		{
 			Versions:                []string{},
 			SortedVersions:          []string{},
-			ExpectedInitErr:         errors.New("No valid semantic version found"),
+			ExpectedInitErr:         errors.New("no valid semantic version found"),
 			ExpectedSearchErr:       ErrNoVersionsFound,
 			ExpectedParsedVersion:   "",
 			ExpectedOriginalVersion: "",
@@ -88,8 +88,8 @@ var (
 		{
 			Versions:                []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
 			SortedVersions:          []string{},
-			ExpectedInitErr:         errors.New("No valid semantic version found"),
-			ExpectedSearchErr:       errors.New("No valid semantic version found"),
+			ExpectedInitErr:         errors.New("no valid semantic version found"),
+			ExpectedSearchErr:       errors.New("no valid semantic version found"),
 			ExpectedParsedVersion:   "",
 			ExpectedOriginalVersion: "",
 		},

@@ -10,6 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
+	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -128,6 +130,34 @@ func (p *PullRequest) Update() error {
 func (p *PullRequest) generatePullRequestHandler() error {
 
 	switch p.Config.Kind {
+	case "gitea":
+		pullRequestSpec := gitea.Spec{}
+
+		if p.Scm.Config.Kind != "gitea" {
+			return fmt.Errorf("scm of kind %q is not compatible with pullrequest of kind %q",
+				p.Scm.Config.Kind,
+				p.Config.Kind)
+		}
+
+		err := mapstructure.Decode(p.Config.Spec, &pullRequestSpec)
+		if err != nil {
+			return err
+		}
+
+		ge, ok := p.Scm.Handler.(*giteascm.Gitea)
+
+		if !ok {
+			return fmt.Errorf("scm is not of kind 'gitea'")
+		}
+
+		g, err := gitea.New(pullRequestSpec, ge)
+
+		if err != nil {
+			return err
+		}
+
+		p.Handler = &g
+
 	case "github":
 		pullRequestSpec := github.PullRequestSpec{}
 
@@ -170,6 +200,7 @@ func (Config) JSONSchema() *jschema.Schema {
 
 	anyOfSpec := map[string]interface{}{
 		"github": &github.PullRequestSpec{},
+		"gitea":  &gitea.Spec{},
 	}
 
 	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
