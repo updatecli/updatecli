@@ -33,7 +33,7 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 		}
 	}
 
-	value := g.foundVersion.ParsedVersion
+	value := g.foundVersion.OriginalVersion
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Gitea branches found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)

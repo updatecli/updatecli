@@ -16,6 +16,13 @@ sources:
       url: "try.gitea.io"
       owner: "olblak"
       repository: "updatecli-test"
+
+  mirror:
+    kind: "gitea/tag"
+    spec:
+      url: "try.gitea.io"
+      owner: "olblak"
+      repository: "updatecli-mirror"
         
 conditions:
   default:
