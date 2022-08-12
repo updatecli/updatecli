@@ -83,8 +83,6 @@ func (s *Schema) GenerateSchema(object interface{}) error {
 
 	r.SetBaseSchemaID(s.BaseSchemaID)
 
-	r.PreferYAMLSchema = true
-	r.YAMLEmbeddedStructs = true
 	r.DoNotReference = true
 	r.RequiredFromJSONSchemaTags = true
 
@@ -120,8 +118,6 @@ func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]inter
 		r := new(jschema.Reflector)
 
 		r.Anonymous = true
-		r.PreferYAMLSchema = true
-		r.YAMLEmbeddedStructs = true
 		r.DoNotReference = true
 		r.RequiredFromJSONSchemaTags = true
 		r.CommentMap = commentMap
@@ -169,7 +165,6 @@ func GetPackageComments(rootPackagePath string) (map[string]string, error) {
 	r := new(jschema.Reflector)
 
 	r.Anonymous = true
-	r.YAMLEmbeddedStructs = true
 	r.DoNotReference = true
 	r.RequiredFromJSONSchemaTags = true
 
