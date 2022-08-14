@@ -11,8 +11,8 @@ import (
 	goyaml "gopkg.in/yaml.v3"
 )
 
-// searchChartMetadataFiles will look, recursively, for every files named Chart.yaml from a root directory.
-func searchChartMetadataFiles(rootDir string, files []string) ([]string, error) {
+// searchChartFiles will look, recursively, for every files named Chart.yaml from a root directory.
+func searchChartFiles(rootDir string, files []string) ([]string, error) {
 
 	metadataFiles := []string{}
 
@@ -86,4 +86,55 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 	}
 
 	return &chart, nil
+}
+
+// getValuesFileContent reads a values.yaml for information that could be automated such as image information
+func getValuesFileContent(filename string) (*valuesContent, error) {
+
+	var values valuesContent
+
+	chartName := filepath.Base(filepath.Dir(filename))
+	logrus.Infof("Chart values file %q found in %q", chartName, filepath.Dir(filename))
+
+	if _, err := os.Stat(filename); err != nil {
+		return &valuesContent{}, err
+	}
+
+	v, err := os.Open(filename)
+	if err != nil {
+		return &valuesContent{}, err
+	}
+
+	defer v.Close()
+
+	content, err := ioutil.ReadAll(v)
+	if err != nil {
+		return &valuesContent{}, err
+	}
+
+	err = goyaml.Unmarshal(content, &values)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(values.Images) == 0 && values.Image.Repository == "" {
+		return &valuesContent{}, nil
+	}
+
+	if len(values.Images) > 0 {
+		logrus.Debugf("Images found for chart %q\n", chartName)
+		for id, value := range values.Images {
+			logrus.Debugf("Image id %q found\n", id)
+			logrus.Debugf("\tName: %q\n", value.Repository)
+			logrus.Debugf("\tURL: %q\n", value.Tag)
+		}
+	}
+
+	if values.Image.Repository != "" {
+		logrus.Debugf("Image Repository: %q\n", values.Image.Repository)
+		logrus.Debugf("Image Tag: %q\n", values.Image.Tag)
+	}
+
+	return &values, nil
 }

@@ -6,7 +6,7 @@ import (
 
 func TestSearchFiles(t *testing.T) {
 
-	gotFiles, err := searchChartMetadataFiles(
+	gotFiles, err := searchChartFiles(
 		"testdata/chart",
 		[]string{"Chart.yaml", "Chart.yml"})
 	if err != nil {
