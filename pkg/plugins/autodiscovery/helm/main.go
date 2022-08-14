@@ -211,19 +211,16 @@ func (h Helm) DiscoverManifests(
 	}
 
 	// Set scm configuration if specified
-	for i, manifest := range manifests {
+	for i := range manifests {
 		// Set scm configuration if specified
 		if len(scmID) > 0 {
-			SetScm(&manifest, *scmSpec, scmID)
+			SetScm(&manifests[i], *scmSpec, scmID)
 		}
 
 		// Set pullrequest configuration if specified
 		if len(pullrequestID) > 0 {
-			SetPullrequest(&manifest, *pullrequestSpec, pullrequestID)
+			SetPullrequest(&manifests[i], *pullrequestSpec, pullrequestID)
 		}
-
-		manifests[i] = manifest
-
 	}
 
 	return manifests, nil
