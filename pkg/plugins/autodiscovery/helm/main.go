@@ -84,11 +84,7 @@ func New(spec interface{}, rootDir string) (Helm, error) {
 
 }
 
-func (h Helm) DiscoverManifests(
-	scmSpec *scm.Config,
-	scmID string,
-	pullrequestSpec *pullrequest.Config,
-	pullrequestID string) ([]config.Spec, error) {
+func (h Helm) DiscoverHelmDependenciesManifests() ([]config.Spec, error) {
 
 	var manifests []config.Spec
 
@@ -194,40 +190,67 @@ func (h Helm) DiscoverManifests(
 					},
 				},
 			}
-
-			//// Set scmID configuration
-			if scmSpec != nil {
-				manifest.SCMs = make(map[string]scm.Config)
-				manifest.SCMs[scmID] = *scmSpec
-
-				s := manifest.Sources[dependency.Name]
-				s.SCMID = scmID
-				manifest.Sources[dependency.Name] = s
-
-				c := manifest.Conditions[dependency.Name]
-				c.SCMID = scmID
-				manifest.Conditions[dependency.Name] = c
-
-				t := manifest.Targets[dependency.Name]
-				t.SCMID = scmID
-				manifest.Targets[dependency.Name] = t
-			}
-
-			if pullrequestSpec != nil {
-				manifest.PullRequests = make(map[string]pullrequest.Config)
-				manifest.PullRequests[pullrequestID] = *pullrequestSpec
-			}
-
 			manifests = append(manifests, manifest)
 
 		}
+	}
+
+	return manifests, nil
+}
+
+func (h Helm) DiscoverManifests(
+	scmSpec *scm.Config,
+	scmID string,
+	pullrequestSpec *pullrequest.Config,
+	pullrequestID string) ([]config.Spec, error) {
+
+	manifests, err := h.DiscoverHelmDependenciesManifests()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Set scm configuration if specified
+	for i, manifest := range manifests {
+		// Set scm configuration if specified
+		if len(scmID) > 0 {
+			SetScm(&manifest, *scmSpec, scmID)
+		}
+
+		// Set pullrequest configuration if specified
+		if len(pullrequestID) > 0 {
+			SetPullrequest(&manifest, *pullrequestSpec, pullrequestID)
+		}
+
+		manifests[i] = manifest
 
 	}
 
 	return manifests, nil
 }
 
-// RunDisabled returns a bool saying if a run could done
+func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
+	configSpec.SCMs = make(map[string]scm.Config)
+	configSpec.SCMs[scmID] = scmSpec
+
+	for id, condition := range configSpec.Conditions {
+		condition.SCMID = scmID
+		configSpec.Conditions[id] = condition
+	}
+
+	for id, target := range configSpec.Targets {
+		target.SCMID = scmID
+		configSpec.Targets[id] = target
+	}
+
+}
+
+func SetPullrequest(configSpec *config.Spec, pullrequestSpec pullrequest.Config, pullrequestID string) {
+	configSpec.PullRequests = make(map[string]pullrequest.Config)
+	configSpec.PullRequests[pullrequestID] = pullrequestSpec
+}
+
+// RunDisabled returns a bool saying if a run should be done
 func (h Helm) Enabled() bool {
 	return !h.spec.Disable
 }
