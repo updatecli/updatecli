@@ -1,0 +1,7 @@
+image:
+  repository: epinio/epinio
+  tag: latest
+images:
+  ui:
+    repository: epinio/epinio-ui
+    tag: latest
