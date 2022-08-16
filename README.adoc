@@ -144,9 +144,15 @@ Here is a non-exhaustive list of possible contributions:
 
 More information available at link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 
+== Conferences
+
+* 2022
+** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video] 
+
 == Links
 
 * link:https://github.com/updatecli/updatecli/blob/main/ADOPTERS.md[ADOPTERS]
 * link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 * link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
 * link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
+
