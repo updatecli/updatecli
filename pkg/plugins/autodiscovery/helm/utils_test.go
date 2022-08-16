@@ -7,8 +7,7 @@ import (
 func TestSearchFiles(t *testing.T) {
 
 	gotFiles, err := searchChartFiles(
-		"testdata/chart",
-		[]string{"Chart.yaml", "Chart.yml"})
+		"testdata/chart", ChartValidFiles[:])
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
