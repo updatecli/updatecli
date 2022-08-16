@@ -34,7 +34,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5
 	github.com/drone/go-scm v1.25.0
 	github.com/goware/urlx v0.3.2
-	github.com/invopop/jsonschema v0.4.0
+	github.com/invopop/jsonschema v0.6.0
 	golang.org/x/text v0.3.7
 )
 
