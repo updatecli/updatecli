@@ -10,6 +10,7 @@ import (
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 )
 
@@ -17,7 +18,8 @@ var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
 	DefaultCrawlerSpecs = discoveryConfig.Config{
 		Crawlers: map[string]interface{}{
-			"helm": helm.Spec{},
+			"helm":          helm.Spec{},
+			"rancher/fleet": fleet.Spec{},
 		},
 	}
 )
@@ -102,6 +104,16 @@ func New(spec discoveryConfig.Config,
 			}
 
 			g.crawlers = append(g.crawlers, helmCrawler)
+
+		case "rancher/fleet":
+			fleetCrawler, err := fleet.New(g.spec.Crawlers[kind], workDir)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, fleetCrawler)
 
 		default:
 			logrus.Infof("Crawler of type %q is not supported", kind)
