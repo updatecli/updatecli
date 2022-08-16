@@ -6,6 +6,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
 )
 
 // Spec defines the parameters which can be provided to the Helm builder.
@@ -15,9 +16,11 @@ type Spec struct {
 	// Disable allows to disable the helm chart crawler
 	Disable bool `yaml:",omitempty"`
 	// Ignore allows to specify rule to ignore autodiscovery a specific Helm based on a rule
-	Ignore MatchingRules
+	Ignore MatchingRules `yaml:",omitempty"`
 	// Only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
-	Only MatchingRules
+	Only MatchingRules `yaml:",omitempty"`
+	// Auths provides a map of registry credentials where the key is the registry URL without scheme
+	Auths map[string]dockerregistry.RegistryAuth `yaml:",omitempty"`
 }
 
 // Helm hold all information needed to generate helm manifest.
