@@ -34,9 +34,9 @@ func (g *Gitea) Source(workingDir string) (string, error) {
 		}
 	}
 
-	value := g.foundVersion.ParsedVersion
+	value := g.foundVersion.OriginalVersion
 
-	logrus.Infof("Latest Release found: %v", g.foundVersion.ParsedVersion)
+	logrus.Infof("Latest Release found: %v", g.foundVersion.OriginalVersion)
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Gitea Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)

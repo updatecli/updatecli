@@ -15,6 +15,7 @@ import (
 // Registry is an interface to any Registry-specific metadata retriever (e.g. to retrieve Docker images metadatas)
 type Registry interface {
 	Digest(image dockerimage.Image) (string, error)
+	Tags(image dockerimage.Image) ([]string, error)
 }
 
 // RegistryAuth holds the authentication element of a given registry
