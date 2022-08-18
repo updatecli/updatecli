@@ -21,6 +21,7 @@ sources:
       repository: venom
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      originalVersion: true
       versionfilter:
         kind: semver
     
