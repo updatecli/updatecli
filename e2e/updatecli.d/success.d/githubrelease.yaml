@@ -5,8 +5,8 @@ sources:
     spec:
       owner: updatecli
       repository: updatecli
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       originalVersion: true
       versionfilter:
         kind: semver
