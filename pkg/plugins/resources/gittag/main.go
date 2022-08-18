@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -18,6 +19,8 @@ type Spec struct {
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// Message associated to the git tag
 	Message string `yaml:",omitempty"`
+	// OriginalVersion is an ephemeral parameters to smooth the transition. cfg https://github.com/updatecli/updatecli/issues/803
+	OriginalVersion bool
 }
 
 // GitTag defines a resource of kind "gittag"
@@ -44,6 +47,10 @@ func New(spec interface{}) (*GitTag, error) {
 	newFilter, err := newSpec.VersionFilter.Init()
 	if err != nil {
 		return &GitTag{}, err
+	}
+
+	if !newSpec.OriginalVersion {
+		logrus.Warningf("%s\n\n", DeprecatedSemverVersionVersion)
 	}
 
 	newResource := &GitTag{

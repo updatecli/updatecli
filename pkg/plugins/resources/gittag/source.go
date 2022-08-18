@@ -29,7 +29,13 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	value := gt.foundVersion.OriginalVersion
+	// To remove after transition
+	// cfg https://github.com/updatecli/updatecli/issues/803
+	if !gt.spec.OriginalVersion {
+		value = gt.foundVersion.ParsedVersion
+	}
 
 	if len(value) == 0 {
 		logrus.Infof("%s No git tag found matching pattern %q", result.FAILURE, gt.versionFilter.Pattern)
