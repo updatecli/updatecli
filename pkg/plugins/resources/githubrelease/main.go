@@ -2,6 +2,7 @@ package githubrelease
 
 import (
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -21,13 +22,16 @@ type Spec struct {
 	Username string `yaml:",omitempty" jsonschema:"required"`
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// OriginalVersion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
+	OriginalVersion bool
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
 type GitHubRelease struct {
-	ghHandler     github.GithubHandler
-	versionFilter version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
-	foundVersion  version.Version
+	ghHandler       github.GithubHandler
+	versionFilter   version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
+	foundVersion    version.Version
+	OriginalVersion bool
 }
 
 // New returns a new valid GitHubRelease object.
@@ -50,13 +54,18 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
+	if !newSpec.OriginalVersion {
+		logrus.Warningf("%s\n\n", DeprecatedSemverVersionVersion)
+	}
+
 	newFilter, err := newSpec.VersionFilter.Init()
 	if err != nil {
 		return &GitHubRelease{}, err
 	}
 
 	return &GitHubRelease{
-		ghHandler:     newHandler,
-		versionFilter: newFilter,
+		ghHandler:       newHandler,
+		versionFilter:   newFilter,
+		OriginalVersion: newSpec.OriginalVersion,
 	}, nil
 }

@@ -33,7 +33,14 @@ func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 	if err != nil {
 		return "", err
 	}
+
 	value = gr.foundVersion.OriginalVersion
+
+	// To remove after transition is over
+	// cfr https://github.com/updatecli/updatecli/issues/803
+	if !gr.OriginalVersion {
+		value = gr.foundVersion.ParsedVersion
+	}
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, gr.versionFilter.Pattern)
