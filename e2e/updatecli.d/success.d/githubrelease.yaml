@@ -1,0 +1,12 @@
+sources:
+  latestVersion:
+    name: Get latest Venom release
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      originalVersion: true
+      versionfilter:
+        kind: semver

@@ -1,0 +1,14 @@
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli/updatecli.git
+
+sources:
+  default:
+    kind: gittag
+    scmid: default
+    spec:
+      originalVersion: true
+      versionFilter:
+        kind: semver
