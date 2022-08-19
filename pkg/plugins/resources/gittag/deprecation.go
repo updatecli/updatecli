@@ -7,15 +7,29 @@ var (
 | then feel free to add the parameter 'originalVersion: true' to hide this message such as in the following example.
 | Otherwise please keep reading this message carefully.
 | 
+| Before:
 | ----
-| sources:
-|  		example:
-|    		name: Get latest Updatecli release
-|    		kind: gittag
-|    		spec:
-|      			originalVersion: true
-|      			versionfilter:
-|        			kind: semver
+| < sources:
+| <     example:
+| <         name: Get latest Updatecli release
+| <         kind: gittag
+| <    	    spec:
+| <             versionfilter:
+| <             kind: semver
+| ----
+|
+| After:
+| ----
+| > sources:
+| >     example:
+| >         name: Get latest Updatecli release
+| >    	    kind: gittag
+| >    	    spec:
+| >             originalVersion: true
+| >             versionfilter:
+| >             kind: semver
+| >             transformers:
+| >                 - trimprefix: v
 | ----
 | 
 | In Updatecli, we consider that information retrieved from a "Source" shouldn't be altered.
