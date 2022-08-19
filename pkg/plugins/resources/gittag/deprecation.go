@@ -3,7 +3,7 @@ package gittag
 var (
 	DeprecatedSemverVersionVersion string = `Deprecated behavior detected
 |++++
-| If the GitTag resource you are interacting with, doesn't prepend the retrieved version with the character "v" such as "v1.0.0",
+| If the GitTag resource you are interacting with doesn't prepend the retrieved version with the character "v" such as "v1.0.0",
 | then feel free to add the parameter 'originalVersion: true' to hide this message such as in the following example.
 | Otherwise please keep reading this message carefully.
 | 
