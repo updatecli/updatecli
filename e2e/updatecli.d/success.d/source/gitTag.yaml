@@ -21,4 +21,5 @@ sources:
       versionfilter:
         kind: semver
         pattern: "~0.1"
+      keeporiginalversion: true
     scmid: updatecli
