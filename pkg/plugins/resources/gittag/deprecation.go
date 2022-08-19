@@ -21,7 +21,7 @@ var (
 | In Updatecli, we consider that information retrieved from a "Source" shouldn't be altered.
 | Instead, it should be the role of a "Transformer" rule to modify it.
 |
-| The Git Tag version retrieve using the semantic version rule will stop dropping the "v" if one is specified in the Git tag such as v1.0.0.
+| The Git Tag version retrieval using the semantic version rule will stop dropping the "v" if one is specified in the Git tag such as v1.0.0.
 | This bug has been around for so long that we saw a significant amount of Updateclli manifest written in a way that we can't automatically fix by running "updatecli manifest upgrade"
 | 
 | As we take seriously backward compatibility for Updatecli manifest, we introduce the parameter "originalVersion" to keep the current deprecated behavior until all manifests are updated.
