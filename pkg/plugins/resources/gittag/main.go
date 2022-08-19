@@ -66,7 +66,7 @@ func (gt *GitTag) Validate() error {
 	}
 
 	if !gt.spec.KeepOriginalVersion && gt.spec.VersionFilter.Kind == version.SEMVERVERSIONKIND {
-		logrus.Warningf("%s\n\n", DeprecatedSemverVersionVersion)
+		logrus.Warningf("%s\n\n", DeprecatedSemverVersionMessage)
 	}
 
 	// Return all the validation errors if found any

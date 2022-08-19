@@ -1,7 +1,7 @@
 package githubrelease
 
 var (
-	DeprecatedSemverVersionVersion string = `Deprecated behavior detected
+	DeprecatedSemverVersionMessage string = `Deprecated behavior detected
 |++++
 | If the Github Release you are interacting with, doesn't prepend the retrieved version with the character "v" such as "v1.0.0",
 | then feel free to add the parameter 'originalVersion: true' to hide this message such as in the following example.

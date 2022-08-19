@@ -55,7 +55,7 @@ func New(spec interface{}) (*GitHubRelease, error) {
 	}
 
 	if !newSpec.KeepOriginalVersion && newSpec.VersionFilter.Kind == version.SEMVERVERSIONKIND {
-		logrus.Warningf("%s\n\n", DeprecatedSemverVersionVersion)
+		logrus.Warningf("%s\n\n", DeprecatedSemverVersionMessage)
 	}
 
 	newFilter, err := newSpec.VersionFilter.Init()
