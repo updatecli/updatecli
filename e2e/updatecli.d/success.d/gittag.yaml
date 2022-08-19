@@ -12,3 +12,9 @@ sources:
       keeporiginalVersion: true
       versionFilter:
         kind: semver
+  regex:
+    kind: gittag
+    scmid: default
+    spec:
+      versionFilter:
+        kind: regex
