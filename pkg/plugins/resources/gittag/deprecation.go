@@ -23,7 +23,7 @@ var (
 | > sources:
 | >     example:
 | >         name: Get latest Updatecli release
-| >    	    kind: gittag
+| >         kind: gittag
 | >    	    spec:
 | >             originalVersion: true
 | >             versionfilter:
