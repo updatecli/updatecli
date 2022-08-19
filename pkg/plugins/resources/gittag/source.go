@@ -31,9 +31,9 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 	}
 
 	value := gt.foundVersion.OriginalVersion
-	// To remove after transition
+	// To remove after transition is over
 	// cfg https://github.com/updatecli/updatecli/issues/803
-	if !gt.spec.OriginalVersion {
+	if !gt.spec.KeepOriginalVersion {
 		value = gt.foundVersion.ParsedVersion
 	}
 

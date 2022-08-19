@@ -38,7 +38,7 @@ func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 
 	// To remove after transition is over
 	// cfr https://github.com/updatecli/updatecli/issues/803
-	if !gr.OriginalVersion {
+	if !gr.keepOriginalVersion {
 		value = gr.foundVersion.ParsedVersion
 	}
 

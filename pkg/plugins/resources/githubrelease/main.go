@@ -22,16 +22,16 @@ type Spec struct {
 	Username string `yaml:",omitempty" jsonschema:"required"`
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// OriginalVersion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
-	OriginalVersion bool
+	// KeepOriginalVersion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
+	KeepOriginalVersion bool
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
 type GitHubRelease struct {
-	ghHandler       github.GithubHandler
-	versionFilter   version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
-	foundVersion    version.Version
-	OriginalVersion bool
+	ghHandler           github.GithubHandler
+	versionFilter       version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
+	foundVersion        version.Version
+	keepOriginalVersion bool
 }
 
 // New returns a new valid GitHubRelease object.
@@ -54,7 +54,7 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
-	if !newSpec.OriginalVersion {
+	if !newSpec.KeepOriginalVersion && newSpec.VersionFilter.Kind == version.SEMVERVERSIONKIND {
 		logrus.Warningf("%s\n\n", DeprecatedSemverVersionVersion)
 	}
 
@@ -64,8 +64,8 @@ func New(spec interface{}) (*GitHubRelease, error) {
 	}
 
 	return &GitHubRelease{
-		ghHandler:       newHandler,
-		versionFilter:   newFilter,
-		OriginalVersion: newSpec.OriginalVersion,
+		ghHandler:           newHandler,
+		versionFilter:       newFilter,
+		keepOriginalVersion: newSpec.KeepOriginalVersion,
 	}, nil
 }

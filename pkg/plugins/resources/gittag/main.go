@@ -19,8 +19,8 @@ type Spec struct {
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// Message associated to the git tag
 	Message string `yaml:",omitempty"`
-	// OriginalVersion is an ephemeral parameters to smooth the transition. cfg https://github.com/updatecli/updatecli/issues/803
-	OriginalVersion bool
+	// Keeporiginalversion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
+	KeepOriginalVersion bool
 }
 
 // GitTag defines a resource of kind "gittag"
@@ -49,10 +49,6 @@ func New(spec interface{}) (*GitTag, error) {
 		return &GitTag{}, err
 	}
 
-	if !newSpec.OriginalVersion {
-		logrus.Warningf("%s\n\n", DeprecatedSemverVersionVersion)
-	}
-
 	newResource := &GitTag{
 		spec:             newSpec,
 		versionFilter:    newFilter,
@@ -67,6 +63,10 @@ func (gt *GitTag) Validate() error {
 	validationErrors := []string{}
 	if gt.spec.Path == "" {
 		validationErrors = append(validationErrors, "Git working directory path is empty while it must be specified. Did you specify an `scmID` or a `spec.path`?")
+	}
+
+	if !gt.spec.KeepOriginalVersion && gt.spec.VersionFilter.Kind == version.SEMVERVERSIONKIND {
+		logrus.Warningf("%s\n\n", DeprecatedSemverVersionVersion)
 	}
 
 	// Return all the validation errors if found any

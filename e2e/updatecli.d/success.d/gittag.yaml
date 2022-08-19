@@ -9,6 +9,6 @@ sources:
     kind: gittag
     scmid: default
     spec:
-      originalVersion: true
+      keeporiginalVersion: true
       versionFilter:
         kind: semver
