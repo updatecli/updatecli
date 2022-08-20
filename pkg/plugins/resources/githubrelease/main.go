@@ -22,7 +22,7 @@ type Spec struct {
 	Username string `yaml:",omitempty" jsonschema:"required"`
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// KeepOriginalVersion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
+	// [S] KeepOriginalVersion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
 	KeepOriginalVersion bool `yaml:",omitempty"`
 }
 

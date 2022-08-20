@@ -19,7 +19,7 @@ type Spec struct {
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// Message associated to the git tag
 	Message string `yaml:",omitempty"`
-	// Keeporiginalversion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
+	// [S] Keeporiginalversion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
 	KeepOriginalVersion bool `yaml:",omitempty"`
 }
 
