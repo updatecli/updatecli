@@ -18,6 +18,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
+	"github.com/updatecli/updatecli/pkg/core/version"
 
 	"path/filepath"
 	"strings"
@@ -426,6 +427,8 @@ func (e *Engine) LoadAutoDiscovery() error {
 
 		for i := range manifests {
 			logrus.Infof("%v. %s", i, manifests[i].Name)
+
+			manifests[i].Version = version.Version
 
 			newConfig := config.Config{
 				Spec: manifests[i],
