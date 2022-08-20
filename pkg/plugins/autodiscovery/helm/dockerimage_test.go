@@ -13,7 +13,7 @@ func TestGetRegistryEndpoint(t *testing.T) {
 	}{
 		{
 			image:            "updatecli/updatecli",
-			expectedRegistry: "index.docker.io",
+			expectedRegistry: "docker.io",
 		},
 		{
 			image:            "ghcr.io/updatecli/updatecli",
