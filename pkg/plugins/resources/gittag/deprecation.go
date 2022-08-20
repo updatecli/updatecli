@@ -40,7 +40,7 @@ var (
 | 
 | As we take seriously backward compatibility for Updatecli manifest, we introduce the parameter "originalVersion" to keep the current deprecated behavior until all manifests are updated.
 | 
-| Please adapt your manifest to this new behavior by adding a transformer and then set originalVersion to true to validate that you are manifest is compatible with the new behavior.
+| Please adapt your manifest to this new behavior by adding a transformer and then set keeporiginalVersion to true to validate that you are manifest is compatible with the new behavior.
 | More information on https://github.com/updatecli/updatecli/issues/803
 |++++
 `
