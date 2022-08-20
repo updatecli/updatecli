@@ -23,7 +23,7 @@ type Spec struct {
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// KeepOriginalVersion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
-	KeepOriginalVersion bool
+	KeepOriginalVersion bool `yaml:",omitempty"`
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
