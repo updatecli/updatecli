@@ -79,7 +79,5 @@ func getFleetBundleData(filename string) (*fleetMetada, error) {
 	logrus.Debugf("Helm Repository URL: %q\n", fleetData.Helm.Repo)
 	logrus.Debugf("Version: %q\n", fleetData.Helm.Version)
 
-	logrus.Infof("%+v", fleetData)
-
 	return &fleetData, nil
 }
