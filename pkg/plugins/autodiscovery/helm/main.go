@@ -1,6 +1,8 @@
 package helm
 
 import (
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -64,6 +66,10 @@ func (h Helm) DiscoverManifests(
 	scmID string,
 	pullrequestSpec *pullrequest.Config,
 	pullrequestID string) ([]config.Spec, error) {
+
+	logrus.Infof("\n\n%s\n", strings.Repeat("#", len("Helm")+4))
+	logrus.Infof("# %s #\n", strings.ToTitle("Helm"))
+	logrus.Infof("%s\n", strings.Repeat("#", len("Helm")+4))
 
 	manifests, err := h.discoverHelmDependenciesManifests()
 

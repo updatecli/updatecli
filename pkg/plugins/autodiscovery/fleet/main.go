@@ -1,6 +1,8 @@
 package fleet
 
 import (
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -61,6 +63,10 @@ func (f Fleet) DiscoverManifests(
 	scmID string,
 	pullrequestSpec *pullrequest.Config,
 	pullrequestID string) ([]config.Spec, error) {
+
+	logrus.Infof("\n\n%s\n", strings.Repeat("#", len("Rancher Fleet")+4))
+	logrus.Infof("# %s #\n", strings.ToTitle("Rancher Fleet"))
+	logrus.Infof("%s\n", strings.Repeat("#", len("Rancher Fleet")+4))
 
 	manifests, err := f.discoverFleetDependenciesManifests()
 
