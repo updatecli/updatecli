@@ -92,6 +92,60 @@ targets:
             name: epinio
             versionincrement: minor
         sourceid: epinio-ui
+`,
+		"epinio_epinio/epinio-ui": `name: epinio_epinio/epinio-ui
+sources:
+    epinio/epinio-ui:
+        name: Get latest "epinio/epinio-ui" Container tag
+        kind: dockerimage
+        spec:
+            image: epinio/epinio-ui
+conditions:
+    epinio/epinio-ui:
+        name: Ensure container repository "epinio/epinio-ui" is specified
+        kind: yaml
+        spec:
+            file: epinio/values.yaml
+            key: images.ui.repository
+            value: epinio/epinio-ui
+        disablesourceinput: true
+targets:
+    epinio/epinio-ui:
+        name: Bump container image tag for image "epinio/epinio-ui" in Chart "epinio"
+        kind: helmchart
+        spec:
+            file: values.yaml
+            key: images.ui.tag
+            name: epinio
+            versionincrement: minor
+        sourceid: epinio/epinio-ui
+`,
+		"epinio_epinio/epinio": `name: epinio_epinio/epinio
+sources:
+    epinio/epinio:
+        name: Get latest "epinio/epinio" Container tag
+        kind: dockerimage
+        spec:
+            image: epinio/epinio
+conditions:
+    epinio/epinio:
+        name: Ensure container repository "epinio/epinio" is specified
+        kind: yaml
+        spec:
+            file: epinio/values.yaml
+            key: image.repository
+            value: epinio/epinio
+        disablesourceinput: true
+targets:
+    epinio/epinio:
+        name: Bump container image tag for image "epinio/epinio" in Chart "epinio"
+        kind: helmchart
+        spec:
+            file: values.yaml
+            key: image.tag
+            name: epinio
+            versionincrement: minor
+        sourceid: epinio/epinio
 `}
 )
 
@@ -123,8 +177,8 @@ func TestDiscoverManifests(t *testing.T) {
 
 		if string(output) != expectedPipelines[pipeline.Name] {
 			fmt.Println("Wrong result")
-			fmt.Printf("Expected:\n>>>\n%q\n>>>\n\n", expectedPipelines[pipeline.Name])
-			fmt.Printf("Got:\n<<<\n%q\n<<<\n", output)
+			fmt.Printf("Expected:\n>>>\n%v\n>>>\n\n", expectedPipelines[pipeline.Name])
+			fmt.Printf("Got:\n<<<\n%v\n<<<\n", string(output))
 			t.Fail()
 		}
 
