@@ -9,6 +9,8 @@ autodiscovery:
   scmid: epinio
   crawlers:
     helm:
+      # Enabled by default
+      enable: true
       # To ignore specific path
       #ignore:
       #  # - path: chart/epinio-ui/*

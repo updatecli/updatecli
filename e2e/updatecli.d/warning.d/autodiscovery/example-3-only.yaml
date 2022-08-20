@@ -1,9 +1,0 @@
-autodiscovery:
-  crawlers:
-    helm:
-      only:
-        - path: chart/epinio/*
-    fleet:
-      enable: false
-    
-

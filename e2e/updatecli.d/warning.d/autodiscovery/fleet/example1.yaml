@@ -1,6 +1,16 @@
+scms:
+  epinio:
+    kind: git 
+    spec:
+      url: https://github.com/olblak/fleet-lab.git
+    
 autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: epinio
   crawlers:
     helm:
+      # By default enabled
+      enable: true
       # To ignore specific path
       #ignore:
       #  # - path: chart/epinio-ui/*
@@ -9,4 +19,6 @@ autodiscovery:
       #only:
       #  # - path: /home/olblak/Projects/Epinio/helm-charts/chart/epinio/*
       #  - path: chart/epinio/*
-#
+    fleet:
+      # By default it's enable 
+      enable: true
