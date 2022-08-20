@@ -1,6 +1,6 @@
 package cmd
 
 var (
-	// autoDiscoveryDisabled allows to disable/enable the autodiscovery feature. Default is disabled
-	autoDiscoveryDisabled bool
+	// localDiscoveryEnabled allows to disable/enable the autodiscovery feature. Default is disabled
+	localDiscoveryEnabled bool
 )

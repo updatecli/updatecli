@@ -25,7 +25,7 @@ var (
 )
 
 type Options struct {
-	Disabled bool
+	Enabled bool
 }
 type Crawler interface {
 	DiscoverManifests(

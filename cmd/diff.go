@@ -19,7 +19,7 @@ var (
 			e.Options.Config.ValuesFiles = valuesFiles
 			e.Options.Config.SecretsFiles = secretsFiles
 
-			e.Options.Pipeline.AutoDiscovery.Disabled = autoDiscoveryDisabled
+			e.Options.Pipeline.AutoDiscovery.Enabled = localDiscoveryEnabled
 
 			e.Options.Pipeline.Target.Commit = false
 			e.Options.Pipeline.Target.Push = false
@@ -39,7 +39,7 @@ func init() {
 	diffCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Sets config file or directory.")
 	diffCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	diffCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
-	diffCmd.Flags().BoolVar(&autoDiscoveryDisabled, "disable-local-autodiscovery", false, "Discovery automatically available Updatecli manifest")
+	diffCmd.Flags().BoolVar(&localDiscoveryEnabled, "local-autodiscovery", false, "Local AutoDiscovery feature enabled")
 	diffCmd.Flags().BoolVar(&diffClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 
 }

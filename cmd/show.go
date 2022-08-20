@@ -20,7 +20,7 @@ var (
 			e.Options.Config.ManifestFile = cfgFile
 			e.Options.Config.ValuesFiles = valuesFiles
 			e.Options.Config.SecretsFiles = secretsFiles
-			e.Options.Pipeline.AutoDiscovery.Disabled = autoDiscoveryDisabled
+			e.Options.Pipeline.AutoDiscovery.Enabled = localDiscoveryEnabled
 			e.Options.Pipeline.Target.Clean = showClean
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli manifest show`")
@@ -38,7 +38,7 @@ func init() {
 	showCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Sets config file or directory.")
 	showCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	showCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
-	showCmd.Flags().BoolVar(&autoDiscoveryDisabled, "disable-local-autodiscovery", false, "Discovery automatically available Updatecli manifest")
+	showCmd.Flags().BoolVar(&localDiscoveryEnabled, "local-autodiscovery", false, "Local AutoDiscovery feature enabled")
 	showCmd.Flags().BoolVar(&showClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	showCmd.Flags().BoolVar(&showDisablePrepare, "disable-prepare", false, "--disable-prepare skip the Updatecli 'prepare' stage'--disable-prepare=true'")
 }

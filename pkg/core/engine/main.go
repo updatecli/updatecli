@@ -340,7 +340,7 @@ func (e *Engine) LoadAutoDiscovery() error {
 	var autoDiscoveryPipelines []pipeline.Pipeline
 
 	// Default Autodiscovery pipeline
-	if !e.Options.Pipeline.AutoDiscovery.Disabled {
+	if e.Options.Pipeline.AutoDiscovery.Enabled {
 		var defaultPipeline pipeline.Pipeline
 		err := defaultPipeline.Init(
 			&config.Config{
@@ -357,7 +357,6 @@ func (e *Engine) LoadAutoDiscovery() error {
 		} else {
 			autoDiscoveryPipelines = append(autoDiscoveryPipelines, defaultPipeline)
 		}
-
 	}
 
 	for _, p := range e.Pipelines {
