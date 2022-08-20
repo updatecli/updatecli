@@ -25,7 +25,7 @@ var (
 | >         name: Get latest Updatecli release
 | >         kind: gittag
 | >    	    spec:
-| >             originalVersion: true
+| >             keeporiginalversion: true
 | >             versionfilter:
 | >             kind: semver
 | >             transformers:
