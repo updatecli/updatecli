@@ -93,59 +93,59 @@ targets:
             versionincrement: minor
         sourceid: epinio-ui
 `,
-		"epinio_epinio/epinio-ui": `name: epinio_epinio/epinio-ui
+		"epinio_epinioteam/epinio-ui-qa": `name: epinio_epinioteam/epinio-ui-qa
 sources:
-    epinio/epinio-ui:
-        name: Get latest "epinio/epinio-ui" Container tag
+    epinioteam/epinio-ui-qa:
+        name: Get latest "epinioteam/epinio-ui-qa" Container tag
         kind: dockerimage
         spec:
-            image: epinio/epinio-ui
+            image: epinioteam/epinio-ui-qa
 conditions:
-    epinio/epinio-ui:
-        name: Ensure container repository "epinio/epinio-ui" is specified
+    epinioteam/epinio-ui-qa:
+        name: Ensure container repository "epinioteam/epinio-ui-qa" is specified
         kind: yaml
         spec:
             file: epinio/values.yaml
             key: images.ui.repository
-            value: epinio/epinio-ui
+            value: epinioteam/epinio-ui-qa
         disablesourceinput: true
 targets:
-    epinio/epinio-ui:
-        name: Bump container image tag for image "epinio/epinio-ui" in Chart "epinio"
+    epinioteam/epinio-ui-qa:
+        name: Bump container image tag for image "epinioteam/epinio-ui-qa" in Chart "epinio"
         kind: helmchart
         spec:
             file: values.yaml
             key: images.ui.tag
             name: epinio
             versionincrement: minor
-        sourceid: epinio/epinio-ui
+        sourceid: epinioteam/epinio-ui-qa
 `,
-		"epinio_epinio/epinio": `name: epinio_epinio/epinio
+		"epinio_splatform/epinio-server": `name: epinio_splatform/epinio-server
 sources:
-    epinio/epinio:
-        name: Get latest "epinio/epinio" Container tag
+    splatform/epinio-server:
+        name: Get latest "splatform/epinio-server" Container tag
         kind: dockerimage
         spec:
-            image: epinio/epinio
+            image: splatform/epinio-server
 conditions:
-    epinio/epinio:
-        name: Ensure container repository "epinio/epinio" is specified
+    splatform/epinio-server:
+        name: Ensure container repository "splatform/epinio-server" is specified
         kind: yaml
         spec:
             file: epinio/values.yaml
             key: image.repository
-            value: epinio/epinio
+            value: splatform/epinio-server
         disablesourceinput: true
 targets:
-    epinio/epinio:
-        name: Bump container image tag for image "epinio/epinio" in Chart "epinio"
+    splatform/epinio-server:
+        name: Bump container image tag for image "splatform/epinio-server" in Chart "epinio"
         kind: helmchart
         spec:
             file: values.yaml
             key: image.tag
             name: epinio
             versionincrement: minor
-        sourceid: epinio/epinio
+        sourceid: splatform/epinio-server
 `}
 )
 
