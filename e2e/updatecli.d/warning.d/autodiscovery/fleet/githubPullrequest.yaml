@@ -1,0 +1,39 @@
+scms:
+  fleet-lab:
+    kind: github
+    spec:
+      owner: olblak
+      repository: fleet-lab
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      branch: main
+
+pullrequests:
+  fleet-lab:
+    kind: github
+    scmid: fleet-lab
+    spec:
+      labels:
+        - dependencies
+
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: fleet-lab
+  pullrequestid: fleet-lab
+  crawlers:
+    helm:
+      # By default enabled
+      enable: true
+      # To ignore specific path
+      #ignore:
+      #  # - path: <filepath relative to scm repository>
+      #only:
+      #  # - path: <filepath relative to scm repository>
+    fleet:
+      # By default it's enable 
+      enable: true
+      # To ignore specific path
+      #ignore:
+      #  # - path: <filepath relative to scm repository>
+      #only:
+      #  # - path: <filepath relative to scm repository>
