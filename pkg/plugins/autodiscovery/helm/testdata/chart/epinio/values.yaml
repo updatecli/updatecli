@@ -1,7 +1,7 @@
 image:
-  repository: epinio/epinio
+  repository: splatform/epinio-server
   tag: latest
 images:
   ui:
-    repository: epinio/epinio-ui
+    repository: epinioteam/epinio-ui-qa
     tag: latest
