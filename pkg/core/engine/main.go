@@ -426,8 +426,6 @@ func (e *Engine) LoadAutoDiscovery() error {
 		}
 
 		for i := range manifests {
-			logrus.Infof("%v. %s", i, manifests[i].Name)
-
 			manifests[i].Version = version.Version
 
 			newConfig := config.Config{
