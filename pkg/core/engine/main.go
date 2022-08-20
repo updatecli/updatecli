@@ -338,15 +338,13 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 // LoadAutoDiscovery will try to guess available pipelines based on specific directory
 func (e *Engine) LoadAutoDiscovery() error {
 
-	var autoDiscoveryPipelines []pipeline.Pipeline
-
 	// Default Autodiscovery pipeline
 	if e.Options.Pipeline.AutoDiscovery.Enabled {
 		var defaultPipeline pipeline.Pipeline
 		err := defaultPipeline.Init(
 			&config.Config{
 				Spec: config.Spec{
-					Name:          "Default AutoDiscovery",
+					Name:          "Local AutoDiscovery",
 					AutoDiscovery: autodiscovery.DefaultCrawlerSpecs,
 				},
 			},
@@ -356,26 +354,22 @@ func (e *Engine) LoadAutoDiscovery() error {
 		if err != nil {
 			logrus.Errorln(err)
 		} else {
-			autoDiscoveryPipelines = append(autoDiscoveryPipelines, defaultPipeline)
+			e.Pipelines = append(e.Pipelines, defaultPipeline)
 		}
-	}
-
-	for _, p := range e.Pipelines {
-		if p.Config.Spec.AutoDiscovery.Crawlers != nil {
-			autoDiscoveryPipelines = append(autoDiscoveryPipelines, p)
-		}
-	}
-
-	// Exit if no autodiscover pipeline
-	if len(autoDiscoveryPipelines) == 0 {
-		return nil
 	}
 
 	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Auto Discovery")+4))
 	logrus.Infof("+ %s +\n", strings.ToTitle("Auto Discovery"))
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Auto Discovery")+4))
 
-	for _, p := range autoDiscoveryPipelines {
+	for id, p := range e.Pipelines {
+		if p.Config.Spec.AutoDiscovery.Crawlers == nil {
+			continue
+		}
+
+		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Name)+4))
+		logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
+		logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
 		var sc scm.Config
 		var pr pullrequest.Config
@@ -408,6 +402,8 @@ func (e *Engine) LoadAutoDiscovery() error {
 			&pr)
 
 		if err != nil {
+			e.Pipelines[id].Report.Result = result.FAILURE
+			e.Reports = append(e.Reports, e.Pipelines[id].Report)
 			logrus.Errorln(err)
 			return err
 		}
@@ -417,6 +413,8 @@ func (e *Engine) LoadAutoDiscovery() error {
 		manifests, err := c.Run()
 
 		if err != nil {
+			e.Pipelines[id].Report.Result = result.FAILURE
+			e.Reports = append(e.Reports, e.Pipelines[id].Report)
 			logrus.Errorln(err)
 			return err
 		}
@@ -439,17 +437,25 @@ func (e *Engine) LoadAutoDiscovery() error {
 				e.Pipelines = append(e.Pipelines, newPipeline)
 				e.configurations = append(e.configurations, newConfig)
 			} else {
+				e.Pipelines[id].Report.Result = result.FAILURE
+				e.Reports = append(e.Reports, e.Pipelines[id].Report)
 				// don't initially fail as init. of the pipeline still fails even with a successful validation
 				err := fmt.Errorf("%q - %s", manifests[i].Name, err)
 				errs = append(errs, err)
 			}
 			if len(errs) > 0 {
+				e.Pipelines[id].Report.Result = result.FAILURE
+				e.Reports = append(e.Reports, e.Pipelines[id].Report)
+
 				logrus.Errorf("Error(s) happened while generating Updatecli pipeline manifest")
 				for i := range errs {
 					logrus.Errorf("%v", errs[i])
 				}
 			}
 		}
+
+		e.Pipelines[id].Report.Result = result.SUCCESS
+		e.Reports = append(e.Reports, e.Pipelines[id].Report)
 
 	}
 

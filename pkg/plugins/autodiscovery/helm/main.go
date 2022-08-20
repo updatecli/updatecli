@@ -67,9 +67,8 @@ func (h Helm) DiscoverManifests(
 	pullrequestSpec *pullrequest.Config,
 	pullrequestID string) ([]config.Spec, error) {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("#", len("Helm")+4))
-	logrus.Infof("# %s #\n", strings.ToTitle("Helm"))
-	logrus.Infof("%s\n", strings.Repeat("#", len("Helm")+4))
+	logrus.Infof("\n\n%s\n", strings.ToTitle("Helm"))
+	logrus.Infof("%s\n", strings.Repeat("=", len("Helm")+1))
 
 	manifests, err := h.discoverHelmDependenciesManifests()
 

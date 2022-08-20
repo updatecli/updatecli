@@ -64,9 +64,8 @@ func (f Fleet) DiscoverManifests(
 	pullrequestSpec *pullrequest.Config,
 	pullrequestID string) ([]config.Spec, error) {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("#", len("Rancher Fleet")+4))
-	logrus.Infof("# %s #\n", strings.ToTitle("Rancher Fleet"))
-	logrus.Infof("%s\n", strings.Repeat("#", len("Rancher Fleet")+4))
+	logrus.Infof("\n\n%s\n", strings.ToTitle("Rancher Fleet"))
+	logrus.Infof("%s\n", strings.Repeat("=", len("Rancher Fleet")+1))
 
 	manifests, err := f.discoverFleetDependenciesManifests()
 
