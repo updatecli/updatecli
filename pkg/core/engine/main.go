@@ -403,7 +403,6 @@ func (e *Engine) LoadAutoDiscovery() error {
 
 		if err != nil {
 			e.Pipelines[id].Report.Result = result.FAILURE
-			e.Reports = append(e.Reports, e.Pipelines[id].Report)
 			logrus.Errorln(err)
 			return err
 		}
@@ -414,7 +413,6 @@ func (e *Engine) LoadAutoDiscovery() error {
 
 		if err != nil {
 			e.Pipelines[id].Report.Result = result.FAILURE
-			e.Reports = append(e.Reports, e.Pipelines[id].Report)
 			logrus.Errorln(err)
 			return err
 		}
@@ -438,14 +436,12 @@ func (e *Engine) LoadAutoDiscovery() error {
 				e.configurations = append(e.configurations, newConfig)
 			} else {
 				e.Pipelines[id].Report.Result = result.FAILURE
-				e.Reports = append(e.Reports, e.Pipelines[id].Report)
 				// don't initially fail as init. of the pipeline still fails even with a successful validation
 				err := fmt.Errorf("%q - %s", manifests[i].Name, err)
 				errs = append(errs, err)
 			}
 			if len(errs) > 0 {
 				e.Pipelines[id].Report.Result = result.FAILURE
-				e.Reports = append(e.Reports, e.Pipelines[id].Report)
 
 				logrus.Errorf("Error(s) happened while generating Updatecli pipeline manifest")
 				for i := range errs {
@@ -455,7 +451,6 @@ func (e *Engine) LoadAutoDiscovery() error {
 		}
 
 		e.Pipelines[id].Report.Result = result.SUCCESS
-		e.Reports = append(e.Reports, e.Pipelines[id].Report)
 
 	}
 
