@@ -1,0 +1,7 @@
+autodiscovery:
+  crawlers:
+    helm:
+      # To ignore specific path
+      ignore:
+        - path: chart/epinio/*
+
