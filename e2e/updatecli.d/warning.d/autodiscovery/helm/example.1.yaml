@@ -13,10 +13,9 @@ autodiscovery:
       enable: true
       # To ignore specific path
       #ignore:
-      #  # - path: chart/epinio-ui/*
-      #  # - path: /home/olblak/Projects/Epinio/helm-charts/chart/epinio/*
-      #  # - path: chart/epinio/*
+      #  # - path: <filepath relative to scm repository>
+      #  # - path: chart/*
       #only:
-      #  # - path: /home/olblak/Projects/Epinio/helm-charts/chart/epinio/*
-      #  - path: chart/epinio/*
+      #  # - path: <filepath relative to scm repository>
+      #  # - path: chart/*
 #
