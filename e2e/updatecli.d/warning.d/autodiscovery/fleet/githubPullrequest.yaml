@@ -29,7 +29,7 @@ autodiscovery:
       #  # - path: <filepath relative to scm repository>
       #only:
       #  # - path: <filepath relative to scm repository>
-    fleet:
+    rancher/fleet:
       # By default it's enable 
       enable: true
       # To ignore specific path
