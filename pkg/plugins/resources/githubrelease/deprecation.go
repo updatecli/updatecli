@@ -33,7 +33,7 @@ var (
 | >             repository: updatecli
 | >             token: '{{ requiredEnv "GITHUB_TOKEN" }}'
 | >             username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-| >             originalVersion: true
+| >             keeporiginalversion: true
 | >             versionfilter:
 | >                 kind: semver
 | >             transformers:
