@@ -11,7 +11,7 @@ sources:
       versionfilter:
         kind: semver
   regex:
-    name: Get latest Venom release
+    name: Get latest Updatecli release
     kind: githubrelease
     spec:
       owner: updatecli
