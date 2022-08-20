@@ -1,6 +1,6 @@
 sources:
   latestVersion:
-    name: Get latest Venom release
+    name: Get latest Updatecli release
     kind: githubrelease
     spec:
       owner: updatecli
