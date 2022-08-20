@@ -20,7 +20,7 @@ type Spec struct {
 	// Message associated to the git tag
 	Message string `yaml:",omitempty"`
 	// Keeporiginalversion is an ephemeral parameters. cfr https://github.com/updatecli/updatecli/issues/803
-	KeepOriginalVersion bool
+	KeepOriginalVersion bool  `yaml:",omitempty"`
 }
 
 // GitTag defines a resource of kind "gittag"
