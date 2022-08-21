@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/engine"
@@ -18,6 +19,7 @@ var (
 	secretsFiles []string
 	e            engine.Engine
 	verbose      bool
+	experimental bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -45,9 +47,14 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "debug", "", false, "Debug Output")
+	rootCmd.PersistentFlags().BoolVarP(&experimental, "experimental", "", false, "Enable Experimental mode")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if verbose {
 			logrus.SetLevel(logrus.DebugLevel)
+		}
+		if experimental {
+			cmdoptions.Experimental = true
+			logrus.Infof("Experimental Mode Enabled")
 		}
 	}
 	rootCmd.AddCommand(
