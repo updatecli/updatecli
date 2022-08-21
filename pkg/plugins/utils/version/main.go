@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 )
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
@@ -21,6 +22,13 @@ type Filter struct {
 type Version struct {
 	ParsedVersion   string
 	OriginalVersion string
+}
+
+func (v Version) GetVersion() string {
+	if cmdoptions.Experimental {
+		return v.OriginalVersion
+	}
+	return v.ParsedVersion
 }
 
 const (
