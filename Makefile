@@ -48,7 +48,7 @@ version: ## Run the "version" updatecli's subcommand for smoke test
 
 .PHONY: test
 test: ## Execute the Golang's tests for updatecli
-	go test ./...
+	go test ./... -race -coverprofile=coverage.txt -covermode=atomic
 
 test-short: ## Execute the Golang's tests for updatecli
 	go test ./... -short
