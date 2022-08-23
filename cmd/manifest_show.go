@@ -35,7 +35,7 @@ var (
 )
 
 func init() {
-	manifestShowCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Sets config file or directory.")
+	manifestShowCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
 	manifestShowCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	manifestShowCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
 	manifestShowCmd.Flags().BoolVar(&localDiscoveryEnabled, "local-autodiscovery", false, "Local AutoDiscovery feature enabled")
