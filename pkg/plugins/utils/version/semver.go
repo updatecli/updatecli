@@ -52,8 +52,8 @@ func (s *Semver) Search(versions []string) error {
 	// We need to be sure that at least one version exist
 	if len(versions) == 0 {
 		return ErrNoVersionsFound
-
 	}
+
 	err := s.Init(versions)
 	if err != nil {
 		logrus.Error(err)

@@ -48,7 +48,7 @@ func (gt *GitTag) condition(source string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	tag := gt.foundVersion.OriginalVersion
+	tag := gt.foundVersion.GetVersion()
 
 	if len(tag) == 0 {
 		err = fmt.Errorf("no git tag matching pattern %q, found", gt.versionFilter.Pattern)
