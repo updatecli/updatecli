@@ -33,7 +33,7 @@ func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 	if err != nil {
 		return "", err
 	}
-	value = gr.foundVersion.OriginalVersion
+	value = gr.foundVersion.GetVersion()
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, gr.versionFilter.Pattern)

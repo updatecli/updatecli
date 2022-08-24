@@ -38,7 +38,7 @@ searchTag:
 
 		// Todo: validate that result is valid for architecture
 
-		tag = di.foundVersion.OriginalVersion
+		tag = di.foundVersion.GetVersion()
 
 		img := di.image
 		img.Tag = tag
