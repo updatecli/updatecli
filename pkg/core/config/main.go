@@ -261,7 +261,7 @@ func (c *Config) SaveOnDisk() error {
 
 // Display shows updatecli configuration including secrets !
 func (config *Config) Display() error {
-	c, err := yaml.Marshal(&config)
+	c, err := yaml.Marshal(&config.Spec)
 	if err != nil {
 		return err
 	}
