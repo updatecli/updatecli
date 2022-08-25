@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+)
+
 // Config defines autodiscover parameters
 type Config struct {
 	// Crawlers specifies crawler configuration
@@ -8,4 +13,15 @@ type Config struct {
 	ScmId string `yaml:",omitempty"`
 	// PullrequestID specifies a pullrequest configuration to use to generate the manifest
 	PullrequestId string `yaml:",omitempty"`
+}
+
+type Input struct {
+	// ScmSpec defines the scm specification
+	ScmSpec *scm.Config
+	// ScmID defines the scmid associated to the scm specification
+	ScmID string
+	// PullRequestSpecSpec defines the pullrequest specificiation
+	PullRequestSpec *pullrequest.Config
+	// ScmID defines the scmid associated to the scm specification
+	PullrequestID string
 }

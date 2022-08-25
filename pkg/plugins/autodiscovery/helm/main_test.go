@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	goyaml "gopkg.in/yaml.v3"
 )
 
@@ -165,7 +166,7 @@ func TestDiscoverManifests(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 
-	pipelines, err := helm.DiscoverManifests(nil, "", nil, "")
+	pipelines, err := helm.DiscoverManifests(discoveryConfig.Input{})
 
 	if err != nil {
 		t.Errorf("%v", err)

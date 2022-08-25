@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
@@ -61,11 +62,7 @@ func New(spec interface{}, rootDir string) (Helm, error) {
 
 }
 
-func (h Helm) DiscoverManifests(
-	scmSpec *scm.Config,
-	scmID string,
-	pullrequestSpec *pullrequest.Config,
-	pullrequestID string) ([]config.Spec, error) {
+func (h Helm) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Helm"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Helm")+1))
@@ -87,13 +84,13 @@ func (h Helm) DiscoverManifests(
 	// Set scm configuration if specified
 	for i := range manifests {
 		// Set scm configuration if specified
-		if len(scmID) > 0 {
-			SetScm(&manifests[i], *scmSpec, scmID)
+		if len(input.ScmID) > 0 {
+			SetScm(&manifests[i], *input.ScmSpec, input.ScmID)
 		}
 
 		// Set pullrequest configuration if specified
-		if len(pullrequestID) > 0 {
-			SetPullrequest(&manifests[i], *pullrequestSpec, pullrequestID)
+		if len(input.PullrequestID) > 0 {
+			SetPullrequest(&manifests[i], *input.PullRequestSpec, input.PullrequestID)
 		}
 	}
 
