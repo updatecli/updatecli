@@ -16,6 +16,7 @@ func searchChartFiles(rootDir string, files []string) ([]string, error) {
 
 	metadataFiles := []string{}
 
+	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
@@ -24,7 +25,9 @@ func searchChartFiles(rootDir string, files []string) ([]string, error) {
 
 		for _, f := range files {
 			if info.Name() == f {
-				metadataFiles = append(metadataFiles, path)
+				if isChartRootDirectory(path) {
+					metadataFiles = append(metadataFiles, path)
+				}
 			}
 		}
 
@@ -42,6 +45,22 @@ func searchChartFiles(rootDir string, files []string) ([]string, error) {
 	}
 
 	return metadataFiles, nil
+}
+
+// isChartRootDirectory checks that file provided by argument is located at the root of a Chart directory
+func isChartRootDirectory(path string) bool {
+	for _, chartFile := range ChartValidFiles {
+		// If browse file is Chart.yaml or Chart.yml then we assume we are in a Chart root directory
+		if chartFile == filepath.Base(path) {
+			return true
+		}
+
+		if _, err := os.Stat(filepath.Join(filepath.Dir(path), chartFile)); err == nil {
+			return true
+		}
+	}
+	return false
+
 }
 
 // getChartMetadata reads a Chart.yaml for information that could be automated

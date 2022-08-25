@@ -11,8 +11,13 @@ func TestSearchFiles(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-
 	expectedFile := "testdata/chart/epinio/Chart.yaml"
+
+	if len(gotFiles) == 0 {
+		t.Errorf("Expecting file %q but got none", expectedFile)
+		return
+	}
+
 	if gotFiles[0] != expectedFile {
 		t.Errorf("Expecting file %q but got %q", expectedFile, gotFiles[0])
 	}
