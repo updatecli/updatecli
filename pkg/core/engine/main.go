@@ -339,13 +339,15 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 // LoadAutoDiscovery will try to guess available pipelines based on specific directory
 func (e *Engine) LoadAutoDiscovery() error {
 
-	if !cmdoptions.Experimental {
-		logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
-		return nil
-	}
-
 	// Default Autodiscovery pipeline
 	if e.Options.Pipeline.AutoDiscovery.Enabled {
+
+		// To remove once not experimental
+		if !cmdoptions.Experimental {
+			logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
+			return nil
+		}
+
 		var defaultPipeline pipeline.Pipeline
 		err := defaultPipeline.Init(
 			&config.Config{
@@ -371,6 +373,12 @@ func (e *Engine) LoadAutoDiscovery() error {
 	for id, p := range e.Pipelines {
 		if p.Config.Spec.AutoDiscovery.Crawlers == nil {
 			continue
+		}
+
+		// To remove once not experimental
+		if !cmdoptions.Experimental {
+			logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
+			return nil
 		}
 
 		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Name)+4))
