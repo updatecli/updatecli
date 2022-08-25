@@ -16,6 +16,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 
 	dockerimageutils "github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerimage"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 type imageRef struct {
@@ -189,9 +190,9 @@ func sanitizeRegistryEndpoint(repository string) string {
 func (h Helm) generateSourceDockerImageSpec(image string) dockerimage.Spec {
 	dockerimagespec := dockerimage.Spec{
 		Image: image,
-		// Use versionFilter
-		// versionFilter:
-		// kind: semver
+		VersionFilter: version.Filter{
+			Kind: version.SEMVERVERSIONKIND,
+		},
 	}
 
 	registry := sanitizeRegistryEndpoint(image)
