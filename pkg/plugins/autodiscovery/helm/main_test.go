@@ -100,6 +100,8 @@ sources:
         kind: dockerimage
         spec:
             image: epinioteam/epinio-ui-qa
+            versionfilter:
+                kind: semver
 conditions:
     epinioteam/epinio-ui-qa:
         name: Ensure container repository "epinioteam/epinio-ui-qa" is specified
@@ -127,6 +129,8 @@ sources:
         kind: dockerimage
         spec:
             image: splatform/epinio-server
+            versionfilter:
+                kind: semver
 conditions:
     splatform/epinio-server:
         name: Ensure container repository "splatform/epinio-server" is specified
