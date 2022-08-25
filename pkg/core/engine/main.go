@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/hashstructure"
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
@@ -337,6 +338,11 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 
 // LoadAutoDiscovery will try to guess available pipelines based on specific directory
 func (e *Engine) LoadAutoDiscovery() error {
+
+	if !cmdoptions.Experimental {
+		logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
+		return nil
+	}
 
 	// Default Autodiscovery pipeline
 	if e.Options.Pipeline.AutoDiscovery.Enabled {
