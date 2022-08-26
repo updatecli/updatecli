@@ -10,7 +10,7 @@ import (
 
 var (
 	expectedPipelines map[string]string = map[string]string{
-		"epinio-minio": `name: epinio-minio
+		"Bump dependency \"minio\" for Helm Chart \"epinio\"": `name: Bump dependency "minio" for Helm Chart "epinio"
 sources:
     minio:
         name: Get latest "minio" Helm Chart Version
@@ -29,7 +29,7 @@ conditions:
         disablesourceinput: true
 targets:
     minio:
-        name: Bump chart dependency "minio" in Chart "epinio"
+        name: Bump Helm Chart dependency "minio" for Helm Chart "epinio"
         kind: helmchart
         spec:
             file: Chart.yaml
@@ -38,7 +38,7 @@ targets:
             versionincrement: minor
         sourceid: minio
 `,
-		"epinio-kubed": `name: epinio-kubed
+		"Bump dependency \"kubed\" for Helm Chart \"epinio\"": `name: Bump dependency "kubed" for Helm Chart "epinio"
 sources:
     kubed:
         name: Get latest "kubed" Helm Chart Version
@@ -57,7 +57,7 @@ conditions:
         disablesourceinput: true
 targets:
     kubed:
-        name: Bump chart dependency "kubed" in Chart "epinio"
+        name: Bump Helm Chart dependency "kubed" for Helm Chart "epinio"
         kind: helmchart
         spec:
             file: Chart.yaml
@@ -66,7 +66,7 @@ targets:
             versionincrement: minor
         sourceid: kubed
 `,
-		"epinio-epinio-ui": `name: epinio-epinio-ui
+		"Bump dependency \"epinio-ui\" for Helm Chart \"epinio\"": `name: Bump dependency "epinio-ui" for Helm Chart "epinio"
 sources:
     epinio-ui:
         name: Get latest "epinio-ui" Helm Chart Version
@@ -85,7 +85,7 @@ conditions:
         disablesourceinput: true
 targets:
     epinio-ui:
-        name: Bump chart dependency "epinio-ui" in Chart "epinio"
+        name: Bump Helm Chart dependency "epinio-ui" for Helm Chart "epinio"
         kind: helmchart
         spec:
             file: Chart.yaml
@@ -94,7 +94,7 @@ targets:
             versionincrement: minor
         sourceid: epinio-ui
 `,
-		"epinio_epinioteam/epinio-ui-qa": `name: epinio_epinioteam/epinio-ui-qa
+		"Bump Docker Image \"epinioteam/epinio-ui-qa\" for Helm Chart \"epinio\"": `name: Bump Docker Image "epinioteam/epinio-ui-qa" for Helm Chart "epinio"
 sources:
     epinioteam/epinio-ui-qa:
         name: Get latest "epinioteam/epinio-ui-qa" Container tag
@@ -123,7 +123,7 @@ targets:
             versionincrement: minor
         sourceid: epinioteam/epinio-ui-qa
 `,
-		"epinio_splatform/epinio-server": `name: epinio_splatform/epinio-server
+		"Bump Docker Image \"splatform/epinio-server\" for Helm Chart \"epinio\"": `name: Bump Docker Image "splatform/epinio-server" for Helm Chart "epinio"
 sources:
     splatform/epinio-server:
         name: Get latest "splatform/epinio-server" Container tag
@@ -158,11 +158,6 @@ func TestDiscoverManifests(t *testing.T) {
 
 	spec := Spec{
 		RootDir: "testdata/chart",
-		Only: MatchingRules{
-			MatchingRule{
-				Path: "pkg/plugins/autodiscovery/helm/testdata",
-			},
-		},
 	}
 
 	helm, err := New(spec, "")
