@@ -37,8 +37,6 @@ type Config struct {
 	ScmID string `yaml:",omitempty"`
 	// !Deprecated in favor for `scmid`
 	DeprecatedScmID string `yaml:"scmID,omitempty" jsonschema:"-"`
-	// Targets defines a list of target related to the pullRequest
-	Targets []string `yaml:",omitempty"`
 }
 
 // PullRequest is a struct used by an updatecli pipeline.
@@ -64,10 +62,6 @@ func (c *Config) Validate() (err error) {
 	if c.Kind != strings.ToLower(c.Kind) {
 		logrus.Warningf("kind value %q must be lowercase", c.Kind)
 		c.Kind = strings.ToLower(c.Kind)
-	}
-
-	if len(c.Targets) == 0 {
-		missingParameters = append(missingParameters, "targets")
 	}
 
 	if len(c.DeprecatedScmID) > 0 {
