@@ -321,7 +321,7 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 	}()
 
 	s := jsonschema.New(baseSchemaID, schemaDir)
-	err = s.GenerateSchema(&config.Config{})
+	err = s.GenerateSchema(&config.Spec{})
 	if err != nil {
 		return err
 	}
@@ -333,7 +333,7 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 		return err
 	}
 
-	return s.GenerateSchema(&config.Config{})
+	return s.GenerateSchema(&config.Spec{})
 }
 
 // LoadAutoDiscovery will try to guess available pipelines based on specific directory
