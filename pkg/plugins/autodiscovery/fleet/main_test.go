@@ -10,7 +10,7 @@ import (
 
 var (
 	expectedPipelines map[string]string = map[string]string{
-		"grafana-grafana": `name: grafana-grafana
+		"Bump Fleet Bundle \"grafana\" for Helm Chart \"grafana\"": `name: Bump Fleet Bundle "grafana" for Helm Chart "grafana"
 sources:
     grafana:
         name: Get latest "grafana" Helm Chart Version
@@ -50,11 +50,6 @@ func TestDiscoverManifests(t *testing.T) {
 
 	spec := Spec{
 		RootDir: "testdata/fleet.d",
-		Only: MatchingRules{
-			MatchingRule{
-				Path: "pkg/plugins/autodiscovery/fleet/testdata",
-			},
-		},
 	}
 
 	helm, err := New(spec, "")
@@ -79,8 +74,8 @@ func TestDiscoverManifests(t *testing.T) {
 
 		if string(output) != expectedPipelines[pipeline.Name] {
 			fmt.Println("Wrong result")
-			fmt.Printf("Expected:\n>>>\n%q\n>>>\n\n", expectedPipelines[pipeline.Name])
-			fmt.Printf("Got:\n<<<\n%q\n<<<\n", output)
+			fmt.Printf("Expected:\n>>>\n%v\n>>>\n\n", expectedPipelines[pipeline.Name])
+			fmt.Printf("Got:\n<<<\n%v\n<<<\n", string(output))
 			t.Fail()
 		}
 
