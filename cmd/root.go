@@ -132,7 +132,24 @@ func run(command string) error {
 			return err
 		}
 
-	case "show":
+	// Show is deprecated
+	case "show", "manifest/show":
+		if showClean {
+			defer func() {
+				if err := e.Clean(); err != nil {
+					logrus.Errorf("error in show clean - %s", err)
+				}
+			}()
+		}
+
+		if !showDisablePrepare {
+			err := e.Prepare()
+			if err != nil {
+				logrus.Errorf("%s %s", result.FAILURE, err)
+				return err
+			}
+		}
+
 		err := e.Show()
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)

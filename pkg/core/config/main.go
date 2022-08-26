@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
+	autodiscovery "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -29,6 +30,10 @@ import (
 const (
 	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
 	LOCALSCMIDENTIFIER string = "local"
+	// DefaultConfigFilename defines the default updatecli configuration filename
+	DefaultConfigFilename string = "updatecli.yaml"
+	// DefaultConfigDirname defines the default updatecli manifest directory
+	DefaultConfigDirname string = "updatecli.d"
 )
 
 // Config contains cli configuration
@@ -47,6 +52,8 @@ type Spec struct {
 	Name string `yaml:",omitempty" jsonschema:"required"`
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	PipelineID string `yaml:",omitempty"`
+	// AutoDiscovery defines parameters to the autodiscover feature
+	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
 	// Title is used for the full pipeline
 	Title string `yaml:",omitempty"`
 	// PullRequests defines the list of Pull Request configuration which need to be managed
@@ -254,7 +261,7 @@ func (c *Config) SaveOnDisk() error {
 
 // Display shows updatecli configuration including secrets !
 func (config *Config) Display() error {
-	c, err := yaml.Marshal(&config)
+	c, err := yaml.Marshal(&config.Spec)
 	if err != nil {
 		return err
 	}
@@ -278,17 +285,27 @@ func (config *Config) validatePullRequests() error {
 			}
 		}
 
-		// Validate references to other configuration objects
-		for _, target := range p.Targets {
-			if _, ok := config.Spec.Targets[target]; !ok {
-				logrus.Errorf("the specified target %q for the pull request %q does not exist", target, id)
-				return ErrBadConfig
-			}
-		}
 		// p.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
 		config.Spec.PullRequests[id] = p
 	}
+	return nil
+}
+
+func (config *Config) validateAutodiscovery() error {
+	// Then validate that the pullrequest specifies an existing SCM
+	if len(config.Spec.AutoDiscovery.ScmId) > 0 {
+		if _, ok := config.Spec.SCMs[config.Spec.AutoDiscovery.ScmId]; !ok {
+			logrus.Errorf("The autodiscovery specifies a scm id %q which does not exist",
+				config.Spec.AutoDiscovery.ScmId)
+			return ErrBadConfig
+		}
+	}
+
+	if err := config.Spec.AutoDiscovery.GroupBy.Validate(); err != nil {
+		return ErrBadConfig
+	}
+
 	return nil
 }
 
@@ -467,6 +484,13 @@ func (config *Config) Validate() error {
 		errs = append(
 			errs,
 			fmt.Errorf("pullrequests validation error:\n%s", err))
+	}
+
+	err = config.validateAutodiscovery()
+	if err != nil {
+		errs = append(
+			errs,
+			fmt.Errorf("autodiscovery validation error:\n%s", err))
 	}
 
 	err = config.validateSCMs()
