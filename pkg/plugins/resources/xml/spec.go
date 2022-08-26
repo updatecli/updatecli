@@ -3,8 +3,11 @@ package xml
 import "errors"
 
 type Spec struct {
-	File  string `yaml:",omitempty"`
-	Path  string `yaml:",omitempty"`
+	// [s][c][t] File defines the xml path to interact with
+	File string `yaml:",omitempty"`
+	// [s][c][t] Path defines the xmlPAth used for doing the query
+	Path string `yaml:",omitempty"`
+	// [s][c][t] Value specifies the value for a specific Path. Default value fetch from source input
 	Value string `yaml:",omitempty"`
 }
 
