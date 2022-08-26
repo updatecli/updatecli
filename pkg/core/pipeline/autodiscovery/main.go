@@ -54,10 +54,6 @@ func New(spec discoveryConfig.Config,
 		return &AutoDiscovery{}, err
 	}
 
-	if len(spec.GroupBy) == 0 {
-		spec.GroupBy.Validate()
-	}
-
 	tmpCrawlers := DefaultCrawlerSpecs.Crawlers
 
 	for id, crawlerSpec := range s.Crawlers {
