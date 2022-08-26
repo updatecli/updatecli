@@ -158,6 +158,11 @@ func TestDiscoverManifests(t *testing.T) {
 
 	spec := Spec{
 		RootDir: "testdata/chart",
+		Only: MatchingRules{
+			MatchingRule{
+				Path: "pkg/plugins/autodiscovery/helm/testdata",
+			},
+		},
 	}
 
 	helm, err := New(spec, "")
