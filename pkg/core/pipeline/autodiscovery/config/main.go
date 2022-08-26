@@ -13,6 +13,8 @@ type Config struct {
 	ScmId string `yaml:",omitempty"`
 	// PullrequestID specifies a pullrequest configuration to use to generate the manifest
 	PullrequestId string `yaml:",omitempty"`
+	// GroupBy specifies how to group pipeline. The Accepted is one of "all", "individual"
+	GroupBy GroupBy
 }
 
 type Input struct {

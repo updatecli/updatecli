@@ -91,6 +91,11 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 		var images []imageData
 
 		if values.Image.Repository != "" && values.Image.Tag != "" {
+			// Docker Image Digest is not supported at this time.
+			if strings.HasSuffix(values.Image.Repository, "sha256") {
+				logrus.Debugf("Docker image digest detected, skipping as not supported yet")
+				continue
+			}
 			images = append(images, imageData{
 				repository:         values.Image.Repository,
 				tag:                values.Image.Tag,
@@ -101,6 +106,12 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 		}
 
 		for id := range values.Images {
+			// Docker Image Digest is not supported at this time.
+			if strings.HasSuffix(values.Images[id].Repository, "sha256") {
+				logrus.Debugf("Docker image digest detected, skipping as not supported yet")
+				continue
+			}
+
 			images = append(images, imageData{
 				repository:         values.Images[id].Repository,
 				tag:                values.Images[id].Tag,
@@ -121,11 +132,10 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 
 			dockerImageSpec := h.generateSourceDockerImageSpec(image.repository)
 
+			manifestName := fmt.Sprintf("Bump Docker Image %q for Helm Chart %q", image.repository, chartName)
+
 			manifest := config.Spec{
-				Name: strings.Join([]string{
-					chartName,
-					image.repository,
-				}, "_"),
+				Name: manifestName,
 				Sources: map[string]source.Config{
 					sourceID: {
 						ResourceConfig: resource.ResourceConfig{

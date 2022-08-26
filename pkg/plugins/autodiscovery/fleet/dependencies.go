@@ -3,7 +3,6 @@ package fleet
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -92,11 +91,10 @@ func (f Fleet) discoverFleetDependenciesManifests() ([]config.Spec, error) {
 		conditionID := data.Helm.Chart
 		targetID := data.Helm.Chart
 
+		manifestName := fmt.Sprintf("Bump Fleet Bundle %q for Helm Chart %q", chartName, data.Helm.Chart)
+
 		manifest := config.Spec{
-			Name: strings.Join([]string{
-				chartName,
-				data.Helm.Chart,
-			}, "-"),
+			Name: manifestName,
 			Sources: map[string]source.Config{
 				sourceID: {
 					ResourceConfig: resource.ResourceConfig{

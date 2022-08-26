@@ -301,6 +301,11 @@ func (config *Config) validateAutodiscovery() error {
 			return ErrBadConfig
 		}
 	}
+
+	if err := config.Spec.AutoDiscovery.GroupBy.Validate(); err != nil {
+		return ErrBadConfig
+	}
+
 	return nil
 }
 

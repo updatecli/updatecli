@@ -1,6 +1,7 @@
 package autodiscovery
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 
@@ -51,6 +52,10 @@ func New(spec discoveryConfig.Config,
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return &AutoDiscovery{}, err
+	}
+
+	if len(spec.GroupBy) == 0 {
+		spec.GroupBy.Validate()
 	}
 
 	tmpCrawlers := DefaultCrawlerSpecs.Crawlers
@@ -146,10 +151,42 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 			logrus.Errorln(err)
 		}
 
+		logrus.Printf("Manifest detected: %d\n", len(discoveredManifests))
+
 		if len(discoveredManifests) > 0 {
+
 			for i := range discoveredManifests {
 				totalDiscoveredManifests = append(totalDiscoveredManifests, discoveredManifests[i])
 			}
+		}
+	}
+
+	logrus.Printf("\n\n---\n\n=> Total manifest detected: %d\n\n", len(totalDiscoveredManifests))
+
+	if g.spec.GroupBy == "" {
+		logrus.Warningf("Autodiscovery settings %q is undefined, fallback to %q",
+			"groupby",
+			discoveryConfig.GROUPEBYINDIVIDUAL)
+	}
+
+	// Set pipelineId for each manifest by on the autodiscovery groupby rule
+
+	// We use a sha256 hash to avoid colusion between pipelineID
+	hash := sha256.New()
+	batchPipelineID := fmt.Sprintf("%x", hash.Sum([]byte("updatecli/autodiscovery/batch")))
+
+	for i := range totalDiscoveredManifests {
+		switch g.spec.GroupBy {
+		case discoveryConfig.GROUPEBYALL:
+			totalDiscoveredManifests[i].PipelineID = batchPipelineID[0:32]
+
+		case discoveryConfig.GROUPEBYINDIVIDUAL, "":
+			pipelineID := fmt.Sprintf("%x", hash.Sum([]byte(totalDiscoveredManifests[i].Name)))
+
+			totalDiscoveredManifests[i].PipelineID = pipelineID[0:32]
+
+		default:
+			logrus.Errorln("something unexpected happened while specifying pipelineid to generated Updatecli manifest")
 		}
 	}
 

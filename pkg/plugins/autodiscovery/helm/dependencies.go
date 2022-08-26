@@ -3,7 +3,6 @@ package helm
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -91,11 +90,10 @@ func (h Helm) discoverHelmDependenciesManifests() ([]config.Spec, error) {
 
 		deps := *dependencies
 		for i, dependency := range deps.Dependencies {
+			manifestName := fmt.Sprintf("Bump dependency %q for Helm Chart %q", dependency.Name, chartName)
+
 			manifest := config.Spec{
-				Name: strings.Join([]string{
-					chartName,
-					dependency.Name,
-				}, "-"),
+				Name: manifestName,
 				Sources: map[string]source.Config{
 					dependency.Name: {
 						ResourceConfig: resource.ResourceConfig{
@@ -126,7 +124,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([]config.Spec, error) {
 					dependency.Name: {
 						SourceID: dependency.Name,
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Bump chart dependency %q in Chart %q", dependency.Name, chartName),
+							Name: fmt.Sprintf("Bump Helm Chart dependency %q for Helm Chart %q", dependency.Name, chartName),
 							Kind: "helmchart",
 							Spec: helm.Spec{
 								File:             metadataFilename,

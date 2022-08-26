@@ -50,7 +50,7 @@ func getFleetBundleData(filename string) (*fleetMetada, error) {
 	var fleetData fleetMetada
 
 	fleetBundleName := filepath.Base(filepath.Dir(filename))
-	logrus.Infof("Fleet bundle %q found in %q", fleetBundleName, filepath.Dir(filename))
+	logrus.Debugf("Fleet bundle %q found in %q", fleetBundleName, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return &fleetMetada{}, err

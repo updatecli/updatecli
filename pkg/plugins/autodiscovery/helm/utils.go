@@ -69,7 +69,7 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 	var chart chartMetadata
 
 	chartName := filepath.Base(filepath.Dir(filename))
-	logrus.Infof("Chart %q found in %q", chartName, filepath.Dir(filename))
+	logrus.Debugf("Chart %q found in %q", chartName, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return &chartMetadata{}, err
@@ -113,7 +113,7 @@ func getValuesFileContent(filename string) (*valuesContent, error) {
 	var values valuesContent
 
 	chartName := filepath.Base(filepath.Dir(filename))
-	logrus.Infof("Chart values file %q found in %q", chartName, filepath.Dir(filename))
+	logrus.Debugf("Chart values file %q found in %q", chartName, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return &valuesContent{}, err
