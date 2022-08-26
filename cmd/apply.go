@@ -25,6 +25,7 @@ var (
 			e.Options.Pipeline.Target.Push = applyPush
 			e.Options.Pipeline.Target.Clean = applyClean
 			e.Options.Pipeline.Target.DryRun = false
+			e.Options.Pipeline.AutoDiscovery.Enabled = localDiscoveryEnabled
 
 			err := run("apply")
 			if err != nil {
@@ -36,11 +37,14 @@ var (
 )
 
 func init() {
-	applyCmd.Flags().StringVarP(&cfgFile, "config", "c", "./updatecli.yaml", "Sets config file or directory. (default: './updatecli.yaml')")
+	applyCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
 	applyCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	applyCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 
 	applyCmd.Flags().BoolVarP(&applyCommit, "commit", "", true, "Record changes to the repository, '--commit=false' (default: true)")
 	applyCmd.Flags().BoolVarP(&applyPush, "push", "", true, "Update remote refs '--push=false' (default: true)")
+
+	applyCmd.Flags().BoolVar(&localDiscoveryEnabled, "local-autodiscovery", false, "Local AutoDiscovery feature enabled")
+
 	applyCmd.Flags().BoolVar(&applyClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 }

@@ -1,0 +1,21 @@
+scms:
+  epinio:
+    kind: git
+    spec:
+      url: https://github.com/epinio/helm-charts.git
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: epinio
+  crawlers:
+    helm:
+      # Enabled by default
+      enable: true
+      # To ignore specific path
+      #ignore:
+      #  # - path: <filepath relative to scm repository>
+      #  # - path: chart/*
+      #only:
+      #  # - path: <filepath relative to scm repository>
+      #  # - path: chart/*
+#

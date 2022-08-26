@@ -25,14 +25,6 @@ type Version struct {
 	OriginalVersion string
 }
 
-// TODO: Change the receiver of this function to Filter once https://github.com/updatecli/updatecli/issues/803 is fixed.
-func (v Version) GetVersion() string {
-	if cmdoptions.Experimental {
-		return v.OriginalVersion
-	}
-	return v.ParsedVersion
-}
-
 const (
 	// REGEXVERSIONKIND represents versions as a simple string
 	REGEXVERSIONKIND string = "regex"
@@ -68,6 +60,14 @@ func (f Filter) Init() (Filter, error) {
 	}
 
 	return f, f.Validate()
+}
+
+// TODO: Change the receiver of this function to Filter once https://github.com/updatecli/updatecli/issues/803 is fixed.
+func (v Version) GetVersion() string {
+	if cmdoptions.Experimental {
+		return v.OriginalVersion
+	}
+	return v.ParsedVersion
 }
 
 // Validate tests if our filter contains valid parameters
