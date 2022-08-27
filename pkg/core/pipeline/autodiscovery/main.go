@@ -3,6 +3,7 @@ package autodiscovery
 import (
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/mitchellh/mapstructure"
@@ -169,7 +170,8 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 
 	// We use a sha256 hash to avoid colusion between pipelineID
 	hash := sha256.New()
-	batchPipelineID := fmt.Sprintf("%x", hash.Sum([]byte("updatecli/autodiscovery/batch")))
+	io.WriteString(hash, "updatecli/autodiscovery/batch")
+	batchPipelineID := fmt.Sprintf("%x", hash.Sum(nil))
 
 	for i := range totalDiscoveredManifests {
 		switch g.spec.GroupBy {
@@ -177,7 +179,8 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 			totalDiscoveredManifests[i].PipelineID = batchPipelineID[0:32]
 
 		case discoveryConfig.GROUPEBYINDIVIDUAL, "":
-			pipelineID := fmt.Sprintf("%x", hash.Sum([]byte(totalDiscoveredManifests[i].Name)))
+			io.WriteString(hash, totalDiscoveredManifests[i].Name)
+			pipelineID := fmt.Sprintf("%x", hash.Sum(nil))
 
 			totalDiscoveredManifests[i].PipelineID = pipelineID[0:32]
 
