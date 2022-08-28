@@ -32,10 +32,12 @@ require (
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5
+	github.com/beevik/etree v1.1.0
 	github.com/drone/go-scm v1.27.0
 	github.com/goware/urlx v0.3.2
 	github.com/invopop/jsonschema v0.6.0
 	golang.org/x/text v0.3.7
+	gotest.tools v2.2.0+incompatible
 )
 
 require (
