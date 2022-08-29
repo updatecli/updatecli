@@ -14,6 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 )
 
 var (
@@ -22,6 +23,7 @@ var (
 		Crawlers: map[string]interface{}{
 			"helm":          helm.Spec{},
 			"rancher/fleet": fleet.Spec{},
+			"maven":         maven.Spec{},
 		},
 	}
 )
@@ -102,6 +104,16 @@ func New(spec discoveryConfig.Config,
 			}
 
 			g.crawlers = append(g.crawlers, helmCrawler)
+
+		case "maven":
+			mavenCrawler, err := maven.New(g.spec.Crawlers[kind], workDir)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, mavenCrawler)
 
 		case "rancher/fleet":
 			fleetCrawler, err := fleet.New(g.spec.Crawlers[kind], workDir)
