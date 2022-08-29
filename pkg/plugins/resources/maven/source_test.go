@@ -61,8 +61,10 @@ func TestSource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sut := Maven{
-				spec:            tt.spec,
-				metadataHandler: tt.mockedMetadataHandler,
+				spec: tt.spec,
+				metadataHandlers: []mavenmetadata.Handler{
+					tt.mockedMetadataHandler,
+				},
 			}
 
 			got, gotErr := sut.Source(tt.workingDir)

@@ -30,7 +30,9 @@ func TestNew(t *testing.T) {
 					GroupID:    "org.eclipse.mylyn.wikitext",
 					ArtifactID: "wikitext.core",
 				},
-				metadataHandler: &mavenmetadata.DefaultHandler{},
+				metadataHandlers: []mavenmetadata.Handler{
+					&mavenmetadata.DefaultHandler{},
+				},
 			},
 		},
 	}
@@ -45,7 +47,7 @@ func TestNew(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.want.spec, got.spec)
-			assert.IsType(t, tt.want.metadataHandler, tt.want.metadataHandler)
+			assert.IsType(t, tt.want.metadataHandlers, tt.want.metadataHandlers)
 		})
 	}
 }
