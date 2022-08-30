@@ -8,8 +8,6 @@ import (
 )
 
 var (
-	// ErrDaselFailedParsingXMLByteFormat is returned if dasel couldn't parse the byteData
-	ErrDaselFailedParsingXMLByteFormat error = errors.New("fail to parse XML data")
 	// ErrWrongSpec is returned when the Spec has wrong content
 	ErrWrongSpec error = errors.New("wrong spec content")
 )
