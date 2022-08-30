@@ -16,6 +16,12 @@ func (m *Maven) Condition(source string) (bool, error) {
 	}
 
 	for _, metadataHandler := range m.metadataHandlers {
+		// metadataURL contains the URL without username/password
+		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
+		if err != nil {
+			logrus.Errorf("Trying to parse Maven metadatal url: %s", err)
+		}
+
 		versions, err := metadataHandler.GetVersions()
 		if err != nil {
 			return false, err
@@ -24,7 +30,7 @@ func (m *Maven) Condition(source string) (bool, error) {
 		for _, version := range versions {
 			if version == m.spec.Version {
 				logrus.Infof("%s Version %s is available on the Maven Repository (%s)",
-					result.SUCCESS, m.spec.Version, metadataHandler.GetMetadataURL())
+					result.SUCCESS, m.spec.Version, metadataURL)
 				return true, nil
 			}
 		}

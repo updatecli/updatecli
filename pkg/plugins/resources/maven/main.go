@@ -16,17 +16,17 @@ var (
 	// ErrWrongSpec is returned when the Spec has wrong content
 	ErrWrongSpec error = errors.New("wrong spec content")
 
-	MavenCentralRepository string = "repo1.maven.org/maven2/"
+	MavenCentralRepository string = "https://repo1.maven.org/maven2/"
 )
 
 // Spec defines a specification for a "maven" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// Specifies the maven repository URL
+	// Deprecated, please specify the Maven url in the repository
 	URL string `yaml:",omitempty"`
-	// Specifies the maven repository name
+	// Specifies the maven repository url + name
 	Repository string `yaml:",omitempty"`
-	// Repositories specifies a list of Maven repository
+	// Repositories specifies a list of Maven repository where to look for version. Order matter, version is retrieve from the first repository with the last one being Maven Central.
 	Repositories []string `yaml:",omitempty"`
 	// Specifies the maven artifact groupID
 	GroupID string `yaml:",omitempty"`
@@ -51,24 +51,25 @@ func New(spec interface{}) (*Maven, error) {
 		return &Maven{}, nil
 	}
 
+	err = newSpec.Sanitize()
+
+	if err != nil {
+		return &Maven{}, nil
+	}
+
 	newResource := &Maven{
 		spec: newSpec,
 	}
 
 	if len(newSpec.Repository) > 0 {
 
-		URL := strings.TrimPrefix(newSpec.URL, "https://")
-
-		URL = strings.TrimPrefix(URL, "http://")
-
-		u, err := url.Parse("https://" + URL)
+		u, err := url.Parse(newSpec.Repository)
 		if err != nil {
 			return &Maven{}, err
 		}
 
 		u.Path = path.Join(
 			u.Path,
-			newSpec.Repository,
 			strings.ReplaceAll(newSpec.GroupID, ".", "/"),
 			newSpec.ArtifactID,
 			"maven-metadata.xml")
@@ -80,16 +81,17 @@ func New(spec interface{}) (*Maven, error) {
 		return newResource, nil
 	}
 
-	for _, repository := range newSpec.Repositories {
-		URL := strings.TrimPrefix(repository, "https://")
-		URL = strings.TrimPrefix(URL, "http://")
-
-		u, err := url.Parse("https://" + URL)
+	for i := range newSpec.Repositories {
+		u, err := url.Parse(newSpec.Repositories[i])
 		if err != nil {
 			return &Maven{}, err
 		}
 
-		u.Path = path.Join(u.Path, strings.ReplaceAll(newSpec.GroupID, ".", "/"), newSpec.ArtifactID, "maven-metadata.xml")
+		u.Path = path.Join(
+			u.Path,
+			strings.ReplaceAll(newSpec.GroupID, ".", "/"),
+			newSpec.ArtifactID,
+			"maven-metadata.xml")
 
 		newResource.metadataHandlers = append(
 			newResource.metadataHandlers,
@@ -103,7 +105,7 @@ func New(spec interface{}) (*Maven, error) {
 	}
 
 	if !mavenCentrallNotFound {
-		u, err := url.Parse("https://" + MavenCentralRepository)
+		u, err := url.Parse(MavenCentralRepository)
 		if err != nil {
 			return &Maven{}, err
 		}
@@ -140,4 +142,46 @@ func (m Maven) Validate() error {
 	}
 	return nil
 
+}
+
+func (s *Spec) Sanitize() error {
+
+	var errs []error
+	var err error
+
+	if len(s.URL) > 0 {
+		logrus.Warningf("Parameter %q is deprecate, please prefix its content to parameter %q", "URL", "repository")
+		s.Repository, err = joinURL([]string{s.URL, s.Repository})
+		if err != nil {
+			logrus.Errorln(err)
+		}
+	}
+
+	if len(s.Repository) > 0 {
+		sanitizedURL, err := joinURL([]string{s.Repository})
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			s.Repository = sanitizedURL
+		}
+	}
+
+	for i := range s.Repositories {
+		sanitizedURL, err := joinURL([]string{s.Repositories[i]})
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		s.Repositories[i] = sanitizedURL
+	}
+
+	if len(errs) > 0 {
+		for i := range errs {
+			logrus.Errorf("%s", errs[i])
+		}
+		return fmt.Errorf("failed sanitizing Maven spec")
+
+	}
+
+	return nil
 }
