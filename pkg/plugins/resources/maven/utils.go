@@ -30,17 +30,17 @@ func isRepositoriesContainsMavenCentral(repositories []string) (bool, error) {
 	return false, nil
 }
 
-// trimUsernamePasswordFromURL parse a maven URL to only return the hostname
+// trimUsernamePasswordFromURL parse a maven URL then remove the username/password component from it
 func trimUsernamePasswordFromURL(URL string) (string, error) {
 	u, err := url.Parse(URL)
 	if err != nil {
 		return "", err
 	}
 
-	result := u.Hostname()
+	result := u.Scheme + "://" + u.Hostname()
 
 	if len(u.Path) > 0 {
-		result = u.Scheme + "://" + result + u.Path
+		result = result + u.Path
 	}
 
 	return result, nil
