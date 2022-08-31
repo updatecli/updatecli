@@ -69,12 +69,3 @@ conditions:
       groupid: "junit"
       artifactid: "junit"
       version: "4.3.1"
-
-  checkIfOlderJunitExist5:
-    kind: maven
-    name: Is there a version 4.3.1 of junit/junit
-    disablesourceinput: true
-    spec:
-      groupid: "junit"
-      artifactid: "junit"
-      version: "4.3.2"
