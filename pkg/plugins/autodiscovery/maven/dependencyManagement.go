@@ -17,7 +17,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 )
 
-func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
+func (m Maven) discoverDependencyManagementsManifests() ([]config.Spec, error) {
 
 	var manifests []config.Spec
 
@@ -63,10 +63,10 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 
 		// Retrieve dependencies
 
-		dependencies := getDependenciesFromPom(doc)
+		dependencies := getDependencyManagementsFromPom(doc)
 
 		if len(dependencies) == 0 {
-			logrus.Debugf("no maven dependencies found in %q\n", pomFile)
+			logrus.Debugf("no Maven dependencyManagements found in %q\n", pomFile)
 			continue
 		}
 
@@ -87,12 +87,12 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 			}
 
 			if isContainsVariable {
-				logrus.Printf("Skipping dependency as it relies on property %q", dependency.Version)
+				logrus.Printf("Skipping dependencyManagement as it relies on property %q", dependency.Version)
 				continue
 			}
 
 			manifestName := fmt.Sprintf(
-				"Bump Maven dependency %s/%s",
+				"Bump Maven dependencyManagement %s/%s",
 				dependency.GroupID,
 				dependency.ArtifactID)
 
@@ -122,11 +122,11 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 					dependency.GroupID: {
 						DisableSourceInput: true,
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Ensure dependency groupId %q is specified", dependency.GroupID),
+							Name: fmt.Sprintf("Ensure dependencyManagement groupId %q is specified", dependency.GroupID),
 							Kind: "xml",
 							Spec: xml.Spec{
 								File:  relativePomFile,
-								Path:  fmt.Sprintf("/project/dependencies/dependency[%d]/groupId", i+1),
+								Path:  fmt.Sprintf("/project/dependencyManagement/dependencies/dependency[%d]/groupId", i+1),
 								Value: dependency.GroupID,
 							},
 						},
@@ -134,11 +134,11 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 					dependency.ArtifactID: {
 						DisableSourceInput: true,
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Ensure dependency artifactId %q is specified", dependency.GroupID),
+							Name: fmt.Sprintf("Ensure dependencyManagement artifactId %q is specified", dependency.GroupID),
 							Kind: "xml",
 							Spec: xml.Spec{
 								File:  relativePomFile,
-								Path:  fmt.Sprintf("/project/dependencies/dependency[%d]/artifactId", i+1),
+								Path:  fmt.Sprintf("/project/dependencyManagement/dependencies/dependency[%d]/artifactId", i+1),
 								Value: dependency.ArtifactID,
 							},
 						},
@@ -148,11 +148,11 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 					artifactFullName: {
 						SourceID: artifactFullName,
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Bump dependency version for %q", artifactFullName),
+							Name: fmt.Sprintf("Bump dependencyManagement version for %q", artifactFullName),
 							Kind: "xml",
 							Spec: xml.Spec{
 								File: relativePomFile,
-								Path: fmt.Sprintf("/project/dependencies/dependency[%d]/version", i+1),
+								Path: fmt.Sprintf("/project/dependencyManagement/dependencies/dependency[%d]/version", i+1),
 							},
 						},
 					},

@@ -71,6 +71,22 @@ func (m Maven) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, er
 		return nil, err
 	}
 
+	dependencyManagementManifests, err := m.discoverDependencyManagementsManifests()
+
+	if err != nil {
+		return nil, err
+	}
+
+	manifests = append(manifests, dependencyManagementManifests...)
+
+	parentPomdependencyManifests, err := m.discoverParentPomDependencyManifests()
+
+	if err != nil {
+		return nil, err
+	}
+
+	manifests = append(manifests, parentPomdependencyManifests...)
+
 	// Set scm configuration if specified
 	for i := range manifests {
 		// Set scm configuration if specified
