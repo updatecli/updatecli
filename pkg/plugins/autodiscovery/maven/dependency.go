@@ -17,25 +17,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 )
 
-// repository contains repository information retrieved from a pom.xml
-type repository struct {
-	URL string
-	ID  string
-}
-
-type dependency struct {
-	GroupID    string
-	ArtifactID string
-	Version    string
-}
-
 func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 
 	var manifests []config.Spec
 
 	foundPomFiles, err := searchPomFiles(
 		m.rootDir,
-		[]string{"pom.xml"})
+		pomFileName)
 
 	if err != nil {
 		return nil, err
@@ -104,7 +92,7 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 			}
 
 			manifestName := fmt.Sprintf(
-				"Bump Maven dependency %s/%s ",
+				"Bump Maven dependency %s/%s",
 				dependency.GroupID,
 				dependency.ArtifactID)
 
