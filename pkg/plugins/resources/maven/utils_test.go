@@ -56,7 +56,7 @@ func TestIsRepositoriesContainsMavenCentral(t *testing.T) {
 
 }
 
-func TestGetURLHostname(t *testing.T) {
+func TestTrimUsernamePasswordFromURL(t *testing.T) {
 	testData := []struct {
 		Name           string
 		Repository     string
@@ -69,14 +69,19 @@ func TestGetURLHostname(t *testing.T) {
 			ExpectedResult: "https://example.com",
 		},
 		{
-			Name:           "test 1",
+			Name:           "test 2",
 			Repository:     "https://username:password@example.com",
 			ExpectedResult: "https://example.com",
 		},
 		{
-			Name:           "test 1",
+			Name:           "test 3",
 			Repository:     "https://username:password@example.com/registry",
 			ExpectedResult: "https://example.com/registry",
+		},
+		{
+			Name:           "test 4",
+			Repository:     "https://username:password@example.com",
+			ExpectedResult: "https://example.com",
 		},
 	}
 
