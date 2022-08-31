@@ -37,28 +37,55 @@ func searchPomFiles(rootDir string, files []string) ([]string, error) {
 }
 
 // getRepositories retrieves all repositories information from a pom.xm
+func getParentFromPom(doc *etree.Document) parentPom {
+
+	p := parentPom{}
+
+	parent := doc.FindElement("//project/parent")
+
+	if elem := parent.FindElement("./groupId"); elem != nil {
+		p.GroupID = elem.Text()
+	}
+
+	if elem := parent.FindElement("./artifactId"); elem != nil {
+		p.ArtifactID = elem.Text()
+	}
+
+	if elem := parent.FindElement("./version"); elem != nil {
+		p.Version = elem.Text()
+	}
+
+	if elem := parent.FindElement("./packaging"); elem != nil {
+		p.Packaging = elem.Text()
+	}
+
+	if elem := parent.FindElement("./relavivePath"); elem != nil {
+		p.RelativePath = elem.Text()
+	}
+
+	return p
+}
+
+// getRepositories retrieves all repositories information from a pom.xm
 func getRepositoriesFromPom(doc *etree.Document) []repository {
 	repositories := []repository{}
 
 	repositoriesPath := "//project/repositories/*"
 
 	for _, repositoryElem := range doc.FindElements(repositoriesPath) {
-		URLElem := repositoryElem.FindElement("./url")
+		rep := repository{}
 
-		if URLElem == nil {
-			continue
+		if elem := repositoryElem.FindElement("./url"); elem != nil {
+			rep.URL = elem.Text()
 		}
 
-		repo := repository{
-			URL: URLElem.Text(),
+		if elem := repositoryElem.FindElement("./id"); elem != nil {
+			rep.ID = elem.Text()
 		}
 
-		idElem := repositoryElem.FindElement("./id")
-		if idElem != nil {
-			repo.ID = idElem.Text()
+		if len(rep.URL) > 0 {
+			repositories = append(repositories, rep)
 		}
-
-		repositories = append(repositories, repo)
 
 	}
 
@@ -71,26 +98,56 @@ func getDependenciesFromPom(doc *etree.Document) []dependency {
 
 	dependenciesPath := "//project/dependencies/*"
 	for _, dependencyElem := range doc.FindElements(dependenciesPath) {
-		GroupIDElem := dependencyElem.FindElement("./groupId")
+		dep := dependency{}
 
-		if GroupIDElem == nil {
-			continue
-		}
-		dep := dependency{
-			GroupID: GroupIDElem.Text(),
+		if elem := dependencyElem.FindElement("./groupId"); elem != nil {
+			dep.GroupID = elem.Text()
 		}
 
-		artifactIDElem := dependencyElem.FindElement("./artifactId")
-		if artifactIDElem != nil {
-			dep.ArtifactID = artifactIDElem.Text()
+		if elem := dependencyElem.FindElement("./artifactId"); elem != nil {
+			dep.ArtifactID = elem.Text()
 		}
 
-		versionElem := dependencyElem.FindElement("./version")
-		if versionElem != nil {
-			dep.Version = versionElem.Text()
+		if elem := dependencyElem.FindElement("./version"); elem != nil {
+			dep.Version = elem.Text()
 		}
 
-		dependencies = append(dependencies, dep)
+		// If Version is not specified then it means we are parsing a childPom dependency
+		// which inherit the value from its parent so we don't want to update it
+		if len(dep.Version) > 0 {
+			dependencies = append(dependencies, dep)
+		}
+
+	}
+	return dependencies
+}
+
+// getDependencyManagementsFromPom parse a pom.xml and return all dependencies
+func getDependencyManagementsFromPom(doc *etree.Document) []dependency {
+	dependencies := []dependency{}
+
+	dependenciesPath := "//project/dependencyManagement/dependencies/*"
+	for _, dependencyElem := range doc.FindElements(dependenciesPath) {
+
+		dep := dependency{}
+
+		if elem := dependencyElem.FindElement("./groupId"); elem != nil {
+			dep.GroupID = elem.Text()
+		}
+
+		if elem := dependencyElem.FindElement("./artifactId"); elem != nil {
+			dep.ArtifactID = elem.Text()
+		}
+
+		if elem := dependencyElem.FindElement("./version"); elem != nil {
+			dep.Version = elem.Text()
+		}
+
+		// If Version is not specified then it means we are parsing a childPom dependency
+		// which inherit the value from its parent so we don't want to update it
+		if len(dep.Version) > 0 {
+			dependencies = append(dependencies, dep)
+		}
 
 	}
 	return dependencies
