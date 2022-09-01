@@ -11,6 +11,12 @@ import (
 func (m *Maven) Source(workingDir string) (string, error) {
 
 	for _, metadataHandler := range m.metadataHandlers {
+		// metadataURL contains the URL without username/password
+		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
+		if err != nil {
+			logrus.Errorf("Trying to parse Maven metadatal url: %s", err)
+		}
+
 		latestVersion, err := metadataHandler.GetLatestVersion()
 		if err != nil {
 			return "", err
@@ -21,7 +27,7 @@ func (m *Maven) Source(workingDir string) (string, error) {
 				"%s Latest version is %s on the Maven repository at %s",
 				result.SUCCESS,
 				latestVersion,
-				metadataHandler.GetMetadataURL(),
+				metadataURL,
 			)
 			return latestVersion, nil
 		}
