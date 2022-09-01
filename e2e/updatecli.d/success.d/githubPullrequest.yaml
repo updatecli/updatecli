@@ -13,13 +13,16 @@ scms:
 sources:
   jenkins:
     name: Get updatecli config title
-    kind: jenkins
+    kind: yaml
     scmid: default
+    spec:
+      file: "updatecli/updatecli.d/updatecli.yaml"
+      key: "title"
 
 targets:
-  jenkins:
+  jenkins: 
     name: Update updatecli config title
-    kind: yaml
+    kind: yaml 
     scmid: default
     spec:
       file: "updatecli/updatecli.d/updatecli.yaml"
