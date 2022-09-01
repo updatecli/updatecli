@@ -9,13 +9,17 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/hashstructure"
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
+	"github.com/updatecli/updatecli/pkg/core/version"
 
 	"path/filepath"
 	"strings"
@@ -37,6 +41,27 @@ func (e *Engine) Clean() (err error) {
 
 // GetFiles return an array with every valid files.
 func GetFiles(root string) (files []string) {
+	if root == "" {
+		// If no manifest have been provided then we try to see if the file
+		// updatecli.yaml exist. If it's then we try to see if the directory updatecli.d
+		// if it's still not the case then we return no manifest files.
+		_, err := os.Stat(config.DefaultConfigFilename)
+		if !errors.Is(err, os.ErrNotExist) {
+			logrus.Debugf("Default Updatecli manifest detected %q", config.DefaultConfigFilename)
+			return []string{config.DefaultConfigFilename}
+		}
+
+		fs, err := os.Stat(config.DefaultConfigDirname)
+		if errors.Is(err, os.ErrNotExist) {
+			return []string{}
+		}
+
+		if fs.IsDir() {
+			logrus.Debugf("Default Updatecli manifest directory detected %q", config.DefaultConfigDirname)
+			root = config.DefaultConfigDirname
+		}
+	}
+
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
@@ -131,11 +156,6 @@ func (e *Engine) Prepare() (err error) {
 
 	err = e.LoadConfigurations()
 
-	if len(e.Pipelines) == 0 {
-		logrus.Errorln(err)
-		return fmt.Errorf("no valid pipeline found")
-	}
-
 	// Don't exit if we identify at least one valid pipeline configuration
 	if err != nil {
 		logrus.Errorln(err)
@@ -145,7 +165,21 @@ func (e *Engine) Prepare() (err error) {
 	// If one git clone fails then we exit
 	err = e.InitSCM()
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	err = e.LoadAutoDiscovery()
+	if err != nil {
+		return err
+	}
+
+	if len(e.Pipelines) == 0 {
+		logrus.Errorln(err)
+		return fmt.Errorf("no valid pipeline found")
+	}
+
+	return nil
 }
 
 // ReadConfigurations read every strategies configuration.
@@ -252,19 +286,13 @@ func (e *Engine) Run() (err error) {
 // Show displays configurations that should be apply.
 func (e *Engine) Show() error {
 
-	err := e.LoadConfigurations()
-
-	if err != nil {
-		return err
-	}
-
 	for _, pipeline := range e.Pipelines {
 
 		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(pipeline.Config.Spec.Name)+4))
 		logrus.Infof("# %s #\n", strings.ToTitle(pipeline.Config.Spec.Name))
 		logrus.Infof("%s\n\n", strings.Repeat("#", len(pipeline.Config.Spec.Name)+4))
 
-		err = pipeline.Config.Display()
+		err := pipeline.Config.Display()
 		if err != nil {
 			return err
 		}
@@ -293,7 +321,7 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 	}()
 
 	s := jsonschema.New(baseSchemaID, schemaDir)
-	err = s.GenerateSchema(&config.Config{})
+	err = s.GenerateSchema(&config.Spec{})
 	if err != nil {
 		return err
 	}
@@ -305,5 +333,141 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 		return err
 	}
 
-	return s.GenerateSchema(&config.Config{})
+	return s.GenerateSchema(&config.Spec{})
+}
+
+// LoadAutoDiscovery will try to guess available pipelines based on specific directory
+func (e *Engine) LoadAutoDiscovery() error {
+
+	// Default Autodiscovery pipeline
+	if e.Options.Pipeline.AutoDiscovery.Enabled {
+
+		// To remove once not experimental
+		if !cmdoptions.Experimental {
+			logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
+			return nil
+		}
+
+		var defaultPipeline pipeline.Pipeline
+		err := defaultPipeline.Init(
+			&config.Config{
+				Spec: config.Spec{
+					Name:          "Local AutoDiscovery",
+					AutoDiscovery: autodiscovery.DefaultCrawlerSpecs,
+				},
+			},
+			pipeline.Options{},
+		)
+
+		if err != nil {
+			logrus.Errorln(err)
+		} else {
+			e.Pipelines = append(e.Pipelines, defaultPipeline)
+		}
+	}
+
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Auto Discovery")+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle("Auto Discovery"))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len("Auto Discovery")+4))
+
+	for id, p := range e.Pipelines {
+		if p.Config.Spec.AutoDiscovery.Crawlers == nil {
+			continue
+		}
+
+		// To remove once not experimental
+		if !cmdoptions.Experimental {
+			logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
+			return nil
+		}
+
+		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Name)+4))
+		logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
+		logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
+
+		var sc scm.Config
+		var pr pullrequest.Config
+		var autodiscoveryScm scm.Scm
+		var autodiscoveryPullrequest pullrequest.PullRequest
+		var found bool
+
+		// Retrieve scm spec if it exists
+		if len(p.Config.Spec.AutoDiscovery.ScmId) > 0 {
+			autodiscoveryScm, found = p.SCMs[p.Config.Spec.AutoDiscovery.ScmId]
+
+			if found {
+				sc = *autodiscoveryScm.Config
+			}
+		}
+
+		// Retrieve pullrequest spec if it exists
+		if len(p.Config.Spec.AutoDiscovery.PullrequestId) > 0 {
+			autodiscoveryPullrequest, found = p.PullRequests[p.Config.Spec.AutoDiscovery.PullrequestId]
+
+			if found {
+				pr = autodiscoveryPullrequest.Config
+			}
+		}
+
+		c, err := autodiscovery.New(
+			p.Config.Spec.AutoDiscovery,
+			autodiscoveryScm.Handler,
+			&sc,
+			&pr)
+
+		if err != nil {
+			e.Pipelines[id].Report.Result = result.FAILURE
+			logrus.Errorln(err)
+			return err
+		}
+
+		errs := []error{}
+
+		manifests, err := c.Run()
+
+		if err != nil {
+			e.Pipelines[id].Report.Result = result.FAILURE
+			logrus.Errorln(err)
+			return err
+		}
+
+		if len(manifests) == 0 {
+			logrus.Infof("nothing detected")
+		}
+
+		for i := range manifests {
+			manifests[i].Version = version.Version
+
+			newConfig := config.Config{
+				Spec: manifests[i],
+			}
+
+			newPipeline := pipeline.Pipeline{}
+			err = newPipeline.Init(&newConfig, e.Options.Pipeline)
+
+			if err == nil {
+				e.Pipelines = append(e.Pipelines, newPipeline)
+				e.configurations = append(e.configurations, newConfig)
+			} else {
+				e.Pipelines[id].Report.Result = result.FAILURE
+				// don't initially fail as init. of the pipeline still fails even with a successful validation
+				err := fmt.Errorf("%q - %s", manifests[i].Name, err)
+				errs = append(errs, err)
+			}
+			if len(errs) > 0 {
+				e.Pipelines[id].Report.Result = result.FAILURE
+
+				logrus.Errorf("Error(s) happened while generating Updatecli pipeline manifest")
+				for i := range errs {
+					logrus.Errorf("%v", errs[i])
+				}
+			}
+		}
+
+		e.Pipelines[id].Report.Result = result.SUCCESS
+
+	}
+
+	return nil
+
 }

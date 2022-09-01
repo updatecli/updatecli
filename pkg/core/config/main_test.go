@@ -644,10 +644,9 @@ var (
 					},
 					PullRequests: map[string]pullrequest.Config{
 						"default": {
-							Title:   "default PR",
-							Kind:    "github/pullrequest",
-							ScmID:   "default",
-							Targets: []string{"updateDefault"},
+							Title: "default PR",
+							Kind:  "github/pullrequest",
+							ScmID: "default",
 						},
 					},
 				},
@@ -707,8 +706,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\nmissing value for parameter(s) [\"kind,targets,scmid\"]"),
-			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\nmissing value for parameter(s) [\"kind,targets,scmid\"]"),
+			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\nmissing value for parameter(s) [\"kind,scmid\"]"),
+			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\nmissing value for parameter(s) [\"kind,scmid\"]"),
 		},
 		{
 			ID: "9.2",
@@ -747,65 +746,9 @@ var (
 					},
 					PullRequests: map[string]pullrequest.Config{
 						"default": {
-							Title:   "default PR",
-							Kind:    "github/pullrequest",
-							ScmID:   "not_existing",
-							Targets: []string{"updateDefault"},
-						},
-					},
-				},
-			},
-			Context: context{
-				Sources: map[string]mockSourceContext{
-					"default": {
-						Output: "2.289.2",
-					},
-				},
-			},
-			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
-			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
-		},
-		{
-			ID: "9.3",
-			Config: Config{
-				Spec: Spec{
-					Name: "jenkins - {{ pipeline \"Sources.default.Output\" }}",
-					SCMs: map[string]scm.Config{
-						"default": {
-							Kind: "github",
-							Spec: map[string]string{
-								"user":       "updatecli",
-								"email":      "me@olblak.com",
-								"owner":      "updatecli",
-								"repository": "updatecli",
-								"token":      "SuperSecret",
-								"username":   "olblak",
-								"branch":     "main",
-							},
-						},
-					},
-					Sources: map[string]source.Config{
-						"default": {
-							ResourceConfig: resource.ResourceConfig{
-								Name: "Get Version",
-								Kind: "jenkins",
-							},
-						},
-					},
-					Targets: map[string]target.Config{
-						"updateDefault": {
-							ResourceConfig: resource.ResourceConfig{
-								Name: "Update Default Version",
-								Kind: "shell",
-							},
-						},
-					},
-					PullRequests: map[string]pullrequest.Config{
-						"default": {
-							Title:   "default PR",
-							Kind:    "github/pullrequest",
-							ScmID:   "default",
-							Targets: []string{"not_existing"},
+							Title: "default PR",
+							Kind:  "github/pullrequest",
+							ScmID: "not_existing",
 						},
 					},
 				},

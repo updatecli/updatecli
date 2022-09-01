@@ -1,0 +1,52 @@
+# The default namespace to be applied to resources. This field is not used to
+# enforce or lock down the deployment to a specific namespace, but instead
+# provide the default value of the namespace field if one is not specified
+# in the manifests.
+# Default: default
+defaultNamespace: grafana
+
+# All resources will be assigned to this namespace and if any cluster scoped
+# resource exists the deployment will fail.
+# Default: ""
+# namespace: ""
+
+helm:
+  # Use a custom location for the Helm chart. This can refer to any go-getter URL.
+  # This allows one to download charts from most any location.  Also know that
+  # go-getter URL supports adding a digest to validate the download. If repo
+  # is set below this field is the name of the chart to lookup
+  chart: grafana
+  # chart: ./chart
+  # A https URL to a Helm repo to download the chart from. It's typically easier
+  # to just use `chart` field and refer to a tgz file.  If repo is used the
+  # value of `chart` will be used as the chart name to lookup in the Helm repository.
+  repo: https://grafana.github.io/helm-charts
+  # A custom release name to deploy the chart as. If not specified a release name
+  # will be generated.
+  releaseName: grafana
+  # The version of the chart or semver constraint of the chart to find. If a constraint
+  # is specified it is evaluated each time git changes.
+  version: 6.32.12
+  # Any values that should be placed in the `values.yaml` and passed to helm during
+  # install.
+  #values:
+  #  any-custom: value
+  ## All labels on Rancher clusters are available using global.fleet.clusterLabels.LABELNAME
+  ## These can now be accessed directly as variables
+  #  variableName: global.fleet.clusterLabels.LABELNAME
+  ## Path to any values files that need to be passed to helm during install
+  valuesFiles:
+    - values.yaml
+  ## Allow to use values files from configmaps or secrets
+  #valuesFrom:
+  #- configMapKeyRef:
+  #    name: configmap-values
+  #    # default to namespace of bundle
+  #    namespace: default
+  #    key: values.yaml
+  #  secretKeyRef:
+  #    name: secret-values
+  #    namespace: default
+  #    key: values.yaml
+  ## Override immutable resources. This could be dangerous.
+  force: false
