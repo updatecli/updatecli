@@ -126,7 +126,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([]config.Spec, error) {
 				parentPom.ArtifactID: {
 					DisableSourceInput: true,
 					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Ensure parent artifactId %q is specified", parentPom.GroupID),
+						Name: fmt.Sprintf("Ensure parent artifactId %q is specified", parentPom.ArtifactID),
 						Kind: "xml",
 						Spec: xml.Spec{
 							File:  relativePomFile,

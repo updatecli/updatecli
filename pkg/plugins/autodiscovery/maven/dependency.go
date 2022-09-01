@@ -139,7 +139,7 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 					dependency.ArtifactID: {
 						DisableSourceInput: true,
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Ensure dependency artifactId %q is specified", dependency.GroupID),
+							Name: fmt.Sprintf("Ensure dependency artifactId %q is specified", dependency.ArtifactID),
 							Kind: "xml",
 							Spec: xml.Spec{
 								File:  relativePomFile,
