@@ -21,7 +21,12 @@ func (p *Pipeline) RunPullRequests() error {
 	}
 
 	for id, pr := range p.PullRequests {
-		relatedTargets := p.SearchAssociatedTargetsID(pr.Config.ScmID)
+		relatedTargets, err := p.SearchAssociatedTargetsID(id)
+
+		if err != nil {
+			logrus.Errorf(err.Error())
+			continue
+		}
 
 		if _, ok := p.SCMs[pr.Config.ScmID]; !ok {
 			return fmt.Errorf("scm id %q couldn't be found", pr.Config.ScmID)
@@ -33,7 +38,7 @@ func (p *Pipeline) RunPullRequests() error {
 		pr = p.PullRequests[id]
 		pr.Config = p.Config.Spec.PullRequests[id]
 
-		err := pr.Update()
+		err = pr.Update()
 		if err != nil {
 			return err
 		}
@@ -172,9 +177,13 @@ func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
 }
 
 // SearchAssociatedTargetsID search for targets related to a pullrequest based on a scm configuration
-func (p *Pipeline) SearchAssociatedTargetsID(prID string) []string {
+func (p *Pipeline) SearchAssociatedTargetsID(pullrequestID string) ([]string, error) {
 
-	scmid := p.PullRequests[prID].Config.ScmID
+	scmid := p.PullRequests[pullrequestID].Config.ScmID
+
+	if len(scmid) == 0 {
+		return []string{}, fmt.Errorf("scmid %q not found for pullrequest id %q", scmid, pullrequestID)
+	}
 	results := []string{}
 
 	for id, target := range p.Targets {
@@ -183,5 +192,5 @@ func (p *Pipeline) SearchAssociatedTargetsID(prID string) []string {
 		}
 	}
 
-	return results
+	return results, nil
 }
