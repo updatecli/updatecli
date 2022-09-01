@@ -1,0 +1,34 @@
+---
+title: Show a set of maven resources as a generic example
+
+scms:
+  local:
+    disabled: true
+
+sources:
+  getLatestJenkinsWarVersion:
+    kind: maven
+    spec:
+      url: "http://repo.jenkins-ci.org"
+      repository: "releases"
+      groupid: "org.jenkins-ci.main"
+      artifactid: "jenkins-war"
+  getLatestJunitVersion:
+    kind: maven
+    spec:
+      url: "repo.maven.apache.org"
+      repository: "maven2"
+      groupid: "junit"
+      artifactid: "junit"
+
+conditions:
+  checkIfOlderJunitExist:
+    kind: maven
+    name: Is there a version 4.3.1 of junit/junit at https://repo.maven.apache.org/maven2
+    disablesourceinput: true
+    spec:
+      url: "repo.maven.apache.org"
+      repository: "maven2"
+      groupid: "junit"
+      artifactid: "junit"
+      version: "4.3.1"

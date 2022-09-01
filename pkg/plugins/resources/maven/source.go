@@ -10,20 +10,29 @@ import (
 // Source return the latest version
 func (m *Maven) Source(workingDir string) (string, error) {
 
-	latestVersion, err := m.metadataHandler.GetLatestVersion()
-	if err != nil {
-		return "", err
+	for _, metadataHandler := range m.metadataHandlers {
+		// metadataURL contains the URL without username/password
+		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
+		if err != nil {
+			logrus.Errorf("Trying to parse Maven metadatal url: %s", err)
+		}
+
+		latestVersion, err := metadataHandler.GetLatestVersion()
+		if err != nil {
+			return "", err
+		}
+
+		if latestVersion != "" {
+			logrus.Infof(
+				"%s Latest version is %s on the Maven repository at %s",
+				result.SUCCESS,
+				latestVersion,
+				metadataURL,
+			)
+			return latestVersion, nil
+		}
+
 	}
 
-	if latestVersion != "" {
-		logrus.Infof(
-			"%s Latest version is %s on the Maven repository at %s",
-			result.SUCCESS,
-			latestVersion,
-			m.metadataHandler.GetMetadataURL(),
-		)
-		return latestVersion, nil
-	}
-
-	return "", fmt.Errorf("%s No latest version on the Maven Repository at %s", result.FAILURE, m.metadataHandler.GetMetadataURL())
+	return "", fmt.Errorf("%s No latest version for the Maven Artifact %s/%s", result.FAILURE, m.spec.GroupID, m.spec.ArtifactID)
 }
