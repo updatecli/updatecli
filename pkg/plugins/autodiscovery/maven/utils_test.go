@@ -82,6 +82,31 @@ func TestGetDependenciesFromPom(t *testing.T) {
 					ArtifactID: "jsch",
 					Version:    "0.1.55",
 				},
+				{
+					GroupID:    "org.jenkins-ci.plugins",
+					ArtifactID: "trilead-api",
+				},
+				{
+
+					GroupID:    "org.jenkins-ci.plugins",
+					ArtifactID: "credentials",
+				},
+				{
+					GroupID:    "io.jenkins.plugins.mina-sshd-api",
+					ArtifactID: "mina-sshd-api-core",
+				},
+				{
+					GroupID:    "org.jenkins-ci.plugins",
+					ArtifactID: "cloudbees-folder",
+				},
+				{
+					GroupID:    "io.jenkins",
+					ArtifactID: "configuration-as-code",
+				},
+				{
+					GroupID:    "io.jenkins.configuration-as-code",
+					ArtifactID: "test-harness",
+				},
 			},
 		},
 	}

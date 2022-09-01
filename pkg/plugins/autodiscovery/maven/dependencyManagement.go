@@ -91,6 +91,11 @@ func (m Maven) discoverDependencyManagementsManifests() ([]config.Spec, error) {
 				continue
 			}
 
+			// No need to update Version if it's not specified
+			if len(dependencies[i].Version) == 0 {
+				continue
+			}
+
 			manifestName := fmt.Sprintf(
 				"Bump Maven dependencyManagement %s/%s",
 				dependency.GroupID,

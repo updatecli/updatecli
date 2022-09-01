@@ -83,9 +83,7 @@ func getRepositoriesFromPom(doc *etree.Document) []repository {
 			rep.ID = elem.Text()
 		}
 
-		if len(rep.URL) > 0 {
-			repositories = append(repositories, rep)
-		}
+		repositories = append(repositories, rep)
 
 	}
 
@@ -112,11 +110,7 @@ func getDependenciesFromPom(doc *etree.Document) []dependency {
 			dep.Version = elem.Text()
 		}
 
-		// If Version is not specified then it means we are parsing a childPom dependency
-		// which inherit the value from its parent so we don't want to update it
-		if len(dep.Version) > 0 {
-			dependencies = append(dependencies, dep)
-		}
+		dependencies = append(dependencies, dep)
 
 	}
 	return dependencies
@@ -143,11 +137,7 @@ func getDependencyManagementsFromPom(doc *etree.Document) []dependency {
 			dep.Version = elem.Text()
 		}
 
-		// If Version is not specified then it means we are parsing a childPom dependency
-		// which inherit the value from its parent so we don't want to update it
-		if len(dep.Version) > 0 {
-			dependencies = append(dependencies, dep)
-		}
+		dependencies = append(dependencies, dep)
 
 	}
 	return dependencies
