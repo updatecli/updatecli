@@ -72,7 +72,7 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 		// Something went wrong during the tag search.
 		return false, files, message, err
 	}
-	if gt.foundVersion.ParsedVersion == source {
+	if gt.foundVersion.GetVersion() == source {
 		// No error, but no change
 		logrus.Printf("%s The Git Tag %q already exists, nothing else to do.",
 			result.SUCCESS,

@@ -7,7 +7,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/aws/aws-sdk-go v1.44.71
+	github.com/aws/aws-sdk-go v1.44.86
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/fatih/color v1.13.0
 	github.com/go-git/go-git/v5 v5.4.2
@@ -15,7 +15,7 @@ require (
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/moby/buildkit v0.10.3
+	github.com/moby/buildkit v0.10.4
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/shurcooL/githubv4 v0.0.0-20220115235240-a14260e6f8a2
@@ -26,16 +26,18 @@ require (
 	go.mozilla.org/sops/v3 v3.7.3
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.9.2
+	helm.sh/helm/v3 v3.9.4
 	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5
-	github.com/drone/go-scm v1.25.0
+	github.com/beevik/etree v1.1.0
+	github.com/drone/go-scm v1.27.0
 	github.com/goware/urlx v0.3.2
-	github.com/invopop/jsonschema v0.4.0
+	github.com/invopop/jsonschema v0.6.0
 	golang.org/x/text v0.3.7
+	gotest.tools v2.2.0+incompatible
 )
 
 require (
@@ -79,7 +81,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
+	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
@@ -212,7 +214,7 @@ require (
 	k8s.io/client-go v0.24.2 // indirect
 	k8s.io/component-base v0.24.2 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
+	k8s.io/kube-openapi v0.0.0-20220627174259-011e075b9cb8 // indirect
 	k8s.io/kubectl v0.24.2 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	oras.land/oras-go v1.2.0 // indirect

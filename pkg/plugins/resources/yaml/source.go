@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -20,6 +21,15 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		validationError := fmt.Errorf("Validation error in sources of type 'yaml': the attributes `spec.files` can't contain more than one element for conditions")
 		logrus.Errorf(validationError.Error())
 		return "", validationError
+  }
+
+	if len(workingDir) > 0 {
+		y.spec.File = filepath.Join(workingDir, y.spec.File)
+	}
+
+	// Test at runtime if a file exist
+	if !y.contentRetriever.FileExists(y.spec.File) {
+		return "", fmt.Errorf("the yaml file %q does not exist", y.spec.File)
 	}
 
 	if y.spec.Value != "" {

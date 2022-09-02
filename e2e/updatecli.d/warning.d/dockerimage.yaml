@@ -1,0 +1,39 @@
+title: Retrieve the latest Docker Image Tag
+
+sources:
+  ## Dockerhub return an alphabetically ordered list of docker image tag
+  dockerhub-latest:
+    name: Get Latest Tag for Dockerhub
+    kind: dockerimage
+    spec:
+      image: "updatecli/updatecli"
+      architecture: amd64
+  # Ghcr return an created time ordered list of container image tag
+  ghcr.io-latest:
+    name: Get Latest Tag from ghcr
+    kind: dockerimage
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: amd64
+  # comment following test until dockerimage and semver versionfilter move out from experimental
+  # more ctx on https://github.com/updatecli/updatecli/pull/816
+  ### Dockerhub return an alphabetically ordered list of docker image tag
+  ## semver doesn't work in the current state
+  #dockerhub-semver:
+  #  name: Get Latest semver Tag for Dockerhub
+  #  kind: dockerimage
+  #  spec:
+  #    image: "updatecli/updatecli"
+  #    architecture: amd64
+  #    versionFilter:
+  #      kind: semver
+  ## Ghcr return an created time ordered list of container image tag
+  ## semver doesn't work in the current state
+  #ghcr.io-semver:
+  #  name: Get Latest semver Tag from ghcr
+  #  kind: dockerimage
+  #  spec:
+  #    image: "ghcr.io/updatecli/updatecli"
+  #    architecture: amd64
+  #    versionFilter:
+  #      kind: semver

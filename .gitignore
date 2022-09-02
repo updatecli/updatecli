@@ -28,3 +28,5 @@ dist/
 e2e/test_results.yaml
 
 schema/*
+
+coverage.txt

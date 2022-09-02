@@ -1,0 +1,58 @@
+---
+
+title: Show a set of xml resources as a generic example
+
+scms:
+  ircbot:
+    kind: git
+    spec:
+      url: https://github.com/olblak/ircbot.git
+      branch: master
+
+
+sources:
+  parentVersion:
+    name: Get parent version from pom.xml
+    scmid: ircbot
+    kind: xml
+    spec:
+      file: pom.xml
+      path: "/project/parent/version"
+
+conditions:
+  parent-version:
+    name: Test if parent version is set to source output
+    kind: xml
+    sourceid: parentVersion
+    scmid: ircbot
+    spec:
+      file: pom.xml
+      path: "/project/parent/version"
+  artifactid:
+    name: Test if parent artifactId is set to jenkins
+    kind: xml
+    scmid: ircbot
+    disablesourceinput: true
+    spec:
+      file: pom.xml
+      path: "/project/parent/artifactId"
+      value: "jenkins"
+
+targets:
+  parent-version:
+    name: Test if parent version is set to source output
+    kind: xml
+    sourceid: parentVersion
+    scmid: ircbot
+    spec:
+      file: pom.xml
+      path: "/project/parent/version"
+  artifactid:
+    name: Test if parent artifactId is set to jenkins
+    kind: xml
+    scmid: ircbot
+    disablesourceinput: true
+    spec:
+      file: pom.xml
+      path: "/project/parent/artifactId"
+      value: "donotjenkins"

@@ -9,12 +9,25 @@ import (
 )
 
 func (p *Pipeline) RunPullRequests() error {
+
+	if len(p.Targets) == 0 {
+		logrus.Debugln("no target found, skipping pullrequest")
+		return nil
+	}
+
 	if len(p.PullRequests) > 0 {
 		logrus.Infof("\n\n%s\n", strings.ToTitle("Pull Requests"))
 		logrus.Infof("%s\n\n", strings.Repeat("=", len("PullRequests")+1))
 	}
 
 	for id, pr := range p.PullRequests {
+		relatedTargets, err := p.SearchAssociatedTargetsID(id)
+
+		if err != nil {
+			logrus.Errorf(err.Error())
+			continue
+		}
+
 		if _, ok := p.SCMs[pr.Config.ScmID]; !ok {
 			return fmt.Errorf("scm id %q couldn't be found", pr.Config.ScmID)
 		}
@@ -25,7 +38,7 @@ func (p *Pipeline) RunPullRequests() error {
 		pr = p.PullRequests[id]
 		pr.Config = p.Config.Spec.PullRequests[id]
 
-		err := pr.Update()
+		err = pr.Update()
 		if err != nil {
 			return err
 		}
@@ -37,7 +50,7 @@ func (p *Pipeline) RunPullRequests() error {
 				p.SCMs[pr.Config.ScmID].Config.Kind)
 		}
 
-		firstTargetID := pr.Config.Targets[0]
+		firstTargetID := relatedTargets[0]
 		firstTargetSourceID := p.Targets[firstTargetID].Config.SourceID
 
 		// If pr.Title is not set then we try to guess it
@@ -75,7 +88,7 @@ func (p *Pipeline) RunPullRequests() error {
 		changelog := ""
 		processedSourceIDs := []string{}
 
-		failedTargetIDs, attentionTargetIDs, successTargetIDs, skippedTargetIDs := p.GetTargetsIDByResult(pr.Config.Targets)
+		failedTargetIDs, attentionTargetIDs, successTargetIDs, skippedTargetIDs := p.GetTargetsIDByResult(relatedTargets)
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
@@ -161,4 +174,23 @@ func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
 		}
 	}
 	return failedTargetsID, attentionTargetsID, successTargetsID, skippedTargetsID
+}
+
+// SearchAssociatedTargetsID search for targets related to a pullrequest based on a scm configuration
+func (p *Pipeline) SearchAssociatedTargetsID(pullrequestID string) ([]string, error) {
+
+	scmid := p.PullRequests[pullrequestID].Config.ScmID
+
+	if len(scmid) == 0 {
+		return []string{}, fmt.Errorf("scmid %q not found for pullrequest id %q", scmid, pullrequestID)
+	}
+	results := []string{}
+
+	for id, target := range p.Targets {
+		if target.Config.SCMID == scmid {
+			results = append(results, id)
+		}
+	}
+
+	return results, nil
 }

@@ -1,0 +1,37 @@
+annotations:
+  artifacthub.io/license: Apache-2.0
+apiVersion: v2
+appVersion: v1.0.0
+dependencies:
+- condition: minio.enabled, global.minio.enabled
+  name: minio
+  repository: https://charts.min.io/
+  tags:
+  - minio
+  version: 4.0.2
+- condition: kubed.enabled, global.kubed.enabled
+  name: kubed
+  repository: https://charts.appscode.com/stable
+  tags:
+  - kubed
+  version: 0.13.2
+- condition: epinio-ui.enabled
+  name: epinio-ui
+  repository: https://epinio.github.io/helm-charts
+  tags:
+  - epinio-ui
+  version: 0.7.0
+description: The official way to install Epinio
+home: https://github.com/epinio/epinio
+icon: https://raw.githubusercontent.com/epinio/helm-charts/main/assets/epinio.png
+keywords:
+- epinio
+- paas
+maintainers:
+- email: team@epinio.io
+  name: SUSE
+name: epinio
+sources:
+- https://github.com/epinio/epinio
+version: 1.0.1
+
