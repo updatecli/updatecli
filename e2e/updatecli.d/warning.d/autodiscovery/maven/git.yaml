@@ -1,0 +1,30 @@
+scms:
+  default:
+    kind: git 
+    spec:
+      # Contains no repositories
+      #url: https://github.com/olblak/jira-ldap-syncer.git
+      #branch: master
+      
+      # Contains repositories
+      url: https://github.com/olblak/jenkins-datadog-plugin.git
+      branch: master
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  crawlers:
+    maven:
+      # By default enabled
+      enable: true
+      # To ignore specific path
+      #ignore:
+      #  - path: <filepath relative to scm repository>
+      #only:
+      #  - path: <filepath relative to scm repository>
+    rancher/fleet:
+      # By default it's enable 
+      enable: false
+    helm:
+      # By default it's enable 
+      enable: false
