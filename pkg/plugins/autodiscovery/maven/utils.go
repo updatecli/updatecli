@@ -43,6 +43,10 @@ func getParentFromPom(doc *etree.Document) parentPom {
 
 	parent := doc.FindElement("//project/parent")
 
+	if parent == nil {
+		return p
+	}
+
 	if elem := parent.FindElement("./groupId"); elem != nil {
 		p.GroupID = elem.Text()
 	}
@@ -73,6 +77,12 @@ func getRepositoriesFromPom(doc *etree.Document) []repository {
 	repositoriesPath := "//project/repositories/*"
 
 	for _, repositoryElem := range doc.FindElements(repositoriesPath) {
+
+		if repositoryElem == nil {
+			repositories = append(repositories, repository{})
+			continue
+		}
+
 		rep := repository{}
 
 		if elem := repositoryElem.FindElement("./url"); elem != nil {
@@ -97,6 +107,11 @@ func getDependenciesFromPom(doc *etree.Document) []dependency {
 	dependenciesPath := "//project/dependencies/*"
 	for _, dependencyElem := range doc.FindElements(dependenciesPath) {
 		dep := dependency{}
+
+		if dependencyElem == nil {
+			dependencies = append(dependencies, dep)
+			continue
+		}
 
 		if elem := dependencyElem.FindElement("./groupId"); elem != nil {
 			dep.GroupID = elem.Text()
@@ -124,6 +139,11 @@ func getDependencyManagementsFromPom(doc *etree.Document) []dependency {
 	for _, dependencyElem := range doc.FindElements(dependenciesPath) {
 
 		dep := dependency{}
+
+		if dependencyElem == nil {
+			dependencies = append(dependencies, dep)
+			continue
+		}
 
 		if elem := dependencyElem.FindElement("./groupId"); elem != nil {
 			dep.GroupID = elem.Text()

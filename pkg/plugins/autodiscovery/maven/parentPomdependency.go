@@ -62,6 +62,11 @@ func (m Maven) discoverParentPomDependencyManifests() ([]config.Spec, error) {
 		repositories := getRepositoriesFromPom(doc)
 		parentPom := getParentFromPom(doc)
 
+		// No need to update Version if it's not specified
+		if len(parentPom.Version) == 0 {
+			continue
+		}
+
 		// Retrieve dependencies
 
 		containsVariableRegex, err := regexp.Compile(`.*\$\{.*\}.*`)
