@@ -21,8 +21,7 @@ func TestSource(t *testing.T) {
 		{
 			name: "Normal case with org.eclipse.mylyn.wikitext.wikitext.core on repo.jenkins-ci.org/releases",
 			spec: Spec{
-				URL:        "repo.jenkins-ci.org",
-				Repository: "releases",
+				Repository: "repo.jenkins-ci.org/releases",
 				GroupID:    "org.eclipse.mylyn.wikitext",
 				ArtifactID: "wikitext.core",
 			},
@@ -34,8 +33,7 @@ func TestSource(t *testing.T) {
 		{
 			name: "Error case with an error returned by the handler",
 			spec: Spec{
-				URL:        "repo.jenkins-ci.org",
-				Repository: "releases",
+				Repository: "repo.jenkins-ci.org/releases",
 				GroupID:    "org.eclipse.mylyn.wikitext",
 				ArtifactID: "wikitext.core",
 			},
@@ -47,8 +45,7 @@ func TestSource(t *testing.T) {
 		{
 			name: "Error case with empty latest version returned by the handler",
 			spec: Spec{
-				URL:        "repo.jenkins-ci.org",
-				Repository: "releases",
+				Repository: "repo.jenkins-ci.org/releases",
 				GroupID:    "org.eclipse.mylyn.wikitext",
 				ArtifactID: "wikitext.core",
 			},
@@ -61,8 +58,10 @@ func TestSource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sut := Maven{
-				spec:            tt.spec,
-				metadataHandler: tt.mockedMetadataHandler,
+				spec: tt.spec,
+				metadataHandlers: []mavenmetadata.Handler{
+					tt.mockedMetadataHandler,
+				},
 			}
 
 			got, gotErr := sut.Source(tt.workingDir)

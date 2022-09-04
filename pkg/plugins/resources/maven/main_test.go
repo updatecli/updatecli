@@ -18,19 +18,37 @@ func TestNew(t *testing.T) {
 		{
 			name: "Normal Maven case",
 			spec: Spec{
-				URL:        "repo.jenkins-ci.org",
-				Repository: "releases",
+				Repository: "repo.jenkins-ci.org/releases",
 				GroupID:    "org.eclipse.mylyn.wikitext",
 				ArtifactID: "wikitext.core",
 			},
 			want: &Maven{
 				spec: Spec{
-					URL:        "repo.jenkins-ci.org",
-					Repository: "releases",
+					Repository: "https://repo.jenkins-ci.org/releases",
 					GroupID:    "org.eclipse.mylyn.wikitext",
 					ArtifactID: "wikitext.core",
 				},
-				metadataHandler: &mavenmetadata.DefaultHandler{},
+				metadataHandlers: []mavenmetadata.Handler{
+					&mavenmetadata.DefaultHandler{},
+				},
+			},
+		},
+		{
+			name: "Normal Maven case",
+			spec: Spec{
+				Repository: "https://repo.jenkins-ci.org/releases",
+				GroupID:    "org.eclipse.mylyn.wikitext",
+				ArtifactID: "wikitext.core",
+			},
+			want: &Maven{
+				spec: Spec{
+					Repository: "https://repo.jenkins-ci.org/releases",
+					GroupID:    "org.eclipse.mylyn.wikitext",
+					ArtifactID: "wikitext.core",
+				},
+				metadataHandlers: []mavenmetadata.Handler{
+					&mavenmetadata.DefaultHandler{},
+				},
 			},
 		},
 	}
@@ -45,7 +63,7 @@ func TestNew(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.want.spec, got.spec)
-			assert.IsType(t, tt.want.metadataHandler, tt.want.metadataHandler)
+			assert.IsType(t, tt.want.metadataHandlers, tt.want.metadataHandlers)
 		})
 	}
 }

@@ -15,21 +15,30 @@ func (m *Maven) Condition(source string) (bool, error) {
 		m.spec.Version = source
 	}
 
-	versions, err := m.metadataHandler.GetVersions()
-	if err != nil {
-		return false, err
-	}
-
-	for _, version := range versions {
-		if version == m.spec.Version {
-			logrus.Infof("%s Version %s is available on the Maven Repository (%s)",
-				result.SUCCESS, m.spec.Version, m.metadataHandler.GetMetadataURL())
-			return true, nil
+	for _, metadataHandler := range m.metadataHandlers {
+		// metadataURL contains the URL without username/password
+		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
+		if err != nil {
+			logrus.Errorf("Trying to parse Maven metadatal url: %s", err)
 		}
+
+		versions, err := metadataHandler.GetVersions()
+		if err != nil {
+			return false, err
+		}
+
+		for _, version := range versions {
+			if version == m.spec.Version {
+				logrus.Infof("%s Version %s is available on the Maven Repository (%s)",
+					result.SUCCESS, m.spec.Version, metadataURL)
+				return true, nil
+			}
+		}
+
 	}
 
-	logrus.Infof("%s Version %s is not available on the Maven Repository (%s)",
-		result.FAILURE, m.spec.Version, m.metadataHandler.GetMetadataURL())
+	logrus.Infof("%s Version %s is not found for Maven artifact (%s/%s)",
+		result.FAILURE, m.spec.Version, m.spec.GroupID, m.spec.ArtifactID)
 	return false, nil
 }
 
