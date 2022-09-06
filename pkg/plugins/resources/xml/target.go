@@ -30,7 +30,9 @@ func (x *XML) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 		return false, files, message, fmt.Errorf("URL scheme is not supported for XML target: %q", x.spec.File)
 	}
 
-	x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+	if scm != nil {
+		x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+	}
 
 	// Test at runtime if a file exist
 	if !x.contentRetriever.FileExists(x.spec.File) {

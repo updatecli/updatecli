@@ -15,7 +15,9 @@ func (x *XML) Condition(source string) (bool, error) {
 
 func (x *XML) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 
-	x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+	if scm != nil {
+		x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+	}
 
 	// Test at runtime if a file exist
 	if !x.contentRetriever.FileExists(x.spec.File) {
