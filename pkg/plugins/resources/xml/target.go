@@ -3,6 +3,7 @@ package xml
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/beevik/etree"
 	"github.com/sirupsen/logrus"
@@ -23,6 +24,19 @@ func (x *XML) Target(source string, dryRun bool) (changed bool, err error) {
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
 func (x *XML) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+
+	if strings.HasPrefix(x.spec.File, "https://") ||
+		strings.HasPrefix(x.spec.File, "http://") {
+		return false, files, message, fmt.Errorf("URL scheme is not supported for XML target: %q", x.spec.File)
+	}
+
+	x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+
+	// Test at runtime if a file exist
+	if !x.contentRetriever.FileExists(x.spec.File) {
+		return false, files, message, fmt.Errorf("the XML file %q does not exist", x.spec.File)
+	}
+
 	if len(x.spec.Value) == 0 {
 		x.spec.Value = source
 	}
@@ -34,8 +48,13 @@ func (x *XML) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 		resourceFile = x.spec.File
 	}
 
+	if err := x.Read(); err != nil {
+		return false, []string{}, "", err
+	}
+
 	doc := etree.NewDocument()
-	if err := doc.ReadFromFile(resourceFile); err != nil {
+
+	if err := doc.ReadFromString(x.currentContent); err != nil {
 		return false, []string{}, "", err
 	}
 

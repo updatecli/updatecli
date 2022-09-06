@@ -1,7 +1,7 @@
 package xml
 
 import (
-	"path/filepath"
+	"fmt"
 
 	"github.com/beevik/etree"
 	"github.com/sirupsen/logrus"
@@ -14,16 +14,21 @@ func (x *XML) Condition(source string) (bool, error) {
 }
 
 func (x *XML) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	conditionFile := ""
 
-	if scm != nil {
-		conditionFile = filepath.Join(scm.GetDirectory(), x.spec.File)
-	} else {
-		conditionFile = x.spec.File
+	x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+
+	// Test at runtime if a file exist
+	if !x.contentRetriever.FileExists(x.spec.File) {
+		return false, fmt.Errorf("the XML file %q does not exist", x.spec.File)
+	}
+
+	if err := x.Read(); err != nil {
+		return false, err
 	}
 
 	doc := etree.NewDocument()
-	if err := doc.ReadFromFile(conditionFile); err != nil {
+
+	if err := doc.ReadFromString(x.currentContent); err != nil {
 		return false, err
 	}
 
