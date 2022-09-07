@@ -16,7 +16,6 @@ sources:
   latestGoVersion:
     name: Get Latest Go Release
     kind: githubrelease
-    scmid: default
     spec:
       owner: golang
       repository: go
