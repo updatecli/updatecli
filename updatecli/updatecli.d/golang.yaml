@@ -30,7 +30,7 @@ sources:
     name: Update go.mod
     kind: shell
     scmid: default
-    dependson:
+    depends_on:
       - latestGoVersion
     spec:
       command: ./updatecli/scripts/updateGomodGoversion.sh ./go.mod {{ source "latestGoVersion" }}
