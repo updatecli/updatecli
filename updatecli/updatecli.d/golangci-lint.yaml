@@ -1,4 +1,4 @@
-title: "Bump golangci-lint version"
+name: "Bump golangci-lint version"
 
 scms:
   default:
@@ -54,9 +54,8 @@ pullrequests:
     title: '[updatecli] Bump golangci-lint version to {{ source "default" }}'
     kind: github
     scmid: default
-    targets:
-      - default
     spec:
+      automerge: true
       labels:
         - chore
         - dependencies
