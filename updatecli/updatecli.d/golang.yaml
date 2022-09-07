@@ -1,4 +1,4 @@
-title: Bump Golang Version
+name: Bump Golang Version
 
 scms:
   default:
@@ -16,6 +16,7 @@ sources:
   latestGoVersion:
     name: Get Latest Go Release
     kind: githubrelease
+    scmid: default
     spec:
       owner: golang
       repository: go
@@ -29,7 +30,8 @@ sources:
   gomod:
     name: Update go.mod
     kind: shell
-    depends_on:
+    scmid: default
+    dependson:
       - latestGoVersion
     spec:
       command: ./updatecli/scripts/updateGomodGoversion.sh ./go.mod {{ source "latestGoVersion" }}
@@ -41,6 +43,7 @@ conditions:
     name: Ensure GA step is defined in Github Action named release-sandbox
     kind: yaml
     disablesourceinput: true
+    scmid: default
     spec:
       file: .github/workflows/release-sandbox.yaml
       key: jobs.build.steps[3].id
@@ -49,6 +52,7 @@ conditions:
     name: Ensure GA step is defined in Github Action named release
     kind: yaml
     disablesourceinput: true
+    scmid: default
     spec:
       file: .github/workflows/release.yaml
       key: jobs.build.steps[3].id
@@ -57,6 +61,7 @@ conditions:
     name: Ensure GA step is defined in Github Action named go
     kind: yaml
     disablesourceinput: true
+    scmid: default
     spec:
       file: .github/workflows/go.yaml
       key: jobs.build.steps[0].id
@@ -74,6 +79,7 @@ conditions:
     name: 'Is docker image golang:{{ source "latestGoVersion" }} published'
     sourceid: latestGoVersion
     kind: dockerimage
+    scmid: default
     spec:
       image: golang
       tag: '{{ source "latestGoVersion" }}'
@@ -124,11 +130,6 @@ pullrequests:
     title: '[updatecli] Bump Golang version to {{ source "latestGoVersion" }}'
     kind: github
     scmid: default
-    targets:
-      - release-sandbox
-      - release
-      - workflowgo
-      - go.mod
     spec:
       labels:
         - chore
