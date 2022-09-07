@@ -1,4 +1,4 @@
-title: Bump venom version
+name: Bump venom version
 
 scms:
   default:
@@ -39,9 +39,8 @@ pullrequests:
     title: '[updatecli] Bump Venom version to {{ source "latestVersion" }}'
     kind: github
     scmid: default
-    targets:
-      - goWorkflow
     spec:
+      automerge: true
       labels:
         - chore
         - skip-changelog

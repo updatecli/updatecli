@@ -1,4 +1,4 @@
-title: Bump udpatecli version
+name: Bump udpatecli version
 
 scms:
   default:
@@ -37,9 +37,8 @@ pullrequests:
     title: '[updatecli] Bump updatecli version to {{ source "latestVersion" }}'
     kind: github
     scmid: default
-    targets:
-      - bugReport
     spec:
+      automerge: true
       labels:
         - chore
         - skip-changelog
