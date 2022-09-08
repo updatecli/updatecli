@@ -68,7 +68,6 @@ linters:
   disable-all: true
   enable:
     - asciicheck
-    - deadcode
     - depguard
     - dogsled
     - errcheck
@@ -98,8 +97,7 @@ linters:
     - typecheck
     - unconvert
     - unparam
-    # - unused
-    - varcheck
+    - unused
     # - whitespace
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source

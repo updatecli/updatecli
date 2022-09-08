@@ -43,7 +43,7 @@ type AutoDiscovery struct {
 	crawlers          []Crawler
 }
 
-//
+// New returns an initiated autodiscovery object
 func New(spec discoveryConfig.Config,
 	scmHandler scm.ScmHandler,
 	scmConfig *scm.Config,
