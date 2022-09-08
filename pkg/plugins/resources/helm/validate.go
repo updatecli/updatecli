@@ -13,7 +13,7 @@ var (
 	ErrWrongConfig = errors.New("wrong helm configuration")
 )
 
-//ValidateTarget ensure that target required parameter are set
+// ValidateTarget ensure that target required parameter are set
 func (c *Chart) ValidateTarget() error {
 
 	var errs []error
