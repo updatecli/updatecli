@@ -16,7 +16,7 @@ var (
 	ErrEmptyInput = errors.New("validation error: transformer input is empty")
 )
 
-//Transformer holds a tranformer rule
+// Transformer holds a tranformer rule
 type Transformer struct {
 	// AddPrefix adds a prefix to the transformer input value
 	AddPrefix           string `yaml:",omitempty"`
@@ -44,7 +44,7 @@ type Transformer struct {
 	DeprecatedSemVerInc string `yaml:"semverInc,omitempty" jsonschema:"-"`
 }
 
-//Transformers defines a list of transformer applied in order
+// Transformers defines a list of transformer applied in order
 type Transformers []Transformer
 
 // Apply applies a single transformation based on a key
