@@ -27,10 +27,11 @@ func (s *Shell) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (b
 }
 
 // Target executes the provided command (concatenated with the source) to apply the change.
-//	The command is expected, if it changes something, to print the new value to the stdout
-//	- An exit code of 0 and an empty stdout means: "successful command and no change"
-//	- An exit code of 0 and something on the stdout means: "successful command with a changed value"
-//	- Any other exit code means "failed command with no change"
+// The command is expected, if it changes something, to print the new value to the stdout
+//   - An exit code of 0 and an empty stdout means: "successful command and no change"
+//   - An exit code of 0 and something on the stdout means: "successful command with a changed value"
+//   - Any other exit code means "failed command with no change"
+//
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
 func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, error) {
 
