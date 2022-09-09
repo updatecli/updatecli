@@ -75,7 +75,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	}
 
 	if s.URL == "" {
-		s.URL = "github.com"
+		s.URL = "https://github.com"
 	}
 
 	// Initialize github client
@@ -94,7 +94,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	if strings.HasSuffix(s.URL, "github.com") {
 		g.client = githubv4.NewClient(httpClient)
 	} else {
-		g.client = githubv4.NewEnterpriseClient(os.Getenv(s.URL), httpClient)
+		g.client = githubv4.NewEnterpriseClient(s.URL, httpClient)
 	}
 
 	g.setDirectory()

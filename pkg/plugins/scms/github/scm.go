@@ -3,6 +3,8 @@ package github
 import (
 	"fmt"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 // GetDirectory returns the local git repository path.
@@ -21,10 +23,12 @@ func (g *Github) Clean() error {
 
 // Clone run `git clone`.
 func (g *Github) Clone() (string, error) {
-
-	URL := fmt.Sprintf("https://github.com/%v/%v.git",
+	URL := fmt.Sprintf("%v/%v/%v.git",
+		g.Spec.URL,
 		g.Spec.Owner,
 		g.Spec.Repository)
+
+	logrus.Debug("Cloning repository", URL)
 
 	g.setDirectory()
 
