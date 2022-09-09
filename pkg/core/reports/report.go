@@ -74,7 +74,6 @@ type Report struct {
 }
 
 // Init initializes a new report for a specific configuration
-//func (config *Config) InitReport() (report *Report) {
 func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 
 	r.Name = name
