@@ -69,7 +69,7 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 		return "", err
 	}
 
-	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
+	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository)
 
 	if err != nil {
 		return "", err

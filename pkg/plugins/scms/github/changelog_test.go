@@ -70,7 +70,7 @@ func TestChangelog(t *testing.T) {
 					Release: queriedRelease{},
 				},
 			},
-			wantChangelog: "No Github Release found for v0.17.0 on https://github.com/updatecli/updatecli",
+			wantChangelog: "no Github Release found for v0.17.0 on \"https://github.com/updatecli/updatecli\"",
 		},
 		{
 			name: "Case with error returned from query",
@@ -93,13 +93,15 @@ func TestChangelog(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.mockedQuery)
 
-			sut := Github{
-				Spec: tt.spec,
-				client: &MockGitHubClient{
-					mockedQuery: tt.mockedQuery,
-					mockedErr:   tt.mockedError,
-				},
+			sut, err := New(tt.spec, "id1")
+
+			require.NoError(t, err)
+
+			sut.client = &MockGitHubClient{
+				mockedQuery: tt.mockedQuery,
+				mockedErr:   tt.mockedError,
 			}
+
 			got, err := sut.Changelog(tt.version)
 
 			if tt.wantErr {
