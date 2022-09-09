@@ -22,7 +22,7 @@ func (g *Github) Clean() error {
 // Clone run `git clone`.
 func (g *Github) Clone() (string, error) {
 
-	URL, err := url.JoinPath("https://"+g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
+	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
 
 	if err != nil {
 		return "", err

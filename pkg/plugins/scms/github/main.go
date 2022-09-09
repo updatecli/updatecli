@@ -74,12 +74,16 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		s.Directory = path.Join(tmp.Directory, "github", s.Owner, s.Repository)
 	}
 
-	// Ensure we didn't specified HTTP scheme
+	// Ensure user don't specified HTTP scheme.
 	s.URL = strings.TrimPrefix(s.URL, "https://")
 	s.URL = strings.TrimPrefix(s.URL, "http://")
 
 	if s.URL == "" {
-		s.URL = "github.com"
+		s.URL = "https://github.com"
+	}
+
+	if !strings.HasPrefix(s.URL, "https://") && !strings.HasPrefix(s.URL, "http://") {
+		s.URL = "https://" + s.URL
 	}
 
 	// Initialize github client
