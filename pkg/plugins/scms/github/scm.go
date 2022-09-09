@@ -1,7 +1,7 @@
 package github
 
 import (
-	"fmt"
+	"net/url"
 	"os"
 )
 
@@ -22,13 +22,15 @@ func (g *Github) Clean() error {
 // Clone run `git clone`.
 func (g *Github) Clone() (string, error) {
 
-	URL := fmt.Sprintf("https://github.com/%v/%v.git",
-		g.Spec.Owner,
-		g.Spec.Repository)
+	URL, err := url.JoinPath("https://"+g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
+
+	if err != nil {
+		return "", err
+	}
 
 	g.setDirectory()
 
-	err := g.nativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
+	err = g.nativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
 
 	if err != nil {
 		return "", err
