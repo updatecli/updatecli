@@ -94,7 +94,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	if strings.HasSuffix(s.URL, "github.com") {
 		g.client = githubv4.NewClient(httpClient)
 	} else {
-		g.client = githubv4.NewEnterpriseClient(os.Getenv(s.URL), httpClient)
+		g.client = githubv4.NewEnterpriseClient(s.URL, httpClient)
 	}
 
 	g.setDirectory()
@@ -134,7 +134,7 @@ func (s *Spec) Validate() (errs []error) {
 func (gs *Spec) Merge(child interface{}) error {
 	childGHSpec, ok := child.(Spec)
 	if !ok {
-		return fmt.Errorf("unable to merge GitHub spec with unknown object type.")
+		return fmt.Errorf("unable to merge GitHub spec with unknown object type")
 	}
 
 	if childGHSpec.Branch != "" {
