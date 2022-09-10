@@ -70,7 +70,7 @@ func TestChangelog(t *testing.T) {
 					Release: queriedRelease{},
 				},
 			},
-			wantChangelog: "no Github Release found for v0.17.0 on \"https://github.com/updatecli/updatecli\"",
+			wantChangelog: "no GitHub Release found for v0.17.0 on \"https://github.com/updatecli/updatecli\"",
 		},
 		{
 			name: "Case with error returned from query",

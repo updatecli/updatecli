@@ -77,7 +77,7 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 
 	if len(query.Repository.Release.Url) == 0 {
 		// TODO: getRepositoryURL()
-		return fmt.Sprintf("no Github Release found for %s on %q", versionName, URL), nil
+		return fmt.Sprintf("no GitHub Release found for %s on %q", versionName, URL), nil
 	}
 
 	return fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v",
