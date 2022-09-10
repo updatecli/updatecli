@@ -1,0 +1,72 @@
+name: Test YAML resource
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli/updatecli.git
+
+sources:
+  scenario1:
+    name: Basic yaml source
+    kind: yaml
+    spec:
+      file: e2e/updatecli.d/success.d/yaml.yaml
+      key: sources.scenario1.kind
+
+  scenario2:
+    name: Basic yaml source
+    kind: yaml
+    spec:
+      file: file://e2e/updatecli.d/success.d/yaml.yaml
+      key: sources.scenario1.kind
+
+  scenario21:
+    name: Basic yaml source
+    kind: yaml
+    spec:
+      file: file://e2e/updatecli.d/success.d/yaml.yaml
+      key: sources.scenario1.kind
+
+  scenario3:
+    name: Test URL scheme
+    kind: yaml
+    spec:
+      file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
+      key: vars.message.error
+
+  scenario31:
+    name: Test URL scheme
+    kind: yaml
+    scmid: default
+    spec:
+      file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
+      key: vars.message.error
+
+conditions:
+  scenario1:
+    name: Basic yaml condition
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: e2e/updatecli.d/success.d/yaml.yaml
+      key: sources.scenario1.kind
+      value: yaml
+
+  scenario2:
+    name: Basic yaml condition
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: file://e2e/updatecli.d/success.d/yaml.yaml
+      key: sources.scenario1.kind
+      value: yaml
+
+  scenario3:
+    name: Test URL scheme
+    kind: yaml
+    disablesourceinput: true
+    spec:
+      file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
+      key: vars.message.error
+      value: "ERROR:"

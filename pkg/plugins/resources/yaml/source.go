@@ -2,7 +2,6 @@ package yaml
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -14,10 +13,8 @@ import (
 // Source return the latest version
 func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
-
-	if len(workingDir) > 0 {
-		y.spec.File = filepath.Join(workingDir, y.spec.File)
-	}
+	// Merge File path with current workingDir, unless File is an HTTP URL
+	y.spec.File = joinPathWithWorkingDirectoryPath(y.spec.File, workingDir)
 
 	// Test at runtime if a file exist
 	if !y.contentRetriever.FileExists(y.spec.File) {
