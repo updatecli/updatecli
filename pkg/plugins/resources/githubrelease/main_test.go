@@ -1,10 +1,12 @@
 package githubrelease
 
 import (
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -32,7 +34,7 @@ func TestNew(t *testing.T) {
 						Owner:      "updatecli",
 						Username:   "joe",
 						Token:      "superSecretTOkenOfJoe",
-						URL:        "github.com",
+						URL:        "https://github.com",
 					},
 				},
 				versionFilter: version.Filter{
@@ -41,67 +43,67 @@ func TestNew(t *testing.T) {
 				},
 			},
 		},
-		// {
-		// 	name: "Nominal case with empty directory",
-		// 	spec: Spec{
-		// 		Repository: "updatecli",
-		// 		Owner:      "updatecli",
-		// 		Username:   "joe",
-		// 		Token:      "superSecretTOkenOfJoe",
-		// 		URL:        "github.com",
-		// 	},
-		// 	want: GitHubRelease{
-		// 		ghHandler: &github.Github{
-		// 			Spec: github.Spec{
-		// 				Repository: "updatecli",
-		// 				Owner:      "updatecli",
-		// 				Directory:  path.Join(tmp.Directory, "updatecli", "updatecli"),
-		// 				Username:   "joe",
-		// 				Token:      "superSecretTOkenOfJoe",
-		// 				URL:        "github.com",
-		// 			},
-		// 		},
-		// 		versionFilter: version.Filter{
-		// 			Kind:    "latest",
-		// 			Pattern: "latest",
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "Nominal case with empty URL",
-		// 	spec: Spec{
-		// 		Repository: "updatecli",
-		// 		Owner:      "updatecli",
-		// 		Username:   "joe",
-		// 		Token:      "superSecretTOkenOfJoe",
-		// 	},
-		// 	want: GitHubRelease{
-		// 		ghHandler: &github.Github{
-		// 			Spec: github.Spec{
-		// 				Branch:     "main",
-		// 				Repository: "updatecli",
-		// 				Owner:      "updatecli",
-		// 				Directory:  "/home/updatecli",
-		// 				Username:   "joe",
-		// 				Token:      "superSecretTOkenOfJoe",
-		// 				URL:        "github.com",
-		// 			},
-		// 		},
-		// 		versionFilter: version.Filter{
-		// 			Kind:    "latest",
-		// 			Pattern: "latest",
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	name: "Validation Error (missing token)",
-		// 	spec: Spec{
-		// 		Repository: "updatecli",
-		// 		Owner:      "updatecli",
-		// 		Username:   "joe",
-		// 	},
-		// 	wantErr: true,
-		// },
+		{
+			name: "Nominal case with empty directory",
+			spec: Spec{
+				Repository: "updatecli",
+				Owner:      "updatecli",
+				Username:   "joe",
+				Token:      "superSecretTOkenOfJoe",
+				URL:        "github.com",
+			},
+			want: GitHubRelease{
+				ghHandler: &github.Github{
+					Spec: github.Spec{
+						Repository: "updatecli",
+						Owner:      "updatecli",
+						Directory:  path.Join(tmp.Directory, "updatecli", "updatecli"),
+						Username:   "joe",
+						Token:      "superSecretTOkenOfJoe",
+						URL:        "https://github.com",
+					},
+				},
+				versionFilter: version.Filter{
+					Kind:    "latest",
+					Pattern: "latest",
+				},
+			},
+		},
+		{
+			name: "Nominal case with empty URL",
+			spec: Spec{
+				Repository: "updatecli",
+				Owner:      "updatecli",
+				Username:   "joe",
+				Token:      "superSecretTOkenOfJoe",
+			},
+			want: GitHubRelease{
+				ghHandler: &github.Github{
+					Spec: github.Spec{
+						Branch:     "main",
+						Repository: "updatecli",
+						Owner:      "updatecli",
+						Directory:  "/home/updatecli",
+						Username:   "joe",
+						Token:      "superSecretTOkenOfJoe",
+						URL:        "https://github.com",
+					},
+				},
+				versionFilter: version.Filter{
+					Kind:    "latest",
+					Pattern: "latest",
+				},
+			},
+		},
+		{
+			name: "Validation Error (missing token)",
+			spec: Spec{
+				Repository: "updatecli",
+				Owner:      "updatecli",
+				Username:   "joe",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
