@@ -2,9 +2,11 @@ package xml
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
 var (
@@ -14,7 +16,9 @@ var (
 
 // XML stores configuration about the file and the key value which needs to be updated.
 type XML struct {
-	spec Spec
+	spec             Spec
+	contentRetriever text.TextRetriever
+	currentContent   string
 }
 
 func New(spec interface{}) (*XML, error) {
@@ -26,13 +30,29 @@ func New(spec interface{}) (*XML, error) {
 		return nil, err
 	}
 
+	newSpec.File = strings.TrimPrefix(newSpec.File, "file://")
+
 	x := XML{
-		spec: newSpec,
+		spec:             newSpec,
+		contentRetriever: &text.Text{},
 	}
 
 	err = x.Validate()
 
+	if err != nil {
+		return nil, err
+	}
+
 	return &x, err
+}
+
+func (x *XML) Read() error {
+	textContent, err := x.contentRetriever.ReadAll(x.spec.File)
+	if err != nil {
+		return err
+	}
+	x.currentContent = textContent
+	return nil
 }
 
 func (x *XML) Validate() (err error) {

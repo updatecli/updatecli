@@ -1,7 +1,7 @@
 package xml
 
 import (
-	"path/filepath"
+	"fmt"
 
 	"github.com/beevik/etree"
 	"github.com/sirupsen/logrus"
@@ -10,8 +10,21 @@ import (
 
 func (x *XML) Source(workingDir string) (string, error) {
 
+	// To merge File path with current working dire, unless file is an http url
+	x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, workingDir)
+
+	// Test at runtime if a file exist
+	if !x.contentRetriever.FileExists(x.spec.File) {
+		return "", fmt.Errorf("the XML file %q does not exist", x.spec.File)
+	}
+
+	if err := x.Read(); err != nil {
+		return "", err
+	}
+
 	doc := etree.NewDocument()
-	if err := doc.ReadFromFile(filepath.Join(workingDir, x.spec.File)); err != nil {
+
+	if err := doc.ReadFromString(x.currentContent); err != nil {
 		return "", err
 	}
 
