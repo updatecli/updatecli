@@ -2,7 +2,6 @@ package yaml
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -18,9 +17,11 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	if !filepath.IsAbs(y.spec.File) {
-		y.spec.File = filepath.Join(scm.GetDirectory(), y.spec.File)
+
+	if scm != nil {
+		y.spec.File = joinPathWithWorkingDirectoryPath(y.spec.File, scm.GetDirectory())
 	}
+
 	return y.condition(source)
 }
 

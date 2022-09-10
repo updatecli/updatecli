@@ -3,7 +3,6 @@ package yaml
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -22,15 +21,21 @@ func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
 func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	if !filepath.IsAbs(y.spec.File) {
-		y.spec.File = filepath.Join(scm.GetDirectory(), y.spec.File)
+	if scm != nil {
+		y.spec.File = joinPathWithWorkingDirectoryPath(y.spec.File, scm.GetDirectory())
 	}
+
 	return y.target(source, dryRun)
 }
 
 func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error) {
 	var files []string
 	var message string
+
+	if strings.HasPrefix(y.spec.File, "https://") ||
+		strings.HasPrefix(y.spec.File, "http://") {
+		return false, files, message, fmt.Errorf("URL scheme is not supported for YAML target: %q", y.spec.File)
+	}
 
 	// Test at runtime if a file exist
 	if !y.contentRetriever.FileExists(y.spec.File) {
