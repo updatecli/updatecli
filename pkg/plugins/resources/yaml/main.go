@@ -19,6 +19,7 @@ import (
 type Spec struct {
 	// [source,condition,target] File contains the file path to take in account
 	File string
+	// TODO: implement files for condition too
 	// [target] Files contains the file path(s) to take in account
 	Files []string
 	// [source,condition,target] Key is the YAML key to retrieve
@@ -26,7 +27,7 @@ type Spec struct {
 	// [source,condition,target] Value is the YAML value to set
 	Value string
 	// [condition] allow checking for only the existence of a key (not its value)
-	KeyOnly bool // TODO: add in documentation
+	KeyOnly bool `yaml:",omitempty"`
 }
 
 // Yaml defines a resource of kind "yaml"

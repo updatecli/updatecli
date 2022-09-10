@@ -13,7 +13,6 @@ import (
 // Source return the latest version
 func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
-
 	var fileContent string
 	var filePath string
 
@@ -21,14 +20,6 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		validationError := fmt.Errorf("Validation error in sources of type 'yaml': the attributes `spec.files` can't contain more than one element for conditions")
 		logrus.Errorf(validationError.Error())
 		return "", validationError
-  }
-
-  // Merge File path with current workingDir, unless File is an HTTP URL
-	y.spec.File = joinPathWithWorkingDirectoryPath(y.spec.File, workingDir)
-
-	// Test at runtime if a file exist
-	if !y.contentRetriever.FileExists(y.spec.File) {
-		return "", fmt.Errorf("the yaml file %q does not exist", y.spec.File)
 	}
 
 	if y.spec.Value != "" {
@@ -45,6 +36,16 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	for theFilePath := range y.files {
 		fileContent = y.files[theFilePath]
 		filePath = theFilePath
+
+		// Merge File path with current workingDir, unless File is an HTTP URL
+		if len(workingDir) > 0 && workingDir != filePath {
+			filePath = joinPathWithWorkingDirectoryPath(filePath, workingDir)
+		}
+
+		// Test at runtime if a file exist
+		if !y.contentRetriever.FileExists(filePath) {
+			return "", fmt.Errorf("the yaml file %q does not exist", filePath)
+		}
 	}
 
 	var out yaml.Node

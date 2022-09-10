@@ -3,9 +3,7 @@ package yaml
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
-
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -28,18 +26,16 @@ func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
 func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	absoluteFiles := make(map[string]string)
+	joignedFiles := make(map[string]string)
 	for filePath := range y.files {
-		absoluteFilePath := filePath
-
-    if scm != nil {
-		  absoluteFilePath = joinPathWithWorkingDirectoryPath(filePath, scm.GetDirectory())
-      logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
-	  }
-    
-		absoluteFiles[absoluteFilePath] = y.files[filePath]
+		joignedFilePath := filePath
+		if scm != nil {
+			joignedFilePath = joinPathWithWorkingDirectoryPath(joignedFilePath, scm.GetDirectory())
+			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", joignedFilePath)
+		}
+		joignedFiles[joignedFilePath] = y.files[filePath]
 	}
-	y.files = absoluteFiles
+	y.files = joignedFiles
 
 	return y.target(source, dryRun)
 }
@@ -53,6 +49,12 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		if text.IsURL(filePath) {
 			return false, files, message.String(), fmt.Errorf("unsupported filename prefix for %s", filePath)
 		}
+
+		if strings.HasPrefix(filePath, "https://") ||
+			strings.HasPrefix(filePath, "http://") {
+			return false, files, message.String(), fmt.Errorf("URL scheme is not supported for YAML target: %q", filePath)
+		}
+
 		// Test at runtime if a file exist (no ForceCreate for kind: yaml)
 		if !y.contentRetriever.FileExists(filePath) {
 			return false, files, message.String(), fmt.Errorf("the yaml file %q does not exist", filePath)
