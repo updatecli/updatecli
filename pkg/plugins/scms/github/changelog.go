@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -68,12 +69,15 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 		return "", err
 	}
 
+	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository)
+
+	if err != nil {
+		return "", err
+	}
+
 	if len(query.Repository.Release.Url) == 0 {
 		// TODO: getRepositoryURL()
-		return fmt.Sprintf("No Github Release found for %s on https://github.com/%s/%s",
-			versionName,
-			g.Spec.Owner,
-			g.Spec.Repository), nil
+		return fmt.Sprintf("no GitHub Release found for %s on %q", versionName, URL), nil
 	}
 
 	return fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v",
