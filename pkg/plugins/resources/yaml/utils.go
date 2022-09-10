@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// joinPathwithworkingDirectoryPath To merge File path with current working dire, unless file is an http url
+// joinPathwithworkingDirectoryPath To merge File path with current workingDir, unless file is an HTTP URL
 func joinPathWithWorkingDirectoryPath(fileName, workingDir string) string {
 	if workingDir == "" ||
 		filepath.IsAbs(fileName) ||
