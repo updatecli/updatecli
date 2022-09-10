@@ -13,7 +13,7 @@ import (
 // Source return the latest version
 func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
-	// Merge Filepath with current working dire, unless file is an http url
+	// Merge File path with current workingDir, unless File is an HTTP URL
 	y.spec.File = joinPathWithWorkingDirectoryPath(y.spec.File, workingDir)
 
 	// Test at runtime if a file exist
