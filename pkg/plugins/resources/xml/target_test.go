@@ -8,105 +8,102 @@ import (
 	"gotest.tools/assert"
 )
 
-type TargetDataset []TargetData
+func TestTarget(t *testing.T) {
 
-type TargetData struct {
-	name         string
-	data         XML
-	wantResult   bool
-	wantErrorMsg error
-	wantErr      bool
-}
-
-var (
-	targetDataset = TargetDataset{
+	testData := []struct {
+		name             string
+		spec             Spec
+		expectedResult   bool
+		expectedErrorMsg error
+		wantErr          bool
+	}{
 		{
 			name: "Test 1",
-			data: XML{
-				spec: Spec{
-					File:  "testdata/data_0.xml",
-					Path:  "/name/firstname",
-					Value: "Bob",
-				},
+			spec: Spec{
+				File:  "testdata/data_0.xml",
+				Path:  "/name/firstname",
+				Value: "Bob",
 			},
-			wantResult: true,
+			expectedResult: true,
 		},
 		{
 			name: "Test 2",
-			data: XML{
-				spec: Spec{
-					File:  "testdata/data_0.xml",
-					Path:  "/name/firstname",
-					Value: "John",
-				},
+			spec: Spec{
+				File:  "testdata/data_0.xml",
+				Path:  "/name/firstname",
+				Value: "John",
 			},
-			wantResult: false,
+			expectedResult: false,
 		},
 		{
 			name: "Test 3",
-			data: XML{
-				spec: Spec{
-					File:  "testdata/data_2.xml",
-					Path:  "/name/firstname",
-					Value: "Bob",
-				},
+			spec: Spec{
+				File:  "testdata/data_2.xml",
+				Path:  "/name/firstname",
+				Value: "Bob",
 			},
-			wantResult: true,
+			expectedResult: true,
 		},
 		{
 			name: "Test 4",
-			data: XML{
-				spec: Spec{
-					File:  "testdata/doNotExist.xml",
-					Path:  "/name/firstname",
-					Value: "Alice",
-				},
+			spec: Spec{
+				File:  "testdata/doNotExist.xml",
+				Path:  "/name/firstname",
+				Value: "Alice",
 			},
-			wantResult:   false,
-			wantErrorMsg: errors.New("open testdata/doNotExist.xml: no such file or directory"),
-			wantErr:      true,
+			expectedResult:   false,
+			expectedErrorMsg: errors.New("the XML file \"testdata/doNotExist.xml\" does not exist"),
+			wantErr:          true,
 		},
 		{
-			data: XML{
-				spec: Spec{
-					File:  "testdata/data_2.xml",
-					Path:  "/name/donotexist",
-					Value: "Bob",
-				},
+			name: "Test 5",
+			spec: Spec{
+				File:  "testdata/data_2.xml",
+				Path:  "/name/donotexist",
+				Value: "Bob",
 			},
-			wantResult:   false,
-			wantErr:      true,
-			wantErrorMsg: errors.New("✗ nothing found at path \"/name/donotexist\" from file \"testdata/data_2.xml\""),
+			expectedResult:   false,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("✗ nothing found at path \"/name/donotexist\" from file \"testdata/data_2.xml\""),
 		},
 		{
-			data: XML{
-				spec: Spec{
-					File:  "testdata/data_2.xml",
-					Path:  "/name/firstname",
-					Value: "John",
-				},
+			name: "Test 6",
+			spec: Spec{
+				File:  "testdata/data_2.xml",
+				Path:  "/name/firstname",
+				Value: "John",
 			},
-			wantResult: false,
+			expectedResult: false,
+		},
+		{
+			name: "Test 7",
+			spec: Spec{
+				File:  "https://raw.githubusercontent.com/updatecli/updatecli/main/pkg/plugins/resources/xml/testdata/data_2.xml",
+				Path:  "/name/firstname",
+				Value: "John",
+			},
+			wantErr:          true,
+			expectedResult:   false,
+			expectedErrorMsg: errors.New("URL scheme is not supported for XML target: \"https://raw.githubusercontent.com/updatecli/updatecli/main/pkg/plugins/resources/xml/testdata/data_2.xml\""),
 		},
 	}
-)
 
-func TestTarget(t *testing.T) {
-
-	for _, tt := range targetDataset {
+	for _, tt := range testData {
 
 		t.Run(tt.name, func(t *testing.T) {
+			x, err := New(tt.spec)
 
-			gotResult, gotErr := tt.data.Target("", true)
+			require.NoError(t, err)
+
+			gotResult, err := x.Target("", true)
 
 			if tt.wantErr {
-				require.Error(t, gotErr)
+				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
 			} else {
-				require.NoError(t, gotErr)
+				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.wantResult, gotResult)
-
+			assert.Equal(t, tt.expectedResult, gotResult)
 		})
 	}
 

@@ -2,7 +2,6 @@ package yaml
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -21,8 +20,8 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 	absoluteFiles := make(map[string]string)
 	for filePath := range y.files {
 		absoluteFilePath := filePath
-		if !filepath.IsAbs(filePath) {
-			absoluteFilePath = filepath.Join(scm.GetDirectory(), filePath)
+    if scm != nil {
+      absoluteFilePath = joinPathWithWorkingDirectoryPath(filePath, scm.GetDirectory())
 			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
 		}
 		absoluteFiles[absoluteFilePath] = y.files[filePath]

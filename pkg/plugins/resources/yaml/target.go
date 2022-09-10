@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -30,10 +31,12 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bo
 	absoluteFiles := make(map[string]string)
 	for filePath := range y.files {
 		absoluteFilePath := filePath
-		if !filepath.IsAbs(filePath) {
-			absoluteFilePath = filepath.Join(scm.GetDirectory(), filePath)
-			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
-		}
+
+    if scm != nil {
+		  absoluteFilePath = joinPathWithWorkingDirectoryPath(filePath, scm.GetDirectory())
+      logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
+	  }
+    
 		absoluteFiles[absoluteFilePath] = y.files[filePath]
 	}
 	y.files = absoluteFiles
