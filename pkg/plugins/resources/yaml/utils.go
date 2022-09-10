@@ -6,13 +6,13 @@ import (
 )
 
 // joinPathwithworkingDirectoryPath To merge File path with current workingDir, unless file is an HTTP URL
-func joinPathWithWorkingDirectoryPath(fileName, workingDir string) string {
+func joinPathWithWorkingDirectoryPath(filePath, workingDir string) string {
 	if workingDir == "" ||
-		filepath.IsAbs(fileName) ||
-		strings.HasPrefix(fileName, "https://") ||
-		strings.HasPrefix(fileName, "http://") {
-		return fileName
+		filepath.IsAbs(filePath) ||
+		strings.HasPrefix(filePath, "https://") ||
+		strings.HasPrefix(filePath, "http://") {
+		return filePath
 	}
 
-	return filepath.Join(workingDir, fileName)
+	return filepath.Join(workingDir, filePath)
 }
