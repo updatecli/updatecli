@@ -17,7 +17,6 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-
 	if scm != nil {
 		y.spec.File = joinPathWithWorkingDirectoryPath(y.spec.File, scm.GetDirectory())
 	}
