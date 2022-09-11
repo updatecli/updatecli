@@ -21,6 +21,7 @@ conditions:
     name: "Is loki release name is correctly set?"
     spec:
       file: "helmfile.d/loki.yaml"
+      files: []
       key: "releases[0].name"
       value: "loki"
     scm:
@@ -39,6 +40,7 @@ targets:
     kind: "yaml"
     spec:
       file: "helmfile.d/loki.yaml"
+      files: []
       key: "releases[0].version"
     scm:
       github:

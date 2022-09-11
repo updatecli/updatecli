@@ -24,6 +24,7 @@ conditions:
         kind: yaml
         spec:
             file: epinio/Chart.yaml
+            files: []
             key: dependencies[0].name
             value: minio
         disablesourceinput: true
@@ -52,6 +53,7 @@ conditions:
         kind: yaml
         spec:
             file: epinio/Chart.yaml
+            files: []
             key: dependencies[1].name
             value: kubed
         disablesourceinput: true
@@ -80,6 +82,7 @@ conditions:
         kind: yaml
         spec:
             file: epinio/Chart.yaml
+            files: []
             key: dependencies[2].name
             value: epinio-ui
         disablesourceinput: true
@@ -109,6 +112,7 @@ conditions:
         kind: yaml
         spec:
             file: epinio/values.yaml
+            files: []
             key: images.ui.repository
             value: epinioteam/epinio-ui-qa
         disablesourceinput: true
@@ -138,6 +142,7 @@ conditions:
         kind: yaml
         spec:
             file: epinio/values.yaml
+            files: []
             key: image.repository
             value: splatform/epinio-server
         disablesourceinput: true
