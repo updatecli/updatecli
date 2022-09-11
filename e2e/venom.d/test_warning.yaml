@@ -7,7 +7,7 @@ vars:
 testcases:
   - name: "Test updatecli working but show warning"
     steps:
-      - script: '{{ .binpath }}/updatecli diff --config  ../updatecli.d/warning.d'
+      - script: '../scripts/test_warning.bash'
         type: 'exec'
         assertions:
           - 'result.code ShouldEqual 0'
