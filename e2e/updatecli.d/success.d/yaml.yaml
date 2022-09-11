@@ -33,7 +33,7 @@ sources:
     kind: yaml
     spec:
       file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
-      key: vars.message.error
+      key: name
 
   scenario31:
     name: Test URL scheme
@@ -41,7 +41,7 @@ sources:
     scmid: default
     spec:
       file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
-      key: vars.message.error
+      key: name
 
 conditions:
   scenario1:
@@ -68,5 +68,5 @@ conditions:
     disablesourceinput: true
     spec:
       file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
-      key: vars.message.error
-      value: "ERROR:"
+      key: name
+      value: "Updatecli Diff TestSuite"

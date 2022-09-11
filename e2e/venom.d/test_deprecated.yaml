@@ -6,7 +6,7 @@ vars:
 testcases:
   - name: "Test updatecli diff shouldn't fail"
     steps:
-      - script: '{{ .binpath }}/updatecli diff --config  ../updatecli.d/deprecated.d'
+      - script: '../scripts/test_deprecated.bash'
         type: 'exec'
         assertions:
           - 'result.code ShouldEqual 0'
