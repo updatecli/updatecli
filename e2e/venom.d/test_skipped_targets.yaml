@@ -14,7 +14,7 @@ testcases:
           - 'result.systemout ShouldContainSubstring "shouldNeverRun:"'
   - name: "Test that no target is ever run in this set of updatecli manifests"
     steps:
-      - script: '../scripts/updatecli.d/skipped.targets.bash'
+      - script: '../scripts/test_skipped_targets.bash'
         type: 'exec'
         assertions:
           - 'result.code ShouldEqual 0'
