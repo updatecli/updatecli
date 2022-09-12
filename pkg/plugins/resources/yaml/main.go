@@ -18,14 +18,14 @@ import (
 // parsed from an updatecli manifest file
 type Spec struct {
 	// [source,condition,target] File contains the file path to take in account
-	File string
+	File string `yaml:",omitempty"`
 	// TODO: implement files for condition too
 	// [target] Files contains the file path(s) to take in account
-	Files []string
+	Files []string `yaml:",omitempty"`
 	// [source,condition,target] Key is the YAML key to retrieve
-	Key string
+	Key string `yaml:",omitempty"`
 	// [source,condition,target] Value is the YAML value to set
-	Value string
+	Value string `yaml:",omitempty"`
 	// [condition] allow checking for only the existence of a key (not its value)
 	KeyOnly bool `yaml:",omitempty"`
 }
