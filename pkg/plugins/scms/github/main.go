@@ -98,7 +98,8 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	if strings.HasSuffix(s.URL, "github.com") {
 		g.client = githubv4.NewClient(httpClient)
 	} else {
-		g.client = githubv4.NewEnterpriseClient(s.URL, httpClient)
+		// Based on official documentation, for GH enterprise, the GraphQL API path is /api/graphql
+		g.client = githubv4.NewEnterpriseClient(s.URL+"api/graphql", httpClient)
 	}
 
 	g.setDirectory()
