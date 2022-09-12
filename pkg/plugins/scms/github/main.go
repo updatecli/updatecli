@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -99,7 +100,11 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		g.client = githubv4.NewClient(httpClient)
 	} else {
 		// Based on official documentation, for GH enterprise, the GraphQL API path is /api/graphql
-		g.client = githubv4.NewEnterpriseClient(s.URL+"api/graphql", httpClient)
+		graphqlURL, err := url.JoinPath(s.URL, "/api/graphql")
+		if err != nil {
+			return nil, err
+		}
+		g.client = githubv4.NewEnterpriseClient(graphqlURL, httpClient)
 	}
 
 	g.setDirectory()
