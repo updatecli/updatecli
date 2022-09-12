@@ -19,7 +19,6 @@ import (
 type Spec struct {
 	// [source,condition,target] File contains the file path to take in account
 	File string `yaml:",omitempty"`
-	// TODO: implement files for condition too
 	// [target] Files contains the file path(s) to take in account
 	Files []string `yaml:",omitempty"`
 	// [source,condition,target] Key is the YAML key to retrieve
