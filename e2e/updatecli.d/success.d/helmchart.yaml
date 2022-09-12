@@ -42,7 +42,6 @@ targets:
     spec:
       name: chart/epinio
       file: Chart.yaml
-      files: []
       appversion: true
       key:  dependencies[1].version
       versionincrement: minor
@@ -54,7 +53,6 @@ targets:
     spec:
       name: chart/epinio
       file: Chart.yaml
-      files: []
       appversion: true
       key:  dependencies[2].version
       versionincrement: minor,major
@@ -65,7 +63,6 @@ targets:
     spec:
       name: chart/epinio
       file: Chart.yaml
-      files: []
       appversion: true
       key:  dependencies[2].version
       versionincrement: none
