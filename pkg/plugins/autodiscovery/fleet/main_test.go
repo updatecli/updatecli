@@ -24,7 +24,6 @@ conditions:
         kind: yaml
         spec:
             file: grafana/fleet.yaml
-            files: []
             key: helm.chart
             value: grafana
         disablesourceinput: true
@@ -33,7 +32,6 @@ conditions:
         kind: yaml
         spec:
             file: grafana/fleet.yaml
-            files: []
             key: helm.repo
             value: https://grafana.github.io/helm-charts
         disablesourceinput: true
