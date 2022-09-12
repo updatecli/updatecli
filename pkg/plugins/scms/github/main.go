@@ -100,7 +100,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		g.client = githubv4.NewClient(httpClient)
 	} else {
 		// For GH enterprise the GraphQL API path is /api/graphql
-		// Cf https://docs.github.com/en/enterprise-cloud@latest/graphql/guides/managing-enterprise-accounts#3-setting-up-insomnia-to-use-the-github-graphql-api-with-enterprise-accounts)
+		// Cf https://docs.github.com/en/enterprise-cloud@latest/graphql/guides/managing-enterprise-accounts#3-setting-up-insomnia-to-use-the-github-graphql-api-with-enterprise-accounts
 		graphqlURL, err := url.JoinPath(s.URL, "/api/graphql")
 		if err != nil {
 			return nil, err
