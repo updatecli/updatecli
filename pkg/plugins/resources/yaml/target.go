@@ -31,7 +31,7 @@ func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bo
 		joignedFilePath := filePath
 		if scm != nil {
 			joignedFilePath = joinPathWithWorkingDirectoryPath(joignedFilePath, scm.GetDirectory())
-			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", joignedFilePath)
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", filePath, joignedFilePath)
 		}
 		joignedFiles[joignedFilePath] = y.files[filePath]
 	}
