@@ -155,11 +155,12 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	)
 
 	if err != nil {
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		return err
 	}
 
 	if resp.Status > 400 {
-		logrus.Debugf("Gitea Api Response: %v", resp)
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	for _, p := range pullrequests {
@@ -176,6 +177,27 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 		}
 	}
 
+	// Test that both sourceBranch and targetBranch exists on remote
+
+	ok, err := g.isRemoteBranchesExist()
+
+	if err != nil {
+		return err
+	}
+
+	/*
+		Due to the following scenario, Updatecli always tries to open a Pullrequest
+			* A pullrequest has been "manually" closed via UI
+			* A previous Updatecli run failed during a Pullrequest creation for example due to network issues
+
+
+		Therefore we always try to open a PR, we don't consider being an error if all conditions are not met
+		such as missing remote branches.
+	*/
+	if !ok {
+		return nil
+	}
+
 	opts := scm.PullRequestInput{
 		Title:  title,
 		Body:   body,
@@ -188,8 +210,6 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 		body,
 		sourceBranch,
 		targetBranch)
-
-	logrus.Debugf("Repository:\t%s:%s", owner, repository)
 
 	// Timeout api query after 30sec
 	ctx = context.Background()
@@ -205,14 +225,107 @@ func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error
 	)
 
 	if resp.Status > 400 {
-		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	if err != nil {
+		if err.Error() == scm.ErrNotFound.Error() {
+			logrus.Infof("Gitea pullrequest not created, skipping")
+			return nil
+		}
 		return err
 	}
 
-	logrus.Infof("Gitea pullrequest successfully open on %q", pr.Link)
+	logrus.Infof("Gitea pullrequest successfully opened on %q", pr.Link)
 
 	return nil
+}
+
+func (g *Gitea) isRemoteBranchesExist() (bool, error) {
+
+	var sourceBranch string
+	var targetBranch string
+	var owner string
+	var repository string
+
+	if g.ge != nil {
+		sourceBranch = g.ge.HeadBranch
+		targetBranch = g.ge.Spec.Branch
+		owner = g.ge.Spec.Owner
+		repository = g.ge.Spec.Repository
+	}
+
+	if len(g.spec.SourceBranch) > 0 {
+		sourceBranch = g.spec.SourceBranch
+	}
+
+	if len(g.spec.TargetBranch) > 0 {
+		targetBranch = g.spec.TargetBranch
+	}
+
+	if len(g.spec.Owner) > 0 {
+		owner = g.spec.Owner
+	}
+
+	if len(g.spec.Repository) > 0 {
+		repository = g.spec.Repository
+	}
+
+	// Timeout api query after 30sec
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	logrus.Printf("%q:%q", g.spec.Owner, g.spec.Repository)
+
+	remoteBranches, resp, err := g.client.Git.ListBranches(
+		ctx,
+		strings.Join([]string{owner, repository}, "/"),
+		scm.ListOptions{
+			URL:  g.spec.URL,
+			Page: 1,
+			Size: 30,
+		},
+	)
+
+	if err != nil {
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		return false, err
+	}
+
+	if resp.Status > 400 {
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+	}
+
+	foundRemoteSourceBranch := false
+	foundRemoteTargetBranch := false
+
+	for _, remoteBranch := range remoteBranches {
+		if remoteBranch.Name == sourceBranch {
+			foundRemoteSourceBranch = true
+		}
+		if remoteBranch.Name == targetBranch {
+			foundRemoteTargetBranch = true
+		}
+
+		if foundRemoteSourceBranch && foundRemoteTargetBranch {
+			return true, nil
+		}
+	}
+
+	if !foundRemoteSourceBranch {
+		logrus.Debugf("Branch %q not found on remote repository %s/%s",
+			sourceBranch,
+			owner,
+			repository)
+	}
+
+	if !foundRemoteTargetBranch {
+		logrus.Debugf("Branch %q not found on remote repository %s/%s",
+			targetBranch,
+			owner,
+			repository)
+	}
+
+	return false, nil
 }
