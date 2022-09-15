@@ -276,8 +276,6 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	logrus.Printf("%q:%q", g.spec.Owner, g.spec.Repository)
-
 	remoteBranches, resp, err := g.client.Git.ListBranches(
 		ctx,
 		strings.Join([]string{owner, repository}, "/"),
