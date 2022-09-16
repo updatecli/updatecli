@@ -44,7 +44,7 @@ type Gitea struct {
 }
 
 // New returns a new valid Gitea object.
-func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
+func New(spec interface{}, scm *giteascm.Gitea) (Gitea, error) {
 
 	var clientSpec client.Spec
 	var s Spec
@@ -61,18 +61,18 @@ func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 		return Gitea{}, nil
 	}
 
-	if ge != nil {
+	if scm != nil {
 
-		if len(clientSpec.Token) == 0 && len(ge.Spec.Token) > 0 {
-			clientSpec.Token = ge.Spec.Token
+		if len(clientSpec.Token) == 0 && len(scm.Spec.Token) > 0 {
+			clientSpec.Token = scm.Spec.Token
 		}
 
-		if len(clientSpec.URL) == 0 && len(ge.Spec.URL) > 0 {
-			clientSpec.URL = ge.Spec.URL
+		if len(clientSpec.URL) == 0 && len(scm.Spec.URL) > 0 {
+			clientSpec.URL = scm.Spec.URL
 		}
 
-		if len(clientSpec.Username) == 0 && len(ge.Spec.Username) > 0 {
-			clientSpec.Username = ge.Spec.Username
+		if len(clientSpec.Username) == 0 && len(scm.Spec.Username) > 0 {
+			clientSpec.Username = scm.Spec.Username
 		}
 	}
 
@@ -91,7 +91,7 @@ func New(spec interface{}, ge *giteascm.Gitea) (Gitea, error) {
 	g := Gitea{
 		spec:   s,
 		client: c,
-		scm:    ge,
+		scm:    scm,
 	}
 
 	err = g.inheritFromScm()
