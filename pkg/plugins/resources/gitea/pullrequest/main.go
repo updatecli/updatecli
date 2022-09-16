@@ -94,7 +94,7 @@ func New(spec interface{}, scm *giteascm.Gitea) (Gitea, error) {
 		scm:    scm,
 	}
 
-	err = g.inheritFromScm()
+	g.inheritFromScm()
 
 	if err != nil {
 		return Gitea{}, nil

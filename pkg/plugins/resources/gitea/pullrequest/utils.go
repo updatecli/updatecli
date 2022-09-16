@@ -146,7 +146,7 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 }
 
 // inheritFromScm retrieve missing gitea settings from the gitea scm object.
-func (g *Gitea) inheritFromScm() error {
+func (g *Gitea) inheritFromScm() {
 
 	if g.scm != nil {
 		g.SourceBranch = g.scm.HeadBranch
@@ -170,6 +170,4 @@ func (g *Gitea) inheritFromScm() error {
 	if len(g.spec.Repository) > 0 {
 		g.Repository = g.spec.Repository
 	}
-
-	return nil
 }
