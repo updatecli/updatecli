@@ -95,7 +95,7 @@ func New(spec interface{}) (*Gitea, error) {
 
 }
 
-// Retrieve git tags from a remote gitea repository
+// Retrieve gitea branches from a remote gitea repository
 func (g *Gitea) SearchBranches() (tags []string, err error) {
 
 	// Timeout api query after 30sec
