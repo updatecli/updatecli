@@ -24,34 +24,22 @@ releases:
       - "../config/ext_datadog_cik8s.yaml"
     secrets:
       - "../secrets/config/datadog/cik8s-secrets.yaml"
-#  - name: docker-registry-secrets
-#    #this helmchart doesn't create any resources within the namespace specified below.
-#    #specifying a namespace is required by the "needs" feature of helmfile (to allow referencing to this release from others)
-#    namespace: default
-#    chart: jenkins-infra/docker-registry-secrets
-#    version: 0.1.0
-#    values:
-#      - "../config/docker-registry-secrets.yaml"
-#    secrets:
-#      - "../secrets/config/docker-registry-secrets/secrets.yaml"
-#  - name: jenkins-agents
-#    needs:
-#      - default/docker-registry-secrets
-#    namespace: jenkins-agents
-#    chart: jenkins-infra/jenkins-kubernetes-agents
-#    version: 0.2.1
-#    secrets:
-#      - "../secrets/config/jenkins-kubernetes-agents/secrets.yaml"
-#  - name: autoscaler
-#    namespace: autoscaler
-#    chart: autoscaler/cluster-autoscaler
-#    version: 9.21.0
-#    values:
-#      - "../config/ext_autoscaler.yaml"
-#  - name: aws-node-termination-handler
-#    namespace: eks
-#    chart: eks/aws-node-termination-handler
-#    version: 0.19.3
-#    values:
-#      - "../config/ext_aws-node-termination-handler.yaml"
+  - name: docker-registry-secrets
+    #this helmchart doesn't create any resources within the namespace specified below.
+    #specifying a namespace is required by the "needs" feature of helmfile (to allow referencing to this release from others)
+    namespace: default
+    chart: jenkins-infra/docker-registry-secrets
+    version: 0.1.0
+    values:
+      - "../config/docker-registry-secrets.yaml"
+    secrets:
+      - "../secrets/config/docker-registry-secrets/secrets.yaml"
+  # Should not be pick up as no version specified
+  - name: jenkins-agents
+    needs:
+      - default/docker-registry-secrets
+    namespace: jenkins-agents
+    chart: jenkins-infra/jenkins-kubernetes-agents
+    secrets:
+      - "../secrets/config/jenkins-kubernetes-agents/secrets.yaml"
 

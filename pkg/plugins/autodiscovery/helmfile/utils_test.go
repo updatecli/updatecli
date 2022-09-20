@@ -2,16 +2,18 @@ package helmfile
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSearchFiles(t *testing.T) {
 
 	gotFiles, err := searchHelmfileFiles(
-		"testdata/chart", ChartValidFiles[:])
+		"testdata/helmfile.d", DefaultFilePattern[:])
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	expectedFile := "testdata/chart/epinio/Chart.yaml"
+	expectedFile := "testdata/helmfile.d/cik8s.yaml"
 
 	if len(gotFiles) == 0 {
 		t.Errorf("Expecting file %q but got none", expectedFile)
@@ -25,13 +27,48 @@ func TestSearchFiles(t *testing.T) {
 
 func TestListChartDependency(t *testing.T) {
 
-	gotChartMetadata, err := getHelmfileMetadata(
-		"testdata/chart/epinio/Chart.yaml")
+	gotMetadata, err := getHelmfileMetadata(
+		"testdata/helmfile.d/cik8s.yaml")
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	expectedChartName := "epinio"
-	if gotChartMetadata.Name != expectedChartName {
-		t.Errorf("Expecting Chart Name %q but got %q", expectedChartName, gotChartMetadata.Name)
+	expectedReleases := []release{
+		{
+			Name:    "datadog",
+			Chart:   "datadog/datadog",
+			Version: "3.1.3",
+		},
+		{
+			Name:    "docker-registry-secrets",
+			Chart:   "jenkins-infra/docker-registry-secrets",
+			Version: "0.1.0",
+		},
+		{
+			Name:    "jenkins-agents",
+			Chart:   "jenkins-infra/jenkins-kubernetes-agents",
+			Version: "",
+		},
 	}
+
+	expectedRepositories := []repository{
+		{
+			Name: "autoscaler",
+			URL:  "https://kubernetes.github.io/autoscaler",
+		},
+		{
+			Name: "datadog",
+			URL:  "https://helm.datadoghq.com",
+		},
+		{
+			Name: "eks",
+			URL:  "https://aws.github.io/eks-charts",
+		},
+		{
+			Name: "jenkins-infra",
+			URL:  "https://jenkins-infra.github.io/helm-charts",
+		},
+	}
+
+	assert.Equal(t, expectedReleases, gotMetadata.Releases)
+	assert.Equal(t, expectedRepositories, gotMetadata.Repositories)
 }

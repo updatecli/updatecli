@@ -27,7 +27,7 @@ func TestDiscoverManifests(t *testing.T) {
 			expectedPipelines: []config.Spec{
 				{
 
-					Name: "Bump \"datadog\" Helm Chart version for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
+					Name: "Bump \"datadog\" Helm Chart version for Helmfile \"helmfile.d/cik8s.yaml\"",
 					Sources: map[string]source.Config{
 						"datadog": {
 							ResourceConfig: resource.ResourceConfig{
@@ -44,7 +44,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"datadog": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Ensure release \"datadog\" is specified",
+								Name: "Ensure release \"datadog\" is specified for Helmfile \"helmfile.d/cik8s.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File:  "testdata/helmfile.d/cik8s.yaml",
@@ -59,11 +59,54 @@ func TestDiscoverManifests(t *testing.T) {
 						"datadog": {
 							SourceID: "datadog",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"datadog\" Helm Chart Version for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
+								Name: "Bump \"datadog\" Helm Chart Version for Helmfile \"helmfile.d/cik8s.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/helmfile.d/cik8s.yaml",
 									Key:  "releases[0].version",
+								},
+							},
+						},
+					},
+				},
+				{
+
+					Name: "Bump \"docker-registry-secrets\" Helm Chart version for Helmfile \"helmfile.d/cik8s.yaml\"",
+					Sources: map[string]source.Config{
+						"docker-registry-secrets": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get latest \"docker-registry-secrets\" Helm Chart Version",
+								Kind: "helmchart",
+								Spec: helm.Spec{
+									Name: "docker-registry-secrets",
+									URL:  "https://jenkins-infra.github.io/helm-charts",
+								},
+							},
+						},
+					},
+					Conditions: map[string]condition.Config{
+						"docker-registry-secrets": {
+							DisableSourceInput: true,
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Ensure release \"docker-registry-secrets\" is specified for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Kind: "yaml",
+								Spec: yaml.Spec{
+									File:  "testdata/helmfile.d/cik8s.yaml",
+									Key:   "releases[1].chart",
+									Value: "jenkins-infra/docker-registry-secrets",
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"docker-registry-secrets": {
+							SourceID: "docker-registry-secrets",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Bump \"docker-registry-secrets\" Helm Chart Version for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Kind: "yaml",
+								Spec: yaml.Spec{
+									File: "testdata/helmfile.d/cik8s.yaml",
+									Key:  "releases[1].version",
 								},
 							},
 						},
