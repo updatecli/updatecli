@@ -67,7 +67,7 @@ func (h Helmfile) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec,
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Helmfile"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Helmfile")+1))
 
-	manifests, err := h.discoverHelmfileManifests()
+	manifests, err := h.discoverHelmfileReleaseManifests()
 
 	if err != nil {
 		return nil, err

@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	// ChartValidFiles specifies accepted Helm chart metadata file name
-	ChartValidFiles [2]string = [2]string{"*.yaml", "*.yml"}
+	// DefaultFilePattern specifies accepted Helm chart metadata file name
+	DefaultFilePattern [2]string = [2]string{"*.yaml", "*.yml"}
 )
 
 // Release specify the release information that we are looking for in Helmfile
@@ -39,13 +39,13 @@ type helmfileMetadata struct {
 	Releases     []release
 }
 
-func (h Helmfile) discoverHelmfileManifests() ([]config.Spec, error) {
+func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 
 	var manifests []config.Spec
 
 	foundHelmfileFiles, err := searchHelmfileFiles(
 		h.rootDir,
-		ChartValidFiles[:])
+		DefaultFilePattern[:])
 
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (h Helmfile) discoverHelmfileManifests() ([]config.Spec, error) {
 		}
 
 		for i, release := range metadata.Releases {
-			manifestName := fmt.Sprintf("Bump %q Helm Chart version for Helmfile %q", release.Name, foundHelmfile)
+			manifestName := fmt.Sprintf("Bump %q Helm Chart version for Helmfile %q", release.Name, relativeFoundChartFile)
 
 			chartName, chartURL := getReleaseRepositoryUrl(metadata.Repositories, release)
 
@@ -128,7 +128,7 @@ func (h Helmfile) discoverHelmfileManifests() ([]config.Spec, error) {
 					release.Name: {
 						DisableSourceInput: true,
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Ensure release %q is specified", release.Name),
+							Name: fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
 							Kind: "yaml",
 							Spec: yaml.Spec{
 								File:  foundHelmfile,
@@ -142,7 +142,7 @@ func (h Helmfile) discoverHelmfileManifests() ([]config.Spec, error) {
 					release.Name: {
 						SourceID: release.Name,
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, foundHelmfile),
+							Name: fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
 							Kind: "yaml",
 							Spec: yaml.Spec{
 								File: foundHelmfile,
