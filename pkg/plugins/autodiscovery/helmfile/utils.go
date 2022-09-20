@@ -2,8 +2,8 @@ package helmfile
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,7 +63,7 @@ func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
 
 	defer v.Close()
 
-	content, err := ioutil.ReadAll(v)
+	content, err := io.ReadAll(v)
 	if err != nil {
 		return &helmfileMetadata{}, err
 	}
