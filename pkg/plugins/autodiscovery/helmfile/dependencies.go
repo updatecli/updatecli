@@ -94,16 +94,20 @@ func (h Helmfile) discoverHelmfileManifests() ([]config.Spec, error) {
 			continue
 		}
 
-		logrus.Printf("\n\n%+v\n\n", metadata)
-
 		for i, release := range metadata.Releases {
 			manifestName := fmt.Sprintf("Bump %q Helm Chart version for Helmfile %q", release.Name, foundHelmfile)
 
 			chartName, chartURL := getReleaseRepositoryUrl(metadata.Repositories, release)
 
 			if chartName == "" || chartURL == "" {
-				logrus.Infof("repository not identified for release %q", release.Chart)
+				logrus.Debugf("repository not identified for release %q, skipping", release.Chart)
 				continue
+			}
+
+			if release.Version == "" {
+				logrus.Debugf("no version specified for release %q, skipping", release.Chart)
+				continue
+
 			}
 
 			manifest := config.Spec{
