@@ -141,7 +141,9 @@ func (p *Pipeline) RunPullRequests() error {
 		err = pr.Handler.CreatePullRequest(
 			pr.Title,
 			pr.Changelog,
-			pr.PipelineReport)
+			pr.PipelineReport,
+			p.Config.GetFilename(),
+		)
 
 		if err != nil {
 			return err

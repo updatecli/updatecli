@@ -629,3 +629,7 @@ func (config *Config) Update(data interface{}) (err error) {
 
 	return err
 }
+
+func (config *Config) GetFilename() string {
+	return config.filename
+}

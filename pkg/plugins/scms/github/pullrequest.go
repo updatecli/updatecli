@@ -47,7 +47,7 @@ const PULLREQUESTBODY = `
 
 ## Remark
 
-This pull request was automatically created using [Updatecli](https://www.updatecli.io).
+This pull request was automatically created from {{ .Filename }} using [Updatecli](https://www.updatecli.io).
 
 Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/)
 
@@ -96,6 +96,7 @@ type PullRequest struct {
 	Description       string
 	Report            string
 	Title             string
+	Filename          string
 	spec              PullRequestSpec
 	remotePullRequest PullRequestApi
 }
@@ -138,11 +139,12 @@ func NewPullRequest(spec PullRequestSpec, gh *Github) (PullRequest, error) {
 	}, err
 }
 
-func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string) error {
+func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string, filename string) error {
 
 	p.Description = changelog
 	p.Report = pipelineReport
 	p.Title = title
+	p.Filename = filename
 
 	// Check if they are changes that need to be published otherwise exit
 	matchingBranch, err := p.gh.nativeGitHandler.IsSimilarBranch(
@@ -205,6 +207,7 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 		Title        string
 		Report       string
 		Description  string
+		Filename     string
 	}
 
 	err := t.Execute(buffer, params{
@@ -212,6 +215,7 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 		Description:  p.Description,
 		Report:       p.Report,
 		Title:        p.Title,
+		Filename:     p.Filename,
 	})
 
 	if err != nil {
