@@ -8,6 +8,8 @@ export DOCKER_BUILDKIT
 # Used by the test-e2e system
 VENOM_VAR_binpath ?= $(CURDIR)/dist/updatecli_$(shell go env GOOS)_$(shell go env GOARCH)_v1
 export VENOM_VAR_binpath
+VENOM_VAR_rootpath ?= $(CURDIR)
+export VENOM_VAR_rootpath
 
 local_bin=./dist/updatecli_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)/updatecli
 
