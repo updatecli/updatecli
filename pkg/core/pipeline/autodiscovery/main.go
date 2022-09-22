@@ -34,7 +34,6 @@ type Options struct {
 }
 type Crawler interface {
 	DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error)
-	Enabled() bool
 }
 
 type AutoDiscovery struct {
@@ -58,14 +57,6 @@ func New(spec discoveryConfig.Config,
 		return &AutoDiscovery{}, err
 	}
 
-	tmpCrawlers := DefaultCrawlerSpecs.Crawlers
-
-	for id, crawlerSpec := range s.Crawlers {
-		tmpCrawlers[id] = crawlerSpec
-	}
-
-	s.Crawlers = tmpCrawlers
-
 	g := AutoDiscovery{
 		spec: s,
 	}
@@ -79,7 +70,7 @@ func New(spec discoveryConfig.Config,
 		g.pullrequestConfig = pullrequestConfig
 	}
 
-	for kind := range DefaultCrawlerSpecs.Crawlers {
+	for kind := range s.Crawlers {
 
 		// Init workDir based on process running directory
 		workDir, err := os.Getwd()
@@ -154,11 +145,7 @@ func New(spec discoveryConfig.Config,
 func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 	var totalDiscoveredManifests []config.Spec
 
-	for id, crawler := range g.crawlers {
-		if !crawler.Enabled() {
-			logrus.Infof("Manifest autodiscovering is disabled for %q", id)
-			continue
-		}
+	for _, crawler := range g.crawlers {
 
 		discoveredManifests, err := crawler.DiscoverManifests(
 			discoveryConfig.Input{
