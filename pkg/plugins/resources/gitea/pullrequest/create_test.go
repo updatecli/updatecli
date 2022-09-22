@@ -59,7 +59,7 @@ func TestCreatePullRequest(t *testing.T) {
 			gotErr = g.CreatePullRequest(
 				"Bump version to x.y.z",
 				"This is a changelog",
-				"This is a report")
+				"This is a report", "")
 
 			if tt.wantErr {
 				require.Error(t, gotErr)
