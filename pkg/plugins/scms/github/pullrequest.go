@@ -47,7 +47,7 @@ const PULLREQUESTBODY = `
 
 ## Remark
 
-This pull request was automatically created from {{ .Filename }} using [Updatecli](https://www.updatecli.io).
+This pull request was automatically created from {{ .FileURL }} using [Updatecli](https://www.updatecli.io).
 
 Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/)
 
@@ -200,6 +200,8 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string,
 func (p *PullRequest) generatePullRequestBody() (string, error) {
 	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
 
+	fileUrl := p.gh.Spec.URL + p.gh.Spec.Owner + "/" + p.gh.Spec.Repository + "/" + p.Filename
+
 	buffer := new(bytes.Buffer)
 
 	type params struct {
@@ -207,7 +209,7 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 		Title        string
 		Report       string
 		Description  string
-		Filename     string
+		FileURL      string
 	}
 
 	err := t.Execute(buffer, params{
@@ -215,7 +217,7 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 		Description:  p.Description,
 		Report:       p.Report,
 		Title:        p.Title,
-		Filename:     p.Filename,
+		FileURL:      fileUrl,
 	})
 
 	if err != nil {
