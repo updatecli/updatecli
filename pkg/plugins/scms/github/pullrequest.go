@@ -200,7 +200,7 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string,
 func (p *PullRequest) generatePullRequestBody() (string, error) {
 	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
 
-	fileUrl := p.gh.Spec.URL + p.gh.Spec.Owner + "/" + p.gh.Spec.Repository + "/" + p.Filename
+	fileUrl := p.gh.Spec.URL + p.gh.Spec.Owner + "/" + p.gh.Spec.Repository + "/tree/" + p.gh.HeadBranch + "/" + p.Filename
 
 	buffer := new(bytes.Buffer)
 
