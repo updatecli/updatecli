@@ -1,0 +1,20 @@
+name: Test Helmfile Autodiscovery
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/olblak/k8s-lab.git
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  crawlers:
+    helmfile:
+      # To ignore specific path
+      #ignore:
+      #  # - path: <filepath relative to scm repository>
+      #  # - path: chart/*
+      only:
+        - path: helmfile.d/*
+#
