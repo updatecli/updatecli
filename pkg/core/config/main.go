@@ -38,8 +38,8 @@ const (
 
 // Config contains cli configuration
 type Config struct {
-	// filename contains the updatecli manifest filename
-	filename string
+	// Filename contains the updatecli manifest Filename
+	Filename string
 	// Spec describe an updatecli manifest
 	Spec Spec
 	// gitHandler holds a git client implementation to manipulate git SCMs
@@ -94,7 +94,7 @@ func New(option Option) (config Config, err error) {
 
 	config.Reset()
 
-	config.filename = option.ManifestFile
+	config.Filename = option.ManifestFile
 
 	dirname, basename := filepath.Split(option.ManifestFile)
 
@@ -146,7 +146,7 @@ func New(option Option) (config Config, err error) {
 		}
 
 	default:
-		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, config.filename)
+		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, config.Filename)
 		return config, ErrConfigFileTypeNotSupported
 	}
 
@@ -204,7 +204,7 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 
 	data := buf.Bytes()
 
-	onDiskData, err := ioutil.ReadFile(c.filename)
+	onDiskData, err := ioutil.ReadFile(c.Filename)
 	if err != nil {
 		return false, err
 	}
@@ -214,8 +214,8 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 		return false, nil
 	}
 
-	edits := myers.ComputeEdits(span.URIFromPath(c.filename), string(onDiskData), string(data))
-	diff := fmt.Sprint(gotextdiff.ToUnified(c.filename+"(old)", c.filename+"(updated)", string(onDiskData), edits))
+	edits := myers.ComputeEdits(span.URIFromPath(c.Filename), string(onDiskData), string(data))
+	diff := fmt.Sprint(gotextdiff.ToUnified(c.Filename+"(old)", c.Filename+"(updated)", string(onDiskData), edits))
 
 	logrus.Infof("%s Updatecli manifest change required\n%s", result.ATTENTION, diff)
 
@@ -226,7 +226,7 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 // SaveOnDisk saves an updatecli manifest to disk
 func (c *Config) SaveOnDisk() error {
 
-	file, err := os.OpenFile(c.filename, os.O_WRONLY, os.ModePerm)
+	file, err := os.OpenFile(c.Filename, os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -628,8 +628,4 @@ func (config *Config) Update(data interface{}) (err error) {
 	}
 
 	return err
-}
-
-func (config *Config) GetFilename() string {
-	return config.filename
 }

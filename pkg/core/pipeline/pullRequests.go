@@ -142,7 +142,7 @@ func (p *Pipeline) RunPullRequests() error {
 			pr.Title,
 			pr.Changelog,
 			pr.PipelineReport,
-			p.Config.GetFilename(),
+			p.Config.Filename,
 		)
 
 		if err != nil {
