@@ -47,7 +47,7 @@ const PULLREQUESTBODY = `
 
 ## Remark
 
-This pull request was automatically created from {{ .FileURL }} using [Updatecli](https://www.updatecli.io).
+This pull request was automatically created from [{{ .Filename }}]({{ .FileURL }}) using [Updatecli](https://www.updatecli.io).
 
 Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/)
 
@@ -209,6 +209,7 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 		Title        string
 		Report       string
 		Description  string
+		Filename     string
 		FileURL      string
 	}
 
@@ -217,6 +218,7 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 		Description:  p.Description,
 		Report:       p.Report,
 		Title:        p.Title,
+		Filename:     p.Filename,
 		FileURL:      fileUrl,
 	})
 
