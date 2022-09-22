@@ -1,6 +1,9 @@
 package truncate
 
-import "unicode/utf8"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 // String safely truncate a string
 func String(str string, length int) string {
@@ -12,5 +15,5 @@ func String(str string, length int) string {
 		return str
 	}
 
-	return string([]rune(str)[:length])
+	return fmt.Sprint(string([]rune(str)[:length]), "...")
 }

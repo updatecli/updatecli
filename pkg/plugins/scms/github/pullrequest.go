@@ -222,8 +222,8 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 	// GitHub Issues/PRs messages have a max size limit on the
 	// message body payload.
 	// `body is too long (maximum is 65536 characters)`.
-	// To avoid that, we ensure to cap the message to 60k chars.
-	const MAX_CHARACTERS_PER_MESSAGE = 60000
+	// To avoid that, we ensure to cap the message to 65k chars.
+	const MAX_CHARACTERS_PER_MESSAGE = 65000
 
 	return truncate.String(buffer.String(), MAX_CHARACTERS_PER_MESSAGE), nil
 }
