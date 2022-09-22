@@ -10,7 +10,7 @@ import (
 )
 
 // CreatePullRequest opens a pullrequest on the Gitea server
-func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string) error {
+func (g *Gitea) CreatePullRequest(title, changelog, pipelineReport string, filename string) error {
 
 	body := changelog + "\n" + pipelineReport
 
