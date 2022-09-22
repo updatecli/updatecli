@@ -38,7 +38,7 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		filePath = theFilePath
 
 		// Merge File path with current workingDir, unless File is an HTTP URL
-		if len(workingDir) > 0 && workingDir != filePath {
+		if workingDir != filePath {
 			filePath = joinPathWithWorkingDirectoryPath(filePath, workingDir)
 		}
 
