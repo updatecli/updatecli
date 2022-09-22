@@ -1,0 +1,45 @@
+helmDefaults:
+  atomic: true
+  force: false
+  timeout: 300
+  wait: true
+repositories:
+  - name: autoscaler
+    url: https://kubernetes.github.io/autoscaler
+  - name: datadog
+    url: https://helm.datadoghq.com
+  - name: eks
+    url: https://aws.github.io/eks-charts
+  - name: jenkins-infra
+    url: https://jenkins-infra.github.io/helm-charts
+releases:
+  - name: datadog
+    needs:
+      - default/docker-registry-secrets
+    namespace: datadog
+    chart: datadog/datadog
+    version: 3.1.3
+    values:
+      - "../config/ext_datadog.yaml.gotmpl"
+      - "../config/ext_datadog_cik8s.yaml"
+    secrets:
+      - "../secrets/config/datadog/cik8s-secrets.yaml"
+  - name: docker-registry-secrets
+    #this helmchart doesn't create any resources within the namespace specified below.
+    #specifying a namespace is required by the "needs" feature of helmfile (to allow referencing to this release from others)
+    namespace: default
+    chart: jenkins-infra/docker-registry-secrets
+    version: 0.1.0
+    values:
+      - "../config/docker-registry-secrets.yaml"
+    secrets:
+      - "../secrets/config/docker-registry-secrets/secrets.yaml"
+  # Should not be pick up as no version specified
+  - name: jenkins-agents
+    needs:
+      - default/docker-registry-secrets
+    namespace: jenkins-agents
+    chart: jenkins-infra/jenkins-kubernetes-agents
+    secrets:
+      - "../secrets/config/jenkins-kubernetes-agents/secrets.yaml"
+

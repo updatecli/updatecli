@@ -14,6 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 )
 
@@ -95,6 +96,17 @@ func New(spec discoveryConfig.Config,
 			}
 
 			g.crawlers = append(g.crawlers, helmCrawler)
+
+		case "helmfile":
+
+			helmfileCrawler, err := helmfile.New(g.spec.Crawlers[kind], workDir)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, helmfileCrawler)
 
 		case "maven":
 			mavenCrawler, err := maven.New(g.spec.Crawlers[kind], workDir)
