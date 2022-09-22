@@ -21,6 +21,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/truncate"
 )
 
 // PULLREQUESTBODY is the pull request template used as pull request description
@@ -218,7 +219,13 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 		return "", err
 	}
 
-	return buffer.String(), nil
+	// GitHub Issues/PRs messages have a max size limit on the
+	// message body payload.
+	// `body is too long (maximum is 65536 characters)`.
+	// To avoid that, we ensure to cap the message to 60k chars.
+	const MAX_CHARACTERS_PER_MESSAGE = 60000
+
+	return truncate.String(buffer.String(), MAX_CHARACTERS_PER_MESSAGE), nil
 }
 
 // updatePullRequest updates an existing pull request.
