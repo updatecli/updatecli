@@ -19,6 +19,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gittag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/jenkins"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/json"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
@@ -78,6 +79,8 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return helm.New(rs.Spec)
 	case "jenkins":
 		return jenkins.New(rs.Spec)
+	case "json":
+		return json.New(rs.Spec)
 	case "maven":
 		return maven.New(rs.Spec)
 	case "shell":
@@ -106,20 +109,21 @@ func GetResourceMapping() map[string]interface{} {
 
 	return map[string]interface{}{
 		"aws/ami":       &awsami.Spec{},
-		"jenkins":       &jenkins.Spec{},
-		"shell":         &shell.Spec{},
+		"dockerdigest":  &dockerdigest.Spec{},
+		"dockerfile":    &dockerfile.Spec{},
+		"dockerimage":   &dockerimage.Spec{},
+		"file":          &file.Spec{},
 		"gittag":        &gittag.Spec{},
 		"gitea/branch":  &giteaBranch.Spec{},
 		"gitea/release": &giteaRelease.Spec{},
 		"gitea/tag":     &giteaTag.Spec{},
 		"githubrelease": &githubrelease.Spec{},
-		"dockerdigest":  &dockerdigest.Spec{},
-		"dockerfile":    &dockerfile.Spec{},
-		"dockerimage":   &dockerimage.Spec{},
-		"file":          &file.Spec{},
 		"helmchart":     &helm.Spec{},
+		"jenkins":       &jenkins.Spec{},
+		"json":          &json.Spec{},
 		"maven":         &maven.Spec{},
-		"yaml":          &yaml.Spec{},
+		"shell":         &shell.Spec{},
 		"xml":           &xml.Spec{},
+		"yaml":          &yaml.Spec{},
 	}
 }

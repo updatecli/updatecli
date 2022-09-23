@@ -1,0 +1,26 @@
+name: Basic Json Example
+
+sources:
+  local: 
+    name: Get value from json
+    kind: json
+    spec: 
+      file: pkg/plugins/resources/json/testdata/data.json
+      key: firstName
+       
+conditions:
+  local: 
+    name: Test value from json
+    kind: json
+    spec: 
+      file: pkg/plugins/resources/json/testdata/data.json
+      key: firstName
+
+targets:
+  local: 
+    name: Test value from json
+    kind: json
+    spec: 
+      file: pkg/plugins/resources/json/testdata/data.json
+      key: firstName
+      value: John

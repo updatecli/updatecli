@@ -1,0 +1,29 @@
+{
+4"address": {
+44"city": "New York",
+44"postalCode": "10021-3100",
+44"state": "NY",
+44"streetAddress": "21 2nd Street"
+4},
+4"age": 27,
+4"children": [
+44"Catherine",
+44"Thomas",
+44"Trevor"
+4],
+4"firstName": "John",
+4"isAlive": true,
+4"lastName": "Smith",
+4"phoneNumbers": [
+44{
+444"number": "212 555-1234",
+444"type": "home"
+44},
+44{
+444"number": "646 555-4567",
+444"type": "office"
+44}
+4],
+4"spouse": null,
+4"surname": ""
+}
