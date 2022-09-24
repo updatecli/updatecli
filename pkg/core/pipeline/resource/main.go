@@ -43,7 +43,7 @@ type ResourceConfig struct {
 	// !deprecated, please use scmid
 	DeprecatedSCMID string `yaml:"scmID,omitempty" jsonschema:"-"` // SCMID references a uniq scm configuration
 	// !deprecated, please use dependson
-	DeprecatedDependsOn []string `yaml:"depends_on,omitempty" jsonschema:"-"` // SCMID references a uniq scm configuration
+	DeprecatedDependsOn []string `yaml:"depends_on,omitempty" jsonschema:"-"` // depends_on specifies which resources must be executed before the current one
 }
 
 // New returns a newly initialized Resource or an error
