@@ -27,8 +27,8 @@ import (
 )
 
 type ResourceConfig struct {
-	// depends_on specifies which resources must be executed before the current one
-	DependsOn []string `yaml:"depends_on,omitempty"`
+	// dependson specifies which resources must be executed before the current one
+	DependsOn []string `yaml:",omitempty"`
 	// name specifies the resource name
 	Name string `yaml:",omitempty"`
 	// kind specifies the resource kind which defines accepted spec value
@@ -43,6 +43,8 @@ type ResourceConfig struct {
 	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 	// !deprecated, please use scmid
 	DeprecatedSCMID string `yaml:"scmID,omitempty" jsonschema:"-"` // SCMID references a uniq scm configuration
+	// !deprecated, please use dependson
+	DeprecatedDependsOn []string `yaml:"depends_on,omitempty" jsonschema:"-"` // depends_on specifies which resources must be executed before the current one
 }
 
 // New returns a newly initialized Resource or an error
