@@ -1,0 +1,27 @@
+name: Basic Json Example
+
+sources:
+  local:
+    name: Get value from toml
+    kind: toml
+    spec:
+      file: pkg/plugins/resources/toml/testdata/data.toml
+      key: owner.firstName
+
+conditions:
+  local:
+    name: Test value from toml
+    kind: toml
+    spec:
+      file: pkg/plugins/resources/toml/testdata/data.toml
+      key: owner.firstName
+
+targets:
+  local:
+    name: Test value from toml
+    kind: toml
+    spec:
+      file: pkg/plugins/resources/toml/testdata/data.toml
+      key: owner.firstName
+      value: John
+
