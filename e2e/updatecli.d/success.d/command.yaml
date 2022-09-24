@@ -25,7 +25,7 @@ targets:
 #
 #  4:
 #    name: Should be skipped
-#    depends_on:
+#    dependson:
 #      - "2"
 #    kind: shell
 #    spec:
@@ -34,7 +34,7 @@ targets:
   5:
     name: Should be succeeding
     kind: shell
-    depends_on:
+    dependson:
       - "1"
     spec:
       command: "true"
