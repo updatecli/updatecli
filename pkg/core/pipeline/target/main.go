@@ -191,11 +191,11 @@ func (c *Config) Validate() error {
 	if len(c.DeprecatedDependsOn) > 0 {
 		switch len(c.DependsOn) == 0 {
 		case true:
-			logrus.Warningf("%q is deprecated in favor of %q.", "depends_on", "dependson")
+			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
 			c.DependsOn = c.DeprecatedDependsOn
 			c.DeprecatedDependsOn = []string{}
 		case false:
-			logrus.Warningf("%q is ignored in favor of %q.", "depends_on", "dependson")
+			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
 			c.DeprecatedDependsOn = []string{}
 		}
 	}
