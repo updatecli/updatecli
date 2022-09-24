@@ -12,6 +12,7 @@ func TestTarget(t *testing.T) {
 	testData := []struct {
 		name             string
 		spec             Spec
+		sourceInput      string
 		expectedResult   bool
 		expectedErrorMsg error
 		wantErr          bool
@@ -22,6 +23,16 @@ func TestTarget(t *testing.T) {
 				File: "testdata/data.json",
 				Key:  ".firstName",
 			},
+			sourceInput:    "Jack",
+			expectedResult: false,
+		},
+		{
+			name: "Default successful workflow",
+			spec: Spec{
+				File: "testdata/data.json",
+				Key:  ".firstName",
+			},
+			sourceInput:    "Tom",
 			expectedResult: true,
 		},
 	}
@@ -33,7 +44,7 @@ func TestTarget(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := j.Target("Tom", true)
+			gotResult, err := j.Target(tt.sourceInput, true)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
