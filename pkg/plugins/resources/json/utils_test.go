@@ -16,39 +16,39 @@ func TestJoinPathWithWorkingDirectoryPath(t *testing.T) {
 	}{
 		{
 			name:           "scenario 1",
-			fileName:       "test.xml",
+			fileName:       "test.json",
 			workingDir:     "/tmp",
-			expectedResult: "/tmp/test.xml",
+			expectedResult: "/tmp/test.json",
 		},
 		{
 			name:           "scenario 2",
-			fileName:       "/tmp/test.xml",
+			fileName:       "/tmp/test.json",
 			workingDir:     "/opt",
-			expectedResult: "/tmp/test.xml",
+			expectedResult: "/tmp/test.json",
 		},
 		{
 			name:           "scenario 3",
-			fileName:       "https://test.xml",
+			fileName:       "https://test.json",
 			workingDir:     "/opt",
-			expectedResult: "https://test.xml",
+			expectedResult: "https://test.json",
 		},
 		{
 			name:           "scenario 4",
-			fileName:       "http://test.xml",
+			fileName:       "http://test.json",
 			workingDir:     "/opt",
-			expectedResult: "http://test.xml",
+			expectedResult: "http://test.json",
 		},
 		{
 			name:           "scenario 5",
-			fileName:       "test.xml",
+			fileName:       "test.json",
 			workingDir:     "",
-			expectedResult: "test.xml",
+			expectedResult: "test.json",
 		},
 		{
 			name:           "scenario 6",
-			fileName:       "./test.xml",
+			fileName:       "./test.json",
 			workingDir:     "/opt",
-			expectedResult: "/opt/test.xml",
+			expectedResult: "/opt/test.json",
 		},
 	}
 
