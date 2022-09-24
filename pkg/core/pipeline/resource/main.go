@@ -26,7 +26,7 @@ import (
 )
 
 type ResourceConfig struct {
-	// depends_on specifies which resources must be executed before the current one
+	// dependson specifies which resources must be executed before the current one
 	DependsOn []string `yaml:",omitempty"`
 	// name specifies the resource name
 	Name string `yaml:",omitempty"`
