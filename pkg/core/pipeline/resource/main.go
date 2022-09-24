@@ -42,7 +42,7 @@ type ResourceConfig struct {
 	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 	// !deprecated, please use scmid
 	DeprecatedSCMID string `yaml:"scmID,omitempty" jsonschema:"-"` // SCMID references a uniq scm configuration
-	// !deprecated, please use scmid
+	// !deprecated, please use dependson
 	DeprecatedDependsOn []string `yaml:"depends_on,omitempty" jsonschema:"-"` // SCMID references a uniq scm configuration
 }
 
