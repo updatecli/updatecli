@@ -138,6 +138,19 @@ func (c *Config) Validate() error {
 		missingParameters = append(missingParameters, "kind")
 	}
 
+	// Handle depends_on deprecation
+	if len(c.DeprecatedDependsOn) > 0 {
+		switch len(c.DependsOn) == 0 {
+		case true:
+			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
+			c.DependsOn = c.DeprecatedDependsOn
+			c.DeprecatedDependsOn = []string{}
+		case false:
+			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
+			c.DeprecatedDependsOn = []string{}
+		}
+	}
+
 	// Ensure kind is lowercase
 	if c.Kind != strings.ToLower(c.Kind) {
 		logrus.Warningf("kind value %q must be lowercase", c.Kind)
