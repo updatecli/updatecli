@@ -22,7 +22,7 @@ var (
 
 func (s *Spec) Validate() (errs []error) {
 	if len(s.File) == 0 {
-		errs = append(errs, errors.New(""))
+		errs = append(errs, ErrSpecFileUndefined)
 	}
 	if len(s.Key) == 0 {
 		errs = append(errs, ErrSpecKeyUndefined)
