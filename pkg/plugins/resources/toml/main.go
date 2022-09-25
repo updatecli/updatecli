@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	// ErrDaselFailedParsingJSONByteFormat is returned if dasel couldn't parse the byteData
-	ErrDaselFailedParsingJSONByteFormat error = errors.New("fail to parse Json data")
+	// ErrDaselFailedParsingTOMLByteFormat is returned if dasel couldn't parse the byteData
+	ErrDaselFailedParsingTOMLByteFormat error = errors.New("fail to parse Toml data")
 	// ErrWrongSpec is returned when the Spec has wrong content
 	ErrWrongSpec error = errors.New("wrong spec content")
 )

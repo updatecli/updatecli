@@ -31,7 +31,7 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 	if strings.HasPrefix(t.spec.File, "https://") ||
 		strings.HasPrefix(t.spec.File, "http://") {
-		return false, files, message, fmt.Errorf("URL scheme is not supported for Json target: %q", t.spec.File)
+		return false, files, message, fmt.Errorf("URL scheme is not supported for Toml target: %q", t.spec.File)
 	}
 
 	if scm != nil {
@@ -40,7 +40,7 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 	// Test at runtime if a file exist
 	if !t.contentRetriever.FileExists(t.spec.File) {
-		return false, files, message, fmt.Errorf("the Json file %q does not exist", t.spec.File)
+		return false, files, message, fmt.Errorf("the Toml file %q does not exist", t.spec.File)
 	}
 
 	if len(t.spec.Value) == 0 {
@@ -74,7 +74,7 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 	rootNode := dasel.New(data)
 
 	if rootNode == nil {
-		return changed, files, message, ErrDaselFailedParsingJSONByteFormat
+		return changed, files, message, ErrDaselFailedParsingTOMLByteFormat
 	}
 
 	queryResult, err := rootNode.Query(t.spec.Key)

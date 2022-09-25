@@ -3,22 +3,27 @@ package toml
 import "errors"
 
 type Spec struct {
-	File  string `yaml:",omitempty"`
-	Key   string `yaml:",omitempty"`
+	// [s][c][t] File specifies the csv file to manipulate
+	File string `yaml:",omitempty"`
+	// [s][c][t] Key specifies the query to retrieve an information from a csv file
+	Key string `yaml:",omitempty"`
+	// [s][c][t] Value specifies the value for a specific key. Default to source output
 	Value string `yaml:",omitempty"`
 }
 
 var (
-	ErrSpecFileUndefined = errors.New("json file not specified")
-	ErrSpecKeyUndefined  = errors.New("json key undefined")
+	// ErrSpecFileUndefined is returned if a file wasn't specified
+	ErrSpecFileUndefined = errors.New("toml file not specified")
+	// ErrSpecKeyUndefined is returned if a key wasn't specified
+	ErrSpecKeyUndefined = errors.New("toml key undefined")
 )
 
 func (s *Spec) Validate() (errs []error) {
 	if len(s.File) == 0 {
-		errs = append(errs, errors.New(""))
+		errs = append(errs, ErrSpecFileUndefined)
 	}
 	if len(s.Key) == 0 {
-		errs = append(errs, errors.New("json key not specified "))
+		errs = append(errs, ErrSpecKeyUndefined)
 	}
 	return errs
 }

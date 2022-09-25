@@ -14,7 +14,7 @@ func (t *Toml) Source(workingDir string) (string, error) {
 
 	// Test at runtime if a file exist
 	if !t.contentRetriever.FileExists(t.spec.File) {
-		return "", fmt.Errorf("the Json file %q does not exist", t.spec.File)
+		return "", fmt.Errorf("the Toml file %q does not exist", t.spec.File)
 	}
 
 	if err := t.Read(); err != nil {
@@ -32,7 +32,7 @@ func (t *Toml) Source(workingDir string) (string, error) {
 	rootNode := dasel.New(data)
 
 	if rootNode == nil {
-		return "", ErrDaselFailedParsingJSONByteFormat
+		return "", ErrDaselFailedParsingTOMLByteFormat
 	}
 
 	queryResult, err := rootNode.Query(t.spec.Key)
