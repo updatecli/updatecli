@@ -84,8 +84,8 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 		if strings.HasPrefix(err.Error(), "could not find value:") {
-			err = fmt.Errorf("%s could not find value for query %q from file %q",
-				result.FAILURE,
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find value for query %q from file %q",
 				t.spec.Key,
 				t.spec.File)
 			return changed, files, message, err
