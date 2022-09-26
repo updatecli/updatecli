@@ -18,7 +18,7 @@ func TestTarget(t *testing.T) {
 		wantErr          bool
 	}{
 		{
-			name: "Default successful workflow",
+			name: "Default no change needed workflow",
 			spec: Spec{
 				File: "testdata/data.json",
 				Key:  ".firstName",
@@ -27,7 +27,7 @@ func TestTarget(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			name: "Default successful workflow",
+			name: "Default change detected workflow",
 			spec: Spec{
 				File: "testdata/data.json",
 				Key:  ".firstName",

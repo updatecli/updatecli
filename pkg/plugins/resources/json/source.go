@@ -42,11 +42,11 @@ func (j *Json) Source(workingDir string) (string, error) {
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 		if strings.HasPrefix(err.Error(), "could not find value:") {
-			logrus.Infof("%s cannot find value for path %q from file %q",
+			err = fmt.Errorf("%s could not find value for query %q from file %q",
 				result.FAILURE,
 				j.spec.Key,
 				j.spec.File)
-			return "", nil
+			return "", err
 		}
 		return "", err
 	}

@@ -79,11 +79,23 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 	queryResult, err := rootNode.Query(j.spec.Key)
 	if err != nil {
+		// Catch error message returned by Dasel, if it couldn't find the node
+		// This is approach is not very robust
+		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
+
+		if strings.HasPrefix(err.Error(), "could not find value:") {
+			logrus.Infof("%s could not find value for query %q from file %q",
+				result.FAILURE,
+				j.spec.Key,
+				j.spec.File)
+			return changed, files, message, err
+		}
+
 		return changed, files, message, err
 	}
 
 	if queryResult.String() == j.spec.Value {
-		logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
+		err = fmt.Errorf("%s Key %q, from file %q, already set to %q, nothing else need to do",
 			result.SUCCESS,
 			j.spec.Key,
 			j.spec.File,
