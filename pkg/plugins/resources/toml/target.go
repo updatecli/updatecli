@@ -77,7 +77,8 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		return changed, files, message, ErrDaselFailedParsingTOMLByteFormat
 	}
 
-	queryResult, err := rootNode.Query(t.spec.Key)
+	queryResults, err := rootNode.QueryMultiple(t.spec.Key)
+
 	if err != nil {
 		// Catch error message returned by Dasel, if it couldn't find the node
 		// This is approach is not very robust
@@ -94,8 +95,39 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		return changed, files, message, err
 	}
 
-	if queryResult.String() == t.spec.Value {
-		logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
+	if queryResults == nil {
+		err = fmt.Errorf("could not find value for query %q from file %q",
+			t.spec.Key,
+			t.spec.File)
+		return changed, files, message, err
+	}
+
+	for i := range queryResults {
+
+		queryResult := queryResults[i]
+
+		if queryResult.String() == t.spec.Value {
+			logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
+				result.SUCCESS,
+				t.spec.Key,
+				t.spec.File,
+				t.spec.Value)
+			continue
+		}
+
+		logrus.Infof("%s Key %q, from file %q, will be updated from  %q to %q",
+			result.ATTENTION,
+			t.spec.Key,
+			t.spec.File,
+			queryResult.String(),
+			t.spec.Value)
+
+		changed = true
+
+	}
+
+	if !changed {
+		logrus.Infof("%s Key(s) %q, from file %q, already set to %q, nothing else need to do",
 			result.SUCCESS,
 			t.spec.Key,
 			t.spec.File,
@@ -103,19 +135,10 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		return changed, files, message, nil
 	}
 
-	err = rootNode.Put(t.spec.Key, t.spec.Value)
+	err = rootNode.PutMultiple(t.spec.Key, t.spec.Value)
 	if err != nil {
 		return changed, files, message, err
 	}
-
-	changed = true
-
-	logrus.Infof("%s Key %q, from file %q, updated from  %q to %q",
-		result.ATTENTION,
-		t.spec.Key,
-		t.spec.File,
-		queryResult.String(),
-		t.spec.Value)
 
 	if !dryRun {
 
