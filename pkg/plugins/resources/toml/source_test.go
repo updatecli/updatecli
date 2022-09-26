@@ -42,7 +42,7 @@ func TestSource(t *testing.T) {
 			},
 			expectedResult:   "",
 			wantErr:          true,
-			expectedErrorMsg: errors.New("✗ could not find value for query \".doNotExist\" from file \"testdata/data.toml\""),
+			expectedErrorMsg: errors.New("could not find value for query \".doNotExist\" from file \"testdata/data.toml\""),
 		},
 		{
 			name: "Test array exist",
