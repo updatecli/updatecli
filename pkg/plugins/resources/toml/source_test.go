@@ -1,6 +1,7 @@
 package toml
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -39,7 +40,9 @@ func TestSource(t *testing.T) {
 				Key:   ".doNotExist",
 				Value: "",
 			},
-			expectedResult: "",
+			expectedResult:   "",
+			wantErr:          true,
+			expectedErrorMsg: errors.New("✗ could not find value for query \".doNotExist\" from file \"testdata/data.toml\""),
 		},
 		{
 			name: "Test array exist",
