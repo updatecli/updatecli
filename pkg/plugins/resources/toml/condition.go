@@ -56,11 +56,11 @@ func (t *Toml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 		if strings.HasPrefix(err.Error(), "could not find value:") {
-			logrus.Infof("%s cannot find value for path %q from file %q",
+			err = fmt.Errorf("%s could not find value for query %q from file %q",
 				result.FAILURE,
 				t.spec.Key,
 				t.spec.File)
-			return false, nil
+			return false, err
 		}
 
 		return false, err

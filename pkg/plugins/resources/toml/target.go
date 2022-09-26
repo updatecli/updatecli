@@ -79,6 +79,18 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 	queryResult, err := rootNode.Query(t.spec.Key)
 	if err != nil {
+		// Catch error message returned by Dasel, if it couldn't find the node
+		// This is approach is not very robust
+		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
+
+		if strings.HasPrefix(err.Error(), "could not find value:") {
+			err = fmt.Errorf("%s could not find value for query %q from file %q",
+				result.FAILURE,
+				t.spec.Key,
+				t.spec.File)
+			return changed, files, message, err
+		}
+
 		return changed, files, message, err
 	}
 
