@@ -3,9 +3,9 @@ package toml
 import "errors"
 
 type Spec struct {
-	// [s][c][t] File specifies the csv file to manipulate
+	// [s][c][t] File specifies the toml file to manipulate
 	File string `yaml:",omitempty"`
-	// [s][c][t] Key specifies the query to retrieve an information from a csv file
+	// [s][c][t] Key specifies the query to retrieve an information from a toml file
 	Key string `yaml:",omitempty"`
 	// [s][c][t] Value specifies the value for a specific key. Default to source output
 	Value string `yaml:",omitempty"`
