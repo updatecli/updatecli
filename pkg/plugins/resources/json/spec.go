@@ -9,6 +9,8 @@ type Spec struct {
 	Key string `yaml:",omitempty"`
 	// [s][c][t] Value specifies the Jsonpath key to manipuate. Default to source output
 	Value string `yaml:",omitempty"`
+	// [c][t] Multiple allows to query multiple values at once
+	Multiple bool `yaml:",omitempty"`
 }
 
 var (
