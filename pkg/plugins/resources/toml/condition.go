@@ -1,9 +1,10 @@
-package json
+package toml
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
+
+	toml "github.com/pelletier/go-toml"
 
 	"github.com/sirupsen/logrus"
 	"github.com/tomwright/dasel"
@@ -11,32 +12,32 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (j *Json) Condition(source string) (bool, error) {
-	return j.ConditionFromSCM(source, nil)
+func (t *Toml) Condition(source string) (bool, error) {
+	return t.ConditionFromSCM(source, nil)
 }
 
-func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+func (t *Toml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	if scm != nil {
-		j.spec.File = joinPathWithWorkingDirectoryPath(j.spec.File, scm.GetDirectory())
+		t.spec.File = joinPathWithWorkingDirectoryPath(t.spec.File, scm.GetDirectory())
 	}
 
 	// Test at runtime if a file exist
-	if !j.contentRetriever.FileExists(j.spec.File) {
-		return false, fmt.Errorf("the Json file %q does not exist", j.spec.File)
+	if !t.contentRetriever.FileExists(t.spec.File) {
+		return false, fmt.Errorf("the Toml file %q does not exist", t.spec.File)
 	}
 
-	if err := j.Read(); err != nil {
+	if err := t.Read(); err != nil {
 		return false, err
 	}
 
 	// Override value from source if not yet defined
-	if len(j.spec.Value) == 0 {
-		j.spec.Value = source
+	if len(t.spec.Value) == 0 {
+		t.spec.Value = source
 	}
 
 	var data interface{}
 
-	err := json.Unmarshal([]byte(j.currentContent), &data)
+	err := toml.Unmarshal([]byte(t.currentContent), &data)
 
 	if err != nil {
 		return false, err
@@ -44,19 +45,19 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 
 	rootNode := dasel.New(data)
 
-	if j.spec.Multiple {
-		return j.multipleConditionQuery(rootNode)
+	if t.spec.Multiple {
+		return t.multipleConditionQuery(rootNode)
 	}
-	return j.singleConditionQuery(rootNode)
+	return t.singleConditionQuery(rootNode)
 
 }
 
-func (j *Json) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
+func (t *Toml) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
 	if rootNode == nil {
-		return false, ErrDaselFailedParsingJSONByteFormat
+		return false, ErrDaselFailedParsingTOMLByteFormat
 	}
 
-	queryResults, err := rootNode.QueryMultiple(j.spec.Key)
+	queryResults, err := rootNode.QueryMultiple(t.spec.Key)
 	if err != nil {
 		// Catch error message returned by Dasel, if it couldn't find the node
 		// This is approach is not very robust
@@ -65,8 +66,8 @@ func (j *Json) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
 		if strings.HasPrefix(err.Error(), "could not find multiple value:") {
 			logrus.Debugln(err)
 			err = fmt.Errorf("could not find multiple value for query %q from file %q",
-				j.spec.Key,
-				j.spec.File)
+				t.spec.Key,
+				t.spec.File)
 			return false, err
 		}
 
@@ -75,8 +76,8 @@ func (j *Json) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
 
 	if queryResults == nil {
 		err = fmt.Errorf("could not find multiple value for query %q from file %q",
-			j.spec.Key,
-			j.spec.File)
+			t.spec.Key,
+			t.spec.File)
 		return false, err
 	}
 
@@ -85,15 +86,15 @@ func (j *Json) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
 
 		queryResult := queryResults[i]
 
-		if queryResult.String() != j.spec.Value {
+		if queryResult.String() != t.spec.Value {
 			ok = false
 
 			logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
 				result.ATTENTION,
-				j.spec.Key,
-				j.spec.File,
+				t.spec.Key,
+				t.spec.File,
 				queryResult.String(),
-				j.spec.Value)
+				t.spec.Value)
 		}
 
 	}
@@ -101,9 +102,9 @@ func (j *Json) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
 	if ok {
 		logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
 			result.SUCCESS,
-			j.spec.Key,
-			j.spec.File,
-			j.spec.Value)
+			t.spec.Key,
+			t.spec.File,
+			t.spec.Value)
 		return true, nil
 	}
 
@@ -111,12 +112,12 @@ func (j *Json) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
 
 }
 
-func (j *Json) singleConditionQuery(rootNode *dasel.Node) (bool, error) {
+func (t *Toml) singleConditionQuery(rootNode *dasel.Node) (bool, error) {
 	if rootNode == nil {
-		return false, ErrDaselFailedParsingJSONByteFormat
+		return false, ErrDaselFailedParsingTOMLByteFormat
 	}
 
-	queryResult, err := rootNode.Query(j.spec.Key)
+	queryResult, err := rootNode.Query(t.spec.Key)
 	if err != nil {
 		// Catch error message returned by Dasel, if it couldn't find the node
 		// This is approach is not very robust
@@ -125,8 +126,8 @@ func (j *Json) singleConditionQuery(rootNode *dasel.Node) (bool, error) {
 		if strings.HasPrefix(err.Error(), "could not find value:") {
 			logrus.Debugln(err)
 			err = fmt.Errorf("could not find value for query %q from file %q",
-				j.spec.Key,
-				j.spec.File)
+				t.spec.Key,
+				t.spec.File)
 			return false, err
 		}
 
@@ -135,29 +136,27 @@ func (j *Json) singleConditionQuery(rootNode *dasel.Node) (bool, error) {
 
 	if queryResult == nil {
 		err = fmt.Errorf("could not find value for query %q from file %q",
-			j.spec.Key,
-			j.spec.File)
+			t.spec.Key,
+			t.spec.File)
 		return false, err
 	}
 
-	logrus.Infof("%q = %q", queryResult.String(), j.spec.Value)
-
-	if queryResult.String() != j.spec.Value {
+	if queryResult.String() != t.spec.Value {
 
 		logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
 			result.ATTENTION,
-			j.spec.Key,
-			j.spec.File,
+			t.spec.Key,
+			t.spec.File,
 			queryResult.String(),
-			j.spec.Value)
+			t.spec.Value)
 		return false, nil
 	}
 
 	logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
 		result.SUCCESS,
-		j.spec.Key,
-		j.spec.File,
-		j.spec.Value)
+		t.spec.Key,
+		t.spec.File,
+		t.spec.Value)
 	return true, nil
 
 }

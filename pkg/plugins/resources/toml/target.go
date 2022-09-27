@@ -1,13 +1,13 @@
-package json
+package toml
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
 
+	toml "github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
 	"github.com/tomwright/dasel"
 	"github.com/tomwright/dasel/storage"
@@ -16,9 +16,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (j *Json) Target(source string, dryRun bool) (changed bool, err error) {
+func (t *Toml) Target(source string, dryRun bool) (changed bool, err error) {
 
-	changed, _, _, err = j.TargetFromSCM(source, nil, dryRun)
+	changed, _, _, err = t.TargetFromSCM(source, nil, dryRun)
 	if err != nil {
 		return changed, err
 	}
@@ -27,45 +27,45 @@ func (j *Json) Target(source string, dryRun bool) (changed bool, err error) {
 }
 
 // TargetFromSCM updates a scm repository based on the modified yaml file.
-func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
-	if strings.HasPrefix(j.spec.File, "https://") ||
-		strings.HasPrefix(j.spec.File, "http://") {
-		return false, files, message, fmt.Errorf("URL scheme is not supported for Json target: %q", j.spec.File)
+	if strings.HasPrefix(t.spec.File, "https://") ||
+		strings.HasPrefix(t.spec.File, "http://") {
+		return false, files, message, fmt.Errorf("URL scheme is not supported for Toml target: %q", t.spec.File)
 	}
 
 	if scm != nil {
-		j.spec.File = joinPathWithWorkingDirectoryPath(j.spec.File, scm.GetDirectory())
+		t.spec.File = joinPathWithWorkingDirectoryPath(t.spec.File, scm.GetDirectory())
 	}
 
 	// Test at runtime if a file exist
-	if !j.contentRetriever.FileExists(j.spec.File) {
-		return false, files, message, fmt.Errorf("the Json file %q does not exist", j.spec.File)
+	if !t.contentRetriever.FileExists(t.spec.File) {
+		return false, files, message, fmt.Errorf("the Toml file %q does not exist", t.spec.File)
 	}
 
-	if len(j.spec.Value) == 0 {
-		j.spec.Value = source
+	if len(t.spec.Value) == 0 {
+		t.spec.Value = source
 	}
 
 	resourceFile := ""
 	if scm != nil {
-		resourceFile = filepath.Join(scm.GetDirectory(), j.spec.File)
+		resourceFile = filepath.Join(scm.GetDirectory(), t.spec.File)
 	} else {
-		resourceFile = j.spec.File
+		resourceFile = t.spec.File
 	}
 
-	if err := j.Read(); err != nil {
+	if err := t.Read(); err != nil {
 		return false, []string{}, "", err
 	}
 
 	// Override value from source if not yet defined
-	if len(j.spec.Value) == 0 {
-		j.spec.Value = source
+	if len(t.spec.Value) == 0 {
+		t.spec.Value = source
 	}
 
 	var data interface{}
 
-	err = json.Unmarshal([]byte(j.currentContent), &data)
+	err = toml.Unmarshal([]byte(t.currentContent), &data)
 
 	if err != nil {
 		return false, []string{}, "", err
@@ -74,14 +74,14 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 	rootNode := dasel.New(data)
 
 	if rootNode == nil {
-		return changed, files, message, ErrDaselFailedParsingJSONByteFormat
+		return changed, files, message, ErrDaselFailedParsingTOMLByteFormat
 	}
 
-	switch j.spec.Multiple {
+	switch t.spec.Multiple {
 	case true:
-		changed, err = j.multipleTargetQuery(rootNode)
+		changed, err = t.multipleTargetQuery(rootNode)
 	case false:
-		changed, err = j.singleTargetQuery(rootNode)
+		changed, err = t.singleTargetQuery(rootNode)
 	}
 
 	if err != nil {
@@ -96,7 +96,7 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 		fileInfo, err := os.Stat(resourceFile)
 		if err != nil {
-			return changed, files, message, fmt.Errorf("[%s] unable to get file info: %w", j.spec.File, err)
+			return changed, files, message, fmt.Errorf("[%s] unable to get file info: %w", t.spec.File, err)
 		}
 
 		logrus.Debugf("fileInfo for %s mode=%s", resourceFile, fileInfo.Mode().String())
@@ -117,7 +117,7 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 		err = rootNode.Write(
 			newFile,
-			"json",
+			"toml",
 			[]storage.ReadWriteOption{
 				{
 					Key:   storage.OptionIndent,
@@ -137,14 +137,14 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 	}
 
 	files = append(files, resourceFile)
-	message = fmt.Sprintf("Update key %q from file %q", j.spec.Key, j.spec.File)
+	message = fmt.Sprintf("Update key %q from file %q", t.spec.Key, t.spec.File)
 
 	return changed, files, message, err
 
 }
 
-func (j *Json) singleTargetQuery(rootNode *dasel.Node) (changed bool, err error) {
-	queryResult, err := rootNode.Query(j.spec.Key)
+func (t *Toml) singleTargetQuery(rootNode *dasel.Node) (changed bool, err error) {
+	queryResult, err := rootNode.Query(t.spec.Key)
 
 	if err != nil {
 		// Catch error message returned by Dasel, if it couldn't find the node
@@ -154,8 +154,8 @@ func (j *Json) singleTargetQuery(rootNode *dasel.Node) (changed bool, err error)
 		if strings.HasPrefix(err.Error(), "could not find value:") {
 			logrus.Debugln(err)
 			err = fmt.Errorf("could not find value for query %q from file %q",
-				j.spec.Key,
-				j.spec.File)
+				t.spec.Key,
+				t.spec.File)
 			return changed, err
 		}
 
@@ -164,17 +164,17 @@ func (j *Json) singleTargetQuery(rootNode *dasel.Node) (changed bool, err error)
 
 	if queryResult == nil {
 		err = fmt.Errorf("could not find value for query %q from file %q",
-			j.spec.Key,
-			j.spec.File)
+			t.spec.Key,
+			t.spec.File)
 		return changed, err
 	}
 
-	if queryResult.String() == j.spec.Value {
+	if queryResult.String() == t.spec.Value {
 		logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
 			result.SUCCESS,
-			j.spec.Key,
-			j.spec.File,
-			j.spec.Value)
+			t.spec.Key,
+			t.spec.File,
+			t.spec.Value)
 		return changed, nil
 	}
 
@@ -182,20 +182,20 @@ func (j *Json) singleTargetQuery(rootNode *dasel.Node) (changed bool, err error)
 
 	logrus.Infof("%s Key %q, from file %q, will be updated from  %q to %q",
 		result.ATTENTION,
-		j.spec.Key,
-		j.spec.File,
+		t.spec.Key,
+		t.spec.File,
 		queryResult.String(),
-		j.spec.Value)
+		t.spec.Value)
 
-	err = rootNode.Put(j.spec.Key, j.spec.Value)
+	err = rootNode.Put(t.spec.Key, t.spec.Value)
 	if err != nil {
 		return changed, err
 	}
 	return changed, err
 }
 
-func (j *Json) multipleTargetQuery(rootNode *dasel.Node) (changed bool, err error) {
-	queryResults, err := rootNode.QueryMultiple(j.spec.Key)
+func (t *Toml) multipleTargetQuery(rootNode *dasel.Node) (changed bool, err error) {
+	queryResults, err := rootNode.QueryMultiple(t.spec.Key)
 
 	if err != nil {
 		// Catch error message returned by Dasel, if it couldn't find the node
@@ -205,8 +205,8 @@ func (j *Json) multipleTargetQuery(rootNode *dasel.Node) (changed bool, err erro
 		if strings.HasPrefix(err.Error(), "could not find multiple value:") {
 			logrus.Debugln(err)
 			err = fmt.Errorf("could not find multiple value for query %q from file %q",
-				j.spec.Key,
-				j.spec.File)
+				t.spec.Key,
+				t.spec.File)
 			return changed, err
 		}
 
@@ -215,8 +215,8 @@ func (j *Json) multipleTargetQuery(rootNode *dasel.Node) (changed bool, err erro
 
 	if queryResults == nil {
 		err = fmt.Errorf("could not find multiple value for query %q from file %q",
-			j.spec.Key,
-			j.spec.File)
+			t.spec.Key,
+			t.spec.File)
 		return changed, err
 	}
 
@@ -224,21 +224,21 @@ func (j *Json) multipleTargetQuery(rootNode *dasel.Node) (changed bool, err erro
 
 		queryResult := queryResults[i]
 
-		if queryResult.String() == j.spec.Value {
+		if queryResult.String() == t.spec.Value {
 			logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
 				result.SUCCESS,
-				j.spec.Key,
-				j.spec.File,
-				j.spec.Value)
+				t.spec.Key,
+				t.spec.File,
+				t.spec.Value)
 			continue
 		}
 
 		logrus.Infof("%s Key %q, from file %q, will be updated from  %q to %q",
 			result.ATTENTION,
-			j.spec.Key,
-			j.spec.File,
+			t.spec.Key,
+			t.spec.File,
 			queryResult.String(),
-			j.spec.Value)
+			t.spec.Value)
 
 		changed = true
 
@@ -247,13 +247,13 @@ func (j *Json) multipleTargetQuery(rootNode *dasel.Node) (changed bool, err erro
 	if !changed {
 		logrus.Infof("%s Key(s) %q, from file %q, already set to %q, nothing else need to do",
 			result.SUCCESS,
-			j.spec.Key,
-			j.spec.File,
-			j.spec.Value)
+			t.spec.Key,
+			t.spec.File,
+			t.spec.Value)
 		return changed, nil
 	}
 
-	err = rootNode.PutMultiple(j.spec.Key, j.spec.Value)
+	err = rootNode.PutMultiple(t.spec.Key, t.spec.Value)
 	if err != nil {
 		return changed, err
 	}

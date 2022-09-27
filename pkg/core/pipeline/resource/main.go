@@ -23,6 +23,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/json"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
@@ -90,6 +91,8 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return maven.New(rs.Spec)
 	case "shell":
 		return shell.New(rs.Spec)
+	case "toml":
+		return toml.New(rs.Spec)
 	case "yaml":
 		return yaml.New(rs.Spec)
 	case "xml":
@@ -129,6 +132,7 @@ func GetResourceMapping() map[string]interface{} {
 		"json":          &json.Spec{},
 		"maven":         &maven.Spec{},
 		"shell":         &shell.Spec{},
+		"toml":          &toml.Spec{},
 		"xml":           &xml.Spec{},
 		"yaml":          &yaml.Spec{},
 	}

@@ -3,9 +3,14 @@ package json
 import "errors"
 
 type Spec struct {
-	File  string `yaml:",omitempty"`
-	Key   string `yaml:",omitempty"`
+	// [s][c][t] File specifies the Json file to manipuate
+	File string `yaml:",omitempty"`
+	// [s][c][t] Key specifies the Jsonpath key to manipuate
+	Key string `yaml:",omitempty"`
+	// [s][c][t] Value specifies the Jsonpath key to manipuate. Default to source output
 	Value string `yaml:",omitempty"`
+	// [c][t] Multiple allows to query multiple values at once
+	Multiple bool `yaml:",omitempty"`
 }
 
 var (
@@ -15,10 +20,10 @@ var (
 
 func (s *Spec) Validate() (errs []error) {
 	if len(s.File) == 0 {
-		errs = append(errs, errors.New(""))
+		errs = append(errs, ErrSpecFileUndefined)
 	}
 	if len(s.Key) == 0 {
-		errs = append(errs, errors.New("json key not specified "))
+		errs = append(errs, ErrSpecKeyUndefined)
 	}
 	return errs
 }
