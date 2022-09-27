@@ -15,6 +15,14 @@ conditions:
     spec:
       file: pkg/plugins/resources/toml/testdata/data.toml
       key: owner.firstName
+  multiple:
+    name: Test multiple value from toml
+    kind: toml
+    disablesourceinput: true
+    spec:
+      file: pkg/plugins/resources/toml/testdata/data.toml
+      key: ".employees.(address=AU).role"
+      value: "M"
 
 targets:
   local:
