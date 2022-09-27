@@ -1,6 +1,7 @@
 package json
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,26 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Multiple key scenario",
+			spec: Spec{
+				File:     "testdata/data.json",
+				Key:      "phoneNumbers.[0].type",
+				Value:    "home",
+				Multiple: true,
+			},
+			expectedResult: true,
+		},
+		// Doesn't seem to be working on Dasel side.
+		//{
+		//	name: "none multiple key scenario",
+		//	spec: Spec{
+		//		File:  "testdata/data.json",
+		//		Key:   "phoneNumbers.[*].type",
+		//		Value: "another home",
+		//	},
+		//	expectedResult: true,
+		//},
+		{
 			name: "Default successful workflow with empty result",
 			spec: Spec{
 				File:  "testdata/data.json",
@@ -41,7 +62,21 @@ func TestCondition(t *testing.T) {
 				Key:   ".doNotExist",
 				Value: "",
 			},
-			expectedResult: false,
+			expectedResult:   false,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find value for query \".doNotExist\" from file \"testdata/data.json\""),
+		},
+		{
+			name: "Test key do not exist",
+			spec: Spec{
+				File:     "testdata/data.json",
+				Key:      ".doNotExist",
+				Value:    "",
+				Multiple: true,
+			},
+			expectedResult:   false,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find multiple value for query \".doNotExist\" from file \"testdata/data.json\""),
 		},
 	}
 
