@@ -77,6 +77,124 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		return changed, files, message, ErrDaselFailedParsingTOMLByteFormat
 	}
 
+	switch t.spec.Multiple {
+	case true:
+		changed, files, message, err = t.multipleTargetQuery(rootNode)
+	case false:
+		changed, files, message, err = t.singleTargetQuery(rootNode)
+	}
+
+	if err != nil {
+		return false, files, message, err
+	}
+
+	if !changed {
+		return changed, files, message, nil
+	}
+
+	if !dryRun {
+
+		fileInfo, err := os.Stat(resourceFile)
+		if err != nil {
+			return changed, files, message, fmt.Errorf("[%s] unable to get file info: %w", t.spec.File, err)
+		}
+
+		logrus.Debugf("fileInfo for %s mode=%s", resourceFile, fileInfo.Mode().String())
+
+		user, err := user.Current()
+		if err != nil {
+			logrus.Errorf("unable to get user info: %s", err)
+		}
+
+		logrus.Debugf("user: username=%s, uid=%s, gid=%s", user.Username, user.Uid, user.Gid)
+
+		newFile, err := os.Create(resourceFile)
+		if err != nil {
+			return changed, files, message, fmt.Errorf("unable to write to file %s: %w", resourceFile, err)
+		}
+
+		defer newFile.Close()
+
+		err = rootNode.Write(
+			newFile,
+			"toml",
+			[]storage.ReadWriteOption{
+				{
+					Key:   storage.OptionIndent,
+					Value: "  ",
+				},
+				{
+					Key:   storage.OptionPrettyPrint,
+					Value: true,
+				},
+			},
+		)
+
+		if err != nil {
+			return changed, files, message, fmt.Errorf("unable to write to file %s: %w", resourceFile, err)
+		}
+
+	}
+
+	files = append(files, resourceFile)
+	message = fmt.Sprintf("Update key %q from file %q", t.spec.Key, t.spec.File)
+
+	return changed, files, message, err
+
+}
+
+func (t *Toml) singleTargetQuery(rootNode *dasel.Node) (changed bool, files []string, message string, err error) {
+	queryResult, err := rootNode.Query(t.spec.Key)
+
+	if err != nil {
+		// Catch error message returned by Dasel, if it couldn't find the node
+		// This is approach is not very robust
+		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
+
+		if strings.HasPrefix(err.Error(), "could not find value:") {
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find value for query %q from file %q",
+				t.spec.Key,
+				t.spec.File)
+			return changed, files, message, err
+		}
+
+		return changed, files, message, err
+	}
+
+	if queryResult == nil {
+		err = fmt.Errorf("could not find value for query %q from file %q",
+			t.spec.Key,
+			t.spec.File)
+		return changed, files, message, err
+	}
+
+	if queryResult.String() == t.spec.Value {
+		logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
+			result.SUCCESS,
+			t.spec.Key,
+			t.spec.File,
+			t.spec.Value)
+		return changed, files, message, nil
+	}
+
+	changed = true
+
+	logrus.Infof("%s Key %q, from file %q, will be updated from  %q to %q",
+		result.ATTENTION,
+		t.spec.Key,
+		t.spec.File,
+		queryResult.String(),
+		t.spec.Value)
+
+	err = rootNode.Put(t.spec.Key, t.spec.Value)
+	if err != nil {
+		return changed, files, message, err
+	}
+	return changed, files, message, err
+}
+
+func (t *Toml) multipleTargetQuery(rootNode *dasel.Node) (changed bool, files []string, message string, err error) {
 	queryResults, err := rootNode.QueryMultiple(t.spec.Key)
 
 	if err != nil {
@@ -139,54 +257,5 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 	if err != nil {
 		return changed, files, message, err
 	}
-
-	if !dryRun {
-
-		fileInfo, err := os.Stat(resourceFile)
-		if err != nil {
-			return changed, files, message, fmt.Errorf("[%s] unable to get file info: %w", t.spec.File, err)
-		}
-
-		logrus.Debugf("fileInfo for %s mode=%s", resourceFile, fileInfo.Mode().String())
-
-		user, err := user.Current()
-		if err != nil {
-			logrus.Errorf("unable to get user info: %s", err)
-		}
-
-		logrus.Debugf("user: username=%s, uid=%s, gid=%s", user.Username, user.Uid, user.Gid)
-
-		newFile, err := os.Create(resourceFile)
-		if err != nil {
-			return changed, files, message, fmt.Errorf("unable to write to file %s: %w", resourceFile, err)
-		}
-
-		defer newFile.Close()
-
-		err = rootNode.Write(
-			newFile,
-			"toml",
-			[]storage.ReadWriteOption{
-				{
-					Key:   storage.OptionIndent,
-					Value: "  ",
-				},
-				{
-					Key:   storage.OptionPrettyPrint,
-					Value: true,
-				},
-			},
-		)
-
-		if err != nil {
-			return changed, files, message, fmt.Errorf("unable to write to file %s: %w", resourceFile, err)
-		}
-
-	}
-
-	files = append(files, resourceFile)
-	message = fmt.Sprintf("Update key %q from file %q", t.spec.Key, t.spec.File)
-
 	return changed, files, message, err
-
 }

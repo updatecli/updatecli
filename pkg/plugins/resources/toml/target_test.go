@@ -21,6 +21,19 @@ func TestTarget(t *testing.T) {
 		{
 			name: "Test key do not exist",
 			spec: Spec{
+				File:     "testdata/data.toml",
+				Key:      ".doNotExist.[*]",
+				Value:    "",
+				Multiple: true,
+			},
+			expectedResult:   false,
+			sourceInput:      "M",
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find multiple value for query \".doNotExist.[*]\" from file \"testdata/data.toml\""),
+		},
+		{
+			name: "Test key do not exist",
+			spec: Spec{
 				File:  "testdata/data.toml",
 				Key:   ".doNotExist",
 				Value: "",
@@ -28,13 +41,14 @@ func TestTarget(t *testing.T) {
 			expectedResult:   false,
 			sourceInput:      "M",
 			wantErr:          true,
-			expectedErrorMsg: errors.New("could not find multiple value for query \".doNotExist\" from file \"testdata/data.toml\""),
+			expectedErrorMsg: errors.New("could not find value for query \".doNotExist\" from file \"testdata/data.toml\""),
 		},
 		{
 			name: "Default successful multiple update workflow",
 			spec: Spec{
-				File: "testdata/data.toml",
-				Key:  ".employees.[*].role",
+				File:     "testdata/data.toml",
+				Key:      ".employees.[*].role",
+				Multiple: true,
 			},
 			sourceInput:    "M",
 			expectedResult: true,
@@ -42,8 +56,9 @@ func TestTarget(t *testing.T) {
 		{
 			name: "Successful conditional multiple update workflow",
 			spec: Spec{
-				File: "testdata/data.toml",
-				Key:  ".employees.(address=AU).role",
+				File:     "testdata/data.toml",
+				Key:      ".employees.(address=AU).role",
+				Multiple: true,
 			},
 			sourceInput:    "M",
 			expectedResult: false,
@@ -51,8 +66,9 @@ func TestTarget(t *testing.T) {
 		{
 			name: "Successful multiple map update workflow",
 			spec: Spec{
-				File: "testdata/data.toml",
-				Key:  ".benefits.[0].country.(country=UK).name",
+				File:     "testdata/data.toml",
+				Key:      ".benefits.[0].country.(country=UK).name",
+				Multiple: true,
 			},
 			sourceInput:    "all",
 			expectedResult: true,

@@ -45,6 +45,14 @@ func (t *Toml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 
 	rootNode := dasel.New(data)
 
+	if t.spec.Multiple {
+		return t.multipleConditionQuery(rootNode)
+	}
+	return t.singleConditionQuery(rootNode)
+
+}
+
+func (t *Toml) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
 	if rootNode == nil {
 		return false, ErrDaselFailedParsingTOMLByteFormat
 	}
@@ -101,4 +109,54 @@ func (t *Toml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 	}
 
 	return false, nil
+
+}
+
+func (t *Toml) singleConditionQuery(rootNode *dasel.Node) (bool, error) {
+	if rootNode == nil {
+		return false, ErrDaselFailedParsingTOMLByteFormat
+	}
+
+	queryResult, err := rootNode.Query(t.spec.Key)
+	if err != nil {
+		// Catch error message returned by Dasel, if it couldn't find the node
+		// This is approach is not very robust
+		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
+
+		if strings.HasPrefix(err.Error(), "could not find value:") {
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find value for query %q from file %q",
+				t.spec.Key,
+				t.spec.File)
+			return false, err
+		}
+
+		return false, err
+	}
+
+	if queryResult == nil {
+		err = fmt.Errorf("could not find value for query %q from file %q",
+			t.spec.Key,
+			t.spec.File)
+		return false, err
+	}
+
+	if queryResult.String() != t.spec.Value {
+
+		logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
+			result.ATTENTION,
+			t.spec.Key,
+			t.spec.File,
+			queryResult.String(),
+			t.spec.Value)
+		return false, nil
+	}
+
+	logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
+		result.SUCCESS,
+		t.spec.Key,
+		t.spec.File,
+		t.spec.Value)
+	return true, nil
+
 }
