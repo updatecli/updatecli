@@ -39,6 +39,74 @@ func (c *CSV) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) 
 
 	rootNode := dasel.New(c.csvDocument.Documents())
 
+	if c.spec.Multiple {
+		return c.multipleConditionQuery(rootNode)
+	}
+	return c.singleConditionQuery(rootNode)
+
+}
+
+func (c *CSV) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
+	if rootNode == nil {
+		return false, ErrDaselFailedParsingJSONByteFormat
+	}
+
+	queryResults, err := rootNode.QueryMultiple(c.spec.Key)
+	if err != nil {
+		// Catch error message returned by Dasel, if it couldn't find the node
+		// This is approach is not very robust
+		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
+
+		if strings.HasPrefix(err.Error(), "could not find multiple value:") {
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find multiple value for query %q from file %q",
+				c.spec.Key,
+				c.spec.File)
+			return false, err
+		}
+
+		return false, err
+	}
+
+	if queryResults == nil {
+		err = fmt.Errorf("could not find multiple value for query %q from file %q",
+			c.spec.Key,
+			c.spec.File)
+		return false, err
+	}
+
+	ok := true
+	for i := range queryResults {
+
+		queryResult := queryResults[i]
+
+		if queryResult.String() != c.spec.Value {
+			ok = false
+
+			logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
+				result.ATTENTION,
+				c.spec.Key,
+				c.spec.File,
+				queryResult.String(),
+				c.spec.Value)
+		}
+
+	}
+
+	if ok {
+		logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
+			result.SUCCESS,
+			c.spec.Key,
+			c.spec.File,
+			c.spec.Value)
+		return true, nil
+	}
+
+	return false, nil
+
+}
+
+func (c *CSV) singleConditionQuery(rootNode *dasel.Node) (bool, error) {
 	if rootNode == nil {
 		return false, ErrDaselFailedParsingJSONByteFormat
 	}
@@ -50,30 +118,41 @@ func (c *CSV) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) 
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 		if strings.HasPrefix(err.Error(), "could not find value:") {
-			logrus.Infof("%s cannot find value for path %q from file %q",
-				result.FAILURE,
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find value for query %q from file %q",
 				c.spec.Key,
 				c.spec.File)
-			return false, nil
+			return false, err
 		}
 
 		return false, err
 	}
 
-	if queryResult.String() == c.spec.Value {
-		logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
-			result.SUCCESS,
+	if queryResult == nil {
+		err = fmt.Errorf("could not find value for query %q from file %q",
 			c.spec.Key,
-			c.spec.File,
-			c.spec.Value)
-		return true, nil
-	} else {
+			c.spec.File)
+		return false, err
+	}
+
+	logrus.Infof("%q = %q", queryResult.String(), c.spec.Value)
+
+	if queryResult.String() != c.spec.Value {
+
 		logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
 			result.ATTENTION,
 			c.spec.Key,
 			c.spec.File,
 			queryResult.String(),
 			c.spec.Value)
+		return false, nil
 	}
-	return false, nil
+
+	logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
+		result.SUCCESS,
+		c.spec.Key,
+		c.spec.File,
+		c.spec.Value)
+	return true, nil
+
 }

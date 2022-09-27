@@ -1,6 +1,7 @@
 package csv
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,6 +25,26 @@ func TestCondition(t *testing.T) {
 				Value: "John",
 			},
 			expectedResult: true,
+		},
+		{
+			name: "Multiple query scenario",
+			spec: Spec{
+				File:     "testdata/data.csv",
+				Key:      ".[*].firstname",
+				Value:    "John",
+				Multiple: true,
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Multiple query scenario",
+			spec: Spec{
+				File:     "testdata/data.csv",
+				Key:      ".[*].surname",
+				Value:    "",
+				Multiple: true,
+			},
+			expectedResult: false,
 		},
 		{
 			name: "Default scenario 2",
@@ -51,7 +72,9 @@ func TestCondition(t *testing.T) {
 				Key:   ".doNotExist",
 				Value: "",
 			},
-			expectedResult: false,
+			expectedResult:   false,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find value for query \".doNotExist\" from file \"testdata/data.csv\""),
 		},
 	}
 

@@ -13,6 +13,8 @@ type Spec struct {
 	Comma rune `yaml:",omitempty"`
 	// [s][c][t] Comma specifies the csv comment character, default "#"
 	Comment rune `yaml:",omitempty"`
+	// [c][t] Multiple allows to query multiple values at once
+	Multiple bool `yaml:",omitempty"`
 }
 
 var (
