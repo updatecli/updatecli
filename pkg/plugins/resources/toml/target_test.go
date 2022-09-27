@@ -18,6 +18,33 @@ func TestTarget(t *testing.T) {
 		wantErr          bool
 	}{
 		{
+			name: "Default successful multiple workflow",
+			spec: Spec{
+				File: "testdata/data.toml",
+				Key:  ".employees.[*].role",
+			},
+			sourceInput:    "M",
+			expectedResult: true,
+		},
+		{
+			name: "Default successful multiple workflow",
+			spec: Spec{
+				File: "testdata/data.toml",
+				Key:  ".employees.(address=AU).role",
+			},
+			sourceInput:    "M",
+			expectedResult: false,
+		},
+		{
+			name: "Default successful multiple workflow",
+			spec: Spec{
+				File: "testdata/data.toml",
+				Key:  ".benefits.[0].country.(country=UK).name",
+			},
+			sourceInput:    "all",
+			expectedResult: true,
+		},
+		{
 			name: "Default successful workflow",
 			spec: Spec{
 				File: "testdata/data.toml",

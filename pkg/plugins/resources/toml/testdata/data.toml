@@ -24,3 +24,39 @@ role = "frontend"
 ip = "10.0.0.2"
 role = "backend"
 
+
+[[employees]]
+department = "sales"
+did = 1
+role = "IC"
+
+[[employees]]
+department = "sales"
+salary = 5_000
+role = "IC"
+
+[[employees]]
+department = "engineering"
+address = "USA"
+pincode = 97_845
+role = "IC"
+
+[[employees]]
+department = "engineering"
+address = "AU"
+pincode = 97_845
+role = "M"
+
+[[benefits]]
+
+[[benefits.country]]
+country = "UK"
+name = "air"
+
+[[benefits.country]]
+country = "NL"
+name = "water"
+
+[[benefits.country]]
+country = "IT"
+name = "fire"
