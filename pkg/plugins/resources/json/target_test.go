@@ -35,6 +35,16 @@ func TestTarget(t *testing.T) {
 			sourceInput:    "Tom",
 			expectedResult: true,
 		},
+		{
+			name: "Default successful workflow",
+			spec: Spec{
+				File:     "testdata/data.json",
+				Key:      ".phoneNumbers.[*].type",
+				Multiple: true,
+			},
+			sourceInput:    "Tom",
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testData {

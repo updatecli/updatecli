@@ -44,6 +44,74 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 
 	rootNode := dasel.New(data)
 
+	if j.spec.Multiple {
+		return j.multipleConditionQuery(rootNode)
+	}
+	return j.singleConditionQuery(rootNode)
+
+}
+
+func (j *Json) multipleConditionQuery(rootNode *dasel.Node) (bool, error) {
+	if rootNode == nil {
+		return false, ErrDaselFailedParsingJSONByteFormat
+	}
+
+	queryResults, err := rootNode.QueryMultiple(j.spec.Key)
+	if err != nil {
+		// Catch error message returned by Dasel, if it couldn't find the node
+		// This is approach is not very robust
+		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
+
+		if strings.HasPrefix(err.Error(), "could not find multiple value:") {
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find multiple value for query %q from file %q",
+				j.spec.Key,
+				j.spec.File)
+			return false, err
+		}
+
+		return false, err
+	}
+
+	if queryResults == nil {
+		err = fmt.Errorf("could not find multiple value for query %q from file %q",
+			j.spec.Key,
+			j.spec.File)
+		return false, err
+	}
+
+	ok := true
+	for i := range queryResults {
+
+		queryResult := queryResults[i]
+
+		if queryResult.String() != j.spec.Value {
+			ok = false
+
+			logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
+				result.ATTENTION,
+				j.spec.Key,
+				j.spec.File,
+				queryResult.String(),
+				j.spec.Value)
+		}
+
+	}
+
+	if ok {
+		logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
+			result.SUCCESS,
+			j.spec.Key,
+			j.spec.File,
+			j.spec.Value)
+		return true, nil
+	}
+
+	return false, nil
+
+}
+
+func (j *Json) singleConditionQuery(rootNode *dasel.Node) (bool, error) {
 	if rootNode == nil {
 		return false, ErrDaselFailedParsingJSONByteFormat
 	}
@@ -55,30 +123,41 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 		if strings.HasPrefix(err.Error(), "could not find value:") {
-			logrus.Infof("%s cannot find value for path %q from file %q",
-				result.FAILURE,
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find value for query %q from file %q",
 				j.spec.Key,
 				j.spec.File)
-			return false, nil
+			return false, err
 		}
 
 		return false, err
 	}
 
-	if queryResult.String() == j.spec.Value {
-		logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
-			result.SUCCESS,
+	if queryResult == nil {
+		err = fmt.Errorf("could not find value for query %q from file %q",
 			j.spec.Key,
-			j.spec.File,
-			j.spec.Value)
-		return true, nil
-	} else {
+			j.spec.File)
+		return false, err
+	}
+
+	logrus.Infof("%q = %q", queryResult.String(), j.spec.Value)
+
+	if queryResult.String() != j.spec.Value {
+
 		logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
 			result.ATTENTION,
 			j.spec.Key,
 			j.spec.File,
 			queryResult.String(),
 			j.spec.Value)
+		return false, nil
 	}
-	return false, nil
+
+	logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
+		result.SUCCESS,
+		j.spec.Key,
+		j.spec.File,
+		j.spec.Value)
+	return true, nil
+
 }
