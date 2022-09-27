@@ -79,9 +79,9 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 	switch t.spec.Multiple {
 	case true:
-		changed, files, message, err = t.multipleTargetQuery(rootNode)
+		changed, err = t.multipleTargetQuery(rootNode)
 	case false:
-		changed, files, message, err = t.singleTargetQuery(rootNode)
+		changed, err = t.singleTargetQuery(rootNode)
 	}
 
 	if err != nil {
@@ -143,7 +143,7 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 }
 
-func (t *Toml) singleTargetQuery(rootNode *dasel.Node) (changed bool, files []string, message string, err error) {
+func (t *Toml) singleTargetQuery(rootNode *dasel.Node) (changed bool, err error) {
 	queryResult, err := rootNode.Query(t.spec.Key)
 
 	if err != nil {
@@ -156,17 +156,17 @@ func (t *Toml) singleTargetQuery(rootNode *dasel.Node) (changed bool, files []st
 			err = fmt.Errorf("could not find value for query %q from file %q",
 				t.spec.Key,
 				t.spec.File)
-			return changed, files, message, err
+			return changed, err
 		}
 
-		return changed, files, message, err
+		return changed, err
 	}
 
 	if queryResult == nil {
 		err = fmt.Errorf("could not find value for query %q from file %q",
 			t.spec.Key,
 			t.spec.File)
-		return changed, files, message, err
+		return changed, err
 	}
 
 	if queryResult.String() == t.spec.Value {
@@ -175,7 +175,7 @@ func (t *Toml) singleTargetQuery(rootNode *dasel.Node) (changed bool, files []st
 			t.spec.Key,
 			t.spec.File,
 			t.spec.Value)
-		return changed, files, message, nil
+		return changed, nil
 	}
 
 	changed = true
@@ -189,12 +189,12 @@ func (t *Toml) singleTargetQuery(rootNode *dasel.Node) (changed bool, files []st
 
 	err = rootNode.Put(t.spec.Key, t.spec.Value)
 	if err != nil {
-		return changed, files, message, err
+		return changed, err
 	}
-	return changed, files, message, err
+	return changed, err
 }
 
-func (t *Toml) multipleTargetQuery(rootNode *dasel.Node) (changed bool, files []string, message string, err error) {
+func (t *Toml) multipleTargetQuery(rootNode *dasel.Node) (changed bool, err error) {
 	queryResults, err := rootNode.QueryMultiple(t.spec.Key)
 
 	if err != nil {
@@ -207,17 +207,17 @@ func (t *Toml) multipleTargetQuery(rootNode *dasel.Node) (changed bool, files []
 			err = fmt.Errorf("could not find multiple value for query %q from file %q",
 				t.spec.Key,
 				t.spec.File)
-			return changed, files, message, err
+			return changed, err
 		}
 
-		return changed, files, message, err
+		return changed, err
 	}
 
 	if queryResults == nil {
 		err = fmt.Errorf("could not find multiple value for query %q from file %q",
 			t.spec.Key,
 			t.spec.File)
-		return changed, files, message, err
+		return changed, err
 	}
 
 	for i := range queryResults {
@@ -250,12 +250,12 @@ func (t *Toml) multipleTargetQuery(rootNode *dasel.Node) (changed bool, files []
 			t.spec.Key,
 			t.spec.File,
 			t.spec.Value)
-		return changed, files, message, nil
+		return changed, nil
 	}
 
 	err = rootNode.PutMultiple(t.spec.Key, t.spec.Value)
 	if err != nil {
-		return changed, files, message, err
+		return changed, err
 	}
-	return changed, files, message, err
+	return changed, err
 }
