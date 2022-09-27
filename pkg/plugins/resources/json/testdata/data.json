@@ -14,6 +14,7 @@
   "firstName": "Jack",
   "isAlive": true,
   "lastName": "Smith",
+  "phoneNumbers.[*].type": "another home",
   "phoneNumbers": [
     {
       "number": "212 555-1234",

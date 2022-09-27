@@ -77,33 +77,20 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		return changed, files, message, ErrDaselFailedParsingJSONByteFormat
 	}
 
-	queryResult, err := rootNode.Query(j.spec.Key)
-	if err != nil {
-		return changed, files, message, err
+	switch j.spec.Multiple {
+	case true:
+		changed, err = j.multipleTargetQuery(rootNode)
+	case false:
+		changed, err = j.singleTargetQuery(rootNode)
 	}
 
-	if queryResult.String() == j.spec.Value {
-		logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
-			result.SUCCESS,
-			j.spec.Key,
-			j.spec.File,
-			j.spec.Value)
+	if err != nil {
+		return false, files, message, err
+	}
+
+	if !changed {
 		return changed, files, message, nil
 	}
-
-	err = rootNode.Put(j.spec.Key, j.spec.Value)
-	if err != nil {
-		return changed, files, message, err
-	}
-
-	changed = true
-
-	logrus.Infof("%s Key %q, from file %q, updated from  %q to %q",
-		result.ATTENTION,
-		j.spec.Key,
-		j.spec.File,
-		queryResult.String(),
-		j.spec.Value)
 
 	if !dryRun {
 
@@ -154,4 +141,121 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 
 	return changed, files, message, err
 
+}
+
+func (j *Json) singleTargetQuery(rootNode *dasel.Node) (changed bool, err error) {
+	queryResult, err := rootNode.Query(j.spec.Key)
+
+	if err != nil {
+		// Catch error message returned by Dasel, if it couldn't find the node
+		// This is approach is not very robust
+		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
+
+		if strings.HasPrefix(err.Error(), "could not find value:") {
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find value for query %q from file %q",
+				j.spec.Key,
+				j.spec.File)
+			return changed, err
+		}
+
+		return changed, err
+	}
+
+	if queryResult == nil {
+		err = fmt.Errorf("could not find value for query %q from file %q",
+			j.spec.Key,
+			j.spec.File)
+		return changed, err
+	}
+
+	if queryResult.String() == j.spec.Value {
+		logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
+			result.SUCCESS,
+			j.spec.Key,
+			j.spec.File,
+			j.spec.Value)
+		return changed, nil
+	}
+
+	changed = true
+
+	logrus.Infof("%s Key %q, from file %q, will be updated from  %q to %q",
+		result.ATTENTION,
+		j.spec.Key,
+		j.spec.File,
+		queryResult.String(),
+		j.spec.Value)
+
+	err = rootNode.Put(j.spec.Key, j.spec.Value)
+	if err != nil {
+		return changed, err
+	}
+	return changed, err
+}
+
+func (j *Json) multipleTargetQuery(rootNode *dasel.Node) (changed bool, err error) {
+	queryResults, err := rootNode.QueryMultiple(j.spec.Key)
+
+	if err != nil {
+		// Catch error message returned by Dasel, if it couldn't find the node
+		// This is approach is not very robust
+		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
+
+		if strings.HasPrefix(err.Error(), "could not find multiple value:") {
+			logrus.Debugln(err)
+			err = fmt.Errorf("could not find multiple value for query %q from file %q",
+				j.spec.Key,
+				j.spec.File)
+			return changed, err
+		}
+
+		return changed, err
+	}
+
+	if queryResults == nil {
+		err = fmt.Errorf("could not find multiple value for query %q from file %q",
+			j.spec.Key,
+			j.spec.File)
+		return changed, err
+	}
+
+	for i := range queryResults {
+
+		queryResult := queryResults[i]
+
+		if queryResult.String() == j.spec.Value {
+			logrus.Infof("%s Key %q, from file %q, already set to %q, nothing else need to do",
+				result.SUCCESS,
+				j.spec.Key,
+				j.spec.File,
+				j.spec.Value)
+			continue
+		}
+
+		logrus.Infof("%s Key %q, from file %q, will be updated from  %q to %q",
+			result.ATTENTION,
+			j.spec.Key,
+			j.spec.File,
+			queryResult.String(),
+			j.spec.Value)
+
+		changed = true
+
+	}
+
+	if !changed {
+		logrus.Infof("%s Key(s) %q, from file %q, already set to %q, nothing else need to do",
+			result.SUCCESS,
+			j.spec.Key,
+			j.spec.File,
+			j.spec.Value)
+		return changed, nil
+	}
+
+	err = rootNode.PutMultiple(j.spec.Key, j.spec.Value)
+	if err != nil {
+		return changed, err
+	}
+	return changed, err
 }
