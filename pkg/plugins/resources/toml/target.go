@@ -84,9 +84,9 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		// This is approach is not very robust
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
-		if strings.HasPrefix(err.Error(), "could not find value:") {
+		if strings.HasPrefix(err.Error(), "could not find multiple value:") {
 			logrus.Debugln(err)
-			err = fmt.Errorf("could not find value for query %q from file %q",
+			err = fmt.Errorf("could not find multiple value for query %q from file %q",
 				t.spec.Key,
 				t.spec.File)
 			return changed, files, message, err
@@ -96,7 +96,7 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 	}
 
 	if queryResults == nil {
-		err = fmt.Errorf("could not find value for query %q from file %q",
+		err = fmt.Errorf("could not find multiple value for query %q from file %q",
 			t.spec.Key,
 			t.spec.File)
 		return changed, files, message, err

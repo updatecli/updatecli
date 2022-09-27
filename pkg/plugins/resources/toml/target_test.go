@@ -1,6 +1,7 @@
 package toml
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,7 +19,19 @@ func TestTarget(t *testing.T) {
 		wantErr          bool
 	}{
 		{
-			name: "Default successful multiple workflow",
+			name: "Test key do not exist",
+			spec: Spec{
+				File:  "testdata/data.toml",
+				Key:   ".doNotExist",
+				Value: "",
+			},
+			expectedResult:   false,
+			sourceInput:      "M",
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find multiple value for query \".doNotExist\" from file \"testdata/data.toml\""),
+		},
+		{
+			name: "Default successful multiple update workflow",
 			spec: Spec{
 				File: "testdata/data.toml",
 				Key:  ".employees.[*].role",
@@ -27,7 +40,7 @@ func TestTarget(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name: "Default successful multiple workflow",
+			name: "Successful conditional multiple update workflow",
 			spec: Spec{
 				File: "testdata/data.toml",
 				Key:  ".employees.(address=AU).role",
@@ -36,7 +49,7 @@ func TestTarget(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			name: "Default successful multiple workflow",
+			name: "Successful multiple map update workflow",
 			spec: Spec{
 				File: "testdata/data.toml",
 				Key:  ".benefits.[0].country.(country=UK).name",
@@ -45,7 +58,7 @@ func TestTarget(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name: "Default successful workflow",
+			name: "Successful single update workflow",
 			spec: Spec{
 				File: "testdata/data.toml",
 				Key:  ".owner.firstName",
@@ -54,7 +67,7 @@ func TestTarget(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name: "Default successful workflow",
+			name: "Successful no update workflow",
 			spec: Spec{
 				File: "testdata/data.toml",
 				Key:  ".owner.firstName",

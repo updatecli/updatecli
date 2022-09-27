@@ -18,6 +18,30 @@ func TestCondition(t *testing.T) {
 		wantErr          bool
 	}{
 		{
+			name: "Default successful multiple update workflow",
+			spec: Spec{
+				File: "testdata/data.toml",
+				Key:  ".employees.[*].role",
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Successful conditional multiple update workflow",
+			spec: Spec{
+				File: "testdata/data.toml",
+				Key:  ".employees.(address=AU).role",
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Successful multiple map update workflow",
+			spec: Spec{
+				File: "testdata/data.toml",
+				Key:  ".benefits.[0].country.(country=UK).name",
+			},
+			expectedResult: false,
+		},
+		{
 			name: "Default scenario",
 			spec: Spec{
 				File:  "testdata/data.toml",
@@ -44,7 +68,7 @@ func TestCondition(t *testing.T) {
 			},
 			expectedResult:   false,
 			wantErr:          true,
-			expectedErrorMsg: errors.New("could not find value for query \".doNotExist\" from file \"testdata/data.toml\""),
+			expectedErrorMsg: errors.New("could not find multiple value for query \".doNotExist\" from file \"testdata/data.toml\""),
 		},
 	}
 

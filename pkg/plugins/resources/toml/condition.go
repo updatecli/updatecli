@@ -49,15 +49,15 @@ func (t *Toml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		return false, ErrDaselFailedParsingTOMLByteFormat
 	}
 
-	queryResult, err := rootNode.Query(t.spec.Key)
+	queryResults, err := rootNode.QueryMultiple(t.spec.Key)
 	if err != nil {
 		// Catch error message returned by Dasel, if it couldn't find the node
 		// This is approach is not very robust
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
-		if strings.HasPrefix(err.Error(), "could not find value:") {
+		if strings.HasPrefix(err.Error(), "could not find multiple value:") {
 			logrus.Debugln(err)
-			err = fmt.Errorf("could not find value for query %q from file %q",
+			err = fmt.Errorf("could not find multiple value for query %q from file %q",
 				t.spec.Key,
 				t.spec.File)
 			return false, err
@@ -66,20 +66,39 @@ func (t *Toml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		return false, err
 	}
 
-	if queryResult.String() == t.spec.Value {
+	if queryResults == nil {
+		err = fmt.Errorf("could not find multiple value for query %q from file %q",
+			t.spec.Key,
+			t.spec.File)
+		return false, err
+	}
+
+	ok := true
+	for i := range queryResults {
+
+		queryResult := queryResults[i]
+
+		if queryResult.String() != t.spec.Value {
+			ok = false
+
+			logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
+				result.ATTENTION,
+				t.spec.Key,
+				t.spec.File,
+				queryResult.String(),
+				t.spec.Value)
+		}
+
+	}
+
+	if ok {
 		logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
 			result.SUCCESS,
 			t.spec.Key,
 			t.spec.File,
 			t.spec.Value)
 		return true, nil
-	} else {
-		logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
-			result.ATTENTION,
-			t.spec.Key,
-			t.spec.File,
-			queryResult.String(),
-			t.spec.Value)
 	}
+
 	return false, nil
 }
