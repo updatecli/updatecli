@@ -1,44 +1,44 @@
 name: Bump udpatecli version
-
-scms:
-  default:
-    kind: github
-    spec:
-      user: updatecli
-      email: me@olblak.com
-      owner: updatecli
-      repository: updatecli
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      branch: main
-
-sources:
-  latestVersion:
-    name: Get latest updatecli release
-    kind: githubrelease
-    spec:
-      owner: updatecli
-      repository: updatecli
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-
-targets:
-  bugReport:
-    name: '[bug-report] Update updatecli version to {{ source "latestVersion" }}'
-    kind: file
-    spec:
-      file: .github/ISSUE_TEMPLATE/1-bug-report.yml
-      matchpattern: '\*\*updatecli\*\*: .*'
-      content: '**updatecli**: {{ source `latestVersion` }}'
-    scmid: default
-
+pipelineid: cac467f9bdc931266038f8cf363edc865370121deb3954b93e70d0588827a04f
 pullrequests:
-  default:
-    title: '[updatecli] Bump updatecli version to {{ source "latestVersion" }}'
-    kind: github
-    scmid: default
-    spec:
-      automerge: true
-      labels:
-        - chore
-        - skip-changelog
+    default:
+        title: '[updatecli] Bump updatecli version to {{ source "latestVersion" }}'
+        kind: github
+        spec:
+            automerge: true
+            labels:
+                - chore
+                - skip-changelog
+        scmid: default
+scms:
+    default:
+        kind: github
+        spec:
+            branch: main
+            email: me@olblak.com
+            owner: updatecli
+            repository: updatecli
+            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+            user: updatecli
+            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        disabled: false
+sources:
+    latestVersion:
+        name: Get latest updatecli release
+        kind: githubrelease
+        spec:
+            owner: updatecli
+            repository: updatecli
+            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+targets:
+    bugReport:
+        name: '[bug-report] Update updatecli version to {{ source "latestVersion" }}'
+        kind: file
+        spec:
+            content: '**updatecli**: {{ source `latestVersion` }}'
+            file: .github/ISSUE_TEMPLATE/1-bug-report.yml
+            matchpattern: '\*\*updatecli\*\*: .*'
+        scmid: default
+        sourceid: latestVersion
+version: 0.34.0
