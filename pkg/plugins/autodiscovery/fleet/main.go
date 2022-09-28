@@ -15,8 +15,6 @@ import (
 type Spec struct {
 	// RootDir defines the root directory used to recursively search for Fleet bundle
 	RootDir string `yaml:",omitempty"`
-	// Disable allows to disable the Fleet crawler
-	Disable bool `yaml:",omitempty"`
 	// Ignore allows to specify rule to ignore autodiscovery a specific Fleet bundle based on a rule
 	Ignore MatchingRules `yaml:",omitempty"`
 	// Only allows to specify rule to only autodiscover manifest for a specific Fleet bundle based on a rule
@@ -105,9 +103,4 @@ func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
 func SetPullrequest(configSpec *config.Spec, pullrequestSpec pullrequest.Config, pullrequestID string) {
 	configSpec.PullRequests = make(map[string]pullrequest.Config)
 	configSpec.PullRequests[pullrequestID] = pullrequestSpec
-}
-
-// RunDisabled returns a bool saying if a run should be done
-func (f Fleet) Enabled() bool {
-	return !f.spec.Disable
 }

@@ -16,8 +16,6 @@ import (
 type Spec struct {
 	// RootDir defines the root directory used to recursively search for Helm Chart
 	RootDir string `yaml:",omitempty"`
-	// Disable allows to disable the helm chart crawler
-	Disable bool `yaml:",omitempty"`
 	// Ignore allows to specify rule to ignore autodiscovery a specific Helm based on a rule
 	Ignore MatchingRules `yaml:",omitempty"`
 	// Only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
@@ -107,9 +105,4 @@ func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
 func SetPullrequest(configSpec *config.Spec, pullrequestSpec pullrequest.Config, pullrequestID string) {
 	configSpec.PullRequests = make(map[string]pullrequest.Config)
 	configSpec.PullRequests[pullrequestID] = pullrequestSpec
-}
-
-// RunDisabled returns a bool saying if a run should be done
-func (h Helmfile) Enabled() bool {
-	return !h.spec.Disable
 }
