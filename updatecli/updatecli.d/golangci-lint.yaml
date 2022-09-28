@@ -1,62 +1,59 @@
-name: "Bump golangci-lint version"
-
-scms:
-  default:
-    kind: github
-    spec:
-      user: updatecli
-      email: me@olblak.com
-      owner: updatecli
-      repository: updatecli
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      branch: main
-
-sources:
-  default:
-    name: Get latest golangci-lint version
-    kind: githubrelease
-    spec:
-      owner: golangci
-      repository: golangci-lint
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-    
-
-conditions:
-  default:
-    name: 'Test golangci-lint is used in workflow go.yaml'
-    kind: yaml
-    disablesourceinput: true
-    spec:
-      file: .github/workflows/go.yaml
-      key: jobs.build.steps[6].name
-      value: "golangci-lint"
-    scmid: default
-
-targets:
-  default:
-    name: 'Update Golangci-lint version to {{ source "default" }}'
-    kind: yaml
-    spec:
-      file: .github/workflows/go.yaml
-      key: jobs.build.steps[6].with.version
-    scmid: default
-    # Required: the version of golangci-lint is required
-    # and must be specified without patch version:
-    # we always use the latest patch version.
-    transformers:
-      - findsubmatch:
-          pattern: 'v(\d*)\.(\d*)'
-
+name: Bump golangci-lint version
+pipelineid: e6d141666bd851d4bac9467b898b5e908012a53932de7a805c0767c9e7aeb532
 pullrequests:
-  default:
-    title: '[updatecli] Bump golangci-lint version to {{ source "default" }}'
-    kind: github
-    scmid: default
-    spec:
-      automerge: true
-      labels:
-        - chore
-        - dependencies
-        - skip-changelog
+    default:
+        title: '[updatecli] Bump golangci-lint version to {{ source "default" }}'
+        kind: github
+        spec:
+            automerge: true
+            labels:
+                - chore
+                - dependencies
+                - skip-changelog
+        scmid: default
+scms:
+    default:
+        kind: github
+        spec:
+            branch: main
+            email: me@olblak.com
+            owner: updatecli
+            repository: updatecli
+            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+            user: updatecli
+            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        disabled: false
+sources:
+    default:
+        name: Get latest golangci-lint version
+        kind: githubrelease
+        spec:
+            owner: golangci
+            repository: golangci-lint
+            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+conditions:
+    default:
+        name: Test golangci-lint is used in workflow go.yaml
+        kind: yaml
+        spec:
+            file: .github/workflows/go.yaml
+            key: jobs.build.steps[2].name
+            value: golangci-lint
+        scmid: default
+        disablesourceinput: true
+targets:
+    default:
+        name: Update Golangci-lint version to {{ source "default" }}
+        kind: yaml
+        transformers:
+            - findsubmatch:
+                pattern: v(\d*)\.(\d*)
+                captureIndex: 0
+                captureindex: 0
+        spec:
+            file: .github/workflows/go.yaml
+            key: jobs.build.steps[2].with.version
+        scmid: default
+        sourceid: default
+version: 0.34.0
