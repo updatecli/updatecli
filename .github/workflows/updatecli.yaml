@@ -18,6 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
+          go-version-file: 'go.mod'
           check-latest: true
         id: go
       - name: "Run updatecli in dryrun"
