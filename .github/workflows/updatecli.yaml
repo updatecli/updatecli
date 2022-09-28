@@ -17,7 +17,8 @@ jobs:
         uses: "updatecli/updatecli-action@v2.9.0"
       - name: Set up Go
         uses: actions/setup-go@v3
-        check-latest: true
+        with:
+          check-latest: true
         id: go
       - name: "Run updatecli in dryrun"
         run: "updatecli diff --config ./updatecli/updatecli.d"
