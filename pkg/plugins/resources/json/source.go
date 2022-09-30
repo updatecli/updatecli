@@ -2,6 +2,7 @@ package json
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -27,11 +28,11 @@ func (j *Json) Source(workingDir string) (string, error) {
 			// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 			if strings.HasPrefix(err.Error(), "could not find value:") {
-				logrus.Infof("%s cannot find value for path %q from file %q",
+				err := fmt.Errorf("%s cannot find value for path %q from file %q",
 					result.FAILURE,
 					j.spec.Key,
 					j.contents[i].FilePath)
-				return "", nil
+				return "", err
 			}
 			return "", err
 		}
