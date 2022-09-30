@@ -50,6 +50,26 @@ func (f *FileContent) Write() error {
 		if err != nil {
 			return fmt.Errorf("unable to write to file %s: %w", f.FilePath, err)
 		}
+
+	case "toml":
+		err = f.DaselNode.Write(
+			newFile,
+			f.DataType,
+			[]storage.ReadWriteOption{
+				{
+					Key:   storage.OptionIndent,
+					Value: "  ",
+				},
+				{
+					Key:   storage.OptionPrettyPrint,
+					Value: true,
+				},
+			},
+		)
+
+		if err != nil {
+			return fmt.Errorf("unable to write to file %s: %w", f.FilePath, err)
+		}
 	default:
 		return fmt.Errorf("data type %q no supported", f.DataType)
 	}
