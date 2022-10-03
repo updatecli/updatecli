@@ -3,6 +3,7 @@ package csv
 import (
 	"encoding/csv"
 	"fmt"
+	"os"
 	"strings"
 
 	das "github.com/tomwright/dasel"
@@ -45,8 +46,9 @@ func (c *csvContent) Read(rootDir string) error {
 	}
 
 	if len(records) == 0 {
-		return nil
+		return fmt.Errorf("no csv record found")
 	}
+
 	var headers []string
 	for i, row := range records {
 		if i == 0 {
@@ -72,6 +74,45 @@ func (c *csvContent) Read(rootDir string) error {
 	}
 
 	c.DaselNode = das.New(c.csvDocument.Documents())
+
+	return nil
+}
+
+func (c *csvContent) Write() error {
+	newFile, err := os.Create(c.FilePath)
+	if err != nil {
+		return fmt.Errorf("could not write to file : %w", err)
+	}
+
+	defer newFile.Close()
+
+	writer := csv.NewWriter(newFile)
+
+	writer.Comma = c.comma
+
+	// Iterate through the rows and write the output.
+	for i, r := range c.csvDocument.Value {
+		if i == 0 {
+			if err := writer.Write(c.csvDocument.Headers); err != nil {
+				return fmt.Errorf("could not write headers: %w", err)
+			}
+		}
+
+		values := make([]string, 0)
+		for _, header := range c.csvDocument.Headers {
+			val, ok := r[header]
+			if !ok {
+				val = ""
+			}
+			values = append(values, fmt.Sprint(val))
+		}
+
+		if err := writer.Write(values); err != nil {
+			return fmt.Errorf("could not write headers: %w", err)
+		}
+
+		writer.Flush()
+	}
 
 	return nil
 }
