@@ -9,7 +9,7 @@ import (
 type Spec struct {
 	// [s][c][t] File specifies the Json file to manipuate
 	File string `yaml:",omitempty"`
-	// [s][c][t] Files specifies a list of Json file to manipuate
+	// [c][t] Files specifies a list of Json file to manipuate
 	Files []string `yaml:",omitempty"`
 	// [s][c][t] Key specifies the Jsonpath key to manipuate
 	Key string `yaml:",omitempty"`
