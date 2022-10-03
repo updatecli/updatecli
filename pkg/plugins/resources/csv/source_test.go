@@ -1,6 +1,7 @@
 package csv
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -51,7 +52,9 @@ func TestSource(t *testing.T) {
 				Key:   ".doNotExist",
 				Value: "",
 			},
-			expectedResult: "",
+			expectedResult:   "",
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find value for path \".doNotExist\" from file \"testdata/data.csv\""),
 		},
 	}
 

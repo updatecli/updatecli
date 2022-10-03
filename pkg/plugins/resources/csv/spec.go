@@ -1,10 +1,16 @@
 package csv
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/sirupsen/logrus"
+)
 
 type Spec struct {
 	// [s][c][t] File specifies the csv file
 	File string `yaml:",omitempty"`
+	// [c][t] Files specifies a list of Json file to manipuate
+	Files []string `yaml:",omitempty"`
 	// [s][c][t] Key specifies the csv query
 	Key string `yaml:",omitempty"`
 	// [s][c][t] Key specifies the csv value, default to source output
@@ -20,14 +26,25 @@ type Spec struct {
 var (
 	ErrSpecFileUndefined = errors.New("csv file not specified")
 	ErrSpecKeyUndefined  = errors.New("csv key undefined")
+	// ErrWrongSpec is returned when the Spec has wrong content
+	ErrWrongSpec error = errors.New("wrong spec content")
 )
 
-func (s *Spec) Validate() (errs []error) {
+func (s *Spec) Validate() error {
+	var errs []error
 	if len(s.File) == 0 {
 		errs = append(errs, ErrSpecFileUndefined)
 	}
 	if len(s.Key) == 0 {
 		errs = append(errs, ErrSpecKeyUndefined)
 	}
-	return errs
+
+	if len(errs) > 0 {
+		for i := range errs {
+			logrus.Errorln(errs[i])
+		}
+		return ErrWrongSpec
+	}
+
+	return nil
 }
