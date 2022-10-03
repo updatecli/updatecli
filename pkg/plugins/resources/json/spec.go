@@ -20,7 +20,7 @@ type Spec struct {
 }
 
 var (
-	ErrSpecFileUndefined       = errors.New("json file not specified")
+	ErrSpecFileUndefined       = errors.New("json file undefined")
 	ErrSpecKeyUndefined        = errors.New("json key undefined")
 	ErrSpecFileAndFilesDefined = errors.New("parameter \"file\" and \"files\" are mutually exclusive")
 	// ErrWrongSpec is returned when the Spec has wrong content

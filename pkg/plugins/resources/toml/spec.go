@@ -21,7 +21,7 @@ type Spec struct {
 
 var (
 	// ErrSpecFileUndefined is returned if a file wasn't specified
-	ErrSpecFileUndefined = errors.New("toml file not specified")
+	ErrSpecFileUndefined = errors.New("toml file undefined")
 	// ErrSpecKeyUndefined is returned if a key wasn't specified
 	ErrSpecKeyUndefined = errors.New("toml key undefined")
 	// ErrSpecFileAndFilesDefines when we both spec File and Files have been specified
