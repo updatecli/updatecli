@@ -6,7 +6,7 @@ import (
 )
 
 // joinPathwithworkingDirectoryPath To merge File path with current working dire, unless file is an http url
-func joinPathWithWorkingDirectoryPath(fileName, workingDir string) string {
+func JoinPathWithWorkingDirectoryPath(fileName, workingDir string) string {
 	if workingDir == "" ||
 		filepath.IsAbs(fileName) ||
 		strings.HasPrefix(fileName, "https://") ||

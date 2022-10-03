@@ -11,7 +11,7 @@ import (
 // Read reads the content of a file after runtime validation
 func (f *FileContent) Read(rootDir string) error {
 
-	f.FilePath = joinPathWithWorkingDirectoryPath(f.FilePath, rootDir)
+	f.FilePath = JoinPathWithWorkingDirectoryPath(f.FilePath, rootDir)
 
 	if !f.ContentRetriever.FileExists(f.FilePath) {
 		return fmt.Errorf("file %q does not exist", f.FilePath)

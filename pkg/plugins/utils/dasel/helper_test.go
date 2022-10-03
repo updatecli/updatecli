@@ -55,7 +55,7 @@ func TestJoinPathWithWorkingDirectoryPath(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 
-			gotResult := joinPathWithWorkingDirectoryPath(tt.fileName, tt.workingDir)
+			gotResult := JoinPathWithWorkingDirectoryPath(tt.fileName, tt.workingDir)
 
 			assert.Equal(t, tt.expectedResult, gotResult)
 		})
