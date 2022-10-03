@@ -24,19 +24,24 @@ type Spec struct {
 }
 
 var (
-	ErrSpecFileUndefined = errors.New("csv file not specified")
-	ErrSpecKeyUndefined  = errors.New("csv key undefined")
+	ErrSpecFileUndefined       = errors.New("csv file undefined")
+	ErrSpecKeyUndefined        = errors.New("csv key undefined")
+	ErrSpecFileAndFilesDefined = errors.New("parameter \"file\" and \"files\" are mutually exclusive")
 	// ErrWrongSpec is returned when the Spec has wrong content
 	ErrWrongSpec error = errors.New("wrong spec content")
 )
 
 func (s *Spec) Validate() error {
 	var errs []error
-	if len(s.File) == 0 {
+	if len(s.File) == 0 && len(s.Files) == 0 {
 		errs = append(errs, ErrSpecFileUndefined)
 	}
 	if len(s.Key) == 0 {
 		errs = append(errs, ErrSpecKeyUndefined)
+	}
+
+	if len(s.File) > 0 && len(s.Files) > 0 {
+		errs = append(errs, ErrSpecFileAndFilesDefined)
 	}
 
 	if len(errs) > 0 {
