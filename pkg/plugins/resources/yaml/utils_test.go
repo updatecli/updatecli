@@ -112,8 +112,6 @@ func TestParseKey(t *testing.T) {
 	for _, tt := range testData {
 		t.Run(tt.key, func(t *testing.T) {
 			gotResult := parseKey(tt.key)
-			t.Logf("Got Result: %+v", gotResult)
-			t.Logf("Expected Result: %+v", tt.expectedResult)
 
 			assert.Equal(t, len(tt.expectedResult), len(gotResult))
 			for i := range tt.expectedResult {
