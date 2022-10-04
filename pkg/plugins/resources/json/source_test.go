@@ -1,6 +1,7 @@
 package json
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -39,7 +40,9 @@ func TestSource(t *testing.T) {
 				Key:   ".doNotExist",
 				Value: "",
 			},
-			expectedResult: "",
+			wantErr:          true,
+			expectedErrorMsg: errors.New("✗ cannot find value for path \".doNotExist\" from file \"testdata/data.json\""),
+			expectedResult:   "",
 		},
 		{
 			name: "Test array exist",

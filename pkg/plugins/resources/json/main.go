@@ -1,26 +1,17 @@
 package json
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
-)
-
-var (
-	// ErrDaselFailedParsingJSONByteFormat is returned if dasel couldn't parse the byteData
-	ErrDaselFailedParsingJSONByteFormat error = errors.New("fail to parse Json data")
-	// ErrWrongSpec is returned when the Spec has wrong content
-	ErrWrongSpec error = errors.New("wrong spec content")
+	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
 
 // Json stores configuration about the file and the key value which needs to be updated.
 type Json struct {
-	spec             Spec
-	contentRetriever text.TextRetriever
-	currentContent   string
+	spec     Spec
+	contents []dasel.FileContent
 }
 
 func New(spec interface{}) (*Json, error) {
@@ -32,39 +23,38 @@ func New(spec interface{}) (*Json, error) {
 		return nil, err
 	}
 
+	err = newSpec.Validate()
+
 	newSpec.File = strings.TrimPrefix(newSpec.File, "file://")
 
 	j := Json{
-		spec:             newSpec,
-		contentRetriever: &text.Text{},
+		spec: newSpec,
 	}
 
-	err = j.Validate()
+	// Init currentContents
+	switch len(j.spec.File) > 0 {
+	case true:
+		j.contents = append(
+			j.contents, dasel.FileContent{
+				DataType:         "json",
+				FilePath:         j.spec.File,
+				ContentRetriever: &text.Text{},
+			})
+
+	case false:
+		for i := range j.spec.Files {
+			j.contents = append(
+				j.contents, dasel.FileContent{
+					DataType:         "json",
+					FilePath:         j.spec.Files[i],
+					ContentRetriever: &text.Text{},
+				})
+		}
+	}
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &j, err
-}
-
-func (j *Json) Validate() (err error) {
-	errs := j.spec.Validate()
-
-	if len(errs) > 0 {
-		for _, e := range errs {
-			logrus.Errorf(e.Error())
-		}
-		return ErrWrongSpec
-	}
-	return nil
-}
-
-func (j *Json) Read() error {
-	textContent, err := j.contentRetriever.ReadAll(j.spec.File)
-	if err != nil {
-		return err
-	}
-	j.currentContent = textContent
-	return nil
 }
