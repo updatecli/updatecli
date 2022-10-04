@@ -20,7 +20,9 @@ conditions:
     kind: json
     sourceid: local
     spec:
-      file: pkg/plugins/resources/json/testdata/data.json
+      files: 
+        - pkg/plugins/resources/json/testdata/data.json
+        - pkg/plugins/resources/json/testdata/data.2.json
       key: firstName
   http:
     name: Test value from json
@@ -38,5 +40,16 @@ targets:
     sourceid: local
     spec:
       file: pkg/plugins/resources/json/testdata/data.json
+      key: firstName
+      value: John
+
+  local2:
+    name: Test value from json
+    kind: json
+    sourceid: local
+    spec:
+      files:
+        - pkg/plugins/resources/json/testdata/data.json
+        - pkg/plugins/resources/json/testdata/data.2.json
       key: firstName
       value: John
