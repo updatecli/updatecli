@@ -1,117 +1,115 @@
 name: Bump Golang Version
-
-scms:
-  default:
-    kind: github
-    spec:
-      user: updatecli
-      email: me@olblak.com
-      owner: updatecli
-      repository: updatecli
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      branch: main
-
-sources:
-  latestGoVersion:
-    name: Get Latest Go Release
-    kind: githubrelease
-    spec:
-      owner: golang
-      repository: go
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      versionfilter:
-        kind: regex
-        pattern: 'go1\.(\d*)\.(\d*)$'
-    transformers:
-      - trimprefix: go
-  gomod:
-    name: Update go.mod
-    kind: shell
-    scmid: default
-    depends_on:
-      - latestGoVersion
-    spec:
-      command: ./updatecli/scripts/updateGomodGoversion.sh ./go.mod {{ source "latestGoVersion" }}
-      environments:
-        - name: PATH
-
-conditions:
-  workflowrelease-sandbox:
-    name: Ensure GA step is defined in Github Action named release-sandbox
-    kind: yaml
-    disablesourceinput: true
-    scmid: default
-    spec:
-      file: .github/workflows/release-sandbox.yaml
-      key: jobs.build.steps[3].id
-      value: go
-  workflowrelease:
-    name: Ensure GA step is defined in Github Action named release
-    kind: yaml
-    disablesourceinput: true
-    scmid: default
-    spec:
-      file: .github/workflows/release.yaml
-      key: jobs.build.steps[3].id
-      value: go
-  workflowgo:
-    name: Ensure GA step is defined in Github Action named go
-    kind: yaml
-    disablesourceinput: true
-    scmid: default
-    spec:
-      file: .github/workflows/go.yaml
-      key: jobs.build.steps[0].id
-      value: go
-  dockerTag:
-    name: 'Is docker image golang:{{ source "latestGoVersion" }} published'
-    sourceid: latestGoVersion
-    kind: dockerimage
-    scmid: default
-    spec:
-      image: golang
-      tag: '{{ source "latestGoVersion" }}'
-
-targets:
-  release-sandbox:
-    name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceid: latestGoVersion
-    kind: yaml
-    spec:
-      file: .github/workflows/release.yaml
-      key: jobs.build.steps[3].with.go-version
-    scmid: default
-  release:
-    name: '[release-sandbox.yaml] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceid: latestGoVersion
-    kind: yaml
-    spec:
-      file: .github/workflows/release-sandbox.yaml
-      key: jobs.build.steps[3].with.go-version
-    scmid: default
-  workflowgo:
-    name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
-    kind: yaml
-    sourceid: latestGoVersion
-    spec:
-      file: .github/workflows/go.yaml
-      key: jobs.build.steps[0].with.go-version
-    scmid: default
-  go.mod:
-    name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
-    sourceid: gomod
-    kind: file
-    spec:
-      file: go.mod
-    scmid: default
-
+pipelineid: 5ba938aaacf1b88e3db4076b2a7a7db6ee1e00eb19dbe2469abf35c96f008e8d
 pullrequests:
-  default:
-    title: '[updatecli] Bump Golang version to {{ source "latestGoVersion" }}'
-    kind: github
-    scmid: default
-    spec:
-      labels:
-        - chore
+    default:
+        title: '[updatecli] Bump Golang version to {{ source "latestGoVersion" }}'
+        kind: github
+        spec:
+            labels:
+                - chore
+        scmid: default
+scms:
+    default:
+        kind: github
+        spec:
+            branch: main
+            email: me@olblak.com
+            owner: updatecli
+            repository: updatecli
+            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+            user: updatecli
+            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+        disabled: false
+sources:
+    gomod:
+        dependson:
+            - latestGoVersion
+        name: Update go.mod
+        kind: shell
+        spec:
+            command: ./updatecli/scripts/updateGomodGoversion.sh ./go.mod {{ source "latestGoVersion" }}
+            environments:
+                - name: PATH
+        scmid: default
+    latestGoVersion:
+        name: Get Latest Go Release
+        kind: githubrelease
+        transformers:
+            - trimprefix: go
+        spec:
+            owner: golang
+            repository: go
+            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            versionfilter:
+                kind: regex
+                pattern: go1\.(\d*)\.(\d*)$
+conditions:
+    dockerTag:
+        name: Is docker image golang:{{ source "latestGoVersion" }} published
+        kind: dockerimage
+        spec:
+            image: golang
+            tag: '{{ source "latestGoVersion" }}'
+        scmid: default
+        sourceid: latestGoVersion
+    workflowgo:
+        name: Ensure GA step is defined in Github Action named go
+        kind: yaml
+        spec:
+            file: .github/workflows/go.yaml
+            key: jobs.build.steps[0].id
+            value: go
+        scmid: default
+        disablesourceinput: true
+    workflowrelease:
+        name: Ensure GA step is defined in Github Action named release
+        kind: yaml
+        spec:
+            file: .github/workflows/release.yaml
+            key: jobs.build.steps[3].id
+            value: go
+        scmid: default
+        disablesourceinput: true
+    workflowrelease-sandbox:
+        name: Ensure GA step is defined in Github Action named release-sandbox
+        kind: yaml
+        spec:
+            file: .github/workflows/release-sandbox.yaml
+            key: jobs.build.steps[3].id
+            value: go
+        scmid: default
+        disablesourceinput: true
+targets:
+    go.mod:
+        name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
+        kind: file
+        spec:
+            file: go.mod
+        scmid: default
+        sourceid: gomod
+    release:
+        name: '[release-sandbox.yaml] Update Golang version to {{ source "latestGoVersion" }}'
+        kind: yaml
+        spec:
+            file: .github/workflows/release-sandbox.yaml
+            key: jobs.build.steps[3].with.go-version
+        scmid: default
+        sourceid: latestGoVersion
+    release-sandbox:
+        name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
+        kind: yaml
+        spec:
+            file: .github/workflows/release.yaml
+            key: jobs.build.steps[3].with.go-version
+        scmid: default
+        sourceid: latestGoVersion
+    workflowgo:
+        name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
+        kind: yaml
+        spec:
+            file: .github/workflows/go.yaml
+            key: jobs.build.steps[0].with.go-version
+        scmid: default
+        sourceid: latestGoVersion
+version: 0.34.0

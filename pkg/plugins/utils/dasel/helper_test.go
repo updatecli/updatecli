@@ -1,4 +1,4 @@
-package csv
+package dasel
 
 import (
 	"testing"
@@ -16,46 +16,46 @@ func TestJoinPathWithWorkingDirectoryPath(t *testing.T) {
 	}{
 		{
 			name:           "scenario 1",
-			fileName:       "test.csv",
+			fileName:       "test.json",
 			workingDir:     "/tmp",
-			expectedResult: "/tmp/test.csv",
+			expectedResult: "/tmp/test.json",
 		},
 		{
 			name:           "scenario 2",
-			fileName:       "/tmp/test.csv",
+			fileName:       "/tmp/test.json",
 			workingDir:     "/opt",
-			expectedResult: "/tmp/test.csv",
+			expectedResult: "/tmp/test.json",
 		},
 		{
 			name:           "scenario 3",
-			fileName:       "https://test.csv",
+			fileName:       "https://test.json",
 			workingDir:     "/opt",
-			expectedResult: "https://test.csv",
+			expectedResult: "https://test.json",
 		},
 		{
 			name:           "scenario 4",
-			fileName:       "http://test.csv",
+			fileName:       "http://test.json",
 			workingDir:     "/opt",
-			expectedResult: "http://test.csv",
+			expectedResult: "http://test.json",
 		},
 		{
 			name:           "scenario 5",
-			fileName:       "test.csv",
+			fileName:       "test.json",
 			workingDir:     "",
-			expectedResult: "test.csv",
+			expectedResult: "test.json",
 		},
 		{
 			name:           "scenario 6",
-			fileName:       "./test.csv",
+			fileName:       "./test.json",
 			workingDir:     "/opt",
-			expectedResult: "/opt/test.csv",
+			expectedResult: "/opt/test.json",
 		},
 	}
 
 	for _, tt := range testData {
 		t.Run(tt.name, func(t *testing.T) {
 
-			gotResult := joinPathWithWorkingDirectoryPath(tt.fileName, tt.workingDir)
+			gotResult := JoinPathWithWorkingDirectoryPath(tt.fileName, tt.workingDir)
 
 			assert.Equal(t, tt.expectedResult, gotResult)
 		})
