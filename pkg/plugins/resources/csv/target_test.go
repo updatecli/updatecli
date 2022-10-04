@@ -1,6 +1,7 @@
 package csv
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,6 +36,18 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:    "Tom",
 			expectedResult: true,
+		},
+		{
+			name: "Do not exist query workflow",
+			spec: Spec{
+				File:  "testdata/data.2.csv",
+				Key:   ".[0].DoNotExist",
+				Comma: ';',
+			},
+			sourceInput:      "Tom",
+			expectedResult:   false,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find value for query \".[0].DoNotExist\" from file \"testdata/data.2.csv\""),
 		},
 	}
 

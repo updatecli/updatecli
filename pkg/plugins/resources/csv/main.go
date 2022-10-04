@@ -5,16 +5,13 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
-	"github.com/tomwright/dasel/storage"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
 
 var (
 	// ErrDaselFailedParsingJSONByteFormat is returned if dasel couldn't parse the byteData
 	ErrDaselFailedParsingJSONByteFormat error = errors.New("fail to parse Json data")
-	// ErrWrongSpec is returned when the Spec has wrong content
-	ErrWrongSpec error = errors.New("wrong spec content")
 )
 
 const (
@@ -26,10 +23,11 @@ const (
 
 // CSV stores configuration about the file and the key value which needs to be updated.
 type CSV struct {
-	spec             Spec
-	contentRetriever text.TextRetriever
-	currentContent   string
-	csvDocument      storage.CSVDocument
+	spec Spec
+	//contentRetriever text.TextRetriever
+	//currentContent   string
+	//csvDocument      storage.CSVDocument
+	contents []csvContent
 }
 
 func New(spec interface{}) (*CSV, error) {
@@ -41,48 +39,55 @@ func New(spec interface{}) (*CSV, error) {
 		return nil, err
 	}
 
+	comma := DEFAULTSEPARATOR
+	comment := DEFAULTCOMMENT
 	var emptyRune rune
-	if newSpec.Comma == emptyRune {
-		newSpec.Comma = DEFAULTSEPARATOR
+	if newSpec.Comma != emptyRune {
+		comma = newSpec.Comma
 	}
 
-	if newSpec.Comment == emptyRune {
-		newSpec.Comment = DEFAULTCOMMENT
+	if newSpec.Comment != emptyRune {
+		comment = newSpec.Comment
 	}
 
 	newSpec.File = strings.TrimPrefix(newSpec.File, "file://")
 
-	c := CSV{
-		spec:             newSpec,
-		contentRetriever: &text.Text{},
-	}
-
-	err = c.Validate()
-
-	if err != nil {
+	if err := newSpec.Validate(); err != nil {
 		return nil, err
 	}
 
-	return &c, err
-}
+	c := CSV{
+		spec: newSpec,
+	}
 
-func (c *CSV) Validate() (err error) {
-	errs := c.spec.Validate()
+	// Init currentContents
+	switch len(c.spec.File) > 0 {
+	case true:
+		c.contents = append(
+			c.contents, csvContent{
+				comma:   comma,
+				comment: comment,
+				FileContent: dasel.FileContent{
+					DataType:         "csv",
+					FilePath:         c.spec.File,
+					ContentRetriever: &text.Text{},
+				},
+			})
 
-	if len(errs) > 0 {
-		for _, e := range errs {
-			logrus.Errorf(e.Error())
+	case false:
+		for i := range c.spec.Files {
+			c.contents = append(
+				c.contents, csvContent{
+					comma:   comma,
+					comment: comment,
+					FileContent: dasel.FileContent{
+						DataType:         "csv",
+						FilePath:         c.spec.Files[i],
+						ContentRetriever: &text.Text{},
+					},
+				})
 		}
-		return ErrWrongSpec
 	}
-	return nil
-}
 
-func (c *CSV) Read() error {
-	textContent, err := c.contentRetriever.ReadAll(c.spec.File)
-	if err != nil {
-		return err
-	}
-	c.currentContent = textContent
-	return nil
+	return &c, err
 }
