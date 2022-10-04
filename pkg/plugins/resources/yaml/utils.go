@@ -1,7 +1,6 @@
 package yaml
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 )
@@ -25,7 +24,6 @@ func parseKey(key string) []string {
 	escapedCharacter := false
 
 	for i := range key {
-		fmt.Printf("Current element: %q\n", element)
 		switch string(key[i]) {
 		case `\`:
 			if !escapedCharacter {
