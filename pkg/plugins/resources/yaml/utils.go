@@ -26,9 +26,12 @@ func parseKey(key string) []string {
 	for i := range key {
 		switch string(key[i]) {
 		case `\`:
-			if !escapedCharacter {
-				escapedCharacter = true
+			if escapedCharacter {
+				element = element + string(key[i])
+				escapedCharacter = false
+				continue
 			}
+			escapedCharacter = true
 
 		case `.`:
 			if escapedCharacter {

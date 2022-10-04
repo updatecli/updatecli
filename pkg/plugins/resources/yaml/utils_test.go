@@ -67,44 +67,56 @@ func TestParseKey(t *testing.T) {
 		expectedResult []string
 	}{
 		{
-			key: "image",
+			key: `image`,
 			expectedResult: []string{
-				"image",
+				`image`,
 			},
 		},
 		{
-			key: "image.tag",
+			key: `image.tag`,
 			expectedResult: []string{
-				"image",
-				"tag",
+				`image`,
+				`tag`,
 			},
 		},
 		{
-			key: "image\\.tag",
+			key: `image\.tag`,
 			expectedResult: []string{
-				"image.tag",
+				`image.tag`,
 			},
 		},
 		{
-			key: "image.",
+			key: `image.`,
 			expectedResult: []string{
-				"image",
+				`image`,
 			},
 		},
 		{
-			key: "image\\.",
+			key: `image\.`,
 			expectedResult: []string{
-				"image.",
+				`image.`,
 			},
 		},
 		{
-			key: "image*",
+			key: `image*`,
 			expectedResult: []string{
-				"image*",
+				`image*`,
 			},
 		},
 		{
-			key:            "",
+			key: `image\`,
+			expectedResult: []string{
+				`image`,
+			},
+		},
+		{
+			key: `image\\`,
+			expectedResult: []string{
+				`image\`,
+			},
+		},
+		{
+			key:            ``,
 			expectedResult: []string{},
 		},
 	}
