@@ -4,39 +4,40 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
+	das "github.com/tomwright/dasel"
+
 	"github.com/tomwright/dasel/storage"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
 
-// joinPathwithworkingDirectoryPath To merge File path with current working dire, unless file is an http url
-func joinPathWithWorkingDirectoryPath(fileName, workingDir string) string {
-	if workingDir == "" ||
-		filepath.IsAbs(fileName) ||
-		strings.HasPrefix(fileName, "https://") ||
-		strings.HasPrefix(fileName, "http://") {
-		return fileName
-	}
-
-	return filepath.Join(workingDir, fileName)
+// csvContent is *** of the dasel FileContent
+type csvContent struct {
+	dasel.FileContent
+	csvDocument storage.CSVDocument
+	comma       rune
+	comment     rune
 }
 
-func (c *CSV) ReadFromFile() error {
+func (c *csvContent) Read(rootDir string) error {
+
+	c.FilePath = dasel.JoinPathWithWorkingDirectoryPath(c.FilePath, rootDir)
 
 	// Test at runtime if a file exist
-	if !c.contentRetriever.FileExists(c.spec.File) {
-		return fmt.Errorf("the CSV file %q does not exist", c.spec.File)
+	if !c.ContentRetriever.FileExists(c.FilePath) {
+		return fmt.Errorf("the CSV file %q does not exist", c.FilePath)
 	}
 
-	if err := c.Read(); err != nil {
+	textContent, err := c.ContentRetriever.ReadAll(c.FilePath)
+	if err != nil {
 		return err
 	}
 
-	r := csv.NewReader(strings.NewReader(c.currentContent))
+	r := csv.NewReader(strings.NewReader(textContent))
 
-	r.Comma = c.spec.Comma
-	r.Comment = c.spec.Comment
+	r.Comma = c.comma
+	r.Comment = c.comment
 
 	res := make([]map[string]interface{}, 0)
 	records, err := r.ReadAll()
@@ -45,8 +46,9 @@ func (c *CSV) ReadFromFile() error {
 	}
 
 	if len(records) == 0 {
-		return nil
+		return fmt.Errorf("no csv record found")
 	}
+
 	var headers []string
 	for i, row := range records {
 		if i == 0 {
@@ -65,16 +67,19 @@ func (c *CSV) ReadFromFile() error {
 			res = append(res, rowRes)
 		}
 	}
+
 	c.csvDocument = storage.CSVDocument{
 		Value:   res,
 		Headers: headers,
 	}
 
+	c.DaselNode = das.New(c.csvDocument.Documents())
+
 	return nil
 }
 
-func (c *CSV) WriteToFile(resourceFile string) error {
-	newFile, err := os.Create(resourceFile)
+func (c *csvContent) Write() error {
+	newFile, err := os.Create(c.FilePath)
 	if err != nil {
 		return fmt.Errorf("could not write to file : %w", err)
 	}
@@ -83,7 +88,7 @@ func (c *CSV) WriteToFile(resourceFile string) error {
 
 	writer := csv.NewWriter(newFile)
 
-	writer.Comma = c.spec.Comma
+	writer.Comma = c.comma
 
 	// Iterate through the rows and write the output.
 	for i, r := range c.csvDocument.Value {

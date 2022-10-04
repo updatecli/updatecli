@@ -5,22 +5,19 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
 
 var (
 	// ErrDaselFailedParsingTOMLByteFormat is returned if dasel couldn't parse the byteData
 	ErrDaselFailedParsingTOMLByteFormat error = errors.New("fail to parse Toml data")
-	// ErrWrongSpec is returned when the Spec has wrong content
-	ErrWrongSpec error = errors.New("wrong spec content")
 )
 
 // Toml stores configuration about the file and the key value which needs to be updated.
 type Toml struct {
-	spec             Spec
-	contentRetriever text.TextRetriever
-	currentContent   string
+	spec     Spec
+	contents []dasel.FileContent
 }
 
 func New(spec interface{}) (*Toml, error) {
@@ -32,39 +29,34 @@ func New(spec interface{}) (*Toml, error) {
 		return nil, err
 	}
 
+	err = newSpec.Validate()
+
 	newSpec.File = strings.TrimPrefix(newSpec.File, "file://")
 
 	j := Toml{
-		spec:             newSpec,
-		contentRetriever: &text.Text{},
+		spec: newSpec,
 	}
 
-	err = j.Validate()
+	// Init currentContents
+	switch len(j.spec.File) > 0 {
+	case true:
+		j.contents = append(
+			j.contents, dasel.FileContent{
+				DataType:         "toml",
+				FilePath:         j.spec.File,
+				ContentRetriever: &text.Text{},
+			})
 
-	if err != nil {
-		return nil, err
+	case false:
+		for i := range j.spec.Files {
+			j.contents = append(
+				j.contents, dasel.FileContent{
+					DataType:         "toml",
+					FilePath:         j.spec.Files[i],
+					ContentRetriever: &text.Text{},
+				})
+		}
 	}
 
 	return &j, err
-}
-
-func (t *Toml) Validate() (err error) {
-	errs := t.spec.Validate()
-
-	if len(errs) > 0 {
-		for _, e := range errs {
-			logrus.Errorf(e.Error())
-		}
-		return ErrWrongSpec
-	}
-	return nil
-}
-
-func (t *Toml) Read() error {
-	textContent, err := t.contentRetriever.ReadAll(t.spec.File)
-	if err != nil {
-		return err
-	}
-	t.currentContent = textContent
-	return nil
 }
