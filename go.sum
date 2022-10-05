@@ -808,8 +808,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
-github.com/tomwright/dasel v1.26.1 h1:yhzUZ7ChKNBK230WNg6BKv88GwRi1ItxeiNzTxlRAcM=
-github.com/tomwright/dasel v1.26.1/go.mod h1:/rESPoTvQxRkrtEH8lhSU8CB2UWPh/bM0kDrKVGf1kQ=
+github.com/tomwright/dasel v1.27.1 h1:jj+0EkllUCknnC/uR8iH4KZ7C6Q43KGvrcZkJcKT90o=
+github.com/tomwright/dasel v1.27.1/go.mod h1:/rESPoTvQxRkrtEH8lhSU8CB2UWPh/bM0kDrKVGf1kQ=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
 github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6eAcqrDh0=
