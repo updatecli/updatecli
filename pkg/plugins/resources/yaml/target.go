@@ -65,7 +65,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		logrus.Info("INFO: Using spec.Value instead of source input value.")
 	}
 
-	keyFound, oldVersion, _ := replace(&out, strings.Split(y.spec.Key, "."), valueToWrite, 1)
+	keyFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToWrite, 1)
 
 	if !keyFound {
 		return false, files, message, fmt.Errorf("%s cannot find key '%s' from file '%s'",
