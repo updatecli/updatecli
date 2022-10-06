@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 )
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
@@ -64,10 +63,7 @@ func (f Filter) Init() (Filter, error) {
 
 // TODO: Change the receiver of this function to Filter once https://github.com/updatecli/updatecli/issues/803 is fixed.
 func (v Version) GetVersion() string {
-	if cmdoptions.Experimental {
-		return v.OriginalVersion
-	}
-	return v.ParsedVersion
+	return v.OriginalVersion
 }
 
 // Validate tests if our filter contains valid parameters
@@ -132,26 +128,6 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		err := s.Search(versions)
 		if err != nil {
 			return foundVersion, err
-		}
-
-		if s.FoundVersion.ParsedVersion != s.FoundVersion.OriginalVersion && !cmdoptions.Experimental {
-			logrus.Warnf(`Updatecli will soon stop removing the 'v' prefix of 'semver' version filters to keep the original retrieved version as per https://github.com/updatecli/updatecli/issues/803.
-  If you need to keep the old behavior, please add a transformer (https://www.updatecli.io/docs/core/transformer/) of type "trimprefix" to remove the "v" prefix:
-
-  sources:
-    latestVersion:
-      name: Get latest version
-      kind: githubrelease
-      spec:
-        # ...
-        versionfilter:
-          kind: semver
-      transformers:
-        - trimprefix: 'v'
-
-  You can try the new behavior (to verify your updated manifests) by adding the flag "--experimental" when executing the "updatecli" command line.
-
-`)
 		}
 
 		return s.FoundVersion, nil
