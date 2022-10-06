@@ -2,7 +2,6 @@ package yaml
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -39,7 +38,7 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		return "", fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
-	valueFound, value, _ := replace(&out, strings.Split(y.spec.Key, "."), y.spec.Value, 1)
+	valueFound, value, _ := replace(&out, parseKey(y.spec.Key), y.spec.Value, 1)
 
 	if valueFound {
 		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v", result.SUCCESS, value, y.spec.Key, y.spec.File)
