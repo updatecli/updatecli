@@ -29,5 +29,5 @@ func (ds *DockerDigest) Source(workingDir string) (string, error) {
 	}
 	imageDigest := ref.Context().Name() + "@" + digest.String()
 	logrus.Infof("%s Docker Image Tag %s resolved to digest %s", result.SUCCESS, ref.String(), imageDigest)
-	return imageDigest, nil
+	return digest.String(), nil
 }
