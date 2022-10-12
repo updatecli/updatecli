@@ -78,15 +78,15 @@ conditions:
   #  spec:
   #    image: "olblak/test"
   #    architecture: amd64
-  dockerhub-private-not-found:
-    name: Get Latest private olblak test image
-    kind: dockerimage
-    sourceid: dockerhub-private
-    transformers:
-      - addprefix: xxx
-    spec:
-      image: "olblak/test"
-      architecture: amd64
+  #dockerhub-private-not-found:
+  #  name: Get Latest private olblak test image
+  #  kind: dockerimage
+  #  sourceid: dockerhub-private
+  #  transformers:
+  #    - addprefix: xxx
+  #  spec:
+  #    image: "olblak/test"
+  #    architecture: amd64
   ## Dockerhub return an alphabetically ordered list of docker image tag
   dockerhub-latest:
     name: Get Latest Tag for Dockerhub

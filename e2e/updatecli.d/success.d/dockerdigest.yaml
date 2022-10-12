@@ -38,14 +38,14 @@ conditions:
 #      image: "olblak/test"
 #      architecture: "amd64"
 
-  ## Dockerhub return an alphabetically ordered list of docker image tag
-  dockerhub-notfound:
-    name: "Test if  Digest for docker image updatecli/updatecli:v0.35.1 exist"
-    kind: "dockerdigest"
-    disablesourceinput: true
-    spec:
-      image: "updatecli/updatecli"
-      digest: "xxx@sha256:5d86b9249e62a10655a207359cf8480e113284d4bcfd68cd088de5879e293408"
+  ### Dockerhub return an alphabetically ordered list of docker image tag
+  #dockerhub-notfound:
+  #  name: "Test if  Digest for docker image updatecli/updatecli:v0.35.1 exist"
+  #  kind: "dockerdigest"
+  #  disablesourceinput: true
+  #  spec:
+  #    image: "updatecli/updatecli"
+  #    digest: "xxx@sha256:5d86b9249e62a10655a207359cf8480e113284d4bcfd68cd088de5879e293408"
 
   ## Dockerhub return an alphabetically ordered list of docker image tag
   dockerhub:
