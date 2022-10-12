@@ -1,13 +1,14 @@
 name: "Retrieve the latest Docker Image Digest"
 
 sources:
-  private-dockerhub:
-    name: "Get Digest for private docker image olblak/test:updatecli"
-    kind: "dockerdigest"
-    spec:
-      image: "olblak/test"
-      architecture: "amd64"
-      tag: "updatecli"
+# Test environment is not configuration with Dockerhub credential
+#  private-dockerhub:
+#    name: "Get Digest for private docker image olblak/test:updatecli"
+#    kind: "dockerdigest"
+#    spec:
+#      image: "olblak/test"
+#      architecture: "amd64"
+#      tag: "updatecli"
 
   ## Dockerhub return an alphabetically ordered list of docker image tag
   dockerhub:
@@ -28,13 +29,14 @@ sources:
 
 
 conditions:
-  private-dockerhub:
-    name: "Test Digest for private docker image olblak/test:updatecli exist"
-    kind: "dockerdigest"
-    sourceid: private-dockerhub
-    spec:
-      image: "olblak/test"
-      architecture: "amd64"
+# Test environment is not configuration with Dockerhub credential
+#  private-dockerhub:
+#    name: "Test Digest for private docker image olblak/test:updatecli exist"
+#    kind: "dockerdigest"
+#    sourceid: private-dockerhub
+#    spec:
+#      image: "olblak/test"
+#      architecture: "amd64"
 
   ## Dockerhub return an alphabetically ordered list of docker image tag
   dockerhub-notfound:

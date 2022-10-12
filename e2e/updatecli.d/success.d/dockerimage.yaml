@@ -1,15 +1,16 @@
 name: Retrieve the latest Docker Image Tag
 
 sources:
-  dockerhub-private:
-    name: Get Latest private olblak test image
-    kind: dockerimage
-    spec:
-      image: "olblak/test"
-      architecture: amd64
-      versionfilter:
-        kind: regex
-        pattern: "updatecli"
+  # GitHub action is not configured with DockerHub credentials
+  #dockerhub-private:
+  #  name: Get Latest private olblak test image
+  #  kind: dockerimage
+  #  spec:
+  #    image: "olblak/test"
+  #    architecture: amd64
+  #    versionfilter:
+  #      kind: regex
+  #      pattern: "updatecli"
 
   ## Dockerhub return an alphabetically ordered list of docker image tag
   dockerhub-latest:
@@ -69,13 +70,14 @@ sources:
       image: "quay.io/calico/node"
   
 conditions:
-  dockerhub-private:
-    name: Get Latest private olblak test image
-    kind: dockerimage
-    sourceid: dockerhub-private
-    spec:
-      image: "olblak/test"
-      architecture: amd64
+  ## GitHub action is not configured with DockerHub credentials
+  #dockerhub-private:
+  #  name: Get Latest private olblak test image
+  #  kind: dockerimage
+  #  sourceid: dockerhub-private
+  #  spec:
+  #    image: "olblak/test"
+  #    architecture: amd64
   dockerhub-private-not-found:
     name: Get Latest private olblak test image
     kind: dockerimage
