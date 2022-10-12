@@ -63,3 +63,4 @@ conditions:
       image: "ghcr.io/updatecli/updatecli"
       architecture: "amd64"
       digest: "@sha256:5d86b9249e62a10655a207359cf8480e113284d4bcfd68cd088de5879e293408"
+

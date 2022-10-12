@@ -140,3 +140,4 @@ conditions:
     kind: dockerimage
     spec:
       image: "quay.io/calico/node"
+
