@@ -2,11 +2,13 @@ package dockerimage
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // ConditionFromSCM returns an error because it's not supported
@@ -20,13 +22,34 @@ func (di *DockerImage) ConditionFromSCM(source string, scm scm.ScmHandler) (bool
 // it doesn't exist.
 func (di *DockerImage) Condition(source string) (bool, error) {
 	refName := di.spec.Image
-	if di.spec.Tag != "" {
+	switch di.spec.Tag == "" {
+	case true:
+		refName += ":" + source
+	case false:
 		refName += ":" + di.spec.Tag
 	}
+
 	ref, err := name.ParseReference(refName)
 	if err != nil {
 		return false, fmt.Errorf("invalid image %s: %w", refName, err)
 	}
 	_, err = remote.Head(ref, di.options...)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "unexpected status code 404") {
+			logrus.Infof("%s The Docker image %s doesn't exist.",
+				result.FAILURE,
+				refName,
+			)
+			return false, nil
+		}
+		return false, err
+	}
+
+	logrus.Infof("%s The Docker image %s exists and is available.",
+		result.SUCCESS,
+		refName,
+	)
+
 	return err == nil, err
 }
