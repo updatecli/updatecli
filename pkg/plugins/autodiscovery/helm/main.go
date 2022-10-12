@@ -9,7 +9,7 @@ import (
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
 // Spec defines the parameters which can be provided to the Helm builder.
@@ -21,7 +21,7 @@ type Spec struct {
 	// Only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
 	Only MatchingRules `yaml:",omitempty"`
 	// Auths provides a map of registry credentials where the key is the registry URL without scheme
-	Auths map[string]dockerregistry.RegistryAuth `yaml:",omitempty"`
+	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 }
 
 // Helm hold all information needed to generate helm manifest.
