@@ -1,0 +1,65 @@
+name: "Retrieve the latest Docker Image Digest"
+
+sources:
+  private-dockerhub:
+    name: "Get Digest for private docker image olblak/test:updatecli"
+    kind: "dockerdigest"
+    spec:
+      image: "olblak/test"
+      architecture: "amd64"
+      tag: "updatecli"
+
+  ## Dockerhub return an alphabetically ordered list of docker image tag
+  dockerhub:
+    name: "Get Digest for docker image updatecli/updatecli:v0.35.1"
+    kind: "dockerdigest"
+    spec:
+      image: "updatecli/updatecli"
+      tag: "v0.35.1"
+
+  # Ghcr return an created time ordered list of container image tag
+  ghcr.io:
+    name: "Get Latest Tag from ghcr"
+    kind: "dockerdigest"
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: "amd64"
+      tag: "v0.35.1"
+
+
+conditions:
+  private-dockerhub:
+    name: "Test Digest for private docker image olblak/test:updatecli exist"
+    kind: "dockerdigest"
+    sourceid: private-dockerhub
+    spec:
+      image: "olblak/test"
+      architecture: "amd64"
+
+  ## Dockerhub return an alphabetically ordered list of docker image tag
+  dockerhub-notfound:
+    name: "Test if  Digest for docker image updatecli/updatecli:v0.35.1 exist"
+    kind: "dockerdigest"
+    disablesourceinput: true
+    spec:
+      image: "updatecli/updatecli"
+      digest: "xxx@sha256:5d86b9249e62a10655a207359cf8480e113284d4bcfd68cd088de5879e293408"
+
+  ## Dockerhub return an alphabetically ordered list of docker image tag
+  dockerhub:
+    name: "Test if  Digest for docker image updatecli/updatecli:v0.35.1 exist"
+    kind: "dockerdigest"
+    disablesourceinput: true
+    spec:
+      image: "updatecli/updatecli"
+      digest: "@sha256:5d86b9249e62a10655a207359cf8480e113284d4bcfd68cd088de5879e293408"
+
+  # Ghcr return an created time ordered list of container image tag
+  ghcr.io:
+    name: "Test if  Latest Tag  ghcr.io/updatecli/updatecli exist"
+    kind: "dockerdigest"
+    disablesourceinput: true
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: "amd64"
+      digest: "@sha256:5d86b9249e62a10655a207359cf8480e113284d4bcfd68cd088de5879e293408"
