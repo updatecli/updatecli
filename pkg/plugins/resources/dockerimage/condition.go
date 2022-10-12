@@ -3,9 +3,10 @@ package dockerimage
 import (
 	"fmt"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // ConditionFromSCM returns an error because it's not supported
@@ -18,40 +19,14 @@ func (di *DockerImage) ConditionFromSCM(source string, scm scm.ScmHandler) (bool
 // We assume that if we can't retrieve the docker image digest, then it means
 // it doesn't exist.
 func (di *DockerImage) Condition(source string) (bool, error) {
-
-	// Errors if both source input value and specified Tag are empty
-	if di.image.Tag == "" && source == "" {
-		return false, fmt.Errorf("condition validation error for the image %q: source input is empty and no explicit tag is specified", di.spec.Image)
+	refName := di.spec.Image
+	if di.spec.Tag != "" {
+		refName += ":" + di.spec.Tag
 	}
-
-	// An empty input source value means that the attribute disablesourceinput is set to true
-	if source != "" {
-		di.image.Tag = source
-	}
-
-	logrus.Debugf(
-		"Searching digest for the image %q with the tag %q",
-		di.spec.Image,
-		di.spec.Tag,
-	)
-	digest, err := di.registry.Digest(di.image)
+	ref, err := name.ParseReference(refName)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("invalid image %s: %w", refName, err)
 	}
-
-	if digest == "" {
-		logrus.Infof("%s The Docker image %s doesn't exist.",
-			result.FAILURE,
-			di.image.FullName(),
-		)
-		return false, nil
-	}
-
-	logrus.Infof("%s The Docker image %s exists and is available.",
-		result.SUCCESS,
-		di.image.FullName(),
-	)
-
-	return true, nil
-
+	_, err = remote.Head(ref, di.options...)
+	return err == nil, err
 }
