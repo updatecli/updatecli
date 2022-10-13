@@ -129,6 +129,14 @@ conditions:
     spec:
       image: "quay.io/calico/node"
 
+  quayio-semver-strict:
+    name: "Get latest calico image"
+    kind: dockerimage
+    sourceid: quayio-semver
+    spec:
+      image: "quay.io/calico/node"
+      strict: true
+
   quayio-regex:
     name: "Get latest calico image"
     kind: dockerimage
