@@ -10,6 +10,7 @@ import (
 
 type DataSet struct {
 	Semver                  Semver
+	Strict                  bool
 	Versions                []string
 	SortedVersions          []string
 	ExpectedInitErr         error
@@ -73,6 +74,16 @@ var (
 			ExpectedSearchErr:       ErrNoVersionFound,
 			ExpectedParsedVersion:   "",
 			ExpectedOriginalVersion: "",
+		},
+		{
+			Semver: Semver{
+				Strict: true,
+			},
+			Versions:                []string{"1.0.0", "2", "4", "3", "6"},
+			SortedVersions:          []string{"1.0.0"},
+			ExpectedInitErr:         nil,
+			ExpectedParsedVersion:   "1.0.0",
+			ExpectedOriginalVersion: "1.0.0",
 		},
 		{
 			Semver: Semver{

@@ -48,7 +48,7 @@ sources:
         kind: semver
 
   quayio-semver:
-    name: "Get latest calico image"
+    name: "Get latest calico image using semantic versioning"
     kind: dockerimage
     spec:
       image: "quay.io/calico/node"
@@ -56,7 +56,7 @@ sources:
         kind: semver
 
   quayio-regex:
-    name: "Get latest calico image"
+    name: "Get latest calico image using regex rules"
     kind: dockerimage
     spec:
       image: "quay.io/calico/node"
@@ -68,6 +68,13 @@ sources:
     kind: dockerimage
     spec:
       image: "quay.io/calico/node"
+
+  quayio-semver-strict:
+    name: "Get latest calico image using strict semantic versioning"
+    kind: dockerimage
+    spec:
+      image: "quay.io/calico/node"
+      strict: true
   
 conditions:
   ## GitHub action is not configured with DockerHub credentials
@@ -128,6 +135,14 @@ conditions:
     sourceid: quayio-semver
     spec:
       image: "quay.io/calico/node"
+
+  quayio-semver-strict:
+    name: "Get latest calico image"
+    kind: dockerimage
+    sourceid: quayio-semver-strict
+    spec:
+      image: "quay.io/calico/node"
+      strict: true
 
   quayio-regex:
     name: "Get latest calico image"
