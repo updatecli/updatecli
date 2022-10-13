@@ -14,6 +14,8 @@ type Filter struct {
 	Kind string `yaml:",omitempty"`
 	// Specifies the version pattern according the version kind
 	Pattern string `yaml:",omitempty"`
+	// Strict enforce strict versioning rule. Only used for semantic versioning at this time
+	Strict bool `yaml:",omitempty"`
 }
 
 // TODO: Remove this struct once https://github.com/updatecli/updatecli/issues/803 is fixed.
@@ -123,6 +125,7 @@ func (f *Filter) Search(versions []string) (Version, error) {
 	case SEMVERVERSIONKIND:
 		s := Semver{
 			Constraint: f.Pattern,
+			Strict:     f.Strict,
 		}
 
 		err := s.Search(versions)
