@@ -169,7 +169,7 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 		return err
 	}
 
-	// No pullrequest ID so we first have to create the remote pullrequest
+	// No pull request ID, so we first have to create the remote pull request
 	if len(p.remotePullRequest.ID) == 0 {
 		err = p.OpenPullRequest()
 		if err != nil {
@@ -177,7 +177,7 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 		}
 	}
 
-	// Once the remote pull request exist, we can than update it with additional information such as
+	// Once the remote pull request exists, we can than update it with additional information such as
 	// tags,assignee,etc.
 
 	err = p.updatePullRequest()
@@ -245,7 +245,7 @@ func (p *PullRequest) updatePullRequest() error {
 		  {
 			"input": {
 			  "title":"xxx",
-			  "pullRequestId" : "yyy
+			  "pullRequestId" : "yyy"
 			}
 		  }
 	*/
@@ -289,14 +289,11 @@ func (p *PullRequest) updatePullRequest() error {
 		labelsID = append(labelsID, githubv4.NewID(label.ID))
 	}
 
-	pullRequestUpdateStateOpen := githubv4.PullRequestUpdateStateOpen
-
 	input := githubv4.UpdatePullRequestInput{
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
 		LabelIDs:      &labelsID,
-		State:         &pullRequestUpdateStateOpen,
 	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
@@ -352,7 +349,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 	return nil
 }
 
-// OpenPullRequest creates a new pull request on Github.
+// OpenPullRequest creates a new pull request on GitHub.
 func (p *PullRequest) OpenPullRequest() error {
 
 	/*
