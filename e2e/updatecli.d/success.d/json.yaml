@@ -13,6 +13,16 @@ sources:
     spec:
       file: https://www.updatecli.io/schema/latest/config.json
       key: $id
+  semverVersion:
+    kind: json
+    name: Get latest version
+    spec:
+      file: https://api.github.com/repos/updatecli/updatecli/releases
+      key: ".[*].tag_name"
+      multiple: true
+      versionfilter:
+        kind: semver
+        pattern: "v0.35"
 
 conditions:
   local:

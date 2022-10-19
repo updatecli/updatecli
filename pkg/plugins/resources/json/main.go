@@ -6,12 +6,17 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Json stores configuration about the file and the key value which needs to be updated.
 type Json struct {
 	spec     Spec
 	contents []dasel.FileContent
+	// Holds both parsed version and original version (to allow retrieving metadata such as changelog)
+	foundVersion version.Version
+	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
+	versionFilter version.Filter
 }
 
 func New(spec interface{}) (*Json, error) {
@@ -25,10 +30,20 @@ func New(spec interface{}) (*Json, error) {
 
 	err = newSpec.Validate()
 
+	if err != nil {
+		return nil, err
+	}
+
 	newSpec.File = strings.TrimPrefix(newSpec.File, "file://")
 
+	newFilter, err := newSpec.VersionFilter.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	j := Json{
-		spec: newSpec,
+		spec:          newSpec,
+		versionFilter: newFilter,
 	}
 
 	// Init currentContents
