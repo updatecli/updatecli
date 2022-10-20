@@ -74,7 +74,9 @@ sources:
     kind: dockerimage
     spec:
       image: "quay.io/calico/node"
-      strict: true
+      versionfilter:
+        kind: semver
+        strict: true
   
 conditions:
   ## GitHub action is not configured with DockerHub credentials
@@ -142,7 +144,6 @@ conditions:
     sourceid: quayio-semver-strict
     spec:
       image: "quay.io/calico/node"
-      strict: true
 
   quayio-regex:
     name: "Get latest calico image"
