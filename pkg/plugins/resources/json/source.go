@@ -9,10 +9,19 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+var (
+	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"multiple\" must be used together")
+)
+
 func (j *Json) Source(workingDir string) (string, error) {
 
 	if len(j.contents) > 1 {
 		return "", errors.New("source only supports one file")
+	}
+
+	if (j.spec.Multiple && j.spec.VersionFilter.IsZero()) ||
+		(!j.spec.Multiple && !j.spec.VersionFilter.IsZero()) {
+		return "", ErrSpecVersionFilterRequireMultiple
 	}
 
 	content := j.contents[0]
