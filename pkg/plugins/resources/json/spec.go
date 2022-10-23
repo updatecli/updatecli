@@ -24,7 +24,7 @@ type Spec struct {
 
 var (
 	ErrSpecFileUndefined       = errors.New("json file undefined")
-	ErrSpecKeyUndefined        = errors.New("json key undefined")
+	ErrSpecKeyUndefined        = errors.New("json key or query undefined")
 	ErrSpecFileAndFilesDefined = errors.New("parameter \"file\" and \"files\" are mutually exclusive")
 	// ErrWrongSpec is returned when the Spec has wrong content
 	ErrWrongSpec error = errors.New("wrong spec content")
@@ -36,7 +36,7 @@ func (s *Spec) Validate() error {
 	if len(s.File) == 0 && len(s.Files) == 0 {
 		errs = append(errs, ErrSpecFileUndefined)
 	}
-	if len(s.Key) == 0 {
+	if len(s.Key) == 0 && len(s.Query) == 0 {
 		errs = append(errs, ErrSpecKeyUndefined)
 	}
 
