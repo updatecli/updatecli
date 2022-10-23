@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"multiple\" must be used together")
+	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
 func (j *Json) Source(workingDir string) (string, error) {
@@ -19,8 +19,8 @@ func (j *Json) Source(workingDir string) (string, error) {
 		return "", errors.New("source only supports one file")
 	}
 
-	if (j.spec.Multiple && j.spec.VersionFilter.IsZero()) ||
-		(!j.spec.Multiple && !j.spec.VersionFilter.IsZero()) {
+	if (len(j.spec.Query) > 0 && j.spec.VersionFilter.IsZero()) ||
+		(len(j.spec.Query) == 0) && !j.spec.VersionFilter.IsZero() {
 		return "", ErrSpecVersionFilterRequireMultiple
 	}
 
@@ -31,9 +31,11 @@ func (j *Json) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	switch j.spec.Multiple {
+	query := ""
+	switch len(j.spec.Query) > 0 {
 	case true:
-		queryResults, err := content.MultipleQuery(j.spec.Key)
+		query = j.spec.Query
+		queryResults, err := content.MultipleQuery(query)
 
 		if err != nil {
 			return "", err
@@ -46,7 +48,8 @@ func (j *Json) Source(workingDir string) (string, error) {
 		sourceOutput = j.foundVersion.GetVersion()
 
 	case false:
-		queryResult, err := content.DaselNode.Query(j.spec.Key)
+		query = j.spec.Key
+		queryResult, err := content.DaselNode.Query(query)
 		if err != nil {
 			// Catch error message returned by Dasel, if it couldn't find the node
 			// This is approach is not very robust
@@ -69,7 +72,7 @@ func (j *Json) Source(workingDir string) (string, error) {
 		result.SUCCESS,
 		sourceOutput,
 		content.FilePath,
-		j.spec.Key)
+		query)
 
 	return sourceOutput, nil
 }

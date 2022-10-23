@@ -18,8 +18,7 @@ sources:
     name: Get latest version
     spec:
       file: https://api.github.com/repos/updatecli/updatecli/releases
-      key: ".[*].tag_name"
-      multiple: true
+      query: ".[*].tag_name"
       versionfilter:
         kind: semver
         pattern: "v0.35"

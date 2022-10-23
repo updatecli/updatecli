@@ -16,8 +16,8 @@ type Spec struct {
 	Key string `yaml:",omitempty"`
 	// [s][c][t] Value specifies the Jsonpath key to manipuate. Default to source output
 	Value string `yaml:",omitempty"`
-	// [s][c][t] Multiple allows to query multiple values at once
-	Multiple bool `yaml:",omitempty"`
+	// [s][c][t] Query allows to used advanced query. Override the parameter key
+	Query string `yaml:",omitempty"`
 	// [s]VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
