@@ -16,6 +16,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.title="Updatecli"
 LABEL org.opencontainers.image.description="The gitops automation engine"
 LABEL org.opencontainers.image.base.name="ghcr.io/updatecli/updatecli"
+LABEL org.opencontainers.image.source https://github.com/updatecli/updatecli
 
 # /tmp is used by updatecli to store git repository so it's better
 # to define a volume
