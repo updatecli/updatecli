@@ -1,0 +1,11 @@
+name: "Test json deprecating warning"
+
+conditions:
+  semverVersion:
+    kind: json
+    name: Get latest version
+    spec:
+      file: https://api.github.com/repos/updatecli/updatecli/releases
+      key: ".[*].tag_name"
+      value: "v0.35.1"
+      multiple: true
