@@ -20,6 +20,8 @@ type Spec struct {
 	Query string `yaml:",omitempty"`
 	// [s]VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [c][t] *Deprecated* Please look at query parameter to achieve similar objective
+	Multiple bool `yaml:",omitempty" jsonschema:"-"`
 }
 
 var (

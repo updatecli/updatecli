@@ -41,6 +41,14 @@ conditions:
       file: https://www.updatecli.io/schema/latest/config.json
       key: $schema
       value: http://json-schema.org/draft-04/schema
+  http-query:
+    kind: json
+    name: Get latest version
+    disablesourceinput: true
+    spec:
+      file: https://api.github.com/repos/updatecli/updatecli/releases
+      query: ".(tag_name=v0.36.1).tag_name"
+      value: "v0.36.1"
 
 targets:
   local:
