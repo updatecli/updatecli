@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 type Spec struct {
@@ -15,13 +16,17 @@ type Spec struct {
 	Key string `yaml:",omitempty"`
 	// [s][c][t] Value specifies the Jsonpath key to manipuate. Default to source output
 	Value string `yaml:",omitempty"`
-	// [c][t] Multiple allows to query multiple values at once
-	Multiple bool `yaml:",omitempty"`
+	// [s][c][t] Query allows to used advanced query. Override the parameter key
+	Query string `yaml:",omitempty"`
+	// [s]VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
+	// [c][t] *Deprecated* Please look at query parameter to achieve similar objective
+	Multiple bool `yaml:",omitempty" jsonschema:"-"`
 }
 
 var (
 	ErrSpecFileUndefined       = errors.New("json file undefined")
-	ErrSpecKeyUndefined        = errors.New("json key undefined")
+	ErrSpecKeyUndefined        = errors.New("json key or query undefined")
 	ErrSpecFileAndFilesDefined = errors.New("parameter \"file\" and \"files\" are mutually exclusive")
 	// ErrWrongSpec is returned when the Spec has wrong content
 	ErrWrongSpec error = errors.New("wrong spec content")
@@ -33,7 +38,7 @@ func (s *Spec) Validate() error {
 	if len(s.File) == 0 && len(s.Files) == 0 {
 		errs = append(errs, ErrSpecFileUndefined)
 	}
-	if len(s.Key) == 0 {
+	if len(s.Key) == 0 && len(s.Query) == 0 {
 		errs = append(errs, ErrSpecKeyUndefined)
 	}
 

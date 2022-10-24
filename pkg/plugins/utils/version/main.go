@@ -140,3 +140,9 @@ func (f *Filter) Search(versions []string) (Version, error) {
 
 	return foundVersion, fmt.Errorf("no version found matching pattern %q", f.Pattern)
 }
+
+// IsZero return true if filter is not initialized
+func (f Filter) IsZero() bool {
+	var empty Filter
+	return empty == f
+}

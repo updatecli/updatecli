@@ -32,9 +32,9 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		var queryResults []string
 		var err error
 
-		switch j.spec.Multiple {
+		switch len(j.spec.Query) > 0 {
 		case true:
-			queryResults, err = j.contents[i].MultipleQuery(j.spec.Key)
+			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
 
 			if err != nil {
 				return false, err
