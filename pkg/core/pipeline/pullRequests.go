@@ -58,7 +58,7 @@ func (p *Pipeline) RunPullRequests() error {
 		if len(pr.Title) == 0 {
 			pr.Title = p.Config.GetChangelogTitle(
 				firstTargetID,
-				p.Sources[firstTargetSourceID].Result,
+				p.Sources[firstTargetSourceID].Output,
 			)
 		}
 
