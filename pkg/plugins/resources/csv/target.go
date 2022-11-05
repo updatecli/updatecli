@@ -55,9 +55,9 @@ func (c *CSV) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 		var queryResults []string
 		var err error
 
-		switch c.spec.Multiple {
+		switch len(c.spec.Query) > 0 {
 		case true:
-			queryResults, err = c.contents[i].MultipleQuery(c.spec.Key)
+			queryResults, err = c.contents[i].MultipleQuery(c.spec.Query)
 
 			if err != nil {
 				return false, files, message, err
@@ -99,9 +99,9 @@ func (c *CSV) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 		}
 
 		// Update the target file with the new value
-		switch c.spec.Multiple {
+		switch len(c.spec.Query) > 0 {
 		case true:
-			err = c.contents[i].PutMultiple(c.spec.Key, c.spec.Value)
+			err = c.contents[i].PutMultiple(c.spec.Query, c.spec.Value)
 
 			if err != nil {
 				return false, files, message, err
