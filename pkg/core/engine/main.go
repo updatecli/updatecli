@@ -339,8 +339,14 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 // LoadAutoDiscovery will try to guess available pipelines based on specific directory
 func (e *Engine) LoadAutoDiscovery() error {
 
-	// Default Autodiscovery pipeline
-	if e.Options.Pipeline.AutoDiscovery.Enabled {
+	// Load default Autodiscovery pipeline if flag is enabled or no pipeline are scheduled
+	if e.Options.Pipeline.AutoDiscovery.Enabled || len(e.Pipelines) == 0 {
+
+		if !e.Options.Pipeline.AutoDiscovery.Enabled && len(e.Pipelines) == 0 {
+			// Introduce extra space to highlight the warning message
+			logrus.Infof("\n\n")
+			logrus.Warningf("Default Autodiscovery crawlers has been enabled as zero Updatecli configuration were specified and we didn't detected default configuration.\n")
+		}
 
 		// To remove once not experimental
 		if !cmdoptions.Experimental {
