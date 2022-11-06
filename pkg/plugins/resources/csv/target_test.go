@@ -30,6 +30,15 @@ func TestTarget(t *testing.T) {
 		{
 			name: "Default successful workflow",
 			spec: Spec{
+				File:  "testdata/data.csv",
+				Query: ".[*].firstname",
+			},
+			sourceInput:    "Tom",
+			expectedResult: true,
+		},
+		{
+			name: "Default successful workflow",
+			spec: Spec{
 				File:  "testdata/data.2.csv",
 				Key:   ".[0].firstname",
 				Comma: ';',

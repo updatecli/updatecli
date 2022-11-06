@@ -27,7 +27,7 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name: "Multiple query scenario",
+			name: "Deprecated Multiple query scenario",
 			spec: Spec{
 				File:     "testdata/data.csv",
 				Key:      ".[*].firstname",
@@ -37,12 +37,20 @@ func TestCondition(t *testing.T) {
 			expectedResult: false,
 		},
 		{
+			name: "Query scenario",
+			spec: Spec{
+				File:  "testdata/data.csv",
+				Query: ".[*].firstname",
+				Value: "John",
+			},
+			expectedResult: false,
+		},
+		{
 			name: "Multiple query scenario",
 			spec: Spec{
-				File:     "testdata/data.csv",
-				Key:      ".[*].surname",
-				Value:    "",
-				Multiple: true,
+				File:  "testdata/data.csv",
+				Query: ".[*].surname",
+				Value: "",
 			},
 			expectedResult: false,
 		},

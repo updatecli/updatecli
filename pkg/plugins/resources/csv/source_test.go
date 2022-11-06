@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"gotest.tools/assert"
 )
 
@@ -24,6 +25,18 @@ func TestSource(t *testing.T) {
 				Key:     ".[0].firstname",
 				Comma:   ',',
 				Comment: '#',
+			},
+			expectedResult: "John",
+		},
+		{
+			name: "Regex versionFilter successful workflow",
+			spec: Spec{
+				File:  "testdata/data.csv",
+				Query: ".[*].firstname",
+				VersionFilter: version.Filter{
+					Kind:    "regex",
+					Pattern: "^Jo",
+				},
 			},
 			expectedResult: "John",
 		},
@@ -54,7 +67,7 @@ func TestSource(t *testing.T) {
 			},
 			expectedResult:   "",
 			wantErr:          true,
-			expectedErrorMsg: errors.New("could not find value for path \".doNotExist\" from file \"testdata/data.csv\""),
+			expectedErrorMsg: errors.New("✗ cannot find value for path \".doNotExist\" from file \"testdata/data.csv\""),
 		},
 	}
 

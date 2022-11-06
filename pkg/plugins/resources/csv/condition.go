@@ -32,9 +32,9 @@ func (c *CSV) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) 
 		var queryResults []string
 		var err error
 
-		switch c.spec.Multiple {
+		switch len(c.spec.Query) > 0 {
 		case true:
-			queryResults, err = c.contents[i].MultipleQuery(c.spec.Key)
+			queryResults, err = c.contents[i].MultipleQuery(c.spec.Query)
 
 			if err != nil {
 				return false, err
