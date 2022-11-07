@@ -18,3 +18,9 @@ func (r *ReleaseType) Init() {
 		r.Release = true
 	}
 }
+
+// IsZero checks if all release type are set to disable
+func (r ReleaseType) IsZero() bool {
+	var empty ReleaseType
+	return empty == r
+}

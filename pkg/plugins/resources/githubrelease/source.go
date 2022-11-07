@@ -17,6 +17,12 @@ func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 	}
 
 	if len(versions) == 0 {
+
+		if !gr.spec.Type.IsZero() {
+			logrus.Infof("%s No GitHub Release found. As release type rules have been provided, we won't fallback at published git tags", result.ATTENTION)
+			return "", fmt.Errorf("no GitHub release found, exiting")
+		}
+
 		switch gr.spec.DisableTagSearch {
 		case true:
 			return "", fmt.Errorf("no GitHub release found, exiting")

@@ -75,12 +75,7 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
-	empty := github.ReleaseType{}
-	if empty == newSpec.Type {
-		logrus.Warningf("Release Type will be ignore if it fallback to Git Tag search, please use the parameter disabletagsearch")
-	}
-
-	if !newSpec.DisableTagSearch {
+	if !newSpec.DisableTagSearch && newSpec.Type.IsZero() {
 		logrus.Warningf(deprecationTagSearchMessage)
 	}
 
