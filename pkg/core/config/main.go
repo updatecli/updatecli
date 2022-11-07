@@ -3,7 +3,7 @@ package config
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -116,7 +116,7 @@ func New(option Option) (config Config, err error) {
 
 	defer c.Close()
 
-	content, err := ioutil.ReadAll(c)
+	content, err := io.ReadAll(c)
 	if err != nil {
 		return config, err
 	}
@@ -204,7 +204,7 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 
 	data := buf.Bytes()
 
-	onDiskData, err := ioutil.ReadFile(c.filename)
+	onDiskData, err := os.ReadFile(c.filename)
 	if err != nil {
 		return false, err
 	}
@@ -401,16 +401,6 @@ func (config *Config) validateTargets() error {
 		// t.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
 		config.Spec.Targets[id] = t
-
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		//if t.Scm != nil {
-		if len(t.Scm) > 0 {
-			err := generateScmFromLegacyTarget(id, config)
-			if err != nil {
-				return err
-			}
-		}
 
 	}
 	return nil
