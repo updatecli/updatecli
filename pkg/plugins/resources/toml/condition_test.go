@@ -18,7 +18,7 @@ func TestCondition(t *testing.T) {
 		wantErr          bool
 	}{
 		{
-			name: "Default successful multiple update workflow",
+			name: "Deprecated - Default successful multiple update workflow",
 			spec: Spec{
 				File:     "testdata/data.toml",
 				Key:      ".employees.[*].role",
@@ -27,20 +27,26 @@ func TestCondition(t *testing.T) {
 			expectedResult: false,
 		},
 		{
+			name: "Default successful multiple update workflow",
+			spec: Spec{
+				File:  "testdata/data.toml",
+				Query: ".employees.[*].role",
+			},
+			expectedResult: false,
+		},
+		{
 			name: "Successful conditional multiple update workflow",
 			spec: Spec{
-				File:     "testdata/data.toml",
-				Key:      ".employees.(address=AU).role",
-				Multiple: true,
+				File:  "testdata/data.toml",
+				Query: ".employees.(address=AU).role",
 			},
 			expectedResult: false,
 		},
 		{
 			name: "Successful multiple map update workflow",
 			spec: Spec{
-				File:     "testdata/data.toml",
-				Key:      ".benefits.[0].country.(country=UK).name",
-				Multiple: true,
+				File:  "testdata/data.toml",
+				Query: ".benefits.[0].country.(country=UK).name",
 			},
 			expectedResult: false,
 		},
@@ -76,10 +82,9 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Test key do not exist",
 			spec: Spec{
-				File:     "testdata/data.toml",
-				Key:      ".doNotExist.[*]",
-				Value:    "",
-				Multiple: true,
+				File:  "testdata/data.toml",
+				Query: ".doNotExist.[*]",
+				Value: "",
 			},
 			expectedResult:   false,
 			wantErr:          true,

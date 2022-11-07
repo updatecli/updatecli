@@ -55,9 +55,9 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		var queryResults []string
 		var err error
 
-		switch t.spec.Multiple {
+		switch len(t.spec.Query) > 0 {
 		case true:
-			queryResults, err = t.contents[i].MultipleQuery(t.spec.Key)
+			queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
 
 			if err != nil {
 				return false, files, message, err
@@ -99,9 +99,9 @@ func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		}
 
 		// Update the target file with the new value
-		switch t.spec.Multiple {
+		switch len(t.spec.Query) > 0 {
 		case true:
-			err = t.contents[i].PutMultiple(t.spec.Key, t.spec.Value)
+			err = t.contents[i].PutMultiple(t.spec.Query, t.spec.Value)
 
 			if err != nil {
 				return false, files, message, err
