@@ -7,11 +7,20 @@ sources:
     spec:
       file: pkg/plugins/resources/toml/testdata/data.toml
       key: owner.firstName
+  ports:
+    name: Get sorted ports
+    kind: toml
+    spec:
+      file: pkg/plugins/resources/toml/testdata/data.toml
+      query: database.ports.[*]
+      versionfilter:
+        kind: semver
 
 conditions:
   local:
     name: Test value from toml
     kind: toml
+    sourceid: local
     spec:
       file: pkg/plugins/resources/toml/testdata/data.toml
       key: owner.firstName
@@ -23,11 +32,20 @@ conditions:
       file: pkg/plugins/resources/toml/testdata/data.toml
       key: ".employees.(address=AU).role"
       value: "M"
+  ports:
+    name: Get sorted ports
+    kind: toml
+    disablesourceinput: true
+    spec:
+      file: pkg/plugins/resources/toml/testdata/data.toml
+      query: ".employees.(address=AU).role"
+      value: "M"
 
 targets:
   local:
     name: Test value from toml
     kind: toml
+    sourceid: local
     spec:
       file: pkg/plugins/resources/toml/testdata/data.toml
       key: owner.firstName
