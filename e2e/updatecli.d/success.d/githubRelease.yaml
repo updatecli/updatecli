@@ -1,0 +1,87 @@
+name: Test Github Release
+
+sources:
+  default:
+    name: Default Get Latest Release
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+  draft:
+    name: Get Latest Draft Release
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      type:
+        draft: true
+  prerelease:
+    name: Get Latest Prelease
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      disabletagsearch: true
+      type:
+        prerelease: true
+  release:
+    name: Get Latest Release
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      type:
+        release: true
+conditions:
+  default:
+    name: Default Get Latest Release
+    kind: githubrelease
+    sourceid: default
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+  draft:
+    name: Get Latest Draft Release
+    kind: githubrelease
+    sourceid: draft
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      type:
+        draft: true
+  prerelease:
+    name: Get Latest Prelease
+    kind: githubrelease
+    sourceid: prerelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      disabletagsearch: true
+      type:
+        prerelease: true
+  release:
+    name: Get Latest Release
+    kind: githubrelease
+    sourceid: release
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+      type:
+        release: true
+

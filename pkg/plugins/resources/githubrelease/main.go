@@ -2,6 +2,7 @@ package githubrelease
 
 import (
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -9,18 +10,22 @@ import (
 // Spec defines a specification for a "gittag" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// Owner specifies repository owner
+	// [s][c] Owner specifies repository owner
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
+	// [s][c] Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// Token specifies the credential used to authenticate with
+	// [s][c] Token specifies the credential used to authenticate with
 	Token string `yaml:",omitempty" jsonschema:"required"`
-	// URL specifies the default github url in case of GitHub enterprise
+	// [s][c] URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
-	// Username specifies the username used to authenticate with Github API
+	// [s][c] Username specifies the username used to authenticate with Github API
 	Username string `yaml:",omitempty" jsonschema:"required"`
-	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [s][c] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [s][c] Type specifies the Github Release type to interact with
+	Type github.ReleaseType `yaml:",omitempty"`
+	// [s][c] DisableTagSearch is a boolean to not fallback to tag search if not releases were found
+	DisableTagSearch bool `yaml:",omitempty"`
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
@@ -28,7 +33,18 @@ type GitHubRelease struct {
 	ghHandler     github.GithubHandler
 	versionFilter version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	foundVersion  version.Version
+	spec          Spec
 }
+
+var (
+	// deprecationTagSearchMessage is display if ReleaseType is specified
+	deprecationTagSearchMessage string = `If you expect the Github Release resource to fallback to looking for Git Tag if no release could be found,
+then I am sorry to tell you that this behavior is now deprecated and will be removed in a futur release.
+Please consider using the gitTag resource.
+
+You can disable this fallback behavior by using the parameter "disabletagsearch" set to true
+`
+)
 
 // New returns a new valid GitHubRelease object.
 func New(spec interface{}) (*GitHubRelease, error) {
@@ -38,6 +54,8 @@ func New(spec interface{}) (*GitHubRelease, error) {
 	if err != nil {
 		return &GitHubRelease{}, err
 	}
+
+	newSpec.Type.Init()
 
 	newHandler, err := github.New(github.Spec{
 		Owner:      newSpec.Owner,
@@ -55,8 +73,18 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
+	empty := github.ReleaseType{}
+	if empty == newSpec.Type {
+		logrus.Warningf("Release Type will be ignore if it fallback to Git Tag search, please use the parameter disabletagsearch")
+	}
+
+	if !newSpec.DisableTagSearch {
+		logrus.Warningf(deprecationTagSearchMessage)
+	}
+
 	return &GitHubRelease{
 		ghHandler:     newHandler,
 		versionFilter: newFilter,
+		spec:          newSpec,
 	}, nil
 }
