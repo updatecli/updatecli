@@ -11,6 +11,12 @@ import (
 func (gr GitHubRelease) Condition(source string) (bool, error) {
 	versions, err := gr.ghHandler.SearchReleases(gr.spec.Type)
 
+	expectedValue := source
+
+	if len(gr.spec.Tag) == 0 {
+		expectedValue = gr.spec.Tag
+	}
+
 	if err != nil {
 		logrus.Error(err)
 		return false, err
@@ -43,7 +49,9 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 	if len(value) == 0 {
 		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, gr.versionFilter.Pattern)
 		return false, fmt.Errorf("no Github Release version found matching pattern %q", gr.versionFilter.Pattern)
-	} else if len(value) > 0 {
+	}
+
+	if value == expectedValue {
 		logrus.Infof("%s Github Release version %q found matching pattern %q", result.SUCCESS, value, gr.versionFilter.Pattern)
 		return true, nil
 	}

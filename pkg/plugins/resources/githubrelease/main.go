@@ -26,6 +26,8 @@ type Spec struct {
 	Type github.ReleaseType `yaml:",omitempty"`
 	// [s][c] DisableTagSearch is a boolean to not fallback to tag search if not releases were found
 	DisableTagSearch bool `yaml:",omitempty"`
+	// [c] Tag allows to check for a specific release tag
+	Tag string `yaml:",omitempty"`
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
