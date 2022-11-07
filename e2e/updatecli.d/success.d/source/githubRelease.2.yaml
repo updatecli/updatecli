@@ -14,5 +14,6 @@ sources:
       repository: "updatecli"
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      disabletagsearch: true
       versionfilter:
         kind: "latest"
