@@ -77,14 +77,8 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-	} else if len(c.Config.Scm) == 0 {
-		ok, err = condition.Condition(source)
-		if err != nil {
-			c.Result = result.FAILURE
-			return err
-		}
 	} else {
-		return fmt.Errorf("something went wrong while looking at the scm configuration: %v", c.Config.Scm)
+		return fmt.Errorf("something went wrong while looking at the scm configuration: %v", c.Scm)
 	}
 
 	if ok {
