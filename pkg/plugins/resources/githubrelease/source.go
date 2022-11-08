@@ -10,24 +10,18 @@ import (
 // Source retrieves a specific version tag from Github Releases.
 func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 
-	versions, err := gr.ghHandler.SearchReleases(gr.spec.Type)
+	versions, err := gr.ghHandler.SearchReleases(gr.releaseType)
 	if err != nil {
 		logrus.Error(err)
 		return value, err
 	}
 
 	if len(versions) == 0 {
-
-		if !gr.spec.Type.IsZero() {
-			logrus.Infof("%s No GitHub Release found. As release type rules have been provided, we won't fallback at published git tags", result.ATTENTION)
-			return "", fmt.Errorf("no GitHub release found, exiting")
-		}
-
-		switch gr.spec.DisableTagSearch {
+		switch gr.spec.Type.IsZero() {
 		case true:
-			return "", fmt.Errorf("no GitHub release found, exiting")
-		case false:
-			logrus.Infof("%s No GitHub Release found. As fallback Looking at published git tags", result.ATTENTION)
+			logrus.Warnln(deprecationTagSearchMessage)
+			logrus.Warningf("%s No GitHub Release found. Temporary fallback at published git tags", result.ATTENTION)
+
 			versions, err = gr.ghHandler.SearchTags()
 			if err != nil {
 				logrus.Errorf("%s", err)
@@ -36,6 +30,8 @@ func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 			if len(versions) == 0 {
 				return "", fmt.Errorf("no GitHub release or git tags found, exiting")
 			}
+		case false:
+			return "", fmt.Errorf("no GitHub release found, exiting")
 		}
 	}
 

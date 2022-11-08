@@ -9,7 +9,6 @@ sources:
       repository: updatecli
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      disabletagsearch: true
   draft:
     name: Get Latest Draft Release
     kind: githubrelease
@@ -18,7 +17,6 @@ sources:
       repository: updatecli
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      disabletagsearch: true
       type:
         draft: true
   prerelease:
@@ -26,10 +24,9 @@ sources:
     kind: githubrelease
     spec:
       owner: updatecli
-      repository: updatecli
+      repository: updatecli-action
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      disabletagsearch: true
       type:
         prerelease: true
   release:
@@ -40,7 +37,6 @@ sources:
       repository: updatecli
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      disabletagsearch: true
       type:
         release: true
 conditions:
@@ -52,7 +48,6 @@ conditions:
       owner: updatecli
       repository: updatecli
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      disabletagsearch: true
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
   draft:
     name: Get Latest Draft Release
@@ -60,7 +55,6 @@ conditions:
     sourceid: draft
     spec:
       owner: updatecli
-      disabletagsearch: true
       repository: updatecli
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
@@ -72,11 +66,9 @@ conditions:
     sourceid: prerelease
     spec:
       owner: updatecli
-      disabletagsearch: true
-      repository: updatecli
+      repository: updatecli-action
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-      disabletagsearch: true
       type:
         prerelease: true
   release:
@@ -85,7 +77,6 @@ conditions:
     sourceid: release
     spec:
       owner: updatecli
-      disabletagsearch: true
       repository: updatecli
       token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'

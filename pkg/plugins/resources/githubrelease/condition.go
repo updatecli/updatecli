@@ -9,11 +9,11 @@ import (
 )
 
 func (gr GitHubRelease) Condition(source string) (bool, error) {
-	versions, err := gr.ghHandler.SearchReleases(gr.spec.Type)
+	versions, err := gr.ghHandler.SearchReleases(gr.releaseType)
 
 	expectedValue := source
 
-	if len(gr.spec.Tag) == 0 {
+	if gr.spec.Tag != "" {
 		expectedValue = gr.spec.Tag
 	}
 
@@ -23,15 +23,11 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 	}
 
 	if len(versions) == 0 {
-		if !gr.spec.Type.IsZero() {
-			logrus.Infof("%s No GitHub Release found. As release type rules have been provided, we won't fallback at published git tags", result.ATTENTION)
-			return false, fmt.Errorf("no GitHub release found, exiting")
-		}
-		switch gr.spec.DisableTagSearch {
+		switch gr.spec.Type.IsZero() {
 		case true:
-			return false, fmt.Errorf("no GitHub release found, exiting")
-		case false:
-			logrus.Infof("%s No GitHub Release found. As fallback Looking at published git tags", result.ATTENTION)
+			logrus.Warnln(deprecationTagSearchMessage)
+			logrus.Warningf("%s No GitHub Release found. Temporary fallback at published git tags", result.ATTENTION)
+
 			versions, err = gr.ghHandler.SearchTags()
 			if err != nil {
 				logrus.Errorf("%s", err)
@@ -40,6 +36,8 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 			if len(versions) == 0 {
 				return false, fmt.Errorf("no GitHub release or git tags found, exiting")
 			}
+		case false:
+			return false, fmt.Errorf("no GitHub release found, exiting")
 		}
 	}
 
@@ -51,16 +49,16 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 	value := gr.foundVersion.GetVersion()
 
 	if len(value) == 0 {
-		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, gr.versionFilter.Pattern)
-		return false, fmt.Errorf("no Github Release version found matching pattern %q", gr.versionFilter.Pattern)
+		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, expectedValue)
+		return false, fmt.Errorf("no Github Release version found matching pattern %q", expectedValue)
 	}
 
 	if value == expectedValue {
-		logrus.Infof("%s Github Release version %q found matching pattern %q", result.SUCCESS, value, gr.versionFilter.Pattern)
+		logrus.Infof("%s Github Release version %q found matching pattern %q", result.SUCCESS, value, expectedValue)
 		return true, nil
 	}
 
-	return false, fmt.Errorf("something unexpected happened in Github source")
+	return false, fmt.Errorf("no Github Release version found matching pattern %q", expectedValue)
 }
 
 func (ghr GitHubRelease) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {

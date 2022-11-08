@@ -2,7 +2,6 @@ package githubrelease
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -24,8 +23,6 @@ type Spec struct {
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// [s][c] Type specifies the Github Release type to interact with
 	Type github.ReleaseType `yaml:",omitempty"`
-	// [s][c] DisableTagSearch is a boolean to not fallback to tag search if not releases were found
-	DisableTagSearch bool `yaml:",omitempty"`
 	// [c] Tag allows to check for a specific release tag
 	Tag string `yaml:",omitempty"`
 }
@@ -36,15 +33,24 @@ type GitHubRelease struct {
 	versionFilter version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	foundVersion  version.Version
 	spec          Spec
+	releaseType   github.ReleaseType
 }
 
 var (
 	// deprecationTagSearchMessage is display if ReleaseType is specified
-	deprecationTagSearchMessage string = `If you expect the Github Release resource to fallback to looking for Git Tag if no release could be found,
-then I am sorry to tell you that this behavior is now deprecated and will be removed in a futur release.
-Please consider using the gitTag resource.
+	deprecationTagSearchMessage string = `Deprecation announcement, githubrelease will soon stop fallback to git tags if no release could be found.
+This behavior is not compatible with release type filtering.
+If you need to manipulate Git tags, please use the gittag resource.
+You can dismiss this warning by adding a release type filter rule such as
 
-You can disable this fallback behavior by using the parameter "disabletagsearch" set to true
+>  spec:
+>    owner: updatecli
+>    repository: updatecli
+>    token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+>    username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+>    type:
+>      draft: true
+
 `
 )
 
@@ -56,8 +62,6 @@ func New(spec interface{}) (*GitHubRelease, error) {
 	if err != nil {
 		return &GitHubRelease{}, err
 	}
-
-	newSpec.Type.Init()
 
 	newHandler, err := github.New(github.Spec{
 		Owner:      newSpec.Owner,
@@ -75,13 +79,13 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
-	if !newSpec.DisableTagSearch && newSpec.Type.IsZero() {
-		logrus.Warningf(deprecationTagSearchMessage)
-	}
+	newReleaseType := newSpec.Type
+	newReleaseType.Init()
 
 	return &GitHubRelease{
 		ghHandler:     newHandler,
 		versionFilter: newFilter,
+		releaseType:   newReleaseType,
 		spec:          newSpec,
 	}, nil
 }

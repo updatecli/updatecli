@@ -6,13 +6,24 @@ scms:
     disabled: true
 
 sources:
-  helm:
-    name: "Get Latest updatecli release version"
+  kubectl:
+    name: "Get Latest kubectl release version"
     kind: "githubrelease"
     spec:
-      owner: "updatecli"
-      repository: "updatecli"
+      owner: "kubernetes"
+      repository: "kubectl"
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       versionfilter:
         kind: "latest"
+
+conditions:
+  kubectl:
+    name: "Get Latest updatecli release version"
+    kind: "githubrelease"
+    sourceid: kubectl
+    spec:
+      owner: "kubernetes"
+      repository: "kubectl"
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
