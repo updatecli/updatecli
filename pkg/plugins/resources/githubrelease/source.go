@@ -19,8 +19,8 @@ func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 	if len(versions) == 0 {
 		switch gr.spec.Type.IsZero() {
 		case true:
+			logrus.Warningf("%s No GitHub Release found, we temporary fallback to published git tags", result.ATTENTION)
 			logrus.Warnln(deprecationTagSearchMessage)
-			logrus.Warningf("%s No GitHub Release found. Temporary fallback at published git tags", result.ATTENTION)
 
 			versions, err = gr.ghHandler.SearchTags()
 			if err != nil {

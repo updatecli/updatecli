@@ -25,8 +25,8 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 	if len(versions) == 0 {
 		switch gr.spec.Type.IsZero() {
 		case true:
+			logrus.Warningf("%s No GitHub Release found, we temporary fallback to published git tags", result.ATTENTION)
 			logrus.Warnln(deprecationTagSearchMessage)
-			logrus.Warningf("%s No GitHub Release found. Temporary fallback at published git tags", result.ATTENTION)
 
 			versions, err = gr.ghHandler.SearchTags()
 			if err != nil {
@@ -50,15 +50,15 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 
 	if len(value) == 0 {
 		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, expectedValue)
-		return false, fmt.Errorf("no Github Release version found matching pattern %q", expectedValue)
+		return false, fmt.Errorf("%s Github Release %q not found", result.FAILURE, expectedValue)
 	}
 
 	if value == expectedValue {
-		logrus.Infof("%s Github Release version %q found matching pattern %q", result.SUCCESS, value, expectedValue)
+		logrus.Infof("%s Github Release version %q found", result.SUCCESS, value)
 		return true, nil
 	}
 
-	return false, fmt.Errorf("no Github Release version found matching pattern %q", expectedValue)
+	return false, fmt.Errorf("%s Github Release %q not found", result.FAILURE, expectedValue)
 }
 
 func (ghr GitHubRelease) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
