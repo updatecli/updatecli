@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"gotest.tools/assert"
 )
 
@@ -51,6 +52,18 @@ func TestSource(t *testing.T) {
 				Key:  ".database.ports.[1]",
 			},
 			expectedResult: "8001",
+		},
+		{
+			name: "Test Query exist",
+			spec: Spec{
+				File:  "testdata/data.toml",
+				Query: ".employees.[*].role",
+				VersionFilter: version.Filter{
+					Kind:    "regex",
+					Pattern: "I(.*)",
+				},
+			},
+			expectedResult: "IC",
 		},
 	}
 
