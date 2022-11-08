@@ -9,16 +9,6 @@ sources:
       repository: updatecli
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-  draft:
-    name: Get Latest Draft Release
-    kind: githubrelease
-    spec:
-      owner: updatecli
-      repository: updatecli
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-      type:
-        draft: true
   prerelease:
     name: Get Latest Prelease
     kind: githubrelease
@@ -49,17 +39,6 @@ conditions:
       repository: updatecli
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-  draft:
-    name: Get Latest Draft Release
-    kind: githubrelease
-    sourceid: draft
-    spec:
-      owner: updatecli
-      repository: updatecli
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-      type:
-        draft: true
   prerelease:
     name: Get Latest Prelease
     kind: githubrelease
