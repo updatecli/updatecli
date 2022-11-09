@@ -47,7 +47,16 @@ func (s *Source) Run() (err error) {
 
 	workingDir := ""
 
-	if s.Scm != nil {
+	switch s.Scm == nil {
+	case true:
+		pwd, err := os.Getwd()
+		if err != nil {
+			s.Result = result.FAILURE
+			return err
+		}
+
+		workingDir = pwd
+	case false:
 
 		SCM := *s.Scm
 
@@ -64,16 +73,6 @@ func (s *Source) Run() (err error) {
 		}
 
 		workingDir = SCM.GetDirectory()
-
-	} else if s.Scm == nil {
-
-		pwd, err := os.Getwd()
-		if err != nil {
-			s.Result = result.FAILURE
-			return err
-		}
-
-		workingDir = pwd
 	}
 
 	s.Output, err = source.Source(workingDir)
