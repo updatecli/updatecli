@@ -1,63 +1,26 @@
 package github
 
-import (
-	"fmt"
-	"strings"
-)
-
-// ReleaseType specifies accepts a list of GitHub Release type ["draft","prerelease","release","latest"]
-type ReleaseType []string
-
-var (
-	ValidReleaseType []string = []string{
-		"draft",
-		"prerelease",
-		"release",
-		"latest",
-	}
-)
+// ReleaseType specifies accepted GitHub Release type
+type ReleaseType struct {
+	// Draft enable/disable GitHub draft release
+	Draft bool
+	// PreRelease enable/disable GitHub PreRelease
+	PreRelease bool
+	// Release enable/disable GitHub release
+	Release bool
+	// Latest enable/disable the latest Github Release
+	Latest bool
+}
 
 func (r *ReleaseType) Init() {
-	release := *r
-
-	if len(release) == 0 {
-		release = append(release, "release")
+	// If all release type are disable then fallback to stable one only
+	if !r.Draft && !r.PreRelease && !r.Release {
+		r.Release = true
 	}
-	r = &release
 }
 
 // IsZero checks if all release type are set to disable
 func (r ReleaseType) IsZero() bool {
-	return len(r) == 0
-}
-
-func (r ReleaseType) IsEqual(release string) bool {
-	for i := range r {
-		if strings.ToLower(r[i]) == release {
-			return true
-		}
-	}
-	return false
-}
-
-func (r ReleaseType) Validate() error {
-	var notValidReleaseType []string
-
-	for i := range r {
-		valid := false
-		for j := range ValidReleaseType {
-			if strings.ToLower(r[i]) == ValidReleaseType[j] {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			notValidReleaseType = append(notValidReleaseType, r[i])
-		}
-	}
-
-	if len(notValidReleaseType) > 0 {
-		return fmt.Errorf("release type [%q] not valid", strings.Join(notValidReleaseType, "\",\""))
-	}
-	return nil
+	var empty ReleaseType
+	return empty == r
 }

@@ -99,19 +99,19 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err
 			node := query.Repository.Releases.Edges[i]
 
 			if node.Node.IsLatest {
-				if releaseType.IsEqual("latest") {
+				if releaseType.Latest {
 					releases = append(releases, node.Node.TagName)
 				}
 			} else if node.Node.IsDraft {
-				if releaseType.IsEqual("draft") {
+				if releaseType.Draft {
 					releases = append(releases, node.Node.TagName)
 				}
 			} else if node.Node.IsPrerelease {
-				if releaseType.IsEqual("prerelease") {
+				if releaseType.PreRelease {
 					releases = append(releases, node.Node.TagName)
 				}
 			} else {
-				if releaseType.IsEqual("release") {
+				if releaseType.Release {
 					releases = append(releases, node.Node.TagName)
 				}
 			}

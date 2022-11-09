@@ -17,8 +17,8 @@ sources:
       repository: updatecli-action
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-      type: 
-        - prerelease
+      type:
+        prerelease: true
   release:
     name: Get Latest Release
     kind: githubrelease
@@ -28,8 +28,7 @@ sources:
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       type:
-        - release
-        - draft
+        release: true
 conditions:
   default:
     name: Default Get Latest Release
@@ -50,7 +49,7 @@ conditions:
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       type:
-        - prerelease
+        prerelease: true
   release:
     name: Get Latest Release
     kind: githubrelease
@@ -61,6 +60,5 @@ conditions:
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       type:
-        - release
-        - draft
+        release: true
 
