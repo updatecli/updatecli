@@ -1,0 +1,61 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo:6.0.2
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    ports:
+      - 27017
+
+  server:
+    image: ghcr.io/updatecli/updatemonitor:v0.1.0
+    command: server start
+    volumes:
+      - "./config.yaml:/home/updatemonitor/.updatemonitor/config.yaml"
+    expose:
+      - 8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-server.rule=PathPrefix(`/api/`)"
+      - "traefik.http.routers.traefik-server.middlewares=removeapi@docker"
+      # - "traefik.http.routers.traefik-server.service=server"
+      - "traefik.http.middlewares.removeapi.stripprefix.prefixes=/api"
+      - "traefik.http.middlewares.removeapi.stripprefix.forceSlash=false"
+      # If only one port exposed by the container then traefik can detect it
+      # - "traefik.http.services.server.loadbalancer.server.port=8080"
+
+  # export UPDATECLI_GITHUB_TOKEN=<your Github PAT>
+  # export UPDATECLI_GITHUB_ACTOR=<your user name>
+  agent:
+    image: ghcr.io/updatecli/updatemonitor:v0.1.0
+    command: agent start
+    volumes:
+      - "./config.yaml:/home/updatemonitor/.updatemonitor/config.yaml"
+    environment:
+      - UPDATECLI_GITHUB_TOKEN=${UPDATECLI_GITHUB_TOKEN}
+      - UPDATECLI_GITHUB_ACTOR=${UPDATECLI_GITHUB_ACTOR}
+
+  front:
+    image: ghcr.io/updatecli/updatemonitor-ui:v0.1.1
+    expose:
+      - 80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.front.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.front.service=front"
+      - "traefik.http.services.front.loadbalancer.server.port=80"
+
+  traefik:
+    image: "traefik:v2.9"
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
