@@ -48,8 +48,8 @@ You can dismiss this warning by adding a release type filter rule such as
 >    repository: updatecli
 >    token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
 >    username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
->    type:
->      draft: true
+>    typefilter:
+>      release: true
 
 `
 )
