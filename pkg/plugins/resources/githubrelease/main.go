@@ -36,24 +36,6 @@ type GitHubRelease struct {
 	typeFilter    github.ReleaseType
 }
 
-var (
-	// deprecationTagSearchMessage is display if ReleaseType is specified
-	deprecationTagSearchMessage string = `Deprecation announcement, githubrelease will soon stop fallback to git tags if no release could be found.
-This behavior is not compatible with release type filtering.
-If you need to manipulate Git tags, please use the gittag resource.
-You can dismiss this warning by adding a release type filter rule such as
-
->  spec:
->    owner: updatecli
->    repository: updatecli
->    token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
->    username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
->    typefilter:
->      release: true
-
-`
-)
-
 // New returns a new valid GitHubRelease object.
 func New(spec interface{}) (*GitHubRelease, error) {
 	newSpec := Spec{}
