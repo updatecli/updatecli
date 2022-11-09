@@ -21,9 +21,9 @@ type Spec struct {
 	Username string `yaml:",omitempty" jsonschema:"required"`
 	// [s][c] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [s][c] Type specifies the Github Release type to interact with
-	Type github.ReleaseType `yaml:",omitempty"`
-	// [c] Tag allows to check for a specific release tag
+	// [s][c] TypeFilter specifies the Github Release type to retrieve before applying the versionfilter rule
+	TypeFilter github.ReleaseType `yaml:",omitempty"`
+	// [c] Tag allows to check for a specific release tag, default to source output
 	Tag string `yaml:",omitempty"`
 }
 
@@ -33,7 +33,7 @@ type GitHubRelease struct {
 	versionFilter version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	foundVersion  version.Version
 	spec          Spec
-	releaseType   github.ReleaseType
+	typeFilter    github.ReleaseType
 }
 
 var (
@@ -79,13 +79,13 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
-	newReleaseType := newSpec.Type
+	newReleaseType := newSpec.TypeFilter
 	newReleaseType.Init()
 
 	return &GitHubRelease{
 		ghHandler:     newHandler,
 		versionFilter: newFilter,
-		releaseType:   newReleaseType,
+		typeFilter:    newReleaseType,
 		spec:          newSpec,
 	}, nil
 }

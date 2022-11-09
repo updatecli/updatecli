@@ -9,7 +9,7 @@ import (
 )
 
 func (gr GitHubRelease) Condition(source string) (bool, error) {
-	versions, err := gr.ghHandler.SearchReleases(gr.releaseType)
+	versions, err := gr.ghHandler.SearchReleases(gr.typeFilter)
 
 	expectedValue := source
 
@@ -23,7 +23,7 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 	}
 
 	if len(versions) == 0 {
-		switch gr.spec.Type.IsZero() {
+		switch gr.spec.TypeFilter.IsZero() {
 		case true:
 			logrus.Warningf("%s No GitHub Release found, we temporary fallback to published git tags", result.ATTENTION)
 			logrus.Warnln(deprecationTagSearchMessage)
