@@ -79,6 +79,10 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
+	if err = newSpec.Type.Validate(); err != nil {
+		return &GitHubRelease{}, err
+	}
+
 	newReleaseType := newSpec.Type
 	newReleaseType.Init()
 
