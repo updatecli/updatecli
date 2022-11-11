@@ -27,8 +27,7 @@ func TestDiscoverManifests(t *testing.T) {
 			rootDir: "testdata",
 			expectedPipelines: []config.Spec{
 				{
-
-					Name: "Bump \"mongo\" Docker compose service image version for \"testdata/docker-compose.yaml\"",
+					Name: "Bump \"mongo\" Docker compose service image version for \"docker-compose.yaml\"",
 					Sources: map[string]source.Config{
 						"mongodb": {
 							ResourceConfig: resource.ResourceConfig{
@@ -47,7 +46,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"mongodb": {
 							SourceID: "mongodb",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"mongo\" Docker Image tag for docker compose file \"testdata/docker-compose.yaml\"",
+								Name: "Bump \"mongo\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/docker-compose.yaml",
@@ -64,7 +63,112 @@ func TestDiscoverManifests(t *testing.T) {
 				},
 				{
 
-					Name: "Bump \"traefik\" Docker compose service image version for \"testdata/docker-compose.yaml\"",
+					Name: "Bump \"ghcr.io/updatecli/updatemonitor\" Docker compose service image version for \"docker-compose.yaml\"",
+					Sources: map[string]source.Config{
+						"agent": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get latest \"ghcr.io/updatecli/updatemonitor\" Docker Image Tag",
+								Kind: "dockerimage",
+								Spec: dockerimage.Spec{
+									Image: "ghcr.io/updatecli/updatemonitor",
+									VersionFilter: version.Filter{
+										Kind: "semver",
+									},
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"agent": {
+							SourceID: "agent",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Bump \"ghcr.io/updatecli/updatemonitor\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
+								Kind: "yaml",
+								Spec: yaml.Spec{
+									File: "testdata/docker-compose.yaml",
+									Key:  "services.agent.image",
+								},
+								Transformers: transformer.Transformers{
+									transformer.Transformer{
+										AddPrefix: "ghcr.io/updatecli/updatemonitor:",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "Bump \"ghcr.io/updatecli/updatemonitor\" Docker compose service image version for \"docker-compose.yaml\"",
+					Sources: map[string]source.Config{
+						"server": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get latest \"ghcr.io/updatecli/updatemonitor\" Docker Image Tag",
+								Kind: "dockerimage",
+								Spec: dockerimage.Spec{
+									Image: "ghcr.io/updatecli/updatemonitor",
+									VersionFilter: version.Filter{
+										Kind: "semver",
+									},
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"server": {
+							SourceID: "server",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Bump \"ghcr.io/updatecli/updatemonitor\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
+								Kind: "yaml",
+								Spec: yaml.Spec{
+									File: "testdata/docker-compose.yaml",
+									Key:  "services.server.image",
+								},
+								Transformers: transformer.Transformers{
+									transformer.Transformer{
+										AddPrefix: "ghcr.io/updatecli/updatemonitor:",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "Bump \"ghcr.io/updatecli/updatemonitor-ui\" Docker compose service image version for \"docker-compose.yaml\"",
+					Sources: map[string]source.Config{
+						"front": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get latest \"ghcr.io/updatecli/updatemonitor-ui\" Docker Image Tag",
+								Kind: "dockerimage",
+								Spec: dockerimage.Spec{
+									Image: "ghcr.io/updatecli/updatemonitor-ui",
+									VersionFilter: version.Filter{
+										Kind: "semver",
+									},
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"front": {
+							SourceID: "front",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Bump \"ghcr.io/updatecli/updatemonitor-ui\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
+								Kind: "yaml",
+								Spec: yaml.Spec{
+									File: "testdata/docker-compose.yaml",
+									Key:  "services.front.image",
+								},
+								Transformers: transformer.Transformers{
+									transformer.Transformer{
+										AddPrefix: "ghcr.io/updatecli/updatemonitor-ui:",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "Bump \"traefik\" Docker compose service image version for \"docker-compose.yaml\"",
 					Sources: map[string]source.Config{
 						"traefik": {
 							ResourceConfig: resource.ResourceConfig{
@@ -83,7 +187,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"traefik": {
 							SourceID: "traefik",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"traefik\" Docker Image tag for docker compose file \"testdata/docker-compose.yaml\"",
+								Name: "Bump \"traefik\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/docker-compose.yaml",
@@ -115,6 +219,7 @@ func TestDiscoverManifests(t *testing.T) {
 			pipelines, err := helmfile.DiscoverManifests(discoveryConfig.Input{})
 
 			require.NoError(t, err)
+			// !! Order matter between expected result and docker-compose file
 			assert.Equal(t, tt.expectedPipelines, pipelines)
 
 		})
