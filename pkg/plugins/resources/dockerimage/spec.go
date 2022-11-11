@@ -10,6 +10,20 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
+// Spec defines a specification for a "dockerimage" resource
+// parsed from an updatecli manifest file
+type Spec struct {
+	// [S][C][T] Architecture specifies the container image architecture such as `amd64`
+	Architecture string `yaml:",omitempty"`
+	// [S][C][T] Image specifies the container image such as `updatecli/updatecli`
+	Image string `yaml:",omitempty"`
+	// [C][T] Tag specifies the container image tag such as `latest`
+	Tag                   string `yaml:",omitempty"`
+	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
+	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
+}
+
 func sanitizeRegistryEndpoint(repository string) string {
 	ref, err := name.ParseReference(repository)
 	if err != nil {
