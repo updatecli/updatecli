@@ -18,7 +18,7 @@ type mockGhHandler struct {
 	tagErr     error
 }
 
-func (m *mockGhHandler) SearchReleases() (releases []string, err error) {
+func (m *mockGhHandler) SearchReleases(releaseType github.ReleaseType) (releases []string, err error) {
 	return m.releases, m.releaseErr
 }
 

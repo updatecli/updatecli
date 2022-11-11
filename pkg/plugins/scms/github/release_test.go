@@ -100,7 +100,10 @@ func TestSearchReleases(t *testing.T) {
 					mockedErr:   tt.mockedError,
 				},
 			}
-			got, err := sut.SearchReleases()
+			releaseType := ReleaseType{}
+			releaseType.Init()
+
+			got, err := sut.SearchReleases(releaseType)
 
 			if tt.wantErr {
 				assert.Error(t, err)
