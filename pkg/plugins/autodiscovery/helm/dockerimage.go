@@ -127,7 +127,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 			yamlRepositoryPath := image.yamlRepositoryPath
 			yamlTagPath := image.yamlTagPath
 
-			dockerImageSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, h.spec.Auths)
+			dockerImageSpec := dockerimage.NewDockerImageSpecFromImage(image.repository, h.spec.Auths)
 
 			manifestName := fmt.Sprintf("Bump Docker Image %q for Helm Chart %q", image.repository, chartName)
 
