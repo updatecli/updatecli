@@ -89,6 +89,10 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 
 		for id, service := range spec.Services {
 
+			// For the time being, it's not possible to retrieve a list of tag for a specific digest
+			// without a lot of api call. More information on following issue
+			// https://github.com/google/go-containerregistry/issues/1297
+			// until a better solution, we don't handle docker image digest
 			if strings.Contains(service.Image, "@sha256") {
 				logrus.Debugf("Docker Digest is not supported at the moment for %q", service.Image)
 				continue
