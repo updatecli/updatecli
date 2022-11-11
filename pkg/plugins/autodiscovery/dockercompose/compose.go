@@ -11,6 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
@@ -100,7 +101,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				serviceImageName,
 				relativeFoundDockerComposeFile)
 
-			sourceSpec := h.generateSourceDockerImageSpec(serviceImageName)
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, h.spec.Auths)
 
 			manifest := config.Spec{
 				Name: manifestName,

@@ -1,4 +1,4 @@
-package dockercompose
+package dockerimage
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -18,8 +18,9 @@ func sanitizeRegistryEndpoint(repository string) string {
 	return ref.Context().RegistryStr()
 }
 
-func (h DockerCompose) generateSourceDockerImageSpec(image string) dockerimage.Spec {
-	dockerimagespec := dockerimage.Spec{
+// NewDockerImageSpecFromImage return a new docker image specification using an image provided as parameter
+func NewDockerImageSpecFromImage(image string, auths map[string]docker.InlineKeyChain) Spec {
+	dockerimagespec := Spec{
 		Image: image,
 		VersionFilter: version.Filter{
 			Kind: version.SEMVERVERSIONKIND,
@@ -28,7 +29,7 @@ func (h DockerCompose) generateSourceDockerImageSpec(image string) dockerimage.S
 
 	registry := sanitizeRegistryEndpoint(image)
 
-	credential, found := h.spec.Auths[registry]
+	credential, found := auths[registry]
 
 	switch found {
 	case true:
@@ -45,7 +46,7 @@ func (h DockerCompose) generateSourceDockerImageSpec(image string) dockerimage.S
 
 		registryAuths := []string{}
 
-		for endpoint := range h.spec.Auths {
+		for endpoint := range auths {
 			logrus.Printf("Endpoint:\t%q\n", endpoint)
 			registryAuths = append(registryAuths, endpoint)
 		}
