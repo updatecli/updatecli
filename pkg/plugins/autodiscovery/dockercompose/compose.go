@@ -87,6 +87,12 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 		}
 
 		for id, service := range spec.Services {
+
+			if strings.Contains(service.Image, "@sha256") {
+				logrus.Debugf("Docker Digest is not supported at the moment for %q", service.Image)
+				continue
+			}
+
 			serviceImageArray := strings.Split(service.Image, ":")
 			serviceImageName := serviceImageArray[0]
 

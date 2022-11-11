@@ -1,5 +1,15 @@
 version: '3'
 services:
+  # Agent-2 should be ignored as digest is not supported at the moment
+  agent-2:
+    image: ghcr.io/updatecli/updatemonitor@sha256:2b3436753ba2c671c382777d8980ed6ea7350851e71bff0326dc776c0c9e2334
+    command: agent start
+    volumes:
+      - "./config.yaml:/home/updatemonitor/.updatemonitor/config.yaml"
+    environment:
+      - UPDATECLI_GITHUB_TOKEN=${UPDATECLI_GITHUB_TOKEN}
+      - UPDATECLI_GITHUB_ACTOR=${UPDATECLI_GITHUB_ACTOR}
+
   mongodb:
     image: mongo:6.0.2
     environment:
