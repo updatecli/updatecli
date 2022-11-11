@@ -77,7 +77,7 @@ func NewDockerImageSpecFromImage(image string, auths map[string]docker.InlineKey
 				image)
 		}
 
-		logrus.Warning(warningMessage)
+		logrus.Debug(warningMessage)
 	}
 
 	return dockerimagespec
