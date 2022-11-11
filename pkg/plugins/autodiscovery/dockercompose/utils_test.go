@@ -29,8 +29,8 @@ func TestGetDockerComposeSpec(t *testing.T) {
 		t.Errorf("%s\n", err)
 	}
 
-	expectedDockerComposeSpec := DockerComposeSpec{
-		Services: map[string]Service{
+	expectedDockerComposeSpec := dockerComposeSpec{
+		Services: map[string]service{
 			"agent-2": {
 				Image: "ghcr.io/updatecli/updatemonitor@sha256:2b3436753ba2c671c382777d8980ed6ea7350851e71bff0326dc776c0c9e2334",
 			},

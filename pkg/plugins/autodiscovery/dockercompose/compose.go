@@ -24,12 +24,12 @@ var (
 		"docker-compose.*.yml"}
 )
 
-type Service struct {
+type service struct {
 	Image string
 }
 
-type DockerComposeSpec struct {
-	Services map[string]Service
+type dockerComposeSpec struct {
+	Services map[string]service
 }
 
 func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, error) {
