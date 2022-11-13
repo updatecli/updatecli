@@ -17,7 +17,7 @@ type MatchingRule struct {
 type MatchingRules []MatchingRule
 
 // isMatchingRule tests that all defined rule are matching and return true if it's the case otherwise return false
-func (m MatchingRules) isMatchingRule(rootDir string, filePath string, services map[string]service) bool {
+func (m MatchingRules) isMatchingRule(rootDir, filePath, service string) bool {
 	// Test if the ignore rule based on path is respected
 
 	var ruleResults []bool
@@ -49,12 +49,10 @@ func (m MatchingRules) isMatchingRule(rootDir string, filePath string, services 
 			if len(matchingRule.Services) > 0 {
 				match := false
 				for _, ms := range matchingRule.Services {
-					for serviceName := range services {
-						if ms == serviceName {
-							logrus.Debugf("service %q matching rule %q", filePath, matchingRule.Path)
-							match = true
-							break
-						}
+					if ms == service {
+						logrus.Debugf("service %q matching rule %q", service, ms)
+						match = true
+						break
 					}
 				}
 				ruleResults = append(ruleResults, match)

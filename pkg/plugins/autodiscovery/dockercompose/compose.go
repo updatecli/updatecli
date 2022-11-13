@@ -57,7 +57,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 		}
 
 		dirname := filepath.Dir(relativeFoundDockerComposeFile)
-		basename := filepath.Base(dirname)
+		basename := filepath.Base(relativeFoundDockerComposeFile)
 
 		// Retrieve chart dependencies for each chart
 
@@ -71,22 +71,6 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 		}
 
 		if len(spec.Services) == 0 {
-			continue
-		}
-
-		// Test if the ignore rule based on path is respected
-		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingRule(h.rootDir, relativeFoundDockerComposeFile, spec.Services) {
-			logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching ignore rule(s)\n",
-				basename,
-				dirname)
-			continue
-		}
-
-		// Test if the only rule based on path is respected
-		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingRule(h.rootDir, relativeFoundDockerComposeFile, spec.Services) {
-			logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching only rule(s)\n",
-				basename,
-				dirname)
 			continue
 		}
 
@@ -114,6 +98,26 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 
 			if arch != "" {
 				sourceSpec.Architecture = arch
+			}
+
+			// Test if the ignore rule based on path is respected
+			if len(h.spec.Ignore) > 0 {
+				if h.spec.Ignore.isMatchingRule(h.rootDir, relativeFoundDockerComposeFile, id) {
+					logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching ignore rule(s)\n",
+						basename,
+						dirname)
+					continue
+				}
+			}
+
+			// Test if the only rule based on path is respected
+			if len(h.spec.Only) > 0 {
+				if !h.spec.Only.isMatchingRule(h.rootDir, relativeFoundDockerComposeFile, id) {
+					logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching only rule(s)\n",
+						basename,
+						dirname)
+					continue
+				}
 			}
 
 			manifest := config.Spec{
@@ -149,7 +153,6 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				},
 			}
 			manifests = append(manifests, manifest)
-
 		}
 	}
 
