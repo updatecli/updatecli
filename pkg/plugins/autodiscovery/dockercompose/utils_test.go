@@ -35,7 +35,8 @@ func TestGetDockerComposeSpec(t *testing.T) {
 				Image: "ghcr.io/updatecli/updatemonitor@sha256:2b3436753ba2c671c382777d8980ed6ea7350851e71bff0326dc776c0c9e2334",
 			},
 			"mongodb": {
-				Image: "mongo:6.0.2",
+				Image:    "mongo:6.0.2",
+				Platform: "linux/amd64",
 			},
 			"agent": {
 				Image: "ghcr.io/updatecli/updatemonitor:v0.1.0",
