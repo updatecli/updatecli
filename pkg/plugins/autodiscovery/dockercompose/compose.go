@@ -59,25 +59,9 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 		dirname := filepath.Dir(relativeFoundDockerComposeFile)
 		basename := filepath.Base(dirname)
 
-		// Test if the ignore rule based on path is respected
-		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundDockerComposeFile) {
-			logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching rule(s)\n",
-				basename,
-				dirname)
-			continue
-		}
-
-		// Test if the only rule based on path is respected
-		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundDockerComposeFile) {
-			logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching rule(s)\n",
-				basename,
-				dirname)
-			continue
-		}
-
 		// Retrieve chart dependencies for each chart
 
-		spec, err := getDockerComposeData(foundDockerComposefile)
+		spec, err := getDockerComposeSpecFromFile(foundDockerComposefile)
 		if err != nil {
 			return nil, err
 		}
@@ -87,6 +71,22 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 		}
 
 		if len(spec.Services) == 0 {
+			continue
+		}
+
+		// Test if the ignore rule based on path is respected
+		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingRule(h.rootDir, relativeFoundDockerComposeFile, spec.Services) {
+			logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching ignore rule(s)\n",
+				basename,
+				dirname)
+			continue
+		}
+
+		// Test if the only rule based on path is respected
+		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingRule(h.rootDir, relativeFoundDockerComposeFile, spec.Services) {
+			logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching only rule(s)\n",
+				basename,
+				dirname)
 			continue
 		}
 

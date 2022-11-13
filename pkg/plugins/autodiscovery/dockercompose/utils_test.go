@@ -23,7 +23,7 @@ func TestSearchFiles(t *testing.T) {
 
 func TestGetDockerComposeSpec(t *testing.T) {
 
-	gotDockerComposeSpec, err := getDockerComposeData(
+	gotDockerComposeSpec, err := getDockerComposeSpecFromFile(
 		"testdata/docker-compose.yaml")
 	if err != nil {
 		t.Errorf("%s\n", err)

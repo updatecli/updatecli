@@ -46,8 +46,8 @@ func searchDockerComposeFiles(rootDir string, files []string) ([]string, error) 
 	return dockerComposeFiles, nil
 }
 
-// getDockerComposeData reads a Chart.yaml for information that could be automated
-func getDockerComposeData(filename string) (*dockerComposeSpec, error) {
+// getDockerComposeSpecFromFile reads a Chart.yaml for information that could be automated
+func getDockerComposeSpecFromFile(filename string) (*dockerComposeSpec, error) {
 
 	var spec dockerComposeSpec
 

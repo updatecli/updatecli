@@ -10,67 +10,71 @@ import (
 type MatchingRule struct {
 	// Path specifies a Helm chart path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
+	// Services specifies a list of docker compose services
+	Services []string
 }
 
 type MatchingRules []MatchingRule
 
-func (m MatchingRules) isMatchingIgnoreRule(rootDir, relativePath string) bool {
+// isMatchingRule tests that all defined rule are matching and return true if it's the case otherwise return false
+func (m MatchingRules) isMatchingRule(rootDir string, filePath string, services map[string]service) bool {
 	// Test if the ignore rule based on path is respected
-	result := false
+
+	var ruleResults []bool
+	var finaleResult bool
 
 	if len(m) > 0 {
-		for _, rule := range m {
-			logrus.Infof("Rule: %q\n", rule.Path)
-			logrus.Infof("Relative Found: %q\n", relativePath)
-			switch filepath.IsAbs(rule.Path) {
-			case true:
-				match, err := filepath.Match(rule.Path, filepath.Join(rootDir, relativePath))
+		for _, matchingRule := range m {
+			var match bool
+			var err error
+
+			// Only check if path rule defined
+			if matchingRule.Path != "" {
+				if filepath.IsAbs(matchingRule.Path) {
+					filePath = filepath.Join(rootDir, filePath)
+				}
+
+				match, err = filepath.Match(matchingRule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					logrus.Errorf("%s - %q", err, matchingRule.Path)
 				}
+				ruleResults = append(ruleResults, match)
 				if match {
-					result = true
-				}
-			case false:
-				match, err := filepath.Match(rule.Path, relativePath)
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
+					logrus.Debugf("file path %q matching rule %q", filePath, matchingRule.Path)
 				}
 			}
-		}
-	}
 
-	return result
-}
+			// Only check if service rule defined.
+			// All services defined in the rule must be matched
+			if len(matchingRule.Services) > 0 {
+				match := false
+				for _, ms := range matchingRule.Services {
+					for serviceName := range services {
+						if ms == serviceName {
+							logrus.Debugf("service %q matching rule %q", filePath, matchingRule.Path)
+							match = true
+							break
+						}
+					}
+				}
+				ruleResults = append(ruleResults, match)
 
-func (m MatchingRules) isMatchingOnlyRule(rootDir, relativePath string) bool {
-	// Test if the only rule based on path is respected
-	result := false
-	if len(m) > 0 {
-		for _, rule := range m {
-			switch filepath.IsAbs(rule.Path) {
-			case true:
-				match, err := filepath.Match(rule.Path, filepath.Join(rootDir, relativePath))
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
-				}
-			case false:
-				match, err := filepath.Match(rule.Path, relativePath)
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
-				}
 			}
 		}
+
+		allMatchingRule := true
+		for i := range ruleResults {
+			if !ruleResults[i] {
+				allMatchingRule = false
+				break
+			}
+		}
+
+		if allMatchingRule {
+			finaleResult = true
+		}
+
 	}
 
-	return result
+	return finaleResult
 }
