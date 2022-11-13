@@ -12,6 +12,7 @@ services:
 
   mongodb:
     image: mongo:6.0.2
+    platform: linux/amd64
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password

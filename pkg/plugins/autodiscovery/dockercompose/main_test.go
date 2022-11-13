@@ -34,7 +34,8 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: "Get latest \"mongo\" Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
-									Image: "mongo",
+									Image:        "mongo",
+									Architecture: "amd64",
 									VersionFilter: version.Filter{
 										Kind: "semver",
 									},

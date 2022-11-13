@@ -26,6 +26,9 @@ var (
 
 type service struct {
 	Image string
+
+	// platform defines the target platform containers for this service will run on
+	Platform string
 }
 
 type dockerComposeSpec struct {
@@ -107,6 +110,12 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 
 			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, h.spec.Auths)
 
+			_, arch, _ := parsePlatform(service.Platform)
+
+			if arch != "" {
+				sourceSpec.Architecture = arch
+			}
+
 			manifest := config.Spec{
 				Name: manifestName,
 				Sources: map[string]source.Config{
@@ -145,4 +154,25 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 	}
 
 	return manifests, nil
+}
+
+func parsePlatform(platform string) (os, arch, variant string) {
+
+	p := strings.Split(platform, "/")
+
+	switch len(p) {
+	case 3:
+		os = p[0]
+		arch = p[1]
+		variant = p[2]
+
+	case 2:
+		os = p[0]
+		arch = p[1]
+
+	case 1:
+		os = p[0]
+	}
+
+	return os, arch, variant
 }
