@@ -2,22 +2,27 @@ package dockercompose
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
 // MatchingRule allows to specifies rules to identify manifest
 type MatchingRule struct {
+	// Arch specifies a list of docker image architecture
+	Archs []string
 	// Path specifies a Helm chart path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
 	// Services specifies a list of docker compose services
 	Services []string
+	// Image specifies a list of docker image
+	Images []string
 }
 
 type MatchingRules []MatchingRule
 
 // isMatchingRule tests that all defined rule are matching and return true if it's the case otherwise return false
-func (m MatchingRules) isMatchingRule(rootDir, filePath, service string) bool {
+func (m MatchingRules) isMatchingRule(rootDir, filePath, service, image, arch string) bool {
 	// Test if the ignore rule based on path is respected
 
 	var ruleResults []bool
@@ -29,7 +34,7 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service string) bool {
 			var err error
 
 			// Only check if path rule defined
-			if matchingRule.Path != "" {
+			if matchingRule.Path != "" && filePath != "" {
 				if filepath.IsAbs(matchingRule.Path) {
 					filePath = filepath.Join(rootDir, filePath)
 				}
@@ -45,8 +50,20 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service string) bool {
 			}
 
 			// Only check if service rule defined.
-			// All services defined in the rule must be matched
-			if len(matchingRule.Services) > 0 {
+			if len(matchingRule.Archs) > 0 && arch != "" {
+				match := false
+				for _, a := range matchingRule.Archs {
+					if a == arch {
+						logrus.Debugf("arch %q matching rule %q", service, a)
+						match = true
+						break
+					}
+				}
+				ruleResults = append(ruleResults, match)
+			}
+
+			// Only check if service rule defined.
+			if len(matchingRule.Services) > 0 && service != "" {
 				match := false
 				for _, ms := range matchingRule.Services {
 					if ms == service {
@@ -56,7 +73,18 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service string) bool {
 					}
 				}
 				ruleResults = append(ruleResults, match)
-
+			}
+			// Only check if image rule defined.
+			if len(matchingRule.Images) > 0 && image != "" {
+				match := false
+				for _, i := range matchingRule.Images {
+					if strings.HasPrefix(image, i) {
+						logrus.Debugf("image %q matching rule %q", image, i)
+						match = true
+						break
+					}
+				}
+				ruleResults = append(ruleResults, match)
 			}
 		}
 

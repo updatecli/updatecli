@@ -92,17 +92,17 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				serviceImageName,
 				relativeFoundDockerComposeFile)
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, h.spec.Auths)
-
 			_, arch, _ := parsePlatform(service.Platform)
-
-			if arch != "" {
-				sourceSpec.Architecture = arch
-			}
 
 			// Test if the ignore rule based on path is respected
 			if len(h.spec.Ignore) > 0 {
-				if h.spec.Ignore.isMatchingRule(h.rootDir, relativeFoundDockerComposeFile, id) {
+				if h.spec.Ignore.isMatchingRule(
+					h.rootDir,
+					relativeFoundDockerComposeFile,
+					id,
+					service.Image,
+					arch) {
+
 					logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching ignore rule(s)\n",
 						basename,
 						dirname)
@@ -112,12 +112,24 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 
 			// Test if the only rule based on path is respected
 			if len(h.spec.Only) > 0 {
-				if !h.spec.Only.isMatchingRule(h.rootDir, relativeFoundDockerComposeFile, id) {
+				if !h.spec.Only.isMatchingRule(
+					h.rootDir,
+					relativeFoundDockerComposeFile,
+					id,
+					service.Image,
+					arch) {
+
 					logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching only rule(s)\n",
 						basename,
 						dirname)
 					continue
 				}
+			}
+
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, h.spec.Auths)
+
+			if arch != "" {
+				sourceSpec.Architecture = arch
 			}
 
 			manifest := config.Spec{

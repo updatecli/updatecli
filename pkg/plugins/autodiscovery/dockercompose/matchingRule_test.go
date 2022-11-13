@@ -13,6 +13,8 @@ func TestIsMatchingRules(t *testing.T) {
 		rootDir        string
 		filePath       string
 		service        string
+		image          string
+		arch           string
 		expectedResult bool
 	}{
 		{
@@ -53,12 +55,77 @@ func TestIsMatchingRules(t *testing.T) {
 			service:        "mongodb",
 			expectedResult: false,
 		},
+		{
+			name: "Scenario 4 - only matchin image name",
+			rules: MatchingRules{
+				MatchingRule{
+					Images: []string{
+						"mongo",
+					},
+				},
+			},
+			filePath:       "docker-compose.yaml",
+			service:        "mongodb",
+			image:          "mongo:6",
+			expectedResult: true,
+		},
+		{
+			name: "Scenario 5 - matching image name and tag",
+			rules: MatchingRules{
+				MatchingRule{
+					Images: []string{
+						"mongo:6",
+					},
+				},
+			},
+			filePath:       "docker-compose.yaml",
+			service:        "mongodb",
+			image:          "mongo:6",
+			expectedResult: true,
+		},
+		{
+			name: "Scenario 6 - correct image but wrong tag",
+			rules: MatchingRules{
+				MatchingRule{
+					Images: []string{
+						"mongo:6",
+					},
+				},
+			},
+			filePath:       "docker-compose.yaml",
+			service:        "mongodb",
+			image:          "mongo:7",
+			expectedResult: false,
+		},
+		{
+			name: "Scenario 6 - correct image and arch",
+			rules: MatchingRules{
+				MatchingRule{
+					Images: []string{
+						"mongo:6",
+					},
+					Archs: []string{
+						"amd64",
+					},
+				},
+			},
+			filePath:       "docker-compose.yaml",
+			service:        "mongodb",
+			image:          "mongo:6",
+			arch:           "amd64",
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			gotResult := tt.rules.isMatchingRule(tt.rootDir, tt.filePath, tt.service)
+			gotResult := tt.rules.isMatchingRule(
+				tt.rootDir,
+				tt.filePath,
+				tt.service,
+				tt.image,
+				tt.arch)
 
 			assert.Equal(t, tt.expectedResult, gotResult)
 
