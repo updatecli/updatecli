@@ -305,3 +305,61 @@ func TestNewFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestNewFilterFromValue(t *testing.T) {
+	tests := []struct {
+		name           string
+		expectedFilter *Filter
+		value          string
+	}{
+		{
+			name: "Case with latest version",
+			expectedFilter: &Filter{
+				Kind:   "semver",
+				Strict: true,
+			},
+			value: "1.0.0",
+		},
+		{
+			name: "Case with latest version",
+			expectedFilter: &Filter{
+				Kind:    "regex",
+				Pattern: `^v?\d*(\.\d*){2}-alpha$`,
+			},
+			value: "1.0.0-alpha",
+		},
+		{
+			name: "Case with jdk",
+			expectedFilter: &Filter{
+				Kind:    "regex",
+				Pattern: `^v?\d*(\.\d*){1}-jdk11$`,
+			},
+			value: "2.235-jdk11",
+		},
+		{
+			name: "Case with jdk",
+			expectedFilter: &Filter{
+				Kind:    "regex",
+				Pattern: `^v?\d*(\.\d*){1}+jdk11$`,
+			},
+			value: "2.235+jdk11",
+		},
+		{
+			name:           "Case with jdk",
+			expectedFilter: nil,
+			value:          "2022_01_13",
+		},
+		{
+			name:           "Case with string only",
+			expectedFilter: nil,
+			value:          "alpine",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFilter := NewFilterFromValue(tt.value)
+
+			assert.Equal(t, tt.expectedFilter, gotFilter)
+		})
+	}
+}
