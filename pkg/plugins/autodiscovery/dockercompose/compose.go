@@ -75,9 +75,12 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 		}
 
 		for id, service := range spec.Services {
+			if service.Image == "" {
+				continue
+			}
 
 			// For the time being, it's not possible to retrieve a list of tag for a specific digest
-			// without a lot of api call. More information on following issue
+			// without a significant amount f api call. More information on following issue
 			// https://github.com/google/go-containerregistry/issues/1297
 			// until a better solution, we don't handle docker image digest
 			if strings.Contains(service.Image, "@sha256") {
@@ -86,7 +89,17 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 			}
 
 			serviceImageArray := strings.Split(service.Image, ":")
-			serviceImageName := serviceImageArray[0]
+
+			// Get container image name and tag
+			serviceImageName := ""
+			serviceImageTag := ""
+			switch len(serviceImageArray) {
+			case 2:
+				serviceImageName = serviceImageArray[0]
+				serviceImageTag = serviceImageArray[1]
+			case 1:
+				serviceImageName = serviceImageArray[0]
+			}
 
 			manifestName := fmt.Sprintf("Bump %q Docker compose service image version for %q",
 				serviceImageName,
@@ -126,7 +139,12 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				}
 			}
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, h.spec.Auths)
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, serviceImageTag, h.spec.Auths)
+
+			if sourceSpec == nil {
+				logrus.Infoln("No source spec detected")
+				continue
+			}
 
 			if arch != "" {
 				sourceSpec.Architecture = arch

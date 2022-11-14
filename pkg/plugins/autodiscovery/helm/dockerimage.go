@@ -127,7 +127,11 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 			yamlRepositoryPath := image.yamlRepositoryPath
 			yamlTagPath := image.yamlTagPath
 
-			dockerImageSpec := dockerimage.NewDockerImageSpecFromImage(image.repository, h.spec.Auths)
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(image.repository, image.tag, h.spec.Auths)
+
+			if sourceSpec == nil {
+				continue
+			}
 
 			manifestName := fmt.Sprintf("Bump Docker Image %q for Helm Chart %q", image.repository, chartName)
 
@@ -138,7 +142,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Get latest %q Container tag", image.repository),
 							Kind: "dockerimage",
-							Spec: dockerImageSpec,
+							Spec: sourceSpec,
 						},
 					},
 				},

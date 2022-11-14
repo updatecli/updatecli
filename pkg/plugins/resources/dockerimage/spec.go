@@ -25,6 +25,9 @@ type Spec struct {
 }
 
 func sanitizeRegistryEndpoint(repository string) string {
+	if repository == "" {
+		return ""
+	}
 	ref, err := name.ParseReference(repository)
 	if err != nil {
 		logrus.Debugf("Unable to parse repository %q: %v", repository, err)
@@ -33,18 +36,38 @@ func sanitizeRegistryEndpoint(repository string) string {
 }
 
 // NewDockerImageSpecFromImage return a new docker image specification using an image provided as parameter
-func NewDockerImageSpecFromImage(image string, auths map[string]docker.InlineKeyChain) Spec {
+func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.InlineKeyChain) *Spec {
+
+	newVersionFilter := version.NewFilterFromValue(tag)
+
 	dockerimagespec := Spec{
 		Image: image,
-		VersionFilter: version.Filter{
-			Kind: version.SEMVERVERSIONKIND,
-		},
+	}
+
+	switch newVersionFilter {
+	case nil:
+		// Option 1
+		// We couldn't identify a good versionFilter so we do not return any dockerimage spec
+		// At the time of writing, semantic versioning is the only way to have reliable results
+		// accross the different registries.
+		// More information on https://github.com/updatecli/updatecli/issues/977
+		logrus.Warningf("We couldn't identify version filtering rule for container tag %q", image+":"+tag)
+		return nil
+
+		// Option 2
+		// If we couldn't identify a versionFilter then we fallback to semantic versioning
+		// as it's the only way to have reliable results accross the different registries
+		// More information on https://github.com/updatecli/updatecli/issues/977
+		//dockerimagespec.VersionFilter = version.Filter{
+		//	Kind: version.SEMVERVERSIONKIND,
+		//}
+	default:
+		dockerimagespec.VersionFilter = *newVersionFilter
 	}
 
 	registry := sanitizeRegistryEndpoint(image)
 
 	credential, found := auths[registry]
-
 	switch found {
 	case true:
 		if credential.Password != "" {
@@ -80,5 +103,5 @@ func NewDockerImageSpecFromImage(image string, auths map[string]docker.InlineKey
 		logrus.Debug(warningMessage)
 	}
 
-	return dockerimagespec
+	return &dockerimagespec
 }
