@@ -2,6 +2,7 @@ package dockerimage
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -13,15 +14,17 @@ import (
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [S][C][T] Architecture specifies the container image architecture such as `amd64`
+	// [S][C] Architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
-	// [S][C][T] Image specifies the container image such as `updatecli/updatecli`
+	// [S][C] Image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
-	// [C][T] Tag specifies the container image tag such as `latest`
+	// [C] Tag specifies the container image tag such as `latest`
 	Tag                   string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
 	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [S] TagFiter allows to restrict tags retrieved from a remote registry by using a regular expression.
+	TagFilter string
 }
 
 func sanitizeRegistryEndpoint(repository string) string {
@@ -38,31 +41,24 @@ func sanitizeRegistryEndpoint(repository string) string {
 // NewDockerImageSpecFromImage return a new docker image specification using an image provided as parameter
 func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.InlineKeyChain) *Spec {
 
-	newVersionFilter := version.NewFilterFromValue(tag)
+	tagFilter, err := getTagFilterFromValue(tag)
 
-	dockerimagespec := Spec{
-		Image: image,
-	}
-
-	switch newVersionFilter {
-	case nil:
-		// Option 1
+	if err != nil {
 		// We couldn't identify a good versionFilter so we do not return any dockerimage spec
 		// At the time of writing, semantic versioning is the only way to have reliable results
 		// accross the different registries.
 		// More information on https://github.com/updatecli/updatecli/issues/977
-		logrus.Warningf("We couldn't identify version filtering rule for container tag %q", image+":"+tag)
+		logrus.Warningln(err)
 		return nil
+	}
 
-		// Option 2
-		// If we couldn't identify a versionFilter then we fallback to semantic versioning
-		// as it's the only way to have reliable results accross the different registries
-		// More information on https://github.com/updatecli/updatecli/issues/977
-		//dockerimagespec.VersionFilter = version.Filter{
-		//	Kind: version.SEMVERVERSIONKIND,
-		//}
-	default:
-		dockerimagespec.VersionFilter = *newVersionFilter
+	dockerimagespec := Spec{
+		Image:     image,
+		TagFilter: tagFilter,
+		VersionFilter: version.Filter{
+			Kind:    version.SEMVERVERSIONKIND,
+			Pattern: ">=" + tag,
+		},
 	}
 
 	registry := sanitizeRegistryEndpoint(image)
@@ -104,4 +100,66 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 	}
 
 	return &dockerimagespec
+}
+
+// NewFrilterFromValue tries to identify the closest tagFilter based on an existing tag
+func getTagFilterFromValue(tag string) (string, error) {
+
+	logrus.Debugf("Trying the identify the best versionFilter for %q", tag)
+
+	if tag == "" {
+		return "", fmt.Errorf("no tag specifed")
+	}
+
+	patterns := []struct {
+		rule    string
+		newRule string
+	}{
+		{
+			rule: `^v\d*(\.\d*){2}$`,
+		},
+		{
+			rule: `^\d*(\.\d*){2}$`,
+		},
+		{
+			rule: `^v?\d*(\.\d*){1}$`,
+		},
+		{
+			rule: `^v?\d*$`,
+		},
+		{
+			rule:    `^v?(\d*){1}(\.\d*){2}([+-].*){1}$`,
+			newRule: `^v?\d*(\.\d*){2}`,
+		},
+		{
+			rule:    `^v?(\d*){1}(\.\d*){1}([+-].*){1}$`,
+			newRule: `^v?\d*(\.\d*){1}`,
+		},
+		{
+			rule:    `^v?(\d*){1}([+-].*)$`,
+			newRule: `^v?\d*`,
+		},
+	}
+
+	for _, pattern := range patterns {
+		re, err := regexp.Compile(pattern.rule)
+		if err != nil {
+			return "", fmt.Errorf("something went wrong with tag regex - %s", err)
+		}
+
+		if re.MatchString(tag) {
+			submatch := re.FindStringSubmatch(tag)
+
+			newRule := pattern.rule
+			if pattern.newRule != "" {
+				newRule = pattern.newRule + submatch[len(submatch)-1] + "$"
+			}
+
+			logrus.Debugf("=> closest regex %q identify for value %q", newRule, tag)
+			return newRule, nil
+		}
+	}
+
+	logrus.Debugf("=> No matching rule identified for %q, feel free to suggest one https://github.com/updatecli/updatecli/issues/new/choose", tag)
+	return "", fmt.Errorf("no tag pattern identify")
 }
