@@ -1,6 +1,8 @@
 package dockerimage
 
 import (
+	"fmt"
+
 	"github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -14,6 +16,8 @@ import (
 type Spec struct {
 	// [S][C][T] Architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
+	// [C] Architectures specifies a list of architectures to check container images for (conditions only)
+	Architectures []string `yaml:",omitempty"`
 	// [S][C][T] Image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
 	// [C][T] Tag specifies the container image tag such as `latest`
@@ -43,6 +47,21 @@ func New(spec interface{}) (*DockerImage, error) {
 		return nil, err
 	}
 
+	if len(newSpec.Architectures) > 0 {
+		if newSpec.Architecture != "" {
+			return nil, fmt.Errorf("Validation error in the resource of type 'dockerimage': the attributes `spec.architecture` and `spec.architecture` are mutually exclusive")
+		}
+
+	} else {
+		if newSpec.Architecture == "" {
+			newSpec.Architecture = "amd64"
+		}
+
+		// Move the "single" architecture to the "multiple" (used everywhere) and discard it
+		newSpec.Architectures = append(newSpec.Architectures, newSpec.Architecture)
+		newSpec.Architecture = ""
+	}
+
 	newFilter, err := newSpec.VersionFilter.Init()
 	if err != nil {
 		return nil, err
@@ -65,12 +84,13 @@ func New(spec interface{}) (*DockerImage, error) {
 	}
 
 	keychains = append(keychains, authn.DefaultKeychain)
-	arch := newSpec.Architecture
-	if arch == "" {
-		arch = "amd64"
-	}
-	newResource.options = append(newResource.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+
 	newResource.options = append(newResource.options, remote.WithAuthFromKeychain(authn.NewMultiKeychain(keychains...)))
+
+	if len(newSpec.Architectures) == 1 {
+		newResource.options = append(newResource.options, remote.WithPlatform(v1.Platform{Architecture: newSpec.Architectures[0], OS: "linux"}))
+	}
+
 	return newResource, nil
 }
 
