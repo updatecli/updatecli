@@ -46,7 +46,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 	if err != nil {
 		// We couldn't identify a good versionFilter so we do not return any dockerimage spec
 		// At the time of writing, semantic versioning is the only way to have reliable results
-		// accross the different registries.
+		// across the different registries.
 		// More information on https://github.com/updatecli/updatecli/issues/977
 		logrus.Warningln(err)
 		return nil
@@ -107,8 +107,11 @@ func getTagFilterFromValue(tag string) (string, error) {
 
 	logrus.Debugf("Trying the identify the best versionFilter for %q", tag)
 
-	if tag == "" {
-		return "", fmt.Errorf("no tag specifed")
+	switch tag {
+	case "latest":
+		return "", fmt.Errorf("tag latest means nothing to me")
+	case "":
+		return "", fmt.Errorf("no tag specified")
 	}
 
 	patterns := []struct {
@@ -160,6 +163,6 @@ func getTagFilterFromValue(tag string) (string, error) {
 		}
 	}
 
-	logrus.Debugf("=> No matching rule identified for %q, feel free to suggest one https://github.com/updatecli/updatecli/issues/new/choose", tag)
+	logrus.Warningf("=> No matching rule identified for Docker image tag %q, feel free to ignore this image with a manifest or to suggest a new rule on https://github.com/updatecli/updatecli/issues/new/choose", tag)
 	return "", fmt.Errorf("no tag pattern identify")
 }
