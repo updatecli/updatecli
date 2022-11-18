@@ -14,8 +14,9 @@ type ReleaseType struct {
 
 func (r *ReleaseType) Init() {
 	// If all release type are disable then fallback to stable one only
-	if !r.Draft && !r.PreRelease && !r.Release {
+	if !r.Draft && !r.PreRelease && !r.Release && !r.Latest {
 		r.Release = true
+		r.Latest = true
 	}
 }
 
