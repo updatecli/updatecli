@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
@@ -82,9 +81,6 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err
 		},
 	}
 
-	expectedFound := 0
-	releaseCounter := 0
-
 	for {
 		err := g.client.Query(context.Background(), &query, variables)
 		if err != nil {
@@ -95,7 +91,6 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err
 		query.RateLimit.Show()
 
 		for i := len(query.Repository.Releases.Edges) - 1; i >= 0; i-- {
-			releaseCounter++
 			node := query.Repository.Releases.Edges[i]
 
 			// If releaseType.Latest is set to true, then it means
@@ -124,17 +119,11 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err
 			}
 		}
 
-		expectedFound = query.Repository.Releases.TotalCount
-
 		if !query.Repository.Releases.PageInfo.HasPreviousPage {
 			break
 		}
 
 		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Releases.PageInfo.StartCursor))
-	}
-
-	if expectedFound != releaseCounter {
-		return releases, fmt.Errorf("something went wrong, found %d releases, expected %d", releaseCounter, expectedFound)
 	}
 
 	logrus.Debugf("%d releases found", len(releases))
