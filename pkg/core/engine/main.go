@@ -161,7 +161,7 @@ func (e *Engine) Prepare() (err error) {
 
 	err = e.LoadConfigurations()
 
-	if !errors.Is(err, ErrNoManifestDetected) {
+	if !errors.Is(err, ErrNoManifestDetected) && err != nil {
 		logrus.Errorln(err)
 		logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
 	}
