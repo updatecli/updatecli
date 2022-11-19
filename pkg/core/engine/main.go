@@ -168,7 +168,7 @@ func (e *Engine) Prepare() (err error) {
 
 	if errors.Is(err, ErrNoManifestDetected) {
 		if !e.Options.Pipeline.AutoDiscovery.Enabled {
-			logrus.Warningf("No Updatecli manifest found. As a fallback, I enable the autodiscovery feature\n\n")
+			logrus.Infof("Autodiscovery enabled as no Updatecli manifest could be detected\n\n")
 		}
 		e.Options.Pipeline.AutoDiscovery.Enabled = true
 	}
