@@ -36,8 +36,10 @@ func TestDiscoverManifests(t *testing.T) {
 								Spec: dockerimage.Spec{
 									Image:        "mongo",
 									Architecture: "amd64",
+									TagFilter:    `^\d*(\.\d*){2}$`,
 									VersionFilter: version.Filter{
-										Kind: "semver",
+										Kind:    "semver",
+										Pattern: ">=6.0.2",
 									},
 								},
 							},
@@ -71,9 +73,11 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: "Get latest \"ghcr.io/updatecli/updatemonitor\" Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
-									Image: "ghcr.io/updatecli/updatemonitor",
+									Image:     "ghcr.io/updatecli/updatemonitor",
+									TagFilter: `^v\d*(\.\d*){2}$`,
 									VersionFilter: version.Filter{
-										Kind: "semver",
+										Kind:    "semver",
+										Pattern: ">=v0.1.0",
 									},
 								},
 							},
@@ -106,9 +110,11 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: "Get latest \"ghcr.io/updatecli/updatemonitor\" Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
-									Image: "ghcr.io/updatecli/updatemonitor",
+									Image:     "ghcr.io/updatecli/updatemonitor",
+									TagFilter: `^v\d*(\.\d*){2}$`,
 									VersionFilter: version.Filter{
-										Kind: "semver",
+										Kind:    "semver",
+										Pattern: ">=v0.1.0",
 									},
 								},
 							},
@@ -141,9 +147,11 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: "Get latest \"ghcr.io/updatecli/updatemonitor-ui\" Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
-									Image: "ghcr.io/updatecli/updatemonitor-ui",
+									Image:     "ghcr.io/updatecli/updatemonitor-ui",
+									TagFilter: `^v\d*(\.\d*){2}$`,
 									VersionFilter: version.Filter{
-										Kind: "semver",
+										Kind:    "semver",
+										Pattern: ">=v0.1.1",
 									},
 								},
 							},
@@ -176,9 +184,11 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: "Get latest \"traefik\" Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
-									Image: "traefik",
+									Image:     "traefik",
+									TagFilter: `^v?\d*(\.\d*){1}$`,
 									VersionFilter: version.Filter{
-										Kind: "semver",
+										Kind:    "semver",
+										Pattern: ">=v2.9",
 									},
 								},
 							},
