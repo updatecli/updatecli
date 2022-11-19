@@ -157,7 +157,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Get latest %q Docker Image Tag", serviceImageName),
 							Kind: "dockerimage",
-							Spec: sourceSpec,
+							Spec: *sourceSpec,
 						},
 					},
 				},
