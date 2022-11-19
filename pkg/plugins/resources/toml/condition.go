@@ -32,9 +32,9 @@ func (t *Toml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		var queryResults []string
 		var err error
 
-		switch t.spec.Multiple {
+		switch len(t.spec.Query) > 0 {
 		case true:
-			queryResults, err = t.contents[i].MultipleQuery(t.spec.Key)
+			queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
 
 			if err != nil {
 				return false, err
