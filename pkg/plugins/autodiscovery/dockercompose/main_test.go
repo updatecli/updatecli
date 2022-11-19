@@ -27,11 +27,11 @@ func TestDiscoverManifests(t *testing.T) {
 			rootDir: "testdata",
 			expectedPipelines: []config.Spec{
 				{
-					Name: "Bump \"mongo\" Docker compose service image version for \"docker-compose.yaml\"",
+					Name: "Bump Docker Image Tag for \"mongo\"",
 					Sources: map[string]source.Config{
 						"mongodb": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest \"mongo\" Docker Image Tag",
+								Name: "[mongo] Get latest Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
 									Image:        "mongo",
@@ -49,10 +49,10 @@ func TestDiscoverManifests(t *testing.T) {
 						"mongodb": {
 							SourceID: "mongodb",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"mongo\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
+								Name: "[mongo] Bump Docker Image tag in \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
-									File: "testdata/docker-compose.yaml",
+									File: "docker-compose.yaml",
 									Key:  "services.mongodb.image",
 								},
 								Transformers: transformer.Transformers{
@@ -66,11 +66,11 @@ func TestDiscoverManifests(t *testing.T) {
 				},
 				{
 
-					Name: "Bump \"ghcr.io/updatecli/updatemonitor\" Docker compose service image version for \"docker-compose.yaml\"",
+					Name: "Bump Docker Image Tag for \"ghcr.io/updatecli/updatemonitor\"",
 					Sources: map[string]source.Config{
 						"agent": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest \"ghcr.io/updatecli/updatemonitor\" Docker Image Tag",
+								Name: "[ghcr.io/updatecli/updatemonitor] Get latest Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
 									Image:     "ghcr.io/updatecli/updatemonitor",
@@ -87,10 +87,10 @@ func TestDiscoverManifests(t *testing.T) {
 						"agent": {
 							SourceID: "agent",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"ghcr.io/updatecli/updatemonitor\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
+								Name: "[ghcr.io/updatecli/updatemonitor] Bump Docker Image tag in \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
-									File: "testdata/docker-compose.yaml",
+									File: "docker-compose.yaml",
 									Key:  "services.agent.image",
 								},
 								Transformers: transformer.Transformers{
@@ -103,11 +103,11 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 				},
 				{
-					Name: "Bump \"ghcr.io/updatecli/updatemonitor\" Docker compose service image version for \"docker-compose.yaml\"",
+					Name: "Bump Docker Image Tag for \"ghcr.io/updatecli/updatemonitor\"",
 					Sources: map[string]source.Config{
 						"server": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest \"ghcr.io/updatecli/updatemonitor\" Docker Image Tag",
+								Name: "[ghcr.io/updatecli/updatemonitor] Get latest Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
 									Image:     "ghcr.io/updatecli/updatemonitor",
@@ -124,10 +124,10 @@ func TestDiscoverManifests(t *testing.T) {
 						"server": {
 							SourceID: "server",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"ghcr.io/updatecli/updatemonitor\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
+								Name: "[ghcr.io/updatecli/updatemonitor] Bump Docker Image tag in \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
-									File: "testdata/docker-compose.yaml",
+									File: "docker-compose.yaml",
 									Key:  "services.server.image",
 								},
 								Transformers: transformer.Transformers{
@@ -140,11 +140,11 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 				},
 				{
-					Name: "Bump \"ghcr.io/updatecli/updatemonitor-ui\" Docker compose service image version for \"docker-compose.yaml\"",
+					Name: "Bump Docker Image Tag for \"ghcr.io/updatecli/updatemonitor-ui\"",
 					Sources: map[string]source.Config{
 						"front": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest \"ghcr.io/updatecli/updatemonitor-ui\" Docker Image Tag",
+								Name: "[ghcr.io/updatecli/updatemonitor-ui] Get latest Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
 									Image:     "ghcr.io/updatecli/updatemonitor-ui",
@@ -161,10 +161,10 @@ func TestDiscoverManifests(t *testing.T) {
 						"front": {
 							SourceID: "front",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"ghcr.io/updatecli/updatemonitor-ui\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
+								Name: "[ghcr.io/updatecli/updatemonitor-ui] Bump Docker Image tag in \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
-									File: "testdata/docker-compose.yaml",
+									File: "docker-compose.yaml",
 									Key:  "services.front.image",
 								},
 								Transformers: transformer.Transformers{
@@ -177,11 +177,11 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 				},
 				{
-					Name: "Bump \"traefik\" Docker compose service image version for \"docker-compose.yaml\"",
+					Name: "Bump Docker Image Tag for \"traefik\"",
 					Sources: map[string]source.Config{
 						"traefik": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest \"traefik\" Docker Image Tag",
+								Name: "[traefik] Get latest Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
 									Image:     "traefik",
@@ -198,10 +198,10 @@ func TestDiscoverManifests(t *testing.T) {
 						"traefik": {
 							SourceID: "traefik",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"traefik\" Docker Image tag for docker compose file \"docker-compose.yaml\"",
+								Name: "[traefik] Bump Docker Image tag in \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
-									File: "testdata/docker-compose.yaml",
+									File: "docker-compose.yaml",
 									Key:  "services.traefik.image",
 								},
 								Transformers: transformer.Transformers{

@@ -101,9 +101,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				serviceImageName = serviceImageArray[0]
 			}
 
-			manifestName := fmt.Sprintf("Bump %q Docker compose service image version for %q",
-				serviceImageName,
-				relativeFoundDockerComposeFile)
+			manifestName := fmt.Sprintf("Bump Docker Image Tag for %q", serviceImageName)
 
 			_, arch, _ := parsePlatform(service.Platform)
 
@@ -155,7 +153,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				Sources: map[string]source.Config{
 					id: {
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Get latest %q Docker Image Tag", serviceImageName),
+							Name: fmt.Sprintf("[%s] Get latest Docker Image Tag", serviceImageName),
 							Kind: "dockerimage",
 							Spec: *sourceSpec,
 						},
@@ -165,12 +163,12 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 					id: {
 						SourceID: id,
 						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Bump %q Docker Image tag for docker compose file %q",
+							Name: fmt.Sprintf("[%s] Bump Docker Image tag in %q",
 								serviceImageName,
 								relativeFoundDockerComposeFile),
 							Kind: "yaml",
 							Spec: yaml.Spec{
-								File: foundDockerComposefile,
+								File: relativeFoundDockerComposeFile,
 								Key:  fmt.Sprintf("services.%s.image", id),
 							},
 							Transformers: transformer.Transformers{
