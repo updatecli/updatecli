@@ -51,7 +51,7 @@ type Spec struct {
 type Github struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
-	// HeadBranch is used when creating a temporary branch before opening a PR
+	// HeadBranch is used when creating a temporary branch before opening a Pull Request
 	HeadBranch       string
 	client           GitHubClient
 	nativeGitHandler gitgeneric.GitHandler

@@ -1,4 +1,4 @@
-package pullrequest
+package action
 
 import (
 	"errors"
@@ -16,20 +16,20 @@ import (
 )
 
 var (
-	// ErrWrongConfig is returned when a pullrequest has missing mandatory attributes.
-	ErrWrongConfig = errors.New("wrong pull request configuration")
+	// ErrWrongConfig is returned when an action has missing mandatory attributes.
+	ErrWrongConfig = errors.New("wrong action configuration")
 )
 
-// PullRequestHandler interface defines required functions to be an pullRequest
-type PullRequestHandler interface {
-	CreatePullRequest(title, changelog, pipelineReport string) error
+// ActionHandler interface defines required functions to be an action
+type ActionHandler interface {
+	CreateAction(title, changelog, pipelineReport string) error
 }
 
-// Config define pullRequest provided via an updatecli configuration
+// Config define action provided via an updatecli configuration
 type Config struct {
-	// Title defines the pullRequest title
+	// Title defines the action title
 	Title string `yaml:",omitempty"`
-	// Kind defines the pullRequest `kind` which affects accepted "spec" values
+	// Kind defines the action `kind` which affects accepted "spec" values
 	Kind string `yaml:",omitempty"`
 	// Spec defines parameters for a specific "kind"
 	Spec interface{} `yaml:",omitempty"`
@@ -39,17 +39,17 @@ type Config struct {
 	DeprecatedScmID string `yaml:"scmID,omitempty" jsonschema:"-"`
 }
 
-// PullRequest is a struct used by an updatecli pipeline.
-type PullRequest struct {
+// Action is a struct used by an updatecli pipeline.
+type Action struct {
 	Title          string
 	Changelog      string
 	PipelineReport string
 	Config         Config
 	Scm            *scm.Scm
-	Handler        PullRequestHandler
+	Handler        ActionHandler
 }
 
-// Validate ensures that a pullRequest configuration has required parameters.
+// Validate ensures that an action configuration has required parameters.
 func (c *Config) Validate() (err error) {
 
 	missingParameters := []string{}
@@ -91,29 +91,29 @@ func (c *Config) Validate() (err error) {
 
 }
 
-// New returns a new PullRequest based on a pullrequest config and an scm
-func New(config *Config, sourceControlManager *scm.Scm) (PullRequest, error) {
+// New returns a new Action based on an action config and an scm
+func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
 
-	p := PullRequest{
+	p := Action{
 		Title:  config.Title,
 		Config: *config,
 		Scm:    sourceControlManager,
 	}
 
-	err := p.generatePullRequestHandler()
+	err := p.generateActionHandler()
 	if err != nil {
-		return PullRequest{}, err
+		return Action{}, err
 	}
 
 	return p, nil
 
 }
 
-// Update updates a pullRequest object based on its configuration
-func (p *PullRequest) Update() error {
+// Update updates an action object based on its configuration
+func (p *Action) Update() error {
 	p.Title = p.Config.Title
 
-	err := p.generatePullRequestHandler()
+	err := p.generateActionHandler()
 	if err != nil {
 		return err
 	}
@@ -121,79 +121,79 @@ func (p *PullRequest) Update() error {
 	return nil
 }
 
-func (p *PullRequest) generatePullRequestHandler() error {
+func (a *Action) generateActionHandler() error {
 
-	switch p.Config.Kind {
+	switch a.Config.Kind {
 	case "gitea":
-		pullRequestSpec := gitea.Spec{}
+		actionSpec := gitea.Spec{}
 
-		if p.Scm.Config.Kind != "gitea" {
-			return fmt.Errorf("scm of kind %q is not compatible with pullrequest of kind %q",
-				p.Scm.Config.Kind,
-				p.Config.Kind)
+		if a.Scm.Config.Kind != "gitea" {
+			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
+				a.Scm.Config.Kind,
+				a.Config.Kind)
 		}
 
-		err := mapstructure.Decode(p.Config.Spec, &pullRequestSpec)
+		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
 		if err != nil {
 			return err
 		}
 
-		ge, ok := p.Scm.Handler.(*giteascm.Gitea)
+		ge, ok := a.Scm.Handler.(*giteascm.Gitea)
 
 		if !ok {
 			return fmt.Errorf("scm is not of kind 'gitea'")
 		}
 
-		g, err := gitea.New(pullRequestSpec, ge)
+		g, err := gitea.New(actionSpec, ge)
 
 		if err != nil {
 			return err
 		}
 
-		p.Handler = &g
+		a.Handler = &g
 
 	case "github":
-		pullRequestSpec := github.PullRequestSpec{}
+		actionSpec := github.ActionSpec{}
 
-		if p.Scm.Config.Kind != "github" {
-			return fmt.Errorf("scm of kind %q is not compatible with pullrequest of kind %q",
-				p.Scm.Config.Kind,
-				p.Config.Kind)
+		if a.Scm.Config.Kind != "github" {
+			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
+				a.Scm.Config.Kind,
+				a.Config.Kind)
 		}
 
-		err := mapstructure.Decode(p.Config.Spec, &pullRequestSpec)
+		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
 		if err != nil {
 			return err
 		}
 
-		gh, ok := p.Scm.Handler.(*github.Github)
+		gh, ok := a.Scm.Handler.(*github.Github)
 
 		if !ok {
 			return fmt.Errorf("scm is not of kind 'github'")
 		}
 
-		g, err := github.NewPullRequest(pullRequestSpec, gh)
+		g, err := github.NewAction(actionSpec, gh)
 
 		if err != nil {
 			return err
 		}
 
-		p.Handler = &g
+		a.Handler = &g
 
 	default:
-		logrus.Errorf("scm of kind %q is not supported", p.Config.Kind)
+		logrus.Errorf("scm of kind %q is not supported", a.Config.Kind)
 	}
 
 	return nil
 }
 
-// JSONSchema implements the json schema interface to generate the "pullrequest" jsonschema
+// JSONSchema implements the json schema interface to generate the "action" jsonschema
 func (Config) JSONSchema() *jschema.Schema {
 
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
-		"github": &github.PullRequestSpec{},
+		"github": &github.ActionSpec{},
 		"gitea":  &gitea.Spec{},
 	}
 

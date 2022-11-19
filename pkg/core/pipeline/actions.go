@@ -8,19 +8,19 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (p *Pipeline) RunPullRequests() error {
+func (p *Pipeline) RunActions() error {
 
 	if len(p.Targets) == 0 {
-		logrus.Debugln("no target found, skipping pullrequest")
+		logrus.Debugln("no target found, skipping action")
 		return nil
 	}
 
-	if len(p.PullRequests) > 0 {
-		logrus.Infof("\n\n%s\n", strings.ToTitle("Pull Requests"))
-		logrus.Infof("%s\n\n", strings.Repeat("=", len("PullRequests")+1))
+	if len(p.Actions) > 0 {
+		logrus.Infof("\n\n%s\n", strings.ToTitle("Actions"))
+		logrus.Infof("%s\n\n", strings.Repeat("=", len("Actions")+1))
 	}
 
-	for id, pr := range p.PullRequests {
+	for id, action := range p.Actions {
 		relatedTargets, err := p.SearchAssociatedTargetsID(id)
 
 		if err != nil {
@@ -28,35 +28,35 @@ func (p *Pipeline) RunPullRequests() error {
 			continue
 		}
 
-		if _, ok := p.SCMs[pr.Config.ScmID]; !ok {
-			return fmt.Errorf("scm id %q couldn't be found", pr.Config.ScmID)
+		if _, ok := p.SCMs[action.Config.ScmID]; !ok {
+			return fmt.Errorf("scm id %q couldn't be found", action.Config.ScmID)
 		}
 
-		inheritedSCM := p.SCMs[pr.Config.ScmID]
-		pr.Scm = &inheritedSCM
+		inheritedSCM := p.SCMs[action.Config.ScmID]
+		action.Scm = &inheritedSCM
 
-		pr = p.PullRequests[id]
-		pr.Config = p.Config.Spec.PullRequests[id]
+		action = p.Actions[id]
+		action.Config = p.Config.Spec.Actions[id]
 
-		err = pr.Update()
+		err = action.Update()
 		if err != nil {
 			return err
 		}
 
-		if p.SCMs[pr.Config.ScmID].Config.Kind != pr.Config.Kind {
-			return fmt.Errorf("pullrequest of kind %q is not compatible with scm %q of kind %q",
-				pr.Config.Kind,
-				pr.Config.ScmID,
-				p.SCMs[pr.Config.ScmID].Config.Kind)
+		if p.SCMs[action.Config.ScmID].Config.Kind != action.Config.Kind {
+			return fmt.Errorf("action of kind %q is not compatible with scm %q of kind %q",
+				action.Config.Kind,
+				action.Config.ScmID,
+				p.SCMs[action.Config.ScmID].Config.Kind)
 		}
 
 		firstTargetID := relatedTargets[0]
 		firstTargetSourceID := p.Targets[firstTargetID].Config.SourceID
 
-		// If pr.Title is not set then we try to guess it
+		// If action.Title is not set then we try to guess it
 		// based on the first target title
-		if len(pr.Title) == 0 {
-			pr.Title = p.Config.GetChangelogTitle(
+		if len(action.Title) == 0 {
+			action.Title = p.Config.GetChangelogTitle(
 				firstTargetID,
 				p.Sources[firstTargetSourceID].Output,
 			)
@@ -75,7 +75,7 @@ func (p *Pipeline) RunPullRequests() error {
 			return err
 		}
 
-		pr.PipelineReport = fmt.Sprintf("%s\n%s\n%s\n",
+		action.PipelineReport = fmt.Sprintf("%s\n%s\n%s\n",
 			sourcesReport,
 			conditionsReport,
 			targetsReport,
@@ -92,12 +92,12 @@ func (p *Pipeline) RunPullRequests() error {
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
-			logrus.Errorf("%d target(s) (%s) failed for pullrequest %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
+			logrus.Errorf("%d target(s) (%s) failed for action %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
 		}
 
 		// Ignoring skipped targets
 		if len(skippedTargetIDs) > 0 {
-			return fmt.Errorf("%d target(s) (%s) skipped for pullrequest %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
+			return fmt.Errorf("%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
 		}
 
 		// Ensure we don't add changelog from the same sourceID twice
@@ -116,38 +116,38 @@ func (p *Pipeline) RunPullRequests() error {
 				processedSourceIDs = append(processedSourceIDs, sourceID)
 			}
 		}
-		pr.Changelog = changelog
+		action.Changelog = changelog
 
 		if p.Options.Target.DryRun {
 			if len(attentionTargetIDs) > 0 {
-				logrus.Infof("[Dry Run] A pull request with kind %q and title %q is expected.", pr.Config.Kind, pr.Title)
+				logrus.Infof("[Dry Run] An action with kind %q and title %q is expected.", action.Config.Kind, action.Title)
 
-				pullRequestDebugOutput := fmt.Sprintf("The expected pull request would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
-					pr.Title,
-					pr.Changelog,
-					pr.PipelineReport)
-				logrus.Debugf(strings.ReplaceAll(pullRequestDebugOutput, "\n", "\n\t|\t"))
+				actionDebugOutput := fmt.Sprintf("The expected action would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
+					action.Title,
+					action.Changelog,
+					action.PipelineReport)
+				logrus.Debugf(strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
 			}
 
-			pullRequestDebugOutput := fmt.Sprintf("The expected Pull Request would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
-				pr.Title,
-				pr.Changelog,
-				pr.PipelineReport)
-			logrus.Debugf(strings.ReplaceAll(pullRequestDebugOutput, "\n", "\n\t|\t"))
+			actionOutput := fmt.Sprintf("The expected action would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
+				action.Title,
+				action.Changelog,
+				action.PipelineReport)
+			logrus.Debugf(strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
 
 			return nil
 		}
 
-		err = pr.Handler.CreatePullRequest(
-			pr.Title,
-			pr.Changelog,
-			pr.PipelineReport)
+		err = action.Handler.CreateAction(
+			action.Title,
+			action.Changelog,
+			action.PipelineReport)
 
 		if err != nil {
 			return err
 		}
 
-		p.PullRequests[id] = pr
+		p.Actions[id] = action
 	}
 	return nil
 }
@@ -176,13 +176,13 @@ func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
 	return failedTargetsID, attentionTargetsID, successTargetsID, skippedTargetsID
 }
 
-// SearchAssociatedTargetsID search for targets related to a pullrequest based on a scm configuration
-func (p *Pipeline) SearchAssociatedTargetsID(pullrequestID string) ([]string, error) {
+// SearchAssociatedTargetsID search for targets related to an action based on a scm configuration
+func (p *Pipeline) SearchAssociatedTargetsID(actionID string) ([]string, error) {
 
-	scmid := p.PullRequests[pullrequestID].Config.ScmID
+	scmid := p.Actions[actionID].Config.ScmID
 
 	if len(scmid) == 0 {
-		return []string{}, fmt.Errorf("scmid %q not found for pullrequest id %q", scmid, pullrequestID)
+		return []string{}, fmt.Errorf("scmid %q not found for the action %q", scmid, actionID)
 	}
 	results := []string{}
 

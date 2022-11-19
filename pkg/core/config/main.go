@@ -12,9 +12,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	autodiscovery "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
@@ -56,8 +56,8 @@ type Spec struct {
 	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
 	// Title is used for the full pipeline
 	Title string `yaml:",omitempty"`
-	// PullRequests defines the list of Pull Request configuration which need to be managed
-	PullRequests map[string]pullrequest.Config `yaml:",omitempty"`
+	// Actions defines the list of action configurations which need to be managed
+	Actions map[string]action.Config `yaml:",omitempty"`
 	// SCMs defines the list of repository configuration used to fetch content from.
 	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
 	// Sources defines the list of source configuration
@@ -270,30 +270,30 @@ func (config *Config) Display() error {
 	return nil
 }
 
-func (config *Config) validatePullRequests() error {
-	for id, p := range config.Spec.PullRequests {
-		if err := p.Validate(); err != nil {
-			logrus.Errorf("bad parameters for pullrequest %q", id)
+func (config *Config) validateActions() error {
+	for id, a := range config.Spec.Actions {
+		if err := a.Validate(); err != nil {
+			logrus.Errorf("bad parameters for action %q", id)
 			return err
 		}
 
-		// Then validate that the pullrequest specifies an existing SCM
-		if len(p.ScmID) > 0 {
-			if _, ok := config.Spec.SCMs[p.ScmID]; !ok {
-				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, p.ScmID)
+		// Then validate that the action specifies an existing SCM
+		if len(a.ScmID) > 0 {
+			if _, ok := config.Spec.SCMs[a.ScmID]; !ok {
+				logrus.Errorf("The action %q specifies a scm id %q which does not exist", id, a.ScmID)
 				return ErrBadConfig
 			}
 		}
 
-		// p.Validate may modify the object during validation
+		// a.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.Spec.PullRequests[id] = p
+		config.Spec.Actions[id] = a
 	}
 	return nil
 }
 
 func (config *Config) validateAutodiscovery() error {
-	// Then validate that the pullrequest specifies an existing SCM
+	// Then validate that the action specifies an existing SCM
 	if len(config.Spec.AutoDiscovery.ScmId) > 0 {
 		if _, ok := config.Spec.SCMs[config.Spec.AutoDiscovery.ScmId]; !ok {
 			logrus.Errorf("The autodiscovery specifies a scm id %q which does not exist",
@@ -440,11 +440,11 @@ func (config *Config) Validate() error {
 			fmt.Errorf("conditions validation error:\n%s", err))
 	}
 
-	err = config.validatePullRequests()
+	err = config.validateActions()
 	if err != nil {
 		errs = append(
 			errs,
-			fmt.Errorf("pullrequests validation error:\n%s", err))
+			fmt.Errorf("actions validation error:\n%s", err))
 	}
 
 	err = config.validateAutodiscovery()
