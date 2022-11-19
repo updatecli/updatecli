@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -33,23 +34,45 @@ func (di *DockerImage) Condition(source string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("invalid image %s: %w", refName, err)
 	}
-	_, err = remote.Head(ref, di.options...)
+
+	if len(di.spec.Architectures) == 0 {
+		// If only one architecture is specified, then di.options are already set: let's proceed
+		return checkImage(ref, di.spec.Architecture, di.options)
+	}
+
+	for _, arch := range di.spec.Architectures {
+		remoteOptions := append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+
+		found, err := checkImage(ref, arch, remoteOptions)
+		if !found || err != nil {
+			return false, err
+		}
+	}
+
+	return true, err
+}
+
+// checkImage checks if a container reference exists on the "remote" registry with a given set of options
+func checkImage(ref name.Reference, arch string, remoteOpts []remote.Option) (bool, error) {
+	_, err := remote.Head(ref, remoteOpts...)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "unexpected status code 404") {
-			logrus.Infof("%s The Docker image %s doesn't exist.",
+			logrus.Infof("%s The Docker image %s (%s) doesn't exist.",
 				result.FAILURE,
-				refName,
+				ref.Name(),
+				arch,
 			)
 			return false, nil
 		}
 		return false, err
 	}
 
-	logrus.Infof("%s The Docker image %s exists and is available.",
+	logrus.Infof("%s The Docker image %s (%s) exists and is available.",
 		result.SUCCESS,
-		refName,
+		ref.Name(),
+		arch,
 	)
 
-	return err == nil, err
+	return true, nil
 }

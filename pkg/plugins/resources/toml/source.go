@@ -9,19 +9,48 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+var (
+	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
+)
+
 func (t *Toml) Source(workingDir string) (string, error) {
 
 	if len(t.contents) > 1 {
 		return "", errors.New("source only supports one file")
 	}
 
+	if (len(t.spec.Query) > 0 && t.spec.VersionFilter.IsZero()) ||
+		(len(t.spec.Query) == 0) && !t.spec.VersionFilter.IsZero() {
+		return "", ErrSpecVersionFilterRequireMultiple
+	}
+
+	content := t.contents[0]
+
 	sourceOutput := ""
-	for i := range t.contents {
-		if err := t.contents[i].Read(workingDir); err != nil {
+
+	if err := content.Read(workingDir); err != nil {
+		return "", err
+	}
+
+	query := ""
+	switch len(t.spec.Query) > 0 {
+	case true:
+		query = t.spec.Query
+		queryResults, err := content.MultipleQuery(query)
+
+		if err != nil {
 			return "", err
 		}
 
-		queryResult, err := t.contents[i].DaselNode.Query(t.spec.Key)
+		t.foundVersion, err = t.versionFilter.Search(queryResults)
+		if err != nil {
+			return "", err
+		}
+		sourceOutput = t.foundVersion.GetVersion()
+
+	case false:
+		query = t.spec.Key
+		queryResult, err := content.DaselNode.Query(query)
 		if err != nil {
 			// Catch error message returned by Dasel, if it couldn't find the node
 			// This is approach is not very robust
@@ -31,21 +60,20 @@ func (t *Toml) Source(workingDir string) (string, error) {
 				err := fmt.Errorf("%s cannot find value for path %q from file %q",
 					result.FAILURE,
 					t.spec.Key,
-					t.contents[i].FilePath)
+					content.FilePath)
 				return "", err
 			}
 			return "", err
 		}
 
-		logrus.Infof("%s Value %q, found in file %q, for key %q'",
-			result.SUCCESS,
-			queryResult.String(),
-			t.contents[i].FilePath,
-			t.spec.Key)
-
 		sourceOutput = queryResult.String()
-
 	}
+
+	logrus.Infof("%s Value %q, found in file %q, for key %q'",
+		result.SUCCESS,
+		sourceOutput,
+		content.FilePath,
+		query)
 
 	return sourceOutput, nil
 }
