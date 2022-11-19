@@ -33,8 +33,6 @@ sources:
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
             versionfilter:
                 kind: semver
-        transformers:
-          - addprefix: "v"
 targets:
     goWorkflow:
         name: Bump Venom version to {{ source "latestVersion" }}

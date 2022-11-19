@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -15,7 +16,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 
-	dockerimageutils "github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -183,18 +183,11 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 }
 
 func sanitizeRegistryEndpoint(repository string) string {
-	// amd64 is only there to avoid warning message as architecture doesn't matter anyway.
-	image, err := dockerimageutils.New(repository, "amd64")
-
-	if image.Registry == "registry-1.docker.io" {
-		image.Registry = "docker.io"
-	}
-
+	ref, err := name.ParseReference(repository)
 	if err != nil {
-		logrus.Errorln(err)
+		logrus.Debugf("Unable to parse repository %q: %v", repository, err)
 	}
-
-	return image.Registry
+	return ref.Context().RegistryStr()
 }
 
 func (h Helm) generateSourceDockerImageSpec(image string) dockerimage.Spec {

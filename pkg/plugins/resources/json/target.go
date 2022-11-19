@@ -55,9 +55,9 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		var queryResults []string
 		var err error
 
-		switch j.spec.Multiple {
+		switch len(j.spec.Query) > 0 {
 		case true:
-			queryResults, err = j.contents[i].MultipleQuery(j.spec.Key)
+			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
 
 			if err != nil {
 				return false, files, message, err
@@ -99,9 +99,9 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		}
 
 		// Update the target file with the new value
-		switch j.spec.Multiple {
+		switch len(j.spec.Query) > 0 {
 		case true:
-			err = j.contents[i].PutMultiple(j.spec.Key, j.spec.Value)
+			err = j.contents[i].PutMultiple(j.spec.Query, j.spec.Value)
 
 			if err != nil {
 				return false, files, message, err

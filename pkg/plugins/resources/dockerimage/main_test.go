@@ -1,59 +1,129 @@
 package dockerimage
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerimage"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestNew(t *testing.T) {
 	tests := []struct {
-		name    string
-		spec    Spec
-		want    *DockerImage
-		wantErr bool
+		name                  string
+		spec                  Spec
+		wantSpec              Spec
+		wantVersionFilter     version.Filter
+		wantRemoteOptionsSize int
+		wantErr               bool
 	}{
 		{
-			name: "Normal case",
+			name: "Normal case with a single architecture",
 			spec: Spec{
 				Architecture: "arm64",
 				Image:        "ghcr.io/updatecli/updatecli",
 				Tag:          "0.15.0",
-				Username:     "eva",
-				Password:     "SuperSecretPass",
-			},
-			want: &DockerImage{
-				spec: Spec{
-					Architecture: "arm64",
-					Image:        "ghcr.io/updatecli/updatecli",
-					Tag:          "0.15.0",
-					Username:     "eva",
-					Password:     "SuperSecretPass",
-				},
-				image: dockerimage.Image{
-					Registry:     "ghcr.io",
-					Namespace:    "updatecli",
-					Repository:   "updatecli",
-					Tag:          "0.15.0",
-					Architecture: "arm64",
-				},
-				registry: dockerregistry.DockerGenericRegistry{
-					Auth: dockerregistry.RegistryAuth{
-						Username: "eva",
-						Password: "SuperSecretPass",
-					},
-					WebClient: http.DefaultClient,
-				},
-				versionFilter: version.Filter{
-					Kind:    "latest",
-					Pattern: "latest",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
 				},
 			},
+			wantSpec: Spec{
+				Architectures: []string{"arm64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantVersionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			// Only 1 architecture: there is an option for the platform
+			wantRemoteOptionsSize: 2,
+		},
+		{
+			name: "Normal case with default (implicit) architecture",
+			spec: Spec{
+				Image: "ghcr.io/updatecli/updatecli",
+				Tag:   "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantSpec: Spec{
+				Architectures: []string{"amd64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantVersionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			// Only 1 architecture: there is an option for the platform
+			wantRemoteOptionsSize: 2,
+		},
+		{
+			name: "Normal case with multiple architectures",
+			spec: Spec{
+				Architectures: []string{"amd64", "arm/v7", "arm64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantSpec: Spec{
+				Architectures: []string{"amd64", "arm/v7", "arm64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantVersionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			// Multiple architectures: there is NO option for the platform
+			wantRemoteOptionsSize: 1,
+		},
+		{
+			name: "Normal case with multiple architectures but only one in the list",
+			spec: Spec{
+				Architectures: []string{"amd64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantSpec: Spec{
+				Architectures: []string{"amd64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantVersionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			// Only 1 architecture: there is an option for the platform
+			wantRemoteOptionsSize: 2,
 		},
 		{
 			name: "Invalid Spec provided (no password but username)",
@@ -61,9 +131,24 @@ func TestNew(t *testing.T) {
 				Architecture: "arm64",
 				Image:        "ghcr.io/updatecli/updatecli",
 				Tag:          "0.15.0",
-				Username:     "eva",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+				},
 			},
-			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Invalid Spec provided (both single and  multiple architectures)",
+			spec: Spec{
+				Architecture:  "arm64",
+				Architectures: []string{"arm64", "s390x"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
 			wantErr: true,
 		},
 	}
@@ -76,7 +161,9 @@ func TestNew(t *testing.T) {
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantSpec, got.spec)
+			assert.Equal(t, tt.wantVersionFilter, got.versionFilter)
+			assert.Equal(t, tt.wantRemoteOptionsSize, len(got.options))
 		})
 	}
 }
@@ -93,8 +180,10 @@ func Test_Validate(t *testing.T) {
 				Architecture: "amd64",
 				Image:        "ghcr.io/updatecli/updatecli",
 				Tag:          "0.15.0",
-				Username:     "eva",
-				Password:     "SuperSecretPass",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
 			},
 			wantErr: false,
 		},
@@ -104,9 +193,11 @@ func Test_Validate(t *testing.T) {
 				Architecture: "amd64",
 				Image:        "ghcr.io/updatecli/updatecli",
 				Tag:          "0.15.0",
-				Token:        "UberBearerToken",
-				Username:     "eva",
-				Password:     "SuperSecretPass",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+					Token:    "UberBearerToken",
+				},
 			},
 			wantErr: true,
 		},
@@ -116,7 +207,9 @@ func Test_Validate(t *testing.T) {
 				Architecture: "amd64",
 				Image:        "ghcr.io/updatecli/updatecli",
 				Tag:          "0.15.0",
-				Password:     "SuperSecretPass",
+				InlineKeyChain: docker.InlineKeyChain{
+					Password: "SuperSecretPass",
+				},
 			},
 			wantErr: true,
 		},
@@ -126,7 +219,9 @@ func Test_Validate(t *testing.T) {
 				Architecture: "amd64",
 				Image:        "ghcr.io/updatecli/updatecli",
 				Tag:          "0.15.0",
-				Username:     "eva",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+				},
 			},
 			wantErr: true,
 		},
@@ -136,7 +231,7 @@ func Test_Validate(t *testing.T) {
 			sut := DockerImage{
 				spec: tt.spec,
 			}
-			gotErr := sut.Validate()
+			gotErr := sut.spec.InlineKeyChain.Validate()
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

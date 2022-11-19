@@ -53,6 +53,7 @@ type releaseNode struct {
 	Name         string
 	TagName      string
 	IsDraft      bool
+	IsLatest     bool
 	IsPrerelease bool
 }
 type releaseEdge struct {
@@ -68,7 +69,7 @@ type repositoryRelease struct {
 // SearchReleases return every releases from the github api
 // ordered by reverse order of created time.
 // Draft and pre-releases are filtered out.
-func (g *Github) SearchReleases() (releases []string, err error) {
+func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err error) {
 	var query releasesQuery
 
 	variables := map[string]interface{}{
@@ -96,8 +97,23 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 		for i := len(query.Repository.Releases.Edges) - 1; i >= 0; i-- {
 			releaseCounter++
 			node := query.Repository.Releases.Edges[i]
-			if !node.Node.IsDraft && !node.Node.IsPrerelease {
-				releases = append(releases, node.Node.TagName)
+
+			if node.Node.IsLatest {
+				if releaseType.Latest {
+					releases = append(releases, node.Node.TagName)
+				}
+			} else if node.Node.IsDraft {
+				if releaseType.Draft {
+					releases = append(releases, node.Node.TagName)
+				}
+			} else if node.Node.IsPrerelease {
+				if releaseType.PreRelease {
+					releases = append(releases, node.Node.TagName)
+				}
+			} else {
+				if releaseType.Release {
+					releases = append(releases, node.Node.TagName)
+				}
 			}
 		}
 

@@ -38,9 +38,8 @@ func TestTarget(t *testing.T) {
 		{
 			name: "Default successful workflow",
 			spec: Spec{
-				File:     "testdata/data.json",
-				Key:      ".phoneNumbers.[*].type",
-				Multiple: true,
+				File:  "testdata/data.json",
+				Query: ".phoneNumbers.[*].type",
 			},
 			sourceInput:    "Tom",
 			expectedResult: true,

@@ -3,39 +3,31 @@ package dockerdigest
 import (
 	"fmt"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source retrieve docker image tag digest from a registry
 func (ds *DockerDigest) Source(workingDir string) (string, error) {
-	logrus.Debugf(
-		"Searching digest for the image %q with the tag %q",
-		ds.spec.Image,
-		ds.spec.Tag,
-	)
-	digest, err := ds.registry.Digest(ds.image)
+	refName := ds.spec.Image
+	if ds.spec.Tag != "" {
+		refName += ":" + ds.spec.Tag
+	}
+	ref, err := name.ParseReference(refName)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("invalid image %s: %w", refName, err)
 	}
-
-	if digest == "" {
-		return "", fmt.Errorf("%s No digest found for the docker image %s",
-			result.FAILURE,
-			ds.image.FullName(),
-		)
+	image, err := remote.Image(ref, ds.options...)
+	if err != nil {
+		return "", fmt.Errorf("unable to retrieve image %s: %w", refName, err)
 	}
-
-	logrus.Infof("%s Digest %q found for the docker image %s.",
-		result.SUCCESS,
-		digest,
-		ds.image.FullName(),
-	)
-	logrus.Infof("\tRemark: Do not forget to add @sha256 after your the docker image name")
-	logrus.Infof("\tExample: %v@sha256:%v",
-		ds.spec.Image,
-		digest,
-	)
-
-	return digest, nil
+	digest, err := image.Digest()
+	if err != nil {
+		return "", fmt.Errorf("unable to retrieve image digest %s: %w", refName, err)
+	}
+	imageDigest := ref.Context().Name() + "@" + digest.String()
+	logrus.Infof("%s Docker Image Tag %s resolved to digest %s", result.SUCCESS, ref.String(), imageDigest)
+	return digest.String(), nil
 }

@@ -9,18 +9,22 @@ import (
 // Spec defines a specification for a "gittag" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// Owner specifies repository owner
+	// [s][c] Owner specifies repository owner
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
+	// [s][c] Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// Token specifies the credential used to authenticate with
+	// [s][c] Token specifies the credential used to authenticate with
 	Token string `yaml:",omitempty" jsonschema:"required"`
-	// URL specifies the default github url in case of GitHub enterprise
+	// [s][c] URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
-	// Username specifies the username used to authenticate with Github API
+	// [s][c] Username specifies the username used to authenticate with Github API
 	Username string `yaml:",omitempty" jsonschema:"required"`
-	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [s][c] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [s][c] TypeFilter specifies the Github Release type to retrieve before applying the versionfilter rule
+	TypeFilter github.ReleaseType `yaml:",omitempty"`
+	// [c] Tag allows to check for a specific release tag, default to source output
+	Tag string `yaml:",omitempty"`
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
@@ -28,6 +32,8 @@ type GitHubRelease struct {
 	ghHandler     github.GithubHandler
 	versionFilter version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	foundVersion  version.Version
+	spec          Spec
+	typeFilter    github.ReleaseType
 }
 
 // New returns a new valid GitHubRelease object.
@@ -55,8 +61,13 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
+	newReleaseType := newSpec.TypeFilter
+	newReleaseType.Init()
+
 	return &GitHubRelease{
 		ghHandler:     newHandler,
 		versionFilter: newFilter,
+		typeFilter:    newReleaseType,
+		spec:          newSpec,
 	}, nil
 }

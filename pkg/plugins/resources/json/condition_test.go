@@ -29,10 +29,9 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Multiple key scenario",
 			spec: Spec{
-				File:     "testdata/data.json",
-				Key:      "phoneNumbers.[0].type",
-				Value:    "home",
-				Multiple: true,
+				File:  "testdata/data.json",
+				Query: "phoneNumbers.[0].type",
+				Value: "home",
 			},
 			expectedResult: true,
 		},
@@ -69,10 +68,9 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Test key do not exist",
 			spec: Spec{
-				File:     "testdata/data.json",
-				Key:      ".doNotExist",
-				Value:    "",
-				Multiple: true,
+				File:  "testdata/data.json",
+				Query: ".doNotExist",
+				Value: "",
 			},
 			expectedResult:   false,
 			wantErr:          true,
