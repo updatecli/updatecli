@@ -36,7 +36,7 @@ type Spec struct {
 	// URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
 	// Username specifies the username used to authenticate with Github API
-	Username string `yaml:",omitempty" jsonschema:"required"`
+	Username string `yaml:",omitempty"`
 	// User specifies the user of the git commit messages
 	User string `yaml:",omitempty"`
 	// GPG key and passphrased used for commit signing
