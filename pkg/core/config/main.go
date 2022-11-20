@@ -56,6 +56,8 @@ type Spec struct {
 	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
 	// Title is used for the full pipeline
 	Title string `yaml:",omitempty"`
+	// !Deprecated in favor of `actions`
+	PullRequests map[string]action.Config `yaml:",omitempty"`
 	// Actions defines the list of action configurations which need to be managed
 	Actions map[string]action.Config `yaml:",omitempty"`
 	// SCMs defines the list of repository configuration used to fetch content from.
@@ -163,6 +165,19 @@ func New(option Option) (config Config, err error) {
 	// Ensure there is a local SCM defined as specified
 	if err = config.EnsureLocalScm(); err != nil {
 		return config, err
+	}
+
+	/** Check for deprecated directives **/
+	// pullequests deprecated over actions
+	if len(config.Spec.PullRequests) > 0 {
+		if len(config.Spec.Actions) > 0 {
+			return config, fmt.Errorf("The keywords `pullrequests` and `actions` are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated.")
+		}
+
+		logrus.Warningf("The keyword `pullrequests` is deprecated in favor of `actions`, please update your manifest. Updatecli continues the execution while trying to translate `pullrequests` to `actions`.")
+
+		config.Spec.Actions = config.Spec.PullRequests
+		config.Spec.PullRequests = nil
 	}
 
 	err = config.Validate()

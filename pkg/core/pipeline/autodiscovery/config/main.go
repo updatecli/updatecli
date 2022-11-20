@@ -5,7 +5,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-// Config defines autodiscover parameters
+// Config defines autodiscovery parameters
 type Config struct {
 	// Crawlers specifies crawler configuration
 	Crawlers map[string]interface{} `yaml:",omitempty"`
@@ -22,8 +22,8 @@ type Input struct {
 	ScmSpec *scm.Config
 	// ScmID defines the scmid associated to the scm specification
 	ScmID string
-	// ActionSpec defines the action specification
-	ActionSpec *action.Config
+	// ActionConfig defines the action specification
+	ActionConfig *action.Config
 	// ActionID defines the scmid associated to the scm specification
 	ActionID string
 }

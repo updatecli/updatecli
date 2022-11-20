@@ -35,7 +35,7 @@ type Config struct {
 	Spec interface{} `yaml:",omitempty"`
 	// scmid references an scm configuration defined within the updatecli manifest
 	ScmID string `yaml:",omitempty"`
-	// !Deprecated in favor for `scmid`
+	// !Deprecated in favor of `scmid`
 	DeprecatedScmID string `yaml:"scmID,omitempty" jsonschema:"-"`
 }
 

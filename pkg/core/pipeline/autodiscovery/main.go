@@ -162,10 +162,10 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 
 		discoveredManifests, err := crawler.DiscoverManifests(
 			discoveryConfig.Input{
-				ScmSpec:    g.scmConfig,
-				ScmID:      g.spec.ScmId,
-				ActionSpec: g.actionConfig,
-				ActionID:   g.spec.ActionId,
+				ScmSpec:      g.scmConfig,
+				ScmID:        g.spec.ScmId,
+				ActionConfig: g.actionConfig,
+				ActionID:     g.spec.ActionId,
 			})
 
 		if err != nil {

@@ -94,7 +94,7 @@ func (m Maven) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, er
 
 		// Set action configuration if specified
 		if len(input.ActionID) > 0 {
-			SetAction(&manifests[i], *input.ActionSpec, input.ActionID)
+			SetAction(&manifests[i], *input.ActionConfig, input.ActionID)
 		}
 	}
 
