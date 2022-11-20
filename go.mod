@@ -37,7 +37,7 @@ require (
 	github.com/drone/go-scm v1.27.0
 	github.com/google/go-containerregistry v0.12.0
 	github.com/goware/urlx v0.3.2
-	github.com/invopop/jsonschema v0.6.0
+	github.com/invopop/jsonschema v0.7.0
 	github.com/tomwright/dasel v1.27.3
 	golang.org/x/text v0.4.0
 	gotest.tools v2.2.0+incompatible
