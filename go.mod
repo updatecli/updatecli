@@ -35,7 +35,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5
 	github.com/beevik/etree v1.1.0
 	github.com/drone/go-scm v1.27.0
-	github.com/google/go-containerregistry v0.12.0
+	github.com/google/go-containerregistry v0.12.1
 	github.com/goware/urlx v0.3.2
 	github.com/invopop/jsonschema v0.7.0
 	github.com/tomwright/dasel v1.27.3
