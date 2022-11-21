@@ -15,6 +15,8 @@ type Config struct {
 	ActionId string `yaml:",omitempty"`
 	// GroupBy specifies how to group pipeline. The Accepted is one of "all", "individual"
 	GroupBy GroupBy
+	// !Deprecated in favor of `actionid`
+	PullrequestId string `yaml:",omitempty"`
 }
 
 type Input struct {

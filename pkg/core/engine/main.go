@@ -416,6 +416,18 @@ func (e *Engine) LoadAutoDiscovery() error {
 			}
 		}
 
+		/** Check for deprecated items **/
+		if p.Config.Spec.AutoDiscovery.PullrequestId != "" {
+			if p.Config.Spec.AutoDiscovery.ActionId != "" {
+				return fmt.Errorf("The keywords `autodiscovery.pullrequestid` and `autodiscovery.actionid` are mutually exclusive. Please use only `autodiscovery.actionid` as `autodiscovery.pullrequestid` is deprecated.")
+			}
+
+			logrus.Warningf("The keyword `autodiscovery.pullrequestid` is deprecated in favor of `autodiscovery.actionid`, please update your manifest. Updatecli continues the execution while trying to translate `autodiscovery.pullrequestid` to `autodiscovery.actionid`.")
+
+			p.Config.Spec.AutoDiscovery.ActionId = p.Config.Spec.AutoDiscovery.PullrequestId
+			p.Config.Spec.AutoDiscovery.PullrequestId = ""
+		}
+
 		// Retrieve action spec if it exists
 		if len(p.Config.Spec.AutoDiscovery.ActionId) > 0 {
 			autodiscoveryAction, found = p.Actions[p.Config.Spec.AutoDiscovery.ActionId]
