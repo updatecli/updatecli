@@ -31,6 +31,7 @@ type ScmHandler interface {
 	Commit(message string) error
 	Clean() error
 	PushTag(tag string) error
+	PushBranch(branch string) error
 	GetChangedFiles(workingDir string) ([]string, error)
 }
 

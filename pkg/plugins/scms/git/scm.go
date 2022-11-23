@@ -108,6 +108,22 @@ func (g *Git) Push() error {
 
 }
 
+// PushBranch push tags
+func (g *Git) PushBranch(tag string) error {
+
+	err := g.nativeGitHandler.PushBranch(
+		tag,
+		g.spec.Username,
+		g.spec.Password,
+		g.GetDirectory(),
+		g.spec.Force)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // PushTag push tags
 func (g *Git) PushTag(tag string) error {
 

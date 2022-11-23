@@ -103,6 +103,22 @@ func (g *Gitea) PushTag(tag string) error {
 	return nil
 }
 
+// PushBranch push branch
+func (g *Gitea) PushBranch(tag string) error {
+
+	err := g.nativeGitHandler.PushTag(
+		tag,
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory(),
+		g.Spec.Force)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (g *Gitea) GetChangedFiles(workingDir string) ([]string, error) {
 	return g.nativeGitHandler.GetChangedFiles(workingDir)
 }

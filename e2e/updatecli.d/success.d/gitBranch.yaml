@@ -1,0 +1,26 @@
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli/updatecli-action.git
+
+sources:
+  default:
+    name: Get Latest committed branch
+    kind: gitbranch
+    scmid: default
+
+conditions:
+  default:
+    name: Get Latest committed branch
+    kind: gitbranch
+    scmid: default
+    sourceid: default
+  v1:
+    name: Get Latest committed branch
+    kind: gitbranch
+    scmid: default
+    disablesourceinput: true
+    spec:
+      branch: v1

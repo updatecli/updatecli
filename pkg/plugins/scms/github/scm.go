@@ -104,6 +104,22 @@ func (g *Github) PushTag(tag string) error {
 	return nil
 }
 
+// PushBranch push tags
+func (g *Github) PushBranch(tag string) error {
+
+	err := g.nativeGitHandler.PushBranch(
+		tag,
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory(),
+		g.Spec.Force)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (g *Github) GetChangedFiles(workingDir string) ([]string, error) {
 	return g.nativeGitHandler.GetChangedFiles(workingDir)
 }

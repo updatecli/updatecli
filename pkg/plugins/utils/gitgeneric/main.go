@@ -28,11 +28,14 @@ type GitHandler interface {
 	GetChangedFiles(workingDir string) ([]string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
+	NewBranch(branch, workingDir string) (bool, error)
 	Push(username string, password string, workingDir string, force bool) error
 	PushTag(tag string, username string, password string, workingDir string, force bool) error
+	PushBranch(branch string, username string, password string, workingDir string, force bool) error
 	RemoteURLs(workingDir string) (map[string]string, error)
 	SanitizeBranchName(branch string) string
 	Tags(workingDir string) (tags []string, err error)
+	Branches(workingDir string) (branches []string, err error)
 }
 
 type GoGit struct {
