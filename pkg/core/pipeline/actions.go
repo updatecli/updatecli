@@ -43,13 +43,6 @@ func (p *Pipeline) RunActions() error {
 			return err
 		}
 
-		if p.SCMs[action.Config.ScmID].Config.Kind != action.Config.Kind {
-			return fmt.Errorf("action of kind %q is not compatible with scm %q of kind %q",
-				action.Config.Kind,
-				action.Config.ScmID,
-				p.SCMs[action.Config.ScmID].Config.Kind)
-		}
-
 		firstTargetID := relatedTargets[0]
 		firstTargetSourceID := p.Targets[firstTargetID].Config.SourceID
 

@@ -30,4 +30,4 @@ targets:
 actions:
   prID1:
     scmid: default
-    kind: github
+    kind: github/pullrequest

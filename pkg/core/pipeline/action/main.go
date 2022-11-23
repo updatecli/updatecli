@@ -15,6 +15,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
+const (
+	githubIdentifier = "github"
+	giteaIdentifier  = "gitea"
+)
+
 var (
 	// ErrWrongConfig is returned when an action has missing mandatory attributes.
 	ErrWrongConfig = errors.New("wrong action configuration")
@@ -54,7 +59,7 @@ func (c *Config) Validate() (err error) {
 
 	missingParameters := []string{}
 
-	if len(c.Kind) == 0 {
+	if c.Kind == "" {
 		missingParameters = append(missingParameters, "kind")
 	}
 
@@ -64,8 +69,14 @@ func (c *Config) Validate() (err error) {
 		c.Kind = strings.ToLower(c.Kind)
 	}
 
-	if len(c.DeprecatedScmID) > 0 {
-
+	/** Deprecated items **/
+	if c.Kind == githubIdentifier {
+		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest", githubIdentifier, githubIdentifier)
+	}
+	if c.Kind == giteaIdentifier {
+		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest", giteaIdentifier, giteaIdentifier)
+	}
+	if c.DeprecatedScmID != "" {
 		switch len(c.ScmID) {
 		case 0:
 			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
@@ -79,7 +90,7 @@ func (c *Config) Validate() (err error) {
 		}
 	}
 
-	if len(c.ScmID) == 0 {
+	if c.ScmID == "" {
 		missingParameters = append(missingParameters, "scmid")
 	}
 
@@ -122,12 +133,12 @@ func (p *Action) Update() error {
 }
 
 func (a *Action) generateActionHandler() error {
-
+	// Don't forget to update the JSONSchema() method when adding/updating/removing a case
 	switch a.Config.Kind {
-	case "gitea":
+	case "gitea/pullrequest", giteaIdentifier:
 		actionSpec := gitea.Spec{}
 
-		if a.Scm.Config.Kind != "gitea" {
+		if a.Scm.Config.Kind != giteaIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
@@ -152,10 +163,10 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "github":
+	case "github/pullrequest", githubIdentifier:
 		actionSpec := github.ActionSpec{}
 
-		if a.Scm.Config.Kind != "github" {
+		if a.Scm.Config.Kind != githubIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
@@ -193,8 +204,8 @@ func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
-		"github": &github.ActionSpec{},
-		"gitea":  &gitea.Spec{},
+		"github/pullrequest": &github.ActionSpec{},
+		"gitea/pullrequest":  &gitea.Spec{},
 	}
 
 	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
