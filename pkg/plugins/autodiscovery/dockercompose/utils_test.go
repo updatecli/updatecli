@@ -14,7 +14,6 @@ func TestSearchFiles(t *testing.T) {
 		t.Errorf("%s\n", err)
 	}
 	expectedFiles := []string{
-		"testdata/docker-compose.2.yaml",
 		"testdata/docker-compose.yaml",
 	}
 
