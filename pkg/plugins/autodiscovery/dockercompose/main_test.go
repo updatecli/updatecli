@@ -27,186 +27,74 @@ func TestDiscoverManifests(t *testing.T) {
 			rootDir: "testdata",
 			expectedPipelines: []config.Spec{
 				{
-					Name: "Bump Docker Image Tag for \"mongo\"",
+					Name: "Bump Docker Image Tag for \"jenkinsci/jenkins\"",
 					Sources: map[string]source.Config{
-						"mongodb": {
+						"jenkins-lts": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[mongo] Get latest Docker Image Tag",
+								Name: "[jenkinsci/jenkins] Get latest Docker Image Tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
-									Image:        "mongo",
+									Image:     "jenkinsci/jenkins",
+									TagFilter: `^\d*(\.\d*){2}-alpine$`,
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: ">=2.150.1-alpine",
+									},
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"jenkins-lts": {
+							SourceID: "jenkins-lts",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "[jenkinsci/jenkins] Bump Docker Image tag in \"docker-compose.yaml\"",
+								Kind: "yaml",
+								Spec: yaml.Spec{
+									File: "docker-compose.yaml",
+									Key:  "services.jenkins-lts.image",
+								},
+								Transformers: transformer.Transformers{
+									transformer.Transformer{
+										AddPrefix: "jenkinsci/jenkins:",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "Bump Docker Image Tag for \"jenkinsci/jenkins\"",
+					Sources: map[string]source.Config{
+						"jenkins-weekly": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "[jenkinsci/jenkins] Get latest Docker Image Tag",
+								Kind: "dockerimage",
+								Spec: dockerimage.Spec{
 									Architecture: "amd64",
-									TagFilter:    `^\d*(\.\d*){2}$`,
+									Image:        "jenkinsci/jenkins",
+									TagFilter:    `^\d*(\.\d*){1}-alpine$`,
 									VersionFilter: version.Filter{
 										Kind:    "semver",
-										Pattern: ">=6.0.2",
+										Pattern: ">=2.254-alpine",
 									},
 								},
 							},
 						},
 					},
 					Targets: map[string]target.Config{
-						"mongodb": {
-							SourceID: "mongodb",
+						"jenkins-weekly": {
+							SourceID: "jenkins-weekly",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[mongo] Bump Docker Image tag in \"docker-compose.yaml\"",
+								Name: "[jenkinsci/jenkins] Bump Docker Image tag in \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "docker-compose.yaml",
-									Key:  "services.mongodb.image",
+									Key:  "services.jenkins-weekly.image",
 								},
 								Transformers: transformer.Transformers{
 									transformer.Transformer{
-										AddPrefix: "mongo:",
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-
-					Name: "Bump Docker Image Tag for \"ghcr.io/updatecli/updatemonitor\"",
-					Sources: map[string]source.Config{
-						"agent": {
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[ghcr.io/updatecli/updatemonitor] Get latest Docker Image Tag",
-								Kind: "dockerimage",
-								Spec: dockerimage.Spec{
-									Image:     "ghcr.io/updatecli/updatemonitor",
-									TagFilter: `^v\d*(\.\d*){2}$`,
-									VersionFilter: version.Filter{
-										Kind:    "semver",
-										Pattern: ">=v0.1.0",
-									},
-								},
-							},
-						},
-					},
-					Targets: map[string]target.Config{
-						"agent": {
-							SourceID: "agent",
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[ghcr.io/updatecli/updatemonitor] Bump Docker Image tag in \"docker-compose.yaml\"",
-								Kind: "yaml",
-								Spec: yaml.Spec{
-									File: "docker-compose.yaml",
-									Key:  "services.agent.image",
-								},
-								Transformers: transformer.Transformers{
-									transformer.Transformer{
-										AddPrefix: "ghcr.io/updatecli/updatemonitor:",
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "Bump Docker Image Tag for \"ghcr.io/updatecli/updatemonitor\"",
-					Sources: map[string]source.Config{
-						"server": {
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[ghcr.io/updatecli/updatemonitor] Get latest Docker Image Tag",
-								Kind: "dockerimage",
-								Spec: dockerimage.Spec{
-									Image:     "ghcr.io/updatecli/updatemonitor",
-									TagFilter: `^v\d*(\.\d*){2}$`,
-									VersionFilter: version.Filter{
-										Kind:    "semver",
-										Pattern: ">=v0.1.0",
-									},
-								},
-							},
-						},
-					},
-					Targets: map[string]target.Config{
-						"server": {
-							SourceID: "server",
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[ghcr.io/updatecli/updatemonitor] Bump Docker Image tag in \"docker-compose.yaml\"",
-								Kind: "yaml",
-								Spec: yaml.Spec{
-									File: "docker-compose.yaml",
-									Key:  "services.server.image",
-								},
-								Transformers: transformer.Transformers{
-									transformer.Transformer{
-										AddPrefix: "ghcr.io/updatecli/updatemonitor:",
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "Bump Docker Image Tag for \"ghcr.io/updatecli/updatemonitor-ui\"",
-					Sources: map[string]source.Config{
-						"front": {
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[ghcr.io/updatecli/updatemonitor-ui] Get latest Docker Image Tag",
-								Kind: "dockerimage",
-								Spec: dockerimage.Spec{
-									Image:     "ghcr.io/updatecli/updatemonitor-ui",
-									TagFilter: `^v\d*(\.\d*){2}$`,
-									VersionFilter: version.Filter{
-										Kind:    "semver",
-										Pattern: ">=v0.1.1",
-									},
-								},
-							},
-						},
-					},
-					Targets: map[string]target.Config{
-						"front": {
-							SourceID: "front",
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[ghcr.io/updatecli/updatemonitor-ui] Bump Docker Image tag in \"docker-compose.yaml\"",
-								Kind: "yaml",
-								Spec: yaml.Spec{
-									File: "docker-compose.yaml",
-									Key:  "services.front.image",
-								},
-								Transformers: transformer.Transformers{
-									transformer.Transformer{
-										AddPrefix: "ghcr.io/updatecli/updatemonitor-ui:",
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "Bump Docker Image Tag for \"traefik\"",
-					Sources: map[string]source.Config{
-						"traefik": {
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[traefik] Get latest Docker Image Tag",
-								Kind: "dockerimage",
-								Spec: dockerimage.Spec{
-									Image:     "traefik",
-									TagFilter: `^v?\d*(\.\d*){1}$`,
-									VersionFilter: version.Filter{
-										Kind:    "semver",
-										Pattern: ">=v2.9",
-									},
-								},
-							},
-						},
-					},
-					Targets: map[string]target.Config{
-						"traefik": {
-							SourceID: "traefik",
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[traefik] Bump Docker Image tag in \"docker-compose.yaml\"",
-								Kind: "yaml",
-								Spec: yaml.Spec{
-									File: "docker-compose.yaml",
-									Key:  "services.traefik.image",
-								},
-								Transformers: transformer.Transformers{
-									transformer.Transformer{
-										AddPrefix: "traefik:",
+										AddPrefix: "jenkinsci/jenkins:",
 									},
 								},
 							},
