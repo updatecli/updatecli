@@ -20,7 +20,13 @@ func (gt *GitBranch) Target(source string, dryRun bool) (changed bool, err error
 		return false, fmt.Errorf("empty branch specified")
 	}
 
-	changed, _, _, err = gt.target(gt.branch, dryRun)
+	changed, _, _, err = gt.target(dryRun)
+
+	if !changed {
+		logrus.Infof("%s The git branch %q already exist on the specified remote.", result.SUCCESS, gt.branch)
+		return changed, err
+	}
+	logrus.Printf("%s The git branch %q has been created.", result.ATTENTION, gt.branch)
 
 	return changed, err
 }
@@ -43,10 +49,23 @@ func (gt *GitBranch) TargetFromSCM(source string, scm scm.ScmHandler, dryRun boo
 		return changed, files, message, fmt.Errorf("empty branch specified")
 	}
 
-	changed, files, message, err = gt.target(gt.branch, dryRun)
+	changed, files, message, err = gt.target(dryRun)
 	if err != nil {
 		return changed, files, message, err
 	}
+
+	if dryRun {
+		// Dry run: no changes to apply.
+		// Return early without creating branch but notify that a change should be made.
+		return changed, files, message, nil
+	}
+
+	if !changed {
+		logrus.Infof("%s The git branch %q already exist on the specified remote.", result.SUCCESS, gt.branch)
+		return changed, files, message, err
+	}
+
+	logrus.Printf("git branch %q has been created.", gt.branch)
 
 	err = scm.PushBranch(gt.branch)
 	if err != nil {
@@ -57,15 +76,10 @@ func (gt *GitBranch) TargetFromSCM(source string, scm scm.ScmHandler, dryRun boo
 	return changed, files, message, err
 }
 
-func (gt *GitBranch) target(source string, dryRun bool) (bool, []string, string, error) {
+func (gt *GitBranch) target(dryRun bool) (bool, []string, string, error) {
 
 	files := []string{}
 	message := ""
-
-	// Fail if a pattern is specified
-	if gt.versionFilter.Pattern != "" {
-		return false, files, message, fmt.Errorf("target validation error: spec.versionfilter.pattern is not allowed for targets of type gittag")
-	}
 
 	// Fail if the git tag resource cannot be validated
 	err := gt.Validate()
@@ -91,7 +105,7 @@ func (gt *GitBranch) target(source string, dryRun bool) (bool, []string, string,
 		// No error, but no change
 		logrus.Printf("%s The Git branch %q already exists, nothing else to do.",
 			result.SUCCESS,
-			source)
+			gt.branch)
 		return false, files, message, nil
 	}
 
@@ -100,7 +114,7 @@ func (gt *GitBranch) target(source string, dryRun bool) (bool, []string, string,
 
 	if dryRun {
 		// Dry run: no changes to apply.
-		// Return early without creating tag but notify that a change should be made.
+		// Return early without creating branch but notify that a change should be made.
 		return true, files, message, nil
 	}
 
@@ -108,7 +122,10 @@ func (gt *GitBranch) target(source string, dryRun bool) (bool, []string, string,
 	if err != nil {
 		return changed, files, message, err
 	}
+
 	logrus.Printf("%s The git branch %q has been created.", result.ATTENTION, gt.branch)
+
+	message = fmt.Sprintf("Git branch %q has been created.", gt.branch)
 
 	return changed, files, message, nil
 }
