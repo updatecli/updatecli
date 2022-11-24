@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
-	gitConfig "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/sirupsen/logrus"
@@ -96,9 +95,27 @@ func (g GoGit) NewBranch(branch, workingDir string) (bool, error) {
 		return false, err
 	}
 
-	err = r.CreateBranch(&gitConfig.Branch{
-		Name: branch,
-	})
+	// Retrieve local branch
+	head, err := r.Head()
+	if err != nil {
+		return false, err
+	}
+
+	if !head.Name().IsBranch() {
+		return false, errors.New("not pushing from a branch")
+	}
+
+	// Create a new plumbing.HashReference object with the name of the branch
+	// and the hash from the HEAD. The reference name should be a full reference
+	// name and not an abbreviated one, as is used on the git cli.
+	//
+	// For tags we should use `refs/tags/%s` instead of `refs/heads/%s` used
+	// for branches.
+	refName := plumbing.NewBranchReferenceName(branch)
+	ref := plumbing.NewHashReference(refName, head.Hash())
+
+	// The created reference is saved in the storage.
+	err = r.Storer.SetReference(ref)
 
 	if err != nil {
 		logrus.Errorf("create git branch error: %s", err)
