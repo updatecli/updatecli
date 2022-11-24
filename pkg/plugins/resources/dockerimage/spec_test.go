@@ -45,17 +45,22 @@ func TestNewFilterFromValue(t *testing.T) {
 		},
 		{
 			name:              "Case with latest version",
-			expectedTagFilter: `^v?\d*(\.\d*){2}-alpha$`,
+			expectedTagFilter: `^\d*(\.\d*){2}-alpha$`,
 			value:             "1.0.0-alpha",
 		},
 		{
 			name:              "Case with jdk",
-			expectedTagFilter: `^v?\d*(\.\d*){1}-jdk11$`,
+			expectedTagFilter: `^\d*(\.\d*){1}-jdk11$`,
 			value:             "2.235-jdk11",
 		},
 		{
+			name:              "Case with jdk and v prefix",
+			expectedTagFilter: `^v\d*(\.\d*){1}-jdk11$`,
+			value:             "v2.235-jdk11",
+		},
+		{
 			name:              "Case with jdk",
-			expectedTagFilter: `^v?\d*(\.\d*){1}+jdk11$`,
+			expectedTagFilter: `^\d*(\.\d*){1}+jdk11$`,
 			value:             "2.235+jdk11",
 		},
 		{
