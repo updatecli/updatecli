@@ -105,10 +105,10 @@ func (g *Github) PushTag(tag string) error {
 }
 
 // PushBranch push tags
-func (g *Github) PushBranch(tag string) error {
+func (g *Github) PushBranch(branch string) error {
 
 	err := g.nativeGitHandler.PushBranch(
-		tag,
+		branch,
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
