@@ -1,9 +1,15 @@
-
 scms:
   default:
-    kind: git
+    kind: github
     spec:
-      url: https://github.com/updatecli/updatecli-action.git
+      branch: master
+      email: me@olblak.com
+      owner: olblak
+      repository: nocode
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      user: updatecli
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+    disabled: false
 
 sources:
   default:
@@ -17,10 +23,25 @@ conditions:
     kind: gitbranch
     scmid: default
     sourceid: default
-  v1:
+  master:
     name: Get Latest committed branch
     kind: gitbranch
     scmid: default
     disablesourceinput: true
     spec:
-      branch: v1
+      branch: master
+
+targets:
+  #default:
+  #  name: Create the branch v1 if needed
+  #  kind: gitbranch
+  #  scmid: default
+  #  disablesourceinput: true
+  #  spec:
+  #    branch: v1
+  alreadyexist:
+    name: Test that the branch already exist.
+    kind: gitbranch
+    scmid: default
+    spec:
+      branch: master
