@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	// DefaultFileMatch specifies accepted Helm chart metadata file name
+	// DefaultFileMatch specifies the file name patterns identifying Docker Compose files.
 	DefaultFileMatch []string = []string{
 		"docker-compose.yaml",
 		"docker-compose.*.yaml",
