@@ -115,7 +115,7 @@ func TestDiscoverManifests(t *testing.T) {
 
 			require.NoError(t, err)
 
-			pipelines, err := helmfile.DiscoverManifests(discoveryConfig.Input{})
+			pipelines, err := composefile.DiscoverManifests(discoveryConfig.Input{})
 
 			require.NoError(t, err)
 			// !! Order matter between expected result and docker-compose file
