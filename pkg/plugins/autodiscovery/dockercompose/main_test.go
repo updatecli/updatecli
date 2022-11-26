@@ -17,6 +17,12 @@ import (
 )
 
 func TestDiscoverManifests(t *testing.T) {
+
+	// Disable condition testing with running short test
+	if testing.Short() {
+		return
+	}
+
 	testdata := []struct {
 		name              string
 		rootDir           string
