@@ -9,7 +9,7 @@ import (
 func TestSearchFiles(t *testing.T) {
 
 	gotFiles, err := searchDockerComposeFiles(
-		"testdata/", DefaultFilePattern[:])
+		"testdata/", DefaultFileMatch[:])
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}

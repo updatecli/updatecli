@@ -16,12 +16,13 @@ import (
 )
 
 var (
-	// DefaultFilePattern specifies accepted Helm chart metadata file name
-	DefaultFilePattern [4]string = [4]string{
+	// DefaultFileMatch specifies accepted Helm chart metadata file name
+	DefaultFileMatch []string = []string{
 		"docker-compose.yaml",
 		"docker-compose.*.yaml",
 		"docker-compose.yml",
-		"docker-compose.*.yml"}
+		"docker-compose.*.yml",
+	}
 )
 
 type service struct {
@@ -41,7 +42,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 
 	foundDockerComposeFiles, err := searchDockerComposeFiles(
 		h.rootDir,
-		DefaultFilePattern[:])
+		h.filematch)
 
 	if err != nil {
 		return nil, err

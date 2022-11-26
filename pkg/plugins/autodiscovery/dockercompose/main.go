@@ -12,6 +12,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
+// Spec is a struct fill from Updatecli manifest data and shouldn't be modified at runtime unless
+// For Fields that requires it, we can use the struct DockerCompose
 // Spec defines the parameters which can be provided to the Helm builder.
 type Spec struct {
 	// RootDir defines the root directory used to recursively search for Helm Chart
@@ -22,6 +24,8 @@ type Spec struct {
 	Only MatchingRules `yaml:",omitempty"`
 	// Auths provides a map of registry credentials where the key is the registry URL without scheme
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
+	// FileMatch allows to override default docker-compose.yaml file matching. Default ["docker-compose.yaml","docker-compose.yml","docker-compose.*.yaml","docker-compose.*.yml"]
+	FileMatch []string `yaml:",omitempty"`
 }
 
 // DockerCompose hold all information needed to generate helmfile manifest.
@@ -30,6 +34,8 @@ type DockerCompose struct {
 	spec Spec
 	// rootDir defines the root directory from where looking for Helm Chart
 	rootDir string
+	// filematch defines the filematch rule used to identify docker-compose that need to be handled
+	filematch []string
 }
 
 // New return a new valid Helm object.
@@ -53,10 +59,17 @@ func New(spec interface{}, rootDir string) (DockerCompose, error) {
 		return DockerCompose{}, err
 	}
 
-	return DockerCompose{
-		spec:    s,
-		rootDir: dir,
-	}, nil
+	d := DockerCompose{
+		spec:      s,
+		rootDir:   dir,
+		filematch: DefaultFileMatch,
+	}
+
+	if len(s.FileMatch) > 0 {
+		d.filematch = s.FileMatch
+	}
+
+	return d, nil
 
 }
 
