@@ -118,7 +118,6 @@ func TestDiscoverManifests(t *testing.T) {
 			pipelines, err := composefile.DiscoverManifests(discoveryConfig.Input{})
 
 			require.NoError(t, err)
-			// !! Order matter between expected result and docker-compose file
 			assert.Equal(t, tt.expectedPipelines, pipelines)
 
 		})
