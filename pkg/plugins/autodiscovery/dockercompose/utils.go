@@ -12,7 +12,7 @@ import (
 )
 
 // searchDockerComposeFiles will look, recursively, for every files named Chart.yaml from a root directory.
-func searchDockerComposeFiles(rootDir string, files []string) ([]string, error) {
+func searchDockerComposeFiles(rootDir string, filePatterns []string) ([]string, error) {
 
 	dockerComposeFiles := []string{}
 
