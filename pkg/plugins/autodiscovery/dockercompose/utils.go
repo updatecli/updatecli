@@ -23,7 +23,7 @@ func searchDockerComposeFiles(rootDir string, filePatterns []string) ([]string, 
 			return err
 		}
 
-		for _, f := range files {
+		for _, f := range filePatterns {
 			match, err := filepath.Match(f, info.Name())
 			if err != nil {
 				logrus.Errorln(err)
