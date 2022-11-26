@@ -28,7 +28,7 @@ type Spec struct {
 	FileMatch []string `yaml:",omitempty"`
 }
 
-// DockerCompose hold all information needed to generate helmfile manifest.
+// DockerCompose hold all information needed to generate compose file manifest.
 type DockerCompose struct {
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
