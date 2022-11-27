@@ -57,7 +57,7 @@ type Spec struct {
 	// Title is used for the full pipeline
 	Title string `yaml:",omitempty"`
 	// !Deprecated in favor of `actions`
-	PullRequests map[string]action.Config `yaml:",omitempty"`
+	PullRequests map[string]action.Config `yaml:",omitempty" jsonschema:"-"`
 	// Actions defines the list of action configurations which need to be managed
 	Actions map[string]action.Config `yaml:",omitempty"`
 	// SCMs defines the list of repository configuration used to fetch content from.
