@@ -25,31 +25,28 @@ var (
 	}
 )
 
-type service struct {
+type dockerComposeServiceSpec struct {
 	Image string
-
 	// platform defines the target platform containers for this service will run on
 	Platform string
 }
 
-type dockerComposeSpec struct {
-	Services map[string]service
+type dockerComposeService struct {
+	Name string
+	Spec dockerComposeServiceSpec
 }
 
-func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, error) {
+type dockercomposeServicesList []dockerComposeService
 
+func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, error) {
 	var manifests []config.Spec
 
-	foundDockerComposeFiles, err := searchDockerComposeFiles(
-		h.rootDir,
-		h.filematch)
-
+	foundDockerComposeFiles, err := searchDockerComposeFiles(h.rootDir, h.filematch)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, foundDockerComposefile := range foundDockerComposeFiles {
-
 		relativeFoundDockerComposeFile, err := filepath.Rel(h.rootDir, foundDockerComposefile)
 		if err != nil {
 			// Let's try the next one if it fails
@@ -61,22 +58,17 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 		basename := filepath.Base(relativeFoundDockerComposeFile)
 
 		// Retrieve chart dependencies for each chart
-
-		spec, err := getDockerComposeSpecFromFile(foundDockerComposefile)
+		svcList, err := getDockerComposeSpecFromFile(foundDockerComposefile)
 		if err != nil {
 			return nil, err
 		}
 
-		if spec == nil {
+		if len(svcList) == 0 {
 			continue
 		}
 
-		if len(spec.Services) == 0 {
-			continue
-		}
-
-		for id, service := range spec.Services {
-			if service.Image == "" {
+		for _, svc := range svcList {
+			if svc.Spec.Image == "" {
 				continue
 			}
 
@@ -84,12 +76,12 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 			// without a significant amount f api call. More information on following issue
 			// https://github.com/google/go-containerregistry/issues/1297
 			// until a better solution, we don't handle docker image digest
-			if strings.Contains(service.Image, "@sha256") {
-				logrus.Debugf("Docker Digest is not supported at the moment for %q", service.Image)
+			if strings.Contains(svc.Spec.Image, "@sha256") {
+				logrus.Debugf("Docker Digest is not supported at the moment for %q", svc.Spec.Image)
 				continue
 			}
 
-			serviceImageArray := strings.Split(service.Image, ":")
+			serviceImageArray := strings.Split(svc.Spec.Image, ":")
 
 			// Get container image name and tag
 			serviceImageName := ""
@@ -104,15 +96,15 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 
 			manifestName := fmt.Sprintf("Bump Docker Image Tag for %q", serviceImageName)
 
-			_, arch, _ := parsePlatform(service.Platform)
+			_, arch, _ := parsePlatform(svc.Spec.Platform)
 
 			// Test if the ignore rule based on path is respected
 			if len(h.spec.Ignore) > 0 {
 				if h.spec.Ignore.isMatchingRule(
 					h.rootDir,
 					relativeFoundDockerComposeFile,
-					id,
-					service.Image,
+					svc.Name,
+					svc.Spec.Image,
 					arch) {
 
 					logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching ignore rule(s)\n",
@@ -127,8 +119,8 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				if !h.spec.Only.isMatchingRule(
 					h.rootDir,
 					relativeFoundDockerComposeFile,
-					id,
-					service.Image,
+					svc.Name,
+					svc.Spec.Image,
 					arch) {
 
 					logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching only rule(s)\n",
@@ -152,7 +144,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 			manifest := config.Spec{
 				Name: manifestName,
 				Sources: map[string]source.Config{
-					id: {
+					svc.Name: {
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("[%s] Get latest Docker Image Tag", serviceImageName),
 							Kind: "dockerimage",
@@ -161,8 +153,8 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 					},
 				},
 				Targets: map[string]target.Config{
-					id: {
-						SourceID: id,
+					svc.Name: {
+						SourceID: svc.Name,
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("[%s] Bump Docker Image tag in %q",
 								serviceImageName,
@@ -170,7 +162,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 							Kind: "yaml",
 							Spec: yaml.Spec{
 								File: relativeFoundDockerComposeFile,
-								Key:  fmt.Sprintf("services.%s.image", id),
+								Key:  fmt.Sprintf("services.%s.image", svc.Name),
 							},
 							Transformers: transformer.Transformers{
 								transformer.Transformer{

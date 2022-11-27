@@ -112,12 +112,13 @@ func TestDiscoverManifests(t *testing.T) {
 	}
 
 	for _, tt := range testdata {
-
 		t.Run(tt.name, func(t *testing.T) {
 			composefile, err := New(
 				Spec{
 					RootDir: tt.rootDir,
-				}, "")
+				},
+				"",
+			)
 
 			require.NoError(t, err)
 

@@ -74,12 +74,11 @@ func New(spec interface{}, rootDir string) (DockerCompose, error) {
 }
 
 func (h DockerCompose) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
-
+	// Print the header to get started
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Docker Compose"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Docker Compose")+1))
 
 	manifests, err := h.discoverDockerComposeImageManifests()
-
 	if err != nil {
 		return nil, err
 	}
