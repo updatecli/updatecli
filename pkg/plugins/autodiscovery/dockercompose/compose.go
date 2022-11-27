@@ -15,14 +15,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
-var (
-	// DefaultFileMatch specifies the file name patterns identifying Docker Compose files.
-	DefaultFileMatch []string = []string{
-		"docker-compose.yaml",
-		"docker-compose.*.yaml",
-		"docker-compose.yml",
-		"docker-compose.*.yml",
-	}
+const (
+	// DefaultFileMatch specifies the default file shell pattern to identify Docker Compose files
+	// Ref. https://pkg.go.dev/path/filepath#Match and https://go.dev/play/p/y2b7tt03r8Q to test
+	DefaultFilePattern string = "*docker-compose*.y*ml"
 )
 
 type dockerComposeServiceSpec struct {
