@@ -35,43 +35,6 @@ func TestDiscoverManifests(t *testing.T) {
 				{
 					Name: "Bump Docker Image Tag for \"jenkinsci/jenkins\"",
 					Sources: map[string]source.Config{
-						"jenkins-lts": {
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[jenkinsci/jenkins] Get latest Docker Image Tag",
-								Kind: "dockerimage",
-								Spec: dockerimage.Spec{
-									Image:     "jenkinsci/jenkins",
-									TagFilter: `^\d*(\.\d*){2}-alpine$`,
-									VersionFilter: version.Filter{
-										Kind:    "semver",
-										Pattern: ">=2.150.1-alpine",
-									},
-								},
-							},
-						},
-					},
-					Targets: map[string]target.Config{
-						"jenkins-lts": {
-							SourceID: "jenkins-lts",
-							ResourceConfig: resource.ResourceConfig{
-								Name: "[jenkinsci/jenkins] Bump Docker Image tag in \"docker-compose.yaml\"",
-								Kind: "yaml",
-								Spec: yaml.Spec{
-									File: "docker-compose.yaml",
-									Key:  "services.jenkins-lts.image",
-								},
-								Transformers: transformer.Transformers{
-									transformer.Transformer{
-										AddPrefix: "jenkinsci/jenkins:",
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "Bump Docker Image Tag for \"jenkinsci/jenkins\"",
-					Sources: map[string]source.Config{
 						"jenkins-weekly": {
 							ResourceConfig: resource.ResourceConfig{
 								Name: "[jenkinsci/jenkins] Get latest Docker Image Tag",
