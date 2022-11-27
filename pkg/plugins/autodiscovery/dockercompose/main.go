@@ -62,7 +62,7 @@ func New(spec interface{}, rootDir string) (DockerCompose, error) {
 	d := DockerCompose{
 		spec:      s,
 		rootDir:   dir,
-		filematch: DefaultFileMatch,
+		filematch: []string{DefaultFilePattern},
 	}
 
 	if len(s.FileMatch) > 0 {
