@@ -40,8 +40,6 @@ type ResourceConfig struct {
 	Transformers transformer.Transformers `yaml:",omitempty"`
 	// spec specifies parameters for a specific resource kind
 	Spec interface{} `yaml:",omitempty"`
-	// Deprecated field on version [1.17.0]
-	Scm map[string]interface{} `yaml:",omitempty"`
 	// scmid specifies the scm configuration key associated to the current resource
 	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 	// !deprecated, please use scmid

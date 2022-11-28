@@ -1,0 +1,64 @@
+name: Test Github Release
+
+sources:
+  default:
+    name: Default Get Latest github action Release
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli-action
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+  prerelease:
+    name: Get Latest Github Action Prelease
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli-action
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      typefilter:
+        prerelease: true
+  release:
+    name: Get Latest GitHub Action Release
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli-action
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      typefilter:
+        release: true
+conditions:
+  default:
+    name: Default Get Latest GitHub action Release
+    kind: githubrelease
+    sourceid: default
+    spec:
+      owner: updatecli
+      repository: updatecli-action
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+  prerelease:
+    name: Check Latest GitHub Action Prelease
+    kind: githubrelease
+    sourceid: prerelease
+    spec:
+      owner: updatecli
+      repository: updatecli-action
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      typefilter:
+        prerelease: true
+  release:
+    name: Check latest GitHub Action release
+    kind: githubrelease
+    sourceid: release
+    spec:
+      owner: updatecli
+      repository: updatecli-action
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      typefilter:
+        release: true
+

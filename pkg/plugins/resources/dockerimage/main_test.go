@@ -11,13 +11,15 @@ import (
 
 func TestNew(t *testing.T) {
 	tests := []struct {
-		name    string
-		spec    Spec
-		want    *DockerImage
-		wantErr bool
+		name                  string
+		spec                  Spec
+		wantSpec              Spec
+		wantVersionFilter     version.Filter
+		wantRemoteOptionsSize int
+		wantErr               bool
 	}{
 		{
-			name: "Normal case",
+			name: "Normal case with a single architecture",
 			spec: Spec{
 				Architecture: "arm64",
 				Image:        "ghcr.io/updatecli/updatecli",
@@ -27,21 +29,101 @@ func TestNew(t *testing.T) {
 					Password: "SuperSecretPass",
 				},
 			},
-			want: &DockerImage{
-				spec: Spec{
-					Architecture: "arm64",
-					Image:        "ghcr.io/updatecli/updatecli",
-					Tag:          "0.15.0",
-					InlineKeyChain: docker.InlineKeyChain{
-						Username: "eva",
-						Password: "SuperSecretPass",
-					},
-				},
-				versionFilter: version.Filter{
-					Kind:    "latest",
-					Pattern: "latest",
+			wantSpec: Spec{
+				Architectures: []string{"arm64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
 				},
 			},
+			wantVersionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			// Only 1 architecture: there is an option for the platform
+			wantRemoteOptionsSize: 2,
+		},
+		{
+			name: "Normal case with default (implicit) architecture",
+			spec: Spec{
+				Image: "ghcr.io/updatecli/updatecli",
+				Tag:   "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantSpec: Spec{
+				Architectures: []string{"amd64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantVersionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			// Only 1 architecture: there is an option for the platform
+			wantRemoteOptionsSize: 2,
+		},
+		{
+			name: "Normal case with multiple architectures",
+			spec: Spec{
+				Architectures: []string{"amd64", "arm/v7", "arm64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantSpec: Spec{
+				Architectures: []string{"amd64", "arm/v7", "arm64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantVersionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			// Multiple architectures: there is NO option for the platform
+			wantRemoteOptionsSize: 1,
+		},
+		{
+			name: "Normal case with multiple architectures but only one in the list",
+			spec: Spec{
+				Architectures: []string{"amd64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantSpec: Spec{
+				Architectures: []string{"amd64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
+			wantVersionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			// Only 1 architecture: there is an option for the platform
+			wantRemoteOptionsSize: 2,
 		},
 		{
 			name: "Invalid Spec provided (no password but username)",
@@ -53,7 +135,20 @@ func TestNew(t *testing.T) {
 					Username: "eva",
 				},
 			},
-			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Invalid Spec provided (both single and  multiple architectures)",
+			spec: Spec{
+				Architecture:  "arm64",
+				Architectures: []string{"arm64", "s390x"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Tag:           "0.15.0",
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: "eva",
+					Password: "SuperSecretPass",
+				},
+			},
 			wantErr: true,
 		},
 	}
@@ -66,8 +161,9 @@ func TestNew(t *testing.T) {
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.want.spec, got.spec)
-			assert.Equal(t, tt.want.versionFilter, got.versionFilter)
+			assert.Equal(t, tt.wantSpec, got.spec)
+			assert.Equal(t, tt.wantVersionFilter, got.versionFilter)
+			assert.Equal(t, tt.wantRemoteOptionsSize, len(got.options))
 		})
 	}
 }

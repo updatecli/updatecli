@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
@@ -53,6 +52,7 @@ type releaseNode struct {
 	Name         string
 	TagName      string
 	IsDraft      bool
+	IsLatest     bool
 	IsPrerelease bool
 }
 type releaseEdge struct {
@@ -68,7 +68,7 @@ type repositoryRelease struct {
 // SearchReleases return every releases from the github api
 // ordered by reverse order of created time.
 // Draft and pre-releases are filtered out.
-func (g *Github) SearchReleases() (releases []string, err error) {
+func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err error) {
 	var query releasesQuery
 
 	variables := map[string]interface{}{
@@ -81,9 +81,6 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 		},
 	}
 
-	expectedFound := 0
-	releaseCounter := 0
-
 	for {
 		err := g.client.Query(context.Background(), &query, variables)
 		if err != nil {
@@ -94,24 +91,39 @@ func (g *Github) SearchReleases() (releases []string, err error) {
 		query.RateLimit.Show()
 
 		for i := len(query.Repository.Releases.Edges) - 1; i >= 0; i-- {
-			releaseCounter++
 			node := query.Repository.Releases.Edges[i]
-			if !node.Node.IsDraft && !node.Node.IsPrerelease {
-				releases = append(releases, node.Node.TagName)
+
+			// If releaseType.Latest is set to true, then it means
+			// we only care about identifying the latest release
+			if releaseType.Latest {
+				if node.Node.IsLatest {
+					releases = append(releases, node.Node.TagName)
+					break
+				}
+				// Check if the next release is of type "latest"
+				continue
+			}
+
+			if node.Node.IsDraft {
+				if releaseType.Draft {
+					releases = append(releases, node.Node.TagName)
+				}
+			} else if node.Node.IsPrerelease {
+				if releaseType.PreRelease {
+					releases = append(releases, node.Node.TagName)
+				}
+			} else {
+				if releaseType.Release {
+					releases = append(releases, node.Node.TagName)
+				}
 			}
 		}
-
-		expectedFound = query.Repository.Releases.TotalCount
 
 		if !query.Repository.Releases.PageInfo.HasPreviousPage {
 			break
 		}
 
 		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Releases.PageInfo.StartCursor))
-	}
-
-	if expectedFound != releaseCounter {
-		return releases, fmt.Errorf("something went wrong, found %d releases, expected %d", releaseCounter, expectedFound)
 	}
 
 	logrus.Debugf("%d releases found", len(releases))
