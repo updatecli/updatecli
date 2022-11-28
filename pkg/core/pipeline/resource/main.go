@@ -22,6 +22,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/json"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/npm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
@@ -97,6 +98,8 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return yaml.New(rs.Spec)
 	case "xml":
 		return xml.New(rs.Spec)
+	case "npm":
+		return npm.New(rs.Spec)
 	default:
 		return nil, fmt.Errorf("%s Don't support resource kind: %v", result.FAILURE, rs.Kind)
 	}
@@ -135,5 +138,6 @@ func GetResourceMapping() map[string]interface{} {
 		"toml":          &toml.Spec{},
 		"xml":           &xml.Spec{},
 		"yaml":          &yaml.Spec{},
+		"npm":           &npm.Spec{},
 	}
 }
