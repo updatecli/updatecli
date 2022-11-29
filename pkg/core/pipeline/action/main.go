@@ -105,26 +105,26 @@ func (c *Config) Validate() (err error) {
 // New returns a new Action based on an action config and an scm
 func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
 
-	p := Action{
+	newAction := Action{
 		Title:  config.Title,
 		Config: *config,
 		Scm:    sourceControlManager,
 	}
 
-	err := p.generateActionHandler()
+	err := newAction.generateActionHandler()
 	if err != nil {
 		return Action{}, err
 	}
 
-	return p, nil
+	return newAction, nil
 
 }
 
 // Update updates an action object based on its configuration
-func (p *Action) Update() error {
-	p.Title = p.Config.Title
+func (a *Action) Update() error {
+	a.Title = a.Config.Title
 
-	err := p.generateActionHandler()
+	err := a.generateActionHandler()
 	if err != nil {
 		return err
 	}
