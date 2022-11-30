@@ -63,10 +63,10 @@ var (
 		},
 		{
 			Message:        strings.Repeat("a", 75),
-			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaaaaaaa\n\nBREAKING CHANGE",
+			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaaaaaaaaa\n\nBREAKING CHANGE",
 			ExpectedError:  nil,
-			ExpectedBody:   "... aaaaaaaaaaa",
-			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
+			ExpectedBody:   "... aaaaaaaaaaaaa",
+			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
 			Commit: Commit{
 				Type:       "chore",
 				Footers:    "BREAKING CHANGE",
@@ -75,10 +75,10 @@ var (
 		},
 		{
 			Message:        strings.Repeat("a", 75),
-			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaaaaaaa",
+			ExpectedOutput: "chore: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...\n\n... aaaaaaaaaaaaa",
 			ExpectedError:  nil,
-			ExpectedBody:   "... aaaaaaaaaaa",
-			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
+			ExpectedBody:   "... aaaaaaaaaaaaa",
+			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
 			Commit: Commit{
 				Type:       "chore",
 				HideCredit: true,
@@ -121,8 +121,7 @@ func TestCommit(t *testing.T) {
 func TestParseMessage(t *testing.T) {
 
 	for id, data := range dataset {
-		err := data.Commit.ParseMessage(data.Message)
-
+		commitMessage, err := data.Commit.ParseMessage(data.Message)
 		if err != nil && data.ExpectedError != nil {
 			if strings.Compare(err.Error(), data.ExpectedError.Error()) != 0 {
 				t.Errorf("Wrong commit %d err:\n\tExpected:\t\t%v\n\tGot:\t\t%v\n", id, data.ExpectedError, err)
@@ -131,16 +130,16 @@ func TestParseMessage(t *testing.T) {
 			t.Errorf("Unexpected error %q for commit #%d", err, id)
 		}
 
-		if strings.Compare(data.ExpectedTitle, data.Commit.Title) != 0 {
+		if strings.Compare(data.ExpectedTitle, commitMessage.Title) != 0 {
 			t.Errorf("Wrong Commit Title %d:\n\tGot:\t\t%q\n\tExpected:\t%q",
 				id,
-				data.Commit.Title,
+				commitMessage.Title,
 				data.ExpectedTitle)
 		}
-		if strings.Compare(data.ExpectedBody, data.Commit.Body) != 0 {
+		if strings.Compare(data.ExpectedBody, commitMessage.Body) != 0 {
 			t.Errorf("Wrong Commit Body %d:\n\tGot:\t\t%q\n\tExpected:\t%q",
 				id,
-				data.Commit.Body,
+				commitMessage.Body,
 				data.ExpectedBody)
 		}
 	}
