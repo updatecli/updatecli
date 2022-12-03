@@ -30,7 +30,7 @@ func (n Npm) Condition(source string) (bool, error) {
 		}
 	}
 
-	fmt.Printf("%s Version '%v' doesn't exist\n", result.FAILURE, versionToCheck)
+	fmt.Printf("%s Version %q doesn't exist\n", result.FAILURE, versionToCheck)
 
 	return false, nil
 }
