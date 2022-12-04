@@ -1,0 +1,20 @@
+---
+name: "[epinio/image-mirror] Dockerfile autodiscovery"
+scms:
+  helm-charts:
+    kind: git
+    spec:
+      url: https://github.com/epinio/image-mirror.git
+      branch: master
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: helm-charts
+  crawlers:
+    dockerfile:
+      filematch:
+        - "Dockerfile.dapp*"
+      ignore:
+        - images:
+          - "epinio/*"
+
