@@ -1,0 +1,29 @@
+name: test npm plugin
+sources:
+  axios: 
+    name: get latest axios version from npm registry
+    kind: npm
+    spec: 
+      name: axios
+  yaml:
+    name: get latest yaml version matching ~0
+    kind: npm
+    spec: 
+      name: yaml
+      versionfilter: 
+        kind: semver
+        pattern: ~0
+conditions:
+  axios: 
+    name: get latest axios version from npm registry
+    kind: npm
+    disablesourceinput: true
+    spec: 
+      name: axios
+      version: 1.0.0
+  yaml:
+    name: get latest yaml version matching ~0
+    kind: npm
+    sourceid: yaml
+    spec: 
+      name: yaml
