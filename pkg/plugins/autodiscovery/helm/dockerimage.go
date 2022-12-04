@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -15,8 +14,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
-
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 type imageRef struct {
@@ -130,7 +127,11 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 			yamlRepositoryPath := image.yamlRepositoryPath
 			yamlTagPath := image.yamlTagPath
 
-			dockerImageSpec := h.generateSourceDockerImageSpec(image.repository)
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(image.repository, image.tag, h.spec.Auths)
+
+			if sourceSpec == nil {
+				continue
+			}
 
 			manifestName := fmt.Sprintf("Bump Docker Image %q for Helm Chart %q", image.repository, chartName)
 
@@ -141,7 +142,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Get latest %q Container tag", image.repository),
 							Kind: "dockerimage",
-							Spec: dockerImageSpec,
+							Spec: sourceSpec,
 						},
 					},
 				},
@@ -180,62 +181,4 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 	}
 
 	return manifests, nil
-}
-
-func sanitizeRegistryEndpoint(repository string) string {
-	ref, err := name.ParseReference(repository)
-	if err != nil {
-		logrus.Debugf("Unable to parse repository %q: %v", repository, err)
-	}
-	return ref.Context().RegistryStr()
-}
-
-func (h Helm) generateSourceDockerImageSpec(image string) dockerimage.Spec {
-	dockerimagespec := dockerimage.Spec{
-		Image: image,
-		VersionFilter: version.Filter{
-			Kind: version.SEMVERVERSIONKIND,
-		},
-	}
-
-	registry := sanitizeRegistryEndpoint(image)
-
-	credential, found := h.spec.Auths[registry]
-
-	switch found {
-	case true:
-		if credential.Password != "" {
-			dockerimagespec.Password = credential.Password
-		}
-		if credential.Token != "" {
-			dockerimagespec.Token = credential.Token
-		}
-		if credential.Username != "" {
-			dockerimagespec.Username = credential.Username
-		}
-	default:
-
-		registryAuths := []string{}
-
-		for endpoint := range h.spec.Auths {
-			logrus.Printf("Endpoint:\t%q\n", endpoint)
-			registryAuths = append(registryAuths, endpoint)
-		}
-
-		warningMessage := fmt.Sprintf(
-			"no credentials found for docker registry %q hosting image %q, among %q",
-			registry,
-			image,
-			strings.Join(registryAuths, ","))
-
-		if len(registryAuths) == 0 {
-			warningMessage = fmt.Sprintf("no credentials found for docker registry %q hosting image %q",
-				registry,
-				image)
-		}
-
-		logrus.Warning(warningMessage)
-	}
-
-	return dockerimagespec
 }
