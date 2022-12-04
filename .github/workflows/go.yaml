@@ -67,7 +67,7 @@ jobs:
           sudo chmod +x /usr/local/bin/venom
           ls -lha /usr/local/bin/venom
         env:
-          VENOM_VERSION: v1.0.1
+          VENOM_VERSION: v1.1.0
       - name: Show Venom version
         run: venom version
       - name: Run End to End tests
