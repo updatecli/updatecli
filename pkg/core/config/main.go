@@ -52,7 +52,7 @@ type Spec struct {
 	Name string `yaml:",omitempty" jsonschema:"required"`
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	PipelineID string `yaml:",omitempty"`
-	// AutoDiscovery defines parameters to the autodiscover feature
+	// AutoDiscovery defines parameters to the autodiscovery feature
 	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
 	// Title is used for the full pipeline
 	Title string `yaml:",omitempty"`
@@ -68,7 +68,7 @@ type Spec struct {
 	Conditions map[string]condition.Config `yaml:",omitempty"`
 	// Targets defines the list of target configuration
 	Targets map[string]target.Config `yaml:",omitempty"`
-	// Version specifies the mininum updatecli version compatible with the manifest
+	// Version specifies the minimum updatecli version compatible with the manifest
 	Version string `yaml:",omitempty"`
 }
 
@@ -80,7 +80,7 @@ type Option struct {
 	ValuesFiles []string
 	// SecretsFiles contains the list of updatecli sops secrets full file path
 	SecretsFiles []string
-	// DisableTemplating specify if needs to be done
+	// DisableTemplating specifies if needs to be done
 	DisableTemplating bool
 }
 
