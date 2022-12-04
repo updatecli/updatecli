@@ -186,7 +186,6 @@ func (e *Engine) Prepare() (err error) {
 	}
 
 	if len(e.Pipelines) == 0 {
-		logrus.Errorln(err)
 		return fmt.Errorf("no valid pipeline found")
 	}
 
