@@ -11,7 +11,7 @@ import (
 type MatchingRule struct {
 	// Arch specifies a list of docker image architecture
 	Archs []string
-	// Path specifies a Helm chart path pattern, the pattern requires to match all of name, not just a substring.
+	// Path specifies a Dockerfile path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
 	// Image specifies a list of docker image
 	Images []string
