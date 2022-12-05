@@ -175,7 +175,7 @@ func (p *Pipeline) SearchAssociatedTargetsID(actionID string) ([]string, error) 
 	scmid := p.Actions[actionID].Config.ScmID
 
 	if len(scmid) == 0 {
-		return []string{}, fmt.Errorf("scmid %q not found for the action %q", scmid, actionID)
+		return []string{}, fmt.Errorf("scmid %q not found for the action id %q", scmid, actionID)
 	}
 	results := []string{}
 
