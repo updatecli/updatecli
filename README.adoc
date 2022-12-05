@@ -97,7 +97,7 @@ targets:
 
 action:
   default:
-    title: Open a GitHub Pull Request with new Jenkins version
+    title: Open a GitHub pull request with new Jenkins version
     kind: github
     scmID: default
     target:
