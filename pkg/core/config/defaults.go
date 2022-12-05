@@ -11,7 +11,7 @@ import (
 // a specific job
 func (config *Config) GetChangelogTitle(ID string, fallback string) (title string) {
 	if len(config.Spec.Title) > 0 {
-		// If a pipeline title has been defined, then use it for pull request title
+		// If a pipeline title has been defined, then use it for action title
 		title = fmt.Sprintf("[updatecli] %s",
 			config.Spec.Title)
 
@@ -72,8 +72,8 @@ func (config Config) needScm(requiredScmId string) bool {
 			return true
 		}
 	}
-	for _, pr := range config.Spec.PullRequests {
-		if pr.ScmID == requiredScmId {
+	for _, action := range config.Spec.Actions {
+		if action.ScmID == requiredScmId {
 			return true
 		}
 	}
