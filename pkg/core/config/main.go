@@ -174,7 +174,7 @@ func New(option Option) (config Config, err error) {
 			return config, fmt.Errorf("The `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated.")
 		}
 
-		logrus.Warningf("The keyword `pullrequests` is deprecated in favor of `actions`, please update your manifest. Updatecli continues the execution while trying to translate `pullrequests` to `actions`.")
+		logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
 
 		config.Spec.Actions = config.Spec.PullRequests
 		config.Spec.PullRequests = nil
