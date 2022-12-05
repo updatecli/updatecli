@@ -74,7 +74,7 @@ func (c *Config) Validate() (err error) {
 		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest", githubIdentifier, githubIdentifier)
 	}
 	if c.Kind == giteaIdentifier {
-		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest", giteaIdentifier, giteaIdentifier)
+		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", giteaIdentifier, giteaIdentifier)
 	}
 	if c.DeprecatedScmID != "" {
 		switch len(c.ScmID) {
