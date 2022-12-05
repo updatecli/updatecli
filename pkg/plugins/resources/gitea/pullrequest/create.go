@@ -45,7 +45,7 @@ func (g *Gitea) CreateAction(title, changelog, pipelineReport string) error {
 			* A previous Updatecli run failed during a Pullrequest creation for example due to network issues
 
 
-		Therefore we always try to open a Pull Request, we don't consider being an error if all conditions are not met
+		Therefore we always try to open a pull request, we don't consider being an error if all conditions are not met
 		such as missing remote branches.
 	*/
 	if !ok {
