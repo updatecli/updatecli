@@ -12,6 +12,7 @@ import (
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
@@ -25,6 +26,7 @@ var (
 			"helm":          helm.Spec{},
 			"rancher/fleet": fleet.Spec{},
 			"maven":         maven.Spec{},
+			"dockercompose": dockercompose.Spec{},
 		},
 	}
 )
@@ -86,6 +88,17 @@ func New(spec discoveryConfig.Config,
 		}
 
 		switch kind {
+		case "dockercompose":
+
+			dockerComposeCrawler, err := dockercompose.New(g.spec.Crawlers[kind], workDir)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, dockerComposeCrawler)
+
 		case "helm":
 
 			helmCrawler, err := helm.New(g.spec.Crawlers[kind], workDir)

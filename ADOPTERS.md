@@ -8,4 +8,5 @@ We are adding public references of Updatecli but feel free to add your organizat
 * [Jenkins](https://github.com/jenkins-infra/charts/tree/master/updatecli)
 * [Epinio](https://github.com/epinio/helm-charts/tree/main/updatecli)
 * [Asciidoctor](https://github.com/asciidoctor/docker-asciidoctor/tree/main/updatecli)
+* [SUSE Rancher](https://github.com/rancherlabs/updatecli-automation)
 

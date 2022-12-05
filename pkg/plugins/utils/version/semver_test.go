@@ -104,6 +104,22 @@ var (
 			ExpectedParsedVersion:   "",
 			ExpectedOriginalVersion: "",
 		},
+		{
+			Versions:                []string{"1.0-alpine", "2.0-alpine", "4.0-alpine", "3.0-alpine", "6.0-alpine", "5.0-alpine"},
+			SortedVersions:          []string{"6.0.0-alpine", "5.0.0-alpine", "4.0.0-alpine", "3.0.0-alpine", "2.0.0-alpine", "1.0.0-alpine"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "6.0.0-alpine",
+			ExpectedOriginalVersion: "6.0-alpine",
+		},
+		{
+			Versions:                []string{"1-alpine", "2-alpine", "4-alpine", "3-alpine", "6-alpine", "5-alpine"},
+			SortedVersions:          []string{"6.0.0-alpine", "5.0.0-alpine", "4.0.0-alpine", "3.0.0-alpine", "2.0.0-alpine", "1.0.0-alpine"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "6.0.0-alpine",
+			ExpectedOriginalVersion: "6-alpine",
+		},
 	}
 )
 

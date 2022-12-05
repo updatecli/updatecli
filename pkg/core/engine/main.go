@@ -25,6 +25,11 @@ import (
 	"strings"
 )
 
+var (
+	// ErrNoManifestDetected is return when we couldn't find Updatecli manifest
+	ErrNoManifestDetected error = errors.New("no Updatecli manifest detected")
+)
+
 // Engine defined parameters for a specific engine run.
 type Engine struct {
 	configurations []config.Config
@@ -156,10 +161,16 @@ func (e *Engine) Prepare() (err error) {
 
 	err = e.LoadConfigurations()
 
-	// Don't exit if we identify at least one valid pipeline configuration
-	if err != nil {
+	if !errors.Is(err, ErrNoManifestDetected) && err != nil {
 		logrus.Errorln(err)
 		logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
+	}
+
+	if errors.Is(err, ErrNoManifestDetected) {
+		if !e.Options.Pipeline.AutoDiscovery.Enabled {
+			logrus.Infof("Autodiscovery enabled as no Updatecli manifest could be detected\n\n")
+		}
+		e.Options.Pipeline.AutoDiscovery.Enabled = true
 	}
 
 	// If one git clone fails then we exit
@@ -175,7 +186,6 @@ func (e *Engine) Prepare() (err error) {
 	}
 
 	if len(e.Pipelines) == 0 {
-		logrus.Errorln(err)
 		return fmt.Errorf("no valid pipeline found")
 	}
 
@@ -187,7 +197,13 @@ func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
 
-	for _, manifestFile := range GetFiles(e.Options.Config.ManifestFile) {
+	manifestFiles := GetFiles(e.Options.Config.ManifestFile)
+
+	if len(manifestFiles) == 0 {
+		return ErrNoManifestDetected
+	}
+
+	for _, manifestFile := range manifestFiles {
 
 		loadedConfiguration, err := config.New(
 			config.Option{
