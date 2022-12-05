@@ -6,7 +6,6 @@ scms:
     spec:
       owner: updatecli
       repository: updatecli
-      username: '{{ requiredEnv "GITHUB_ACTOR"}}'
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       branch: main
 
@@ -20,15 +19,15 @@ sources:
       key: "name"
 
 targets:
-  jenkins: 
+  jenkins:
     name: Update updatecli config title
-    kind: yaml 
+    kind: yaml
     scmid: default
     spec:
       file: "updatecli/updatecli.d/updatecli.yaml"
       key: "name"
 
-pullrequests:
+actions:
   prID1:
     scmid: default
-    kind: github
+    kind: github/pullrequest

@@ -81,7 +81,7 @@ func (g *Gitea) Add(files []string) error {
 	return nil
 }
 
-// Push run `git push` then open a pull request on Github if not already created.
+// Push run `git push` to the corresponding Gitea remote branch if not already created.
 func (g *Gitea) Push() error {
 
 	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)

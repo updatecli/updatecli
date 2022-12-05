@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreatePullRequest(t *testing.T) {
+func TestCreateAction(t *testing.T) {
 
 	// Disable source testing with running short tes
 	if testing.Short() {
@@ -56,7 +56,7 @@ func TestCreatePullRequest(t *testing.T) {
 			g, gotErr := New(tt.manifest, nil)
 			require.NoError(t, gotErr)
 
-			gotErr = g.CreatePullRequest(
+			gotErr = g.CreateAction(
 				"Bump version to x.y.z",
 				"This is a changelog",
 				"This is a report")

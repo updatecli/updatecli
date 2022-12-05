@@ -1,0 +1,13 @@
+version: '3'
+services:
+  # The jenkinsci/jenkins is deprecated and so won't be updated
+  # So the test shouldn't fail in the future
+  jenkins-weekly:
+    image: jenkinsci/jenkins:2.254-alpine
+    platform: linux/amd64
+    ports:
+      - "8080:8080"
+  jenkins-lts:
+    image: jenkinsci/jenkins:2.150.1-alpine
+    ports:
+      - "8080:8080"

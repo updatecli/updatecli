@@ -51,7 +51,7 @@ func (c *Commit) Generate(raw string) (string, error) {
 
 	t := template.Must(template.New("commit").Parse(commitTpl))
 
-	err = c.ParseMessage(raw)
+	commit, err := c.ParseMessage(raw)
 
 	if err != nil {
 		logrus.Errorf(err.Error())
@@ -60,7 +60,7 @@ func (c *Commit) Generate(raw string) (string, error) {
 
 	buffer := new(bytes.Buffer)
 
-	err = t.Execute(buffer, c)
+	err = t.Execute(buffer, commit)
 
 	commitMessage := buffer.String()
 
@@ -73,46 +73,63 @@ func (c *Commit) Generate(raw string) (string, error) {
 
 // ParseMessage parses a message then return the commit message title and its body.
 // The message title can't be longer than 72 characters
-func (c *Commit) ParseMessage(message string) (err error) {
+func (c *Commit) ParseMessage(message string) (Commit, error) {
+	var commit Commit
+
 	if len(message) == 0 {
-		return ErrEmptyCommitMessage
+		return commit, ErrEmptyCommitMessage
 	}
+
+	commit.Type = c.Type
+	commit.Scope = c.Scope
+	commit.Footers = c.Footers
+	commit.HideCredit = c.HideCredit
+
 	lines := strings.Split(message, "\n")
 
-	maxMessageCharacter := 72 - (len(c.Type) + len(c.Scope))
-	title := ""
-	body := ""
+	placeholders := 0
+	if len(c.Type) > 0 {
+		// Counting colon and space after type
+		// This must be updated if commitTpl is changed
+		placeholders = placeholders + len(c.Type) + 2
+	}
+	if len(c.Scope) > 0 {
+		// Counting parentheses around the scope
+		// This must be updated if commitTpl is changed
+		placeholders = placeholders + len(c.Scope) + 2
+	}
+	maxMessageCharacter := 72 - placeholders
 
 	// If Title based on first line message is too long
 	// then split the message title into the body
 	if len(lines[0]) > maxMessageCharacter {
 		line := lines[0]
-		title = line[0:(maxMessageCharacter-3)] + "..."
-		body = body + "... " + line[(maxMessageCharacter-3):] + "\n"
+		commit.Title = line[0:(maxMessageCharacter-3)] + "..."
+		commit.Body = commit.Body + "... " + line[(maxMessageCharacter-3):] + "\n"
 
 	} else {
-		title = lines[0]
+		commit.Title = lines[0]
 	}
 
 	if len(lines) > 1 {
-		body = body + strings.Join(lines[1:], "\n")
+		commit.Body = commit.Body + strings.Join(lines[1:], "\n")
+
 	}
 
 	// Remove trailing \b so we can handle it from the go template
-	body = strings.TrimRight(body, "\n")
+	commit.Body = strings.TrimRight(commit.Body, "\n")
 
 	// Only set title if not already defined
 	// so we can specify its value from the updatecli configuration
-	if len(c.Title) == 0 {
-		c.Title = title
-	}
-	// Only set body if not already defined
-	// so we can specify its value from the updatecli configuration
-	if len(c.Body) == 0 {
-		c.Body = body
+	// If title is set, then body is also set, even if it's empty
+	// If title is not set, but body is, we ignore body, otherwise the commit
+	// message will be without context - title is not set, but body is
+	if len(c.Title) > 0 {
+		commit.Title = c.Title
+		commit.Body = c.Body
 	}
 
-	return nil
+	return commit, nil
 }
 
 // Validate validates "conventional commit" default parameters.

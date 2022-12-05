@@ -82,7 +82,7 @@ func (g *Github) Add(files []string) error {
 	return nil
 }
 
-// Push run `git push` then open a pull request on Github if not already created.
+// Push run `git push` on the Github remote branch if not already created.
 func (g *Github) Push() error {
 
 	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
