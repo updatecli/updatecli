@@ -38,7 +38,7 @@ type Config struct {
 	Kind string `yaml:",omitempty"`
 	// Spec defines parameters for a specific "kind"
 	Spec interface{} `yaml:",omitempty"`
-	// scmid references an scm configuration defined within the updatecli manifest
+	// scmid references a scm configuration defined within the updatecli manifest
 	ScmID string `yaml:",omitempty"`
 	// !Deprecated in favor of `scmid`
 	DeprecatedScmID string `yaml:"scmID,omitempty" jsonschema:"-"`
