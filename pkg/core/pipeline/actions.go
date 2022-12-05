@@ -113,7 +113,7 @@ func (p *Pipeline) RunActions() error {
 
 		if p.Options.Target.DryRun {
 			if len(attentionTargetIDs) > 0 {
-				logrus.Infof("[Dry Run] An action with kind %q is expected.", action.Config.Kind)
+				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
 
 				actionDebugOutput := fmt.Sprintf("The expected action would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
 					action.Title,
