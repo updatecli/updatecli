@@ -422,7 +422,7 @@ func (e *Engine) LoadAutoDiscovery() error {
 				return fmt.Errorf("The `autodiscovery.pullrequestid` and `autodiscovery.actionid` keywords are mutually exclusive. Please use only `autodiscovery.actionid` as `autodiscovery.pullrequestid` is deprecated.")
 			}
 
-			logrus.Warningf("The keyword `autodiscovery.pullrequestid` is deprecated in favor of `autodiscovery.actionid`, please update your manifest. Updatecli continues the execution while trying to translate `autodiscovery.pullrequestid` to `autodiscovery.actionid`.")
+			logrus.Warningf("The `autodiscovery.pullrequestid` keyword is deprecated in favor of `autodiscovery.actionid`, please update this manifest. Updatecli will continue the execution while trying to translate `autodiscovery.pullrequestid` to `autodiscovery.actionid`.")
 
 			p.Config.Spec.AutoDiscovery.ActionId = p.Config.Spec.AutoDiscovery.PullrequestId
 			p.Config.Spec.AutoDiscovery.PullrequestId = ""
