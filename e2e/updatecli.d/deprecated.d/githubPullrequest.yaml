@@ -1,6 +1,6 @@
 # Depreciation Warning message expected:
 ## This manifest has a 'pullrequests:' top-level directive which is deprecated in favor of 'actions'
-name: Test Github Pullrequest
+name: Test GitHub Pullrequest
 
 scms:
   default:
