@@ -28,7 +28,7 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 
 == Why
 
-There are already many projects out there which can continuously update your files, but they all have an opinionated way of doing it and they often want you to adopt a new platform.
+There are already many projects out there to continuously update your files, but they all have an opinionated way of doing it and they often want you to adopt a new platform.
 Building and distributing software is a difficult task and good practices constantly evolve.
 Updatecli was built to work independently of the underlying dependencies to update, wherever you need it and combining whatever workflow you are using, as you can see in the following section.
 
