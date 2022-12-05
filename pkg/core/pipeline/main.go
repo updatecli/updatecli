@@ -90,7 +90,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		// Validate that scm ID exists
 		if !ok {
-			return fmt.Errorf("scms ID %q referenced by the action %q does not exist",
+			return fmt.Errorf("scms ID %q referenced by the action id %q does not exist",
 				actionConfig.ScmID,
 				id)
 		}
