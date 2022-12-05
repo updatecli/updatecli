@@ -6,8 +6,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
@@ -21,11 +21,11 @@ type Pipeline struct {
 	ID    string // ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	Title string // Title is used for the full pipelin
 
-	Sources      map[string]source.Source
-	Conditions   map[string]condition.Condition
-	Targets      map[string]target.Target
-	SCMs         map[string]scm.Scm
-	PullRequests map[string]pullrequest.PullRequest
+	Sources    map[string]source.Source
+	Conditions map[string]condition.Condition
+	Targets    map[string]target.Target
+	SCMs       map[string]scm.Scm
+	Actions    map[string]action.Action
 
 	Report reports.Report
 
@@ -55,7 +55,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Sources = make(map[string]source.Source, len(config.Spec.Sources))
 	p.Conditions = make(map[string]condition.Condition, len(config.Spec.Conditions))
 	p.Targets = make(map[string]target.Target, len(config.Spec.Targets))
-	p.PullRequests = make(map[string]pullrequest.PullRequest, len(config.Spec.PullRequests))
+	p.Actions = make(map[string]action.Action, len(config.Spec.Actions))
 
 	// Init context resource size
 	p.Report.Sources = make(map[string]reports.Stage, len(config.Spec.Sources))
@@ -79,24 +79,24 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 	}
 
-	// Init pullrequests
-	for id, pullRequestConfig := range config.Spec.PullRequests {
+	// Init actions
+	for id, actionConfig := range config.Spec.Actions {
 		var err error
 
 		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
-		pullRequestConfig := pullRequestConfig
+		actionConfig := actionConfig
 
-		SCM, ok := p.SCMs[pullRequestConfig.ScmID]
+		SCM, ok := p.SCMs[actionConfig.ScmID]
 
 		// Validate that scm ID exists
 		if !ok {
-			return fmt.Errorf("scms ID %q referenced by pullrequest ID %q, doesn't exist",
-				pullRequestConfig.ScmID,
+			return fmt.Errorf("scms ID %q referenced by the action id %q does not exist",
+				actionConfig.ScmID,
 				id)
 		}
 
-		p.PullRequests[id], err = pullrequest.New(
-			&pullRequestConfig,
+		p.Actions[id], err = action.New(
+			&actionConfig,
 			&SCM)
 
 		if err != nil {
@@ -230,12 +230,12 @@ func (p *Pipeline) Run() error {
 		}
 	}
 
-	if len(p.PullRequests) > 0 {
-		err := p.RunPullRequests()
+	if len(p.Actions) > 0 {
+		err := p.RunActions()
 
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			return fmt.Errorf("pull Request stage:\t%q", err.Error())
+			return fmt.Errorf("action stage:\t%q", err.Error())
 		}
 
 	}

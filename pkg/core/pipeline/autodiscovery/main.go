@@ -9,8 +9,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
@@ -41,17 +41,17 @@ type Crawler interface {
 }
 
 type AutoDiscovery struct {
-	scmConfig         *scm.Config
-	pullrequestConfig *pullrequest.Config
-	spec              discoveryConfig.Config
-	crawlers          []Crawler
+	scmConfig    *scm.Config
+	actionConfig *action.Config
+	spec         discoveryConfig.Config
+	crawlers     []Crawler
 }
 
 // New returns an initiated autodiscovery object
 func New(spec discoveryConfig.Config,
 	scmHandler scm.ScmHandler,
 	scmConfig *scm.Config,
-	pullrequestConfig *pullrequest.Config) (*AutoDiscovery, error) {
+	actionConfig *action.Config) (*AutoDiscovery, error) {
 
 	var errs []error
 	var s discoveryConfig.Config
@@ -70,8 +70,8 @@ func New(spec discoveryConfig.Config,
 		g.scmConfig = scmConfig
 	}
 
-	if len(pullrequestConfig.Kind) > 0 {
-		g.pullrequestConfig = pullrequestConfig
+	if len(actionConfig.Kind) > 0 {
+		g.actionConfig = actionConfig
 	}
 
 	for kind := range s.Crawlers {
@@ -175,10 +175,10 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 
 		discoveredManifests, err := crawler.DiscoverManifests(
 			discoveryConfig.Input{
-				ScmSpec:         g.scmConfig,
-				ScmID:           g.spec.ScmId,
-				PullRequestSpec: g.pullrequestConfig,
-				PullrequestID:   g.spec.PullrequestId,
+				ScmSpec:      g.scmConfig,
+				ScmID:        g.spec.ScmId,
+				ActionConfig: g.actionConfig,
+				ActionID:     g.spec.ActionId,
 			})
 
 		if err != nil {

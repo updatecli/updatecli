@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
@@ -32,7 +32,7 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 							Disabled: true,
 						},
 					},
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {
 							ScmID: LOCALSCMIDENTIFIER,
 						},
@@ -44,10 +44,10 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 			},
 		},
 		{
-			name: "passing case with no local SCM (because no target or pullrequest refers it)",
+			name: "passing case with no local SCM (because no target or action refers it)",
 			config: &Config{
 				Spec: Spec{
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {
 							ScmID: "different_than_" + LOCALSCMIDENTIFIER,
 						},
@@ -88,7 +88,7 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 					Remotes: map[string]string{"origin": "https://localhost:2222/olblak/updatecli"},
 				},
 				Spec: Spec{
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {
 							ScmID: LOCALSCMIDENTIFIER,
 						},

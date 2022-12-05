@@ -6,7 +6,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
@@ -92,9 +92,9 @@ func (m Maven) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, er
 			SetScm(&manifests[i], *input.ScmSpec, input.ScmID)
 		}
 
-		// Set pullrequest configuration if specified
-		if len(input.PullrequestID) > 0 {
-			SetPullrequest(&manifests[i], *input.PullRequestSpec, input.PullrequestID)
+		// Set action configuration if specified
+		if len(input.ActionID) > 0 {
+			SetAction(&manifests[i], *input.ActionConfig, input.ActionID)
 		}
 	}
 
@@ -117,7 +117,7 @@ func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
 
 }
 
-func SetPullrequest(configSpec *config.Spec, pullrequestSpec pullrequest.Config, pullrequestID string) {
-	configSpec.PullRequests = make(map[string]pullrequest.Config)
-	configSpec.PullRequests[pullrequestID] = pullrequestSpec
+func SetAction(configSpec *config.Spec, actionSpec action.Config, actionID string) {
+	configSpec.Actions = make(map[string]action.Config)
+	configSpec.Actions[actionID] = actionSpec
 }
