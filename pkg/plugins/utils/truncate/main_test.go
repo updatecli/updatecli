@@ -7,12 +7,12 @@ import (
 
 func TestString(t *testing.T) {
 	// small string
-	smallStr := "This is a small PR body"
-	truncatedSmallStr := "This is a small PR"
+	smallStr := "This is a small Pull Request body"
+	truncatedSmallStr := "This is a small Pull Request"
 
 	// too large string
 	const REPEAT = 2500
-	str := "This is a really long PR body"
+	str := "This is a really long Pull Request body"
 
 	longStr := ""
 	for i := 0; i < REPEAT; i++ {

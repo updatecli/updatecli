@@ -28,8 +28,8 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 
 == Why
 
-There are already many projects out there which can continuously update your files, but they all have an opinionated way of doing it and they often want you to adopt a new platform. 
-Building and distributing software is a difficult task and good practices constantly evolve. 
+There are already many projects out there to continuously update your files, but they all have an opinionated way of doing it and they often want you to adopt a new platform.
+Building and distributing software is a difficult task and good practices constantly evolve.
 Updatecli was built to work independently of the underlying dependencies to update, wherever you need it and combining whatever workflow you are using, as you can see in the following section.
 
 == Demo
@@ -95,9 +95,9 @@ targets:
       file: charts/jenkins/values.yaml
       key: jenkins.controller.imageTag
 
-pullrequests:
+action:
   default:
-    title: Open pullrequest with new Jenkins version
+    title: Open a GitHub pull request with new Jenkins version
     kind: github
     scmID: default
     target:
@@ -121,7 +121,7 @@ Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.335" +
 
 . Targets: +
 Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.335"? +
-=> If yes then open a Github pull request to the branch "main"
+=> If yes then execute the action `default` opening a GitHub pull request to the "main" branch
 
 |===
 
@@ -147,7 +147,7 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 == Conferences
 
 * 2022
-** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video] 
+** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video]
 
 == Links
 
@@ -155,4 +155,3 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 * link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 * link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
 * link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
-
