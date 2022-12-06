@@ -1,6 +1,7 @@
 package dockerfile
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -106,11 +107,13 @@ func TestGetDockerfileData(t *testing.T) {
 
 func TestExtractArgName(t *testing.T) {
 	testdata := []struct {
-		name            string
-		input           string
-		expectedPrefix  string
-		expectedArgName string
-		expectedSuffix  string
+		name                 string
+		input                string
+		expectedPrefix       string
+		expectedArgName      string
+		expectedSuffix       string
+		expectedError        bool
+		expectedErrorMessage error
 	}{
 		{
 			name:            "Default case",
@@ -140,14 +143,29 @@ func TestExtractArgName(t *testing.T) {
 			expectedArgName: "jenkins_version",
 			expectedSuffix:  "",
 		},
+		{
+			name:                 "Default case",
+			input:                "${jenkins_release_type}-${jenkins_version}",
+			expectedPrefix:       "lts-",
+			expectedArgName:      "jenkins_version",
+			expectedSuffix:       "",
+			expectedError:        true,
+			expectedErrorMessage: errors.New("more than one variable detected in the Dockerfile instruction. Updatecli do not support this at the moment"),
+		},
 	}
 
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
-			gotPrefix, gotArgName, gotSuffix := extractArgName(tt.input)
-			assert.Equal(t, tt.expectedPrefix, gotPrefix)
-			assert.Equal(t, tt.expectedArgName, gotArgName)
-			assert.Equal(t, tt.expectedSuffix, gotSuffix)
+			gotPrefix, gotArgName, gotSuffix, gotErr := extractArgName(tt.input)
+
+			if tt.expectedError {
+				assert.EqualError(t, tt.expectedErrorMessage, gotErr.Error())
+			} else {
+				assert.NoError(t, gotErr)
+				assert.Equal(t, tt.expectedPrefix, gotPrefix)
+				assert.Equal(t, tt.expectedArgName, gotArgName)
+				assert.Equal(t, tt.expectedSuffix, gotSuffix)
+			}
 		})
 	}
 }

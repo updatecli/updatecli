@@ -2,6 +2,7 @@ package dockerfile
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -17,7 +18,8 @@ import (
 
 const (
 	// extractVariableRegex defines the regular expression used to extract Dockerfile ARGS from value
-	extractVariableRegex string = `(.*)\$\{(.*)\}(.*)`
+	//extractVariableRegex string = `(.*)\$\{(.*)\}(.*)`
+	extractVariableRegex string = `\$\{([a-zA-Z.+-_]*)\}`
 
 	FromInstruction = "FROM"
 	ArgInstruction  = "ARG"
@@ -138,7 +140,11 @@ func searchInstructions(dockerfileContent []byte) ([]instruction, error) {
 			arch := ""
 			switch regexVariableName.Match([]byte(platform)) {
 			case true:
-				_, argName, _ := extractArgName(platform)
+				_, argName, _, err := extractArgName(platform)
+				if err != nil {
+					logrus.Warningln(err)
+					continue
+				}
 
 				if _, found := args[argName]; !found {
 					logrus.Debugf("No arg key %q found", argName)
@@ -152,7 +158,12 @@ func searchInstructions(dockerfileContent []byte) ([]instruction, error) {
 			match := regexVariableName.Match([]byte(value))
 			switch match {
 			case true:
-				prefix, argName, suffix := extractArgName(value)
+				prefix, argName, suffix, err := extractArgName(value)
+
+				if err != nil {
+					logrus.Warningln(err)
+					continue
+				}
 
 				if _, found := args[argName]; found {
 					inst := instruction{
@@ -164,9 +175,9 @@ func searchInstructions(dockerfileContent []byte) ([]instruction, error) {
 						trimArgSuffix: suffix,
 					}
 					instructions = append(instructions, inst)
-				} else {
-					logrus.Debugf("No arg key %q found", argName)
+					continue
 				}
+				logrus.Debugf("no arg key %q found", argName)
 
 			case false:
 				inst := instruction{
@@ -230,20 +241,34 @@ func searchArgsValue(n *parser.Node) map[string]string {
 	return args
 }
 
-func extractArgName(value string) (prefix, argName, suffix string) {
-	found := regexVariableName.FindStringSubmatch(value)
-	if len(found) > 0 {
-		prefix = found[1]
-		argName = found[2]
-		suffix = found[3]
+func extractArgName(value string) (prefix, argName, suffix string, err error) {
+	founds := regexVariableName.FindAllStringSubmatch(value, -1)
+
+	if len(founds) > 1 {
+		err = errors.New("more than one variable detected in the Dockerfile instruction. Updatecli do not support this at the moment")
+		return
 	}
 
-	return prefix, argName, suffix
+	for _, found := range founds {
+		startingIndex := strings.Index(value, "${"+found[1]+"}")
+		endingIndex := startingIndex + len("${"+found[1]+"}")
+
+		argName = found[1]
+
+		if startingIndex > 0 {
+			prefix = value[:startingIndex]
+		}
+
+		if len(value) > endingIndex {
+			suffix = value[endingIndex:]
+		}
+	}
+
+	return prefix, argName, suffix, nil
 }
 
 func parsePlatform(platform string) (arch string) {
 	p := strings.Split(platform, "/")
-
 	switch len(p) {
 	case 3:
 		arch = p[1]

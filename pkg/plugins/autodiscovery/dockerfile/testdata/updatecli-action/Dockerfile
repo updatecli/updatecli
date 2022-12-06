@@ -1,3 +1,7 @@
+ARG updatecli_version
+# Following FROM instruction should be ignore as we don't have enough information to guess the next one
+FROM updatecli/updatecli:${updatecli_version}
+
 FROM updatecli/updatecli:v0.25.0
 
 ## As per https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
