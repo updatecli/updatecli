@@ -1,0 +1,13 @@
+name: "[asciidoctor/docker-asciidoctor] Docker compose autodiscovery using git scm"
+scms:
+  asciidoctor:
+    kind: git
+    spec:
+      url: https://github.com/asciidoctor/docker-asciidoctor.git
+      branch: main
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: asciidoctor
+  crawlers:
+    dockerfile:
