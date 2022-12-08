@@ -2,7 +2,7 @@ package helm
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -79,7 +79,7 @@ func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
 		return repo.IndexFile{}, err
 	}
 
-	data, err := ioutil.ReadAll(rawIndexFile)
+	data, err := io.ReadAll(rawIndexFile)
 
 	if err != nil {
 		return repo.IndexFile{}, err
@@ -136,7 +136,7 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		return repo.IndexFile{}, err
@@ -169,7 +169,7 @@ func (c *Chart) MetadataUpdate(chartPath string, dryRun bool) error {
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 
 	if err != nil {
 		return err
