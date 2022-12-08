@@ -2,12 +2,11 @@ package helm
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -60,32 +59,67 @@ func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
 	return nil
 }
 
-// GetRepoIndexFile loads an index file and does minimal validity checking.
+// GetRepoIndexFromFile loads an index file from a local file and does minimal validity checking.
 // This will fail if API Version is not set (ErrNoAPIVersion) or if the unmarshal fails.
-func (c *Chart) GetRepoIndexFile() (repo.IndexFile, error) {
+func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
 
-	u, err := url.Parse(c.spec.URL)
+	URL := strings.TrimPrefix(c.spec.URL, "file://")
+
+	if rootDir != "" {
+		URL = filepath.Join(rootDir, URL)
+	}
+
+	if filepath.Base(URL) != "index.yaml" {
+		URL = filepath.Join(URL, "index.yaml")
+	}
+
+	rawIndexFile, err := os.Open(URL)
+
 	if err != nil {
 		return repo.IndexFile{}, err
 	}
 
-	u.Path = path.Join(u.Path, "index.yaml")
-	URL := u.String()
+	data, err := io.ReadAll(rawIndexFile)
 
-	// Waiting for Golang 1.19 to be released
-	// URL, err := url.JoinPath(c.spec.URL, "index.yaml")
-	// if err != nil {
-	// 	return repo.IndexFile{}, err
-	// }
+	if err != nil {
+		return repo.IndexFile{}, err
+	}
+
+	indexFile := repo.IndexFile{}
+
+	if err := yml.Unmarshal(data, &indexFile); err != nil {
+		return indexFile, err
+	}
+
+	indexFile.SortEntries()
+
+	if indexFile.APIVersion == "" {
+		return indexFile, repo.ErrNoAPIVersion
+	}
+
+	return indexFile, nil
+}
+
+// GetRepoIndexFromUrl loads an index file and does minimal validity checking.
+// This will fail if API Version is not set (ErrNoAPIVersion) or if the unmarshal fails.
+func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
+	var err error
+
+	URL := c.spec.URL
+
+	if !strings.HasSuffix(URL, "index.yaml") {
+		URL, err = url.JoinPath(c.spec.URL, "index.yaml")
+		if err != nil {
+			return repo.IndexFile{}, err
+		}
+	}
 
 	req, err := http.NewRequest("GET", URL, nil)
-
 	if err != nil {
 		return repo.IndexFile{}, err
 	}
 
 	res, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return repo.IndexFile{}, err
 	}
@@ -102,7 +136,7 @@ func (c *Chart) GetRepoIndexFile() (repo.IndexFile, error) {
 
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		return repo.IndexFile{}, err
@@ -135,7 +169,7 @@ func (c *Chart) MetadataUpdate(chartPath string, dryRun bool) error {
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 
 	if err != nil {
 		return err

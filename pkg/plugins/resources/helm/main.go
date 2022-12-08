@@ -5,29 +5,6 @@ import (
 )
 
 const (
-	// CHANGELOGTEMPLATE contains helm chart changelog information
-	CHANGELOGTEMPLATE string = `
-Remark: We couldn't identify a way to automatically retrieve changelog information.
-Please use following information to take informed decision
-
-{{ if .Name }}Helm Chart: {{ .Name }}{{ end }}
-{{ if .Description }}{{ .Description }}{{ end }}
-{{ if .Home }}Project Home: {{ .Home }}{{ end }}
-{{ if .KubeVersion }}Require Kubernetes Version: {{ .KubeVersion }}{{end}}
-{{ if .Created }}Version created on the {{ .Created }}{{ end}}
-{{ if .Sources }}
-Sources:
-{{ range $index, $source := .Sources }}
-* {{ $source }}
-{{ end }}
-{{ end }}
-{{ if .URLs }}
-URL:
-{{ range $index, $url := .URLs }}
-* {{ $url }}
-{{ end }}
-{{ end }}
-`
 	// MINORVERSION defines minor version identifier
 	MINORVERSION string = "minor"
 	// MAJORVERSION defines major version identifier
