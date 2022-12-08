@@ -2,8 +2,10 @@ package helm
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
+	"helm.sh/helm/v3/pkg/repo"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -11,15 +13,34 @@ import (
 
 // Condition check if a specific chart version exist
 func (c *Chart) Condition(source string) (bool, error) {
+	return c.ConditionFromSCM(source, nil)
+}
+
+// ConditionFromSCM returns an error because it's not supported
+func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	if c.spec.Version != "" {
 		logrus.Infof("Version %v, already defined from configuration file", c.spec.Version)
 	} else {
 		c.spec.Version = source
 	}
 
-	index, err := c.GetRepoIndexFile()
-	if err != nil {
-		return false, err
+	var index repo.IndexFile
+	var err error
+
+	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
+		index, err = c.GetRepoIndexFromURL()
+		if err != nil {
+			return false, err
+		}
+	} else {
+		rootDir := ""
+		if scm != nil {
+			rootDir = scm.GetDirectory()
+		}
+		index, err = c.GetRepoIndexFromFile(rootDir)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	message := ""
@@ -34,10 +55,5 @@ func (c *Chart) Condition(source string) (bool, error) {
 
 	logrus.Infof("%s Helm Chart '%s' isn't available on %s%s", result.FAILURE, c.spec.Name, c.spec.URL, message)
 	return false, nil
-}
-
-// ConditionFromSCM returns an error because it's not supported
-func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("SCM configuration is not supported for Helm chart condition, aborting")
 
 }
