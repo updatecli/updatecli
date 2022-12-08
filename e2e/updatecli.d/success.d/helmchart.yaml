@@ -28,6 +28,9 @@ sources:
     spec:
       url: index.yaml
       name: epinio
+      versionfilter:
+        kind: semver
+        pattern: "~0"
 
   fromFileURI:
     name: Retrieve Version from file URI hosted on a git repository
