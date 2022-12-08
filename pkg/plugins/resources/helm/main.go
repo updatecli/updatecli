@@ -57,6 +57,10 @@ func New(spec interface{}) (*Chart, error) {
 		return &Chart{}, err
 	}
 
+	if newSpec.VersionFilter.Kind == "" {
+		newSpec.VersionFilter.Kind = "semver"
+	}
+
 	newFilter, err := newSpec.VersionFilter.Init()
 	if err != nil {
 		return &Chart{}, err
