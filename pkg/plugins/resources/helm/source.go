@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -30,20 +31,31 @@ func (c *Chart) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	e, err := index.Get(c.spec.Name, c.spec.Version)
+	entriesVersion, found := index.Entries[c.spec.Name]
+	if !found {
+		return "", fmt.Errorf("helm chart %q not found from Helm Chart repository %q", c.spec.Name, c.spec.URL)
+	}
 
+	versions := []string{}
+
+	for _, entry := range entriesVersion {
+		versions = append(versions, entry.Version)
+	}
+
+	c.foundVersion, err = c.versionFilter.Search(versions)
 	if err != nil {
 		return "", err
 	}
+	value := c.foundVersion.GetVersion()
 
-	if e.Version != "" {
+	if value != "" {
 		logrus.Infof("%s Helm Chart '%s' version '%v' is found from repository %s",
 			result.SUCCESS,
 			c.spec.Name,
-			e.Version,
+			value,
 			c.spec.URL)
 	}
 
-	return e.Version, nil
+	return value, nil
 
 }
