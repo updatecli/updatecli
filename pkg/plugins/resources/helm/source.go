@@ -1,14 +1,30 @@
 package helm
 
 import (
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"helm.sh/helm/v3/pkg/repo"
 )
 
 // Source return the latest version
 func (c *Chart) Source(workingDir string) (string, error) {
 
-	index, err := c.GetRepoIndexFile()
+	var index repo.IndexFile
+	var err error
+
+	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
+		index, err = c.GetRepoIndexFromURL()
+		if err != nil {
+			return "", err
+		}
+	} else {
+		index, err = c.GetRepoIndexFromFile(workingDir)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	if err != nil {
 		return "", err
