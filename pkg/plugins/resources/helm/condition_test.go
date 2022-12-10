@@ -39,6 +39,24 @@ func TestCondition(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "Successful OCI result v1",
+			chart: Spec{
+				URL:     "oci://ghcr.io/olblak/charts/",
+				Name:    "upgrade-responder",
+				Version: "v0.1.5",
+			},
+			expected: true,
+		},
+		{
+			name: "Not found OCI result",
+			chart: Spec{
+				URL:     "oci://ghcr.io/olblak/charts/",
+				Name:    "upgrade-responder",
+				Version: "v9.9.9",
+			},
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {

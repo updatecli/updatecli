@@ -18,6 +18,11 @@ func (c *Chart) Condition(source string) (bool, error) {
 
 // ConditionFromSCM returns an error because it's not supported
 func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+
+	if strings.HasPrefix(c.spec.URL, "oci://") {
+		return c.OCICondition(source)
+	}
+
 	if c.spec.Version != "" {
 		logrus.Infof("Version %v, already defined from configuration file", c.spec.Version)
 	} else {

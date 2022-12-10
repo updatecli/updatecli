@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestSource(t *testing.T) {
@@ -44,6 +45,30 @@ func TestSource(t *testing.T) {
 			expected:             "",
 			expectedError:        true,
 			expectedErrorMessage: errors.New("something went wrong while contacting \"https://example.com/index.yaml\""),
+		},
+		{
+			name: "Successful OCI result v1",
+			chart: Spec{
+				URL:  "oci://ghcr.io/olblak/charts/",
+				Name: "upgrade-responder",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "v0.1.5",
+				},
+			},
+			expected: "v0.1.5",
+		},
+		{
+			name: "Successful OCI result v2",
+			chart: Spec{
+				URL:  "oci://ghcr.io/olblak/charts",
+				Name: "upgrade-responder",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "v0.1.5",
+				},
+			},
+			expected: "v0.1.5",
 		},
 	}
 

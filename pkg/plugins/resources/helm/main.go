@@ -1,7 +1,10 @@
 package helm
 
 import (
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -37,11 +40,14 @@ type Spec struct {
 	AppVersion bool `yaml:",omitempty"`
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// Credentials used to authenticate with OCI registries
+	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
 }
 
 // Chart defines a resource of kind "helmchart"
 type Chart struct {
-	spec Spec
+	spec    Spec
+	options []remote.Option
 	// Holds both parsed version and original version (to allow retrieving metadata such as changelog)
 	foundVersion version.Version
 	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
@@ -70,6 +76,21 @@ func New(spec interface{}) (*Chart, error) {
 		spec:          newSpec,
 		versionFilter: newFilter,
 	}
+
+	err = newSpec.InlineKeyChain.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	keychains := []authn.Keychain{}
+
+	if !newSpec.InlineKeyChain.Empty() {
+		keychains = append(keychains, newSpec.InlineKeyChain)
+	}
+
+	keychains = append(keychains, authn.DefaultKeychain)
+
+	newResource.options = append(newResource.options, remote.WithAuthFromKeychain(authn.NewMultiKeychain(keychains...)))
 
 	return newResource, nil
 
