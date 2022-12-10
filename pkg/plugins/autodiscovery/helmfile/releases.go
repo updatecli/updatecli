@@ -3,6 +3,7 @@ package helmfile
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -28,8 +29,11 @@ type release struct {
 
 // Repository specify the repository information that we are looking for in Helmfile
 type repository struct {
-	Name string
-	URL  string
+	Name     string
+	URL      string
+	OCI      bool
+	Username string
+	Password string
 }
 
 // chartMetadata is the information that we need to retrieve from Helm chart files.
@@ -97,17 +101,53 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 		for i, release := range metadata.Releases {
 			manifestName := fmt.Sprintf("Bump %q Helm Chart version for Helmfile %q", release.Name, relativeFoundChartFile)
 
-			chartName, chartURL := getReleaseRepositoryUrl(metadata.Repositories, release)
+			var chartName, chartURL, OCIUsername, OCIPassword string
+			var isOCI bool
+
+			for _, repository := range metadata.Repositories {
+				if strings.HasPrefix(release.Chart, repository.Name+"/") {
+					chartName = strings.TrimPrefix(release.Chart, repository.Name+"/")
+					chartURL = repository.URL
+					isOCI = repository.OCI
+					OCIUsername = repository.Username
+					OCIPassword = repository.Password
+					break
+				}
+			}
 
 			if chartName == "" || chartURL == "" {
 				logrus.Debugf("repository not identified for release %q, skipping", release.Chart)
 				continue
 			}
 
+			// Helmfile uses the repository boolean "oci"
+			// to identify if we are manipulating an OCI Helm chart
+			// Updatecli expect the scheme "oci://".
+			// Therefor we ensure that our repository URL doesn't contain http scheme
+			if isOCI {
+				for _, scheme := range []string{"https://", "http://"} {
+					if strings.HasPrefix(chartURL, scheme) {
+						chartURL = strings.TrimPrefix(chartURL, scheme)
+						break
+					}
+				}
+				chartURL = "oci://" + chartURL
+			}
+
 			if release.Version == "" {
 				logrus.Debugf("no version specified for release %q, skipping", release.Chart)
 				continue
+			}
 
+			helmSourcespec := helm.Spec{
+				Name: chartName,
+				URL:  chartURL,
+			}
+			if OCIUsername != "" && isOCI {
+				helmSourcespec.InlineKeyChain.Username = OCIUsername
+			}
+			if OCIPassword != "" && isOCI {
+				helmSourcespec.InlineKeyChain.Password = OCIPassword
 			}
 
 			manifest := config.Spec{
@@ -117,10 +157,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
 							Kind: "helmchart",
-							Spec: helm.Spec{
-								Name: chartName,
-								URL:  chartURL,
-							},
+							Spec: helmSourcespec,
 						},
 					},
 				},

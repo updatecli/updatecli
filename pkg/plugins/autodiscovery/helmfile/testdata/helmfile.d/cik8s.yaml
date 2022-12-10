@@ -12,6 +12,9 @@ repositories:
     url: https://aws.github.io/eks-charts
   - name: jenkins-infra
     url: https://jenkins-infra.github.io/helm-charts
+  - name: myOCIRegistry
+    url: myregistry.azurecr.io
+    oci: true
 releases:
   - name: datadog
     needs:
@@ -42,4 +45,7 @@ releases:
     chart: jenkins-infra/jenkins-kubernetes-agents
     secrets:
       - "../secrets/config/jenkins-kubernetes-agents/secrets.yaml"
-
+  - name: myOCIChart
+    namespace: jenkins-agents
+    chart: myOCIRegistry/myOCIChart
+    version: 0.1.0

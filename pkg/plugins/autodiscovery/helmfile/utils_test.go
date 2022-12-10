@@ -48,6 +48,11 @@ func TestListChartDependency(t *testing.T) {
 			Chart:   "jenkins-infra/jenkins-kubernetes-agents",
 			Version: "",
 		},
+		{
+			Name:    "myOCIChart",
+			Chart:   "myOCIRegistry/myOCIChart",
+			Version: "0.1.0",
+		},
 	}
 
 	expectedRepositories := []repository{
@@ -66,6 +71,11 @@ func TestListChartDependency(t *testing.T) {
 		{
 			Name: "jenkins-infra",
 			URL:  "https://jenkins-infra.github.io/helm-charts",
+		},
+		{
+			Name: "myOCIRegistry",
+			URL:  "myregistry.azurecr.io",
+			OCI:  true,
 		},
 	}
 
