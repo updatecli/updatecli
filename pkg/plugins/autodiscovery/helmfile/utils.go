@@ -84,14 +84,3 @@ func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
 
 	return &helmfile, nil
 }
-
-//func getReleaseRepositoryUrl(repositories []repository, release release) (name, url string, oci bool) {
-//	for i := range repositories {
-//		if strings.HasPrefix(release.Chart, repositories[i].Name+"/") {
-//			return strings.TrimPrefix(release.Chart, repositories[i].Name+"/"),
-//				repositories[i].URL,
-//				repositories[i].OCI
-//		}
-//	}
-//	return "", ""
-//}
