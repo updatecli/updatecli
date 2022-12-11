@@ -30,6 +30,8 @@ type Source struct {
 // Config struct defines a source configuration
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
+	// scmid specifies the scm configuration key associated to the current resource
+	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 }
 
 var (

@@ -107,11 +107,6 @@ func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
 		condition.SCMID = scmID
 		configSpec.Conditions[id] = condition
 	}
-
-	for id, target := range configSpec.Targets {
-		target.SCMID = scmID
-		configSpec.Targets[id] = target
-	}
 }
 
 func SetAction(configSpec *config.Spec, actionConfig action.Config, actionID string) {

@@ -117,7 +117,6 @@ func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
 	}
 
 	return newAction, nil
-
 }
 
 // Update updates an action object based on its configuration

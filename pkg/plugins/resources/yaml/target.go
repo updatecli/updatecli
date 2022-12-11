@@ -7,7 +7,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
@@ -15,39 +14,22 @@ import (
 
 // Target updates a scm repository based on the modified yaml file.
 func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
-	changed, _, _, err := y.target(source, dryRun)
-	return changed, err
-}
-
-// TargetFromSCM updates a scm repository based on the modified yaml file.
-func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	if scm != nil {
-		y.spec.File = joinPathWithWorkingDirectoryPath(y.spec.File, scm.GetDirectory())
-	}
-
-	return y.target(source, dryRun)
-}
-
-func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error) {
-	var files []string
-	var message string
-
 	if strings.HasPrefix(y.spec.File, "https://") ||
 		strings.HasPrefix(y.spec.File, "http://") {
-		return false, files, message, fmt.Errorf("URL scheme is not supported for YAML target: %q", y.spec.File)
+		return false, fmt.Errorf("URL scheme is not supported for YAML target: %q", y.spec.File)
 	}
 
 	// Test at runtime if a file exist
 	if !y.contentRetriever.FileExists(y.spec.File) {
-		return false, files, message, fmt.Errorf("the yaml file %q does not exist", y.spec.File)
+		return false, fmt.Errorf("the yaml file %q does not exist", y.spec.File)
 	}
 
 	if text.IsURL(y.spec.File) {
-		return false, files, message, fmt.Errorf("unsupported filename prefix")
+		return false, fmt.Errorf("unsupported filename prefix")
 	}
 
 	if err := y.Read(); err != nil {
-		return false, files, message, err
+		return false, err
 	}
 	data := y.currentContent
 
@@ -56,7 +38,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 	err := yaml.Unmarshal([]byte(data), &out)
 
 	if err != nil {
-		return false, files, message, fmt.Errorf("cannot unmarshal data: %v", err)
+		return false, fmt.Errorf("cannot unmarshal data: %v", err)
 	}
 
 	valueToWrite := source
@@ -68,7 +50,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 	keyFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToWrite, 1)
 
 	if !keyFound {
-		return false, files, message, fmt.Errorf("%s cannot find key '%s' from file '%s'",
+		return false, fmt.Errorf("%s cannot find key '%s' from file '%s'",
 			result.FAILURE,
 			y.spec.Key,
 			y.spec.File)
@@ -80,7 +62,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 			y.spec.Key,
 			y.spec.File,
 			valueToWrite)
-		return false, files, message, nil
+		return false, nil
 	}
 	logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
 		result.ATTENTION,
@@ -98,7 +80,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		defer newFile.Close()
 
 		if err != nil {
-			return false, files, message, nil
+			return false, nil
 		}
 
 		encoder := yaml.NewEncoder(newFile)
@@ -107,13 +89,8 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		err = encoder.Encode(&out)
 
 		if err != nil {
-			return false, files, message, err
+			return false, err
 		}
 	}
-
-	files = append(files, y.spec.File)
-
-	message = fmt.Sprintf("Update key %q from file %q", y.spec.Key, y.spec.File)
-
-	return true, files, message, nil
+	return true, nil
 }

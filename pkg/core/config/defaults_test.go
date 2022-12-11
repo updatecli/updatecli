@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +9,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
@@ -65,9 +63,8 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 				Spec: Spec{
 					Sources: map[string]source.Config{
 						"default": {
-							ResourceConfig: resource.ResourceConfig{
-								SCMID: LOCALSCMIDENTIFIER,
-							},
+							ResourceConfig: resource.ResourceConfig{},
+							SCMID:          LOCALSCMIDENTIFIER,
 						},
 					},
 				},
@@ -120,9 +117,8 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 					},
 					Conditions: map[string]condition.Config{
 						"default": {
-							ResourceConfig: resource.ResourceConfig{
-								SCMID: LOCALSCMIDENTIFIER,
-							},
+							ResourceConfig: resource.ResourceConfig{},
+							SCMID:          LOCALSCMIDENTIFIER,
 						},
 					},
 				},
@@ -134,32 +130,6 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 					Branch: "production",
 				},
 			},
-		},
-		{
-			name: "failing case with incompatible type beetween autoguess and specified SCM",
-			config: &Config{
-				gitHandler: gitgeneric.MockGit{
-					Remotes: map[string]string{"origin": "https://localhost:2222/olblak/updatecli.git"},
-				},
-				Spec: Spec{
-					SCMs: map[string]scm.Config{
-						LOCALSCMIDENTIFIER: {
-							Kind: "github",
-							Spec: github.Spec{
-								Branch: "production",
-							},
-						},
-					},
-					Targets: map[string]target.Config{
-						"default": {
-							ResourceConfig: resource.ResourceConfig{
-								SCMID: LOCALSCMIDENTIFIER,
-							},
-						},
-					},
-				},
-			},
-			wantErr: fmt.Errorf("the SCM discovered in the directory \"\" has a different type ('git') than the specified SCM configuration \"local\"."),
 		},
 	}
 	for _, tt := range tests {

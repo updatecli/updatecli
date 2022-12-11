@@ -9,7 +9,6 @@ import (
 )
 
 func TestTarget(t *testing.T) {
-
 	testData := []struct {
 		name             string
 		spec             Spec

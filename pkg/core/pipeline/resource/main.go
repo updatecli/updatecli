@@ -40,8 +40,9 @@ type ResourceConfig struct {
 	Transformers transformer.Transformers `yaml:",omitempty"`
 	// spec specifies parameters for a specific resource kind
 	Spec interface{} `yaml:",omitempty"`
+	// TODO: Deprecate
 	// scmid specifies the scm configuration key associated to the current resource
-	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
+	// SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 	// !deprecated, please use scmid
 	DeprecatedSCMID string `yaml:"scmID,omitempty" jsonschema:"-"` // SCMID references a uniq scm configuration
 	// !deprecated, please use dependson
@@ -109,7 +110,6 @@ type Resource interface {
 	Condition(version string) (bool, error)
 	ConditionFromSCM(version string, scm scm.ScmHandler) (bool, error)
 	Target(source string, dryRun bool) (bool, error)
-	TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error)
 	Changelog() string
 }
 

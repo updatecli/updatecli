@@ -9,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -27,7 +26,8 @@ type Target struct {
 	Push   bool
 	Clean  bool
 	DryRun bool
-	Scm    *scm.ScmHandler
+	// TODO: Deprecate
+	// Scm *scm.ScmHandler
 }
 
 // Config defines target parameters
@@ -86,45 +86,25 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	// If no scm configuration provided then stop early
-	if t.Scm == nil {
-
-		changed, err = target.Target(source, o.DryRun)
-		if err != nil {
-			t.Result = result.FAILURE
-			return err
-		}
-
-		if changed {
-			t.Result = result.ATTENTION
-		} else {
-			t.Result = result.SUCCESS
-		}
-		return nil
-
-	}
-
-	var message string
-	var files []string
-
 	_, err = t.Check()
 	if err != nil {
 		t.Result = result.FAILURE
 		return err
 	}
 
-	s := *t.Scm
-
-	if err = s.Checkout(); err != nil {
-		t.Result = result.FAILURE
-		return err
-	}
-
-	changed, files, message, err = target.TargetFromSCM(source, s, o.DryRun)
+	// TODO: run target in a temp dir (any cases)
+	changed, err = target.Target(source, o.DryRun)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err
 	}
+
+	if !o.DryRun {
+		// TODO: retrieve content of temp dir to real dir
+		logrus.Debugf("No dry run: applying changes for real")
+	}
+
+	// TODO: execute the runActions() command if any
 
 	if !changed {
 		t.Result = result.SUCCESS
@@ -132,36 +112,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	t.Result = result.ATTENTION
-	if !o.DryRun {
-		if message == "" {
-			t.Result = result.FAILURE
-			return fmt.Errorf("target has no change message")
-		}
-
-		if len(files) == 0 {
-			t.Result = result.FAILURE
-			return fmt.Errorf("no changed file to commit")
-		}
-
-		if o.Commit {
-			if err := s.Add(files); err != nil {
-				t.Result = result.FAILURE
-				return err
-			}
-
-			if err = s.Commit(message); err != nil {
-				t.Result = result.FAILURE
-				return err
-			}
-		}
-		if o.Push {
-			if err := s.Push(); err != nil {
-				t.Result = result.FAILURE
-				return err
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -204,18 +154,6 @@ func (c *Config) Validate() error {
 	if c.Kind != strings.ToLower(c.Kind) {
 		logrus.Warningf("kind value %q must be lowercase", c.Kind)
 		c.Kind = strings.ToLower(c.Kind)
-	}
-
-	if len(c.DeprecatedSCMID) > 0 {
-		switch len(c.SCMID) {
-		case 0:
-			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
-			c.SCMID = c.DeprecatedSCMID
-			c.DeprecatedSCMID = ""
-		default:
-			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
-				"scmID", "scmid", "scmID")
-		}
 	}
 
 	// Handle sourceID deprecation

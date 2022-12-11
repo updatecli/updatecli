@@ -36,6 +36,8 @@ type Config struct {
 	SourceID string `yaml:",omitempty"`
 	// disablesourceinput disable the mechanism to retrieve a default value from a source.
 	DisableSourceInput bool `yaml:",omitempty"`
+	// scmid specifies the scm configuration key associated to the current resource
+	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 }
 
 // Run tests if a specific condition is true

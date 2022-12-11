@@ -6,27 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func (j *Json) Target(source string, dryRun bool) (changed bool, err error) {
-
-	changed, _, _, err = j.TargetFromSCM(source, nil, dryRun)
-	if err != nil {
-		return changed, err
-	}
-
-	return changed, err
-}
-
-// TargetFromSCM updates a scm repository based on the modified yaml file.
-func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
-
 	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
 
 	for i := range j.contents {
 		filename := j.contents[i].FilePath
@@ -34,18 +18,16 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 		// Target doesn't support updating files on remote http location
 		if strings.HasPrefix(filename, "https://") ||
 			strings.HasPrefix(filename, "http://") {
-			return false, files, message, fmt.Errorf("URL scheme is not supported for Json target: %q", j.spec.File)
+			return false, fmt.Errorf("URL scheme is not supported for Json target: %q", j.spec.File)
 		}
 
 		if err := j.contents[i].Read(rootDir); err != nil {
-			return false, files, message, fmt.Errorf("file %q does not exist", j.contents[i].FilePath)
+			return false, fmt.Errorf("file %q does not exist", j.contents[i].FilePath)
 		}
 
 		if len(j.spec.Value) == 0 {
 			j.spec.Value = source
 		}
-
-		resourceFile := j.contents[i].FilePath
 
 		// Override value from source if not yet defined
 		if len(j.spec.Value) == 0 {
@@ -60,14 +42,14 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
 
 			if err != nil {
-				return false, files, message, err
+				return false, err
 			}
 
 		case false:
 			queryResult, err := j.contents[i].Query(j.spec.Key)
 
 			if err != nil {
-				return false, files, message, err
+				return false, err
 			}
 
 			queryResults = append(queryResults, queryResult)
@@ -104,26 +86,22 @@ func (j *Json) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (ch
 			err = j.contents[i].PutMultiple(j.spec.Query, j.spec.Value)
 
 			if err != nil {
-				return false, files, message, err
+				return false, err
 			}
 
 		case false:
 			err = j.contents[i].Put(j.spec.Key, j.spec.Value)
 
 			if err != nil {
-				return false, files, message, err
+				return false, err
 			}
 		}
 
 		err = j.contents[i].Write()
 		if err != nil {
-			return changed, files, message, err
+			return changed, err
 		}
-
-		files = append(files, resourceFile)
-		message = fmt.Sprintf("Update key %q from file %q", j.spec.Key, j.spec.File)
 	}
 
-	return changed, files, message, err
-
+	return changed, err
 }

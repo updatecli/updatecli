@@ -22,7 +22,6 @@ func (p *Pipeline) RunActions() error {
 
 	for id, action := range p.Actions {
 		relatedTargets, err := p.SearchAssociatedTargetsID(id)
-
 		if err != nil {
 			logrus.Errorf(err.Error())
 			continue
@@ -169,20 +168,13 @@ func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
 	return failedTargetsID, attentionTargetsID, successTargetsID, skippedTargetsID
 }
 
-// SearchAssociatedTargetsID search for targets related to an action based on a scm configuration
+// SearchAssociatedTargetsID searches for targets associated to an action
 func (p *Pipeline) SearchAssociatedTargetsID(actionID string) ([]string, error) {
+	// TODO: re-introduce the keyword "targets" at the action level. For now, all targets are returned.
+	results := make([]string, 0, len(p.Targets))
 
-	scmid := p.Actions[actionID].Config.ScmID
-
-	if len(scmid) == 0 {
-		return []string{}, fmt.Errorf("scmid %q not found for the action id %q", scmid, actionID)
-	}
-	results := []string{}
-
-	for id, target := range p.Targets {
-		if target.Config.SCMID == scmid {
-			results = append(results, id)
-		}
+	for id := range p.Targets {
+		results = append(results, id)
 	}
 
 	return results, nil

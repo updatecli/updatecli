@@ -8,13 +8,11 @@ import (
 
 	goscm "github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Target ensure that a specific release exist on gitea, otherwise creates it
 func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
-
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
 	}
@@ -99,8 +97,4 @@ func (g *Gitea) Target(source string, dryRun bool) (bool, error) {
 	logrus.Infof("Gitea Release %q successfully open on %q", release.Title, release.Link)
 
 	return true, nil
-}
-
-func (g Gitea) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	return false, []string{}, "", fmt.Errorf("target not supported for the plugin Gitea Release")
 }

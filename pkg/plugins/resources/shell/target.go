@@ -4,27 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
-
-func (s *Shell) Target(source string, dryRun bool) (bool, error) {
-	changed, _, err := s.target(source, "", dryRun)
-	return changed, err
-}
-
-func (s *Shell) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	changed, message, err := s.target(source, scm.GetDirectory(), dryRun)
-	if err != nil {
-		return false, []string{}, "", err
-	}
-
-	// Once the changes have been applied inside the scm's temp directory, then we have to get the list of these changes
-	files, err := scm.GetChangedFiles(scm.GetDirectory())
-	if err != nil {
-		return false, []string{}, "", err
-	}
-	return changed, files, message, err
-}
 
 // Target executes the provided command (concatenated with the source) to apply the change.
 // The command is expected, if it changes something, to print the new value to the stdout
@@ -33,14 +13,14 @@ func (s *Shell) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (b
 //   - Any other exit code means "failed command with no change"
 //
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
-func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, error) {
-
+func (s *Shell) Target(source string, dryRun bool) (bool, error) {
+	workingDir := ""
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
 	err := s.spec.Environments.Load()
 	if err != nil {
-		return false, "", nil
+		return false, nil
 	}
 
 	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "target"
@@ -65,15 +45,12 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 	})
 
 	if s.result.ExitCode != 0 {
-		return false, "", &ExecutionFailedError{}
+		return false, &ExecutionFailedError{}
 	}
 
 	if s.result.Stdout == "" {
 		logrus.Info("No change detected")
-		return false, "", nil
+		return false, nil
 	}
-
-	commitMessage := fmt.Sprintf("ran shell command %q", s.appendSource(source))
-
-	return true, commitMessage, nil
+	return true, nil
 }

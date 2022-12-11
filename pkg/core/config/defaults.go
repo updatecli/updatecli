@@ -67,11 +67,6 @@ func (config Config) needScm(requiredScmId string) bool {
 			return true
 		}
 	}
-	for _, target := range config.Spec.Targets {
-		if target.SCMID == requiredScmId {
-			return true
-		}
-	}
 	for _, action := range config.Spec.Actions {
 		if action.ScmID == requiredScmId {
 			return true
