@@ -2,32 +2,10 @@ package helm
 
 import (
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 const (
-	// CHANGELOGTEMPLATE contains helm chart changelog information
-	CHANGELOGTEMPLATE string = `
-Remark: We couldn't identify a way to automatically retrieve changelog information.
-Please use following information to take informed decision
-
-{{ if .Name }}Helm Chart: {{ .Name }}{{ end }}
-{{ if .Description }}{{ .Description }}{{ end }}
-{{ if .Home }}Project Home: {{ .Home }}{{ end }}
-{{ if .KubeVersion }}Require Kubernetes Version: {{ .KubeVersion }}{{end}}
-{{ if .Created }}Version created on the {{ .Created }}{{ end}}
-{{ if .Sources }}
-Sources:
-{{ range $index, $source := .Sources }}
-* {{ $source }}
-{{ end }}
-{{ end }}
-{{ if .URLs }}
-URL:
-{{ range $index, $url := .URLs }}
-* {{ $url }}
-{{ end }}
-{{ end }}
-`
 	// MINORVERSION defines minor version identifier
 	MINORVERSION string = "minor"
 	// MAJORVERSION defines major version identifier
@@ -57,11 +35,17 @@ type Spec struct {
 	VersionIncrement string `yaml:",omitempty"`
 	// [target] Defines if AppVersion must be updated as well
 	AppVersion bool `yaml:",omitempty"`
+	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
 // Chart defines a resource of kind "helmchart"
 type Chart struct {
 	spec Spec
+	// Holds both parsed version and original version (to allow retrieving metadata such as changelog)
+	foundVersion version.Version
+	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
+	versionFilter version.Filter
 }
 
 // New returns a reference to a newly initialized Chart object from a Spec
@@ -73,8 +57,18 @@ func New(spec interface{}) (*Chart, error) {
 		return &Chart{}, err
 	}
 
+	if newSpec.VersionFilter.Kind == "" {
+		newSpec.VersionFilter.Kind = "semver"
+	}
+
+	newFilter, err := newSpec.VersionFilter.Init()
+	if err != nil {
+		return &Chart{}, err
+	}
+
 	newResource := &Chart{
-		spec: newSpec,
+		spec:          newSpec,
+		versionFilter: newFilter,
 	}
 
 	return newResource, nil
