@@ -23,9 +23,9 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
-		Short: "Updatecli is a declarative dependency manager cli",
+		Short: "Updatecli is a declarative dependency manager command line tool",
 		Long: `
-Updatecli is a declarative dependency manager tool.
+Updatecli is a declarative dependency manager command line tool.
 Based on Updatecli manifest(s), It ensures that target files are up to date.
 Updatecli  works into three stages:
 
