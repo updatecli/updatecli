@@ -38,6 +38,8 @@ require (
 	github.com/google/go-containerregistry v0.12.1
 	github.com/goware/urlx v0.3.2
 	github.com/invopop/jsonschema v0.7.0
+	github.com/muesli/mango-cobra v1.2.0
+	github.com/muesli/roff v0.1.0
 	github.com/tomwright/dasel v1.27.3
 	golang.org/x/text v0.5.0
 	gotest.tools v2.2.0+incompatible
@@ -170,6 +172,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/muesli/mango v0.1.0 // indirect
+	github.com/muesli/mango-pflag v0.1.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
