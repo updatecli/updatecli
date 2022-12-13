@@ -2,10 +2,12 @@ package helm
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -47,10 +49,17 @@ func TestSource(t *testing.T) {
 			expectedErrorMessage: errors.New("something went wrong while contacting \"https://example.com/index.yaml\""),
 		},
 		{
-			name: "Successful OCI result v1",
+			name: "Successful OCI result",
 			chart: Spec{
 				URL:  "oci://ghcr.io/olblak/charts/",
 				Name: "upgrade-responder",
+				// Following credentials are needed by Github Action workflow to run the tests
+				// If GITHUB_ACTOR and GITHUB_TOKEN are not set then we fallback to
+				// the default docker credential file
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: os.Getenv("GITHUB_ACTOR"),
+					Token:    os.Getenv("GITHUB_TOKEN"),
+				},
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "v0.1.5",
@@ -59,10 +68,17 @@ func TestSource(t *testing.T) {
 			expected: "v0.1.5",
 		},
 		{
-			name: "Successful OCI result v2",
+			name: "Successful OCI result using semver version filter",
 			chart: Spec{
 				URL:  "oci://ghcr.io/olblak/charts",
 				Name: "upgrade-responder",
+				// Following credentials are needed by Github Action workflow to run the tests
+				// If GITHUB_ACTOR and GITHUB_TOKEN are not set then we fallback to
+				// the default docker credential file
+				InlineKeyChain: docker.InlineKeyChain{
+					Username: os.Getenv("GITHUB_ACTOR"),
+					Token:    os.Getenv("GITHUB_TOKEN"),
+				},
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "v0.1.5",
