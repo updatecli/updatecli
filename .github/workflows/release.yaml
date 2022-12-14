@@ -1,7 +1,14 @@
 name: Publish Release Assets
 on:
+  workflow_dispatch:
   release:
     types: [published]
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+  
 jobs:
   build:
     runs-on: ubuntu-20.04
