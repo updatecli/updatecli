@@ -42,6 +42,18 @@ func Test_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "Passing case with both 'DeprecatedScmID' and 'ScmID' set. 'ScmID' should be used",
+			config: Config{
+				Kind:            "github/pullrequest",
+				ScmID:           "used",
+				DeprecatedScmID: "ignored",
+			},
+			wantConfig: Config{
+				Kind:  "github/pullrequest",
+				ScmID: "used",
+			},
+		},
+		{
 			name: "Passing case with 'Kind: github' set to 'github/pullrequest'",
 			config: Config{
 				Kind:  "github",
