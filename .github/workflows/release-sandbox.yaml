@@ -28,7 +28,7 @@ jobs:
           go-version: 1.19.4
         id: go
       - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v4
         with:
           install-only: true
       - name: Show GoReleaser version
