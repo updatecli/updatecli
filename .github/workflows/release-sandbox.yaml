@@ -33,6 +33,13 @@ jobs:
           install-only: true
       - name: Show GoReleaser version
         run: goreleaser --version
+        
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v2.8.0
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0.13.1
+      
       - name: GoReleaser
         if: success()
         env:
