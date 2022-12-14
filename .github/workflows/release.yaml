@@ -1,7 +1,14 @@
 name: Publish Release Assets
 on:
+  workflow_dispatch:
   release:
     types: [published]
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+  
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -24,7 +31,7 @@ jobs:
         id: go
 
       - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v4
         with:
           install-only: true
       - name: Show GoReleaser version
