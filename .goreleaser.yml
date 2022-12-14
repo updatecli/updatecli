@@ -12,11 +12,35 @@ archives:
     files:
       - README.adoc
       - LICENSE
+      - completions/*
+      - manpages/*
 
 before:
   hooks:
-##    - go mod tidy
+    - go mod tidy
     - go mod download
+    - ./scripts/completions.sh
+    - ./scripts/manpages.sh
+
+brews:
+  - name: updatecli
+    folder: Formula
+    tap:
+      owner: updatecli
+      name: homebrew-updatecli
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: "https://updatecli.io/"
+    description: 'Updatecli is a declarative dependency management command line tool.'
+    license: 'Apache-2.0'
+    test: |
+      system "#{bin}/updatecli version"
+    install: |-
+      bin.install "updatecli"
+      bash_completion.install "completions/updatecli.bash" => "updatecli"
+      zsh_completion.install "completions/updatecli.zsh" => "_updatecli"
+      fish_completion.install "completions/updatecli.fish"
+      man1.install "manpages/updatecli.1.gz"
 
 builds:
   - id: updatecli
@@ -39,6 +63,9 @@ builds:
 changelog:
   ## Delegate Changelog to release-drafter
   skip: true
+
+checksum:
+  name_template: 'checksums.txt'
 
 dockers:
   - image_templates:
@@ -78,6 +105,16 @@ dockers:
     extra_files:
       - Makefile
 
+docker_signs:
+  - cmd: cosign
+    env:
+    - COSIGN_EXPERIMENTAL=1
+    artifacts: manifests
+    output: true
+    args:
+    - 'sign'
+    - '${artifact}@${digest}'
+
 docker_manifests:
   - name_template: 'updatecli/updatecli:{{ .Tag }}'
     image_templates:
@@ -103,30 +140,55 @@ env:
 nfpms:
   - file_name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     homepage: 'https://www.updatecli.io'
-    description: 'Updatecli is a tool used to define and apply file update strategies.'
+    description: 'Updatecli is a declarative dependency management command line tool.'
     maintainer: 'Olivier Vernin <olivier@vernin.me>'
-    license: 'MIT'
+    license: 'Apache-2.0'
     vendor: Updatecli
+    section: utils
     formats:
       - apk
       - deb
       - rpm
     dependencies:
       - ca-certificates
+    contents:
+      - src: ./completions/updatecli.bash
+        dst: /usr/share/bash-completion/completions/updatecli
+        file_info:
+          mode: 0644
+      - src: ./completions/updatecli.fish
+        dst: /usr/share/fish/vendor_completions.d/updatecli.fish
+        file_info:
+          mode: 0644
+      - src: ./completions/updatecli.zsh
+        dst:  /usr/share/zsh/vendor-completions/_updatecli
+        file_info:
+          mode: 0644
+      - src: ./manpages/updatecli.1.gz
+        dst: /usr/share/man/man1/updatecli.1.gz
+        file_info:
+          mode: 0644
+      - src: ./LICENSE
+        dst: /usr/share/doc/updatecli/copyright
+        file_info:
+          mode: 0644
 
 snapshot:
   name_template: "{{ .Tag }}-next"
 
-brews:
-  - name: updatecli
-    folder: Formula
-    tap:
-      owner: updatecli
-      name: homebrew-updatecli
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
-    homepage: "https://updatecli.io/"
-    description: "Continuously update everything."
-    license: "MIT"
-    test: |
-      system "#{bin}/updatecli version"
+sboms:
+  - artifacts: archive
+
+signs:
+  - cmd: cosign
+    env:
+    - COSIGN_EXPERIMENTAL=1
+    certificate: '${artifact}.pem'
+    output: true
+    artifacts: checksum
+    args:
+      - sign-blob
+      - '--output-certificate=${certificate}'
+      - '--output-signature=${signature}'
+      - '${artifact}'
+

@@ -22,12 +22,20 @@ jobs:
         with:
           go-version: 1.19.4
         id: go
+
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v3
         with:
           install-only: true
       - name: Show GoReleaser version
         run: goreleaser --version
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v2.8.1
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0.13.1
+
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
@@ -39,6 +47,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: tibdex/github-app-token@v1.7
         id: generate_homebrew_token
         with:
@@ -47,6 +56,7 @@ jobs:
       - name: GoReleaser
         if: success()
         env:
+          COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.generate_homebrew_token.outputs.token }}
         run: |
