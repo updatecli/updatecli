@@ -56,7 +56,6 @@ type Action struct {
 
 // Validate ensures that an action configuration has required parameters.
 func (c *Config) Validate() (err error) {
-
 	missingParameters := []string{}
 
 	if c.Kind == "" {
@@ -79,17 +78,16 @@ func (c *Config) Validate() (err error) {
 		c.Kind = "gitea/pullrequest"
 	}
 	if c.DeprecatedScmID != "" {
-		switch len(c.ScmID) {
-		case 0:
+		if c.ScmID == "" {
 			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
 			c.ScmID = c.DeprecatedScmID
-			c.DeprecatedScmID = ""
-		default:
-			logrus.Warningf("DeprecatedscmID: %q", c.DeprecatedScmID)
+		} else {
+			logrus.Warningf("deprecatedscmID: %q", c.DeprecatedScmID)
 			logrus.Warningf("scmid: %q", c.ScmID)
 			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
-				"scmID", "scmid", "scmID")
+				"scmid", "deprecatedscmID", "deprecatedscmID")
 		}
+		c.DeprecatedScmID = ""
 	}
 
 	if c.ScmID == "" {
@@ -101,7 +99,6 @@ func (c *Config) Validate() (err error) {
 	}
 
 	return err
-
 }
 
 // New returns a new Action based on an action config and an scm
