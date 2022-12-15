@@ -6,7 +6,7 @@ link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.i
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/latest/total[GitHub Releases]]
 link:https://github.com/updatecli/updatecli/actions?query=workflow%3AGo[image:https://img.shields.io/github/workflow/status/updatecli/updatecli/Go[GitHub Workflow Status]]
 link:https://gitter.im/Updatecli/community#[image:https://img.shields.io/gitter/room/updatecli/community[Gitter]]
-
+link:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli[image:https://api.securityscorecards.dev/projects/github.com/google/osv-scanner/badge[OpenSSF Scorecard]]
 
 _"Automatically open a PR on your GitOps repository when a third party service publishes an update"_
 
