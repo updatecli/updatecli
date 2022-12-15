@@ -12,8 +12,7 @@ import (
 )
 
 // Condition checks if a Helm chart version exists on a OCI registry
-// We assume that if we can't retrieve the oci digest, then it means
-// it doesn't exist.
+// It assumes that not being able to retrieve the OCI digest, means, the helm chart doesn't exist.
 func (c *Chart) OCICondition(source string) (bool, error) {
 
 	refName := filepath.Join(strings.TrimPrefix(c.spec.URL, "oci://"), c.spec.Name)

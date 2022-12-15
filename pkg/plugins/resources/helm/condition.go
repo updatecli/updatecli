@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Condition check if a specific chart version exist
+// Condition checks if a specific chart version exist
 func (c *Chart) Condition(source string) (bool, error) {
 	return c.ConditionFromSCM(source, nil)
 }
