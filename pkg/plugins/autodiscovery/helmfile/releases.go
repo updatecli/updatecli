@@ -16,18 +16,18 @@ import (
 )
 
 var (
-	// DefaultFilePattern specifies accepted Helm chart metadata file name
+	// DefaultFilePattern specifies accepted Helm chart metadata filename
 	DefaultFilePattern [2]string = [2]string{"*.yaml", "*.yml"}
 )
 
-// Release specify the release information that we are looking for in Helmfile
+// Release holds the Helmfile release information.
 type release struct {
 	Name    string
 	Chart   string
 	Version string
 }
 
-// Repository specify the repository information that we are looking for in Helmfile
+// Repository holds the Helmfile repository information
 type repository struct {
 	Name     string
 	URL      string
@@ -36,13 +36,14 @@ type repository struct {
 	Password string
 }
 
-// chartMetadata is the information that we need to retrieve from Helm chart files.
+// helmfileMetadata is the information retrieved from Helmfile files.
 type helmfileMetadata struct {
 	Name         string
 	Repositories []repository
 	Releases     []release
 }
 
+// discoverHelmfileReleaseManifests search recursively from a root directory for Helmfile file
 func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 
 	var manifests []config.Spec
@@ -59,7 +60,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 
 		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundHelmfile)
 		if err != nil {
-			// Let's try the next chart if one fail
+			// Jump to the next Helmfile if current failed
 			logrus.Errorln(err)
 			continue
 		}
@@ -67,7 +68,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 		helmfileRelativeMetadataPath := filepath.Dir(relativeFoundChartFile)
 		helmfileFilename := filepath.Base(helmfileRelativeMetadataPath)
 
-		// Test if the ignore rule based on path is respected
+		// Test if the ignore rule based on path doesn't match
 		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundChartFile) {
 			logrus.Debugf("Ignoring Helmfile %q from %q, as not matching rule(s)\n",
 				helmfileFilename,
@@ -75,7 +76,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 			continue
 		}
 
-		// Test if the only rule based on path is respected
+		// Test if the only rule based on path doesn't match
 		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundChartFile) {
 			logrus.Debugf("Ignoring Helmfile %q from %q, as not matching rule(s)\n",
 				helmfileFilename,
@@ -120,10 +121,10 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 				continue
 			}
 
-			// Helmfile uses the repository boolean "oci"
-			// to identify if we are manipulating an OCI Helm chart
-			// Updatecli expect the scheme "oci://".
-			// Therefor we ensure that our repository URL doesn't contain http scheme
+			// Helmfile uses the repository flag 'oci'
+			// to identify OCI Helm chart
+			// Updatecli expects the scheme 'oci://'.
+			// Therefor Updatecli removes any 'http://' or 'https://' schemes before adding 'oci://'
 			if isOCI {
 				for _, scheme := range []string{"https://", "http://"} {
 					if strings.HasPrefix(chartURL, scheme) {
