@@ -112,6 +112,50 @@ func TestDiscoverManifests(t *testing.T) {
 						},
 					},
 				},
+				{
+
+					Name: "Bump \"myOCIChart\" Helm Chart version for Helmfile \"helmfile.d/cik8s.yaml\"",
+					Sources: map[string]source.Config{
+						"myOCIChart": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get latest \"myOCIChart\" Helm Chart Version",
+								Kind: "helmchart",
+								Spec: helm.Spec{
+									Name: "myOCIChart",
+									URL:  "oci://myregistry.azurecr.io",
+								},
+							},
+						},
+					},
+					Conditions: map[string]condition.Config{
+						"myOCIChart": {
+							DisableSourceInput: true,
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Ensure release \"myOCIChart\" is specified for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Kind: "yaml",
+								Spec: yaml.Spec{
+									File:  "testdata/helmfile.d/cik8s.yaml",
+									Key:   "releases[3].chart",
+									Value: "myOCIRegistry/myOCIChart",
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+
+						"myOCIChart": {
+							SourceID: "myOCIChart",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Bump \"myOCIChart\" Helm Chart Version for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Kind: "yaml",
+								Spec: yaml.Spec{
+									File: "testdata/helmfile.d/cik8s.yaml",
+									Key:  "releases[3].version",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestValidateTarget is an integration tests that updating a target if working
 func TestValidateTarget(t *testing.T) {
 
 	dataset := []struct {
@@ -57,6 +58,7 @@ func TestValidateTarget(t *testing.T) {
 	}
 }
 
+// TestValidateVersionInc tests that increment a version effectively works
 func TestValidateVersionInc(t *testing.T) {
 
 	dataset := []struct {

@@ -47,6 +47,14 @@ sources:
     spec:
       name: epinio
 
+# Github Action is not configured yet to query oci registry
+#  fromOCI:
+#    name: Get upgrade-responder
+#    kind: helmchart
+#    spec:
+#      url: oci://ghcr.io/olblak/charts/
+#      name: upgrade-responder
+
 conditions:
   default1:
     name: Retrieve Version v1
@@ -75,6 +83,16 @@ conditions:
       url: index.yaml
       name: epinio
       version: 1.0.0
+
+# # Github Action is not configured yet to query oci registry
+#  fromOCI:
+#    name: Get upgrade-responder
+#    kind: helmchart
+#    disablesourceinput: true
+#    spec:
+#      url: oci://ghcr.io/olblak/charts/
+#      name: upgrade-responder
+#      version: v0.1.5
 
 targets:
   default:

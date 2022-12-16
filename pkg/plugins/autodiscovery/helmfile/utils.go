@@ -6,13 +6,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	goyaml "gopkg.in/yaml.v3"
 )
 
-// searchHelmfileFiles will look, recursively, for every files named Chart.yaml from a root directory.
+// searchHelmfileFiles search, recursively, for every Helmfile files starting from a root directory.
 func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
 
 	helmfiles := []string{}
@@ -47,7 +46,7 @@ func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
 	return helmfiles, nil
 }
 
-// getHelmfileMetadata reads a Chart.yaml for information that could be automated
+// getHelmfileMetadata loads file content from a Helmfile file.
 func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
 
 	var helmfile helmfileMetadata
@@ -84,13 +83,4 @@ func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
 	}
 
 	return &helmfile, nil
-}
-
-func getReleaseRepositoryUrl(repositories []repository, release release) (name, url string) {
-	for i := range repositories {
-		if strings.HasPrefix(release.Chart, repositories[i].Name+"/") {
-			return strings.TrimPrefix(release.Chart, repositories[i].Name+"/"), repositories[i].URL
-		}
-	}
-	return "", ""
 }

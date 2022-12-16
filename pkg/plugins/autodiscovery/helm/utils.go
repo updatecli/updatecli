@@ -11,7 +11,7 @@ import (
 	goyaml "gopkg.in/yaml.v3"
 )
 
-// searchChartFiles will look, recursively, for every files named Chart.yaml from a root directory.
+// searchChartFiles search, recursively, for every files named Chart.yaml from a root directory.
 func searchChartFiles(rootDir string, files []string) ([]string, error) {
 
 	metadataFiles := []string{}
@@ -47,10 +47,10 @@ func searchChartFiles(rootDir string, files []string) ([]string, error) {
 	return metadataFiles, nil
 }
 
-// isChartRootDirectory checks that file provided by argument is located at the root of a Chart directory
+// isChartRootDirectory checks that file provided by argument locates at the root of a Chart directory
 func isChartRootDirectory(path string) bool {
 	for _, chartFile := range ChartValidFiles {
-		// If browse file is Chart.yaml or Chart.yml then we assume we are in a Chart root directory
+		// If browse file is Chart.yaml or Chart.yml then Updatecli assumes that it's a Chart root directory
 		if chartFile == filepath.Base(path) {
 			return true
 		}
@@ -63,7 +63,7 @@ func isChartRootDirectory(path string) bool {
 
 }
 
-// getChartMetadata reads a Chart.yaml for information that could be automated
+// getChartMetadata reads a Chart.yaml for information.
 func getChartMetadata(filename string) (*chartMetadata, error) {
 
 	var chart chartMetadata
@@ -107,7 +107,7 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 	return &chart, nil
 }
 
-// getValuesFileContent reads a values.yaml for information that could be automated such as image information
+// getValuesFileContent reads a values.yaml for information.
 func getValuesFileContent(filename string) (*valuesContent, error) {
 
 	var values valuesContent
