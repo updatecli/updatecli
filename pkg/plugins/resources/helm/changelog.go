@@ -7,9 +7,35 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// CHANGELOGTEMPLATE contains helm chart changelog information
+	CHANGELOGTEMPLATE string = `
+Remark: We couldn't identify a way to automatically retrieve changelog information.
+Please use following information to take informed decision
+
+{{ if .Name }}Helm Chart: {{ .Name }}{{ end }}
+{{ if .Description }}{{ .Description }}{{ end }}
+{{ if .Home }}Project Home: {{ .Home }}{{ end }}
+{{ if .KubeVersion }}Require Kubernetes Version: {{ .KubeVersion }}{{end}}
+{{ if .Created }}Version created on the {{ .Created }}{{ end}}
+{{ if .Sources }}
+Sources:
+{{ range $index, $source := .Sources }}
+* {{ $source }}
+{{ end }}
+{{ end }}
+{{ if .URLs }}
+URL:
+{{ range $index, $url := .URLs }}
+* {{ $url }}
+{{ end }}
+{{ end }}
+`
+)
+
 // Changelog returns a rendered template with this chart version informations
 func (c Chart) Changelog() string {
-	index, err := c.GetRepoIndexFile()
+	index, err := c.GetRepoIndexFromURL()
 
 	if err != nil {
 		return ""

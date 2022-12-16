@@ -4,9 +4,10 @@ link:https://github.com/updatecli/updatecli/blob/main/LICENSE[image:https://img.
 link:https://goreportcard.com/report/github.com/updatecli/updatecli[image:https://goreportcard.com/badge/github.com/updatecli/updatecli[Go Report Card]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/total[GitHub Releases]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/latest/total[GitHub Releases]]
-link:https://github.com/updatecli/updatecli/actions?query=workflow%3AGo[image:https://img.shields.io/github/workflow/status/updatecli/updatecli/Go[GitHub Workflow Status]]
+link:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main[image:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main[GitHub Workflow Status]]
 link:https://gitter.im/Updatecli/community#[image:https://img.shields.io/gitter/room/updatecli/community[Gitter]]
-
+link:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli[image:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli/badge[OpenSSF Scorecard]]
+link:https://bestpractices.coreinfrastructure.org/projects/6731[image:https://bestpractices.coreinfrastructure.org/projects/6731/badge[OpenSSF Best Practices]]
 
 _"Automatically open a PR on your GitOps repository when a third party service publishes an update"_
 
@@ -42,6 +43,38 @@ link:https://asciinema.org/a/CR5DIxyTLnvtt8NllEeYAx83U[image:https://asciinema.o
 
 Updatecli is a Go binary available for Linux, MacOS and Windows from the link:https://github.com/updatecli/updatecli/releases[release page] or installed via link:https://www.updatecli.io/docs/prologue/installation/[other methods].
 
+**Verify File Checksum Signature**
+
+Instead of signing all release assets, Updatecli signs the checksums file containing the different release assets checksum.
+You can download/copy the three files 'checksums.txt.pem', 'checksums.txt.sig', 'checksums.txt' from the latest https://github.com/updatecli/updatecli/releases/latest[release].
+Once you have the three files locally, you can execute the following command
+
+```
+COSIGN_EXPERIMENTAL=1 cosign verify-blob --cert checksums.txt.pem --signature checksums.txt.sig checksums.txt
+```
+A successful output looks like 
+
+```
+tlog entry verified with uuid: 73f57e4c16b830ccb615e00814a3481a33365bf48f9bba1c1588886b3344d0ec index: 9085154
+Verified OK
+```
+
+Now you can verify the assets checksum integrity.
+
+**Verify File Checksum Integrity**
+
+Before verifying the file integrity, you should first verify the checksum file signature.
+Once you've download both the checksums.txt and your binary, you can verify the integrity of your file by running:
+```
+sha256sum --ignore-missing -c checksums.txt
+```
+
+**Verify Container signature**
+
+```
+docker pull updatecli/updatecli:vx.y.z
+cosign verify updatecli/updatecli@sha256:<image_digest> 
+```
 == Documentation
 
 The documentation of Updatecli is available at link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io], but you can also look at the `examples` section to get an overview.

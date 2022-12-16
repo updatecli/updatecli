@@ -7,6 +7,11 @@ scms:
     kind: git
     spec:
       url: https://github.com/epinio/helm-charts.git
+  indexFile:
+    kind: git
+    spec:
+      url: https://github.com/epinio/helm-charts.git
+      branch: gh-pages
 
 sources:
   default:
@@ -16,19 +21,66 @@ sources:
       url: https://charts.min.io/
       name: minio
 
-conditions:
-  default:
-    name: Retrieve Version
+  fromScm:
+    name: Retrieve Version from file hosted on a git repository
+    scmid: indexFile
     kind: helmchart
+    spec:
+      url: index.yaml
+      name: epinio
+      versionfilter:
+        kind: semver
+        pattern: "~0"
+
+  fromFileURI:
+    name: Retrieve Version from file URI hosted on a git repository
+    scmid: indexFile
+    kind: helmchart
+    spec:
+      url: file://./index.yaml
+      name: epinio
+
+  fromScmWithoutURL:
+    name: Retrieve Version without specifying url
+    scmid: indexFile
+    kind: helmchart
+    spec:
+      name: epinio
+
+conditions:
+  default1:
+    name: Retrieve Version v1
+    kind: helmchart
+    sourceid: default
     spec:
       url: https://charts.min.io/
       name: minio
       version: 3.6.2
 
+  default2:
+    name: Retrieve Version v2
+    kind: helmchart
+    sourceid: default
+    spec:
+      url: https://charts.min.io/index.yaml
+      name: minio
+      version: 3.6.2
+
+  fromScm:
+    name: Retrieve Version
+    kind: helmchart
+    sourceid: default
+    scmid: indexFile
+    spec:
+      url: index.yaml
+      name: epinio
+      version: 1.0.0
+
 targets:
   default:
     name: Test Chart Update
     scmid: default
+    sourceid: default
     kind: helmchart
     spec:
       name: chart/epinio
@@ -38,6 +90,7 @@ targets:
   fakeAppVersion:
     name: Test Chart Update
     scmid: default
+    sourceid: default
     kind: helmchart
     spec:
       name: chart/epinio
@@ -49,6 +102,7 @@ targets:
   fakeVersionInc:
     name: Test Chart Update
     scmid: default
+    sourceid: default
     kind: helmchart
     spec:
       name: chart/epinio
@@ -59,6 +113,7 @@ targets:
   noVersionInc:
     name: Test Chart Update
     scmid: default
+    sourceid: default
     kind: helmchart
     spec:
       name: chart/epinio

@@ -23,14 +23,15 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
-		Short: "Updatecli is a tool used to define and apply file update strategies. ",
+		Short: "Updatecli is a declarative dependency manager command line tool",
 		Long: `
-updatecli is a tool uses to apply file update strategies.
-It reads a yaml or a go template configuration file, then works into three stages:
+Updatecli is a declarative dependency manager command line tool.
+Based on Updatecli manifest(s), It ensures that target files are up to date.
+Updatecli  works into three stages:
 
-1. Source: Based on a rule fetch a value that will be injected in later stages.
-2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
-3. Target: Update and publish the target files based on a value retrieved from the source stage.
+1. Source: Retrieve a value from a third location like file, api, etc..
+2. Condition: Ensure conditions are met based on the value retrieved during the source stage.
+3. Target: Update the target based on the value retrieved from the source stage.
 `,
 	}
 )
@@ -65,6 +66,7 @@ func init() {
 		showCmd,
 		versionCmd,
 		docsCmd,
+		manCmd,
 		jsonschemaCmd)
 }
 
