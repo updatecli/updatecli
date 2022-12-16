@@ -15,18 +15,18 @@ import (
 )
 
 var (
-	// ChartValidFiles specifies accepted Helm chart metadata file name
+	// ChartValidFiles specifies accepted Helm chart metadata filename
 	ChartValidFiles [2]string = [2]string{"Chart.yaml", "Chart.yml"}
 )
 
-// Dependency specify the dependency information that we are looking for in Helm chart
+// Dependency specify the dependency information.
 type dependency struct {
 	Name       string
 	Repository string
 	Version    string
 }
 
-// chartMetadata is the information that we need to retrieve from Helm chart files.
+// chartMetadata is the information fetches from a Chart.yaml that Updatecli needs to identify update.
 type chartMetadata struct {
 	Name         string
 	Dependencies []dependency
@@ -48,7 +48,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([]config.Spec, error) {
 
 		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundChartFile)
 		if err != nil {
-			// Let's try the next chart if one fail
+			// Jump to the next Helm chart if current failed
 			logrus.Errorln(err)
 			continue
 		}
@@ -57,7 +57,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([]config.Spec, error) {
 		metadataFilename := filepath.Base(foundChartFile)
 		chartName := filepath.Base(chartRelativeMetadataPath)
 
-		// Test if the ignore rule based on path is respected
+		// Test if the ignore rule based on path doesn't match
 		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundChartFile) {
 			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
 				chartName,
@@ -65,7 +65,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([]config.Spec, error) {
 			continue
 		}
 
-		// Test if the only rule based on path is respected
+		// Test if the only rule based on path match
 		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundChartFile) {
 			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
 				chartName,
@@ -74,7 +74,6 @@ func (h Helm) discoverHelmDependenciesManifests() ([]config.Spec, error) {
 		}
 
 		// Retrieve chart dependencies for each chart
-
 		dependencies, err := getChartMetadata(foundChartFile)
 		if err != nil {
 			return nil, err

@@ -3,6 +3,7 @@ package helmfile
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -15,30 +16,34 @@ import (
 )
 
 var (
-	// DefaultFilePattern specifies accepted Helm chart metadata file name
+	// DefaultFilePattern specifies accepted Helm chart metadata filename
 	DefaultFilePattern [2]string = [2]string{"*.yaml", "*.yml"}
 )
 
-// Release specify the release information that we are looking for in Helmfile
+// Release holds the Helmfile release information.
 type release struct {
 	Name    string
 	Chart   string
 	Version string
 }
 
-// Repository specify the repository information that we are looking for in Helmfile
+// Repository holds the Helmfile repository information
 type repository struct {
-	Name string
-	URL  string
+	Name     string
+	URL      string
+	OCI      bool
+	Username string
+	Password string
 }
 
-// chartMetadata is the information that we need to retrieve from Helm chart files.
+// helmfileMetadata is the information retrieved from Helmfile files.
 type helmfileMetadata struct {
 	Name         string
 	Repositories []repository
 	Releases     []release
 }
 
+// discoverHelmfileReleaseManifests search recursively from a root directory for Helmfile file
 func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 
 	var manifests []config.Spec
@@ -55,7 +60,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 
 		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundHelmfile)
 		if err != nil {
-			// Let's try the next chart if one fail
+			// Jump to the next Helmfile if current failed
 			logrus.Errorln(err)
 			continue
 		}
@@ -63,7 +68,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 		helmfileRelativeMetadataPath := filepath.Dir(relativeFoundChartFile)
 		helmfileFilename := filepath.Base(helmfileRelativeMetadataPath)
 
-		// Test if the ignore rule based on path is respected
+		// Test if the ignore rule based on path doesn't match
 		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundChartFile) {
 			logrus.Debugf("Ignoring Helmfile %q from %q, as not matching rule(s)\n",
 				helmfileFilename,
@@ -71,7 +76,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 			continue
 		}
 
-		// Test if the only rule based on path is respected
+		// Test if the only rule based on path doesn't match
 		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundChartFile) {
 			logrus.Debugf("Ignoring Helmfile %q from %q, as not matching rule(s)\n",
 				helmfileFilename,
@@ -97,17 +102,53 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 		for i, release := range metadata.Releases {
 			manifestName := fmt.Sprintf("Bump %q Helm Chart version for Helmfile %q", release.Name, relativeFoundChartFile)
 
-			chartName, chartURL := getReleaseRepositoryUrl(metadata.Repositories, release)
+			var chartName, chartURL, OCIUsername, OCIPassword string
+			var isOCI bool
+
+			for _, repository := range metadata.Repositories {
+				if strings.HasPrefix(release.Chart, repository.Name+"/") {
+					chartName = strings.TrimPrefix(release.Chart, repository.Name+"/")
+					chartURL = repository.URL
+					isOCI = repository.OCI
+					OCIUsername = repository.Username
+					OCIPassword = repository.Password
+					break
+				}
+			}
 
 			if chartName == "" || chartURL == "" {
 				logrus.Debugf("repository not identified for release %q, skipping", release.Chart)
 				continue
 			}
 
+			// Helmfile uses the repository flag 'oci'
+			// to identify OCI Helm chart
+			// Updatecli expects the scheme 'oci://'.
+			// Therefor Updatecli removes any 'http://' or 'https://' schemes before adding 'oci://'
+			if isOCI {
+				for _, scheme := range []string{"https://", "http://"} {
+					if strings.HasPrefix(chartURL, scheme) {
+						chartURL = strings.TrimPrefix(chartURL, scheme)
+						break
+					}
+				}
+				chartURL = "oci://" + chartURL
+			}
+
 			if release.Version == "" {
 				logrus.Debugf("no version specified for release %q, skipping", release.Chart)
 				continue
+			}
 
+			helmSourcespec := helm.Spec{
+				Name: chartName,
+				URL:  chartURL,
+			}
+			if OCIUsername != "" && isOCI {
+				helmSourcespec.InlineKeyChain.Username = OCIUsername
+			}
+			if OCIPassword != "" && isOCI {
+				helmSourcespec.InlineKeyChain.Password = OCIPassword
 			}
 
 			manifest := config.Spec{
@@ -117,10 +158,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
 							Kind: "helmchart",
-							Spec: helm.Spec{
-								Name: chartName,
-								URL:  chartURL,
-							},
+							Spec: helmSourcespec,
 						},
 					},
 				},
