@@ -2,7 +2,6 @@ package yaml
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -70,7 +69,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 			return false, validationError
 		}
 
-		valueFound, _, _ := replace(&out, strings.Split(y.spec.Key, "."), "", 1)
+		valueFound, _, _ := replace(&out, parseKey(y.spec.Key), "", 1)
 
 		return valueFound, nil
 	}
@@ -88,7 +87,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 		valueToCheck = source
 	}
 
-	valueFound, oldVersion, _ := replace(&out, strings.Split(y.spec.Key, "."), valueToCheck, 1)
+	valueFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToCheck, 1)
 
 	if valueFound {
 		if oldVersion == valueToCheck {

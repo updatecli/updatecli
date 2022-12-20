@@ -1,0 +1,17 @@
+name: "[jenkins-infra/docker-jenkins-weekly] Dockerfile autodiscovery using git scm"
+scms:
+  jenkins-infra-weekly:
+    kind: git
+    spec:
+      url: https://github.com/jenkins-infra/docker-jenkins-weekly.git
+      # url: https://github.com/jenkinsci/docker.git
+      # url: git@github.com:webdevops/Dockerfile.git
+      # url: git@github.com:mritd/autobuild.git
+      # url: git@github.com:vimagick/dockerfiles.git
+      branch: main
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: jenkins-infra-weekly
+  crawlers:
+    dockerfile:

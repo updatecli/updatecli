@@ -1,3 +1,4 @@
+name: "Fleet Autodiscovery using github scm"
 scms:
   fleet-lab:
     kind: github
@@ -8,7 +9,7 @@ scms:
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       branch: main
 
-pullrequests:
+actions:
   fleet-lab:
     kind: github
     scmid: fleet-lab
@@ -19,19 +20,9 @@ pullrequests:
 autodiscovery:
   # scmid is applied to all crawlers
   scmid: fleet-lab
-  pullrequestid: fleet-lab
+  actionid: fleet-lab
   crawlers:
-    helm:
-      # By default enabled
-      enable: true
-      # To ignore specific path
-      #ignore:
-      #  # - path: <filepath relative to scm repository>
-      #only:
-      #  # - path: <filepath relative to scm repository>
     rancher/fleet:
-      # By default it's enable 
-      enable: true
       # To ignore specific path
       #ignore:
       # - path: <filepath relative to scm repository>

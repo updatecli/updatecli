@@ -14,6 +14,7 @@ type Semver struct {
 	Constraint   string
 	versions     []*sv.Version
 	FoundVersion Version
+	Strict       bool
 }
 
 var (
@@ -27,7 +28,16 @@ var (
 func (s *Semver) Init(versions []string) error {
 
 	for _, version := range versions {
-		v, err := sv.NewVersion(version)
+		var v *sv.Version
+		var err error
+
+		switch s.Strict {
+		case true:
+			v, err = sv.StrictNewVersion(version)
+		case false:
+			v, err = sv.NewVersion(version)
+		}
+
 		if err != nil {
 			logrus.Debugf("Skipping %q because %s, skipping", version, err)
 		} else {

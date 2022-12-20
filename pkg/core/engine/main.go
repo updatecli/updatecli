@@ -13,8 +13,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -23,6 +23,11 @@ import (
 
 	"path/filepath"
 	"strings"
+)
+
+var (
+	// ErrNoManifestDetected is return when we couldn't find Updatecli manifest
+	ErrNoManifestDetected error = errors.New("no Updatecli manifest detected")
 )
 
 // Engine defined parameters for a specific engine run.
@@ -156,10 +161,16 @@ func (e *Engine) Prepare() (err error) {
 
 	err = e.LoadConfigurations()
 
-	// Don't exit if we identify at least one valid pipeline configuration
-	if err != nil {
+	if !errors.Is(err, ErrNoManifestDetected) && err != nil {
 		logrus.Errorln(err)
 		logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
+	}
+
+	if errors.Is(err, ErrNoManifestDetected) {
+		if !e.Options.Pipeline.AutoDiscovery.Enabled {
+			logrus.Infof("Autodiscovery enabled as no Updatecli manifest could be detected\n\n")
+		}
+		e.Options.Pipeline.AutoDiscovery.Enabled = true
 	}
 
 	// If one git clone fails then we exit
@@ -175,7 +186,6 @@ func (e *Engine) Prepare() (err error) {
 	}
 
 	if len(e.Pipelines) == 0 {
-		logrus.Errorln(err)
 		return fmt.Errorf("no valid pipeline found")
 	}
 
@@ -187,7 +197,13 @@ func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
 
-	for _, manifestFile := range GetFiles(e.Options.Config.ManifestFile) {
+	manifestFiles := GetFiles(e.Options.Config.ManifestFile)
+
+	if len(manifestFiles) == 0 {
+		return ErrNoManifestDetected
+	}
+
+	for _, manifestFile := range manifestFiles {
 
 		loadedConfiguration, err := config.New(
 			config.Option{
@@ -386,9 +402,9 @@ func (e *Engine) LoadAutoDiscovery() error {
 		logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
 		var sc scm.Config
-		var pr pullrequest.Config
+		var actionConfig action.Config
 		var autodiscoveryScm scm.Scm
-		var autodiscoveryPullrequest pullrequest.PullRequest
+		var autodiscoveryAction action.Action
 		var found bool
 
 		// Retrieve scm spec if it exists
@@ -400,12 +416,24 @@ func (e *Engine) LoadAutoDiscovery() error {
 			}
 		}
 
-		// Retrieve pullrequest spec if it exists
-		if len(p.Config.Spec.AutoDiscovery.PullrequestId) > 0 {
-			autodiscoveryPullrequest, found = p.PullRequests[p.Config.Spec.AutoDiscovery.PullrequestId]
+		/** Check for deprecated items **/
+		if p.Config.Spec.AutoDiscovery.PullrequestId != "" {
+			if p.Config.Spec.AutoDiscovery.ActionId != "" {
+				return fmt.Errorf("The `autodiscovery.pullrequestid` and `autodiscovery.actionid` keywords are mutually exclusive. Please use only `autodiscovery.actionid` as `autodiscovery.pullrequestid` is deprecated.")
+			}
+
+			logrus.Warningf("The `autodiscovery.pullrequestid` keyword is deprecated in favor of `autodiscovery.actionid`, please update this manifest. Updatecli will continue the execution while trying to translate `autodiscovery.pullrequestid` to `autodiscovery.actionid`.")
+
+			p.Config.Spec.AutoDiscovery.ActionId = p.Config.Spec.AutoDiscovery.PullrequestId
+			p.Config.Spec.AutoDiscovery.PullrequestId = ""
+		}
+
+		// Retrieve action spec if it exists
+		if len(p.Config.Spec.AutoDiscovery.ActionId) > 0 {
+			autodiscoveryAction, found = p.Actions[p.Config.Spec.AutoDiscovery.ActionId]
 
 			if found {
-				pr = autodiscoveryPullrequest.Config
+				actionConfig = autodiscoveryAction.Config
 			}
 		}
 
@@ -413,7 +441,7 @@ func (e *Engine) LoadAutoDiscovery() error {
 			p.Config.Spec.AutoDiscovery,
 			autodiscoveryScm.Handler,
 			&sc,
-			&pr)
+			&actionConfig)
 
 		if err != nil {
 			e.Pipelines[id].Report.Result = result.FAILURE

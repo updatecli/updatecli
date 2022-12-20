@@ -1,35 +1,30 @@
 package dockerdigest
 
 import (
-	"fmt"
-	"strings"
-
+	"github.com/google/go-containerregistry/pkg/authn"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/mitchellh/mapstructure"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerimage"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
 // Spec defines a specification for a "dockerdigest" resource parsed from an updatecli manifest file
 type Spec struct {
-	// Architecture specifies the container image architecture such as `amd64`
+	// [s][c] Architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
-	// Image specifies the container image such as `updatecli/updatecli`
+	// [s][c] Image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
-	// Tag specifies the container image tag such as `latest`
+	// [s] Tag specifies the container image tag such as `latest`
 	Tag string `yaml:",omitempty"`
-	// Username specifies the container registry username to use for authentication. Not compatible with token
-	Username string `yaml:",omitempty"`
-	// Password specifies the container registry password to use for authentication. Not compatible with token
-	Password string `yaml:",omitempty"`
-	// Token specifies the container registry token to use for authentication. Not compatible with username/password
-	Token string `yaml:",omitempty"`
+	// [c] Digest specifies the container image digest such as `@sha256:ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6`
+	Digest                string `yaml:",omitempty"`
+	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
 }
 
 // DockerDigest defines a resource of kind "dockerDigest" to interact with a docker registry
 type DockerDigest struct {
-	spec     Spec
-	registry dockerregistry.Registry
-	image    dockerimage.Image
+	spec    Spec
+	options []remote.Option
 }
 
 // New returns a reference to a newly initialized DockerDigest object from a Spec
@@ -42,57 +37,30 @@ func New(spec interface{}) (*DockerDigest, error) {
 		return nil, err
 	}
 
-	newImage, err := dockerimage.New(
-		// concatenate user-provided image name (which may contains registry and namespace along with the namespace) with the user-provided tag
-		fmt.Sprintf("%s:%s", newSpec.Image, newSpec.Tag),
-		newSpec.Architecture,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	newRegistry := dockerregistry.New(
-		newImage.Registry,
-		newSpec.Username,
-		newSpec.Password,
-	)
-
 	newResource := &DockerDigest{
-		spec:     newSpec,
-		registry: newRegistry,
-		image:    *newImage,
+		spec: newSpec,
 	}
 
-	err = newResource.Validate()
+	err = newSpec.InlineKeyChain.Validate()
 	if err != nil {
 		return nil, err
 	}
 
+	keychains := []authn.Keychain{}
+
+	if !newSpec.InlineKeyChain.Empty() {
+		keychains = append(keychains, newSpec.InlineKeyChain)
+	}
+
+	keychains = append(keychains, authn.DefaultKeychain)
+	arch := newSpec.Architecture
+	if arch == "" {
+		arch = "amd64"
+	}
+	newResource.options = append(newResource.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+	newResource.options = append(newResource.options, remote.WithAuthFromKeychain(authn.NewMultiKeychain(keychains...)))
 	return newResource, nil
-}
 
-// Validate validates the object and returns an error (with all the failed validation messages) if it is not valid
-func (ds *DockerDigest) Validate() error {
-	var validationErrors []string
-
-	if len(ds.spec.Token) > 0 {
-		if len(ds.spec.Username) > 0 || len(ds.spec.Password) > 0 {
-			validationErrors = append(validationErrors, "Specifying a (bearer) token is invalid when a username and a password are provided.")
-		}
-	}
-
-	if len(ds.spec.Username) > 0 && len(ds.spec.Password) == 0 {
-		validationErrors = append(validationErrors, "Docker registry username provided but not the password")
-	} else if len(ds.spec.Username) == 0 && len(ds.spec.Password) > 0 {
-		validationErrors = append(validationErrors, "Docker registry password provided but not the username")
-	}
-
-	// Return all the validation errors if found any
-	if len(validationErrors) > 0 {
-		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
-	}
-
-	return nil
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported

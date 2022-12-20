@@ -56,7 +56,7 @@ func TestFile_Condition(t *testing.T) {
 			wantedResult: true,
 		},
 		{
-			name: "Validation failure with more than one element in 'Files'",
+			name: "Validation failure with non-existing element in 'Files'",
 			spec: Spec{
 				Files: []string{
 					"foo.txt",
@@ -206,7 +206,30 @@ func TestFile_Condition(t *testing.T) {
 				"foo.txt": "Title\r\nGood Bye\r\nThe End",
 				"bar.txt": "Title\r\nNot In All Files\r\nThe End",
 			},
-			wantedErr: true,
+			wantedErr:    false,
+			wantedResult: false,
+		},
+		{
+			name: "Passing case with more than one 'Files'",
+			spec: Spec{
+				Files: []string{
+					"foo.txt",
+					"bar.txt",
+				},
+				Line:    2,
+				Content: "In All Files",
+			},
+			files: map[string]string{
+				"foo.txt": "",
+				"bar.txt": "",
+			},
+			inputSourceValue: "",
+			mockedContents: map[string]string{
+				"foo.txt": "Title\r\nIn All Files\r\nEnd",
+				"bar.txt": "Title\r\nIn All Files\r\nThe End",
+			},
+			wantedErr:    false,
+			wantedResult: true,
 		},
 	}
 	for _, tt := range tests {

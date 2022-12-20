@@ -1,0 +1,160 @@
+name: Retrieve the latest Docker Image Tag
+
+sources:
+  # GitHub action is not configured with DockerHub credentials
+  #dockerhub-private:
+  #  name: Get Latest private olblak test image
+  #  kind: dockerimage
+  #  spec:
+  #    image: "olblak/test"
+  #    architecture: amd64
+  #    versionfilter:
+  #      kind: regex
+  #      pattern: "updatecli"
+
+  ## Dockerhub return an alphabetically ordered list of docker image tag
+  dockerhub-latest:
+    name: Get Latest Tag for Dockerhub
+    kind: dockerimage
+    spec:
+      image: "updatecli/updatecli"
+      architecture: amd64
+  ## Dockerhub return an alphabetically ordered list of docker image tag
+  # semver doesn't work in the current state
+  dockerhub-semver:
+    name: Get Latest semver Tag for Dockerhub
+    kind: dockerimage
+    spec:
+      image: "updatecli/updatecli"
+      architecture: amd64
+      versionfilter:
+        kind: semver
+  # Ghcr return an created time ordered list of container image tag
+  ghcr.io-latest:
+    name: Get Latest Tag from ghcr
+    kind: dockerimage
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: amd64
+  # Ghcr return an created time ordered list of container image tag
+  # semver doesn't work in the current state
+  ghcr.io-semver:
+    name: Get Latest semver Tag from ghcr
+    kind: dockerimage
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: amd64
+      versionfilter:
+        kind: semver
+
+  quayio-semver:
+    name: "Get latest calico image using semantic versioning"
+    kind: dockerimage
+    spec:
+      image: "quay.io/calico/node"
+      versionfilter:
+        kind: semver
+
+  quayio-regex:
+    name: "Get latest calico image using regex rules"
+    kind: dockerimage
+    spec:
+      image: "quay.io/calico/node"
+      versionfilter:
+        kind: regex
+
+  quayio-latest:
+    name: "Get latest calico image"
+    kind: dockerimage
+    spec:
+      image: "quay.io/calico/node"
+
+  quayio-semver-strict:
+    name: "Get latest calico image using strict semantic versioning"
+    kind: dockerimage
+    spec:
+      image: "quay.io/calico/node"
+      strict: true
+  
+conditions:
+  ## GitHub action is not configured with DockerHub credentials
+  #dockerhub-private:
+  #  name: Get Latest private olblak test image
+  #  kind: dockerimage
+  #  sourceid: dockerhub-private
+  #  spec:
+  #    image: "olblak/test"
+  #    architecture: amd64
+  #dockerhub-private-not-found:
+  #  name: Get Latest private olblak test image
+  #  kind: dockerimage
+  #  sourceid: dockerhub-private
+  #  transformers:
+  #    - addprefix: xxx
+  #  spec:
+  #    image: "olblak/test"
+  #    architecture: amd64
+  ## Dockerhub return an alphabetically ordered list of docker image tag
+  dockerhub-latest:
+    name: Get Latest Tag for Dockerhub
+    kind: dockerimage
+    sourceid: dockerhub-latest
+    spec:
+      image: "updatecli/updatecli"
+      architecture: amd64
+  # Ghcr return an created time ordered list of container image tag
+  ghcr.io-latest:
+    name: Get Latest Tag from ghcr
+    sourceid: ghcr.io-latest
+    kind: dockerimage
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: amd64
+  ## Dockerhub return an alphabetically ordered list of docker image tag
+  # semver doesn't work in the current state
+  dockerhub-semver:
+    name: Get Latest semver Tag for Dockerhub
+    sourceid: dockerhub-semver
+    kind: dockerimage
+    spec:
+      image: "updatecli/updatecli"
+      architecture: amd64
+  # Ghcr return an created time ordered list of container image tag
+  # semver doesn't work in the current state
+  ghcr.io-semver:
+    name: Get Latest semver Tag from ghcr
+    sourceid: ghcr.io-semver
+    kind: dockerimage
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: amd64
+
+  quayio-semver:
+    name: "Get latest calico image"
+    kind: dockerimage
+    sourceid: quayio-semver
+    spec:
+      image: "quay.io/calico/node"
+
+  quayio-semver-strict:
+    name: "Get latest calico image"
+    kind: dockerimage
+    sourceid: quayio-semver-strict
+    spec:
+      image: "quay.io/calico/node"
+      strict: true
+
+  quayio-regex:
+    name: "Get latest calico image"
+    kind: dockerimage
+    sourceid: quayio-regex
+    spec:
+      image: "quay.io/calico/node"
+
+  quayio-latest:
+    name: "Get latest calico image"
+    sourceid: quayio-latest
+    kind: dockerimage
+    spec:
+      image: "quay.io/calico/node"
+

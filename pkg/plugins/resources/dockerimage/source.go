@@ -2,65 +2,43 @@ package dockerimage
 
 import (
 	"fmt"
+	"regexp"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func (di *DockerImage) Source(workingDir string) (string, error) {
 
+	repo, err := name.NewRepository(di.spec.Image)
+	if err != nil {
+		return "", fmt.Errorf("invalid repository %s: %w", di.spec.Image, err)
+	}
 	logrus.Debugf(
 		"Searching tags for the image %q",
-		di.spec.Image,
+		repo,
 	)
-	tags, err := di.registry.Tags(di.image)
+
+	tags, err := remote.List(repo, di.options...)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("unable to list tags for repository %s: %w", repo, err)
 	}
+
+	// apply tagFilter
 
 	logrus.Debugf("%d Docker image tag(s) found", len(tags))
 
-	for i, t := range tags {
-		logrus.Debugf("%d\t%q\n", i, t)
+	if di.spec.TagFilter != "" {
+		tags = di.filterTags(tags)
 	}
 
-	found := false
-	tag := ""
-
-	// registry.Tags doesn't filter tags based on architecture
-	// which means that we need another api call to show tag information
-searchTag:
-	for !found {
-		di.foundVersion, err = di.versionFilter.Search(tags)
-		if err != nil {
-			return "", err
-		}
-
-		// Todo: validate that result is valid for architecture
-
-		tag = di.foundVersion.GetVersion()
-
-		img := di.image
-		img.Tag = tag
-
-		digest, err := di.registry.Digest(img)
-		if err != nil {
-			return "", err
-		}
-
-		switch digest {
-		case "":
-			logrus.Debugf("Docker image tag %q, doesn't support architecture %q, looking for another one\n", tag, di.image.Architecture)
-			removeTag(tags, tag)
-			if len(tags) == 0 {
-				tag = ""
-				break searchTag
-			}
-		default:
-			found = true
-		}
-
+	di.foundVersion, err = di.versionFilter.Search(tags)
+	if err != nil {
+		return "", err
 	}
+	tag := di.foundVersion.GetVersion()
 
 	if len(tag) == 0 {
 		logrus.Infof("%s No Docker Image Tag found matching pattern %q", result.FAILURE, di.versionFilter.Pattern)
@@ -68,26 +46,27 @@ searchTag:
 	} else if len(tag) > 0 {
 		logrus.Infof("%s Docker Image Tag %q found matching pattern %q", result.SUCCESS, tag, di.versionFilter.Pattern)
 	} else {
-		logrus.Errorf("Something unexpected happened in GitHub source")
+		logrus.Errorf("Something unexpected happened in dockerimage source")
 	}
 
 	return tag, nil
 }
 
-func removeTag(tags []string, tag string) []string {
-	if len(tags) == 0 {
+func (di *DockerImage) filterTags(tags []string) []string {
+	var results []string
+	re, err := regexp.Compile(di.spec.TagFilter)
+	if err != nil {
+		logrus.Errorln(err)
+		logrus.Debugln("=> something went wrong, falling back to latest versioning")
 		return []string{}
 	}
-	index := 0
-	for i, t := range tags {
-		if t == tag {
-			index = i
-			break
+	for _, tag := range tags {
+		if re.MatchString(tag) {
+			results = append(results, tag)
 		}
 	}
 
-	l := make([]string, 0)
-	l = append(l, tags[:index]...)
+	fmt.Println()
 
-	return append(l, tags[index+1:]...)
+	return results
 }

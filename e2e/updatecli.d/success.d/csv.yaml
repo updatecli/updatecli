@@ -1,0 +1,54 @@
+title: CSV manipulation examples
+
+sources:
+  default:
+    name: Basic get query
+    kind: csv
+    spec:
+      files:
+        - pkg/plugins/resources/csv/testdata/data.csv
+      key: .[0].firstname
+  versionfilter:
+    name: Test Version filter`
+    kind: csv
+    spec:
+      files: 
+        - pkg/plugins/resources/csv/testdata/data.csv
+      query: ".[*].firstname"
+      versionfilter:
+        kind: regex
+        pattern: "^Jo"
+
+conditions:
+  single:
+    name: Basic condition query
+    kind: csv
+    disablesourceinput: true
+    spec:
+      files:
+        - pkg/plugins/resources/csv/testdata/data.csv
+        - pkg/plugins/resources/csv/testdata/data.csv
+      key: .[0].firstname
+      value: John
+
+targets:
+  single:
+    name: Basic target update
+    kind: csv
+    sourceid: default
+    spec:
+      files: 
+        - pkg/plugins/resources/csv/testdata/data.csv
+        - pkg/plugins/resources/csv/testdata/data.csv
+      query: .[1].firstname
+      value: John
+
+  multiple:
+    name: Mulitple target update
+    kind: csv
+    sourceid: default
+    spec:
+      files:
+        - pkg/plugins/resources/csv/testdata/data.csv
+        - pkg/plugins/resources/csv/testdata/data.csv
+      query: .[*].firstname

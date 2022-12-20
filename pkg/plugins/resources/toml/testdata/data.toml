@@ -1,0 +1,62 @@
+# This is a TOML document
+
+title = "TOML Example"
+
+[owner]
+firstName = "Jack"
+surname = ""
+lastname = "Preston-Werner"
+dob = 1979-05-27T07:32:00-08:00
+
+[database]
+enabled = true
+ports = [ 8000, 8001, 8002 ]
+data = [ ["delta", "phi"], [3.14] ]
+temp_targets = { cpu = 79.5, case = 72.0 }
+
+[servers]
+
+[servers.alpha]
+ip = "10.0.0.1"
+role = "frontend"
+
+[servers.beta]
+ip = "10.0.0.2"
+role = "backend"
+
+
+[[employees]]
+department = "sales"
+did = 1
+role = "IC"
+
+[[employees]]
+department = "sales"
+salary = 5_000
+role = "IC"
+
+[[employees]]
+department = "engineering"
+address = "USA"
+pincode = 97_845
+role = "IC"
+
+[[employees]]
+department = "engineering"
+address = "AU"
+pincode = 97_845
+role = "M"
+
+[[benefits]]
+
+[[benefits.country]]
+country = "UK"
+name = "air"
+
+[[benefits.country]]
+country = "NL"
+name = "water"
+
+[[benefits.country]]
+country = "IT"
+name = "fire"

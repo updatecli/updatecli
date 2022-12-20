@@ -10,6 +10,7 @@ import (
 
 type DataSet struct {
 	Semver                  Semver
+	Strict                  bool
 	Versions                []string
 	SortedVersions          []string
 	ExpectedInitErr         error
@@ -76,6 +77,16 @@ var (
 		},
 		{
 			Semver: Semver{
+				Strict: true,
+			},
+			Versions:                []string{"1.0.0", "2", "4", "3", "6"},
+			SortedVersions:          []string{"1.0.0"},
+			ExpectedInitErr:         nil,
+			ExpectedParsedVersion:   "1.0.0",
+			ExpectedOriginalVersion: "1.0.0",
+		},
+		{
+			Semver: Semver{
 				Constraint: "xyz",
 			},
 			Versions:                []string{"1.0.0", "2.0.0", "4.0.0", "3.0.0", "6.0.0", "5.0.0"},
@@ -92,6 +103,22 @@ var (
 			ExpectedSearchErr:       errors.New("no valid semantic version found"),
 			ExpectedParsedVersion:   "",
 			ExpectedOriginalVersion: "",
+		},
+		{
+			Versions:                []string{"1.0-alpine", "2.0-alpine", "4.0-alpine", "3.0-alpine", "6.0-alpine", "5.0-alpine"},
+			SortedVersions:          []string{"6.0.0-alpine", "5.0.0-alpine", "4.0.0-alpine", "3.0.0-alpine", "2.0.0-alpine", "1.0.0-alpine"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "6.0.0-alpine",
+			ExpectedOriginalVersion: "6.0-alpine",
+		},
+		{
+			Versions:                []string{"1-alpine", "2-alpine", "4-alpine", "3-alpine", "6-alpine", "5-alpine"},
+			SortedVersions:          []string{"6.0.0-alpine", "5.0.0-alpine", "4.0.0-alpine", "3.0.0-alpine", "2.0.0-alpine", "1.0.0-alpine"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "6.0.0-alpine",
+			ExpectedOriginalVersion: "6-alpine",
 		},
 	}
 )

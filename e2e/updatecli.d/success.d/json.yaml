@@ -1,0 +1,72 @@
+name: Basic Json Example
+
+sources:
+  local:
+    name: Get value from json
+    kind: json
+    spec:
+      file: pkg/plugins/resources/json/testdata/data.json
+      key: firstName
+  http:
+    name: Get value from json
+    kind: json
+    spec:
+      file: https://www.updatecli.io/schema/latest/config.json
+      key: $id
+  semverVersion:
+    kind: json
+    name: Get latest version
+    spec:
+      file: https://api.github.com/repos/updatecli/updatecli/releases
+      query: ".[*].tag_name"
+      versionfilter:
+        kind: semver
+        pattern: "v0.35"
+
+conditions:
+  local:
+    name: Test value from json
+    kind: json
+    sourceid: local
+    spec:
+      files: 
+        - pkg/plugins/resources/json/testdata/data.json
+        - pkg/plugins/resources/json/testdata/data.2.json
+      key: firstName
+  http:
+    name: Test value from json
+    kind: json
+    disablesourceinput: true
+    spec:
+      file: https://www.updatecli.io/schema/latest/config.json
+      key: $schema
+      value: http://json-schema.org/draft-04/schema
+  http-query:
+    kind: json
+    name: Get latest version
+    disablesourceinput: true
+    spec:
+      file: https://api.github.com/repos/updatecli/updatecli/releases
+      query: ".(tag_name=v0.36.1).tag_name"
+      value: "v0.36.1"
+
+targets:
+  local:
+    name: Test value from json
+    kind: json
+    sourceid: local
+    spec:
+      file: pkg/plugins/resources/json/testdata/data.json
+      key: firstName
+      value: John
+
+  local2:
+    name: Test value from json
+    kind: json
+    sourceid: local
+    spec:
+      files:
+        - pkg/plugins/resources/json/testdata/data.json
+        - pkg/plugins/resources/json/testdata/data.2.json
+      key: firstName
+      value: John

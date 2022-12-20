@@ -2,7 +2,6 @@ package condition
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
@@ -41,60 +40,50 @@ type Config struct {
 
 // Run tests if a specific condition is true
 func (c *Condition) Run(source string) (err error) {
+	c.Result = result.FAILURE
 	ok := false
 
 	condition, err := resource.New(c.Config.ResourceConfig)
 	if err != nil {
-		c.Result = result.FAILURE
 		return err
 	}
 
 	if len(c.Config.Transformers) > 0 {
 		source, err = c.Config.Transformers.Apply(source)
 		if err != nil {
-			c.Result = result.FAILURE
 			return err
 		}
 	}
 
-	// If scm is defined then clone the repository
-	if c.Scm != nil {
+	switch c.Scm == nil {
+	case true:
+		ok, err = condition.Condition(source)
+		if err != nil {
+			return err
+		}
+	case false:
+		// If scm is defined then clone the repository
 		s := *c.Scm
 		if err != nil {
-			c.Result = result.FAILURE
 			return err
 		}
 
 		err = s.Checkout()
 		if err != nil {
-			c.Result = result.FAILURE
 			return err
 		}
 
 		ok, err = condition.ConditionFromSCM(source, s)
 		if err != nil {
-			c.Result = result.FAILURE
 			return err
 		}
-
-	} else if len(c.Config.Scm) == 0 {
-		ok, err = condition.Condition(source)
-		if err != nil {
-			c.Result = result.FAILURE
-			return err
-		}
-	} else {
-		return fmt.Errorf("something went wrong while looking at the scm configuration: %v", c.Config.Scm)
 	}
 
 	if ok {
 		c.Result = result.SUCCESS
-	} else {
-		c.Result = result.FAILURE
 	}
 
 	return nil
-
 }
 
 // JSONSchema implements the json schema interface to generate the "condition" jsonschema.
@@ -131,6 +120,19 @@ func (c *Config) Validate() error {
 		default:
 			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
 				"scmID", "scmid", "scmID")
+		}
+	}
+
+	// Handle depends_on deprecation
+	if len(c.DeprecatedDependsOn) > 0 {
+		switch len(c.DependsOn) == 0 {
+		case true:
+			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
+			c.DependsOn = c.DeprecatedDependsOn
+			c.DeprecatedDependsOn = []string{}
+		case false:
+			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
+			c.DeprecatedDependsOn = []string{}
 		}
 	}
 

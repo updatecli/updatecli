@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -35,11 +36,9 @@ type Spec struct {
 	// URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
 	// Username specifies the username used to authenticate with Github API
-	Username string `yaml:",omitempty" jsonschema:"required"`
+	Username string `yaml:",omitempty"`
 	// User specifies the user of the git commit messages
 	User string `yaml:",omitempty"`
-	// Deprecated since https://github.com/updatecli/updatecli/issues/260, must be clean up
-	PullRequest PullRequestSpec `yaml:",omitempty"`
 	// GPG key and passphrased used for commit signing
 	GPG sign.GPGSpec `yaml:",omitempty"`
 	// Force is used during the git push phase to run `git push --force`.
@@ -52,7 +51,7 @@ type Spec struct {
 type Github struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
-	// HeadBranch is used when creating a temporary branch before opening a PR
+	// HeadBranch is used when creating a temporary branch before opening a Pull Request
 	HeadBranch       string
 	client           GitHubClient
 	nativeGitHandler gitgeneric.GitHandler
@@ -98,7 +97,13 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	if strings.HasSuffix(s.URL, "github.com") {
 		g.client = githubv4.NewClient(httpClient)
 	} else {
-		g.client = githubv4.NewEnterpriseClient(s.URL, httpClient)
+		// For GH enterprise the GraphQL API path is /api/graphql
+		// Cf https://docs.github.com/en/enterprise-cloud@latest/graphql/guides/managing-enterprise-accounts#3-setting-up-insomnia-to-use-the-github-graphql-api-with-enterprise-accounts
+		graphqlURL, err := url.JoinPath(s.URL, "/api/graphql")
+		if err != nil {
+			return nil, err
+		}
+		g.client = githubv4.NewEnterpriseClient(graphqlURL, httpClient)
 	}
 
 	g.setDirectory()
@@ -109,10 +114,6 @@ func New(s Spec, pipelineID string) (*Github, error) {
 // Validate verifies if mandatory Github parameters are provided and return false if not.
 func (s *Spec) Validate() (errs []error) {
 	required := []string{}
-
-	if err := s.PullRequest.Validate(); err != nil {
-		errs = append(errs, err)
-	}
 
 	if len(s.Token) == 0 {
 		required = append(required, "token")
@@ -254,11 +255,4 @@ func (g *Github) queryRepositoryID() (string, error) {
 
 	return query.Repository.ID, nil
 
-}
-
-// SpecToPullRequestSpec is a function that export the pullRequest spec from
-// a GithubSpec to a PullRequest.Spec. It's temporary function until we totally remove
-// the old scm configuration introduced by this https://github.com/updatecli/updatecli/pull/388
-func (s *Spec) SpecToPullRequestSpec() interface{} {
-	return s.PullRequest
 }

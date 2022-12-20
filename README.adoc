@@ -4,9 +4,10 @@ link:https://github.com/updatecli/updatecli/blob/main/LICENSE[image:https://img.
 link:https://goreportcard.com/report/github.com/updatecli/updatecli[image:https://goreportcard.com/badge/github.com/updatecli/updatecli[Go Report Card]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/total[GitHub Releases]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/latest/total[GitHub Releases]]
-link:https://github.com/updatecli/updatecli/actions?query=workflow%3AGo[image:https://img.shields.io/github/workflow/status/updatecli/updatecli/Go[GitHub Workflow Status]]
+link:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main[image:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main[GitHub Workflow Status]]
 link:https://gitter.im/Updatecli/community#[image:https://img.shields.io/gitter/room/updatecli/community[Gitter]]
-
+link:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli[image:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli/badge[OpenSSF Scorecard]]
+link:https://bestpractices.coreinfrastructure.org/projects/6731[image:https://bestpractices.coreinfrastructure.org/projects/6731/badge[OpenSSF Best Practices]]
 
 _"Automatically open a PR on your GitOps repository when a third party service publishes an update"_
 
@@ -28,8 +29,8 @@ Updatecli reads a yaml or a go template configuration file, then works into thre
 
 == Why
 
-There are already many projects out there which can continuously update your files, but they all have an opinionated way of doing it and they often want you to adopt a new platform. 
-Building and distributing software is a difficult task and good practices constantly evolve. 
+There are already many projects out there to continuously update your files, but they all have an opinionated way of doing it and they often want you to adopt a new platform.
+Building and distributing software is a difficult task and good practices constantly evolve.
 Updatecli was built to work independently of the underlying dependencies to update, wherever you need it and combining whatever workflow you are using, as you can see in the following section.
 
 == Demo
@@ -42,6 +43,38 @@ link:https://asciinema.org/a/CR5DIxyTLnvtt8NllEeYAx83U[image:https://asciinema.o
 
 Updatecli is a Go binary available for Linux, MacOS and Windows from the link:https://github.com/updatecli/updatecli/releases[release page] or installed via link:https://www.updatecli.io/docs/prologue/installation/[other methods].
 
+**Verify File Checksum Signature**
+
+Instead of signing all release assets, Updatecli signs the checksums file containing the different release assets checksum.
+You can download/copy the three files 'checksums.txt.pem', 'checksums.txt.sig', 'checksums.txt' from the latest https://github.com/updatecli/updatecli/releases/latest[release].
+Once you have the three files locally, you can execute the following command
+
+```
+COSIGN_EXPERIMENTAL=1 cosign verify-blob --cert checksums.txt.pem --signature checksums.txt.sig checksums.txt
+```
+A successful output looks like 
+
+```
+tlog entry verified with uuid: 73f57e4c16b830ccb615e00814a3481a33365bf48f9bba1c1588886b3344d0ec index: 9085154
+Verified OK
+```
+
+Now you can verify the assets checksum integrity.
+
+**Verify File Checksum Integrity**
+
+Before verifying the file integrity, you should first verify the checksum file signature.
+Once you've download both the checksums.txt and your binary, you can verify the integrity of your file by running:
+```
+sha256sum --ignore-missing -c checksums.txt
+```
+
+**Verify Container signature**
+
+```
+docker pull updatecli/updatecli:vx.y.z
+cosign verify updatecli/updatecli@sha256:<image_digest> 
+```
 == Documentation
 
 The documentation of Updatecli is available at link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io], but you can also look at the `examples` section to get an overview.
@@ -95,9 +128,9 @@ targets:
       file: charts/jenkins/values.yaml
       key: jenkins.controller.imageTag
 
-pullrequests:
+action:
   default:
-    title: Open pullrequest with new Jenkins version
+    title: Open a GitHub pull request with new Jenkins version
     kind: github
     scmID: default
     target:
@@ -121,7 +154,7 @@ Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.335" +
 
 . Targets: +
 Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.335"? +
-=> If yes then open a Github pull request to the branch "main"
+=> If yes then execute the action `default` opening a GitHub pull request to the "main" branch
 
 |===
 
@@ -147,7 +180,7 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 == Conferences
 
 * 2022
-** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video] 
+** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video]
 
 == Links
 
@@ -155,4 +188,3 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 * link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 * link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
 * link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
-

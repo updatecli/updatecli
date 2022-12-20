@@ -14,9 +14,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
-
-	dockerimageutils "github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerimage"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 type imageRef struct {
@@ -45,7 +42,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 
 		relativeFoundValueFile, err := filepath.Rel(h.rootDir, foundValueFile)
 		if err != nil {
-			// Let's try the next chart if one fail
+			// Jump to the next Helm chart if current failed
 			logrus.Errorln(err)
 			continue
 		}
@@ -54,7 +51,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 		metadataFilename := filepath.Base(foundValueFile)
 		chartName := filepath.Base(chartRelativeMetadataPath)
 
-		// Test if the ignore rule based on path is respected
+		// Test if the ignore rule based on path doesn't match
 		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundValueFile) {
 			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
 				chartName,
@@ -62,7 +59,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 			continue
 		}
 
-		// Test if the only rule based on path is respected
+		// Test if the only rule based on path match
 		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundValueFile) {
 			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
 				chartName,
@@ -71,7 +68,6 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 		}
 
 		// Retrieve chart dependencies for each chart
-
 		values, err := getValuesFileContent(foundValueFile)
 		if err != nil {
 			return nil, err
@@ -91,7 +87,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 		var images []imageData
 
 		if values.Image.Repository != "" && values.Image.Tag != "" {
-			// Docker Image Digest is not supported at this time.
+			// Docker Image Digest isn't supported at this time.
 			if strings.HasSuffix(values.Image.Repository, "sha256") {
 				logrus.Debugf("Docker image digest detected, skipping as not supported yet")
 				continue
@@ -106,7 +102,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 		}
 
 		for id := range values.Images {
-			// Docker Image Digest is not supported at this time.
+			// Docker Image Digest isn't supported at this time.
 			if strings.HasSuffix(values.Images[id].Repository, "sha256") {
 				logrus.Debugf("Docker image digest detected, skipping as not supported yet")
 				continue
@@ -130,7 +126,11 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 			yamlRepositoryPath := image.yamlRepositoryPath
 			yamlTagPath := image.yamlTagPath
 
-			dockerImageSpec := h.generateSourceDockerImageSpec(image.repository)
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(image.repository, image.tag, h.spec.Auths)
+
+			if sourceSpec == nil {
+				continue
+			}
 
 			manifestName := fmt.Sprintf("Bump Docker Image %q for Helm Chart %q", image.repository, chartName)
 
@@ -141,7 +141,7 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Get latest %q Container tag", image.repository),
 							Kind: "dockerimage",
-							Spec: dockerImageSpec,
+							Spec: sourceSpec,
 						},
 					},
 				},
@@ -180,69 +180,4 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 	}
 
 	return manifests, nil
-}
-
-func sanitizeRegistryEndpoint(repository string) string {
-	// amd64 is only there to avoid warning message as architecture doesn't matter anyway.
-	image, err := dockerimageutils.New(repository, "amd64")
-
-	if image.Registry == "registry-1.docker.io" {
-		image.Registry = "docker.io"
-	}
-
-	if err != nil {
-		logrus.Errorln(err)
-	}
-
-	return image.Registry
-}
-
-func (h Helm) generateSourceDockerImageSpec(image string) dockerimage.Spec {
-	dockerimagespec := dockerimage.Spec{
-		Image: image,
-		VersionFilter: version.Filter{
-			Kind: version.SEMVERVERSIONKIND,
-		},
-	}
-
-	registry := sanitizeRegistryEndpoint(image)
-
-	credential, found := h.spec.Auths[registry]
-
-	switch found {
-	case true:
-		if credential.Password != "" {
-			dockerimagespec.Password = credential.Password
-		}
-		if credential.Token != "" {
-			dockerimagespec.Token = credential.Token
-		}
-		if credential.Username != "" {
-			dockerimagespec.Username = credential.Username
-		}
-	default:
-
-		registryAuths := []string{}
-
-		for endpoint := range h.spec.Auths {
-			logrus.Printf("Endpoint:\t%q\n", endpoint)
-			registryAuths = append(registryAuths, endpoint)
-		}
-
-		warningMessage := fmt.Sprintf(
-			"no credentials found for docker registry %q hosting image %q, among %q",
-			registry,
-			image,
-			strings.Join(registryAuths, ","))
-
-		if len(registryAuths) == 0 {
-			warningMessage = fmt.Sprintf("no credentials found for docker registry %q hosting image %q",
-				registry,
-				image)
-		}
-
-		logrus.Warning(warningMessage)
-	}
-
-	return dockerimagespec
 }

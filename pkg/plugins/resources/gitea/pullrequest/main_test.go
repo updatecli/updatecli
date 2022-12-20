@@ -1,72 +1,119 @@
 package pullrequest
 
 import (
-	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	giteaclient "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
+	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 )
 
-func TestCreatePullRequest(t *testing.T) {
-
-	// Disable source testing with running short tes
-	if testing.Short() {
-		return
-	}
-
-	tests := []struct {
-		name     string
-		manifest struct {
-			URL          string
-			Token        string
-			Owner        string
-			Repository   string
-			SourceBranch string
-			TargetBranch string
-		}
-		wantResult string
-		wantErr    bool
+func TestNew(t *testing.T) {
+	testData := []struct {
+		name                      string
+		spec                      Spec
+		scm                       *giteascm.Gitea
+		expectedGiteaOwner        string
+		expectedGiteaRepository   string
+		expectedGiteaSourceBranch string
+		expectedGiteaTargetBranch string
+		wantErr                   bool
+		wantErrMessage            string
 	}{
 		{
-			name: "pullrequest shouldn't be created on olblak/updatecli should not exist",
-			manifest: struct {
-				URL          string
-				Token        string
-				Owner        string
-				Repository   string
-				SourceBranch string
-				TargetBranch string
-			}{
-				URL:          "try.gitea.io",
-				Token:        os.Getenv("UPDATECLI_GITEA_TOKEN"),
-				Owner:        "olblak",
-				Repository:   "updatecli-test",
-				SourceBranch: "v1",
+			name: "Test basic scenario",
+			spec: Spec{
+				Owner:        "updatecli",
+				Repository:   "updatecli",
+				SourceBranch: "workingBranch",
 				TargetBranch: "main",
 			},
-			wantResult: "",
-			wantErr:    false,
+			scm: &giteascm.Gitea{
+				Spec: giteascm.Spec{
+					Spec: giteaclient.Spec{
+						URL:      "gitea.updatecli.io",
+						Token:    "xxx",
+						Username: "tes",
+					},
+				},
+			},
+			expectedGiteaOwner:        "updatecli",
+			expectedGiteaRepository:   "updatecli",
+			expectedGiteaSourceBranch: "workingBranch",
+			expectedGiteaTargetBranch: "main",
+		},
+		{
+			name: "Test parameter inheritance 1",
+			spec: Spec{
+				Owner:        "updatecli",
+				Repository:   "updatecli",
+				SourceBranch: "workingBranch",
+				TargetBranch: "main",
+			},
+			scm: &giteascm.Gitea{
+				Spec: giteascm.Spec{
+					Spec: giteaclient.Spec{
+						URL: "gitea.updatecli.io",
+					},
+					Repository: "updatecli-test",
+					Branch:     "v2",
+					Owner:      "tartempion",
+				},
+				HeadBranch: "workingBranch",
+			},
+			expectedGiteaOwner:        "updatecli",
+			expectedGiteaRepository:   "updatecli",
+			expectedGiteaSourceBranch: "workingBranch",
+			expectedGiteaTargetBranch: "main",
+		},
+		{
+			name: "Test parameter inheritance 2",
+			spec: Spec{},
+			scm: &giteascm.Gitea{
+				Spec: giteascm.Spec{
+					Spec: giteaclient.Spec{
+						URL: "gitea.updatecli.io",
+					},
+					Repository: "updatecli-test",
+					Branch:     "v2",
+					Owner:      "tartempion",
+				},
+				HeadBranch: "workingBranchv2",
+			},
+			expectedGiteaOwner:        "tartempion",
+			expectedGiteaRepository:   "updatecli-test",
+			expectedGiteaSourceBranch: "workingBranchv2",
+			expectedGiteaTargetBranch: "v2",
+		},
+		{
+			name: "Test required parameter URL not specified",
+			spec: Spec{
+				Owner: "updatecli",
+			},
+			scm:     nil,
+			wantErr: true,
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range testData {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			g, gotErr := New(tt.manifest, nil)
-			require.NoError(t, gotErr)
-
-			gotErr = g.CreatePullRequest(
-				"Bump version to x.y.z",
-				"This is a changelog",
-				"This is a report")
+			g, gotErr := New(tt.spec, tt.scm)
 
 			if tt.wantErr {
 				require.Error(t, gotErr)
 			} else {
 				require.NoError(t, gotErr)
 			}
+
+			assert.Equal(t, g.Owner, tt.expectedGiteaOwner)
+			assert.Equal(t, g.Repository, tt.expectedGiteaRepository)
+			assert.Equal(t, g.SourceBranch, tt.expectedGiteaSourceBranch)
+			assert.Equal(t, g.TargetBranch, tt.expectedGiteaTargetBranch)
 		})
 
 	}
+
 }

@@ -47,7 +47,16 @@ func (s *Source) Run() (err error) {
 
 	workingDir := ""
 
-	if s.Scm != nil {
+	switch s.Scm == nil {
+	case true:
+		pwd, err := os.Getwd()
+		if err != nil {
+			s.Result = result.FAILURE
+			return err
+		}
+
+		workingDir = pwd
+	case false:
 
 		SCM := *s.Scm
 
@@ -64,16 +73,6 @@ func (s *Source) Run() (err error) {
 		}
 
 		workingDir = SCM.GetDirectory()
-
-	} else if s.Scm == nil {
-
-		pwd, err := os.Getwd()
-		if err != nil {
-			s.Result = result.FAILURE
-			return err
-		}
-
-		workingDir = pwd
 	}
 
 	s.Output, err = source.Source(workingDir)
@@ -136,6 +135,19 @@ func (c *Config) Validate() error {
 	// Validate that kind is set
 	if len(c.Kind) == 0 {
 		missingParameters = append(missingParameters, "kind")
+	}
+
+	// Handle depends_on deprecation
+	if len(c.DeprecatedDependsOn) > 0 {
+		switch len(c.DependsOn) == 0 {
+		case true:
+			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
+			c.DependsOn = c.DeprecatedDependsOn
+			c.DeprecatedDependsOn = []string{}
+		case false:
+			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
+			c.DeprecatedDependsOn = []string{}
+		}
 	}
 
 	// Ensure kind is lowercase

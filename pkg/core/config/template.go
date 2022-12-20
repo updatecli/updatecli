@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -130,7 +130,7 @@ func ReadFile(filename string, values *map[string]interface{}, encrypted bool) (
 
 	defer v.Close()
 
-	content, err := ioutil.ReadAll(v)
+	content, err := io.ReadAll(v)
 	if err != nil {
 		return err
 	}

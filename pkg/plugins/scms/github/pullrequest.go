@@ -21,9 +21,10 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/truncate"
 )
 
-// PULLREQUESTBODY is the pull request template used as pull request description
+// PULLREQUESTBODY is the template used as a Pull Request description
 // Please note that triple backticks are concatenated with the literals, as they cannot be escaped
 const PULLREQUESTBODY = `
 # {{ .Title }}
@@ -70,24 +71,23 @@ type PullRequestApi struct {
 	Number      int
 }
 
-// PullRequestSpec is a specific struct containing pullrequest settings provided
-// by an updatecli configuration
-type PullRequestSpec struct {
+// ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
+type ActionSpec struct {
 	// Specifies if automerge is enabled for the new pullrequest
 	AutoMerge bool `yaml:",omitempty"`
-	// Specifies pull request title
+	// Specifies the Pull Request title
 	Title string `yaml:",omitempty"`
 	// Specifies user input description used during pull body creation
 	Description string `yaml:",omitempty"`
-	// Specifies repository labels used for pull request. !! Labels must already exist on the repository
+	// Specifies repository labels used for the Pull Request. !! Labels must already exist on the repository
 	Labels []string `yaml:",omitempty"`
-	// Specifies if a pull request is set to draft, default false
+	// Specifies if a Pull Request is set to draft, default false
 	Draft bool `yaml:",omitempty"`
 	// Specifies if maintainer can modify pullRequest
 	MaintainerCannotModify bool `yaml:",omitempty"`
-	// Specifies which merge method is used to incorporate the pull request. Accept "merge", "squash", "rebase", or ""
+	// Specifies which merge method is used to incorporate the Pull Request. Accept "merge", "squash", "rebase", or ""
 	MergeMethod string `yaml:",omitempty"`
-	// Specifies to use pull request title when using auto merge, only works for "squash" or "rebase"
+	// Specifies to use the Pull Request title as commit message when using auto merge, only works for "squash" or "rebase"
 	UseTitleForAutoMerge bool `yaml:",omitempty"`
 }
 
@@ -96,7 +96,7 @@ type PullRequest struct {
 	Description       string
 	Report            string
 	Title             string
-	spec              PullRequestSpec
+	spec              ActionSpec
 	remotePullRequest PullRequestApi
 }
 
@@ -112,8 +112,8 @@ func isMergeMethodValid(method string) (bool, error) {
 	return false, ErrBadMergeMethod
 }
 
-// Validate ensure that a pullrequest spec contains validate fields
-func (s *PullRequestSpec) Validate() error {
+// Validate ensures that the provided ActionSpec is valid
+func (s *ActionSpec) Validate() error {
 
 	if _, err := isMergeMethodValid(s.MergeMethod); err != nil {
 		return err
@@ -129,7 +129,7 @@ type mutationEnablePullRequestAutoMerge struct {
 	} `graphql:"enablePullRequestAutoMerge(input: $input)"`
 }
 
-func NewPullRequest(spec PullRequestSpec, gh *Github) (PullRequest, error) {
+func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 	err := spec.Validate()
 
 	return PullRequest{
@@ -138,7 +138,7 @@ func NewPullRequest(spec PullRequestSpec, gh *Github) (PullRequest, error) {
 	}, err
 }
 
-func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string) error {
+func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) error {
 
 	p.Description = changelog
 	p.Report = pipelineReport
@@ -168,7 +168,7 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 		return err
 	}
 
-	// No pullrequest ID so we first have to create the remote pullrequest
+	// If there is not already a Pull Request ID then no existing PR so let's open it
 	if len(p.remotePullRequest.ID) == 0 {
 		err = p.OpenPullRequest()
 		if err != nil {
@@ -176,7 +176,7 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 		}
 	}
 
-	// Once the remote pull request exist, we can than update it with additional information such as
+	// Once the remote Pull Request exists, we can than update it with additional information such as
 	// tags,assignee,etc.
 
 	err = p.updatePullRequest()
@@ -194,7 +194,7 @@ func (p *PullRequest) CreatePullRequest(title, changelog, pipelineReport string)
 	return nil
 }
 
-// generatePullRequestBody generates the body pull request based on PULLREQUESTBODY
+// generatePullRequestBody generates the Pull Request's body based on PULLREQUESTBODY
 func (p *PullRequest) generatePullRequestBody() (string, error) {
 	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
 
@@ -218,10 +218,16 @@ func (p *PullRequest) generatePullRequestBody() (string, error) {
 		return "", err
 	}
 
-	return buffer.String(), nil
+	// GitHub Issues/PRs messages have a max size limit on the
+	// message body payload.
+	// `body is too long (maximum is 65536 characters)`.
+	// To avoid that, we ensure to cap the message to 65k chars.
+	const MAX_CHARACTERS_PER_MESSAGE = 65000
+
+	return truncate.String(buffer.String(), MAX_CHARACTERS_PER_MESSAGE), nil
 }
 
-// updatePullRequest updates an existing pull request.
+// updatePullRequest updates an existing Pull Request.
 func (p *PullRequest) updatePullRequest() error {
 
 	/*
@@ -238,7 +244,7 @@ func (p *PullRequest) updatePullRequest() error {
 		  {
 			"input": {
 			  "title":"xxx",
-			  "pullRequestId" : "yyy
+			  "pullRequestId" : "yyy"
 			}
 		  }
 	*/
@@ -248,7 +254,7 @@ func (p *PullRequest) updatePullRequest() error {
 		} `graphql:"updatePullRequest(input: $input)"`
 	}
 
-	logrus.Debugf("Updating Github pull request")
+	logrus.Debugf("Updating GitHub Pull Request")
 
 	title := p.Title
 
@@ -282,14 +288,11 @@ func (p *PullRequest) updatePullRequest() error {
 		labelsID = append(labelsID, githubv4.NewID(label.ID))
 	}
 
-	pullRequestUpdateStateOpen := githubv4.PullRequestUpdateStateOpen
-
 	input := githubv4.UpdatePullRequestInput{
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
 		LabelIDs:      &labelsID,
-		State:         &pullRequestUpdateStateOpen,
 	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
@@ -345,7 +348,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 	return nil
 }
 
-// OpenPullRequest creates a new pull request on Github.
+// OpenPullRequest creates a new GitHub Pull Request.
 func (p *PullRequest) OpenPullRequest() error {
 
 	/*
@@ -406,7 +409,7 @@ func (p *PullRequest) OpenPullRequest() error {
 
 }
 
-// isAutoMergedEnabledOnRepository checks if a remote repository allows automerging pull requests
+// isAutoMergedEnabledOnRepository checks if a remote repository allows automerging Pull Requests.
 func (p *PullRequest) isAutoMergedEnabledOnRepository() (bool, error) {
 
 	var query struct {
@@ -429,7 +432,7 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository() (bool, error) {
 
 }
 
-// getRemotePullRequest checks if a pull request already exist on GitHub and is in the state 'open' or 'closed'.
+// getRemotePullRequest checks if a Pull Request already exists on GitHub and is in the state 'open' or 'closed'.
 func (p *PullRequest) getRemotePullRequest() error {
 	/*
 			https://developer.github.com/v4/explorer/

@@ -1,3 +1,4 @@
+name: Fleet autodiscovery using Git scm
 scms:
   fleet-lab:
     kind: git 
@@ -9,13 +10,9 @@ autodiscovery:
   scmid: fleet-lab
   crawlers:
     helm:
-      # By default enabled
-      enable: true
       # To ignore specific path
       #ignore:
       #  - path: <filepath relative to scm repository>
       #only:
       #  - path: <filepath relative to scm repository>
     rancher/fleet:
-      # By default it's enable 
-      enable: true

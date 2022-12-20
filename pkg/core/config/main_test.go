@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
@@ -642,9 +642,9 @@ var (
 							},
 						},
 					},
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {
-							Title: "default PR",
+							Title: "default Pull Request",
 							Kind:  "github/pullrequest",
 							ScmID: "default",
 						},
@@ -694,7 +694,7 @@ var (
 							},
 						},
 					},
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {},
 					},
 				},
@@ -706,8 +706,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\nmissing value for parameter(s) [\"kind,scmid\"]"),
-			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\nmissing value for parameter(s) [\"kind,scmid\"]"),
+			ExpectedUpdateErr:   fmt.Errorf("actions validation error:\nmissing value for parameter(s) [\"kind,scmid\"]"),
+			ExpectedValidateErr: fmt.Errorf("actions validation error:\nmissing value for parameter(s) [\"kind,scmid\"]"),
 		},
 		{
 			ID: "9.2",
@@ -744,9 +744,9 @@ var (
 							},
 						},
 					},
-					PullRequests: map[string]pullrequest.Config{
+					Actions: map[string]action.Config{
 						"default": {
-							Title: "default PR",
+							Title: "default Pull Request",
 							Kind:  "github/pullrequest",
 							ScmID: "not_existing",
 						},
@@ -760,8 +760,8 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
-			ExpectedValidateErr: fmt.Errorf("pullrequests validation error:\n%s", ErrBadConfig),
+			ExpectedUpdateErr:   fmt.Errorf("actions validation error:\n%s", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("actions validation error:\n%s", ErrBadConfig),
 		},
 	}
 )

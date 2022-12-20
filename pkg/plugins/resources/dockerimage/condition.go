@@ -2,7 +2,11 @@ package dockerimage
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -18,40 +22,57 @@ func (di *DockerImage) ConditionFromSCM(source string, scm scm.ScmHandler) (bool
 // We assume that if we can't retrieve the docker image digest, then it means
 // it doesn't exist.
 func (di *DockerImage) Condition(source string) (bool, error) {
-
-	// Errors if both source input value and specified Tag are empty
-	if di.image.Tag == "" && source == "" {
-		return false, fmt.Errorf("condition validation error for the image %q: source input is empty and no explicit tag is specified", di.spec.Image)
+	refName := di.spec.Image
+	switch di.spec.Tag == "" {
+	case true:
+		refName += ":" + source
+	case false:
+		refName += ":" + di.spec.Tag
 	}
 
-	// An empty input source value means that the attribute disablesourceinput is set to true
-	if source != "" {
-		di.image.Tag = source
-	}
-
-	logrus.Debugf(
-		"Searching digest for the image %q with the tag %q",
-		di.spec.Image,
-		di.spec.Tag,
-	)
-	digest, err := di.registry.Digest(di.image)
+	ref, err := name.ParseReference(refName)
 	if err != nil {
+		return false, fmt.Errorf("invalid image %s: %w", refName, err)
+	}
+
+	if len(di.spec.Architectures) == 0 {
+		// If only one architecture is specified, then di.options are already set: let's proceed
+		return checkImage(ref, di.spec.Architecture, di.options)
+	}
+
+	for _, arch := range di.spec.Architectures {
+		remoteOptions := append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+
+		found, err := checkImage(ref, arch, remoteOptions)
+		if !found || err != nil {
+			return false, err
+		}
+	}
+
+	return true, err
+}
+
+// checkImage checks if a container reference exists on the "remote" registry with a given set of options
+func checkImage(ref name.Reference, arch string, remoteOpts []remote.Option) (bool, error) {
+	_, err := remote.Head(ref, remoteOpts...)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "unexpected status code 404") {
+			logrus.Infof("%s The Docker image %s (%s) doesn't exist.",
+				result.FAILURE,
+				ref.Name(),
+				arch,
+			)
+			return false, nil
+		}
 		return false, err
 	}
 
-	if digest == "" {
-		logrus.Infof("%s The Docker image %s doesn't exist.",
-			result.FAILURE,
-			di.image.FullName(),
-		)
-		return false, nil
-	}
-
-	logrus.Infof("%s The Docker image %s exists and is available.",
+	logrus.Infof("%s The Docker image %s (%s) exists and is available.",
 		result.SUCCESS,
-		di.image.FullName(),
+		ref.Name(),
+		arch,
 	)
 
 	return true, nil
-
 }

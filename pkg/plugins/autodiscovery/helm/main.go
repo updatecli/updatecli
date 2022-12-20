@@ -6,31 +6,29 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/docker/dockerregistry"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
-// Spec defines the parameters which can be provided to the Helm builder.
+// Spec defines the Helm parameters.
 type Spec struct {
-	// RootDir defines the root directory used to recursively search for Helm Chart
+	// rootdir defines the root directory used to recursively search for Helm Chart
 	RootDir string `yaml:",omitempty"`
-	// Disable allows to disable the helm chart crawler
-	Disable bool `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific Helm based on a rule
+	// Ignore specifies rule to ignore Helm chart update.
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
+	// Only specify required rule to restrict Helm chart update.
 	Only MatchingRules `yaml:",omitempty"`
 	// Auths provides a map of registry credentials where the key is the registry URL without scheme
-	Auths map[string]dockerregistry.RegistryAuth `yaml:",omitempty"`
+	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 }
 
 // Helm hold all information needed to generate helm manifest.
 type Helm struct {
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
-	// rootDir defines the root directory from where looking for Helm Chart
+	// rootdir defines the root directory from where looking for Helm Chart
 	rootDir string
 }
 
@@ -48,10 +46,9 @@ func New(spec interface{}, rootDir string) (Helm, error) {
 		dir = s.RootDir
 	}
 
-	// If no RootDir have been provided via settings,
-	// then fallback to the current process path.
+	// Fallback to the current process path if not rootdir specified.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directrory defined")
+		logrus.Errorln("no working directory defined")
 		return Helm{}, err
 	}
 
@@ -88,9 +85,9 @@ func (h Helm) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, err
 			SetScm(&manifests[i], *input.ScmSpec, input.ScmID)
 		}
 
-		// Set pullrequest configuration if specified
-		if len(input.PullrequestID) > 0 {
-			SetPullrequest(&manifests[i], *input.PullRequestSpec, input.PullrequestID)
+		// Set action configuration if specified
+		if len(input.ActionID) > 0 {
+			SetAction(&manifests[i], *input.ActionConfig, input.ActionID)
 		}
 	}
 
@@ -113,12 +110,7 @@ func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
 
 }
 
-func SetPullrequest(configSpec *config.Spec, pullrequestSpec pullrequest.Config, pullrequestID string) {
-	configSpec.PullRequests = make(map[string]pullrequest.Config)
-	configSpec.PullRequests[pullrequestID] = pullrequestSpec
-}
-
-// RunDisabled returns a bool saying if a run should be done
-func (h Helm) Enabled() bool {
-	return !h.spec.Disable
+func SetAction(configSpec *config.Spec, actionSpec action.Config, actionID string) {
+	configSpec.Actions = make(map[string]action.Config)
+	configSpec.Actions[actionID] = actionSpec
 }

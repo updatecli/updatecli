@@ -3,7 +3,7 @@ package config
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,9 +12,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	autodiscovery "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
@@ -52,12 +52,14 @@ type Spec struct {
 	Name string `yaml:",omitempty" jsonschema:"required"`
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	PipelineID string `yaml:",omitempty"`
-	// AutoDiscovery defines parameters to the autodiscover feature
+	// AutoDiscovery defines parameters to the autodiscovery feature
 	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
 	// Title is used for the full pipeline
 	Title string `yaml:",omitempty"`
-	// PullRequests defines the list of Pull Request configuration which need to be managed
-	PullRequests map[string]pullrequest.Config `yaml:",omitempty"`
+	// !Deprecated in favor of `actions`
+	PullRequests map[string]action.Config `yaml:",omitempty" jsonschema:"-"`
+	// Actions defines the list of action configurations which need to be managed
+	Actions map[string]action.Config `yaml:",omitempty"`
 	// SCMs defines the list of repository configuration used to fetch content from.
 	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
 	// Sources defines the list of source configuration
@@ -66,7 +68,7 @@ type Spec struct {
 	Conditions map[string]condition.Config `yaml:",omitempty"`
 	// Targets defines the list of target configuration
 	Targets map[string]target.Config `yaml:",omitempty"`
-	// Version specifies the mininum updatecli version compatible with the manifest
+	// Version specifies the minimum updatecli version compatible with the manifest
 	Version string `yaml:",omitempty"`
 }
 
@@ -78,7 +80,7 @@ type Option struct {
 	ValuesFiles []string
 	// SecretsFiles contains the list of updatecli sops secrets full file path
 	SecretsFiles []string
-	// DisableTemplating specify if needs to be done
+	// DisableTemplating specifies if needs to be done
 	DisableTemplating bool
 }
 
@@ -116,7 +118,7 @@ func New(option Option) (config Config, err error) {
 
 	defer c.Close()
 
-	content, err := ioutil.ReadAll(c)
+	content, err := io.ReadAll(c)
 	if err != nil {
 		return config, err
 	}
@@ -165,6 +167,19 @@ func New(option Option) (config Config, err error) {
 		return config, err
 	}
 
+	/** Check for deprecated directives **/
+	// pullequests deprecated over actions
+	if len(config.Spec.PullRequests) > 0 {
+		if len(config.Spec.Actions) > 0 {
+			return config, fmt.Errorf("The `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated.")
+		}
+
+		logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
+
+		config.Spec.Actions = config.Spec.PullRequests
+		config.Spec.PullRequests = nil
+	}
+
 	err = config.Validate()
 	if err != nil {
 		return config, err
@@ -204,7 +219,7 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 
 	data := buf.Bytes()
 
-	onDiskData, err := ioutil.ReadFile(c.filename)
+	onDiskData, err := os.ReadFile(c.filename)
 	if err != nil {
 		return false, err
 	}
@@ -270,30 +285,30 @@ func (config *Config) Display() error {
 	return nil
 }
 
-func (config *Config) validatePullRequests() error {
-	for id, p := range config.Spec.PullRequests {
-		if err := p.Validate(); err != nil {
-			logrus.Errorf("bad parameters for pullrequest %q", id)
+func (config *Config) validateActions() error {
+	for id, a := range config.Spec.Actions {
+		if err := a.Validate(); err != nil {
+			logrus.Errorf("bad parameters for action %q", id)
 			return err
 		}
 
-		// Then validate that the pullrequest specifies an existing SCM
-		if len(p.ScmID) > 0 {
-			if _, ok := config.Spec.SCMs[p.ScmID]; !ok {
-				logrus.Errorf("The pullrequest %q specifies a scm id %q which does not exist", id, p.ScmID)
+		// Then validate that the action specifies an existing SCM
+		if len(a.ScmID) > 0 {
+			if _, ok := config.Spec.SCMs[a.ScmID]; !ok {
+				logrus.Errorf("The action %q specifies a scm id %q which does not exist", id, a.ScmID)
 				return ErrBadConfig
 			}
 		}
 
-		// p.Validate may modify the object during validation
+		// a.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
-		config.Spec.PullRequests[id] = p
+		config.Spec.Actions[id] = a
 	}
 	return nil
 }
 
 func (config *Config) validateAutodiscovery() error {
-	// Then validate that the pullrequest specifies an existing SCM
+	// Then validate that the action specifies an existing SCM
 	if len(config.Spec.AutoDiscovery.ScmId) > 0 {
 		if _, ok := config.Spec.SCMs[config.Spec.AutoDiscovery.ScmId]; !ok {
 			logrus.Errorf("The autodiscovery specifies a scm id %q which does not exist",
@@ -322,28 +337,6 @@ func (config *Config) validateSources() error {
 			return ErrNotAllowedTemplatedKey
 		}
 
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		if len(s.Scm) > 0 {
-			logrus.Warningf("The directive 'scm' for the source[%q] is now deprecated. Please use the new top level scms syntax", id)
-			if len(s.SCMID) == 0 {
-				if _, ok := config.Spec.SCMs["source_"+id]; !ok {
-					for kind, spec := range s.Scm {
-						if config.Spec.SCMs == nil {
-							config.Spec.SCMs = make(map[string]scm.Config, 1)
-						}
-						config.Spec.SCMs["source_"+id] = scm.Config{
-							Kind: kind,
-							Spec: spec}
-					}
-				}
-				s.SCMID = "source_" + id
-			} else {
-				logrus.Warning("source.SCMID is also defined, ignoring source.Scm")
-			}
-			s.Scm = map[string]interface{}{}
-			config.Spec.Sources[id] = s
-		}
 		// s.Validate may modify the object during validation
 		// so we want to be sure that we save those modifications
 		config.Spec.Sources[id] = s
@@ -402,16 +395,6 @@ func (config *Config) validateTargets() error {
 		// so we want to be sure that we save those modifications
 		config.Spec.Targets[id] = t
 
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		//if t.Scm != nil {
-		if len(t.Scm) > 0 {
-			err := generateScmFromLegacyTarget(id, config)
-			if err != nil {
-				return err
-			}
-		}
-
 	}
 	return nil
 }
@@ -450,13 +433,6 @@ func (config *Config) validateConditions() error {
 
 		config.Spec.Conditions[id] = c
 
-		// Temporary code until we fully remove the old way to configure scm
-		// Introduce by https://github.com/updatecli/updatecli/issues/260
-		//if c.Scm != nil {
-		if len(c.Scm) > 0 {
-			generateScmFromLegacyCondition(id, config)
-		}
-
 	}
 	return nil
 }
@@ -479,11 +455,11 @@ func (config *Config) Validate() error {
 			fmt.Errorf("conditions validation error:\n%s", err))
 	}
 
-	err = config.validatePullRequests()
+	err = config.validateActions()
 	if err != nil {
 		errs = append(
 			errs,
-			fmt.Errorf("pullrequests validation error:\n%s", err))
+			fmt.Errorf("actions validation error:\n%s", err))
 	}
 
 	err = config.validateAutodiscovery()

@@ -9,11 +9,14 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/pullrequest"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 )
 
@@ -21,9 +24,11 @@ var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
 	DefaultCrawlerSpecs = discoveryConfig.Config{
 		Crawlers: map[string]interface{}{
+			"dockercompose": dockercompose.Spec{},
+			"dockerfile":    dockerfile.Spec{},
 			"helm":          helm.Spec{},
-			"rancher/fleet": fleet.Spec{},
 			"maven":         maven.Spec{},
+			"rancher/fleet": fleet.Spec{},
 		},
 	}
 )
@@ -33,21 +38,20 @@ type Options struct {
 }
 type Crawler interface {
 	DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error)
-	Enabled() bool
 }
 
 type AutoDiscovery struct {
-	scmConfig         *scm.Config
-	pullrequestConfig *pullrequest.Config
-	spec              discoveryConfig.Config
-	crawlers          []Crawler
+	scmConfig    *scm.Config
+	actionConfig *action.Config
+	spec         discoveryConfig.Config
+	crawlers     []Crawler
 }
 
 // New returns an initiated autodiscovery object
 func New(spec discoveryConfig.Config,
 	scmHandler scm.ScmHandler,
 	scmConfig *scm.Config,
-	pullrequestConfig *pullrequest.Config) (*AutoDiscovery, error) {
+	actionConfig *action.Config) (*AutoDiscovery, error) {
 
 	var errs []error
 	var s discoveryConfig.Config
@@ -56,14 +60,6 @@ func New(spec discoveryConfig.Config,
 	if err != nil {
 		return &AutoDiscovery{}, err
 	}
-
-	tmpCrawlers := DefaultCrawlerSpecs.Crawlers
-
-	for id, crawlerSpec := range s.Crawlers {
-		tmpCrawlers[id] = crawlerSpec
-	}
-
-	s.Crawlers = tmpCrawlers
 
 	g := AutoDiscovery{
 		spec: s,
@@ -74,11 +70,11 @@ func New(spec discoveryConfig.Config,
 		g.scmConfig = scmConfig
 	}
 
-	if len(pullrequestConfig.Kind) > 0 {
-		g.pullrequestConfig = pullrequestConfig
+	if len(actionConfig.Kind) > 0 {
+		g.actionConfig = actionConfig
 	}
 
-	for kind := range DefaultCrawlerSpecs.Crawlers {
+	for kind := range s.Crawlers {
 
 		// Init workDir based on process running directory
 		workDir, err := os.Getwd()
@@ -94,6 +90,28 @@ func New(spec discoveryConfig.Config,
 		}
 
 		switch kind {
+		case "dockercompose":
+
+			dockerComposeCrawler, err := dockercompose.New(g.spec.Crawlers[kind], workDir)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, dockerComposeCrawler)
+
+		case "dockerfile":
+
+			dockerfileCrawler, err := dockerfile.New(g.spec.Crawlers[kind], workDir)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, dockerfileCrawler)
+
 		case "helm":
 
 			helmCrawler, err := helm.New(g.spec.Crawlers[kind], workDir)
@@ -104,6 +122,17 @@ func New(spec discoveryConfig.Config,
 			}
 
 			g.crawlers = append(g.crawlers, helmCrawler)
+
+		case "helmfile":
+
+			helmfileCrawler, err := helmfile.New(g.spec.Crawlers[kind], workDir)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, helmfileCrawler)
 
 		case "maven":
 			mavenCrawler, err := maven.New(g.spec.Crawlers[kind], workDir)
@@ -142,18 +171,14 @@ func New(spec discoveryConfig.Config,
 func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 	var totalDiscoveredManifests []config.Spec
 
-	for id, crawler := range g.crawlers {
-		if !crawler.Enabled() {
-			logrus.Infof("Manifest autodiscovering is disabled for %q", id)
-			continue
-		}
+	for _, crawler := range g.crawlers {
 
 		discoveredManifests, err := crawler.DiscoverManifests(
 			discoveryConfig.Input{
-				ScmSpec:         g.scmConfig,
-				ScmID:           g.spec.ScmId,
-				PullRequestSpec: g.pullrequestConfig,
-				PullrequestID:   g.spec.PullrequestId,
+				ScmSpec:      g.scmConfig,
+				ScmID:        g.spec.ScmId,
+				ActionConfig: g.actionConfig,
+				ActionID:     g.spec.ActionId,
 			})
 
 		if err != nil {
@@ -210,5 +235,4 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 	}
 
 	return totalDiscoveredManifests, nil
-
 }
