@@ -175,6 +175,16 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 					},
 				},
 			}
+			// Set scmID if defined
+			if h.scmID != "" {
+				t := manifest.Targets[targetID]
+				t.SCMID = h.scmID
+				manifest.Targets[targetID] = t
+				c := manifest.Conditions[conditionID]
+				c.SCMID = h.scmID
+				manifest.Conditions[conditionID] = c
+			}
+
 			manifests = append(manifests, manifest)
 		}
 	}

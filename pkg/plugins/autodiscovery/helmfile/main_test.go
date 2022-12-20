@@ -166,7 +166,7 @@ func TestDiscoverManifests(t *testing.T) {
 			helmfile, err := New(
 				Spec{
 					RootDir: tt.rootDir,
-				}, "")
+				}, "", "")
 
 			require.NoError(t, err)
 

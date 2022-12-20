@@ -169,6 +169,13 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 					},
 				},
 			}
+
+			// Set scmID if defined
+			if h.scmID != "" {
+				t := manifest.Targets[svc.Name]
+				t.SCMID = h.scmID
+				manifest.Targets[svc.Name] = t
+			}
 			manifests = append(manifests, manifest)
 		}
 	}

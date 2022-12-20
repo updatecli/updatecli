@@ -118,6 +118,7 @@ func TestDiscoverManifests(t *testing.T) {
 					RootDir: tt.rootDir,
 				},
 				"",
+				"",
 			)
 
 			require.NoError(t, err)

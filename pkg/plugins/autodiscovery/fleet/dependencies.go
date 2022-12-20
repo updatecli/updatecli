@@ -147,6 +147,18 @@ func (f Fleet) discoverFleetDependenciesManifests() ([]config.Spec, error) {
 				},
 			},
 		}
+		// Set scmID if defined
+		if f.scmID != "" {
+			t := manifest.Targets[targetID]
+			t.SCMID = f.scmID
+			manifest.Targets[targetID] = t
+
+			for _, id := range []string{conditionID + "-name", conditionID + "-repository"} {
+				c := manifest.Conditions[id]
+				c.SCMID = f.scmID
+				manifest.Conditions[id] = c
+			}
+		}
 		manifests = append(manifests, manifest)
 
 	}

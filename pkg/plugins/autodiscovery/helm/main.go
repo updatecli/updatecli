@@ -6,9 +6,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
@@ -30,10 +28,12 @@ type Helm struct {
 	spec Spec
 	// rootdir defines the root directory from where looking for Helm Chart
 	rootDir string
+	// scmID hold the scmID used by the newly generated manifest
+	scmID string
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir string) (Helm, error) {
+func New(spec interface{}, rootDir, scmID string) (Helm, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -55,6 +55,7 @@ func New(spec interface{}, rootDir string) (Helm, error) {
 	return Helm{
 		spec:    s,
 		rootDir: dir,
+		scmID:   scmID,
 	}, nil
 
 }
@@ -78,39 +79,5 @@ func (h Helm) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, err
 
 	manifests = append(manifests, containerManifest...)
 
-	// Set scm configuration if specified
-	for i := range manifests {
-		// Set scm configuration if specified
-		if len(input.ScmID) > 0 {
-			SetScm(&manifests[i], *input.ScmSpec, input.ScmID)
-		}
-
-		// Set action configuration if specified
-		if len(input.ActionID) > 0 {
-			SetAction(&manifests[i], *input.ActionConfig, input.ActionID)
-		}
-	}
-
 	return manifests, nil
-}
-
-func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
-	configSpec.SCMs = make(map[string]scm.Config)
-	configSpec.SCMs[scmID] = scmSpec
-
-	for id, condition := range configSpec.Conditions {
-		condition.SCMID = scmID
-		configSpec.Conditions[id] = condition
-	}
-
-	for id, target := range configSpec.Targets {
-		target.SCMID = scmID
-		configSpec.Targets[id] = target
-	}
-
-}
-
-func SetAction(configSpec *config.Spec, actionSpec action.Config, actionID string) {
-	configSpec.Actions = make(map[string]action.Config)
-	configSpec.Actions[actionID] = actionSpec
 }

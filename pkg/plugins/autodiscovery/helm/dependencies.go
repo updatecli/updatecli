@@ -135,6 +135,15 @@ func (h Helm) discoverHelmDependenciesManifests() ([]config.Spec, error) {
 					},
 				},
 			}
+			// Set scmID if defined
+			if h.scmID != "" {
+				t := manifest.Targets[dependency.Name]
+				t.SCMID = h.scmID
+				manifest.Targets[dependency.Name] = t
+				c := manifest.Conditions[dependency.Name]
+				c.SCMID = h.scmID
+				manifest.Conditions[dependency.Name] = c
+			}
 			manifests = append(manifests, manifest)
 
 		}

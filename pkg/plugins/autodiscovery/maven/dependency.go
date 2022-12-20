@@ -163,6 +163,18 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 					},
 				},
 			}
+			// Set scmID if defined
+			if m.scmID != "" {
+				t := manifest.Targets[artifactFullName]
+				t.SCMID = m.scmID
+				manifest.Targets[artifactFullName] = t
+
+				for _, id := range []string{dependency.ArtifactID, dependency.GroupID} {
+					c := manifest.Conditions[id]
+					c.SCMID = m.scmID
+					manifest.Conditions[id] = c
+				}
+			}
 			manifests = append(manifests, manifest)
 
 		}

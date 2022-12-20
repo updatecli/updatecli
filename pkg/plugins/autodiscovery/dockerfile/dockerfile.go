@@ -173,7 +173,13 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 				},
 			}
 
-			// To Add transformers
+			// Set scmID if defined
+			if h.scmID != "" {
+				t := manifest.Targets[imageName]
+				t.SCMID = h.scmID
+				manifest.Targets[imageName] = t
+			}
+			manifests = append(manifests, manifest)
 
 			manifests = append(manifests, manifest)
 		}

@@ -216,7 +216,7 @@ func TestDiscoverManifests(t *testing.T) {
 			maven, err := New(
 				Spec{
 					RootDir: tt.rootDir,
-				}, "")
+				}, "", "")
 
 			require.NoError(t, err)
 

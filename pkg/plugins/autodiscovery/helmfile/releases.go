@@ -151,10 +151,14 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 				helmSourcespec.InlineKeyChain.Password = OCIPassword
 			}
 
+			sourceID := release.Name
+			conditionID := release.Name
+			targetID := release.Name
+
 			manifest := config.Spec{
 				Name: manifestName,
 				Sources: map[string]source.Config{
-					release.Name: {
+					sourceID: {
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
 							Kind: "helmchart",
@@ -163,7 +167,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 					},
 				},
 				Conditions: map[string]condition.Config{
-					release.Name: {
+					conditionID: {
 						DisableSourceInput: true,
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
@@ -177,7 +181,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 					},
 				},
 				Targets: map[string]target.Config{
-					release.Name: {
+					targetID: {
 						SourceID: release.Name,
 						ResourceConfig: resource.ResourceConfig{
 							Name: fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
@@ -189,6 +193,15 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 						},
 					},
 				},
+			}
+			// Set scmID if defined
+			if h.scmID != "" {
+				t := manifest.Targets[targetID]
+				t.SCMID = h.scmID
+				manifest.Targets[targetID] = t
+				c := manifest.Conditions[conditionID]
+				c.SCMID = h.scmID
+				manifest.Conditions[conditionID] = c
 			}
 			manifests = append(manifests, manifest)
 

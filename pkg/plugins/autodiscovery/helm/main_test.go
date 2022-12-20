@@ -160,7 +160,7 @@ func TestDiscoverManifests(t *testing.T) {
 		RootDir: "testdata/chart",
 	}
 
-	helm, err := New(spec, "")
+	helm, err := New(spec, "", "")
 
 	if err != nil {
 		t.Errorf("%v", err)
