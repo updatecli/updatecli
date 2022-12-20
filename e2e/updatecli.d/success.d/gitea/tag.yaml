@@ -32,7 +32,8 @@ conditions:
       url: "try.gitea.io"
       owner: "olblak"
       repository: "updatecli-test"
-      tag: "0.0.2"
+      tag: "99.0.2"
+    failwhen: true
   sourcedefault:
     kind: "gitea/tag"
     sourceid: "default"
