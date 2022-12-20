@@ -4,14 +4,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
@@ -41,17 +38,14 @@ type Crawler interface {
 }
 
 type AutoDiscovery struct {
-	scmConfig    *scm.Config
-	actionConfig *action.Config
-	spec         discoveryConfig.Config
-	crawlers     []Crawler
+	//	scmConfig    *scm.Config
+	//	actionConfig *action.Config
+	spec     discoveryConfig.Config
+	crawlers []Crawler
 }
 
 // New returns an initiated autodiscovery object
-func New(spec discoveryConfig.Config,
-	scmHandler scm.ScmHandler,
-	scmConfig *scm.Config,
-	actionConfig *action.Config) (*AutoDiscovery, error) {
+func New(spec discoveryConfig.Config, workDir string) (*AutoDiscovery, error) {
 
 	var errs []error
 	var s discoveryConfig.Config
@@ -65,34 +59,20 @@ func New(spec discoveryConfig.Config,
 		spec: s,
 	}
 
-	// Init scm configuration if one is specified
-	if len(scmConfig.Kind) > 0 {
-		g.scmConfig = scmConfig
-	}
-
-	if len(actionConfig.Kind) > 0 {
-		g.actionConfig = actionConfig
-	}
-
 	for kind := range s.Crawlers {
 
-		// Init workDir based on process running directory
-		workDir, err := os.Getwd()
-		if err != nil {
+		if workDir == "" {
 			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
-		}
-
-		// Retrieve the scm workdir if it exist
-		// As long as the autodiscovery specifies one
-		if _, ok := g.spec.Crawlers[kind]; ok && scmHandler != nil {
-			workDir = scmHandler.GetDirectory()
 		}
 
 		switch kind {
 		case "dockercompose":
 
-			dockerComposeCrawler, err := dockercompose.New(g.spec.Crawlers[kind], workDir)
+			dockerComposeCrawler, err := dockercompose.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -103,7 +83,10 @@ func New(spec discoveryConfig.Config,
 
 		case "dockerfile":
 
-			dockerfileCrawler, err := dockerfile.New(g.spec.Crawlers[kind], workDir)
+			dockerfileCrawler, err := dockerfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -114,7 +97,10 @@ func New(spec discoveryConfig.Config,
 
 		case "helm":
 
-			helmCrawler, err := helm.New(g.spec.Crawlers[kind], workDir)
+			helmCrawler, err := helm.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -125,7 +111,10 @@ func New(spec discoveryConfig.Config,
 
 		case "helmfile":
 
-			helmfileCrawler, err := helmfile.New(g.spec.Crawlers[kind], workDir)
+			helmfileCrawler, err := helmfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -135,7 +124,10 @@ func New(spec discoveryConfig.Config,
 			g.crawlers = append(g.crawlers, helmfileCrawler)
 
 		case "maven":
-			mavenCrawler, err := maven.New(g.spec.Crawlers[kind], workDir)
+			mavenCrawler, err := maven.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -145,7 +137,10 @@ func New(spec discoveryConfig.Config,
 			g.crawlers = append(g.crawlers, mavenCrawler)
 
 		case "rancher/fleet":
-			fleetCrawler, err := fleet.New(g.spec.Crawlers[kind], workDir)
+			fleetCrawler, err := fleet.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -175,10 +170,8 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 
 		discoveredManifests, err := crawler.DiscoverManifests(
 			discoveryConfig.Input{
-				ScmSpec:      g.scmConfig,
-				ScmID:        g.spec.ScmId,
-				ActionConfig: g.actionConfig,
-				ActionID:     g.spec.ActionId,
+				ScmID:    g.spec.ScmId,
+				ActionID: g.spec.ActionId,
 			})
 
 		if err != nil {

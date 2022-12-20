@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Config defines autodiscovery parameters
@@ -20,8 +19,8 @@ type Config struct {
 }
 
 type Input struct {
-	// ScmSpec defines the scm specification
-	ScmSpec *scm.Config
+	//// ScmSpec defines the scm specification
+	//ScmSpec *scm.Config
 	// ScmID defines the scmid associated to the scm specification
 	ScmID string
 	// ActionConfig defines the action specification
