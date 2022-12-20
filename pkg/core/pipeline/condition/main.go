@@ -36,6 +36,8 @@ type Config struct {
 	SourceID string `yaml:",omitempty"`
 	// disablesourceinput disable the mechanism to retrieve a default value from a source.
 	DisableSourceInput bool `yaml:",omitempty"`
+	// FailWhen allows to reverse a condition expected result from true to false.
+	FailWhen bool `yaml:",omitempty"`
 }
 
 // Run tests if a specific condition is true
@@ -79,10 +81,12 @@ func (c *Condition) Run(source string) (err error) {
 		}
 	}
 
-	if ok {
-		c.Result = result.SUCCESS
+	if ok == c.Config.FailWhen {
+		logrus.Printf("\t => expected condition result %t, got %t", c.Config.FailWhen, ok)
+		return nil
 	}
 
+	c.Result = result.SUCCESS
 	return nil
 }
 
