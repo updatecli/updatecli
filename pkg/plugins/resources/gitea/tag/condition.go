@@ -33,7 +33,7 @@ func (g *Gitea) Condition(source string) (bool, error) {
 		}
 	}
 
-	logrus.Infof("%s No Gitea Tags found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
+	logrus.Infof("%s No Gitea Tags found matching  %q", result.FAILURE, g.spec.Tag)
 	return false, nil
 
 }
