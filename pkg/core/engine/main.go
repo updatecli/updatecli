@@ -1,8 +1,10 @@
 package engine
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 
@@ -464,6 +466,27 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			logrus.Infof("nothing detected")
 		}
 
+		// Generate PipelineID
+		// Set pipelineId for each manifest by on the autodiscovery groupby rule
+
+		// We use a sha256 hash to avoid colusion between pipelineID
+		hash := sha256.New()
+		_, err = io.WriteString(hash, "updatecli/autodiscovery/batch")
+		var batchPipelineID string
+
+		if err != nil {
+			logrus.Errorln(err)
+		}
+		switch p.Config.Spec.AutoDiscovery.GroupBy {
+		case autodiscovery.GROUPEBYALL:
+			batchPipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+		case autodiscovery.GROUPEBYINDIVIDUAL:
+			// The batchPipelineID must be set per manifest
+			// below
+		default:
+			logrus.Errorln("something unexpected happened while specifying pipelineid to generated Updatecli manifest")
+		}
+
 		for i := range bytesManifests {
 
 			manifest := config.Spec{}
@@ -473,6 +496,18 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			if err != nil {
 				return err
 			}
+
+			pipelineID := batchPipelineID
+			// If matchPipelineID is empty then we generate the ID based on the manifest name
+			if pipelineID == "" {
+				_, err := io.WriteString(hash, manifest.Name)
+				if err != nil {
+					logrus.Errorln(err)
+				}
+				pipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+			}
+
+			manifest.PipelineID = pipelineID
 
 			if sc != nil {
 				manifest.SCMs = make(map[string]scm.Config)
@@ -484,7 +519,9 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 				manifest.Actions[p.Config.Spec.AutoDiscovery.ScmId] = *actionConfig
 			}
 
-			manifest.Version = version.Version
+			if manifest.Version != "" {
+				manifest.Version = version.Version
+			}
 
 			newConfig := config.Config{
 				Spec: manifest,

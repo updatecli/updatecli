@@ -5,23 +5,18 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 )
 
 var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
-	DefaultCrawlerSpecs = discoveryConfig.Config{
+	DefaultCrawlerSpecs = Config{
 		Crawlers: map[string]interface{}{
 			"dockercompose": dockercompose.Spec{},
-			"dockerfile":    dockerfile.Spec{},
-			"helm":          helm.Spec{},
-			"maven":         maven.Spec{},
-			"rancher/fleet": fleet.Spec{},
+			//"dockerfile":    dockerfile.Spec{},
+			//"helm":          helm.Spec{},
+			//"maven":         maven.Spec{},
+			//"rancher/fleet": fleet.Spec{},
 		},
 	}
 )
@@ -31,15 +26,15 @@ type Crawler interface {
 }
 
 type AutoDiscovery struct {
-	spec     discoveryConfig.Config
+	spec     Config
 	crawlers []Crawler
 }
 
 // New returns an initiated autodiscovery object
-func New(spec discoveryConfig.Config, workDir string) (*AutoDiscovery, error) {
+func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 	var errs []error
-	var s discoveryConfig.Config
+	var s Config
 
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
@@ -156,6 +151,7 @@ func New(spec discoveryConfig.Config, workDir string) (*AutoDiscovery, error) {
 	return &g, nil
 }
 
+// Run execute each Autodiscovery crawlers to generatlite Updatecli manifests
 func (g *AutoDiscovery) Run() ([][]byte, error) {
 	var totalDiscoveredManifests [][]byte
 
@@ -176,43 +172,6 @@ func (g *AutoDiscovery) Run() ([][]byte, error) {
 	}
 
 	logrus.Printf("\n\n---\n\n=> Total manifest detected: %d\n\n", len(totalDiscoveredManifests))
-
-	if g.spec.GroupBy == "" {
-		logrus.Warningf("Autodiscovery settings %q is undefined, fallback to %q",
-			"groupby",
-			discoveryConfig.GROUPEBYINDIVIDUAL)
-	}
-
-	//// Set pipelineId for each manifest by on the autodiscovery groupby rule
-
-	//// We use a sha256 hash to avoid colusion between pipelineID
-	//hash := sha256.New()
-	//_, err := io.WriteString(hash, "updatecli/autodiscovery/batch")
-
-	//if err != nil {
-	//	logrus.Errorln(err)
-	//}
-
-	//batchPipelineID := fmt.Sprintf("%x", hash.Sum(nil))
-
-	//for i := range totalDiscoveredManifests {
-	//	switch g.spec.GroupBy {
-	//	case discoveryConfig.GROUPEBYALL:
-	//		totalDiscoveredManifests[i].PipelineID = batchPipelineID[0:32]
-
-	//	case discoveryConfig.GROUPEBYINDIVIDUAL, "":
-	//		_, err := io.WriteString(hash, totalDiscoveredManifests[i].Name)
-	//		if err != nil {
-	//			logrus.Errorln(err)
-	//		}
-	//		pipelineID := fmt.Sprintf("%x", hash.Sum(nil))
-
-	//		totalDiscoveredManifests[i].PipelineID = pipelineID[0:32]
-
-	//	default:
-	//		logrus.Errorln("something unexpected happened while specifying pipelineid to generated Updatecli manifest")
-	//	}
-	//}
 
 	return totalDiscoveredManifests, nil
 }

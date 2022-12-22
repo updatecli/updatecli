@@ -1,4 +1,4 @@
-package config
+package autodiscovery
 
 import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
