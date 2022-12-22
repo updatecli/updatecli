@@ -17,10 +17,10 @@ func TestSearchFiles(t *testing.T) {
 	}{
 		{
 			name:         "Nominal case with test data and default file pattern set",
-			rootDir:      "testdata/",
+			rootDir:      "test/testdata/",
 			filePatterns: []string{DefaultFilePattern},
 			expectedFiles: []string{
-				"testdata/docker-compose.yaml",
+				"test/testdata/docker-compose.yaml",
 			},
 		},
 	}
@@ -49,14 +49,8 @@ func TestGetDockerComposeSpec(t *testing.T) {
 	}{
 		{
 			name:     "Case from testdata with sorted services",
-			filename: "testdata/docker-compose.yaml",
+			filename: "test/testdata/docker-compose.yaml",
 			expectedServices: dockercomposeServicesList{
-				dockerComposeService{
-					Name: "jenkins-lts",
-					Spec: dockerComposeServiceSpec{
-						Image: "jenkinsci/jenkins:2.150.1-alpine",
-					},
-				},
 				dockerComposeService{Name: "jenkins-weekly",
 					Spec: dockerComposeServiceSpec{
 						Image:    "jenkinsci/jenkins:2.254-alpine",
@@ -66,12 +60,12 @@ func TestGetDockerComposeSpec(t *testing.T) {
 		},
 		{
 			name:             "Case with no services found (not a Docker Compose Yaml)",
-			filename:         "testdata/not-compose.yaml",
+			filename:         "test/testdata/not-compose.yaml",
 			expectedServices: dockercomposeServicesList{},
 		},
 		{
 			name:        "Case with a non-YAML file",
-			filename:    "testdata/not-yaml.txt",
+			filename:    "test/testdata/not-yaml.txt",
 			expectedErr: true,
 		},
 		{

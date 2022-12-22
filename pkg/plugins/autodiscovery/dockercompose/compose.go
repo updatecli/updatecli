@@ -131,7 +131,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				sourceSpec.Architecture = arch
 			}
 
-			tmpl, err := template.New("manifest").Parse(composeManifestTemplate)
+			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
 				logrus.Errorln(err)
 				continue

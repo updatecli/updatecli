@@ -64,6 +64,7 @@ func New(spec interface{}, rootDir string, scmID, actionID string) (DockerCompos
 		rootDir:   dir,
 		filematch: []string{DefaultFilePattern},
 		scmID:     scmID,
+		actionID:  actionID,
 	}
 
 	if len(s.FileMatch) > 0 {
@@ -79,10 +80,5 @@ func (h DockerCompose) DiscoverManifests() ([][]byte, error) {
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Docker Compose"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Docker Compose")+1))
 
-	manifests, err := h.discoverDockerComposeImageManifests()
-	if err != nil {
-		return nil, err
-	}
-
-	return manifests, nil
+	return h.discoverDockerComposeImageManifests()
 }
