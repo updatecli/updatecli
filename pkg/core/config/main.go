@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	autodiscovery "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
