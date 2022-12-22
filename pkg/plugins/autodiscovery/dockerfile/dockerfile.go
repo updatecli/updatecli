@@ -1,16 +1,13 @@
 package dockerfile
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -22,9 +19,9 @@ var (
 	}
 )
 
-func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
+func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
-	var manifests []config.Spec
+	var manifests [][]byte
 
 	foundDockerfiles, err := searchDockerfiles(
 		h.rootDir,
@@ -79,7 +76,6 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 				imageName = imageArray[0]
 			}
 
-			manifestName := fmt.Sprintf("Bump Docker Image Tag for %q", imageName)
 
 			// Test if the ignore rule based on path is respected
 			if len(h.spec.Ignore) > 0 {
@@ -129,9 +125,8 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 
 			}
 
-			targetMatcher := ""
-			targetKeyword := instruction.name
 
+			targetMatcher := ""
 			// Depending on the instruction the matcher will be different
 			switch instruction.name {
 			case "FROM":
@@ -142,46 +137,48 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 				targetMatcher = strings.TrimSuffix(targetMatcher, instruction.trimArgSuffix)
 			}
 
-			manifest := config.Spec{
-				Name: manifestName,
-				Sources: map[string]source.Config{
-					imageName: {
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("[%s] Get latest Docker Image Tag", imageName),
-							Kind: "dockerimage",
-							Spec: *sourceSpec,
-						},
-					},
-				},
-				Targets: map[string]target.Config{
-					imageName: {
-						SourceID: imageName,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("[%s] Bump Docker Image tag in %q",
-								imageName,
-								relativeFoundDockerfile),
-							Kind: "dockerfile",
-							Spec: dockerfile.Spec{
-								File: relativeFoundDockerfile,
-								Instruction: map[string]string{
-									"keyword": targetKeyword,
-									"matcher": targetMatcher,
-								},
-							},
-						},
-					},
-				},
+			tmpl, err := template.New("manifest").Parse(manifestTemplate)
+			if err != nil {
+				logrus.Errorln(err)
+				continue
 			}
 
-			// Set scmID if defined
-			if h.scmID != "" {
-				t := manifest.Targets[imageName]
-				t.SCMID = h.scmID
-				manifest.Targets[imageName] = t
+			params := struct {
+				ManifestName string
+				ImageName            string
+				SourceID             string
+				TargetID             string
+				TargetFile           string
+				TargetName           string
+				TargetKeyword        string
+				TargetMatcher 		 string
+				TagFilter            string
+				VersionFilterKind    string
+				VersionFilterPattern string
+				ScmID                string
+				ActionID             string
+			}{
+				ManifestName:         fmt.Sprintf("Bump Docker Image Tag for %q", imageName),
+				ImageName:            imageName,
+				SourceID:             imageName,
+				TargetID:             imageName,
+				TargetName:           fmt.Sprintf("[%s] Bump Docker Image tag in %q",imageName,relativeFoundDockerfile),
+				TargetFile:           relativeFoundDockerfile,
+				TargetKeyword:        instruction.name,
+				TargetMatcher: 		  targetMatcher,
+				TagFilter:            sourceSpec.TagFilter,
+				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
+				VersionFilterPattern: sourceSpec.VersionFilter.Pattern,
+				ScmID:                h.scmID,
+				ActionID:             h.actionID,
 			}
-			manifests = append(manifests, manifest)
 
-			manifests = append(manifests, manifest)
+			manifest := bytes.Buffer{}
+			if err := tmpl.Execute(&manifest, params); err != nil {
+				return nil, err
+			}
+
+			manifests = append(manifests, manifest.Bytes())
 		}
 	}
 

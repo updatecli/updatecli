@@ -5,8 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
@@ -36,10 +34,12 @@ type Dockerfile struct {
 	filematch []string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
+	// actionID hold the scmID used by the newly generated manifest
+	actionID string
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir, scmID string) (Dockerfile, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Dockerfile, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -64,6 +64,7 @@ func New(spec interface{}, rootDir, scmID string) (Dockerfile, error) {
 		rootDir:   dir,
 		filematch: DefaultFileMatch,
 		scmID:     scmID,
+		actionID:  actionID,
 	}
 
 	if len(s.FileMatch) > 0 {
@@ -74,16 +75,10 @@ func New(spec interface{}, rootDir, scmID string) (Dockerfile, error) {
 
 }
 
-func (h Dockerfile) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
+func (h Dockerfile) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Dockerfile"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Dockerfile")+1))
 
-	manifests, err := h.discoverDockerfileManifests()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return manifests, nil
+	return h.discoverDockerfileManifests()
 }
