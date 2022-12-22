@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 )
 
 var (
@@ -13,7 +14,7 @@ var (
 	DefaultCrawlerSpecs = Config{
 		Crawlers: map[string]interface{}{
 			"dockercompose": dockercompose.Spec{},
-			//"dockerfile":    dockerfile.Spec{},
+			"dockerfile":    dockerfile.Spec{},
 			//"helm":          helm.Spec{},
 			//"maven":         maven.Spec{},
 			//"rancher/fleet": fleet.Spec{},
@@ -69,19 +70,20 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 			g.crawlers = append(g.crawlers, dockerComposeCrawler)
 
-		//case "dockerfile":
+		case "dockerfile":
 
-		//	dockerfileCrawler, err := dockerfile.New(
-		//		g.spec.Crawlers[kind],
-		//		workDir,
-		//		g.spec.ScmId)
+			dockerfileCrawler, err := dockerfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId,
+				g.spec.ActionId)
 
-		//	if err != nil {
-		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-		//		continue
-		//	}
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
 
-		//	g.crawlers = append(g.crawlers, dockerfileCrawler)
+			g.crawlers = append(g.crawlers, dockerfileCrawler)
 
 		//case "helm":
 
