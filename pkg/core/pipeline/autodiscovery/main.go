@@ -1,19 +1,15 @@
 package autodiscovery
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"io"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
 	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 )
 
@@ -30,16 +26,11 @@ var (
 	}
 )
 
-type Options struct {
-	Enabled bool
-}
 type Crawler interface {
-	DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error)
+	DiscoverManifests() ([][]byte, error)
 }
 
 type AutoDiscovery struct {
-	//	scmConfig    *scm.Config
-	//	actionConfig *action.Config
 	spec     discoveryConfig.Config
 	crawlers []Crawler
 }
@@ -66,13 +57,15 @@ func New(spec discoveryConfig.Config, workDir string) (*AutoDiscovery, error) {
 			continue
 		}
 
+		// Commmenting for now while refactoring
 		switch kind {
 		case "dockercompose":
 
 			dockerComposeCrawler, err := dockercompose.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -81,73 +74,73 @@ func New(spec discoveryConfig.Config, workDir string) (*AutoDiscovery, error) {
 
 			g.crawlers = append(g.crawlers, dockerComposeCrawler)
 
-		case "dockerfile":
+		//case "dockerfile":
 
-			dockerfileCrawler, err := dockerfile.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId)
+		//	dockerfileCrawler, err := dockerfile.New(
+		//		g.spec.Crawlers[kind],
+		//		workDir,
+		//		g.spec.ScmId)
 
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
+		//	if err != nil {
+		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+		//		continue
+		//	}
 
-			g.crawlers = append(g.crawlers, dockerfileCrawler)
+		//	g.crawlers = append(g.crawlers, dockerfileCrawler)
 
-		case "helm":
+		//case "helm":
 
-			helmCrawler, err := helm.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId)
+		//	helmCrawler, err := helm.New(
+		//		g.spec.Crawlers[kind],
+		//		workDir,
+		//		g.spec.ScmId)
 
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
+		//	if err != nil {
+		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+		//		continue
+		//	}
 
-			g.crawlers = append(g.crawlers, helmCrawler)
+		//	g.crawlers = append(g.crawlers, helmCrawler)
 
-		case "helmfile":
+		//case "helmfile":
 
-			helmfileCrawler, err := helmfile.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId)
+		//	helmfileCrawler, err := helmfile.New(
+		//		g.spec.Crawlers[kind],
+		//		workDir,
+		//		g.spec.ScmId)
 
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
+		//	if err != nil {
+		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+		//		continue
+		//	}
 
-			g.crawlers = append(g.crawlers, helmfileCrawler)
+		//	g.crawlers = append(g.crawlers, helmfileCrawler)
 
-		case "maven":
-			mavenCrawler, err := maven.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId)
+		//case "maven":
+		//	mavenCrawler, err := maven.New(
+		//		g.spec.Crawlers[kind],
+		//		workDir,
+		//		g.spec.ScmId)
 
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
+		//	if err != nil {
+		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+		//		continue
+		//	}
 
-			g.crawlers = append(g.crawlers, mavenCrawler)
+		//	g.crawlers = append(g.crawlers, mavenCrawler)
 
-		case "rancher/fleet":
-			fleetCrawler, err := fleet.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId)
+		//case "rancher/fleet":
+		//	fleetCrawler, err := fleet.New(
+		//		g.spec.Crawlers[kind],
+		//		workDir,
+		//		g.spec.ScmId)
 
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
+		//	if err != nil {
+		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+		//		continue
+		//	}
 
-			g.crawlers = append(g.crawlers, fleetCrawler)
+		//	g.crawlers = append(g.crawlers, fleetCrawler)
 
 		default:
 			logrus.Infof("Crawler of type %q is not supported", kind)
@@ -163,23 +156,17 @@ func New(spec discoveryConfig.Config, workDir string) (*AutoDiscovery, error) {
 	return &g, nil
 }
 
-func (g *AutoDiscovery) Run() ([]config.Spec, error) {
-	var totalDiscoveredManifests []config.Spec
+func (g *AutoDiscovery) Run() ([][]byte, error) {
+	var totalDiscoveredManifests [][]byte
 
 	for _, crawler := range g.crawlers {
 
-		discoveredManifests, err := crawler.DiscoverManifests(
-			discoveryConfig.Input{
-				ScmID:    g.spec.ScmId,
-				ActionID: g.spec.ActionId,
-			})
-
+		discoveredManifests, err := crawler.DiscoverManifests()
 		if err != nil {
 			logrus.Errorln(err)
 		}
 
 		logrus.Printf("Manifest detected: %d\n", len(discoveredManifests))
-
 		if len(discoveredManifests) > 0 {
 
 			for i := range discoveredManifests {
@@ -196,36 +183,36 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 			discoveryConfig.GROUPEBYINDIVIDUAL)
 	}
 
-	// Set pipelineId for each manifest by on the autodiscovery groupby rule
+	//// Set pipelineId for each manifest by on the autodiscovery groupby rule
 
-	// We use a sha256 hash to avoid colusion between pipelineID
-	hash := sha256.New()
-	_, err := io.WriteString(hash, "updatecli/autodiscovery/batch")
+	//// We use a sha256 hash to avoid colusion between pipelineID
+	//hash := sha256.New()
+	//_, err := io.WriteString(hash, "updatecli/autodiscovery/batch")
 
-	if err != nil {
-		logrus.Errorln(err)
-	}
+	//if err != nil {
+	//	logrus.Errorln(err)
+	//}
 
-	batchPipelineID := fmt.Sprintf("%x", hash.Sum(nil))
+	//batchPipelineID := fmt.Sprintf("%x", hash.Sum(nil))
 
-	for i := range totalDiscoveredManifests {
-		switch g.spec.GroupBy {
-		case discoveryConfig.GROUPEBYALL:
-			totalDiscoveredManifests[i].PipelineID = batchPipelineID[0:32]
+	//for i := range totalDiscoveredManifests {
+	//	switch g.spec.GroupBy {
+	//	case discoveryConfig.GROUPEBYALL:
+	//		totalDiscoveredManifests[i].PipelineID = batchPipelineID[0:32]
 
-		case discoveryConfig.GROUPEBYINDIVIDUAL, "":
-			_, err := io.WriteString(hash, totalDiscoveredManifests[i].Name)
-			if err != nil {
-				logrus.Errorln(err)
-			}
-			pipelineID := fmt.Sprintf("%x", hash.Sum(nil))
+	//	case discoveryConfig.GROUPEBYINDIVIDUAL, "":
+	//		_, err := io.WriteString(hash, totalDiscoveredManifests[i].Name)
+	//		if err != nil {
+	//			logrus.Errorln(err)
+	//		}
+	//		pipelineID := fmt.Sprintf("%x", hash.Sum(nil))
 
-			totalDiscoveredManifests[i].PipelineID = pipelineID[0:32]
+	//		totalDiscoveredManifests[i].PipelineID = pipelineID[0:32]
 
-		default:
-			logrus.Errorln("something unexpected happened while specifying pipelineid to generated Updatecli manifest")
-		}
-	}
+	//	default:
+	//		logrus.Errorln("something unexpected happened while specifying pipelineid to generated Updatecli manifest")
+	//	}
+	//}
 
 	return totalDiscoveredManifests, nil
 }
