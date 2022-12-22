@@ -1,18 +1,14 @@
 package dockercompose
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
-	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
 const (
@@ -34,8 +30,8 @@ type dockerComposeService struct {
 
 type dockercomposeServicesList []dockerComposeService
 
-func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, error) {
-	var manifests []config.Spec
+func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
+	var manifests [][]byte
 
 	foundDockerComposeFiles, err := searchDockerComposeFiles(h.rootDir, h.filematch)
 	if err != nil {
@@ -90,8 +86,6 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				serviceImageName = serviceImageArray[0]
 			}
 
-			manifestName := fmt.Sprintf("Bump Docker Image Tag for %q", serviceImageName)
-
 			_, arch, _ := parsePlatform(svc.Spec.Platform)
 
 			// Test if the ignore rule based on path is respected
@@ -137,46 +131,46 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 				sourceSpec.Architecture = arch
 			}
 
-			manifest := config.Spec{
-				Name: manifestName,
-				Sources: map[string]source.Config{
-					svc.Name: {
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("[%s] Get latest Docker Image Tag", serviceImageName),
-							Kind: "dockerimage",
-							Spec: *sourceSpec,
-						},
-					},
-				},
-				Targets: map[string]target.Config{
-					svc.Name: {
-						SourceID: svc.Name,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("[%s] Bump Docker Image tag in %q",
-								serviceImageName,
-								relativeFoundDockerComposeFile),
-							Kind: "yaml",
-							Spec: yaml.Spec{
-								File: relativeFoundDockerComposeFile,
-								Key:  fmt.Sprintf("services.%s.image", svc.Name),
-							},
-							Transformers: transformer.Transformers{
-								transformer.Transformer{
-									AddPrefix: serviceImageName + ":",
-								},
-							},
-						},
-					},
-				},
+			tmpl, err := template.New("manifest").Parse(composeManifestTemplate)
+			if err != nil {
+				logrus.Errorln(err)
+				continue
 			}
 
-			// Set scmID if defined
-			if h.scmID != "" {
-				t := manifest.Targets[svc.Name]
-				t.SCMID = h.scmID
-				manifest.Targets[svc.Name] = t
+			params := struct {
+				ImageName            string
+				SourceID             string
+				TargetID             string
+				TargetFile           string
+				TargetName           string
+				TargetKey            string
+				TargetPrefix         string
+				TagFilter            string
+				VersionFilterKind    string
+				VersionFilterPattern string
+				ScmID                string
+				ActionID             string
+			}{
+				ImageName:            serviceImageName,
+				SourceID:             serviceImageName,
+				TargetID:             serviceImageName,
+				TargetName:           fmt.Sprintf("[%s] Bump Docker Image tag in %q", serviceImageName, relativeFoundDockerComposeFile),
+				TargetFile:           relativeFoundDockerComposeFile,
+				TargetKey:            fmt.Sprintf("services.%s.image", svc.Name),
+				TargetPrefix:         serviceImageName + ":",
+				TagFilter:            sourceSpec.TagFilter,
+				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
+				VersionFilterPattern: sourceSpec.VersionFilter.Pattern,
+				ScmID:                h.scmID,
+				ActionID:             h.actionID,
 			}
-			manifests = append(manifests, manifest)
+
+			manifest := bytes.Buffer{}
+			if err := tmpl.Execute(&manifest, params); err != nil {
+				return nil, err
+			}
+
+			manifests = append(manifests, manifest.Bytes())
 		}
 	}
 
@@ -186,7 +180,6 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([]config.Spec, err
 func parsePlatform(platform string) (os, arch, variant string) {
 
 	p := strings.Split(platform, "/")
-
 	switch len(p) {
 	case 3:
 		os = p[0]

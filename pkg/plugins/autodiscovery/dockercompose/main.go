@@ -5,8 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
@@ -36,10 +34,12 @@ type DockerCompose struct {
 	filematch []string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
+	// actionID hold the scmID used by the newly generated manifest
+	actionID string
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir string, scmID string) (DockerCompose, error) {
+func New(spec interface{}, rootDir string, scmID, actionID string) (DockerCompose, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -74,7 +74,7 @@ func New(spec interface{}, rootDir string, scmID string) (DockerCompose, error) 
 
 }
 
-func (h DockerCompose) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
+func (h DockerCompose) DiscoverManifests() ([][]byte, error) {
 	// Print the header to get started
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Docker Compose"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Docker Compose")+1))
