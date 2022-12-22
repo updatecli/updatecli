@@ -3,8 +3,7 @@ package dockercompose
 const (
 	// composeManifestTemplate is the Go template used to generate
 	// Docker compose manifests
-	composeManifestTemplate string = `
-name: 'Bump Docker Image Tag for {{ .ImageName }}'
+	composeManifestTemplate string = `name: 'Bump Docker Image Tag for {{ .ImageName }}'
 sources:
   {{ .SourceID }}:
     name: '[{{ .ImageName }}] Get latest Docker Image Tag'
@@ -14,14 +13,14 @@ sources:
       tagFilter: '{{ .TagFilter }}'
       versionFilter:
         kind: '{{ .VersionFilterKind }}'
-        pattern: '{{ .VersionFilterPattern }}' 
+        pattern: '{{ .VersionFilterPattern }}'
 targets:
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
     kind: 'yaml'
-{{ if .ScmID }}
+{{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{ end -}}
 {{ if .ActionID }}
     scmid: {{ .ActionID }}
 {{ end }}
