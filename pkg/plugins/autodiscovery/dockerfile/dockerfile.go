@@ -76,7 +76,6 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				imageName = imageArray[0]
 			}
 
-
 			// Test if the ignore rule based on path is respected
 			if len(h.spec.Ignore) > 0 {
 				if h.spec.Ignore.isMatchingRule(
@@ -125,7 +124,6 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 			}
 
-
 			targetMatcher := ""
 			// Depending on the instruction the matcher will be different
 			switch instruction.name {
@@ -144,14 +142,14 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 			}
 
 			params := struct {
-				ManifestName string
+				ManifestName         string
 				ImageName            string
 				SourceID             string
 				TargetID             string
 				TargetFile           string
 				TargetName           string
 				TargetKeyword        string
-				TargetMatcher 		 string
+				TargetMatcher        string
 				TagFilter            string
 				VersionFilterKind    string
 				VersionFilterPattern string
@@ -161,10 +159,10 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				ImageName:            imageName,
 				SourceID:             imageName,
 				TargetID:             imageName,
-				TargetName:           fmt.Sprintf("[%s] Bump Docker Image tag in %q",imageName,relativeFoundDockerfile),
+				TargetName:           fmt.Sprintf("[%s] Bump Docker Image tag in %q", imageName, relativeFoundDockerfile),
 				TargetFile:           relativeFoundDockerfile,
 				TargetKeyword:        instruction.name,
-				TargetMatcher: 		  targetMatcher,
+				TargetMatcher:        targetMatcher,
 				TagFilter:            sourceSpec.TagFilter,
 				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
 				VersionFilterPattern: sourceSpec.VersionFilter.Pattern,
