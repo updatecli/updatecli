@@ -24,7 +24,7 @@ conditions:
     spec:
       file: '{{ .File }}'
       key: '{{ .ConditionKey }}'
-      value: '{{ .ChartName }}'
+      value: '{{ .ConditionValue }}'
 targets:
   {{ .TargetID }}:
     name: '{{ .TargetName }}'

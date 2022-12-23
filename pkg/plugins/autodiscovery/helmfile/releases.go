@@ -198,6 +198,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				ConditionID                string
 				ConditionName              string
 				ConditionKey               string
+				ConditionValue             string
 				SourceID                   string
 				SourceName                 string
 				SourceKind                 string
@@ -215,6 +216,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				ConditionID:                release.Name,
 				ConditionName:              fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
 				ConditionKey:               fmt.Sprintf("releases[%d].chart", i),
+				ConditionValue:             release.Chart,
 				SourceID:                   release.Name,
 				SourceName:                 fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
 				SourceKind:                 "helmchart",
