@@ -34,12 +34,10 @@ type DockerCompose struct {
 	filematch []string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
-	// actionID hold the scmID used by the newly generated manifest
-	actionID string
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir string, scmID, actionID string) (DockerCompose, error) {
+func New(spec interface{}, rootDir, scmID string) (DockerCompose, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -64,7 +62,6 @@ func New(spec interface{}, rootDir string, scmID, actionID string) (DockerCompos
 		rootDir:   dir,
 		filematch: []string{DefaultFilePattern},
 		scmID:     scmID,
-		actionID:  actionID,
 	}
 
 	if len(s.FileMatch) > 0 {

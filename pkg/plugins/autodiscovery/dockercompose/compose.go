@@ -149,7 +149,6 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				VersionFilterKind    string
 				VersionFilterPattern string
 				ScmID                string
-				ActionID             string
 			}{
 				ImageName:            serviceImageName,
 				SourceID:             serviceImageName,
@@ -162,7 +161,6 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
 				VersionFilterPattern: sourceSpec.VersionFilter.Pattern,
 				ScmID:                h.scmID,
-				ActionID:             h.actionID,
 			}
 
 			manifest := bytes.Buffer{}

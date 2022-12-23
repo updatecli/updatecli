@@ -55,7 +55,7 @@ targets:
 			composefile, err := dockercompose.New(
 				dockercompose.Spec{
 					RootDir: tt.rootDir,
-				}, "", "", "")
+				}, "", "")
 			require.NoError(t, err)
 
 			var pipelines []string
