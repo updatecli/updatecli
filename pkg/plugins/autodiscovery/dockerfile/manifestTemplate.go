@@ -17,7 +17,7 @@ sources:
 targets:
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
-    kind: 'yaml'
+    kind: 'dockerfile'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
 {{ end }}
