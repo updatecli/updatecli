@@ -1,6 +1,7 @@
 package helmfile
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+
+	YAML "gopkg.in/yaml.v3"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -36,6 +40,10 @@ func TestDiscoverManifests(t *testing.T) {
 								Spec: helm.Spec{
 									Name: "datadog",
 									URL:  "https://helm.datadoghq.com",
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: "*",
+									},
 								},
 							},
 						},
@@ -80,6 +88,10 @@ func TestDiscoverManifests(t *testing.T) {
 								Spec: helm.Spec{
 									Name: "docker-registry-secrets",
 									URL:  "https://jenkins-infra.github.io/helm-charts",
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: "*",
+									},
 								},
 							},
 						},
@@ -123,6 +135,10 @@ func TestDiscoverManifests(t *testing.T) {
 								Spec: helm.Spec{
 									Name: "myOCIChart",
 									URL:  "oci://myregistry.azurecr.io",
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: "*",
+									},
 								},
 							},
 						},
@@ -172,9 +188,20 @@ func TestDiscoverManifests(t *testing.T) {
 
 			pipelines, err := helmfile.DiscoverManifests()
 
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectedPipelines, pipelines)
+			for i := range tt.expectedPipelines {
+				buf := bytes.NewBufferString("")
+				yamlEncoder := YAML.NewEncoder(buf)
+				yamlEncoder.SetIndent(2) // this is what you're looking for
+				yamlEncoder.Encode(tt.expectedPipelines[i])
+				expectedPipeline := buf.String()
 
+				//expectedPipeline, err := YAML.Marshal(tt.expectedPipelines[i])
+				require.NoError(t, err)
+
+				assert.Equal(t, string(expectedPipeline), string(pipelines[i]))
+			}
+
+			require.NoError(t, err)
 		})
 	}
 
