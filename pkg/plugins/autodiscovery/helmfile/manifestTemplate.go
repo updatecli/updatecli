@@ -34,7 +34,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: 'helm.version'
+      key: '{{ .TargetKey }}'
     sourceid: '{{ .SourceID }}'
 `
 )
