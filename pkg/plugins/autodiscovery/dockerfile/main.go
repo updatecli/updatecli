@@ -34,12 +34,10 @@ type Dockerfile struct {
 	filematch []string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
-	// actionID hold the scmID used by the newly generated manifest
-	actionID string
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir, scmID, actionID string) (Dockerfile, error) {
+func New(spec interface{}, rootDir, scmID string) (Dockerfile, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -64,7 +62,6 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Dockerfile, error) 
 		rootDir:   dir,
 		filematch: DefaultFileMatch,
 		scmID:     scmID,
-		actionID:  actionID,
 	}
 
 	if len(s.FileMatch) > 0 {

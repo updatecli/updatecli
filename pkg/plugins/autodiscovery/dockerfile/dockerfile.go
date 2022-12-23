@@ -156,7 +156,6 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				VersionFilterKind    string
 				VersionFilterPattern string
 				ScmID                string
-				ActionID             string
 			}{
 				ManifestName:         fmt.Sprintf("Bump Docker Image Tag for %q", imageName),
 				ImageName:            imageName,
@@ -170,7 +169,6 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
 				VersionFilterPattern: sourceSpec.VersionFilter.Pattern,
 				ScmID:                h.scmID,
-				ActionID:             h.actionID,
 			}
 
 			manifest := bytes.Buffer{}

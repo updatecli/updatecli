@@ -79,7 +79,7 @@ targets:
 			dockerfile, err := dockerfile.New(
 				dockerfile.Spec{
 					RootDir: tt.rootDir,
-				}, "", "", "")
+				}, "", "")
 
 			require.NoError(t, err)
 

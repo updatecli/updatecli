@@ -20,9 +20,6 @@ targets:
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end -}}
-{{ if .ActionID }}
-    scmid: {{ .ActionID }}
 {{ end }}
     spec:
       file: '{{ .TargetFile }}'
