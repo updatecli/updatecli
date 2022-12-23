@@ -5,8 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 )
 
 // Spec defines the parameters which can be provided to the fleet builder.
@@ -19,7 +17,7 @@ type Spec struct {
 	Only MatchingRules `yaml:",omitempty"`
 }
 
-// Fleet hold all information needed to generate fleet bundle.
+// Fleet holds all information needed to generate fleet bundle.
 type Fleet struct {
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
@@ -58,7 +56,7 @@ func New(spec interface{}, rootDir, scmID string) (Fleet, error) {
 
 }
 
-func (f Fleet) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
+func (f Fleet) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Rancher Fleet"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Rancher Fleet")+1))
