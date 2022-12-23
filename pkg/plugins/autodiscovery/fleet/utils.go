@@ -2,8 +2,8 @@ package fleet
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -63,7 +63,7 @@ func getFleetBundleData(filename string) (*fleetMetadata, error) {
 
 	defer v.Close()
 
-	content, err := ioutil.ReadAll(v)
+	content, err := io.ReadAll(v)
 	if err != nil {
 		return &fleetMetadata{}, err
 	}
