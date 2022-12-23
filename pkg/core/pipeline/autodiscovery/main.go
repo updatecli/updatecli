@@ -8,6 +8,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 )
 
 var (
@@ -16,8 +19,9 @@ var (
 		Crawlers: map[string]interface{}{
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
-			//"helm":          helm.Spec{},
-			//"maven":         maven.Spec{},
+			"helm":          helm.Spec{},
+			"helmfile":      helmfile.Spec{},
+			"maven":         maven.Spec{},
 			"rancher/fleet": fleet.Spec{},
 		},
 	}
@@ -25,8 +29,9 @@ var (
 	AutodiscoverySpecsMapping = map[string]interface{}{
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
-		//"helm":          &helm.Spec{},
-		//"maven":         &maven.Spec{},
+		"helm":          &helm.Spec{},
+		"helmfile":      &helmfile.Spec{},
+		"maven":         &maven.Spec{},
 		"rancher/fleet": &fleet.Spec{},
 	}
 )
@@ -92,47 +97,46 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 			g.crawlers = append(g.crawlers, dockerfileCrawler)
 
-		//case "helm":
+		case "helm":
 
-		//	helmCrawler, err := helm.New(
-		//		g.spec.Crawlers[kind],
-		//		workDir,
-		//		g.spec.ScmId,
-		//		g.spec.ActionId)
+			helmCrawler, err := helm.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
-		//	if err != nil {
-		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-		//		continue
-		//	}
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
 
-		//	g.crawlers = append(g.crawlers, helmCrawler)
+			g.crawlers = append(g.crawlers, helmCrawler)
 
-		//case "helmfile":
+		case "helmfile":
 
-		//	helmfileCrawler, err := helmfile.New(
-		//		g.spec.Crawlers[kind],
-		//		workDir,
-		//		g.spec.ScmId)
+			helmfileCrawler, err := helmfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
-		//	if err != nil {
-		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-		//		continue
-		//	}
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
 
-		//	g.crawlers = append(g.crawlers, helmfileCrawler)
+			g.crawlers = append(g.crawlers, helmfileCrawler)
 
-		//case "maven":
-		//	mavenCrawler, err := maven.New(
-		//		g.spec.Crawlers[kind],
-		//		workDir,
-		//		g.spec.ScmId)
+		case "maven":
+			mavenCrawler, err := maven.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
-		//	if err != nil {
-		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-		//		continue
-		//	}
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
 
-		//	g.crawlers = append(g.crawlers, mavenCrawler)
+			g.crawlers = append(g.crawlers, mavenCrawler)
 
 		case "rancher/fleet":
 			fleetCrawler, err := fleet.New(
