@@ -23,11 +23,11 @@ var (
 	}
 	// AutodiscoverySpecs is a map of all Autodiscovery specification
 	AutodiscoverySpecsMapping = map[string]interface{}{
-		"dockercompose": dockercompose.Spec{},
-		"dockerfile":    dockerfile.Spec{},
-		//"helm":          helm.Spec{},
-		//"maven":         maven.Spec{},
-		"rancher/fleet": fleet.Spec{},
+		"dockercompose": &dockercompose.Spec{},
+		"dockerfile":    &dockerfile.Spec{},
+		//"helm":          &helm.Spec{},
+		//"maven":         &maven.Spec{},
+		"rancher/fleet": &fleet.Spec{},
 	}
 )
 

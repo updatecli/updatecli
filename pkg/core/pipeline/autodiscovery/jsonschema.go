@@ -6,7 +6,7 @@ import (
 )
 
 // JSONSchema implements the json schema interface to generate the "condition" jsonschema.
-func (c *Config) JSONSchema() *jschema.Schema {
+func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 	return jsonschema.GenerateJsonSchema(configAlias{}, AutodiscoverySpecsMapping)
 }
