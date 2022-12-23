@@ -161,7 +161,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 	return &g, nil
 }
 
-// Run execute each Autodiscovery crawlers to generatlite Updatecli manifests
+// Run execute each Autodiscovery crawlers to generate Updatecli manifests
 func (g *AutoDiscovery) Run() ([][]byte, error) {
 	var totalDiscoveredManifests [][]byte
 

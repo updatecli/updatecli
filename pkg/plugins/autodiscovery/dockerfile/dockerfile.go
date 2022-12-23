@@ -155,11 +155,11 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				VersionFilterPattern string
 				ScmID                string
 			}{
-				ManifestName:         fmt.Sprintf("Bump Docker Image Tag for %q", imageName),
+				ManifestName:         fmt.Sprintf("Bump Docker image tag for %q", imageName),
 				ImageName:            imageName,
 				SourceID:             imageName,
 				TargetID:             imageName,
-				TargetName:           fmt.Sprintf("[%s] Bump Docker Image tag in %q", imageName, relativeFoundDockerfile),
+				TargetName:           fmt.Sprintf("[%s] Bump Docker image tag in %q", imageName, relativeFoundDockerfile),
 				TargetFile:           relativeFoundDockerfile,
 				TargetKeyword:        instruction.name,
 				TargetMatcher:        targetMatcher,

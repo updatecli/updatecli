@@ -52,7 +52,7 @@ func GetFiles(root string) (files []string) {
 	if root == "" {
 		// Updatecli tries to load the file updatecli.yaml if no manifest provided
 		// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
-		// if they're no manifests in the directory updatecli.d then Updatecli returns no manifest files.
+		// if there is no manifests in the directory updatecli.d then Updatecli returns no manifest files.
 		_, err := os.Stat(config.DefaultConfigFilename)
 		if !errors.Is(err, os.ErrNotExist) {
 			logrus.Debugf("Default Updatecli manifest detected %q", config.DefaultConfigFilename)
@@ -176,8 +176,8 @@ func (e *Engine) Prepare() (err error) {
 	}
 
 	// If one git clone fails then Updatecli exits
-	// scm initiation must be done before autodiscovery as we need to identify
-	// in advance git repository directories to analyze for possible common update scenarii
+	// scm initialization must be done before autodiscovery as we need to identify
+	// in advance git repository directories to analyze them for possible common update scenarii
 	err = e.InitSCM()
 	if err != nil {
 		return err
@@ -258,7 +258,7 @@ func (e *Engine) LoadConfigurations() error {
 
 }
 
-// Run runs the full process for one manifest.
+// Run runs the full process for one manifest
 func (e *Engine) Run() (err error) {
 	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Pipeline")+4))
 	logrus.Infof("+ %s +\n", strings.ToTitle("Pipeline"))
@@ -358,9 +358,9 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 // LoadAutoDiscovery tries to guess available pipelines based on specific directory
 func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 
-	// To remove once not experimental
+	// TODO: To be removed once not experimental anymore
 	if !cmdoptions.Experimental {
-		logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
+		logrus.Warningf("The 'autodiscovery' feature requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
 		return nil
 	}
 
@@ -409,7 +409,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 
 		workDir, err := os.Getwd()
 		if err != nil {
-			return fmt.Errorf("failed getting current working directory dur to %v", err)
+			return fmt.Errorf("failed getting current working directory due to %v", err)
 		}
 
 		// Retrieve scm spec if it exists
@@ -469,7 +469,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 		// Generate PipelineID
 		// Set pipelineId for each manifest by on the autodiscovery groupby rule
 
-		// We use a sha256 hash to avoid colusion between pipelineID
+		// We use a sha256 hash to avoid collision between pipelineID
 		hash := sha256.New()
 		_, err = io.WriteString(hash, "updatecli/autodiscovery/batch")
 		var batchPipelineID string

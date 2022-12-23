@@ -32,7 +32,7 @@ type DockerCompose struct {
 	rootDir string
 	// filematch defines the filematch rule used to identify docker-compose that need to be handled
 	filematch []string
-	// scmID hold the scmID used by the newly generated manifest
+	// scmID holds the scmID used by the newly generated manifest
 	scmID string
 }
 

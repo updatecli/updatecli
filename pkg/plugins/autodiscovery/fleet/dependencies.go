@@ -159,13 +159,13 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			File                       string
 			ScmID                      string
 		}{
-			ManifestName:               fmt.Sprintf("Bump Fleet Bundle %q for Helm Chart %q", chartName, data.Helm.Chart),
+			ManifestName:               fmt.Sprintf("Bump %q Fleet bundle for %q Helm chart", chartName, data.Helm.Chart),
 			ChartName:                  data.Helm.Chart,
 			ChartRepository:            data.Helm.Repo,
 			ConditionID:                data.Helm.Chart,
 			FleetBundle:                chartName,
 			SourceID:                   data.Helm.Chart,
-			SourceName:                 fmt.Sprintf("Get latest %q Helm Chart Version", data.Helm.Chart),
+			SourceName:                 fmt.Sprintf("Get latest %q Helm chart version", data.Helm.Chart),
 			SourceKind:                 "helmchart",
 			SourceVersionFilterKind:    "semver",
 			SourceVersionFilterPattern: "*",

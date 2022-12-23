@@ -1,8 +1,7 @@
 package dockercompose
 
 const (
-	// manifestTemplate is the Go template used to generate
-	// Docker compose manifests
+	// manifestTemplate is the Go template used to generate Docker compose manifests
 	manifestTemplate string = `name: 'Bump Docker Image Tag for {{ .ImageName }}'
 sources:
   {{ .SourceID }}:

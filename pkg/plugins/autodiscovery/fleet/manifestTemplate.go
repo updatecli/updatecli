@@ -1,8 +1,7 @@
 package fleet
 
 const (
-	// manifestTemplate is the Go template used to generate
-	// Docker compose manifests
+	// manifestTemplate is the Go template used to generate Fleet manifests
 	manifestTemplate string = `name: '{{ .ManifestName }}'
 sources:
   {{ .SourceID }}:
