@@ -21,8 +21,8 @@ type fleetHelmData struct {
 	Version string
 }
 
-// fleetMetada is the information that we need to retrieve from Helm chart files.
-type fleetMetada struct {
+// fleetMetadata is the information that we need to retrieve from Helm chart files.
+type fleetMetadata struct {
 	Helm fleetHelmData
 }
 

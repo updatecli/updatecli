@@ -42,7 +42,7 @@ func New(spec interface{}, rootDir, scmID string) (Maven, error) {
 	}
 
 	if len(dir) == 0 {
-		logrus.Errorln("no working directrory defined")
+		logrus.Errorln("no working directory defined")
 		return Maven{}, err
 	}
 
