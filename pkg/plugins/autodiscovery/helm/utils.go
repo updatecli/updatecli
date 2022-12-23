@@ -2,8 +2,8 @@ package helm
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -82,7 +82,7 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 
 	defer v.Close()
 
-	content, err := ioutil.ReadAll(v)
+	content, err := io.ReadAll(v)
 	if err != nil {
 		return &chartMetadata{}, err
 	}
@@ -126,7 +126,7 @@ func getValuesFileContent(filename string) (*valuesContent, error) {
 
 	defer v.Close()
 
-	content, err := ioutil.ReadAll(v)
+	content, err := io.ReadAll(v)
 	if err != nil {
 		return &valuesContent{}, err
 	}
