@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 )
 
 var (
@@ -17,7 +18,7 @@ var (
 			"dockerfile":    dockerfile.Spec{},
 			//"helm":          helm.Spec{},
 			//"maven":         maven.Spec{},
-			//"rancher/fleet": fleet.Spec{},
+			"rancher/fleet": fleet.Spec{},
 		},
 	}
 )
@@ -60,8 +61,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			dockerComposeCrawler, err := dockercompose.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -75,8 +75,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			dockerfileCrawler, err := dockerfile.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -90,7 +89,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 		//	helmCrawler, err := helm.New(
 		//		g.spec.Crawlers[kind],
 		//		workDir,
-		//		g.spec.ScmId)
+		//		g.spec.ScmId,
+		//		g.spec.ActionId)
 
 		//	if err != nil {
 		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -126,18 +126,18 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		//	g.crawlers = append(g.crawlers, mavenCrawler)
 
-		//case "rancher/fleet":
-		//	fleetCrawler, err := fleet.New(
-		//		g.spec.Crawlers[kind],
-		//		workDir,
-		//		g.spec.ScmId)
+		case "rancher/fleet":
+			fleetCrawler, err := fleet.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
-		//	if err != nil {
-		//		errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-		//		continue
-		//	}
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
 
-		//	g.crawlers = append(g.crawlers, fleetCrawler)
+			g.crawlers = append(g.crawlers, fleetCrawler)
 
 		default:
 			logrus.Infof("Crawler of type %q is not supported", kind)
