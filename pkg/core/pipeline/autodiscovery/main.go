@@ -67,7 +67,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			continue
 		}
 
-		// Commmenting for now while refactoring
+		// Commenting for now while refactoring
 		switch kind {
 		case "dockercompose":
 

@@ -136,7 +136,7 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 			},
 		},
 		{
-			name: "failing case with incompatible type beetween autoguess and specified SCM",
+			name: "failing case with incompatible type between autoguess and specified SCM",
 			config: &Config{
 				gitHandler: gitgeneric.MockGit{
 					Remotes: map[string]string{"origin": "https://localhost:2222/olblak/updatecli.git"},
