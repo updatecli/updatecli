@@ -21,6 +21,14 @@ var (
 			"rancher/fleet": fleet.Spec{},
 		},
 	}
+	// AutodiscoverySpecs is a map of all Autodiscovery specification
+	AutodiscoverySpecsMapping = map[string]interface{}{
+		"dockercompose": dockercompose.Spec{},
+		"dockerfile":    dockerfile.Spec{},
+		//"helm":          helm.Spec{},
+		//"maven":         maven.Spec{},
+		"rancher/fleet": fleet.Spec{},
+	}
 )
 
 type Crawler interface {
