@@ -26,7 +26,7 @@ type Maven struct {
 	spec Spec
 	// rootDir defines the root directory from where looking for Helm Chart
 	rootDir string
-	// scmID hold the scmID used by the newly generated manifest
+	// scmID holds the scmID used by the newly generated manifest
 	scmID string
 }
 
