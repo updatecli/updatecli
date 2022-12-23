@@ -5,9 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 )
 
 // Spec defines the parameters which can be provided to the Helm builder.
@@ -44,8 +41,6 @@ func New(spec interface{}, rootDir, scmID string) (Maven, error) {
 		dir = s.RootDir
 	}
 
-	// If no RootDir have been provided via settings,
-	// then fallback to the current process path.
 	if len(dir) == 0 {
 		logrus.Errorln("no working directrory defined")
 		return Maven{}, err
@@ -59,7 +54,7 @@ func New(spec interface{}, rootDir, scmID string) (Maven, error) {
 
 }
 
-func (m Maven) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
+func (m Maven) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Maven"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Maven")+1))

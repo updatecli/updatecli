@@ -1,4 +1,4 @@
-package maven
+package test
 
 import (
 	"testing"
@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	m "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 )
@@ -213,14 +213,14 @@ func TestDiscoverManifests(t *testing.T) {
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			maven, err := New(
-				Spec{
+			resource, err := m.New(
+				m.Spec{
 					RootDir: tt.rootDir,
 				}, "", "")
 
 			require.NoError(t, err)
 
-			pipelines, err := maven.DiscoverManifests(discoveryConfig.Input{})
+			pipelines, err := resource.DiscoverManifests()
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedPipelines, pipelines)

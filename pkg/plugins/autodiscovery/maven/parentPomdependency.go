@@ -1,25 +1,20 @@
 package maven
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
+	"text/template"
 
 	"regexp"
 
 	"github.com/beevik/etree"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 )
 
-func (m Maven) discoverParentPomDependencyManifests() ([]config.Spec, error) {
+func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
-	var manifests []config.Spec
+	var manifests [][]byte
 
 	foundPomFiles, err := searchPomFiles(
 		m.rootDir,
@@ -88,86 +83,123 @@ func (m Maven) discoverParentPomDependencyManifests() ([]config.Spec, error) {
 			continue
 		}
 
-		manifestName := fmt.Sprintf(
-			"Bump Maven parent Pom %s/%s",
-			parentPom.GroupID,
-			parentPom.ArtifactID)
-
+		//manifest := config.Spec{
+		//	Name: manifestName,
+		//	Sources: map[string]source.Config{
+		//		artifactFullName: {
+		//			ResourceConfig: resource.ResourceConfig{
+		//				Name: fmt.Sprintf("Get latest Parent Pom Artifact version: %q", artifactFullName),
+		//				Kind: "maven",
+		//				Spec: mavenSourceSpec,
+		//			},
+		//		},
+		//	},
+		//	Conditions: map[string]condition.Config{
+		//		parentPom.GroupID: {
+		//			DisableSourceInput: true,
+		//			ResourceConfig: resource.ResourceConfig{
+		//				Name: fmt.Sprintf("Ensure parent pom.xml groupId %q is specified", parentPom.GroupID),
+		//				Kind: "xml",
+		//				Spec: xml.Spec{
+		//					File:  relativePomFile,
+		//					Path:  "/project/parent/groupId",
+		//					Value: parentPom.GroupID,
+		//				},
+		//			},
+		//		},
+		//		parentPom.ArtifactID: {
+		//			DisableSourceInput: true,
+		//			ResourceConfig: resource.ResourceConfig{
+		//				Name: fmt.Sprintf("Ensure parent artifactId %q is specified", parentPom.ArtifactID),
+		//				Kind: "xml",
+		//				Spec: xml.Spec{
+		//					File:  relativePomFile,
+		//					Path:  "/project/parent/artifactId",
+		//					Value: parentPom.ArtifactID,
+		//				},
+		//			},
+		//		},
+		//	},
+		//	Targets: map[string]target.Config{
+		//		artifactFullName: {
+		//			SourceID: artifactFullName,
+		//			ResourceConfig: resource.ResourceConfig{
+		//				Name: fmt.Sprintf("Bump parent pom version for %q", artifactFullName),
+		//				Kind: "xml",
+		//				Spec: xml.Spec{
+		//					File: relativePomFile,
+		//					Path: "/project/parent/version",
+		//				},
+		//			},
+		//		},
+		//	},
+		//}
+		// Set scmID if defined
 		artifactFullName := fmt.Sprintf("%s/%s", parentPom.GroupID, parentPom.ArtifactID)
 
-		mavenSourceSpec := maven.Spec{
-			GroupID:    parentPom.GroupID,
-			ArtifactID: parentPom.ArtifactID,
-		}
-
+		repos := []string{}
 		for _, repo := range repositories {
-			mavenSourceSpec.Repositories = append(mavenSourceSpec.Repositories, repo.URL)
+			repos = append(repos, repo.URL)
 		}
 
-		manifest := config.Spec{
-			Name: manifestName,
-			Sources: map[string]source.Config{
-				artifactFullName: {
-					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Get latest Parent Pom Artifact version: %q", artifactFullName),
-						Kind: "maven",
-						Spec: mavenSourceSpec,
-					},
-				},
-			},
-			Conditions: map[string]condition.Config{
-				parentPom.GroupID: {
-					DisableSourceInput: true,
-					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Ensure parent pom.xml groupId %q is specified", parentPom.GroupID),
-						Kind: "xml",
-						Spec: xml.Spec{
-							File:  relativePomFile,
-							Path:  "/project/parent/groupId",
-							Value: parentPom.GroupID,
-						},
-					},
-				},
-				parentPom.ArtifactID: {
-					DisableSourceInput: true,
-					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Ensure parent artifactId %q is specified", parentPom.ArtifactID),
-						Kind: "xml",
-						Spec: xml.Spec{
-							File:  relativePomFile,
-							Path:  "/project/parent/artifactId",
-							Value: parentPom.ArtifactID,
-						},
-					},
-				},
-			},
-			Targets: map[string]target.Config{
-				artifactFullName: {
-					SourceID: artifactFullName,
-					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Bump parent pom version for %q", artifactFullName),
-						Kind: "xml",
-						Spec: xml.Spec{
-							File: relativePomFile,
-							Path: "/project/parent/version",
-						},
-					},
-				},
-			},
+		tmpl, err := template.New("manifest").Parse(manifestTemplate)
+		if err != nil {
+			logrus.Errorln(err)
+			continue
 		}
-		// Set scmID if defined
-		if m.scmID != "" {
-			t := manifest.Targets[artifactFullName]
-			t.SCMID = m.scmID
-			manifest.Targets[artifactFullName] = t
 
-			for _, id := range []string{parentPom.ArtifactID, parentPom.GroupID} {
-				c := manifest.Conditions[id]
-				c.SCMID = m.scmID
-				manifest.Conditions[id] = c
-			}
+		params := struct {
+			ManifestName             string
+			ConditionID              string
+			ConditionGroupID         string
+			ConditionGroupIDName     string
+			ConditionGroupIDPath     string
+			ConditionGroupIDValue    string
+			ConditionArtifactID      string
+			ConditionArtifactIDName  string
+			ConditionArtifactIDPath  string
+			ConditionArtifactIDValue string
+			SourceID                 string
+			SourceName               string
+			SourceKind               string
+			SourceGroupID            string
+			SourceArtifactID         string
+			SourceRepositories       []string
+			TargetID                 string
+			TargetName               string
+			TargetXMLPath            string
+			File                     string
+			ScmID                    string
+		}{
+			ManifestName:             fmt.Sprintf("Bump Maven parent Pom %s/%s", parentPom.GroupID, parentPom.ArtifactID),
+			ConditionID:              artifactFullName,
+			ConditionGroupID:         parentPom.GroupID,
+			ConditionGroupIDName:     fmt.Sprintf("Ensure dependency groupId %q is specified", parentPom.GroupID),
+			ConditionGroupIDPath:     "/project/parent/groupId",
+			ConditionGroupIDValue:    parentPom.GroupID,
+			ConditionArtifactID:      parentPom.ArtifactID,
+			ConditionArtifactIDName:  fmt.Sprintf("Bump dependency version for %q", artifactFullName),
+			ConditionArtifactIDPath:  "/project/parent/artifactId",
+			ConditionArtifactIDValue: parentPom.ArtifactID,
+			SourceID:                 artifactFullName,
+			SourceName:               fmt.Sprintf("Get latest Maven Artifact version: %q", artifactFullName),
+			SourceKind:               "maven",
+			SourceGroupID:            parentPom.GroupID,
+			SourceArtifactID:         parentPom.ArtifactID,
+			SourceRepositories:       repos,
+			TargetID:                 artifactFullName,
+			TargetName:               fmt.Sprintf("Bump dependencyManagement version for %q", artifactFullName),
+			TargetXMLPath:            "/project/parent/version",
+			File:                     relativePomFile,
+			ScmID:                    m.scmID,
 		}
-		manifests = append(manifests, manifest)
+
+		manifest := bytes.Buffer{}
+		if err := tmpl.Execute(&manifest, params); err != nil {
+			return nil, err
+		}
+
+		manifests = append(manifests, manifest.Bytes())
 
 	}
 
