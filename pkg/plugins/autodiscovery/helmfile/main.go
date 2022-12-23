@@ -5,8 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
@@ -60,7 +58,7 @@ func New(spec interface{}, rootDir, scmID string) (Helmfile, error) {
 
 }
 
-func (h Helmfile) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
+func (h Helmfile) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Helmfile"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Helmfile")+1))

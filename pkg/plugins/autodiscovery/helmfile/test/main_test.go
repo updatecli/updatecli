@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
@@ -163,14 +163,14 @@ func TestDiscoverManifests(t *testing.T) {
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			helmfile, err := New(
-				Spec{
+			helmfile, err := helmfile.New(
+				helmfile.Spec{
 					RootDir: tt.rootDir,
 				}, "", "")
 
 			require.NoError(t, err)
 
-			pipelines, err := helmfile.DiscoverManifests(discoveryConfig.Input{})
+			pipelines, err := helmfile.DiscoverManifests()
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedPipelines, pipelines)
