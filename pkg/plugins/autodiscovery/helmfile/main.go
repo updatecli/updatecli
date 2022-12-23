@@ -28,7 +28,7 @@ type Helmfile struct {
 	spec Spec
 	// rootdir defines the root directory from where looking for Helmfile
 	rootDir string
-	// scmID hold the scmID used by the newly generated manifest
+	// scmID holds the scmID used by the newly generated manifest
 	scmID string
 }
 

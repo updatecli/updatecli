@@ -6,7 +6,7 @@ var (
 	manifestTemplate string = `name: '{{ .ManifestName }}'
 sources:
   {{ .SourceID }}:
-    name: '[{{ .ImageName }}] Get latest Docker Image Tag'
+    name: '[{{ .ImageName }}] Get latest Docker image tag'
     kind: 'dockerimage'
     spec:
       image: '{{ .ImageName }}'
