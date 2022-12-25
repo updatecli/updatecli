@@ -110,7 +110,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				File                       string
 				ScmID                      string
 			}{
-				ManifestName:               fmt.Sprintf("Bump dependency %q for Helm Chart %q", dependency.Name, chartName),
+				ManifestName:               fmt.Sprintf("Bump dependency %q for Helm chart %q", dependency.Name, chartName),
 				ChartName:                  chartName,
 				DependencyName:             dependency.Name,
 				DependencyRepository:       dependency.Repository,
@@ -118,7 +118,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				ConditionKey:               fmt.Sprintf("dependencies[%d].name", i),
 				FleetBundle:                chartName,
 				SourceID:                   dependency.Name,
-				SourceName:                 fmt.Sprintf("Get latest %q Helm Chart Version", dependency.Name),
+				SourceName:                 fmt.Sprintf("Get latest %q Helm chart version", dependency.Name),
 				SourceVersionFilterKind:    "semver",
 				SourceVersionFilterPattern: "*",
 				TargetID:                   dependency.Name,
