@@ -20,5 +20,5 @@ func AssertConfigSpecEqualByteArray(t *testing.T, spec *config.Spec, manifest st
 	err := yamlEncoder.Encode(spec)
 	require.NoError(t, err)
 
-	return assert.Equal(t, string(buf.String()), manifest)
+	return assert.Equal(t, buf.String(), manifest)
 }
