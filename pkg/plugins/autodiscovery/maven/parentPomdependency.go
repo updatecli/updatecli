@@ -182,7 +182,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			ConditionArtifactIDPath:  "/project/parent/artifactId",
 			ConditionArtifactIDValue: parentPom.ArtifactID,
 			SourceID:                 artifactFullName,
-			SourceName:               fmt.Sprintf("Get latest Parent Pom Artifact version: %q", artifactFullName),
+			SourceName:               fmt.Sprintf("Get latest Parent Pom Artifact version %q", artifactFullName),
 			SourceKind:               "maven",
 			SourceGroupID:            parentPom.GroupID,
 			SourceArtifactID:         parentPom.ArtifactID,
