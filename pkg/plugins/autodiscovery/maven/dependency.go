@@ -180,11 +180,11 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 			}{
 				ManifestName:             fmt.Sprintf("Bump Maven dependency %s", artifactFullName),
 				ConditionID:              artifactFullName,
-				ConditionGroupID:         dependency.GroupID,
+				ConditionGroupID:         "groupid",
 				ConditionGroupIDName:     fmt.Sprintf("Ensure dependency groupId %q is specified", dependency.GroupID),
 				ConditionGroupIDPath:     fmt.Sprintf("/project/dependencies/dependency[%d]/groupId", i+1),
 				ConditionGroupIDValue:    dependency.GroupID,
-				ConditionArtifactID:      dependency.ArtifactID,
+				ConditionArtifactID:      "artifactid",
 				ConditionArtifactIDName:  fmt.Sprintf("Ensure dependency artifactId %q is specified", dependency.ArtifactID),
 				ConditionArtifactIDPath:  fmt.Sprintf("/project/dependencies/dependency[%d]/artifactId", i+1),
 				ConditionArtifactIDValue: dependency.ArtifactID,

@@ -46,7 +46,7 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 					Conditions: map[string]condition.Config{
 
-						"com.jcraft": {
+						"groupid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure dependency groupId \"com.jcraft\" is specified",
@@ -58,7 +58,7 @@ func TestDiscoverManifests(t *testing.T) {
 								},
 							},
 						},
-						"jsch": {
+						"artifactid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure dependency artifactId \"jsch\" is specified",
@@ -165,7 +165,7 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 					Conditions: map[string]condition.Config{
 
-						"org.jenkins-ci.plugins": {
+						"groupid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure parent pom.xml groupId \"org.jenkins-ci.plugins\" is specified",
@@ -177,7 +177,7 @@ func TestDiscoverManifests(t *testing.T) {
 								},
 							},
 						},
-						"plugin": {
+						"artifactid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure parent artifactId \"plugin\" is specified",

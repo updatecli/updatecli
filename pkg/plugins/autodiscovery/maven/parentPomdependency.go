@@ -173,11 +173,11 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		}{
 			ManifestName:             fmt.Sprintf("Bump Maven parent Pom %s/%s", parentPom.GroupID, parentPom.ArtifactID),
 			ConditionID:              artifactFullName,
-			ConditionGroupID:         parentPom.GroupID,
+			ConditionGroupID:         "groupid",
 			ConditionGroupIDName:     fmt.Sprintf("Ensure parent pom.xml groupId %q is specified", parentPom.GroupID),
 			ConditionGroupIDPath:     "/project/parent/groupId",
 			ConditionGroupIDValue:    parentPom.GroupID,
-			ConditionArtifactID:      parentPom.ArtifactID,
+			ConditionArtifactID:      "artifactid",
 			ConditionArtifactIDName:  fmt.Sprintf("Ensure parent artifactId %q is specified", parentPom.ArtifactID),
 			ConditionArtifactIDPath:  "/project/parent/artifactId",
 			ConditionArtifactIDValue: parentPom.ArtifactID,

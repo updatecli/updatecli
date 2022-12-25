@@ -17,17 +17,6 @@ sources:
       groupid: {{ .SourceGroupID }}
       artifactid: {{ .SourceArtifactID }}
 conditions:
-  {{ .ConditionGroupID }}:
-    name: {{ .ConditionGroupIDName }}
-    kind: xml
-{{- if .ScmID }}
-    scmid: {{ .ScmID }}
-{{ end }}
-    spec:
-      file: {{ .File }}
-      path: {{ .ConditionGroupIDPath }}
-      value: {{ .ConditionGroupIDValue }}
-    disablesourceinput: true
   {{ .ConditionArtifactID }}:
     name: {{ .ConditionArtifactIDName }}
     kind: xml
@@ -38,6 +27,17 @@ conditions:
       file: {{ .File }}
       path: {{ .ConditionArtifactIDPath }}
       value: {{ .ConditionArtifactIDValue }}
+    disablesourceinput: true
+  {{ .ConditionGroupID }}:
+    name: {{ .ConditionGroupIDName }}
+    kind: xml
+{{- if .ScmID }}
+    scmid: {{ .ScmID }}
+{{ end }}
+    spec:
+      file: {{ .File }}
+      path: {{ .ConditionGroupIDPath }}
+      value: {{ .ConditionGroupIDValue }}
     disablesourceinput: true
 targets:
   {{ .TargetID }}:
