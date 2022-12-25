@@ -10,7 +10,7 @@ sources:
     kind: dockerimage
     spec:
       image: {{ .ImageName }}
-      tagFilter: {{ .TagFilter }}
+      tagFilter: {{ .SourceTagFilter }}
       versionFilter:
         kind: {{ .SourceVersionFilterKind }}
         pattern: {{ .SourceVersionFilterPattern }}

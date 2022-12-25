@@ -140,7 +140,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				SourceVersionFilterKind    string
 				SourceVersionFilterPattern string
 				SourceImageName            string
-				SourceTagFiler             string
+				SourceTagFilter            string
 				TargetName                 string
 				TargetID                   string
 				TargetKey                  string
@@ -160,7 +160,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				SourceVersionFilterKind:    "semver",
 				SourceVersionFilterPattern: "*",
 				SourceImageName:            sourceSpec.Image,
-				SourceTagFiler:             sourceSpec.TagFilter,
+				SourceTagFilter:            sourceSpec.TagFilter,
 				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", image.repository, chartName),
 				TargetID:                   image.repository,
 				TargetKey:                  image.yamlTagPath,
