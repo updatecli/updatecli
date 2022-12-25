@@ -358,12 +358,6 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 // LoadAutoDiscovery tries to guess available pipelines based on specific directory
 func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 
-	// TODO: To be removed once not experimental anymore
-	if !cmdoptions.Experimental {
-		logrus.Warningf("The 'autodiscovery' feature requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
-		return nil
-	}
-
 	// Default Autodiscovery pipeline
 	if defaultEnabled {
 
@@ -395,6 +389,12 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 	for id, p := range e.Pipelines {
 		if p.Config.Spec.AutoDiscovery.Crawlers == nil {
 			continue
+		}
+
+		// TODO: To be removed once not experimental anymore
+		if !cmdoptions.Experimental {
+			logrus.Warningf("The 'autodiscovery' feature requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
+			return nil
 		}
 
 		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Name)+4))
@@ -477,14 +477,9 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 		if err != nil {
 			logrus.Errorln(err)
 		}
-		switch p.Config.Spec.AutoDiscovery.GroupBy {
-		case autodiscovery.GROUPEBYALL:
+
+		if p.Config.Spec.AutoDiscovery.GroupBy == autodiscovery.GROUPEBYALL {
 			batchPipelineID = fmt.Sprintf("%x", hash.Sum(nil))
-		case autodiscovery.GROUPEBYINDIVIDUAL:
-			// The batchPipelineID must be set per manifest
-			// below
-		default:
-			logrus.Errorln("something unexpected happened while specifying pipelineid to generated Updatecli manifest")
 		}
 
 		for i := range bytesManifests {
