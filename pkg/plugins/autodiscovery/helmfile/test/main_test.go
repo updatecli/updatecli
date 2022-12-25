@@ -1,10 +1,8 @@
 package helmfile
 
 import (
-	"bytes"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -14,9 +12,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
-
-	YAML "gopkg.in/yaml.v3"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -187,21 +184,11 @@ func TestDiscoverManifests(t *testing.T) {
 			require.NoError(t, err)
 
 			pipelines, err := helmfile.DiscoverManifests()
+			require.NoError(t, err)
 
 			for i := range tt.expectedPipelines {
-				buf := bytes.NewBufferString("")
-				yamlEncoder := YAML.NewEncoder(buf)
-				yamlEncoder.SetIndent(2) // this is what you're looking for
-				yamlEncoder.Encode(tt.expectedPipelines[i])
-				expectedPipeline := buf.String()
-
-				//expectedPipeline, err := YAML.Marshal(tt.expectedPipelines[i])
-				require.NoError(t, err)
-
-				assert.Equal(t, string(expectedPipeline), string(pipelines[i]))
+				test.AssertConfigSpecEqualByteArray(t, &tt.expectedPipelines[i], string(pipelines[i]))
 			}
-
-			require.NoError(t, err)
 		})
 	}
 
