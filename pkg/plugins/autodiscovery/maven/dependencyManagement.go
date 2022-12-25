@@ -25,7 +25,6 @@ func (m Maven) discoverDependencyManagementsManifests() ([][]byte, error) {
 	}
 
 	for _, pomFile := range foundPomFiles {
-
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
@@ -179,21 +178,27 @@ func (m Maven) discoverDependencyManagementsManifests() ([][]byte, error) {
 				File                     string
 				ScmID                    string
 			}{
-				ManifestName:        fmt.Sprintf("Bump Maven dependencyManagement %s/%s", dependency.GroupID, dependency.ArtifactID),
-				ConditionID:         artifactFullName,
-				ConditionGroupID:    dependency.GroupID,
-				ConditionArtifactID: dependency.ArtifactID,
-				SourceID:            artifactFullName,
-				SourceName:          fmt.Sprintf("Get latest Maven Artifact version: %q", artifactFullName),
-				SourceKind:          "maven",
-				SourceGroupID:       dependency.GroupID,
-				SourceArtifactID:    dependency.ArtifactID,
-				SourceRepositories:  repos,
-				TargetID:            artifactFullName,
-				TargetName:          fmt.Sprintf("Bump dependencyManagement version for %q", artifactFullName),
-				TargetXMLPath:       fmt.Sprintf("/project/dependencyManagement/dependencies/dependency[%d]/version", i+1),
-				File:                relativePomFile,
-				ScmID:               m.scmID,
+				ManifestName:             fmt.Sprintf("Bump Maven dependencyManagement %s/%s", dependency.GroupID, dependency.ArtifactID),
+				ConditionID:              artifactFullName,
+				ConditionGroupID:         dependency.GroupID,
+				ConditionGroupIDName:     fmt.Sprintf("Ensure dependencyManagement groupId %q is specified", dependency.GroupID),
+				ConditionGroupIDValue:    dependency.GroupID,
+				ConditionGroupIDPath:     fmt.Sprintf("/project/dependencyManagement/dependencies/dependency[%d]/groupId", i+1),
+				ConditionArtifactIDName:  fmt.Sprintf("Ensure dependencyManagement artifactId %q is specified", dependency.ArtifactID),
+				ConditionArtifactID:      dependency.ArtifactID,
+				ConditionArtifactIDPath:  fmt.Sprintf("/project/dependencyManagement/dependencies/dependency[%d]/artifactId", i+1),
+				ConditionArtifactIDValue: dependency.ArtifactID,
+				SourceID:                 artifactFullName,
+				SourceName:               fmt.Sprintf("Get latest Maven Artifact version: %q", artifactFullName),
+				SourceKind:               "maven",
+				SourceGroupID:            dependency.GroupID,
+				SourceArtifactID:         dependency.ArtifactID,
+				SourceRepositories:       repos,
+				TargetID:                 artifactFullName,
+				TargetName:               fmt.Sprintf("Bump dependencyManagement version for %q", artifactFullName),
+				TargetXMLPath:            fmt.Sprintf("/project/dependencyManagement/dependencies/dependency[%d]/version", i+1),
+				File:                     relativePomFile,
+				ScmID:                    m.scmID,
 			}
 
 			manifest := bytes.Buffer{}

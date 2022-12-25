@@ -3,7 +3,6 @@ package test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -13,6 +12,7 @@ import (
 	m "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -105,7 +105,6 @@ func TestDiscoverManifests(t *testing.T) {
 						},
 					},
 					Conditions: map[string]condition.Config{
-
 						"io.jenkins.tools.bom": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
@@ -217,13 +216,14 @@ func TestDiscoverManifests(t *testing.T) {
 				m.Spec{
 					RootDir: tt.rootDir,
 				}, "", "")
-
 			require.NoError(t, err)
 
 			pipelines, err := resource.DiscoverManifests()
-
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedPipelines, pipelines)
+
+			for i := range pipelines {
+				test.AssertConfigSpecEqualByteArray(t, &tt.expectedPipelines[i], string(pipelines[i]))
+			}
 		})
 	}
 
