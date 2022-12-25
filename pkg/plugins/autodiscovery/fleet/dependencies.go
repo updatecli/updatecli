@@ -82,61 +82,6 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			continue
 		}
 
-		//manifest := config.Spec{
-		//	Name: manifestName,
-		//	Sources: map[string]source.Config{
-		//		sourceID: {
-		//			ResourceConfig: resource.ResourceConfig{
-		//				Name: fmt.Sprintf("Get latest %q Helm Chart Version", data.Helm.Chart),
-		//				Kind: "helmchart",
-		//				Spec: helm.Spec{
-		//					Name: data.Helm.Chart,
-		//					URL:  data.Helm.Repo,
-		//				},
-		//			},
-		//		},
-		//	},
-		//	Conditions: map[string]condition.Config{
-		//		conditionID + "-name": {
-		//			DisableSourceInput: true,
-		//			ResourceConfig: resource.ResourceConfig{
-		//				Name: fmt.Sprintf("Ensure Helm chart name %q is specified", data.Helm.Chart),
-		//				Kind: "yaml",
-		//				Spec: yaml.Spec{
-		//					File:  relativeFoundChartFile,
-		//					Key:   "helm.chart",
-		//					Value: data.Helm.Chart,
-		//				},
-		//			},
-		//		},
-		//		conditionID + "-repository": {
-		//			DisableSourceInput: true,
-		//			ResourceConfig: resource.ResourceConfig{
-		//				Name: fmt.Sprintf("Ensure Helm chart repository %q is specified", data.Helm.Repo),
-		//				Kind: "yaml",
-		//				Spec: yaml.Spec{
-		//					File:  relativeFoundChartFile,
-		//					Key:   "helm.repo",
-		//					Value: data.Helm.Repo,
-		//				},
-		//			},
-		//		},
-		//	},
-		//	Targets: map[string]target.Config{
-		//		targetID: {
-		//			SourceID: sourceID,
-		//			ResourceConfig: resource.ResourceConfig{
-		//				Name: fmt.Sprintf("Bump chart %q from Fleet bundle %q", data.Helm.Chart, chartName),
-		//				Kind: "yaml",
-		//				Spec: helm.Spec{
-		//					File: relativeFoundChartFile,
-		//					Key:  "helm.version",
-		//				},
-		//			},
-		//		},
-		//	},
-		//}
-
 		tmpl, err := template.New("manifest").Parse(manifestTemplate)
 		if err != nil {
 			logrus.Errorln(err)

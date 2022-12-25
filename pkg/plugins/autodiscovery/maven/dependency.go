@@ -91,57 +91,6 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 				continue
 			}
 
-			//manifest := config.Spec{
-			//	Name: manifestName,
-			//	Sources: map[string]source.Config{
-			//		artifactFullName: {
-			//			ResourceConfig: resource.ResourceConfig{
-			//				Name: fmt.Sprintf("Get latest Maven Artifact version: %q", artifactFullName),
-			//				Kind: "maven",
-			//				Spec: mavenSourceSpec,
-			//			},
-			//		},
-			//	},
-			//	Conditions: map[string]condition.Config{
-			//		dependency.GroupID: {
-			//			DisableSourceInput: true,
-			//			ResourceConfig: resource.ResourceConfig{
-			//				Name: fmt.Sprintf("Ensure dependency groupId %q is specified", dependency.GroupID),
-			//				Kind: "xml",
-			//				Spec: xml.Spec{
-			//					File:  relativePomFile,
-			//					Path:  fmt.Sprintf("/project/dependencies/dependency[%d]/groupId", i+1),
-			//					Value: dependency.GroupID,
-			//				},
-			//			},
-			//		},
-			//		dependency.ArtifactID: {
-			//			DisableSourceInput: true,
-			//			ResourceConfig: resource.ResourceConfig{
-			//				Name: fmt.Sprintf("Ensure dependency artifactId %q is specified", dependency.ArtifactID),
-			//				Kind: "xml",
-			//				Spec: xml.Spec{
-			//					File:  relativePomFile,
-			//					Path:  fmt.Sprintf("/project/dependencies/dependency[%d]/artifactId", i+1),
-			//					Value: dependency.ArtifactID,
-			//				},
-			//			},
-			//		},
-			//	},
-			//	Targets: map[string]target.Config{
-			//		artifactFullName: {
-			//			SourceID: artifactFullName,
-			//			ResourceConfig: resource.ResourceConfig{
-			//				Name: fmt.Sprintf("Bump dependency version for %q", artifactFullName),
-			//				Kind: "xml",
-			//				Spec: xml.Spec{
-			//					File: relativePomFile,
-			//					Path: fmt.Sprintf("/project/dependencies/dependency[%d]/version", i+1),
-			//				},
-			//			},
-			//		},
-			//	},
-			//}
 			artifactFullName := fmt.Sprintf("%s/%s", dependency.GroupID, dependency.ArtifactID)
 
 			repos := []string{}

@@ -83,58 +83,6 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
-		//manifest := config.Spec{
-		//	Name: manifestName,
-		//	Sources: map[string]source.Config{
-		//		artifactFullName: {
-		//			ResourceConfig: resource.ResourceConfig{
-		//				Name: fmt.Sprintf("Get latest Parent Pom Artifact version: %q", artifactFullName),
-		//				Kind: "maven",
-		//				Spec: mavenSourceSpec,
-		//			},
-		//		},
-		//	},
-		//	Conditions: map[string]condition.Config{
-		//		parentPom.GroupID: {
-		//			DisableSourceInput: true,
-		//			ResourceConfig: resource.ResourceConfig{
-		//				Name: fmt.Sprintf("Ensure parent pom.xml groupId %q is specified", parentPom.GroupID),
-		//				Kind: "xml",
-		//				Spec: xml.Spec{
-		//					File:  relativePomFile,
-		//					Path:  "/project/parent/groupId",
-		//					Value: parentPom.GroupID,
-		//				},
-		//			},
-		//		},
-		//		parentPom.ArtifactID: {
-		//			DisableSourceInput: true,
-		//			ResourceConfig: resource.ResourceConfig{
-		//				Name: fmt.Sprintf("Ensure parent artifactId %q is specified", parentPom.ArtifactID),
-		//				Kind: "xml",
-		//				Spec: xml.Spec{
-		//					File:  relativePomFile,
-		//					Path:  "/project/parent/artifactId",
-		//					Value: parentPom.ArtifactID,
-		//				},
-		//			},
-		//		},
-		//	},
-		//	Targets: map[string]target.Config{
-		//		artifactFullName: {
-		//			SourceID: artifactFullName,
-		//			ResourceConfig: resource.ResourceConfig{
-		//				Name: fmt.Sprintf("Bump parent pom version for %q", artifactFullName),
-		//				Kind: "xml",
-		//				Spec: xml.Spec{
-		//					File: relativePomFile,
-		//					Path: "/project/parent/version",
-		//				},
-		//			},
-		//		},
-		//	},
-		//}
-		// Set scmID if defined
 		artifactFullName := fmt.Sprintf("%s/%s", parentPom.GroupID, parentPom.ArtifactID)
 
 		repos := []string{}
