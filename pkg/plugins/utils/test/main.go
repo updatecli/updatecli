@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
 )
 
@@ -16,8 +17,8 @@ func AssertConfigSpecEqualByteArray(t *testing.T, spec *config.Spec, manifest st
 	buf := bytes.NewBufferString("")
 	yamlEncoder := yaml.NewEncoder(buf)
 	yamlEncoder.SetIndent(2)
-	yamlEncoder.Encode(spec)
-	expectedPipeline := buf.String()
+	err := yamlEncoder.Encode(spec)
+	require.NoError(t, err)
 
-	return assert.Equal(t, string(expectedPipeline), manifest)
+	return assert.Equal(t, string(buf.String()), manifest)
 }
