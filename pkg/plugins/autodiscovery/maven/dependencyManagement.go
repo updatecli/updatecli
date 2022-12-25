@@ -189,7 +189,7 @@ func (m Maven) discoverDependencyManagementsManifests() ([][]byte, error) {
 				ConditionArtifactIDPath:  fmt.Sprintf("/project/dependencyManagement/dependencies/dependency[%d]/artifactId", i+1),
 				ConditionArtifactIDValue: dependency.ArtifactID,
 				SourceID:                 artifactFullName,
-				SourceName:               fmt.Sprintf("Get latest Maven Artifact version: %q", artifactFullName),
+				SourceName:               fmt.Sprintf("Get latest Maven Artifact version %q", artifactFullName),
 				SourceKind:               "maven",
 				SourceGroupID:            dependency.GroupID,
 				SourceArtifactID:         dependency.ArtifactID,

@@ -32,7 +32,7 @@ func TestDiscoverManifests(t *testing.T) {
 					Sources: map[string]source.Config{
 						"com.jcraft/jsch": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest Maven Artifact version: \"com.jcraft/jsch\"",
+								Name: "Get latest Maven Artifact version \"com.jcraft/jsch\"",
 								Kind: "maven",
 								Spec: maven.Spec{
 									Repositories: []string{
@@ -92,7 +92,7 @@ func TestDiscoverManifests(t *testing.T) {
 					Sources: map[string]source.Config{
 						"io.jenkins.tools.bom/bom-2.346.x": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest Maven Artifact version: \"io.jenkins.tools.bom/bom-2.346.x\"",
+								Name: "Get latest Maven Artifact version \"io.jenkins.tools.bom/bom-2.346.x\"",
 								Kind: "maven",
 								Spec: maven.Spec{
 									Repositories: []string{
@@ -105,7 +105,7 @@ func TestDiscoverManifests(t *testing.T) {
 						},
 					},
 					Conditions: map[string]condition.Config{
-						"io.jenkins.tools.bom": {
+						"groupid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure dependencyManagement groupId \"io.jenkins.tools.bom\" is specified",
@@ -117,7 +117,7 @@ func TestDiscoverManifests(t *testing.T) {
 								},
 							},
 						},
-						"bom-2.346.x": {
+						"artifactid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure dependencyManagement artifactId \"bom-2.346.x\" is specified",
@@ -151,7 +151,7 @@ func TestDiscoverManifests(t *testing.T) {
 					Sources: map[string]source.Config{
 						"org.jenkins-ci.plugins/plugin": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest Parent Pom Artifact version: \"org.jenkins-ci.plugins/plugin\"",
+								Name: "Get latest Parent Pom Artifact version \"org.jenkins-ci.plugins/plugin\"",
 								Kind: "maven",
 								Spec: maven.Spec{
 									Repositories: []string{
