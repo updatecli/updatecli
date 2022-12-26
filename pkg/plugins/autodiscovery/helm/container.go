@@ -128,7 +128,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 			params := struct {
 				ManifestName               string
-				ImageName                  string
 				ChartName                  string
 				DependencyName             string
 				DependencyRepository       string

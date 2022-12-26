@@ -9,7 +9,7 @@ sources:
     name: {{ .SourceName }}
     kind: dockerimage
     spec:
-      image: {{ .ImageName }}
+      image: {{ .SourceImageName }}
       tagFilter: {{ .SourceTagFilter }}
       versionFilter:
         kind: {{ .SourceVersionFilterKind }}
