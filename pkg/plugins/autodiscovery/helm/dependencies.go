@@ -40,11 +40,12 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 	}
 
 	for _, foundChartFile := range foundChartFiles {
+		logrus.Debugf("parsing file %q", foundChartFile)
 
 		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundChartFile)
 		if err != nil {
 			// Jump to the next Helm chart if current failed
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -70,7 +71,8 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 		// Retrieve chart dependencies for each chart
 		dependencies, err := getChartMetadata(foundChartFile)
 		if err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		if dependencies == nil {
@@ -86,7 +88,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 
 			tmpl, err := template.New("manifest").Parse(dependencyManifest)
 			if err != nil {
-				logrus.Errorln(err)
+				logrus.Debugln(err)
 				continue
 			}
 
@@ -131,7 +133,8 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				return nil, err
+				logrus.Debugln(err)
+				continue
 			}
 
 			manifests = append(manifests, manifest.Bytes())

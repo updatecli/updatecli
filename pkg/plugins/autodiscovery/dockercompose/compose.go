@@ -40,9 +40,10 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 
 	for _, foundDockerComposefile := range foundDockerComposeFiles {
 		relativeFoundDockerComposeFile, err := filepath.Rel(h.rootDir, foundDockerComposefile)
+		logrus.Debugf("parsing file %q", foundDockerComposefile)
 		if err != nil {
 			// Let's try the next one if it fails
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -52,7 +53,8 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 		// Retrieve chart dependencies for each chart
 		svcList, err := getDockerComposeSpecFromFile(foundDockerComposefile)
 		if err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		if len(svcList) == 0 {
@@ -133,7 +135,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
-				logrus.Errorln(err)
+				logrus.Debugln(err)
 				continue
 			}
 
@@ -165,7 +167,8 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				return nil, err
+				logrus.Debugln(err)
+				continue
 			}
 
 			manifests = append(manifests, manifest.Bytes())

@@ -39,11 +39,12 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 	}
 
 	for _, foundFleetBundleFile := range foundFleetBundleFiles {
+		logrus.Debugf("parsing file %q", foundFleetBundleFile)
 
 		relativeFoundChartFile, err := filepath.Rel(f.rootDir, foundFleetBundleFile)
 		if err != nil {
 			// Let's try the next chart if one fail
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -70,7 +71,8 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 
 		data, err := getFleetBundleData(foundFleetBundleFile)
 		if err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		if data == nil {
@@ -84,7 +86,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 
 		tmpl, err := template.New("manifest").Parse(manifestTemplate)
 		if err != nil {
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -121,11 +123,11 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 
 		manifest := bytes.Buffer{}
 		if err := tmpl.Execute(&manifest, params); err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		manifests = append(manifests, manifest.Bytes())
-
 	}
 
 	return manifests, nil

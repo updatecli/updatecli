@@ -53,11 +53,12 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 	}
 
 	for _, foundHelmfile := range foundHelmfileFiles {
+		logrus.Debugf("parsing file %q", foundHelmfile)
 
 		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundHelmfile)
 		if err != nil {
 			// Jump to the next Helmfile if current failed
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -84,7 +85,8 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 
 		metadata, err := getHelmfileMetadata(foundHelmfile)
 		if err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		if metadata == nil {
@@ -145,49 +147,9 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				helmSourcespec.InlineKeyChain.Password = OCIPassword
 			}
 
-			//manifest := config.Spec{
-			//	Name: manifestName,
-			//	Sources: map[string]source.Config{
-			//		sourceID: {
-			//			ResourceConfig: resource.ResourceConfig{
-			//				Name: fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
-			//				Kind: "helmchart",
-			//				Spec: helmSourcespec,
-			//			},
-			//		},
-			//	},
-			//	Conditions: map[string]condition.Config{
-			//		conditionID: {
-			//			DisableSourceInput: true,
-			//			ResourceConfig: resource.ResourceConfig{
-			//				Name: fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
-			//				Kind: "yaml",
-			//				Spec: yaml.Spec{
-			//					File:  foundHelmfile,
-			//					Key:   fmt.Sprintf("releases[%d].chart", i),
-			//					Value: release.Chart,
-			//				},
-			//			},
-			//		},
-			//	},
-			//	Targets: map[string]target.Config{
-			//		targetID: {
-			//			SourceID: release.Name,
-			//			ResourceConfig: resource.ResourceConfig{
-			//				Name: fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
-			//				Kind: "yaml",
-			//				Spec: yaml.Spec{
-			//					File: foundHelmfile,
-			//					Key:  fmt.Sprintf("releases[%d].version", i),
-			//				},
-			//			},
-			//		},
-			//	},
-			//}
-			// Set scmID if defined
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
-				logrus.Errorln(err)
+				logrus.Debugln(err)
 				continue
 			}
 
@@ -231,7 +193,8 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				return nil, err
+				logrus.Debugln(err)
+				continue
 			}
 
 			manifests = append(manifests, manifest.Bytes())

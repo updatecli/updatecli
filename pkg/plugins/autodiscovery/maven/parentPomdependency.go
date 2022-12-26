@@ -27,9 +27,10 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 	for _, pomFile := range foundPomFiles {
 
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
+		logrus.Debugf("parsing file %q", pomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -49,7 +50,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		doc := etree.NewDocument()
 		if err := doc.ReadFromFile(pomFile); err != nil {
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -67,7 +68,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		containsVariableRegex, err := regexp.Compile(`.*\$\{.*\}.*`)
 
 		if err != nil {
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -75,7 +76,8 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		isContainsVariable := containsVariableRegex.Match([]byte(parentPom.Version))
 
 		if err != nil {
-			logrus.Errorln(err)
+			logrus.Debugln(err)
+			continue
 		}
 
 		if isContainsVariable {
@@ -92,7 +94,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		tmpl, err := template.New("manifest").Parse(manifestTemplate)
 		if err != nil {
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -144,7 +146,8 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		manifest := bytes.Buffer{}
 		if err := tmpl.Execute(&manifest, params); err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		manifests = append(manifests, manifest.Bytes())

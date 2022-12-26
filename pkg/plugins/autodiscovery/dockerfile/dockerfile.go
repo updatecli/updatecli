@@ -33,10 +33,11 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 	for _, foundDockerfile := range foundDockerfiles {
 
+		logrus.Debugf("parsing file %q", foundDockerfile)
 		relativeFoundDockerfile, err := filepath.Rel(h.rootDir, foundDockerfile)
 		if err != nil {
 			// Let try the next one if it fails
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -45,7 +46,8 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 		instructions, err := parseDockerfile(foundDockerfile)
 		if err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		if len(instructions) == 0 {
@@ -119,9 +121,8 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 			}
 
 			if err != nil {
-				logrus.Errorln(err)
+				logrus.Debugln(err)
 				continue
-
 			}
 
 			targetMatcher := ""
@@ -137,7 +138,7 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
-				logrus.Errorln(err)
+				logrus.Debugln(err)
 				continue
 			}
 
@@ -171,7 +172,8 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				return nil, err
+				logrus.Debugln(err)
+				continue
 			}
 
 			manifests = append(manifests, manifest.Bytes())

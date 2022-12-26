@@ -35,6 +35,8 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 	for _, foundValueFile := range foundValuesFiles {
 
+		logrus.Debugf("parsing file %q", foundValueFile)
+
 		relativeFoundValueFile, err := filepath.Rel(h.rootDir, foundValueFile)
 		if err != nil {
 			// Jump to the next Helm chart if current failed
@@ -158,9 +160,9 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				SourceID:                   image.repository,
 				SourceName:                 fmt.Sprintf("Get latest %q container tag", image.repository),
 				SourceVersionFilterKind:    "semver",
-				SourceVersionFilterPattern: "*",
+				SourceVersionFilterPattern: "'*'",
 				SourceImageName:            sourceSpec.Image,
-				SourceTagFilter:            sourceSpec.TagFilter,
+				SourceTagFilter:            fmt.Sprintf("'%s'", sourceSpec.TagFilter),
 				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", image.repository, chartName),
 				TargetID:                   image.repository,
 				TargetKey:                  image.yamlTagPath,
