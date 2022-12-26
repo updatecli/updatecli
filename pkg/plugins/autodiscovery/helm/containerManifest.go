@@ -34,7 +34,7 @@ targets:
     scmid: {{ .ScmID }}
 {{ end }}
     spec:
-      file: {{ .File }}
+      file: {{ .TargetFile }}
       name: {{ .TargetChartName }}
       key: {{ .TargetKey }}
       VersionIncrement: minor

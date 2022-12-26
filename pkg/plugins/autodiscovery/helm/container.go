@@ -141,6 +141,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				TargetName                 string
 				TargetID                   string
 				TargetKey                  string
+				TargetFile                 string
 				TargetChartName            string
 				File                       string
 				ScmID                      string
@@ -160,6 +161,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				TargetID:                   image.repository,
 				TargetKey:                  image.yamlTagPath,
 				TargetChartName:            chartRelativeMetadataPath,
+				TargetFile:                 filepath.Base(foundValueFile),
 				File:                       relativeFoundValueFile,
 				ScmID:                      h.scmID,
 			}
