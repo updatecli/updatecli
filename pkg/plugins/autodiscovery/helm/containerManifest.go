@@ -17,7 +17,7 @@ sources:
 conditions:
   {{ .ConditionID }}:
     disablesourceinput: true
-    name: Ensure Helm chart repository {{ .DependencyRepository }} is specified
+    name: {{ .ConditionName }}
     kind: yaml
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
@@ -25,10 +25,10 @@ conditions:
     spec:
       file: {{ .File }}
       key: {{ .ConditionKey }}
-      value: {{ .DependencyName}}
+      value: {{ .ConditionValue }}
 targets:
   {{ .TargetID }}:
-    name: Bump Helm chart dependency {{ .DependencyName }} for Helm chart {{ .ChartName }}
+    name: {{ .TargetName }}
     kind: helmchart
 {{- if .ScmID }}
     scmid: {{ .ScmID }}

@@ -128,14 +128,10 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 			params := struct {
 				ManifestName               string
-				ChartName                  string
-				DependencyName             string
-				DependencyRepository       string
 				ConditionID                string
 				ConditionKey               string
 				ConditionValue             string
 				ConditionName              string
-				FleetBundle                string
 				SourceID                   string
 				SourceName                 string
 				SourceVersionFilterKind    string
@@ -150,12 +146,10 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				ScmID                      string
 			}{
 				ManifestName:               fmt.Sprintf("Bump Docker image %q for Helm chart %q", image.repository, chartName),
-				ChartName:                  chartName,
 				ConditionID:                image.repository,
 				ConditionKey:               image.yamlRepositoryPath,
 				ConditionName:              fmt.Sprintf("Ensure container repository %q is specified", image.repository),
 				ConditionValue:             image.repository,
-				FleetBundle:                chartName,
 				SourceID:                   image.repository,
 				SourceName:                 fmt.Sprintf("Get latest %q container tag", image.repository),
 				SourceVersionFilterKind:    "semver",
