@@ -20,7 +20,9 @@ func AssertConfigSpecEqualByteArray(t *testing.T, spec *config.Spec, manifest st
 	err := yamlEncoder.Encode(spec)
 	require.NoError(t, err)
 
-	return assert.Equal(t, buf.String(), yamlMarshalUnmarshal(t, manifest))
+	return assert.Equal(t,
+		yamlMarshalUnmarshal(t, buf.String()),
+		yamlMarshalUnmarshal(t, manifest))
 }
 
 // yamlMarshalUmarshal is used to parse a manifest to ensure it's a valid yaml one.
