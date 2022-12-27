@@ -183,7 +183,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				SourceName:                 fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
 				SourceKind:                 "helmchart",
 				SourceVersionFilterKind:    "semver",
-				SourceVersionFilterPattern: "'*'",
+				SourceVersionFilterPattern: "*",
 				TargetID:                   release.Name,
 				TargetName:                 fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
 				TargetKey:                  fmt.Sprintf("releases[%d].version", i),

@@ -2,39 +2,39 @@ package helmfile
 
 const (
 	// manifestTemplate is the Go template used to generate Fleet manifests
-	manifestTemplate string = `name: {{ .ManifestName }}
+	manifestTemplate string = `name: '{{ .ManifestName }}'
 sources:
   {{ .SourceID }}:
-    name: {{ .SourceName }}
-    kind: {{ .SourceKind }}
+    name: '{{ .SourceName }}'
+    kind: '{{ .SourceKind }}'
     spec:
-      name: {{ .ChartName }}
-      url: {{ .ChartRepository }}
+      name: '{{ .ChartName }}'
+      url: '{{ .ChartRepository }}'
       versionfilter:
-        kind: {{ .SourceVersionFilterKind }}
-        pattern: {{ .SourceVersionFilterPattern }}
+        kind: '{{ .SourceVersionFilterKind }}'
+        pattern: '{{ .SourceVersionFilterPattern }}'
 conditions:
   {{ .ConditionID }}:
-    name: {{ .ConditionName }}
-    kind: yaml
+    name: '{{ .ConditionName }}'
+    kind: 'yaml'
 {{- if .ScmID }}
-    scmid: {{ .ScmID }}
+    scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
-      file: {{ .File }}
-      key: {{ .ConditionKey }}
-      value: {{ .ConditionValue }}
+      file: '{{ .File }}'
+      key: '{{ .ConditionKey }}'
+      value: '{{ .ConditionValue }}'
     disablesourceinput: true
 targets:
   {{ .TargetID }}:
-    name: {{ .TargetName }}
-    kind: yaml
+    name: '{{ .TargetName }}'
+    kind: 'yaml'
 {{- if .ScmID }}
-    scmid: {{ .ScmID }}
+    scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
-      file: {{ .File }}
-      key: {{ .TargetKey }}
-    sourceid: {{ .SourceID }}
+      file: '{{ .File }}'
+      key: '{{ .TargetKey }}'
+    sourceid: '{{ .SourceID }}'
 `
 )
