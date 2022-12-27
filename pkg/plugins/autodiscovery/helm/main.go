@@ -12,13 +12,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
-// Spec defines the parameters which can be provided to the Helm builder.
+// Spec defines the Helm parameters.
 type Spec struct {
-	// RootDir defines the root directory used to recursively search for Helm Chart
+	// rootdir defines the root directory used to recursively search for Helm Chart
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific Helm based on a rule
+	// Ignore specifies rule to ignore Helm chart update.
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
+	// Only specify required rule to restrict Helm chart update.
 	Only MatchingRules `yaml:",omitempty"`
 	// Auths provides a map of registry credentials where the key is the registry URL without scheme
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
@@ -28,7 +28,7 @@ type Spec struct {
 type Helm struct {
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
-	// rootDir defines the root directory from where looking for Helm Chart
+	// rootdir defines the root directory from where looking for Helm Chart
 	rootDir string
 }
 
@@ -46,10 +46,9 @@ func New(spec interface{}, rootDir string) (Helm, error) {
 		dir = s.RootDir
 	}
 
-	// If no RootDir have been provided via settings,
-	// then fallback to the current process path.
+	// Fallback to the current process path if not rootdir specified.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directrory defined")
+		logrus.Errorln("no working directory defined")
 		return Helm{}, err
 	}
 

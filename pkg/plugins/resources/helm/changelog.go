@@ -33,7 +33,7 @@ URL:
 `
 )
 
-// Changelog returns a rendered template with this chart version informations
+// Changelog returns a rendered template with this chart version information
 func (c Chart) Changelog() string {
 	index, err := c.GetRepoIndexFromURL()
 

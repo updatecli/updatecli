@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	// ErrWrongConfig is returned in case of a wrong configuration
+	// ErrWrongConfig is the error message for a wrong helm configuration
 	ErrWrongConfig = errors.New("wrong helm configuration")
 )
 
-// ValidateTarget ensure that target required parameter are set
+// ValidateTarget validates target struct fields.
 func (c *Chart) ValidateTarget() error {
 
 	var errs []error
@@ -42,6 +42,7 @@ func (c *Chart) ValidateTarget() error {
 	return nil
 }
 
+// validateVersionInc validates that the version increment settings is correctly set.
 func (c *Chart) validateVersionInc() []error {
 	var errs []error
 
