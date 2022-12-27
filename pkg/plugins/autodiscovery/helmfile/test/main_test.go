@@ -180,7 +180,6 @@ func TestDiscoverManifests(t *testing.T) {
 				helmfile.Spec{
 					RootDir: tt.rootDir,
 				}, "", "")
-
 			require.NoError(t, err)
 
 			pipelines, err := helmfile.DiscoverManifests()
