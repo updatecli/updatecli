@@ -10,8 +10,8 @@ sources:
     kind: 'dockerimage'
     spec:
       image: '{{ .ImageName }}'
-      tagFilter: '{{ .TagFilter }}'
-      versionFilter:
+      tagfilter: '{{ .TagFilter }}'
+      versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
 targets:
