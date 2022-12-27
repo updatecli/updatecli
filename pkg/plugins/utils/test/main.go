@@ -30,12 +30,13 @@ func AssertConfigSpecEqualByteArray(t *testing.T, spec *config.Spec, manifest st
 func yamlMarshalUnmarshal(t *testing.T, manifest string) string {
 
 	var spec config.Spec
-	yaml.Unmarshal([]byte(manifest), &spec)
+	err := yaml.Unmarshal([]byte(manifest), &spec)
+	require.NoError(t, err)
 
 	buf := bytes.NewBufferString("")
 	yamlEncoder := yaml.NewEncoder(buf)
 	yamlEncoder.SetIndent(2)
-	err := yamlEncoder.Encode(spec)
+	err = yamlEncoder.Encode(spec)
 	require.NoError(t, err)
 
 	return buf.String()
