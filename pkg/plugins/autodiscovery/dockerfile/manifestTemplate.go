@@ -19,7 +19,7 @@ targets:
     name: '{{ .TargetName }}'
     kind: 'dockerfile'
 {{- if .ScmID }}
-    scmid: {{ .ScmID }}
+    scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .TargetFile }}'
