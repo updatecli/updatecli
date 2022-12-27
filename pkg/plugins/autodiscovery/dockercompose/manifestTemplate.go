@@ -18,7 +18,7 @@ targets:
     name: '{{ .TargetName }}'
     kind: 'yaml'
 {{- if .ScmID }}
-    scmid: {{ .ScmID }}
+    scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .TargetFile }}'
