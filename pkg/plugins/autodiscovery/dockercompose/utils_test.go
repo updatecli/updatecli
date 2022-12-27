@@ -51,7 +51,14 @@ func TestGetDockerComposeSpec(t *testing.T) {
 			name:     "Case from testdata with sorted services",
 			filename: "test/testdata/docker-compose.yaml",
 			expectedServices: dockercomposeServicesList{
-				dockerComposeService{Name: "jenkins-weekly",
+				dockerComposeService{
+					Name: "jenkins-lts",
+					Spec: dockerComposeServiceSpec{
+						Image: "jenkinsci/jenkins:2.150.1-alpine",
+					},
+				},
+				dockerComposeService{
+					Name: "jenkins-weekly",
 					Spec: dockerComposeServiceSpec{
 						Image:    "jenkinsci/jenkins:2.254-alpine",
 						Platform: "linux/amd64",
