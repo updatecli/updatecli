@@ -140,8 +140,11 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			}
 
 			params := struct {
+				ManifestName         string
 				ImageName            string
+				ImageArchitecture    string
 				SourceID             string
+				SourceName           string
 				TargetID             string
 				TargetFile           string
 				TargetName           string
@@ -152,9 +155,12 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				VersionFilterPattern string
 				ScmID                string
 			}{
+				ManifestName:         fmt.Sprintf("Bump Docker image tag for %q", serviceImageName),
 				ImageName:            serviceImageName,
-				SourceID:             serviceImageName,
-				TargetID:             serviceImageName,
+				ImageArchitecture:    sourceSpec.Architecture,
+				SourceID:             svc.Name,
+				SourceName:           fmt.Sprintf("[%s] Get latest Docker image tag", serviceImageName),
+				TargetID:             svc.Name,
 				TargetName:           fmt.Sprintf("[%s] Bump Docker image tag in %q", serviceImageName, relativeFoundDockerComposeFile),
 				TargetFile:           relativeFoundDockerComposeFile,
 				TargetKey:            fmt.Sprintf("services.%s.image", svc.Name),
