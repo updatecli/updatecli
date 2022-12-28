@@ -1,12 +1,15 @@
 package engine
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
@@ -26,7 +29,7 @@ import (
 )
 
 var (
-	// ErrNoManifestDetected is return when we couldn't find Updatecli manifest
+	// ErrNoManifestDetected is the error message returned by Updatecli if it can't find manifest
 	ErrNoManifestDetected error = errors.New("no Updatecli manifest detected")
 )
 
@@ -47,9 +50,9 @@ func (e *Engine) Clean() (err error) {
 // GetFiles return an array with every valid files.
 func GetFiles(root string) (files []string) {
 	if root == "" {
-		// If no manifest have been provided then we try to see if the file
-		// updatecli.yaml exist. If it's then we try to see if the directory updatecli.d
-		// if it's still not the case then we return no manifest files.
+		// Updatecli tries to load the file updatecli.yaml if no manifest provided
+		// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
+		// if there is no manifests in the directory updatecli.d then Updatecli returns no manifest files.
 		_, err := os.Stat(config.DefaultConfigFilename)
 		if !errors.Is(err, os.ErrNotExist) {
 			logrus.Debugf("Default Updatecli manifest detected %q", config.DefaultConfigFilename)
@@ -154,6 +157,8 @@ func (e *Engine) Prepare() (err error) {
 	logrus.Infof("+ %s +\n", strings.ToTitle("Prepare"))
 	logrus.Infof("%s\n\n", strings.Repeat("+", len("Prepare")+4))
 
+	var defaultCrawlersEnabled bool
+
 	err = tmp.Create()
 	if err != nil {
 		return err
@@ -167,20 +172,18 @@ func (e *Engine) Prepare() (err error) {
 	}
 
 	if errors.Is(err, ErrNoManifestDetected) {
-		if !e.Options.Pipeline.AutoDiscovery.Enabled {
-			logrus.Infof("Autodiscovery enabled as no Updatecli manifest could be detected\n\n")
-		}
-		e.Options.Pipeline.AutoDiscovery.Enabled = true
+		defaultCrawlersEnabled = true
 	}
 
-	// If one git clone fails then we exit
+	// If one git clone fails then Updatecli exits
+	// scm initialization must be done before autodiscovery as we need to identify
+	// in advance git repository directories to analyze them for possible common update scenarii
 	err = e.InitSCM()
-
 	if err != nil {
 		return err
 	}
 
-	err = e.LoadAutoDiscovery()
+	err = e.LoadAutoDiscovery(defaultCrawlersEnabled)
 	if err != nil {
 		return err
 	}
@@ -216,7 +219,7 @@ func (e *Engine) LoadConfigurations() error {
 		switch err {
 		case config.ErrConfigFileTypeNotSupported:
 			// Updatecli accepts either a single configuration file or a directory containing multiple configurations.
-			// When browsing files from a directory, we don't want to record error due to unsupported files.
+			// When browsing files from a directory, Updatecli ignores unsupported files.
 			continue
 		case nil:
 			// nothing to do
@@ -255,7 +258,7 @@ func (e *Engine) LoadConfigurations() error {
 
 }
 
-// Run runs the full process for one yaml file.
+// Run runs the full process for one manifest
 func (e *Engine) Run() (err error) {
 	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Pipeline")+4))
 	logrus.Infof("+ %s +\n", strings.ToTitle("Pipeline"))
@@ -352,19 +355,16 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 	return s.GenerateSchema(&config.Spec{})
 }
 
-// LoadAutoDiscovery will try to guess available pipelines based on specific directory
-func (e *Engine) LoadAutoDiscovery() error {
+// LoadAutoDiscovery tries to guess available pipelines based on specific directory
+func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 
 	// Default Autodiscovery pipeline
-	if e.Options.Pipeline.AutoDiscovery.Enabled {
+	if defaultEnabled {
 
-		// To remove once not experimental
-		if !cmdoptions.Experimental {
-			logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
-			return nil
-		}
+		logrus.Debugf("Default Autodiscovery crawlers enabled")
 
 		var defaultPipeline pipeline.Pipeline
+
 		err := defaultPipeline.Init(
 			&config.Config{
 				Spec: config.Spec{
@@ -391,9 +391,9 @@ func (e *Engine) LoadAutoDiscovery() error {
 			continue
 		}
 
-		// To remove once not experimental
+		// TODO: To be removed once not experimental anymore
 		if !cmdoptions.Experimental {
-			logrus.Warningf("The feature 'autodiscovery' requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
+			logrus.Warningf("The 'autodiscovery' feature requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
 			return nil
 		}
 
@@ -401,25 +401,31 @@ func (e *Engine) LoadAutoDiscovery() error {
 		logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
 		logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
-		var sc scm.Config
-		var actionConfig action.Config
+		var sc *scm.Config
+		var actionConfig *action.Config
 		var autodiscoveryScm scm.Scm
 		var autodiscoveryAction action.Action
 		var found bool
+
+		workDir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed getting current working directory due to %v", err)
+		}
 
 		// Retrieve scm spec if it exists
 		if len(p.Config.Spec.AutoDiscovery.ScmId) > 0 {
 			autodiscoveryScm, found = p.SCMs[p.Config.Spec.AutoDiscovery.ScmId]
 
 			if found {
-				sc = *autodiscoveryScm.Config
+				sc = autodiscoveryScm.Config
+				workDir = autodiscoveryScm.Handler.GetDirectory()
 			}
 		}
 
 		/** Check for deprecated items **/
 		if p.Config.Spec.AutoDiscovery.PullrequestId != "" {
 			if p.Config.Spec.AutoDiscovery.ActionId != "" {
-				return fmt.Errorf("The `autodiscovery.pullrequestid` and `autodiscovery.actionid` keywords are mutually exclusive. Please use only `autodiscovery.actionid` as `autodiscovery.pullrequestid` is deprecated.")
+				return fmt.Errorf("the `autodiscovery.pullrequestid` and `autodiscovery.actionid` keywords are mutually exclusive. Please use only `autodiscovery.actionid` as `autodiscovery.pullrequestid` is deprecated")
 			}
 
 			logrus.Warningf("The `autodiscovery.pullrequestid` keyword is deprecated in favor of `autodiscovery.actionid`, please update this manifest. Updatecli will continue the execution while trying to translate `autodiscovery.pullrequestid` to `autodiscovery.actionid`.")
@@ -433,15 +439,12 @@ func (e *Engine) LoadAutoDiscovery() error {
 			autodiscoveryAction, found = p.Actions[p.Config.Spec.AutoDiscovery.ActionId]
 
 			if found {
-				actionConfig = autodiscoveryAction.Config
+				actionConfig = &autodiscoveryAction.Config
 			}
 		}
 
 		c, err := autodiscovery.New(
-			p.Config.Spec.AutoDiscovery,
-			autodiscoveryScm.Handler,
-			&sc,
-			&actionConfig)
+			p.Config.Spec.AutoDiscovery, workDir)
 
 		if err != nil {
 			e.Pipelines[id].Report.Result = result.FAILURE
@@ -451,7 +454,7 @@ func (e *Engine) LoadAutoDiscovery() error {
 
 		errs := []error{}
 
-		manifests, err := c.Run()
+		bytesManifests, err := c.Run()
 
 		if err != nil {
 			e.Pipelines[id].Report.Result = result.FAILURE
@@ -459,15 +462,64 @@ func (e *Engine) LoadAutoDiscovery() error {
 			return err
 		}
 
-		if len(manifests) == 0 {
+		if len(bytesManifests) == 0 {
 			logrus.Infof("nothing detected")
 		}
 
-		for i := range manifests {
-			manifests[i].Version = version.Version
+		// Generate PipelineID
+		// Set pipelineId for each manifest by on the autodiscovery groupby rule
+
+		// We use a sha256 hash to avoid collision between pipelineID
+		hash := sha256.New()
+		_, err = io.WriteString(hash, "updatecli/autodiscovery/batch")
+		var batchPipelineID string
+
+		if err != nil {
+			logrus.Errorln(err)
+		}
+
+		if p.Config.Spec.AutoDiscovery.GroupBy == autodiscovery.GROUPEBYALL {
+			batchPipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+		}
+
+		for i := range bytesManifests {
+
+			manifest := config.Spec{}
+
+			// We expected manifest generated by the autodiscovery to use the yaml syntax
+			err = yaml.Unmarshal(bytesManifests[i], &manifest)
+			if err != nil {
+				return err
+			}
+
+			pipelineID := batchPipelineID
+			// If matchPipelineID is empty then we generate the ID based on the manifest name
+			if pipelineID == "" {
+				_, err := io.WriteString(hash, manifest.Name)
+				if err != nil {
+					logrus.Errorln(err)
+				}
+				pipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+			}
+
+			manifest.PipelineID = pipelineID
+
+			if sc != nil {
+				manifest.SCMs = make(map[string]scm.Config)
+				manifest.SCMs[p.Config.Spec.AutoDiscovery.ScmId] = *sc
+			}
+
+			if actionConfig != nil {
+				manifest.Actions = make(map[string]action.Config)
+				manifest.Actions[p.Config.Spec.AutoDiscovery.ScmId] = *actionConfig
+			}
+
+			if manifest.Version != "" {
+				manifest.Version = version.Version
+			}
 
 			newConfig := config.Config{
-				Spec: manifests[i],
+				Spec: manifest,
 			}
 
 			newPipeline := pipeline.Pipeline{}
@@ -479,7 +531,7 @@ func (e *Engine) LoadAutoDiscovery() error {
 			} else {
 				e.Pipelines[id].Report.Result = result.FAILURE
 				// don't initially fail as init. of the pipeline still fails even with a successful validation
-				err := fmt.Errorf("%q - %s", manifests[i].Name, err)
+				err := fmt.Errorf("%q - %s", manifest.Name, err)
 				errs = append(errs, err)
 			}
 			if len(errs) > 0 {

@@ -1,4 +1,4 @@
-package config
+package autodiscovery
 
 import (
 	"fmt"

@@ -52,19 +52,19 @@ func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
 	var helmfile helmfileMetadata
 
 	if _, err := os.Stat(filename); err != nil {
-		return &helmfileMetadata{}, err
+		return nil, err
 	}
 
 	v, err := os.Open(filename)
 	if err != nil {
-		return &helmfileMetadata{}, err
+		return nil, err
 	}
 
 	defer v.Close()
 
 	content, err := io.ReadAll(v)
 	if err != nil {
-		return &helmfileMetadata{}, err
+		return nil, err
 	}
 
 	err = goyaml.Unmarshal(content, &helmfile)
@@ -74,7 +74,7 @@ func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
 	}
 
 	if len(helmfile.Releases) == 0 {
-		return &helmfileMetadata{}, nil
+		return nil, nil
 	}
 
 	for _, value := range helmfile.Releases {

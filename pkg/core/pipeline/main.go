@@ -19,7 +19,7 @@ import (
 type Pipeline struct {
 	Name  string // Name defines a pipeline name, used to improve human visualization
 	ID    string // ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title string // Title is used for the full pipelin
+	Title string // Title is used for the full pipeline
 
 	Sources    map[string]source.Source
 	Conditions map[string]condition.Condition

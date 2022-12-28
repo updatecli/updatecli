@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	autodiscovery "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
@@ -552,7 +552,7 @@ func (config *Config) Update(data interface{}) (err error) {
 		"source": func(s string) (string, error) {
 			/*
 				Retrieve the value of a third location key from
-				the updatecli contex.
+				the updatecli context.
 				It returns an error if a key doesn't exist
 				It returns {{ source "<key>" }} if a key exist but still set to zero value,
 				then we assume that the value will be set later in the run.

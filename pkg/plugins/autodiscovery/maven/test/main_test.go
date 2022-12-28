@@ -1,18 +1,18 @@
-package maven
+package test
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	m "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -32,7 +32,7 @@ func TestDiscoverManifests(t *testing.T) {
 					Sources: map[string]source.Config{
 						"com.jcraft/jsch": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest Maven Artifact version: \"com.jcraft/jsch\"",
+								Name: "Get latest Maven Artifact version \"com.jcraft/jsch\"",
 								Kind: "maven",
 								Spec: maven.Spec{
 									Repositories: []string{
@@ -46,7 +46,7 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 					Conditions: map[string]condition.Config{
 
-						"com.jcraft": {
+						"groupid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure dependency groupId \"com.jcraft\" is specified",
@@ -58,7 +58,7 @@ func TestDiscoverManifests(t *testing.T) {
 								},
 							},
 						},
-						"jsch": {
+						"artifactid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure dependency artifactId \"jsch\" is specified",
@@ -92,7 +92,7 @@ func TestDiscoverManifests(t *testing.T) {
 					Sources: map[string]source.Config{
 						"io.jenkins.tools.bom/bom-2.346.x": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest Maven Artifact version: \"io.jenkins.tools.bom/bom-2.346.x\"",
+								Name: "Get latest Maven Artifact version \"io.jenkins.tools.bom/bom-2.346.x\"",
 								Kind: "maven",
 								Spec: maven.Spec{
 									Repositories: []string{
@@ -105,8 +105,7 @@ func TestDiscoverManifests(t *testing.T) {
 						},
 					},
 					Conditions: map[string]condition.Config{
-
-						"io.jenkins.tools.bom": {
+						"groupid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure dependencyManagement groupId \"io.jenkins.tools.bom\" is specified",
@@ -118,7 +117,7 @@ func TestDiscoverManifests(t *testing.T) {
 								},
 							},
 						},
-						"bom-2.346.x": {
+						"artifactid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure dependencyManagement artifactId \"bom-2.346.x\" is specified",
@@ -152,7 +151,7 @@ func TestDiscoverManifests(t *testing.T) {
 					Sources: map[string]source.Config{
 						"org.jenkins-ci.plugins/plugin": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest Parent Pom Artifact version: \"org.jenkins-ci.plugins/plugin\"",
+								Name: "Get latest Parent Pom Artifact version \"org.jenkins-ci.plugins/plugin\"",
 								Kind: "maven",
 								Spec: maven.Spec{
 									Repositories: []string{
@@ -166,7 +165,7 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 					Conditions: map[string]condition.Config{
 
-						"org.jenkins-ci.plugins": {
+						"groupid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure parent pom.xml groupId \"org.jenkins-ci.plugins\" is specified",
@@ -178,7 +177,7 @@ func TestDiscoverManifests(t *testing.T) {
 								},
 							},
 						},
-						"plugin": {
+						"artifactid": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Name: "Ensure parent artifactId \"plugin\" is specified",
@@ -213,17 +212,18 @@ func TestDiscoverManifests(t *testing.T) {
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			maven, err := New(
-				Spec{
+			resource, err := m.New(
+				m.Spec{
 					RootDir: tt.rootDir,
-				}, "")
-
+				}, "", "")
 			require.NoError(t, err)
 
-			pipelines, err := maven.DiscoverManifests(discoveryConfig.Input{})
-
+			pipelines, err := resource.DiscoverManifests()
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedPipelines, pipelines)
+
+			for i := range pipelines {
+				test.AssertConfigSpecEqualByteArray(t, &tt.expectedPipelines[i], string(pipelines[i]))
+			}
 		})
 	}
 

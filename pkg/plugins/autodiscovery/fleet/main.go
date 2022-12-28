@@ -5,10 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Spec defines the parameters which can be provided to the fleet builder.
@@ -21,16 +17,18 @@ type Spec struct {
 	Only MatchingRules `yaml:",omitempty"`
 }
 
-// Fleet hold all information needed to generate fleet bundle.
+// Fleet holds all information needed to generate fleet bundle.
 type Fleet struct {
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootDir defines the root directory from where looking for Fleet bundle
 	rootDir string
+	// scmID hold the scmID used by the newly generated manifest
+	scmID string
 }
 
 // New return a new valid Fleet object.
-func New(spec interface{}, rootDir string) (Fleet, error) {
+func New(spec interface{}, rootDir, scmID string) (Fleet, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -46,61 +44,22 @@ func New(spec interface{}, rootDir string) (Fleet, error) {
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directrory defined")
+		logrus.Errorln("no working directory defined")
 		return Fleet{}, err
 	}
 
 	return Fleet{
 		spec:    s,
 		rootDir: dir,
+		scmID:   scmID,
 	}, nil
 
 }
 
-func (f Fleet) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
+func (f Fleet) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Rancher Fleet"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Rancher Fleet")+1))
 
-	manifests, err := f.discoverFleetDependenciesManifests()
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Set scm configuration if specified
-	for i := range manifests {
-		// Set scm configuration if specified
-		if len(input.ScmID) > 0 {
-			SetScm(&manifests[i], *input.ScmSpec, input.ScmID)
-		}
-
-		// Set action configuration if specified
-		if len(input.ActionID) > 0 {
-			SetAction(&manifests[i], *input.ActionConfig, input.ActionID)
-		}
-	}
-
-	return manifests, nil
-}
-
-func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
-	configSpec.SCMs = make(map[string]scm.Config)
-	configSpec.SCMs[scmID] = scmSpec
-
-	for id, condition := range configSpec.Conditions {
-		condition.SCMID = scmID
-		configSpec.Conditions[id] = condition
-	}
-
-	for id, target := range configSpec.Targets {
-		target.SCMID = scmID
-		configSpec.Targets[id] = target
-	}
-
-}
-
-func SetAction(configSpec *config.Spec, actionSpec action.Config, actionID string) {
-	configSpec.Actions = make(map[string]action.Config)
-	configSpec.Actions[actionID] = actionSpec
+	return f.discoverFleetDependenciesManifests()
 }

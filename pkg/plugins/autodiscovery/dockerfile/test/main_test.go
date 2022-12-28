@@ -1,17 +1,17 @@
-package dockerfile
+package test
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	autodiscoveryDockerfile "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -31,11 +31,11 @@ func TestDiscoverManifests(t *testing.T) {
 			rootDir: "testdata/updatecli-action",
 			expectedPipelines: []config.Spec{
 				{
-					Name: "Bump Docker Image Tag for \"updatecli/updatecli\"",
+					Name: "Bump Docker image tag for \"updatecli/updatecli\"",
 					Sources: map[string]source.Config{
 						"updatecli/updatecli": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[updatecli/updatecli] Get latest Docker Image Tag",
+								Name: "[updatecli/updatecli] Get latest Docker image tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
 									Image:     "updatecli/updatecli",
@@ -52,7 +52,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"updatecli/updatecli": {
 							SourceID: "updatecli/updatecli",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[updatecli/updatecli] Bump Docker Image tag in \"Dockerfile\"",
+								Name: "[updatecli/updatecli] Bump Docker image tag in \"Dockerfile\"",
 								Kind: "dockerfile",
 								Spec: dockerfile.Spec{
 									File: "Dockerfile",
@@ -72,11 +72,11 @@ func TestDiscoverManifests(t *testing.T) {
 			rootDir: "testdata/jenkins",
 			expectedPipelines: []config.Spec{
 				{
-					Name: "Bump Docker Image Tag for \"jenkins/jenkins\"",
+					Name: "Bump Docker image tag for \"jenkins/jenkins\"",
 					Sources: map[string]source.Config{
 						"jenkins/jenkins": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[jenkins/jenkins] Get latest Docker Image Tag",
+								Name: "[jenkins/jenkins] Get latest Docker image tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
 									Image:     "jenkins/jenkins",
@@ -93,7 +93,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"jenkins/jenkins": {
 							SourceID: "jenkins/jenkins",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[jenkins/jenkins] Bump Docker Image tag in \"Dockerfile\"",
+								Name: "[jenkins/jenkins] Bump Docker image tag in \"Dockerfile\"",
 								Kind: "dockerfile",
 								Spec: dockerfile.Spec{
 									File: "Dockerfile",
@@ -113,19 +113,18 @@ func TestDiscoverManifests(t *testing.T) {
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			helmfile, err := New(
-				Spec{
+			dockerfile, err := autodiscoveryDockerfile.New(
+				autodiscoveryDockerfile.Spec{
 					RootDir: tt.rootDir,
-				}, "")
-
+				}, "", "")
 			require.NoError(t, err)
 
-			pipelines, err := helmfile.DiscoverManifests(discoveryConfig.Input{})
-
+			pipelines, err := dockerfile.DiscoverManifests()
 			require.NoError(t, err)
-			// !! Order matter between expected result and docker-compose file
-			assert.Equal(t, tt.expectedPipelines, pipelines)
 
+			for i := range tt.expectedPipelines {
+				test.AssertConfigSpecEqualByteArray(t, &tt.expectedPipelines[i], string(pipelines[i]))
+			}
 		})
 	}
 
