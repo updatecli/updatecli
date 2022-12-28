@@ -5,10 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
@@ -36,10 +32,12 @@ type DockerCompose struct {
 	rootDir string
 	// filematch defines the filematch rule used to identify docker-compose that need to be handled
 	filematch []string
+	// scmID holds the scmID used by the newly generated manifest
+	scmID string
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir string) (DockerCompose, error) {
+func New(spec interface{}, rootDir, scmID string) (DockerCompose, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -63,6 +61,7 @@ func New(spec interface{}, rootDir string) (DockerCompose, error) {
 		spec:      s,
 		rootDir:   dir,
 		filematch: []string{DefaultFilePattern},
+		scmID:     scmID,
 	}
 
 	if len(s.FileMatch) > 0 {
@@ -73,48 +72,10 @@ func New(spec interface{}, rootDir string) (DockerCompose, error) {
 
 }
 
-func (h DockerCompose) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
+func (h DockerCompose) DiscoverManifests() ([][]byte, error) {
 	// Print the header to get started
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Docker Compose"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Docker Compose")+1))
 
-	manifests, err := h.discoverDockerComposeImageManifests()
-	if err != nil {
-		return nil, err
-	}
-
-	// Set scm configuration if specified
-	for i := range manifests {
-		// Set scm configuration if specified
-		if len(input.ScmID) > 0 {
-			SetScm(&manifests[i], *input.ScmSpec, input.ScmID)
-		}
-
-		// Set action configuration if specified
-		if len(input.ActionID) > 0 {
-			SetAction(&manifests[i], *input.ActionConfig, input.ActionID)
-		}
-	}
-
-	return manifests, nil
-}
-
-func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
-	configSpec.SCMs = make(map[string]scm.Config)
-	configSpec.SCMs[scmID] = scmSpec
-
-	for id, condition := range configSpec.Conditions {
-		condition.SCMID = scmID
-		configSpec.Conditions[id] = condition
-	}
-
-	for id, target := range configSpec.Targets {
-		target.SCMID = scmID
-		configSpec.Targets[id] = target
-	}
-}
-
-func SetAction(configSpec *config.Spec, actionConfig action.Config, actionID string) {
-	configSpec.Actions = make(map[string]action.Config)
-	configSpec.Actions[actionID] = actionConfig
+	return h.discoverDockerComposeImageManifests()
 }

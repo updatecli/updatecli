@@ -11,7 +11,7 @@ scms:
 
 actions:
   fleet-lab:
-    kind: github
+    kind: github/pullrequest
     scmid: fleet-lab
     spec:
       labels:

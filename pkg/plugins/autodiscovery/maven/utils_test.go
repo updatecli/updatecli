@@ -16,7 +16,7 @@ func TestGetParentFromPom(t *testing.T) {
 	}{
 		{
 			name: "Test 1",
-			file: "testdata/pom.xml",
+			file: "test/testdata/pom.xml",
 			expectedParent: parentPom{
 				GroupID:    "org.jenkins-ci.plugins",
 				ArtifactID: "plugin",
@@ -45,7 +45,7 @@ func TestGetRepositoriesFromPom(t *testing.T) {
 	}{
 		{
 			name: "Test 1",
-			file: "testdata/pom.xml",
+			file: "test/testdata/pom.xml",
 			expectedRepositories: []repository{
 				{
 					URL: "https://repo.jenkins-ci.org/public/",
@@ -75,7 +75,7 @@ func TestGetDependenciesFromPom(t *testing.T) {
 	}{
 		{
 			name: "Test 1",
-			file: "testdata/pom.xml",
+			file: "test/testdata/pom.xml",
 			expectedDependencies: []dependency{
 				{
 					GroupID:    "com.jcraft",
@@ -131,7 +131,7 @@ func TestGetDependencyManagementsFromPom(t *testing.T) {
 	}{
 		{
 			name: "Test 1",
-			file: "testdata/pom.xml",
+			file: "test/testdata/pom.xml",
 			expectedDependencies: []dependency{
 				{
 					GroupID:    "io.jenkins.tools.bom",

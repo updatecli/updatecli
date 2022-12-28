@@ -1,19 +1,14 @@
 package helm
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
 type imageRef struct {
@@ -26,9 +21,9 @@ type valuesContent struct {
 	Images map[string]imageRef
 }
 
-func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
+func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
-	var manifests []config.Spec
+	var manifests [][]byte
 
 	foundValuesFiles, err := searchChartFiles(
 		h.rootDir,
@@ -40,6 +35,8 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 
 	for _, foundValueFile := range foundValuesFiles {
 
+		logrus.Debugf("parsing file %q", foundValueFile)
+
 		relativeFoundValueFile, err := filepath.Rel(h.rootDir, foundValueFile)
 		if err != nil {
 			// Jump to the next Helm chart if current failed
@@ -48,7 +45,6 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 		}
 
 		chartRelativeMetadataPath := filepath.Dir(relativeFoundValueFile)
-		metadataFilename := filepath.Base(foundValueFile)
 		chartName := filepath.Base(chartRelativeMetadataPath)
 
 		// Test if the ignore rule based on path doesn't match
@@ -118,64 +114,64 @@ func (h Helm) discoverHelmContainerManifests() ([]config.Spec, error) {
 		}
 
 		for _, image := range images {
-
-			sourceID := image.repository
-			conditionID := image.repository
-			targetID := image.repository
-
-			yamlRepositoryPath := image.yamlRepositoryPath
-			yamlTagPath := image.yamlTagPath
-
 			sourceSpec := dockerimage.NewDockerImageSpecFromImage(image.repository, image.tag, h.spec.Auths)
 
 			if sourceSpec == nil {
 				continue
 			}
 
-			manifestName := fmt.Sprintf("Bump Docker Image %q for Helm Chart %q", image.repository, chartName)
-
-			manifest := config.Spec{
-				Name: manifestName,
-				Sources: map[string]source.Config{
-					sourceID: {
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Get latest %q Container tag", image.repository),
-							Kind: "dockerimage",
-							Spec: sourceSpec,
-						},
-					},
-				},
-				Conditions: map[string]condition.Config{
-					conditionID: {
-						DisableSourceInput: true,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Ensure container repository %q is specified", image.repository),
-							Kind: "yaml",
-							Spec: yaml.Spec{
-								File:  relativeFoundValueFile,
-								Key:   yamlRepositoryPath,
-								Value: image.repository,
-							},
-						},
-					},
-				},
-				Targets: map[string]target.Config{
-					targetID: {
-						SourceID: sourceID,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Bump container image tag for image %q in Chart %q", image.repository, chartName),
-							Kind: "helmchart",
-							Spec: helm.Spec{
-								File:             metadataFilename,
-								Name:             chartRelativeMetadataPath,
-								Key:              yamlTagPath,
-								VersionIncrement: "minor",
-							},
-						},
-					},
-				},
+			tmpl, err := template.New("manifest").Parse(containerManifest)
+			if err != nil {
+				logrus.Errorln(err)
+				continue
 			}
-			manifests = append(manifests, manifest)
+
+			params := struct {
+				ManifestName               string
+				ConditionID                string
+				ConditionKey               string
+				ConditionValue             string
+				ConditionName              string
+				SourceID                   string
+				SourceName                 string
+				SourceVersionFilterKind    string
+				SourceVersionFilterPattern string
+				SourceImageName            string
+				SourceTagFilter            string
+				TargetName                 string
+				TargetID                   string
+				TargetKey                  string
+				TargetFile                 string
+				TargetChartName            string
+				File                       string
+				ScmID                      string
+			}{
+				ManifestName:               fmt.Sprintf("Bump Docker image %q for Helm chart %q", image.repository, chartName),
+				ConditionID:                image.repository,
+				ConditionKey:               image.yamlRepositoryPath,
+				ConditionName:              fmt.Sprintf("Ensure container repository %q is specified", image.repository),
+				ConditionValue:             image.repository,
+				SourceID:                   image.repository,
+				SourceName:                 fmt.Sprintf("Get latest %q container tag", image.repository),
+				SourceVersionFilterKind:    sourceSpec.VersionFilter.Kind,
+				SourceVersionFilterPattern: sourceSpec.VersionFilter.Pattern,
+				SourceImageName:            sourceSpec.Image,
+				SourceTagFilter:            sourceSpec.TagFilter,
+				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", image.repository, chartName),
+				TargetID:                   image.repository,
+				TargetKey:                  image.yamlTagPath,
+				TargetChartName:            chartRelativeMetadataPath,
+				TargetFile:                 filepath.Base(foundValueFile),
+				File:                       relativeFoundValueFile,
+				ScmID:                      h.scmID,
+			}
+
+			manifest := bytes.Buffer{}
+			if err := tmpl.Execute(&manifest, params); err != nil {
+				return nil, err
+			}
+
+			manifests = append(manifests, manifest.Bytes())
 		}
 	}
 
