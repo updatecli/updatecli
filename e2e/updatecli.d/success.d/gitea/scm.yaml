@@ -4,9 +4,9 @@ scms:
   gitea:
     kind: gitea
     spec:
-      url: "try.gitea.io"
-      owner: "olblak"
-      repository: "updatecli-mirror"
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "demo-terminal"
       branch: main
 
 sources:
@@ -17,11 +17,11 @@ sources:
     spec:
       file: LICENSE
   readme:
-    name: Retrieve license file content
+    name: Retrieve readme file content
     kind: file
     scmid: gitea
     spec:
-      file: README.adoc
+      file: README.md
 
 conditions:
   license:
@@ -37,20 +37,19 @@ conditions:
     sourceid: readme
     scmid: gitea
     spec:
-      file: README.adoc
-
+      file: README.md
 targets:
   license:
-    name: Retrieve license file content
+    name: Update license file content
     kind: file
     scmid: gitea
     sourceid: license
     spec:
       file: LICENSE
   readme:
-    name: Retrieve license file content
+    name: Update README license file content
     kind: file
     sourceid: readme
     scmid: gitea
     spec:
-      file: README.adoc
+      file: README.md
