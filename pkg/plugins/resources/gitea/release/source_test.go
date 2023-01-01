@@ -23,7 +23,7 @@ func TestSource(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "repository olblak/updatecli should not exist",
+			name: "repository updatecli/updatecli-donotexist should not exist",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -31,16 +31,16 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli",
+				Owner:      "updatecli",
+				Repository: "updatecli-donotexist",
 			},
 			wantResult: "",
 			wantErr:    true,
 		},
 		{
-			name: "repository olblak/updatecli-mirror should exist but no release",
+			name: "repository updatecli/demo-terminal should exist but no release",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -48,10 +48,10 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-mirror",
+				Owner:      "updatecli",
+				Repository: "demo-terminal",
 			},
 			wantResult: "",
 			wantErr:    true,
@@ -65,34 +65,17 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
-			},
-			wantResult: "0.0.3",
-			wantErr:    false,
-		},
-		{
-			name: "repository should exist with no release 1.0.0",
-			manifest: struct {
-				URL           string
-				Token         string
-				Owner         string
-				Repository    string
-				VersionFilter version.Filter
-			}{
-				URL:        "try.gitea.io",
-				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "1.0.0",
+					Pattern: "~2.15",
 				},
 			},
-			wantResult: "",
-			wantErr:    true,
+			wantResult: "v2.15.0",
+			wantErr:    false,
 		},
 	}
 
