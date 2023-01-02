@@ -57,15 +57,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 			}
 			for dependencyName, dependencyVersion := range dependencies {
 				// If a dependency already contains a version constraint then we ignore it
-				skipDependency := false
-				for _, toIgnorePrefix := range []string{">", "<", "~", "^", "*"} {
-					if strings.HasPrefix(dependencyVersion, toIgnorePrefix) {
-						skipDependency = true
-					}
-				}
-
-				if skipDependency {
-					logrus.Debugf("Ignoring dependency %q as it already contains the version constraint %q handled by NPM", dependencyName, dependencyVersion)
+				if isVersionConstraintSpecified(dependencyName, dependencyVersion, n.spec.StrictSemver) {
 					continue
 				}
 
@@ -103,9 +95,11 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					SourceVersionFilterPattern: ">=" + dependencyVersion,
 					TargetID:                   "npm",
 					TargetName:                 fmt.Sprintf("Bump %q package version", dependencyName),
-					TargetKey:                  fmt.Sprintf("%s.%s", dependencyType, dependencyName),
-					File:                       relativeFoundFile,
-					ScmID:                      n.scmID,
+					// NPM package allows dot in package name which has a different meaning in Dasel query
+					// Therefor we must escape it for Dasel query to work
+					TargetKey: fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
+					File:      relativeFoundFile,
+					ScmID:     n.scmID,
 				}
 
 				manifest := bytes.Buffer{}
