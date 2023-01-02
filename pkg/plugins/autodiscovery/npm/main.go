@@ -15,6 +15,8 @@ type Spec struct {
 	Ignore MatchingRules `yaml:",omitempty"`
 	// Only allows to specify rule to only autodiscover manifest for a specific NPM based on a rule
 	Only MatchingRules `yaml:",omitempty"`
+	// StrictSemver allows to restrict update to identified version matching strict semantic versioning
+	StrictSemver bool
 }
 
 // Npm holds all information needed to generate npm manifest.
