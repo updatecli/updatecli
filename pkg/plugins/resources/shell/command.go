@@ -2,7 +2,7 @@ package shell
 
 import (
 	"bytes"
-	"crypto/md5"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -41,7 +41,7 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 	}
 
 	var stdout, stderr bytes.Buffer
-	command := exec.Command("/bin/sh", scriptName) //nolint: gosec
+	command := exec.Command("/bin/sh", scriptName)
 	command.Dir = inputCmd.Dir
 	command.Stdout = &stdout
 	command.Stderr = &stderr
@@ -87,8 +87,12 @@ func newShellScript(inputCmd command) (string, error) {
 	}
 
 	// Generate uniq script name
-	h := md5.New()
-	io.WriteString(h, inputCmd.Cmd)
+	h := sha256.New()
+	_, err = io.WriteString(h, inputCmd.Cmd)
+	if err != nil {
+		return "", err
+	}
+
 	scriptFilename := filepath.Join(bindDir, fmt.Sprintf("%x", h.Sum(nil)))
 
 	// Save command in script name
@@ -99,7 +103,10 @@ func newShellScript(inputCmd command) (string, error) {
 
 	defer f.Close()
 
-	f.WriteString(inputCmd.Cmd)
+	_, err = f.WriteString(inputCmd.Cmd)
+	if err != nil {
+		return "", err
+	}
 
 	return scriptFilename, nil
 }
