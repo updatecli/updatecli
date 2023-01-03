@@ -23,5 +23,31 @@ targets:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}'
     sourceid: '{{ .SourceID }}'
+{{- if .TargetNPMCleanupEnabled }}
+  package-lock.json:
+    name: Update NPM lockfile package-lock.json
+    dependson:
+      - {{ .TargetID }}
+    disablesourceinput: true
+    kind: shell
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+    spec:
+      command: npm install --package-lock-only
+{{ end }}
+{{- if .TargetYarnCleanupEnabled }}
+  yarn.lock:
+    name: Update Yarn lockfile yarn.lock
+    dependson:
+      - {{ .TargetID }}
+    disablesourceinput: true
+    kind: shell
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+    spec:
+      command: yarn install --mode update-lockfile
+{{ end }}
 `
 )

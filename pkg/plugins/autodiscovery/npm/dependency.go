@@ -31,6 +31,30 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
+		// It doesn't make sense to update the package.json if Updatecli do not have access to the yarn to update the lock file yarn.lock
+		yarnTargetCleanManifestEnabled := false
+		if isLockFileDetected(filepath.Join(filepath.Dir(foundFile), "yarn.lock")) {
+			switch isYarnInstalled() {
+			case true:
+				yarnTargetCleanManifestEnabled = true
+			case false:
+				logrus.Warning("skipping, Yarn lock file detected but Updatecli couldn't detect the yarn command to update it in case of a package.json update")
+				continue
+			}
+		}
+
+		// It doesn't make sense to update the package.json if Updatecli do not have access to the npm command to update package-lock.json
+		npmTargetCleanupManifestEnabled := false
+		if isLockFileDetected(filepath.Join(filepath.Dir(foundFile), "package-lock.json")) {
+			switch isNpmInstalled() {
+			case true:
+				npmTargetCleanupManifestEnabled = true
+			case false:
+				logrus.Warning("skipping, NPM lock file detected but Updatecli couldn't detect the npm command to update it in case of a package.json update")
+				continue
+			}
+		}
+
 		// Test if the ignore rule based on path is respected
 		if len(n.spec.Ignore) > 0 && n.spec.Ignore.isMatchingIgnoreRule(n.rootDir, relativeFoundFile) {
 			logrus.Debugf("Ignoring %q as not matching rule(s)\n", foundFile)
@@ -83,6 +107,8 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetID                   string
 					TargetName                 string
 					TargetKey                  string
+					TargetYarnCleanupEnabled   bool
+					TargetNPMCleanupEnabled    bool
 					File                       string
 					ScmID                      string
 				}{
@@ -97,9 +123,11 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetName:                 fmt.Sprintf("Bump %q package version", dependencyName),
 					// NPM package allows dot in package name which has a different meaning in Dasel query
 					// Therefor we must escape it for Dasel query to work
-					TargetKey: fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
-					File:      relativeFoundFile,
-					ScmID:     n.scmID,
+					TargetKey:                fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
+					TargetYarnCleanupEnabled: yarnTargetCleanManifestEnabled,
+					TargetNPMCleanupEnabled:  npmTargetCleanupManifestEnabled,
+					File:                     relativeFoundFile,
+					ScmID:                    n.scmID,
 				}
 
 				manifest := bytes.Buffer{}

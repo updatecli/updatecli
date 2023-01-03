@@ -3,6 +3,8 @@ package npm
 import (
 	"fmt"
 	"io/fs"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -88,7 +90,7 @@ func isVersionConstraintSpecified(packageName, packageVersion string, strictSemv
 	// https://docs.npmjs.com/cli/v6/configuring-npm/package-json#local-paths
 	for _, localPath := range []string{"../", "./", "~/", "/"} {
 		if strings.HasPrefix(packageVersion, localPath) {
-			logrus.Debugf("Ignoreing dependency %q. Updating local path is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
+			logrus.Debugf("Ignoring dependency %q. Updating local path is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
 			return true
 		}
 	}
@@ -98,17 +100,34 @@ func isVersionConstraintSpecified(packageName, packageVersion string, strictSemv
 		_, err := semver.StrictNewVersion(packageVersion)
 		if err != nil {
 			logrus.Debugln(err)
-			logrus.Debugf("NPM package version %s detected. Updatecli only update version following strict semantic versioning", packageVersion)
+			logrus.Debugf("NPM package version %s detected. Updatecli only updates version following strict semantic versioning", packageVersion)
 			return true
 		}
 	case false:
 		_, err := semver.NewVersion(packageVersion)
 		if err != nil {
 			logrus.Debugln(err)
-			logrus.Debugf("NPM package version %s detected. Updatecli only update version following semantic versioning", packageVersion)
+			logrus.Debugf("NPM package version %s detected. Updatecli only updates version following semantic versioning", packageVersion)
 			return true
 		}
 	}
 
 	return false
+}
+
+func isNpmInstalled() bool {
+	cmd := exec.Command("npm", "--version")
+	err := cmd.Run()
+	return err == nil
+}
+
+func isYarnInstalled() bool {
+	cmd := exec.Command("yarn", "--version")
+	err := cmd.Run()
+	return err == nil
+}
+
+func isLockFileDetected(lockfile string) bool {
+	_, err := os.Stat(lockfile)
+	return err == nil
 }
