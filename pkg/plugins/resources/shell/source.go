@@ -23,9 +23,10 @@ func (s *Shell) Source(workingDir string) (string, error) {
 	})
 
 	s.executeCommand(command{
-		Cmd: s.spec.Command,
-		Dir: workingDir,
-		Env: env.ToStringSlice(),
+		Cmd:   s.spec.Command,
+		Dir:   workingDir,
+		Env:   env.ToStringSlice(),
+		Shell: s.interpreter,
 	})
 
 	if s.result.ExitCode != 0 {

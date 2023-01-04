@@ -16,9 +16,10 @@ import (
 )
 
 type command struct {
-	Cmd string
-	Dir string
-	Env []string
+	Shell string
+	Cmd   string
+	Dir   string
+	Env   []string
 }
 
 type commandResult struct {
@@ -41,7 +42,10 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 	}
 
 	var stdout, stderr bytes.Buffer
-	command := exec.Command("/bin/sh", scriptName)
+
+	logrus.Debugf("\tcommand: %s %s\n", inputCmd.Shell, scriptName)
+
+	command := exec.Command(inputCmd.Shell, scriptName)
 	command.Dir = inputCmd.Dir
 	command.Stdout = &stdout
 	command.Stderr = &stderr

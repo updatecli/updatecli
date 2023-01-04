@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -14,13 +15,16 @@ type Spec struct {
 	Command string `yaml:",omitempty" jsonschema:"required"`
 	// Environments allows to pass environment variable(s) to the shell script
 	Environments Environments `yaml:",omitempty"`
+	// Shell specifies which shell interpreter to use. Default to pwshell(Windows), /bin/bash(Darwin), and "/bin/sh" (Linux)
+	Shell string `yaml:", omitempty"`
 }
 
 // Shell defines a resource of kind "shell"
 type Shell struct {
-	executor commandExecutor
-	spec     Spec
-	result   commandResult
+	executor    commandExecutor
+	spec        Spec
+	result      commandResult
+	interpreter string
 }
 
 // New returns a reference to a newly initialized Shell object from a ShellSpec
@@ -42,10 +46,34 @@ func New(spec interface{}) (*Shell, error) {
 		return nil, err
 	}
 
+	interpreter := getDefaultShell()
+	if newSpec.Shell != "" {
+		interpreter = newSpec.Shell
+	}
+
 	return &Shell{
-		executor: &nativeCommandExecutor{},
-		spec:     newSpec,
+		executor:    &nativeCommandExecutor{},
+		spec:        newSpec,
+		interpreter: interpreter,
 	}, nil
+}
+
+func getDefaultShell() string {
+	os := runtime.GOOS
+
+	switch os {
+	case "windows":
+		// pwshell is the default shell on Windows system
+		return "pwshell"
+	case "darwin":
+		// bash is the default shell on MacOSx system
+		return "/bin/bash"
+	case "linux":
+		return "/bin/sh"
+	default:
+		return "/bin/sh"
+	}
+
 }
 
 // appendSource appends the source as last argument if not empty.

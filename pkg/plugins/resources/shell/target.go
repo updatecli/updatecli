@@ -59,9 +59,10 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 	})
 
 	s.executeCommand(command{
-		Cmd: s.appendSource(source),
-		Dir: workingDir,
-		Env: env.ToStringSlice(),
+		Cmd:   s.appendSource(source),
+		Dir:   workingDir,
+		Env:   env.ToStringSlice(),
+		Shell: s.interpreter,
 	})
 
 	if s.result.ExitCode != 0 {
