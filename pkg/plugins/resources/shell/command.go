@@ -45,7 +45,7 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 
 	logrus.Debugf("\tcommand: %s %s\n", inputCmd.Shell, scriptName)
 
-	command := exec.Command(inputCmd.Shell, scriptName)
+	command := exec.Command(inputCmd.Shell, scriptName) //nolint: gosec
 	command.Dir = inputCmd.Dir
 	command.Stdout = &stdout
 	command.Stderr = &stderr
