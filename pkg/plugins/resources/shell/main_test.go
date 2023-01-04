@@ -18,12 +18,15 @@ func TestShell_New(t *testing.T) {
 			name: "Normal case",
 			spec: Spec{
 				Command: "echo Hello",
+				Shell:   "/bin/bash",
 			},
 			wantErr: false,
 			wantShell: &Shell{
-				executor: &nativeCommandExecutor{},
+				executor:    &nativeCommandExecutor{},
+				interpreter: "/bin/bash",
 				spec: Spec{
 					Command: "echo Hello",
+					Shell:   "/bin/bash",
 				},
 			},
 		},
@@ -55,6 +58,7 @@ func TestShell_New(t *testing.T) {
 						},
 					},
 				},
+				interpreter: "/bin/sh",
 			},
 		},
 		{
@@ -69,7 +73,8 @@ func TestShell_New(t *testing.T) {
 			},
 			wantErr: false,
 			wantShell: &Shell{
-				executor: &nativeCommandExecutor{},
+				executor:    &nativeCommandExecutor{},
+				interpreter: "/bin/sh",
 				spec: Spec{
 					Command: "echo Hello",
 					Environments: Environments{
@@ -107,6 +112,7 @@ func TestShell_New(t *testing.T) {
 						},
 					},
 				},
+				interpreter: "/bin/sh",
 			},
 		},
 		{
@@ -124,12 +130,14 @@ func TestShell_New(t *testing.T) {
 				executor: &nativeCommandExecutor{},
 				spec: Spec{
 					Command: "echo Hello",
+					Shell:   "/bin/sh",
 					Environments: Environments{
 						Environment{
 							Name: "PATH",
 						},
 					},
 				},
+				interpreter: "/bin/sh",
 			},
 		},
 	}
