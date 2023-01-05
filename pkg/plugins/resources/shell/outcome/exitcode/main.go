@@ -70,7 +70,7 @@ func (s Spec) Validate() error {
 	return nil
 }
 
-// PreCommand defines operations needed to be executed before the shell commmand
+// PreCommand defines operations needed to be executed before the shell command
 func (e *ExitCode) PreCommand() error {
 	return nil
 }

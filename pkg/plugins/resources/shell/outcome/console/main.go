@@ -23,7 +23,7 @@ func New(exitCode *int, output *string) (*Console, error) {
 	}, nil
 }
 
-// PreCommand defines operations needed to be executed before the shell commmand
+// PreCommand defines operations needed to be executed before the shell command
 func (c *Console) PreCommand() error {
 	return nil
 }
