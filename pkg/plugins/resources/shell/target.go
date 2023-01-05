@@ -64,11 +64,13 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		Env: env.ToStringSlice(),
 	})
 
-	if s.result.ExitCode != 0 {
+	changed, err := s.outcome.TargetResult()
+
+	if err != nil {
 		return false, "", &ExecutionFailedError{}
 	}
 
-	if s.result.Stdout == "" {
+	if !changed {
 		logrus.Info("No change detected")
 		return false, "", nil
 	}

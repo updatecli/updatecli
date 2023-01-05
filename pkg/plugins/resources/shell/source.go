@@ -22,15 +22,25 @@ func (s *Shell) Source(workingDir string) (string, error) {
 		Value: "source",
 	})
 
+	// PreCommand is executed to collect information before running the shell command
+	// so we could collect information needed to validate that a command successfully as expected
+	err = s.outcome.PreCommand()
+	if err != nil {
+		return "", err
+	}
+
 	s.executeCommand(command{
 		Cmd: s.spec.Command,
 		Dir: workingDir,
 		Env: env.ToStringSlice(),
 	})
 
-	if s.result.ExitCode != 0 {
-		return "", &ExecutionFailedError{}
+	// PostCommand is executed to collect information after running the shell command
+	// so we could collect information needed to validate that a command successfully as expected
+	err = s.outcome.PostCommand()
+	if err != nil {
+		return "", err
 	}
 
-	return s.result.Stdout, nil
+	return s.outcome.SourceResult()
 }
