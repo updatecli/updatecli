@@ -3,6 +3,8 @@ package console
 import (
 	"errors"
 	"fmt"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Console struct {
@@ -49,7 +51,8 @@ func (c *Console) ConditionResult() (bool, error) {
 	case 0:
 		return true, nil
 	default:
-		return false, fmt.Errorf("shell command failed. Expected exit code 0 but got %d", *c.exitCode)
+		logrus.Infof("shell command failed. Expected exit code 0 but got %d", *c.exitCode)
+		return false, nil
 	}
 }
 

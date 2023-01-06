@@ -72,6 +72,10 @@ func TestShell_Target(t *testing.T) {
 				},
 			}
 
+			// InitOutcome
+			err := s.InitOutcome()
+			require.NoError(t, err)
+
 			gotChanged, err := s.Target(tt.source, tt.dryrun)
 
 			if tt.wantErr {
@@ -137,6 +141,10 @@ func TestShell_TargetFromSCM(t *testing.T) {
 					Command: tt.command,
 				},
 			}
+
+			// InitOutcome
+			err := s.InitOutcome()
+			require.NoError(t, err)
 
 			gotChanged, gotFilesChanged, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)
 

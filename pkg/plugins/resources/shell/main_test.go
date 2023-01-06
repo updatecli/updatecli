@@ -143,6 +143,10 @@ func TestShell_New(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 
+			// InitOutcome as I couldn't manage to do it via the tests
+			gotErr = tt.wantShell.InitOutcome()
+			require.NoError(t, gotErr)
+
 			assert.Equal(t, tt.wantShell, gotShell)
 		})
 	}

@@ -55,15 +55,19 @@ func TestShell_Condition(t *testing.T) {
 				},
 			}
 
-			gotResult, err := s.Condition(tt.source)
+			// InitOutcome
+			gotErr := s.InitOutcome()
+			require.NoError(t, gotErr)
+
+			gotResult, gotErr := s.Condition(tt.source)
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				assert.Error(t, gotErr)
 				assert.False(t, gotResult)
 				return
 			}
 
-			require.NoError(t, err)
+			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantResult, gotResult)
 
 			assert.Equal(t, tt.wantCommand, mock.GotCommand.Cmd)
@@ -111,15 +115,19 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 				},
 			}
 
-			gotResult, err := s.ConditionFromSCM(tt.source, &ms)
+			// InitOutcome
+			gotErr := s.InitOutcome()
+			require.NoError(t, gotErr)
+
+			gotResult, gotErr := s.ConditionFromSCM(tt.source, &ms)
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				assert.Error(t, gotErr)
 				assert.False(t, gotResult)
 				return
 			}
 
-			require.NoError(t, err)
+			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantResult, gotResult)
 
 			assert.Equal(t, tt.wantCommand, mce.GotCommand.Cmd)

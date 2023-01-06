@@ -62,6 +62,10 @@ func TestShell_Source(t *testing.T) {
 				},
 			}
 
+			// InitOutcome
+			gotErr := s.InitOutcome()
+			require.NoError(t, gotErr)
+
 			source, err := s.Source(tt.workingDir)
 
 			if tt.wantErr {
