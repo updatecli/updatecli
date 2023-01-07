@@ -2,17 +2,11 @@ package shell
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"errors"
-	"fmt"
-	"io"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/tmp"
 )
 
 type command struct {
@@ -36,22 +30,19 @@ type commandExecutor interface {
 type nativeCommandExecutor struct{}
 
 func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResult, error) {
-	scriptName, err := newShellScript(inputCmd)
-	if err != nil {
-		return commandResult{}, err
-	}
-
 	var stdout, stderr bytes.Buffer
 
-	logrus.Debugf("\tcommand: %s %s\n", inputCmd.Shell, scriptName)
+	logrus.Debugf("\tcommand: %s %s\n", inputCmd.Shell, inputCmd.Cmd)
 
-	command := exec.Command(inputCmd.Shell, scriptName) //nolint: gosec
+	cmdFields := strings.Fields(inputCmd.Cmd)
+	command := exec.Command(cmdFields[0], cmdFields[1:]...) //nolint: gosec
+
 	command.Dir = inputCmd.Dir
 	command.Stdout = &stdout
 	command.Stderr = &stderr
 	// Pass current environment to process and append the customized environment variables used internally by updatecli (such as DRY_RUN)
 	command.Env = append(command.Env, inputCmd.Env...)
-	err = command.Run()
+	err := command.Run()
 
 	// Display environment variables in debug mode
 	logrus.Debugf("Environment variables\n")
@@ -81,36 +72,4 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 		Stderr:   stderr.String(),
 		Cmd:      inputCmd.Cmd,
 	}, nil
-}
-
-func newShellScript(inputCmd command) (string, error) {
-	// Ensure Updatecli bin directory exists
-	bindDir, err := tmp.InitBin()
-	if err != nil {
-		return "", err
-	}
-
-	// Generate uniq script name
-	h := sha256.New()
-	_, err = io.WriteString(h, inputCmd.Cmd)
-	if err != nil {
-		return "", err
-	}
-
-	scriptFilename := filepath.Join(bindDir, fmt.Sprintf("%x", h.Sum(nil)))
-
-	// Save command in script name
-	f, err := os.Create(scriptFilename)
-	if err != nil {
-		return "", err
-	}
-
-	defer f.Close()
-
-	_, err = f.WriteString(inputCmd.Cmd)
-	if err != nil {
-		return "", err
-	}
-
-	return scriptFilename, nil
 }
