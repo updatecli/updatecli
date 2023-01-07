@@ -21,10 +21,11 @@ type Spec struct {
 
 // Shell defines a resource of kind "shell"
 type Shell struct {
-	executor    commandExecutor
-	spec        Spec
-	result      commandResult
-	interpreter string
+	executor       commandExecutor
+	spec           Spec
+	result         commandResult
+	interpreter    string
+	scriptFilename string
 }
 
 // New returns a reference to a newly initialized Shell object from a ShellSpec
@@ -51,10 +52,16 @@ func New(spec interface{}) (*Shell, error) {
 		interpreter = newSpec.Shell
 	}
 
+	scriptFilename, err := newShellScript(newSpec.Command)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Shell{
-		executor:    &nativeCommandExecutor{},
-		spec:        newSpec,
-		interpreter: interpreter,
+		executor:       &nativeCommandExecutor{},
+		spec:           newSpec,
+		interpreter:    interpreter,
+		scriptFilename: scriptFilename,
 	}, nil
 }
 
@@ -65,11 +72,6 @@ func getDefaultShell() string {
 	case "windows":
 		// pwshell is the default shell on Windows system
 		return "pwshell"
-	case "darwin":
-		// bash is the default shell on MacOSx system
-		return "/bin/bash"
-	case "linux":
-		return "/bin/sh"
 	default:
 		return "/bin/sh"
 	}
