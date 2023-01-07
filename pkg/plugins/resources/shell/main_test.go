@@ -58,7 +58,7 @@ func TestShell_New(t *testing.T) {
 		{
 			name: "Missing env name despite env value specified",
 			spec: Spec{
-				Command: "echo Hello",
+				Command: "echo World",
 				Environments: Environments{
 					Environment{
 						Value: "xxx",
@@ -69,7 +69,7 @@ func TestShell_New(t *testing.T) {
 			wantShell: &Shell{
 				executor: &nativeCommandExecutor{},
 				spec: Spec{
-					Command: "echo Hello",
+					Command: "echo World",
 					Environments: Environments{
 						Environment{
 							Value: "xxx",
@@ -77,7 +77,7 @@ func TestShell_New(t *testing.T) {
 					},
 				},
 				interpreter:    getDefaultShell(),
-				scriptFilename: wantedScriptFilename(t, "echo Hello"),
+				scriptFilename: wantedScriptFilename(t, "echo World"),
 			},
 		},
 		{
