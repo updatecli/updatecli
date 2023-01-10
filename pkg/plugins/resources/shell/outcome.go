@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/outcome/checksum"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/outcome/console"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/outcome/exitcode"
 )
@@ -17,6 +18,7 @@ var (
 	MappingSpecOutcome = map[string]interface{}{
 		"console/output": nil,
 		"exitcode":       exitcode.Spec{},
+		"file/checksum":  checksum.Spec{},
 	}
 )
 
@@ -51,6 +53,14 @@ func (s *Shell) InitOutcome() error {
 
 	case "exitcode":
 		o, err := exitcode.New(s.spec.Outcome.Spec, &s.result.ExitCode, &s.result.Stdout)
+		if err != nil {
+			return err
+		}
+
+		s.outcome = o
+
+	case "file/checksum":
+		o, err := checksum.New(s.spec.Outcome.Spec, &s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err
 		}
