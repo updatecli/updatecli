@@ -35,7 +35,7 @@ func (c *Console) PostCommand() error {
 	return nil
 }
 
-// SourceOutcome defines the success criteria for a source using the shell resource
+// SourceResult defines the success criteria for a source using the shell resource
 func (c *Console) SourceResult() (string, error) {
 	switch *c.exitCode {
 	case 0:

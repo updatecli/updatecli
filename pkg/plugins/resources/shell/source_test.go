@@ -62,8 +62,8 @@ func TestShell_Source(t *testing.T) {
 				},
 			}
 
-			// InitOutcome
-			gotErr := s.InitOutcome()
+			// InitSuccess Criteria
+			gotErr := s.InitSuccess()
 			require.NoError(t, gotErr)
 
 			source, err := s.Source(tt.workingDir)

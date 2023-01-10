@@ -14,8 +14,8 @@ type Spec struct {
 	Command string `yaml:",omitempty" jsonschema:"required"`
 	// Environments allows to pass environment variable(s) to the shell script
 	Environments Environments `yaml:",omitempty"`
-	// Outcome defines how to interpreted shell command outcome. The goal is to define what a success means, what an error means, and what a warning would mean
-	Outcome SpecOutcome `yaml:",omitempty"`
+	// Success defines how to interpreted shell command success criteria. What a success means, what an error means, and what a warning would mean
+	Success SpecSuccess `yaml:",omitempty"`
 }
 
 // Shell defines a resource of kind "shell"
@@ -23,7 +23,7 @@ type Shell struct {
 	executor commandExecutor
 	spec     Spec
 	result   commandResult
-	outcome  Outcomer
+	success  Successer
 }
 
 // New returns a reference to a newly initialized Shell object from a ShellSpec
@@ -50,7 +50,7 @@ func New(spec interface{}) (*Shell, error) {
 		spec:     newSpec,
 	}
 
-	err = s.InitOutcome()
+	err = s.InitSuccess()
 	if err != nil {
 		return nil, err
 	}

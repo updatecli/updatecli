@@ -76,7 +76,7 @@ func (c *Checksum) PostCommand() error {
 	return nil
 }
 
-// SourceOutcome defines the success criteria for a source using the shell resource
+// SourceResult defines the success criteria for a source using the shell resource
 func (c *Checksum) SourceResult() (string, error) {
 	var missingFiles []string
 

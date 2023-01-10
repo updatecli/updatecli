@@ -32,7 +32,7 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		Value: "condition",
 	})
 
-	err = s.outcome.PreCommand()
+	err = s.success.PreCommand()
 	if err != nil {
 		return false, err
 	}
@@ -43,10 +43,10 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		Env: env.ToStringSlice(),
 	})
 
-	err = s.outcome.PostCommand()
+	err = s.success.PostCommand()
 	if err != nil {
 		return false, err
 	}
 
-	return s.outcome.ConditionResult()
+	return s.success.ConditionResult()
 }

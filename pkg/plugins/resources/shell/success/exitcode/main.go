@@ -80,7 +80,7 @@ func (e *ExitCode) PostCommand() error {
 	return nil
 }
 
-// SourceOutcome defines the success criteria for a source using the shell resource
+// SourceResult defines the success criteria for a source using the shell resource
 func (e *ExitCode) SourceResult() (string, error) {
 	switch *e.exitCode {
 	case e.spec.Success:

@@ -58,7 +58,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		Value: fmt.Sprintf("%v", dryRun),
 	})
 
-	err = s.outcome.PreCommand()
+	err = s.success.PreCommand()
 	if err != nil {
 		return false, "", err
 	}
@@ -69,12 +69,12 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		Env: env.ToStringSlice(),
 	})
 
-	err = s.outcome.PostCommand()
+	err = s.success.PostCommand()
 	if err != nil {
 		return false, "", err
 	}
 
-	changed, err := s.outcome.TargetResult()
+	changed, err := s.success.TargetResult()
 
 	if err != nil {
 		return false, "", &ExecutionFailedError{}
