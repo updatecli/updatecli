@@ -41,7 +41,7 @@ require (
 	github.com/muesli/mango-cobra v1.2.0
 	github.com/muesli/roff v0.1.0
 	github.com/tomwright/dasel v1.27.3
-	golang.org/x/text v0.5.0
+	golang.org/x/text v0.6.0
 	gotest.tools v2.2.0+incompatible
 )
 
