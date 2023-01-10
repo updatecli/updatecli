@@ -58,11 +58,21 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		Value: fmt.Sprintf("%v", dryRun),
 	})
 
+	err = s.outcome.PreCommand()
+	if err != nil {
+		return false, "", err
+	}
+
 	s.executeCommand(command{
 		Cmd: s.appendSource(source),
 		Dir: workingDir,
 		Env: env.ToStringSlice(),
 	})
+
+	err = s.outcome.PostCommand()
+	if err != nil {
+		return false, "", err
+	}
 
 	changed, err := s.outcome.TargetResult()
 
