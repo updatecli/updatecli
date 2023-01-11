@@ -1,0 +1,29 @@
+name: Retrieve the latest Cargo Package Version
+
+scms:
+  cratesio-index:
+    kind: git
+    spec:
+      url: https://github.com/rust-lang/crates.io-index.git
+      branch: master
+
+sources:
+  rand:
+    name: Get the latest rand version
+    kind: cargopackage
+    scmid: cratesio-index
+    spec:
+      package: rand
+      versionfilter:
+        kind: semver
+        pattern: "~0.7"
+  
+conditions:
+  rand:
+    name: Test if rand version exists
+    kind: cargopackage
+    scmid: cratesio-index
+    spec:
+      package: rand
+      version: 0.7.2
+
