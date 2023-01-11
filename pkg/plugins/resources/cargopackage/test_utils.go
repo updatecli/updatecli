@@ -30,7 +30,10 @@ func CreateDummyIndex() (string, error) {
 		return "", err
 	}
 	defer crateFile.Close()
-	_, err = fmt.Fprintf(crateFile, "{\"name\":\"crate-test\",\"vers\":\"0.1.0\",\"deps\":[],\"features\":{},\"cksum\":\"b274d286f7a6aad5a7d5b5407e9db0098c94711fb3563bf2e32854a611edfb63\",\"yanked\":false,\"links\":null}")
+	_, err = fmt.Fprintf(crateFile, "{\"name\":\"crate-test\",\"vers\":\"0.1.0\",\"deps\":[],\"features\":{},\"cksum\":\"b274d286f7a6aad5a7d5b5407e9db0098c94711fb3563bf2e32854a611edfb63\",\"yanked\":false,\"links\":null}\n")
+	_, err = fmt.Fprintf(crateFile, "{\"name\":\"crate-test\",\"vers\":\"0.2.0\",\"deps\":[],\"features\":{},\"cksum\":\"b274d286f7a6aad5a7d5b5407e9db0098c94711fb3563bf2e32854a611edfb63\",\"yanked\":false,\"links\":null}\n")
+	_, err = fmt.Fprintf(crateFile, "{\"name\":\"crate-test\",\"vers\":\"0.2.2\",\"deps\":[],\"features\":{},\"cksum\":\"b274d286f7a6aad5a7d5b5407e9db0098c94711fb3563bf2e32854a611edfb63\",\"yanked\":false,\"links\":null}\n")
+	_, err = fmt.Fprintf(crateFile, "{\"name\":\"crate-test\",\"vers\":\"0.2.3\",\"deps\":[],\"features\":{},\"cksum\":\"b274d286f7a6aad5a7d5b5407e9db0098c94711fb3563bf2e32854a611edfb63\",\"yanked\":true,\"links\":null}\n")
 	if err != nil {
 		return "", err
 	}

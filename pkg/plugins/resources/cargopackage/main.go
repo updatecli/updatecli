@@ -150,6 +150,9 @@ func (cp *CargoPackage) getPackageData() (PackageData, error) {
 		if err != nil {
 			logrus.Errorf("something went wrong while parsing the version %q\n", err)
 		}
+		if packageVersion.Yanked {
+			continue
+		}
 		pd.Versions = append(pd.Versions, packageVersion)
 	}
 	return pd, nil

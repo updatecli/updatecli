@@ -24,13 +24,23 @@ func TestCondition(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name: "Passing case of retrieving rand versions ",
+			name: "Passing case of retrieving crate-test versions ",
 			spec: Spec{
 				IndexDir: dir,
 				Package:  "crate-test",
 				Version:  "0.1.0",
 			},
 			expectedResult: true,
+			expectedError:  false,
+		},
+		{
+			name: "Passing case of retrieving crate-test yanked versions ",
+			spec: Spec{
+				IndexDir: dir,
+				Package:  "crate-test",
+				Version:  "0.2.3",
+			},
+			expectedResult: false,
 			expectedError:  false,
 		},
 		{
