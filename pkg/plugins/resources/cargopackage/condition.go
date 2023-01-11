@@ -11,6 +11,15 @@ import (
 
 // Condition checks that a git tag exists
 func (cp *CargoPackage) Condition(source string) (bool, error) {
+	if len(cp.spec.IndexDir) == 0 {
+		// No IndexDir provided nor scm resource
+		// We should use the default `crates.io` repository
+		indexDir, err := loadDefaultCrateIndex()
+		if err != nil {
+			return false, err
+		}
+		cp.spec.IndexDir = indexDir
+	}
 	return cp.condition(source)
 }
 

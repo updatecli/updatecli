@@ -9,9 +9,17 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/updatecli/updatecli/pkg/core/tmp"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+)
+
+const (
+	// URL of the default Npm api data
+	cratesDefaultIndex string = "https://github.com/rust-lang/crates.io-index.git"
 )
 
 // CargoPackage defines a resource of type "cargopackage"
@@ -46,8 +54,6 @@ func New(spec interface{}) (*CargoPackage, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	err = newSpec.Validate()
 
 	if err != nil {
 		return nil, err
@@ -147,4 +153,46 @@ func (cp *CargoPackage) getPackageData() (PackageData, error) {
 		pd.Versions = append(pd.Versions, packageVersion)
 	}
 	return pd, nil
+}
+
+func loadDefaultCrateIndex() (string, error) {
+	err := tmp.Create()
+	if err != nil {
+		return "", err
+	}
+	directory := tmp.Directory
+	indexPath := filepath.Join(directory, "crates-default-index")
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		_, err = git.PlainClone(indexPath, false, &git.CloneOptions{
+			URL: cratesDefaultIndex,
+			// Can be reanabled once https://github.com/go-git/go-git/issues/305 is fixed
+			//Depth:        1,
+			SingleBranch: true,
+		})
+		if err != nil {
+			return "", err
+		}
+	} else {
+		// Repo already exists, update to latest
+		rep, err := git.PlainOpen(indexPath)
+		if err != nil {
+			logrus.Errorf("something went wrong when opening the existing repo %q\n", err)
+			return "", err
+		}
+		w, err := rep.Worktree()
+		if err != nil {
+			logrus.Errorf("something went wrong when loading the worktree of the existing repo %q\n", err)
+			return "", err
+		}
+		err = w.Pull(&git.PullOptions{})
+		if err != nil &&
+			err != git.NoErrAlreadyUpToDate {
+			logrus.Errorf("something went wrong when pulling the existing repo %q\n", err)
+			return "", err
+		}
+	}
+	if err != nil {
+		return "", err
+	}
+	return indexPath, nil
 }
