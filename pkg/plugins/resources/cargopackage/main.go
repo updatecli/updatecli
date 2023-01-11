@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // CargoPackage defines a resource of type "cargopackage"
@@ -130,6 +131,10 @@ func (cp *CargoPackage) getPackageData() (PackageData, error) {
 	pd.Name = cp.spec.Package
 
 	packageDir, err := getPackageFileDir(cp.spec.Package)
+	if err != nil {
+		logrus.Errorf("something went wrong while opening the package file %q\n", err)
+		return pd, err
+	}
 	packageFilePath := filepath.Join(cp.spec.IndexDir, packageDir, cp.spec.Package)
 	packageInfoFile, err := os.Open(packageFilePath)
 	if err != nil {

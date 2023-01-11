@@ -2,6 +2,7 @@ package cargopackage
 
 import (
 	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
