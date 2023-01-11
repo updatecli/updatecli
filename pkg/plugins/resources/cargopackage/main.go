@@ -118,7 +118,7 @@ func (cp *CargoPackage) getPackageData() (PackageData, error) {
 
 	packageDir, err := getPackageFileDir(cp.spec.Package)
 	if err != nil {
-		logrus.Errorf("something went wrong while opening the package file %q\n", err)
+		logrus.Errorf("something went wrong while getting the package directory from its name %q\n", err)
 		return pd, err
 	}
 	packageFilePath := filepath.Join(cp.spec.IndexDir, packageDir, cp.spec.Package)
