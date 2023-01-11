@@ -5,16 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // CargoPackage defines a resource of type "cargopackage"
@@ -39,11 +36,6 @@ type PackageData struct {
 	Versions []PackageVersion
 }
 
-const (
-	// URL of the default Npm api data
-	cargoDefaultIndexURL string = "https://github.com/rust-lang/crates.io-index.git"
-)
-
 // New returns a reference to a newly initialized CargoPackage object from a cargopackage.Spec
 // or an error if the provided Spec triggers a validation error.
 func New(spec interface{}) (*CargoPackage, error) {
@@ -55,12 +47,6 @@ func New(spec interface{}) (*CargoPackage, error) {
 		return nil, err
 	}
 
-	if newSpec.IndexUrl == "" {
-		// Default to `crates.io` url
-		newSpec.IndexUrl = cargoDefaultIndexURL
-	}
-
-	err = newSpec.Validate()
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +62,21 @@ func New(spec interface{}) (*CargoPackage, error) {
 	}
 
 	return newResource, nil
+}
+
+// Validate tests that tag struct is correctly configured
+func (cp *CargoPackage) Validate() error {
+	validationErrors := []string{}
+	if cp.spec.IndexDir == "" {
+		validationErrors = append(validationErrors, "Index directory path is empty while it must be specified. Did you specify an `scmID` or a `spec.indexDIR`?")
+	}
+
+	// Return all the validation errors if found any
+	if len(validationErrors) > 0 {
+		return fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+	}
+
+	return nil
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
@@ -128,51 +129,8 @@ func (cp *CargoPackage) getPackageData() (PackageData, error) {
 
 	pd.Name = cp.spec.Package
 
-	dir, err := os.MkdirTemp("", "*-cargo-index")
-	if err != nil {
-		logrus.Errorf("something went wrong while creating a temp directory for the cargo index %q\n", err)
-		return pd, err
-	}
-	defer func(path string) {
-		err := os.RemoveAll(path)
-		if err != nil {
-			logrus.Errorf("something went wrong while cleaning the temp directory for the cargo index %q\n", err)
-		}
-	}(dir) // clean up
-
-	var auth transport.AuthMethod
-	if cp.spec.Username != "" {
-		auth = &http.BasicAuth{
-			Username: cp.spec.Username,
-			Password: cp.spec.Password,
-		}
-	} else if cp.spec.PrivateKey != "" {
-		privateKeyUser := "git"
-		if cp.spec.PrivateKeyUser != "" {
-			privateKeyUser = cp.spec.PrivateKeyUser
-		}
-		publicKeys, err := ssh.NewPublicKeys(privateKeyUser, []byte(cp.spec.PrivateKey), cp.spec.PrivateKeyPassword)
-		if err != nil {
-			logrus.Errorf("something went wrong while parsing the private key for the cargo index %q\n", err)
-			return pd, err
-		}
-		auth = publicKeys
-	}
-
-	_, err = git.PlainClone(dir, false, &git.CloneOptions{
-		URL:          cp.spec.IndexUrl,
-		Auth:         auth,
-		Depth:        1,
-		SingleBranch: true,
-	})
-
-	if err != nil {
-		logrus.Errorf("something went wrong while cloning the cargo index %q\n", err)
-		return pd, err
-	}
-
 	packageDir, err := getPackageFileDir(cp.spec.Package)
-	packageFilePath := filepath.Join(dir, packageDir, cp.spec.Package)
+	packageFilePath := filepath.Join(cp.spec.IndexDir, packageDir, cp.spec.Package)
 	packageInfoFile, err := os.Open(packageFilePath)
 	if err != nil {
 		logrus.Errorf("something went wrong while opening the package file %q\n", err)

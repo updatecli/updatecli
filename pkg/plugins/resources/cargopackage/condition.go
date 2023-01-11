@@ -8,15 +8,28 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// ConditionFromSCM returns an error because it's not supported
+// Condition checks that a git tag exists
+func (cp *CargoPackage) Condition(source string) (bool, error) {
+	return cp.condition(source)
+}
+
+// ConditionFromSCM test if a tag exists from a git repository specific from SCM
 func (cp *CargoPackage) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	logrus.Warningf("SCM configuration is not supported for condition of type cargopackage. Remove the `scm` directive from condition to remove this warning message")
-	return cp.Condition(source)
+	path := scm.GetDirectory()
+
+	if len(cp.spec.IndexDir) > 0 {
+		logrus.Warningf("IndexDir is defined and set to %q but is overridden by the scm definition %q",
+			cp.spec.IndexDir,
+			path)
+	}
+	cp.spec.IndexDir = path
+
+	return cp.condition(source)
 }
 
 // Condition checks if a cargo package with a specific version is published
 // We assume that if we can't find the package version in the index, then it means it doesn't exist.
-func (cp *CargoPackage) Condition(source string) (bool, error) {
+func (cp *CargoPackage) condition(source string) (bool, error) {
 	versionToCheck := cp.spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source

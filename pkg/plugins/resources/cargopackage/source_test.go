@@ -1,6 +1,8 @@
 package cargopackage
 
 import (
+	"log"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +11,11 @@ import (
 )
 
 func TestSource(t *testing.T) {
+	dir, err := CreateDummyIndex()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
 	tests := []struct {
 		name           string
 		url            string
@@ -19,13 +26,14 @@ func TestSource(t *testing.T) {
 		{
 			name: "Passing case of retrieving rand versions ",
 			spec: Spec{
-				Package: "rand",
+				IndexDir: dir,
+				Package:  "crate-test",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "~0.7",
+					Pattern: "~0.1",
 				},
 			},
-			expectedResult: "0.7.3",
+			expectedResult: "0.1.0",
 			expectedError:  false,
 		},
 	}

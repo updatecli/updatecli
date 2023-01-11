@@ -85,8 +85,7 @@ func TestNew(t *testing.T) {
 				Package: "test",
 			},
 			wantSpec: Spec{
-				IndexUrl: "https://github.com/rust-lang/crates.io-index.git",
-				Package:  "test",
+				Package: "test",
 			},
 			wantVersionFilter: version.Filter{
 				Kind:    "latest",

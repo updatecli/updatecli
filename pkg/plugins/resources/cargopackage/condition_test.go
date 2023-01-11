@@ -1,6 +1,8 @@
 package cargopackage
 
 import (
+	"log"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,6 +10,12 @@ import (
 )
 
 func TestCondition(t *testing.T) {
+	dir, err := CreateDummyIndex()
+	defer os.RemoveAll(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	tests := []struct {
 		name           string
 		url            string
@@ -18,8 +26,9 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Passing case of retrieving rand versions ",
 			spec: Spec{
-				Package: "rand",
-				Version: "0.7.3",
+				IndexDir: dir,
+				Package:  "crate-test",
+				Version:  "0.1.0",
 			},
 			expectedResult: true,
 			expectedError:  false,
@@ -27,8 +36,9 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Passing case of retrieving latest rand version using latest rule ",
 			spec: Spec{
-				Package: "rand",
-				Version: "99.99.99",
+				IndexDir: dir,
+				Package:  "crate-test",
+				Version:  "99.99.99",
 			},
 			expectedResult: false,
 			expectedError:  false,

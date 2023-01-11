@@ -8,6 +8,15 @@ import (
 
 // Source returns the latest npm package version
 func (cp CargoPackage) Source(workingDir string) (string, error) {
+	if len(cp.spec.IndexDir) == 0 && len(workingDir) > 0 {
+		cp.spec.IndexDir = workingDir
+	}
+
+	err := cp.Validate()
+	if err != nil {
+		return "", err
+	}
+
 	version, _, err := cp.getVersions()
 	if err != nil {
 		return "", err
