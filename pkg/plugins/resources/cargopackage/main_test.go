@@ -82,10 +82,12 @@ func TestNew(t *testing.T) {
 		{
 			name: "Normal case without a custom index",
 			spec: Spec{
-				Package: "test",
+				IndexDir: "test",
+				Package:  "test",
 			},
 			wantSpec: Spec{
-				Package: "test",
+				IndexDir: "test",
+				Package:  "test",
 			},
 			wantVersionFilter: version.Filter{
 				Kind:    "latest",

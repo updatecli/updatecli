@@ -13,11 +13,6 @@ func (cp CargoPackage) Source(workingDir string) (string, error) {
 		cp.spec.IndexDir = workingDir
 	}
 
-	err := cp.Validate()
-	if err != nil {
-		return "", err
-	}
-
 	version, _, err := cp.getVersions()
 	if err != nil {
 		return "", err

@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -48,6 +47,8 @@ func New(spec interface{}) (*CargoPackage, error) {
 		return nil, err
 	}
 
+	err = newSpec.Validate()
+
 	if err != nil {
 		return nil, err
 	}
@@ -63,21 +64,6 @@ func New(spec interface{}) (*CargoPackage, error) {
 	}
 
 	return newResource, nil
-}
-
-// Validate tests that tag struct is correctly configured
-func (cp *CargoPackage) Validate() error {
-	validationErrors := []string{}
-	if cp.spec.IndexDir == "" {
-		validationErrors = append(validationErrors, "Index directory path is empty while it must be specified. Did you specify an `scmID` or a `spec.indexDIR`?")
-	}
-
-	// Return all the validation errors if found any
-	if len(validationErrors) > 0 {
-		return fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
-	}
-
-	return nil
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
