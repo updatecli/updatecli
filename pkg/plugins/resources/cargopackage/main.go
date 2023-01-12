@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
-
-	"github.com/go-git/go-git/v5"
-	"github.com/updatecli/updatecli/pkg/core/tmp"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -18,43 +17,117 @@ import (
 )
 
 const (
-	// URL of the default Npm api data
-	cratesDefaultIndex string = "https://github.com/rust-lang/crates.io-index.git"
+	// URL of the default Crates index api
+	cratesDefaultIndexApiUrl string = "https://crates.io/api/v1/crates"
 )
 
 // CargoPackage defines a resource of type "cargopackage"
 type CargoPackage struct {
 	spec Spec
-	//options []remote.Option
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
 	foundVersion  version.Version
 	packageData   PackageData
+	// indexDir holds the location of the indexDir
+	indexDir string
+	indexUrl string
+	scmID    string
+}
+
+type CargoUser struct {
+	Avatar string `json:"avatar"`
+	Id     int    `json:"id"`
+	Login  string `json:"login"`
+	Name   string `json:"name"`
+	Url    string `json:"url"`
 }
 
 type PackageVersion struct {
-	Name     string `json:"name"`
-	Version  string `json:"vers"`
-	Yanked   bool   `json:"yanked"`
-	Checksum string `json:"chsum"`
+	AuditActions []struct {
+		Action string    `json:"action"`
+		Time   string    `json:"time"`
+		User   CargoUser `json:"user"`
+	} `json:"audit_actions"`
+	Checksum  string              `json:"checksum"`
+	Crate     string              `json:"crate"`
+	CrateSize int                 `json:"crate_size"`
+	CreatedAt string              `json:"created_at"`
+	DlPath    string              `json:"dl_path"`
+	Downloads int                 `json:"downloads"`
+	Features  map[string][]string `json:"features"`
+	Id        int                 `json:"id"`
+	License   string              `json:"license"`
+	Links     struct {
+		Authors         string `json:"authors"`
+		Dependencies    string `json:"dependencies"`
+		VersionDownload string `json:"version_downloads"`
+	} `json:"links"`
+	Num         string    `json:"num,omitempty"`
+	PublishedBy CargoUser `json:"published_by"`
+	ReadmePath  string    `json:"readme_path"`
+	UpdatedAt   string    `json:"updated_at"`
+	Version     string    `json:"vers,omitempty"`
+	Yanked      bool      `json:"yanked"`
+}
+
+type PackageCategory struct {
+	Category    string `json:"category"`
+	CratesCnt   int    `json:"crates_cnt"`
+	CreatedAt   string `json:"created_at"`
+	Description string `json:"description"`
+	Id          string `json:"id"`
+	Slug        string `json:"slug"`
+}
+
+type PackageKeyword struct {
+	CratesCnt int    `json:"crates_cnt"`
+	CreatedAt string `json:"created_at"`
+	Keyword   string `json:"keyword"`
+	Id        string `json:"id"`
+}
+
+type PackageCrate struct {
+	Categories    []string `json:"categories"`
+	CreatedAt     string   `json:"created_at"`
+	Description   string   `json:"description"`
+	Documentation string   `json:"documentation"`
+	Downloads     int      `json:"downloads"`
+	ExactMatch    bool     `json:"exact_match"`
+	Homepage      string   `json:"homepage"`
+	Id            string   `json:"id"`
+	Keywords      []string `json:"keywords"`
+	Links         struct {
+		OwnerTeam           string `json:"owner_team"`
+		OwnerUser           string `json:"owner_user"`
+		Owners              string `json:"owners"`
+		ReverseDependencies string `json:"reverse_dependencies"`
+		VersionDownloads    string `json:"version_downloads"`
+		Versions            string `json:"versions"`
+	} `json:"links"`
+	MaxStableVersion string `json:"max_stable_version"`
+	MaxVersion       string `json:"max_version"`
+	Name             string `json:"name"`
+	NewestVersion    string `json:"newest_version"`
+	RecentDownloads  int    `json:"recent_downloads"`
+	Repository       string `json:"repository"`
+	UpdatedAt        string `json:"updated_at"`
+	Versions         []int  `json:"versions"`
 }
 
 type PackageData struct {
-	Name     string
-	Versions []PackageVersion
+	Categories []PackageCategory `json:"categories"`
+	Keywords   []PackageKeyword  `json:"keywords"`
+	Crate      PackageCrate      `json:"crate"`
+	Versions   []PackageVersion  `json:"versions"`
 }
 
 // New returns a reference to a newly initialized CargoPackage object from a cargopackage.Spec
 // or an error if the provided Spec triggers a validation error.
-func New(spec interface{}) (*CargoPackage, error) {
+func New(spec interface{}, scmID string) (*CargoPackage, error) {
 
 	newSpec := Spec{}
 
 	err := mapstructure.Decode(spec, &newSpec)
-	if err != nil {
-		return nil, err
-	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +140,13 @@ func New(spec interface{}) (*CargoPackage, error) {
 	newResource := &CargoPackage{
 		spec:          newSpec,
 		versionFilter: newFilter,
+		scmID:         scmID,
+		indexDir:      newSpec.IndexDir,
+		indexUrl:      newSpec.IndexUrl,
+	}
+
+	if newResource.scmID == "" && newSpec.IndexDir == "" && newSpec.IndexUrl == "" {
+		newResource.indexUrl = cratesDefaultIndexApiUrl
 	}
 
 	return newResource, nil
@@ -86,7 +166,9 @@ func (cp *CargoPackage) getVersions() (v string, versions []string, err error) {
 	}
 
 	for _, value := range cp.packageData.Versions {
-		versions = append(versions, value.Version)
+		if !value.Yanked {
+			versions = append(versions, value.Num)
+		}
 	}
 
 	sort.Strings(versions)
@@ -116,18 +198,40 @@ func getPackageFileDir(packageName string) (string, error) {
 	}
 }
 
-// Get package data from Json API
-func (cp *CargoPackage) getPackageData() (PackageData, error) {
+func getPackageDataFromApi(name string, indexUrl string) (PackageData, error) {
+	packageUrl := fmt.Sprintf("%s/%s", indexUrl, name)
+
+	req, err := http.NewRequest("GET", packageUrl, nil)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
+		return PackageData{}, err
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
+		return PackageData{}, err
+	}
+	defer res.Body.Close()
+
+	var d PackageData
+	err = json.NewDecoder(res.Body).Decode(&d)
+	if err != nil && err != io.EOF {
+		logrus.Errorf("something went wrong while reading cargo api data%q\n", err)
+		return PackageData{}, err
+	}
+	return d, nil
+}
+
+func getPackageDataFromFS(name string, indexDir string) (PackageData, error) {
 	var pd PackageData
-
-	pd.Name = cp.spec.Package
-
-	packageDir, err := getPackageFileDir(cp.spec.Package)
+	pd.Crate.Name = name
+	packageDir, err := getPackageFileDir(name)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting the package directory from its name %q\n", err)
 		return pd, err
 	}
-	packageFilePath := filepath.Join(cp.spec.IndexDir, packageDir, cp.spec.Package)
+	packageFilePath := filepath.Join(indexDir, packageDir, name)
 	packageInfoFile, err := os.Open(packageFilePath)
 	if err != nil {
 		logrus.Errorf("something went wrong while opening the package file %q\n", err)
@@ -150,49 +254,17 @@ func (cp *CargoPackage) getPackageData() (PackageData, error) {
 		if packageVersion.Yanked {
 			continue
 		}
+		// File index store version info in Version Field
+		packageVersion.Num = packageVersion.Version
 		pd.Versions = append(pd.Versions, packageVersion)
 	}
 	return pd, nil
 }
 
-func loadDefaultCrateIndex() (string, error) {
-	err := tmp.Create()
-	if err != nil {
-		return "", err
+// Get package data from Json API
+func (cp *CargoPackage) getPackageData() (PackageData, error) {
+	if cp.indexDir != "" {
+		return getPackageDataFromFS(cp.spec.Package, cp.indexDir)
 	}
-	directory := tmp.Directory
-	indexPath := filepath.Join(directory, "crates-default-index")
-	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-		_, err = git.PlainClone(indexPath, false, &git.CloneOptions{
-			URL: cratesDefaultIndex,
-			// Can be reanabled once https://github.com/go-git/go-git/issues/305 is fixed
-			//Depth:        1,
-			SingleBranch: true,
-		})
-		if err != nil {
-			return "", err
-		}
-	} else {
-		// Repo already exists, update to latest
-		rep, err := git.PlainOpen(indexPath)
-		if err != nil {
-			logrus.Errorf("something went wrong when opening the existing repo %q\n", err)
-			return "", err
-		}
-		w, err := rep.Worktree()
-		if err != nil {
-			logrus.Errorf("something went wrong when loading the worktree of the existing repo %q\n", err)
-			return "", err
-		}
-		err = w.Pull(&git.PullOptions{})
-		if err != nil &&
-			err != git.NoErrAlreadyUpToDate {
-			logrus.Errorf("something went wrong when pulling the existing repo %q\n", err)
-			return "", err
-		}
-	}
-	if err != nil {
-		return "", err
-	}
-	return indexPath, nil
+	return getPackageDataFromApi(cp.spec.Package, cp.indexUrl)
 }

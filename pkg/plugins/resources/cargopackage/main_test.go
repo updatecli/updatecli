@@ -80,14 +80,12 @@ func TestNew(t *testing.T) {
 		wantErr           bool
 	}{
 		{
-			name: "Normal case without a custom index",
+			name: "Normal case with default index",
 			spec: Spec{
-				IndexDir: "test",
-				Package:  "test",
+				Package: "rand",
 			},
 			wantSpec: Spec{
-				IndexDir: "test",
-				Package:  "test",
+				Package: "rand",
 			},
 			wantVersionFilter: version.Filter{
 				Kind:    "latest",
@@ -97,7 +95,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotErr := New(tt.spec)
+			got, gotErr := New(tt.spec, "")
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

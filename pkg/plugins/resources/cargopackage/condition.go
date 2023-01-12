@@ -11,15 +11,6 @@ import (
 
 // Condition checks that a git tag exists
 func (cp *CargoPackage) Condition(source string) (bool, error) {
-	if len(cp.spec.IndexDir) == 0 {
-		// No IndexDir provided nor scm resource
-		// We should use the default `crates.io` repository
-		indexDir, err := loadDefaultCrateIndex()
-		if err != nil {
-			return false, err
-		}
-		cp.spec.IndexDir = indexDir
-	}
 	return cp.condition(source)
 }
 
@@ -27,12 +18,17 @@ func (cp *CargoPackage) Condition(source string) (bool, error) {
 func (cp *CargoPackage) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	path := scm.GetDirectory()
 
-	if len(cp.spec.IndexDir) > 0 {
+	if cp.spec.IndexDir != "" {
 		logrus.Warningf("IndexDir is defined and set to %q but is overridden by the scm definition %q",
 			cp.spec.IndexDir,
 			path)
 	}
-	cp.spec.IndexDir = path
+	if cp.spec.IndexUrl != "" {
+		logrus.Warningf("IndexUrl is defined and set to %q but is overridden by the scm definition %q",
+			cp.spec.IndexDir,
+			path)
+	}
+	cp.indexDir = path
 
 	return cp.condition(source)
 }

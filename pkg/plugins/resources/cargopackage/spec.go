@@ -7,7 +7,11 @@ import (
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
+	// [S][C] IndexUrl specifies the directory of the index to use to check version
+	// If set, package version will be checked against the API
+	IndexUrl string `yaml:",omitempty"`
 	// [S][C] IndexDir specifies the directory of the index to use to check version
+	// If set, package version will be checked using the file structure
 	IndexDir string `yaml:",omitempty"`
 	// [S][C] Package specifies the name of the package
 	Package string `yaml:",omitempty" jsonschema:"required"`

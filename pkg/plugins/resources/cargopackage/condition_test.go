@@ -24,17 +24,35 @@ func TestCondition(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name: "Passing case of retrieving crate-test versions ",
+			name: "Retrieving existing rand version from the default index api",
 			spec: Spec{
-				IndexDir: dir,
-				Package:  "crate-test",
-				Version:  "0.1.0",
+				Package: "rand",
+				Version: "0.7.2",
 			},
 			expectedResult: true,
 			expectedError:  false,
 		},
 		{
-			name: "Passing case of retrieving crate-test yanked versions ",
+			name: "Retrieving non-existing rand version from the default index api",
+			spec: Spec{
+				Package: "rand",
+				Version: "99.99.99",
+			},
+			expectedResult: false,
+			expectedError:  false,
+		},
+		{
+			name: "Retrieving existing crate-test version from the filesystem index",
+			spec: Spec{
+				IndexDir: dir,
+				Package:  "crate-test",
+				Version:  "0.2.2",
+			},
+			expectedResult: true,
+			expectedError:  false,
+		},
+		{
+			name: "Retrieving existing yanked crate-test version from the filesystem index",
 			spec: Spec{
 				IndexDir: dir,
 				Package:  "crate-test",
@@ -44,7 +62,7 @@ func TestCondition(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Passing case of retrieving latest rand version using latest rule ",
+			name: "Retrieving non-existing yanked crate-test version from the filesystem index",
 			spec: Spec{
 				IndexDir: dir,
 				Package:  "crate-test",
@@ -56,7 +74,7 @@ func TestCondition(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.spec)
+			got, err := New(tt.spec, "")
 			if tt.expectedError {
 				assert.Error(t, err)
 				return

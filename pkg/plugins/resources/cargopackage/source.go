@@ -2,7 +2,6 @@ package cargopackage
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -10,22 +9,10 @@ import (
 
 // Source returns the latest npm package version
 func (cp CargoPackage) Source(workingDir string) (string, error) {
-	if len(cp.spec.IndexDir) == 0 {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return "", err
-		}
-		if workingDir == pwd {
-			// No IndexDir provided nor scm resource
-			// We should use the default `crates.io` repository
-			indexDir, err := loadDefaultCrateIndex()
-			if err != nil {
-				return "", err
-			}
-			cp.spec.IndexDir = indexDir
-		} else {
-			cp.spec.IndexDir = workingDir
-		}
+	logrus.Infof("indexDir: %s, workingDir: %s", cp.indexDir, workingDir)
+	if cp.scmID != "" {
+		// We are in a scm context, workingDir is holding the data
+		cp.indexDir = workingDir
 	}
 
 	version, _, err := cp.getVersions()

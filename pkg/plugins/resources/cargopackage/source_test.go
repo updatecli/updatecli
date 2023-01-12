@@ -24,7 +24,19 @@ func TestSource(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name: "Passing case of retrieving rand versions ",
+			name: "Passing case of retrieving rand version from the default index api",
+			spec: Spec{
+				Package: "rand",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "~0.7",
+				},
+			},
+			expectedResult: "0.7.3",
+			expectedError:  false,
+		},
+		{
+			name: "Passing case of retrieving crate-test version from the filesystem index",
 			spec: Spec{
 				IndexDir: dir,
 				Package:  "crate-test",
@@ -39,7 +51,7 @@ func TestSource(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.spec)
+			got, err := New(tt.spec, "")
 			if tt.expectedError {
 				assert.Error(t, err)
 				return
