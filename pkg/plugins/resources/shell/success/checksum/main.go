@@ -108,7 +108,7 @@ func (c *Checksum) SourceResult() (string, error) {
 		return *c.output, fmt.Errorf("missing monitored file checksum")
 	}
 
-	if !changed {
+	if changed {
 		return *c.output, fmt.Errorf("monitored checksum changed")
 	}
 
@@ -116,6 +116,7 @@ func (c *Checksum) SourceResult() (string, error) {
 }
 
 // ConditionResult defines the success criteria for a condition using the shell resource
+// To succeed, Updatecli expects the condition to be true so file shouldn't change
 func (c *Checksum) ConditionResult() (bool, error) {
 	var missingFiles []string
 
@@ -144,13 +145,14 @@ func (c *Checksum) ConditionResult() (bool, error) {
 		for i := range missingFiles {
 			logrus.Debugf("Missing files %q", missingFiles[i])
 		}
-		return changed, fmt.Errorf("missing monitored file checksum")
+		return !changed, fmt.Errorf("missing monitored file checksum")
 	}
 
-	return changed, nil
+	return !changed, nil
 }
 
 // TargetResult defines the success criteria for a target using the shell resource
+// To success Updatecli expected to not change by default
 func (c *Checksum) TargetResult() (bool, error) {
 
 	var missingFiles []string
