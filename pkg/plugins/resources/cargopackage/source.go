@@ -9,7 +9,7 @@ import (
 
 // Source returns the latest npm package version
 func (cp CargoPackage) Source(workingDir string) (string, error) {
-	logrus.Infof("indexDir: %s, workingDir: %s", cp.indexDir, workingDir)
+	logrus.Debugf("indexDir: %s, workingDir: %s", cp.indexDir, workingDir)
 	if cp.isSCM {
 		// We are in a scm context, workingDir is holding the data
 		cp.indexDir = workingDir
