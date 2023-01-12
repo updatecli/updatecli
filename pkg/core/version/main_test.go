@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestIsGreatherThan(t *testing.T) {
+func TestIsGreaterThan(t *testing.T) {
 
 	type data struct {
 		updatecliBinaryVersion           string

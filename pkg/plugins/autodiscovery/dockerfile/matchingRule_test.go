@@ -38,7 +38,7 @@ func TestIsMatchingRules(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			name: "Scenario 4 - only matchin image name",
+			name: "Scenario 4 - only matching image name",
 			rules: MatchingRules{
 				MatchingRule{
 					Images: []string{

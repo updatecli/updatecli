@@ -99,8 +99,8 @@ func (p *Pipeline) RunActions() error {
 			sourceID := p.Targets[targetID].Config.SourceID
 
 			found := false
-			for _, proccessedSourceID := range processedSourceIDs {
-				if proccessedSourceID == sourceID {
+			for _, processedSourceID := range processedSourceIDs {
+				if processedSourceID == sourceID {
 					found = true
 				}
 			}
@@ -115,14 +115,14 @@ func (p *Pipeline) RunActions() error {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
 
-				actionDebugOutput := fmt.Sprintf("The expected action would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
+				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
 					action.Title,
 					action.Changelog,
 					action.PipelineReport)
 				logrus.Debugf(strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
 			}
 
-			actionOutput := fmt.Sprintf("The expected action would have the following informations:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
+			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
 				action.Title,
 				action.Changelog,
 				action.PipelineReport)
