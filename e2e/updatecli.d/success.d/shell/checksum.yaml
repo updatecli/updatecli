@@ -1,0 +1,71 @@
+name: Test shell checksum
+
+sources:
+  success1:
+    name: Test the source succeed according success criteria despite command failing
+    kind: shell
+    spec:
+      command: "false"
+      success:
+        kind: file/checksum
+        spec:
+          files:
+            - e2e/updatecli.d/success.d/shell/checksum.yaml
+  success2:
+    name: Test the source succeed according success criteria
+    kind: shell
+    spec:
+      command: "true"
+      success:
+        kind: file/checksum
+        spec:
+          files:
+            - e2e/updatecli.d/success.d/shell/checksum.yaml
+conditions:
+  success1:
+    disablesourceinput: true
+    name: Test the condition succeed according success criteria despite command failing
+    kind: shell
+    spec:
+      command: "false"
+      success:
+        kind: file/checksum
+        spec:
+          files:
+            - e2e/updatecli.d/success.d/shell/checksum.yaml
+
+  success2:
+    disablesourceinput: true
+    name: Test the source succeed according success criteria
+    kind: shell
+    spec:
+      command: "true"
+      success:
+        kind: file/checksum
+        spec:
+          files:
+            - e2e/updatecli.d/success.d/shell/checksum.yaml
+
+targets:
+  success1:
+    disablesourceinput: true
+    name: Test the target succeed according success criteria despite command failing
+    kind: shell
+    spec:
+      command: "false"
+      success:
+        kind: file/checksum
+        spec:
+          files:
+            - e2e/updatecli.d/success.d/shell/checksum.yaml
+  success2:
+    disablesourceinput: true
+    name: Test the source succeed according success criteria
+    kind: shell
+    spec:
+      command: "true"
+      success:
+        kind: file/checksum
+        spec:
+          files:
+            - e2e/updatecli.d/success.d/shell/checksum.yaml
