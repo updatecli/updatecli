@@ -3,6 +3,9 @@ package shell
 import (
 	"fmt"
 
+	jschema "github.com/invopop/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/checksum"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/console"
@@ -73,4 +76,10 @@ func (s *Shell) InitSuccess() error {
 	}
 
 	return nil
+}
+
+// JSONSchema implements the json schema interface to generate the "condition" jsonschema.
+func (SpecSuccess) JSONSchema() *jschema.Schema {
+	type SpecSuccessAlias SpecSuccess
+	return jsonschema.GenerateJsonSchema(SpecSuccessAlias{}, MappingSpecSuccess)
 }
