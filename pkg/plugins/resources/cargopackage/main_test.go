@@ -95,7 +95,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotErr := New(tt.spec, "")
+			got, gotErr := New(tt.spec, false)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

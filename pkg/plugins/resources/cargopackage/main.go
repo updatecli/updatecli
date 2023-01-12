@@ -31,7 +31,7 @@ type CargoPackage struct {
 	// indexDir holds the location of the indexDir
 	indexDir string
 	indexUrl string
-	scmID    string
+	isSCM    bool
 }
 
 type CargoUser struct {
@@ -123,7 +123,7 @@ type PackageData struct {
 
 // New returns a reference to a newly initialized CargoPackage object from a cargopackage.Spec
 // or an error if the provided Spec triggers a validation error.
-func New(spec interface{}, scmID string) (*CargoPackage, error) {
+func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 
 	newSpec := Spec{}
 
@@ -140,12 +140,12 @@ func New(spec interface{}, scmID string) (*CargoPackage, error) {
 	newResource := &CargoPackage{
 		spec:          newSpec,
 		versionFilter: newFilter,
-		scmID:         scmID,
+		isSCM:         isSCM,
 		indexDir:      newSpec.IndexDir,
 		indexUrl:      newSpec.IndexUrl,
 	}
 
-	if newResource.scmID == "" && newSpec.IndexDir == "" && newSpec.IndexUrl == "" {
+	if !newResource.isSCM && newSpec.IndexDir == "" && newSpec.IndexUrl == "" {
 		newResource.indexUrl = cratesDefaultIndexApiUrl
 	}
 

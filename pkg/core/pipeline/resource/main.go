@@ -62,8 +62,7 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "aws/ami":
 		return awsami.New(rs.Spec)
 	case "cargopackage":
-
-		return cargopackage.New(rs.Spec, rs.SCMID)
+		return cargopackage.New(rs.Spec, rs.SCMID != "")
 	case "csv":
 		return csv.New(rs.Spec)
 	case "dockerdigest":
