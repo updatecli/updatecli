@@ -2,7 +2,6 @@ package cargopackage
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -51,12 +50,12 @@ func (cp *CargoPackage) condition(source string) (bool, error) {
 
 	for _, v := range versions {
 		if v == versionToCheck {
-			fmt.Printf("%s release version '%s' available\n", result.SUCCESS, versionToCheck)
+			logrus.Infof("%s release version '%s' available\n", result.SUCCESS, versionToCheck)
 			return true, nil
 		}
 	}
 
-	fmt.Printf("%s Version %q doesn't exist\n", result.FAILURE, versionToCheck)
+	logrus.Infof("%s Version %q doesn't exist\n", result.FAILURE, versionToCheck)
 
 	return false, nil
 }
