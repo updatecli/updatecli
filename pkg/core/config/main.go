@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	autodiscovery "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
@@ -367,7 +367,7 @@ func (config *Config) validateTargets() error {
 
 		if len(t.SourceID) > 0 {
 			if _, ok := config.Spec.Sources[t.SourceID]; !ok {
-				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", t.SourceID)
+				logrus.Errorf("the specified sourceid %q for condition[id] does not exist", t.SourceID)
 				return ErrBadConfig
 			}
 		}
@@ -377,7 +377,7 @@ func (config *Config) validateTargets() error {
 			// Try to guess SourceID
 			if len(t.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 
-				logrus.Errorf("empty 'sourceID' for target %q", id)
+				logrus.Errorf("empty 'sourceid' for target %q", id)
 				return ErrBadConfig
 			} else if len(t.SourceID) == 0 && len(config.Spec.Sources) == 1 {
 				for id := range config.Spec.Sources {
@@ -409,7 +409,7 @@ func (config *Config) validateConditions() error {
 
 		if len(c.SourceID) > 0 {
 			if _, ok := config.Spec.Sources[c.SourceID]; !ok {
-				logrus.Errorf("the specified SourceID %q for condition[id] does not exist", c.SourceID)
+				logrus.Errorf("the specified sourceid %q for condition[id] does not exist", c.SourceID)
 				return ErrBadConfig
 			}
 		}
@@ -417,7 +417,7 @@ func (config *Config) validateConditions() error {
 		if !c.DisableSourceInput {
 			// Try to guess SourceID
 			if len(c.SourceID) == 0 && len(config.Spec.Sources) > 1 {
-				logrus.Errorf("The condition %q has an empty 'sourceID' attribute.", id)
+				logrus.Errorf("The condition %q has an empty 'sourceid' attribute.", id)
 				return ErrBadConfig
 			} else if len(c.SourceID) == 0 && len(config.Spec.Sources) == 1 {
 				for id := range config.Spec.Sources {
@@ -552,7 +552,7 @@ func (config *Config) Update(data interface{}) (err error) {
 		"source": func(s string) (string, error) {
 			/*
 				Retrieve the value of a third location key from
-				the updatecli contex.
+				the updatecli context.
 				It returns an error if a key doesn't exist
 				It returns {{ source "<key>" }} if a key exist but still set to zero value,
 				then we assume that the value will be set later in the run.

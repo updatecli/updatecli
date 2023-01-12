@@ -1,25 +1,20 @@
 package maven
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
+	"text/template"
 
 	"regexp"
 
 	"github.com/beevik/etree"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 )
 
-func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
+func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 
-	var manifests []config.Spec
+	var manifests [][]byte
 
 	foundPomFiles, err := searchPomFiles(
 		m.rootDir,
@@ -31,10 +26,12 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 
 	for _, pomFile := range foundPomFiles {
 
+		logrus.Debugf("parsing file %q", pomFile)
+
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -54,7 +51,7 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 
 		doc := etree.NewDocument()
 		if err := doc.ReadFromFile(pomFile); err != nil {
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -83,7 +80,8 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 			isContainsVariable := containsVariableRegex.Match([]byte(dependency.Version))
 
 			if err != nil {
-				logrus.Errorln(err)
+				logrus.Debugln(err)
+				continue
 			}
 
 			if isContainsVariable {
@@ -96,75 +94,72 @@ func (m Maven) discoverDependenciesManifests() ([]config.Spec, error) {
 				continue
 			}
 
-			manifestName := fmt.Sprintf(
-				"Bump Maven dependency %s/%s",
-				dependency.GroupID,
-				dependency.ArtifactID)
-
 			artifactFullName := fmt.Sprintf("%s/%s", dependency.GroupID, dependency.ArtifactID)
 
-			mavenSourceSpec := maven.Spec{
-				GroupID:    dependency.GroupID,
-				ArtifactID: dependency.ArtifactID,
-			}
-
+			repos := []string{}
 			for _, repo := range repositories {
-				mavenSourceSpec.Repositories = append(mavenSourceSpec.Repositories, repo.URL)
+				repos = append(repos, repo.URL)
 			}
 
-			manifest := config.Spec{
-				Name: manifestName,
-				Sources: map[string]source.Config{
-					artifactFullName: {
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Get latest Maven Artifact version: %q", artifactFullName),
-							Kind: "maven",
-							Spec: mavenSourceSpec,
-						},
-					},
-				},
-				Conditions: map[string]condition.Config{
-					dependency.GroupID: {
-						DisableSourceInput: true,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Ensure dependency groupId %q is specified", dependency.GroupID),
-							Kind: "xml",
-							Spec: xml.Spec{
-								File:  relativePomFile,
-								Path:  fmt.Sprintf("/project/dependencies/dependency[%d]/groupId", i+1),
-								Value: dependency.GroupID,
-							},
-						},
-					},
-					dependency.ArtifactID: {
-						DisableSourceInput: true,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Ensure dependency artifactId %q is specified", dependency.ArtifactID),
-							Kind: "xml",
-							Spec: xml.Spec{
-								File:  relativePomFile,
-								Path:  fmt.Sprintf("/project/dependencies/dependency[%d]/artifactId", i+1),
-								Value: dependency.ArtifactID,
-							},
-						},
-					},
-				},
-				Targets: map[string]target.Config{
-					artifactFullName: {
-						SourceID: artifactFullName,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Bump dependency version for %q", artifactFullName),
-							Kind: "xml",
-							Spec: xml.Spec{
-								File: relativePomFile,
-								Path: fmt.Sprintf("/project/dependencies/dependency[%d]/version", i+1),
-							},
-						},
-					},
-				},
+			tmpl, err := template.New("manifest").Parse(manifestTemplate)
+			if err != nil {
+				logrus.Debugln(err)
+				continue
 			}
-			manifests = append(manifests, manifest)
 
+			params := struct {
+				ManifestName             string
+				ConditionID              string
+				ConditionGroupID         string
+				ConditionGroupIDName     string
+				ConditionGroupIDPath     string
+				ConditionGroupIDValue    string
+				ConditionArtifactID      string
+				ConditionArtifactIDName  string
+				ConditionArtifactIDPath  string
+				ConditionArtifactIDValue string
+				SourceID                 string
+				SourceName               string
+				SourceKind               string
+				SourceGroupID            string
+				SourceArtifactID         string
+				SourceRepositories       []string
+				TargetID                 string
+				TargetName               string
+				TargetXMLPath            string
+				File                     string
+				ScmID                    string
+			}{
+				ManifestName:             fmt.Sprintf("Bump Maven dependency %s", artifactFullName),
+				ConditionID:              artifactFullName,
+				ConditionGroupID:         "groupid",
+				ConditionGroupIDName:     fmt.Sprintf("Ensure dependency groupId %q is specified", dependency.GroupID),
+				ConditionGroupIDPath:     fmt.Sprintf("/project/dependencies/dependency[%d]/groupId", i+1),
+				ConditionGroupIDValue:    dependency.GroupID,
+				ConditionArtifactID:      "artifactid",
+				ConditionArtifactIDName:  fmt.Sprintf("Ensure dependency artifactId %q is specified", dependency.ArtifactID),
+				ConditionArtifactIDPath:  fmt.Sprintf("/project/dependencies/dependency[%d]/artifactId", i+1),
+				ConditionArtifactIDValue: dependency.ArtifactID,
+				SourceID:                 artifactFullName,
+				SourceName:               fmt.Sprintf("Get latest Maven Artifact version %q", artifactFullName),
+				SourceKind:               "maven",
+				SourceGroupID:            dependency.GroupID,
+				SourceArtifactID:         dependency.ArtifactID,
+				SourceRepositories:       repos,
+				TargetID:                 artifactFullName,
+				TargetName:               fmt.Sprintf("Bump dependency version for %q", artifactFullName),
+				TargetXMLPath:            fmt.Sprintf("/project/dependencies/dependency[%d]/version", i+1),
+				File:                     relativePomFile,
+				ScmID:                    m.scmID,
+			}
+
+			manifest := bytes.Buffer{}
+			if err := tmpl.Execute(&manifest, params); err != nil {
+				logrus.Debugln(err)
+				continue
+			}
+
+			manifests = append(manifests, manifest.Bytes())
 		}
 	}
 

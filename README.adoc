@@ -128,10 +128,10 @@ targets:
       file: charts/jenkins/values.yaml
       key: jenkins.controller.imageTag
 
-action:
+actions:
   default:
     title: Open a GitHub pull request with new Jenkins version
-    kind: github
+    kind: github/pullrequest
     scmID: default
     target:
       - bumpJenkins

@@ -5,11 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 )
 
 // Spec defines the parameters which can be provided to the Helm builder.
@@ -28,10 +23,12 @@ type Maven struct {
 	spec Spec
 	// rootDir defines the root directory from where looking for Helm Chart
 	rootDir string
+	// scmID holds the scmID used by the newly generated manifest
+	scmID string
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir string) (Maven, error) {
+func New(spec interface{}, rootDir, scmID string) (Maven, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -44,21 +41,20 @@ func New(spec interface{}, rootDir string) (Maven, error) {
 		dir = s.RootDir
 	}
 
-	// If no RootDir have been provided via settings,
-	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directrory defined")
+		logrus.Errorln("no working directory defined")
 		return Maven{}, err
 	}
 
 	return Maven{
 		spec:    s,
 		rootDir: dir,
+		scmID:   scmID,
 	}, nil
 
 }
 
-func (m Maven) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error) {
+func (m Maven) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Maven"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Maven")+1))
@@ -85,39 +81,5 @@ func (m Maven) DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, er
 
 	manifests = append(manifests, parentPomdependencyManifests...)
 
-	// Set scm configuration if specified
-	for i := range manifests {
-		// Set scm configuration if specified
-		if len(input.ScmID) > 0 {
-			SetScm(&manifests[i], *input.ScmSpec, input.ScmID)
-		}
-
-		// Set action configuration if specified
-		if len(input.ActionID) > 0 {
-			SetAction(&manifests[i], *input.ActionConfig, input.ActionID)
-		}
-	}
-
 	return manifests, nil
-}
-
-func SetScm(configSpec *config.Spec, scmSpec scm.Config, scmID string) {
-	configSpec.SCMs = make(map[string]scm.Config)
-	configSpec.SCMs[scmID] = scmSpec
-
-	for id, condition := range configSpec.Conditions {
-		condition.SCMID = scmID
-		configSpec.Conditions[id] = condition
-	}
-
-	for id, target := range configSpec.Targets {
-		target.SCMID = scmID
-		configSpec.Targets[id] = target
-	}
-
-}
-
-func SetAction(configSpec *config.Spec, actionSpec action.Config, actionID string) {
-	configSpec.Actions = make(map[string]action.Config)
-	configSpec.Actions[actionID] = actionSpec
 }

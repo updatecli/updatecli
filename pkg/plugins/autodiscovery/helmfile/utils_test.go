@@ -9,11 +9,11 @@ import (
 func TestSearchFiles(t *testing.T) {
 
 	gotFiles, err := searchHelmfileFiles(
-		"testdata/helmfile.d", DefaultFilePattern[:])
+		"test/testdata/helmfile.d", DefaultFilePattern[:])
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	expectedFile := "testdata/helmfile.d/cik8s.yaml"
+	expectedFile := "test/testdata/helmfile.d/cik8s.yaml"
 
 	if len(gotFiles) == 0 {
 		t.Errorf("Expecting file %q but got none", expectedFile)
@@ -28,7 +28,7 @@ func TestSearchFiles(t *testing.T) {
 func TestListChartDependency(t *testing.T) {
 
 	gotMetadata, err := getHelmfileMetadata(
-		"testdata/helmfile.d/cik8s.yaml")
+		"test/testdata/helmfile.d/cik8s.yaml")
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}

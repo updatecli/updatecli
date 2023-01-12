@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -162,11 +161,19 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		Password: password,
 	}
 
-	err = w.Pull(&git.PullOptions{
-		Auth:     &auth,
+	pullOptions := git.PullOptions{
 		Force:    true,
 		Progress: &b,
-	})
+	}
+
+	if !isAuthEmpty(&auth) {
+		pullOptions.Auth = &auth
+	}
+
+	err = w.Pull(&pullOptions)
+
+	logrus.Debugln(b.String())
+	b.Reset()
 
 	if err != nil &&
 		err != git.ErrNonFastForwardUpdate &&
@@ -228,7 +235,14 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		if err != nil {
 			return err
 		}
-		refs, err := remote.List(&git.ListOptions{Auth: &auth})
+
+		listOptions := git.ListOptions{}
+
+		if !isAuthEmpty(&auth) {
+			listOptions.Auth = &auth
+		}
+
+		refs, err := remote.List(&listOptions)
 
 		if err != nil {
 			return err
@@ -354,14 +368,21 @@ func (g GoGit) Clone(username, password, URL, workingDir string) error {
 	}
 
 	var b bytes.Buffer
-
-	b.WriteString(fmt.Sprintf("cloning git repository: %s in %s\n", URL, workingDir))
-	repo, err := git.PlainClone(workingDir, false, &git.CloneOptions{
+	cloneOptions := git.CloneOptions{
 		URL:               URL,
-		Auth:              &auth,
 		Progress:          &b,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-	})
+	}
+
+	if !isAuthEmpty(&auth) {
+		cloneOptions.Auth = &auth
+	}
+
+	b.WriteString(fmt.Sprintf("cloning git repository: %s in %s\n", URL, workingDir))
+	repo, err := git.PlainClone(workingDir, false, &cloneOptions)
+
+	logrus.Debugln(b.String())
+	b.Reset()
 
 	if err == git.ErrRepositoryAlreadyExists {
 		b.Reset()
@@ -382,14 +403,18 @@ func (g GoGit) Clone(username, password, URL, workingDir string) error {
 		}
 		b.WriteString(status.String())
 
-		err = w.Pull(&git.PullOptions{
-			Auth:     &auth,
+		pullOptions := git.PullOptions{
 			Force:    true,
 			Progress: &b,
-		})
+		}
+
+		if !isAuthEmpty(&auth) {
+			pullOptions.Auth = &auth
+		}
+
+		err = w.Pull(&pullOptions)
 
 		logrus.Debugln(b.String())
-
 		b.Reset()
 
 		if err != nil &&
@@ -413,16 +438,20 @@ func (g GoGit) Clone(username, password, URL, workingDir string) error {
 	b.WriteString("fetching remote branches")
 	for _, r := range remotes {
 
-		err := r.Fetch(&git.FetchOptions{
-			Auth:     &auth,
+		fetchOptions := git.FetchOptions{
 			Progress: &b,
 			RefSpecs: []config.RefSpec{"refs/*:refs/*"},
 			Force:    true,
-		})
+		}
+		if !isAuthEmpty(&auth) {
+			fetchOptions.Auth = &auth
+		}
+
+		err := r.Fetch(&fetchOptions)
 
 		logrus.Debugln(b.String())
-
 		b.Reset()
+
 		if err != nil &&
 			err != git.NoErrAlreadyUpToDate &&
 			err != git.ErrBranchExists {
@@ -478,14 +507,21 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 
 	b := bytes.Buffer{}
 
-	// Only push one branch at a time
-	err = r.Push(&git.PushOptions{
+	pushOptions := git.PushOptions{
 		Auth:     &auth,
 		Progress: &b,
 		RefSpecs: []config.RefSpec{refspec},
-	})
+	}
+
+	if !isAuthEmpty(&auth) {
+		pushOptions.Auth = &auth
+	}
+
+	// Only push one branch at a time
+	err = r.Push(&pushOptions)
 
 	logrus.Debugln(b.String())
+	b.Reset()
 
 	if err != nil {
 		return err
@@ -640,14 +676,21 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 		refspec = config.RefSpec("+refs/tags/" + tag + ":refs/tags/" + tag)
 	}
 
+	b := bytes.Buffer{}
 	po := &git.PushOptions{
 		RemoteName: "origin",
-		Progress:   os.Stdout,
+		Progress:   &b,
 		RefSpecs:   []config.RefSpec{refspec},
-		Auth:       &auth,
+	}
+
+	if !isAuthEmpty(&auth) {
+		po.Auth = &auth
 	}
 
 	err = r.Push(po)
+
+	logrus.Debugln(b.String())
+	b.Reset()
 
 	if err != nil {
 		if err == git.NoErrAlreadyUpToDate {
@@ -680,4 +723,9 @@ func (g GoGit) RemoteURLs(workingDir string) (map[string]string, error) {
 	}
 
 	return remoteList, nil
+}
+
+// isAuthEmpty return true if no username/password are defined
+func isAuthEmpty(auth *transportHttp.BasicAuth) bool {
+	return auth.Username == "" && auth.Password == ""
 }

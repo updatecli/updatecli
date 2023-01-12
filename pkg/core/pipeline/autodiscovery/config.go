@@ -1,9 +1,4 @@
-package config
-
-import (
-	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-)
+package autodiscovery
 
 // Config defines autodiscovery parameters
 type Config struct {
@@ -17,15 +12,4 @@ type Config struct {
 	GroupBy GroupBy
 	// !Deprecated in favor of `actionid`
 	PullrequestId string `yaml:",omitempty"`
-}
-
-type Input struct {
-	// ScmSpec defines the scm specification
-	ScmSpec *scm.Config
-	// ScmID defines the scmid associated to the scm specification
-	ScmID string
-	// ActionConfig defines the action specification
-	ActionConfig *action.Config
-	// ActionID defines the scmid associated to the scm specification
-	ActionID string
 }

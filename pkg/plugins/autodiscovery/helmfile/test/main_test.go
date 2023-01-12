@@ -3,16 +3,17 @@ package helmfile
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -36,6 +37,10 @@ func TestDiscoverManifests(t *testing.T) {
 								Spec: helm.Spec{
 									Name: "datadog",
 									URL:  "https://helm.datadoghq.com",
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: "*",
+									},
 								},
 							},
 						},
@@ -80,6 +85,10 @@ func TestDiscoverManifests(t *testing.T) {
 								Spec: helm.Spec{
 									Name: "docker-registry-secrets",
 									URL:  "https://jenkins-infra.github.io/helm-charts",
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: "*",
+									},
 								},
 							},
 						},
@@ -123,6 +132,10 @@ func TestDiscoverManifests(t *testing.T) {
 								Spec: helm.Spec{
 									Name: "myOCIChart",
 									URL:  "oci://myregistry.azurecr.io",
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: "*",
+									},
 								},
 							},
 						},
@@ -163,18 +176,18 @@ func TestDiscoverManifests(t *testing.T) {
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			helmfile, err := New(
-				Spec{
+			helmfile, err := helmfile.New(
+				helmfile.Spec{
 					RootDir: tt.rootDir,
-				}, "")
-
+				}, "", "")
 			require.NoError(t, err)
 
-			pipelines, err := helmfile.DiscoverManifests(discoveryConfig.Input{})
-
+			pipelines, err := helmfile.DiscoverManifests()
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedPipelines, pipelines)
 
+			for i := range tt.expectedPipelines {
+				test.AssertConfigSpecEqualByteArray(t, &tt.expectedPipelines[i], string(pipelines[i]))
+			}
 		})
 	}
 

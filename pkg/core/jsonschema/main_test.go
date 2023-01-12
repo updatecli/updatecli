@@ -195,7 +195,7 @@ func TestGetPackageComments(t *testing.T) {
 
 		if !expectedResult {
 			for key := range comments {
-				// For simplifying error messag only show comments related to our test case
+				// To simplify error message, it only show comments related to our test case
 				if strings.HasPrefix(key, "github.com/updatecli/updatecli/pkg/core/config") {
 					fmt.Printf("Debugging %q\n", key)
 				}

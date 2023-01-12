@@ -1,18 +1,14 @@
 package helmfile
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
 var (
@@ -44,9 +40,9 @@ type helmfileMetadata struct {
 }
 
 // discoverHelmfileReleaseManifests search recursively from a root directory for Helmfile file
-func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
+func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 
-	var manifests []config.Spec
+	var manifests [][]byte
 
 	foundHelmfileFiles, err := searchHelmfileFiles(
 		h.rootDir,
@@ -57,11 +53,12 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 	}
 
 	for _, foundHelmfile := range foundHelmfileFiles {
+		logrus.Debugf("parsing file %q", foundHelmfile)
 
 		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundHelmfile)
 		if err != nil {
 			// Jump to the next Helmfile if current failed
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -88,7 +85,8 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 
 		metadata, err := getHelmfileMetadata(foundHelmfile)
 		if err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		if metadata == nil {
@@ -100,8 +98,6 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 		}
 
 		for i, release := range metadata.Releases {
-			manifestName := fmt.Sprintf("Bump %q Helm Chart version for Helmfile %q", release.Name, relativeFoundChartFile)
-
 			var chartName, chartURL, OCIUsername, OCIPassword string
 			var isOCI bool
 
@@ -151,46 +147,57 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([]config.Spec, error) {
 				helmSourcespec.InlineKeyChain.Password = OCIPassword
 			}
 
-			manifest := config.Spec{
-				Name: manifestName,
-				Sources: map[string]source.Config{
-					release.Name: {
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
-							Kind: "helmchart",
-							Spec: helmSourcespec,
-						},
-					},
-				},
-				Conditions: map[string]condition.Config{
-					release.Name: {
-						DisableSourceInput: true,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
-							Kind: "yaml",
-							Spec: yaml.Spec{
-								File:  foundHelmfile,
-								Key:   fmt.Sprintf("releases[%d].chart", i),
-								Value: release.Chart,
-							},
-						},
-					},
-				},
-				Targets: map[string]target.Config{
-					release.Name: {
-						SourceID: release.Name,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
-							Kind: "yaml",
-							Spec: yaml.Spec{
-								File: foundHelmfile,
-								Key:  fmt.Sprintf("releases[%d].version", i),
-							},
-						},
-					},
-				},
+			tmpl, err := template.New("manifest").Parse(manifestTemplate)
+			if err != nil {
+				logrus.Debugln(err)
+				continue
 			}
-			manifests = append(manifests, manifest)
+
+			params := struct {
+				ManifestName               string
+				ChartName                  string
+				ChartRepository            string
+				ConditionID                string
+				ConditionName              string
+				ConditionKey               string
+				ConditionValue             string
+				SourceID                   string
+				SourceName                 string
+				SourceKind                 string
+				SourceVersionFilterKind    string
+				SourceVersionFilterPattern string
+				TargetID                   string
+				TargetName                 string
+				TargetKey                  string
+				File                       string
+				ScmID                      string
+			}{
+				ManifestName:               fmt.Sprintf("Bump %q Helm Chart version for Helmfile %q", release.Name, relativeFoundChartFile),
+				ChartName:                  chartName,
+				ChartRepository:            chartURL,
+				ConditionID:                release.Name,
+				ConditionName:              fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
+				ConditionKey:               fmt.Sprintf("releases[%d].chart", i),
+				ConditionValue:             release.Chart,
+				SourceID:                   release.Name,
+				SourceName:                 fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
+				SourceKind:                 "helmchart",
+				SourceVersionFilterKind:    "semver",
+				SourceVersionFilterPattern: "*",
+				TargetID:                   release.Name,
+				TargetName:                 fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
+				TargetKey:                  fmt.Sprintf("releases[%d].version", i),
+				File:                       foundHelmfile,
+				ScmID:                      h.scmID,
+			}
+
+			manifest := bytes.Buffer{}
+			if err := tmpl.Execute(&manifest, params); err != nil {
+				logrus.Debugln(err)
+				continue
+			}
+
+			manifests = append(manifests, manifest.Bytes())
 
 		}
 	}

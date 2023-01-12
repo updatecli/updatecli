@@ -1,18 +1,18 @@
-package dockercompose
+package test
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -33,11 +33,11 @@ func TestDiscoverManifests(t *testing.T) {
 			rootDir: "testdata",
 			expectedPipelines: []config.Spec{
 				{
-					Name: "Bump Docker Image Tag for \"jenkinsci/jenkins\"",
+					Name: "Bump Docker image tag for \"jenkinsci/jenkins\"",
 					Sources: map[string]source.Config{
 						"jenkins-lts": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[jenkinsci/jenkins] Get latest Docker Image Tag",
+								Name: "[jenkinsci/jenkins] Get latest Docker image tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
 									Image:     "jenkinsci/jenkins",
@@ -54,7 +54,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"jenkins-lts": {
 							SourceID: "jenkins-lts",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[jenkinsci/jenkins] Bump Docker Image tag in \"docker-compose.yaml\"",
+								Name: "[jenkinsci/jenkins] Bump Docker image tag in \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "docker-compose.yaml",
@@ -70,16 +70,15 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 				},
 				{
-					Name: "Bump Docker Image Tag for \"jenkinsci/jenkins\"",
+					Name: "Bump Docker image tag for \"jenkinsci/jenkins\"",
 					Sources: map[string]source.Config{
 						"jenkins-weekly": {
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[jenkinsci/jenkins] Get latest Docker Image Tag",
+								Name: "[jenkinsci/jenkins] Get latest Docker image tag",
 								Kind: "dockerimage",
 								Spec: dockerimage.Spec{
-									Architecture: "amd64",
-									Image:        "jenkinsci/jenkins",
-									TagFilter:    `^\d*(\.\d*){1}-alpine$`,
+									Image:     "jenkinsci/jenkins",
+									TagFilter: `^\d*(\.\d*){1}-alpine$`,
 									VersionFilter: version.Filter{
 										Kind:    "semver",
 										Pattern: ">=2.254-alpine",
@@ -92,7 +91,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"jenkins-weekly": {
 							SourceID: "jenkins-weekly",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "[jenkinsci/jenkins] Bump Docker Image tag in \"docker-compose.yaml\"",
+								Name: "[jenkinsci/jenkins] Bump Docker image tag in \"docker-compose.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "docker-compose.yaml",
@@ -113,19 +112,19 @@ func TestDiscoverManifests(t *testing.T) {
 
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
-			composefile, err := New(
-				Spec{
+			composefile, err := dockercompose.New(
+				dockercompose.Spec{
 					RootDir: tt.rootDir,
-				},
-				"",
-			)
-
+				}, "", "")
 			require.NoError(t, err)
 
-			pipelines, err := composefile.DiscoverManifests(discoveryConfig.Input{})
+			pipelines, err := composefile.DiscoverManifests()
+			require.NoError(t, err)
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedPipelines, pipelines)
+			for i := range tt.expectedPipelines {
+				test.AssertConfigSpecEqualByteArray(t, &tt.expectedPipelines[i], string(pipelines[i]))
+			}
 
 		})
 	}

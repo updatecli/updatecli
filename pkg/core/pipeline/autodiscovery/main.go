@@ -1,17 +1,10 @@
 package autodiscovery
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
-	discoveryConfig "github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
@@ -22,39 +15,41 @@ import (
 
 var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
-	DefaultCrawlerSpecs = discoveryConfig.Config{
+	DefaultCrawlerSpecs = Config{
 		Crawlers: map[string]interface{}{
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
 			"helm":          helm.Spec{},
+			"helmfile":      helmfile.Spec{},
 			"maven":         maven.Spec{},
 			"rancher/fleet": fleet.Spec{},
 		},
 	}
+	// AutodiscoverySpecs is a map of all Autodiscovery specification
+	AutodiscoverySpecsMapping = map[string]interface{}{
+		"dockercompose": &dockercompose.Spec{},
+		"dockerfile":    &dockerfile.Spec{},
+		"helm":          &helm.Spec{},
+		"helmfile":      &helmfile.Spec{},
+		"maven":         &maven.Spec{},
+		"rancher/fleet": &fleet.Spec{},
+	}
 )
 
-type Options struct {
-	Enabled bool
-}
 type Crawler interface {
-	DiscoverManifests(input discoveryConfig.Input) ([]config.Spec, error)
+	DiscoverManifests() ([][]byte, error)
 }
 
 type AutoDiscovery struct {
-	scmConfig    *scm.Config
-	actionConfig *action.Config
-	spec         discoveryConfig.Config
-	crawlers     []Crawler
+	spec     Config
+	crawlers []Crawler
 }
 
 // New returns an initiated autodiscovery object
-func New(spec discoveryConfig.Config,
-	scmHandler scm.ScmHandler,
-	scmConfig *scm.Config,
-	actionConfig *action.Config) (*AutoDiscovery, error) {
+func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 	var errs []error
-	var s discoveryConfig.Config
+	var s Config
 
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
@@ -65,34 +60,21 @@ func New(spec discoveryConfig.Config,
 		spec: s,
 	}
 
-	// Init scm configuration if one is specified
-	if len(scmConfig.Kind) > 0 {
-		g.scmConfig = scmConfig
-	}
-
-	if len(actionConfig.Kind) > 0 {
-		g.actionConfig = actionConfig
-	}
-
 	for kind := range s.Crawlers {
 
-		// Init workDir based on process running directory
-		workDir, err := os.Getwd()
-		if err != nil {
+		if workDir == "" {
 			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
 		}
 
-		// Retrieve the scm workdir if it exist
-		// As long as the autodiscovery specifies one
-		if _, ok := g.spec.Crawlers[kind]; ok && scmHandler != nil {
-			workDir = scmHandler.GetDirectory()
-		}
-
+		// Commenting for now while refactoring
 		switch kind {
 		case "dockercompose":
 
-			dockerComposeCrawler, err := dockercompose.New(g.spec.Crawlers[kind], workDir)
+			dockerComposeCrawler, err := dockercompose.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -103,7 +85,10 @@ func New(spec discoveryConfig.Config,
 
 		case "dockerfile":
 
-			dockerfileCrawler, err := dockerfile.New(g.spec.Crawlers[kind], workDir)
+			dockerfileCrawler, err := dockerfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -114,7 +99,10 @@ func New(spec discoveryConfig.Config,
 
 		case "helm":
 
-			helmCrawler, err := helm.New(g.spec.Crawlers[kind], workDir)
+			helmCrawler, err := helm.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -125,7 +113,10 @@ func New(spec discoveryConfig.Config,
 
 		case "helmfile":
 
-			helmfileCrawler, err := helmfile.New(g.spec.Crawlers[kind], workDir)
+			helmfileCrawler, err := helmfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -135,7 +126,10 @@ func New(spec discoveryConfig.Config,
 			g.crawlers = append(g.crawlers, helmfileCrawler)
 
 		case "maven":
-			mavenCrawler, err := maven.New(g.spec.Crawlers[kind], workDir)
+			mavenCrawler, err := maven.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -145,7 +139,10 @@ func New(spec discoveryConfig.Config,
 			g.crawlers = append(g.crawlers, mavenCrawler)
 
 		case "rancher/fleet":
-			fleetCrawler, err := fleet.New(g.spec.Crawlers[kind], workDir)
+			fleetCrawler, err := fleet.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
 
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -168,25 +165,18 @@ func New(spec discoveryConfig.Config,
 	return &g, nil
 }
 
-func (g *AutoDiscovery) Run() ([]config.Spec, error) {
-	var totalDiscoveredManifests []config.Spec
+// Run execute each Autodiscovery crawlers to generate Updatecli manifests
+func (g *AutoDiscovery) Run() ([][]byte, error) {
+	var totalDiscoveredManifests [][]byte
 
 	for _, crawler := range g.crawlers {
 
-		discoveredManifests, err := crawler.DiscoverManifests(
-			discoveryConfig.Input{
-				ScmSpec:      g.scmConfig,
-				ScmID:        g.spec.ScmId,
-				ActionConfig: g.actionConfig,
-				ActionID:     g.spec.ActionId,
-			})
-
+		discoveredManifests, err := crawler.DiscoverManifests()
 		if err != nil {
 			logrus.Errorln(err)
 		}
 
 		logrus.Printf("Manifest detected: %d\n", len(discoveredManifests))
-
 		if len(discoveredManifests) > 0 {
 
 			for i := range discoveredManifests {
@@ -196,43 +186,6 @@ func (g *AutoDiscovery) Run() ([]config.Spec, error) {
 	}
 
 	logrus.Printf("\n\n---\n\n=> Total manifest detected: %d\n\n", len(totalDiscoveredManifests))
-
-	if g.spec.GroupBy == "" {
-		logrus.Warningf("Autodiscovery settings %q is undefined, fallback to %q",
-			"groupby",
-			discoveryConfig.GROUPEBYINDIVIDUAL)
-	}
-
-	// Set pipelineId for each manifest by on the autodiscovery groupby rule
-
-	// We use a sha256 hash to avoid colusion between pipelineID
-	hash := sha256.New()
-	_, err := io.WriteString(hash, "updatecli/autodiscovery/batch")
-
-	if err != nil {
-		logrus.Errorln(err)
-	}
-
-	batchPipelineID := fmt.Sprintf("%x", hash.Sum(nil))
-
-	for i := range totalDiscoveredManifests {
-		switch g.spec.GroupBy {
-		case discoveryConfig.GROUPEBYALL:
-			totalDiscoveredManifests[i].PipelineID = batchPipelineID[0:32]
-
-		case discoveryConfig.GROUPEBYINDIVIDUAL, "":
-			_, err := io.WriteString(hash, totalDiscoveredManifests[i].Name)
-			if err != nil {
-				logrus.Errorln(err)
-			}
-			pipelineID := fmt.Sprintf("%x", hash.Sum(nil))
-
-			totalDiscoveredManifests[i].PipelineID = pipelineID[0:32]
-
-		default:
-			logrus.Errorln("something unexpected happened while specifying pipelineid to generated Updatecli manifest")
-		}
-	}
 
 	return totalDiscoveredManifests, nil
 }

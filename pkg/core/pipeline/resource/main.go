@@ -8,6 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/awsami"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/cargopackage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/csv"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerdigest"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile"
@@ -61,6 +62,8 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	switch kind {
 	case "aws/ami":
 		return awsami.New(rs.Spec)
+	case "cargopackage":
+		return cargopackage.New(rs.Spec, rs.SCMID != "")
 	case "csv":
 		return csv.New(rs.Spec)
 	case "dockerdigest":
@@ -121,6 +124,7 @@ func GetResourceMapping() map[string]interface{} {
 
 	return map[string]interface{}{
 		"aws/ami":       &awsami.Spec{},
+		"cargopackage":  &cargopackage.Spec{},
 		"csv":           &csv.Spec{},
 		"dockerdigest":  &dockerdigest.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
