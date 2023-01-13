@@ -26,7 +26,9 @@ var (
 )
 
 type SpecSuccess struct {
-	Kind string                 `yaml:",omitempty"`
+	// Kind specifies the success criteria kind, accepted answer ["console/output","exitcode","file/checksum"]
+	Kind string `yaml:",omitempty"`
+	// Spec specifies the parameter for a specific success criteria kind
 	Spec map[string]interface{} `yaml:",omitempty"`
 }
 
