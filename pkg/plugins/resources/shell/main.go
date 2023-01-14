@@ -21,11 +21,10 @@ type Spec struct {
 
 // Shell defines a resource of kind "shell"
 type Shell struct {
-	executor       commandExecutor
-	spec           Spec
-	result         commandResult
-	interpreter    string
-	scriptFilename string
+	executor    commandExecutor
+	spec        Spec
+	result      commandResult
+	interpreter string
 }
 
 // New returns a reference to a newly initialized Shell object from a ShellSpec
@@ -52,16 +51,10 @@ func New(spec interface{}) (*Shell, error) {
 		interpreter = newSpec.Shell
 	}
 
-	scriptFilename, err := newShellScript(newSpec.Command)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Shell{
-		executor:       &nativeCommandExecutor{},
-		spec:           newSpec,
-		interpreter:    interpreter,
-		scriptFilename: scriptFilename,
+		executor:    &nativeCommandExecutor{},
+		spec:        newSpec,
+		interpreter: interpreter,
 	}, nil
 }
 

@@ -1,28 +1,11 @@
 package shell
 
 import (
-	"crypto/sha256"
-	"fmt"
-	"io"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/tmp"
 )
-
-// wanteScriptFilename is an utility used to get the filescript named generated
-// by Updatecli. Outside of testing, it's not supposed to be used by Updatecli
-// as it ignore error handling
-func wantedScriptFilename(t *testing.T, command string) string {
-	h := sha256.New()
-	_, err := io.WriteString(h, command)
-
-	require.NoError(t, err)
-
-	return filepath.Join(tmp.BinDirectory, fmt.Sprintf("%x", h.Sum(nil)))
-}
 
 func TestShell_New(t *testing.T) {
 	tests := []struct {
@@ -45,7 +28,6 @@ func TestShell_New(t *testing.T) {
 					Command: "echo Hello",
 					Shell:   "/bin/bash",
 				},
-				scriptFilename: wantedScriptFilename(t, "echo Hello"),
 			},
 		},
 		{
@@ -76,8 +58,7 @@ func TestShell_New(t *testing.T) {
 						},
 					},
 				},
-				interpreter:    getDefaultShell(),
-				scriptFilename: wantedScriptFilename(t, "echo World"),
+				interpreter: getDefaultShell(),
 			},
 		},
 		{
@@ -102,7 +83,6 @@ func TestShell_New(t *testing.T) {
 						},
 					},
 				},
-				scriptFilename: wantedScriptFilename(t, "echo Hello"),
 			},
 		},
 		{
@@ -132,8 +112,7 @@ func TestShell_New(t *testing.T) {
 						},
 					},
 				},
-				interpreter:    getDefaultShell(),
-				scriptFilename: wantedScriptFilename(t, "echo Hello"),
+				interpreter: getDefaultShell(),
 			},
 		},
 		{
@@ -158,8 +137,7 @@ func TestShell_New(t *testing.T) {
 						},
 					},
 				},
-				interpreter:    getDefaultShell(),
-				scriptFilename: wantedScriptFilename(t, "echo Hello"),
+				interpreter: getDefaultShell(),
 			},
 		},
 	}

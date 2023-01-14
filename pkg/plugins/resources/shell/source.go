@@ -1,5 +1,7 @@
 package shell
 
+import "fmt"
+
 // Source returns the stdout of the shell command if its exit code is 0
 // otherwise an error is returned with the content of stderr
 func (s *Shell) Source(workingDir string) (string, error) {
@@ -22,11 +24,15 @@ func (s *Shell) Source(workingDir string) (string, error) {
 		Value: "source",
 	})
 
+	scriptFilename, err := newShellScript(s.spec.Command)
+	if err != nil {
+		return "", fmt.Errorf("failed initializing source script - %s", err)
+	}
+
 	s.executeCommand(command{
-		Cmd:   s.spec.Command,
-		Dir:   workingDir,
-		Env:   env.ToStringSlice(),
-		Shell: s.interpreter,
+		Cmd: s.interpreter + " " + scriptFilename,
+		Dir: workingDir,
+		Env: env.ToStringSlice(),
 	})
 
 	if s.result.ExitCode != 0 {

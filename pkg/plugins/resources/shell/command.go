@@ -10,10 +10,9 @@ import (
 )
 
 type command struct {
-	Shell string
-	Cmd   string
-	Dir   string
-	Env   []string
+	Cmd string
+	Dir string
+	Env []string
 }
 
 type commandResult struct {
@@ -32,7 +31,7 @@ type nativeCommandExecutor struct{}
 func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResult, error) {
 	var stdout, stderr bytes.Buffer
 
-	logrus.Debugf("\tcommand: %s %s\n", inputCmd.Shell, inputCmd.Cmd)
+	logrus.Debugf("\tcommand: %s\n", inputCmd.Cmd)
 
 	cmdFields := strings.Fields(inputCmd.Cmd)
 	command := exec.Command(cmdFields[0], cmdFields[1:]...) //nolint: gosec

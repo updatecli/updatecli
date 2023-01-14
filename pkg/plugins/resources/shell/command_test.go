@@ -20,8 +20,7 @@ func TestNativeCommandExecutor_ExecuteCommand(t *testing.T) {
 		{
 			name: "Runs command with exit code 0",
 			cmd: command{
-				Cmd:   "echo Hello",
-				Shell: "/bin/sh",
+				Cmd: "echo Hello",
 			},
 			wantExitCode: 0,
 			wantStdout:   "Hello",
@@ -29,8 +28,7 @@ func TestNativeCommandExecutor_ExecuteCommand(t *testing.T) {
 		{
 			name: "Runs command with exit code 1",
 			cmd: command{
-				Cmd:   "false",
-				Shell: "/bin/sh",
+				Cmd: "false",
 			},
 			wantExitCode: 1,
 		},
@@ -39,8 +37,7 @@ func TestNativeCommandExecutor_ExecuteCommand(t *testing.T) {
 			cmd: command{
 				Cmd: "pwd",
 				// This directory should exist as we do not mock here. Avoid /tmp as it can be a link to another location
-				Dir:   "/",
-				Shell: "/bin/sh",
+				Dir: "/",
 			},
 			wantExitCode: 0,
 			wantStdout:   "/",
@@ -48,9 +45,8 @@ func TestNativeCommandExecutor_ExecuteCommand(t *testing.T) {
 		{
 			name: "Runs command with exit code 0 in a non existing directory",
 			cmd: command{
-				Cmd:   "pwd",
-				Dir:   "/toto",
-				Shell: "/bin/sh",
+				Cmd: "pwd",
+				Dir: "/toto",
 			},
 			wantErr: true,
 		},
