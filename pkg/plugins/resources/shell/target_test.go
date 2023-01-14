@@ -12,6 +12,7 @@ func TestShell_Target(t *testing.T) {
 	tests := []struct {
 		name              string
 		command           string
+		shell             string
 		source            string
 		dryrun            bool
 		wantChanged       bool
@@ -23,10 +24,11 @@ func TestShell_Target(t *testing.T) {
 		{
 			name:              "runs a target that does not change anything and no dryrun",
 			command:           "do_not_change.sh",
+			shell:             "/bin/bash",
 			source:            "1.2.3",
 			wantChanged:       false,
 			wantErr:           false,
-			wantCommandInMock: "do_not_change.sh 1.2.3",
+			wantCommandInMock: "/bin/bash /tmp/updatecli/bin/2fac759bcbb104999966042caff78466befef6c3b9ae6d3ccade7f087ff584d5.sh",
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "",
@@ -39,12 +41,13 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       true,
 			wantErr:           false,
-			wantCommandInMock: "change.sh 1.2.3",
+			wantCommandInMock: "/bin/bash /tmp/updatecli/bin/47e31e5674a4ef3131d5ef53badfcba025009cc68f39abd12d8cd63392f9d5dd.sh",
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "1.2.3",
 			},
 			commandEnv: []string{"DRY_RUN=false"},
+			shell:      "/bin/bash",
 		},
 		{
 			name:              "runs a target with exit code 2 and no dryrun",
@@ -52,7 +55,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       false,
 			wantErr:           true,
-			wantCommandInMock: "change.sh 1.2.3",
+			wantCommandInMock: "/bin/bash /tmp/updatecli/bin/47e31e5674a4ef3131d5ef53badfcba025009cc68f39abd12d8cd63392f9d5dd.sh",
 			commandResult: commandResult{
 				ExitCode: 2,
 				Stderr:   "Error: unable to change value to 1.2.3.",
@@ -69,7 +72,9 @@ func TestShell_Target(t *testing.T) {
 				executor: &mock,
 				spec: Spec{
 					Command: tt.command,
+					Shell:   tt.shell,
 				},
+				interpreter: tt.shell,
 			}
 
 			gotChanged, err := s.Target(tt.source, tt.dryrun)
@@ -105,6 +110,7 @@ func TestShell_TargetFromSCM(t *testing.T) {
 		wantCommandInMock        string
 		wantErr                  bool
 		dryrun                   bool
+		shell                    string
 	}{
 		{
 			name:                     "runs a target that changes a value and no dryrun",
@@ -113,13 +119,14 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			mockReturnedChangedFiles: []string{"pom.xml"},
 			wantMessage:              `ran shell command "change.sh 1.2.3"`,
 			wantErr:                  false,
-			wantCommandInMock:        "change.sh 1.2.3",
+			wantCommandInMock:        "/bin/bash /tmp/updatecli/bin/47e31e5674a4ef3131d5ef53badfcba025009cc68f39abd12d8cd63392f9d5dd.sh",
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Changed value from 1.2.2 to 1.2.3.",
 			},
 			wantFilesChanged: []string{"pom.xml"},
 			commandEnv:       []string{"DRY_RUN=false"},
+			shell:            "/bin/bash",
 		},
 	}
 	for _, tt := range tests {
@@ -135,7 +142,9 @@ func TestShell_TargetFromSCM(t *testing.T) {
 				executor: &mock,
 				spec: Spec{
 					Command: tt.command,
+					Shell:   tt.shell,
 				},
+				interpreter: tt.shell,
 			}
 
 			gotChanged, gotFilesChanged, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)

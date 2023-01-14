@@ -15,7 +15,7 @@ type Spec struct {
 	Command string `yaml:",omitempty" jsonschema:"required"`
 	// Environments allows to pass environment variable(s) to the shell script
 	Environments Environments `yaml:",omitempty"`
-	// Shell specifies which shell interpreter to use. Default to pwshell(Windows), /bin/bash(Darwin), and "/bin/sh" (Linux)
+	// Shell specifies which shell interpreter to use. Default to powershell(Windows) and "/bin/sh" (Darwin/Linux)
 	Shell string `yaml:", omitempty"`
 }
 
