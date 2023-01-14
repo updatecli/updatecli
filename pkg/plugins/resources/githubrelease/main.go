@@ -18,7 +18,7 @@ type Spec struct {
 	// [s][c] URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
 	// [s][c] Username specifies the username used to authenticate with Github API
-	Username string `yaml:",omitempty" jsonschema:"required"`
+	Username string `yaml:",omitempty"`
 	// [s] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// [s][c] TypeFilter specifies the Github Release type to retrieve before applying the versionfilter rule
