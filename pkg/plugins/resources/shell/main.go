@@ -71,7 +71,7 @@ func getDefaultShell() string {
 	switch os {
 	case "windows":
 		// pwshell is the default shell on Windows system
-		return "pwshell"
+		return "powershell -executionpolicy remotesigned -File"
 	default:
 		return "/bin/sh"
 	}

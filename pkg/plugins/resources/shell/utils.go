@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 )
@@ -29,6 +30,14 @@ func newShellScript(command string) (string, error) {
 	}
 
 	scriptFilename := filepath.Join(bindDir, fmt.Sprintf("%x", h.Sum(nil)))
+
+	switch runtime.GOOS {
+	case "windows":
+		// A windows shell script requires extension ".ps1" to be executed
+		scriptFilename = scriptFilename + ".ps1"
+	default:
+		scriptFilename = scriptFilename + ".sh"
+	}
 
 	// Save command in script name
 	f, err := os.Create(scriptFilename)
