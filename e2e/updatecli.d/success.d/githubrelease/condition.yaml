@@ -29,9 +29,6 @@ conditions:
       owner: updatecli
       repository: updatecli
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      versionfilter:
-        kind: regex
-        pattern: "v0.40.1"
 targets:
   version:
     name: Only run if conditions succeeded
