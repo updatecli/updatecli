@@ -1,9 +1,9 @@
 name: Bump udpatecli version
 pipelineid: cac467f9bdc931266038f8cf363edc865370121deb3954b93e70d0588827a04f
-pullrequests:
+actions:
     default:
         title: '[updatecli] Bump updatecli version to {{ source "latestVersion" }}'
-        kind: github
+        kind: github/pullrequest
         spec:
             automerge: true
             labels:
