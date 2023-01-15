@@ -25,7 +25,7 @@ func wantedScriptFilename(t *testing.T, command string) string {
 	suffix := ""
 
 	switch runtime.GOOS {
-	case "windows":
+	case WINOS:
 		suffix = ".ps1"
 	default:
 		suffix = ".sh"

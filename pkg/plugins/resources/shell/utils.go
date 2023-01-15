@@ -32,7 +32,7 @@ func newShellScript(command string) (string, error) {
 	scriptFilename := filepath.Join(bindDir, fmt.Sprintf("%x", h.Sum(nil)))
 
 	switch runtime.GOOS {
-	case "windows":
+	case WINOS:
 		// A windows shell script requires extension ".ps1" to be executed
 		scriptFilename = scriptFilename + ".ps1"
 	default:

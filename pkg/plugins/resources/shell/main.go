@@ -62,7 +62,7 @@ func getDefaultShell() string {
 	os := runtime.GOOS
 
 	switch os {
-	case "windows":
+	case WINOS:
 		// pwshell is the default shell on Windows system
 		return "powershell -executionpolicy remotesigned -File"
 	default:
