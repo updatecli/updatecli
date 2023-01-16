@@ -12,7 +12,7 @@ import (
 )
 
 // newShellScript copies the command to a temporary shell script located in
-// the updatecli temparory working directory.
+// the updatecli temporary working directory.
 // This technique allows to executed complex command directly from an Updatecli
 // manifest
 func newShellScript(command string) (string, error) {
