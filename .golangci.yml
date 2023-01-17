@@ -114,7 +114,8 @@ issues:
         - gocritic
       text: "unnecessaryDefer:"
 run:
-  timeout: 5m
+  # Increase timeout for windows
+  timeout: 10m
   skip-dirs:
     - test/testdata_etc
     - internal/cache
