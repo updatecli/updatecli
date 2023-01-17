@@ -116,10 +116,6 @@ func TestSource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec)
-			if tt.expectedError {
-				assert.Error(t, err)
-				return
-			}
 			require.NoError(t, err)
 			if tt.mockedResponse {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode)

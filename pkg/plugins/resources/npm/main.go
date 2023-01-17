@@ -120,28 +120,37 @@ type RcConfig struct {
 	Scopes     map[string]string
 }
 
-func defaultNpmConfig(default_url string, default_token string) RcConfig {
+func defaultNpmConfig(defaultUrl string, defaultToken string) RcConfig {
 	var config RcConfig
 	config.Registries = make(map[string]Registry)
 	var url string
-	if default_url == "" {
+	if defaultUrl == "" {
 		url = npmDefaultApiURL
 	} else {
-		url = default_url
+		url = defaultUrl
 	}
 	config.Registries["default"] = Registry{
 		Url:       url,
-		AuthToken: default_token,
+		AuthToken: defaultToken,
 	}
 	config.Scopes = make(map[string]string)
 	return config
 }
 
-func getNpmrcConfig(path string, default_url string, default_token string) (RcConfig, error) {
-	config := defaultNpmConfig(default_url, default_token)
-	if path == "" {
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
+}
+
+func getNpmrcConfig(path string, defaultUrl string, defaultToken string) (RcConfig, error) {
+	config := defaultNpmConfig(defaultUrl, defaultToken)
+	if path == "" || !fileExists(path) {
 		path = fmt.Sprintf("%s/.npmrc", os.Getenv("HOME"))
 	}
+	if !fileExists(path) {
+		return config, nil
+	}
+
 	cfg, err := ini.Load(path)
 	if err != nil {
 		return config, err
