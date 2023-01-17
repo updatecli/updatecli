@@ -1,10 +1,11 @@
 package cargo
 
 import (
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
-	"strings"
 )
 
 // Spec defines the Cargo parameters.

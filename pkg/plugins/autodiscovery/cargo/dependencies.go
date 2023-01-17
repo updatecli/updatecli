@@ -3,20 +3,22 @@ package cargo
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"text/template"
+
+	"github.com/sirupsen/logrus"
 )
 
 var (
-	// CargoValidFiles specifies accepted Cargo files.
-	CargoValidFiles [1]string = [1]string{"Cargo.toml"}
+	// ValidFiles specifies accepted Cargo files.
+	ValidFiles [1]string = [1]string{"Cargo.toml"}
 )
 
 type crateDependency struct {
 	Name     string
 	Registry string
 	Version  string
+	Inlined  bool
 }
 
 type crateMetadata struct {
@@ -31,6 +33,24 @@ func generateManifest(crateName string, dependency crateDependency, relativeFile
 	if err != nil {
 		logrus.Debugln(err)
 		return manifest, err
+	}
+	var existingSourceKey string
+	if dependency.Inlined {
+		existingSourceKey = fmt.Sprintf("%s.%s", dependencyType, dependency.Name)
+	} else {
+		existingSourceKey = fmt.Sprintf("%s.%s.version", dependencyType, dependency.Name)
+	}
+	var ConditionQuery string
+	if dependency.Inlined {
+		ConditionQuery = fmt.Sprintf("%s.(?:-=%s)", dependencyType, dependency.Name)
+	} else {
+		ConditionQuery = fmt.Sprintf("%s.(?:-=%s).version", dependencyType, dependency.Name)
+	}
+	var TargetKey string
+	if dependency.Inlined {
+		TargetKey = fmt.Sprintf("%s.%s", dependencyType, dependency.Name)
+	} else {
+		TargetKey = fmt.Sprintf("%s.%s.version", dependencyType, dependency.Name)
 	}
 	params := struct {
 		ManifestName               string
@@ -59,14 +79,14 @@ func generateManifest(crateName string, dependency crateDependency, relativeFile
 		SourceVersionFilterKind:    "semver",
 		SourceVersionFilterPattern: "*",
 		ExistingSourceID:           fmt.Sprintf("%s-current-version", dependency.Name),
-		ExistingSourceKey:          fmt.Sprintf("%s.%s.version", dependencyType, dependency.Name),
+		ExistingSourceKey:          existingSourceKey,
 		ExistingSourceName:         fmt.Sprintf("Get current %q crate version", dependency.Name),
 		ConditionID:                dependency.Name,
-		ConditionQuery:             fmt.Sprintf("%s.(?:-=%s).version", dependencyType, dependency.Name),
+		ConditionQuery:             ConditionQuery,
 		File:                       relativeFile,
 		TargetID:                   dependency.Name,
 		TargetFile:                 filepath.Base(foundFile),
-		TargetKey:                  fmt.Sprintf("%s.%s.version", dependencyType, dependency.Name),
+		TargetKey:                  TargetKey,
 	}
 
 	if err := tmpl.Execute(&manifest, params); err != nil {
@@ -81,7 +101,7 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 
 	foundCargoFiles, err := findCargoFiles(
 		c.rootDir,
-		CargoValidFiles[:],
+		ValidFiles[:],
 	)
 
 	if err != nil {
@@ -118,7 +138,7 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 		}
 
 		// Retrieve Cargo dependencies for each crate
-		crate, err := getCrateMetadata(c.rootDir, foundCargoFile)
+		crate, err := getCrateMetadata(foundCargoFile)
 		if err != nil {
 			logrus.Debugln(err)
 			continue

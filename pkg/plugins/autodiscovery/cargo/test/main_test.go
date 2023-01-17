@@ -1,8 +1,9 @@
 package fleet
 
 import (
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 	"testing"
+
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,39 @@ func TestDiscoverManifests(t *testing.T) {
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata",
-			expectedPipelines: []string{`name: 'Bump dependencies "rand" for "test-crate" crate'
+			expectedPipelines: []string{`name: 'Bump dependencies "anyhow" for "test-crate" crate'
+sources:
+  anyhow:
+    name: 'Get latest "anyhow" crate version'
+    kind: 'cargopackage'
+    spec:
+      package: 'anyhow'
+      versionFilter:
+        kind: 'semver'
+        pattern: '*'
+  anyhow-current-version:
+    name: 'Get current "anyhow" crate version'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      Key: 'dependencies.anyhow'
+conditions:
+  anyhow:
+    name: 'Ensure Cargo chart named "anyhow" is specified'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      Query: 'dependencies.(?:-=anyhow)'
+    sourceid: 'anyhow-current-version'
+targets:
+  anyhow:
+    name: 'Bump crate dependency "anyhow" for crate "test-crate"'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      key: 'dependencies.anyhow'
+    sourceid: 'anyhow'
+`, `name: 'Bump dependencies "rand" for "test-crate" crate'
 sources:
   rand:
     name: 'Get latest "rand" crate version'

@@ -2,11 +2,12 @@ package cargo
 
 import (
 	"fmt"
+	"io/fs"
+	"path/filepath"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
-	"io/fs"
-	"path/filepath"
 )
 
 // searchChartFiles search, recursively, for every files named Cargo.toml from a root directory.
@@ -55,7 +56,11 @@ func getDependencies(fc *dasel.FileContent, dependencyType string) ([]crateDepen
 		}
 		cd.Version, err = fc.Query(fmt.Sprintf(".%s.%s.version", dependencyType, pkg))
 		if err != nil {
-			continue
+			cd.Version, err = fc.Query(fmt.Sprintf(".%s.%s", dependencyType, pkg))
+			if err != nil {
+				continue
+			}
+			cd.Inlined = true
 		}
 		cd.Registry, _ = fc.Query(fmt.Sprintf(".%s.%s.registry", dependencyType, pkg))
 		dependencies = append(dependencies, cd)
@@ -63,7 +68,7 @@ func getDependencies(fc *dasel.FileContent, dependencyType string) ([]crateDepen
 	return dependencies, nil
 }
 
-func getCrateMetadata(rootDir string, manifestPath string) (*crateMetadata, error) {
+func getCrateMetadata(manifestPath string) (*crateMetadata, error) {
 
 	var crate crateMetadata
 
