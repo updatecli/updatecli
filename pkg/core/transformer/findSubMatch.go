@@ -10,8 +10,8 @@ import (
 // FindSubMatch is a struct used to feed regexp.findSubMatch
 type FindSubMatch struct {
 	// Pattern defines regular expression to use for retrieving a submatch
-	Pattern                string
-	DeprecatedCaptureIndex int `yaml:"captureIndex"`
+	Pattern                string `yaml:",omitempty" jsonschema:"required"`
+	DeprecatedCaptureIndex int    `yaml:"captureIndex,omitempty" jsonschema:"-"`
 	// CaptureIndex defines which substring occurrence to retrieve. Note also that a value of `0` for `captureIndex` returns all submatches, and individual submatch indexes start at `1`.
 	CaptureIndex int
 }
