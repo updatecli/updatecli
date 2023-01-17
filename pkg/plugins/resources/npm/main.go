@@ -3,10 +3,15 @@ package npm
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"sort"
+	"strings"
+
+	"gopkg.in/ini.v1"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -20,10 +25,14 @@ type Spec struct {
 	Name string `yaml:",omitempty"`
 	// Defines a specific package version
 	Version string `yaml:",omitempty"`
-	// Defines registry url
+	// URL defines the registry url (defaults to `https://registry.npmjs.org/`)
 	URL string `yaml:",omitempty"`
+	// RegistryToken defines the token to use when connection to the registry
+	RegistryToken string `yaml:",omitempty"`
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// NpmrcPath defines the path to the .npmrc file
+	NpmrcPath string `yaml:"npmrcPath,omitempty"`
 }
 
 type distTags struct {
@@ -48,6 +57,7 @@ type Npm struct {
 	versionFilter version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	foundVersion  version.Version
 	data          Data
+	rcConfig      RcConfig
 }
 
 const (
@@ -64,8 +74,10 @@ func New(spec interface{}) (*Npm, error) {
 		return &Npm{}, err
 	}
 
-	if newSpec.URL == "" {
-		newSpec.URL = npmDefaultApiURL
+	// parse the .npmrc files
+	rcConfig, err := getNpmrcConfig(newSpec.NpmrcPath, newSpec.URL, newSpec.RegistryToken)
+	if err != nil {
+		return &Npm{}, err
 	}
 
 	err = newSpec.Validate()
@@ -81,6 +93,7 @@ func New(spec interface{}) (*Npm, error) {
 	return &Npm{
 		spec:          newSpec,
 		versionFilter: newFilter,
+		rcConfig:      rcConfig,
 	}, nil
 }
 
@@ -93,9 +106,68 @@ func (s *Spec) Validate() (err error) {
 	return nil
 }
 
+type Registry struct {
+	AuthToken string
+	Url       string
+}
+
+type RcConfig struct {
+	Registries map[string]Registry
+	Scopes     map[string]string
+}
+
+func defaultNpmConfig(default_url string, default_token string) RcConfig {
+	var config RcConfig
+	config.Registries = make(map[string]Registry)
+	var url string
+	if default_url == "" {
+		url = npmDefaultApiURL
+	} else {
+		url = default_url
+	}
+	config.Registries["default"] = Registry{
+		Url:       url,
+		AuthToken: default_token,
+	}
+	config.Scopes = make(map[string]string)
+	return config
+}
+
+func getNpmrcConfig(path string, default_url string, default_token string) (RcConfig, error) {
+	config := defaultNpmConfig(default_url, default_token)
+	if path == "" {
+		path = fmt.Sprintf("%s/.npmrc", os.Getenv("HOME"))
+	}
+	cfg, err := ini.Load(path)
+	if err != nil {
+		return config, err
+	}
+	for _, section := range cfg.Section("").Keys() {
+		sectionName := section.Name()
+		if strings.HasPrefix(sectionName, "//") {
+			// Registry section
+			authTokenValue := strings.Split(section.Value(), "_authToken=")
+			if len(authTokenValue) == 2 {
+				config.Registries[sectionName[2:]] = Registry{
+					AuthToken: authTokenValue[1],
+					Url:       fmt.Sprintf("https:%s", sectionName),
+				}
+			}
+		} else if strings.HasPrefix(sectionName, "@") {
+			// Scope section
+			registryValue := strings.Split(section.Value(), "registry=https://")
+			if len(registryValue) == 2 {
+				config.Scopes[sectionName] = registryValue[1]
+			}
+		}
+
+	}
+	return config, nil
+}
+
 // GetVersions fetch all versions of the Npm package
 func (n *Npm) getVersions() (v string, versions []string, err error) {
-	n.data, err = getPackageData(n.spec.URL + n.spec.Name)
+	n.data, err = n.getPackageData(n.spec.Name)
 
 	if err != nil {
 		return "", nil, err
@@ -119,12 +191,33 @@ func (n *Npm) getVersions() (v string, versions []string, err error) {
 }
 
 // Get package data from Json API
-func getPackageData(URL string) (Data, error) {
+func (n *Npm) getPackageData(packageName string) (Data, error) {
 	var d Data
+	var registry Registry
+	// We need to find the registry URL to use for the package
+	if strings.HasPrefix(packageName, "@") {
+		// Scoped package
+		if scope, ok := n.rcConfig.Scopes[packageName[:strings.Index(packageName, "/")]]; ok {
+			// We found a scope registry for the package
+			registry = n.rcConfig.Registries[scope]
+		} else {
+			// We didn't find a scope for the package, we use the default registry
+			registry = n.rcConfig.Registries["default"]
+		}
+	} else {
+		// Not a scoped package, using default registry
+		registry = n.rcConfig.Registries["default"]
+	}
+
+	URL := fmt.Sprintf("%s%s", registry.Url, packageName)
 
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting npm api data %q\n", err)
+	}
+
+	if registry.AuthToken != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", registry.AuthToken))
 	}
 
 	res, err := http.DefaultClient.Do(req)
