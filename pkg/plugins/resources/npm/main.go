@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
+
 	"gopkg.in/ini.v1"
 
 	"github.com/mitchellh/mapstructure"
@@ -57,6 +59,7 @@ type Npm struct {
 	versionFilter version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	foundVersion  version.Version
 	data          Data
+	webClient     httpclient.HTTPClient
 	rcConfig      RcConfig
 }
 
@@ -94,6 +97,7 @@ func New(spec interface{}) (*Npm, error) {
 		spec:          newSpec,
 		versionFilter: newFilter,
 		rcConfig:      rcConfig,
+		webClient:     http.DefaultClient,
 	}, nil
 }
 
@@ -220,7 +224,7 @@ func (n *Npm) getPackageData(packageName string) (Data, error) {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", registry.AuthToken))
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := n.webClient.Do(req)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting npm api data %q\n", err)
 		return Data{}, err
