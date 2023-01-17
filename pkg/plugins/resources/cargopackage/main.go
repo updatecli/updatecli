@@ -10,9 +10,11 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -29,9 +31,10 @@ type CargoPackage struct {
 	foundVersion  version.Version
 	packageData   PackageData
 	// indexDir holds the location of the indexDir
-	indexDir string
-	indexUrl string
-	isSCM    bool
+	indexDir  string
+	indexUrl  string
+	isSCM     bool
+	webClient *http.Client
 }
 
 type CargoUser struct {
@@ -143,7 +146,10 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 		isSCM:         isSCM,
 		indexDir:      newSpec.IndexDir,
 		indexUrl:      newSpec.IndexUrl,
+		webClient:     http.DefaultClient,
 	}
+
+	newResource.webClient.Transport = httpclient.NewThrottledTransport(1*time.Second, 1, http.DefaultTransport)
 
 	if !newResource.isSCM && newSpec.IndexDir == "" && newSpec.IndexUrl == "" {
 		newResource.indexUrl = cratesDefaultIndexApiUrl
@@ -198,7 +204,7 @@ func getPackageFileDir(packageName string) (string, error) {
 	}
 }
 
-func getPackageDataFromApi(name string, indexUrl string) (PackageData, error) {
+func (cp *CargoPackage) getPackageDataFromApi(name string, indexUrl string) (PackageData, error) {
 	packageUrl := fmt.Sprintf("%s/%s", indexUrl, name)
 
 	req, err := http.NewRequest("GET", packageUrl, nil)
@@ -207,7 +213,7 @@ func getPackageDataFromApi(name string, indexUrl string) (PackageData, error) {
 		return PackageData{}, err
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := cp.webClient.Do(req)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
 		return PackageData{}, err
@@ -223,7 +229,7 @@ func getPackageDataFromApi(name string, indexUrl string) (PackageData, error) {
 	return d, nil
 }
 
-func getPackageDataFromFS(name string, indexDir string) (PackageData, error) {
+func (cp *CargoPackage) getPackageDataFromFS(name string, indexDir string) (PackageData, error) {
 	var pd PackageData
 	pd.Crate.Name = name
 	packageDir, err := getPackageFileDir(name)
@@ -264,7 +270,7 @@ func getPackageDataFromFS(name string, indexDir string) (PackageData, error) {
 // Get package data from Json API
 func (cp *CargoPackage) getPackageData() (PackageData, error) {
 	if cp.indexDir != "" {
-		return getPackageDataFromFS(cp.spec.Package, cp.indexDir)
+		return cp.getPackageDataFromFS(cp.spec.Package, cp.indexDir)
 	}
-	return getPackageDataFromApi(cp.spec.Package, cp.indexUrl)
+	return cp.getPackageDataFromApi(cp.spec.Package, cp.indexUrl)
 }
