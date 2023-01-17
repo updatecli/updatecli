@@ -28,7 +28,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       false,
 			wantErr:           false,
-			wantCommandInMock: "/bin/bash /tmp/updatecli/bin/2fac759bcbb104999966042caff78466befef6c3b9ae6d3ccade7f087ff584d5.sh",
+			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "do_not_change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "",
@@ -41,7 +41,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       true,
 			wantErr:           false,
-			wantCommandInMock: "/bin/bash /tmp/updatecli/bin/47e31e5674a4ef3131d5ef53badfcba025009cc68f39abd12d8cd63392f9d5dd.sh",
+			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "1.2.3",
@@ -55,7 +55,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       false,
 			wantErr:           true,
-			wantCommandInMock: "/bin/bash /tmp/updatecli/bin/47e31e5674a4ef3131d5ef53badfcba025009cc68f39abd12d8cd63392f9d5dd.sh",
+			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 2,
 				Stderr:   "Error: unable to change value to 1.2.3.",
@@ -119,7 +119,7 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			mockReturnedChangedFiles: []string{"pom.xml"},
 			wantMessage:              `ran shell command "change.sh 1.2.3"`,
 			wantErr:                  false,
-			wantCommandInMock:        "/bin/bash /tmp/updatecli/bin/47e31e5674a4ef3131d5ef53badfcba025009cc68f39abd12d8cd63392f9d5dd.sh",
+			wantCommandInMock:        "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Changed value from 1.2.2 to 1.2.3.",

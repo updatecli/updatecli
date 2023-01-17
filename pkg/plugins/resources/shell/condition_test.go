@@ -96,7 +96,7 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 			scmDir:      "/dummy/dir",
 			wantResult:  true,
 			wantErr:     false,
-			wantCommand: "/bin/bash /tmp/updatecli/bin/9adca274a8e9298dd9060a3bd68649e74950b670b9bc4efe47443e1843091683.sh",
+			wantCommand: "/bin/bash" + " " + wantedScriptFilename(t, "echo Hello 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Hello",
