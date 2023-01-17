@@ -18,6 +18,9 @@ var (
 
 	// GoVersion contains the golang version uses to build this binary
 	GoVersion string
+
+	// DisableDevWarning is used to identify if we already notify that we use a dev version
+	isDevWarningDisabled bool
 )
 
 // Show displays various version information
@@ -38,7 +41,12 @@ func IsGreaterThan(binaryVersion, manifestVersion string) (bool, error) {
 	}
 
 	if len(binaryVersion) == 0 {
-		binaryVersion = "0.0.0"
+		if !isDevWarningDisabled {
+			logrus.Warningf("Updatecli binary version is unset. This means you are using a development version that ignores manifest version constraint.\n")
+			isDevWarningDisabled = true
+		}
+
+		return true, nil
 	}
 
 	mv, err := sv.NewVersion(manifestVersion)
