@@ -37,12 +37,16 @@ jobs:
           git config --global core.eol lf
 
       - name: golangci-lint
+        ## Running golanci-lint on multiple architecture doesn't make sense
+        ## So to save some installation time, we only run it on Linux
+        if: runner.os == 'ubuntu-20.04'
         uses: golangci/golangci-lint-action@v3
         with:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
           # we always use the latest patch version.
           version: v1.50
+
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:
