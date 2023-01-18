@@ -3,10 +3,11 @@ package cargo
 import (
 	"bytes"
 	"fmt"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 	"path/filepath"
 	"sort"
 	"text/template"
+
+	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 
 	"github.com/sirupsen/logrus"
 )

@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
+
+	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"

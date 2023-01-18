@@ -3,12 +3,13 @@ package cargopackage
 import (
 	"errors"
 	"fmt"
-	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 func CreateDummyIndex() (string, error) {

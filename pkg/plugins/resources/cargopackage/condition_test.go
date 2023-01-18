@@ -1,9 +1,10 @@
 package cargopackage
 
 import (
-	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 	"os"
 	"testing"
+
+	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -131,6 +132,7 @@ func TestCondition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec, false)
+			require.NoError(t, err)
 			if tt.mockedResponse {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode, tt.mockedHeaderFormat)
 			}

@@ -2,6 +2,7 @@ package autodiscovery
 
 import (
 	"fmt"
+
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 
 	"github.com/mitchellh/mapstructure"
