@@ -2,7 +2,6 @@ package cargopackage
 
 import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
-	"log"
 	"os"
 	"testing"
 
@@ -14,7 +13,7 @@ func TestCondition(t *testing.T) {
 	dir, err := CreateDummyIndex()
 	defer os.RemoveAll(dir)
 	if err != nil {
-		log.Fatal(err)
+		require.NoError(t, err)
 	}
 
 	tests := []struct {
