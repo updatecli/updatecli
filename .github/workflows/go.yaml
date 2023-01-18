@@ -13,11 +13,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-20.04, windows-latest, macos-latest]
+    runs-on: ubuntu-20.04
 
     steps:
 
@@ -27,19 +23,11 @@ jobs:
         with:
           go-version: 1.19.4
         id: go
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
 
-      # fix issues on windows with line endings with a matrix build
-      - if: runner.os == 'windows-latest'
-        run: |
-          git config --global core.autocrlf false
-          git config --global core.eol lf
-
       - name: golangci-lint
-        ## Running golanci-lint on multiple architecture doesn't make sense
-        ## So to save some installation time, we only run it on Linux
-        if: runner.os == 'ubuntu-20.04'
         uses: golangci/golangci-lint-action@v3
         with:
           # Required: the version of golangci-lint is required
@@ -51,15 +39,19 @@ jobs:
         uses: goreleaser/goreleaser-action@v4
         with:
           install-only: true
+
       - name: Show GoReleaser version
         run: goreleaser --version
+
       - name: Build
         run: make build
+
       - name: Quick Test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make test-short
         if: ${{ github.event_name == 'pull_request' }}
+
       - name: All Test
         env:
           # Access only to ec2 AMI api in read-only
@@ -72,6 +64,7 @@ jobs:
           UPDATECLI_GITEA_TOKEN: ${{ secrets.UPDATECLI_GITEA_TOKEN }}
         run: make test
         if: ${{ github.event_name == 'schedule' }}
+
       # Codecov should only be updated if make test is executed
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
@@ -93,3 +86,36 @@ jobs:
           IS_TTY: true # https://github.com/ovh/venom#use-venom-in-ci
           # Access only to ec2 AMI api in read-only
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-os:
+    name: Multi OS Build
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubunu-latest, windows-latest, macos-latest]
+
+    steps:
+
+      # https://github.com/actions/setup-go
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.4
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+
+      # fix issues on windows with line endings with a matrix build
+      - if: runner.os == 'windows-latest'
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - name: Quick Test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make test-short
+        if: ${{ github.event_name == 'pull_request' }}
+
