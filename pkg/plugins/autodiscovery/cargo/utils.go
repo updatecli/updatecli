@@ -54,15 +54,21 @@ func getDependencies(fc *dasel.FileContent, dependencyType string) ([]crateDepen
 		cd := crateDependency{
 			Name: pkg,
 		}
-		cd.Version, err = fc.Query(fmt.Sprintf(".%s.%s.version", dependencyType, pkg))
+		version, err := fc.DaselNode.Query(fmt.Sprintf(".%s.%s.version", dependencyType, pkg))
 		if err != nil {
-			cd.Version, err = fc.Query(fmt.Sprintf(".%s.%s", dependencyType, pkg))
+			version, err := fc.DaselNode.Query(fmt.Sprintf(".%s.%s", dependencyType, pkg))
 			if err != nil {
 				continue
 			}
+			cd.Version = version.String()
 			cd.Inlined = true
+		} else {
+			cd.Version = version.String()
 		}
-		cd.Registry, _ = fc.Query(fmt.Sprintf(".%s.%s.registry", dependencyType, pkg))
+		registry, _ := fc.DaselNode.Query(fmt.Sprintf(".%s.%s.registry", dependencyType, pkg))
+		if err == nil && registry != nil {
+			cd.Registry = registry.String()
+		}
 		dependencies = append(dependencies, cd)
 	}
 	return dependencies, nil
@@ -78,7 +84,7 @@ func getCrateMetadata(manifestPath string) (*crateMetadata, error) {
 		ContentRetriever: &text.Text{},
 	}
 
-	err := tomlFile.Read(".")
+	err := tomlFile.Read("")
 
 	if err != nil {
 		return &crateMetadata{}, err
@@ -91,14 +97,8 @@ func getCrateMetadata(manifestPath string) (*crateMetadata, error) {
 	}
 
 	crate.Name = name
-	crate.Dependencies, err = getDependencies(&tomlFile, "dependencies")
-	if err != nil {
-		return &crateMetadata{}, err
-	}
-	crate.DevDependencies, err = getDependencies(&tomlFile, "dev-dependencies")
-	if err != nil {
-		return &crateMetadata{}, err
-	}
+	crate.Dependencies, _ = getDependencies(&tomlFile, "dependencies")
+	crate.DevDependencies, _ = getDependencies(&tomlFile, "dev-dependencies")
 
 	logrus.Debugf("Crate: %q\n", name)
 	logrus.Debugf("Dependencies")

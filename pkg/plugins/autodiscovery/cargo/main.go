@@ -10,14 +10,14 @@ import (
 
 // Spec defines the Cargo parameters.
 type Spec struct {
-	// rootdir defines the root directory used to recursively search for Cargo.toml
+	// RootDir defines the root directory used to recursively search for Cargo.toml
 	RootDir string `yaml:",omitempty"`
 	// Ignore specifies rule to ignore Cargo.toml update.
 	Ignore MatchingRules `yaml:",omitempty"`
 	// Only specify required rule to restrict Cargo.toml update.
 	Only MatchingRules `yaml:",omitempty"`
 	// Auths provides a map of registry credentials where the key is the registry URL without scheme
-	Auths map[string]cargo.InlineKeyChain `yaml:",omitempty"`
+	Registries map[string]cargo.Registry `yaml:",omitempty"`
 }
 
 // Cargo struct holds all information needed to generate cargo manifest.

@@ -1,20 +1,23 @@
-name: "Docker compose autodiscovery using git scm"
+name: "Cargo compose autodiscovery using git scm"
 scms:
   default:
     kind: git
     spec:
-      url: https://github.com/updatecli/updatemonitor.git
+      url: https://github.com/loispostula/cargo-lab.git
+      branch: "main"
+  private-registry:
+    kind: git
+    spec:
+      url: "https://github.com/loispostula/fake-cargo-registry.git"
+      branch: "main"
     
 autodiscovery:
-  # scmid is applied to all crawlers
   scmid: default
   crawlers:
-    dockercompose:
-      ignore: 
-       - path: "*/docker-compose.yaml"
-         services:
-          -  traefik
-      #only:
-      #  # - path: <filepath relative to scm repository>
-      #  # - path: chart/*
-#
+    cargo:
+      registries:
+        fake-private-git:
+          scmid: private-registry
+        fake-private-http:
+          url: "https://loispostula.github.io/fake-cargo-registry/api/v1/crates"
+

@@ -401,7 +401,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 		logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
 		logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
-		var sc *scm.Config
+		//var sc *scm.Config
 		var actionConfig *action.Config
 		var autodiscoveryScm scm.Scm
 		var autodiscoveryAction action.Action
@@ -417,7 +417,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			autodiscoveryScm, found = p.SCMs[p.Config.Spec.AutoDiscovery.ScmId]
 
 			if found {
-				sc = autodiscoveryScm.Config
+				//sc = autodiscoveryScm.Config
 				workDir = autodiscoveryScm.Handler.GetDirectory()
 			}
 		}
@@ -504,9 +504,9 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 
 			manifest.PipelineID = pipelineID
 
-			if sc != nil {
-				manifest.SCMs = make(map[string]scm.Config)
-				manifest.SCMs[p.Config.Spec.AutoDiscovery.ScmId] = *sc
+			manifest.SCMs = make(map[string]scm.Config)
+			for scmId, sc := range p.SCMs {
+				manifest.SCMs[scmId] = *sc.Config
 			}
 
 			if actionConfig != nil {

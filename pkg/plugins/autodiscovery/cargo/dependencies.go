@@ -3,7 +3,9 @@ package cargo
 import (
 	"bytes"
 	"fmt"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 	"path/filepath"
+	"sort"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -27,7 +29,7 @@ type crateMetadata struct {
 	DevDependencies []crateDependency
 }
 
-func generateManifest(crateName string, dependency crateDependency, relativeFile string, foundFile string, dependencyType string) (bytes.Buffer, error) {
+func (c Cargo) generateManifest(crateName string, dependency crateDependency, relativeFile string, foundFile string, dependencyType string) (bytes.Buffer, error) {
 	manifest := bytes.Buffer{}
 	tmpl, err := template.New("manifest").Parse(dependencyManifest)
 	if err != nil {
@@ -52,6 +54,12 @@ func generateManifest(crateName string, dependency crateDependency, relativeFile
 	} else {
 		TargetKey = fmt.Sprintf("%s.%s.version", dependencyType, dependency.Name)
 	}
+	var Registry cargo.Registry
+	if dependency.Registry != "" {
+		if registry, found := c.spec.Registries[dependency.Registry]; found {
+			Registry = registry
+		}
+	}
 	params := struct {
 		ManifestName               string
 		CrateName                  string
@@ -70,6 +78,12 @@ func generateManifest(crateName string, dependency crateDependency, relativeFile
 		TargetFile                 string
 		TargetKey                  string
 		ScmID                      string
+		WithRegistry               bool
+		RegistrySCMID              string
+		RegistryRootDir            string
+		RegistryURL                string
+		RegistryAuthToken          string
+		RegistryHeaderFormat       string
 	}{
 		ManifestName:               fmt.Sprintf("Bump %s %q for \"%s\" crate", dependencyType, dependency.Name, crateName),
 		CrateName:                  crateName,
@@ -87,6 +101,13 @@ func generateManifest(crateName string, dependency crateDependency, relativeFile
 		TargetID:                   dependency.Name,
 		TargetFile:                 filepath.Base(foundFile),
 		TargetKey:                  TargetKey,
+		ScmID:                      c.scmID,
+		WithRegistry:               dependency.Registry != "",
+		RegistrySCMID:              Registry.SCMID,
+		RegistryRootDir:            Registry.RootDir,
+		RegistryURL:                Registry.URL,
+		RegistryAuthToken:          Registry.Auth.Token,
+		RegistryHeaderFormat:       Registry.Auth.HeaderFormat,
 	}
 
 	if err := tmpl.Execute(&manifest, params); err != nil {
@@ -97,7 +118,7 @@ func generateManifest(crateName string, dependency crateDependency, relativeFile
 }
 
 func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
-	manifests := [][]byte{}
+	var manifests [][]byte
 
 	foundCargoFiles, err := findCargoFiles(
 		c.rootDir,
@@ -152,17 +173,26 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 			continue
 		}
 
-		c := *crate
-		for _, dependency := range c.Dependencies {
-			manifest, err := generateManifest(c.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dependencies")
+		cr := *crate
+		dependencies := cr.Dependencies
+		sort.Slice(dependencies, func(i, j int) bool {
+			return dependencies[i].Name < dependencies[j].Name
+		})
+		devDependencies := cr.DevDependencies
+		sort.Slice(devDependencies, func(i, j int) bool {
+			return devDependencies[i].Name < devDependencies[j].Name
+		})
+
+		for _, dependency := range dependencies {
+			manifest, err := c.generateManifest(cr.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dependencies")
 			if err != nil {
 				logrus.Debugln(err)
 				continue
 			}
 			manifests = append(manifests, manifest.Bytes())
 		}
-		for _, dependency := range c.DevDependencies {
-			manifest, err := generateManifest(c.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dev-dependencies")
+		for _, dependency := range devDependencies {
+			manifest, err := c.generateManifest(cr.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dev-dependencies")
 			if err != nil {
 				logrus.Debugln(err)
 				continue
@@ -171,5 +201,6 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 		}
 	}
 
+	logrus.Debugf("found manifests: %s", manifests)
 	return manifests, nil
 }

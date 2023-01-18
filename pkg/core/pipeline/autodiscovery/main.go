@@ -2,6 +2,7 @@ package autodiscovery
 
 import (
 	"fmt"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
 	DefaultCrawlerSpecs = Config{
 		Crawlers: map[string]interface{}{
+			"cargo":         cargo.Spec{},
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
 			"helm":          helm.Spec{},
@@ -27,6 +29,7 @@ var (
 	}
 	// AutodiscoverySpecs is a map of all Autodiscovery specification
 	AutodiscoverySpecsMapping = map[string]interface{}{
+		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
 		"helm":          &helm.Spec{},
@@ -69,6 +72,20 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		// Commenting for now while refactoring
 		switch kind {
+		case "cargo":
+
+			cargoCrawler, err := cargo.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, cargoCrawler)
+
 		case "dockercompose":
 
 			dockerComposeCrawler, err := dockercompose.New(
