@@ -33,7 +33,7 @@ type CargoPackage struct {
 	packageData   PackageData
 	registry      cargo.Registry
 	isSCM         bool
-	webClient     *http.Client
+	webClient     httpclient.HTTPClient
 }
 
 type PackageVersion struct {
@@ -67,15 +67,15 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 		return nil, err
 	}
 
+	webClient := http.DefaultClient
+	webClient.Transport = httpclient.NewThrottledTransport(1*time.Second, 1, http.DefaultTransport)
 	newResource := &CargoPackage{
 		spec:          newSpec,
 		versionFilter: newFilter,
 		isSCM:         isSCM,
 		registry:      newSpec.Registry,
-		webClient:     http.DefaultClient,
+		webClient:     webClient,
 	}
-
-	newResource.webClient.Transport = httpclient.NewThrottledTransport(1*time.Second, 1, http.DefaultTransport)
 
 	if !newResource.isSCM && newSpec.Registry.RootDir == "" && newSpec.Registry.URL == "" {
 		newResource.registry.URL = cratesDefaultIndexApiUrl
@@ -137,6 +137,14 @@ func (cp *CargoPackage) getPackageDataFromApi(name string, indexUrl string) (Pac
 	if err != nil {
 		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
 		return PackageData{}, err
+	}
+
+	if cp.registry.Auth.Token != "" {
+		format := "Bearer %s"
+		if cp.registry.Auth.HeaderFormat != "" {
+			format = cp.registry.Auth.HeaderFormat
+		}
+		req.Header.Set("Authorization", fmt.Sprintf(format, cp.registry.Auth.Token))
 	}
 
 	res, err := cp.webClient.Do(req)
