@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 	"io"
 	"net/http"
 	"os"
@@ -30,98 +31,24 @@ type CargoPackage struct {
 	versionFilter version.Filter
 	foundVersion  version.Version
 	packageData   PackageData
-	// indexDir holds the location of the indexDir
-	indexDir  string
-	indexUrl  string
-	isSCM     bool
-	webClient *http.Client
-}
-
-type CargoUser struct {
-	Avatar string `json:"avatar"`
-	Id     int    `json:"id"`
-	Login  string `json:"login"`
-	Name   string `json:"name"`
-	Url    string `json:"url"`
+	registry      cargo.Registry
+	isSCM         bool
+	webClient     *http.Client
 }
 
 type PackageVersion struct {
-	AuditActions []struct {
-		Action string    `json:"action"`
-		Time   string    `json:"time"`
-		User   CargoUser `json:"user"`
-	} `json:"audit_actions"`
-	Checksum  string              `json:"checksum"`
-	Crate     string              `json:"crate"`
-	CrateSize int                 `json:"crate_size"`
-	CreatedAt string              `json:"created_at"`
-	DlPath    string              `json:"dl_path"`
-	Downloads int                 `json:"downloads"`
-	Features  map[string][]string `json:"features"`
-	Id        int                 `json:"id"`
-	License   string              `json:"license"`
-	Links     struct {
-		Authors         string `json:"authors"`
-		Dependencies    string `json:"dependencies"`
-		VersionDownload string `json:"version_downloads"`
-	} `json:"links"`
-	Num         string    `json:"num,omitempty"`
-	PublishedBy CargoUser `json:"published_by"`
-	ReadmePath  string    `json:"readme_path"`
-	UpdatedAt   string    `json:"updated_at"`
-	Version     string    `json:"vers,omitempty"`
-	Yanked      bool      `json:"yanked"`
-}
-
-type PackageCategory struct {
-	Category    string `json:"category"`
-	CratesCnt   int    `json:"crates_cnt"`
-	CreatedAt   string `json:"created_at"`
-	Description string `json:"description"`
-	Id          string `json:"id"`
-	Slug        string `json:"slug"`
-}
-
-type PackageKeyword struct {
-	CratesCnt int    `json:"crates_cnt"`
-	CreatedAt string `json:"created_at"`
-	Keyword   string `json:"keyword"`
-	Id        string `json:"id"`
+	Num     string `json:"num,omitempty"`
+	Version string `json:"vers,omitempty"`
+	Yanked  bool   `json:"yanked"`
 }
 
 type PackageCrate struct {
-	Categories    []string `json:"categories"`
-	CreatedAt     string   `json:"created_at"`
-	Description   string   `json:"description"`
-	Documentation string   `json:"documentation"`
-	Downloads     int      `json:"downloads"`
-	ExactMatch    bool     `json:"exact_match"`
-	Homepage      string   `json:"homepage"`
-	Id            string   `json:"id"`
-	Keywords      []string `json:"keywords"`
-	Links         struct {
-		OwnerTeam           string `json:"owner_team"`
-		OwnerUser           string `json:"owner_user"`
-		Owners              string `json:"owners"`
-		ReverseDependencies string `json:"reverse_dependencies"`
-		VersionDownloads    string `json:"version_downloads"`
-		Versions            string `json:"versions"`
-	} `json:"links"`
-	MaxStableVersion string `json:"max_stable_version"`
-	MaxVersion       string `json:"max_version"`
-	Name             string `json:"name"`
-	NewestVersion    string `json:"newest_version"`
-	RecentDownloads  int    `json:"recent_downloads"`
-	Repository       string `json:"repository"`
-	UpdatedAt        string `json:"updated_at"`
-	Versions         []int  `json:"versions"`
+	Name string `json:"name"`
 }
 
 type PackageData struct {
-	Categories []PackageCategory `json:"categories"`
-	Keywords   []PackageKeyword  `json:"keywords"`
-	Crate      PackageCrate      `json:"crate"`
-	Versions   []PackageVersion  `json:"versions"`
+	Crate    PackageCrate     `json:"crate"`
+	Versions []PackageVersion `json:"versions"`
 }
 
 // New returns a reference to a newly initialized CargoPackage object from a cargopackage.Spec
@@ -144,15 +71,14 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 		spec:          newSpec,
 		versionFilter: newFilter,
 		isSCM:         isSCM,
-		indexDir:      newSpec.IndexDir,
-		indexUrl:      newSpec.IndexUrl,
+		registry:      newSpec.Registry,
 		webClient:     http.DefaultClient,
 	}
 
 	newResource.webClient.Transport = httpclient.NewThrottledTransport(1*time.Second, 1, http.DefaultTransport)
 
-	if !newResource.isSCM && newSpec.IndexDir == "" && newSpec.IndexUrl == "" {
-		newResource.indexUrl = cratesDefaultIndexApiUrl
+	if !newResource.isSCM && newSpec.Registry.RootDir == "" && newSpec.Registry.URL == "" {
+		newResource.registry.URL = cratesDefaultIndexApiUrl
 	}
 
 	return newResource, nil
@@ -269,8 +195,8 @@ func (cp *CargoPackage) getPackageDataFromFS(name string, indexDir string) (Pack
 
 // Get package data from Json API
 func (cp *CargoPackage) getPackageData() (PackageData, error) {
-	if cp.indexDir != "" {
-		return cp.getPackageDataFromFS(cp.spec.Package, cp.indexDir)
+	if cp.registry.RootDir != "" {
+		return cp.getPackageDataFromFS(cp.spec.Package, cp.registry.RootDir)
 	}
-	return cp.getPackageDataFromApi(cp.spec.Package, cp.indexUrl)
+	return cp.getPackageDataFromApi(cp.spec.Package, cp.registry.URL)
 }

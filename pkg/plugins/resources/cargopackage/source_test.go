@@ -1,6 +1,7 @@
 package cargopackage
 
 import (
+	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 	"log"
 	"os"
 	"testing"
@@ -38,8 +39,10 @@ func TestSource(t *testing.T) {
 		{
 			name: "Passing case of retrieving crate-test version from the filesystem index",
 			spec: Spec{
-				IndexDir: dir,
-				Package:  "crate-test",
+				Registry: cargo.Registry{
+					RootDir: dir,
+				},
+				Package: "crate-test",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "~0.1",

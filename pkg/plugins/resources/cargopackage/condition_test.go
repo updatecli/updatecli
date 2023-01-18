@@ -1,6 +1,7 @@
 package cargopackage
 
 import (
+	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 	"log"
 	"os"
 	"testing"
@@ -44,9 +45,11 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Retrieving existing crate-test version from the filesystem index",
 			spec: Spec{
-				IndexDir: dir,
-				Package:  "crate-test",
-				Version:  "0.2.2",
+				Registry: cargo.Registry{
+					RootDir: dir,
+				},
+				Package: "crate-test",
+				Version: "0.2.2",
 			},
 			expectedResult: true,
 			expectedError:  false,
@@ -54,9 +57,11 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Retrieving existing yanked crate-test version from the filesystem index",
 			spec: Spec{
-				IndexDir: dir,
-				Package:  "crate-test",
-				Version:  "0.2.3",
+				Registry: cargo.Registry{
+					RootDir: dir,
+				},
+				Package: "crate-test",
+				Version: "0.2.3",
 			},
 			expectedResult: false,
 			expectedError:  false,
@@ -64,9 +69,11 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Retrieving non-existing yanked crate-test version from the filesystem index",
 			spec: Spec{
-				IndexDir: dir,
-				Package:  "crate-test",
-				Version:  "99.99.99",
+				Registry: cargo.Registry{
+					RootDir: dir,
+				},
+				Package: "crate-test",
+				Version: "99.99.99",
 			},
 			expectedResult: false,
 			expectedError:  false,

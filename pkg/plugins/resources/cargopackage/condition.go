@@ -17,17 +17,17 @@ func (cp *CargoPackage) Condition(source string) (bool, error) {
 func (cp *CargoPackage) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	path := scm.GetDirectory()
 
-	if cp.spec.IndexDir != "" {
-		logrus.Warningf("IndexDir is defined and set to %q but is overridden by the scm definition %q",
-			cp.spec.IndexDir,
+	if cp.spec.Registry.RootDir != "" {
+		logrus.Warningf("Registry.RootDir is defined and set to %q but is overridden by the scm definition %q",
+			cp.spec.Registry.RootDir,
 			path)
 	}
-	if cp.spec.IndexUrl != "" {
-		logrus.Warningf("IndexUrl is defined and set to %q but is overridden by the scm definition %q",
-			cp.spec.IndexDir,
+	if cp.spec.Registry.URL != "" {
+		logrus.Warningf("Registry.URL is defined and set to %q but is overridden by the scm definition %q",
+			cp.spec.Registry.URL,
 			path)
 	}
-	cp.indexDir = path
+	cp.registry.RootDir = path
 
 	return cp.condition(source)
 }
