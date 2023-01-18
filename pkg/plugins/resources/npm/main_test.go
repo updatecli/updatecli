@@ -1,7 +1,6 @@
 package npm
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +12,7 @@ import (
 func TestParseNpmRc(t *testing.T) {
 	dir, err := CreateDummyRc()
 	if err != nil {
-		log.Fatal(err)
+		require.NoError(t, err)
 	}
 	defer os.RemoveAll(dir)
 	t.Run("Test parsing custom npmrc", func(t *testing.T) {

@@ -1,7 +1,6 @@
 package npm
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +12,7 @@ import (
 func TestCondition(t *testing.T) {
 	dir, err := CreateDummyRc()
 	if err != nil {
-		log.Fatal(err)
+		require.NoError(t, err)
 	}
 	defer os.RemoveAll(dir)
 	tests := []struct {
