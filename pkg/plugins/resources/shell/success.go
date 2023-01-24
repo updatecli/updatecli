@@ -83,5 +83,5 @@ func (s *Shell) InitSuccess() error {
 // JSONSchema implements the json schema interface to generate the "condition" jsonschema.
 func (SpecSuccess) JSONSchema() *jschema.Schema {
 	type SpecSuccessAlias SpecSuccess
-	return jsonschema.GenerateJsonSchema(SpecSuccessAlias{}, MappingSpecSuccess)
+	return jsonschema.AppendOneOfToJsonSchema(SpecSuccessAlias{}, MappingSpecSuccess)
 }
