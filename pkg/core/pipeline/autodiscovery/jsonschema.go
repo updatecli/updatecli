@@ -6,7 +6,10 @@ import (
 )
 
 // JSONSchema implements the json schema interface to generate the "condition" jsonschema.
-func (Config) JSONSchema() *jschema.Schema {
-	type configAlias Config
-	return jsonschema.GenerateJsonSchema(configAlias{}, AutodiscoverySpecsMapping)
+func (CrawlersConfig) JSONSchema() *jschema.Schema {
+	type CrawlersConfigAlias CrawlersConfig
+
+	return jsonschema.AppendMapToJsonSchema(
+		CrawlersConfigAlias{},
+		AutodiscoverySpecsMapping)
 }
