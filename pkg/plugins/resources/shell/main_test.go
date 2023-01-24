@@ -18,12 +18,15 @@ func TestShell_New(t *testing.T) {
 			name: "Normal case",
 			spec: Spec{
 				Command: "echo Hello",
+				Shell:   "/bin/bash",
 			},
 			wantErr: false,
 			wantShell: &Shell{
-				executor: &nativeCommandExecutor{},
+				executor:    &nativeCommandExecutor{},
+				interpreter: "/bin/bash",
 				spec: Spec{
 					Command: "echo Hello",
+					Shell:   "/bin/bash",
 				},
 			},
 		},
@@ -37,7 +40,7 @@ func TestShell_New(t *testing.T) {
 		{
 			name: "Missing env name despite env value specified",
 			spec: Spec{
-				Command: "echo Hello",
+				Command: "echo World",
 				Environments: Environments{
 					Environment{
 						Value: "xxx",
@@ -48,13 +51,14 @@ func TestShell_New(t *testing.T) {
 			wantShell: &Shell{
 				executor: &nativeCommandExecutor{},
 				spec: Spec{
-					Command: "echo Hello",
+					Command: "echo World",
 					Environments: Environments{
 						Environment{
 							Value: "xxx",
 						},
 					},
 				},
+				interpreter: getDefaultShell(),
 			},
 		},
 		{
@@ -69,7 +73,8 @@ func TestShell_New(t *testing.T) {
 			},
 			wantErr: false,
 			wantShell: &Shell{
-				executor: &nativeCommandExecutor{},
+				executor:    &nativeCommandExecutor{},
+				interpreter: getDefaultShell(),
 				spec: Spec{
 					Command: "echo Hello",
 					Environments: Environments{
@@ -107,6 +112,7 @@ func TestShell_New(t *testing.T) {
 						},
 					},
 				},
+				interpreter: getDefaultShell(),
 			},
 		},
 		{
@@ -124,12 +130,14 @@ func TestShell_New(t *testing.T) {
 				executor: &nativeCommandExecutor{},
 				spec: Spec{
 					Command: "echo Hello",
+					Shell:   "/bin/sh",
 					Environments: Environments{
 						Environment{
 							Name: "PATH",
 						},
 					},
 				},
+				interpreter: getDefaultShell(),
 			},
 		},
 	}

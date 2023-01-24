@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -16,14 +17,17 @@ type Spec struct {
 	Environments Environments `yaml:",omitempty"`
 	// Success defines how to interpreted shell command success criteria. What a success means, what an error means, and what a warning would mean
 	Success SpecSuccess `yaml:",omitempty"`
+	// Shell specifies which shell interpreter to use. Default to powershell(Windows) and "/bin/sh" (Darwin/Linux)
+	Shell string `yaml:", omitempty"`
 }
 
 // Shell defines a resource of kind "shell"
 type Shell struct {
-	executor commandExecutor
-	spec     Spec
-	result   commandResult
-	success  Successer
+	executor    commandExecutor
+	spec        Spec
+	result      commandResult
+	success     Successer
+	interpreter string
 }
 
 // New returns a reference to a newly initialized Shell object from a ShellSpec
@@ -45,9 +49,15 @@ func New(spec interface{}) (*Shell, error) {
 		return nil, err
 	}
 
+	interpreter := getDefaultShell()
+	if newSpec.Shell != "" {
+		interpreter = newSpec.Shell
+	}
+
 	s := Shell{
-		executor: &nativeCommandExecutor{},
-		spec:     newSpec,
+		executor:    &nativeCommandExecutor{},
+		spec:        newSpec,
+		interpreter: interpreter,
 	}
 
 	err = s.InitSuccess()
@@ -56,6 +66,19 @@ func New(spec interface{}) (*Shell, error) {
 	}
 
 	return &s, nil
+}
+
+func getDefaultShell() string {
+	os := runtime.GOOS
+
+	switch os {
+	case WINOS:
+		// pwshell is the default shell on Windows system
+		return "powershell.exe -executionpolicy remotesigned -File"
+	default:
+		return "/bin/sh"
+	}
+
 }
 
 // appendSource appends the source as last argument if not empty.

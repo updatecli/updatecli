@@ -63,8 +63,13 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		return false, "", err
 	}
 
+	scriptFilename, err := newShellScript(s.appendSource(source))
+	if err != nil {
+		return false, "", fmt.Errorf("failed initializing source script - %s", err)
+	}
+
 	s.executeCommand(command{
-		Cmd: s.appendSource(source),
+		Cmd: s.interpreter + " " + scriptFilename,
 		Dir: workingDir,
 		Env: env.ToStringSlice(),
 	})
