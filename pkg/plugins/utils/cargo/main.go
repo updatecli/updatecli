@@ -1,6 +1,11 @@
 package cargo
 
-import "github.com/sirupsen/logrus"
+import (
+	"os"
+	"os/exec"
+
+	"github.com/sirupsen/logrus"
+)
 
 type InlineKeyChain struct {
 	// [A][S][C] Token specifies the cargo registry token to use for authentication.
@@ -40,4 +45,15 @@ func (r Registry) Validate() bool {
 		return false
 	}
 	return true
+}
+
+func IsCargoInstalled() bool {
+	cmd := exec.Command("cargo", "--version")
+	err := cmd.Run()
+	return err == nil
+}
+
+func IsLockFileDetected(lockfile string) bool {
+	_, err := os.Stat(lockfile)
+	return err == nil
 }

@@ -55,5 +55,18 @@ targets:
       file: '{{ .TargetFile }}'
       key: '{{ .TargetKey }}'
     sourceid: '{{ .SourceID }}'
+{{- if .TargetCargoCleanupEnabled }}
+  Cargo.lock:
+    name: Update Cargo lockfile Cargo.lock
+    dependson:
+      - {{ .TargetID }}
+    disablesourceinput: true
+    kind: shell
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+    spec:
+      command: cargo generate-lockfile
+{{ end }}
 `
 )

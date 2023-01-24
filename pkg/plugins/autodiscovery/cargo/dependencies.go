@@ -30,7 +30,7 @@ type crateMetadata struct {
 	DevDependencies []crateDependency
 }
 
-func (c Cargo) generateManifest(crateName string, dependency crateDependency, relativeFile string, foundFile string, dependencyType string) (bytes.Buffer, error) {
+func (c Cargo) generateManifest(crateName string, dependency crateDependency, relativeFile string, foundFile string, dependencyType string, targetCargoCleanupEnabled bool) (bytes.Buffer, error) {
 	manifest := bytes.Buffer{}
 	tmpl, err := template.New("manifest").Parse(dependencyManifest)
 	if err != nil {
@@ -78,6 +78,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		TargetID                   string
 		TargetFile                 string
 		TargetKey                  string
+		TargetCargoCleanupEnabled  bool
 		ScmID                      string
 		WithRegistry               bool
 		RegistrySCMID              string
@@ -101,6 +102,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		TargetID:                   dependency.Name,
 		TargetFile:                 filepath.Base(foundFile),
 		TargetKey:                  TargetKey,
+		TargetCargoCleanupEnabled:  targetCargoCleanupEnabled,
 		ScmID:                      c.scmID,
 		WithRegistry:               dependency.Registry != "",
 		RegistrySCMID:              Registry.SCMID,
@@ -137,6 +139,17 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 			// Jump to the next Cargo if current failed
 			logrus.Debugln(err)
 			continue
+		}
+
+		cargoTargetCleanManifestEnabled := false
+		if cargo.IsLockFileDetected(filepath.Join(filepath.Dir(foundCargoFile), "Cargo.lock")) {
+			switch cargo.IsCargoInstalled() {
+			case true:
+				cargoTargetCleanManifestEnabled = true
+			case false:
+				logrus.Warning("skipping, Cargo lock file detected but Updatecli couldn't detect the cargo command to update it in case of a Cargo.lock update")
+				continue
+			}
 		}
 
 		cargoRelativePath := filepath.Dir(relativeFoundCargoFile)
@@ -184,7 +197,7 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 		})
 
 		for _, dependency := range dependencies {
-			manifest, err := c.generateManifest(cr.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dependencies")
+			manifest, err := c.generateManifest(cr.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dependencies", cargoTargetCleanManifestEnabled)
 			if err != nil {
 				logrus.Debugln(err)
 				continue
@@ -192,7 +205,7 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 			manifests = append(manifests, manifest.Bytes())
 		}
 		for _, dependency := range devDependencies {
-			manifest, err := c.generateManifest(cr.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dev-dependencies")
+			manifest, err := c.generateManifest(cr.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dev-dependencies", cargoTargetCleanManifestEnabled)
 			if err != nil {
 				logrus.Debugln(err)
 				continue
