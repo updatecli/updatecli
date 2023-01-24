@@ -86,9 +86,8 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		RegistryAuthToken          string
 		RegistryHeaderFormat       string
 	}{
-		ManifestName:               fmt.Sprintf("Bump %s %q for \"%s\" crate", dependencyType, dependency.Name, crateName),
-		CrateName:                  crateName,
-		DependencyName:             dependency.Name,
+		ManifestName: fmt.Sprintf("Bump %s %q for %q crate", dependencyType, dependency.Name, crateName),
+		CrateName:    crateName, DependencyName: dependency.Name,
 		SourceID:                   dependency.Name,
 		SourceName:                 fmt.Sprintf("Get latest %q crate version", dependency.Name),
 		SourceVersionFilterKind:    "semver",

@@ -2,7 +2,7 @@ package cargo
 
 const (
 	// dependencyManifest is the Go template used to generate
-	// the Helm chart manifests specific for Helm dependencies
+	// the manifests to update the cargo file
 	dependencyManifest string = `name: '{{ .ManifestName }}'
 sources:
   {{ .SourceID }}:
@@ -42,7 +42,7 @@ conditions:
 {{- end }}
     spec:
       file: '{{ .File }}'
-      Query: '{{ .ConditionQuery }}'
+      query: '{{ .ConditionQuery }}'
     sourceid: '{{ .ExistingSourceID }}'
 targets:
   {{ .TargetID }}:

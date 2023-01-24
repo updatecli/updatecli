@@ -10,9 +10,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
 
-// searchChartFiles search, recursively, for every files named Cargo.toml from a root directory.
+// findCargoFiles search, recursively, for every files named Cargo.toml from a root directory.
 func findCargoFiles(rootDir string, validFiles []string) ([]string, error) {
-	manifestsFiles := []string{}
+	cargoFiles := []string{}
 
 	err := filepath.WalkDir(rootDir, func(path string, di fs.DirEntry, err error) error {
 		if err != nil {
@@ -26,7 +26,7 @@ func findCargoFiles(rootDir string, validFiles []string) ([]string, error) {
 
 		for _, f := range validFiles {
 			if di.Name() == f {
-				manifestsFiles = append(manifestsFiles, path)
+				cargoFiles = append(cargoFiles, path)
 			}
 		}
 		return nil
@@ -36,12 +36,12 @@ func findCargoFiles(rootDir string, validFiles []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d chart(s) found", len(manifestsFiles))
-	for _, foundFile := range manifestsFiles {
-		chartName := filepath.Base(filepath.Dir(foundFile))
-		logrus.Debugf("    * %q", chartName)
+	logrus.Debugf("%d cargo files(s) found", len(cargoFiles))
+	for _, foundFile := range cargoFiles {
+		cargoFile := filepath.Base(filepath.Dir(foundFile))
+		logrus.Debugf("    * %q", cargoFile)
 	}
-	return manifestsFiles, nil
+	return cargoFiles, nil
 }
 
 func getDependencies(fc *dasel.FileContent, dependencyType string) ([]crateDependency, error) {
