@@ -46,7 +46,7 @@ conditions:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Query: 'dependencies.(?:-=anyhow)'
+      query: 'dependencies.(?:-=anyhow)'
     sourceid: 'anyhow-current-version'
 targets:
   anyhow:
@@ -78,7 +78,7 @@ conditions:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Query: 'dependencies.(?:-=rand).version'
+      query: 'dependencies.(?:-=rand).version'
     sourceid: 'rand-current-version'
 targets:
   rand:
@@ -110,7 +110,7 @@ conditions:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Query: 'dev-dependencies.(?:-=futures).version'
+      query: 'dev-dependencies.(?:-=futures).version'
     sourceid: 'futures-current-version'
 targets:
   futures:
