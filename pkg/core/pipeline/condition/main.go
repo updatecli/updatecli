@@ -96,7 +96,7 @@ func (c Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 	anyOfSpec := resource.GetResourceMapping()
 
-	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
+	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
 }
 
 func (c *Config) Validate() error {

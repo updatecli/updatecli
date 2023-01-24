@@ -18,7 +18,7 @@ import (
 var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
 	DefaultCrawlerSpecs = Config{
-		Crawlers: map[string]interface{}{
+		Crawlers: CrawlersConfig{
 			"cargo":         cargo.Spec{},
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},

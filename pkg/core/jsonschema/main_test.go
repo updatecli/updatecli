@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+	"gotest.tools/assert"
 )
 
 // mockConditionConfig defines conditions input parameters
@@ -83,29 +84,17 @@ func TestGenerateSchema(t *testing.T) {
 	s := New("", "")
 
 	err := CloneCommentDirectory()
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	defer func() {
 		err := CleanCommentDirectory()
-		if err != nil {
-			t.Errorf("unexpected error while cleaning comment directory: %v", err)
-		}
+		require.NoError(t, err)
 	}()
 
 	err = s.GenerateSchema(&mockConfig{})
+	require.NoError(t, err)
 
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	if expectedJsonSchema != s.String() {
-		t.Errorf("Expected Jsonschema:\n%s\nGot:%s",
-			expectedJsonSchema,
-			s.String())
-	}
-
+	assert.Equal(t, expectedJsonSchema, s.String())
 }
 
 func TestGenerateJsonSchema(t *testing.T) {
@@ -145,46 +134,31 @@ func TestGenerateJsonSchema(t *testing.T) {
     ]
 }`
 	err := CloneCommentDirectory()
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	defer func() {
 		err := CleanCommentDirectory()
-		if err != nil {
-			t.Errorf("unexpected error while cleaning comment directory: %v", err)
-		}
+		require.NoError(t, err)
 	}()
 
 	anyOfSpec := map[string]interface{}{
 		"jenkins": mockJenkinsSpec{},
 	}
 
-	schema := GenerateJsonSchema(mockConditionConfig{}, anyOfSpec)
+	schema := AppendOneOfToJsonSchema(mockConditionConfig{}, anyOfSpec)
 
 	gotJsonSchema, err := json.MarshalIndent(schema, "", "    ")
+	require.NoError(t, err)
 
-	if err != nil {
-		logrus.Errorf(err.Error())
-	}
-
-	if expectedJsonSchema != string(gotJsonSchema) {
-		t.Errorf("Expected Jsonschema:\n%s\nGot:%s",
-			expectedJsonSchema,
-			string(gotJsonSchema))
-	}
+	assert.Equal(t, expectedJsonSchema, string(gotJsonSchema))
 }
 
 func TestGetPackageComments(t *testing.T) {
 	for _, path := range []string{"../../.."} {
 		comments, err := GetPackageComments(path)
-
-		if err != nil {
-			t.Errorf("Unexpected Error for path %q: %v", path, err)
-		}
+		require.NoError(t, err)
 
 		expectedResult := false
-
 		for key := range comments {
 			// Testing arbitrary comment that should exist
 			if strings.HasPrefix(key, "github.com/updatecli/updatecli/pkg/core/config.Config") {
@@ -202,5 +176,94 @@ func TestGetPackageComments(t *testing.T) {
 			}
 			t.Errorf("Unexpected result for path %q", path)
 		}
+	}
+}
+
+func TestGenerateSpecToMapJsonSchema(t *testing.T) {
+
+	type emptyMap map[string]interface{}
+
+	dataset := []struct {
+		expectedJsonSchema string
+		baseSchema         interface{}
+		input              map[string]interface{}
+	}{
+		{
+			input: map[string]interface{}{
+				"jenkins": mockJenkinsSpec{},
+			},
+			baseSchema: emptyMap{},
+			expectedJsonSchema: `{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "properties": {
+        "jenkins": {
+            "$schema": "http://json-schema.org/draft-04/schema",
+            "properties": {
+                "release": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object"
+        }
+    },
+    "type": "object"
+}`},
+		{
+			input: map[string]interface{}{
+				"jenkins": mockJenkinsSpec{},
+			},
+			baseSchema: mockConditionConfig{},
+			expectedJsonSchema: `{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "properties": {
+        "sourceid": {
+            "type": "string"
+        },
+        "disablesourceinput": {
+            "type": "boolean"
+        },
+        "spec": true,
+        "kind": {
+            "type": "string"
+        },
+        "jenkins": {
+            "$schema": "http://json-schema.org/draft-04/schema",
+            "properties": {
+                "release": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object"
+        }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+        "kind"
+    ]
+}`},
+	}
+
+	err := CloneCommentDirectory()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	defer func() {
+		err := CleanCommentDirectory()
+		if err != nil {
+			t.Errorf("unexpected error while cleaning comment directory: %v", err)
+		}
+	}()
+
+	for _, data := range dataset {
+		schema := AppendMapToJsonSchema(data.baseSchema, data.input)
+
+		gotJsonSchema, err := json.MarshalIndent(schema, "", "    ")
+		require.NoError(t, err)
+
+		assert.Equal(t, data.expectedJsonSchema, string(gotJsonSchema))
 	}
 }
