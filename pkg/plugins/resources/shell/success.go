@@ -20,8 +20,8 @@ import (
 var (
 	MappingSpecSuccess = map[string]interface{}{
 		"console/output": nil,
-		"exitcode":       exitcode.Spec{},
-		"file/checksum":  checksum.Spec{},
+		"exitcode":       &exitcode.Spec{},
+		"file/checksum":  &checksum.Spec{},
 	}
 )
 
@@ -42,12 +42,12 @@ type Successer interface {
 
 func (s *Shell) InitSuccess() error {
 
-	if s.spec.Success.Kind == "" {
+	if s.spec.ChangedIf.Kind == "" {
 		logrus.Debugf("No shell success criteria defined, updatecli fallbacks to historical workflow")
-		s.spec.Success.Kind = "console/output"
+		s.spec.ChangedIf.Kind = "console/output"
 	}
 
-	switch s.spec.Success.Kind {
+	switch s.spec.ChangedIf.Kind {
 	case "console/output":
 		o, err := console.New(&s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
@@ -57,7 +57,7 @@ func (s *Shell) InitSuccess() error {
 		s.success = o
 
 	case "exitcode":
-		o, err := exitcode.New(s.spec.Success.Spec, &s.result.ExitCode, &s.result.Stdout)
+		o, err := exitcode.New(s.spec.ChangedIf.Spec, &s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ func (s *Shell) InitSuccess() error {
 		s.success = o
 
 	case "file/checksum":
-		o, err := checksum.New(s.spec.Success.Spec, &s.result.ExitCode, &s.result.Stdout)
+		o, err := checksum.New(s.spec.ChangedIf.Spec, &s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func (s *Shell) InitSuccess() error {
 		s.success = o
 
 	default:
-		err := fmt.Errorf("shell success criteria %q is not supported by Updatecli", s.spec.Success.Kind)
+		err := fmt.Errorf("shell success criteria %q is not supported by Updatecli", s.spec.ChangedIf.Kind)
 		return err
 	}
 
