@@ -39,7 +39,7 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		return false, err
 	}
 
-	scriptFilename, err := newShellScript(s.spec.Command)
+	scriptFilename, err := newShellScript(s.appendSource(source))
 	if err != nil {
 		return false, fmt.Errorf("failed initializing source script - %s", err)
 	}
