@@ -34,7 +34,7 @@ type Spec struct {
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// NpmrcPath defines the path to the .npmrc file
-	NpmrcPath string `yaml:"npmrcPath,omitempty"`
+	NpmrcPath string `yaml:"npmrcpath,omitempty"`
 }
 
 type distTags struct {
