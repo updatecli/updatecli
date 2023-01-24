@@ -8,6 +8,8 @@ import (
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
+	// !deprecated, please use Registry.URL
+	IndexUrl string `yaml:",omitempty" jsonschema:"-"`
 	// [S][C] Registry specifies the registry to use
 	Registry cargo.Registry `yaml:",omitempty"`
 	// [S][C] Package specifies the name of the package

@@ -63,6 +63,19 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 		return nil, err
 	}
 
+	if newSpec.IndexUrl != "" {
+		logrus.Infof("IndexURL IS SET, but not used")
+		switch newSpec.Registry.URL != "" {
+		case true:
+			logrus.Warningf("Registry.URL and IndexUrl are mutually exclusive, unset indexurl")
+			newSpec.IndexUrl = ""
+		case false:
+			logrus.Warningf("indexurl is deprecated in favor of registry.url")
+			newSpec.Registry.URL = newSpec.IndexUrl
+			newSpec.IndexUrl = ""
+		}
+	}
+
 	newFilter, err := newSpec.VersionFilter.Init()
 	if err != nil {
 		return nil, err
