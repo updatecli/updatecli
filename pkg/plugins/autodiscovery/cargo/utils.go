@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"path/filepath"
 
+	sv "github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
@@ -56,11 +57,30 @@ func getDependencies(fc *dasel.FileContent, dependencyType string) ([]crateDepen
 		}
 		version, err := fc.DaselNode.Query(fmt.Sprintf(".%s.%s.version", dependencyType, pkg))
 		if err != nil {
+			// Cargo dependency has not been defined using a version
+			// It could have been defined using a git repository
+			_, err := fc.DaselNode.Query(fmt.Sprintf(".%s.%s.git", dependencyType, pkg))
+			if err == nil {
+				// TODO: Handle git dependencies
+				continue
+			}
+			// It could have been defined using a path to a local directory
+			_, err = fc.DaselNode.Query(fmt.Sprintf(".%s.%s.path", dependencyType, pkg))
+			if err == nil {
+				// TODO: Handle Path dependencies
+				continue
+			}
+
 			version, err := fc.DaselNode.Query(fmt.Sprintf(".%s.%s", dependencyType, pkg))
 			if err != nil {
 				continue
 			}
-			cd.Version = version.String()
+			// Ensure version is semver compliant
+			v := version.String()
+			if _, err = sv.NewVersion(v); err != nil {
+				continue
+			}
+			cd.Version = v
 			cd.Inlined = true
 		} else {
 			cd.Version = version.String()

@@ -6,6 +6,7 @@ version = "0.1.0"
 [dependencies]
 anyhow = "1"
 rand = { version = "0.8" }
+policy-evaluator = { git = "https://github.com/kubewarden/policy-evaluator", tag = "v0.6.1" }
 [dev-dependencies]
 futures = { version = "0.3.21" }
 

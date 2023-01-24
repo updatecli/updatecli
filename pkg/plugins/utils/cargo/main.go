@@ -1,5 +1,7 @@
 package cargo
 
+import "github.com/sirupsen/logrus"
+
 type InlineKeyChain struct {
 	// [A][S][C] Token specifies the cargo registry token to use for authentication.
 	Token string `yaml:",omitempty"`
@@ -16,4 +18,26 @@ type Registry struct {
 	RootDir string `yaml:",omitempty"`
 	// [A] SCMID specifies the cargo registry scmId to use as FS index.
 	SCMID string `yaml:",omitempty"`
+}
+
+func (r Registry) Validate() bool {
+	if r.RootDir != "" && r.SCMID != "" {
+		logrus.Errorf("Registry.RootDir is defined and set to %q but would be overridden by the scm %q",
+			r.RootDir,
+			r.SCMID)
+		return false
+	}
+	if r.URL != "" && r.SCMID != "" {
+		logrus.Errorf("Registry.URL is defined and set to %q but would be overridden by the scm %q",
+			r.URL,
+			r.SCMID)
+		return false
+	}
+	if r.RootDir != "" && r.URL != "" {
+		logrus.Errorf("Registry.URL is defined and set to %q but would be overridden by Registry.RootDir %q",
+			r.URL,
+			r.RootDir)
+		return false
+	}
+	return true
 }

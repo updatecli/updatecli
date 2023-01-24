@@ -76,6 +76,10 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 		}
 	}
 
+	if !newSpec.Registry.Validate() {
+		return nil, fmt.Errorf("invalid registry configuration")
+	}
+
 	newFilter, err := newSpec.VersionFilter.Init()
 	if err != nil {
 		return nil, err

@@ -3,6 +3,8 @@ package cargopackage
 import (
 	"testing"
 
+	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -104,6 +106,80 @@ func TestNew(t *testing.T) {
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantSpec, got.spec)
 			assert.Equal(t, tt.wantVersionFilter, got.versionFilter)
+		})
+	}
+}
+
+func TestRegistrySettings(t *testing.T) {
+	tests := []struct {
+		name     string
+		Registry cargo.Registry
+		wantErr  bool
+	}{
+		{
+			name: "Normal case with registry url",
+			Registry: cargo.Registry{
+				URL: "https://crates.io",
+			},
+		},
+		{
+			name: "Normal case with registry rootdir",
+			Registry: cargo.Registry{
+				RootDir: "/custom/dir",
+			},
+		},
+		{
+			name: "Normal case with registry scmid",
+			Registry: cargo.Registry{
+				SCMID: "git",
+			},
+		},
+		{
+			name: "Failing case with all registry settingsd",
+			Registry: cargo.Registry{
+				URL:     "https://crates.io",
+				RootDir: "/custom/dir",
+				SCMID:   "git",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Failing case with rootdir and scmid",
+			Registry: cargo.Registry{
+				RootDir: "/custom/dir",
+				SCMID:   "git",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Failing case with url and scmid",
+			Registry: cargo.Registry{
+				URL:   "https://crates.io",
+				SCMID: "git",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Failing case with url and rootdir",
+			Registry: cargo.Registry{
+				RootDir: "/custom/dir",
+				URL:     "https://crates.io",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := Spec{
+				Package:  "rand",
+				Registry: tt.Registry,
+			}
+			_, gotErr := New(spec, false)
+			if tt.wantErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
 		})
 	}
 }
