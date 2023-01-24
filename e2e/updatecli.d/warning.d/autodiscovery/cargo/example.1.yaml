@@ -3,12 +3,12 @@ scms:
   default:
     kind: git
     spec:
-      url: https://github.com/loispostula/cargo-lab.git
+      url: https://github.com/updatecli-test/cargo-lab.git
       branch: "main"
   private-registry:
     kind: git
     spec:
-      url: "https://github.com/loispostula/fake-cargo-registry.git"
+      url: "https://github.com/updatecli-test/fake-cargo-registry.git"
       branch: "main"
     
 autodiscovery:
@@ -19,5 +19,5 @@ autodiscovery:
         fake-private-git:
           scmid: private-registry
         fake-private-http:
-          url: "https://loispostula.github.io/fake-cargo-registry/api/v1/crates"
+          url: "https://updatecli-test.github.io/fake-cargo-registry/api/v1/crates"
 
