@@ -56,7 +56,7 @@ func (e Environments) Validate() error {
 
 		if environment.Name == DryRunVariableName {
 			gotErr = true
-			logrus.Errorf("environment variable %q is defined and overidden by the Updatecli process", DryRunVariableName)
+			logrus.Errorf("environment variable %q is defined and overridden by the Updatecli process", DryRunVariableName)
 
 		}
 	}
