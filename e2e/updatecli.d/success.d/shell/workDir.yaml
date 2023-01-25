@@ -1,0 +1,25 @@
+name: shell workdir e2e tests
+
+sources:
+  relative:
+    name: Test that pwd return the correct path
+    kind: shell
+    spec:
+      command: pwd
+      workdir: e2e/updatecli.d/success.d/shell
+conditions:
+  relative:
+    name: Test that pwd return the correct path
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: pwd
+      workdir: e2e/updatecli.d/success.d/shell
+targets:
+  relative:
+    name: Test that pwd return the correct path
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: pwd
+      workdir: e2e/updatecli.d/success.d/shell

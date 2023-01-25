@@ -63,11 +63,14 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		return false, "", fmt.Errorf("failed initializing source script - %s", err)
 	}
 
-	s.executeCommand(command{
+	err = s.executeCommand(command{
 		Cmd: s.interpreter + " " + scriptFilename,
-		Dir: workingDir,
+		Dir: s.getWorkingDirPath(workingDir),
 		Env: env.ToStringSlice(),
 	})
+	if err != nil {
+		return false, "", fmt.Errorf("failed while running target script - %s", err)
+	}
 
 	if s.result.ExitCode != 0 {
 		return false, "", &ExecutionFailedError{}

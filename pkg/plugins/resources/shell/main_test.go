@@ -155,3 +155,50 @@ func TestShell_New(t *testing.T) {
 		})
 	}
 }
+
+func TestGetWorkingDir(t *testing.T) {
+	testdata := []struct {
+		name               string
+		spec               Spec
+		currentWorkingDir  string
+		expectedWorkingDir string
+	}{
+		{
+			name: "Expecting merged path",
+			spec: Spec{
+				WorkDir: "pkg",
+				Command: "true",
+			},
+			currentWorkingDir:  "/projects/updatecli",
+			expectedWorkingDir: "/projects/updatecli/pkg",
+		},
+		{
+			name: "Expecting spec absolute path",
+			spec: Spec{
+				WorkDir: "/pkg",
+				Command: "true",
+			},
+			currentWorkingDir:  "/projects/updatecli",
+			expectedWorkingDir: "/pkg",
+		},
+		{
+			name: "Expecting current working dir path",
+			spec: Spec{
+				Command: "true",
+			},
+			currentWorkingDir:  "/projects/updatecli",
+			expectedWorkingDir: "/projects/updatecli",
+		},
+	}
+
+	for _, tt := range testdata {
+
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := New(tt.spec)
+			require.NoError(t, err)
+
+			gotWorkingdir := s.getWorkingDirPath(tt.currentWorkingDir)
+			assert.Equal(t, tt.expectedWorkingDir, gotWorkingdir)
+		})
+	}
+}
