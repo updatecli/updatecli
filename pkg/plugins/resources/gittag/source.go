@@ -19,7 +19,7 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	tags, err := gt.nativeGitHandler.Tags(workingDir)
+	tags, err := gt.nativeGitHandler.Tags(gt.spec.Path)
 
 	if err != nil {
 		return "", err

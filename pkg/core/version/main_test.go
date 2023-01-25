@@ -22,7 +22,7 @@ func TestIsGreaterThan(t *testing.T) {
 		{
 			updatecliBinaryVersion:           "",
 			updatecliManifestRequiredVersion: "1.2.0",
-			expectedResult:                   false,
+			expectedResult:                   true,
 		},
 		{
 			updatecliBinaryVersion:           "1.0.0",

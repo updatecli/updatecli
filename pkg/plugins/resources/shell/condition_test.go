@@ -12,6 +12,7 @@ func TestShell_Condition(t *testing.T) {
 	tests := []struct {
 		name              string
 		command           string
+		shell             string
 		source            string
 		wantResult        bool
 		wantErr           bool
@@ -21,10 +22,11 @@ func TestShell_Condition(t *testing.T) {
 		{
 			name:        "Successful Condition",
 			command:     "echo Hello",
+			shell:       "/bin/bash",
 			source:      "1.2.3",
 			wantResult:  true,
 			wantErr:     false,
-			wantCommand: "echo Hello 1.2.3",
+			wantCommand: "/bin/bash" + " " + wantedScriptFilename(t, "echo Hello 1.2.3"),
 			mockCommandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Hello",
@@ -33,10 +35,11 @@ func TestShell_Condition(t *testing.T) {
 		{
 			name:        "Failed Condition",
 			command:     "ls",
+			shell:       "/bin/bash",
 			source:      "1.2.3",
 			wantResult:  false,
 			wantErr:     false,
-			wantCommand: "ls 1.2.3",
+			wantCommand: "/bin/bash" + " " + wantedScriptFilename(t, "ls 1.2.3"),
 			mockCommandResult: commandResult{
 				ExitCode: 1,
 				Stderr:   "ls: 1.2.3: No such file or directory",
@@ -52,7 +55,9 @@ func TestShell_Condition(t *testing.T) {
 				executor: &mock,
 				spec: Spec{
 					Command: tt.command,
+					Shell:   tt.shell,
 				},
+				interpreter: tt.shell,
 			}
 
 			gotResult, err := s.Condition(tt.source)
@@ -81,15 +86,17 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 		wantErr       bool
 		wantCommand   string
 		commandResult commandResult
+		shell         string
 	}{
 		{
 			name:        "Successful Condition in existing SCM",
 			command:     "echo Hello",
+			shell:       "/bin/bash",
 			source:      "1.2.3",
 			scmDir:      "/dummy/dir",
 			wantResult:  true,
 			wantErr:     false,
-			wantCommand: "echo Hello 1.2.3",
+			wantCommand: "/bin/bash" + " " + wantedScriptFilename(t, "echo Hello 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Hello",
@@ -108,7 +115,9 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 				executor: &mce,
 				spec: Spec{
 					Command: tt.command,
+					Shell:   tt.shell,
 				},
+				interpreter: tt.shell,
 			}
 
 			gotResult, err := s.ConditionFromSCM(tt.source, &ms)
