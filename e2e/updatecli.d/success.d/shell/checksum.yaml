@@ -6,7 +6,7 @@ sources:
     kind: shell
     spec:
       command: "false"
-      success:
+      changedif:
         kind: file/checksum
         spec:
           files:
@@ -16,7 +16,7 @@ sources:
     kind: shell
     spec:
       command: "true"
-      success:
+      changedif:
         kind: file/checksum
         spec:
           files:
@@ -28,7 +28,7 @@ conditions:
     kind: shell
     spec:
       command: "false"
-      success:
+      changedif:
         kind: file/checksum
         spec:
           files:
@@ -40,7 +40,7 @@ conditions:
     kind: shell
     spec:
       command: "true"
-      success:
+      changedif:
         kind: file/checksum
         spec:
           files:
@@ -53,7 +53,7 @@ targets:
     kind: shell
     spec:
       command: "false"
-      success:
+      changedif:
         kind: file/checksum
         spec:
           files:
@@ -64,7 +64,7 @@ targets:
     kind: shell
     spec:
       command: "true"
-      success:
+      changedif:
         kind: file/checksum
         spec:
           files:

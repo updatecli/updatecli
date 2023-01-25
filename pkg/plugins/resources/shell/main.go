@@ -16,7 +16,7 @@ type Spec struct {
 	// Environments allows to pass environment variable(s) to the shell script
 	Environments Environments `yaml:",omitempty"`
 	// ChangedIf defines how to interpreted shell command success criteria. What a success means, what an error means, and what a warning would mean
-	ChangedIf SpecSuccess `yaml:"changed_if,omitempty" json:"changed_if,omitempty"`
+	ChangedIf SpecChangedIf `yaml:",omitempty" json:",omitempty"`
 	// Shell specifies which shell interpreter to use. Default to powershell(Windows) and "/bin/sh" (Darwin/Linux)
 	Shell string `yaml:", omitempty"`
 }
@@ -60,7 +60,7 @@ func New(spec interface{}) (*Shell, error) {
 		interpreter: interpreter,
 	}
 
-	err = s.InitSuccess()
+	err = s.InitChangedIf()
 	if err != nil {
 		return nil, err
 	}

@@ -61,7 +61,7 @@ func TestShell_Condition(t *testing.T) {
 			}
 
 			// InitSuccess
-			gotErr := s.InitSuccess()
+			gotErr := s.InitChangedIf()
 			require.NoError(t, gotErr)
 
 			gotResult, gotErr := s.Condition(tt.source)
@@ -125,7 +125,7 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 			}
 
 			// InitSuccess Criteria
-			gotErr := s.InitSuccess()
+			gotErr := s.InitChangedIf()
 			require.NoError(t, gotErr)
 
 			gotResult, gotErr := s.ConditionFromSCM(tt.source, &ms)

@@ -18,14 +18,14 @@ import (
 */
 
 var (
-	MappingSpecSuccess = map[string]interface{}{
+	MappingSpecChangedIf = map[string]interface{}{
 		"console/output": nil,
 		"exitcode":       &exitcode.Spec{},
 		"file/checksum":  &checksum.Spec{},
 	}
 )
 
-type SpecSuccess struct {
+type SpecChangedIf struct {
 	// Kind specifies the success criteria kind, accepted answer ["console/output","exitcode","file/checksum"]
 	Kind string `yaml:",omitempty"`
 	// Spec specifies the parameter for a specific success criteria kind
@@ -40,7 +40,7 @@ type Successer interface {
 	TargetResult() (bool, error)
 }
 
-func (s *Shell) InitSuccess() error {
+func (s *Shell) InitChangedIf() error {
 
 	if s.spec.ChangedIf.Kind == "" {
 		logrus.Debugf("No shell success criteria defined, updatecli fallbacks to historical workflow")
@@ -81,7 +81,7 @@ func (s *Shell) InitSuccess() error {
 }
 
 // JSONSchema implements the json schema interface to generate the "condition" jsonschema.
-func (SpecSuccess) JSONSchema() *jschema.Schema {
-	type SpecSuccessAlias SpecSuccess
-	return jsonschema.AppendOneOfToJsonSchema(SpecSuccessAlias{}, MappingSpecSuccess)
+func (SpecChangedIf) JSONSchema() *jschema.Schema {
+	type SpecSuccessAlias SpecChangedIf
+	return jsonschema.AppendOneOfToJsonSchema(SpecSuccessAlias{}, MappingSpecChangedIf)
 }
