@@ -199,6 +199,10 @@ func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{
 	var err error
 	var commentMap map[string]string
 
+	if baseConfig == nil {
+		return nil
+	}
+
 	// Retrieve Updatecli code comments
 	commentMap, err = GetPackageComments(commentDir)
 
@@ -209,7 +213,7 @@ func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{
 
 	resourceSchema := jschema.Schema{}
 
-	for id, spec := range anyOf {
+	for id := range anyOf {
 		r := new(jschema.Reflector)
 
 		r.Anonymous = true
@@ -222,14 +226,20 @@ func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{
 
 		resourceConfig := r.Reflect(baseConfig)
 
-		spec := r.Reflect(spec)
+		switch anyOf[id] == nil {
+		case false:
+			spec := r.Reflect(anyOf[id])
+			resourceConfig.Properties.Set("spec", spec)
+			resourceConfig.Properties.Set("kind", jschema.Schema{
+				Enum: []interface{}{id}})
+			resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
 
-		resourceConfig.Properties.Set("spec", spec)
-		resourceConfig.Properties.Set("kind", jschema.Schema{
-			Enum: []interface{}{id}})
+		case true:
+			resourceConfig.Properties.Set("kind", jschema.Schema{
+				Enum: []interface{}{id}})
+			resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
 
-		resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
-
+		}
 	}
 	return &resourceSchema
 
@@ -268,6 +278,11 @@ func AppendMapToJsonSchema(baseConfig interface{}, mapConfig map[string]interfac
 	}
 
 	for key := range mapConfig {
+		if mapConfig[key] == nil {
+			resourceConfig.Properties.Set(key, "")
+			continue
+		}
+
 		spec := r.Reflect(mapConfig[key])
 		resourceConfig.Properties.Set(key, spec)
 	}
