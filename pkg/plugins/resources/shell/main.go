@@ -16,7 +16,9 @@ type Spec struct {
 	Command string `yaml:",omitempty" jsonschema:"required"`
 	// environments allows to pass environment variable(s) to the shell script. By default no environment variable are shared.
 	Environments Environments `yaml:",omitempty"`
-	// shell specifies which shell interpreter to use. Default to powershell(Windows) and "/bin/sh" (Darwin/Linux)
+	// ChangedIf defines how to interpreted shell command success criteria. What a success means, what an error means, and what a warning would mean
+	ChangedIf SpecChangedIf `yaml:",omitempty" json:",omitempty"`
+	// Shell specifies which shell interpreter to use. Default to powershell(Windows) and "/bin/sh" (Darwin/Linux)
 	Shell string `yaml:", omitempty"`
 	// workdir specifies the working directory path from where to execute the command. It defaults to the current context path (scm or current shell). Updatecli join the current path and the one specified in parameter if the parameter one contains a relative path.
 	WorkDir string `yaml:",omitempty"`
@@ -27,6 +29,7 @@ type Shell struct {
 	executor    commandExecutor
 	spec        Spec
 	result      commandResult
+	success     Successer
 	interpreter string
 }
 
@@ -54,11 +57,18 @@ func New(spec interface{}) (*Shell, error) {
 		interpreter = newSpec.Shell
 	}
 
-	return &Shell{
+	s := Shell{
 		executor:    &nativeCommandExecutor{},
 		spec:        newSpec,
 		interpreter: interpreter,
-	}, nil
+	}
+
+	err = s.InitChangedIf()
+	if err != nil {
+		return nil, err
+	}
+
+	return &s, nil
 }
 
 func getDefaultShell() string {

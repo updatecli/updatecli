@@ -58,6 +58,11 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		Value: fmt.Sprintf("%v", dryRun),
 	})
 
+	err = s.success.PreCommand()
+	if err != nil {
+		return false, "", err
+	}
+
 	scriptFilename, err := newShellScript(s.appendSource(source))
 	if err != nil {
 		return false, "", fmt.Errorf("failed initializing source script - %s", err)
@@ -72,11 +77,18 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		return false, "", fmt.Errorf("failed while running target script - %s", err)
 	}
 
-	if s.result.ExitCode != 0 {
+	err = s.success.PostCommand()
+	if err != nil {
+		return false, "", err
+	}
+
+	changed, err := s.success.TargetResult()
+
+	if err != nil {
 		return false, "", &ExecutionFailedError{}
 	}
 
-	if s.result.Stdout == "" {
+	if !changed {
 		logrus.Info("No change detected")
 		return false, "", nil
 	}

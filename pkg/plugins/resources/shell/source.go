@@ -24,6 +24,13 @@ func (s *Shell) Source(workingDir string) (string, error) {
 		Value: "source",
 	})
 
+	// PreCommand is executed to collect information before running the shell command
+	// so we could collect information needed to validate that a command successfully as expected
+	err = s.success.PreCommand()
+	if err != nil {
+		return "", err
+	}
+
 	scriptFilename, err := newShellScript(s.spec.Command)
 	if err != nil {
 		return "", fmt.Errorf("failed initializing source script - %s", err)
@@ -34,14 +41,16 @@ func (s *Shell) Source(workingDir string) (string, error) {
 		Dir: s.getWorkingDirPath(workingDir),
 		Env: env.ToStringSlice(),
 	})
-
 	if err != nil {
 		return "", fmt.Errorf("failed while running source script - %s", err)
 	}
 
-	if s.result.ExitCode != 0 {
-		return "", &ExecutionFailedError{}
+	// PostCommand is executed to collect information after running the shell command
+	// so we could collect information needed to validate that a command successfully as expected
+	err = s.success.PostCommand()
+	if err != nil {
+		return "", err
 	}
 
-	return s.result.Stdout, nil
+	return s.success.SourceResult()
 }
