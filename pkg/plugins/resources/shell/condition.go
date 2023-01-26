@@ -39,11 +39,14 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		return false, fmt.Errorf("failed initializing source script - %s", err)
 	}
 
-	s.executeCommand(command{
+	err = s.executeCommand(command{
 		Cmd: s.interpreter + " " + scriptFilename,
-		Dir: workingDir,
+		Dir: s.getWorkingDirPath(workingDir),
 		Env: env.ToStringSlice(),
 	})
+	if err != nil {
+		return false, fmt.Errorf("failed while running condition script - %s", err)
+	}
 
 	if s.result.ExitCode != 0 {
 		return false, nil
