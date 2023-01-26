@@ -30,8 +30,12 @@ type nativeCommandExecutor struct{}
 
 func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResult, error) {
 	var stdout, stderr bytes.Buffer
+
+	logrus.Debugf("\tcommand: %s\n", inputCmd.Cmd)
+
 	cmdFields := strings.Fields(inputCmd.Cmd)
 	command := exec.Command(cmdFields[0], cmdFields[1:]...) //nolint: gosec
+
 	command.Dir = inputCmd.Dir
 	command.Stdout = &stdout
 	command.Stderr = &stderr
