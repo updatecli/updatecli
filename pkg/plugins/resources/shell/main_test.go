@@ -151,6 +151,10 @@ func TestShell_New(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 
+			// Init Success Criteria as I couldn't manage to do it via the tests
+			gotErr = tt.wantShell.InitChangedIf()
+			require.NoError(t, gotErr)
+
 			assert.Equal(t, tt.wantShell, gotShell)
 		})
 	}

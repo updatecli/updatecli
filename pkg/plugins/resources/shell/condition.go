@@ -34,6 +34,11 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		Value: "condition",
 	})
 
+	err = s.success.PreCommand()
+	if err != nil {
+		return false, err
+	}
+
 	scriptFilename, err := newShellScript(s.appendSource(source))
 	if err != nil {
 		return false, fmt.Errorf("failed initializing source script - %s", err)
@@ -48,9 +53,10 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		return false, fmt.Errorf("failed while running condition script - %s", err)
 	}
 
-	if s.result.ExitCode != 0 {
-		return false, nil
+	err = s.success.PostCommand()
+	if err != nil {
+		return false, err
 	}
 
-	return true, nil
+	return s.success.ConditionResult()
 }
