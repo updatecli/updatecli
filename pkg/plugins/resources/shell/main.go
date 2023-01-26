@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime"
 
 	"github.com/mitchellh/mapstructure"
@@ -11,14 +12,16 @@ import (
 // Spec defines a specification for a "shell" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// Specifies the shell command
+	// command specifies the shell command to execute by Updatecli
 	Command string `yaml:",omitempty" jsonschema:"required"`
-	// Environments allows to pass environment variable(s) to the shell script
+	// environments allows to pass environment variable(s) to the shell script. By default no environment variable are shared.
 	Environments Environments `yaml:",omitempty"`
 	// ChangedIf defines how to interpreted shell command success criteria. What a success means, what an error means, and what a warning would mean
 	ChangedIf SpecChangedIf `yaml:",omitempty" json:",omitempty"`
 	// Shell specifies which shell interpreter to use. Default to powershell(Windows) and "/bin/sh" (Darwin/Linux)
 	Shell string `yaml:", omitempty"`
+	// workdir specifies the working directory path from where to execute the command. It defaults to the current context path (scm or current shell). Updatecli join the current path and the one specified in parameter if the parameter one contains a relative path.
+	WorkDir string `yaml:",omitempty"`
 }
 
 // Shell defines a resource of kind "shell"
@@ -93,13 +96,13 @@ func (s *Shell) appendSource(source string) string {
 
 // executeCommand call the shell command executor to execute its command
 // and sets the internal "result" to the command result
-func (s *Shell) executeCommand(inputCmd command) {
-	// No error catching: a non nil error means something went really wrong
-	// So the s.result is a nil value
-	s.result, _ = s.executor.ExecuteCommand(inputCmd)
+func (s *Shell) executeCommand(inputCmd command) (err error) {
 
+	s.result, err = s.executor.ExecuteCommand(inputCmd)
 	// Logs the result
 	s.report()
+
+	return err
 }
 
 // report logs the result of the shell command to the end user.
@@ -139,4 +142,17 @@ func formatShellBlock(content string) string {
 // Changelog returns the changelog for this resource, or an empty string if not supported
 func (s *Shell) Changelog() string {
 	return ""
+}
+
+// getWorkingDirPath returns the real workingDir path that should be used by the shell resource
+func (s *Shell) getWorkingDirPath(currentWorkDir string) string {
+	if s.spec.WorkDir == "" {
+		return currentWorkDir
+	}
+
+	if filepath.IsAbs(s.spec.WorkDir) {
+		return s.spec.WorkDir
+	}
+
+	return filepath.Join(currentWorkDir, s.spec.WorkDir)
 }
