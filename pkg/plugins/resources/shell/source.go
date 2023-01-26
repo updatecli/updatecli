@@ -41,7 +41,7 @@ func (s *Shell) Source(workingDir string) (string, error) {
 		Dir: s.getWorkingDirPath(workingDir),
 		Env: env.ToStringSlice(),
 	})
-  if err != nil {
+	if err != nil {
 		return "", fmt.Errorf("failed while running source script - %s", err)
 	}
 
