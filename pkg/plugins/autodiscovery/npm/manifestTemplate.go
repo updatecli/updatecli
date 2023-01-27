@@ -35,6 +35,12 @@ targets:
 {{ end }}
     spec:
       command: npm install --package-lock-only
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "package-lock.json"
+      workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 {{- if .TargetYarnCleanupEnabled }}
   yarn.lock:
@@ -48,6 +54,12 @@ targets:
 {{ end }}
     spec:
       command: yarn install --mode update-lockfile
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "yarn.lock"
+      workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 `
 )

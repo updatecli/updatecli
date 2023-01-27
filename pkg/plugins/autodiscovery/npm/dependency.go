@@ -109,6 +109,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetKey                  string
 					TargetYarnCleanupEnabled   bool
 					TargetNPMCleanupEnabled    bool
+					TargetWorkdir              string
 					File                       string
 					ScmID                      string
 				}{
@@ -126,6 +127,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetKey:                fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
 					TargetYarnCleanupEnabled: yarnTargetCleanManifestEnabled,
 					TargetNPMCleanupEnabled:  npmTargetCleanupManifestEnabled,
+					TargetWorkdir:            filepath.Dir(relativeFoundFile),
 					File:                     relativeFoundFile,
 					ScmID:                    n.scmID,
 				}
