@@ -79,6 +79,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		TargetFile                 string
 		TargetKey                  string
 		TargetCargoCleanupEnabled  bool
+		TargetWorkdir              string
 		ScmID                      string
 		WithRegistry               bool
 		RegistrySCMID              string
@@ -103,6 +104,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		TargetFile:                 filepath.Base(foundFile),
 		TargetKey:                  TargetKey,
 		TargetCargoCleanupEnabled:  targetCargoCleanupEnabled,
+		TargetWorkdir:              filepath.Dir(foundFile),
 		ScmID:                      c.scmID,
 		WithRegistry:               dependency.Registry != "",
 		RegistrySCMID:              Registry.SCMID,

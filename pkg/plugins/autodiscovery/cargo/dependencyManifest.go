@@ -67,6 +67,15 @@ targets:
 {{ end }}
     spec:
       command: cargo generate-lockfile
+      environments:
+        - name: PATH
+          inherit: true
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "Cargo.lock"
+      workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 `
 )
