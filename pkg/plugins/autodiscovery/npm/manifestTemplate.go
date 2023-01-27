@@ -40,6 +40,9 @@ targets:
         spec:
           files:
             - "package-lock.json"
+      environments:
+       - name: PATH
+         inherit: true
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 {{- if .TargetYarnCleanupEnabled }}
@@ -59,6 +62,9 @@ targets:
         spec:
           files:
             - "yarn.lock"
+      environments:
+       - name: PATH
+         inherit: true
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 `
