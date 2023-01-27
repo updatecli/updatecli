@@ -1,6 +1,8 @@
 package shell
 
 import (
+	"fmt"
+
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
@@ -32,15 +34,29 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		Value: "condition",
 	})
 
-	s.executeCommand(command{
-		Cmd: s.appendSource(source),
-		Dir: workingDir,
-		Env: env.ToStringSlice(),
-	})
-
-	if s.result.ExitCode != 0 {
-		return false, nil
+	err = s.success.PreCommand()
+	if err != nil {
+		return false, err
 	}
 
-	return true, nil
+	scriptFilename, err := newShellScript(s.appendSource(source))
+	if err != nil {
+		return false, fmt.Errorf("failed initializing source script - %s", err)
+	}
+
+	err = s.executeCommand(command{
+		Cmd: s.interpreter + " " + scriptFilename,
+		Dir: s.getWorkingDirPath(workingDir),
+		Env: env.ToStringSlice(),
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed while running condition script - %s", err)
+	}
+
+	err = s.success.PostCommand()
+	if err != nil {
+		return false, err
+	}
+
+	return s.success.ConditionResult()
 }

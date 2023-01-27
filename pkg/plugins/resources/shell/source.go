@@ -1,5 +1,7 @@
 package shell
 
+import "fmt"
+
 // Source returns the stdout of the shell command if its exit code is 0
 // otherwise an error is returned with the content of stderr
 func (s *Shell) Source(workingDir string) (string, error) {
@@ -22,15 +24,33 @@ func (s *Shell) Source(workingDir string) (string, error) {
 		Value: "source",
 	})
 
-	s.executeCommand(command{
-		Cmd: s.spec.Command,
-		Dir: workingDir,
-		Env: env.ToStringSlice(),
-	})
-
-	if s.result.ExitCode != 0 {
-		return "", &ExecutionFailedError{}
+	// PreCommand is executed to collect information before running the shell command
+	// so we could collect information needed to validate that a command successfully as expected
+	err = s.success.PreCommand()
+	if err != nil {
+		return "", err
 	}
 
-	return s.result.Stdout, nil
+	scriptFilename, err := newShellScript(s.spec.Command)
+	if err != nil {
+		return "", fmt.Errorf("failed initializing source script - %s", err)
+	}
+
+	err = s.executeCommand(command{
+		Cmd: s.interpreter + " " + scriptFilename,
+		Dir: s.getWorkingDirPath(workingDir),
+		Env: env.ToStringSlice(),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed while running source script - %s", err)
+	}
+
+	// PostCommand is executed to collect information after running the shell command
+	// so we could collect information needed to validate that a command successfully as expected
+	err = s.success.PostCommand()
+	if err != nil {
+		return "", err
+	}
+
+	return s.success.SourceResult()
 }

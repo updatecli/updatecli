@@ -3,13 +3,13 @@ package jsonschema
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/iancoleman/orderedmap"
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 )
@@ -99,50 +99,9 @@ func (s *Schema) GenerateSchema(object interface{}) error {
 	return nil
 }
 
-func GenerateJsonSchema(resourceConfigSchema interface{}, anyOf map[string]interface{}) *jschema.Schema {
-
-	var err error
-	var commentMap map[string]string
-
-	// Retrieve Updatecli code comments
-	commentMap, err = GetPackageComments(commentDir)
-
-	if err != nil {
-		logrus.Errorf(err.Error())
-		return nil
-	}
-
-	resourceSchema := jschema.Schema{}
-
-	for id, spec := range anyOf {
-		r := new(jschema.Reflector)
-
-		r.Anonymous = true
-		r.DoNotReference = true
-		r.RequiredFromJSONSchemaTags = true
-		r.CommentMap = commentMap
-		r.KeyNamer = strings.ToLower
-
-		// schema we need a way to remove schema
-
-		resourceConfig := r.Reflect(resourceConfigSchema)
-
-		spec := r.Reflect(spec)
-
-		resourceConfig.Properties.Set("spec", spec)
-		resourceConfig.Properties.Set("kind", jschema.Schema{
-			Enum: []interface{}{id}})
-
-		resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
-
-	}
-	return &resourceSchema
-
-}
-
 // Save export a jsonschema to a local file
 func (s *Schema) Save() error {
-	err := ioutil.WriteFile(filepath.Join(s.SchemaDir, "config.json"), []byte(s.String()), 0600)
+	err := os.WriteFile(filepath.Join(s.SchemaDir, "config.json"), []byte(s.String()), 0600)
 	if err != nil {
 		return err
 	}
@@ -232,4 +191,101 @@ func CleanCommentDirectory() error {
 	}
 
 	return nil
+}
+
+// AppendOneOfToJsonschema generates a jsonschema based on a baseConfig and then append a oneOf based on the mapConfig.
+func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{}) *jschema.Schema {
+
+	var err error
+	var commentMap map[string]string
+
+	if baseConfig == nil {
+		return nil
+	}
+
+	// Retrieve Updatecli code comments
+	commentMap, err = GetPackageComments(commentDir)
+
+	if err != nil {
+		logrus.Errorf(err.Error())
+		return nil
+	}
+
+	resourceSchema := jschema.Schema{}
+
+	for id := range anyOf {
+		r := new(jschema.Reflector)
+
+		r.Anonymous = true
+		r.DoNotReference = true
+		r.RequiredFromJSONSchemaTags = true
+		r.CommentMap = commentMap
+		r.KeyNamer = strings.ToLower
+
+		// schema we need a way to remove schema
+
+		resourceConfig := r.Reflect(baseConfig)
+
+		switch anyOf[id] == nil {
+		case false:
+			spec := r.Reflect(anyOf[id])
+			resourceConfig.Properties.Set("spec", spec)
+			resourceConfig.Properties.Set("kind", jschema.Schema{
+				Enum: []interface{}{id}})
+			resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
+
+		case true:
+			resourceConfig.Properties.Set("kind", jschema.Schema{
+				Enum: []interface{}{id}})
+			resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
+
+		}
+	}
+	return &resourceSchema
+
+}
+
+// AppendMapToJsonSchema generates a jsonschema based on a baseConfig and then append a map of properties using the mapConfig.
+func AppendMapToJsonSchema(baseConfig interface{}, mapConfig map[string]interface{}) *jschema.Schema {
+
+	var err error
+	var commentMap map[string]string
+
+	// Retrieve Updatecli code comments
+	commentMap, err = GetPackageComments(commentDir)
+
+	if err != nil {
+		logrus.Errorf(err.Error())
+		return nil
+	}
+
+	if baseConfig == nil {
+		return nil
+	}
+
+	r := new(jschema.Reflector)
+
+	r.Anonymous = true
+	r.DoNotReference = true
+	r.RequiredFromJSONSchemaTags = true
+	r.CommentMap = commentMap
+	r.KeyNamer = strings.ToLower
+
+	resourceConfig := r.Reflect(baseConfig)
+
+	if resourceConfig.Properties == nil {
+		resourceConfig.Properties = orderedmap.New()
+	}
+
+	for key := range mapConfig {
+		if mapConfig[key] == nil {
+			resourceConfig.Properties.Set(key, "")
+			continue
+		}
+
+		spec := r.Reflect(mapConfig[key])
+		resourceConfig.Properties.Set(key, spec)
+	}
+
+	return resourceConfig
 }
