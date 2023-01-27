@@ -96,6 +96,10 @@ func TestShell_Source(t *testing.T) {
 				interpreter: tt.shell,
 			}
 
+			// InitSuccess Criteria
+			gotErr := s.InitChangedIf()
+			require.NoError(t, gotErr)
+
 			source, err := s.Source(tt.workingDir)
 
 			if tt.wantErr {
