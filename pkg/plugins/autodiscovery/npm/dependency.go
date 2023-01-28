@@ -107,6 +107,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetID                   string
 					TargetName                 string
 					TargetKey                  string
+					TargetPackageJsonEnabled   bool
 					TargetYarnCleanupEnabled   bool
 					TargetNPMCleanupEnabled    bool
 					TargetWorkdir              string
@@ -121,17 +122,18 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					SourceKind:                 "npm",
 					SourceNPMName:              dependencyName,
 					SourceVersionFilterKind:    "semver",
-					SourceVersionFilterPattern: ">=" + dependencyVersion,
+					SourceVersionFilterPattern: dependencyVersion,
 					TargetID:                   "npm",
 					TargetName:                 fmt.Sprintf("Bump %q package version", dependencyName),
 					// NPM package allows dot in package name which has a different meaning in Dasel query
 					// Therefor we must escape it for Dasel query to work
 					TargetKey:                fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
+					TargetPackageJsonEnabled: false,
 					TargetYarnCleanupEnabled: yarnTargetCleanManifestEnabled,
 					TargetNPMCleanupEnabled:  npmTargetCleanupManifestEnabled,
 					TargetWorkdir:            filepath.Dir(relativeFoundFile),
-					TargetNPMCommand:         fmt.Sprintf("npm install --package-lock-only --dry-run=$DRY_RUN %s@{{ source %q }}", dependencyName, "npm"),
-					TargetYarnCommand:        fmt.Sprintf("yarn add --mode update-lockfile --dry-run=$DRY_RUN %s@{{ source %q }}", dependencyName, "npm"),
+					TargetNPMCommand:         getTargetCommand("npm", dependencyName),
+					TargetYarnCommand:        getTargetCommand("yarn", dependencyName),
 					File:                     relativeFoundFile,
 					ScmID:                    n.scmID,
 				}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -63,8 +64,7 @@ func isVersionConstraintSpecified(packageName, packageVersion string, strictSemv
 	// Check version start with
 	for _, toIgnorePrefix := range []string{">", "<", "~", "^", "*"} {
 		if strings.HasPrefix(packageVersion, toIgnorePrefix) {
-			logrus.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
-			return true
+			return false
 		}
 	}
 
@@ -130,4 +130,19 @@ func isYarnInstalled() bool {
 func isLockFileDetected(lockfile string) bool {
 	_, err := os.Stat(lockfile)
 	return err == nil
+}
+
+func getTargetCommand(cmd, dependencyName string) string {
+	dryRunVariable := "$DRY_RUN"
+	if runtime.GOOS == "windows" {
+		dryRunVariable = "$env:DRY_RUN"
+	}
+
+	switch cmd {
+	case "npm":
+		return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, "npm")
+	case "yarn":
+		return fmt.Sprintf("yarn add --mode update-lockfile --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, "npm")
+	}
+	return "false"
 }

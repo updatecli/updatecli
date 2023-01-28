@@ -13,6 +13,7 @@ sources:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
 targets:
+{{- if .TargetPackageJsonEnabled }}
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
     kind: 'json'
@@ -23,11 +24,14 @@ targets:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}'
     sourceid: '{{ .SourceID }}'
+{{ end }}
 {{- if .TargetNPMCleanupEnabled }}
   package-lock.json:
     name: Update NPM lockfile package-lock.json
+{{- if .TargetPackageJsonEnabled }}
     dependson:
       - {{ .TargetID }}
+{{ end }}
     disablesourceinput: true
     kind: shell
 {{- if .ScmID }}
@@ -50,8 +54,10 @@ targets:
 {{- if .TargetYarnCleanupEnabled }}
   yarn.lock:
     name: Update Yarn lockfile yarn.lock
+{{- if .TargetPackageJsonEnabled }}
     dependson:
       - {{ .TargetID }}
+{{ end }}
     disablesourceinput: true
     kind: shell
 {{- if .ScmID }}
