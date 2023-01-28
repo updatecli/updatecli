@@ -110,6 +110,8 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetYarnCleanupEnabled   bool
 					TargetNPMCleanupEnabled    bool
 					TargetWorkdir              string
+					TargetNPMCommand           string
+					TargetYarnCommand          string
 					File                       string
 					ScmID                      string
 				}{
@@ -128,6 +130,8 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetYarnCleanupEnabled: yarnTargetCleanManifestEnabled,
 					TargetNPMCleanupEnabled:  npmTargetCleanupManifestEnabled,
 					TargetWorkdir:            filepath.Dir(relativeFoundFile),
+					TargetNPMCommand:         fmt.Sprintf("npm install --package-lock-only --dry-run=$DRY_RUN %s@{{ source %q }}", dependencyName, "npm"),
+					TargetYarnCommand:        fmt.Sprintf("yarn add --mode update-lockfile --dry-run=$DRY_RUN %s@{{ source %q }}", dependencyName, "npm"),
 					File:                     relativeFoundFile,
 					ScmID:                    n.scmID,
 				}

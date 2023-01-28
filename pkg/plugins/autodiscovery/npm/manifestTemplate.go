@@ -34,12 +34,14 @@ targets:
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
-      command: npm install --package-lock-only
+      command: |
+        {{ .TargetNPMCommand }}
       changedif:
         kind: file/checksum
         spec:
           files:
             - "package-lock.json"
+            - "package.json"
       environments:
        - name: PATH
          inherit: true
@@ -56,7 +58,8 @@ targets:
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
-      command: yarn install --mode update-lockfile
+      command: |
+        {{ .TargetYarnCommand }}
       changedif:
         kind: file/checksum
         spec:
