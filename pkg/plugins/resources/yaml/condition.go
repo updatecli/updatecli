@@ -34,12 +34,6 @@ func (y *Yaml) condition(source string) (bool, error) {
 	var fileContent string
 	var filePath string
 
-	if len(y.files) > 1 {
-		validationError := fmt.Errorf("Validation error in conditions of type 'yaml': the attributes `spec.files` can't contain more than one element for conditions")
-		logrus.Errorf(validationError.Error())
-		return false, validationError
-	}
-
 	// Start by retrieving the specified file's content
 	if err := y.Read(); err != nil {
 		return false, err

@@ -19,7 +19,7 @@ import (
 type Spec struct {
 	// [source,condition,target] File contains the file path to take in account
 	File string `yaml:",omitempty"`
-	// [target] Files contains the file path(s) to take in account
+	// [source,condition,target] Files contains the file path(s) to take in account. For 'source': limited to one item
 	Files []string `yaml:",omitempty"`
 	// [source,condition,target] Key is the YAML key to retrieve
 	Key string `yaml:",omitempty"`
