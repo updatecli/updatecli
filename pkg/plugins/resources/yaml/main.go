@@ -23,7 +23,7 @@ type Spec struct {
 	Files []string `yaml:",omitempty"`
 	// [source,condition,target] Key is the YAML key to retrieve
 	Key string `yaml:",omitempty"`
-	// [source,condition,target] Value is the YAML value to set
+	// [source,condition,target] Value is the YAML value to set. Default value set to source output for condition and target
 	Value string `yaml:",omitempty"`
 	// [condition] allow checking for only the existence of a key (not its value)
 	KeyOnly bool `yaml:",omitempty"`
