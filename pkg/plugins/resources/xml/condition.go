@@ -17,7 +17,6 @@ func (x *XML) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) 
 
 	if scm != nil {
 		x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
-		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", x.spec.File)
 	}
 
 	// Test at runtime if a file exist
