@@ -55,7 +55,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: tibdex/github-app-token@v1.7
+      - uses: tibdex/github-app-token@v1.8
         id: generate_homebrew_token
         with:
           app_id: ${{ secrets.UPDATECLIBOT_APP_ID }}
