@@ -137,7 +137,6 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 			if err != nil {
 				return false, files, message.String(), err
 			}
-			// TODO: check if all this encoder stuff is needed, and why yamlIndent isn't respected
 			err = y.contentRetriever.WriteToFile(y.files[filePath], filePath)
 			if err != nil {
 				return false, files, message.String(), err

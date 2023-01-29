@@ -42,7 +42,6 @@ github:
 `,
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
-			// TODO: fix indentation
 			wantedContents: map[string]string{
 				"test.yaml": `github:
     owner: obiwankenobi
@@ -79,7 +78,6 @@ github:
 `,
 			},
 			// Note: the updated files don't contain separator anymore
-			// TODO: fix indentation
 			wantedContents: map[string]string{
 				"test.yaml": `github:
     owner: obiwankenobi
@@ -120,7 +118,6 @@ github:
 `,
 			},
 			// Note: the updated file doesn't contain separator anymore
-			// TODO: fix indentation
 			wantedContents: map[string]string{
 				"test.yaml": `github:
     owner: obiwankenobi
@@ -280,7 +277,6 @@ github:
 				"/tmp/test.yaml",
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
-			// TODO: fix indentation
 			wantedContents: map[string]string{
 				"/tmp/test.yaml": `github:
     owner: obiwankenobi
@@ -322,7 +318,6 @@ github:
 				"/tmp/test.yaml",
 			},
 			// Note: the updated files don't contain separator anymore
-			// TODO: fix indentation
 			wantedContents: map[string]string{
 				"/tmp/test.yaml": `github:
     owner: obiwankenobi

@@ -25,8 +25,6 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		logrus.Warnf("Key 'Value' is not used by source YAML")
 	}
 
-	// TODO: warn if the boolean 'KeyOnly' is set?
-
 	if err := y.Read(); err != nil {
 		return "", err
 	}
@@ -62,7 +60,6 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		return value, nil
 	}
 
-	// TODO: return result.WARNING? Or an actual error?
 	logrus.Infof("%s cannot find key '%s' from file '%s'",
 		result.FAILURE,
 		y.spec.Key,
