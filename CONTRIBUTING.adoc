@@ -192,6 +192,9 @@ venom version # expect v1.1.0+
 make test-e2e
 ----
 
+
+The execution log is written by Venom into `./e2e/venom.log`.
+
 === DOCUMENTATION
 
 If you spot phrasing issues or just a lack of documentation, feel free to open link:https://github.com/updatecli/updatecli/issues[an issue] and/or link:https://github.com/updatecli/updatecli/pulls[a pull request].
