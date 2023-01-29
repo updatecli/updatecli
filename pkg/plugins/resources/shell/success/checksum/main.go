@@ -3,6 +3,7 @@ package checksum
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -61,17 +62,27 @@ func (s Spec) Validate() error {
 }
 
 // PreCommand defines operations needed to be executed before the shell command
-func (c *Checksum) PreCommand() error {
+func (c *Checksum) PreCommand(workingDir string) error {
 	for _, filename := range c.spec.Files {
-		c.preCommandMonitoredFiles[filename] = getChecksum(filename)
+		switch filepath.IsAbs(filename) {
+		case true:
+			c.preCommandMonitoredFiles[filename] = getChecksum(filename)
+		case false:
+			c.preCommandMonitoredFiles[filename] = getChecksum(filepath.Join(workingDir, filename))
+		}
 	}
 	return nil
 }
 
 // PostCommand defines operations needed to be executed after the shell command
-func (c *Checksum) PostCommand() error {
+func (c *Checksum) PostCommand(workingDir string) error {
 	for _, filename := range c.spec.Files {
-		c.postCommandMonitoredFiles[filename] = getChecksum(filename)
+		switch filepath.IsAbs(filename) {
+		case true:
+			c.postCommandMonitoredFiles[filename] = getChecksum(filename)
+		case false:
+			c.postCommandMonitoredFiles[filename] = getChecksum(filepath.Join(workingDir, filename))
+		}
 	}
 	return nil
 }

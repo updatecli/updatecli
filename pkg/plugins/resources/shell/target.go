@@ -58,7 +58,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		Value: fmt.Sprintf("%v", dryRun),
 	})
 
-	err = s.success.PreCommand()
+	err = s.success.PreCommand(workingDir)
 	if err != nil {
 		return false, "", err
 	}
@@ -77,7 +77,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		return false, "", fmt.Errorf("failed while running target script - %s", err)
 	}
 
-	err = s.success.PostCommand()
+	err = s.success.PostCommand(workingDir)
 	if err != nil {
 		return false, "", err
 	}
