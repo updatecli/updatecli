@@ -33,3 +33,4 @@ coverage.txt
 
 manpages/*
 completions/*
+*.log
