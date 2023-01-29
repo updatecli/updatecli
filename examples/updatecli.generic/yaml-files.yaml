@@ -32,7 +32,9 @@ conditions:
     kind: yaml
     sourceID: default
     spec:
-      file: examples/values.yaml
+      files:
+      - examples/values.yaml
+      - examples/another-values.yaml
       key: "github.user"
   checkGithubRepositoryHasSpecifiedValue:
     kind: yaml
