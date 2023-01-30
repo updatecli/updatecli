@@ -50,10 +50,60 @@ func searchPackageJsonFiles(rootDir string) ([]string, error) {
 	return foundFiles, nil
 }
 
+// isVersionConstraintSupported checks if the version is a version constraint that should be handle by npm
+// and not updatecli
+// https://docs.npmjs.com/cli/v6/configuring-npm/package-json#dependencies
+func isVersionConstraintSupported(packageName, packageVersion string) bool {
+	// Ignore http urls paths dependencies
+	// https://docs.npmjs.com/cli/v6/configuring-npm/package-json#git-urls-as-dependencies
+
+	uriPrefixes := []string{
+		"https://",
+		"http://",
+		"ftp://",
+		"file://",
+		"git://",
+		"git+ssh://",
+		"git+https://",
+		"git+file://",
+	}
+
+	for _, uriPrefix := range uriPrefixes {
+		if strings.HasPrefix(packageVersion, uriPrefix) {
+			logrus.Debugf("Ignoring dependency %q. Updating uri type %q is not supported at this time. Feel free to reach out to suggest an update scenario", packageName, uriPrefix)
+			return false
+		}
+	}
+
+	// Ignore local paths dependencies
+	// https://docs.npmjs.com/cli/v6/configuring-npm/package-json#local-paths
+	for _, localPath := range []string{"../", "./", "~/", "/"} {
+		if strings.HasPrefix(packageVersion, localPath) {
+			logrus.Debugf("Ignoring dependency %q. Updating local path is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
+			return false
+		}
+	}
+
+	if packageVersion == "" || packageVersion == "latest" || packageVersion == "*" {
+		logrus.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
+		logrus.Debugln("You probably want to adopt a better versioning strategy")
+		return true
+	}
+
+	_, err := semver.NewConstraint(packageVersion)
+	if err != nil {
+		logrus.Debugln(err)
+		logrus.Debugf("Semantic versioning constraint %q not supported for package %q", packageVersion, packageName)
+		return false
+	}
+
+	return true
+}
+
 // isVersionConstraintSpecified checks if the version is a version constraint that should be handle by npm
 // and not updatecli
 // https://docs.npmjs.com/cli/v6/configuring-npm/package-json#dependencies
-func isVersionConstraintSpecified(packageName, packageVersion string, strictSemver bool) bool {
+func isVersionConstraintSpecified(packageName, packageVersion string) bool {
 	// version set to an empty string is equivalent to *
 
 	if packageVersion == "" || packageVersion == "latest" || packageVersion == "*" {
@@ -65,7 +115,7 @@ func isVersionConstraintSpecified(packageName, packageVersion string, strictSemv
 	// Check version start with
 	for _, toIgnorePrefix := range []string{">", "<", "~", "^", "*"} {
 		if strings.HasPrefix(packageVersion, toIgnorePrefix) {
-			return false
+			return true
 		}
 	}
 
@@ -96,21 +146,11 @@ func isVersionConstraintSpecified(packageName, packageVersion string, strictSemv
 		}
 	}
 
-	switch strictSemver {
-	case true:
-		_, err := semver.StrictNewVersion(packageVersion)
-		if err != nil {
-			logrus.Debugln(err)
-			logrus.Debugf("NPM package version %s detected. Updatecli only updates version following strict semantic versioning", packageVersion)
-			return true
-		}
-	case false:
-		_, err := semver.NewVersion(packageVersion)
-		if err != nil {
-			logrus.Debugln(err)
-			logrus.Debugf("NPM package version %s detected. Updatecli only updates version following semantic versioning", packageVersion)
-			return true
-		}
+	_, err := semver.StrictNewVersion(packageVersion)
+	if err != nil {
+		logrus.Debugln(err)
+		logrus.Debugf("None strict semantic version detected %s for package %q", packageVersion, packageName)
+		return true
 	}
 
 	return false

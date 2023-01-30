@@ -27,7 +27,7 @@ targets:
 {{ end }}
 {{- if .TargetNPMCleanupEnabled }}
   package-lock.json:
-    name: Update NPM lockfile package-lock.json
+    name: '{{ .TargetName }}'
 {{- if .TargetPackageJsonEnabled }}
     dependson:
       - {{ .TargetID }}
@@ -53,7 +53,7 @@ targets:
 {{ end }}
 {{- if .TargetYarnCleanupEnabled }}
   yarn.lock:
-    name: Update Yarn lockfile yarn.lock
+    name: '{{ .TargetName }}'
 {{- if .TargetPackageJsonEnabled }}
     dependson:
       - {{ .TargetID }}
@@ -71,6 +71,7 @@ targets:
         spec:
           files:
             - "yarn.lock"
+            - "package.json"
       environments:
        - name: PATH
          inherit: true

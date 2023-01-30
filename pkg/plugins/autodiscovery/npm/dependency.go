@@ -133,11 +133,11 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					SourceVersionFilterKind:    "semver",
 					SourceVersionFilterPattern: dependencyVersion,
 					TargetID:                   "npm",
-					TargetName:                 fmt.Sprintf("Bump %q package version", dependencyName),
+					TargetName:                 fmt.Sprintf("Bump %q package version to {{ source \"npm\" }}", dependencyName),
 					// NPM package allows dot in package name which has a different meaning in Dasel query
 					// Therefor we must escape it for Dasel query to work
 					TargetKey:                fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
-					TargetPackageJsonEnabled: false,
+					TargetPackageJsonEnabled: yarnTargetCleanManifestEnabled && npmTargetCleanupManifestEnabled,
 					TargetYarnCleanupEnabled: yarnTargetCleanManifestEnabled,
 					TargetNPMCleanupEnabled:  npmTargetCleanupManifestEnabled,
 					TargetWorkdir:            filepath.Dir(relativeFoundFile),
