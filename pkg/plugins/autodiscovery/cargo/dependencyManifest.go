@@ -47,7 +47,6 @@ conditions:
 targets:
   {{ .TargetID }}:
 	name: '{{ .TargetName }}'
-    name: 'Bump crate dependency "{{ .DependencyName }}" for crate "{{ .CrateName }}"'
     kind: 'toml'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
@@ -67,7 +66,7 @@ targets:
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
-      command: cargo generate-lockfile
+      command: cargo update --dry-run $DRY_RUN '{{ .DependencyName }}'
       environments:
         - name: PATH
           inherit: true
