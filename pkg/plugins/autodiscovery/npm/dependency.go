@@ -80,8 +80,17 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 				return
 			}
 			for dependencyName, dependencyVersion := range dependencies {
-				// If a dependency already contains a version constraint then we ignore it
-				if isVersionConstraintSpecified(dependencyName, dependencyVersion, n.spec.StrictSemver) {
+				if !isVersionConstraintSupported(dependencyName, dependencyVersion) {
+					continue
+				}
+
+				// If a version constraint is specified such as "~4.0.0" then package.json shouldn't be updated
+				// And if no lock file exist then we can skip this dependency
+				if yarnTargetCleanManifestEnabled &&
+					npmTargetCleanupManifestEnabled &&
+					isVersionConstraintSpecified(
+						dependencyName,
+						dependencyVersion) {
 					continue
 				}
 
