@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"os"
@@ -121,6 +122,35 @@ func isNpmInstalled() bool {
 	return err == nil
 }
 
+// Since npm version 8, npm support updating yarn.lock file when it detects it
+// isNpmSupportYarnUpdate checks if the current npm version can update the yarn file which is the preferred approach as it supports a dryrun mode
+func isNpmSupportYarnUpdate() bool {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("npm", "--version")
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		logrus.Debugf("failed while running npm command - %s", stderr.String())
+		return false
+	}
+
+	currentVersion, err := semver.NewVersion(strings.TrimSuffix(stdout.String(), "\n"))
+	if err != nil {
+		logrus.Debugf("failed verifying current npm version - %s\n%s", err, stdout.String())
+		return false
+	}
+
+	c, err := semver.NewConstraint(">= 8.0.0")
+	if err != nil {
+		logrus.Debugln(err)
+	}
+
+	return c.Check(currentVersion)
+}
+
 func isYarnInstalled() bool {
 	cmd := exec.Command("yarn", "--version")
 	err := cmd.Run()
@@ -142,7 +172,11 @@ func getTargetCommand(cmd, dependencyName string) string {
 	case "npm":
 		return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, "npm")
 	case "yarn":
-		return fmt.Sprintf("yarn add --mode update-lockfile --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, "npm")
+		if isNpmSupportYarnUpdate() {
+			return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, "npm")
+		}
+		logrus.Warningf("In the current state, yarn package update do not support dry-run mode")
+		return fmt.Sprintf("yarn add --mode update-lockfile %s@{{ source %q }}", dependencyName, "npm")
 	}
 	return "false"
 }
