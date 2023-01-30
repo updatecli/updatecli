@@ -76,6 +76,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		ConditionQuery             string
 		File                       string
 		TargetID                   string
+		TargetName                 string
 		TargetFile                 string
 		TargetKey                  string
 		TargetCargoCleanupEnabled  bool
@@ -88,8 +89,9 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		RegistryAuthToken          string
 		RegistryHeaderFormat       string
 	}{
-		ManifestName: fmt.Sprintf("Bump %s %q for %q crate", dependencyType, dependency.Name, crateName),
-		CrateName:    crateName, DependencyName: dependency.Name,
+		ManifestName:               fmt.Sprintf("Bump %s %q for %q crate", dependencyType, dependency.Name, crateName),
+		CrateName:                  crateName,
+		DependencyName:             dependency.Name,
 		SourceID:                   dependency.Name,
 		SourceName:                 fmt.Sprintf("Get latest %q crate version", dependency.Name),
 		SourceVersionFilterKind:    "semver",
@@ -101,6 +103,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		ConditionQuery:             ConditionQuery,
 		File:                       relativeFile,
 		TargetID:                   dependency.Name,
+		TargetName:                 fmt.Sprintf("Bump crate dependency \"{{ .DependencyName }}\" to {{ source %q }}\"", dependency.Name),
 		TargetFile:                 filepath.Base(foundFile),
 		TargetKey:                  TargetKey,
 		TargetCargoCleanupEnabled:  targetCargoCleanupEnabled,

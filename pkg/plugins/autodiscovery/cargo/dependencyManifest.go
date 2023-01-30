@@ -46,6 +46,7 @@ conditions:
     sourceid: '{{ .ExistingSourceID }}'
 targets:
   {{ .TargetID }}:
+	name: '{{ .TargetName }}'
     name: 'Bump crate dependency "{{ .DependencyName }}" for crate "{{ .CrateName }}"'
     kind: 'toml'
 {{- if .ScmID }}
