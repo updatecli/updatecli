@@ -205,7 +205,7 @@ func TestPreCommand(t *testing.T) {
 	c, gotErr := New(&exitCode, &stdout)
 	assert.NoError(t, gotErr)
 
-	if c.PreCommand() != nil {
+	if c.PreCommand("") != nil {
 		t.Fail()
 	}
 }
@@ -217,7 +217,7 @@ func TestPostCommand(t *testing.T) {
 	c, gotErr := New(&exitCode, &stdout)
 	assert.NoError(t, gotErr)
 
-	if c.PostCommand() != nil {
+	if c.PostCommand("") != nil {
 		t.Fail()
 	}
 }
