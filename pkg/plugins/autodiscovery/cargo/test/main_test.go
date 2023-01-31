@@ -50,7 +50,7 @@ conditions:
     sourceid: 'anyhow-current-version'
 targets:
   anyhow:
-    name: 'Bump crate dependency "anyhow" for crate "test-crate"'
+    name: 'Bump crate dependency "anyhow" to {{ source "anyhow" }}'
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
@@ -82,7 +82,7 @@ conditions:
     sourceid: 'rand-current-version'
 targets:
   rand:
-    name: 'Bump crate dependency "rand" for crate "test-crate"'
+    name: 'Bump crate dependency "rand" to {{ source "rand" }}'
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
@@ -114,7 +114,7 @@ conditions:
     sourceid: 'futures-current-version'
 targets:
   futures:
-    name: 'Bump crate dependency "futures" for crate "test-crate"'
+    name: 'Bump crate dependency "futures" to {{ source "futures" }}'
     kind: 'toml'
     spec:
       file: 'Cargo.toml'

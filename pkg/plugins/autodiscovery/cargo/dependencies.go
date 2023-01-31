@@ -103,7 +103,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		ConditionQuery:             ConditionQuery,
 		File:                       relativeFile,
 		TargetID:                   dependency.Name,
-		TargetName:                 fmt.Sprintf("Bump crate dependency \"{{ .DependencyName }}\" to {{ source %q }}\"", dependency.Name),
+		TargetName:                 fmt.Sprintf("Bump crate dependency %q to {{ source %q }}", dependency.Name, dependency.Name),
 		TargetFile:                 filepath.Base(foundFile),
 		TargetKey:                  TargetKey,
 		TargetCargoCleanupEnabled:  targetCargoCleanupEnabled,

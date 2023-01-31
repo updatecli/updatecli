@@ -19,7 +19,7 @@ sources:
         rootdir: '{{ .RegistryRootDir }}'
         auth:
           token: '{{ .RegistryAuthToken }}'
-          headerFormat : '{{ .RegistryHeaderFormat }}'		
+          headerFormat : '{{ .RegistryHeaderFormat }}'
 {{- if .RegistrySCMID }}
     scmid: '{{ .RegistrySCMID }}'
 {{- end }}
@@ -46,7 +46,7 @@ conditions:
     sourceid: '{{ .ExistingSourceID }}'
 targets:
   {{ .TargetID }}:
-	name: '{{ .TargetName }}'
+    name: '{{ .TargetName }}'
     kind: 'toml'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
@@ -64,18 +64,17 @@ targets:
     kind: shell
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
-{{ end }}
+{{- end }}
     spec:
-      command: cargo update --dry-run $DRY_RUN '{{ .DependencyName }}'
+      command: cargo generate-lockfile
       environments:
         - name: PATH
-          inherit: true
       changedif:
         kind: file/checksum
         spec:
           files:
             - "Cargo.lock"
       workdir: '{{ .TargetWorkdir }}'
-{{ end }}
+{{- end }}
 `
 )
