@@ -26,12 +26,12 @@ func New(exitCode *int, output *string) (*Console, error) {
 }
 
 // PreCommand defines operations needed to be executed before the shell command
-func (c *Console) PreCommand() error {
+func (c *Console) PreCommand(workingDir string) error {
 	return nil
 }
 
 // PostCommand defines operations needed to be executed after the shell command
-func (c *Console) PostCommand() error {
+func (c *Console) PostCommand(workingDir string) error {
 	return nil
 }
 

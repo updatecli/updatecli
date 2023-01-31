@@ -71,12 +71,12 @@ func (s Spec) Validate() error {
 }
 
 // PreCommand defines operations needed to be executed before the shell command
-func (e *ExitCode) PreCommand() error {
+func (e *ExitCode) PreCommand(workingDir string) error {
 	return nil
 }
 
 // PostCommand defines operations needed to be executed after the shell command
-func (e *ExitCode) PostCommand() error {
+func (e *ExitCode) PostCommand(workingDir string) error {
 	return nil
 }
 

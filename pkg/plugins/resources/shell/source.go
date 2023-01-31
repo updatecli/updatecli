@@ -26,7 +26,7 @@ func (s *Shell) Source(workingDir string) (string, error) {
 
 	// PreCommand is executed to collect information before running the shell command
 	// so we could collect information needed to validate that a command successfully as expected
-	err = s.success.PreCommand()
+	err = s.success.PreCommand(workingDir)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +47,7 @@ func (s *Shell) Source(workingDir string) (string, error) {
 
 	// PostCommand is executed to collect information after running the shell command
 	// so we could collect information needed to validate that a command successfully as expected
-	err = s.success.PostCommand()
+	err = s.success.PostCommand(workingDir)
 	if err != nil {
 		return "", err
 	}

@@ -33,8 +33,8 @@ type SpecChangedIf struct {
 }
 
 type Successer interface {
-	PreCommand() error
-	PostCommand() error
+	PreCommand(workingDir string) error
+	PostCommand(workingDir string) error
 	SourceResult() (string, error)
 	ConditionResult() (bool, error)
 	TargetResult() (bool, error)

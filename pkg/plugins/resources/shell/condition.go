@@ -34,7 +34,7 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		Value: "condition",
 	})
 
-	err = s.success.PreCommand()
+	err = s.success.PreCommand(workingDir)
 	if err != nil {
 		return false, err
 	}
@@ -53,7 +53,7 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		return false, fmt.Errorf("failed while running condition script - %s", err)
 	}
 
-	err = s.success.PostCommand()
+	err = s.success.PostCommand(workingDir)
 	if err != nil {
 		return false, err
 	}

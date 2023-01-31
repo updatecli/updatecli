@@ -34,8 +34,8 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/ProtonMail/go-crypto v0.0.0-20221026131551-cf6655e29de4
 	github.com/beevik/etree v1.1.0
-	github.com/drone/go-scm v1.28.0
-	github.com/google/go-containerregistry v0.12.1
+	github.com/drone/go-scm v1.28.1
+	github.com/google/go-containerregistry v0.13.0
 	github.com/goware/urlx v0.3.2
 	github.com/invopop/jsonschema v0.7.0
 	github.com/muesli/mango-cobra v1.2.0
@@ -43,7 +43,7 @@ require (
 	github.com/tomwright/dasel v1.27.3
 	golang.org/x/text v0.6.0
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
-	gopkg.in/ini.v1 v1.66.4
+	gopkg.in/ini.v1 v1.67.0
 	gotest.tools v2.2.0+incompatible
 )
 
