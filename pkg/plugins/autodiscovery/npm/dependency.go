@@ -84,14 +84,20 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					continue
 				}
 
+				isVersionConstraint := isVersionConstraintSpecified(
+					dependencyName,
+					dependencyVersion)
+
 				// If a version constraint is specified such as "~4.0.0" then package.json shouldn't be updated
 				// And if no lock file exist then we can skip this dependency
 				if yarnTargetCleanManifestEnabled &&
 					npmTargetCleanupManifestEnabled &&
-					isVersionConstraintSpecified(
-						dependencyName,
-						dependencyVersion) {
+					isVersionConstraint {
 					continue
+				}
+
+				if !isVersionConstraint {
+					dependencyVersion = ">=" + dependencyVersion
 				}
 
 				if err != nil {
@@ -137,7 +143,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					// NPM package allows dot in package name which has a different meaning in Dasel query
 					// Therefor we must escape it for Dasel query to work
 					TargetKey:                fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
-					TargetPackageJsonEnabled: yarnTargetCleanManifestEnabled && npmTargetCleanupManifestEnabled,
+					TargetPackageJsonEnabled: !yarnTargetCleanManifestEnabled && !npmTargetCleanupManifestEnabled,
 					TargetYarnCleanupEnabled: yarnTargetCleanManifestEnabled,
 					TargetNPMCleanupEnabled:  npmTargetCleanupManifestEnabled,
 					TargetWorkdir:            filepath.Dir(relativeFoundFile),

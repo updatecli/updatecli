@@ -24,7 +24,7 @@ func TestDiscoverManifests(t *testing.T) {
 	}{
 		{
 			name:    "Scenario 1",
-			rootDir: "testdata",
+			rootDir: "testdata/nolockfile",
 			expectedPipelines: []config.Spec{
 				{
 
@@ -48,7 +48,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"npm": {
 							SourceID: "npm",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"@mdi/font\" package version",
+								Name: "Bump \"@mdi/font\" package version to {{ source \"npm\" }}",
 								Kind: "json",
 								Spec: json.Spec{
 									File: "package.json",
