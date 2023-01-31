@@ -38,7 +38,7 @@ targets:
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
-      command: |
+      command: |-
         {{ .TargetNPMCommand }}
       changedif:
         kind: file/checksum
@@ -48,7 +48,6 @@ targets:
             - "package.json"
       environments:
        - name: PATH
-         inherit: true
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 {{- if .TargetYarnCleanupEnabled }}
@@ -64,7 +63,7 @@ targets:
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
-      command: |
+      command: |-
         {{ .TargetYarnCommand }}
       changedif:
         kind: file/checksum
@@ -74,7 +73,6 @@ targets:
             - "package.json"
       environments:
        - name: PATH
-         inherit: true
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 `

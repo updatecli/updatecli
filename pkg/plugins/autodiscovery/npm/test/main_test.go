@@ -11,6 +11,8 @@ import (
 	NPMAutodiscovery "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/npm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/json"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/npm"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/checksum"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -22,6 +24,56 @@ func TestDiscoverManifests(t *testing.T) {
 		rootDir           string
 		expectedPipelines []config.Spec
 	}{
+		{
+			name:    "Npm lockfile",
+			rootDir: "testdata/npmlockfile",
+			expectedPipelines: []config.Spec{
+				{
+
+					Name: "Bump \"axios\" package version",
+					Sources: map[string]source.Config{
+						"npm": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get \"axios\" package version",
+								Kind: "npm",
+								Spec: npm.Spec{
+									Name: "axios",
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: "^1.0.0",
+									},
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"package-lock.json": {
+							DisableSourceInput: true,
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Bump \"axios\" package version to {{ source \"npm\" }}",
+								Kind: "shell",
+								Spec: shell.Spec{
+									WorkDir: ".",
+									Command: "\nnpm install --package-lock-only --dry-run=$DRY_RUN axios@{{ source \"npm\" }}",
+									Environments: shell.Environments{
+										{Name: "PATH"},
+									},
+									ChangedIf: shell.SpecChangedIf{
+										Kind: "file/checksum",
+										Spec: checksum.Spec{
+											Files: []string{
+												"package-lock.json",
+												"package.json",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata/nolockfile",
