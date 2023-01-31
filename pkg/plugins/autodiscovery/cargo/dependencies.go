@@ -32,6 +32,12 @@ type crateMetadata struct {
 
 func (c Cargo) generateManifest(crateName string, dependency crateDependency, relativeFile string, foundFile string, dependencyType string, targetCargoCleanupEnabled bool) (bytes.Buffer, error) {
 	manifest := bytes.Buffer{}
+
+	// No need to continue if both Cargo.lock and Cargo.toml do not need to be updated
+	if !targetCargoCleanupEnabled && !isStrictSemver(dependency.Version) {
+		return manifest, nil
+	}
+
 	tmpl, err := template.New("manifest").Parse(dependencyManifest)
 	if err != nil {
 		logrus.Debugln(err)
@@ -61,6 +67,12 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 			Registry = registry
 		}
 	}
+
+	sourceVersionFilterPattern := dependency.Version
+	if isStrictSemver(dependency.Version) {
+		sourceVersionFilterPattern = ">=" + sourceVersionFilterPattern
+	}
+
 	params := struct {
 		ManifestName               string
 		CrateName                  string
@@ -75,6 +87,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		ConditionID                string
 		ConditionQuery             string
 		File                       string
+		TargetIDEnable             bool
 		TargetID                   string
 		TargetName                 string
 		TargetFile                 string
@@ -95,13 +108,14 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		SourceID:                   dependency.Name,
 		SourceName:                 fmt.Sprintf("Get latest %q crate version", dependency.Name),
 		SourceVersionFilterKind:    "semver",
-		SourceVersionFilterPattern: "*",
+		SourceVersionFilterPattern: sourceVersionFilterPattern,
 		ExistingSourceID:           fmt.Sprintf("%s-current-version", dependency.Name),
 		ExistingSourceKey:          existingSourceKey,
 		ExistingSourceName:         fmt.Sprintf("Get current %q crate version", dependency.Name),
 		ConditionID:                dependency.Name,
 		ConditionQuery:             ConditionQuery,
 		File:                       relativeFile,
+		TargetIDEnable:             isStrictSemver(dependency.Version),
 		TargetID:                   dependency.Name,
 		TargetName:                 fmt.Sprintf("Bump crate dependency %q to {{ source %q }}", dependency.Name, dependency.Name),
 		TargetFile:                 filepath.Base(foundFile),

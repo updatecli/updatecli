@@ -45,6 +45,7 @@ conditions:
       query: '{{ .ConditionQuery }}'
     sourceid: '{{ .ExistingSourceID }}'
 targets:
+{{- if .TargetIDEnable }}
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
     kind: 'toml'
@@ -55,11 +56,14 @@ targets:
       file: '{{ .TargetFile }}'
       key: '{{ .TargetKey }}'
     sourceid: '{{ .SourceID }}'
+{{ end }}
 {{- if .TargetCargoCleanupEnabled }}
   Cargo.lock:
     name: Update Cargo lockfile Cargo.lock
+{{- if .TargetIDEnable }}
     dependson:
       - {{ .TargetID }}
+{{- end }}
     disablesourceinput: true
     kind: shell
 {{- if .ScmID }}
