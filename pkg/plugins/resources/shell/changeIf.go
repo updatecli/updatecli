@@ -29,7 +29,7 @@ type SpecChangedIf struct {
 	// Kind specifies the success criteria kind, accepted answer ["console/output","exitcode","file/checksum"]
 	Kind string `yaml:",omitempty"`
 	// Spec specifies the parameter for a specific success criteria kind
-	Spec map[string]interface{} `yaml:",omitempty"`
+	Spec interface{} `yaml:",omitempty"`
 }
 
 type Successer interface {

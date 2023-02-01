@@ -11,7 +11,7 @@ import (
 
 type Spec struct {
 	// Files specifies the list of file that Updatecli monitors to identify state change
-	Files []string
+	Files []string `yaml:",omitempty" jsonschema:"required"`
 }
 
 type Checksum struct {
