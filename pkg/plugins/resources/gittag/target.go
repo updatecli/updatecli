@@ -46,7 +46,9 @@ func (gt *GitTag) target(source string, dryRun bool) (bool, []string, string, er
 		logrus.Warningf("No specified message for gittag target. Using default value %q", gt.spec.Message)
 	}
 
-	files := []string{}
+	// cfr https://github.com/updatecli/updatecli/issues/1126
+	// to know why the following line is needed at the moment
+	files := []string{""}
 	message := gt.spec.Message
 
 	// Fail if a pattern is specified
