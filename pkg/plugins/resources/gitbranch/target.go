@@ -78,7 +78,9 @@ func (gt *GitBranch) TargetFromSCM(source string, scm scm.ScmHandler, dryRun boo
 
 func (gt *GitBranch) target(dryRun bool) (bool, []string, string, error) {
 
-	files := []string{}
+	// cfr https://github.com/updatecli/updatecli/issues/1126
+	// to know why the following line is needed at the moment
+	files := []string{""}
 	message := ""
 
 	// Fail if the git tag resource cannot be validated
