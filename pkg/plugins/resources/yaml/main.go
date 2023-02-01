@@ -89,7 +89,7 @@ func (s *Spec) Validate() error {
 	if s.Key == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
 	}
-	if len(s.Files) > 0 && s.File == "" {
+	if len(s.Files) > 0 && s.File != "" {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attributes `spec.file` and `spec.files` are mutually exclusive")
 	}
 	if len(s.Files) > 1 && hasDuplicates(s.Files) {
