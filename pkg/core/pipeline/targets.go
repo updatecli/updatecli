@@ -44,6 +44,14 @@ func (p *Pipeline) RunTargets() error {
 		target := p.Targets[id]
 		target.Config = p.Config.Spec.Targets[id]
 
+		if target.Scm != nil {
+			scm := *target.Scm
+			err = scm.UpdateSpec(p.Config.Spec.SCMs[target.Config.SCMID].Spec)
+			if err != nil {
+				return err
+			}
+		}
+
 		report := p.Report.Targets[id]
 		// Update report name as the target configuration might has been updated (templated values)
 		report.Name = target.Config.Name

@@ -173,3 +173,16 @@ func (s *Spec) Validate() error {
 
 	return nil
 }
+
+func (g *Gitea) UpdateSpec(spec interface{}) error {
+	giteaSpec := Spec{}
+
+	err := mapstructure.Decode(spec, &giteaSpec)
+	if err != nil {
+		return err
+	}
+
+	g.Spec.CommitMessage = giteaSpec.CommitMessage
+
+	return nil
+}

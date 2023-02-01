@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/tmp"
@@ -176,4 +177,17 @@ func sanitizeDirectoryName(URL string) string {
 		}
 	}
 	return URL
+}
+
+func (g *Git) UpdateSpec(spec interface{}) error {
+	gitSpec := Spec{}
+
+	err := mapstructure.Decode(spec, &gitSpec)
+	if err != nil {
+		return err
+	}
+
+	g.spec.CommitMessage = gitSpec.CommitMessage
+
+	return nil
 }

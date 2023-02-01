@@ -33,6 +33,7 @@ type ScmHandler interface {
 	PushTag(tag string) error
 	PushBranch(branch string) error
 	GetChangedFiles(workingDir string) ([]string, error)
+	UpdateSpec(spec interface{}) error
 }
 
 func New(config *Config, pipelineID string) (Scm, error) {

@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
@@ -255,4 +256,17 @@ func (g *Github) queryRepositoryID() (string, error) {
 
 	return query.Repository.ID, nil
 
+}
+
+func (g *Github) UpdateSpec(spec interface{}) error {
+	githubSpec := Spec{}
+
+	err := mapstructure.Decode(spec, &githubSpec)
+	if err != nil {
+		return err
+	}
+
+	g.Spec.CommitMessage = githubSpec.CommitMessage
+
+	return nil
 }
