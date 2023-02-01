@@ -12,12 +12,13 @@ import (
 // Source return the latest version
 func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
-	// Merge File path with current workingDir, unless File is an HTTP URL
-	y.spec.File = joinPathWithWorkingDirectoryPath(y.spec.File, workingDir)
+	var fileContent string
+	var filePath string
 
-	// Test at runtime if a file exist
-	if !y.contentRetriever.FileExists(y.spec.File) {
-		return "", fmt.Errorf("the yaml file %q does not exist", y.spec.File)
+	if len(y.files) > 1 {
+		validationError := fmt.Errorf("Validation error in sources of type 'yaml': the attributes `spec.files` can't contain more than one element for conditions")
+		logrus.Errorf(validationError.Error())
+		return "", validationError
 	}
 
 	if y.spec.Value != "" {
@@ -28,27 +29,41 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	data := y.currentContent
+	// loop over the only file
+	for theFilePath := range y.files {
+		fileContent = y.files[theFilePath]
+		filePath = theFilePath
+
+		// Merge File path with current workingDir, unless File is an HTTP URL
+		if workingDir != filePath {
+			filePath = joinPathWithWorkingDirectoryPath(filePath, workingDir)
+		}
+
+		// Test at runtime if a file exist
+		if !y.contentRetriever.FileExists(filePath) {
+			return "", fmt.Errorf("the yaml file %q does not exist", filePath)
+		}
+	}
 
 	var out yaml.Node
 
-	err := yaml.Unmarshal([]byte(data), &out)
+	err := yaml.Unmarshal([]byte(fileContent), &out)
 
 	if err != nil {
-		return "", fmt.Errorf("cannot unmarshal data: %v", err)
+		return "", fmt.Errorf("cannot unmarshal content of file %s: %v", filePath, err)
 	}
 
 	valueFound, value, _ := replace(&out, parseKey(y.spec.Key), y.spec.Value, 1)
 
 	if valueFound {
-		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v", result.SUCCESS, value, y.spec.Key, y.spec.File)
+		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v", result.SUCCESS, value, y.spec.Key, filePath)
 		return value, nil
 	}
 
 	logrus.Infof("%s cannot find key '%s' from file '%s'",
 		result.FAILURE,
 		y.spec.Key,
-		y.spec.File)
+		filePath)
 	return "", nil
 
 }
