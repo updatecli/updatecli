@@ -22,7 +22,7 @@ import (
 	yml "sigs.k8s.io/yaml"
 )
 
-// DependencyUpdate ensures that Chart.lock is updated if needed
+// DependencyUpdate updates the "Chart.lock" file if needed
 func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
 
 	client := action.NewDependency()
@@ -60,7 +60,7 @@ func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
 }
 
 // GetRepoIndexFromFile loads an index file from a local file and does minimal validity checking.
-// This will fail if API Version is not set (ErrNoAPIVersion) or if the unmarshal fails.
+// It fails if API Version isn't set (ErrNoAPIVersion) or if the "unmarshal" operation fails.
 func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
 
 	URL := strings.TrimPrefix(c.spec.URL, "file://")
@@ -101,7 +101,7 @@ func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
 }
 
 // GetRepoIndexFromUrl loads an index file and does minimal validity checking.
-// This will fail if API Version is not set (ErrNoAPIVersion) or if the unmarshal fails.
+// It fails if API Version isn't set (ErrNoAPIVersion) or if the "unmarshal" operation fails.
 func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 	var err error
 
@@ -248,9 +248,8 @@ forLoop:
 	return nil
 }
 
-// RequirementsUpdate test if we are updating the file requirements.yaml
-// if it's the case then we also have to delete and recreate the file
-// requirements.lock
+// RequirementsUpdate test if Updatecli updated the "requirements.yaml" file
+// if it's the case then Updatecli also delete and recreate the "requirements.lock" file
 func (c *Chart) RequirementsUpdate(chartPath string) error {
 	lockFilename := filepath.Join(chartPath, "requirements.lock")
 

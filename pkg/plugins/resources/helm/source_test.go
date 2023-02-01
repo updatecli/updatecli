@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestSource is an integration tests that test that retrieving source value effectively works
 func TestSource(t *testing.T) {
 
 	tests := []struct {
@@ -45,6 +46,31 @@ func TestSource(t *testing.T) {
 			expectedError:        true,
 			expectedErrorMessage: errors.New("something went wrong while contacting \"https://example.com/index.yaml\""),
 		},
+		// Disabling the test for now as the GitHub Action doesn't have credentials nor allowed to anonymously query the ghcr.io API
+		//{
+		//	name: "Successful OCI result",
+		//	chart: Spec{
+		//		URL:  "oci://ghcr.io/olblak/charts/",
+		//		Name: "upgrade-responder",
+		//		VersionFilter: version.Filter{
+		//			Kind:    "semver",
+		//			Pattern: "v0.1.5",
+		//		},
+		//	},
+		//	expected: "v0.1.5",
+		//},
+		//{
+		//	name: "Successful OCI result using semver version filter",
+		//	chart: Spec{
+		//		URL:  "oci://ghcr.io/olblak/charts",
+		//		Name: "upgrade-responder",
+		//		VersionFilter: version.Filter{
+		//			Kind:    "semver",
+		//			Pattern: "v0.1.5",
+		//		},
+		//	},
+		//	expected: "v0.1.5",
+		//},
 	}
 
 	for _, tt := range tests {

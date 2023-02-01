@@ -1,0 +1,54 @@
+name: shell workdir e2e tests
+
+scms:
+  updatecli:
+    kind: git
+    spec:
+      url: https://github.com/updatecli/updatecli-action.git
+
+sources:
+  relative:
+    name: Test that pwd return the correct path
+    kind: shell
+    spec:
+      command: pwd
+      workdir: e2e/updatecli.d/success.d/shell
+  relativefromscm:
+    name: Test that pwd return the correct path from scm
+    scmid: updatecli
+    kind: shell
+    spec:
+      command: pwd
+      workdir: .github
+conditions:
+  relative:
+    name: Test that pwd return the correct path
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: pwd
+      workdir: e2e/updatecli.d/success.d/shell
+  relativefromscm:
+    name: Test that pwd return the correct path from scm
+    disablesourceinput: true
+    scmid: updatecli
+    kind: shell
+    spec:
+      command: pwd
+      workdir: .github
+targets:
+  relative:
+    name: Test that pwd return the correct path
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: pwd
+      workdir: e2e/updatecli.d/success.d/shell
+  relativefromscm:
+    name: Test that pwd return the correct path from scm
+    disablesourceinput: true
+    scmid: updatecli
+    kind: shell
+    spec:
+      command: pwd
+      workdir: .github

@@ -1,9 +1,9 @@
 name: Bump venom version
 pipelineid: 6a1c726e25648f93a45aa3b540ba8fd6307a62f92830404f55259bfbbc1b3c6f
-pullrequests:
+actions:
     default:
         title: '[updatecli] Bump Venom version to {{ source "latestVersion" }}'
-        kind: github
+        kind: github/pullrequest
         spec:
             automerge: true
             labels:

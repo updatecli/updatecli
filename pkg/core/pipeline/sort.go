@@ -72,7 +72,7 @@ func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err 
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
 					if strings.Contains(err.Error(), "would create a loop") {
-						logrus.Errorf("Depency loop detected between Sources[%q] and Sources[%q]",
+						logrus.Errorf("Dependency loop detected between Sources[%q] and Sources[%q]",
 							key,
 							dep)
 						return result, ErrDependsOnLoopDetected
@@ -150,7 +150,7 @@ func SortedConditionsKeys(conditions *map[string]condition.Condition) (result []
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
 					if strings.Contains(err.Error(), "would create a loop") {
-						logrus.Errorf("Depency loop detected between Conditions[%q] and Conditions[%q]",
+						logrus.Errorf("Dependency loop detected between Conditions[%q] and Conditions[%q]",
 							key,
 							dep)
 						return result, ErrDependsOnLoopDetected
@@ -227,7 +227,7 @@ func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err 
 				err = d.AddEdge(index[key], index[dep])
 				if err != nil {
 					if strings.Contains(err.Error(), "would create a loop") {
-						logrus.Errorf("Depency loop detected between Targets[%q] and Targets[%q]",
+						logrus.Errorf("Dependency loop detected between Targets[%q] and Targets[%q]",
 							key,
 							dep)
 						return result, ErrDependsOnLoopDetected

@@ -31,7 +31,7 @@ jobs:
           # we always use the latest patch version.
           version: v1.50
       - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v4
         with:
           install-only: true
       - name: Show GoReleaser version

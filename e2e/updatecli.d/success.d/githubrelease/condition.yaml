@@ -1,0 +1,38 @@
+name: Test checking that both github release and gittag exist
+
+scms:
+  default:
+    kind: github
+    spec:
+      owner: updatecli
+      repository: updatecli
+      branch: main
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+
+sources:
+  shell:
+    name: Get version from shell command output
+    kind: shell
+    spec:
+      command: echo v0.40.0
+conditions:
+  gittag:
+    name: Test that gittag exist based on source output
+    sourceid: shell
+    kind: gittag
+    scmid: default
+  githubrelease:
+    name: Test that github release tag exist based on source output
+    kind: githubrelease
+    sourceid: shell
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+targets:
+  version:
+    name: Only run if conditions succeeded
+    kind: shell
+    spec:
+      command: echo release 
+

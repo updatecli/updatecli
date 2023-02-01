@@ -30,10 +30,10 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli",
+				Owner:      "updatecli",
+				Repository: "updatecli-donotexist",
 			},
 			wantResult: false,
 			wantErr:    true,
@@ -47,10 +47,10 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-mirror",
+				Owner:      "updatecli",
+				Repository: "demo-terminal",
 			},
 			wantResult: false,
 			wantErr:    false,
@@ -64,17 +64,17 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
+				Owner:      "updatecli",
+				Repository: "demo-terminal",
 				Tag:        "2.0.0",
 			},
 			wantResult: false,
 			wantErr:    false,
 		},
 		{
-			name: "repository should exist with release 0.0.1",
+			name: "repository should exist with release v2.15.0",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -82,11 +82,11 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
-				Tag:        "0.0.1",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
+				Tag:        "v2.15.0",
 			},
 			wantResult: true,
 			wantErr:    false,

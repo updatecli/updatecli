@@ -1,16 +1,13 @@
 package dockerfile
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -22,9 +19,9 @@ var (
 	}
 )
 
-func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
+func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
-	var manifests []config.Spec
+	var manifests [][]byte
 
 	foundDockerfiles, err := searchDockerfiles(
 		h.rootDir,
@@ -36,10 +33,11 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 
 	for _, foundDockerfile := range foundDockerfiles {
 
+		logrus.Debugf("parsing file %q", foundDockerfile)
 		relativeFoundDockerfile, err := filepath.Rel(h.rootDir, foundDockerfile)
 		if err != nil {
 			// Let try the next one if it fails
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -48,7 +46,8 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 
 		instructions, err := parseDockerfile(foundDockerfile)
 		if err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		if len(instructions) == 0 {
@@ -78,8 +77,6 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 			case 1:
 				imageName = imageArray[0]
 			}
-
-			manifestName := fmt.Sprintf("Bump Docker Image Tag for %q", imageName)
 
 			// Test if the ignore rule based on path is respected
 			if len(h.spec.Ignore) > 0 {
@@ -124,14 +121,11 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 			}
 
 			if err != nil {
-				logrus.Errorln(err)
+				logrus.Debugln(err)
 				continue
-
 			}
 
 			targetMatcher := ""
-			targetKeyword := instruction.name
-
 			// Depending on the instruction the matcher will be different
 			switch instruction.name {
 			case "FROM":
@@ -142,40 +136,47 @@ func (h Dockerfile) discoverDockerfileManifests() ([]config.Spec, error) {
 				targetMatcher = strings.TrimSuffix(targetMatcher, instruction.trimArgSuffix)
 			}
 
-			manifest := config.Spec{
-				Name: manifestName,
-				Sources: map[string]source.Config{
-					imageName: {
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("[%s] Get latest Docker Image Tag", imageName),
-							Kind: "dockerimage",
-							Spec: *sourceSpec,
-						},
-					},
-				},
-				Targets: map[string]target.Config{
-					imageName: {
-						SourceID: imageName,
-						ResourceConfig: resource.ResourceConfig{
-							Name: fmt.Sprintf("[%s] Bump Docker Image tag in %q",
-								imageName,
-								relativeFoundDockerfile),
-							Kind: "dockerfile",
-							Spec: dockerfile.Spec{
-								File: relativeFoundDockerfile,
-								Instruction: map[string]string{
-									"keyword": targetKeyword,
-									"matcher": targetMatcher,
-								},
-							},
-						},
-					},
-				},
+			tmpl, err := template.New("manifest").Parse(manifestTemplate)
+			if err != nil {
+				logrus.Debugln(err)
+				continue
 			}
 
-			// To Add transformers
+			params := struct {
+				ManifestName         string
+				ImageName            string
+				SourceID             string
+				TargetID             string
+				TargetFile           string
+				TargetName           string
+				TargetKeyword        string
+				TargetMatcher        string
+				TagFilter            string
+				VersionFilterKind    string
+				VersionFilterPattern string
+				ScmID                string
+			}{
+				ManifestName:         fmt.Sprintf("Bump Docker image tag for %q", imageName),
+				ImageName:            imageName,
+				SourceID:             imageName,
+				TargetID:             imageName,
+				TargetName:           fmt.Sprintf("[%s] Bump Docker image tag in %q", imageName, relativeFoundDockerfile),
+				TargetFile:           relativeFoundDockerfile,
+				TargetKeyword:        instruction.name,
+				TargetMatcher:        targetMatcher,
+				TagFilter:            sourceSpec.TagFilter,
+				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
+				VersionFilterPattern: sourceSpec.VersionFilter.Pattern,
+				ScmID:                h.scmID,
+			}
 
-			manifests = append(manifests, manifest)
+			manifest := bytes.Buffer{}
+			if err := tmpl.Execute(&manifest, params); err != nil {
+				logrus.Debugln(err)
+				continue
+			}
+
+			manifests = append(manifests, manifest.Bytes())
 		}
 	}
 

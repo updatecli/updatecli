@@ -12,6 +12,10 @@ import (
 // Source return the latest version
 func (c *Chart) Source(workingDir string) (string, error) {
 
+	if strings.HasPrefix(c.spec.URL, "oci://") {
+		return c.OCISource(workingDir)
+	}
+
 	var index repo.IndexFile
 	var err error
 

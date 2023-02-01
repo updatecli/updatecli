@@ -8,11 +8,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/awsami"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/cargopackage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/csv"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerdigest"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/file"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/gitbranch"
 	giteaBranch "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/branch"
 	giteaRelease "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/release"
 	giteaTag "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/tag"
@@ -60,6 +62,8 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	switch kind {
 	case "aws/ami":
 		return awsami.New(rs.Spec)
+	case "cargopackage":
+		return cargopackage.New(rs.Spec, rs.SCMID != "")
 	case "csv":
 		return csv.New(rs.Spec)
 	case "dockerdigest":
@@ -70,6 +74,8 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return dockerimage.New(rs.Spec)
 	case "githubrelease":
 		return githubrelease.New(rs.Spec)
+	case "gitbranch":
+		return gitbranch.New(rs.Spec)
 	case "gittag":
 		return gittag.New(rs.Spec)
 	case "gitea/branch":
@@ -118,12 +124,14 @@ func GetResourceMapping() map[string]interface{} {
 
 	return map[string]interface{}{
 		"aws/ami":       &awsami.Spec{},
+		"cargopackage":  &cargopackage.Spec{},
 		"csv":           &csv.Spec{},
 		"dockerdigest":  &dockerdigest.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
 		"dockerimage":   &dockerimage.Spec{},
 		"file":          &file.Spec{},
 		"gittag":        &gittag.Spec{},
+		"gitbranch":     &gitbranch.Spec{},
 		"gitea/branch":  &giteaBranch.Spec{},
 		"gitea/release": &giteaRelease.Spec{},
 		"gitea/tag":     &giteaTag.Spec{},

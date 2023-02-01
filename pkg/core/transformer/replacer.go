@@ -3,9 +3,9 @@ package transformer
 // Replacer is struct used to feed strings.Replacer
 type Replacer struct {
 	// From defines the source value which need to be replaced
-	From string `yaml:",omitempty"`
+	From string `yaml:",omitempty" jsonschema:"required"`
 	// To defines the "to what" a "from" value needs to be replaced
-	To string `yaml:",omitempty"`
+	To string `yaml:",omitempty" jsonschema:"required"`
 }
 
 // Replacers is an array of Replacer

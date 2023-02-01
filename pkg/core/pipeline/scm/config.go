@@ -157,5 +157,5 @@ func (Config) JSONSchema() *jschema.Schema {
 		"gitea":  &gitea.Spec{},
 	}
 
-	return jsonschema.GenerateJsonSchema(configAlias{}, anyOfSpec)
+	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
 }

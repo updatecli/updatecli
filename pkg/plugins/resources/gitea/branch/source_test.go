@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestSource(t *testing.T) {
@@ -12,10 +13,11 @@ func TestSource(t *testing.T) {
 	tests := []struct {
 		name     string
 		manifest struct {
-			URL        string
-			Token      string
-			Owner      string
-			Repository string
+			URL           string
+			Token         string
+			Owner         string
+			Repository    string
+			VersionFilter version.Filter
 		}
 		wantResult string
 		wantErr    bool
@@ -23,15 +25,16 @@ func TestSource(t *testing.T) {
 		{
 			name: "repository olblak/updatecli should not exist",
 			manifest: struct {
-				URL        string
-				Token      string
-				Owner      string
-				Repository string
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli",
+				Owner:      "updatecli",
+				Repository: "updatecli-donotexist",
 			},
 			wantResult: "",
 			wantErr:    true,
@@ -39,17 +42,22 @@ func TestSource(t *testing.T) {
 		{
 			name: "repository should exist with latest branch v3",
 			manifest: struct {
-				URL        string
-				Token      string
-				Owner      string
-				Repository string
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
+				VersionFilter: version.Filter{
+					Kind:    "regex",
+					Pattern: "v1",
+				},
 			},
-			wantResult: "v3",
+			wantResult: "v1",
 			wantErr:    false,
 		},
 	}

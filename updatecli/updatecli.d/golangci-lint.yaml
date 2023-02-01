@@ -1,9 +1,9 @@
 name: Bump golangci-lint version
 pipelineid: e6d141666bd851d4bac9467b898b5e908012a53932de7a805c0767c9e7aeb532
-pullrequests:
+actions:
     default:
         title: '[updatecli] Bump golangci-lint version to {{ source "default" }}'
-        kind: github
+        kind: github/pullrequest
         spec:
             automerge: true
             labels:
@@ -49,7 +49,6 @@ targets:
         transformers:
             - findsubmatch:
                 pattern: v(\d*)\.(\d*)
-                captureIndex: 0
                 captureindex: 0
         spec:
             file: .github/workflows/go.yaml

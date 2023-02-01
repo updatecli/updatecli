@@ -4,9 +4,9 @@ sources:
   default:
     kind: "gitea/branch"
     spec:
-      url: "try.gitea.io"
-      owner: "olblak"
-      repository: "updatecli-test"
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "demo-terminal"
       branch: main
 
 conditions:
@@ -14,15 +14,15 @@ conditions:
     kind: "gitea/branch"
     disablesourceinput: true
     spec:
-      url: "try.gitea.io"
-      owner: "olblak"
-      repository: "updatecli-test"
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "demo-terminal"
       branch: "main"
 
   sourcedefault:
     kind: "gitea/branch"
     sourceid: "default"
     spec:
-      url: "try.gitea.io"
-      owner: "olblak"
-      repository: "updatecli-test"
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "demo-terminal"

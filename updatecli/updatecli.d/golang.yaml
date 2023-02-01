@@ -1,9 +1,9 @@
 name: Bump Golang Version
 pipelineid: 5ba938aaacf1b88e3db4076b2a7a7db6ee1e00eb19dbe2469abf35c96f008e8d
-pullrequests:
+actions:
     default:
         title: '[updatecli] Bump Golang version to {{ source "latestGoVersion" }}'
-        kind: github
+        kind: github/pullrequest
         spec:
             labels:
                 - chore
@@ -51,7 +51,6 @@ conditions:
         spec:
             image: golang
             tag: '{{ source "latestGoVersion" }}'
-        scmid: default
         sourceid: latestGoVersion
     workflowgo:
         name: Ensure GA step is defined in Github Action named go

@@ -15,12 +15,12 @@ func TestSearchFiles(t *testing.T) {
 	}{
 		{
 			name:    "Nonimal case",
-			rootDir: "testdata/",
+			rootDir: "test/testdata/",
 			expectedfiles: []string{
-				"testdata/Dockerfile",
-				"testdata/alpine/Dockerfile",
-				"testdata/jenkins/Dockerfile",
-				"testdata/updatecli-action/Dockerfile",
+				"test/testdata/Dockerfile",
+				"test/testdata/alpine/Dockerfile",
+				"test/testdata/jenkins/Dockerfile",
+				"test/testdata/updatecli-action/Dockerfile",
 			},
 		},
 	}
@@ -28,7 +28,7 @@ func TestSearchFiles(t *testing.T) {
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
 			gotFiles, err := searchDockerfiles(
-				"testdata/", DefaultFileMatch[:])
+				"test/testdata/", DefaultFileMatch[:])
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedfiles, gotFiles)
 		})
@@ -43,7 +43,7 @@ func TestGetDockerfileData(t *testing.T) {
 	}{
 		{
 			name:     "Default case",
-			filepath: "testdata/Dockerfile",
+			filepath: "test/testdata/Dockerfile",
 			expectedInstruction: []instruction{
 				{
 					name:  "FROM",
@@ -70,7 +70,7 @@ func TestGetDockerfileData(t *testing.T) {
 		},
 		{
 			name:     "Alpine case with ARG",
-			filepath: "testdata/alpine/Dockerfile",
+			filepath: "test/testdata/alpine/Dockerfile",
 			expectedInstruction: []instruction{
 				{
 					name:          "ARG",

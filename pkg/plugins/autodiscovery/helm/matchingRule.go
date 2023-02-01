@@ -8,14 +8,14 @@ import (
 
 // MatchingRule allows to specifies rules to identify manifest
 type MatchingRule struct {
-	// Path specifies a Helm chart path pattern, the pattern requires to match all of name, not just a substring.
+	// Path specifies a Helm chart path pattern, the pattern requires to match all of name, not just a subpart of the path.
 	Path string
 }
 
 type MatchingRules []MatchingRule
 
+// isMatchingIgnoreRule checks if a specific file content matches the "ignore" rule
 func (m MatchingRules) isMatchingIgnoreRule(rootDir, relativePath string) bool {
-	// Test if the ignore rule based on path is respected
 	result := false
 
 	if len(m) > 0 {
@@ -46,8 +46,8 @@ func (m MatchingRules) isMatchingIgnoreRule(rootDir, relativePath string) bool {
 	return result
 }
 
+// isMatchingOnlyRule checks if a specific file content matches the "only" rule
 func (m MatchingRules) isMatchingOnlyRule(rootDir, relativePath string) bool {
-	// Test if the only rule based on path is respected
 	result := false
 	if len(m) > 0 {
 		for _, rule := range m {

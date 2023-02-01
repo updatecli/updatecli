@@ -7,11 +7,11 @@ import (
 func TestSearchFiles(t *testing.T) {
 
 	gotFiles, err := searchChartFiles(
-		"testdata/chart", ChartValidFiles[:])
+		"test/testdata/chart", ChartValidFiles[:])
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	expectedFile := "testdata/chart/epinio/Chart.yaml"
+	expectedFile := "test/testdata/chart/epinio/Chart.yaml"
 
 	if len(gotFiles) == 0 {
 		t.Errorf("Expecting file %q but got none", expectedFile)
@@ -26,7 +26,7 @@ func TestSearchFiles(t *testing.T) {
 func TestListChartDependency(t *testing.T) {
 
 	gotChartMetadata, err := getChartMetadata(
-		"testdata/chart/epinio/Chart.yaml")
+		"test/testdata/chart/epinio/Chart.yaml")
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}

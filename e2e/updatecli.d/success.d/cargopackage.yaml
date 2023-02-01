@@ -1,0 +1,20 @@
+name: Retrieve the latest Cargo Package Version
+
+sources:
+  rand:
+    name: Get the latest rand version
+    kind: cargopackage
+    spec:
+      package: rand
+      versionfilter:
+        kind: semver
+        pattern: "~0.7"
+  
+conditions:
+  rand:
+    name: Test if rand version exists
+    kind: cargopackage
+    spec:
+      package: rand
+      version: 0.7.2
+

@@ -31,10 +31,10 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli",
+				Owner:      "updatecli",
+				Repository: "updatecli-dotnotexist",
 			},
 			wantResult: "",
 			wantErr:    true,
@@ -48,12 +48,16 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "~1",
+				},
 			},
-			wantResult: "1.0.1",
+			wantResult: "v1.33.0",
 			wantErr:    false,
 		},
 		{
@@ -65,13 +69,13 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "1.0.0",
+					Pattern: "~0",
 				},
 			},
 			wantResult: "",

@@ -30,11 +30,11 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Branch     string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli",
-				Branch:     "v1",
+				Owner:      "updatecli",
+				Repository: "updatecli-donotexist",
+				Branch:     "v2",
 			},
 			wantResult: false,
 			wantErr:    true,
@@ -48,28 +48,10 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Branch     string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-mirror",
-				Branch:     "main",
-			},
-			wantResult: true,
-			wantErr:    false,
-		},
-		{
-			name: "v1 should exist",
-			manifest: struct {
-				URL        string
-				Token      string
-				Owner      string
-				Repository string
-				Branch     string
-			}{
-				URL:        "try.gitea.io",
-				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
 				Branch:     "v1",
 			},
 			wantResult: true,

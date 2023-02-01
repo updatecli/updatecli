@@ -9,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
-// Target updates helm chart, it receives the default source value and a dryrun flag
+// Target updates helm chart, it receives the default source value and a "dry-run" flag
 // then return if it changed something or failed
 func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 	var out bytes.Buffer
@@ -43,7 +43,7 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 		return false, nil
 	}
 
-	// Update Chart.yaml file new Chart Version and appVersion if needed
+	// Update Chart.yaml file new Chart Version and the chart app version if needed
 	err = c.MetadataUpdate(c.spec.Name, dryRun)
 	if err != nil {
 		return false, err
@@ -67,7 +67,7 @@ func (c *Chart) Target(source string, dryRun bool) (changed bool, err error) {
 	return true, nil
 }
 
-// TargetFromSCM updates helm chart then push changed to a scm, it receives the default source value and dryrun flag
+// TargetFromSCM updates helm chart then push changed to a scm repository, it receives the default source value and "dry run" flag
 // then return if it changed something or failed
 func (c *Chart) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (
 	changed bool, files []string, message string, err error) {

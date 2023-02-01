@@ -30,10 +30,10 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli",
+				Owner:      "updatecli",
+				Repository: "updatecli-donotexist",
 			},
 			wantResult: false,
 			wantErr:    true,
@@ -47,16 +47,16 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-mirror",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
 			},
 			wantResult: false,
 			wantErr:    false,
 		},
 		{
-			name: "repository should exist with no tag 3.0.0",
+			name: "repository should exist with no tag v2.15.0",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -64,31 +64,31 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "try.gitea.io",
+				URL:        "codeberg.org",
 				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
-				Tag:        "3.0.0",
-			},
-			wantResult: false,
-			wantErr:    false,
-		},
-		{
-			name: "repository should exist with no release 1.0.0",
-			manifest: struct {
-				URL        string
-				Token      string
-				Owner      string
-				Repository string
-				Tag        string
-			}{
-				URL:        "try.gitea.io",
-				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli-test",
-				Tag:        "0.0.1",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
+				Tag:        "v2.15.0",
 			},
 			wantResult: true,
+			wantErr:    false,
+		},
+		{
+			name: "repository should exist with no release 0.0.35",
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+			}{
+				URL:        "codeberg.org",
+				Token:      "",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
+				Tag:        "0.0.35",
+			},
+			wantResult: false,
 			wantErr:    false,
 		},
 	}

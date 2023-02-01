@@ -1,17 +1,12 @@
 package fleet
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
 var (
@@ -26,14 +21,14 @@ type fleetHelmData struct {
 	Version string
 }
 
-// fleetMetada is the information that we need to retrieve from Helm chart files.
-type fleetMetada struct {
+// fleetMetadata is the information that we need to retrieve from Helm chart files.
+type fleetMetadata struct {
 	Helm fleetHelmData
 }
 
-func (f Fleet) discoverFleetDependenciesManifests() ([]config.Spec, error) {
+func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 
-	var manifests []config.Spec
+	var manifests [][]byte
 
 	foundFleetBundleFiles, err := searchFleetBundleFiles(
 		f.rootDir,
@@ -44,11 +39,12 @@ func (f Fleet) discoverFleetDependenciesManifests() ([]config.Spec, error) {
 	}
 
 	for _, foundFleetBundleFile := range foundFleetBundleFiles {
+		logrus.Debugf("parsing file %q", foundFleetBundleFile)
 
 		relativeFoundChartFile, err := filepath.Rel(f.rootDir, foundFleetBundleFile)
 		if err != nil {
 			// Let's try the next chart if one fail
-			logrus.Errorln(err)
+			logrus.Debugln(err)
 			continue
 		}
 
@@ -75,7 +71,8 @@ func (f Fleet) discoverFleetDependenciesManifests() ([]config.Spec, error) {
 
 		data, err := getFleetBundleData(foundFleetBundleFile)
 		if err != nil {
-			return nil, err
+			logrus.Debugln(err)
+			continue
 		}
 
 		if data == nil {
@@ -87,68 +84,50 @@ func (f Fleet) discoverFleetDependenciesManifests() ([]config.Spec, error) {
 			continue
 		}
 
-		sourceID := data.Helm.Chart
-		conditionID := data.Helm.Chart
-		targetID := data.Helm.Chart
-
-		manifestName := fmt.Sprintf("Bump Fleet Bundle %q for Helm Chart %q", chartName, data.Helm.Chart)
-
-		manifest := config.Spec{
-			Name: manifestName,
-			Sources: map[string]source.Config{
-				sourceID: {
-					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Get latest %q Helm Chart Version", data.Helm.Chart),
-						Kind: "helmchart",
-						Spec: helm.Spec{
-							Name: data.Helm.Chart,
-							URL:  data.Helm.Repo,
-						},
-					},
-				},
-			},
-			Conditions: map[string]condition.Config{
-				conditionID + "-name": {
-					DisableSourceInput: true,
-					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Ensure Helm chart name %q is specified", data.Helm.Chart),
-						Kind: "yaml",
-						Spec: yaml.Spec{
-							File:  relativeFoundChartFile,
-							Key:   "helm.chart",
-							Value: data.Helm.Chart,
-						},
-					},
-				},
-				conditionID + "-repository": {
-					DisableSourceInput: true,
-					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Ensure Helm chart repository %q is specified", data.Helm.Repo),
-						Kind: "yaml",
-						Spec: yaml.Spec{
-							File:  relativeFoundChartFile,
-							Key:   "helm.repo",
-							Value: data.Helm.Repo,
-						},
-					},
-				},
-			},
-			Targets: map[string]target.Config{
-				targetID: {
-					SourceID: sourceID,
-					ResourceConfig: resource.ResourceConfig{
-						Name: fmt.Sprintf("Bump chart %q from Fleet bundle %q", data.Helm.Chart, chartName),
-						Kind: "yaml",
-						Spec: helm.Spec{
-							File: relativeFoundChartFile,
-							Key:  "helm.version",
-						},
-					},
-				},
-			},
+		tmpl, err := template.New("manifest").Parse(manifestTemplate)
+		if err != nil {
+			logrus.Debugln(err)
+			continue
 		}
-		manifests = append(manifests, manifest)
 
+		params := struct {
+			ManifestName               string
+			ImageName                  string
+			ChartName                  string
+			ChartRepository            string
+			ConditionID                string
+			FleetBundle                string
+			SourceID                   string
+			SourceName                 string
+			SourceKind                 string
+			SourceVersionFilterKind    string
+			SourceVersionFilterPattern string
+			TargetID                   string
+			File                       string
+			ScmID                      string
+		}{
+			ManifestName:               fmt.Sprintf("Bump %q Fleet bundle for %q Helm chart", chartName, data.Helm.Chart),
+			ChartName:                  data.Helm.Chart,
+			ChartRepository:            data.Helm.Repo,
+			ConditionID:                data.Helm.Chart,
+			FleetBundle:                chartName,
+			SourceID:                   data.Helm.Chart,
+			SourceName:                 fmt.Sprintf("Get latest %q Helm chart version", data.Helm.Chart),
+			SourceKind:                 "helmchart",
+			SourceVersionFilterKind:    "semver",
+			SourceVersionFilterPattern: "*",
+			TargetID:                   data.Helm.Chart,
+			File:                       relativeFoundChartFile,
+			ScmID:                      f.scmID,
+		}
+
+		manifest := bytes.Buffer{}
+		if err := tmpl.Execute(&manifest, params); err != nil {
+			logrus.Debugln(err)
+			continue
+		}
+
+		manifests = append(manifests, manifest.Bytes())
 	}
 
 	return manifests, nil

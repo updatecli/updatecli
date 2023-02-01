@@ -4,26 +4,76 @@ scms:
   local:
     disabled: true
 
-targets:
+sources:
   1:
     name: Should be succeeding
     kind: shell
     spec:
-      command: "true"
+      command: "echo 1.2.3"
 
+# Commenting so e2e can success as it doesn't support failing case yet
 #  2:
+#    disablesourceinput: true
 #    name: Should be failing
 #    kind: shell
 #    spec:
 #      command: "false"
 #
 #  3:
+#    disablesourceinput: true
+#    name: Should trigger an error
+#    kind: shell
+#    spec:
+#      command: "/bin/donotexit"
+
+conditions:
+  1:
+    disablesourceinput: true
+    name: Should be succeeding
+    kind: shell
+    spec:
+      command: "true"
+
+# Commenting so e2e can success as it doesn't support failing case yet
+#  2:
+#    disablesourceinput: true
+#    name: Should be failing
+#    kind: shell
+#    spec:
+#      command: "false"
+#
+#  3:
+#    disablesourceinput: true
+#    name: Should trigger an error
+#    kind: shell
+#    spec:
+#      command: "/bin/donotexit"
+
+targets:
+  1:
+    disablesourceinput: true
+    name: Should be succeeding
+    kind: shell
+    spec:
+      command: "true"
+
+# Commenting so e2e can success as it doesn't support failing case yet
+#  2:
+#    disablesourceinput: true
+#    name: Should be failing
+#    kind: shell
+#    spec:
+#      command: "false"
+#
+#  3:
+#    disablesourceinput: true
 #    name: Should be failing
 #    kind: shell
 #    spec:
 #      command: "false"
 #
 #  4:
+#    disablesourceinput: true
 #    name: Should be skipped
 #    dependson:
 #      - "2"
@@ -32,6 +82,7 @@ targets:
 #      command: "false"
 
   5:
+    disablesourceinput: true
     name: Should be succeeding
     kind: shell
     dependson:

@@ -40,21 +40,11 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 		}
 	}
 
-	gr.foundVersion, err = gr.versionFilter.Search(versions)
-	if err != nil {
-		return false, err
-	}
-
-	value := gr.foundVersion.GetVersion()
-
-	if len(value) == 0 {
-		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, expectedValue)
-		return false, fmt.Errorf("%s Github Release %q not found", result.FAILURE, expectedValue)
-	}
-
-	if value == expectedValue {
-		logrus.Infof("%s Github Release version %q found", result.SUCCESS, value)
-		return true, nil
+	for _, version := range versions {
+		if version == expectedValue {
+			logrus.Infof("%s Github Release version %q found", result.SUCCESS, expectedValue)
+			return true, nil
+		}
 	}
 
 	return false, fmt.Errorf("%s Github Release %q not found", result.FAILURE, expectedValue)

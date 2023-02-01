@@ -7,10 +7,11 @@ import (
 
 var (
 	//Directory defines where updatecli will save temporary files like git clone.
-	Directory = path.Join(os.TempDir(), "updatecli")
+	Directory    = path.Join(os.TempDir(), "updatecli")
+	BinDirectory = path.Join(Directory, "bin")
 )
 
-// Clean will remove the main temporary directory used by updatecli.
+// Clean removes the Updatecli temporary root directory.
 func Clean() error {
 	err := os.RemoveAll(Directory)
 
@@ -21,7 +22,7 @@ func Clean() error {
 	return nil
 }
 
-// Create will create the main temporary directory used by updatecli
+// Create creates Updatecli temporary directory
 func Create() error {
 	if _, err := os.Stat(Directory); os.IsNotExist(err) {
 
@@ -31,4 +32,15 @@ func Create() error {
 		}
 	}
 	return nil
+}
+
+// InitBin creates a bin directory used by updatecli to store and execute command
+func InitBin() (string, error) {
+	if _, err := os.Stat(BinDirectory); os.IsNotExist(err) {
+		err := os.MkdirAll(BinDirectory, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+	return BinDirectory, nil
 }

@@ -4,45 +4,26 @@ sources:
   default:
     kind: gitea/release  
     spec:
-      url: "try.gitea.io"
-      owner: olblak
-      repository: updatecli-test
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
       versionfilter:
         kind: semver
-        pattern: "~0"
+        pattern: "~2"
         
 conditions:
   default:
     kind: gitea/release  
     spec:
-      url: "try.gitea.io"
-      owner: olblak
-      repository: updatecli-test
-      tag: "0.0.2"
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
+      tag: "v2.15.0"
   sourcedefault:
     kind: gitea/release  
     sourceid: default
     spec:
-      url: "try.gitea.io"
-      owner: olblak
-      repository: updatecli-test
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
 
-# Can't work on Github Action without providing credentials
-#targets:
-#  default:
-#    kind: gitea/release  
-#    spec:
-#      url: "try.gitea.io"
-#      owner: olblak
-#      repository: updatecli-test
-#      token: xxx
-#      tag: "0.0.1"
-#  sourcedefault:
-#    kind: gitea/release  
-#    sourceid: default
-#    spec:
-#      url: "try.gitea.io"
-#      owner: olblak
-#      repository: updatecli-test
-#      token: xxx
-#      tag: 1.0.1

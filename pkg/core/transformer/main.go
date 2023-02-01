@@ -16,7 +16,7 @@ var (
 	ErrEmptyInput = errors.New("validation error: transformer input is empty")
 )
 
-// Transformer holds a tranformer rule
+// Transformer holds a transformer rule
 type Transformer struct {
 	// AddPrefix adds a prefix to the transformer input value
 	AddPrefix           string `yaml:",omitempty"`

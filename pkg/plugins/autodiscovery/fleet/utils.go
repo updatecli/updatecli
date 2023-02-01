@@ -2,8 +2,8 @@ package fleet
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -45,27 +45,27 @@ func searchFleetBundleFiles(rootDir string, files []string) ([]string, error) {
 }
 
 // getFleetBundleData reads a Chart.yaml for information that could be automated
-func getFleetBundleData(filename string) (*fleetMetada, error) {
+func getFleetBundleData(filename string) (*fleetMetadata, error) {
 
-	var fleetData fleetMetada
+	var fleetData fleetMetadata
 
 	fleetBundleName := filepath.Base(filepath.Dir(filename))
 	logrus.Debugf("Fleet bundle %q found in %q", fleetBundleName, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
-		return &fleetMetada{}, err
+		return &fleetMetadata{}, err
 	}
 
 	v, err := os.Open(filename)
 	if err != nil {
-		return &fleetMetada{}, err
+		return &fleetMetadata{}, err
 	}
 
 	defer v.Close()
 
-	content, err := ioutil.ReadAll(v)
+	content, err := io.ReadAll(v)
 	if err != nil {
-		return &fleetMetada{}, err
+		return &fleetMetadata{}, err
 	}
 
 	err = goyaml.Unmarshal(content, &fleetData)

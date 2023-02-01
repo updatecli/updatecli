@@ -9,11 +9,6 @@ import (
 )
 
 var (
-	manifestCmd = &cobra.Command{
-		Use:   "manifest",
-		Short: "manifest executes specific manifest task such as upgrade",
-	}
-
 	manifestUpgradeInPlace bool
 
 	manifestUpgradeCmd = &cobra.Command{
