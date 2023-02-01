@@ -11,7 +11,7 @@ type InlineKeyChain struct {
 	// [A][S][C] Token specifies the cargo registry token to use for authentication.
 	Token string `yaml:",omitempty"`
 	// [A][S][C] HeaderFormat specifies the cargo registry header format to use for authentication (defaults to `Bearer`).
-	HeaderFormat string `yaml:"headerFormat,omitempty"`
+	HeaderFormat string `yaml:"headerformat,omitempty"`
 }
 
 type Registry struct {
