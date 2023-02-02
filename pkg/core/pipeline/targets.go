@@ -33,7 +33,7 @@ func (p *Pipeline) RunTargets() error {
 
 	for _, id := range sortedTargetsKeys {
 		// Update pipeline before each target run
-		err = p.Config.Update(p)
+		err = p.Update()
 		if err != nil {
 			return err
 		}
