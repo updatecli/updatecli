@@ -20,7 +20,7 @@ func (p *Pipeline) RunSources() error {
 	}
 
 	for _, id := range sortedSourcesKeys {
-		err = p.Config.Update(p)
+		err = p.Update()
 		if err != nil {
 			return err
 		}

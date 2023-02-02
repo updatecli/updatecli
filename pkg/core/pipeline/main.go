@@ -76,7 +76,6 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		if err != nil {
 			return err
 		}
-
 	}
 
 	// Init actions
@@ -269,4 +268,83 @@ func (p *Pipeline) String() string {
 	}
 
 	return result
+}
+
+func (p *Pipeline) Update() error {
+	err := p.Config.Update(p)
+	if err != nil {
+		return err
+	}
+
+	// Reset scm
+	for id, scmConfig := range p.Config.Spec.SCMs {
+		var err error
+
+		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
+		scmConfig := scmConfig
+
+		p.SCMs[id], err = scm.New(&scmConfig, p.Config.Spec.PipelineID)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Update scm pointer for each actions
+	for id := range p.Config.Spec.Actions {
+		action := p.Actions[id]
+
+		if len(p.Config.Spec.Actions[id].ScmID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Actions[id].ScmID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Actions[id].ScmID)
+			}
+
+			action.Scm = &sc
+		}
+		p.Actions[id] = action
+	}
+	// Update scm pointer for each condition
+	for id := range p.Config.Spec.Conditions {
+		condition := p.Conditions[id]
+
+		if len(p.Config.Spec.Conditions[id].SCMID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Conditions[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Conditions[id].SCMID)
+			}
+
+			condition.Scm = &sc.Handler
+		}
+		p.Conditions[id] = condition
+	}
+
+	// Update scm pointer for each sources
+	for id := range p.Config.Spec.Sources {
+		source := p.Sources[id]
+
+		if len(p.Config.Spec.Sources[id].SCMID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Sources[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Conditions[id].SCMID)
+			}
+			source.Scm = &sc.Handler
+		}
+		p.Sources[id] = source
+	}
+
+	// Update scm pointer for each target
+	for id := range p.Config.Spec.Targets {
+		target := p.Targets[id]
+
+		if len(p.Config.Spec.Targets[id].SCMID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Targets[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Targets[id].SCMID)
+			}
+			target.Scm = &sc.Handler
+		}
+		p.Targets[id] = target
+	}
+
+	return nil
 }

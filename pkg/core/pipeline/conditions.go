@@ -23,7 +23,7 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 
 	for _, id := range sortedConditionsKeys {
 		// Update pipeline before each condition run
-		err = p.Config.Update(p)
+		err = p.Update()
 		if err != nil {
 			globalResult = false
 			return globalResult, err
