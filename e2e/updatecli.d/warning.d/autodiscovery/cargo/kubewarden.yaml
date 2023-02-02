@@ -1,0 +1,13 @@
+name: "Cargo compose autodiscovery using git scm"
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli-test/kwctl.git
+      branch: "main"
+    
+autodiscovery:
+  scmid: default
+  crawlers:
+    cargo:
+
