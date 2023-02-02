@@ -40,12 +40,12 @@ type Spec struct {
 
 type Git struct {
 	spec             Spec
-	remoteBranch     string
+	HeadBranch       string
 	nativeGitHandler gitgeneric.GitHandler
 }
 
 // New returns a new git object
-func New(s Spec) (*Git, error) {
+func New(s Spec, pipelineID string) (*Git, error) {
 	var err error
 	if len(s.Directory) == 0 {
 		s.Directory, err = newDirectory(s.URL)
@@ -62,7 +62,7 @@ func New(s Spec) (*Git, error) {
 
 	return &Git{
 		spec:             s,
-		remoteBranch:     nativeGitHandler.SanitizeBranchName(s.Branch),
+		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
 		nativeGitHandler: nativeGitHandler,
 	}, nil
 }
