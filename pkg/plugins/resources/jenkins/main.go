@@ -13,9 +13,9 @@ import (
 // Spec defines a specification for a "jenkins" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// Defines the release name like latest or weekly
+	// [s][c] Defines the release name. It accepts "stable" or "weekly"
 	Release string `yaml:",omitempty"`
-	// Defines a specific release version (condition only)
+	// [s][c] Defines a specific release version (condition only)
 	Version string `yaml:",omitempty"`
 }
 
