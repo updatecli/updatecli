@@ -56,7 +56,7 @@ targets:
       file: '{{ .TargetFile }}'
       key: '{{ .TargetKey }}'
     sourceid: '{{ .SourceID }}'
-{{ end }}
+{{- end }}
 {{- if .TargetCargoCleanupEnabled }}
   Cargo.lock:
     name: Update Cargo lockfile Cargo.lock
