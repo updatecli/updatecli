@@ -33,7 +33,7 @@ sources:
       package: 'anyhow'
       versionFilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=1.0.1'
   anyhow-current-version:
     name: 'Get current "anyhow" crate version'
     kind: 'toml'
@@ -65,7 +65,7 @@ sources:
       package: 'rand'
       versionFilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=0.8.0'
   rand-current-version:
     name: 'Get current "rand" crate version'
     kind: 'toml'
@@ -97,7 +97,7 @@ sources:
       package: 'futures'
       versionFilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=0.3.21'
   futures-current-version:
     name: 'Get current "futures" crate version'
     kind: 'toml'
