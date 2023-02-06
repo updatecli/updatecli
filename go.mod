@@ -7,7 +7,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0
-	github.com/aws/aws-sdk-go v1.44.179
+	github.com/aws/aws-sdk-go v1.44.194
 	github.com/containerd/containerd v1.6.15 // indirect
 	github.com/fatih/color v1.14.1
 	github.com/go-git/go-git/v5 v5.5.2
