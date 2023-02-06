@@ -6,6 +6,7 @@ This document contains a none exhaustive list of organizations who adopted Updat
 We are adding public references of Updatecli but feel free to add your organization to the list, with a link to your organization website.
 
 * [Jenkins](https://github.com/jenkins-infra/charts/tree/master/updatecli)
+* [Elastic](https://github.com/elastic/apm-pipeline-library/blob/main/.ci/bump-golang.yml)
 * [Epinio](https://github.com/epinio/helm-charts/tree/main/updatecli)
 * [Asciidoctor](https://github.com/asciidoctor/docker-asciidoctor/tree/main/updatecli)
 * [SUSE Rancher](https://github.com/rancherlabs/updatecli-automation)
