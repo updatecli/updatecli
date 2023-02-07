@@ -15,6 +15,29 @@ archives:
       - completions/*
       - manpages/*
 
+aurs:
+  - homepage:  https://www.updatecli.io
+    description: Updatecli is a declarative dependency management command line tool.
+    maintainers:
+      - 'Olivier Vernin <olivier at vernin dot me>'
+    license: 'Apache-2.0'
+    private_key: '{{ .Env.AUR_KEY }}'
+    git_url: 'ssh://aur@aur.archlinux.org/updatecli-bin.git'
+    package: |-
+      # bin
+      install -Dm755 "./updatecli" "${pkgdir}/usr/bin/updatecli"
+      # license
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/updatecli/LICENSE"
+      # completions
+      mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
+      mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
+      mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
+      install -Dm644 "./completions/updatecli.bash" "${pkgdir}/usr/share/bash-completion/completions/updatecli"
+      install -Dm644 "./completions/updatecli.zsh" "${pkgdir}/usr/share/zsh/site-functions/_updatecli"
+      install -Dm644 "./completions/updatecli.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/updatecli.fish"
+      # man pages
+      install -Dm644 "./manpages/updatecli.1.gz" "${pkgdir}/usr/share/man/man1/updatecli.1.gz"
+
 before:
   hooks:
     - go mod tidy
