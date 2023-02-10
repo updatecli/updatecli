@@ -78,14 +78,13 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		originalContents[filePath] = y.files[filePath]
 
 		out := yaml.Node{}
-
 		err := yaml.Unmarshal([]byte(y.files[filePath]), &out)
 
 		if err != nil {
 			return false, files, message.String(), fmt.Errorf("cannot unmarshal content of file %s: %v", filePath, err)
 		}
 
-		keyFound, oldVersion, _ := replace(&out, strings.Split(y.spec.Key, "."), valueToWrite, 1)
+		keyFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToWrite, 1)
 
 		if !keyFound {
 			return false, files, message.String(), fmt.Errorf("%s cannot find key '%s' from file '%s'",
