@@ -24,6 +24,33 @@ func Test_Target(t *testing.T) {
 		dryRun           bool
 	}{
 		{
+			name: "Passing case with both complex input source and specified value (specified value should be used)",
+			spec: Spec{
+				File:  "test.yaml",
+				Key:   "annotations.github\\.owner",
+				Value: "obiwankenobi",
+			},
+			files: map[string]string{
+				"test.yaml": "",
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+annotations:
+    github.owner: olblak
+    repository: charts
+`,
+			},
+			// Note: the re-encoded file doesn't contain any separator anymore
+			wantedContents: map[string]string{
+				"test.yaml": `annotations:
+    github.owner: obiwankenobi
+    repository: charts
+`,
+			},
+			wantedResult: true,
+		},
+		{
 			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
 				File:  "test.yaml",

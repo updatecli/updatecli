@@ -22,6 +22,28 @@ func Test_Source(t *testing.T) {
 		isErrorWanted    bool
 	}{
 		{
+			name: "Passing Case with 'File' and complex key",
+			spec: Spec{
+				File: "test.yaml",
+				Key:  "annotations.github\\.owner",
+			},
+			files: map[string]string{
+				"test.yaml": "",
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+annotations:
+  github.owner: olblak
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": "olblak",
+			},
+			isResultWanted: true,
+		},
+		{
 			name: "Passing Case with 'File'",
 			spec: Spec{
 				File: "test.yaml",

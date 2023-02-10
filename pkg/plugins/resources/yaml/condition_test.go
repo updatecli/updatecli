@@ -23,6 +23,32 @@ func Test_Condition(t *testing.T) {
 		isErrorWanted    bool
 	}{
 		{
+			name: "Passing Case with complex key",
+			spec: Spec{
+				File: "test.yaml",
+				Key:  "annotations.github\\.owner",
+			},
+			files: map[string]string{
+				"test.yaml": "",
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+annotations:
+  github.owner: olblak
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+annotations:
+  github.owner: olblak
+  repository: charts
+`,
+			},
+			isResultWanted: true,
+		},
+		{
 			name: "Passing Case",
 			spec: Spec{
 				File: "test.yaml",
