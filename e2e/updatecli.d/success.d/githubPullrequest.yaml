@@ -8,6 +8,7 @@ scms:
       repository: updatecli
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       branch: main
+      headBranchSuffix: '-my-super-suffix'
 
 sources:
   jenkins:
