@@ -45,6 +45,8 @@ type Spec struct {
 	Force bool `yaml:",omitempty"`
 	// CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
 	CommitMessage commit.Commit `yaml:",omitempty"`
+	// Suffix for the Head Branch where the github repository is checked out to.
+	HeadBranchSuffix string `yaml:",omitempty"`
 }
 
 // Github contains settings to interact with Github
@@ -90,7 +92,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 
 	g := Github{
 		Spec:             s,
-		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v%v", pipelineID, s.HeadBranchSuffix)),
 		nativeGitHandler: nativeGitHandler,
 	}
 
@@ -159,6 +161,9 @@ func (gs *Spec) Merge(child interface{}) error {
 	}
 	if childGHSpec.GPG != (sign.GPGSpec{}) {
 		gs.GPG = childGHSpec.GPG
+	}
+	if childGHSpec.HeadBranchSuffix != "" {
+		gs.HeadBranchSuffix = childGHSpec.HeadBranchSuffix
 	}
 	if childGHSpec.Owner != "" {
 		gs.Owner = childGHSpec.Owner

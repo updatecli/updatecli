@@ -39,6 +39,8 @@ type Spec struct {
 	User string `yaml:",omitempty"`
 	// Branch specifies which Gitea repository branch to work on
 	Branch string `yaml:",omitempty"`
+	// Suffix for the Head Branch where the github repository is checked out to.
+	HeadBranchSuffix string `yaml:",omitempty"`
 }
 
 // Gitea contains information to interact with Gitea api
@@ -106,7 +108,7 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 	g := Gitea{
 		Spec:             s,
 		client:           c,
-		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v%v", pipelineID, s.HeadBranchSuffix)),
 		nativeGitHandler: nativeGitHandler,
 	}
 

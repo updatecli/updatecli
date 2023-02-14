@@ -193,6 +193,33 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			name:       "Custom Head branch",
+			pipelineID: "12345",
+			spec: Spec{
+				Branch:           "main",
+				Repository:       "updatecli",
+				Owner:            "updatecli",
+				Directory:        "/home/updatecli",
+				Username:         "joe",
+				Token:            "superSecretTOkenOfJoe",
+				URL:              "github.com",
+				HeadBranchSuffix: "my_branch",
+			},
+			want: Github{
+				HeadBranch: "updatecli_12345my_branch",
+				Spec: Spec{
+					Branch:           "main",
+					Repository:       "updatecli",
+					Owner:            "updatecli",
+					Directory:        "/home/updatecli",
+					Username:         "joe",
+					Token:            "superSecretTOkenOfJoe",
+					URL:              "https://github.com",
+					HeadBranchSuffix: "my_branch",
+				},
+			},
+		},
+		{
 			name:       "Validation Error (missing token)",
 			pipelineID: "12345",
 			spec: Spec{
