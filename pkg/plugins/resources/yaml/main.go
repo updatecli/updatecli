@@ -192,8 +192,6 @@ func replace(entry *yaml.Node, keys []string, version string, columnRef int) (fo
 
 				keys = keys[1:]
 
-				column = entry.Content[0].Content[positionIndex].Column
-
 				valueFound, oldVersion, column = replace(entry.Content[0].Content[positionIndex],
 					keys,
 					version,

@@ -204,10 +204,7 @@ func (g *AutoDiscovery) Run() ([][]byte, error) {
 
 		logrus.Printf("Manifest detected: %d\n", len(discoveredManifests))
 		if len(discoveredManifests) > 0 {
-
-			for i := range discoveredManifests {
-				totalDiscoveredManifests = append(totalDiscoveredManifests, discoveredManifests[i])
-			}
+			totalDiscoveredManifests = append(totalDiscoveredManifests, discoveredManifests...)
 		}
 	}
 
