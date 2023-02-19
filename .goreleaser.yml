@@ -20,6 +20,7 @@ aurs:
     description: A declarative dependency management command line tool.
     maintainers:
       - 'Olivier Vernin <olivier at vernin dot me>'
+      - 'Jonathan Neidel <aur at jneidel dot com>'
     license: 'Apache'
     private_key: '{{ .Env.AUR_KEY }}'
     git_url: 'ssh://aur@aur.archlinux.org/updatecli-bin.git'
