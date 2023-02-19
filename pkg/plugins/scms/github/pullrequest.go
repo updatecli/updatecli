@@ -155,9 +155,7 @@ func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) erro
 	}
 
 	if matchingBranch {
-		logrus.Debugf("No changes detected between branches %q and %q, skipping pullrequest creation",
-			p.gh.HeadBranch,
-			p.gh.Spec.Branch)
+		logrus.Debugf("GitHub pullrequest not needed")
 
 		return nil
 	}

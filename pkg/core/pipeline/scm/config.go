@@ -47,7 +47,6 @@ func (c Config) Validate() error {
 		// Ensure kind is lowercase
 		if c.Kind != strings.ToLower(c.Kind) {
 			logrus.Warningf("The specified value for the parameter 'kind' (%q) should be lowercase", c.Kind)
-			c.Kind = strings.ToLower(c.Kind)
 		}
 		if c.Spec == nil {
 			validationErrs = append(validationErrs, "missing value for parameter 'value'")
@@ -108,7 +107,7 @@ func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.
 		currentGhSpec, ok := c.Spec.(github.Spec)
 		if c.Spec != nil {
 			if !ok {
-				return fmt.Errorf("the SCM discovered in the directory %q has a different type ('github') than the specified SCM configuration %q.", workingDir, configName)
+				return fmt.Errorf("the SCM discovered in the directory %q has a different type ('github') than the specified SCM configuration %q", workingDir, configName)
 			}
 			if err := autoguessSpec.Merge(currentGhSpec); err != nil {
 				return err
@@ -133,7 +132,7 @@ func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.
 
 		if c.Spec != nil {
 			if !ok {
-				return fmt.Errorf("the SCM discovered in the directory %q has a different type ('git') than the specified SCM configuration %q.", workingDir, configName)
+				return fmt.Errorf("the SCM discovered in the directory %q has a different type ('git') than the specified SCM configuration %q", workingDir, configName)
 			}
 			if err := autoguessSpec.Merge(currentGitSpec); err != nil {
 				return err

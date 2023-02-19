@@ -124,6 +124,14 @@ func (g *Git) PushBranch(branch string) error {
 	return nil
 }
 
+// IsRemoteBranchUpToDate checks if the working branch should be push to remote
+func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
+	return g.nativeGitHandler.IsLocalBranchPublished(
+		g.spec.Branch,
+		g.remoteBranch,
+		g.GetDirectory())
+}
+
 // PushTag push tags
 func (g *Git) PushTag(tag string) error {
 

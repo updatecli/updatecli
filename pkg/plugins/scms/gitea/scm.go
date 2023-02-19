@@ -81,6 +81,15 @@ func (g *Gitea) Add(files []string) error {
 	return nil
 }
 
+// IsRemoteBranchUpToDate checks if the branche reference name is published on
+// on the default remote
+func (g *Gitea) IsRemoteBranchUpToDate() (bool, error) {
+	return g.nativeGitHandler.IsLocalBranchPublished(
+		g.Spec.Branch,
+		g.HeadBranch,
+		g.GetDirectory())
+}
+
 // Push run `git push` to the corresponding Gitea remote branch if not already created.
 func (g *Gitea) Push() error {
 
