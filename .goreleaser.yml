@@ -17,7 +17,7 @@ archives:
 
 aurs:
   - homepage:  https://www.updatecli.io
-    description: Updatecli is a declarative dependency management command line tool.
+    description: A declarative dependency management command line tool.
     maintainers:
       - 'Olivier Vernin <olivier at vernin dot me>'
     license: 'Apache-2.0'
