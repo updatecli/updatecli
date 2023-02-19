@@ -88,6 +88,8 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 	return g.nativeGitHandler.IsLocalBranchPublished(
 		g.Spec.Branch,
 		g.HeadBranch,
+		g.Spec.Username,
+		g.Spec.Token,
 		g.GetDirectory())
 }
 

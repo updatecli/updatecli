@@ -31,7 +31,7 @@ type GitHandler interface {
 	Commit(user, email, message, workingDir string, signingKey string, passprase string) error
 	GetChangedFiles(workingDir string) ([]string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)
-	IsLocalBranchPublished(baseBranch, workingBranch, workingDir string) (bool, error)
+	IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
 	NewBranch(branch, workingDir string) (bool, error)
 	Push(username string, password string, workingDir string, force bool) error
@@ -65,9 +65,14 @@ local working branch == local base branch == remote working branch
 
 returns true if both the remote and local reference is similar.
 */
-func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, workingDir string) (bool, error) {
+func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error) {
 
 	logrus.Debugln("Check if working branch is up to date with remote")
+
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything excepted an empty string
+		Password: password,
+	}
 
 	matching, err := g.IsSimilarBranch(baseBranch, workingBranch, workingDir)
 	if err != nil {
@@ -88,7 +93,12 @@ func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, workingDir stri
 		return false, err
 	}
 
-	refs, err := rem.List(&git.ListOptions{})
+	listOptions := git.ListOptions{}
+	if !isAuthEmpty(&auth) {
+		listOptions.Auth = &auth
+	}
+
+	refs, err := rem.List(&listOptions)
 	if err != nil {
 		log.Fatal(err)
 	}

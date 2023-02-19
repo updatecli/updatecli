@@ -129,6 +129,8 @@ func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
 	return g.nativeGitHandler.IsLocalBranchPublished(
 		g.spec.Branch,
 		g.remoteBranch,
+		g.spec.Username,
+		g.spec.Password,
 		g.GetDirectory())
 }
 
