@@ -25,7 +25,7 @@ aurs:
     git_url: 'ssh://aur@aur.archlinux.org/updatecli-bin.git'
     package: |-
       # bin
-      install -Dm755 "./updatecli" "${pkgdir}/usr/bin/updatecli"
+      install -Dm755 "./updatecli" "${pkgdir}/usr/bin/${pkgname}"
       # license
       install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
       # completions
