@@ -27,7 +27,7 @@ aurs:
       # bin
       install -Dm755 "./updatecli" "${pkgdir}/usr/bin/updatecli"
       # license
-      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/updatecli/LICENSE"
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
       # completions
       mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
       mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
