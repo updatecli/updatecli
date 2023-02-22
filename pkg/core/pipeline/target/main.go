@@ -139,7 +139,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 			return nil
 		}
 
-		logrus.Infof("some changes are yet to be published")
+		logrus.Infof("\n\u26A0 While nothing change in the current pipeline run, according to the git history, some commits will be pushed\n")
 	}
 
 	t.Result = result.ATTENTION
