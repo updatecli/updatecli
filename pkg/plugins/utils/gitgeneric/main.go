@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -47,33 +46,39 @@ type GoGit struct {
 }
 
 /*
-IsLocalBranchPublished checks if the local working branch, contains change that should be published.
+IsLocalBranchPublished checks if the local working branch, contains any changes which should be published.
 
   - `git diff` is not yet supported by the go-git library.
-    https://github.com/go-git/go-git/issues/561
+    https://github.com/go-git/go-git/issues/36
 
-For it retrieve the latest branch reference for the local working branch, the base branch, and the remote working branch if it exists.
+We retrieve:
+  - the latest commit from the local working branch
+  - the latest commit from the base branch
+  - the latest commit from the remote working branch if it exists.
 
-local working branch == local base branch and no remote working branch
-=> This means that base branch and working are similar so nothing need to be push
+Based on those three information we decide if local changes should be published.
 
-local working branch == local base branch != remote working branch
+If local working branch == local base branch and no remote working branch
+=> This means that base branch and working are similar so nothing need to be pushed
+
+If local working branch == local base branch != remote working branch
 => This means that at some point the remote branch diverge from base branch
 
-local working branch == local base branch == remote working branch
+If local working branch == local base branch == remote working branch
 => This means that everything is up to date
 
-returns true if both the remote and local reference is similar.
+returns true if both the remote and local reference are similar.
 */
 func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error) {
 
-	logrus.Debugln("Check if working branch is up to date with remote")
+	logrus.Debugln("Checking if local changes have been done that should be published")
 
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything excepted an empty string
 		Password: password,
 	}
 
+	// Check if base branch and working branch have the same reference
 	matching, err := g.IsSimilarBranch(baseBranch, workingBranch, workingDir)
 	if err != nil {
 		return false, err
@@ -84,12 +89,11 @@ func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, passw
 		return false, err
 	}
 
-	branchReferenceName := workingBranch
-
+	workingBranchReferenceName := workingBranch
 	//
 	rem, err := gitRepository.Remote(DefaultRemoteReferenceName)
 	if err != nil {
-		logrus.Errorf("reference %q - %s", branchReferenceName, err)
+		logrus.Errorf("reference %q - %s", workingBranchReferenceName, err)
 		return false, err
 	}
 
@@ -98,27 +102,51 @@ func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, passw
 		listOptions.Auth = &auth
 	}
 
-	refs, err := rem.List(&listOptions)
+	remoteRefs, err := rem.List(&listOptions)
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 
-	for _, ref := range refs {
-		if ref.Name().IsBranch() {
-			if ref.Name().Short() == branchReferenceName {
-				refA, err := gitRepository.Reference(plumbing.NewBranchReferenceName(branchReferenceName), true)
-				if err != nil {
-					logrus.Errorf("reference %q - %s", branchReferenceName, err)
-					return false, err
-				}
-				return ref.Hash().String() == refA.Hash().String(), nil
+	var workingBranchRef *plumbing.Reference
+	var remoteRef *plumbing.Reference
+
+	workingBranchRef, err = gitRepository.Reference(plumbing.NewBranchReferenceName(workingBranchReferenceName), true)
+	if err != nil {
+		return false, err
+	}
+
+	// Looking for remote branch hash
+	for id := range remoteRefs {
+		if remoteRefs[id].Name().IsBranch() {
+			// We are looking for the remote branch matching the local one
+			if remoteRefs[id].Name().Short() != workingBranchReferenceName {
+				continue
 			}
+
+			remoteRef = remoteRefs[id]
+
+			// Local branch matches the remote one which means that local one is already
+			// up to date. Nothing else to do
+			if remoteRef.Hash().String() == workingBranchRef.Hash().String() {
+				return true, nil
+			}
+			break
 		}
 	}
 
-	if matching {
+	if remoteRef == nil && matching {
+		/*
+			if there is no remote branch, and the local working
+			branch equal the base branch then it means that nothing changed
+		*/
 		return true, nil
 	}
+
+	/*
+		There is no way to git log between two branches at the moment using go-git
+		https://github.com/go-git/go-git/issues/69
+	*/
+
 	return false, nil
 }
 
