@@ -21,6 +21,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+
 	"github.com/updatecli/updatecli/pkg/plugins/utils/truncate"
 )
 
@@ -89,6 +90,8 @@ type ActionSpec struct {
 	MergeMethod string `yaml:",omitempty"`
 	// Specifies to use the Pull Request title as commit message when using auto merge, only works for "squash" or "rebase"
 	UseTitleForAutoMerge bool `yaml:",omitempty"`
+	// Specifies if a Pull Request should be sent to the upstream of a fork.
+	Upstream bool `yaml:",omitempty"`
 }
 
 type PullRequest struct {
@@ -98,6 +101,7 @@ type PullRequest struct {
 	Title             string
 	spec              ActionSpec
 	remotePullRequest PullRequestApi
+	repository        *Repository
 }
 
 // isMergeMethodValid ensure that we specified a valid merge method.
@@ -144,6 +148,13 @@ func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) erro
 	p.Report = pipelineReport
 	p.Title = title
 
+	repository, err := p.gh.queryRepository()
+	if err != nil {
+		return err
+	}
+
+	p.repository = repository
+
 	// Check if they are changes that need to be published otherwise exit
 	matchingBranch, err := p.gh.nativeGitHandler.IsSimilarBranch(
 		p.gh.HeadBranch,
@@ -176,6 +187,11 @@ func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) erro
 
 	// Once the remote Pull Request exists, we can than update it with additional information such as
 	// tags,assignee,etc.
+
+	if p.spec.Upstream {
+		logrus.Debugf("Skipping update of upstream pullrequest")
+		return nil
+	}
 
 	err = p.updatePullRequest()
 	if err != nil {
@@ -264,6 +280,7 @@ func (p *PullRequest) updatePullRequest() error {
 	labelsID := []githubv4.ID{}
 	repositoryLabels, err := p.gh.getRepositoryLabels()
 	if err != nil {
+		logrus.Debugf("Error fetching repository labels: %s", err.Error())
 		return err
 	}
 
@@ -278,6 +295,7 @@ func (p *PullRequest) updatePullRequest() error {
 
 	remotePRLabels, err := p.GetPullRequestLabelsInformation()
 	if err != nil {
+		logrus.Debugf("Error fetching labels information: %s", err.Error())
 		return err
 	}
 
@@ -287,7 +305,7 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	input := githubv4.UpdatePullRequestInput{
-		PullRequestID: githubv4.String(p.remotePullRequest.ID),
+		PullRequestID: githubv4.ID(p.remotePullRequest.ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
 		LabelIDs:      &labelsID,
@@ -295,6 +313,7 @@ func (p *PullRequest) updatePullRequest() error {
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
+		logrus.Debugf("Error updating pull-request: %s", err.Error())
 		return err
 	}
 
@@ -350,23 +369,24 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 func (p *PullRequest) OpenPullRequest() error {
 
 	/*
-		mutation($input: CreatePullRequestInput!){
-		  createPullRequest(input:$input){
-			pullRequest{
-			  url
-			}
-		  }
-		}
+	   mutation($input: CreatePullRequestInput!){
+	     createPullRequest(input:$input){
+	       pullRequest{
+	         url
+	       }
+	     }
+	   }
 
-		{
-		  "input":{
-			"baseRefName": "x" ,
-			"repositoryId":"y",
-			"headRefName": "z",
-			"title",
-			"body",
-		  }
-		}
+	   {
+	     "input":{
+	       "baseRefName": "x" ,
+	       "repositoryId":"y",
+	       "headRefName": "z",
+	       "headRepositoryId": "",
+	       "title",
+	       "body",
+	     }
+	   }
 
 
 	*/
@@ -376,19 +396,14 @@ func (p *PullRequest) OpenPullRequest() error {
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
-	repositoryID, err := p.gh.queryRepositoryID()
-	if err != nil {
-		return err
-	}
-
 	bodyPR, err := p.generatePullRequestBody()
 	if err != nil {
 		return err
 	}
 
 	input := githubv4.CreatePullRequestInput{
+		RepositoryID:        githubv4.String(p.repository.ID),
 		BaseRefName:         githubv4.String(p.gh.Spec.Branch),
-		RepositoryID:        githubv4.String(repositoryID),
 		HeadRefName:         githubv4.String(p.gh.HeadBranch),
 		Title:               githubv4.String(p.Title),
 		Body:                githubv4.NewString(githubv4.String(bodyPR)),
@@ -396,8 +411,16 @@ func (p *PullRequest) OpenPullRequest() error {
 		Draft:               githubv4.NewBoolean(githubv4.Boolean(p.spec.Draft)),
 	}
 
+	if p.spec.Upstream {
+		input.RepositoryID = githubv4.String(p.repository.ParentID)
+		input.HeadRepositoryID = githubv4.NewID(p.repository.ID)
+	}
+
+	logrus.Debugf("Opening pull-request against repo %s", input.RepositoryID)
+
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
+		logrus.Infof("\nError creating pull request:\n\n\t%s\n\n", err.Error())
 		return err
 	}
 
@@ -467,22 +490,32 @@ func (p *PullRequest) getRemotePullRequest() error {
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
+	owner := githubv4.String(p.repository.Owner)
+	name := githubv4.String(p.repository.Name)
+
+	if p.spec.Upstream {
+		owner = githubv4.String(p.repository.ParentOwner)
+		name = githubv4.String(p.repository.ParentName)
+	}
+
 	variables := map[string]interface{}{
-		"owner":       githubv4.String(p.gh.Spec.Owner),
-		"name":        githubv4.String(p.gh.Spec.Repository),
+		"owner":       owner,
+		"name":        name,
 		"baseRefName": githubv4.String(p.gh.Spec.Branch),
 		"headRefName": githubv4.String(p.gh.HeadBranch),
 	}
 
 	err := p.gh.client.Query(context.Background(), &query, variables)
-
 	if err != nil {
+		logrus.Debugf("Error getting existing pull-request: %s", err.Error())
 		return err
 	}
 
 	if len(query.Repository.PullRequests.Nodes) > 0 {
 		p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
-		return nil
+		logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.ID)
+	} else {
+		logrus.Debugf("No existing pull-request found in repo: %s/%s", owner, name)
 	}
 
 	return nil
@@ -518,9 +551,17 @@ func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, e
 		  }
 	*/
 
+	owner := githubv4.String(p.repository.Owner)
+	repo := githubv4.String(p.repository.Name)
+
+	if p.spec.Upstream {
+		owner = githubv4.String(p.repository.ParentOwner)
+		repo = githubv4.String(p.repository.ParentName)
+	}
+
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(p.gh.Spec.Owner),
-		"repository": githubv4.String(p.gh.Spec.Repository),
+		"owner":      owner,
+		"repository": repo,
 		"number":     githubv4.Int(p.remotePullRequest.Number),
 		"before":     (*githubv4.String)(nil),
 	}

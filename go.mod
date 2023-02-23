@@ -20,8 +20,8 @@ require (
 	github.com/moby/buildkit v0.10.6
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/shurcooL/githubv4 v0.0.0-20220115235240-a14260e6f8a2
-	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a //indirect
+	github.com/shurcooL/githubv4 v0.0.0-20230215024106-420ad0987b9b
+	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29 //indirect
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
