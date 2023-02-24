@@ -22,7 +22,9 @@ func (g *Git) Checkout() error {
 		g.spec.Password,
 		g.spec.Branch,
 		g.remoteBranch,
-		g.GetDirectory())
+		g.GetDirectory(),
+		false)
+
 	if err != nil {
 		return err
 	}
@@ -58,7 +60,14 @@ func (g *Git) Clone() (string, error) {
 	}
 
 	if len(g.remoteBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = g.Checkout()
+		err := g.nativeGitHandler.Checkout(
+			g.spec.Username,
+			g.spec.Password,
+			g.spec.Branch,
+			g.remoteBranch,
+			g.GetDirectory(),
+			true)
+
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 			return "", err

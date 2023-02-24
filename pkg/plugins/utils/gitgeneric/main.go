@@ -25,7 +25,7 @@ const (
 
 type GitHandler interface {
 	Add(files []string, workingDir string) error
-	Checkout(username, password, branch, remoteBranch, workingDir string) error
+	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error
 	Clone(username, password, URL, workingDir string) error
 	Commit(user, email, message, workingDir string, signingKey string, passprase string) error
 	GetChangedFiles(workingDir string) ([]string, error)
@@ -245,7 +245,7 @@ func (g GoGit) Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir string) error {
+func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error {
 
 	logrus.Debugf("stage: git-checkout\n\n")
 
@@ -263,6 +263,18 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 	if err != nil {
 		logrus.Debugln(err)
 		return err
+	}
+
+	// Retrieve local branch
+	head, err := r.Head()
+	if err != nil {
+		return err
+	}
+
+	if head.Name().IsBranch() {
+		if head.Name().Short() == branch {
+			return nil
+		}
 	}
 
 	b := bytes.Buffer{}
@@ -374,14 +386,16 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 			return err
 		}
 
-		err = w.Reset(&git.ResetOptions{
-			Commit: remoteRef.Hash(),
-			Mode:   git.HardReset,
-		})
+		if forceReset {
+			err = w.Reset(&git.ResetOptions{
+				Commit: remoteRef.Hash(),
+				Mode:   git.HardReset,
+			})
 
-		if err != nil {
-			logrus.Debugln(err)
-			return err
+			if err != nil {
+				logrus.Debugln(err)
+				return err
+			}
 		}
 
 		err = w.Checkout(&git.CheckoutOptions{
