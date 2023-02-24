@@ -265,17 +265,17 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		return err
 	}
 
-	// Retrieve local branch
-	head, err := r.Head()
-	if err != nil {
-		return err
-	}
+	//// Retrieve local branch
+	//head, err := r.Head()
+	//if err != nil {
+	//	return err
+	//}
 
-	if head.Name().IsBranch() {
-		if head.Name().Short() == branch {
-			return nil
-		}
-	}
+	//if head.Name().IsBranch() {
+	//	if head.Name().Short() == branch {
+	//		return nil
+	//	}
+	//}
 
 	b := bytes.Buffer{}
 
@@ -314,45 +314,13 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		Force:  true,
 	})
 
-	if err == plumbing.ErrReferenceNotFound {
-		// Checkout source branch without creating it yet
-
-		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
-
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(branch),
-			Create: false,
-			Keep:   false,
-			Force:  true,
-		})
-
-		if err != nil {
-			logrus.Debugf("branch: '%v' - \n\t%v", branch, err)
-			return err
-		}
-
-		// Checkout locale branch without creating it yet
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(remoteBranch),
-			Create: true,
-			Keep:   false,
-			Force:  true,
-		})
-
-		logrus.Debugf("branch %q successfully created", remoteBranch)
-
-		if err != nil {
-			return err
-		}
-
-	} else if err != plumbing.ErrReferenceNotFound && err != nil {
-		logrus.Debugln(err)
-		return err
-	} else {
-
-		// Means that a local branch named remoteBranch already exist
-		// so we want to be sure that the local branch is
-		// aligned with the remote one.
+	switch err {
+	case nil:
+		/*
+			Means that a local branch named remoteBranch already exist
+			so we want to be sure that the local branch is
+			aligned with the remote one.
+		*/
 
 		remote, err := r.Remote(DefaultRemoteReferenceName)
 		if err != nil {
@@ -410,6 +378,42 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 			return err
 		}
 
+	case plumbing.ErrReferenceNotFound:
+		/*
+			Checkout source branch without creating it yet
+		*/
+
+		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
+
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(branch),
+			Create: false,
+			Keep:   false,
+			Force:  true,
+		})
+
+		if err != nil {
+			logrus.Debugf("branch: '%v' - \n\t%v", branch, err)
+			return err
+		}
+
+		// Checkout locale branch without creating it yet
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(remoteBranch),
+			Create: true,
+			Keep:   false,
+			Force:  true,
+		})
+
+		logrus.Debugf("branch %q successfully created", remoteBranch)
+
+		if err != nil {
+			return err
+		}
+
+	default:
+		logrus.Debugln(err)
+		return err
 	}
 
 	return nil
