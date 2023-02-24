@@ -3,6 +3,8 @@ package github
 import (
 	"net/url"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 // GetDirectory returns the local git repository path.
@@ -33,6 +35,7 @@ func (g *Github) Clone() (string, error) {
 	err = g.nativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
 
 	if err != nil {
+		logrus.Errorf("failed cloning GitHub repositotory %q", URL)
 		return "", err
 	}
 
@@ -47,6 +50,7 @@ func (g *Github) Clone() (string, error) {
 	}
 
 	if err != nil {
+		logrus.Errorf("initial git checkout failed for GitHub repository %q", URL)
 		return "", err
 	}
 

@@ -55,7 +55,7 @@ func (g *Git) Clone() (string, error) {
 		g.GetDirectory())
 
 	if err != nil {
-		logrus.Errorf("err - %s", err)
+		logrus.Errorf("failed cloning git repository %q - %s", g.spec.URL, err)
 		return "", err
 	}
 
@@ -69,7 +69,7 @@ func (g *Git) Clone() (string, error) {
 			true)
 
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			logrus.Errorf("initial git checkout failed for repository %s - %s", g.spec.URL, err)
 			return "", err
 		}
 	}
