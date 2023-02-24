@@ -127,7 +127,7 @@ func (p *Pipeline) RunActions() error {
 		}
 		action.Changelog = changelog
 
-		if p.Options.Target.DryRun {
+		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
 
