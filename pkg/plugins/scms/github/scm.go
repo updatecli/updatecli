@@ -37,7 +37,13 @@ func (g *Github) Clone() (string, error) {
 	}
 
 	if len(g.HeadBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = g.nativeGitHandler.Checkout(g.Spec.Username, g.Spec.Token, g.Spec.Branch, g.HeadBranch, g.GetDirectory())
+		err = g.nativeGitHandler.Checkout(
+			g.Spec.Username,
+			g.Spec.Token,
+			g.Spec.Branch,
+			g.HeadBranch,
+			g.GetDirectory(),
+			true)
 	}
 
 	if err != nil {
@@ -65,7 +71,13 @@ func (g *Github) Commit(message string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() error {
-	err := g.nativeGitHandler.Checkout(g.Spec.Username, g.Spec.Token, g.Spec.Branch, g.HeadBranch, g.Spec.Directory)
+	err := g.nativeGitHandler.Checkout(
+		g.Spec.Username,
+		g.Spec.Token,
+		g.Spec.Branch,
+		g.HeadBranch,
+		g.Spec.Directory,
+		false)
 	if err != nil {
 		return err
 	}
