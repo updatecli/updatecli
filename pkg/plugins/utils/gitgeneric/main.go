@@ -154,6 +154,18 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		return err
 	}
 
+	// Retrieve local branch
+	head, err := r.Head()
+	if err != nil {
+		return err
+	}
+
+	if head.Name().IsBranch() {
+		if head.Name().Short() == branch {
+			return nil
+		}
+	}
+
 	b := bytes.Buffer{}
 
 	auth := transportHttp.BasicAuth{
