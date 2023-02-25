@@ -3,6 +3,8 @@ package github
 import (
 	"net/url"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 // GetDirectory returns the local git repository path.
@@ -33,6 +35,7 @@ func (g *Github) Clone() (string, error) {
 	err = g.nativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
 
 	if err != nil {
+		logrus.Errorf("failed cloning GitHub repositotory %q", URL)
 		return "", err
 	}
 
@@ -47,6 +50,7 @@ func (g *Github) Clone() (string, error) {
 	}
 
 	if err != nil {
+		logrus.Errorf("initial git checkout failed for GitHub repository %q", URL)
 		return "", err
 	}
 
@@ -92,6 +96,17 @@ func (g *Github) Add(files []string) error {
 		return err
 	}
 	return nil
+}
+
+// IsRemoteBranchUpToDate checks if the branche reference name is published on
+// on the default remote
+func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
+	return g.nativeGitHandler.IsLocalBranchPublished(
+		g.Spec.Branch,
+		g.HeadBranch,
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory())
 }
 
 // Push run `git push` on the Github remote branch if not already created.

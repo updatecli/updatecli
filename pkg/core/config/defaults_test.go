@@ -159,7 +159,7 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 					},
 				},
 			},
-			wantErr: fmt.Errorf("the SCM discovered in the directory \"\" has a different type ('git') than the specified SCM configuration \"local\"."),
+			wantErr: fmt.Errorf("the SCM discovered in the directory \"\" has a different type ('git') than the specified SCM configuration \"local\""),
 		},
 	}
 	for _, tt := range tests {

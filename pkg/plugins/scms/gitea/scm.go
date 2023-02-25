@@ -3,6 +3,8 @@ package gitea
 import (
 	"fmt"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 // GetDirectory returns the local git repository path.
@@ -32,6 +34,7 @@ func (g *Gitea) Clone() (string, error) {
 	err := g.nativeGitHandler.Clone(g.Spec.User, g.Spec.Token, URL, g.GetDirectory())
 
 	if err != nil {
+		logrus.Errorf("failed cloning Gitea repository %q", URL)
 		return "", err
 	}
 
@@ -46,6 +49,7 @@ func (g *Gitea) Clone() (string, error) {
 	}
 
 	if err != nil {
+		logrus.Errorf("initial Gitea checkout failed for repository %q", URL)
 		return "", err
 	}
 
@@ -91,6 +95,17 @@ func (g *Gitea) Add(files []string) error {
 		return err
 	}
 	return nil
+}
+
+// IsRemoteBranchUpToDate checks if the branche reference name is published on
+// on the default remote
+func (g *Gitea) IsRemoteBranchUpToDate() (bool, error) {
+	return g.nativeGitHandler.IsLocalBranchPublished(
+		g.Spec.Branch,
+		g.HeadBranch,
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory())
 }
 
 // Push run `git push` to the corresponding Gitea remote branch if not already created.
