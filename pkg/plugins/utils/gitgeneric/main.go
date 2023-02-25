@@ -19,6 +19,10 @@ import (
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+const (
+	DefaultRemoteReferenceName = "origin"
+)
+
 type GitHandler interface {
 	Add(files []string, workingDir string) error
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error
@@ -26,6 +30,7 @@ type GitHandler interface {
 	Commit(user, email, message, workingDir string, signingKey string, passprase string) error
 	GetChangedFiles(workingDir string) ([]string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)
+	IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
 	NewBranch(branch, workingDir string) (bool, error)
 	Push(username string, password string, workingDir string, force bool) error
@@ -38,6 +43,111 @@ type GitHandler interface {
 }
 
 type GoGit struct {
+}
+
+/*
+IsLocalBranchPublished checks if the local working branch, contains any changes which should be published.
+
+  - `git diff` is not yet supported by the go-git library.
+    https://github.com/go-git/go-git/issues/36
+
+We retrieve:
+  - the latest commit from the local working branch
+  - the latest commit from the base branch
+  - the latest commit from the remote working branch if it exists.
+
+Based on those three information we decide if local changes should be published.
+
+If local working branch == local base branch and no remote working branch
+=> This means that base branch and working are similar so nothing need to be pushed
+
+If local working branch == local base branch != remote working branch
+=> This means that at some point the remote branch diverge from base branch
+
+If local working branch == local base branch == remote working branch
+=> This means that everything is up to date
+
+returns true if both the remote and local reference are similar.
+*/
+func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error) {
+
+	logrus.Debugln("Checking if local changes have been done that should be published")
+
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything excepted an empty string
+		Password: password,
+	}
+
+	// Check if base branch and working branch have the same reference
+	matching, err := g.IsSimilarBranch(baseBranch, workingBranch, workingDir)
+	if err != nil {
+		return false, err
+	}
+
+	gitRepository, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return false, err
+	}
+
+	workingBranchReferenceName := workingBranch
+	//
+	rem, err := gitRepository.Remote(DefaultRemoteReferenceName)
+	if err != nil {
+		logrus.Errorf("reference %q - %s", workingBranchReferenceName, err)
+		return false, err
+	}
+
+	listOptions := git.ListOptions{}
+	if !isAuthEmpty(&auth) {
+		listOptions.Auth = &auth
+	}
+
+	remoteRefs, err := rem.List(&listOptions)
+	if err != nil {
+		return false, err
+	}
+
+	var workingBranchRef *plumbing.Reference
+	var remoteRef *plumbing.Reference
+
+	workingBranchRef, err = gitRepository.Reference(plumbing.NewBranchReferenceName(workingBranchReferenceName), true)
+	if err != nil {
+		return false, err
+	}
+
+	// Looking for remote branch hash
+	for id := range remoteRefs {
+		if remoteRefs[id].Name().IsBranch() {
+			// We are looking for the remote branch matching the local one
+			if remoteRefs[id].Name().Short() != workingBranchReferenceName {
+				continue
+			}
+
+			remoteRef = remoteRefs[id]
+
+			// Local branch matches the remote one which means that local one is already
+			// up to date. Nothing else to do
+			if remoteRef.Hash().String() == workingBranchRef.Hash().String() {
+				return true, nil
+			}
+			break
+		}
+	}
+
+	if remoteRef == nil && matching {
+		/*
+			if there is no remote branch, and the local working
+			branch equal the base branch then it means that nothing changed
+		*/
+		return true, nil
+	}
+
+	/*
+		There is no way to git log between two branches at the moment using go-git
+		https://github.com/go-git/go-git/issues/69
+	*/
+
+	return false, nil
 }
 
 // IsSimilarBranch checks that the last commits of the two branches are similar then return
@@ -63,11 +173,12 @@ func (g GoGit) IsSimilarBranch(a, b, workingDir string) (bool, error) {
 	}
 
 	if refA.Hash().String() == refB.Hash().String() {
+		logrus.Debugf("no changes detected between branches %q and %q",
+			a, b)
 		return true, nil
 	}
 
 	return false, nil
-
 }
 
 func (g GoGit) GetChangedFiles(workingDir string) ([]string, error) {
@@ -154,17 +265,17 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		return err
 	}
 
-	// Retrieve local branch
-	head, err := r.Head()
-	if err != nil {
-		return err
-	}
+	//// Retrieve local branch
+	//head, err := r.Head()
+	//if err != nil {
+	//	return err
+	//}
 
-	if head.Name().IsBranch() {
-		if head.Name().Short() == branch {
-			return nil
-		}
-	}
+	//if head.Name().IsBranch() {
+	//	if head.Name().Short() == branch {
+	//		return nil
+	//	}
+	//}
 
 	b := bytes.Buffer{}
 
@@ -203,47 +314,15 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		Force:  true,
 	})
 
-	if err == plumbing.ErrReferenceNotFound {
-		// Checkout source branch without creating it yet
+	switch err {
+	case nil:
+		/*
+			Means that a local branch named remoteBranch already exist
+			so we want to be sure that the local branch is
+			aligned with the remote one.
+		*/
 
-		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
-
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(branch),
-			Create: false,
-			Keep:   false,
-			Force:  true,
-		})
-
-		if err != nil {
-			logrus.Debugf("branch: '%v' - \n\t%v", branch, err)
-			return err
-		}
-
-		// Checkout locale branch without creating it yet
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(remoteBranch),
-			Create: true,
-			Keep:   false,
-			Force:  true,
-		})
-
-		logrus.Debugf("branch %q successfully created", remoteBranch)
-
-		if err != nil {
-			return err
-		}
-
-	} else if err != plumbing.ErrReferenceNotFound && err != nil {
-		logrus.Debugln(err)
-		return err
-	} else {
-
-		// Means that a local branch named remoteBranch already exist
-		// so we want to be sure that the local branch is
-		// aligned with the remote one.
-
-		remote, err := r.Remote("origin")
+		remote, err := r.Remote(DefaultRemoteReferenceName)
 		if err != nil {
 			return err
 		}
@@ -267,7 +346,7 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 			return nil
 		}
 
-		remoteBranchRef := plumbing.NewRemoteReferenceName("origin", remoteBranch)
+		remoteBranchRef := plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, remoteBranch)
 
 		remoteRef, err := r.Reference(remoteBranchRef, true)
 
@@ -299,6 +378,42 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 			return err
 		}
 
+	case plumbing.ErrReferenceNotFound:
+		/*
+			Checkout source branch without creating it yet
+		*/
+
+		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
+
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(branch),
+			Create: false,
+			Keep:   false,
+			Force:  true,
+		})
+
+		if err != nil {
+			logrus.Debugf("branch: '%v' - \n\t%v", branch, err)
+			return err
+		}
+
+		// Checkout locale branch without creating it yet
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(remoteBranch),
+			Create: true,
+			Keep:   false,
+			Force:  true,
+		})
+
+		logrus.Debugf("branch %q successfully created", remoteBranch)
+
+		if err != nil {
+			return err
+		}
+
+	default:
+		logrus.Debugln(err)
+		return err
 	}
 
 	return nil
@@ -692,7 +807,7 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 
 	b := bytes.Buffer{}
 	po := &git.PushOptions{
-		RemoteName: "origin",
+		RemoteName: DefaultRemoteReferenceName,
 		Progress:   &b,
 		RefSpecs:   []config.RefSpec{refspec},
 	}
@@ -708,10 +823,10 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 
 	if err != nil {
 		if err == git.NoErrAlreadyUpToDate {
-			logrus.Info("origin remote was up to date, no push done")
+			logrus.Infof("%q remote was up to date, no push done", DefaultRemoteReferenceName)
 			return nil
 		}
-		logrus.Infof("push to remote origin error: %s", err)
+		logrus.Infof("push to remote %q error: %s", DefaultRemoteReferenceName, err)
 		return err
 	}
 
