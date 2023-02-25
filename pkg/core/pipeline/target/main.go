@@ -27,7 +27,6 @@ type Target struct {
 	Push   bool
 	Clean  bool
 	DryRun bool
-	Scm    *scm.ScmHandler
 }
 
 // Config defines target parameters
@@ -64,7 +63,7 @@ func (t *Target) Check() (bool, error) {
 }
 
 // Run applies a specific target configuration
-func (t *Target) Run(source string, o *Options) (err error) {
+func (t *Target) Run(source string, o *Options, Scm scm.ScmHandler) (err error) {
 
 	var changed bool
 
@@ -87,7 +86,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	// If no scm configuration provided then stop early
-	if t.Scm == nil {
+	if Scm == nil {
 
 		changed, err = target.Target(source, o.DryRun)
 		if err != nil {
@@ -113,20 +112,18 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	s := *t.Scm
-
-	if err = s.Checkout(); err != nil {
+	if err = Scm.Checkout(); err != nil {
 		t.Result = result.FAILURE
 		return err
 	}
 
-	changed, files, message, err = target.TargetFromSCM(source, s, o.DryRun)
+	changed, files, message, err = target.TargetFromSCM(source, Scm, o.DryRun)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err
 	}
 
-	isRemoteBranchUpToDate, err := s.IsRemoteBranchUpToDate()
+	isRemoteBranchUpToDate, err := Scm.IsRemoteBranchUpToDate()
 
 	if err != nil {
 		t.Result = result.FAILURE
@@ -157,12 +154,12 @@ func (t *Target) Run(source string, o *Options) (err error) {
 			}
 
 			if o.Commit {
-				if err := s.Add(files); err != nil {
+				if err := Scm.Add(files); err != nil {
 					t.Result = result.FAILURE
 					return err
 				}
 
-				if err = s.Commit(message); err != nil {
+				if err = Scm.Commit(message); err != nil {
 					t.Result = result.FAILURE
 					return err
 				}
@@ -171,7 +168,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 
 		if o.Push {
-			if err := s.Push(); err != nil {
+			if err := Scm.Push(); err != nil {
 				t.Result = result.FAILURE
 				return err
 			}
