@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/shurcooL/githubv4"
+
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
@@ -55,6 +56,16 @@ type Github struct {
 	HeadBranch       string
 	client           GitHubClient
 	nativeGitHandler gitgeneric.GitHandler
+}
+
+// Repository contains Github repository data
+type Repository struct {
+	ID          string
+	Name        string
+	Owner       string
+	ParentID    string
+	ParentName  string
+	ParentOwner string
 }
 
 // New returns a new valid Github object.
@@ -226,18 +237,41 @@ func (g *Github) setDirectory() {
 	}
 }
 
-func (g *Github) queryRepositoryID() (string, error) {
+func (g *Github) queryRepository() (*Repository, error) {
 	/*
-		query($owner: String!, $name: String!) {
-			repository(owner: $owner, name: $name){
-				id
-			}
-		}
+			   query($owner: String!, $name: String!) {
+			       repository(owner: $owner, name: $name){
+			           id
+			           name
+		               owner {
+		                   login
+		               }
+			           parent {
+		                   id
+		                   name
+		                   owner {
+		                       login
+		                   }
+			           }
+			       }
+			   }
 	*/
 
 	var query struct {
 		Repository struct {
-			ID string
+			ID    string
+			Name  string
+			Owner struct {
+				Login string
+			}
+
+			Parent *struct {
+				ID    string
+				Name  string
+				Owner struct {
+					Login string
+				}
+			}
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
@@ -250,9 +284,26 @@ func (g *Github) queryRepositoryID() (string, error) {
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
-		return "", err
+		return nil, err
 	}
 
-	return query.Repository.ID, nil
+	parentID := ""
+	parentName := ""
+	parentOwner := ""
+	if query.Repository.Parent != nil {
+		parentID = query.Repository.Parent.ID
+		parentName = query.Repository.Parent.Name
+		parentOwner = query.Repository.Parent.Owner.Login
+	}
 
+	result := &Repository{
+		ID:          query.Repository.ID,
+		Name:        query.Repository.Name,
+		Owner:       query.Repository.Owner.Login,
+		ParentID:    parentID,
+		ParentName:  parentName,
+		ParentOwner: parentOwner,
+	}
+
+	return result, nil
 }
