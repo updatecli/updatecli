@@ -44,7 +44,7 @@ require (
 	github.com/muesli/roff v0.1.0
 	github.com/tomwright/dasel v1.27.3
 	golang.org/x/text v0.7.0
-	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
+	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
 	gotest.tools v2.2.0+incompatible
 )
