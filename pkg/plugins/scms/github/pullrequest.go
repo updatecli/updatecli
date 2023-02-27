@@ -90,8 +90,8 @@ type ActionSpec struct {
 	MergeMethod string `yaml:",omitempty"`
 	// Specifies to use the Pull Request title as commit message when using auto merge, only works for "squash" or "rebase"
 	UseTitleForAutoMerge bool `yaml:",omitempty"`
-	// Specifies if a Pull Request should be sent to the upstream of a fork.
-	Upstream bool `yaml:",omitempty"`
+	// Specifies if a Pull Request should be sent to the parent of a fork.
+	Parent bool `yaml:",omitempty"`
 }
 
 type PullRequest struct {
@@ -409,7 +409,7 @@ func (p *PullRequest) OpenPullRequest() error {
 		Draft:               githubv4.NewBoolean(githubv4.Boolean(p.spec.Draft)),
 	}
 
-	if p.spec.Upstream {
+	if p.spec.Parent {
 		input.RepositoryID = githubv4.String(p.repository.ParentID)
 		input.HeadRepositoryID = githubv4.NewID(p.repository.ID)
 	}
@@ -491,7 +491,7 @@ func (p *PullRequest) getRemotePullRequest() error {
 	owner := githubv4.String(p.repository.Owner)
 	name := githubv4.String(p.repository.Name)
 
-	if p.spec.Upstream {
+	if p.spec.Parent {
 		owner = githubv4.String(p.repository.ParentOwner)
 		name = githubv4.String(p.repository.ParentName)
 	}
@@ -552,7 +552,7 @@ func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, e
 	owner := githubv4.String(p.repository.Owner)
 	repo := githubv4.String(p.repository.Name)
 
-	if p.spec.Upstream {
+	if p.spec.Parent {
 		owner = githubv4.String(p.repository.ParentOwner)
 		repo = githubv4.String(p.repository.ParentName)
 	}
