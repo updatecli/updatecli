@@ -188,11 +188,6 @@ func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) erro
 	// Once the remote Pull Request exists, we can than update it with additional information such as
 	// tags,assignee,etc.
 
-	if p.spec.Upstream {
-		logrus.Debugf("Skipping update of upstream pullrequest")
-		return nil
-	}
-
 	err = p.updatePullRequest()
 	if err != nil {
 		return err
@@ -308,7 +303,10 @@ func (p *PullRequest) updatePullRequest() error {
 		PullRequestID: githubv4.ID(p.remotePullRequest.ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
-		LabelIDs:      &labelsID,
+	}
+
+	if len(p.spec.Labels) != 0 {
+		input.LabelIDs = &labelsID
 	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
