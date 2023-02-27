@@ -50,6 +50,8 @@ type Config struct {
 type Spec struct {
 	// Name defines a pipeline name
 	Name string `yaml:",omitempty" jsonschema:"required"`
+	// PipelineBy allows to groups pipeline based on a criteria. Accepted values are ["","source","target"]. Default is ""
+	PipelineBy string `yaml:",omitempty"`
 	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
 	PipelineID string `yaml:",omitempty"`
 	// AutoDiscovery defines parameters to the autodiscovery feature
@@ -171,7 +173,7 @@ func New(option Option) (config Config, err error) {
 	// pullequests deprecated over actions
 	if len(config.Spec.PullRequests) > 0 {
 		if len(config.Spec.Actions) > 0 {
-			return config, fmt.Errorf("The `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated.")
+			return config, fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
 		}
 
 		logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
@@ -488,6 +490,15 @@ func (config *Config) Validate() error {
 		errs = append(
 			errs,
 			fmt.Errorf("targets validation error:\n%s", err))
+	}
+
+	config.Spec.PipelineBy = strings.ToLower(config.Spec.PipelineBy)
+	if config.Spec.PipelineBy != "" &&
+		config.Spec.PipelineBy != "source" &&
+		config.Spec.PipelineBy != "target" {
+		errs = append(
+			errs,
+			fmt.Errorf("pipelineby set to %q, accepted values is one source, condition,\"\"", config.Spec.PipelineBy))
 	}
 
 	// Concatenate error message
