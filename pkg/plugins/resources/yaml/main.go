@@ -115,7 +115,7 @@ func (y *Yaml) Read() error {
 				return err
 			}
 		} else {
-			return fmt.Errorf("%s The specified file %q does not exist.\n", result.FAILURE, filePath)
+			return fmt.Errorf("%s The specified file %q does not exist", result.FAILURE, filePath)
 		}
 	}
 	return nil
