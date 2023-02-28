@@ -129,10 +129,17 @@ func New(option Option) (config Config, err error) {
 		// Try to template manifest no matter the extension
 		// templated manifest must respect its extension before and after templating
 
+		cwd, err := os.Getwd()
+		if err != nil {
+			return config, err
+		}
+		fs := os.DirFS(cwd)
+
 		t := Template{
 			CfgFile:      filepath.Join(dirname, basename),
 			ValuesFiles:  option.ValuesFiles,
 			SecretsFiles: option.SecretsFiles,
+			fs:           fs,
 		}
 
 		content, err = t.New(content)

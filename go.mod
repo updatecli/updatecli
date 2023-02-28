@@ -7,22 +7,24 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0
+	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/aws/aws-sdk-go v1.44.203
 	github.com/containerd/containerd v1.6.18 // indirect
 	github.com/fatih/color v1.14.1
 	github.com/go-git/go-git/v5 v5.5.2
 	github.com/heimdalr/dag v1.2.1
 	github.com/hexops/gotextdiff v1.0.3
+	github.com/lithammer/dedent v1.1.0
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/moby/buildkit v0.10.6
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/shurcooL/githubv4 v0.0.0-20220115235240-a14260e6f8a2
-	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a //indirect
+	github.com/shurcooL/githubv4 v0.0.0-20230215024106-420ad0987b9b
+	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29 //indirect
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	go.mozilla.org/sops/v3 v3.7.3
 	golang.org/x/oauth2 v0.5.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -42,7 +44,7 @@ require (
 	github.com/muesli/roff v0.1.0
 	github.com/tomwright/dasel v1.27.3
 	golang.org/x/text v0.7.0
-	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
+	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
 	gotest.tools v2.2.0+incompatible
 )
@@ -61,7 +63,6 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
