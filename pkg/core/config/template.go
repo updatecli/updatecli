@@ -120,12 +120,13 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 		logrus.Errorln(err)
 		return err
 	}
+
 	if filename == "" {
 		fmt.Println("No filename defined, nothing else to do")
 		return nil
 	}
 
-	v, err := t.fs.Open(filename)
+	v, err := t.fs.Open(filepath.Clean(filename))
 	if err != nil {
 		return err
 	}
