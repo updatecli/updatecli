@@ -79,4 +79,6 @@ targets:
       files:
       - e2e/updatecli.d/success.d/yaml/noscm.yaml
       - e2e/updatecli.d/success.d/yaml/duplicate.yaml
-      key: scms.default.kind
+      key: sources.scenario1.kind
+    transformers:
+      - addsuffix: -beta
