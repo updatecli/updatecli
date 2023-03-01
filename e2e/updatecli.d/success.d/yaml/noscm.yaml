@@ -75,8 +75,11 @@ targets:
     name: Update files content
     kind: yaml
     sourceid: scenario1
+    transformers:
+      - addsuffix: -beta
     spec:
       files:
       - e2e/updatecli.d/success.d/yaml/noscm.yaml
       - e2e/updatecli.d/success.d/yaml/duplicate.yaml
-      key: scms.default.kind
+      key: sources.scenario1.kind
+
