@@ -109,7 +109,7 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		if err != nil {
 			return false, files, message.String(), err
 		}
-		y.files[filePath] = string(buf.String())
+		y.files[filePath] = buf.String()
 		buf.Reset()
 
 		files = append(files, filePath)
