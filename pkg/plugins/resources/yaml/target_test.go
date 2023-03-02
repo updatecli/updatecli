@@ -26,9 +26,10 @@ func Test_Target(t *testing.T) {
 		{
 			name: "Passing case with both complex input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:  "test.yaml",
-				Key:   "annotations.github\\.owner",
-				Value: "obiwankenobi",
+				File:   "test.yaml",
+				Key:    "annotations.github\\.owner",
+				Value:  "obiwankenobi",
+				Indent: 4,
 			},
 			files: map[string]string{
 				"test.yaml": "",
@@ -44,8 +45,8 @@ annotations:
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
 				"test.yaml": `annotations:
-  github.owner: obiwankenobi
-  repository: charts
+    github.owner: obiwankenobi
+    repository: charts
 `,
 			},
 			wantedResult: true,
@@ -53,9 +54,10 @@ annotations:
 		{
 			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:  "test.yaml",
-				Key:   "github.owner",
-				Value: "obiwankenobi",
+				File:   "test.yaml",
+				Key:    "github.owner",
+				Value:  "obiwankenobi",
+				Indent: 2,
 			},
 			files: map[string]string{
 				"test.yaml": "",
@@ -84,8 +86,9 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:   "github.owner",
-				Value: "obiwankenobi",
+				Key:    "github.owner",
+				Value:  "obiwankenobi",
+				Indent: 2,
 			},
 			files: map[string]string{
 				"test.yaml": "",
@@ -124,8 +127,9 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:   "github.owner",
-				Value: "obiwankenobi",
+				Key:    "github.owner",
+				Value:  "obiwankenobi",
+				Indent: 2,
 			},
 			files: map[string]string{
 				"test.yaml": "",
@@ -161,9 +165,10 @@ github:
 		{
 			name: "Validation failure with an https:// URL instead of a file",
 			spec: Spec{
-				File:  "https://github.com/foo.yaml",
-				Key:   "github.owner",
-				Value: "obiwankenobi",
+				File:   "https://github.com/foo.yaml",
+				Key:    "github.owner",
+				Value:  "obiwankenobi",
+				Indent: 2,
 			},
 			files: map[string]string{
 				"test.yaml": "",
@@ -249,6 +254,7 @@ github:
 				spec:             tt.spec,
 				contentRetriever: &mockedText,
 				files:            tt.files,
+				indent:           tt.spec.Indent,
 			}
 			gotResult, gotErr := y.Target(tt.inputSourceValue, tt.dryRun)
 			if tt.wantedError {
@@ -285,9 +291,10 @@ func Test_TargetFromSCM(t *testing.T) {
 		{
 			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:  "test.yaml",
-				Key:   "github.owner",
-				Value: "obiwankenobi",
+				File:   "test.yaml",
+				Key:    "github.owner",
+				Value:  "obiwankenobi",
+				Indent: 2,
 			},
 			files: map[string]string{
 				"/tmp/test.yaml": "",
@@ -319,8 +326,9 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:   "github.owner",
-				Value: "obiwankenobi",
+				Key:    "github.owner",
+				Value:  "obiwankenobi",
+				Indent: 2,
 			},
 			files: map[string]string{
 				"/tmp/test.yaml": "",
@@ -368,6 +376,7 @@ github:
 				spec:             tt.spec,
 				contentRetriever: &mockedText,
 				files:            tt.files,
+				indent:           tt.spec.Indent,
 			}
 			gotResult, gotFiles, _, gotErr := y.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
 			if tt.wantedError {

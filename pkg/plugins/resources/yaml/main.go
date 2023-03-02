@@ -27,12 +27,15 @@ type Spec struct {
 	Value string `yaml:",omitempty"`
 	// [condition] allow checking for only the existence of a key (not its value)
 	KeyOnly bool `yaml:",omitempty"`
+	// [target] Indent defines the yaml indentation for file updated by target of kind yaml. Default to 2
+	Indent int `yaml:",omitempty"`
 }
 
 // Yaml defines a resource of kind "yaml"
 type Yaml struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
+	indent           int
 	files            map[string]string // map of file paths to file contents
 }
 
@@ -54,6 +57,11 @@ func New(spec interface{}) (*Yaml, error) {
 	err = newResource.spec.Validate()
 	if err != nil {
 		return nil, err
+	}
+
+	newResource.indent = newResource.spec.Indent
+	if newResource.indent <= 0 {
+		newResource.indent = 2
 	}
 
 	newResource.files = make(map[string]string)
@@ -94,6 +102,10 @@ func (s *Spec) Validate() error {
 	}
 	if len(s.Files) > 1 && hasDuplicates(s.Files) {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attributes `spec.files` contains duplicated values")
+	}
+
+	if s.Indent < 0 {
+		validationErrors = append(validationErrors, "Invalid spec for yaml resource: indentation must be a >= 0")
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
