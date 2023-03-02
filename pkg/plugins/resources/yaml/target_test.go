@@ -37,15 +37,15 @@ func Test_Target(t *testing.T) {
 			mockedContents: map[string]string{
 				"test.yaml": `---
 annotations:
-    github.owner: olblak
-    repository: charts
+  github.owner: olblak
+  repository: charts
 `,
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
 				"test.yaml": `annotations:
-    github.owner: obiwankenobi
-    repository: charts
+  github.owner: obiwankenobi
+  repository: charts
 `,
 			},
 			wantedResult: true,
@@ -71,8 +71,8 @@ github:
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
 				"test.yaml": `github:
-    owner: obiwankenobi
-    repository: charts
+  owner: obiwankenobi
+  repository: charts
 `,
 			},
 			wantedResult: true,
@@ -100,19 +100,19 @@ github:
 `,
 				"bar.yaml": `---
 github:
-  owner: asterix
-  repository: charts
+    owner: asterix
+    repository: charts
 `,
 			},
 			// Note: the updated files don't contain separator anymore
 			wantedContents: map[string]string{
 				"test.yaml": `github:
-    owner: obiwankenobi
-    repository: charts
+  owner: obiwankenobi
+  repository: charts
 `,
 				"bar.yaml": `github:
-    owner: obiwankenobi
-    repository: charts
+  owner: obiwankenobi
+  repository: charts
 `,
 			},
 			wantedResult: true,
@@ -147,8 +147,8 @@ github:
 			// Note: the updated file doesn't contain separator anymore
 			wantedContents: map[string]string{
 				"test.yaml": `github:
-    owner: obiwankenobi
-    repository: charts
+  owner: obiwankenobi
+  repository: charts
 `,
 				"bar.yaml": `---
 github:
@@ -306,8 +306,8 @@ github:
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
 				"/tmp/test.yaml": `github:
-    owner: obiwankenobi
-    repository: charts
+  owner: obiwankenobi
+  repository: charts
 `,
 			},
 			wantedResult: true,
@@ -347,12 +347,12 @@ github:
 			// Note: the updated files don't contain separator anymore
 			wantedContents: map[string]string{
 				"/tmp/test.yaml": `github:
-    owner: obiwankenobi
-    repository: charts
+  owner: obiwankenobi
+  repository: charts
 `,
 				"/tmp/bar.yaml": `github:
-    owner: obiwankenobi
-    repository: charts
+  owner: obiwankenobi
+  repository: charts
 `,
 			},
 			wantedResult: true,

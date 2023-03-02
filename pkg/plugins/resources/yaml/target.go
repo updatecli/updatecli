@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"sort"
@@ -101,7 +102,14 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 				valueToWrite)
 			notChanged++
 		} else {
-			newFileContent, err := yaml.Marshal(&out)
+
+			buf := new(bytes.Buffer)
+			encoder := yaml.NewEncoder(buf)
+			defer encoder.Close()
+			encoder.SetIndent(yamlIndent)
+			err = encoder.Encode(&out)
+
+			newFileContent := buf.String()
 			if err != nil {
 				return false, files, message.String(), err
 			}
