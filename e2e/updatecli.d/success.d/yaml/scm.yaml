@@ -1,0 +1,65 @@
+name: Test YAML resource with scm
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli-test/kwctl.git
+
+sources:
+  scenario1:
+    name: Basic yaml source
+    scmid: default
+    kind: yaml
+    spec:
+      file: .clomonitor.yml
+      key: exemptions[0].reason
+
+  scenario2:
+    name: Basic yaml source
+    scmid: default
+    kind: yaml
+    spec:
+      files:
+        - .clomonitor.yml
+      key: exemptions[0].reason
+
+conditions:
+  scenario1:
+    name: using file
+    kind: yaml
+    scmid: default
+    sourceid: scenario1
+    spec:
+      file: .clomonitor.yml
+      key: exemptions[0].reason
+
+  scenario2:
+    name: using files
+    kind: yaml
+    scmid: default
+    sourceid: scenario1
+    spec:
+      files:
+      - .clomonitor.yml
+      key: exemptions[0].reason
+
+targets:
+  scenario1:
+    name: using file
+    kind: yaml
+    scmid: default
+    sourceid: scenario1
+    spec:
+      file: .clomonitor.yml
+      key: exemptions[0].reason
+
+  scenario2:
+    name: using files
+    kind: yaml
+    scmid: default
+    sourceid: scenario1
+    spec:
+      files:
+      - .clomonitor.yml
+      key: exemptions[0].reason
