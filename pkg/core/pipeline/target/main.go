@@ -39,7 +39,6 @@ type Config struct {
 	ReportBody string `yaml:",omitempty"`
 	// ! Deprecated - please use all lowercase `sourceid`
 	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
-	// disablesourceinput disables the mechanism to retrieve a default value from a source. For example, if true, 
 	// disablesourceinput disables the mechanism to retrieve a default value from a source. For example, if true, source information like changelog will not be accessible for a github/pullrequest action.
 	DisableSourceInput bool `yaml:",omitempty"`
 	// sourceid specifies where retrieving the default value
