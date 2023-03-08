@@ -52,7 +52,7 @@ func TestTarget(t *testing.T) {
 				Value: "Alice",
 			},
 			expectedResult:   false,
-			expectedErrorMsg: errors.New("the XML file \"testdata/doNotExist.xml\" does not exist"),
+			expectedErrorMsg: errors.New("file \"testdata/doNotExist.xml\" does not exist"),
 			wantErr:          true,
 		},
 		{

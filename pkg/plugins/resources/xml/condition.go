@@ -15,17 +15,22 @@ func (x *XML) Condition(source string) (bool, error) {
 
 func (x *XML) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 
+	resourceFile := x.spec.File
 	if scm != nil {
-		x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
-		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", x.spec.File)
+		resourceFile = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+	}
+
+	value := source
+	if len(x.spec.Value) > 0 {
+		value = x.spec.Value
 	}
 
 	// Test at runtime if a file exist
-	if !x.contentRetriever.FileExists(x.spec.File) {
-		return false, fmt.Errorf("the XML file %q does not exist", x.spec.File)
+	if !x.contentRetriever.FileExists(resourceFile) {
+		return false, fmt.Errorf("file %q does not exist", resourceFile)
 	}
 
-	if err := x.Read(); err != nil {
+	if err := x.Read(resourceFile); err != nil {
 		return false, err
 	}
 
@@ -35,37 +40,32 @@ func (x *XML) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) 
 		return false, err
 	}
 
-	// Override value from source if not yet defined
-	if len(x.spec.Value) == 0 {
-		x.spec.Value = source
-	}
-
 	elem := doc.FindElement(x.spec.Path)
 
 	if elem == nil {
-		logrus.Infof("%s nothing found in path '%s' from file '%s'",
+		logrus.Infof("%s nothing found in path %q from file %q",
 			result.FAILURE,
 			x.spec.Path,
-			x.spec.File)
+			resourceFile)
 
 		return false, nil
 	}
 
-	if x.spec.Value == elem.Text() {
-		logrus.Infof("%s Path '%s', from file '%v', is correctly set to %s'",
+	if value == elem.Text() {
+		logrus.Infof("%s Path %q, from file %q, is correctly set to %s",
 			result.SUCCESS,
 			x.spec.Path,
-			x.spec.File,
-			x.spec.Value)
+			resourceFile,
+			value)
 		return true, nil
 	}
 
-	logrus.Infof("%s Path '%s', from file '%v', is incorrectly set to %s and should be %s'",
+	logrus.Infof("%s Path %q, from file %q, is incorrectly set to %q and should be %q",
 		result.ATTENTION,
 		x.spec.Path,
-		x.spec.File,
+		resourceFile,
 		elem.Text(),
-		x.spec.Value)
+		value)
 
 	return false, nil
 }
