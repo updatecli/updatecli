@@ -2,7 +2,6 @@ package xml
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/beevik/etree"
@@ -30,28 +29,22 @@ func (x *XML) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 		return false, files, message, fmt.Errorf("URL scheme is not supported for XML target: %q", x.spec.File)
 	}
 
+	value := source
+	if len(x.spec.Value) > 0 {
+		value = x.spec.Value
+	}
+
+	resourceFile := x.spec.File
 	if scm != nil {
-		x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
-		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", x.spec.File)
+		resourceFile = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
 	}
 
 	// Test at runtime if a file exist
-	if !x.contentRetriever.FileExists(x.spec.File) {
-		return false, files, message, fmt.Errorf("the XML file %q does not exist", x.spec.File)
+	if !x.contentRetriever.FileExists(resourceFile) {
+		return false, files, message, fmt.Errorf("file %q does not exist", resourceFile)
 	}
 
-	if len(x.spec.Value) == 0 {
-		x.spec.Value = source
-	}
-
-	resourceFile := ""
-	if scm != nil {
-		resourceFile = filepath.Join(scm.GetDirectory(), x.spec.File)
-	} else {
-		resourceFile = x.spec.File
-	}
-
-	if err := x.Read(); err != nil {
+	if err := x.Read(resourceFile); err != nil {
 		return false, []string{}, "", err
 	}
 
@@ -62,40 +55,39 @@ func (x *XML) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 	}
 
 	elem := doc.FindElement(x.spec.Path)
-
 	if elem == nil {
 		return false, []string{}, "", fmt.Errorf("%s nothing found at path %q from file %q",
 			result.FAILURE,
 			x.spec.Path,
-			x.spec.File)
+			resourceFile)
 	}
 
-	if elem.Text() == x.spec.Value {
-		logrus.Infof("%s Path '%s', from file '%v', already set to %s, nothing else need to be done",
+	if elem.Text() == value {
+		logrus.Infof("%s Path %q, from file %q, already set to %q, nothing else to do",
 			result.SUCCESS,
 			x.spec.Path,
-			x.spec.File,
-			x.spec.Value)
+			resourceFile,
+			value)
 		return false, []string{}, "", nil
 	}
-	logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
+	logrus.Infof("%s Key %q, from file '%v', was updated from %q to %q",
 		result.ATTENTION,
 		x.spec.Path,
-		x.spec.File,
+		resourceFile,
 		elem.Text(),
-		x.spec.Value)
+		value)
 
 	if !dryRun {
-		elem.SetText(x.spec.Value)
+		elem.SetText(value)
 
 		if err := doc.WriteToFile(resourceFile); err != nil {
 			return false, []string{}, "", err
 		}
 	}
 
-	files = append(files, resourceFile)
-	message = fmt.Sprintf("Update key %q from file %q", x.spec.Path, x.spec.File)
+	files = append(files, x.spec.File)
+	message = fmt.Sprintf("Update key %q from file %q",
+		x.spec.Path, x.spec.File)
 
 	return true, files, message, nil
-
 }
