@@ -25,7 +25,7 @@ var (
 type ScmHandler interface {
 	Add(files []string) error
 	Clone() (string, error)
-	Checkout() error
+	Checkout(branch string) error
 	GetDirectory() (directory string)
 	Push() error
 	Commit(message string) error

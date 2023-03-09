@@ -65,7 +65,7 @@ func (s *Source) Run() (err error) {
 			return err
 		}
 
-		err = SCM.Checkout()
+		err = SCM.Checkout("")
 
 		if err != nil {
 			s.Result = result.FAILURE

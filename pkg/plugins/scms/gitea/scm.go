@@ -43,7 +43,7 @@ func (g *Gitea) Clone() (string, error) {
 			g.Spec.Username,
 			g.Spec.Token,
 			g.Spec.Branch,
-			g.HeadBranch,
+			g.Spec.Branch,
 			g.GetDirectory(),
 			true)
 	}
@@ -73,12 +73,17 @@ func (g *Gitea) Commit(message string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g *Gitea) Checkout() error {
+func (g *Gitea) Checkout(branch string) error {
+
+	if branch == "" {
+		branch = g.Spec.Branch
+	}
+
 	err := g.nativeGitHandler.Checkout(
 		g.Spec.Username,
 		g.Spec.Token,
 		g.Spec.Branch,
-		g.HeadBranch,
+		branch,
 		g.Spec.Directory,
 		false)
 	if err != nil {

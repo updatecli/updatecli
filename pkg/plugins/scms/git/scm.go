@@ -16,12 +16,16 @@ func (g *Git) Add(files []string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g *Git) Checkout() error {
+func (g *Git) Checkout(branch string) error {
+	if branch == "" {
+		branch = g.spec.Branch
+	}
+
 	err := g.nativeGitHandler.Checkout(
 		g.spec.Username,
 		g.spec.Password,
 		g.spec.Branch,
-		g.remoteBranch,
+		branch,
 		g.GetDirectory(),
 		false)
 

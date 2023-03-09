@@ -70,7 +70,7 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		err = s.Checkout()
+		err = s.Checkout("")
 		if err != nil {
 			return err
 		}
