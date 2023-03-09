@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.203
 	github.com/containerd/containerd v1.6.18 // indirect
 	github.com/fatih/color v1.14.1
-	github.com/go-git/go-git/v5 v5.5.2
+	github.com/go-git/go-git/v5 v5.6.0
 	github.com/heimdalr/dag v1.2.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/lithammer/dedent v1.1.0
@@ -26,7 +26,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.2
 	go.mozilla.org/sops/v3 v3.7.3
-	golang.org/x/oauth2 v0.5.0
+	golang.org/x/oauth2 v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.11.1
 	sigs.k8s.io/yaml v1.3.0
@@ -43,7 +43,7 @@ require (
 	github.com/muesli/mango-cobra v1.2.0
 	github.com/muesli/roff v0.1.0
 	github.com/tomwright/dasel v1.27.3
-	golang.org/x/text v0.7.0
+	golang.org/x/text v0.8.0
 	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
 	gotest.tools v2.2.0+incompatible
@@ -183,7 +183,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
-	github.com/pjbgf/sha1cd v0.2.3 // indirect
+	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
@@ -207,12 +207,12 @@ require (
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/mod v0.6.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/api v0.96.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220915135415-7fd63a7952de // indirect

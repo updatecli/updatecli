@@ -46,8 +46,8 @@ func New(spec interface{}) (*XML, error) {
 	return &x, err
 }
 
-func (x *XML) Read() error {
-	textContent, err := x.contentRetriever.ReadAll(x.spec.File)
+func (x *XML) Read(filename string) error {
+	textContent, err := x.contentRetriever.ReadAll(filename)
 	if err != nil {
 		return err
 	}
