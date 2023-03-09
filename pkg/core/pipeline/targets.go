@@ -66,6 +66,7 @@ func (p *Pipeline) RunTargets() error {
 		}
 
 		err = target.Run(
+			p.getSubPipelineID(),
 			p.Sources[target.Config.SourceID].Output,
 			&p.Options.Target,
 			p.SCMs[target.Config.SCMID].Handler)

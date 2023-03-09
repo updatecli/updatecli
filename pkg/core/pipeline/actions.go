@@ -150,7 +150,8 @@ func (p *Pipeline) RunActions() error {
 		err = action.Handler.CreateAction(
 			action.Title,
 			action.Changelog,
-			action.PipelineReport)
+			action.PipelineReport,
+			p.getSubPipelineID())
 
 		if err != nil {
 			return err

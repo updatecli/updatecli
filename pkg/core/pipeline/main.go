@@ -323,3 +323,15 @@ func (p *Pipeline) Update() error {
 
 	return nil
 }
+
+// getSubPipelineID returns the sub pipeline ID.
+func (p *Pipeline) getSubPipelineID() string {
+	switch p.Config.Spec.PipelineBy {
+	case "":
+		return strings.Join([]string{"updatecli", p.Config.Spec.PipelineID}, "_")
+	default:
+		logrus.Warningf("Group pipeline  by %q is not supported, fallback to none")
+	}
+
+	return strings.Join([]string{"updatecli", p.Config.Spec.PipelineID}, "_")
+}

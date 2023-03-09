@@ -62,7 +62,7 @@ func (t *Target) Check() (bool, error) {
 }
 
 // Run applies a specific target configuration
-func (t *Target) Run(source string, o *Options, Scm scm.ScmHandler) (err error) {
+func (t *Target) Run(subPipelineID string, source string, o *Options, Scm scm.ScmHandler) (err error) {
 
 	var changed bool
 
@@ -111,7 +111,7 @@ func (t *Target) Run(source string, o *Options, Scm scm.ScmHandler) (err error) 
 		return err
 	}
 
-	if err = Scm.Checkout(); err != nil {
+	if err = Scm.Checkout(subPipelineID); err != nil {
 		t.Result = result.FAILURE
 		return err
 	}

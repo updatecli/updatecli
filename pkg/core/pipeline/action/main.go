@@ -27,7 +27,7 @@ var (
 
 // ActionHandler interface defines required functions to be an action
 type ActionHandler interface {
-	CreateAction(title, changelog, pipelineReport string) error
+	CreateAction(title, changelog, pipelineReport, subPipelineID string) error
 }
 
 // Config define action provided via an updatecli configuration
@@ -52,6 +52,7 @@ type Action struct {
 	Config         Config
 	Scm            *scm.Scm
 	Handler        ActionHandler
+	SubPipelineID  string
 }
 
 // Validate ensures that an action configuration has required parameters.
@@ -102,12 +103,13 @@ func (c *Config) Validate() (err error) {
 }
 
 // New returns a new Action based on an action config and an scm
-func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
+func New(subPipelineID string, config *Config, sourceControlManager *scm.Scm) (Action, error) {
 
 	newAction := Action{
-		Title:  config.Title,
-		Config: *config,
-		Scm:    sourceControlManager,
+		SubPipelineID: subPipelineID,
+		Title:         config.Title,
+		Config:        *config,
+		Scm:           sourceControlManager,
 	}
 
 	err := newAction.generateActionHandler()
@@ -154,7 +156,7 @@ func (a *Action) generateActionHandler() error {
 			return fmt.Errorf("scm is not of kind 'gitea'")
 		}
 
-		g, err := gitea.New(actionSpec, ge)
+		g, err := gitea.New(actionSpec, ge, a.SubPipelineID)
 
 		if err != nil {
 			return err
