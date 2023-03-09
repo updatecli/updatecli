@@ -245,13 +245,12 @@ func (g GoGit) Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error {
+func (g GoGit) Checkout(username, password, baseBranch, branch, workingDir string, forceReset bool) error {
 
 	logrus.Debugf("stage: git-checkout\n\n")
-
 	logrus.Debugf("checkout branch %q, based on %q to directory %q",
-		remoteBranch,
 		branch,
+		baseBranch,
 		workingDir)
 
 	r, err := git.PlainOpen(workingDir)
@@ -259,31 +258,22 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		return err
 	}
 
+	// Sanitize branch name
+	baseBranch = g.SanitizeBranchName(baseBranch)
+	branch = g.SanitizeBranchName(branch)
+
 	w, err := r.Worktree()
 	if err != nil {
 		logrus.Debugln(err)
 		return err
 	}
 
-	//// Retrieve local branch
-	//head, err := r.Head()
-	//if err != nil {
-	//	return err
-	//}
-
-	//if head.Name().IsBranch() {
-	//	if head.Name().Short() == branch {
-	//		return nil
-	//	}
-	//}
-
-	b := bytes.Buffer{}
-
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything except an empty string
 		Password: password,
 	}
 
+	b := bytes.Buffer{}
 	pullOptions := git.PullOptions{
 		Force:    true,
 		Progress: &b,
@@ -308,7 +298,7 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 	// If remoteBranch already exist, use it
 	// otherwise use the one define in the spec
 	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(remoteBranch),
+		Branch: plumbing.NewBranchReferenceName(branch),
 		Create: false,
 		Keep:   false,
 		Force:  true,
@@ -340,13 +330,13 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		}
 
 		if !g.exists(
-			plumbing.NewBranchReferenceName(remoteBranch),
+			plumbing.NewBranchReferenceName(branch),
 			refs) {
-			logrus.Debugf("No remote name %q", remoteBranch)
+			logrus.Debugf("No remote name %q", branch)
 			return nil
 		}
 
-		remoteBranchRef := plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, remoteBranch)
+		remoteBranchRef := plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, branch)
 
 		remoteRef, err := r.Reference(remoteBranchRef, true)
 
@@ -367,7 +357,7 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		}
 
 		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(remoteBranch),
+			Branch: plumbing.NewBranchReferenceName(branch),
 			Create: false,
 			Keep:   false,
 			Force:  true,
@@ -383,29 +373,29 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 			Checkout source branch without creating it yet
 		*/
 
-		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
+		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", branch, baseBranch)
 
 		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(branch),
+			Branch: plumbing.NewBranchReferenceName(baseBranch),
 			Create: false,
 			Keep:   false,
 			Force:  true,
 		})
 
 		if err != nil {
-			logrus.Debugf("branch: '%v' - \n\t%v", branch, err)
+			logrus.Debugf("branch: '%v' - \n\t%v", baseBranch, err)
 			return err
 		}
 
 		// Checkout locale branch without creating it yet
 		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(remoteBranch),
+			Branch: plumbing.NewBranchReferenceName(branch),
 			Create: true,
 			Keep:   false,
 			Force:  true,
 		})
 
-		logrus.Debugf("branch %q successfully created", remoteBranch)
+		logrus.Debugf("branch %q successfully created", branch)
 
 		if err != nil {
 			return err
