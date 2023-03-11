@@ -11,13 +11,16 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
+	gitlab "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/mergerequest"
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 )
 
 const (
 	githubIdentifier = "github"
 	giteaIdentifier  = "gitea"
+	gitlabIdentifier = "gitlab"
 )
 
 var (
@@ -162,6 +165,34 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
+	case "gitlab/mergerequest", gitlabIdentifier:
+		actionSpec := gitlab.Spec{}
+
+		if a.Scm.Config.Kind != gitlabIdentifier {
+			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
+				a.Scm.Config.Kind,
+				a.Config.Kind)
+		}
+
+		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
+		if err != nil {
+			return err
+		}
+
+		ge, ok := a.Scm.Handler.(*gitlabscm.Gitlab)
+
+		if !ok {
+			return fmt.Errorf("scm is not of kind 'gitlab'")
+		}
+
+		g, err := gitlab.New(actionSpec, ge)
+
+		if err != nil {
+			return err
+		}
+
+		a.Handler = &g
+
 	case "github/pullrequest", githubIdentifier:
 		actionSpec := github.ActionSpec{}
 
@@ -203,8 +234,9 @@ func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
-		"github/pullrequest": &github.ActionSpec{},
-		"gitea/pullrequest":  &gitea.Spec{},
+		"github/pullrequest":  &github.ActionSpec{},
+		"gitea/pullrequest":   &gitea.Spec{},
+		"gitlab/mergerequest": &gitlab.Spec{},
 	}
 
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
