@@ -72,7 +72,7 @@ func TestCondition(t *testing.T) {
 				Repository: "updatecli",
 				Branch:     "donotexist",
 			},
-			wantResult: true,
+			wantResult: false,
 			wantErr:    false,
 		},
 	}

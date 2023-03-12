@@ -123,7 +123,6 @@ func (g *Gitlab) SearchBranches() (tags []string, err error) {
 		if page == 0 {
 			break
 		}
-
 	}
 
 	return results, nil
