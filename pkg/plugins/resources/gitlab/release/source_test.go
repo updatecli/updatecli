@@ -48,7 +48,6 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "gitlab.com",
 				Token:      "",
 				Owner:      "cicd-devroom",
 				Repository: "FOSDEM22",
