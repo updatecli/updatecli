@@ -23,7 +23,7 @@ func TestSource(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "repository olblak/updatecli should not exist",
+			name: "repository olblak/updatecli-donotexist should not exist",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -31,16 +31,16 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
+				Owner:      "olblak",
 				Repository: "updatecli-dotnotexist",
 			},
 			wantResult: "",
 			wantErr:    true,
 		},
 		{
-			name: "repository should exist with release 0.0.3",
+			name: "repository should exist with tag 0.3.0",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -48,20 +48,20 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "updatecli-action",
+				Owner:      "olblak",
+				Repository: "updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "~1",
+					Pattern: "0.3.0",
 				},
 			},
-			wantResult: "v1.33.0",
+			wantResult: "v0.3.0",
 			wantErr:    false,
 		},
 		{
-			name: "repository should exist with no release 1.0.0",
+			name: "repository should exist with no tag 0.3.11",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -69,13 +69,13 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "updatecli-action",
+				Owner:      "olblak",
+				Repository: "updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "~0",
+					Pattern: "v0.3.11",
 				},
 			},
 			wantResult: "",

@@ -22,7 +22,7 @@ func TestCondition(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "repository olblak/updatecli should not exist",
+			name: "repository olblak/updatecli-donotexist should not exist",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -30,16 +30,16 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
+				Owner:      "olblak",
 				Repository: "updatecli-donotexist",
 			},
 			wantResult: false,
 			wantErr:    true,
 		},
 		{
-			name: "repository olblak/updatecli-mirror should exist with tags",
+			name: "repository olblak/updatecli should exist with tags",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -47,16 +47,16 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "updatecli-action",
+				Owner:      "olblak",
+				Repository: "updatecli",
 			},
 			wantResult: false,
 			wantErr:    false,
 		},
 		{
-			name: "repository should exist with no tag v2.15.0",
+			name: "repository should exist with no tag v0.1.11",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -64,31 +64,31 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "updatecli-action",
-				Tag:        "v2.15.0",
+				Owner:      "olblak",
+				Repository: "updatecli",
+				Tag:        "v0.1.11",
+			},
+			wantResult: false,
+			wantErr:    false,
+		},
+		{
+			name: "repository should exist with tag v0.3.0",
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+			}{
+				URL:        "gitlab.com",
+				Token:      "",
+				Owner:      "olblak",
+				Repository: "updatecli",
+				Tag:        "v0.3.0",
 			},
 			wantResult: true,
-			wantErr:    false,
-		},
-		{
-			name: "repository should exist with no release 0.0.35",
-			manifest: struct {
-				URL        string
-				Token      string
-				Owner      string
-				Repository string
-				Tag        string
-			}{
-				URL:        "codeberg.org",
-				Token:      "",
-				Owner:      "updatecli",
-				Repository: "updatecli-action",
-				Tag:        "0.0.35",
-			},
-			wantResult: false,
 			wantErr:    false,
 		},
 	}
