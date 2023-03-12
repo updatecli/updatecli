@@ -101,26 +101,35 @@ func (g *Gitea) SearchTags() (tags []string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	references, resp, err := g.client.Git.ListTags(
-		ctx,
-		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-		scm.ListOptions{
-			URL:  g.spec.URL,
-			Page: 1,
-			Size: 30,
-		},
-	)
+	page := 0
+	for {
+		references, resp, err := g.client.Git.ListTags(
+			ctx,
+			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
+			scm.ListOptions{
+				URL:  g.spec.URL,
+				Page: page,
+				Size: 30,
+			},
+		)
 
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-	}
+		page = resp.Page.Next
 
-	for _, ref := range references {
-		tags = append(tags, ref.Name)
+		if resp.Status > 400 {
+			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+		}
+
+		for _, ref := range references {
+			tags = append(tags, ref.Name)
+		}
+
+		if page == 0 {
+			break
+		}
 	}
 
 	return tags, nil

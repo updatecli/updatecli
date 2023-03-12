@@ -103,27 +103,36 @@ func (g *Gitea) SearchBranches() (tags []string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	branches, resp, err := g.client.Git.ListBranches(
-		ctx,
-		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-		scm.ListOptions{
-			URL:  g.spec.URL,
-			Page: 1,
-			Size: 30,
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-	}
-
 	results := []string{}
-	for _, branch := range branches {
-		results = append(results, branch.Name)
+	page := 0
+	for {
+		branches, resp, err := g.client.Git.ListBranches(
+			ctx,
+			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
+			scm.ListOptions{
+				URL:  g.spec.URL,
+				Page: page,
+				Size: 30,
+			},
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		page = resp.Page.Next
+
+		if resp.Status > 400 {
+			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+		}
+
+		for _, branch := range branches {
+			results = append(results, branch.Name)
+		}
+
+		if page == 0 {
+			break
+		}
 	}
 
 	return results, nil

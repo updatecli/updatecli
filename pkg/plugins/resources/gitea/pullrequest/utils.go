@@ -17,43 +17,53 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
 	defer cancelList()
 
-	optsSearch := scm.PullRequestListOptions{
-		Page:   1,
-		Size:   30,
-		Open:   true,
-		Closed: false,
-	}
+	page := 0
+	for {
 
-	pullrequests, resp, err := g.client.PullRequests.List(
-		ctx,
-		strings.Join([]string{
-			g.Owner,
-			g.Repository}, "/"),
-		optsSearch,
-	)
+		optsSearch := scm.PullRequestListOptions{
+			Page:   page,
+			Size:   30,
+			Open:   true,
+			Closed: false,
+		}
+		pullrequests, resp, err := g.client.PullRequests.List(
+			ctx,
+			strings.Join([]string{
+				g.Owner,
+				g.Repository}, "/"),
+			optsSearch,
+		)
 
-	if err != nil {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-		return false, err
-	}
+		if err != nil {
+			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+			return false, err
+		}
 
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-	}
+		page = resp.Page.Next
 
-	for _, p := range pullrequests {
-		if p.Source == g.SourceBranch &&
-			p.Target == g.TargetBranch &&
-			!p.Closed &&
-			!p.Merged {
+		if resp.Status > 400 {
+			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		}
 
-			logrus.Infof("%s Nothing else to do, our pullrequest already exist on:\n\t%s",
-				result.SUCCESS,
-				p.Link)
+		for _, p := range pullrequests {
+			if p.Source == g.SourceBranch &&
+				p.Target == g.TargetBranch &&
+				!p.Closed &&
+				!p.Merged {
 
-			return true, nil
+				logrus.Infof("%s Nothing else to do, our pullrequest already exist on:\n\t%s",
+					result.SUCCESS,
+					p.Link)
+
+				return true, nil
+			}
+		}
+
+		if page == 0 {
+			break
 		}
 	}
+
 	return false, nil
 }
 
