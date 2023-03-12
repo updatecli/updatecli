@@ -1,0 +1,25 @@
+name: "Test Gitlab branch"
+
+sources:
+  default:
+    kind: "gitlab/branch"
+    spec:
+      owner: "olblak"
+      repository: "updatecli"
+      branch: main
+
+conditions:
+  default:
+    kind: "gitlab/branch"
+    disablesourceinput: true
+    spec:
+      owner: "olblak"
+      repository: "updatecli"
+      branch: "main"
+
+  sourcedefault:
+    kind: "gitlab/branch"
+    sourceid: "default"
+    spec:
+      owner: "olblak"
+      repository: "updatecli"

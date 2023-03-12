@@ -1,0 +1,27 @@
+name: Test Gitea release
+
+sources:
+  default:
+    kind: gitlab/release  
+    spec:
+      owner: "olblak"
+      repository: "updatecli"
+      versionfilter:
+        kind: semver
+        pattern: "~0"
+        
+conditions:
+  default:
+    kind: gitlab/release  
+    spec:
+      owner: "updatecli"
+      repository: "updatecli-action"
+      tag: "v2.15.0"
+  sourcedefault:
+    kind: gitea/release  
+    sourceid: default
+    spec:
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
+

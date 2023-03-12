@@ -1,0 +1,50 @@
+name: "Test Gitea tag"
+
+sources:
+  default:
+    kind: "gitea/tag"
+    spec:
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
+      versionfilter:
+        kind: "semver"
+        pattern: "~2"
+  latest:
+    kind: "gitea/tag"
+    spec:
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
+
+  mirror:
+    kind: "gitea/tag"
+    spec:
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
+        
+conditions:
+  default:
+    kind: "gitea/tag"
+    disablesourceinput: true
+    spec:
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
+      tag: "v2.15.0"
+    failwhen: true
+  sourcedefault:
+    kind: "gitea/tag"
+    sourceid: "default"
+    spec:
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
+  latest:
+    kind: "gitea/tag"
+    sourceid: "latest"
+    spec:
+      url: "codeberg.org"
+      owner: "updatecli"
+      repository: "updatecli-action"
