@@ -90,26 +90,39 @@ func (g *Gitlab) SearchTags() (tags []string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	references, resp, err := g.client.Git.ListTags(
-		ctx,
-		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-		scm.ListOptions{
-			URL:  g.spec.URL,
-			Page: 1,
-			Size: 30,
-		},
-	)
+	page := 0
 
-	if err != nil {
-		return nil, err
-	}
+	// Query gitlab api until we visit all pages
+	for {
+		references, resp, err := g.client.Git.ListTags(
+			ctx,
+			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
+			scm.ListOptions{
+				URL:  g.client.BaseURL.Host,
+				Page: page,
+				Size: 30,
+			},
+		)
 
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-	}
+		if err != nil {
+			return nil, err
+		}
 
-	for _, ref := range references {
-		tags = append(tags, ref.Name)
+		page = resp.Page.Next
+
+		fmt.Println(resp.Page.Next)
+
+		if resp.Status > 400 {
+			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+		}
+
+		for _, ref := range references {
+			tags = append(tags, ref.Name)
+		}
+
+		if page == 0 {
+			break
+		}
 	}
 
 	return tags, nil

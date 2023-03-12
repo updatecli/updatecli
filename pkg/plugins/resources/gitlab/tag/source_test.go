@@ -40,6 +40,26 @@ func TestSource(t *testing.T) {
 			wantErr:    true,
 		},
 		{
+			name: "repository should exist with tag 0.3.0 withou specifying gitlab.com",
+			manifest: struct {
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
+			}{
+				Token:      "",
+				Owner:      "olblak",
+				Repository: "updatecli",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "0.3.0",
+				},
+			},
+			wantResult: "v0.3.0",
+			wantErr:    false,
+		},
+		{
 			name: "repository should exist with tag 0.3.0",
 			manifest: struct {
 				URL           string
