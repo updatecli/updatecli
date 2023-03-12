@@ -22,7 +22,7 @@ func TestCondition(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "repository olblak/updatecli should not exist",
+			name: "repository olblak/updatecli-donotexiset should not exist",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -30,16 +30,16 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
+				Owner:      "olblak",
 				Repository: "updatecli-donotexist",
 			},
 			wantResult: false,
 			wantErr:    true,
 		},
 		{
-			name: "repository olblak/updatecli-mirror should exist but no release",
+			name: "repository cicd-devroom/FOSDEM22 should exist but no release",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -47,10 +47,10 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "demo-terminal",
+				Owner:      "cicd-devroom",
+				Repository: "FOSDEM22",
 			},
 			wantResult: false,
 			wantErr:    false,
@@ -64,17 +64,17 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "demo-terminal",
+				Owner:      "cicd-devroom",
+				Repository: "FOSDEM22",
 				Tag:        "2.0.0",
 			},
 			wantResult: false,
 			wantErr:    false,
 		},
 		{
-			name: "repository should exist with release v2.15.0",
+			name: "repository should exist with release v0.46.2",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -82,11 +82,11 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "updatecli-action",
-				Tag:        "v2.15.0",
+				Owner:      "olblak",
+				Repository: "updatecli",
+				Tag:        "v0.46.2",
 			},
 			wantResult: true,
 			wantErr:    false,

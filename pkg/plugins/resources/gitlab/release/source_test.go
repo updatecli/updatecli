@@ -31,16 +31,16 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
+				Owner:      "olblak",
 				Repository: "updatecli-donotexist",
 			},
 			wantResult: "",
 			wantErr:    true,
 		},
 		{
-			name: "repository updatecli/demo-terminal should exist but no release",
+			name: "repository cicd-devroom/FOSDEM22 should exist but no release",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -48,16 +48,16 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "demo-terminal",
+				Owner:      "cicd-devroom",
+				Repository: "FOSDEM22",
 			},
 			wantResult: "",
 			wantErr:    true,
 		},
 		{
-			name: "repository should exist with release 0.0.3",
+			name: "repository should exist with release 0.46.2",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -65,16 +65,16 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "codeberg.org",
+				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "updatecli",
-				Repository: "updatecli-action",
+				Owner:      "olblak",
+				Repository: "updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "~2.15",
+					Pattern: "~0.46.0",
 				},
 			},
-			wantResult: "v2.15.0",
+			wantResult: "v0.46.2",
 			wantErr:    false,
 		},
 	}
