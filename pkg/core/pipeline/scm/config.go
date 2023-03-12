@@ -155,7 +155,7 @@ func (Config) JSONSchema() *jschema.Schema {
 		"git":    &git.Spec{},
 		"gitea":  &gitea.Spec{},
 		"github": &github.Spec{},
-		"gitlab":  &gitlab.Spec{},
+		"gitlab": &gitlab.Spec{},
 	}
 
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
