@@ -93,38 +93,45 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	remoteBranches, resp, err := g.client.Git.ListBranches(
-		ctx,
-		strings.Join([]string{owner, repository}, "/"),
-		scm.ListOptions{
-			URL:  g.spec.URL,
-			Page: 1,
-			Size: 30,
-		},
-	)
-
-	if err != nil {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-		return false, err
-	}
-
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-	}
-
 	foundRemoteSourceBranch := false
 	foundRemoteTargetBranch := false
+	page := 0
+	for {
+		remoteBranches, resp, err := g.client.Git.ListBranches(
+			ctx,
+			strings.Join([]string{owner, repository}, "/"),
+			scm.ListOptions{
+				URL:  g.spec.URL,
+				Page: page,
+				Size: 30,
+			},
+		)
 
-	for _, remoteBranch := range remoteBranches {
-		if remoteBranch.Name == sourceBranch {
-			foundRemoteSourceBranch = true
-		}
-		if remoteBranch.Name == targetBranch {
-			foundRemoteTargetBranch = true
+		if err != nil {
+			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+			return false, err
 		}
 
-		if foundRemoteSourceBranch && foundRemoteTargetBranch {
-			return true, nil
+		page = resp.Page.Next
+
+		if resp.Status > 400 {
+			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		}
+
+		for _, remoteBranch := range remoteBranches {
+			if remoteBranch.Name == sourceBranch {
+				foundRemoteSourceBranch = true
+			}
+			if remoteBranch.Name == targetBranch {
+				foundRemoteTargetBranch = true
+			}
+
+			if foundRemoteSourceBranch && foundRemoteTargetBranch {
+				return true, nil
+			}
+		}
+		if page == 0 {
+			break
 		}
 	}
 
