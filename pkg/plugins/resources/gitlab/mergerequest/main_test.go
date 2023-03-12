@@ -32,7 +32,7 @@ func TestNew(t *testing.T) {
 			scm: &gitlabscm.Gitlab{
 				Spec: gitlabscm.Spec{
 					Spec: gitlabclient.Spec{
-						URL:      "gitea.updatecli.io",
+						URL:      "gitlab.com",
 						Token:    "xxx",
 						Username: "tes",
 					},
@@ -54,7 +54,7 @@ func TestNew(t *testing.T) {
 			scm: &gitlabscm.Gitlab{
 				Spec: gitlabscm.Spec{
 					Spec: gitlabclient.Spec{
-						URL: "gitea.updatecli.io",
+						URL: "gitlab.com",
 					},
 					Repository: "updatecli-test",
 					Branch:     "v2",
@@ -73,7 +73,7 @@ func TestNew(t *testing.T) {
 			scm: &gitlabscm.Gitlab{
 				Spec: gitlabscm.Spec{
 					Spec: gitlabclient.Spec{
-						URL: "gitea.updatecli.io",
+						URL: "gitlab.com",
 					},
 					Repository: "updatecli-test",
 					Branch:     "v2",
