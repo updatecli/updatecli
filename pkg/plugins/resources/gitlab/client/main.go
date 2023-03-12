@@ -26,7 +26,13 @@ type Client *scm.Client
 
 func New(s Spec) (Client, error) {
 
-	client, err := gitlab.New(s.URL)
+	url := s.URL
+
+	if url == "" {
+		url = "gitlab.com"
+	}
+
+	client, err := gitlab.New(url)
 
 	if err != nil {
 		return nil, err
