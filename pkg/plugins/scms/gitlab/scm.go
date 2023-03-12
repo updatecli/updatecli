@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 )
 
 // GetDirectory returns the local git repository path.
@@ -24,8 +25,14 @@ func (g *Gitlab) Clean() error {
 // Clone run `git clone`.
 func (g *Gitlab) Clone() (string, error) {
 
-	URL := fmt.Sprintf("%v/%v/%v.git",
-		g.Spec.URL,
+	url := g.Spec.URL
+
+	if url == "" {
+		url = client.GITLABDOMAIN
+	}
+
+	URL := fmt.Sprintf("https://%s/%s/%s.git",
+		url,
 		g.Spec.Owner,
 		g.Spec.Repository)
 

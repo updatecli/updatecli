@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -20,6 +21,12 @@ type Spec struct {
 	Token string `yaml:",omitempty"`
 }
 
+const (
+
+	// GITLABDOMAIN defines the default gitlab url
+	GITLABDOMAIN string = "gitlab.com"
+)
+
 type Client *scm.Client
 
 func New(s Spec) (Client, error) {
@@ -27,7 +34,7 @@ func New(s Spec) (Client, error) {
 	url := s.URL
 
 	if url == "" {
-		url = "https://gitlab.com"
+		url = fmt.Sprintf("https://%s", GITLABDOMAIN)
 	}
 
 	if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
