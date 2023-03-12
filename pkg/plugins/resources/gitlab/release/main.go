@@ -70,16 +70,6 @@ func New(spec interface{}) (*Gitlab, error) {
 		return &Gitlab{}, nil
 	}
 
-	err = clientSpec.Validate()
-	if err != nil {
-		return &Gitlab{}, err
-	}
-
-	err = clientSpec.Sanitize()
-	if err != nil {
-		return &Gitlab{}, err
-	}
-
 	s.Spec = clientSpec
 
 	err = s.Validate()
@@ -149,13 +139,6 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 func (s Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
-
-	err := s.Spec.Validate()
-
-	if err != nil {
-		logrus.Errorln(err)
-		gotError = true
-	}
 
 	if len(s.Owner) == 0 {
 		gotError = true

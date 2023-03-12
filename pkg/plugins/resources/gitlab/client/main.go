@@ -1,14 +1,12 @@
 package client
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/drone/go-scm/scm"
 	"github.com/drone/go-scm/scm/driver/gitlab"
 	"github.com/drone/go-scm/scm/transport/oauth2"
-	"github.com/sirupsen/logrus"
 )
 
 // Spec defines a specification for a "Gitlab" resource
@@ -29,7 +27,11 @@ func New(s Spec) (Client, error) {
 	url := s.URL
 
 	if url == "" {
-		url = "gitlab.com"
+		url = "https://gitlab.com"
+	}
+
+	if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
+		url = "https://" + url
 	}
 
 	client, err := gitlab.New(url)
@@ -54,30 +56,4 @@ func New(s Spec) (Client, error) {
 
 	return client, nil
 
-}
-
-// Validate validates that a spec contains good content
-func (s Spec) Validate() error {
-
-	if len(s.URL) == 0 {
-		logrus.Errorf("missing %q parameter", "url")
-		return fmt.Errorf("wrong configuration")
-	}
-
-	return nil
-}
-
-// Sanitize parse and update if needed a spec content
-func (s *Spec) Sanitize() error {
-
-	err := s.Validate()
-	if err != nil {
-		return err
-	}
-
-	if !strings.HasPrefix(s.URL, "https://") && !strings.HasPrefix(s.URL, "http://") {
-		s.URL = "https://" + s.URL
-	}
-
-	return nil
 }

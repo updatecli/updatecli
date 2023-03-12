@@ -76,12 +76,6 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 		}
 	}
 
-	// Sanitize modifies the clientSpec so it must be done once initialization is completed
-	err = clientSpec.Sanitize()
-	if err != nil {
-		return Gitlab{}, err
-	}
-
 	c, err := client.New(clientSpec)
 
 	if err != nil {

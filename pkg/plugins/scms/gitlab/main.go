@@ -63,17 +63,6 @@ func New(spec interface{}, pipelineID string) (*Gitlab, error) {
 		return &Gitlab{}, err
 	}
 
-	err = clientSpec.Sanitize()
-	if err != nil {
-		return &Gitlab{}, err
-	}
-
-	err = clientSpec.Validate()
-
-	if err != nil {
-		return &Gitlab{}, err
-	}
-
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
 		return &Gitlab{}, nil
