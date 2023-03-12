@@ -22,25 +22,8 @@ func TestSource(t *testing.T) {
 		wantResult string
 		wantErr    bool
 	}{
-		//{
-		//	name: "repository olblak/updatecli should not exist",
-		//	manifest: struct {
-		//		URL           string
-		//		Token         string
-		//		Owner         string
-		//		Repository    string
-		//		VersionFilter version.Filter
-		//	}{
-		//		URL:        "codeberg.org",
-		//		Token:      "",
-		//		Owner:      "updatecli",
-		//		Repository: "updatecli-donotexist",
-		//	},
-		//	wantResult: "",
-		//	wantErr:    true,
-		//},
 		{
-			name: "repository should exist with latest branch v3",
+			name: "repository olblak/updatecli-donotexist should not exist",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -48,18 +31,55 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				//URL:        "codeberg.org",
 				URL:        "gitlab.com",
 				Token:      "",
-				Owner:      "cicd-devroom",
-				Repository: "FOSDEM22",
-				//VersionFilter: version.Filter{
-				//	Kind:    "regex",
-				//	Pattern: "v1",
-				//},
+				Owner:      "updatecli",
+				Repository: "updatecli-donotexist",
+			},
+			wantResult: "",
+			wantErr:    true,
+		},
+		{
+			name: "repository should exist with a branch main",
+			manifest: struct {
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
+			}{
+				URL:        "gitlab.com",
+				Token:      "",
+				Owner:      "olblak",
+				Repository: "updatecli",
+				VersionFilter: version.Filter{
+					Kind:    "regex",
+					Pattern: "main",
+				},
 			},
 			wantResult: "main",
 			wantErr:    false,
+		},
+		{
+			name: "repository should not have branch donotexist",
+			manifest: struct {
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
+			}{
+				URL:        "gitlab.com",
+				Token:      "",
+				Owner:      "olblak",
+				Repository: "updatecli",
+				VersionFilter: version.Filter{
+					Kind:    "regex",
+					Pattern: "donotexist",
+				},
+			},
+			wantResult: "",
+			wantErr:    true,
 		},
 	}
 
