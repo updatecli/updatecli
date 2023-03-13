@@ -9,11 +9,11 @@ import (
 	"github.com/drone/go-scm/scm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines settings used to interact with Gitea release
+// Spec defines settings used to interact with Gitlab release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
 	// [S][C][T] Owner specifies repository owner
@@ -22,9 +22,9 @@ type Spec struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [T] Title defines the Gitea release title.
+	// [T] Title defines the Gitlab release title.
 	Title string `yaml:",omitempty"`
-	// [C][T] Tag defines the Gitea release tag.
+	// [C][T] Tag defines the Gitlab release tag.
 	Tag string `yaml:",omitempty"`
 	// [T] Commitish defines the commit-ish such as `main`
 	Commitish string `yaml:",omitempty"`
@@ -42,8 +42,8 @@ const (
 	updatecliCredits string = "Made with ❤️️ by updatecli"
 )
 
-// Gitea contains information to interact with Gitea api
-type Gitea struct {
+// Gitlab contains information to interact with Gitlab api
+type Gitlab struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
 	// client handle the api authentication
@@ -54,7 +54,7 @@ type Gitea struct {
 }
 
 // New returns a new valid Github object.
-func New(spec interface{}) (*Gitea, error) {
+func New(spec interface{}) (*Gitlab, error) {
 	var s Spec
 	var clientSpec client.Spec
 
@@ -62,22 +62,12 @@ func New(spec interface{}) (*Gitea, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return &Gitea{}, err
+		return &Gitlab{}, err
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return &Gitea{}, nil
-	}
-
-	err = clientSpec.Validate()
-	if err != nil {
-		return &Gitea{}, err
-	}
-
-	err = clientSpec.Sanitize()
-	if err != nil {
-		return &Gitea{}, err
+		return &Gitlab{}, nil
 	}
 
 	s.Spec = clientSpec
@@ -85,22 +75,22 @@ func New(spec interface{}) (*Gitea, error) {
 	err = s.Validate()
 
 	if err != nil {
-		return &Gitea{}, err
+		return &Gitlab{}, err
 	}
 
 	c, err := client.New(clientSpec)
 
 	if err != nil {
-		return &Gitea{}, err
+		return &Gitlab{}, err
 	}
 
 	newFilter, err := s.VersionFilter.Init()
 	if err != nil {
-		return &Gitea{}, err
+		return &Gitlab{}, err
 	}
 	s.VersionFilter = newFilter
 
-	g := Gitea{
+	g := Gitlab{
 		spec:          s,
 		client:        c,
 		versionFilter: newFilter,
@@ -109,17 +99,18 @@ func New(spec interface{}) (*Gitea, error) {
 	return &g, nil
 }
 
-// Retrieve git tags from a remote gitea repository
-func (g *Gitea) SearchReleases() ([]string, error) {
+// Retrieve git tags from a remote Gitlab repository
+func (g *Gitlab) SearchReleases() ([]string, error) {
 
 	ctx := context.Background()
+	// Timeout api query after 30sec
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 
 	results := []string{}
 	page := 0
 	for {
-		// Timeout api query after 30sec
-		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		defer cancel()
+
 		releases, resp, err := g.client.Releases.List(
 			ctx,
 			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
@@ -136,7 +127,7 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 		}
 
 		if resp.Status > 400 {
-			logrus.Debugf("Gitea Api Response:\n%+v", resp)
+			logrus.Debugf("Gitlab Api Response:\n%+v", resp)
 		}
 
 		for i := len(releases) - 1; i >= 0; i-- {
@@ -145,11 +136,11 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 			}
 		}
 
+		// Means that we parsed all pages
 		if page >= resp.Page.Last {
 			break
 		}
 		page++
-
 	}
 
 	return results, nil
@@ -158,13 +149,6 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 func (s Spec) Validate() error {
 	gotError := false
 	missingParameters := []string{}
-
-	err := s.Spec.Validate()
-
-	if err != nil {
-		logrus.Errorln(err)
-		gotError = true
-	}
 
 	if len(s.Owner) == 0 {
 		gotError = true
@@ -181,7 +165,7 @@ func (s Spec) Validate() error {
 	}
 
 	if gotError {
-		return fmt.Errorf("wrong gitea configuration")
+		return fmt.Errorf("wrong Gitlab configuration")
 	}
 
 	return nil
