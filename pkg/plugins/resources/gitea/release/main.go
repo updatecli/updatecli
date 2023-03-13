@@ -113,34 +113,43 @@ func New(spec interface{}) (*Gitea, error) {
 func (g *Gitea) SearchReleases() ([]string, error) {
 
 	ctx := context.Background()
-	// Timeout api query after 30sec
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	releases, resp, err := g.client.Releases.List(
-		ctx,
-		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-		scm.ReleaseListOptions{
-			Page:   1,
-			Size:   30,
-			Open:   true,
-			Closed: true,
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.Status > 400 {
-		logrus.Debugf("Gitea Api Response:\n%+v", resp)
-	}
 
 	results := []string{}
-	for i := len(releases) - 1; i >= 0; i-- {
-		if !releases[i].Draft {
-			results = append(results, releases[i].Tag)
+	page := 0
+	for {
+		// Timeout api query after 30sec
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		releases, resp, err := g.client.Releases.List(
+			ctx,
+			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
+			scm.ReleaseListOptions{
+				Page:   page,
+				Size:   30,
+				Open:   true,
+				Closed: true,
+			},
+		)
+
+		if err != nil {
+			return nil, err
 		}
+
+		if resp.Status > 400 {
+			logrus.Debugf("Gitea Api Response:\n%+v", resp)
+		}
+
+		for i := len(releases) - 1; i >= 0; i-- {
+			if !releases[i].Draft {
+				results = append(results, releases[i].Tag)
+			}
+		}
+
+		if page >= resp.Page.Last {
+			break
+		}
+		page++
+
 	}
 
 	return results, nil
