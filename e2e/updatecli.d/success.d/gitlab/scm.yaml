@@ -52,3 +52,10 @@ targets:
     scmid: gitlab
     spec:
       file: README.adoc
+
+actions:
+  default:
+    title: Bump xxx
+    kind: gitlab/mergerequest
+    scmid: gitlab
+    spec:
