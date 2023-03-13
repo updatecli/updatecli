@@ -2,49 +2,42 @@ name: "Test Gitea tag"
 
 sources:
   default:
-    kind: "gitea/tag"
+    kind: "gitlab/tag"
     spec:
-      url: "codeberg.org"
-      owner: "updatecli"
-      repository: "updatecli-action"
+      owner: "olblak"
+      repository: "updatecli"
       versionfilter:
         kind: "semver"
-        pattern: "~2"
+        pattern: "~0.46"
   latest:
-    kind: "gitea/tag"
+    kind: "gitlab/tag"
     spec:
-      url: "codeberg.org"
-      owner: "updatecli"
-      repository: "updatecli-action"
+      url: "gitlab.com"
+      owner: "olblak"
+      repository: "updatecli"
 
-  mirror:
-    kind: "gitea/tag"
-    spec:
-      url: "codeberg.org"
-      owner: "updatecli"
-      repository: "updatecli-action"
-        
 conditions:
   default:
-    kind: "gitea/tag"
+    name: Test that tag v0.1.11 do not exist
+    kind: "gitlab/tag"
     disablesourceinput: true
     spec:
-      url: "codeberg.org"
-      owner: "updatecli"
-      repository: "updatecli-action"
-      tag: "v2.15.0"
+      owner: "olblak"
+      repository: "updatecli"
+      tag: "v0.1.11"
     failwhen: true
   sourcedefault:
-    kind: "gitea/tag"
+    name: Test that tag retrieved from sourceid default exist
+    kind: "gitlab/tag"
     sourceid: "default"
     spec:
-      url: "codeberg.org"
-      owner: "updatecli"
-      repository: "updatecli-action"
+      owner: "olblak"
+      repository: "updatecli"
   latest:
-    kind: "gitea/tag"
+    name: Test that tag retrieved from sourceid latest exist
+    kind: "gitlab/tag"
     sourceid: "latest"
     spec:
-      url: "codeberg.org"
-      owner: "updatecli"
-      repository: "updatecli-action"
+      owner: "olblak"
+      repository: "updatecli"
+

@@ -1,27 +1,27 @@
-name: Test Gitea release
+name: Test Gitlab release
 
 sources:
   default:
-    kind: gitlab/release  
+    kind: gitlab/release
     spec:
       owner: "olblak"
       repository: "updatecli"
       versionfilter:
         kind: semver
         pattern: "~0"
-        
+
 conditions:
   default:
-    kind: gitlab/release  
+    kind: gitlab/release
     spec:
-      owner: "updatecli"
-      repository: "updatecli-action"
-      tag: "v2.15.0"
+      owner: "olblak"
+      repository: "updatecli"
+      tag: "v0.46.2"
   sourcedefault:
-    kind: gitea/release  
+    kind: gitlab/release
     sourceid: default
     spec:
-      url: "codeberg.org"
-      owner: "updatecli"
-      repository: "updatecli-action"
+      url: "gitlab.com"
+      owner: "olblak"
+      repository: "updatecli"
 
