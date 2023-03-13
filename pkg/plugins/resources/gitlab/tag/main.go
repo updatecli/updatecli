@@ -100,17 +100,13 @@ func (g *Gitlab) SearchTags() (tags []string, err error) {
 			scm.ListOptions{
 				URL:  g.client.BaseURL.Host,
 				Page: page,
-				Size: 30,
+				Size: 100,
 			},
 		)
 
 		if err != nil {
 			return nil, err
 		}
-
-		page = resp.Page.Next
-
-		fmt.Println(resp.Page.Next)
 
 		if resp.Status > 400 {
 			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
@@ -120,9 +116,10 @@ func (g *Gitlab) SearchTags() (tags []string, err error) {
 			tags = append(tags, ref.Name)
 		}
 
-		if page == 0 {
+		if page >= resp.Page.Last {
 			break
 		}
+		page++
 	}
 
 	return tags, nil

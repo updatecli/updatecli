@@ -90,12 +90,12 @@ func (g *Gitlab) SearchBranches() (tags []string, err error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
 
 	results := []string{}
 	page := 0
 	for {
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
 		branches, resp, err := g.client.Git.ListBranches(
 			ctx,
 			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
@@ -110,8 +110,6 @@ func (g *Gitlab) SearchBranches() (tags []string, err error) {
 			return nil, err
 		}
 
-		page = resp.Page.Next
-
 		if resp.Status > 400 {
 			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 		}
@@ -120,9 +118,10 @@ func (g *Gitlab) SearchBranches() (tags []string, err error) {
 			results = append(results, branch.Name)
 		}
 		// if the next page is 0 then it means we visited all pages
-		if page == 0 {
+		if page >= resp.Page.Last {
 			break
 		}
+		page++
 	}
 
 	return results, nil

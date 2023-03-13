@@ -110,6 +110,7 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 	results := []string{}
 	page := 0
 	for {
+
 		releases, resp, err := g.client.Releases.List(
 			ctx,
 			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
@@ -125,8 +126,6 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 			return nil, err
 		}
 
-		page = resp.Page.Next
-
 		if resp.Status > 400 {
 			logrus.Debugf("Gitlab Api Response:\n%+v", resp)
 		}
@@ -137,10 +136,11 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 			}
 		}
 
-		if page == 0 {
+		// Means that we parsed all pages
+		if page >= resp.Page.Last {
 			break
 		}
-
+		page++
 	}
 
 	return results, nil

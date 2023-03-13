@@ -99,13 +99,13 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
 
 	foundRemoteSourceBranch := false
 	foundRemoteTargetBranch := false
 	page := 0
 	for {
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
 		remoteBranches, resp, err := g.client.Git.ListBranches(
 			ctx,
 			strings.Join([]string{owner, repository}, "/"),
@@ -120,8 +120,6 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 			return false, err
 		}
-
-		page = resp.Page.Next
 
 		if resp.Status > 400 {
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
@@ -139,9 +137,10 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 				return true, nil
 			}
 		}
-		if page == 0 {
+		if page >= resp.Page.Last {
 			break
 		}
+		page++
 	}
 
 	if !foundRemoteSourceBranch {
