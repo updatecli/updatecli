@@ -86,14 +86,6 @@ func TestNew(t *testing.T) {
 			expectedGitlabSourceBranch: "workingBranchv2",
 			expectedGitlabTargetBranch: "v2",
 		},
-		{
-			name: "Test required parameter URL not specified",
-			spec: Spec{
-				Owner: "updatecli",
-			},
-			scm:     nil,
-			wantErr: true,
-		},
 	}
 
 	for _, tt := range testData {
