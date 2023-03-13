@@ -79,16 +79,16 @@ func (g *Gitlab) CreateAction(title, changelog, pipelineReport string) error {
 		&opts,
 	)
 
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-	}
-
 	if err != nil {
 		if err.Error() == scm.ErrNotFound.Error() {
 			logrus.Infof("Gitlab pullrequest not created, skipping")
 			return nil
 		}
 		return err
+	}
+
+	if resp.Status > 400 {
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	logrus.Infof("Gitlab pullrequest successfully opened on %q", pr.Link)
