@@ -13,12 +13,12 @@ import (
 // isPullRequestExist queries a remote Gitea instance to know if a pullrequest already exists.
 func (g *Gitea) isPullRequestExist() (bool, error) {
 	ctx := context.Background()
-	// Timeout api query after 30sec
-	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
-	defer cancelList()
 
 	page := 0
 	for {
+		// Timeout api query after 30sec
+		ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
+		defer cancelList()
 
 		optsSearch := scm.PullRequestListOptions{
 			Page:   page,
@@ -39,8 +39,6 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 			return false, err
 		}
 
-		page = resp.Page.Next
-
 		if resp.Status > 400 {
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		}
@@ -59,9 +57,10 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 			}
 		}
 
-		if page == 0 {
+		if page >= resp.Page.Last {
 			break
 		}
+		page++
 	}
 
 	return false, nil

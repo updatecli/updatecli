@@ -98,26 +98,24 @@ func (g *Gitea) SearchTags() (tags []string, err error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
 	page := 0
 	for {
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+
 		references, resp, err := g.client.Git.ListTags(
 			ctx,
 			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 			scm.ListOptions{
 				URL:  g.spec.URL,
 				Page: page,
-				Size: 30,
+				Size: 100,
 			},
 		)
 
 		if err != nil {
 			return nil, err
 		}
-
-		page = resp.Page.Next
 
 		if resp.Status > 400 {
 			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
@@ -127,9 +125,10 @@ func (g *Gitea) SearchTags() (tags []string, err error) {
 			tags = append(tags, ref.Name)
 		}
 
-		if page == 0 {
+		if page >= resp.Page.Last {
 			break
 		}
+		page++
 	}
 
 	return tags, nil

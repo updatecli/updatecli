@@ -113,13 +113,13 @@ func New(spec interface{}) (*Gitea, error) {
 func (g *Gitea) SearchReleases() ([]string, error) {
 
 	ctx := context.Background()
-	// Timeout api query after 30sec
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
 
 	results := []string{}
 	page := 0
 	for {
+		// Timeout api query after 30sec
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
 		releases, resp, err := g.client.Releases.List(
 			ctx,
 			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
@@ -135,8 +135,6 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 			return nil, err
 		}
 
-		page = resp.Page.Next
-
 		if resp.Status > 400 {
 			logrus.Debugf("Gitea Api Response:\n%+v", resp)
 		}
@@ -147,9 +145,10 @@ func (g *Gitea) SearchReleases() ([]string, error) {
 			}
 		}
 
-		if page == 0 {
+		if page >= resp.Page.Last {
 			break
 		}
+		page++
 
 	}
 

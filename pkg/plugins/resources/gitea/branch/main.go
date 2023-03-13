@@ -120,8 +120,6 @@ func (g *Gitea) SearchBranches() (tags []string, err error) {
 			return nil, err
 		}
 
-		page = resp.Page.Next
-
 		if resp.Status > 400 {
 			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 		}
@@ -130,9 +128,10 @@ func (g *Gitea) SearchBranches() (tags []string, err error) {
 			results = append(results, branch.Name)
 		}
 
-		if page == 0 {
+		if page >= resp.Page.Last {
 			break
 		}
+		page++
 	}
 
 	return results, nil
