@@ -10,8 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	azure "github.com/updatecli/updatecli/pkg/plugins/resources/azure/devops/pullrequest"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
 	gitlab "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/mergerequest"
+	azurescm "github.com/updatecli/updatecli/pkg/plugins/scms/azure"
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
@@ -21,6 +23,7 @@ const (
 	githubIdentifier = "github"
 	giteaIdentifier  = "gitea"
 	gitlabIdentifier = "gitlab"
+	azureIdentifier  = "azure"
 )
 
 var (
@@ -137,6 +140,34 @@ func (a *Action) Update() error {
 func (a *Action) generateActionHandler() error {
 	// Don't forget to update the JSONSchema() method when adding/updating/removing a case
 	switch a.Config.Kind {
+
+	case "azure/pullrequest", azureIdentifier:
+		actionSpec := azure.Spec{}
+
+		if a.Scm.Config.Kind != azureIdentifier {
+			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
+				a.Scm.Config.Kind,
+				a.Config.Kind)
+		}
+
+		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
+		if err != nil {
+			return err
+		}
+
+		ge, ok := a.Scm.Handler.(*azurescm.Azure)
+
+		if !ok {
+			return fmt.Errorf("scm is not of kind %q", azureIdentifier)
+		}
+
+		g, err := azure.New(actionSpec, ge)
+
+		if err != nil {
+			return err
+		}
+
+		a.Handler = &g
 	case "gitea/pullrequest", giteaIdentifier:
 		actionSpec := gitea.Spec{}
 
@@ -234,6 +265,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
+		"azure/pullrequest":   &azure.Spec{},
 		"github/pullrequest":  &github.ActionSpec{},
 		"gitea/pullrequest":   &gitea.Spec{},
 		"gitlab/mergerequest": &gitlab.Spec{},
