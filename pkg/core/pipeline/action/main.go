@@ -10,17 +10,20 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	bitbucket "github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/pullrequest"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
 	gitlab "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/mergerequest"
+	bitbucketscm "github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 )
 
 const (
-	githubIdentifier = "github"
-	giteaIdentifier  = "gitea"
-	gitlabIdentifier = "gitlab"
+	gitlabIdentifier    = "gitlab"
+	githubIdentifier    = "github"
+	giteaIdentifier     = "gitea"
+	bitbucketIdentifier = "bitbucket"
 )
 
 var (
@@ -214,6 +217,34 @@ func (a *Action) generateActionHandler() error {
 		}
 
 		g, err := github.NewAction(actionSpec, gh)
+
+		if err != nil {
+			return err
+		}
+
+		a.Handler = &g
+
+	case "bitbucket/pullrequest", bitbucketIdentifier:
+		actionSpec := bitbucket.Spec{}
+
+		if a.Scm.Config.Kind != bitbucketIdentifier {
+			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
+				a.Scm.Config.Kind,
+				a.Config.Kind)
+		}
+
+		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
+		if err != nil {
+			return err
+		}
+
+		ge, ok := a.Scm.Handler.(*bitbucketscm.Bitbucket)
+
+		if !ok {
+			return fmt.Errorf("scm is not of kind 'bitbucket'")
+		}
+
+		g, err := bitbucket.New(actionSpec, ge)
 
 		if err != nil {
 			return err
