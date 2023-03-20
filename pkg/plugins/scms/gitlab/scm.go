@@ -25,13 +25,9 @@ func (g *Gitlab) Clean() error {
 // Clone run `git clone`.
 func (g *Gitlab) Clone() (string, error) {
 
-	url := g.Spec.URL
+	url := client.EnsureValidURL(g.Spec.URL)
 
-	if url == "" {
-		url = client.GITLABDOMAIN
-	}
-
-	URL := fmt.Sprintf("https://%s/%s/%s.git",
+	URL := fmt.Sprintf("%s/%s/%s.git",
 		url,
 		g.Spec.Owner,
 		g.Spec.Repository)
