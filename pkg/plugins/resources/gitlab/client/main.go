@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -13,7 +12,7 @@ import (
 // Spec defines a specification for a "Gitlab" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [S][C][T] URL specifies the default github url in case of Gitlab enterprise
+	// [S][C][T] URL specifies the default Gitlab url in case of Gitlab enterprise
 	URL string `yaml:",omitempty" jsonschema:"required"`
 	// [S][C][T] Username specifies the username used to authenticate with Gitlab API
 	Username string `yaml:",omitempty"`
@@ -31,15 +30,7 @@ type Client *scm.Client
 
 func New(s Spec) (Client, error) {
 
-	url := s.URL
-
-	if url == "" {
-		url = fmt.Sprintf("https://%s", GITLABDOMAIN)
-	}
-
-	if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
-		url = "https://" + url
-	}
+	url := EnsureValidURL(s.URL)
 
 	client, err := gitlab.New(url)
 
@@ -63,4 +54,16 @@ func New(s Spec) (Client, error) {
 
 	return client, nil
 
+}
+
+func EnsureValidURL(u string) string {
+	if u == "" {
+		u = GITLABDOMAIN
+	}
+
+	if !strings.HasPrefix(u, "https://") && !strings.HasPrefix(u, "http://") {
+		u = "https://" + u
+	}
+
+	return u
 }
