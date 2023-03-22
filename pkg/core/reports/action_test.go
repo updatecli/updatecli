@@ -11,19 +11,19 @@ func TestHTMLReportsString(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		report         htmlReport
+		report         Action
 		expectedOutput string
 	}{
 		{
 			name: "Default working situation",
-			report: htmlReport{
+			report: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.0",
 								Description: "",
@@ -40,26 +40,21 @@ func TestHTMLReportsString(t *testing.T) {
 					},
 				},
 			},
-			expectedOutput: `<htmlReport id="1234">
+			expectedOutput: `<Action id="1234">
     <h2>Test Title</h2>
-    <p></p>
     <details id="4567">
-        <summary>Target One</summary>
-        <p></p>
+        <h3>Target One</h3>
         <details>
             <summary>1.0.0</summary>
-            <p></p>
         </details>
         <details>
             <summary>1.0.1</summary>
-            <p></p>
         </details>
     </details>
     <details id="4567">
-        <summary>Target Two</summary>
-        <p></p>
+        <h3>Target Two</h3>
     </details>
-</htmlReport>`,
+</Action>`,
 		},
 	}
 
@@ -75,18 +70,18 @@ func TestHTMLUnmarshal(t *testing.T) {
 	tests := []struct {
 		name           string
 		report         string
-		expectedOutput htmlReport
+		expectedOutput Action
 	}{
 		{
 			name: "Default working situation",
-			expectedOutput: htmlReport{
+			expectedOutput: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.0",
 								Description: "",
@@ -103,11 +98,11 @@ func TestHTMLUnmarshal(t *testing.T) {
 					},
 				},
 			},
-			report: `<htmlReport id="1234">
+			report: `<action id="1234">
     <h2>Test Title</h2>
     <p></p>
     <details id="4567">
-        <summary>Target One</summary>
+        <h3>Target One</h3>
         <p></p>
         <details>
             <summary>1.0.0</summary>
@@ -119,16 +114,16 @@ func TestHTMLUnmarshal(t *testing.T) {
         </details>
     </details>
     <details id="4567">
-        <summary>Target Two</summary>
+        <h3>Target Two</h3>
         <p></p>
     </details>
-</htmlReport>`,
+</action>`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var gotOutput htmlReport
+			var gotOutput Action
 			err := Unmarshal([]byte(tt.report), &gotOutput)
 			require.NoError(t, err)
 
@@ -141,19 +136,19 @@ func TestSort(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		report         htmlReport
-		expectedOutput htmlReport
+		report         Action
+		expectedOutput Action
 	}{
 		{
 			name: "Canonical scenario, both are matching",
-			expectedOutput: htmlReport{
+			expectedOutput: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.0",
 								Description: "",
@@ -170,14 +165,14 @@ func TestSort(t *testing.T) {
 					},
 				},
 			},
-			report: htmlReport{
+			report: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.0",
 								Description: "",
@@ -197,14 +192,14 @@ func TestSort(t *testing.T) {
 		},
 		{
 			name: "Should must be reorder",
-			expectedOutput: htmlReport{
+			expectedOutput: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.0",
 								Description: "",
@@ -221,14 +216,14 @@ func TestSort(t *testing.T) {
 					},
 				},
 			},
-			report: htmlReport{
+			report: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.1",
 								Description: "",
@@ -261,20 +256,20 @@ func TestMerge(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		report1        htmlReport
-		report2        htmlReport
-		expectedOutput htmlReport
+		report1        Action
+		report2        Action
+		expectedOutput Action
 	}{
 		{
 			name: "Should must be merged",
-			report1: htmlReport{
+			report1: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.0",
 								Description: "",
@@ -287,14 +282,14 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			report2: htmlReport{
+			report2: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.1",
 								Description: "",
@@ -307,14 +302,14 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			expectedOutput: htmlReport{
+			expectedOutput: Action{
 				ID:    "1234",
 				Title: "Test Title",
-				Targets: []targetHTMLReport{
+				Targets: []ActionTarget{
 					{
 						ID:    "4567",
 						Title: "Target One",
-						Changelogs: []HTMLChangelog{
+						Changelogs: []ActionTargetChangelog{
 							{
 								Title:       "1.0.0",
 								Description: "",
