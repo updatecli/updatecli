@@ -64,15 +64,11 @@ func (p *Pipeline) RunActions() error {
 
 		failedTargetIDs, attentionTargetIDs, _, skippedTargetIDs := p.GetTargetsIDByResult(relatedTargets)
 
-		actionTitle := getActionTitle(&action)
-
 		/*
 			Better for ID to use hash string
 			By having a actionID that combine both the pipelineID and the actionID, avoid collision
 			when two different pipeline open the same pullrequest based on the same action title
 		*/
-		action.Report.ID = fmt.Sprintf("%x", md5.Sum([]byte(p.Title+actionTitle)))
-		action.Report.Title = actionTitle
 
 		for _, t := range relatedTargets {
 			actionTarget := reports.ActionTarget{
@@ -83,12 +79,18 @@ func (p *Pipeline) RunActions() error {
 			}
 
 			if p.Sources[p.Targets[t].Config.SourceID].Changelog != "" {
-				actionTarget.Title = p.Sources[p.Targets[t].Config.SourceID].Output
-				actionTarget.Description = p.Sources[p.Targets[t].Config.SourceID].Changelog
+				actionTarget.Changelogs = append(actionTarget.Changelogs, reports.ActionTargetChangelog{
+					Title:       p.Sources[p.Targets[t].Config.SourceID].Output,
+					Description: p.Sources[p.Targets[t].Config.SourceID].Changelog,
+				})
 			}
 
 			action.Report.Targets = append(action.Report.Targets, actionTarget)
 		}
+		// Must action.Report.ID and action.Report.Title must be set after actionTarget are set
+		actionTitle := getActionTitle(&action)
+		action.Report.ID = fmt.Sprintf("%x", md5.Sum([]byte(p.Title+actionTitle)))
+		action.Report.Title = actionTitle
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
@@ -105,13 +107,13 @@ func (p *Pipeline) RunActions() error {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
 
 				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
-					action.Title,
+					actionTitle,
 					action.Report.String())
 				logrus.Debugf(strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
 			}
 
 			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n\n##Report:\n\n%s\n\n=====\n",
-				action.Title,
+				actionTitle,
 				action.Report.String())
 			logrus.Debugf(strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
 
@@ -119,7 +121,7 @@ func (p *Pipeline) RunActions() error {
 		}
 
 		err = action.Handler.CreateAction(
-			action.Title,
+			actionTitle,
 			"", // now useless and must be removed once action interface is updated
 			action.Report.String())
 
@@ -175,18 +177,18 @@ func (p *Pipeline) SearchAssociatedTargetsID(actionID string) ([]string, error) 
 }
 
 func getActionTitle(action *action.Action) string {
-	actionTitle := "No action title could be found"
-	switch len(action.Title) > 0 {
+	switch action.Title != "" {
 	case true:
-		actionTitle = action.Title
+		return action.Title
 	case false:
 		// Search first validate action title based on target title
 		// if none could be found then actionTitle keeps its default value
 		for i := range action.Report.Targets {
 			if action.Report.Targets[i].Title != "" {
-				actionTitle = action.Report.Targets[i].Title
+				return action.Report.Targets[i].Title
+
 			}
 		}
 	}
-	return actionTitle
+	return "No action title could be found"
 }
