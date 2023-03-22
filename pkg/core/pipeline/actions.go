@@ -1,10 +1,13 @@
 package pipeline
 
 import (
+	"crypto/md5"
 	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
+	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -59,45 +62,33 @@ func (p *Pipeline) RunActions() error {
 			return err
 		}
 
-		firstTargetID := relatedTargets[0]
-		firstTargetSourceID := p.Targets[firstTargetID].Config.SourceID
+		failedTargetIDs, attentionTargetIDs, _, skippedTargetIDs := p.GetTargetsIDByResult(relatedTargets)
 
-		// If action.Title is not set then we try to guess it
-		// based on the first target title
-		if len(action.Title) == 0 {
-			action.Title = p.Config.GetChangelogTitle(
-				firstTargetID,
-				p.Sources[firstTargetSourceID].Output,
-			)
+		actionTitle := getActionTitle(&action)
+
+		/*
+			Better for ID to use hash string
+			By having a actionID that combine both the pipelineID and the actionID, avoid collision
+			when two different pipeline open the same pullrequest based on the same action title
+		*/
+		action.Report.ID = fmt.Sprintf("%x", md5.Sum([]byte(p.Title+actionTitle)))
+		action.Report.Title = actionTitle
+
+		for _, t := range relatedTargets {
+			actionTarget := reports.ActionTarget{
+				// Better for ID to use hash string
+				ID:          fmt.Sprintf("%x", md5.Sum([]byte(t))),
+				Title:       p.Targets[t].Config.Name,
+				Description: fmt.Sprintf("=> %s\n", p.Targets[t].Result),
+			}
+
+			if p.Sources[p.Targets[t].Config.SourceID].Changelog != "" {
+				actionTarget.Title = p.Sources[p.Targets[t].Config.SourceID].Output
+				actionTarget.Description = p.Sources[p.Targets[t].Config.SourceID].Changelog
+			}
+
+			action.Report.Targets = append(action.Report.Targets, actionTarget)
 		}
-
-		sourcesReport, err := p.Report.String("sources")
-		if err != nil {
-			return err
-		}
-		conditionsReport, err := p.Report.String("conditions")
-		if err != nil {
-			return err
-		}
-		targetsReport, err := p.Report.String("targets")
-		if err != nil {
-			return err
-		}
-
-		action.PipelineReport = fmt.Sprintf("%s\n%s\n%s\n",
-			sourcesReport,
-			conditionsReport,
-			targetsReport,
-		)
-
-		if err != nil {
-			return err
-		}
-
-		changelog := ""
-		processedSourceIDs := []string{}
-
-		failedTargetIDs, attentionTargetIDs, successTargetIDs, skippedTargetIDs := p.GetTargetsIDByResult(relatedTargets)
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
@@ -109,39 +100,19 @@ func (p *Pipeline) RunActions() error {
 			return fmt.Errorf("%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
 		}
 
-		// Ensure we don't add changelog from the same sourceID twice
-		// Please note that the targets with both results (success and attention) need to be checked for changelog
-		for _, targetID := range append(successTargetIDs, attentionTargetIDs...) {
-			sourceID := p.Targets[targetID].Config.SourceID
-
-			found := false
-			for _, processedSourceID := range processedSourceIDs {
-				if processedSourceID == sourceID {
-					found = true
-				}
-			}
-			if !found {
-				changelog = changelog + p.Sources[sourceID].Changelog + "\n"
-				processedSourceIDs = append(processedSourceIDs, sourceID)
-			}
-		}
-		action.Changelog = changelog
-
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
 
-				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
+				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
 					action.Title,
-					action.Changelog,
-					action.PipelineReport)
+					action.Report.String())
 				logrus.Debugf(strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
 			}
 
-			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n##Changelog:\n\n%s\n\n##Report:\n\n%s\n\n=====\n",
+			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n\n##Report:\n\n%s\n\n=====\n",
 				action.Title,
-				action.Changelog,
-				action.PipelineReport)
+				action.Report.String())
 			logrus.Debugf(strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
 
 			return nil
@@ -149,8 +120,8 @@ func (p *Pipeline) RunActions() error {
 
 		err = action.Handler.CreateAction(
 			action.Title,
-			action.Changelog,
-			action.PipelineReport)
+			"", // now useless and must be removed once action interface is updated
+			action.Report.String())
 
 		if err != nil {
 			return err
@@ -200,6 +171,22 @@ func (p *Pipeline) SearchAssociatedTargetsID(actionID string) ([]string, error) 
 			results = append(results, id)
 		}
 	}
-
 	return results, nil
+}
+
+func getActionTitle(action *action.Action) string {
+	actionTitle := "No action title could be found"
+	switch len(action.Title) > 0 {
+	case true:
+		actionTitle = action.Title
+	case false:
+		// Search first validate action title based on target title
+		// if none could be found then actionTitle keeps its default value
+		for i := range action.Report.Targets {
+			if action.Report.Targets[i].Title != "" {
+				actionTitle = action.Report.Targets[i].Title
+			}
+		}
+	}
+	return actionTitle
 }
