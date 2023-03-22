@@ -12,18 +12,17 @@ import (
 func (config *Config) GetChangelogTitle(ID string, fallback string) (title string) {
 	if len(config.Spec.Title) > 0 {
 		// If a pipeline title has been defined, then use it for action title
-		title = fmt.Sprintf("[updatecli] %s",
-			config.Spec.Title)
+		title = config.Spec.Title
 
 	} else if len(config.Spec.Targets) == 1 && len(config.Spec.Targets[ID].Name) > 0 {
 		// If we only have one target then we can use it as fallback.
 		// Reminder, map in golang are not sorted so the order can't be kept between updatecli run
-		title = fmt.Sprintf("[updatecli] %s", config.Spec.Targets[ID].Name)
+		title = config.Spec.Targets[ID].Name
 	} else {
 		// At the moment, we don't have an easy way to describe what changed
 		// I am still thinking to a better solution.
 		logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
-		title = fmt.Sprintf("[updatecli][%s] Bump version to %s",
+		title = fmt.Sprintf("[%s] Bump version to %s",
 			config.Spec.Sources[config.Spec.Targets[ID].SourceID].Kind,
 			fallback)
 	}
