@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/reports"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
@@ -46,12 +47,11 @@ type Config struct {
 
 // Action is a struct used by an updatecli pipeline.
 type Action struct {
-	Title          string
-	Changelog      string
-	PipelineReport string
-	Config         Config
-	Scm            *scm.Scm
-	Handler        ActionHandler
+	Title   string
+	Config  Config
+	Scm     *scm.Scm
+	Handler ActionHandler
+	Report  reports.Action
 }
 
 // Validate ensures that an action configuration has required parameters.
