@@ -1,7 +1,7 @@
 package pipeline
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"strings"
 
@@ -73,7 +73,7 @@ func (p *Pipeline) RunActions() error {
 		for _, t := range relatedTargets {
 			actionTarget := reports.ActionTarget{
 				// Better for ID to use hash string
-				ID:    fmt.Sprintf("%x", md5.Sum([]byte(t))),
+				ID:    fmt.Sprintf("%x", sha256.Sum256([]byte(t))),
 				Title: p.Targets[t].Config.Name,
 			}
 
@@ -87,8 +87,8 @@ func (p *Pipeline) RunActions() error {
 			action.Report.Targets = append(action.Report.Targets, actionTarget)
 		}
 		// Must action.Report.ID and action.Report.Title must be set after actionTarget are set
-		actionTitle := getActionTitle(&action)
-		action.Report.ID = fmt.Sprintf("%x", md5.Sum([]byte(p.Title+actionTitle)))
+		actionTitle := getActionTitle(action)
+		action.Report.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(p.Title+actionTitle)))
 		action.Report.Title = actionTitle
 
 		// Ignoring failed targets
@@ -174,7 +174,7 @@ func (p *Pipeline) SearchAssociatedTargetsID(actionID string) ([]string, error) 
 	return results, nil
 }
 
-func getActionTitle(action *action.Action) string {
+func getActionTitle(action action.Action) string {
 	switch action.Title != "" {
 	case true:
 		return action.Title
