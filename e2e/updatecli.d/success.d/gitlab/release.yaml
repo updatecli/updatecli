@@ -1,0 +1,27 @@
+name: Test Gitlab release
+
+sources:
+  default:
+    kind: gitlab/release
+    spec:
+      owner: "olblak"
+      repository: "updatecli"
+      versionfilter:
+        kind: semver
+        pattern: "~0"
+
+conditions:
+  default:
+    kind: gitlab/release
+    spec:
+      owner: "olblak"
+      repository: "updatecli"
+      tag: "v0.46.2"
+  sourcedefault:
+    kind: gitlab/release
+    sourceid: default
+    spec:
+      url: "gitlab.com"
+      owner: "olblak"
+      repository: "updatecli"
+

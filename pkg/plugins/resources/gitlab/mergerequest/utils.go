@@ -1,4 +1,4 @@
-package pullrequest
+package mergerequest
 
 import (
 	"context"
@@ -10,22 +10,22 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// isPullRequestExist queries a remote Gitea instance to know if a pullrequest already exists.
-func (g *Gitea) isPullRequestExist() (bool, error) {
+// isPullRequestExist queries a remote Gitlab instance to know if a pullrequest already exists.
+func (g *Gitlab) isPullRequestExist() (bool, error) {
 	ctx := context.Background()
+	// Timeout api query after 30sec
+	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
+	defer cancelList()
 
 	page := 0
 	for {
-		// Timeout api query after 30sec
-		ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
-		defer cancelList()
-
 		optsSearch := scm.PullRequestListOptions{
 			Page:   page,
 			Size:   30,
 			Open:   true,
 			Closed: false,
 		}
+
 		pullrequests, resp, err := g.client.PullRequests.List(
 			ctx,
 			strings.Join([]string{
@@ -38,6 +38,8 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 			return false, err
 		}
+
+		page = resp.Page.Next
 
 		if resp.Status > 400 {
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
@@ -56,18 +58,16 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 				return true, nil
 			}
 		}
-
-		if page >= resp.Page.Last {
+		if page == 0 {
 			break
 		}
-		page++
 	}
 
 	return false, nil
 }
 
-// isRemoteBranchesExist queries a remote Gitea instance to know if both the pull-request source branch and the target branch exist.
-func (g *Gitea) isRemoteBranchesExist() (bool, error) {
+// isRemoteBranchesExist queries a remote Gitlab instance to know if both the pull-request source branch and the target branch exist.
+func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 
 	var sourceBranch string
 	var targetBranch string
@@ -99,42 +99,48 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	remoteBranches, resp, err := g.client.Git.ListBranches(
-		ctx,
-		strings.Join([]string{owner, repository}, "/"),
-		scm.ListOptions{
-			URL:  g.spec.URL,
-			Page: 1,
-			Size: 30,
-		},
-	)
-
-	if err != nil {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-		return false, err
-	}
-
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-	}
 
 	foundRemoteSourceBranch := false
 	foundRemoteTargetBranch := false
+	page := 0
+	for {
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		remoteBranches, resp, err := g.client.Git.ListBranches(
+			ctx,
+			strings.Join([]string{owner, repository}, "/"),
+			scm.ListOptions{
+				URL:  g.spec.URL,
+				Page: page,
+				Size: 30,
+			},
+		)
 
-	for _, remoteBranch := range remoteBranches {
-		if remoteBranch.Name == sourceBranch {
-			foundRemoteSourceBranch = true
-		}
-		if remoteBranch.Name == targetBranch {
-			foundRemoteTargetBranch = true
+		if err != nil {
+			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+			return false, err
 		}
 
-		if foundRemoteSourceBranch && foundRemoteTargetBranch {
-			return true, nil
+		if resp.Status > 400 {
+			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		}
+
+		for _, remoteBranch := range remoteBranches {
+			if remoteBranch.Name == sourceBranch {
+				foundRemoteSourceBranch = true
+			}
+			if remoteBranch.Name == targetBranch {
+				foundRemoteTargetBranch = true
+			}
+
+			if foundRemoteSourceBranch && foundRemoteTargetBranch {
+				return true, nil
+			}
+		}
+		if page >= resp.Page.Last {
+			break
+		}
+		page++
 	}
 
 	if !foundRemoteSourceBranch {
@@ -154,8 +160,8 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 	return false, nil
 }
 
-// inheritFromScm retrieve missing gitea settings from the gitea scm object.
-func (g *Gitea) inheritFromScm() {
+// inheritFromScm retrieve missing Gitlab settings from the Gitlab scm object.
+func (g *Gitlab) inheritFromScm() {
 
 	if g.scm != nil {
 		g.SourceBranch = g.scm.HeadBranch
