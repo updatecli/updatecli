@@ -28,7 +28,7 @@ var (
 
 // ActionHandler interface defines required functions to be an action
 type ActionHandler interface {
-	CreateAction(title, changelog, pipelineReport string) error
+	CreateAction(title, pipelineReport string) error
 }
 
 // Config define action provided via an updatecli configuration

@@ -73,9 +73,8 @@ func (p *Pipeline) RunActions() error {
 		for _, t := range relatedTargets {
 			actionTarget := reports.ActionTarget{
 				// Better for ID to use hash string
-				ID:          fmt.Sprintf("%x", md5.Sum([]byte(t))),
-				Title:       p.Targets[t].Config.Name,
-				Description: fmt.Sprintf("=> %s\n", p.Targets[t].Result),
+				ID:    fmt.Sprintf("%x", md5.Sum([]byte(t))),
+				Title: p.Targets[t].Config.Name,
 			}
 
 			if p.Sources[p.Targets[t].Config.SourceID].Changelog != "" {
@@ -122,7 +121,6 @@ func (p *Pipeline) RunActions() error {
 
 		err = action.Handler.CreateAction(
 			actionTitle,
-			"", // now useless and must be removed once action interface is updated
 			action.Report.String())
 
 		if err != nil {
