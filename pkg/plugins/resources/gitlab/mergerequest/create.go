@@ -7,12 +7,21 @@ import (
 
 	"github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
 // CreateAction opens a Pull Request on the Gitlab server
-func (g *Gitlab) CreateAction(title, changelog, pipelineReport string) error {
+func (g *Gitlab) CreateAction(title, pipelineReport string) error {
 
-	body := changelog + "\n" + pipelineReport
+	// One Gitlab mergerequest body can contain multiple action report
+	// It would be better to refactor CreateAction
+	body, err := utils.GeneratePullRequestBody("", reports.ToActionsString(pipelineReport))
+
+	if err != nil {
+		logrus.Errorf("something went wrong while generating gitlab body: %s", err)
+		body = pipelineReport
+	}
 
 	if len(g.spec.Body) > 0 {
 		body = g.spec.Body
