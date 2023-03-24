@@ -34,7 +34,7 @@ Most of Updatecli configuration is done via Updatecli manifest.
 Action triggered automatically by [Updatecli](https://wwww.updatecli.io).
 
 Please report any issues at [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/issues/).
-Or star our GitHub repository [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/stargazers) as a sign of appreciation if you found it usefull.
+Or star our GitHub repository [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/stargazers) as a sign of appreciation if you found it useful.
 `
 
 // GeneratePullRequestBody generates the Pull Request's body based on PULLREQUESTBODY
