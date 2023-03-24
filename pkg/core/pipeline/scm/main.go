@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
 type Scm struct {
@@ -61,8 +61,8 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	switch s.Config.Kind {
-	case "bitbucket":
-		g, err := bitbucket.New(s.Config.Spec, s.PipelineID)
+	case "stash":
+		g, err := stash.New(s.Config.Spec, s.PipelineID)
 
 		if err != nil {
 			return err

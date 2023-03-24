@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Bitbucket) Condition(source string) (bool, error) {
+func (g *Stash) Condition(source string) (bool, error) {
 	releases, err := g.SearchReleases()
 
 	if len(g.spec.Tag) == 0 {
@@ -37,6 +37,6 @@ func (g *Bitbucket) Condition(source string) (bool, error) {
 
 }
 
-func (g *Bitbucket) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+func (g *Stash) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("Condition not supported for the plugin Bitbucket Release")
 }

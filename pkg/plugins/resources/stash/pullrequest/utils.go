@@ -11,7 +11,7 @@ import (
 )
 
 // isPullRequestExist queries a remote Bitbucket instance to know if a pullrequest already exists.
-func (g *Bitbucket) isPullRequestExist() (bool, error) {
+func (g *Stash) isPullRequestExist() (bool, error) {
 	ctx := context.Background()
 	// Timeout api query after 30sec
 	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
@@ -58,7 +58,7 @@ func (g *Bitbucket) isPullRequestExist() (bool, error) {
 }
 
 // isRemoteBranchesExist queries a remote Bitbucket instance to know if both the pull-request source branch and the target branch exist.
-func (g *Bitbucket) isRemoteBranchesExist() (bool, error) {
+func (g *Stash) isRemoteBranchesExist() (bool, error) {
 
 	var sourceBranch string
 	var targetBranch string
@@ -146,7 +146,7 @@ func (g *Bitbucket) isRemoteBranchesExist() (bool, error) {
 }
 
 // inheritFromScm retrieve missing bitbucket settings from the bitbucket scm object.
-func (g *Bitbucket) inheritFromScm() {
+func (g *Stash) inheritFromScm() {
 
 	if g.scm != nil {
 		g.SourceBranch = g.scm.HeadBranch

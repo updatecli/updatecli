@@ -2,8 +2,8 @@ package pullrequest
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
-	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/stash/client"
+	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
 // Spec defines settings used to interact with Bitbucket pullrequest
@@ -25,13 +25,13 @@ type Spec struct {
 }
 
 // Bitbucket contains information to interact with Bitbucket api
-type Bitbucket struct {
+type Stash struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
 	// client handle the api authentication
 	client client.Client
 	// scm allows to interact with a scm object
-	scm *giteascm.Bitbucket
+	scm *stashscm.Stash
 	// SourceBranch specifies the pullrequest source branch.
 	SourceBranch string `yaml:",inline,omitempty"`
 	// TargetBranch specifies the pullrequest target branch
@@ -43,7 +43,7 @@ type Bitbucket struct {
 }
 
 // New returns a new valid Bitbucket object.
-func New(spec interface{}, scm *giteascm.Bitbucket) (Bitbucket, error) {
+func New(spec interface{}, scm *stashscm.Stash) (Stash, error) {
 
 	var clientSpec client.Spec
 	var s Spec
@@ -52,12 +52,12 @@ func New(spec interface{}, scm *giteascm.Bitbucket) (Bitbucket, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return Bitbucket{}, err
+		return Stash{}, err
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return Bitbucket{}, nil
+		return Stash{}, nil
 	}
 
 	if scm != nil {
@@ -86,16 +86,16 @@ func New(spec interface{}, scm *giteascm.Bitbucket) (Bitbucket, error) {
 	// Sanitize modifies the clientSpec so it must be done once initialization is completed
 	err = clientSpec.Sanitize()
 	if err != nil {
-		return Bitbucket{}, err
+		return Stash{}, err
 	}
 
 	c, err := client.New(clientSpec)
 
 	if err != nil {
-		return Bitbucket{}, err
+		return Stash{}, err
 	}
 
-	g := Bitbucket{
+	g := Stash{
 		spec:   s,
 		client: c,
 		scm:    scm,
@@ -104,7 +104,7 @@ func New(spec interface{}, scm *giteascm.Bitbucket) (Bitbucket, error) {
 	g.inheritFromScm()
 
 	if err != nil {
-		return Bitbucket{}, nil
+		return Stash{}, nil
 	}
 
 	return g, nil

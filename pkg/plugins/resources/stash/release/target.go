@@ -13,7 +13,7 @@ import (
 )
 
 // Target ensure that a specific release exist on bitbucket, otherwise creates it
-func (g *Bitbucket) Target(source string, dryRun bool) (bool, error) {
+func (g *Stash) Target(source string, dryRun bool) (bool, error) {
 
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
@@ -101,6 +101,6 @@ func (g *Bitbucket) Target(source string, dryRun bool) (bool, error) {
 	return true, nil
 }
 
-func (g Bitbucket) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
+func (g Stash) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
 	return false, []string{}, "", fmt.Errorf("target not supported for the plugin Bitbucket Release")
 }

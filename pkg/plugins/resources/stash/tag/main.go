@@ -1,4 +1,4 @@
-package branch
+package tag
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/drone/go-scm/scm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/stash/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -20,26 +20,24 @@ type Spec struct {
 	Owner string `yaml:",omitempty" jsonschema:"required"`
 	// [S][C] Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S][C] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [C] Branch specifies the branch name
-	Branch string `yaml:",omitempty"`
+	// [S] Tag defines the Bitbucket tag .
+	Tag string `yaml:",omitempty"`
 }
 
-// Bitbucket contains information to interact with Bitbucket api
-type Bitbucket struct {
+// Stash contains information to interact with Stash api
+type Stash struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
 	// client handle the api authentication
 	client        client.Client
-	HeadBranch    string
 	foundVersion  version.Version
 	versionFilter version.Filter
 }
 
 // New returns a new valid Bitbucket object.
-func New(spec interface{}) (*Bitbucket, error) {
-
+func New(spec interface{}) (*Stash, error) {
 	var s Spec
 	var clientSpec client.Spec
 
@@ -47,45 +45,45 @@ func New(spec interface{}) (*Bitbucket, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return &Bitbucket{}, nil
+		return &Stash{}, nil
 	}
 
 	err = clientSpec.Validate()
+
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	err = clientSpec.Sanitize()
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	s.Spec = clientSpec
-
 	err = s.Validate()
 
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	c, err := client.New(clientSpec)
 
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	newFilter, err := s.VersionFilter.Init()
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 	s.VersionFilter = newFilter
 
-	g := Bitbucket{
+	g := Stash{
 		spec:          s,
 		client:        c,
 		versionFilter: newFilter,
@@ -95,15 +93,15 @@ func New(spec interface{}) (*Bitbucket, error) {
 
 }
 
-// Retrieve bitbucket branches from a remote bitbucket repository
-func (g *Bitbucket) SearchBranches() (tags []string, err error) {
+// Retrieve git tags from a remote bitbucket repository
+func (g *Stash) SearchTags() (tags []string, err error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	branches, resp, err := g.client.Git.ListBranches(
+	references, resp, err := g.client.Git.ListTags(
 		ctx,
 		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 		scm.ListOptions{
@@ -121,12 +119,11 @@ func (g *Bitbucket) SearchBranches() (tags []string, err error) {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 	}
 
-	results := []string{}
-	for _, branch := range branches {
-		results = append(results, branch.Name)
+	for _, ref := range references {
+		tags = append(tags, ref.Name)
 	}
 
-	return results, nil
+	return tags, nil
 }
 
 func (s Spec) Validate() error {
@@ -136,6 +133,7 @@ func (s Spec) Validate() error {
 	err := s.Spec.Validate()
 
 	if err != nil {
+		logrus.Errorln(err)
 		gotError = true
 	}
 

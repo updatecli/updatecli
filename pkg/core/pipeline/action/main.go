@@ -10,20 +10,20 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	bitbucket "github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/pullrequest"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
 	gitlab "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/mergerequest"
-	bitbucketscm "github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
+	stash "github.com/updatecli/updatecli/pkg/plugins/resources/stash/pullrequest"
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
+	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
 const (
-	gitlabIdentifier    = "gitlab"
-	githubIdentifier    = "github"
-	giteaIdentifier     = "gitea"
-	bitbucketIdentifier = "bitbucket"
+	gitlabIdentifier = "gitlab"
+	githubIdentifier = "github"
+	giteaIdentifier  = "gitea"
+	stashIdentifier  = "stash"
 )
 
 var (
@@ -224,10 +224,10 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "bitbucket/pullrequest", bitbucketIdentifier:
-		actionSpec := bitbucket.Spec{}
+	case "stash/pullrequest", stashIdentifier:
+		actionSpec := stash.Spec{}
 
-		if a.Scm.Config.Kind != bitbucketIdentifier {
+		if a.Scm.Config.Kind != stashIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
@@ -238,13 +238,13 @@ func (a *Action) generateActionHandler() error {
 			return err
 		}
 
-		ge, ok := a.Scm.Handler.(*bitbucketscm.Bitbucket)
+		ge, ok := a.Scm.Handler.(*stashscm.Stash)
 
 		if !ok {
-			return fmt.Errorf("scm is not of kind 'bitbucket'")
+			return fmt.Errorf("scm is not of kind 'stash'")
 		}
 
-		g, err := bitbucket.New(actionSpec, ge)
+		g, err := stash.New(actionSpec, ge)
 
 		if err != nil {
 			return err
@@ -267,6 +267,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	anyOfSpec := map[string]interface{}{
 		"github/pullrequest":  &github.ActionSpec{},
 		"gitea/pullrequest":   &gitea.Spec{},
+		"stash/pullrequest":   &stash.Spec{},
 		"gitlab/mergerequest": &gitlab.Spec{},
 	}
 

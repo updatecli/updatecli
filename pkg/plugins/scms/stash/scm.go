@@ -1,4 +1,4 @@
-package bitbucket
+package stash
 
 import (
 	"fmt"
@@ -8,12 +8,12 @@ import (
 )
 
 // GetDirectory returns the local git repository path.
-func (g *Bitbucket) GetDirectory() (directory string) {
+func (g *Stash) GetDirectory() (directory string) {
 	return g.Spec.Directory
 }
 
 // Clean deletes github working directory.
-func (g *Bitbucket) Clean() error {
+func (g *Stash) Clean() error {
 	err := os.RemoveAll(g.Spec.Directory)
 	if err != nil {
 		return err
@@ -22,7 +22,7 @@ func (g *Bitbucket) Clean() error {
 }
 
 // Clone run `git clone`.
-func (g *Bitbucket) Clone() (string, error) {
+func (g *Stash) Clone() (string, error) {
 
 	URL := fmt.Sprintf("%v/scm/%v/%v.git",
 		g.Spec.URL,
@@ -57,7 +57,7 @@ func (g *Bitbucket) Clone() (string, error) {
 }
 
 // Commit run `git commit`.
-func (g *Bitbucket) Commit(message string) error {
+func (g *Stash) Commit(message string) error {
 
 	// Generate the conventional commit message
 	commitMessage, err := g.Spec.CommitMessage.Generate(message)
@@ -73,7 +73,7 @@ func (g *Bitbucket) Commit(message string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g *Bitbucket) Checkout() error {
+func (g *Stash) Checkout() error {
 	err := g.nativeGitHandler.Checkout(
 		g.Spec.Username,
 		g.Spec.Token,
@@ -88,7 +88,7 @@ func (g *Bitbucket) Checkout() error {
 }
 
 // Add run `git add`.
-func (g *Bitbucket) Add(files []string) error {
+func (g *Stash) Add(files []string) error {
 
 	err := g.nativeGitHandler.Add(files, g.Spec.Directory)
 	if err != nil {
@@ -99,7 +99,7 @@ func (g *Bitbucket) Add(files []string) error {
 
 // IsRemoteBranchUpToDate checks if the branche reference name is published on
 // on the default remote
-func (g *Bitbucket) IsRemoteBranchUpToDate() (bool, error) {
+func (g *Stash) IsRemoteBranchUpToDate() (bool, error) {
 	return g.nativeGitHandler.IsLocalBranchPublished(
 		g.Spec.Branch,
 		g.HeadBranch,
@@ -109,7 +109,7 @@ func (g *Bitbucket) IsRemoteBranchUpToDate() (bool, error) {
 }
 
 // Push run `git push` to the corresponding Bitbucket remote branch if not already created.
-func (g *Bitbucket) Push() error {
+func (g *Stash) Push() error {
 
 	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
 	if err != nil {
@@ -120,7 +120,7 @@ func (g *Bitbucket) Push() error {
 }
 
 // PushTag push tags
-func (g *Bitbucket) PushTag(tag string) error {
+func (g *Stash) PushTag(tag string) error {
 
 	err := g.nativeGitHandler.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
 	if err != nil {
@@ -131,7 +131,7 @@ func (g *Bitbucket) PushTag(tag string) error {
 }
 
 // PushBranch push branch
-func (g *Bitbucket) PushBranch(branch string) error {
+func (g *Stash) PushBranch(branch string) error {
 
 	err := g.nativeGitHandler.PushTag(
 		branch,
@@ -146,6 +146,6 @@ func (g *Bitbucket) PushBranch(branch string) error {
 	return nil
 }
 
-func (g *Bitbucket) GetChangedFiles(workingDir string) ([]string, error) {
+func (g *Stash) GetChangedFiles(workingDir string) ([]string, error) {
 	return g.nativeGitHandler.GetChangedFiles(workingDir)
 }

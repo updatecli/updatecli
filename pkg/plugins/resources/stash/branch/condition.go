@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Bitbucket) Condition(source string) (bool, error) {
+func (g *Stash) Condition(source string) (bool, error) {
 	if len(g.spec.Branch) == 0 {
 		g.spec.Branch = source
 	}
@@ -40,6 +40,6 @@ func (g *Bitbucket) Condition(source string) (bool, error) {
 	return false, nil
 }
 
-func (g *Bitbucket) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+func (g *Stash) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
 	return false, fmt.Errorf("Condition not supported for the plugin GitHub Release")
 }

@@ -1,4 +1,4 @@
-package branch
+package release
 
 import (
 	"errors"
@@ -9,15 +9,16 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Bitbucket) Source(workingDir string) (string, error) {
-	versions, err := g.SearchBranches()
+func (g *Stash) Source(workingDir string) (string, error) {
+	versions, err := g.SearchReleases()
 
 	if err != nil {
+		logrus.Error(err)
 		return "", err
 	}
 
 	if len(versions) == 0 {
-		logrus.Infof("%s No Bitbucket branches found", result.FAILURE)
+		logrus.Infof("%s No Bitbucket Release found. As a fallback you may be looking for git tags", result.ATTENTION)
 		return "", errors.New("no result found")
 	}
 
@@ -26,7 +27,7 @@ func (g *Bitbucket) Source(workingDir string) (string, error) {
 	if err != nil {
 		switch err {
 		case version.ErrNoVersionFound:
-			logrus.Infof("%s No Bitbucket branches found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
+			logrus.Infof("%s No Bitbucket Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
 			return "", errors.New("no result found")
 		default:
 			return "", err
@@ -35,11 +36,13 @@ func (g *Bitbucket) Source(workingDir string) (string, error) {
 
 	value := g.foundVersion.GetVersion()
 
+	logrus.Infof("Latest Release found: %v", g.foundVersion.GetVersion())
+
 	if len(value) == 0 {
-		logrus.Infof("%s No Bitbucket branches found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
+		logrus.Infof("%s No Bitbucket Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
 		return "", errors.New("no result found")
 	} else if len(value) > 0 {
-		logrus.Infof("%s Bitbucket branches %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
+		logrus.Infof("%s Bitbucket Release tag %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
 		return value, nil
 	}
 

@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
@@ -30,21 +29,6 @@ type Spec struct {
 }
 
 type Client *scm.Client
-type BasicAuthTransport struct {
-	Username string
-	Password string
-}
-
-func (bat BasicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s",
-		base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
-			bat.Username, bat.Password)))))
-	return http.DefaultTransport.RoundTrip(req)
-}
-
-func (bat *BasicAuthTransport) Client2() *http.Client {
-	return &http.Client{Transport: bat}
-}
 
 func New(s Spec) (Client, error) {
 	client, err := stash.New(s.URL)
@@ -66,7 +50,6 @@ func New(s Spec) (Client, error) {
 	}
 
 	return client, nil
-
 }
 
 // Validate validates that a spec contains good content

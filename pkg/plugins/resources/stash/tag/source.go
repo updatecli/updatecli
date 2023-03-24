@@ -9,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Bitbucket) Source(workingDir string) (string, error) {
+func (g *Stash) Source(workingDir string) (string, error) {
 	versions, err := g.SearchTags()
 
 	if err != nil {

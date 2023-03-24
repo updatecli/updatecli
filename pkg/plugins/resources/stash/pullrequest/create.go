@@ -10,7 +10,7 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Bitbucket server
-func (g *Bitbucket) CreateAction(title, changelog, pipelineReport string) error {
+func (g *Stash) CreateAction(title, changelog, pipelineReport string) error {
 
 	body := changelog + "\n" + pipelineReport
 

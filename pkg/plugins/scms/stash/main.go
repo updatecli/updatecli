@@ -1,4 +1,4 @@
-package bitbucket
+package stash
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/stash/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 
@@ -41,8 +41,8 @@ type Spec struct {
 	Branch string `yaml:",omitempty"`
 }
 
-// Bitbucket contains information to interact with Bitbucket api
-type Bitbucket struct {
+// Stash contains information to interact with Stash api
+type Stash struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
 	// client handle the api authentication
@@ -52,7 +52,7 @@ type Bitbucket struct {
 }
 
 // New returns a new valid Bitbucket object.
-func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
+func New(spec interface{}, pipelineID string) (*Stash, error) {
 	var s Spec
 	var clientSpec client.Spec
 
@@ -60,23 +60,23 @@ func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	err = clientSpec.Sanitize()
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	err = clientSpec.Validate()
 
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return &Bitbucket{}, nil
+		return &Stash{}, nil
 	}
 
 	s.Spec = clientSpec
@@ -84,11 +84,11 @@ func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
 	err = s.Validate()
 
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	if s.Directory == "" {
-		s.Directory = path.Join(tmp.Directory, "bitbucket", s.Owner, s.Repository)
+		s.Directory = path.Join(tmp.Directory, "stash", s.Owner, s.Repository)
 	}
 
 	if len(s.Branch) == 0 {
@@ -99,11 +99,11 @@ func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
 	c, err := client.New(clientSpec)
 
 	if err != nil {
-		return &Bitbucket{}, err
+		return &Stash{}, err
 	}
 
 	nativeGitHandler := gitgeneric.GoGit{}
-	g := Bitbucket{
+	g := Stash{
 		Spec:             s,
 		client:           c,
 		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
@@ -117,7 +117,7 @@ func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
 }
 
 // Retrieve git tags from a remote bitbucket repository
-func (g *Bitbucket) SearchTags() (tags []string, err error) {
+func (g *Stash) SearchTags() (tags []string, err error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()

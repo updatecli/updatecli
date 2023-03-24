@@ -1,4 +1,4 @@
-package bitbucket
+package stash
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (g *Bitbucket) setDirectory() {
+func (g *Stash) setDirectory() {
 
 	if _, err := os.Stat(g.Spec.Directory); os.IsNotExist(err) {
 
