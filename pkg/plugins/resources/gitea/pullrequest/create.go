@@ -7,12 +7,17 @@ import (
 
 	"github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
+	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
 // CreateAction opens a Pull Request on the Gitea server
-func (g *Gitea) CreateAction(title, changelog, pipelineReport string) error {
+func (g *Gitea) CreateAction(title, pipelineReport string) error {
 
-	body := changelog + "\n" + pipelineReport
+	body, err := utils.GeneratePullRequestBody("", pipelineReport)
+	if err != nil {
+		logrus.Errorf("something wrong happened while generating gitea pullrequest body: %s", err)
+		body = pipelineReport
+	}
 
 	if len(g.spec.Body) > 0 {
 		body = g.spec.Body
