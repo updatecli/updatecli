@@ -31,10 +31,11 @@ Most of Updatecli configuration is done via Updatecli manifest.
 
 ---
 
-Action triggered automatically by [Updatecli](https://wwww.updatecli.io).
+Action triggered automatically by [Updatecli](https://www.updatecli.io).
 
-Please report any issues at [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/issues/).
-Or star our GitHub repository [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/stargazers) as a sign of appreciation if you found it useful.
+Feel free to report any issues at [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/issues/).
+If you find this tool useful, do not hesitate to star our GitHub repository [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/stargazers) as a sign of appreciation.
+Or tell us directly on our [https://matrix.to/#/#Updatecli_community:gitter.im](chat)
 `
 
 // GeneratePullRequestBody generates the Pull Request's body based on PULLREQUESTBODY
