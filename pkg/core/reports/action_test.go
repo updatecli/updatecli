@@ -43,7 +43,7 @@ func TestHTMLReportsString(t *testing.T) {
 			expectedOutput: `<Action id="1234">
     <h2>Test Title</h2>
     <details id="4567">
-        <h3>Target One</h3>
+        <summary>Target One</summary>
         <details>
             <summary>1.0.0</summary>
         </details>
@@ -52,7 +52,7 @@ func TestHTMLReportsString(t *testing.T) {
         </details>
     </details>
     <details id="4567">
-        <h3>Target Two</h3>
+        <summary>Target Two</summary>
     </details>
 </Action>`,
 		},
@@ -70,31 +70,33 @@ func TestHTMLUnmarshal(t *testing.T) {
 	tests := []struct {
 		name           string
 		report         string
-		expectedOutput Action
+		expectedOutput Actions
 	}{
 		{
 			name: "Default working situation",
-			expectedOutput: Action{
-				ID:    "1234",
-				Title: "Test Title",
-				Targets: []ActionTarget{
-					{
-						ID:    "4567",
-						Title: "Target One",
-						Changelogs: []ActionTargetChangelog{
-							{
-								Title:       "1.0.0",
-								Description: "",
-							},
-							{
-								Title:       "1.0.1",
-								Description: "",
+			expectedOutput: Actions{
+				{
+					ID:    "1234",
+					Title: "Test Title",
+					Targets: []ActionTarget{
+						{
+							ID:    "4567",
+							Title: "Target One",
+							Changelogs: []ActionTargetChangelog{
+								{
+									Title:       "1.0.0",
+									Description: "",
+								},
+								{
+									Title:       "1.0.1",
+									Description: "",
+								},
 							},
 						},
-					},
-					{
-						ID:    "4567",
-						Title: "Target Two",
+						{
+							ID:    "4567",
+							Title: "Target Two",
+						},
 					},
 				},
 			},
@@ -102,7 +104,7 @@ func TestHTMLUnmarshal(t *testing.T) {
     <h2>Test Title</h2>
     <p></p>
     <details id="4567">
-        <h3>Target One</h3>
+        <summary>Target One</summary>
         <p></p>
         <details>
             <summary>1.0.0</summary>
@@ -114,7 +116,7 @@ func TestHTMLUnmarshal(t *testing.T) {
         </details>
     </details>
     <details id="4567">
-        <h3>Target Two</h3>
+        <summary>Target Two</summary>
         <p></p>
     </details>
 </action>`,
@@ -123,8 +125,8 @@ func TestHTMLUnmarshal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var gotOutput Action
-			err := Unmarshal([]byte(tt.report), &gotOutput)
+			var gotOutput Actions
+			err := unmarshal([]byte(tt.report), &gotOutput)
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.expectedOutput, gotOutput)
@@ -335,6 +337,189 @@ func TestMerge(t *testing.T) {
 			err := tt.report1.Sort()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedOutput, tt.report1)
+		})
+	}
+}
+
+func TestFromString(t *testing.T) {
+
+	tests := []struct {
+		name                string
+		oldReport           string
+		newReport           string
+		expectedFinalReport string
+	}{
+		{
+			name: "Default none situation",
+			oldReport: `<action id="1234">
+    <h2>Test Title</h2>
+    <p></p>
+    <details id="4567">
+        <summary>Target One</summary>
+        <p></p>
+        <details>
+            <summary>1.0.0</summary>
+            <p></p>
+        </details>
+        <details>
+            <summary>1.0.1</summary>
+            <p></p>
+        </details>
+    </details>
+    <details id="4568">
+        <summary>Target Two</summary>
+        <p></p>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+        <p></p>
+    </details>
+</action>`,
+			newReport: `<action id="1234">
+    <h2>Test Title</h2>
+    <p></p>
+    <details id="4567">
+        <summary>Target One</summary>
+        <p></p>
+        <details>
+            <summary>1.0.0</summary>
+            <p></p>
+        </details>
+        <details>
+            <summary>1.0.1</summary>
+            <p></p>
+        </details>
+    </details>
+    <details id="4568">
+        <summary>Target Two</summary>
+        <p></p>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+        <p></p>
+    </details>
+</action>`,
+			expectedFinalReport: `<Action id="1234">
+    <h2>Test Title</h2>
+    <details id="4567">
+        <summary>Target One</summary>
+        <details>
+            <summary>1.0.0</summary>
+        </details>
+        <details>
+            <summary>1.0.1</summary>
+        </details>
+    </details>
+    <details id="4568">
+        <summary>Target Two</summary>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+    </details>
+</Action>`,
+		},
+		{
+			name: "Test target merge",
+			oldReport: `<action id="1234">
+	<h2>Test Title</h2>
+	<details id="4567">
+	    <summary>Target One</summary>
+	    <details>
+	        <summary>1.0.0</summary>
+	    </details>
+	    <details>
+	        <summary>1.0.1</summary>
+	    </details>
+	</details>
+</action>`,
+			newReport: `<action id="1234">
+    <h2>Test Title</h2>
+    <details id="4568">
+        <summary>Target Two</summary>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+    </details>
+</action>`,
+			expectedFinalReport: `<Action id="1234">
+    <h2>Test Title</h2>
+    <details id="4567">
+        <summary>Target One</summary>
+        <details>
+            <summary>1.0.0</summary>
+        </details>
+        <details>
+            <summary>1.0.1</summary>
+        </details>
+    </details>
+    <details id="4568">
+        <summary>Target Two</summary>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+    </details>
+</Action>`,
+		},
+		{
+			name:      "Test that old report is not html formatted",
+			oldReport: `This is not a html formatted report`,
+			newReport: `<Action id="1234">
+    <h2>Test Title</h2>
+    <details id="4568">
+        <summary>Target Two</summary>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+    </details>
+</Action>`,
+			expectedFinalReport: `<Action id="1234">
+    <h2>Test Title</h2>
+    <details id="4568">
+        <summary>Target Two</summary>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+    </details>
+</Action>`,
+		},
+		{
+			name: "Test that old report is not fully html formatted",
+			oldReport: `
+This is not a html formatted report
+<Action id="1234">
+    <h2>Test Title</h2>
+    <details id="4568">
+        <summary>Target Two</summary>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+    </details>
+</Action>`,
+			newReport: `<Action id="1234">
+    <h2>Test Title</h2>
+    <details id="4568">
+        <summary>Target Two</summary>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+    </details>
+</Action>`,
+			expectedFinalReport: `<Action id="1234">
+    <h2>Test Title</h2>
+    <details id="4568">
+        <summary>Target Two</summary>
+    </details>
+    <details id="4569">
+        <summary>Target Three</summary>
+    </details>
+</Action>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFinalReport := MergeFromString(tt.oldReport, tt.newReport)
+			assert.Equal(t, tt.expectedFinalReport, gotFinalReport)
 		})
 	}
 }

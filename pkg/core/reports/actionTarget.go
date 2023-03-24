@@ -3,7 +3,7 @@ package reports
 // ActionTarget holds target data to describe an action report
 type ActionTarget struct {
 	ID          string                  `xml:"id,attr"`
-	Title       string                  `xml:"h3,omitempty"`
+	Title       string                  `xml:"summary,omitempty"`
 	Description string                  `xml:"p,omitempty"`
 	Changelogs  []ActionTargetChangelog `xml:"details,omitempty"`
 }

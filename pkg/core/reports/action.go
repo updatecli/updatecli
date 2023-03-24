@@ -19,11 +19,11 @@ type ActionTargetChangelog struct {
 }
 
 // String show an action report formatted as a string
-func (h *Action) String() string {
-	if err := h.Sort(); err != nil {
+func (a *Action) String() string {
+	if err := a.Sort(); err != nil {
 		return ""
 	}
-	output, err := xml.MarshalIndent(h, "", "    ")
+	output, err := xml.MarshalIndent(a, "", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
@@ -31,47 +31,36 @@ func (h *Action) String() string {
 	return string(output[:])
 }
 
-func (h *Action) Merge(a *Action) {
+func (ba *Action) Merge(a *Action) {
 	for i := range a.Targets {
 		targetFound := false
-		for j := range h.Targets {
-			if a.Targets[i].ID == h.Targets[j].ID {
+		for j := range ba.Targets {
+			if a.Targets[i].ID == ba.Targets[j].ID {
 				targetFound = true
-				h.Targets[i].Merge(&a.Targets[j])
+				ba.Targets[j].Merge(&a.Targets[i])
 				break
 			}
 		}
 		if !targetFound {
-			h.Targets = append(h.Targets, a.Targets[i])
+			ba.Targets = append(ba.Targets, a.Targets[i])
 		}
 	}
 }
 
-func (h *Action) Sort() error {
+func (a *Action) Sort() error {
 	sort.Slice(
-		h.Targets,
+		a.Targets,
 		func(i, j int) bool {
-			return h.Targets[i].ID < h.Targets[j].ID
+			return a.Targets[i].ID < a.Targets[j].ID
 		})
 
-	for id, target := range h.Targets {
+	for id, target := range a.Targets {
 		sort.Slice(
 			target.Changelogs,
 			func(i, j int) bool {
 				return target.Changelogs[i].Title < target.Changelogs[j].Title
 			})
-		h.Targets[id] = target
-	}
-	return nil
-}
-
-// Unmarshal parses the htmlReport string and return a struct
-func Unmarshal(input []byte, output *Action) (err error) {
-	if err := xml.Unmarshal(input, &output); err != nil {
-		return err
-	}
-	if err := output.Sort(); err != nil {
-		return err
+		a.Targets[id] = target
 	}
 	return nil
 }
