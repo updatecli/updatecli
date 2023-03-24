@@ -112,7 +112,9 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 
 func (p *PullRequest) CreateAction(title, pipelineReport string) error {
 
-	p.Report = pipelineReport
+	// One GitHub pullrequest body can contain multiple action report
+	// It would be better to refactor CreateAction
+	p.Report = reports.ToActionsString(pipelineReport)
 	p.Title = title
 
 	repository, err := p.gh.queryRepository()
