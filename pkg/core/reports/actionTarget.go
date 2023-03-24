@@ -8,17 +8,31 @@ type ActionTarget struct {
 	Changelogs  []ActionTargetChangelog `xml:"details,omitempty"`
 }
 
-func (h *ActionTarget) Merge(a *ActionTarget) {
-	for i := range a.Changelogs {
+func (a *ActionTarget) Merge(sourceActionTarget *ActionTarget) {
+
+	var c, d []ActionTargetChangelog
+
+	switch len(a.Changelogs) > len(sourceActionTarget.Changelogs) {
+	case true:
+		c = a.Changelogs
+		d = sourceActionTarget.Changelogs
+	case false:
+		d = a.Changelogs
+		c = sourceActionTarget.Changelogs
+	}
+
+	for i := range d {
 		changelogFound := false
-		for j := range h.Changelogs {
-			if a.Changelogs[i].Title == h.Changelogs[j].Title {
+		for j := range c {
+			if d[i].Title == c[j].Title {
 				changelogFound = true
 				break
 			}
 		}
 		if !changelogFound {
-			h.Changelogs = append(h.Changelogs, a.Changelogs[i])
+			c = append(c, d[i])
 		}
 	}
+
+	a.Changelogs = c
 }

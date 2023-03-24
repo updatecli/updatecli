@@ -3,53 +3,51 @@ package reports
 import (
 	"encoding/xml"
 	"fmt"
-	"strings"
+	"sort"
 
 	"github.com/sirupsen/logrus"
 )
 
-type Actions []Action
+type Actions struct {
+	Actions []Action `xml:"action"`
+}
 
-func (ba *Actions) Merge(a *Actions) {
-	b := *ba
-	act := *a
+func (a *Actions) Merge(sourceActions *Actions) {
 
-	for i := range act {
+	var c, d Actions
+	switch len(a.Actions) > len(sourceActions.Actions) {
+	case true:
+		c = *a
+		d = *sourceActions
+	case false:
+		d = *a
+		c = *sourceActions
+	}
+
+	for i := range d.Actions {
 		pipelineFound := false
-		for j := range b {
-			if act[i].ID == b[j].ID {
+	out:
+		for j := range c.Actions {
+			if d.Actions[i].ID == c.Actions[j].ID {
 				pipelineFound = true
-				b[j].Merge(&act[i])
-				break
+				c.Actions[j].Merge(&d.Actions[i])
+				break out
 			}
 		}
 		if !pipelineFound {
-			b = append(b, act[i])
+			c.Actions = append(c.Actions, d.Actions[i])
 		}
 	}
+	*a = c
 }
 
 // String show an action report formatted as a string
 func (a *Actions) String() string {
-	output := ""
+	a.sort()
 
-	act := *a
-
-	for i := range act {
-		if err := act[i].Sort(); err != nil {
-			return ""
-		}
-		o, err := xml.MarshalIndent(act[i], "", "    ")
-		if err != nil {
-			fmt.Printf("error: %v\n", err)
-		}
-
-		if output == "" {
-			output = string(o)
-			continue
-		}
-		output = strings.Join([]string{output, string(o)}, "\n")
-
+	output, err := xml.MarshalIndent(a, "", "    ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
 	}
 
 	return string(output[:])
@@ -74,7 +72,17 @@ func MergeFromString(old, new string) string {
 	}
 
 	newReport.Merge(&oldReport)
+
 	return newReport.String()
+}
+
+func (a *Actions) sort() {
+	actions := *a
+	sort.Slice(
+		actions.Actions,
+		func(i, j int) bool {
+			return actions.Actions[i].ID < actions.Actions[j].ID
+		})
 }
 
 // unmarshal parses the htmlReport string and return a struct
@@ -84,10 +92,8 @@ func unmarshal(input []byte, a *Actions) (err error) {
 	}
 
 	b := *a
-	for i := range b {
-		if err := b[i].Sort(); err != nil {
-			return err
-		}
+	for i := range b.Actions {
+		b.Actions[i].sort()
 	}
 	return nil
 }

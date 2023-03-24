@@ -4,6 +4,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"sort"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Action struct {
@@ -20,9 +22,7 @@ type ActionTargetChangelog struct {
 
 // String show an action report formatted as a string
 func (a *Action) String() string {
-	if err := a.Sort(); err != nil {
-		return ""
-	}
+	a.sort()
 	output, err := xml.MarshalIndent(a, "", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
@@ -31,23 +31,38 @@ func (a *Action) String() string {
 	return string(output[:])
 }
 
-func (ba *Action) Merge(a *Action) {
-	for i := range a.Targets {
+func (a *Action) Merge(sourceAction *Action) {
+
+	var c, d []ActionTarget
+
+	switch len(a.Targets) > len(sourceAction.Targets) {
+	case true:
+		c = a.Targets
+		d = sourceAction.Targets
+	case false:
+		d = a.Targets
+		c = sourceAction.Targets
+	}
+
+	for i := range d {
 		targetFound := false
-		for j := range ba.Targets {
-			if a.Targets[i].ID == ba.Targets[j].ID {
+		for j := range c {
+			if d[i].ID == c[j].ID {
 				targetFound = true
-				ba.Targets[j].Merge(&a.Targets[i])
+				c[j].Merge(&d[i])
 				break
 			}
 		}
 		if !targetFound {
-			ba.Targets = append(ba.Targets, a.Targets[i])
+			c = append(c, d[i])
 		}
 	}
+
+	a.Targets = c
+	a.sort()
 }
 
-func (a *Action) Sort() error {
+func (a *Action) sort() {
 	sort.Slice(
 		a.Targets,
 		func(i, j int) bool {
@@ -62,5 +77,29 @@ func (a *Action) Sort() error {
 			})
 		a.Targets[id] = target
 	}
-	return nil
+}
+
+// String show an action report formatted as a string
+func ToActionsString(input string) string {
+	var a Action
+
+	if err := xml.Unmarshal([]byte(input), &a); err != nil {
+		logrus.Errorln(err)
+		return ""
+	}
+
+	actions := Actions{
+		Actions: []Action{
+			a,
+		},
+	}
+
+	actions.sort()
+
+	output, err := xml.MarshalIndent(actions, "", "    ")
+	if err != nil {
+		logrus.Errorf("error: %v\n", err)
+	}
+
+	return string(output[:])
 }

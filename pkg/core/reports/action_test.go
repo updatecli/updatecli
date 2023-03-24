@@ -75,51 +75,55 @@ func TestHTMLUnmarshal(t *testing.T) {
 		{
 			name: "Default working situation",
 			expectedOutput: Actions{
-				{
-					ID:    "1234",
-					Title: "Test Title",
-					Targets: []ActionTarget{
-						{
-							ID:    "4567",
-							Title: "Target One",
-							Changelogs: []ActionTargetChangelog{
-								{
-									Title:       "1.0.0",
-									Description: "",
-								},
-								{
-									Title:       "1.0.1",
-									Description: "",
+				Actions: []Action{
+					{
+						ID:    "1234",
+						Title: "Test Title",
+						Targets: []ActionTarget{
+							{
+								ID:    "4567",
+								Title: "Target One",
+								Changelogs: []ActionTargetChangelog{
+									{
+										Title:       "1.0.0",
+										Description: "",
+									},
+									{
+										Title:       "1.0.1",
+										Description: "",
+									},
 								},
 							},
-						},
-						{
-							ID:    "4567",
-							Title: "Target Two",
+							{
+								ID:    "4567",
+								Title: "Target Two",
+							},
 						},
 					},
 				},
 			},
-			report: `<action id="1234">
-    <h2>Test Title</h2>
-    <p></p>
-    <details id="4567">
-        <summary>Target One</summary>
-        <p></p>
-        <details>
-            <summary>1.0.0</summary>
-            <p></p>
-        </details>
-        <details>
-            <summary>1.0.1</summary>
-            <p></p>
-        </details>
-    </details>
-    <details id="4567">
-        <summary>Target Two</summary>
-        <p></p>
-    </details>
-</action>`,
+			report: `<actions>
+	<action id="1234">
+	    <h2>Test Title</h2>
+	    <p></p>
+	    <details id="4567">
+	        <summary>Target One</summary>
+	        <p></p>
+	        <details>
+	            <summary>1.0.0</summary>
+	            <p></p>
+	        </details>
+	        <details>
+	            <summary>1.0.1</summary>
+	            <p></p>
+	        </details>
+	    </details>
+	    <details id="4567">
+	        <summary>Target Two</summary>
+	        <p></p>
+	    </details>
+	</action>
+</actions>`,
 		},
 	}
 
@@ -247,8 +251,7 @@ func TestSort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.report.Sort()
-			require.NoError(t, err)
+			tt.report.sort()
 			assert.Equal(t, tt.expectedOutput, tt.report)
 		})
 	}
@@ -334,8 +337,7 @@ func TestMerge(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.report1.Merge(&tt.report2)
-			err := tt.report1.Sort()
-			require.NoError(t, err)
+			tt.report1.sort()
 			assert.Equal(t, tt.expectedOutput, tt.report1)
 		})
 	}
@@ -351,136 +353,126 @@ func TestFromString(t *testing.T) {
 	}{
 		{
 			name: "Default none situation",
-			oldReport: `<action id="1234">
-    <h2>Test Title</h2>
-    <p></p>
-    <details id="4567">
-        <summary>Target One</summary>
+			oldReport: `<Actions>
+    <action id="1234">
+        <h2>Test Title</h2>
         <p></p>
-        <details>
-            <summary>1.0.0</summary>
+        <details id="4567">
+            <summary>Target One</summary>
+            <p></p>
+            <details>
+                <summary>1.0.0</summary>
+                <p></p>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+                <p></p>
+            </details>
+        </details>
+        <details id="4568">
+            <summary>Target Two</summary>
             <p></p>
         </details>
-        <details>
-            <summary>1.0.1</summary>
+        <details id="4569">
+            <summary>Target Three</summary>
             <p></p>
         </details>
-    </details>
-    <details id="4568">
-        <summary>Target Two</summary>
-        <p></p>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-        <p></p>
-    </details>
-</action>`,
-			newReport: `<action id="1234">
-    <h2>Test Title</h2>
-    <p></p>
-    <details id="4567">
-        <summary>Target One</summary>
-        <p></p>
-        <details>
-            <summary>1.0.0</summary>
-            <p></p>
+    </action>
+</Actions>`,
+			newReport: `<Actions>
+	<action id="1234">
+		<h2>Test Title</h2>
+		<p></p>
+		<details id="4567">
+		    <summary>Target One</summary>
+		    <p></p>
+		    <details>
+		        <summary>1.0.0</summary>
+		        <p></p>
+		    </details>
+		    <details>
+		        <summary>1.0.1</summary>
+		        <p></p>
+		    </details>
+		</details>
+		<details id="4568">
+		    <summary>Target Two</summary>
+		    <p></p>
+		</details>
+		<details id="4569">
+		    <summary>Target Three</summary>
+		    <p></p>
+		</details>
+	</action>
+</Actions>`,
+			expectedFinalReport: `<Actions>
+    <action id="1234">
+        <h2>Test Title</h2>
+        <details id="4567">
+            <summary>Target One</summary>
+            <details>
+                <summary>1.0.0</summary>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+            </details>
         </details>
-        <details>
-            <summary>1.0.1</summary>
-            <p></p>
+        <details id="4568">
+            <summary>Target Two</summary>
         </details>
-    </details>
-    <details id="4568">
-        <summary>Target Two</summary>
-        <p></p>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-        <p></p>
-    </details>
-</action>`,
-			expectedFinalReport: `<Action id="1234">
-    <h2>Test Title</h2>
-    <details id="4567">
-        <summary>Target One</summary>
-        <details>
-            <summary>1.0.0</summary>
+        <details id="4569">
+            <summary>Target Three</summary>
         </details>
-        <details>
-            <summary>1.0.1</summary>
-        </details>
-    </details>
-    <details id="4568">
-        <summary>Target Two</summary>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-    </details>
-</Action>`,
+    </action>
+</Actions>`,
 		},
 		{
 			name: "Test target merge",
-			oldReport: `<action id="1234">
-	<h2>Test Title</h2>
-	<details id="4567">
-	    <summary>Target One</summary>
-	    <details>
-	        <summary>1.0.0</summary>
-	    </details>
-	    <details>
-	        <summary>1.0.1</summary>
-	    </details>
-	</details>
-</action>`,
-			newReport: `<action id="1234">
-    <h2>Test Title</h2>
-    <details id="4568">
-        <summary>Target Two</summary>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-    </details>
-</action>`,
-			expectedFinalReport: `<Action id="1234">
-    <h2>Test Title</h2>
-    <details id="4567">
-        <summary>Target One</summary>
-        <details>
-            <summary>1.0.0</summary>
+			oldReport: `<Actions>
+    <action id="1234">
+    	<h2>Test Title</h2>
+    	<details id="4567">
+    	    <summary>Target One</summary>
+    	    <details>
+    	        <summary>1.0.0</summary>
+    	    </details>
+    	    <details>
+    	        <summary>1.0.1</summary>
+    	    </details>
+    	</details>
+    </action>
+</Actions>`,
+			newReport: `<actions>
+    <action id="1234">
+        <h2>Test Title</h2>
+        <details id="4568">
+            <summary>Target Two</summary>
         </details>
-        <details>
-            <summary>1.0.1</summary>
+        <details id="4569">
+            <summary>Target Three</summary>
         </details>
-    </details>
-    <details id="4568">
-        <summary>Target Two</summary>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-    </details>
-</Action>`,
-		},
-		{
-			name:      "Test that old report is not html formatted",
-			oldReport: `This is not a html formatted report`,
-			newReport: `<Action id="1234">
-    <h2>Test Title</h2>
-    <details id="4568">
-        <summary>Target Two</summary>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-    </details>
-</Action>`,
-			expectedFinalReport: `<Action id="1234">
-    <h2>Test Title</h2>
-    <details id="4568">
-        <summary>Target Two</summary>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-    </details>
-</Action>`,
+    </action>
+</actions>`,
+			expectedFinalReport: `<Actions>
+    <action id="1234">
+        <h2>Test Title</h2>
+        <details id="4567">
+            <summary>Target One</summary>
+            <details>
+                <summary>1.0.0</summary>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+            </details>
+        </details>
+        <details id="4568">
+            <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+</Actions>`,
 		},
 		{
 			name: "Test that old report is not fully html formatted",
@@ -495,24 +487,199 @@ This is not a html formatted report
         <summary>Target Three</summary>
     </details>
 </Action>`,
-			newReport: `<Action id="1234">
-    <h2>Test Title</h2>
-    <details id="4568">
-        <summary>Target Two</summary>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-    </details>
-</Action>`,
-			expectedFinalReport: `<Action id="1234">
-    <h2>Test Title</h2>
-    <details id="4568">
-        <summary>Target Two</summary>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-    </details>
-</Action>`,
+			newReport: `<Actions>
+    <action id="1234">
+        <h2>Test Title</h2>
+        <details id="4568">
+		    <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+</Actions>`,
+			expectedFinalReport: `<Actions>
+    <action id="1234">
+        <h2>Test Title</h2>
+        <details id="4568">
+            <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+</Actions>`,
+		},
+		{
+			name: "Test Pipeline merge",
+			oldReport: `<actions>
+    <action id="1234">
+        <h2>Old Pipeline</h2>
+        <details id="4567">
+            <summary>Target One</summary>
+            <details>
+                <summary>1.0.0</summary>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+            </details>
+        </details>
+    </action>
+</actions>`,
+			newReport: `<actions>
+    <action id="1235">
+        <h2>New Pipeline</h2>
+        <details id="4568">
+            <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+</actions>`,
+			expectedFinalReport: `<Actions>
+    <action id="1234">
+        <h2>Old Pipeline</h2>
+        <details id="4567">
+            <summary>Target One</summary>
+            <details>
+                <summary>1.0.0</summary>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+            </details>
+        </details>
+    </action>
+    <action id="1235">
+        <h2>New Pipeline</h2>
+        <details id="4568">
+            <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+</Actions>`,
+		},
+		{
+			name: "Test Pipeline merge scenario 2",
+			newReport: `<actions>
+    <action id="1235">
+    	<h2>Old Pipeline</h2>
+    	<details id="4567">
+    	    <summary>Target One</summary>
+    	    <details>
+    	        <summary>1.0.0</summary>
+    	    </details>
+    	    <details>
+    	        <summary>1.0.1</summary>
+    	    </details>
+    	</details>
+    </action>
+</actions>`,
+			oldReport: `<actions>
+    <action id="1234">
+        <h2>New Pipeline</h2>
+        <details id="4568">
+            <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+</actions>`,
+			expectedFinalReport: `<Actions>
+    <action id="1234">
+        <h2>New Pipeline</h2>
+        <details id="4568">
+            <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+    <action id="1235">
+        <h2>Old Pipeline</h2>
+        <details id="4567">
+            <summary>Target One</summary>
+            <details>
+                <summary>1.0.0</summary>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+            </details>
+        </details>
+    </action>
+</Actions>`,
+		},
+		{
+			name: "Test Pipeline merge scenario 3",
+			newReport: `<Actions>
+	<action id="1235">
+		<h2>New Pipeline</h2>
+		<details id="4567">
+		    <summary>Target One</summary>
+		    <details>
+		        <summary>1.0.0</summary>
+		    </details>
+		    <details>
+		        <summary>1.0.1</summary>
+		    </details>
+		</details>
+	</action>
+</Actions>`,
+			oldReport: `<actions>
+	<action id="1234">
+	    <h2>Old Pipeline 1</h2>
+	    <details id="4568">
+	        <summary>Target Two</summary>
+	    </details>
+	    <details id="4569">
+	        <summary>Target Three</summary>
+	    </details>
+	</action>
+	<action id="1236">
+	    <h2>Old Pipeline 2</h2>
+	    <details id="4568">
+	        <summary>Target Two</summary>
+	    </details>
+	    <details id="4569">
+	        <summary>Target Three</summary>
+	    </details>
+	</action>
+</actions>`,
+			expectedFinalReport: `<Actions>
+    <action id="1234">
+        <h2>Old Pipeline 1</h2>
+        <details id="4568">
+            <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+    <action id="1235">
+        <h2>New Pipeline</h2>
+        <details id="4567">
+            <summary>Target One</summary>
+            <details>
+                <summary>1.0.0</summary>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+            </details>
+        </details>
+    </action>
+    <action id="1236">
+        <h2>Old Pipeline 2</h2>
+        <details id="4568">
+            <summary>Target Two</summary>
+        </details>
+        <details id="4569">
+            <summary>Target Three</summary>
+        </details>
+    </action>
+</Actions>`,
 		},
 	}
 
