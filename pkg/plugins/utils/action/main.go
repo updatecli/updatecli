@@ -35,7 +35,9 @@ Action triggered automatically by [Updatecli](https://www.updatecli.io).
 
 Feel free to report any issues at [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/issues/).
 If you find this tool useful, do not hesitate to star our GitHub repository [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/stargazers) as a sign of appreciation.
-Or tell us directly on our [https://matrix.to/#/#Updatecli_community:gitter.im](chat)
+Or tell us directly on our [chat](https://matrix.to/#/#Updatecli_community:gitter.im)
+
+<img src="https://www.updatecli.io/images/updatecli.png" alt="Updatecli logo" width="200" height="200">
 `
 
 // GeneratePullRequestBody generates the Pull Request's body based on PULLREQUESTBODY
