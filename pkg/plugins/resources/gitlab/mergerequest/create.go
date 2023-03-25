@@ -12,15 +12,16 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Gitlab server
-func (g *Gitlab) CreateAction(title, pipelineReport string) error {
+func (g *Gitlab) CreateAction(report reports.Action) error {
+
+	var title string
 
 	// One Gitlab mergerequest body can contain multiple action report
 	// It would be better to refactor CreateAction
-	body, err := utils.GeneratePullRequestBody("", reports.ToActionsString(pipelineReport))
+	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
 
 	if err != nil {
-		logrus.Errorf("something went wrong while generating gitlab body: %s", err)
-		body = pipelineReport
+		logrus.Warningf("something went wrong while generating gitlab body: %s", err)
 	}
 
 	if len(g.spec.Body) > 0 {

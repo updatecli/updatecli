@@ -80,10 +80,9 @@ func (a *Action) sort() {
 }
 
 // String show an action report formatted as a string
-func ToActionsString(input string) string {
-	var a Action
+func (a Action) ToActionsString() string {
 
-	if err := xml.Unmarshal([]byte(input), &a); err != nil {
+	if err := xml.Unmarshal([]byte(a.String()), &a); err != nil {
 		logrus.Errorln(err)
 		return ""
 	}

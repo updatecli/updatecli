@@ -119,9 +119,7 @@ func (p *Pipeline) RunActions() error {
 			return nil
 		}
 
-		err = action.Handler.CreateAction(
-			actionTitle,
-			action.Report.String())
+		err = action.Handler.CreateAction(action.Report)
 
 		if err != nil {
 			return err

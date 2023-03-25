@@ -12,14 +12,16 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Gitea server
-func (g *Gitea) CreateAction(title, pipelineReport string) error {
+func (g *Gitea) CreateAction(report reports.Action) error {
+
+	var title string
 
 	// One Gitea pullrequest body can contain multiple action report
 	// It would be better to refactor CreateAction
-	body, err := utils.GeneratePullRequestBody("", reports.ToActionsString(pipelineReport))
+	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
+
 	if err != nil {
-		logrus.Errorf("something wrong happened while generating gitea pullrequest body: %s", err)
-		body = pipelineReport
+		logrus.Warningf("something wrong happened while generating gitea pullrequest body: %s", err)
 	}
 
 	if len(g.spec.Body) > 0 {
@@ -27,7 +29,7 @@ func (g *Gitea) CreateAction(title, pipelineReport string) error {
 	}
 
 	if len(g.spec.Title) > 0 {
-		title = g.spec.Title
+		title = report.Title
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.
