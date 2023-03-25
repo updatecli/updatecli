@@ -81,21 +81,12 @@ func (a *Action) sort() {
 
 // String show an action report formatted as a string
 func (a Action) ToActionsString() string {
-
-	if err := xml.Unmarshal([]byte(a.String()), &a); err != nil {
-		logrus.Errorln(err)
-		return ""
-	}
-
-	actions := Actions{
-		Actions: []Action{
-			a,
-		},
-	}
-
-	actions.sort()
-
-	output, err := xml.MarshalIndent(actions, "", "    ")
+	output, err := xml.MarshalIndent(
+		Actions{
+			Actions: []Action{
+				a,
+			},
+		}, "", "    ")
 	if err != nil {
 		logrus.Errorf("error: %v\n", err)
 	}
