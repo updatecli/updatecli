@@ -17,7 +17,7 @@ type Action struct {
 
 type ActionTargetChangelog struct {
 	Title       string `xml:"summary,omitempty"`
-	Description string `xml:"code,omitempty"`
+	Description string `xml:"pre,omitempty"`
 }
 
 // String show an action report formatted as a string
