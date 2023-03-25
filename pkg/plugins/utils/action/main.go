@@ -24,7 +24,7 @@ const PULLREQUESTBODYTEMPLATE = `
 <details><summary>Updatecli options</summary>
 Most of Updatecli configuration is done via Updatecli manifest.
 <ul>
-<li>If you close this pullrequest, Updatecli will automatically reopen it, next it runs.</li>
+<li>If you close this pullrequest, Updatecli will automatically reopen it, next time it runs.</li>
 <li>If you close this pullrequest, and delete the base branch, Updatecli will automatically recreate it, erasing all previous commits made.</li>
 </ul>
 </details>
