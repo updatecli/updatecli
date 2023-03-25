@@ -681,6 +681,38 @@ This is not a html formatted report
     </action>
 </Actions>`,
 		},
+		{
+			name: "No merge needed",
+			newReport: `<Actions>
+	<action id="1235">
+		<h2>New Pipeline</h2>
+		<details id="4567">
+		    <summary>Target One</summary>
+		    <details>
+		        <summary>1.0.0</summary>
+		    </details>
+		    <details>
+		        <summary>1.0.1</summary>
+		    </details>
+		</details>
+	</action>
+</Actions>`,
+			oldReport: "",
+			expectedFinalReport: `<Actions>
+	<action id="1235">
+		<h2>New Pipeline</h2>
+		<details id="4567">
+		    <summary>Target One</summary>
+		    <details>
+		        <summary>1.0.0</summary>
+		    </details>
+		    <details>
+		        <summary>1.0.1</summary>
+		    </details>
+		</details>
+	</action>
+</Actions>`,
+		},
 	}
 
 	for _, tt := range tests {
