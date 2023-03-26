@@ -41,7 +41,7 @@ func TestHTMLReportsString(t *testing.T) {
 				},
 			},
 			expectedOutput: `<Action id="1234">
-    <h2>Test Title</h2>
+    <h3>Test Title</h3>
     <details id="4567">
         <summary>Target One</summary>
         <details>
@@ -104,7 +104,7 @@ func TestHTMLUnmarshal(t *testing.T) {
 			},
 			report: `<actions>
 	<action id="1234">
-	    <h2>Test Title</h2>
+	    <h3>Test Title</h3>
 	    <p></p>
 	    <details id="4567">
 	        <summary>Target One</summary>
@@ -355,7 +355,7 @@ func TestFromString(t *testing.T) {
 			name: "Default none situation",
 			oldReport: `<Actions>
     <action id="1234">
-        <h2>Test Title</h2>
+        <h3>Test Title</h3>
         <p></p>
         <details id="4567">
             <summary>Target One</summary>
@@ -381,7 +381,7 @@ func TestFromString(t *testing.T) {
 </Actions>`,
 			newReport: `<Actions>
 	<action id="1234">
-		<h2>Test Title</h2>
+		<h3>Test Title</h3>
 		<p></p>
 		<details id="4567">
 		    <summary>Target One</summary>
@@ -407,7 +407,7 @@ func TestFromString(t *testing.T) {
 </Actions>`,
 			expectedFinalReport: `<Actions>
     <action id="1234">
-        <h2>Test Title</h2>
+        <h3>Test Title</h3>
         <details id="4567">
             <summary>Target One</summary>
             <details>
@@ -430,7 +430,7 @@ func TestFromString(t *testing.T) {
 			name: "Test target merge",
 			oldReport: `<Actions>
     <action id="1234">
-    	<h2>Test Title</h2>
+    	<h3>Test Title</h3>
     	<details id="4567">
     	    <summary>Target One</summary>
     	    <details>
@@ -444,7 +444,7 @@ func TestFromString(t *testing.T) {
 </Actions>`,
 			newReport: `<actions>
     <action id="1234">
-        <h2>Test Title</h2>
+        <h3>Test Title</h3>
         <details id="4568">
             <summary>Target Two</summary>
         </details>
@@ -455,7 +455,7 @@ func TestFromString(t *testing.T) {
 </actions>`,
 			expectedFinalReport: `<Actions>
     <action id="1234">
-        <h2>Test Title</h2>
+        <h3>Test Title</h3>
         <details id="4567">
             <summary>Target One</summary>
             <details>
@@ -479,7 +479,7 @@ func TestFromString(t *testing.T) {
 			oldReport: `
 This is not a html formatted report
 <Action id="1234">
-    <h2>Test Title</h2>
+    <h3>Test Title</h3>
     <details id="4568">
         <summary>Target Two</summary>
     </details>
@@ -489,7 +489,7 @@ This is not a html formatted report
 </Action>`,
 			newReport: `<Actions>
     <action id="1234">
-        <h2>Test Title</h2>
+        <h3>Test Title</h3>
         <details id="4568">
 		    <summary>Target Two</summary>
         </details>
@@ -500,7 +500,7 @@ This is not a html formatted report
 </Actions>`,
 			expectedFinalReport: `<Actions>
     <action id="1234">
-        <h2>Test Title</h2>
+        <h3>Test Title</h3>
         <details id="4568">
             <summary>Target Two</summary>
         </details>
@@ -514,7 +514,7 @@ This is not a html formatted report
 			name: "Test Pipeline merge",
 			oldReport: `<actions>
     <action id="1234">
-        <h2>Old Pipeline</h2>
+        <h3>Old Pipeline</h3>
         <details id="4567">
             <summary>Target One</summary>
             <details>
@@ -528,7 +528,7 @@ This is not a html formatted report
 </actions>`,
 			newReport: `<actions>
     <action id="1235">
-        <h2>New Pipeline</h2>
+        <h3>New Pipeline</h3>
         <details id="4568">
             <summary>Target Two</summary>
         </details>
@@ -539,7 +539,7 @@ This is not a html formatted report
 </actions>`,
 			expectedFinalReport: `<Actions>
     <action id="1234">
-        <h2>Old Pipeline</h2>
+        <h3>Old Pipeline</h3>
         <details id="4567">
             <summary>Target One</summary>
             <details>
@@ -551,7 +551,7 @@ This is not a html formatted report
         </details>
     </action>
     <action id="1235">
-        <h2>New Pipeline</h2>
+        <h3>New Pipeline</h3>
         <details id="4568">
             <summary>Target Two</summary>
         </details>
@@ -565,7 +565,7 @@ This is not a html formatted report
 			name: "Test Pipeline merge scenario 2",
 			newReport: `<actions>
     <action id="1235">
-    	<h2>Old Pipeline</h2>
+    	<h3>Old Pipeline</h3>
     	<details id="4567">
     	    <summary>Target One</summary>
     	    <details>
@@ -579,7 +579,7 @@ This is not a html formatted report
 </actions>`,
 			oldReport: `<actions>
     <action id="1234">
-        <h2>New Pipeline</h2>
+        <h3>New Pipeline</h3>
         <details id="4568">
             <summary>Target Two</summary>
         </details>
@@ -590,7 +590,7 @@ This is not a html formatted report
 </actions>`,
 			expectedFinalReport: `<Actions>
     <action id="1234">
-        <h2>New Pipeline</h2>
+        <h3>New Pipeline</h3>
         <details id="4568">
             <summary>Target Two</summary>
         </details>
@@ -599,7 +599,7 @@ This is not a html formatted report
         </details>
     </action>
     <action id="1235">
-        <h2>Old Pipeline</h2>
+        <h3>Old Pipeline</h3>
         <details id="4567">
             <summary>Target One</summary>
             <details>
@@ -616,7 +616,7 @@ This is not a html formatted report
 			name: "Test Pipeline merge scenario 3",
 			newReport: `<Actions>
 	<action id="1235">
-		<h2>New Pipeline</h2>
+		<h3>New Pipeline</h3>
 		<details id="4567">
 		    <summary>Target One</summary>
 		    <details>
@@ -630,7 +630,7 @@ This is not a html formatted report
 </Actions>`,
 			oldReport: `<actions>
 	<action id="1234">
-	    <h2>Old Pipeline 1</h2>
+	    <h3>Old Pipeline 1</h3>
 	    <details id="4568">
 	        <summary>Target Two</summary>
 	    </details>
@@ -639,7 +639,7 @@ This is not a html formatted report
 	    </details>
 	</action>
 	<action id="1236">
-	    <h2>Old Pipeline 2</h2>
+	    <h3>Old Pipeline 2</h3>
 	    <details id="4568">
 	        <summary>Target Two</summary>
 	    </details>
@@ -650,7 +650,7 @@ This is not a html formatted report
 </actions>`,
 			expectedFinalReport: `<Actions>
     <action id="1234">
-        <h2>Old Pipeline 1</h2>
+        <h3>Old Pipeline 1</h3>
         <details id="4568">
             <summary>Target Two</summary>
         </details>
@@ -659,7 +659,7 @@ This is not a html formatted report
         </details>
     </action>
     <action id="1235">
-        <h2>New Pipeline</h2>
+        <h3>New Pipeline</h3>
         <details id="4567">
             <summary>Target One</summary>
             <details>
@@ -671,7 +671,7 @@ This is not a html formatted report
         </details>
     </action>
     <action id="1236">
-        <h2>Old Pipeline 2</h2>
+        <h3>Old Pipeline 2</h3>
         <details id="4568">
             <summary>Target Two</summary>
         </details>
@@ -685,7 +685,7 @@ This is not a html formatted report
 			name: "No merge needed",
 			newReport: `<Actions>
 	<action id="1235">
-		<h2>New Pipeline</h2>
+		<h3>New Pipeline</h3>
 		<details id="4567">
 		    <summary>Target One</summary>
 		    <details>
@@ -700,7 +700,7 @@ This is not a html formatted report
 			oldReport: "",
 			expectedFinalReport: `<Actions>
 	<action id="1235">
-		<h2>New Pipeline</h2>
+		<h3>New Pipeline</h3>
 		<details id="4567">
 		    <summary>Target One</summary>
 		    <details>
