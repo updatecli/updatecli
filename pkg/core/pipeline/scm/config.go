@@ -13,6 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
@@ -156,6 +157,7 @@ func (Config) JSONSchema() *jschema.Schema {
 		"gitea":  &gitea.Spec{},
 		"github": &github.Spec{},
 		"gitlab": &gitlab.Spec{},
+		"stash":  &stash.Spec{},
 	}
 
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
