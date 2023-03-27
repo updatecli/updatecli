@@ -19,6 +19,8 @@ scms:
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             user: updatecli
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            commitmessage:
+                title: 'Bump Golang version to {{ source "latestGoVersion" }}'
         disabled: false
 sources:
     gomod:
