@@ -14,7 +14,7 @@ import (
 // CreateAction opens a Pull Request on the Gitea server
 func (g *Gitea) CreateAction(report reports.Action) error {
 
-	var title string
+	title := report.Title
 
 	// One Gitea pullrequest body can contain multiple action report
 	// It would be better to refactor CreateAction
@@ -29,7 +29,7 @@ func (g *Gitea) CreateAction(report reports.Action) error {
 	}
 
 	if len(g.spec.Title) > 0 {
-		title = report.Title
+		title = g.spec.Title
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.

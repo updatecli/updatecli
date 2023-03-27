@@ -117,6 +117,10 @@ func (p *PullRequest) CreateAction(report reports.Action) error {
 	p.Report = report.ToActionsString()
 	p.Title = report.Title
 
+	if p.spec.Title != "" {
+		p.Title = p.spec.Title
+	}
+
 	repository, err := p.gh.queryRepository()
 	if err != nil {
 		return err

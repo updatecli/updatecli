@@ -14,22 +14,20 @@ import (
 // CreateAction opens a Pull Request on the Gitlab server
 func (g *Gitlab) CreateAction(report reports.Action) error {
 
-	var title string
+	title := report.Title
+	if len(g.spec.Title) > 0 {
+		title = g.spec.Title
+	}
 
 	// One Gitlab mergerequest body can contain multiple action report
 	// It would be better to refactor CreateAction
 	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
-
 	if err != nil {
-		logrus.Warningf("something went wrong while generating gitlab body: %s", err)
+		logrus.Warningf("something went wrong while generating Gitlab body: %s", err)
 	}
 
 	if len(g.spec.Body) > 0 {
 		body = g.spec.Body
-	}
-
-	if len(g.spec.Title) > 0 {
-		title = g.spec.Title
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.
