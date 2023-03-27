@@ -29,6 +29,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/npm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
+	stashBranch "github.com/updatecli/updatecli/pkg/plugins/resources/stash/branch"
+	stashTag "github.com/updatecli/updatecli/pkg/plugins/resources/stash/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -105,6 +107,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return maven.New(rs.Spec)
 	case "shell":
 		return shell.New(rs.Spec)
+	case "stash/branch":
+		return stashBranch.New(rs.Spec)
+	case "stash/tag":
+		return stashTag.New(rs.Spec)
 	case "toml":
 		return toml.New(rs.Spec)
 	case "yaml":
@@ -152,10 +158,12 @@ func GetResourceMapping() map[string]interface{} {
 		"jenkins":        &jenkins.Spec{},
 		"json":           &json.Spec{},
 		"maven":          &maven.Spec{},
+		"npm":            &npm.Spec{},
 		"shell":          &shell.Spec{},
+		"stash/branch":   &stashBranch.Spec{},
+		"stash/tag":      &stashTag.Spec{},
 		"toml":           &toml.Spec{},
 		"xml":            &xml.Spec{},
 		"yaml":           &yaml.Spec{},
-		"npm":            &npm.Spec{},
 	}
 }
