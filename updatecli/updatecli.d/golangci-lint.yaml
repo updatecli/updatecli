@@ -22,6 +22,8 @@ scms:
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             user: updatecli
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            commitmessage:
+                title: 'Bump golangci-lint version to {{ source "default" }}'
         disabled: false
 sources:
     default:
