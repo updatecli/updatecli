@@ -194,7 +194,7 @@ func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) erro
 	}
 
 	if p.spec.AutoMerge {
-		logrus.Warningf("GitHub automerge temporarly disabled on pullrequest due to https://github.com/updatecli/updatecli/issues/1252")
+		logrus.Warningf("GitHub automerge temporarily disabled on pull request due to https://github.com/updatecli/updatecli/issues/1252")
 		//err = p.EnablePullRequestAutoMerge()
 		//if err != nil {
 		//	return err
