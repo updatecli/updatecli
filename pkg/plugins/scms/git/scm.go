@@ -22,7 +22,9 @@ func (g *Git) Checkout() error {
 		g.spec.Password,
 		g.spec.Branch,
 		g.remoteBranch,
-		g.GetDirectory())
+		g.GetDirectory(),
+		false)
+
 	if err != nil {
 		return err
 	}
@@ -53,14 +55,21 @@ func (g *Git) Clone() (string, error) {
 		g.GetDirectory())
 
 	if err != nil {
-		logrus.Errorf("err - %s", err)
+		logrus.Errorf("failed cloning git repository %q - %s", g.spec.URL, err)
 		return "", err
 	}
 
 	if len(g.remoteBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = g.Checkout()
+		err := g.nativeGitHandler.Checkout(
+			g.spec.Username,
+			g.spec.Password,
+			g.spec.Branch,
+			g.remoteBranch,
+			g.GetDirectory(),
+			true)
+
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			logrus.Errorf("initial git checkout failed for repository %s - %s", g.spec.URL, err)
 			return "", err
 		}
 	}
@@ -122,6 +131,16 @@ func (g *Git) PushBranch(branch string) error {
 	}
 
 	return nil
+}
+
+// IsRemoteBranchUpToDate checks if the working branch should be push to remote
+func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
+	return g.nativeGitHandler.IsLocalBranchPublished(
+		g.spec.Branch,
+		g.remoteBranch,
+		g.spec.Username,
+		g.spec.Password,
+		g.GetDirectory())
 }
 
 // PushTag push tags

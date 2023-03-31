@@ -1,11 +1,11 @@
 = Updatecli
 
+link:https://matrix.to/#/#Updatecli_community:gitter.im[image:https://img.shields.io/matrix/updatecli:matrix.org[]]
 link:https://github.com/updatecli/updatecli/blob/main/LICENSE[image:https://img.shields.io/github/license/updatecli/updatecli[GitHub]]
 link:https://goreportcard.com/report/github.com/updatecli/updatecli[image:https://goreportcard.com/badge/github.com/updatecli/updatecli[Go Report Card]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/total[GitHub Releases]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/latest/total[GitHub Releases]]
 link:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main[image:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main[GitHub Workflow Status]]
-link:https://gitter.im/Updatecli/community#[image:https://img.shields.io/gitter/room/updatecli/community[Gitter]]
 link:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli[image:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli/badge[OpenSSF Scorecard]]
 link:https://bestpractices.coreinfrastructure.org/projects/6731[image:https://bestpractices.coreinfrastructure.org/projects/6731/badge[OpenSSF Best Practices]]
 
@@ -181,6 +181,8 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 
 * 2022
 ** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video]
+* 2023
+** FOSDEM (BE) - Cloud Native Dependencies link:https://fosdem.org/2023/schedule/event/continuous_update_everything/[Video]
 
 == Links
 

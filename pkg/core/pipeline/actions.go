@@ -15,6 +15,11 @@ func (p *Pipeline) RunActions() error {
 		return nil
 	}
 
+	if len(p.Actions) == 0 {
+		logrus.Debugln("no action found, skipping")
+		return nil
+	}
+
 	if len(p.Actions) > 0 {
 		logrus.Infof("\n\n%s\n", strings.ToTitle("Actions"))
 		logrus.Infof("%s\n\n", strings.Repeat("=", len("Actions")+1))
@@ -22,6 +27,17 @@ func (p *Pipeline) RunActions() error {
 
 	for id, action := range p.Actions {
 		relatedTargets, err := p.SearchAssociatedTargetsID(id)
+		if err != nil {
+			logrus.Errorf(err.Error())
+			continue
+		}
+
+		// Update pipeline before each condition run
+		err = p.Update()
+		if err != nil {
+			logrus.Errorf(err.Error())
+			continue
+		}
 
 		if err != nil {
 			logrus.Errorf(err.Error())
@@ -111,7 +127,7 @@ func (p *Pipeline) RunActions() error {
 		}
 		action.Changelog = changelog
 
-		if p.Options.Target.DryRun {
+		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
 

@@ -19,6 +19,9 @@ import (
 	giteaRelease "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/release"
 	giteaTag "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/githubrelease"
+	gitlabBranch "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/branch"
+	gitlabRelease "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/release"
+	gitlabTag "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gittag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/jenkins"
@@ -26,6 +29,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/npm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
+	stashBranch "github.com/updatecli/updatecli/pkg/plugins/resources/stash/branch"
+	stashTag "github.com/updatecli/updatecli/pkg/plugins/resources/stash/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -84,6 +89,12 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return giteaTag.New(rs.Spec)
 	case "gitea/release":
 		return giteaRelease.New(rs.Spec)
+	case "gitlab/branch":
+		return gitlabBranch.New(rs.Spec)
+	case "gitlab/tag":
+		return gitlabTag.New(rs.Spec)
+	case "gitlab/release":
+		return gitlabRelease.New(rs.Spec)
 	case "file":
 		return file.New(rs.Spec)
 	case "helmchart":
@@ -96,6 +107,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return maven.New(rs.Spec)
 	case "shell":
 		return shell.New(rs.Spec)
+	case "stash/branch":
+		return stashBranch.New(rs.Spec)
+	case "stash/tag":
+		return stashTag.New(rs.Spec)
 	case "toml":
 		return toml.New(rs.Spec)
 	case "yaml":
@@ -123,27 +138,32 @@ type Resource interface {
 func GetResourceMapping() map[string]interface{} {
 
 	return map[string]interface{}{
-		"aws/ami":       &awsami.Spec{},
-		"cargopackage":  &cargopackage.Spec{},
-		"csv":           &csv.Spec{},
-		"dockerdigest":  &dockerdigest.Spec{},
-		"dockerfile":    &dockerfile.Spec{},
-		"dockerimage":   &dockerimage.Spec{},
-		"file":          &file.Spec{},
-		"gittag":        &gittag.Spec{},
-		"gitbranch":     &gitbranch.Spec{},
-		"gitea/branch":  &giteaBranch.Spec{},
-		"gitea/release": &giteaRelease.Spec{},
-		"gitea/tag":     &giteaTag.Spec{},
-		"githubrelease": &githubrelease.Spec{},
-		"helmchart":     &helm.Spec{},
-		"jenkins":       &jenkins.Spec{},
-		"json":          &json.Spec{},
-		"maven":         &maven.Spec{},
-		"shell":         &shell.Spec{},
-		"toml":          &toml.Spec{},
-		"xml":           &xml.Spec{},
-		"yaml":          &yaml.Spec{},
-		"npm":           &npm.Spec{},
+		"aws/ami":        &awsami.Spec{},
+		"cargopackage":   &cargopackage.Spec{},
+		"csv":            &csv.Spec{},
+		"dockerdigest":   &dockerdigest.Spec{},
+		"dockerfile":     &dockerfile.Spec{},
+		"dockerimage":    &dockerimage.Spec{},
+		"file":           &file.Spec{},
+		"gittag":         &gittag.Spec{},
+		"gitbranch":      &gitbranch.Spec{},
+		"gitea/branch":   &giteaBranch.Spec{},
+		"gitea/release":  &giteaRelease.Spec{},
+		"gitea/tag":      &giteaTag.Spec{},
+		"gitlab/branch":  &gitlabBranch.Spec{},
+		"gitlab/release": &gitlabRelease.Spec{},
+		"gitlab/tag":     &gitlabTag.Spec{},
+		"githubrelease":  &githubrelease.Spec{},
+		"helmchart":      &helm.Spec{},
+		"jenkins":        &jenkins.Spec{},
+		"json":           &json.Spec{},
+		"maven":          &maven.Spec{},
+		"npm":            &npm.Spec{},
+		"shell":          &shell.Spec{},
+		"stash/branch":   &stashBranch.Spec{},
+		"stash/tag":      &stashTag.Spec{},
+		"toml":           &toml.Spec{},
+		"xml":            &xml.Spec{},
+		"yaml":           &yaml.Spec{},
 	}
 }

@@ -1,6 +1,8 @@
 package shell
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Source returns the stdout of the shell command if its exit code is 0
 // otherwise an error is returned with the content of stderr
@@ -26,7 +28,7 @@ func (s *Shell) Source(workingDir string) (string, error) {
 
 	// PreCommand is executed to collect information before running the shell command
 	// so we could collect information needed to validate that a command successfully as expected
-	err = s.success.PreCommand(workingDir)
+	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +49,7 @@ func (s *Shell) Source(workingDir string) (string, error) {
 
 	// PostCommand is executed to collect information after running the shell command
 	// so we could collect information needed to validate that a command successfully as expected
-	err = s.success.PostCommand(workingDir)
+	err = s.success.PostCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
 		return "", err
 	}

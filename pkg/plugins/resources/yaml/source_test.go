@@ -11,16 +11,36 @@ import (
 
 func Test_Source(t *testing.T) {
 	tests := []struct {
-		name             string
-		spec             Spec
-		files            map[string]string
-		inputSourceValue string
-		mockedContents   map[string]string
-		mockedError      error
-		wantedContents   map[string]string
-		isResultWanted   bool
-		isErrorWanted    bool
+		name           string
+		spec           Spec
+		files          map[string]string
+		mockedContents map[string]string
+		mockedError    error
+		wantedContents map[string]string
+		isResultWanted bool
+		isErrorWanted  bool
 	}{
+		{
+			name: "Passing Case with 'File' and complex key",
+			spec: Spec{
+				File: "test.yaml",
+				Key:  "annotations.github\\.owner",
+			},
+			files: map[string]string{
+				"test.yaml": "",
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+annotations:
+  github.owner: olblak
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": "olblak",
+			},
+			isResultWanted: true,
+		},
 		{
 			name: "Passing Case with 'File'",
 			spec: Spec{
@@ -30,7 +50,6 @@ func Test_Source(t *testing.T) {
 			files: map[string]string{
 				"test.yaml": "",
 			},
-			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
 				"test.yaml": `---
 github:
@@ -54,7 +73,6 @@ github:
 			files: map[string]string{
 				"test.yaml": "",
 			},
-			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
 				"test.yaml": `---
 github:
@@ -115,13 +133,12 @@ github:
 			files: map[string]string{
 				"test.yaml": "",
 			},
-			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
 				"test.yaml": `---
-github:
-  	owner: olblak
-  	repository: charts
-`,
+		github:
+		  	owner: olblak
+		  	repository: charts
+		`,
 			},
 			isErrorWanted: true,
 		},
@@ -134,7 +151,6 @@ github:
 			files: map[string]string{
 				"test.yaml": "",
 			},
-			inputSourceValue: "",
 			mockedContents: map[string]string{
 				"test.yaml": `---
 github:
@@ -171,7 +187,7 @@ github:
 
 			// Looping on the only filePath in 'files'
 			for filePath := range y.files {
-				source, gotErr := y.Source(filePath)
+				source, gotErr := y.Source("")
 				if tt.isErrorWanted {
 					assert.Error(t, gotErr)
 					return

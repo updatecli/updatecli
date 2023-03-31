@@ -72,7 +72,7 @@ func New(s Spec) (*Git, error) {
 func (gs *Spec) Merge(child interface{}) error {
 	childGHSpec, ok := child.(Spec)
 	if !ok {
-		return fmt.Errorf("unable to merge GitHub spec with unknown object type.")
+		return fmt.Errorf("unable to merge GitHub spec with unknown object type")
 	}
 
 	if childGHSpec.Branch != "" {

@@ -3,6 +3,8 @@ package autodiscovery
 import (
 	"fmt"
 
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
@@ -18,6 +20,7 @@ var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
 	DefaultCrawlerSpecs = Config{
 		Crawlers: CrawlersConfig{
+			"cargo":         cargo.Spec{},
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
 			"helm":          helm.Spec{},
@@ -29,6 +32,7 @@ var (
 	}
 	// AutodiscoverySpecs is a map of all Autodiscovery specification
 	AutodiscoverySpecsMapping = map[string]interface{}{
+		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
 		"helm":          &helm.Spec{},
@@ -71,6 +75,20 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		// Commenting for now while refactoring
 		switch kind {
+		case "cargo":
+
+			cargoCrawler, err := cargo.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, cargoCrawler)
+
 		case "dockercompose":
 			crawler, err := dockercompose.New(
 				g.spec.Crawlers[kind],
@@ -186,10 +204,7 @@ func (g *AutoDiscovery) Run() ([][]byte, error) {
 
 		logrus.Printf("Manifest detected: %d\n", len(discoveredManifests))
 		if len(discoveredManifests) > 0 {
-
-			for i := range discoveredManifests {
-				totalDiscoveredManifests = append(totalDiscoveredManifests, discoveredManifests[i])
-			}
+			totalDiscoveredManifests = append(totalDiscoveredManifests, discoveredManifests...)
 		}
 	}
 

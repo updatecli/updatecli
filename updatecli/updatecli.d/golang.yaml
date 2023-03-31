@@ -19,6 +19,8 @@ scms:
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             user: updatecli
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            commitmessage:
+                title: 'Bump Golang version to {{ source "latestGoVersion" }}'
         disabled: false
 sources:
     gomod:
@@ -70,15 +72,6 @@ conditions:
             value: go
         scmid: default
         disablesourceinput: true
-    workflowrelease-sandbox:
-        name: Ensure GA step is defined in Github Action named release-sandbox
-        kind: yaml
-        spec:
-            file: .github/workflows/release-sandbox.yaml
-            key: jobs.build.steps[3].id
-            value: go
-        scmid: default
-        disablesourceinput: true
 targets:
     go.mod:
         name: '[go.mod] Update Golang version to {{ source "latestGoVersion" }}'
@@ -88,14 +81,6 @@ targets:
         scmid: default
         sourceid: gomod
     release:
-        name: '[release-sandbox.yaml] Update Golang version to {{ source "latestGoVersion" }}'
-        kind: yaml
-        spec:
-            file: .github/workflows/release-sandbox.yaml
-            key: jobs.build.steps[3].with.go-version
-        scmid: default
-        sourceid: latestGoVersion
-    release-sandbox:
         name: '[release.yaml] Update Golang version to {{ source "latestGoVersion" }}'
         kind: yaml
         spec:

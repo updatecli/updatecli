@@ -39,11 +39,10 @@ type Config struct {
 	ReportBody string `yaml:",omitempty"`
 	// ! Deprecated - please use all lowercase `sourceid`
 	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
-	// disablesourceinput disables the mechanism to retrieve a default value from a source.
+	// disablesourceinput disables the mechanism to retrieve a default value from a source. For example, if true, source information like changelog will not be accessible for a github/pullrequest action.
 	DisableSourceInput bool `yaml:",omitempty"`
 	// sourceid specifies where retrieving the default value
 	SourceID string `yaml:",omitempty"`
-	// disablesourceinput
 }
 
 // Check verifies if mandatory Targets parameters are provided and return false if not.
@@ -126,34 +125,50 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
+	isRemoteBranchUpToDate, err := s.IsRemoteBranchUpToDate()
+
+	if err != nil {
+		t.Result = result.FAILURE
+		return err
+	}
+
 	if !changed {
-		t.Result = result.SUCCESS
-		return nil
+		if isRemoteBranchUpToDate {
+			t.Result = result.SUCCESS
+			return nil
+		}
+
+		logrus.Infof("\n\u26A0 While nothing change in the current pipeline run, according to the git history, some commits will be pushed\n")
 	}
 
 	t.Result = result.ATTENTION
 	if !o.DryRun {
-		if message == "" {
-			t.Result = result.FAILURE
-			return fmt.Errorf("target has no change message")
-		}
 
-		if len(files) == 0 {
-			t.Result = result.FAILURE
-			return fmt.Errorf("no changed file to commit")
-		}
-
-		if o.Commit {
-			if err := s.Add(files); err != nil {
+		if changed {
+			if message == "" {
 				t.Result = result.FAILURE
-				return err
+				return fmt.Errorf("target has no change message")
 			}
 
-			if err = s.Commit(message); err != nil {
+			if len(files) == 0 {
 				t.Result = result.FAILURE
-				return err
+				return fmt.Errorf("no changed file to commit")
 			}
+
+			if o.Commit {
+				if err := s.Add(files); err != nil {
+					t.Result = result.FAILURE
+					return err
+				}
+
+				if err = s.Commit(message); err != nil {
+					t.Result = result.FAILURE
+					return err
+				}
+			}
+
 		}
+
 		if o.Push {
 			if err := s.Push(); err != nil {
 				t.Result = result.FAILURE

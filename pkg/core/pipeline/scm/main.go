@@ -8,6 +8,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
 type Scm struct {
@@ -33,6 +35,7 @@ type ScmHandler interface {
 	PushTag(tag string) error
 	PushBranch(branch string) error
 	GetChangedFiles(workingDir string) ([]string, error)
+	IsRemoteBranchUpToDate() (bool, error)
 }
 
 func New(config *Config, pipelineID string) (Scm, error) {
@@ -58,8 +61,26 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	switch s.Config.Kind {
+	case "stash":
+		g, err := stash.New(s.Config.Spec, s.PipelineID)
+
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
+
 	case "gitea":
 		g, err := gitea.New(s.Config.Spec, s.PipelineID)
+
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
+
+	case "gitlab":
+		g, err := gitlab.New(s.Config.Spec, s.PipelineID)
 
 		if err != nil {
 			return err

@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"sort"
@@ -12,10 +13,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"gopkg.in/yaml.v3"
-)
-
-var (
-	yamlIndent int = 2
 )
 
 // Target updates a scm repository based on the modified yaml file.
@@ -78,14 +75,13 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		originalContents[filePath] = y.files[filePath]
 
 		out := yaml.Node{}
-
 		err := yaml.Unmarshal([]byte(y.files[filePath]), &out)
 
 		if err != nil {
 			return false, files, message.String(), fmt.Errorf("cannot unmarshal content of file %s: %v", filePath, err)
 		}
 
-		keyFound, oldVersion, _ := replace(&out, strings.Split(y.spec.Key, "."), valueToWrite, 1)
+		keyFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToWrite, 1)
 
 		if !keyFound {
 			return false, files, message.String(), fmt.Errorf("%s cannot find key '%s' from file '%s'",
@@ -101,25 +97,31 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 				filePath,
 				valueToWrite)
 			notChanged++
-		} else {
-			newFileContent, err := yaml.Marshal(&out)
-			if err != nil {
-				return false, files, message.String(), err
-			}
-			y.files[filePath] = string(newFileContent)
-
-			files = append(files, filePath)
-
-			logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
-				result.ATTENTION,
-				y.spec.Key,
-				filePath,
-				oldVersion,
-				valueToWrite)
+			continue
 		}
 
-		if !dryRun {
+		buf := new(bytes.Buffer)
+		encoder := yaml.NewEncoder(buf)
+		defer encoder.Close()
+		encoder.SetIndent(y.indent)
+		err = encoder.Encode(&out)
 
+		if err != nil {
+			return false, files, message.String(), err
+		}
+		y.files[filePath] = buf.String()
+		buf.Reset()
+
+		files = append(files, filePath)
+
+		logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
+			result.ATTENTION,
+			y.spec.Key,
+			filePath,
+			oldVersion,
+			valueToWrite)
+
+		if !dryRun {
 			newFile, err := os.Create(filePath)
 
 			// https://staticcheck.io/docs/checks/#SA5001
@@ -130,13 +132,6 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 				return false, files, message.String(), nil
 			}
 
-			encoder := yaml.NewEncoder(newFile)
-			defer encoder.Close()
-			encoder.SetIndent(yamlIndent)
-			err = encoder.Encode(&out)
-			if err != nil {
-				return false, files, message.String(), err
-			}
 			err = y.contentRetriever.WriteToFile(y.files[filePath], filePath)
 			if err != nil {
 				return false, files, message.String(), err

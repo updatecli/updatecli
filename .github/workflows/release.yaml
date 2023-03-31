@@ -1,73 +1,67 @@
 name: Publish Release Assets
 on:
-  workflow_dispatch:
-  release:
-    types: [published]
-
+    workflow_dispatch:
+    release:
+        types: [published]
 permissions:
-  contents: write
-  id-token: write
-  packages: write
-  
+    contents: write
+    id-token: write
+    packages: write
 jobs:
-  build:
-    runs-on: ubuntu-20.04
-    env:
-      DOCKER_CLI_EXPERIMENTAL: "enabled"
-      DOCKER_BUILDKIT: 1
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      # https://github.com/actions/setup-go
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19.4
-        id: go
-
-      - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v4
-        with:
-          install-only: true
-      - name: Show GoReleaser version
-        run: goreleaser --version
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v2.8.1
-
-      - name: Install Syft
-        uses: anchore/sbom-action/download-syft@v0.13.3
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      - name: Login to GitHub Docker Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: tibdex/github-app-token@v1.8
-        id: generate_homebrew_token
-        with:
-          app_id: ${{ secrets.UPDATECLIBOT_APP_ID }}
-          private_key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
-      - name: GoReleaser
-        if: success()
+    build:
+        runs-on: ubuntu-20.04
         env:
-          COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.generate_homebrew_token.outputs.token }}
-        run: |
-          make release
-      - name: Clean up
-        run: |
-          rm -f ${HOME}/.docker/config.json
+            DOCKER_CLI_EXPERIMENTAL: "enabled"
+            DOCKER_BUILDKIT: 1
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                fetch-depth: 0
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v2
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
+            # https://github.com/actions/setup-go
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                go-version: 1.20.2
+              id: go
+            - name: Install GoReleaser
+              uses: goreleaser/goreleaser-action@v4
+              with:
+                install-only: true
+            - name: Show GoReleaser version
+              run: goreleaser --version
+            - name: Install Cosign
+              uses: sigstore/cosign-installer@v2.8.1
+            - name: Install Syft
+              uses: anchore/sbom-action/download-syft@v0.13.4
+            - name: Login to DockerHub
+              uses: docker/login-action@v2
+              with:
+                username: ${{ secrets.DOCKERHUB_USERNAME }}
+                password: ${{ secrets.DOCKERHUB_PASSWORD }}
+            - name: Login to GitHub Docker Registry
+              uses: docker/login-action@v2
+              with:
+                registry: ghcr.io
+                username: ${{ github.repository_owner }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+            - uses: tibdex/github-app-token@v1.8
+              id: generate_homebrew_token
+              with:
+                app_id: ${{ secrets.UPDATECLIBOT_APP_ID }}
+                private_key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
+            - name: GoReleaser
+              if: success()
+              env:
+                AUR_KEY: ${{ secrets.AUR_KEY }}
+                COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.generate_homebrew_token.outputs.token }}
+              run: |
+                make release
+            - name: Clean up
+              run: |
+                rm -f ${HOME}/.docker/config.json

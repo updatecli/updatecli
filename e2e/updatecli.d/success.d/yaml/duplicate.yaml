@@ -1,31 +1,25 @@
-name: Test YAML resource
-
-scms:
-  default:
-    kind: git
-    spec:
-      url: https://github.com/updatecli/updatecli.git
+name: Test duplicated YAML resource
 
 sources:
   scenario1:
     name: Basic yaml source
     kind: yaml
     spec:
-      file: e2e/updatecli.d/success.d/yaml.yaml
+      file: e2e/updatecli.d/success.d/yaml/noscm.yaml
       key: sources.scenario1.kind
 
   scenario2:
     name: Basic yaml source
     kind: yaml
     spec:
-      file: file://e2e/updatecli.d/success.d/yaml.yaml
+      file: file://e2e/updatecli.d/success.d/yaml/noscm.yaml
       key: sources.scenario1.kind
 
   scenario21:
     name: Basic yaml source
     kind: yaml
     spec:
-      file: file://e2e/updatecli.d/success.d/yaml.yaml
+      file: file://e2e/updatecli.d/success.d/yaml/noscm.yaml
       key: sources.scenario1.kind
 
   scenario3:
@@ -38,7 +32,6 @@ sources:
   scenario31:
     name: Test URL scheme
     kind: yaml
-    scmid: default
     spec:
       file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
       key: name
@@ -50,8 +43,8 @@ conditions:
     disablesourceinput: true
     spec:
       files:
-      - e2e/updatecli.d/success.d/yaml.yaml
-      - e2e/updatecli.d/success.d/yaml-duplicate.yaml
+      - e2e/updatecli.d/success.d/yaml/noscm.yaml
+      - e2e/updatecli.d/success.d/yaml/duplicate.yaml
       key: sources.scenario1.kind
       value: yaml
 
@@ -61,8 +54,8 @@ conditions:
     disablesourceinput: true
     spec:
       files:
-      - file://e2e/updatecli.d/success.d/yaml.yaml
-      - file://e2e/updatecli.d/success.d/yaml-duplicate.yaml
+      - file://e2e/updatecli.d/success.d/yaml/noscm.yaml
+      - file://e2e/updatecli.d/success.d/yaml/duplicate.yaml
       key: sources.scenario1.kind
       value: yaml
 
@@ -72,8 +65,8 @@ conditions:
     disablesourceinput: true
     spec:
       files:
-      - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml.yaml
-      - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml-duplicate.yaml
+      - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml/noscm.yaml
+      - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml/duplicate.yaml
       key: sources.scenario1.kind
       value: yaml
 
@@ -81,10 +74,11 @@ targets:
   multiples:
     name: Update files content
     kind: yaml
-    scmid: default
     sourceid: scenario1
     spec:
       files:
-      - e2e/updatecli.d/success.d/yaml.yaml
-      - e2e/updatecli.d/success.d/yaml-duplicate.yaml
-      key: scms.default.kind
+      - e2e/updatecli.d/success.d/yaml/noscm.yaml
+      - e2e/updatecli.d/success.d/yaml/duplicate.yaml
+      key: sources.scenario1.kind
+    transformers:
+      - addsuffix: -beta

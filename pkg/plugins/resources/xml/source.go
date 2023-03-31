@@ -1,7 +1,9 @@
 package xml
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/beevik/etree"
 	"github.com/sirupsen/logrus"
@@ -10,15 +12,26 @@ import (
 
 func (x *XML) Source(workingDir string) (string, error) {
 
-	// To merge File path with current working dire, unless file is an http url
-	x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, workingDir)
-
-	// Test at runtime if a file exist
-	if !x.contentRetriever.FileExists(x.spec.File) {
-		return "", fmt.Errorf("the XML file %q does not exist", x.spec.File)
+	// By the default workingdir is set to the current working directory
+	// it would be better to have it empty by default but it must be changed in the
+	// souce core codebase.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		return "", errors.New("fail getting current working directory")
 	}
 
-	if err := x.Read(); err != nil {
+	resourceFile := x.spec.File
+	// To merge File path with current working dire, unless file is an http url
+	if workingDir != currentWorkingDirectory {
+		resourceFile = joinPathWithWorkingDirectoryPath(x.spec.File, workingDir)
+	}
+
+	// Test at runtime if a file exist
+	if !x.contentRetriever.FileExists(resourceFile) {
+		return "", fmt.Errorf("file %q does not exist", resourceFile)
+	}
+
+	if err := x.Read(resourceFile); err != nil {
 		return "", err
 	}
 
@@ -31,10 +44,10 @@ func (x *XML) Source(workingDir string) (string, error) {
 	elem := doc.FindElement(x.spec.Path)
 
 	if elem == nil {
-		logrus.Infof("%s cannot find value for path '%s' from file '%s'",
+		logrus.Infof("%s cannot find value for path %q from file %q",
 			result.FAILURE,
 			x.spec.Path,
-			x.spec.File)
+			resourceFile)
 
 		return "", nil
 	}
@@ -42,7 +55,10 @@ func (x *XML) Source(workingDir string) (string, error) {
 	queryResult := elem.Text()
 
 	logrus.Infof("%s Value %q found at path %q in the xml file %q",
-		result.SUCCESS, queryResult, x.spec.Path, x.spec.File)
+		result.SUCCESS,
+		queryResult,
+		x.spec.Path,
+		resourceFile)
 
 	return queryResult, nil
 }

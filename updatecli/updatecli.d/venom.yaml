@@ -21,6 +21,8 @@ scms:
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             user: updatecli
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            commitmessage:
+                title: 'Bump Venom version to {{ source "latestVersion" }}'
         disabled: false
 sources:
     latestVersion:
