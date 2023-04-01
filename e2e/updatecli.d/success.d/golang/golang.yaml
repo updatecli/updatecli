@@ -1,0 +1,17 @@
+name: "Test Golanng version"
+
+sources:
+  default:
+    name: Get Golang version
+    kind: golang
+    spec:
+      versionfilter:
+        kind: semver
+        pattern: "1.15"
+
+conditions:
+  default:
+    name: Get version
+    kind: golang
+    spec:
+      version: "1.20.1"
