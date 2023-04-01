@@ -19,7 +19,7 @@ type Language struct {
 
 // New returns a reference to a newly initialized Go Module object from a godmodule.Spec
 // or an error if the provided Spec triggers a validation error.
-func New(spec interface{}, isSCM bool) (*Language, error) {
+func New(spec interface{}) (*Language, error) {
 
 	newSpec := Spec{}
 

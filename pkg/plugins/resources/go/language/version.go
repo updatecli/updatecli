@@ -22,23 +22,23 @@ type Info struct {
 }
 
 // versions fetch all stable Golang version
-func (g *Language) versions() (v string, versions []string, err error) {
+func (l *Language) versions() (versions []string, err error) {
 
 	if err != nil {
 		logrus.Errorf("something went wrong while generating the go url to retrieve versions %q\n", err)
-		return "", []string{}, err
+		return []string{}, err
 	}
 
 	req, err := http.NewRequest("GET", "https://go.dev/dl/?mode=json&include=all", nil)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting go version data %q\n", err)
-		return "", []string{}, err
+		return []string{}, err
 	}
 
-	res, err := g.webClient.Do(req)
+	res, err := l.webClient.Do(req)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting go version data %q\n", err)
-		return "", []string{}, err
+		return []string{}, err
 	}
 
 	defer res.Body.Close()
@@ -51,7 +51,7 @@ func (g *Language) versions() (v string, versions []string, err error) {
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
-		return "", []string{}, err
+		return []string{}, err
 	}
 
 	versionsInfo := []Info{}
@@ -59,7 +59,7 @@ func (g *Language) versions() (v string, versions []string, err error) {
 	err = json.Unmarshal(data, &versionsInfo)
 	if err != nil {
 		logrus.Errorf("error unmarshalling json: %q", err)
-		return "", []string{}, err
+		return []string{}, err
 	}
 
 	for _, v := range versionsInfo {
@@ -74,11 +74,11 @@ func (g *Language) versions() (v string, versions []string, err error) {
 	}
 
 	sort.Strings(versions)
-	g.foundVersion, err = g.versionFilter.Search(versions)
+	l.foundVersion, err = l.versionFilter.Search(versions)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	return g.foundVersion.GetVersion(), versions, nil
+	return versions, nil
 
 }

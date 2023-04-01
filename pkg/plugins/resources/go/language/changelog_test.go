@@ -29,7 +29,7 @@ func TestChangelog(t *testing.T) {
 					OriginalVersion: "1.20.1",
 				},
 			},
-			expectedResult: "Golang changelog for version \"1.20.1\" is available on \"https://go.dev/doc/go1.20.minor\"",
+			expectedResult: "Golang changelog for version \"1.20.1\" is available on \"https://go.dev/doc/devel/release#go1.20.minor\"",
 		},
 	}
 

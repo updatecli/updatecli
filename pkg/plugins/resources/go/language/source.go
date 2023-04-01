@@ -8,15 +8,15 @@ import (
 )
 
 // Source returns the latest go module version
-func (g Language) Source(workingDir string) (string, error) {
-	version, _, err := g.versions()
+func (g *Language) Source(workingDir string) (string, error) {
+	_, err := g.versions()
 	if err != nil {
 		return "", err
 	}
 
-	if version != "" {
-		logrus.Infof("%s Golang Version %s found", result.SUCCESS, version)
-		return version, nil
+	if g.foundVersion.GetVersion() != "" {
+		logrus.Infof("%s Golang Version %s found", result.SUCCESS, g.foundVersion.GetVersion())
+		return g.foundVersion.GetVersion(), nil
 	}
 
 	logrus.Infof("%s No Golang version found matching pattern %q", result.FAILURE, g.spec.VersionFilter.Pattern)

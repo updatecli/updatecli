@@ -31,7 +31,7 @@ func TestCondition(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.spec, false)
+			got, err := New(tt.spec)
 			require.NoError(t, err)
 			foundVersion, err := got.Condition("")
 			if tt.expectedError {

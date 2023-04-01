@@ -28,7 +28,7 @@ func (l *Language) condition(source string) (bool, error) {
 		return false, errors.New("no version defined")
 	}
 
-	_, versions, err := l.versions()
+	versions, err := l.versions()
 	if err != nil {
 		return false, err
 	}
