@@ -3,7 +3,7 @@ package cargopackage
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -120,7 +120,7 @@ func GetMockClient(baseUrl string, mockedToken string, mockedBody string, mocked
 			}
 			return &http.Response{
 				StatusCode: statusCode,
-				Body:       ioutil.NopCloser(strings.NewReader(body)),
+				Body:       io.NopCloser(strings.NewReader(body)),
 			}, httpError
 		},
 	}
