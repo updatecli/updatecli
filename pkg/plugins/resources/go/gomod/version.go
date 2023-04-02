@@ -16,15 +16,15 @@ var (
 // version retrieve the version specified by a GO module
 func (g *GoMod) version(filename string) (string, error) {
 
-	data, err := os.ReadFile(g.filename)
+	data, err := os.ReadFile(filename)
 
 	if err != nil {
-		return "", fmt.Errorf("failed reading %q", g.filename)
+		return "", fmt.Errorf("failed reading %q", filename)
 	}
 
-	modfile, err := modfile.Parse(g.filename, data, nil)
+	modfile, err := modfile.Parse(filename, data, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed reading %q", g.filename)
+		return "", fmt.Errorf("failed reading %q", filename)
 	}
 
 	for _, r := range modfile.Require {
@@ -36,7 +36,7 @@ func (g *GoMod) version(filename string) (string, error) {
 		}
 	}
 
-	logrus.Errorf("GO module %q not found in %q", g.spec.Module, g.filename)
+	logrus.Errorf("GO module %q not found in %q", g.spec.Module, filename)
 	return "", ErrModuleNotFound
 
 }
