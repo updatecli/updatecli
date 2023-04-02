@@ -27,7 +27,7 @@ type GoModule struct {
 
 // New returns a reference to a newly initialized Go Module object from a godmodule.Spec
 // or an error if the provided Spec triggers a validation error.
-func New(spec interface{}, isSCM bool) (*GoModule, error) {
+func New(spec interface{}) (*GoModule, error) {
 	newSpec := Spec{}
 
 	err := mapstructure.Decode(spec, &newSpec)
