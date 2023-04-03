@@ -190,3 +190,9 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 * link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 * link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
 * link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
+
+== Thanks to all the contributors ❤️
+
+<a href = "https://github.com/updatecli/updatecli/graphs/contributors">
+  <img src = "https://contrib.rocks/image?repo=updatecli/updatecli"/>
+</a>
