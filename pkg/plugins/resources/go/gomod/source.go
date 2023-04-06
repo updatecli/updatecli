@@ -5,11 +5,14 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns the latest go module version
 func (g GoMod) Source(workingDir string) (string, error) {
-	version, err := g.version(g.filename)
+
+	version, err := g.version(utils.JoinFilePathWithWorkingDirectoryPath(g.filename, workingDir))
 	if err != nil {
 		return "", err
 	}
