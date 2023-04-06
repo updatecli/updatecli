@@ -8,11 +8,30 @@ sources:
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
       module: "github.com/Masterminds/semver/v3"
 
+  golang:
+    name: Get version
+    kind: golang/gomod
+    spec:
+      file: pkg/plugins/resources/go/gomod/testdata/go.mod
+      kind: golang
+      module: "github.com/Masterminds/semver/v3"
+
 conditions:
   default:
+    disablesourceinput: true
     name: Get version
     kind: golang/gomod
     spec:
       module: "github.com/Masterminds/semver/v3"
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
       version: "v3.2.0"
+
+  goversion:
+    disablesourceinput: true
+    name: Get version
+    kind: golang/gomod
+    spec:
+      module: "github.com/Masterminds/semver/v3"
+      kind: golang
+      file: pkg/plugins/resources/go/gomod/testdata/go.mod
+      version: "1.20"
