@@ -2,18 +2,19 @@ name: "Test gomod"
 
 sources:
   default:
-    name: Get version
+    name: Get module version
     kind: golang/module
     spec:
-      path: "github.com/Masterminds/semver/v3"
+      module: "github.com/Masterminds/semver/v3"
 
 conditions:
   default:
-    name: Get version
+    name: Test module version exist
     kind: golang/module
     spec:
-      path: "github.com/Masterminds/semver/v3"
+      module: "github.com/Masterminds/semver/v3"
       version: "v3.2.0"
       versionfilter:
         kind: semver
         pattern: "3.2"
+

@@ -1,20 +1,31 @@
-name: "Test gomod"
+name: "Test Go module file interaction"
+
+scms:
+  updatecli:
+    kind: git
+    spec:
+      url: https://github.com/updatecli/updatecli.git
 
 sources:
   default:
-    name: Get version
+    name: Get semver version used in Go.mod
     kind: golang/gomod
     spec:
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
-      module: "github.com/Masterminds/semver/v3"
+      module: github.com/Masterminds/semver/v3
 
   golang:
-    name: Get version
+    name: Get Golang version used in go.mod
     kind: golang/gomod
     spec:
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
       kind: golang
-      module: "github.com/Masterminds/semver/v3"
+
+  buildkit:
+    name: Get BuildKit version used in go.mod
+    kind: golang/module
+    spec:
+      module: github.com/moby/buildkit
 
 conditions:
   default:
@@ -22,16 +33,44 @@ conditions:
     name: Get version
     kind: golang/gomod
     spec:
-      module: "github.com/Masterminds/semver/v3"
+      module: github.com/Masterminds/semver/v3
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
       version: "v3.2.0"
 
   goversion:
-    disablesourceinput: true
     name: Get version
+    sourceid: golang
     kind: golang/gomod
     spec:
-      module: "github.com/Masterminds/semver/v3"
       kind: golang
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
-      version: "1.20"
+
+targets:
+  default:
+    name: Test that module version shouldn't be updated
+    disablesourceinput: true
+    kind: golang/gomod
+    spec:
+      module: github.com/Masterminds/semver/v3
+      file: pkg/plugins/resources/go/gomod/testdata/go.mod
+      version: "v3.2.0"
+
+  goversion:
+    # sourceid: golang
+    name: Test that Golang version shouldn't be updated
+    disablesourceinput: true
+    kind: golang/gomod
+    spec:
+      kind: golang
+      file: pkg/plugins/resources/go/gomod/testdata/go.mod
+      version: "1.19"
+
+  buildkit:
+    sourceid: buildkit
+    name: Test buildkit update
+    kind: golang/gomod
+    scmid: updatecli
+    spec:
+      module: "github.com/moby/buildkit"
+      file: go.mod
+

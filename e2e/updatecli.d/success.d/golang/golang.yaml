@@ -1,4 +1,4 @@
-name: "Test Golanng version"
+name: "Test retrieving Golang version"
 
 sources:
   default:
@@ -11,7 +11,8 @@ sources:
 
 conditions:
   default:
-    name: Get version
+    name: Test that golang version 1.20.1 exists
     kind: golang
     spec:
       version: "1.20.1"
+
