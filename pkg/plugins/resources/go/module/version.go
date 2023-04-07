@@ -17,8 +17,8 @@ import (
 func (g *GoModule) versions() (v string, versions []string, err error) {
 
 	var GOPROXY string
-	if g.spec.Proxy != "" {
-		GOPROXY = g.spec.Proxy
+	if g.Spec.Proxy != "" {
+		GOPROXY = g.Spec.Proxy
 	} else if os.Getenv("GOPROXY") != "" {
 		GOPROXY = os.Getenv("GOPROXY")
 	} else {
@@ -32,7 +32,7 @@ func (g *GoModule) versions() (v string, versions []string, err error) {
 
 		URL, err := url.JoinPath(
 			sanitizeGoProxy(proxy),
-			sanitizeGoModuleNameForProxy(g.spec.Path),
+			sanitizeGoModuleNameForProxy(g.Spec.Module),
 			"@v", "list")
 		if err != nil {
 			logrus.Errorf("something went wrong while getting go module api data %q\n", err)
@@ -73,14 +73,14 @@ func (g *GoModule) versions() (v string, versions []string, err error) {
 		versions = append(versions, strings.Split(string(data), "\n")...)
 
 		sort.Strings(versions)
-		g.foundVersion, err = g.versionFilter.Search(versions)
+		g.Version, err = g.versionFilter.Search(versions)
 		if err != nil {
 			return "", nil, err
 		}
 
-		return g.foundVersion.GetVersion(), versions, nil
+		return g.Version.GetVersion(), versions, nil
 
 	}
 
-	return "", nil, fmt.Errorf("GO module %q not found on proxy %q", g.spec.Path, GOPROXY)
+	return "", nil, fmt.Errorf("GO module %q not found on proxy %q", g.Spec.Module, GOPROXY)
 }

@@ -16,10 +16,10 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Test getting changelog from github",
 			version: GoModule{
-				spec: Spec{
-					Path: "github.com/updatecli/updatecli",
+				Spec: Spec{
+					Module: "github.com/updatecli/updatecli",
 				},
-				foundVersion: version.Version{
+				Version: version.Version{
 					OriginalVersion: "v0.42.0",
 				},
 			},

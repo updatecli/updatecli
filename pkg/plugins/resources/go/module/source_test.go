@@ -17,7 +17,7 @@ func TestSource(t *testing.T) {
 	}{
 		{
 			spec: Spec{
-				Path: "github.com/updatecli/updatecli",
+				Module: "github.com/updatecli/updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "0.47",
@@ -27,8 +27,8 @@ func TestSource(t *testing.T) {
 		},
 		{
 			spec: Spec{
-				Proxy: "proxy.golang.org",
-				Path:  "github.com/updatecli/updatecli",
+				Proxy:  "proxy.golang.org",
+				Module: "github.com/updatecli/updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "0.47",
@@ -38,8 +38,8 @@ func TestSource(t *testing.T) {
 		},
 		{
 			spec: Spec{
-				Proxy: "direct,proxy.golang.org",
-				Path:  "github.com/updatecli/updatecli",
+				Proxy:  "direct,proxy.golang.org",
+				Module: "github.com/updatecli/updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "0.47",
@@ -49,7 +49,7 @@ func TestSource(t *testing.T) {
 		},
 		{
 			spec: Spec{
-				Path: "github.com/MakeNowJust/heredoc",
+				Module: "github.com/MakeNowJust/heredoc",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "1.0.0",

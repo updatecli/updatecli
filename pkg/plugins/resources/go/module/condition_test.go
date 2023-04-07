@@ -17,7 +17,7 @@ func TestCondition(t *testing.T) {
 		{
 			name: "canonical test",
 			spec: Spec{
-				Path:    "github.com/updatecli/updatecli",
+				Module:  "github.com/updatecli/updatecli",
 				Version: "v0.47.2",
 			},
 			expectedResult: true,
@@ -25,7 +25,7 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Test go module with upper case character",
 			spec: Spec{
-				Path:    "github.com/MakeNowJust/heredoc",
+				Module:  "github.com/MakeNowJust/heredoc",
 				Version: "v1.0.0",
 			},
 			expectedResult: true,

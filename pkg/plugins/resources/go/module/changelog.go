@@ -1,20 +1,16 @@
 package gomodule
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"net/http/httputil"
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
 // Changelog returns the changelog for a specific golang module, or an empty string if it couldn't find one
 func (g *GoModule) Changelog() string {
-	if strings.HasPrefix(g.spec.Path, "github.com") {
-		return getChangelogFromGitHub(g.spec.Path, g.foundVersion.OriginalVersion)
+	if strings.HasPrefix(g.Spec.Module, "github.com") {
+		return getChangelogFromGitHub(g.Spec.Module, g.Version.OriginalVersion)
 	}
 	return ""
 }
@@ -22,52 +18,23 @@ func (g *GoModule) Changelog() string {
 func getChangelogFromGitHub(module, version string) string {
 	parsedModule := strings.Split(module, "/")
 
-	if len(parsedModule) != 3 {
+	if len(parsedModule) < 3 {
 		return ""
 	}
 
-	URL := fmt.Sprintf("https://api.%s/repos/%s/%s/releases/tags/%s",
-		parsedModule[0], parsedModule[1], parsedModule[2], version)
+	g := github.Github{
+		Spec: github.Spec{
+			URL:        "https://api.github.com",
+			Owner:      parsedModule[1],
+			Repository: parsedModule[2],
+		},
+	}
 
-	req, err := http.NewRequest("GET", URL, nil)
+	result, err := g.ChangelogV3(version)
 	if err != nil {
-		logrus.Debugf("failed to retrieve changelog from GitHub %q\n", err)
-		return ""
+		logrus.Debugln(err)
 	}
 
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		logrus.Debugf("failed to retrieve changelog from GitHub %q\n", err)
-		return ""
-	}
+	return result
 
-	defer res.Body.Close()
-	if res.StatusCode >= 400 {
-		body, err := httputil.DumpResponse(res, false)
-		logrus.Debugf("failed to retrieve changelog from GitHub %q\n", err)
-		logrus.Debugf("\n%v\n", string(body))
-		return ""
-	}
-
-	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
-		return ""
-	}
-
-	type ReleaseInfo struct {
-		HtmlURL string `json:"html_url,"`
-		Body    string `json:"body,"`
-	}
-
-	release := ReleaseInfo{}
-
-	err = json.Unmarshal(data, &release)
-	if err != nil {
-		logrus.Errorf("error unmarshalling json: %q", err)
-		return ""
-	}
-
-	return fmt.Sprintf("Changelog retrieved from:\n\t%s\n%s",
-		release.HtmlURL, release.Body)
 }

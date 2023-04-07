@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -18,10 +19,10 @@ const (
 
 // GoModule defines a resource of type "gomodule"
 type GoModule struct {
-	spec Spec
+	Spec Spec
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
-	foundVersion  version.Version
+	Version       version.Version
 	webClient     httpclient.HTTPClient
 }
 
@@ -35,13 +36,16 @@ func New(spec interface{}) (*GoModule, error) {
 		return nil, err
 	}
 
-	newFilter, err := newSpec.VersionFilter.Init()
-	if err != nil {
-		return nil, err
+	newFilter := newSpec.VersionFilter
+	if newSpec.VersionFilter.IsZero() {
+		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")
+		// By default, golang versioning uses semantic versioning
+		newFilter.Kind = "semver"
+		newFilter.Pattern = "*"
 	}
 
 	return &GoModule{
-		spec:          newSpec,
+		Spec:          newSpec,
 		versionFilter: newFilter,
 		webClient:     http.DefaultClient,
 	}, nil

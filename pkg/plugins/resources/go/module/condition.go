@@ -20,7 +20,7 @@ func (g *GoModule) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, er
 
 // Condition checks if a go module with a specific version is published
 func (g *GoModule) condition(source string) (bool, error) {
-	versionToCheck := g.spec.Version
+	versionToCheck := g.Spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source
 	}
