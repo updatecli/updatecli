@@ -14,12 +14,12 @@ func (g *Language) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	if g.foundVersion.GetVersion() != "" {
-		logrus.Infof("%s Golang Version %s found", result.SUCCESS, g.foundVersion.GetVersion())
-		return g.foundVersion.GetVersion(), nil
+	if g.Version.GetVersion() != "" {
+		logrus.Infof("%s Golang Version %s found", result.SUCCESS, g.Version.GetVersion())
+		return g.Version.GetVersion(), nil
 	}
 
-	logrus.Infof("%s No Golang version found matching pattern %q", result.FAILURE, g.spec.VersionFilter.Pattern)
+	logrus.Infof("%s No Golang version found matching pattern %q", result.FAILURE, g.Spec.VersionFilter.Pattern)
 
-	return "", fmt.Errorf("%s No Golang version found matching pattern %q ", result.FAILURE, g.spec.VersionFilter.Pattern)
+	return "", fmt.Errorf("%s No Golang version found matching pattern %q ", result.FAILURE, g.Spec.VersionFilter.Pattern)
 }

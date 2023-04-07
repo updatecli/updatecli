@@ -16,7 +16,7 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Test new minor version",
 			version: Language{
-				foundVersion: version.Version{
+				Version: version.Version{
 					OriginalVersion: "1.20",
 				},
 			},
@@ -25,7 +25,7 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Test new patch version",
 			version: Language{
-				foundVersion: version.Version{
+				Version: version.Version{
 					OriginalVersion: "1.20.1",
 				},
 			},

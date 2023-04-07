@@ -10,11 +10,11 @@ import (
 // Changelog returns a link to the Golang version
 func (l *Language) Changelog() string {
 
-	v, err := semver.NewVersion(l.foundVersion.GetVersion())
+	v, err := semver.NewVersion(l.Version.GetVersion())
 
 	if err != nil {
 		logrus.Errorf("failing parsing version %q - %q",
-			l.foundVersion.GetVersion(), err)
+			l.Version.GetVersion(), err)
 		return ""
 	}
 
@@ -23,5 +23,5 @@ func (l *Language) Changelog() string {
 		url = fmt.Sprintf("https://go.dev/doc/go%d.%d", v.Major(), v.Minor())
 	}
 
-	return fmt.Sprintf("Golang changelog for version %q is available on %q", l.foundVersion.OriginalVersion, url)
+	return fmt.Sprintf("Golang changelog for version %q is available on %q", l.Version.OriginalVersion, url)
 }

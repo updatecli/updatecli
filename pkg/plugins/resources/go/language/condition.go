@@ -20,7 +20,7 @@ func (l *Language) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, er
 
 // Condition checks if a specific stable Golang version is published
 func (l *Language) condition(source string) (bool, error) {
-	versionToCheck := l.spec.Version
+	versionToCheck := l.Spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source
 	}

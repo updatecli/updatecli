@@ -74,7 +74,7 @@ func (l *Language) versions() (versions []string, err error) {
 	}
 
 	sort.Strings(versions)
-	l.foundVersion, err = l.versionFilter.Search(versions)
+	l.Version, err = l.versionFilter.Search(versions)
 	if err != nil {
 		return nil, err
 	}
