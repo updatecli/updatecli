@@ -14,7 +14,7 @@ func (x *XML) Source(workingDir string) (string, error) {
 
 	// By the default workingdir is set to the current working directory
 	// it would be better to have it empty by default but it must be changed in the
-	// souce core codebase.
+	// source core codebase.
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
 		return "", errors.New("fail getting current working directory")

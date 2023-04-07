@@ -79,7 +79,7 @@ func (g *Stash) Target(source string, dryRun bool) (bool, error) {
 		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 		&goscm.ReleaseInput{
 			Title:       g.spec.Title,
-			Description: g.spec.Drescription + "\n" + updatecliCredits,
+			Description: g.spec.Description + "\n" + updatecliCredits,
 			Tag:         g.spec.Tag,
 			Commitish:   g.spec.Commitish,
 			Draft:       g.spec.Draft,

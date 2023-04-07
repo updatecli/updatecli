@@ -14,19 +14,19 @@ import (
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [C] Architectures specifies a list of architectures to check container images for (conditions only)
+	// [C] architectures specifies a list of architectures to check container images for (conditions only)
 	Architectures []string `yaml:",omitempty"`
-	// [S][C] Architecture specifies the container image architecture such as `amd64`
+	// [S][C] architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
-	// [S][C] Image specifies the container image such as `updatecli/updatecli`
+	// [S][C] image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
-	// [C] Tag specifies the container image tag such as `latest`
+	// [C] tag specifies the container image tag such as `latest`
 	Tag                   string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
-	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S] versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] TagFiter allows to restrict tags retrieved from a remote registry by using a regular expression.
-	TagFilter string
+	// [S] tagfilter allows to restrict tags retrieved from a remote registry by using a regular expression.
+	TagFilter string `yaml:",omitempty"`
 }
 
 func sanitizeRegistryEndpoint(repository string) string {

@@ -28,15 +28,15 @@ var (
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
 type Filter struct {
-	// Specifies the version kind such as semver, regex, or latest
+	// specifies the version kind such as semver, regex, or latest
 	Kind string `yaml:",omitempty"`
-	// Specifies the version pattern according the version kind
+	// specifies the version pattern according the version kind
 	Pattern string `yaml:",omitempty"`
-	// Strict enforce strict versioning rule. Only used for semantic versioning at this time
+	// strict enforce strict versioning rule. Only used for semantic versioning at this time
 	Strict bool `yaml:",omitempty"`
 }
 
-// Init returns a new (copy) valid instanciated filter
+// Init returns a new (copy) valid instantiated filter
 func (f Filter) Init() (Filter, error) {
 	// Set default kind value to "latest"
 	if len(f.Kind) == 0 {

@@ -44,7 +44,7 @@ targets:
       value: John
 
   multiple:
-    name: Mulitple target update
+    name: Multitple target update
     kind: csv
     sourceid: default
     spec:
