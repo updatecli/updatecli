@@ -6,9 +6,10 @@ import (
 
 // GoMod defines a resource of type "go language"
 type GoMod struct {
-	spec     Spec
-	filename string
-	kind     string
+	spec         Spec
+	filename     string
+	kind         string
+	foundVersion string
 }
 
 var (
@@ -33,13 +34,9 @@ func New(spec interface{}) (*GoMod, error) {
 	}
 
 	kind := kindModule
-	if newSpec.Kind != "" {
-		kind = newSpec.Kind
-	}
+	if newSpec.Module == "" {
+		kind = kindGolang
 
-	err = newSpec.Validate()
-	if err != nil {
-		return nil, err
 	}
 
 	return &GoMod{

@@ -20,6 +20,8 @@ func (g *GoMod) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error
 
 // Condition checks if a specific stable Golang version is published
 func (g *GoMod) condition(source string) (bool, error) {
+	var err error
+
 	versionToCheck := g.spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source
@@ -29,7 +31,7 @@ func (g *GoMod) condition(source string) (bool, error) {
 		return false, errors.New("no version defined")
 	}
 
-	version, err := g.version(g.filename)
+	g.foundVersion, err = g.version(g.filename)
 	if err != nil {
 
 		if err == ErrModuleNotFound {
@@ -41,14 +43,26 @@ func (g *GoMod) condition(source string) (bool, error) {
 		return false, err
 	}
 
-	if version == versionToCheck {
-		logrus.Infof("%s version %q found for module %q",
-			result.SUCCESS, version, g.spec.Module)
+	if g.foundVersion == versionToCheck {
+		switch g.kind {
+		case kindGolang:
+			logrus.Infof("%s Golang version %q found",
+				result.SUCCESS, g.foundVersion)
+		case kindModule:
+			logrus.Infof("%s version %q found for module %q",
+				result.SUCCESS, g.foundVersion, g.spec.Module)
+		}
 		return true, nil
 	}
 
-	logrus.Infof("%s version %q found, expected %s for module path %q\n",
-		result.FAILURE, version, versionToCheck, g.spec.Module)
+	switch g.kind {
+	case kindGolang:
+		logrus.Infof("%s Golang version %q found, expected %q",
+			result.SUCCESS, g.foundVersion, versionToCheck)
+	case kindModule:
+		logrus.Infof("%s version %q found, expected %s for module path %q\n",
+			result.FAILURE, g.foundVersion, versionToCheck, g.spec.Module)
+	}
 
 	return false, nil
 }

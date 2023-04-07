@@ -2,8 +2,6 @@ package gomod
 
 import (
 	"errors"
-
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -21,17 +19,4 @@ type Spec struct {
 	Indirect bool `yaml:",omitempty"`
 	// Version Defines a specific golang version
 	Version string `yaml:",omitempty"`
-	// Kind defines the kind of information we are manipulating, accepted value are "golang" or "module"
-	Kind string `yaml:",omitempty"`
-}
-
-func (s Spec) Validate() error {
-	if s.Kind != "" &&
-		s.Kind != kindGolang &&
-		s.Kind != kindModule {
-		logrus.Errorf("wrong kind %q, accepted value %v",
-			s.Kind, []string{"", kindGolang, kindModule})
-		return ErrWrongSpec
-	}
-	return nil
 }

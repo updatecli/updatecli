@@ -10,19 +10,25 @@ import (
 )
 
 // Source returns the latest go module version
-func (g GoMod) Source(workingDir string) (string, error) {
+func (g *GoMod) Source(workingDir string) (string, error) {
+	var err error
 
-	version, err := g.version(utils.JoinFilePathWithWorkingDirectoryPath(g.filename, workingDir))
+	g.foundVersion, err = g.version(utils.JoinFilePathWithWorkingDirectoryPath(g.filename, workingDir))
 	if err != nil {
 		return "", err
 	}
 
-	if version != "" {
-		logrus.Infof("%s Version %s found for GO module %q", result.SUCCESS, version, g.spec.Module)
-		return version, nil
+	if g.foundVersion == "" {
+		err = fmt.Errorf("%s no version found for module path %q", result.FAILURE, g.spec.Module)
+		return "", err
 	}
 
-	logrus.Infof("%s No version found for module path %q", result.FAILURE, g.spec.Module)
+	switch g.kind {
+	case kindGolang:
+		logrus.Infof("%s Golang Version %s found", result.SUCCESS, g.foundVersion)
+	case kindModule:
+		logrus.Infof("%s Version %s found for GO module %q", result.SUCCESS, g.foundVersion, g.spec.Module)
+	}
 
-	return "", fmt.Errorf("%s No version found for module path %q ", result.FAILURE, g.spec.Module)
+	return g.foundVersion, nil
 }
