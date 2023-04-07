@@ -18,7 +18,7 @@ const (
 
 var (
 	// ErrEmptyCommitMessage is returned when the commit message is empty
-	ErrEmptyCommitMessage error = errors.New("error: empty commmit messager")
+	ErrEmptyCommitMessage error = errors.New("error: empty commit message")
 )
 
 // Commit contains conventional commit information
