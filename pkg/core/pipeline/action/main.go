@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/reports"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
 	gitlab "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/mergerequest"
 	stash "github.com/updatecli/updatecli/pkg/plugins/resources/stash/pullrequest"
@@ -33,7 +34,7 @@ var (
 
 // ActionHandler interface defines required functions to be an action
 type ActionHandler interface {
-	CreateAction(title, changelog, pipelineReport string) error
+	CreateAction(report reports.Action) error
 }
 
 // Config define action provided via an updatecli configuration
@@ -52,12 +53,11 @@ type Config struct {
 
 // Action is a struct used by an updatecli pipeline.
 type Action struct {
-	Title          string
-	Changelog      string
-	PipelineReport string
-	Config         Config
-	Scm            *scm.Scm
-	Handler        ActionHandler
+	Title   string
+	Config  Config
+	Scm     *scm.Scm
+	Handler ActionHandler
+	Report  reports.Action
 }
 
 // Validate ensures that an action configuration has required parameters.

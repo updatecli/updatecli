@@ -12,48 +12,17 @@ package github
 */
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"strings"
-	"text/template"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 
-	"github.com/updatecli/updatecli/pkg/plugins/utils/truncate"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
-
-// PULLREQUESTBODY is the template used as a Pull Request description
-// Please note that triple backticks are concatenated with the literals, as they cannot be escaped
-const PULLREQUESTBODY = `
-# {{ .Title }}
-
-{{ if .Introduction }}
-{{ .Introduction }}
-{{ end }}
-
-
-## Report
-
-{{ .Report }}
-
-## Changelog
-
-<details><summary>Click to expand</summary>
-
-` + "````\n{{ .Description }}\n````" + `
-
-</details>
-
-## Remark
-
-This pull request was automatically created using [Updatecli](https://www.updatecli.io).
-
-Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/)
-
-`
 
 var (
 	ErrAutomergeNotAllowOnRepository = errors.New("automerge is not allowed on repository")
@@ -96,7 +65,6 @@ type ActionSpec struct {
 
 type PullRequest struct {
 	gh                *Github
-	Description       string
 	Report            string
 	Title             string
 	spec              ActionSpec
@@ -142,11 +110,16 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 	}, err
 }
 
-func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) error {
+func (p *PullRequest) CreateAction(report reports.Action) error {
 
-	p.Description = changelog
-	p.Report = pipelineReport
-	p.Title = title
+	// One GitHub pullrequest body can contain multiple action report
+	// It would be better to refactor CreateAction
+	p.Report = report.ToActionsString()
+	p.Title = report.Title
+
+	if p.spec.Title != "" {
+		p.Title = p.spec.Title
+	}
 
 	repository, err := p.gh.queryRepository()
 	if err != nil {
@@ -203,39 +176,6 @@ func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) erro
 	return nil
 }
 
-// generatePullRequestBody generates the Pull Request's body based on PULLREQUESTBODY
-func (p *PullRequest) generatePullRequestBody() (string, error) {
-	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
-
-	buffer := new(bytes.Buffer)
-
-	type params struct {
-		Introduction string
-		Title        string
-		Report       string
-		Description  string
-	}
-
-	err := t.Execute(buffer, params{
-		Introduction: p.spec.Description,
-		Description:  p.Description,
-		Report:       p.Report,
-		Title:        p.Title,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	// GitHub Issues/PRs messages have a max size limit on the
-	// message body payload.
-	// `body is too long (maximum is 65536 characters)`.
-	// To avoid that, we ensure to cap the message to 65k chars.
-	const MAX_CHARACTERS_PER_MESSAGE = 65000
-
-	return truncate.String(buffer.String(), MAX_CHARACTERS_PER_MESSAGE), nil
-}
-
 // updatePullRequest updates an existing Pull Request.
 func (p *PullRequest) updatePullRequest() error {
 
@@ -267,7 +207,7 @@ func (p *PullRequest) updatePullRequest() error {
 
 	title := p.Title
 
-	bodyPR, err := p.generatePullRequestBody()
+	bodyPR, err := utils.GeneratePullRequestBody(p.spec.Description, p.Report)
 	if err != nil {
 		return err
 	}
@@ -394,7 +334,7 @@ func (p *PullRequest) OpenPullRequest() error {
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
-	bodyPR, err := p.generatePullRequestBody()
+	bodyPR, err := utils.GeneratePullRequestBody(p.spec.Description, p.Report)
 	if err != nil {
 		return err
 	}
@@ -511,6 +451,8 @@ func (p *PullRequest) getRemotePullRequest() error {
 
 	if len(query.Repository.PullRequests.Nodes) > 0 {
 		p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
+		// If a remote pullrequest already exist, then we reuse its body to generate the final one
+		p.Report = reports.MergeFromString(p.Report, p.remotePullRequest.Body)
 		logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.ID)
 	} else {
 		logrus.Debugf("No existing pull-request found in repo: %s/%s", owner, name)
