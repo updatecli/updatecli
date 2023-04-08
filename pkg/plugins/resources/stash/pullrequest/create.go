@@ -7,19 +7,25 @@ import (
 
 	"github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
 // CreateAction opens a Pull Request on the Bitbucket server
-func (g *Stash) CreateAction(title, changelog, pipelineReport string) error {
+func (g *Stash) CreateAction(report reports.Action) error {
 
-	body := changelog + "\n" + pipelineReport
+	title := report.Title
+	if len(g.spec.Title) > 0 {
+		title = g.spec.Title
+	}
+
+	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
+	if err != nil {
+		logrus.Warningf("something wrong happened while generating stash pullrequest body: %s", err)
+	}
 
 	if len(g.spec.Body) > 0 {
 		body = g.spec.Body
-	}
-
-	if len(g.spec.Title) > 0 {
-		title = g.spec.Title
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.
