@@ -40,7 +40,7 @@ func TestSource(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "repository should exist with tag 0.3.0 withou specifying gitlab.com",
+			name: "repository should exist with tag 0.3.0 without specifying gitlab.com",
 			manifest: struct {
 				URL           string
 				Token         string
