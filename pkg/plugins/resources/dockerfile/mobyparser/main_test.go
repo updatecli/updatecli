@@ -71,7 +71,7 @@ ENTRYPOINT [ "/usr/bin/updatecli" ]
 CMD ["--help"]
 `
 
-	datas dataSets = []dataSet{
+	datasets dataSets = []dataSet{
 		{
 			dockerfile: rawDockerfile,
 			spec: MobyParser{
@@ -272,7 +272,7 @@ func TestGetPositionKeys(t *testing.T) {
 }
 
 func TestReplaceNode(t *testing.T) {
-	for i, data := range datas {
+	for i, data := range datasets {
 		d, err := parser.Parse(bytes.NewReader([]byte(data.dockerfile)))
 
 		if err != nil {
@@ -306,7 +306,7 @@ func TestReplaceNode(t *testing.T) {
 }
 
 func TestMobyParser_FindInstruction(t *testing.T) {
-	for i, data := range datas {
+	for i, data := range datasets {
 		found := data.spec.FindInstruction([]byte(data.dockerfile))
 
 		if found != data.expectedFound {
