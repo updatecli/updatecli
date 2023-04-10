@@ -10,4 +10,4 @@ We are adding public references of Updatecli but feel free to add your organizat
 * [Epinio](https://github.com/epinio/helm-charts/tree/main/updatecli)
 * [Asciidoctor](https://github.com/asciidoctor/docker-asciidoctor/tree/main/updatecli)
 * [SUSE Rancher](https://github.com/rancherlabs/updatecli-automation)
-
+* [K3s](https://github.com/k3s-io/k3s/tree/master/updatecli)
