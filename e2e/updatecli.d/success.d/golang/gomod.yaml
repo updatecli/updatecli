@@ -61,14 +61,12 @@ targets:
     disablesourceinput: true
     kind: golang/gomod
     spec:
-      kind: golang
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
       version: "1.19"
 
   buildkit:
     sourceid: buildkit
     name: Test buildkit update
-    kind: golang/gomod
     scmid: updatecli
     spec:
       module: "github.com/moby/buildkit"
