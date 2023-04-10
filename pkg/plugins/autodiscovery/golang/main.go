@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Spec defines the parameters which can be provided to the Golang autodiscovery builder.
@@ -15,6 +16,8 @@ type Spec struct {
 	Ignore MatchingRules `yaml:",omitempty"`
 	// only allows to specify rule to "only" autodiscover manifest for a specific golang rule
 	Only MatchingRules `yaml:",omitempty"`
+	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
 // Golang holds all information needed to generate golang manifest.
@@ -25,6 +28,8 @@ type Golang struct {
 	rootDir string
 	// scmID holds the scmID used by the newly generated manifest
 	scmID string
+	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
+	versionFilter version.Filter
 }
 
 // New return a new valid object.
@@ -34,6 +39,14 @@ func New(spec interface{}, rootDir, scmID string) (Golang, error) {
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Golang{}, err
+	}
+
+	newFilter := s.VersionFilter
+	if s.VersionFilter.IsZero() {
+		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")
+		// By default, golang versioning uses semantic versioning
+		newFilter.Kind = "semver"
+		newFilter.Pattern = "*"
 	}
 
 	dir := rootDir
@@ -47,9 +60,10 @@ func New(spec interface{}, rootDir, scmID string) (Golang, error) {
 	}
 
 	return Golang{
-		spec:    s,
-		rootDir: dir,
-		scmID:   scmID,
+		spec:          s,
+		rootDir:       dir,
+		scmID:         scmID,
+		versionFilter: newFilter,
 	}, nil
 
 }

@@ -3,7 +3,6 @@ package golang
 import (
 	"bytes"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -55,19 +54,33 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
-		golangVersionManifest, err := getGolangVersionManifest(relativeFoundFile, goVersion, g.scmID)
+		goVersionPattern, err := g.versionFilter.GreaterThanPattern(goVersion)
+		golangVersionManifest := []byte{}
 		if err != nil {
 			logrus.Debugln(err)
-			logrus.Debugln("skipping golang version manifest due to previous error")
+		} else {
+			golangVersionManifest, err = getGolangVersionManifest(relativeFoundFile, goVersionPattern, g.scmID)
+			if err != nil {
+				logrus.Debugln(err)
+				logrus.Debugln("skipping golang version manifest due to previous error")
+			}
 		}
+
 		manifests = append(manifests, golangVersionManifest)
 
 		for goModule, goModuleVersion := range goModules {
 
+			goModuleVersionPattern, err := g.versionFilter.GreaterThanPattern(goModuleVersion)
+			if err != nil {
+				logrus.Debugln(err)
+				logrus.Debugf("skipping golang module %q module due to previous error", goModule)
+				continue
+			}
+
 			moduleManifest, err := getGolangModuleManifest(
 				relativeFoundFile,
 				goModule,
-				goModuleVersion,
+				goModuleVersionPattern,
 				g.scmID,
 				goModTidyEnabled)
 			if err != nil {
@@ -85,7 +98,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 	return manifests, nil
 }
 
-func getGolangVersionManifest(filename, version, scmID string) ([]byte, error) {
+func getGolangVersionManifest(filename, versionPattern, scmID string) ([]byte, error) {
 	tmpl, err := template.New("manifest").Parse(goManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
@@ -98,7 +111,7 @@ func getGolangVersionManifest(filename, version, scmID string) ([]byte, error) {
 		ScmID                string
 	}{
 		GoModFile:            filename,
-		VersionFilterPattern: ">=" + strings.TrimPrefix(version, "v"),
+		VersionFilterPattern: versionPattern,
 		ScmID:                scmID,
 	}
 
@@ -110,7 +123,7 @@ func getGolangVersionManifest(filename, version, scmID string) ([]byte, error) {
 	return manifest.Bytes(), nil
 }
 
-func getGolangModuleManifest(filename, module, version, scmID string, goModTidy bool) ([]byte, error) {
+func getGolangModuleManifest(filename, module, versionPattern, scmID string, goModTidy bool) ([]byte, error) {
 	tmpl, err := template.New("manifest").Parse(goModuleManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
@@ -123,14 +136,12 @@ func getGolangModuleManifest(filename, module, version, scmID string, goModTidy 
 		VersionFilterPattern string
 		GoModTidyEnabled     bool
 		ScmID                string
-		WorkDir              string
 	}{
 		GoModFile:            filename,
 		Module:               module,
-		VersionFilterPattern: ">=" + strings.TrimPrefix(version, "v"),
+		VersionFilterPattern: versionPattern,
 		GoModTidyEnabled:     goModTidy,
 		ScmID:                scmID,
-		WorkDir:              filepath.Dir(filename),
 	}
 
 	manifest := bytes.Buffer{}

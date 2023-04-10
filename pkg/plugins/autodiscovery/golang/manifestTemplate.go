@@ -60,7 +60,6 @@ targets:
           files:
            - go.mod
            - go.sum
-      workDir: '{{ .WorkDir }}'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
