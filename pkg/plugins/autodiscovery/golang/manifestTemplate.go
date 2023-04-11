@@ -54,6 +54,9 @@ targets:
     kind: shell
     spec:
       command: go mod tidy
+      environments:
+        - name: HOME
+        - name: PATH
       changedif:
         kind: file/checksum
         spec:

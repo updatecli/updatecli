@@ -95,6 +95,10 @@ func TestDiscoverManifests(t *testing.T) {
 								DependsOn: []string{"golangModuleVersion"},
 								Spec: shell.Spec{
 									Command: "go mod tidy",
+									Environments: shell.Environments{
+										{Name: "HOME"},
+										{Name: "PATH"},
+									},
 									ChangedIf: shell.SpecChangedIf{
 										Kind: "file/checksum",
 										Spec: checksum.Spec{
