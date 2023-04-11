@@ -140,17 +140,12 @@ func (f Filter) IsZero() bool {
 func (f *Filter) GreaterThanPattern(version string) (string, error) {
 	switch f.Kind {
 	case LATESTVERSIONKIND:
-		return f.Pattern, nil
+		return LATESTVERSIONKIND, nil
 
 	case REGEXVERSIONKIND:
 		return f.Pattern, nil
 
 	case SEMVERVERSIONKIND:
-
-		_, err := sv.NewConstraint(version)
-		if err != nil {
-			return "", fmt.Errorf("wrong semantic versioning constraint %q", version)
-		}
 
 		switch f.Pattern {
 		case "prerelease":
@@ -193,13 +188,19 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 
 		case "", "*":
 			v, err := sv.NewVersion(version)
-			if err != nil {
-				return "", err
+			// If NewVersion do not fails then it means that version contains a valid semantic version
+			if err == nil {
+				return ">=" + v.String(), nil
 			}
-			return ">=" + v.String(), nil
+
+			fmt.Println(version)
+			_, err = sv.NewConstraint(version)
+			if err != nil {
+				return "", fmt.Errorf("wrong semantic versioning constraint %q", version)
+			}
+			return version, nil
 
 		default:
-			logrus.Debugf("semver pattern %q not supported", f.Pattern)
 			return f.Pattern, nil
 		}
 	}
