@@ -11,6 +11,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/golang"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/go/gomod"
 	goLang "github.com/updatecli/updatecli/pkg/plugins/resources/go/language"
+	gomodule "github.com/updatecli/updatecli/pkg/plugins/resources/go/module"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/checksum"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -36,7 +39,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Spec: goLang.Spec{
 									VersionFilter: version.Filter{
 										Kind:    "semver",
-										Pattern: "*",
+										Pattern: ">=1.20.0",
 									},
 								},
 							},
@@ -50,6 +53,54 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "golang/gomod",
 								Spec: gomod.Spec{
 									File: "go.mod",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "Update Golang module gopkg.in/yaml.v3",
+					Sources: map[string]source.Config{
+						"golangModuleVersion": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get latest golang module gopkg.in/yaml.v3 version",
+								Kind: "golang/module",
+								Spec: gomodule.Spec{
+									Module: "gopkg.in/yaml.v3",
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: ">=3.0.1",
+									},
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"golangModuleVersion": {
+							SourceID: "golangModuleVersion",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update gopkg.in/yaml.v3 Golang module version",
+								Kind: "golang/gomod",
+								Spec: gomod.Spec{
+									File:   "go.mod",
+									Module: "gopkg.in/yaml.v3",
+								},
+							},
+						},
+						"goModTidy": {
+							DisableSourceInput: true,
+							ResourceConfig: resource.ResourceConfig{
+								Name:      "Run Go mod tidy",
+								Kind:      "shell",
+								DependsOn: []string{"golangModuleVersion"},
+								Spec: shell.Spec{
+									Command: "go mod tidy",
+									ChangedIf: shell.SpecChangedIf{
+										Kind: "file/checksum",
+										Spec: checksum.Spec{
+											Files: []string{"go.mod", "go.sum"},
+										},
+									},
 								},
 							},
 						},

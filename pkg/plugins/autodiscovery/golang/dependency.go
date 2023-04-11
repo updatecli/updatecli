@@ -59,7 +59,10 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 		if err != nil {
 			logrus.Debugln(err)
 		} else {
-			golangVersionManifest, err = getGolangVersionManifest(relativeFoundFile, goVersionPattern, g.scmID)
+			golangVersionManifest, err = getGolangVersionManifest(
+				relativeFoundFile,
+				g.versionFilter.Kind,
+				goVersionPattern, g.scmID)
 			if err != nil {
 				logrus.Debugln(err)
 				logrus.Debugln("skipping golang version manifest due to previous error")
@@ -80,6 +83,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			moduleManifest, err := getGolangModuleManifest(
 				relativeFoundFile,
 				goModule,
+				g.versionFilter.Kind,
 				goModuleVersionPattern,
 				g.scmID,
 				goModTidyEnabled)
@@ -98,7 +102,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 	return manifests, nil
 }
 
-func getGolangVersionManifest(filename, versionPattern, scmID string) ([]byte, error) {
+func getGolangVersionManifest(filename, versionFilterKind, versionFilterPattern, scmID string) ([]byte, error) {
 	tmpl, err := template.New("manifest").Parse(goManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
@@ -107,11 +111,13 @@ func getGolangVersionManifest(filename, versionPattern, scmID string) ([]byte, e
 
 	params := struct {
 		GoModFile            string
+		VersionFilterKind    string
 		VersionFilterPattern string
 		ScmID                string
 	}{
 		GoModFile:            filename,
-		VersionFilterPattern: versionPattern,
+		VersionFilterKind:    versionFilterKind,
+		VersionFilterPattern: versionFilterPattern,
 		ScmID:                scmID,
 	}
 
@@ -123,7 +129,7 @@ func getGolangVersionManifest(filename, versionPattern, scmID string) ([]byte, e
 	return manifest.Bytes(), nil
 }
 
-func getGolangModuleManifest(filename, module, versionPattern, scmID string, goModTidy bool) ([]byte, error) {
+func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterPattern, scmID string, goModTidy bool) ([]byte, error) {
 	tmpl, err := template.New("manifest").Parse(goModuleManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
@@ -133,13 +139,15 @@ func getGolangModuleManifest(filename, module, versionPattern, scmID string, goM
 	params := struct {
 		GoModFile            string
 		Module               string
+		VersionFilterKind    string
 		VersionFilterPattern string
 		GoModTidyEnabled     bool
 		ScmID                string
 	}{
 		GoModFile:            filename,
 		Module:               module,
-		VersionFilterPattern: versionPattern,
+		VersionFilterKind:    versionFilterKind,
+		VersionFilterPattern: versionFilterPattern,
 		GoModTidyEnabled:     goModTidy,
 		ScmID:                scmID,
 	}

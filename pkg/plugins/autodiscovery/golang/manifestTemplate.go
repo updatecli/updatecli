@@ -9,7 +9,7 @@ sources:
     kind: 'golang'
     spec:
       versionfilter:
-        kind: 'semver'
+        kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
 targets:
   golangVersion:
@@ -24,7 +24,7 @@ targets:
 `
 
 	// goModuleManifestTemplate is the Go template used to generate Golang manifest update
-	goModuleManifestTemplate string = `name: 'Update Golang Module {{ .Module }}'
+	goModuleManifestTemplate string = `name: 'Update Golang module {{ .Module }}'
 sources:
   golangModuleVersion:
     name: 'Get latest golang module {{ .Module }} version'
@@ -32,7 +32,7 @@ sources:
     spec:
       module: '{{ .Module }}'
       versionfilter:
-        kind: 'semver'
+        kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
 targets:
   golangModuleVersion:
