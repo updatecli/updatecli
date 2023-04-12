@@ -67,6 +67,7 @@ targets:
   buildkit:
     sourceid: buildkit
     name: Test buildkit update
+    kind: golang/gomod
     scmid: updatecli
     spec:
       module: "github.com/moby/buildkit"
