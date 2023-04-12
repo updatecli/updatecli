@@ -9,10 +9,11 @@ import (
 )
 
 type Action struct {
-	ID          string         `xml:"id,attr"`
-	Title       string         `xml:"h3,omitempty"`
-	Description string         `xml:"p,omitempty"`
-	Targets     []ActionTarget `xml:"details,omitempty"`
+	ID            string         `xml:"id,attr"`
+	Title         string         `xml:"-"`
+	PipelineTitle string         `xml:"h3,omitempty"`
+	Description   string         `xml:"p,omitempty"`
+	Targets       []ActionTarget `xml:"details,omitempty"`
 }
 
 type ActionTargetChangelog struct {
