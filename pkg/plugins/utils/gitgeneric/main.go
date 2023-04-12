@@ -39,6 +39,7 @@ type GitHandler interface {
 	RemoteURLs(workingDir string) (map[string]string, error)
 	SanitizeBranchName(branch string) string
 	Tags(workingDir string) (tags []string, err error)
+	TagHashes(workingDir string) (hashes []string, err error)
 	Branches(workingDir string) (branches []string, err error)
 }
 
@@ -683,23 +684,70 @@ func (g GoGit) SanitizeBranchName(branch string) string {
 	return branch
 }
 
-// Tags return a list of git tags ordered by creation time
-func (g GoGit) Tags(workingDir string) (tags []string, err error) {
+// TagHashes returns a list of the commit hashes for git tags ordered by creation time
+func (g GoGit) TagHashes(workingDir string) (hashes []string, err error) {
+	refs, err := g.TagRefs(workingDir)
+	if err != nil {
+		logrus.Errorf("problem finding tag references for %q, err: %s", workingDir, err)
+		return hashes, err
+	}
+
+	// Extract the list of tag hashes (ordered by time)
+	for _, ref := range refs {
+		hashes = append(hashes, ref.hash)
+	}
+
+	logrus.Debugf("got tags: %v", hashes)
+
+	if len(hashes) == 0 {
+		err = errors.New("no tag found")
+		return hashes, err
+	}
+
+	return hashes, err
+
+}
+
+// Tags returns a list of the names for git tags ordered by creation time
+func (g GoGit) Tags(workingDir string) (names []string, err error) {
+	refs, err := g.TagRefs(workingDir)
+	if err != nil {
+		logrus.Errorf("problem finding tag references for %q, err: %s", workingDir, err)
+		return names, err
+	}
+
+	// Extract the list of tag names (ordered by time)
+	for _, ref := range refs {
+		names = append(names, ref.name)
+	}
+
+	logrus.Debugf("got tags: %v", names)
+
+	if len(names) == 0 {
+		err = errors.New("no tag found")
+		return names, err
+	}
+
+	return names, err
+}
+
+type DatedTag struct {
+	when time.Time
+	name string
+	hash string
+}
+// TagRefs returns a list of git tags ordered by creation time
+func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
 		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
 		return tags, err
 	}
-
 	tagrefs, err := r.Tags()
 	if err != nil {
 		return tags, err
 	}
 
-	type DatedTag struct {
-		when time.Time
-		name string
-	}
 	listOfDatedTags := []DatedTag{}
 
 	err = tagrefs.ForEach(func(tagRef *plumbing.Reference) error {
@@ -718,6 +766,7 @@ func (g GoGit) Tags(workingDir string) (tags []string, err error) {
 			listOfDatedTags,
 			DatedTag{
 				name: tagRef.Name().Short(),
+				hash: tagRef.Hash().String(),
 				when: commit.Committer.When,
 			},
 		)
@@ -730,7 +779,7 @@ func (g GoGit) Tags(workingDir string) (tags []string, err error) {
 
 	if len(listOfDatedTags) == 0 {
 		err = errors.New("no tag found")
-		return []string{}, err
+		return []DatedTag{}, err
 	}
 
 	// Sort tags by time
@@ -738,20 +787,7 @@ func (g GoGit) Tags(workingDir string) (tags []string, err error) {
 		return listOfDatedTags[i].when.Before(listOfDatedTags[j].when)
 	})
 
-	// Extract the list of tags names (ordered by time)
-	for _, datedTag := range listOfDatedTags {
-		tags = append(tags, datedTag.name)
-	}
-
-	logrus.Debugf("got tags: %v", tags)
-
-	if len(tags) == 0 {
-		err = errors.New("no tag found")
-		return tags, err
-	}
-
-	return tags, err
-
+	return listOfDatedTags, err
 }
 
 // NewTag create a tag then return a boolean to indicate if
