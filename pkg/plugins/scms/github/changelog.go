@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -100,27 +101,35 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
-		logrus.Debugf("failed to retrieve changelog from GitHub %q\n", err)
+		logrus.Debugf("failed to retrieve changelog from GitHub %w\n", err)
 		return "", err
+	}
+
+	envToken := getTokenFromEnv()
+	if envToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", envToken))
+		req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		logrus.Debugf("failed to retrieve changelog from GitHub %q\n", err)
+		logrus.Debugf("failed to retrieve changelog from GitHub %w\n", err)
 		return "", err
 	}
 
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		body, err := httputil.DumpResponse(res, false)
-		logrus.Debugf("failed to retrieve changelog from GitHub %q\n", err)
+		if err != nil {
+			logrus.Debugf("failed to retrieve changelog from GitHub %w\n", err)
+		}
 		logrus.Debugf("\n%v\n", string(body))
 		return "", err
 	}
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
+		logrus.Errorf("something went wrong while getting npm api data%w\n", err)
 		return "", err
 	}
 
@@ -139,4 +148,17 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 
 	return fmt.Sprintf("Changelog retrieved from:\n\t%s\n%s",
 		release.HtmlURL, release.Body), nil
+}
+
+func getTokenFromEnv() string {
+	if envToken := os.Getenv("UPDATECLI_GITHUB_TOKEN"); envToken != "" {
+		logrus.Debugln("GitHub token defined by environment variable UPDATECLI_GITHUB_TOKEN detected")
+		return envToken
+	}
+
+	if envToken := os.Getenv("GITHUB_TOKEN"); envToken != "" {
+		logrus.Debugln("GitHub token defined by environment variable GITHUB_TOKEN detected")
+		return envToken
+	}
+	return ""
 }
