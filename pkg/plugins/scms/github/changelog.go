@@ -101,7 +101,7 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
-		logrus.Debugf("failed to retrieve changelog from GitHub %w\n", err)
+		logrus.Debugf("failed to retrieve changelog from GitHub %v\n", err)
 		return "", err
 	}
 
@@ -113,7 +113,7 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		logrus.Debugf("failed to retrieve changelog from GitHub %w\n", err)
+		logrus.Debugf("failed to retrieve changelog from GitHub %v\n", err)
 		return "", err
 	}
 
@@ -121,7 +121,7 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 	if res.StatusCode >= 400 {
 		body, err := httputil.DumpResponse(res, false)
 		if err != nil {
-			logrus.Debugf("failed to retrieve changelog from GitHub %w\n", err)
+			logrus.Debugf("failed to retrieve changelog from GitHub %v\n", err)
 		}
 		logrus.Debugf("\n%v\n", string(body))
 		return "", err
@@ -129,7 +129,7 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data%w\n", err)
+		logrus.Errorf("something went wrong while getting GitHub api data %v\n", err)
 		return "", err
 	}
 
@@ -142,7 +142,7 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 
 	err = json.Unmarshal(data, &release)
 	if err != nil {
-		logrus.Errorf("error unmarshalling json: %q", err)
+		logrus.Errorf("error unmarshalling json: %v", err)
 		return "", err
 	}
 
