@@ -151,13 +151,3 @@ func TestValidate(t *testing.T) {
 		})
 	}
 }
-
-// spec: Spec{
-// 	Path: "github.com/updatecli/updatecli",
-// 	VersionFilter: version.Filter{
-// 		Kind: "latest",
-// 		Pattern: "latest",
-// 	},
-// 	Message: "",
-// 	Key: "",
-// },
