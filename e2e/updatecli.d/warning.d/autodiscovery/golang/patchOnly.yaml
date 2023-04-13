@@ -1,0 +1,36 @@
+name: "Bump Patch version for Golang module"
+scms:
+  default:
+    kind: github
+    spec:
+      owner: olblak
+      repository: updatecli
+      token: {{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}
+      username: {{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}
+      branch: main
+
+actions:
+    default:
+        # The action title is used to define the pullrequest title
+        title: Bump Patch version for Golang module
+        kind: github/pullrequest
+        scmid: default
+        spec:
+          labels:
+            - "dependencies"
+        
+autodiscovery:
+  scmid: default
+  actionid:  default
+  groupby: all
+  crawlers:
+    golang:
+      versionfilter:
+        kind: semver
+        pattern: patch
+      # To ignore specific path
+      #ignore:
+      #  - path: <filepath relative to scm repository>
+      #only:
+      #  - path: <filepath relative to scm repository>
+

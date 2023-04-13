@@ -1,0 +1,28 @@
+name: "Bump minor version for each Golang module one by one"
+scms:
+  default:
+    kind: github
+    spec:
+      owner: olblak
+      repository: updatecli
+      token: {{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}
+      username: {{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}
+      branch: main
+
+actions:
+    default:
+        # The action title mustn't be set each pullrequest use the pipeline title
+        kind: github/pullrequest
+        scmid: default
+        
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  actionid:  default
+  groupby: individual
+  crawlers:
+    golang:
+      versionfilter:
+        kind: semver
+        pattern: minor
+
