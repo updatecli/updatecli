@@ -28,8 +28,8 @@ type Spec struct {
 	Tag string `yaml:",omitempty"`
 	// [T] Commitish defines the commit-ish such as `main`
 	Commitish string `yaml:",omitempty"`
-	// [T] Drescription defines if the new release description
-	Drescription string `yaml:",omitempty"`
+	// [T] Description defines if the new release description
+	Description string `yaml:",omitempty"`
 	// [T] Draft defines if the release is a draft release
 	Draft bool `yaml:",omitempty"`
 	// [T] Prerelease defines if the release is a pre-release release

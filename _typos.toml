@@ -1,0 +1,17 @@
+[files]
+extend-exclude = [
+  "go.mod",
+  "vale",
+  "_typos.toml"
+]
+
+[default]
+extend-ignore-re = [
+    "lQOs.*",
+    "lIYEY.*",
+    "mDMEYi.*"
+]
+
+[default.extend-words]
+# Don't correct the surname "Teh"
+lQOsBGIqZEEBCACOnlRGd40w2SvqxFe0FRtBhruQIHLWpWAkYxz6otNRuCAkK7w1 = "lQOsBGIqZEEBCACOnlRGd40w2SvqxFe0FRtBhruQIHLWpWAkYxz6otNRuCAkK7w1"

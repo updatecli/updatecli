@@ -256,7 +256,7 @@ func (n *Npm) getPackageData(packageName string) (Data, error) {
 
 	err = json.Unmarshal(data, &d)
 	if err != nil {
-		logrus.Errorf("error unmarshaling json: %q", err)
+		logrus.Errorf("error unmarshalling json: %q", err)
 		return Data{}, err
 	}
 

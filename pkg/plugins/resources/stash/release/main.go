@@ -16,23 +16,23 @@ import (
 // Spec defines settings used to interact with Bitbucket release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C][T] Owner specifies repository owner
+	// [S][C][T] owner specifies repository owner
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T]Repository specifies the name of a repository for a specific owner
+	// [S][C][T] repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S] versionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [T] Title defines the Bitbucket release title.
+	// [T] title defines the Bitbucket release title.
 	Title string `yaml:",omitempty"`
-	// [C][T] Tag defines the Bitbucket release tag.
+	// [C][T] tag defines the Bitbucket release tag.
 	Tag string `yaml:",omitempty"`
-	// [T] Commitish defines the commit-ish such as `main`
+	// [T] commitish defines the commit-ish such as `main`
 	Commitish string `yaml:",omitempty"`
-	// [T] Drescription defines if the new release description
-	Drescription string `yaml:",omitempty"`
-	// [T] Draft defines if the release is a draft release
+	// [T] description defines if the new release description
+	Description string `yaml:",omitempty"`
+	// [T] draft defines if the release is a draft release
 	Draft bool `yaml:",omitempty"`
-	// [T] Prerelease defines if the release is a pre-release release
+	// [T] prerelease defines if the release is a pre-release release
 	Prerelease bool `yaml:",omitempty"`
 }
 
