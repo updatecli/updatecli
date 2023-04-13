@@ -40,6 +40,7 @@ type GitHandler interface {
 	SanitizeBranchName(branch string) string
 	Tags(workingDir string) (tags []string, err error)
 	TagHashes(workingDir string) (hashes []string, err error)
+	TagRefs(workingDir string) (refs []DatedTag, err error)
 	Branches(workingDir string) (branches []string, err error)
 }
 
@@ -694,7 +695,7 @@ func (g GoGit) TagHashes(workingDir string) (hashes []string, err error) {
 
 	// Extract the list of tag hashes (ordered by time)
 	for _, ref := range refs {
-		hashes = append(hashes, ref.hash)
+		hashes = append(hashes, ref.Hash)
 	}
 
 	logrus.Debugf("got tags: %v", hashes)
@@ -718,7 +719,7 @@ func (g GoGit) Tags(workingDir string) (names []string, err error) {
 
 	// Extract the list of tag names (ordered by time)
 	for _, ref := range refs {
-		names = append(names, ref.name)
+		names = append(names, ref.Name)
 	}
 
 	logrus.Debugf("got tags: %v", names)
@@ -732,9 +733,9 @@ func (g GoGit) Tags(workingDir string) (names []string, err error) {
 }
 
 type DatedTag struct {
-	when time.Time
-	name string
-	hash string
+	When time.Time
+	Name string
+	Hash string
 }
 // TagRefs returns a list of git tags ordered by creation time
 func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
@@ -765,9 +766,9 @@ func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 		listOfDatedTags = append(
 			listOfDatedTags,
 			DatedTag{
-				name: tagRef.Name().Short(),
-				hash: tagRef.Hash().String(),
-				when: commit.Committer.When,
+				Name: tagRef.Name().Short(),
+				Hash: tagRef.Hash().String(),
+				When: commit.Committer.When,
 			},
 		)
 
@@ -784,7 +785,7 @@ func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 
 	// Sort tags by time
 	sort.Slice(listOfDatedTags, func(i, j int) bool {
-		return listOfDatedTags[i].when.Before(listOfDatedTags[j].when)
+		return listOfDatedTags[i].When.Before(listOfDatedTags[j].When)
 	})
 
 	return listOfDatedTags, err

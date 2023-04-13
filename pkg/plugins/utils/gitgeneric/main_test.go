@@ -162,9 +162,9 @@ func TestTagRefsIntegration(t *testing.T) {
 	}
 
 	expectedRef := DatedTag{
-		when: time.Unix(1582144213,0).In(time.FixedZone("",1*60*60*1)), //tz "+0100"
-		name: "v0.0.1",
-		hash: "d0812d972468d97a3b7e70699f977854cfb83892",
+		When: time.Unix(1582144213,0).In(time.FixedZone("",1*60*60*1)), //tz "+0100"
+		Name: "v0.0.1",
+		Hash: "d0812d972468d97a3b7e70699f977854cfb83892",
 	}
 	found := false
 
