@@ -37,12 +37,12 @@ func TestNew(t *testing.T) {
 			name: "Get Hash",
 			spec: Spec{
 				Path: "github.com/updatecli/updatecli",
-				Key: "hash",
+				Key:  "hash",
 			},
 			want: GitTag{
 				spec: Spec{
 					Path: "github.com/updatecli/updatecli",
-					Key: "hash",
+					Key:  "hash",
 				},
 				versionFilter: version.Filter{
 					Kind:    "latest",
@@ -108,7 +108,7 @@ func TestValidate(t *testing.T) {
 			name: "Bad Key",
 			spec: Spec{
 				Path: "github.com/updatecli/updatecli",
-				Key: "commit",
+				Key:  "commit",
 			},
 			want: GitTag{
 				spec: Spec{},
@@ -124,7 +124,7 @@ func TestValidate(t *testing.T) {
 			name: "Good Key",
 			spec: Spec{
 				Path: "github.com/updatecli/updatecli",
-				Key: "hash",
+				Key:  "hash",
 			},
 			want: GitTag{
 				spec: Spec{},

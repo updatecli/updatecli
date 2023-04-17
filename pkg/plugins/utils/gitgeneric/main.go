@@ -737,6 +737,7 @@ type DatedTag struct {
 	Name string
 	Hash string
 }
+
 // TagRefs returns a list of git tags ordered by creation time
 func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 	r, err := git.PlainOpen(workingDir)

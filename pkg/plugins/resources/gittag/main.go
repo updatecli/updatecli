@@ -18,9 +18,7 @@ type Spec struct {
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// Message associated to the git tag
 	Message string `yaml:",omitempty"`
-	// Key of the tag object to retrieve, default is tag "name"
-	//  filters are always against tag name, this only controls the output
-	//  current values are 'name' and 'hash'
+	// Key of the tag object to retrieve, default is tag "name" filters are always against tag name, this only controls the output; Current options are 'name' and 'hash'.
 	Key string `yaml:",omitempty"`
 }
 

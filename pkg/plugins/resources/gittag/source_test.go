@@ -6,14 +6,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 type mockNativeGitHandler struct {
 	gitgeneric.GitHandler
-	tagRefs			[]gitgeneric.DatedTag
-	tagRefsError	error
+	tagRefs      []gitgeneric.DatedTag
+	tagRefsError error
 }
 
 func (m *mockNativeGitHandler) TagRefs(workingDir string) (refs []gitgeneric.DatedTag, err error) {
@@ -22,16 +22,16 @@ func (m *mockNativeGitHandler) TagRefs(workingDir string) (refs []gitgeneric.Dat
 
 func TestGitTag_Source(t *testing.T) {
 	tests := []struct {
-		name            		string
-		workingDir      		string
-		mockedNativeGitHandler 	gitgeneric.GitHandler
-		versionFilter   		version.Filter
-		spec					Spec
-		wantValue       		string
-		wantErr         		bool
+		name                   string
+		workingDir             string
+		mockedNativeGitHandler gitgeneric.GitHandler
+		versionFilter          version.Filter
+		spec                   Spec
+		wantValue              string
+		wantErr                bool
 	}{
 		{
-			name: "3 tags found, filter with latest",
+			name:       "3 tags found, filter with latest",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefs: []gitgeneric.DatedTag{
@@ -53,24 +53,24 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			spec: Spec{},
+			spec:      Spec{},
 			wantValue: "3.0.0",
-			wantErr: false,
+			wantErr:   false,
 		},
 		{
-			name: "Error: O tags found, filter with latest",
-			workingDir: "github.com/updatecli/updatecli",
+			name:                   "Error: O tags found, filter with latest",
+			workingDir:             "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{tagRefs: []gitgeneric.DatedTag{}},
 			versionFilter: version.Filter{
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			spec: Spec{},
+			spec:      Spec{},
 			wantValue: "",
-			wantErr: true,
+			wantErr:   true,
 		},
 		{
-			name: "Error: 3 tags found, filter with semver on 2.1.y",
+			name:       "Error: 3 tags found, filter with semver on 2.1.y",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefs: []gitgeneric.DatedTag{
@@ -92,12 +92,12 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "semver",
 				Pattern: "~2.1",
 			},
-			spec: Spec{},
+			spec:      Spec{},
 			wantValue: "",
-			wantErr: true,
+			wantErr:   true,
 		},
 		{
-			name: "3 tags found, filter with semver on 2.1.y",
+			name:       "3 tags found, filter with semver on 2.1.y",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefs: []gitgeneric.DatedTag{
@@ -119,12 +119,12 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "semver",
 				Pattern: "~2.1",
 			},
-			spec: Spec{},
+			spec:      Spec{},
 			wantValue: "2.1.1",
-			wantErr: false,
+			wantErr:   false,
 		},
 		{
-			name: "Error: error while retrieving tags",
+			name:       "Error: error while retrieving tags",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefsError: fmt.Errorf("Unexpected error while retrieving tags."),
@@ -133,12 +133,12 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			spec: Spec{},
+			spec:      Spec{},
 			wantValue: "",
-			wantErr: true,
+			wantErr:   true,
 		},
 		{
-			name: "3 tags found, filter with semver on 2.1.y, return hash",
+			name:       "3 tags found, filter with semver on 2.1.y, return hash",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefs: []gitgeneric.DatedTag{
@@ -161,14 +161,14 @@ func TestGitTag_Source(t *testing.T) {
 				Pattern: "~2.1",
 			},
 			spec: Spec{
-				Key: "hash",
+				Key:  "hash",
 				Path: "github.com/updatecli/updatecli",
 			},
 			wantValue: "ghi789",
-			wantErr: false,
+			wantErr:   false,
 		},
 		{
-			name: "3 tags found, filter with semver on 2.1.y, return name",
+			name:       "3 tags found, filter with semver on 2.1.y, return name",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefs: []gitgeneric.DatedTag{
@@ -191,14 +191,14 @@ func TestGitTag_Source(t *testing.T) {
 				Pattern: "~2.1",
 			},
 			spec: Spec{
-				Key: "name",
+				Key:  "name",
 				Path: "github.com/updatecli/updatecli",
 			},
 			wantValue: "2.1.1",
-			wantErr: false,
+			wantErr:   false,
 		},
 		{
-			name: "5 tags found, filter with regex on 'gopls/', return last tag's name",
+			name:       "5 tags found, filter with regex on 'gopls/', return last tag's name",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefs: []gitgeneric.DatedTag{
@@ -229,14 +229,14 @@ func TestGitTag_Source(t *testing.T) {
 				Pattern: "^gopls\\/v.*",
 			},
 			spec: Spec{
-				Key: "name",
+				Key:  "name",
 				Path: "github.com/updatecli/updatecli",
 			},
 			wantValue: "gopls/v3.0.0",
-			wantErr: false,
+			wantErr:   false,
 		},
 		{
-			name: "5 tags found, filter with regex on 'gopls/', return last tag's hash",
+			name:       "5 tags found, filter with regex on 'gopls/', return last tag's hash",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefs: []gitgeneric.DatedTag{
@@ -267,11 +267,11 @@ func TestGitTag_Source(t *testing.T) {
 				Pattern: "^gopls\\/v.*",
 			},
 			spec: Spec{
-				Key: "hash",
+				Key:  "hash",
 				Path: "github.com/updatecli/updatecli",
 			},
 			wantValue: "mno345",
-			wantErr: false,
+			wantErr:   false,
 		},
 	}
 	for _, tt := range tests {
@@ -281,8 +281,8 @@ func TestGitTag_Source(t *testing.T) {
 
 			gr := &GitTag{
 				nativeGitHandler: tt.mockedNativeGitHandler,
-				versionFilter: tt.versionFilter,
-				spec: tt.spec,
+				versionFilter:    tt.versionFilter,
+				spec:             tt.spec,
 			}
 			gotValue, err := gr.Source(tt.workingDir)
 			if tt.wantErr {

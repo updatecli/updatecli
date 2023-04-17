@@ -29,7 +29,7 @@ func (gt *GitTag) Source(workingDir string) (string, error) {
 
 	var tags []string
 	for i := range refs {
-		tags = append(tags,refs[i].Name)
+		tags = append(tags, refs[i].Name)
 	}
 
 	gt.foundVersion, err = gt.versionFilter.Search(tags)

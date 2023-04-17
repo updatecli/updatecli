@@ -145,6 +145,7 @@ func TestTagsIntegration(t *testing.T) {
 	}
 	os.Remove(workingDir)
 }
+
 // Test that we can correctly retrieve a list of tag refs from a remote git repository
 // and that it's correctly ordered, starting with the oldest tag
 func TestTagRefsIntegration(t *testing.T) {
@@ -162,7 +163,7 @@ func TestTagRefsIntegration(t *testing.T) {
 	}
 
 	expectedRef := DatedTag{
-		When: time.Unix(1582144213,0).In(time.FixedZone("",1*60*60*1)), //tz "+0100"
+		When: time.Unix(1582144213, 0).In(time.FixedZone("", 1*60*60*1)), //tz "+0100"
 		Name: "v0.0.1",
 		Hash: "d0812d972468d97a3b7e70699f977854cfb83892",
 	}
@@ -178,6 +179,7 @@ func TestTagRefsIntegration(t *testing.T) {
 	}
 	os.Remove(workingDir)
 }
+
 // Test that we can correctly retrieve tag hashes from a remote git repository
 // and that it's correctly ordered, starting with the oldest tag
 func TestHashesIntegration(t *testing.T) {
