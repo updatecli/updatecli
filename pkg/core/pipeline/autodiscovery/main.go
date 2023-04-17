@@ -24,7 +24,7 @@ var (
 			"cargo":         cargo.Spec{},
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
-			"golang":        golang.Spec{},
+			"golang/gomod":  golang.Spec{},
 			"helm":          helm.Spec{},
 			"helmfile":      helmfile.Spec{},
 			"maven":         maven.Spec{},
@@ -37,7 +37,7 @@ var (
 		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
-		"golang":        golang.Spec{},
+		"golang/gomod":  golang.Spec{},
 		"helm":          &helm.Spec{},
 		"helmfile":      &helmfile.Spec{},
 		"maven":         &maven.Spec{},
@@ -114,7 +114,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 			g.crawlers = append(g.crawlers, crawler)
 
-		case "golang":
+		case "golang/gomod":
 			crawler, err := golang.New(
 				g.spec.Crawlers[kind],
 				workDir,
