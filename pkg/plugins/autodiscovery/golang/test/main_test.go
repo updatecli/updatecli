@@ -30,35 +30,6 @@ func TestDiscoverManifests(t *testing.T) {
 			rootDir: "testdata/noModule",
 			expectedPipelines: []config.Spec{
 				{
-					Name: "Update Golang version",
-					Sources: map[string]source.Config{
-						"golangVersion": {
-							ResourceConfig: resource.ResourceConfig{
-								Name: "Get latest golang version",
-								Kind: "golang",
-								Spec: goLang.Spec{
-									VersionFilter: version.Filter{
-										Kind:    "semver",
-										Pattern: ">=1.20.0",
-									},
-								},
-							},
-						},
-					},
-					Targets: map[string]target.Config{
-						"golangVersion": {
-							SourceID: "golangVersion",
-							ResourceConfig: resource.ResourceConfig{
-								Name: "Update Go version",
-								Kind: "golang/gomod",
-								Spec: gomod.Spec{
-									File: "go.mod",
-								},
-							},
-						},
-					},
-				},
-				{
 					Name: "Update Golang module gopkg.in/yaml.v3",
 					Sources: map[string]source.Config{
 						"golangModuleVersion": {
@@ -105,6 +76,35 @@ func TestDiscoverManifests(t *testing.T) {
 											Files: []string{"go.mod", "go.sum"},
 										},
 									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "Update Golang version",
+					Sources: map[string]source.Config{
+						"golangVersion": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get latest golang version",
+								Kind: "golang",
+								Spec: goLang.Spec{
+									VersionFilter: version.Filter{
+										Kind:    "semver",
+										Pattern: ">=1.20.0",
+									},
+								},
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"golangVersion": {
+							SourceID: "golangVersion",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update Go version",
+								Kind: "golang/gomod",
+								Spec: gomod.Spec{
+									File: "go.mod",
 								},
 							},
 						},
