@@ -39,7 +39,7 @@ autodiscovery:
             # Ignore module using version matching constraint 1.x
             helm.sh/helm/v3: "1.x"
             # The remote version uses the version v0.0.0-20190318233801-ac98e3ecb4b0 which do not exists anymore
-            # the patch version will try to fetch the verison matching 0.0.x and finds nothing 
+            # the patch version will try to fetch the version matching 0.0.x and finds nothing 
             github.com/iancoleman/orderedmap:
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             golang.org/x/time:
