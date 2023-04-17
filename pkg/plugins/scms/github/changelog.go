@@ -2,8 +2,13 @@ package github
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httputil"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -84,4 +89,76 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 		query.Repository.Release.PublishedAt.String(),
 		query.Repository.Release.Url,
 		query.Repository.Release.Description), nil
+}
+
+// ChangelogV3 returns a changelog description based on a release name using the GitHub api v3 version
+func (g *Github) ChangelogV3(version string) (string, error) {
+
+	URL := fmt.Sprintf("%s/repos/%s/%s/releases/tags/%s",
+		g.Spec.URL, g.Spec.Owner, g.Spec.Repository, version)
+
+	logrus.Debugf("Retrieving changelog from %q", URL)
+
+	req, err := http.NewRequest("GET", URL, nil)
+	if err != nil {
+		logrus.Debugf("failed to retrieve changelog from GitHub %v\n", err)
+		return "", err
+	}
+
+	envToken := getTokenFromEnv()
+	if envToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", envToken))
+		req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		logrus.Debugf("failed to retrieve changelog from GitHub %v\n", err)
+		return "", err
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode >= 400 {
+		body, err := httputil.DumpResponse(res, false)
+		if err != nil {
+			logrus.Debugf("failed to retrieve changelog from GitHub %v\n", err)
+		}
+		logrus.Debugf("\n%v\n", string(body))
+		return "", err
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting GitHub api data %v\n", err)
+		return "", err
+	}
+
+	type ReleaseInfo struct {
+		HtmlURL string `json:"html_url,"`
+		Body    string `json:"body,"`
+	}
+
+	release := ReleaseInfo{}
+
+	err = json.Unmarshal(data, &release)
+	if err != nil {
+		logrus.Errorf("error unmarshalling json: %v", err)
+		return "", err
+	}
+
+	return fmt.Sprintf("Changelog retrieved from:\n\t%s\n%s",
+		release.HtmlURL, release.Body), nil
+}
+
+func getTokenFromEnv() string {
+	if envToken := os.Getenv("UPDATECLI_GITHUB_TOKEN"); envToken != "" {
+		logrus.Debugln("GitHub token defined by environment variable UPDATECLI_GITHUB_TOKEN detected")
+		return envToken
+	}
+
+	if envToken := os.Getenv("GITHUB_TOKEN"); envToken != "" {
+		logrus.Debugln("GitHub token defined by environment variable GITHUB_TOKEN detected")
+		return envToken
+	}
+	return ""
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/golang"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
@@ -23,6 +24,7 @@ var (
 			"cargo":         cargo.Spec{},
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
+			"golang/gomod":  golang.Spec{},
 			"helm":          helm.Spec{},
 			"helmfile":      helmfile.Spec{},
 			"maven":         maven.Spec{},
@@ -35,6 +37,7 @@ var (
 		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
+		"golang/gomod":  golang.Spec{},
 		"helm":          &helm.Spec{},
 		"helmfile":      &helmfile.Spec{},
 		"maven":         &maven.Spec{},
@@ -73,10 +76,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			continue
 		}
 
-		// Commenting for now while refactoring
 		switch kind {
 		case "cargo":
-
 			cargoCrawler, err := cargo.New(
 				g.spec.Crawlers[kind],
 				workDir,
@@ -102,8 +103,19 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			g.crawlers = append(g.crawlers, crawler)
 
 		case "dockerfile":
-
 			crawler, err := dockerfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "golang/gomod":
+			crawler, err := golang.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
@@ -127,7 +139,6 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			g.crawlers = append(g.crawlers, crawler)
 
 		case "helmfile":
-
 			crawler, err := helmfile.New(
 				g.spec.Crawlers[kind],
 				workDir,

@@ -23,6 +23,9 @@ import (
 	gitlabRelease "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/release"
 	gitlabTag "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/tag"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gittag"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/go/gomod"
+	golang "github.com/updatecli/updatecli/pkg/plugins/resources/go/language"
+	gomodule "github.com/updatecli/updatecli/pkg/plugins/resources/go/module"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/json"
@@ -95,6 +98,12 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 		return gitlabTag.New(rs.Spec)
 	case "gitlab/release":
 		return gitlabRelease.New(rs.Spec)
+	case "golang":
+		return golang.New(rs.Spec)
+	case "golang/gomod":
+		return gomod.New(rs.Spec)
+	case "golang/module":
+		return gomodule.New(rs.Spec)
 	case "file":
 		return file.New(rs.Spec)
 	case "helmchart":
@@ -154,6 +163,9 @@ func GetResourceMapping() map[string]interface{} {
 		"gitlab/release": &gitlabRelease.Spec{},
 		"gitlab/tag":     &gitlabTag.Spec{},
 		"githubrelease":  &githubrelease.Spec{},
+		"golang":         &golang.Spec{},
+		"golang/gomod":   &gomod.Spec{},
+		"golang/module":  &gomodule.Spec{},
 		"helmchart":      &helm.Spec{},
 		"jenkins":        &jenkins.Spec{},
 		"json":           &json.Spec{},

@@ -227,3 +227,100 @@ func TestNewFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestGreaterThanPattern(t *testing.T) {
+	tests := []struct {
+		name    string
+		filter  Filter
+		version string
+		want    string
+		wantErr error
+	}{
+		{
+			name: "Latest version kind",
+			filter: Filter{
+				Kind:    LATESTVERSIONKIND,
+				Pattern: LATESTVERSIONKIND,
+			},
+			version: "3.0", want: "latest",
+		},
+		{
+			name: "Regex version kind",
+			filter: Filter{
+				Kind:    REGEXVERSIONKIND,
+				Pattern: "^3.*",
+			},
+			version: "3.0", want: "^3.*",
+		},
+		{
+			name: "Major semver pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "major",
+			},
+			version: "3.0", want: ">=3",
+		},
+		{
+			name: "Minor semver pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "minor",
+			},
+			version: "3.0", want: "3.x",
+		},
+		{
+			name: "Patch semver pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "patch",
+			},
+			version: "3.0", want: "3.0.x",
+		},
+		{
+			name: "Version constraint semver pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "*",
+			},
+			version: "1.0 - 2.0", want: "1.0 - 2.0",
+		},
+		{
+			name: "Wrong Version constraint semver pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "*",
+			},
+			version: "v0.0.0-20220606043923-3cf50f8a0a29", want: ">=0.0.0-20220606043923-3cf50f8a0a29",
+		},
+		{
+			name: "Wrong Semver Version",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "*",
+			},
+			version: "v0.0.0_20220606043923-3cf50f8a0a29", want: "", wantErr: errors.New("wrong semantic versioning constraint \"v0.0.0_20220606043923-3cf50f8a0a29\""),
+		},
+		{
+			name: "Wrong Semver Constraint",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "*",
+			},
+			version: "1.0 - 2.0 !!!", want: "", wantErr: errors.New("wrong semantic versioning constraint \"1.0 - 2.0 !!!\""),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.filter.GreaterThanPattern(tt.version)
+
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tt.wantErr, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

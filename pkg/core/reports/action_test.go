@@ -17,8 +17,9 @@ func TestHTMLReportsString(t *testing.T) {
 		{
 			name: "Default working situation",
 			report: Action{
-				ID:    "1234",
-				Title: "Test Title",
+				ID:            "1234",
+				Title:         "Action Title",
+				PipelineTitle: "Test Title",
 				Targets: []ActionTarget{
 					{
 						ID:    "4567",
@@ -77,8 +78,8 @@ func TestHTMLUnmarshal(t *testing.T) {
 			expectedOutput: Actions{
 				Actions: []Action{
 					{
-						ID:    "1234",
-						Title: "Test Title",
+						ID:            "1234",
+						PipelineTitle: "Test Title",
 						Targets: []ActionTarget{
 							{
 								ID:    "4567",

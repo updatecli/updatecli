@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+
+	sv "github.com/Masterminds/semver/v3"
 )
 
 const (
@@ -132,4 +134,75 @@ func (f *Filter) Search(versions []string) (Version, error) {
 func (f Filter) IsZero() bool {
 	var empty Filter
 	return empty == f
+}
+
+// GreaterThanPattern returns a pattern that can be used to find newer version
+func (f *Filter) GreaterThanPattern(version string) (string, error) {
+	switch f.Kind {
+	case LATESTVERSIONKIND:
+		return LATESTVERSIONKIND, nil
+
+	case REGEXVERSIONKIND:
+		return f.Pattern, nil
+
+	case SEMVERVERSIONKIND:
+
+		switch f.Pattern {
+		case "prerelease":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+
+			return fmt.Sprintf(">=%d.%d.%d-%s <= %d.%d.%d",
+				v.Major(), v.Minor(), v.Patch(), v.Prerelease(),
+				v.Major(), v.Minor(), v.Patch(),
+			), nil
+
+		case "patch":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf("%d.%d.x",
+				v.Major(),
+				v.Minor()), nil
+
+		case "minor":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf(
+				"%d.x",
+				v.Major()), nil
+
+		case "major":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf(
+				">=%d",
+				v.Major()), nil
+
+		case "", "*":
+			v, err := sv.NewVersion(version)
+			// If NewVersion do not fails then it means that version contains a valid semantic version
+			if err == nil {
+				return ">=" + v.String(), nil
+			}
+
+			fmt.Println(version)
+			_, err = sv.NewConstraint(version)
+			if err != nil {
+				return "", fmt.Errorf("wrong semantic versioning constraint %q", version)
+			}
+			return version, nil
+
+		default:
+			return f.Pattern, nil
+		}
+	}
+	return "", fmt.Errorf("kind %q not supported", f.Kind)
 }

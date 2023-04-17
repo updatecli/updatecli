@@ -71,6 +71,11 @@ func (p *Pipeline) RunActions() error {
 		*/
 
 		for _, t := range relatedTargets {
+			// We only care about target that have changed something
+			if p.Targets[t].Result != result.ATTENTION {
+				continue
+			}
+
 			actionTarget := reports.ActionTarget{
 				// Better for ID to use hash string
 				ID:    fmt.Sprintf("%x", sha256.Sum256([]byte(t))),
@@ -86,10 +91,34 @@ func (p *Pipeline) RunActions() error {
 
 			action.Report.Targets = append(action.Report.Targets, actionTarget)
 		}
+
+		// No need to execute the action if no target require attention
+		if len(action.Report.Targets) == 0 {
+			continue
+		}
+
 		// Must action.Report.ID and action.Report.Title must be set after actionTarget are set
-		actionTitle := getActionTitle(action)
+		actionTitle := action.Title
+		// If an action spec do not have a tittle, then we use the one specified by the pipeline spec title
+		if actionTitle == "" && p.Config.Spec.Name != "" {
+			actionTitle = p.Config.Spec.Name
+		} else if actionTitle == "" && p.Config.Spec.Title != "" {
+			// The field "Title" is probably uselsss and need to be refactor in a later iteration
+			actionTitle = p.Config.Spec.Title
+		} else {
+			actionTitle = getActionTitle(action)
+		}
+
+		pipelineTitle := p.Config.Spec.Name
+		if pipelineTitle == "" && p.Config.Spec.Title != "" {
+			pipelineTitle = p.Config.Spec.Name
+		} else if pipelineTitle == "" && p.Name != "" {
+			pipelineTitle = p.Name
+		}
+
 		action.Report.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(p.Title+actionTitle)))
 		action.Report.Title = actionTitle
+		action.Report.PipelineTitle = pipelineTitle
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
