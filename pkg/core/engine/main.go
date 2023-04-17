@@ -509,7 +509,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 				if p.Config.Spec.AutoDiscovery.GroupBy == autodiscovery.GROUPEBYALL {
 					if actionConfig.Title == "" {
 						defaultActionTitle := "[updatecli] bumping version"
-						logrus.Warningf("Action Title %q used by autodiscovery is empty, fallback to generic:\n\t=> %t",
+						logrus.Warningf("Action Title %q used by autodiscovery is empty, fallback to generic:\n\t=> %s",
 							p.Config.Spec.AutoDiscovery.ActionId,
 							defaultActionTitle)
 						actionConfig.Title = defaultActionTitle
