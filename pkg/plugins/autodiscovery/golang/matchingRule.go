@@ -3,6 +3,7 @@ package golang
 import (
 	"path/filepath"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,67 +11,132 @@ import (
 type MatchingRule struct {
 	// Path specifies a go.mod path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
+	// Modules specifies a list of module pattern.
+	Modules map[string]string
+	// GoVersions specifies a list of version pattern.
+	GoVersion string
 }
 
 type MatchingRules []MatchingRule
 
-func (m MatchingRules) isMatchingIgnoreRule(rootDir, relativePath string) bool {
-	// Test if the ignore rule based on path is respected
-	result := false
+// isMatchingRules checks for each matchingRule if parameters are matching rules and then return true or false.
+func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName, moduleVersion string) bool {
+	var ruleResults []bool
 
 	if len(m) > 0 {
 		for _, rule := range m {
-			logrus.Infof("Rule: %q\n", rule.Path)
-			logrus.Infof("Relative Found: %q\n", relativePath)
-			switch filepath.IsAbs(rule.Path) {
-			case true:
-				match, err := filepath.Match(rule.Path, filepath.Join(rootDir, relativePath))
+			/*
+			 Check if rule.Path is matching. Path accepts wildcard path
+			*/
+			if rule.Path != "" {
+				logrus.Infof("Rule: %q\n", rule.Path)
+				logrus.Infof("Relative Found: %q\n", filePath)
+
+				if filepath.IsAbs(rule.Path) {
+					filePath = filepath.Join(rootDir, filePath)
+				}
+
+				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
 					logrus.Errorf("%s - %q", err, rule.Path)
+					continue
 				}
+				ruleResults = append(ruleResults, match)
 				if match {
-					result = true
+					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
-			case false:
-				match, err := filepath.Match(rule.Path, relativePath)
+			}
+
+			/*
+				Checks if module is matching the module constraint.
+				If both module constraint is empty and no modulename have been provided then we
+				assumg the rule is matching
+
+				Otherwise we checks both that version and module name are matching.
+				Version matching uses semantic versioning constraints if possible otherwise
+				just compare the version rule and the module version.
+			*/
+
+			if len(rule.Modules) == 0 && moduleName == "" {
+				ruleResults = append(ruleResults, true)
+			} else {
+				match := false
+			outModule:
+				for ruleModuleName, ruleModuleVersion := range rule.Modules {
+					if moduleName == ruleModuleName {
+						if ruleModuleVersion == "" {
+							match = true
+							break outModule
+						}
+
+						v, err := semver.NewVersion(moduleVersion)
+						if err != nil {
+							match = moduleVersion == ruleModuleVersion
+							logrus.Debugf("%q - %s", moduleVersion, err)
+							break outModule
+						}
+
+						c, err := semver.NewConstraint(ruleModuleVersion)
+						if err != nil {
+							match = moduleVersion == ruleModuleVersion
+							logrus.Debugf("%q %s", err, ruleModuleVersion)
+							break outModule
+						}
+
+						match = c.Check(v)
+						break outModule
+					}
+				}
+				ruleResults = append(ruleResults, match)
+			}
+
+			/*
+				Checks if the goVersion is matching the rule
+				The version constraint must be a valid semenatic version constraint.
+			*/
+			if rule.GoVersion != "" {
+				if goVersion == "" {
+					ruleResults = append(ruleResults, false)
+					continue
+				}
+
+				v, err := semver.NewVersion(goVersion)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					logrus.Errorln(err)
+					ruleResults = append(ruleResults, false)
+					continue
 				}
-				if match {
-					result = true
+
+				c, err := semver.NewConstraint(rule.GoVersion)
+				if err != nil {
+					logrus.Errorln(err)
+					ruleResults = append(ruleResults, false)
+					continue
 				}
+
+				ruleResults = append(ruleResults, c.Check(v))
 			}
 		}
 	}
 
-	return result
-}
+	/*
+		If not rule result could be identified then we return false
+	*/
+	if len(ruleResults) == 0 {
+		return false
+	}
 
-func (m MatchingRules) isMatchingOnlyRule(rootDir, relativePath string) bool {
-	// Test if the only rule based on path is respected
-	result := false
-	if len(m) > 0 {
-		for _, rule := range m {
-			switch filepath.IsAbs(rule.Path) {
-			case true:
-				match, err := filepath.Match(rule.Path, filepath.Join(rootDir, relativePath))
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
-				}
-			case false:
-				match, err := filepath.Match(rule.Path, relativePath)
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
-				}
-			}
+	/*
+		If at least one rule is failing then we return false
+	*/
+	for i := range ruleResults {
+		if !ruleResults[i] {
+			return false
 		}
 	}
 
-	return result
+	/*
+		In any other situation we consider the rule matching
+	*/
+	return true
 }
