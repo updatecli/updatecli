@@ -28,9 +28,11 @@ func New(spec interface{}) (*Language, error) {
 		return nil, err
 	}
 
-	newFilter, err := newSpec.VersionFilter.Init()
-	if err != nil {
-		return nil, err
+	newFilter := newSpec.VersionFilter
+	if newFilter.IsZero() {
+		// By default, golang versioning uses semantic versioning
+		newFilter.Kind = "semver"
+		newFilter.Pattern = "*"
 	}
 
 	return &Language{
