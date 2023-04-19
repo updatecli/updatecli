@@ -256,7 +256,7 @@ github:
 				files:            tt.files,
 				indent:           tt.spec.Indent,
 			}
-			gotResult, gotErr := y.Target(tt.inputSourceValue, tt.dryRun)
+			gotResult, _, _, gotErr := y.Target(tt.inputSourceValue, nil, tt.dryRun)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
@@ -378,7 +378,7 @@ github:
 				files:            tt.files,
 				indent:           tt.spec.Indent,
 			}
-			gotResult, gotFiles, _, gotErr := y.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
+			gotResult, gotFiles, _, gotErr := y.Target(tt.inputSourceValue, tt.scm, tt.dryRun)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return

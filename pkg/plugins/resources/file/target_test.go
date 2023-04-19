@@ -371,7 +371,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, gotErr := f.Target(tt.inputSourceValue, tt.dryRun)
+			gotResult, _, _, gotErr := f.Target(tt.inputSourceValue, nil, tt.dryRun)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -520,7 +520,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, gotFiles, _, gotErr := f.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
+			gotResult, gotFiles, _, gotErr := f.Target(tt.inputSourceValue, tt.scm, tt.dryRun)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)

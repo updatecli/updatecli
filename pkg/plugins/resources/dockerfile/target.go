@@ -9,15 +9,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-// Target updates a targeted Dockerfile
-func (d *Dockerfile) Target(source string, dryRun bool) (bool, error) {
-	changed, _, _, err := d.target(source, dryRun)
-	return changed, err
-}
-
-// TargetFromSCM updates a targeted Dockerfile from source control management system
-func (d *Dockerfile) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
-	if !filepath.IsAbs(d.spec.File) {
+// Target updates a targeted Dockerfile from source control management system
+func (d *Dockerfile) Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+	if !filepath.IsAbs(d.spec.File) && scm != nil {
 		d.spec.File = filepath.Join(scm.GetDirectory(), d.spec.File)
 		logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", d.spec.File)
 	}

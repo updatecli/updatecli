@@ -143,7 +143,7 @@ CMD ["--help:golang"]
 				contentRetriever: mockFile,
 				parser:           newParser,
 			}
-			gotChanged, gotErr := d.Target(tt.inputSourceValue, tt.dryRun)
+			gotChanged, _, _, gotErr := d.Target(tt.inputSourceValue, nil, tt.dryRun)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
@@ -215,7 +215,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				contentRetriever: &mockFile,
 				parser:           newParser,
 			}
-			gotChanged, gotFiles, gotMessage, gotErr := d.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
+			gotChanged, gotFiles, gotMessage, gotErr := d.Target(tt.inputSourceValue, tt.scm, tt.dryRun)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return

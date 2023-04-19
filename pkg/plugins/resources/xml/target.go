@@ -11,18 +11,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (x *XML) Target(source string, dryRun bool) (changed bool, err error) {
-
-	changed, _, _, err = x.TargetFromSCM(source, nil, dryRun)
-	if err != nil {
-		return changed, err
-	}
-
-	return changed, err
-}
-
-// TargetFromSCM updates a scm repository based on the modified yaml file.
-func (x *XML) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+// Target updates a scm repository based on the modified yaml file.
+func (x *XML) Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
 	if strings.HasPrefix(x.spec.File, "https://") ||
 		strings.HasPrefix(x.spec.File, "http://") {

@@ -9,15 +9,7 @@ import (
 )
 
 // Target is not supported for the Golang resource
-func (g *GoMod) Target(source string, dryRun bool) (changed bool, err error) {
-
-	changed, _, _, err = g.TargetFromSCM(source, nil, dryRun)
-	return changed, err
-
-}
-
-// TargetFromSCM is not supported for the Golang resource
-func (g *GoMod) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+func (g *GoMod) Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
 	version := source
 	if g.spec.Version != "" {

@@ -10,18 +10,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *Toml) Target(source string, dryRun bool) (changed bool, err error) {
-
-	changed, _, _, err = t.TargetFromSCM(source, nil, dryRun)
-	if err != nil {
-		return changed, err
-	}
-
-	return changed, err
-}
-
-// TargetFromSCM updates a scm repository based on the modified yaml file.
-func (t *Toml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+// Target updates a scm repository based on the modified yaml file.
+func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
 	rootDir := ""
 	if scm != nil {

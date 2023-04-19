@@ -14,20 +14,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// Target creates or updates a file located locally.
+// Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
-func (f *File) Target(source string, dryRun bool) (bool, error) {
-	changed, _, _, err := f.target(source, dryRun)
-	return changed, err
-}
-
-// TargetFromSCM creates or updates a file from a source control management system.
-// The default content is the value retrieved from source
-func (f *File) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
+func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
 	absoluteFiles := make(map[string]string)
 	for filePath := range f.files {
 		absoluteFilePath := filePath
-		if !filepath.IsAbs(filePath) {
+		if !filepath.IsAbs(filePath) && scm != nil {
 			absoluteFilePath = filepath.Join(scm.GetDirectory(), filePath)
 			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
 		}
@@ -43,7 +36,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 	var message strings.Builder
 
 	if f.spec.Line > 0 && f.spec.ForceCreate {
-		validationError := fmt.Errorf("Validation error in target of type 'file': 'spec.line' and 'spec.forcecreate' are mutually exclusive")
+		validationError := fmt.Errorf("validation error in target of type 'file': 'spec.line' and 'spec.forcecreate' are mutually exclusive")
 		logrus.Errorf(validationError.Error())
 		return false, files, message.String(), validationError
 	}
@@ -52,7 +45,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 	// We need to loop the files here before calling ReadOrForceCreate in case one of these file paths is an URL, not supported for a target
 	for filePath := range f.files {
 		if text.IsURL(filePath) {
-			validationError := fmt.Errorf("Validation error in target of type 'file': spec.files item value (%q) is an URL which is not supported for a target.", filePath)
+			validationError := fmt.Errorf("validation error in target of type 'file': spec.files item value (%q) is an URL which is not supported for a target", filePath)
 			logrus.Errorf(validationError.Error())
 			return false, files, message.String(), validationError
 		}
@@ -88,7 +81,7 @@ func (f *File) target(source string, dryRun bool) (bool, []string, string, error
 			// Check if there is any match in the file
 			if !reg.MatchString(f.files[filePath]) {
 				// We allow the possibility to match only some files. In that case, just a warning here
-				return false, files, message.String(), fmt.Errorf("No line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
+				return false, files, message.String(), fmt.Errorf("no line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
 			// Keep the original content for later comparison
 			originalContents[filePath] = f.files[filePath]

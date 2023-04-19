@@ -13,8 +13,7 @@ import (
 )
 
 // Target ensure that a specific release exist on Gitlab, otherwise creates it
-func (g *Gitlab) Target(source string, dryRun bool) (bool, error) {
-
+func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
 	}
@@ -48,23 +47,23 @@ func (g *Gitlab) Target(source string, dryRun bool) (bool, error) {
 
 	if err != nil {
 		logrus.Debugf("Gitlab Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
-		return false, err
+		return false, []string{}, "", err
 	}
 
 	for _, r := range releases {
 		if r.Tag == g.spec.Tag {
 			logrus.Infof("%s Release Tag %q already exist, nothing else to do", result.SUCCESS, g.spec.Tag)
-			return false, nil
+			return false, []string{}, "", nil
 		}
 	}
 
 	if dryRun {
 		logrus.Infof("%s Release Tag %q doesn't exist, we need to create it", result.SUCCESS, g.spec.Tag)
-		return true, nil
+		return true, []string{}, "", nil
 	}
 
 	if len(g.spec.Token) == 0 {
-		return true, fmt.Errorf("wrong configuration, missing parameter %q", "token")
+		return true, []string{}, "", fmt.Errorf("wrong configuration, missing parameter %q", "token")
 	}
 
 	// Create a new release as it doesn't exist yet
@@ -88,19 +87,14 @@ func (g *Gitlab) Target(source string, dryRun bool) (bool, error) {
 	)
 
 	if err != nil {
-		return false, err
+		return false, []string{}, "", err
 	}
 
 	if resp.Status >= 400 {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-		return false, fmt.Errorf("error from Gitlab api: %v", resp.Status)
+		return false, []string{}, "", fmt.Errorf("error from Gitlab api: %v", resp.Status)
 	}
 
 	logrus.Infof("Gitlab Release %q successfully open on %q", release.Title, release.Link)
-
-	return true, nil
-}
-
-func (g Gitlab) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
 	return false, []string{}, "", fmt.Errorf("target not supported for the plugin Gitlab Release")
 }

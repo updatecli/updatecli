@@ -81,7 +81,7 @@ func TestShell_Target(t *testing.T) {
 			err := s.InitChangedIf()
 			require.NoError(t, err)
 
-			gotChanged, err := s.Target(tt.source, tt.dryrun)
+			gotChanged, _, _, err := s.Target(tt.source, nil, tt.dryrun)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -155,7 +155,7 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			err := s.InitChangedIf()
 			require.NoError(t, err)
 
-			gotChanged, gotFilesChanged, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)
+			gotChanged, gotFilesChanged, gotMessage, err := s.Target(tt.source, &ms, tt.dryrun)
 
 			if tt.wantErr {
 				assert.Error(t, err)
