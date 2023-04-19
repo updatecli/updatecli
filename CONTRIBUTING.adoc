@@ -14,7 +14,7 @@ docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windo
 
 == CONTRIBUTE
 
-They are multiple ways to contribute which don't necessarily involve coding, like providing feedback, improving documentation and processes.
+They're multiple ways to contribute which don't necessarily involve coding, like providing feedback, improving documentation and processes.
 Here I'll just highlight some of them:
 
 === FEEDBACK
@@ -27,13 +27,13 @@ The code is divided into two categories, core and plugins. The core is designed 
 
 ==== CORE
 
-This section is still evolving as they are many areas that need attention.
+This section is still evolving as they're many areas that need attention.
 
 ==== PLUGINS
 
 Plugins can be easily added by following this workflow:
 
-===== 1. Define Package name
+===== 1. Define package name
 
 Creating a new directory using your "packageName" under the directory `pkg/plugins` that will contain your go package similar to:
 
@@ -105,11 +105,10 @@ type Spec interface {
 | Target
 | ```
 type Spec interface {
-    Target(source string, dryRun bool) (bool, error)
-    TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error)
+    Target(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error)
 
 ```
-| Define how a target file will be updated
+| Define how a target file is updated
 
 |===
 
