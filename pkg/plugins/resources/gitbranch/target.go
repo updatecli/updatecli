@@ -8,37 +8,18 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Target creates a tag if needed from a local git repository, without pushing the tag
-func (gt *GitBranch) Target(source string, dryRun bool) (changed bool, err error) {
+// Target creates and pushes a git tag based on the SCM configuration
+func (gt *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
 
-	gt.branch = source
-	if gt.spec.Branch != "" {
-		gt.branch = gt.spec.Branch
+	if scm != nil {
+		if len(gt.spec.Path) > 0 {
+			logrus.Warningf("Path setting value %q overridden by the scm configuration (value %q)",
+				gt.spec.Path,
+				scm.GetDirectory())
+		}
+
+		gt.spec.Path = scm.GetDirectory()
 	}
-
-	if gt.branch == "" {
-		return false, fmt.Errorf("empty branch specified")
-	}
-
-	changed, _, _, err = gt.target(dryRun)
-
-	if !changed {
-		logrus.Infof("%s The git branch %q already exist on the specified remote.", result.SUCCESS, gt.branch)
-		return changed, err
-	}
-	logrus.Printf("%s The git branch %q has been created.", result.ATTENTION, gt.branch)
-
-	return changed, err
-}
-
-// TargetFromSCM creates and pushes a git tag based on the SCM configuration
-func (gt *GitBranch) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
-	if len(gt.spec.Path) > 0 {
-		logrus.Warningf("Path setting value %q overridden by the scm configuration (value %q)",
-			gt.spec.Path,
-			scm.GetDirectory())
-	}
-	gt.spec.Path = scm.GetDirectory()
 
 	gt.branch = source
 	if gt.spec.Branch != "" {
@@ -62,10 +43,14 @@ func (gt *GitBranch) TargetFromSCM(source string, scm scm.ScmHandler, dryRun boo
 
 	if !changed {
 		logrus.Infof("%s The git branch %q already exist on the specified remote.", result.SUCCESS, gt.branch)
-		return changed, files, message, err
+		return changed, files, message, nil
 	}
 
 	logrus.Printf("git branch %q has been created.", gt.branch)
+
+	if scm == nil {
+		return changed, files, message, nil
+	}
 
 	err = scm.PushBranch(gt.branch)
 	if err != nil {

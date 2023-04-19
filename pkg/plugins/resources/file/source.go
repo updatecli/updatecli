@@ -19,20 +19,20 @@ func (f *File) Source(workingDir string) (string, error) {
 	var newFilePath string
 
 	if len(f.spec.Files) > 1 {
-		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attributes `spec.files` can't contain more than one element for sources")
+		validationErrors = append(validationErrors, "validation error in source of type 'file': the attributes `spec.files` can't contain more than one element for sources")
 	}
 	if len(f.spec.ReplacePattern) > 0 {
-		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attribute `spec.replacepattern` is only supported for targets.")
+		validationErrors = append(validationErrors, "validation error in source of type 'file': the attribute `spec.replacepattern` is only supported for targets")
 	}
 	if len(f.spec.Content) > 0 {
-		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attribute `spec.content` is only supported for conditions and targets.")
+		validationErrors = append(validationErrors, "validation error in source of type 'file': the attribute `spec.content` is only supported for conditions and targets")
 	}
 	if f.spec.ForceCreate {
-		validationErrors = append(validationErrors, "Validation error in source of type 'file': the attribute `spec.forcecreate` is only supported for targets.")
+		validationErrors = append(validationErrors, "validation error in source of type 'file': the attribute `spec.forcecreate` is only supported for targets")
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return "", fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return "", fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	// Looping on the only filePath in 'files'
@@ -41,7 +41,7 @@ func (f *File) Source(workingDir string) (string, error) {
 		if !text.IsURL(filePath) && !filepath.IsAbs(filePath) {
 			newFilePath = filepath.Join(workingDir, filePath)
 			oldFilePath = filePath
-			logrus.Debugf("Relative path detected: changing to absolute path from working directory: %q", filePath)
+			logrus.Debugf("relative path detected: changing to absolute path from working directory: %q", filePath)
 		}
 	}
 	// Replace old file path
@@ -61,13 +61,13 @@ func (f *File) Source(workingDir string) (string, error) {
 		if len(f.spec.MatchPattern) > 0 {
 			reg, err := regexp.Compile(f.spec.MatchPattern)
 			if err != nil {
-				logrus.Errorf("Validation error in source of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
+				logrus.Errorf("validation error in source of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
 				return "", err
 			}
 
 			// Check if there is any match in the file
 			if !reg.MatchString(f.files[filePath]) {
-				return "", fmt.Errorf("No line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
+				return "", fmt.Errorf("no line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
 			matchedStrings := reg.FindAllString(f.files[filePath], -1)
 

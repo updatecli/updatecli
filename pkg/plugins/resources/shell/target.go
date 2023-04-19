@@ -7,22 +7,26 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (s *Shell) Target(source string, dryRun bool) (bool, error) {
-	changed, _, err := s.target(source, "", dryRun)
-	return changed, err
-}
+func (s *Shell) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
+	getDir := ""
+	if scm != nil {
+		getDir = scm.GetDirectory()
+	}
 
-func (s *Shell) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	changed, message, err := s.target(source, scm.GetDirectory(), dryRun)
+	changed, message, err := s.target(source, getDir, dryRun)
 	if err != nil {
 		return false, []string{}, "", err
 	}
 
-	// Once the changes have been applied inside the scm's temp directory, then we have to get the list of these changes
-	files, err := scm.GetChangedFiles(scm.GetDirectory())
-	if err != nil {
-		return false, []string{}, "", err
+	files := []string{}
+	if scm != nil {
+		// Once the changes have been applied inside the scm's temp directory, then we have to get the list of these changes
+		files, err = scm.GetChangedFiles(scm.GetDirectory())
+		if err != nil {
+			return false, files, message, err
+		}
 	}
+
 	return changed, files, message, err
 }
 

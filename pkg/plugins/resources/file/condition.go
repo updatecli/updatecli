@@ -61,7 +61,7 @@ func (f *File) condition(source string) (bool, error) {
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return false, fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return false, fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	// Start by retrieving the specified file's content
@@ -102,7 +102,7 @@ func (f *File) condition(source string) (bool, error) {
 		if len(source) > 0 {
 			logrus.Debugf("Using source input value: %q", source)
 			if len(f.spec.Content) > 0 {
-				validationError := fmt.Errorf("Validation error in condition of type 'file': the attributes `sourceid` and `spec.content` are mutually exclusive")
+				validationError := fmt.Errorf("validation error in condition of type 'file': the attributes `sourceid` and `spec.content` are mutually exclusive")
 				logrus.Errorf(validationError.Error())
 				return false, validationError
 			}

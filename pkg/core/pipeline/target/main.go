@@ -88,7 +88,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
 
-		changed, err = target.Target(source, o.DryRun)
+		changed, _, _, err = target.Target(source, nil, o.DryRun)
 		if err != nil {
 			t.Result = result.FAILURE
 			return err
@@ -119,7 +119,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	changed, files, message, err = target.TargetFromSCM(source, s, o.DryRun)
+	changed, files, message, err = target.Target(source, s, o.DryRun)
 	if err != nil {
 		t.Result = result.FAILURE
 		return err

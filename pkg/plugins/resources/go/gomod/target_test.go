@@ -62,7 +62,7 @@ func TestTarget(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
-			gotChanged, err := got.Target("", true)
+			gotChanged, _, _, err := got.Target("", nil, true)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return

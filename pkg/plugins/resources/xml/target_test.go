@@ -95,7 +95,7 @@ func TestTarget(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := x.Target("", true)
+			gotResult, _, _, err := x.Target("", nil, true)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

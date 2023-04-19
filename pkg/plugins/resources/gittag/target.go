@@ -9,20 +9,15 @@ import (
 )
 
 // Target creates a tag if needed from a local git repository, without pushing the tag
-func (gt *GitTag) Target(source string, dryRun bool) (changed bool, err error) {
-	changed, _, _, err = gt.target(source, dryRun)
-
-	return changed, err
-}
-
-// TargetFromSCM creates and pushes a git tag based on the SCM configuration
-func (gt *GitTag) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
-	if len(gt.spec.Path) > 0 {
-		logrus.Warningf("Path setting value %q overridden by the scm configuration (value %q)",
-			gt.spec.Path,
-			scm.GetDirectory())
+func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+	if scm != nil {
+		if len(gt.spec.Path) > 0 {
+			logrus.Warningf("Path setting value %q overridden by the scm configuration (value %q)",
+				gt.spec.Path,
+				scm.GetDirectory())
+		}
+		gt.spec.Path = scm.GetDirectory()
 	}
-	gt.spec.Path = scm.GetDirectory()
 
 	changed, files, message, err = gt.target(source, dryRun)
 	if err != nil {

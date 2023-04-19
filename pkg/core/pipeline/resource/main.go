@@ -138,8 +138,7 @@ type Resource interface {
 	Source(workingDir string) (string, error)
 	Condition(version string) (bool, error)
 	ConditionFromSCM(version string, scm scm.ScmHandler) (bool, error)
-	Target(source string, dryRun bool) (bool, error)
-	TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error)
+	Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error)
 	Changelog() string
 }
 

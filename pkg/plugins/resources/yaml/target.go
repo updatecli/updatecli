@@ -16,13 +16,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
-	changed, _, _, err := y.target(source, dryRun)
-	return changed, err
-}
-
-// TargetFromSCM updates a scm repository based on the modified yaml file.
-func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
+func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
 	joignedFiles := make(map[string]string)
 	for filePath := range y.files {
 		joignedFilePath := filePath

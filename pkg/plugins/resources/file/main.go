@@ -116,7 +116,7 @@ func (s *Spec) Validate() error {
 
 	// Return all the validation errors if any
 	if len(validationErrors) > 0 {
-		return fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	return nil
@@ -151,9 +151,9 @@ func (f *File) Read() error {
 				logrus.Infof("Creating a new file at %q", filePath)
 			} else {
 				if f.spec.Line > 0 {
-					return fmt.Errorf("%s The specified line %d of the file %q does not exist.\n", result.FAILURE, f.spec.Line, filePath)
+					return fmt.Errorf("%s The specified line %d of the file %q does not exist", result.FAILURE, f.spec.Line, filePath)
 				}
-				return fmt.Errorf("%s The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'.\n", result.FAILURE, filePath)
+				return fmt.Errorf("%s The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'", result.FAILURE, filePath)
 			}
 		}
 	}
