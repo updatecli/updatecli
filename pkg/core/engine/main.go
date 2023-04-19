@@ -457,22 +457,6 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			logrus.Infof("nothing detected")
 		}
 
-		// Generate PipelineID
-		// Set pipelineId for each manifest by on the autodiscovery groupby rule
-
-		// We use a sha256 hash to avoid collision between pipelineID
-		hash := sha256.New()
-		_, err = io.WriteString(hash, "updatecli/autodiscovery/batch")
-		var batchPipelineID string
-
-		if err != nil {
-			logrus.Errorln(err)
-		}
-
-		if p.Config.Spec.AutoDiscovery.GroupBy == autodiscovery.GROUPEBYALL {
-			batchPipelineID = fmt.Sprintf("%x", hash.Sum(nil))
-		}
-
 		for i := range bytesManifests {
 			manifest := config.Spec{}
 
@@ -482,17 +466,26 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 				return err
 			}
 
-			pipelineID := batchPipelineID
-			// If matchPipelineID is empty then we generate the ID based on the manifest name
-			if pipelineID == "" {
-				_, err := io.WriteString(hash, manifest.Name)
+			switch p.Config.Spec.AutoDiscovery.GroupBy {
+			case autodiscovery.GROUPEBYALL:
+				manifest.PipelineID = p.Config.Spec.PipelineID
+			case autodiscovery.GROUPEBYINDIVIDUAL:
+				hash := sha256.New()
+				/*
+					We need to generate an uniq ID per individual pipeline
+					but we shouldn't use the manifest of a pipeline
+					because it may change over pipeline execution
+					such as different source version filter
+
+					Starting the id with the autodiscovery pipelinid looks enough
+					to avoid collision
+				*/
+				_, err := io.WriteString(hash, p.Config.Spec.PipelineID+"/"+manifest.Name)
 				if err != nil {
 					logrus.Errorln(err)
 				}
-				pipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+				manifest.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
 			}
-
-			manifest.PipelineID = pipelineID
 
 			manifest.SCMs = make(map[string]scm.Config)
 			for scmId, sc := range p.SCMs {
