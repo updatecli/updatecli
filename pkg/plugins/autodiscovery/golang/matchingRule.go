@@ -29,14 +29,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 			 Check if rule.Path is matching. Path accepts wildcard path
 			*/
 			if rule.Path != "" {
-				logrus.Infof("Rule: %q\n", rule.Path)
-				logrus.Infof("Relative Found: %q\n", filePath)
-
 				if filepath.IsAbs(rule.Path) {
 					filePath = filepath.Join(rootDir, filePath)
 				}
 
 				match, err := filepath.Match(rule.Path, filePath)
+
 				if err != nil {
 					logrus.Errorf("%s - %q", err, rule.Path)
 					continue
@@ -57,37 +55,38 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 				just compare the version rule and the module version.
 			*/
 
-			if len(rule.Modules) == 0 && moduleName == "" {
-				ruleResults = append(ruleResults, true)
-			} else {
-				match := false
-			outModule:
-				for ruleModuleName, ruleModuleVersion := range rule.Modules {
-					if moduleName == ruleModuleName {
-						if ruleModuleVersion == "" {
-							match = true
+			if len(rule.Modules) > 0 {
+				if moduleName != "" {
+					match := false
+				outModule:
+					for ruleModuleName, ruleModuleVersion := range rule.Modules {
+						if moduleName == ruleModuleName {
+							if ruleModuleVersion == "" {
+								match = true
+								break outModule
+							}
+
+							v, err := semver.NewVersion(moduleVersion)
+							if err != nil {
+								match = moduleVersion == ruleModuleVersion
+								logrus.Debugf("%q - %s", moduleVersion, err)
+								break outModule
+							}
+
+							c, err := semver.NewConstraint(ruleModuleVersion)
+							if err != nil {
+								match = moduleVersion == ruleModuleVersion
+								logrus.Debugf("%q %s", err, ruleModuleVersion)
+								break outModule
+							}
+
+							match = c.Check(v)
 							break outModule
 						}
-
-						v, err := semver.NewVersion(moduleVersion)
-						if err != nil {
-							match = moduleVersion == ruleModuleVersion
-							logrus.Debugf("%q - %s", moduleVersion, err)
-							break outModule
-						}
-
-						c, err := semver.NewConstraint(ruleModuleVersion)
-						if err != nil {
-							match = moduleVersion == ruleModuleVersion
-							logrus.Debugf("%q %s", err, ruleModuleVersion)
-							break outModule
-						}
-
-						match = c.Check(v)
-						break outModule
 					}
+					ruleResults = append(ruleResults, match)
 				}
-				ruleResults = append(ruleResults, match)
+
 			}
 
 			/*
@@ -97,46 +96,43 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 			if rule.GoVersion != "" {
 				if goVersion == "" {
 					ruleResults = append(ruleResults, false)
-					continue
+					goto goVersionDone
 				}
 
 				v, err := semver.NewVersion(goVersion)
 				if err != nil {
 					logrus.Errorln(err)
 					ruleResults = append(ruleResults, false)
-					continue
+					goto goVersionDone
 				}
 
 				c, err := semver.NewConstraint(rule.GoVersion)
 				if err != nil {
 					logrus.Errorln(err)
 					ruleResults = append(ruleResults, false)
-					continue
+					goto goVersionDone
 				}
 
 				ruleResults = append(ruleResults, c.Check(v))
 			}
+
+		goVersionDone:
+
+			/*
+				If at least one rule is failing then we return false
+			*/
+			isAllMatching := true
+			for i := range ruleResults {
+				if !ruleResults[i] {
+					isAllMatching = false
+				}
+			}
+			if isAllMatching {
+				return true
+			}
+			ruleResults = []bool{}
 		}
 	}
 
-	/*
-		If not rule result could be identified then we return false
-	*/
-	if len(ruleResults) == 0 {
-		return false
-	}
-
-	/*
-		If at least one rule is failing then we return false
-	*/
-	for i := range ruleResults {
-		if !ruleResults[i] {
-			return false
-		}
-	}
-
-	/*
-		In any other situation we consider the rule matching
-	*/
-	return true
+	return false
 }

@@ -33,6 +33,15 @@ func TestIsMatchingRule(t *testing.T) {
 					Path: "go.mod",
 				},
 			},
+			filePath:       "go.mod",
+			expectedResult: true,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "go.mod",
+				},
+			},
 			filePath:       "./pkg/go.mod",
 			expectedResult: false,
 		},
@@ -45,6 +54,20 @@ func TestIsMatchingRule(t *testing.T) {
 			},
 			filePath:       "go.mod",
 			goVersion:      "1.20",
+			expectedResult: true,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "go.mod",
+				},
+				MatchingRule{
+					Modules: map[string]string{
+						"github.com/updatecli/updatecli": "",
+					},
+				},
+			},
+			filePath:       "go.mod",
 			expectedResult: true,
 		},
 		{
