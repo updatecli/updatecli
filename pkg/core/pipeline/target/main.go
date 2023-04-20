@@ -21,7 +21,7 @@ var (
 // Target defines which file needs to be updated based on source output
 type Target struct {
 	// Result store the condition result after a target run.
-	Result string
+	Result result.Target
 	Config Config
 	Commit bool
 	Push   bool
@@ -70,7 +70,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	if len(t.Config.Transformers) > 0 {
 		source, err = t.Config.Transformers.Apply(source)
 		if err != nil {
-			t.Result = result.FAILURE
+			t.Result.Result = result.FAILURE
 			return err
 		}
 	}
@@ -81,24 +81,27 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	target, err := resource.New(t.Config.ResourceConfig)
 	if err != nil {
-		t.Result = result.FAILURE
+		t.Result.Result = result.FAILURE
 		return err
 	}
+
+	// Ensure the result named contains the up to date target name
+	// after templating
+	t.Result.Name = t.Config.Name
 
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
 
-		changed, _, _, err = target.Target(source, nil, o.DryRun)
+		err = target.Target(source, nil, o.DryRun, &t.Result)
 		if err != nil {
-			t.Result = result.FAILURE
+			t.Result.Description = "something went wrong during pipeline execution"
+			t.Result.Result = result.FAILURE
 			return err
 		}
 
-		if changed {
-			t.Result = result.ATTENTION
-		} else {
-			t.Result = result.SUCCESS
-		}
+		// Could be improve to show attention description in yello, success in green, failure in red
+		logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
+
 		return nil
 
 	}
@@ -108,70 +111,68 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	_, err = t.Check()
 	if err != nil {
-		t.Result = result.FAILURE
+		t.Result.Result = result.FAILURE
 		return err
 	}
 
 	s := *t.Scm
 
 	if err = s.Checkout(); err != nil {
-		t.Result = result.FAILURE
+		t.Result.Result = result.FAILURE
 		return err
 	}
 
-	changed, files, message, err = target.Target(source, s, o.DryRun)
+	err = target.Target(source, s, o.DryRun, &t.Result)
 	if err != nil {
-		t.Result = result.FAILURE
+		t.Result.Result = result.FAILURE
 		return err
 	}
+
+	// Could be improve to show attention description in yello, success in green, failure in red
+	logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
 
 	isRemoteBranchUpToDate, err := s.IsRemoteBranchUpToDate()
-
 	if err != nil {
-		t.Result = result.FAILURE
+		t.Result.Result = result.FAILURE
 		return err
 	}
 
-	if !changed {
+	if !t.Result.Changed {
 		if isRemoteBranchUpToDate {
-			t.Result = result.SUCCESS
 			return nil
 		}
 
 		logrus.Infof("\n\u26A0 While nothing change in the current pipeline run, according to the git history, some commits will be pushed\n")
 	}
 
-	t.Result = result.ATTENTION
 	if !o.DryRun {
-
 		if changed {
-			if message == "" {
-				t.Result = result.FAILURE
+			if t.Result.Description == "" {
+				t.Result.Result = result.FAILURE
 				return fmt.Errorf("target has no change message")
 			}
 
-			if len(files) == 0 {
-				t.Result = result.FAILURE
+			if len(t.Result.Files) == 0 {
+				t.Result.Result = result.FAILURE
 				return fmt.Errorf("no changed file to commit")
 			}
 
 			if o.Commit {
 				if err := s.Add(files); err != nil {
-					t.Result = result.FAILURE
+					t.Result.Result = result.FAILURE
 					return err
 				}
 
 				if err = s.Commit(message); err != nil {
-					t.Result = result.FAILURE
+					t.Result.Result = result.FAILURE
 					return err
 				}
 			}
-
 		}
 
 		if o.Push {
 			if err := s.Push(); err != nil {
-				t.Result = result.FAILURE
+				t.Result.Result = result.FAILURE
 				return err
 			}
 		}
