@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"gotest.tools/assert"
 )
 
@@ -64,7 +65,7 @@ func TestTarget(t *testing.T) {
 			},
 			expectedResult:   false,
 			wantErr:          true,
-			expectedErrorMsg: errors.New("✗ nothing found at path \"/name/donotexist\" from file \"testdata/data_2.xml\""),
+			expectedErrorMsg: errors.New("nothing found at path \"/name/donotexist\" from file \"testdata/data_2.xml\""),
 		},
 		{
 			name: "Test 6",
@@ -95,7 +96,8 @@ func TestTarget(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, _, _, err := x.Target("", nil, true)
+			gotResult := result.Target{}
+			err = x.Target("", nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -103,7 +105,7 @@ func TestTarget(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Changed)
 		})
 	}
 

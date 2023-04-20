@@ -13,10 +13,12 @@ import (
 )
 
 // Target ensure that a specific release exist on Gitlab, otherwise creates it
-func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
+func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
 	}
+
+	resultTarget.NewInformation = g.spec.Tag
 
 	if len(g.spec.Title) == 0 {
 		g.spec.Title = g.spec.Tag
@@ -47,23 +49,28 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []
 
 	if err != nil {
 		logrus.Debugf("Gitlab Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
-		return false, []string{}, "", err
+		return err
 	}
 
 	for _, r := range releases {
 		if r.Tag == g.spec.Tag {
-			logrus.Infof("%s Release Tag %q already exist, nothing else to do", result.SUCCESS, g.spec.Tag)
-			return false, []string{}, "", nil
+			resultTarget.Result = result.SUCCESS
+			resultTarget.OldInformation = g.spec.Tag
+			resultTarget.Description = fmt.Sprintf("Gitlab release tag %q already exist", g.spec.Tag)
+			return nil
 		}
 	}
 
+	resultTarget.Result = result.ATTENTION
+	resultTarget.Changed = true
+
 	if dryRun {
-		logrus.Infof("%s Release Tag %q doesn't exist, we need to create it", result.SUCCESS, g.spec.Tag)
-		return true, []string{}, "", nil
+		resultTarget.Description = fmt.Sprintf("Gitlab release tag %q doesn't exist, we need to create it", g.spec.Tag)
+		return nil
 	}
 
 	if len(g.spec.Token) == 0 {
-		return true, []string{}, "", fmt.Errorf("wrong configuration, missing parameter %q", "token")
+		return fmt.Errorf("wrong configuration, missing parameter %q", "token")
 	}
 
 	// Create a new release as it doesn't exist yet
@@ -87,14 +94,15 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []
 	)
 
 	if err != nil {
-		return false, []string{}, "", err
+		return err
 	}
 
 	if resp.Status >= 400 {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-		return false, []string{}, "", fmt.Errorf("error from Gitlab api: %v", resp.Status)
+		return fmt.Errorf("error from Gitlab api: %v", resp.Status)
 	}
 
-	logrus.Infof("Gitlab Release %q successfully open on %q", release.Title, release.Link)
-	return false, []string{}, "", fmt.Errorf("target not supported for the plugin Gitlab Release")
+	resultTarget.Description = fmt.Sprintf("Gitlab Release %q successfully opened on %q", release.Title, release.Link)
+
+	return nil
 }

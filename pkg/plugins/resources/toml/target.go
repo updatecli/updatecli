@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {
@@ -24,16 +22,17 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool) (changed b
 		// Target doesn't support updating files on remote http location
 		if strings.HasPrefix(filename, "https://") ||
 			strings.HasPrefix(filename, "http://") {
-			return false, files, message, fmt.Errorf("URL scheme is not supported for Json target: %q", t.spec.File)
+			return fmt.Errorf("URL scheme is not supported for Json target: %q", t.spec.File)
 		}
 
 		if err := t.contents[i].Read(rootDir); err != nil {
-			return false, files, message, fmt.Errorf("file %q does not exist", t.contents[i].FilePath)
+			return fmt.Errorf("file %q does not exist", t.contents[i].FilePath)
 		}
 
 		if len(t.spec.Value) == 0 {
 			t.spec.Value = source
 		}
+		resultTarget.NewInformation = t.spec.Value
 
 		resourceFile := t.contents[i].FilePath
 
@@ -48,35 +47,37 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool) (changed b
 		switch len(t.spec.Query) > 0 {
 		case true:
 			queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
-
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 		case false:
 			queryResult, err := t.contents[i].Query(t.spec.Key)
-
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 			queryResults = append(queryResults, queryResult)
 
 		}
 
+		changedFile := false
 		for _, queryResult := range queryResults {
-			switch queryResult == t.spec.Value {
+			switch queryResult == resultTarget.NewInformation {
 			case true:
-				logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
-					result.SUCCESS,
+				resultTarget.Description = fmt.Sprintf("%s\nkey %q, from file %q, is correctly set to %q",
+					resultTarget.Description,
 					t.spec.Key,
 					t.contents[i].FilePath,
 					t.spec.Value)
 
 			case false:
-				changed = true
-				logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
-					result.ATTENTION,
+				changedFile = true
+				resultTarget.OldInformation = queryResult
+				resultTarget.Result = result.ATTENTION
+				resultTarget.Changed = true
+				resultTarget.Description = fmt.Sprintf("%s\nkey %q, from file %q, is incorrectly set to %q and should be %q",
+					resultTarget.Description,
 					t.spec.Key,
 					t.contents[i].FilePath,
 					queryResult,
@@ -84,7 +85,7 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool) (changed b
 			}
 		}
 
-		if !changed || dryRun {
+		if !changedFile || dryRun {
 			continue
 		}
 
@@ -94,26 +95,27 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool) (changed b
 			err = t.contents[i].PutMultiple(t.spec.Query, t.spec.Value)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 		case false:
 			err = t.contents[i].Put(t.spec.Key, t.spec.Value)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 		}
 
 		err = t.contents[i].Write()
 		if err != nil {
-			return changed, files, message, err
+			return err
 		}
 
-		files = append(files, resourceFile)
-		message = fmt.Sprintf("Update key %q from file %q", t.spec.Key, t.spec.File)
+		resultTarget.Files = append(resultTarget.Files, resourceFile)
 	}
 
-	return changed, files, message, err
+	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
+
+	return nil
 
 }
