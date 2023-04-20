@@ -72,7 +72,7 @@ func (p *Pipeline) RunActions() error {
 
 		for _, t := range relatedTargets {
 			// We only care about target that have changed something
-			if p.Targets[t].Result != result.ATTENTION {
+			if !p.Targets[t].Result.Changed {
 				continue
 			}
 
