@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -371,7 +372,8 @@ func TestFile_TargetMultiples(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, _, _, gotErr := f.Target(tt.inputSourceValue, nil, tt.dryRun)
+			gotResultTarget := result.Target{}
+			gotErr := f.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResultTarget)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -379,7 +381,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantedResult, gotResult)
+			assert.Equal(t, tt.wantedResult, gotResultTarget.Changed)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
 			}
@@ -520,7 +522,9 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, gotFiles, _, gotErr := f.Target(tt.inputSourceValue, tt.scm, tt.dryRun)
+			gotResultTarget := result.Target{}
+
+			gotErr := f.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResultTarget)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -528,8 +532,8 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantedResult, gotResult)
-			assert.Equal(t, tt.wantedFiles, gotFiles)
+			assert.Equal(t, tt.wantedResult, gotResultTarget.Changed)
+			assert.Equal(t, tt.wantedFiles, gotResultTarget.Files)
 
 			for filePath := range f.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])

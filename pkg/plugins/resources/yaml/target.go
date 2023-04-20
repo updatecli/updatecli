@@ -16,7 +16,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
+func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	joignedFiles := make(map[string]string)
 	for filePath := range y.files {
 		joignedFilePath := filePath
@@ -28,32 +28,30 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []s
 	}
 	y.files = joignedFiles
 
-	return y.target(source, dryRun)
+	return y.target(source, dryRun, resultTarget)
 }
 
-func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error) {
-	var files []string
-	var message strings.Builder
+func (y *Yaml) target(source string, dryRun bool, resultTarget *result.Target) error {
 
 	// Test if target reference a file with a prefix like https:// or file://, as we don't know how to update those files.
 	for filePath := range y.files {
 		if text.IsURL(filePath) {
-			return false, files, message.String(), fmt.Errorf("unsupported filename prefix for %s", filePath)
+			return fmt.Errorf("unsupported filename prefix for %s", filePath)
 		}
 
 		if strings.HasPrefix(filePath, "https://") ||
 			strings.HasPrefix(filePath, "http://") {
-			return false, files, message.String(), fmt.Errorf("URL scheme is not supported for YAML target: %q", filePath)
+			return fmt.Errorf("URL scheme is not supported for YAML target: %q", filePath)
 		}
 
 		// Test at runtime if a file exist (no ForceCreate for kind: yaml)
 		if !y.contentRetriever.FileExists(filePath) {
-			return false, files, message.String(), fmt.Errorf("the yaml file %q does not exist", filePath)
+			return fmt.Errorf("the yaml file %q does not exist", filePath)
 		}
 	}
 
 	if err := y.Read(); err != nil {
-		return false, files, message.String(), err
+		return err
 	}
 
 	valueToWrite := source
@@ -61,6 +59,10 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		valueToWrite = y.spec.Value
 		logrus.Info("INFO: Using spec.Value instead of source input value.")
 	}
+
+	resultTarget.NewInformation = valueToWrite
+
+	shouldMsg := "should be"
 
 	// loop over file(s)
 	notChanged := 0
@@ -72,24 +74,26 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		err := yaml.Unmarshal([]byte(y.files[filePath]), &out)
 
 		if err != nil {
-			return false, files, message.String(), fmt.Errorf("cannot unmarshal content of file %s: %v", filePath, err)
+			return fmt.Errorf("cannot unmarshal content of file %s: %v", filePath, err)
 		}
 
 		keyFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToWrite, 1)
 
+		resultTarget.OldInformation = oldVersion
+
 		if !keyFound {
-			return false, files, message.String(), fmt.Errorf("%s cannot find key '%s' from file '%s'",
-				result.FAILURE,
+			return fmt.Errorf("couldn't find key %q from file %q",
 				y.spec.Key,
 				filePath)
 		}
 
 		if oldVersion == valueToWrite {
-			logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
-				result.SUCCESS,
+			resultTarget.Result = result.SUCCESS
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
+				resultTarget.Description,
 				y.spec.Key,
-				filePath,
-				valueToWrite)
+				valueToWrite,
+				filePath)
 			notChanged++
 			continue
 		}
@@ -101,19 +105,22 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		err = encoder.Encode(&out)
 
 		if err != nil {
-			return false, files, message.String(), err
+			return err
 		}
 		y.files[filePath] = buf.String()
 		buf.Reset()
 
-		files = append(files, filePath)
+		resultTarget.Changed = true
+		resultTarget.Files = append(resultTarget.Files, filePath)
+		resultTarget.Result = result.ATTENTION
 
-		logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
-			result.ATTENTION,
+		logrus.Infof("%s\nkey %q %supdated from %q to %q, in file %q",
+			resultTarget.Description,
 			y.spec.Key,
-			filePath,
 			oldVersion,
-			valueToWrite)
+			shouldMsg,
+			valueToWrite,
+			filePath)
 
 		if !dryRun {
 			newFile, err := os.Create(filePath)
@@ -123,24 +130,24 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 			defer newFile.Close()
 
 			if err != nil {
-				return false, files, message.String(), nil
+				return err
 			}
 
 			err = y.contentRetriever.WriteToFile(y.files[filePath], filePath)
 			if err != nil {
-				return false, files, message.String(), err
+				return err
 			}
 		}
-		message.WriteString(fmt.Sprintf("Update key %q from file %q", y.spec.Key, filePath))
-
 	}
+
+	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
 
 	// If no file was updated, don't return an error
 	if notChanged == len(y.files) {
-		return false, files, message.String(), nil
+		return nil
 	}
 
-	sort.Strings(files)
+	sort.Strings(resultTarget.Files)
 
-	return true, files, message.String(), nil
+	return nil
 }

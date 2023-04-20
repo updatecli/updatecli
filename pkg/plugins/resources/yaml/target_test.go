@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -256,14 +257,15 @@ github:
 				files:            tt.files,
 				indent:           tt.spec.Indent,
 			}
-			gotResult, _, _, gotErr := y.Target(tt.inputSourceValue, nil, tt.dryRun)
+			gotResult := result.Target{}
+			gotErr := y.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantedResult, gotResult)
+			assert.Equal(t, tt.wantedResult, gotResult.Changed)
 
 			for filePath := range y.files {
 				defer os.Remove(filePath)
@@ -378,15 +380,16 @@ github:
 				files:            tt.files,
 				indent:           tt.spec.Indent,
 			}
-			gotResult, gotFiles, _, gotErr := y.Target(tt.inputSourceValue, tt.scm, tt.dryRun)
+			gotResult := result.Target{}
+			gotErr := y.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantedResult, gotResult)
-			assert.Equal(t, tt.wantedFiles, gotFiles)
+			assert.Equal(t, tt.wantedResult, gotResult.Changed)
+			assert.Equal(t, tt.wantedFiles, gotResult.Files)
 
 			for filePath := range y.files {
 				defer os.Remove(filePath)

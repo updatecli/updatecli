@@ -6,40 +6,41 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
 // Target updates helm chart, it receives the default source value and a "dry-run" flag
 // then return if it changed something or failed
-func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool) (
-	changed bool, files []string, message string, err error) {
+func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	var out bytes.Buffer
-	err = c.ValidateTarget()
+	err := c.ValidateTarget()
 	if err != nil {
-		return false, files, message, err
+		return err
 	}
 
 	yamlSpec := yaml.Spec{
 		File: filepath.Join(c.spec.Name, c.spec.File),
 		Key:  c.spec.Key,
 	}
-	if len(c.spec.Value) == 0 {
-		c.spec.Value = source
-	} else {
+
+	c.spec.Value = source
+	if c.spec.Value != "" {
 		yamlSpec.Value = c.spec.Value
 	}
 
 	yamlResource, err := yaml.New(yamlSpec)
 	if err != nil {
-		return false, files, message, err
+		return err
 	}
 
-	changed, files, message, err = yamlResource.Target(source, scm, dryRun)
+	err = yamlResource.Target(source, scm, dryRun, resultTarget)
+
 	if err != nil {
-		return false, files, message, err
-	} else if err == nil && !changed {
-		return false, files, message, nil
+		return err
+	} else if err == nil && !resultTarget.Changed {
+		return nil
 	}
 
 	chartPath := c.spec.Name
@@ -49,12 +50,12 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool) (
 
 	err = c.MetadataUpdate(chartPath, dryRun)
 	if err != nil {
-		return false, files, message, err
+		return err
 	}
 
 	err = c.RequirementsUpdate(chartPath)
 	if err != nil {
-		return false, files, message, err
+		return err
 	}
 
 	if !dryRun {
@@ -63,12 +64,12 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool) (
 		logrus.Debug(out.String())
 
 		if err != nil {
-			return false, files, message, err
+			return err
 		}
 
 	}
 
-	files = append(files, chartPath)
+	resultTarget.Files = append(resultTarget.Files, chartPath)
 
-	return changed, files, message, err
+	return err
 }

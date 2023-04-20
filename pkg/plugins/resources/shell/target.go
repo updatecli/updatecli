@@ -5,29 +5,29 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (s *Shell) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
+func (s *Shell) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	getDir := ""
 	if scm != nil {
 		getDir = scm.GetDirectory()
 	}
 
-	changed, message, err := s.target(source, getDir, dryRun)
+	err := s.target(source, getDir, dryRun, resultTarget)
 	if err != nil {
-		return false, []string{}, "", err
+		return err
 	}
 
-	files := []string{}
 	if scm != nil {
 		// Once the changes have been applied inside the scm's temp directory, then we have to get the list of these changes
-		files, err = scm.GetChangedFiles(scm.GetDirectory())
+		resultTarget.Files, err = scm.GetChangedFiles(scm.GetDirectory())
 		if err != nil {
-			return false, files, message, err
+			return err
 		}
 	}
 
-	return changed, files, message, err
+	return nil
 }
 
 // Target executes the provided command (concatenated with the source) to apply the change.
@@ -37,14 +37,14 @@ func (s *Shell) Target(source string, scm scm.ScmHandler, dryRun bool) (bool, []
 //   - Any other exit code means "failed command with no change"
 //
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
-func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, error) {
+func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *result.Target) error {
 
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
 	err := s.spec.Environments.Load()
 	if err != nil {
-		return false, "", nil
+		return err
 	}
 
 	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "target"
@@ -64,12 +64,12 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 
 	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
-		return false, "", err
+		return err
 	}
 
 	scriptFilename, err := newShellScript(s.appendSource(source))
 	if err != nil {
-		return false, "", fmt.Errorf("failed initializing source script - %s", err)
+		return fmt.Errorf("failed initializing source script - %s", err)
 	}
 
 	err = s.executeCommand(command{
@@ -78,26 +78,33 @@ func (s *Shell) target(source, workingDir string, dryRun bool) (bool, string, er
 		Env: env.ToStringSlice(),
 	})
 	if err != nil {
-		return false, "", fmt.Errorf("failed while running target script - %s", err)
+		return fmt.Errorf("failed while running target script - %s", err)
 	}
 
 	err = s.success.PostCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
-		return false, "", err
+		return err
 	}
 
-	changed, err := s.success.TargetResult()
+	resultTarget.Changed, err = s.success.TargetResult()
 
 	if err != nil {
-		return false, "", &ExecutionFailedError{}
+		return &ExecutionFailedError{}
 	}
 
-	if !changed {
+	resultTarget.Description = fmt.Sprintf("ran shell command %q", s.appendSource(source))
+
+	if !resultTarget.Changed {
+		resultTarget.NewInformation = source
+		resultTarget.OldInformation = source
+
+		resultTarget.Result = result.SUCCESS
 		logrus.Info("No change detected")
-		return false, "", nil
+		return nil
 	}
 
-	commitMessage := fmt.Sprintf("ran shell command %q", s.appendSource(source))
+	resultTarget.Result = result.ATTENTION
+	resultTarget.OldInformation = "unknown"
 
-	return true, commitMessage, nil
+	return nil
 }

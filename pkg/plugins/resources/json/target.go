@@ -11,11 +11,20 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {
 		rootDir = scm.GetDirectory()
+	}
+
+	if len(j.spec.Value) == 0 {
+		j.spec.Value = source
+	}
+
+	shouldMessage := ""
+	if dryRun {
+		shouldMessage = "should be "
 	}
 
 	for i := range j.contents {
@@ -24,23 +33,14 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool) (changed b
 		// Target doesn't support updating files on remote http location
 		if strings.HasPrefix(filename, "https://") ||
 			strings.HasPrefix(filename, "http://") {
-			return false, files, message, fmt.Errorf("URL scheme is not supported for Json target: %q", j.spec.File)
+			return fmt.Errorf("URL scheme is not supported for Json target: %q", j.spec.File)
 		}
 
 		if err := j.contents[i].Read(rootDir); err != nil {
-			return false, files, message, fmt.Errorf("file %q does not exist", j.contents[i].FilePath)
-		}
-
-		if len(j.spec.Value) == 0 {
-			j.spec.Value = source
+			return fmt.Errorf("file %q does not exist", j.contents[i].FilePath)
 		}
 
 		resourceFile := j.contents[i].FilePath
-
-		// Override value from source if not yet defined
-		if len(j.spec.Value) == 0 {
-			j.spec.Value = source
-		}
 
 		var queryResults []string
 		var err error
@@ -50,14 +50,14 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool) (changed b
 			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 		case false:
 			queryResult, err := j.contents[i].Query(j.spec.Key)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 			queryResults = append(queryResults, queryResult)
@@ -65,26 +65,31 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool) (changed b
 		}
 
 		for _, queryResult := range queryResults {
+			resultTarget.OldInformation = queryResult
+
 			switch queryResult == j.spec.Value {
 			case true:
-				logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
-					result.SUCCESS,
+				logrus.Infof("%s\nkey %q, from file %q, is correctly set to %q",
+					resultTarget.Description,
 					j.spec.Key,
 					j.contents[i].FilePath,
-					j.spec.Value)
+					resultTarget.NewInformation)
 
 			case false:
-				changed = true
-				logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
-					result.ATTENTION,
+				resultTarget.Result = result.ATTENTION
+				resultTarget.Changed = true
+
+				logrus.Infof("%s\nkey %q, from file %q, %supdated from %q to %q",
+					resultTarget.Description,
 					j.spec.Key,
+					shouldMessage,
 					j.contents[i].FilePath,
-					queryResult,
-					j.spec.Value)
+					resultTarget.OldInformation,
+					resultTarget.NewInformation)
 			}
 		}
 
-		if !changed || dryRun {
+		if !resultTarget.Changed || dryRun {
 			continue
 		}
 
@@ -94,26 +99,25 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool) (changed b
 			err = j.contents[i].PutMultiple(j.spec.Query, j.spec.Value)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 		case false:
 			err = j.contents[i].Put(j.spec.Key, j.spec.Value)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 		}
 
 		err = j.contents[i].Write()
 		if err != nil {
-			return changed, files, message, err
+			return err
 		}
 
-		files = append(files, resourceFile)
-		message = fmt.Sprintf("Update key %q from file %q", j.spec.Key, j.spec.File)
+		resultTarget.Files = append(resultTarget.Files, resourceFile)
 	}
 
-	return changed, files, message, err
+	return nil
 
 }
