@@ -157,7 +157,7 @@ func (f *File) target(source string, dryRun bool, resultTarget *result.Target) e
 			contentType,
 			filePath)
 
-		logrus.Debugf("%s updated %s of file %q\n\n%s\n",
+		logrus.Debugf("updated %s of file %q\n\n%s\n",
 			contentType,
 			filePath,
 			text.Diff(filePath, originalContents[filePath], f.files[filePath]),
