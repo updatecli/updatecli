@@ -15,7 +15,7 @@ func Test_Target(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]file
 		inputSourceValue string
 		mockedContents   map[string]string
 		mockedError      error
@@ -32,8 +32,11 @@ func Test_Target(t *testing.T) {
 				Value:  "obiwankenobi",
 				Indent: 4,
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -60,8 +63,11 @@ annotations:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -91,9 +97,15 @@ github:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"test.yaml": "",
-				"bar.yaml":  "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"bar.yaml": {
+					filePath:         "bar.yaml",
+					originalFilePath: "bar.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -132,9 +144,15 @@ github:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"test.yaml": "",
-				"bar.yaml":  "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"bar.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "bar.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -171,8 +189,11 @@ github:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			wantedResult: false,
 			wantedError:  true,
@@ -183,8 +204,11 @@ github:
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -209,8 +233,11 @@ github:
 				Key:   "github.ship",
 				Value: "obiwankenobi",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -230,8 +257,11 @@ github:
 				Key:   "github.ship",
 				Value: "obiwankenobi",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -279,7 +309,7 @@ func Test_TargetFromSCM(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]file
 		scm              scm.ScmHandler
 		inputSourceValue string
 		mockedContents   map[string]string
@@ -298,8 +328,11 @@ func Test_TargetFromSCM(t *testing.T) {
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"/tmp/test.yaml": "",
+			files: map[string]file{
+				"/tmp/test.yaml": {
+					filePath:         "/tmp/test.yaml",
+					originalFilePath: "/tmp/test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -332,9 +365,15 @@ github:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"/tmp/test.yaml": "",
-				"/tmp/bar.yaml":  "",
+			files: map[string]file{
+				"/tmp/test.yaml": {
+					filePath:         "/tmp/test.yaml",
+					originalFilePath: "/tmp/test.yaml",
+				},
+				"/tmp/bar.yaml": {
+					filePath:         "/tmp/bar.yaml",
+					originalFilePath: "/tmp/bar.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{

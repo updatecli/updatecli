@@ -36,23 +36,20 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	}
 
 	// loop over the only file
-	files := make(map[string]string)
 	for f := range y.files {
 		filePath = f
 
 		// Ideally currentWorkingDirectory should be empty
 		if workingDir != currentWorkingDirectory {
-			filePath = joinPathWithWorkingDirectoryPath(f, workingDir)
+			y.UpdateAbsoluteFilePath(workingDir)
 		}
-		files[filePath] = y.files[f]
 	}
-	y.files = files
 
 	if err = y.Read(); err != nil {
 		return "", err
 	}
 
-	fileContent = y.files[filePath]
+	fileContent = y.files[filePath].content
 
 	var out yaml.Node
 
