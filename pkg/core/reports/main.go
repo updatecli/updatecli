@@ -37,7 +37,6 @@ REPORTS:
 {{- "\t" -}}Target:
 {{ range $ID, $target := .Targets }}
 {{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name }}{{"\n"}}
-{{- "\t" }}{{"\t"}}{{"\t"}}=> {{ $target.Description -}}{{"\n"}}
 {{- end }}
 {{ end }}
 {{- end -}}
