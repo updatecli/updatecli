@@ -16,16 +16,9 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	joignedFiles := make(map[string]string)
-	for filePath := range y.files {
-		joignedFilePath := filePath
-		if scm != nil {
-			joignedFilePath = joinPathWithWorkingDirectoryPath(joignedFilePath, scm.GetDirectory())
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", filePath, joignedFilePath)
-		}
-		joignedFiles[joignedFilePath] = y.files[filePath]
+	if scm != nil {
+		y.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
-	y.files = joignedFiles
 
 	return y.condition(source)
 }
@@ -42,9 +35,10 @@ func (y *Yaml) condition(source string) (bool, error) {
 
 	// loop over the only file
 	for theFilePath := range y.files {
-		fileContent = y.files[theFilePath]
-		filePath = theFilePath
+		fileContent = y.files[theFilePath].content
+		filePath = y.files[theFilePath].filePath
 	}
+
 	err := yaml.Unmarshal([]byte(fileContent), &out)
 
 	if err != nil {
