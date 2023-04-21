@@ -40,8 +40,10 @@ func (c *CSV) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 		var queryResults []string
 		var err error
 
+		query := ""
 		switch len(c.spec.Query) > 0 {
 		case true:
+			query = c.spec.Query
 			queryResults, err = c.contents[i].MultipleQuery(c.spec.Query)
 
 			if err != nil {
@@ -49,6 +51,7 @@ func (c *CSV) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 			}
 
 		case false:
+			query = c.spec.Key
 			queryResult, err := c.contents[i].Query(c.spec.Key)
 
 			if err != nil {
@@ -66,23 +69,23 @@ func (c *CSV) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 
 			switch resultTarget.NewInformation == resultTarget.OldInformation {
 			case true:
-				resultTarget.Description = fmt.Sprintf("%s \n * Key %q, from file %q, is correctly set to %q",
+				resultTarget.Description = fmt.Sprintf("%s \n * Query %q correctly return %q from file %q",
 					resultTarget.Description,
-					c.spec.Key,
-					c.contents[i].FilePath,
-					resultTarget.NewInformation)
+					query,
+					resultTarget.NewInformation,
+					c.contents[i].FilePath)
 
 			case false:
 				fileChanged = true
 				resultTarget.Changed = true
 				resultTarget.Files = append(resultTarget.Files, resourceFile)
 				resultTarget.Result = result.ATTENTION
-				resultTarget.Description = fmt.Sprintf("%s\n * Key %q, from file %q, should be updated from %q to %q",
+				resultTarget.Description = fmt.Sprintf("%s\n * Query %q, return update from %q to %q in file %q",
 					resultTarget.Description,
-					c.spec.Key,
-					c.contents[i].FilePath,
+					query,
 					resultTarget.OldInformation,
 					resultTarget.NewInformation,
+					c.contents[i].FilePath,
 				)
 
 			}
@@ -115,7 +118,7 @@ func (c *CSV) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 		}
 	}
 
-	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n ")
+	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
 
 	if !dryRun {
 		resultTarget.Description = strings.ReplaceAll(resultTarget.Description, "should be", "")
