@@ -29,14 +29,17 @@ func (f *File) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 }
 
 func (f *File) checkCondition(source string) (bool, error) {
+	files := f.spec.Files
+	files = append(files, f.spec.File)
+
 	passing, err := f.condition(source)
 	if err != nil {
 		logrus.Infof("%s Condition on file errored: %s", result.FAILURE, err.Error())
 	} else {
 		if passing {
-			logrus.Infof("%s Condition on file %q passed", result.SUCCESS, f.spec.Files)
+			logrus.Infof("%s Condition on file %q passed", result.SUCCESS, files)
 		} else {
-			logrus.Infof("%s Condition on file %q did not pass", result.FAILURE, f.spec.Files)
+			logrus.Infof("%s Condition on file %q did not pass", result.FAILURE, files)
 		}
 	}
 
