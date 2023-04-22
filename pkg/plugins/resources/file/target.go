@@ -115,8 +115,6 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		resultTarget.Changed = false
 		resultTarget.Result = result.SUCCESS
 
-		logrus.Infoln(resultTarget.Description)
-
 		return nil
 	}
 
