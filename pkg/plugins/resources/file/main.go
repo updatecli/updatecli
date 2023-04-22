@@ -33,7 +33,13 @@ type Spec struct {
 type File struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
-	files            map[string]string // map of file paths to file contents
+	files            map[string]fileMetadata // map of file
+}
+
+type fileMetadata struct {
+	originalPath string
+	path         string
+	content      string
 }
 
 // New returns a reference to a newly initialized File object from a Spec
@@ -55,14 +61,20 @@ func New(spec interface{}) (*File, error) {
 		return nil, err
 	}
 
-	newResource.files = make(map[string]string)
+	newResource.files = make(map[string]fileMetadata)
 	// File as unique element of newResource.files
 	if len(newResource.spec.File) > 0 {
-		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
+		f := fileMetadata{
+			originalPath: strings.TrimPrefix(newResource.spec.File, "file://"),
+		}
+		newResource.files[newResource.spec.File] = f
 	}
-	// Files
+
 	for _, filePath := range newResource.spec.Files {
-		newResource.files[strings.TrimPrefix(filePath, "file://")] = ""
+		f := fileMetadata{
+			originalPath: strings.TrimPrefix(filePath, "file://"),
+		}
+		newResource.files[filePath] = f
 	}
 
 	return newResource, nil
@@ -75,6 +87,18 @@ func hasDuplicates(values []string) bool {
 	}
 
 	return len(values) != len(uniqueValues)
+}
+
+func (f *File) UpdateAbsoluteFilePath(workDir string) {
+	for filePath := range f.files {
+		if workDir != "" {
+			file := f.files[filePath]
+			file.path = joinPathWithWorkingDirectoryPath(file.originalPath, workDir)
+
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalPath, file.path)
+			f.files[filePath] = file
+		}
+	}
 }
 
 // Validate validates the object and returns an error (with all the failed validation messages) if not valid
@@ -128,11 +152,12 @@ func (f *File) Read() error {
 
 	// Retrieve files content
 	for filePath := range f.files {
-		if f.contentRetriever.FileExists(filePath) {
+		file := f.files[filePath]
+		if f.contentRetriever.FileExists(file.path) {
 			// Return the specified line if a positive number is specified by user in its manifest
 			// Note that in this case we're with a fileCount of 1 (as other cases wouldn't pass validation)
 			if f.spec.Line > 0 {
-				f.files[filePath], err = f.contentRetriever.ReadLine(filePath, f.spec.Line)
+				file.content, err = f.contentRetriever.ReadLine(file.path, f.spec.Line)
 				if err != nil {
 					return err
 				}
@@ -140,7 +165,7 @@ func (f *File) Read() error {
 
 			// Otherwise return the textual content
 			if f.spec.Line == 0 {
-				f.files[filePath], err = f.contentRetriever.ReadAll(filePath)
+				file.content, err = f.contentRetriever.ReadAll(file.path)
 				if err != nil {
 					return err
 				}
@@ -148,14 +173,15 @@ func (f *File) Read() error {
 		} else {
 			if f.spec.ForceCreate {
 				// f.files[filePath] is already set to "", no need for more except logging
-				logrus.Infof("Creating a new file at %q", filePath)
+				logrus.Infof("Creating a new file at %q", file.originalPath)
 			} else {
 				if f.spec.Line > 0 {
-					return fmt.Errorf("%s The specified line %d of the file %q does not exist", result.FAILURE, f.spec.Line, filePath)
+					return fmt.Errorf("%s The specified line %d of the file %q does not exist", result.FAILURE, f.spec.Line, file.originalPath)
 				}
 				return fmt.Errorf("%s The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'", result.FAILURE, filePath)
 			}
 		}
+		f.files[filePath] = file
 	}
 	return nil
 }

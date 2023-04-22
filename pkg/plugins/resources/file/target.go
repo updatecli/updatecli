@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -17,21 +16,10 @@ import (
 // Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
 func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-	absoluteFiles := make(map[string]string)
-	for filePath := range f.files {
-		absoluteFilePath := filePath
-		if !filepath.IsAbs(filePath) && scm != nil {
-			absoluteFilePath = filepath.Join(scm.GetDirectory(), filePath)
-			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
-		}
-		absoluteFiles[absoluteFilePath] = f.files[filePath]
+	if scm != nil {
+		f.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
-	f.files = absoluteFiles
 
-	return f.target(source, dryRun, resultTarget)
-}
-
-func (f *File) target(source string, dryRun bool, resultTarget *result.Target) error {
 	var files []string
 
 	if f.spec.Line > 0 && f.spec.ForceCreate {
@@ -43,7 +31,7 @@ func (f *File) target(source string, dryRun bool, resultTarget *result.Target) e
 	// Test if target reference a file with a prefix like https:// or file://, as we don't know how to update those files.
 	// We need to loop the files here before calling ReadOrForceCreate in case one of these file paths is an URL, not supported for a target
 	for filePath := range f.files {
-		if text.IsURL(filePath) {
+		if text.IsURL(f.files[filePath].path) {
 			validationError := fmt.Errorf("validation error in target of type 'file': spec.files item value (%q) is an URL which is not supported for a target", filePath)
 			logrus.Errorf(validationError.Error())
 			return validationError
@@ -89,33 +77,37 @@ func (f *File) target(source string, dryRun bool, resultTarget *result.Target) e
 			return err
 		}
 
-		for filePath := range f.files {
+		for filePath, file := range f.files {
 			// Check if there is any match in the file
-			if !reg.MatchString(f.files[filePath]) {
+			if !reg.MatchString(file.content) {
 				// We allow the possibility to match only some files. In that case, just a warning here
 				return fmt.Errorf("no line matched in file %q for pattern %q", filePath, f.spec.MatchPattern)
 			}
 			// Keep the original content for later comparison
-			originalContents[filePath] = f.files[filePath]
-			f.files[filePath] = reg.ReplaceAllString(f.files[filePath], inputContent)
+			originalContents[filePath] = file.content
+			file.content = reg.ReplaceAllString(file.content, inputContent)
+			f.files[filePath] = file
 		}
 	} else {
-		for filePath := range f.files {
+		for filePath, file := range f.files {
 			// Keep the original content for later comparison
-			originalContents[filePath] = f.files[filePath]
-			f.files[filePath] = inputContent
+			originalContents[filePath] = file.content
+			file.content = inputContent
+
+			f.files[filePath] = file
 		}
 	}
 
 	// Nothing to do if there is no content change
 	notChanged := 0
-	for filePath := range f.files {
-		if f.files[filePath] == originalContents[filePath] {
+	for filePath, file := range f.files {
+		if file.content == originalContents[filePath] {
 			notChanged++
-			logrus.Debugf("content from file %q already up to date", filePath)
+			logrus.Debugf("content from file %q already up to date", file.originalPath)
 		} else {
-			files = append(files, filePath)
+			files = append(files, file.path)
 		}
+		f.files[filePath] = file
 	}
 	if notChanged == len(f.files) {
 		resultTarget.Description = "all contents from 'file' and 'files' combined already up to date"
@@ -131,9 +123,10 @@ func (f *File) target(source string, dryRun bool, resultTarget *result.Target) e
 	sort.Strings(files)
 
 	// Otherwise write the new content to the file(s), or nothing but logs if dry run is enabled
-	for filePath := range f.files {
+	for filePath, file := range f.files {
 		var contentType string
 		var err error
+
 		if dryRun {
 			contentType = "[dry run] content"
 			if f.spec.Line > 0 {
@@ -141,27 +134,31 @@ func (f *File) target(source string, dryRun bool, resultTarget *result.Target) e
 			}
 		}
 		if f.spec.Line == 0 && !dryRun {
-			err = f.contentRetriever.WriteToFile(f.files[filePath], filePath)
+			err = f.contentRetriever.WriteToFile(file.content, file.path)
 			contentType = "content"
 		}
 		if f.spec.Line > 0 && !dryRun {
-			err = f.contentRetriever.WriteLineToFile(f.files[filePath], filePath, f.spec.Line)
+			err = f.contentRetriever.WriteLineToFile(file.content, file.path, f.spec.Line)
 			contentType = fmt.Sprintf("line %d", f.spec.Line)
 		}
 		if err != nil {
 			return err
 		}
 
-		resultTarget.Description = fmt.Sprintf("%s\nUpdated %s of file %q\n",
+		resultTarget.Description = fmt.Sprintf("%s\nUpdated to %s %q in file %q\n",
 			resultTarget.Description,
 			contentType,
-			filePath)
+			f.spec.Content,
+			file.originalPath)
 
 		logrus.Debugf("updated %s of file %q\n\n%s\n",
 			contentType,
-			filePath,
-			text.Diff(filePath, originalContents[filePath], f.files[filePath]),
+
+			file.originalPath,
+			text.Diff(filePath, originalContents[filePath], file.content),
 		)
+
+		f.files[filePath] = file
 	}
 
 	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")

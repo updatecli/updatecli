@@ -15,7 +15,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]fileMetadata
 		inputSourceValue string
 		mockedContents   map[string]string
 		mockedError      error
@@ -32,8 +32,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				MatchPattern:   "maven_(.*)=.*",
 				ReplacePattern: "maven_$1= 3.9.0",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": `maven_version = "3.8.2"
@@ -68,9 +71,15 @@ func TestFile_TargetMultiples(t *testing.T) {
 				MatchPattern:   "maven_(.*)=.*",
 				ReplacePattern: "maven_$1= 3.9.0",
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": `maven_version = "3.8.2"
@@ -110,8 +119,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				File:    "foo.txt",
 				Content: "Be happy",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "current_version=1.2.3",
 			mockedContents: map[string]string{
@@ -131,9 +143,15 @@ func TestFile_TargetMultiples(t *testing.T) {
 				},
 				Content: "Be happy",
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			inputSourceValue: "current_version=1.2.3",
 			mockedContents: map[string]string{
@@ -153,8 +171,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				Content: "Hello World",
 				Line:    2,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "Title\r\nGood Bye\r\nThe end",
@@ -175,9 +196,15 @@ func TestFile_TargetMultiples(t *testing.T) {
 				Content: "Hello World",
 				Line:    2,
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "Title\r\nGood Bye\r\nThe end",
@@ -195,8 +222,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 			spec: Spec{
 				File: "https://github.com/foo.txt",
 			},
-			files: map[string]string{
-				"https://github.com/foo.txt": "",
+			files: map[string]fileMetadata{
+				"https://github.com/foo.txt": {
+					originalPath: "https://github.com/foo.txt",
+					path:         "https://github.com/foo.txt",
+				},
 			},
 			wantedResult: false,
 			wantedErr:    true,
@@ -209,9 +239,15 @@ func TestFile_TargetMultiples(t *testing.T) {
 					"https://github.com/bar.txt",
 				},
 			},
-			files: map[string]string{
-				"foo.txt":                    "",
-				"https://github.com/bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"https://github.com/bar.txt": {
+					originalPath: "https://github.com/bar.txt",
+					path:         "https://github.com/bar.txt",
+				},
 			},
 			wantedResult: false,
 			wantedErr:    true,
@@ -225,8 +261,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				ForceCreate: true,
 				Line:        2,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			wantedResult: false,
 			wantedErr:    true,
@@ -239,8 +278,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				},
 				MatchPattern: "(d+:1",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			wantedResult: false,
 			wantedErr:    true,
@@ -253,8 +295,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				},
 				Line: 3,
 			},
-			files: map[string]string{
-				"not_existing.txt": "",
+			files: map[string]fileMetadata{
+				"not_existing.txt": {
+					originalPath: "not_existing.txt",
+					path:         "not_existing.txt",
+				},
 			},
 			wantedResult: false,
 			wantedErr:    true,
@@ -267,8 +312,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				},
 				Content: "Hello World",
 			},
-			files: map[string]string{
-				"not_existing.txt": "",
+			files: map[string]fileMetadata{
+				"not_existing.txt": {
+					originalPath: "not_existing.txt",
+					path:         "not_existing.txt",
+				},
 			},
 			wantedResult: false,
 			wantedErr:    true,
@@ -281,8 +329,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				},
 				Line: 3,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "Be happy",
@@ -299,8 +350,11 @@ func TestFile_TargetMultiples(t *testing.T) {
 				},
 				Content: "Hello World",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "Be happy",
@@ -321,9 +375,15 @@ func TestFile_TargetMultiples(t *testing.T) {
 				},
 				Line: 3,
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					path:         "foo.txt",
+					originalPath: "foo.txt",
+				},
+				"bar.txt": {
+					path:         "bar.txt",
+					originalPath: "bar.txt",
+				},
 			},
 			inputSourceValue: "Be happy",
 			mockedContents: map[string]string{
@@ -344,9 +404,15 @@ func TestFile_TargetMultiples(t *testing.T) {
 					"bar.txt",
 				},
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			inputSourceValue: "current_version=1.2.3",
 			mockedContents: map[string]string{
@@ -393,7 +459,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]fileMetadata
 		scm              scm.ScmHandler
 		inputSourceValue string
 		mockedContents   map[string]string
@@ -413,9 +479,15 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				},
 				Line: 3,
 			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-				"/tmp/bar.txt": "",
+			files: map[string]fileMetadata{
+				"/tmp/foo.txt": {
+					originalPath: "/tmp/foo.txt",
+					path:         "/tmp/foo.txt",
+				},
+				"/tmp/bar.txt": {
+					originalPath: "/tmp/bar.txt",
+					path:         "/tmp/bar.txt",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
@@ -445,9 +517,15 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				},
 				ForceCreate: true,
 			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-				"/tmp/bar.txt": "",
+			files: map[string]fileMetadata{
+				"/tmp/foo.txt": {
+					originalPath: "/tmp/foo.txt",
+					path:         "/tmp/foo.txt",
+				},
+				"/tmp/bar.txt": {
+					originalPath: "/tmp/bar.txt",
+					path:         "/tmp/bar.txt",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
@@ -478,9 +556,15 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				MatchPattern:   "notmatching=*",
 				ReplacePattern: "maven_version= 3.9.0",
 			},
-			files: map[string]string{
-				"/tmp/bar.txt": "",
-				"/tmp/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/tmp/bar.txt": {
+					originalPath: "/tmp/bar.txt",
+					path:         "/tmp/bar.txt",
+				},
+				"/tmp/foo.txt": {
+					originalPath: "/tmp/foo.txt",
+					path:         "/tmp/foo.txt",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
