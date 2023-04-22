@@ -47,7 +47,9 @@ func (f *File) Source(workingDir string) (string, error) {
 	// Replace old file path
 	if newFilePath != "" {
 		delete(f.files, oldFilePath)
-		f.files[newFilePath] = ""
+		file := f.files[newFilePath]
+		file.content = ""
+		f.files[newFilePath] = file
 	}
 
 	if err := f.Read(); err != nil {
@@ -56,7 +58,7 @@ func (f *File) Source(workingDir string) (string, error) {
 
 	// Looping on the only filePath in 'files'
 	for filePath := range f.files {
-		foundContent = f.files[filePath]
+		foundContent = f.files[filePath].content
 		// If a matchPattern is specified, then retrieve the string matched and returns the (eventually) multi-line string
 		if len(f.spec.MatchPattern) > 0 {
 			reg, err := regexp.Compile(f.spec.MatchPattern)
@@ -66,10 +68,10 @@ func (f *File) Source(workingDir string) (string, error) {
 			}
 
 			// Check if there is any match in the file
-			if !reg.MatchString(f.files[filePath]) {
+			if !reg.MatchString(f.files[filePath].content) {
 				return "", fmt.Errorf("no line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
-			matchedStrings := reg.FindAllString(f.files[filePath], -1)
+			matchedStrings := reg.FindAllString(f.files[filePath].content, -1)
 
 			foundContent = strings.Join(matchedStrings, "\n")
 		}

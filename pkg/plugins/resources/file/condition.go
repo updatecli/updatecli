@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -22,16 +21,10 @@ func (f *File) Condition(source string) (bool, error) {
 // ConditionFromSCM test if a file content from SCM match the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
 func (f *File) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	absoluteFiles := make(map[string]string)
-	for filePath := range f.files {
-		absoluteFilePath := filePath
-		if !filepath.IsAbs(filePath) {
-			absoluteFilePath = filepath.Join(scm.GetDirectory(), filePath)
-			logrus.Debugf("Relative path detected: changing to absolute path from SCM: %q", absoluteFilePath)
-		}
-		absoluteFiles[absoluteFilePath] = f.files[filePath]
+	if scm != nil {
+		f.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
-	f.files = absoluteFiles
+
 	return f.checkCondition(source)
 }
 
@@ -71,10 +64,10 @@ func (f *File) condition(source string) (bool, error) {
 		return false, err
 	}
 
-	for filePath := range f.files {
-		logMessage := fmt.Sprintf("Content of the file %q", filePath)
+	for filePath, file := range f.files {
+		logMessage := fmt.Sprintf("Content of the file %q", file.originalPath)
 		if f.spec.Line > 0 {
-			logMessage = fmt.Sprintf("Content of the file %q (line %d)", filePath, f.spec.Line)
+			logMessage = fmt.Sprintf("Content of the file %q (line %d)", file.originalPath, f.spec.Line)
 		}
 
 		// If a matchPattern is specified, then return its result
@@ -86,7 +79,7 @@ func (f *File) condition(source string) (bool, error) {
 				return false, err
 			}
 
-			if !reg.MatchString(f.files[filePath]) {
+			if !reg.MatchString(file.content) {
 				logrus.Infof(
 					"%s %s did not match the pattern %q",
 					result.FAILURE,
@@ -108,12 +101,12 @@ func (f *File) condition(source string) (bool, error) {
 			}
 
 			// Compare the content of the file with the source's value
-			if f.files[filePath] != source {
+			if file.content != source {
 				logrus.Infof(
 					"%s %s is different than the input source value:\n%s",
 					result.FAILURE,
 					logMessage,
-					text.Diff(filePath, f.files[filePath], source),
+					text.Diff(filePath, file.content, source),
 				)
 
 				return false, nil
@@ -127,7 +120,7 @@ func (f *File) condition(source string) (bool, error) {
 			logrus.Debug("No attribute 'content' provided")
 			// No content + no source input values means the user only want to check if the line "exists" (e.g. is not empty) and that's all
 			if f.spec.Line > 0 {
-				if f.files[filePath] == "" {
+				if file.content == "" {
 					logrus.Infof("%s %s is empty or the file does not exist.", result.FAILURE, logMessage)
 					return false, nil
 				}
@@ -135,20 +128,22 @@ func (f *File) condition(source string) (bool, error) {
 			}
 
 			// No source, no content, no line: Only check for existence of the file
-			return f.contentRetriever.FileExists(filePath), nil
+			return f.contentRetriever.FileExists(file.path), nil
 		}
 
 		logrus.Debug("Attribute `content` detected")
 
-		if f.spec.Content != f.files[filePath] {
+		if f.spec.Content != file.content {
 			logrus.Infof("%s %s is different than the specified content: \n%s",
 				result.FAILURE,
 				logMessage,
-				text.Diff(filePath, f.files[filePath], f.spec.Content),
+				text.Diff(filePath, file.content, f.spec.Content),
 			)
 			return false, nil
 		}
 		logrus.Infof("%s %s is the same as the specified content.", result.SUCCESS, logMessage)
+
+		f.files[filePath] = file
 	}
 	return true, nil
 }
