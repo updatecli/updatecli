@@ -1,22 +1,28 @@
 package file
 
 import (
+	"errors"
 	"fmt"
-	"path/filepath"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
 // Source return a file content
 func (f *File) Source(workingDir string) (string, error) {
 	var validationErrors []string
 	var foundContent string
-	var oldFilePath string
-	var newFilePath string
+
+	// By the default workingdir is set to the current working directory
+	// it would be better to have it empty by default but it must be changed in the
+	// source core codebase.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		return "", errors.New("fail getting current working directory")
+	}
 
 	if len(f.spec.Files) > 1 {
 		validationErrors = append(validationErrors, "validation error in source of type 'file': the attributes `spec.files` can't contain more than one element for sources")
@@ -35,21 +41,9 @@ func (f *File) Source(workingDir string) (string, error) {
 		return "", fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
-	// Looping on the only filePath in 'files'
-	for filePath := range f.files {
-		// Relative path is used when an SCM is associated with the file resource: means the file is on a remote SCM (hence relative path)
-		if !text.IsURL(filePath) && !filepath.IsAbs(filePath) {
-			newFilePath = filepath.Join(workingDir, filePath)
-			oldFilePath = filePath
-			logrus.Debugf("relative path detected: changing to absolute path from working directory: %q", filePath)
-		}
-	}
-	// Replace old file path
-	if newFilePath != "" {
-		delete(f.files, oldFilePath)
-		file := f.files[newFilePath]
-		file.content = ""
-		f.files[newFilePath] = file
+	// Ideally currentWorkingDirectory should be empty
+	if workingDir != currentWorkingDirectory {
+		f.UpdateAbsoluteFilePath(workingDir)
 	}
 
 	if err := f.Read(); err != nil {
