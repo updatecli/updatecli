@@ -111,7 +111,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
 		resultTarget.Result = result.ATTENTION
 
-		logrus.Infof("%s\nkey %q%supdated from %q to %q, in file %q",
+		resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
 			resultTarget.Description,
 			y.spec.Key,
 			shouldMsg,
