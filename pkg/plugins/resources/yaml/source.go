@@ -14,7 +14,6 @@ import (
 // Source return the latest version
 func (y *Yaml) Source(workingDir string) (string, error) {
 	// By default workingDir is set to local directory
-	var fileContent string
 	var filePath string
 
 	// By the default workingdir is set to the current working directory
@@ -49,26 +48,32 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 		return "", err
 	}
 
-	fileContent = y.files[filePath].content
+	fileContent := y.files[filePath].content
+	originalFilePath := y.files[filePath].originalFilePath
 
 	var out yaml.Node
 
 	err = yaml.Unmarshal([]byte(fileContent), &out)
 	if err != nil {
-		return "", fmt.Errorf("cannot unmarshal content of file %s: %v", filePath, err)
+		return "", fmt.Errorf("cannot unmarshal content of file %s: %v", originalFilePath, err)
 	}
 
 	valueFound, value, _ := replace(&out, parseKey(y.spec.Key), y.spec.Value, 1)
 
 	if valueFound {
-		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v", result.SUCCESS, value, y.spec.Key, filePath)
+		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v",
+			result.SUCCESS,
+			value,
+			y.spec.Key,
+			originalFilePath,
+		)
 		return value, nil
 	}
 
 	logrus.Infof("%s cannot find key '%s' from file '%s'",
 		result.FAILURE,
 		y.spec.Key,
-		filePath)
+		originalFilePath)
 	return "", nil
 
 }
