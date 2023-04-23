@@ -25,7 +25,7 @@ func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 
 func (y *Yaml) condition(source string) (bool, error) {
 	var fileContent string
-	var filePath string
+	var originalFilePath string
 
 	// Start by retrieving the specified file's content
 	if err := y.Read(); err != nil {
@@ -36,7 +36,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 	// loop over the only file
 	for theFilePath := range y.files {
 		fileContent = y.files[theFilePath].content
-		filePath = y.files[theFilePath].filePath
+		originalFilePath = y.files[theFilePath].originalFilePath
 	}
 
 	err := yaml.Unmarshal([]byte(fileContent), &out)
@@ -82,7 +82,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 			logrus.Infof("%s Key %q, in YAML file %q, is correctly set to %q",
 				result.SUCCESS,
 				y.spec.Key,
-				filePath,
+				originalFilePath,
 				valueToCheck)
 			return true, nil
 		}
@@ -90,7 +90,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 		logrus.Infof("%s Key %q, in YAML file %q, is incorrectly set to %s and should be %q",
 			result.FAILURE,
 			y.spec.Key,
-			filePath,
+			originalFilePath,
 			oldVersion,
 			valueToCheck)
 		return false, nil
@@ -98,5 +98,6 @@ func (y *Yaml) condition(source string) (bool, error) {
 	return false, fmt.Errorf("%s cannot find key %q in the YAML file %q",
 		result.FAILURE,
 		y.spec.Key,
-		filePath)
+		originalFilePath,
+	)
 }
