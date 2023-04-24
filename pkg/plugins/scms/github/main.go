@@ -57,8 +57,7 @@ type Github struct {
 	HeadBranch       string
 	client           GitHubClient
 	nativeGitHandler gitgeneric.GitHandler
-	mu               sync.RWMutex // a mutex to guard shared state
-
+	mu               sync.RWMutex
 }
 
 // Repository contains Github repository data
