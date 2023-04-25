@@ -8,7 +8,7 @@ import (
 )
 
 // Source return the latest version
-func (m *Maven) Source(workingDir string) (string, error) {
+func (m *Maven) Source(workingDir string, resultSource *result.Source) error {
 
 	for _, metadataHandler := range m.metadataHandlers {
 		// metadataURL contains the URL without username/password
@@ -19,20 +19,21 @@ func (m *Maven) Source(workingDir string) (string, error) {
 
 		latestVersion, err := metadataHandler.GetLatestVersion()
 		if err != nil {
-			return "", err
+			return fmt.Errorf("getting latest version: %w", err)
 		}
 
 		if latestVersion != "" {
-			logrus.Infof(
-				"%s Latest version is %s on the Maven repository at %s",
-				result.SUCCESS,
+			resultSource.Result = result.SUCCESS
+			resultSource.Information = latestVersion
+			resultSource.Description = fmt.Sprintf(
+				"Latest version is %s on the Maven repository at %s",
 				latestVersion,
 				metadataURL,
 			)
-			return latestVersion, nil
+			return nil
 		}
 
 	}
 
-	return "", fmt.Errorf("%s No latest version for the Maven Artifact %s/%s", result.FAILURE, m.spec.GroupID, m.spec.ArtifactID)
+	return fmt.Errorf("no latest version for the Maven Artifact %s/%s", m.spec.GroupID, m.spec.ArtifactID)
 }

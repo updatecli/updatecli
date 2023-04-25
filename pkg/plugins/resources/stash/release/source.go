@@ -1,7 +1,6 @@
 package release
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -9,17 +8,16 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Stash) Source(workingDir string) (string, error) {
+func (g *Stash) Source(workingDir string, resultSource *result.Source) error {
 	versions, err := g.SearchReleases()
 
 	if err != nil {
 		logrus.Error(err)
-		return "", err
+		return fmt.Errorf("searching Bitbucket releases: %w", err)
 	}
 
 	if len(versions) == 0 {
-		logrus.Infof("%s No Bitbucket Release found. As a fallback you may be looking for git tags", result.ATTENTION)
-		return "", errors.New("no result found")
+		return fmt.Errorf("no Bitbucket Release found")
 	}
 
 	g.foundVersion, err = g.spec.VersionFilter.Search(versions)
@@ -27,25 +25,22 @@ func (g *Stash) Source(workingDir string) (string, error) {
 	if err != nil {
 		switch err {
 		case version.ErrNoVersionFound:
-			logrus.Infof("%s No Bitbucket Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-			return "", errors.New("no result found")
+			return fmt.Errorf("no Bitbucket release tag found matching pattern %q", g.versionFilter.Pattern)
 		default:
-			return "", err
+			return fmt.Errorf("filtering Bitbucket release: %w", err)
 		}
 	}
 
 	value := g.foundVersion.GetVersion()
 
-	logrus.Infof("Latest Release found: %v", g.foundVersion.GetVersion())
-
 	if len(value) == 0 {
-		logrus.Infof("%s No Bitbucket Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", errors.New("no result found")
-	} else if len(value) > 0 {
-		logrus.Infof("%s Bitbucket Release tag %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
-		return value, nil
+		return fmt.Errorf("no Bitbucket release tag found matching pattern %q of kind %q", g.versionFilter.Pattern, g.versionFilter.Kind)
 	}
 
-	return "", fmt.Errorf("something unexpected happened in Bitbucket source")
+	resultSource.Information = value
+	resultSource.Description = fmt.Sprintf("Bitbucket release tag %q found matching pattern %q", value, g.versionFilter.Pattern)
+	resultSource.Result = result.SUCCESS
+
+	return nil
 
 }

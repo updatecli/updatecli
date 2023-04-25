@@ -12,7 +12,7 @@ import (
 )
 
 // Source return a file content
-func (f *File) Source(workingDir string) (string, error) {
+func (f *File) Source(workingDir string, resultSource *result.Source) error {
 	var validationErrors []string
 	var foundContent string
 
@@ -21,7 +21,7 @@ func (f *File) Source(workingDir string) (string, error) {
 	// source core codebase.
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
-		return "", errors.New("fail getting current working directory")
+		return errors.New("fail getting current working directory")
 	}
 
 	if len(f.spec.Files) > 1 {
@@ -38,7 +38,7 @@ func (f *File) Source(workingDir string) (string, error) {
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
-		return "", fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	// Ideally currentWorkingDirectory should be empty
@@ -47,7 +47,7 @@ func (f *File) Source(workingDir string) (string, error) {
 	}
 
 	if err := f.Read(); err != nil {
-		return "", err
+		return fmt.Errorf("reading file: %w", err)
 	}
 
 	// Looping on the only filePath in 'files'
@@ -58,20 +58,22 @@ func (f *File) Source(workingDir string) (string, error) {
 			reg, err := regexp.Compile(f.spec.MatchPattern)
 			if err != nil {
 				logrus.Errorf("validation error in source of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
-				return "", err
+				return fmt.Errorf("compiling regex: %w", err)
 			}
 
 			// Check if there is any match in the file
 			if !reg.MatchString(f.files[filePath].content) {
-				return "", fmt.Errorf("no line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
+				return fmt.Errorf("no line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
 			matchedStrings := reg.FindAllString(f.files[filePath].content, -1)
 
 			foundContent = strings.Join(matchedStrings, "\n")
 		}
 
-		logrus.Infof("%s Content: found from file %q:\n%v", result.SUCCESS, filePath, foundContent)
+		resultSource.Result = result.SUCCESS
+		resultSource.Information = foundContent
+		resultSource.Description = fmt.Sprintf("content: found from file %q:\n%v", filePath, foundContent)
 
 	}
-	return foundContent, nil
+	return nil
 }

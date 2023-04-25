@@ -5,6 +5,7 @@ import (
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/result"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/checksum"
@@ -35,7 +36,7 @@ type SpecChangedIf struct {
 type Successer interface {
 	PreCommand(workingDir string) error
 	PostCommand(workingDir string) error
-	SourceResult() (string, error)
+	SourceResult(resultSource *result.Source) error
 	ConditionResult() (bool, error)
 	TargetResult() (bool, error)
 }

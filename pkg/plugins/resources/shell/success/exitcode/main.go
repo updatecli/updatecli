@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 type Spec struct {
@@ -81,12 +82,17 @@ func (e *ExitCode) PostCommand(workingDir string) error {
 }
 
 // SourceResult defines the success criteria for a source using the shell resource
-func (e *ExitCode) SourceResult() (string, error) {
+func (e *ExitCode) SourceResult(resultSource *result.Source) error {
 	switch *e.exitCode {
 	case e.spec.Success:
-		return *e.output, nil
+		resultSource.Information = *e.output
+		resultSource.Result = result.SUCCESS
+		resultSource.Description = "shell command successfully executed"
+
+		return nil
+
 	default:
-		return "", fmt.Errorf("shell command failed. Expected exit code %d but got %d", e.spec.Success, *e.exitCode)
+		return fmt.Errorf("shell command failed. Expected exit code %d but got %d", e.spec.Success, *e.exitCode)
 	}
 }
 

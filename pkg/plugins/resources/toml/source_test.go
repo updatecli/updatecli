@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"gotest.tools/assert"
 )
@@ -43,7 +44,7 @@ func TestSource(t *testing.T) {
 			},
 			expectedResult:   "",
 			wantErr:          true,
-			expectedErrorMsg: errors.New("✗ cannot find value for path \".doNotExist\" from file \"testdata/data.toml\""),
+			expectedErrorMsg: errors.New("cannot find value for path \".doNotExist\" from file \"testdata/data.toml\""),
 		},
 		{
 			name: "Test array exist",
@@ -74,7 +75,8 @@ func TestSource(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := j.Source("")
+			gotResult := result.Source{}
+			err = j.Source("", &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -82,7 +84,7 @@ func TestSource(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}
 }

@@ -8,12 +8,11 @@ import (
 )
 
 // Source retrieves a specific version tag from Github Releases.
-func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
+func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) error {
 
 	versions, err := gr.ghHandler.SearchReleases(gr.typeFilter)
 	if err != nil {
-		logrus.Error(err)
-		return value, err
+		return fmt.Errorf("searching GitHub release: %w", err)
 	}
 
 	if len(versions) == 0 {
@@ -23,31 +22,37 @@ func (gr *GitHubRelease) Source(workingDir string) (value string, err error) {
 
 			versions, err = gr.ghHandler.SearchTags()
 			if err != nil {
-				logrus.Errorf("%s", err)
-				return "", err
+				return fmt.Errorf("searching git tag: %w", err)
 			}
 			if len(versions) == 0 {
-				return "", fmt.Errorf("no GitHub release or git tags found, exiting")
+				return fmt.Errorf("no GitHub release or git tags found, exiting")
 			}
 		case false:
-			return "", fmt.Errorf("no GitHub release found, exiting")
+			return fmt.Errorf("no GitHub release found, exiting")
 		}
 	}
 
 	gr.foundVersion, err = gr.versionFilter.Search(versions)
 	if err != nil {
-		return "", err
+		return fmt.Errorf("filtering github release version: %w", err)
 	}
-	value = gr.foundVersion.GetVersion()
+
+	value := gr.foundVersion.GetVersion()
 
 	if len(value) == 0 {
-		logrus.Infof("%s No Github Release version found matching pattern %q", result.FAILURE, gr.versionFilter.Pattern)
-		return value, fmt.Errorf("no Github Release version found matching pattern %q", gr.versionFilter.Pattern)
-	} else if len(value) > 0 {
-		logrus.Infof("%s Github Release version %q found matching pattern %q", result.SUCCESS, value, gr.versionFilter.Pattern)
-	} else {
-		logrus.Errorf("Something unexpected happened in Github source")
+		return fmt.Errorf("no Github Release version found matching pattern %q of kind %q",
+			gr.versionFilter.Pattern,
+			gr.versionFilter.Kind,
+		)
+
 	}
 
-	return value, nil
+	resultSource.Result = result.SUCCESS
+	resultSource.Information = value
+	resultSource.Description = fmt.Sprintf("GitHub release version %q found matching pattern %q of kind %q",
+		value,
+		gr.versionFilter.Pattern,
+		gr.versionFilter.Kind)
+
+	return nil
 }

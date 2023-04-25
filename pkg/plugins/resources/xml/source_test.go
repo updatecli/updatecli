@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"gotest.tools/assert"
 )
 
@@ -55,11 +56,12 @@ func TestSource(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := x.Source("")
+			gotResult := result.Source{}
+			err = x.Source("", &gotResult)
 
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}
 }
