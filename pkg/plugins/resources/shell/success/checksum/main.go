@@ -7,6 +7,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 type Spec struct {
@@ -88,7 +89,7 @@ func (c *Checksum) PostCommand(workingDir string) error {
 }
 
 // SourceResult defines the success criteria for a source using the shell resource
-func (c *Checksum) SourceResult() (string, error) {
+func (c *Checksum) SourceResult(resultSource *result.Source) error {
 	var missingFiles []string
 
 	changed := false
@@ -116,14 +117,18 @@ func (c *Checksum) SourceResult() (string, error) {
 		for i := range missingFiles {
 			logrus.Debugf("Missing files %q", missingFiles[i])
 		}
-		return *c.output, fmt.Errorf("missing monitored file checksum")
+		return fmt.Errorf("missing monitored file checksum")
 	}
 
 	if changed {
-		return *c.output, fmt.Errorf("monitored checksum changed")
+		return fmt.Errorf("monitored checksum changed")
 	}
 
-	return *c.output, nil
+	resultSource.Information = *c.output
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = "monitored file checksum didn't changed"
+
+	return nil
 }
 
 // ConditionResult defines the success criteria for a condition using the shell resource

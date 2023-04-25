@@ -9,10 +9,10 @@ import (
 )
 
 // Source returns the latest Jenkins version based on release type
-func (j *Jenkins) Source(workingDir string) (string, error) {
+func (j *Jenkins) Source(workingDir string, resultSource *result.Source) error {
 	latest, versions, err := j.getVersions()
 	if err != nil {
-		return "", err
+		return fmt.Errorf("searching jenkins version: %w", err)
 	}
 
 	switch j.spec.Release {
@@ -33,10 +33,12 @@ func (j *Jenkins) Source(workingDir string) (string, error) {
 		found := vs[len(vs)-1]
 		j.foundVersion = found.Original()
 	default:
-		fmt.Printf("%s Unknown version %s found for the %s release", result.FAILURE, j.spec.Version, j.spec.Release)
-		return "unknown", fmt.Errorf("unknown Jenkins version found")
+		return fmt.Errorf("unknown version %s found for the %s release", j.spec.Version, j.spec.Release)
 	}
 
-	fmt.Printf("%s Version %s found for the Jenkins %s release", result.SUCCESS, j.foundVersion, j.spec.Release)
-	return j.foundVersion, nil
+	resultSource.Information = j.foundVersion
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = fmt.Sprintf("version %q found for the Jenkins %s release", j.foundVersion, j.spec.Release)
+
+	return nil
 }

@@ -10,11 +10,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (di *DockerImage) Source(workingDir string) (string, error) {
+func (di *DockerImage) Source(workingDir string, resultSource *result.Source) error {
 
 	repo, err := name.NewRepository(di.spec.Image)
 	if err != nil {
-		return "", fmt.Errorf("invalid repository %s: %w", di.spec.Image, err)
+		return fmt.Errorf("invalid repository %s: %w", di.spec.Image, err)
 	}
 	logrus.Debugf(
 		"Searching tags for the image %q",
@@ -23,7 +23,7 @@ func (di *DockerImage) Source(workingDir string) (string, error) {
 
 	tags, err := remote.List(repo, di.options...)
 	if err != nil {
-		return "", fmt.Errorf("unable to list tags for repository %s: %w", repo, err)
+		return fmt.Errorf("unable to list tags for repository %s: %w", repo, err)
 	}
 
 	// apply tagFilter
@@ -36,20 +36,19 @@ func (di *DockerImage) Source(workingDir string) (string, error) {
 
 	di.foundVersion, err = di.versionFilter.Search(tags)
 	if err != nil {
-		return "", err
+		return fmt.Errorf("filtering tags: %w", err)
 	}
 	tag := di.foundVersion.GetVersion()
 
 	if len(tag) == 0 {
-		logrus.Infof("%s No Docker Image Tag found matching pattern %q", result.FAILURE, di.versionFilter.Pattern)
-		return tag, fmt.Errorf("no Docker Image Tag tag found matching pattern %q", di.versionFilter.Pattern)
-	} else if len(tag) > 0 {
-		logrus.Infof("%s Docker Image Tag %q found matching pattern %q", result.SUCCESS, tag, di.versionFilter.Pattern)
-	} else {
-		logrus.Errorf("Something unexpected happened in dockerimage source")
+		return fmt.Errorf("no Docker Image Tag tag found matching pattern %q", di.versionFilter.Pattern)
 	}
 
-	return tag, nil
+	resultSource.Result = result.SUCCESS
+	resultSource.Information = tag
+	resultSource.Description = fmt.Sprintf("Docker Image Tag %q found matching pattern %q", tag, di.versionFilter.Pattern)
+
+	return nil
 }
 
 func (di *DockerImage) filterTags(tags []string) []string {

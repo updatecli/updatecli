@@ -135,7 +135,7 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 // Resource allow to manipulate a resource that can be a source, a condition or a target
 type Resource interface {
-	Source(workingDir string) (string, error)
+	Source(workingDir string, sourceResult *result.Source) error
 	Condition(version string) (bool, error)
 	ConditionFromSCM(version string, scm scm.ScmHandler) (bool, error)
 	Target(source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)

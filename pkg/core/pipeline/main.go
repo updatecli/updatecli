@@ -122,8 +122,10 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		// Init Sources[id]
 		p.Sources[id] = source.Source{
 			Config: config.Spec.Sources[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Result: result.Source{
+				Result: result.SKIPPED,
+			},
+			Scm: scmPointer,
 		}
 
 		p.Report.Sources[id] = reports.Stage{

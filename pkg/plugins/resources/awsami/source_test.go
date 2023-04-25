@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestSource(t *testing.T) {
@@ -23,18 +25,20 @@ func TestSource(t *testing.T) {
 			Resp: d.mockedResponse,
 		}
 
-		got, err := d.ami.Source("")
+		gotResult := result.Source{}
+
+		err := d.ami.Source("", &gotResult)
 
 		if !errors.Is(err, d.expectedError) {
 			t.Errorf("[%d] Wrong error:\nExpected Error:\t%v\nGot:\t\t%v\n",
 				id, d.expectedError, err)
 		}
 
-		if strings.Compare(got, d.expectedSource) != 0 {
+		if strings.Compare(gotResult.Information, d.expectedSource) != 0 {
 			t.Errorf("[%d] Wrong AMI ID returned:\nExpected Result:\t\t%q\nGot:\t\t\t\t\t%q",
 				id,
 				d.expectedSource,
-				got)
+				gotResult.Information)
 		}
 	}
 }

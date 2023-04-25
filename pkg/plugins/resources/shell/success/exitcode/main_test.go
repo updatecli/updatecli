@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestSourceResult(t *testing.T) {
@@ -119,9 +120,10 @@ func TestSourceResult(t *testing.T) {
 				assert.NoError(t, gotErr)
 			}
 
-			gotSourceResult, gotErr := c.SourceResult()
+			gotResult := result.Source{}
+			gotErr = c.SourceResult(&gotResult)
 
-			assert.Equal(t, gotSourceResult, d.expectedResultOutput)
+			assert.Equal(t, d.expectedResultOutput, gotResult.Information)
 			switch d.expectedError {
 			case true:
 				assert.Equal(t, gotErr.Error(), d.expectedResultErrorMessage)

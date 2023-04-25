@@ -19,7 +19,7 @@ type Source struct {
 	// Changelog holds the changelog description
 	Changelog string
 	// Result stores the source result after a source run.
-	Result string
+	Result result.Source
 	// Output contains the value retrieved from a source
 	Output string
 	// Config defines a source specifications
@@ -41,7 +41,7 @@ var (
 func (s *Source) Run() (err error) {
 	source, err := resource.New(s.Config.ResourceConfig)
 	if err != nil {
-		s.Result = result.FAILURE
+		s.Result.Result = result.FAILURE
 		return err
 	}
 
@@ -51,7 +51,7 @@ func (s *Source) Run() (err error) {
 	case true:
 		pwd, err := os.Getwd()
 		if err != nil {
-			s.Result = result.FAILURE
+			s.Result.Result = result.FAILURE
 			return err
 		}
 
@@ -61,26 +61,27 @@ func (s *Source) Run() (err error) {
 		SCM := *s.Scm
 
 		if err != nil {
-			s.Result = result.FAILURE
+			s.Result.Result = result.FAILURE
 			return err
 		}
 
 		err = SCM.Checkout()
 
 		if err != nil {
-			s.Result = result.FAILURE
+			s.Result.Result = result.FAILURE
 			return err
 		}
 
 		workingDir = SCM.GetDirectory()
 	}
 
-	s.Output, err = source.Source(workingDir)
-	s.Result = result.SUCCESS
+	err = source.Source(workingDir, &s.Result)
 	if err != nil {
-		s.Result = result.FAILURE
+		s.Result.Result = result.FAILURE
 		return err
 	}
+
+	logrus.Infof("%s %s", s.Result.Result, s.Result.Description)
 
 	// Once the source is executed, then it can retrieve its changelog
 	// Any error means an empty changelog
@@ -92,13 +93,13 @@ func (s *Source) Run() (err error) {
 	if len(s.Config.Transformers) > 0 {
 		s.Output, err = s.Config.Transformers.Apply(s.Output)
 		if err != nil {
-			s.Result = result.FAILURE
+			s.Result.Result = result.FAILURE
 			return err
 		}
 	}
 
 	if len(s.Output) == 0 {
-		s.Result = result.ATTENTION
+		s.Result.Result = result.ATTENTION
 	}
 
 	return err

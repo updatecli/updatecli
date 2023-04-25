@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 type Console struct {
@@ -36,12 +37,17 @@ func (c *Console) PostCommand(workingDir string) error {
 }
 
 // SourceResult defines the success criteria for a source using the shell resource
-func (c *Console) SourceResult() (string, error) {
+func (c *Console) SourceResult(resultSource *result.Source) error {
 	switch *c.exitCode {
 	case 0:
-		return *c.output, nil
+		resultSource.Information = *c.output
+		resultSource.Result = result.SUCCESS
+		resultSource.Description = "shell command executed successfully"
+
+		return nil
+
 	default:
-		return "", fmt.Errorf("shell command failed. Expected exit code 0 but got %d", *c.exitCode)
+		return fmt.Errorf("shell command failed. Expected exit code 0 but got %d", *c.exitCode)
 	}
 }
 

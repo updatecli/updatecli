@@ -1,25 +1,21 @@
 package tag
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Gitlab) Source(workingDir string) (string, error) {
+func (g *Gitlab) Source(workingDir string, resultSource *result.Source) error {
 	versions, err := g.SearchTags()
 
 	if err != nil {
-		logrus.Error(err)
-		return "", err
+		return fmt.Errorf("searching Gitlab tags: %w", err)
 	}
 
 	if len(versions) == 0 {
-		logrus.Infof("%s No Gitlab Tags found", result.ATTENTION)
-		return "", errors.New("no result found")
+		return fmt.Errorf("no Gitlab Tags found")
 	}
 
 	g.foundVersion, err = g.spec.VersionFilter.Search(versions)
@@ -27,23 +23,31 @@ func (g *Gitlab) Source(workingDir string) (string, error) {
 	if err != nil {
 		switch err {
 		case version.ErrNoVersionFound:
-			logrus.Infof("%s No Gitlab tags found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-			return "", errors.New("no result found")
+			return fmt.Errorf("no Gitlab tags found matching pattern %q of kind %q",
+				g.versionFilter.Pattern,
+				g.versionFilter.Kind,
+			)
 		default:
-			return "", err
+			return fmt.Errorf("filtering tag: %w", err)
 		}
 	}
 
-	value := g.foundVersion.GetVersion()
+	resultSource.Information = g.foundVersion.GetVersion()
 
-	if len(value) == 0 {
-		logrus.Infof("%s No Gitlab tags found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", errors.New("no result found")
-	} else if len(value) > 0 {
-		logrus.Infof("%s Gitlab tags %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
-		return value, nil
+	if len(resultSource.Information) == 0 {
+		return fmt.Errorf("no Gitlab tags found matching pattern %q of kind %q",
+			g.versionFilter.Pattern,
+			g.versionFilter.Kind,
+		)
 	}
 
-	return "", fmt.Errorf("something unexpected happened in Gitlab source")
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = fmt.Sprintf("Gitlab tags %q found matching pattern %q of kind %q",
+		resultSource.Information,
+		g.versionFilter.Pattern,
+		g.versionFilter.Kind,
+	)
+
+	return nil
 
 }

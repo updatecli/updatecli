@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -182,7 +183,7 @@ github:
 `,
 			},
 			isResultWanted: false,
-			isErrorWanted:  false,
+			isErrorWanted:  true,
 		},
 		{
 			name: "File does not exist",
@@ -213,14 +214,16 @@ github:
 
 			// Looping on the only filePath in 'files'
 			for filePath := range y.files {
-				source, gotErr := y.Source("")
+				gotResult := result.Source{}
+
+				gotErr := y.Source("", &gotResult)
 				if tt.isErrorWanted {
 					assert.Error(t, gotErr)
 					return
 				}
 
 				require.NoError(t, gotErr)
-				assert.Equal(t, tt.wantedContents[filePath], source)
+				assert.Equal(t, tt.wantedContents[filePath], gotResult.Information)
 			}
 		})
 	}

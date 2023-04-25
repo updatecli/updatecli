@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -109,14 +110,17 @@ func TestGitHubRelease_Source(t *testing.T) {
 				ghHandler:     tt.mockedGhHandler,
 				versionFilter: tt.versionFilter,
 			}
-			gotValue, err := gr.Source(tt.workingDir)
+
+			gotResult := result.Source{}
+
+			err := gr.Source(tt.workingDir, &gotResult)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantValue, gotValue)
+			assert.Equal(t, tt.wantValue, gotResult.Information)
 		})
 	}
 }

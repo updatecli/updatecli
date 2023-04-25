@@ -8,7 +8,7 @@ import (
 )
 
 // Source returns the latest npm package version
-func (cp CargoPackage) Source(workingDir string) (string, error) {
+func (cp CargoPackage) Source(workingDir string, resultSource *result.Source) error {
 	logrus.Debugf("Registry RootDir: %s, workingDir: %s", cp.registry.RootDir, workingDir)
 	if cp.isSCM {
 		// We are in a scm context, workingDir is holding the data
@@ -17,15 +17,15 @@ func (cp CargoPackage) Source(workingDir string) (string, error) {
 
 	version, _, err := cp.getVersions()
 	if err != nil {
-		return "", err
+		return fmt.Errorf("get cargo packages versions: %w", err)
 	}
 
-	if version != "" {
-		logrus.Infof("%s Version %s found for package name %q", result.SUCCESS, version, cp.spec.Package)
-		return version, nil
+	if version == "" {
+		return fmt.Errorf("no version found for cargo package name %q", cp.spec.Package)
 	}
 
-	logrus.Infof("%s Unknown version %s found for package name %s ", result.FAILURE, version, cp.spec.Package)
-
-	return "", fmt.Errorf("%s Unknown version %s found for package name %s ", result.FAILURE, version, cp.spec.Package)
+	resultSource.Result = result.SUCCESS
+	resultSource.Information = version
+	resultSource.Description = fmt.Sprintf("version %q found for cargo package name %q", version, cp.spec.Package)
+	return nil
 }
