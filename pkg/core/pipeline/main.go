@@ -58,7 +58,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Actions = make(map[string]action.Action, len(config.Spec.Actions))
 
 	// Init context resource size
-	p.Report.Sources = make(map[string]reports.Stage, len(config.Spec.Sources))
+	p.Report.Sources = make(map[string]*result.Source, len(config.Spec.Sources))
 	p.Report.Conditions = make(map[string]reports.Stage, len(config.Spec.Conditions))
 	p.Report.Targets = make(map[string]*result.Target, len(config.Spec.Targets))
 	p.Report.Name = config.Spec.Name
@@ -128,12 +128,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			Scm: scmPointer,
 		}
 
-		p.Report.Sources[id] = reports.Stage{
-			Name:   config.Spec.Sources[id].Name,
-			Kind:   config.Spec.Sources[id].Kind,
-			Result: result.SKIPPED,
-		}
-
+		r := p.Sources[id].Result
+		p.Report.Sources[id] = &r
 	}
 
 	// Init conditions report

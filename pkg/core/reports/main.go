@@ -23,7 +23,7 @@ REPORTS:
 {{- if .Sources -}}
 {{- "\t"}}Source:
 {{ range $ID,$source := .Sources }}
-{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }} (kind: {{ $source.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }}{{"\n"}}
 {{- end -}}
 {{- end -}}
 
