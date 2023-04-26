@@ -567,7 +567,7 @@ func (config *Config) Update(data interface{}) (err error) {
 				This func is design to constantly reevaluate if a configuration changed
 			*/
 
-			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result"})
+			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result", "Result"})
 			if err != nil {
 				return "", err
 			}
