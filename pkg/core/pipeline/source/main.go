@@ -39,6 +39,7 @@ var (
 
 // Run execute actions defined by the source configuration
 func (s *Source) Run() (err error) {
+
 	source, err := resource.New(s.Config.ResourceConfig)
 	if err != nil {
 		s.Result.Result = result.FAILURE
@@ -57,16 +58,9 @@ func (s *Source) Run() (err error) {
 
 		workingDir = pwd
 	case false:
-
 		SCM := *s.Scm
 
-		if err != nil {
-			s.Result.Result = result.FAILURE
-			return err
-		}
-
 		err = SCM.Checkout()
-
 		if err != nil {
 			s.Result.Result = result.FAILURE
 			return err
@@ -75,6 +69,7 @@ func (s *Source) Run() (err error) {
 		workingDir = SCM.GetDirectory()
 	}
 
+	s.Result.Name = s.Config.Name
 	err = source.Source(workingDir, &s.Result)
 	if err != nil {
 		s.Result.Result = result.FAILURE
