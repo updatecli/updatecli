@@ -64,10 +64,6 @@ func (p *Pipeline) RunSources() error {
 			logrus.Infof("%s\n", source.Changelog)
 		}
 
-		if source.Result.Result == result.ATTENTION {
-			logrus.Infof("\n%s empty source returned", source.Result)
-		}
-
 		p.Sources[id] = source
 		p.Report.Sources[id] = &source.Result
 	}
