@@ -16,23 +16,16 @@ func (y *Yaml) Condition(source string) (bool, error) {
 
 // ConditionFromSCM checks if a key exists in a yaml file
 func (y *Yaml) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	joignedFiles := make(map[string]string)
-	for filePath := range y.files {
-		joignedFilePath := filePath
-		if scm != nil {
-			joignedFilePath = joinPathWithWorkingDirectoryPath(joignedFilePath, scm.GetDirectory())
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", filePath, joignedFilePath)
-		}
-		joignedFiles[joignedFilePath] = y.files[filePath]
+	if scm != nil {
+		y.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
-	y.files = joignedFiles
 
 	return y.condition(source)
 }
 
 func (y *Yaml) condition(source string) (bool, error) {
 	var fileContent string
-	var filePath string
+	var originalFilePath string
 
 	// Start by retrieving the specified file's content
 	if err := y.Read(); err != nil {
@@ -42,9 +35,10 @@ func (y *Yaml) condition(source string) (bool, error) {
 
 	// loop over the only file
 	for theFilePath := range y.files {
-		fileContent = y.files[theFilePath]
-		filePath = theFilePath
+		fileContent = y.files[theFilePath].content
+		originalFilePath = y.files[theFilePath].originalFilePath
 	}
+
 	err := yaml.Unmarshal([]byte(fileContent), &out)
 
 	if err != nil {
@@ -88,7 +82,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 			logrus.Infof("%s Key %q, in YAML file %q, is correctly set to %q",
 				result.SUCCESS,
 				y.spec.Key,
-				filePath,
+				originalFilePath,
 				valueToCheck)
 			return true, nil
 		}
@@ -96,7 +90,7 @@ func (y *Yaml) condition(source string) (bool, error) {
 		logrus.Infof("%s Key %q, in YAML file %q, is incorrectly set to %s and should be %q",
 			result.FAILURE,
 			y.spec.Key,
-			filePath,
+			originalFilePath,
 			oldVersion,
 			valueToCheck)
 		return false, nil
@@ -104,5 +98,6 @@ func (y *Yaml) condition(source string) (bool, error) {
 	return false, fmt.Errorf("%s cannot find key %q in the YAML file %q",
 		result.FAILURE,
 		y.spec.Key,
-		filePath)
+		originalFilePath,
+	)
 }

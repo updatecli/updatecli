@@ -36,7 +36,13 @@ type Yaml struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
 	indent           int
-	files            map[string]string // map of file paths to file contents
+	files            map[string]file // map of file paths to file contents
+}
+
+type file struct {
+	originalFilePath string
+	filePath         string
+	content          string
 }
 
 // New returns a reference to a newly initialized Yaml object from a Spec
@@ -64,14 +70,22 @@ func New(spec interface{}) (*Yaml, error) {
 		newResource.indent = 2
 	}
 
-	newResource.files = make(map[string]string)
+	newResource.files = make(map[string]file)
 	// File as unique element of newResource.files
 	if len(newResource.spec.File) > 0 {
-		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
+		filePath := strings.TrimPrefix(newResource.spec.File, "file://")
+		newResource.files[filePath] = file{
+			originalFilePath: filePath,
+			filePath:         filePath,
+		}
 	}
 	// Files
 	for _, filePath := range newResource.spec.Files {
-		newResource.files[strings.TrimPrefix(filePath, "file://")] = ""
+		filePath := strings.TrimPrefix(filePath, "file://")
+		newResource.files[strings.TrimPrefix(filePath, "file://")] = file{
+			originalFilePath: filePath,
+			filePath:         filePath,
+		}
 	}
 
 	return newResource, nil
@@ -121,16 +135,31 @@ func (y *Yaml) Read() error {
 
 	// Retrieve files content
 	for filePath := range y.files {
-		if y.contentRetriever.FileExists(filePath) {
-			y.files[filePath], err = y.contentRetriever.ReadAll(filePath)
+		f := y.files[filePath]
+		if y.contentRetriever.FileExists(f.filePath) {
+			f.content, err = y.contentRetriever.ReadAll(f.filePath)
 			if err != nil {
 				return err
 			}
+			y.files[filePath] = f
+
 		} else {
-			return fmt.Errorf("%s The specified file %q does not exist", result.FAILURE, filePath)
+			return fmt.Errorf("%s The specified file %q does not exist", result.FAILURE, f.filePath)
 		}
 	}
 	return nil
+}
+
+func (y *Yaml) UpdateAbsoluteFilePath(workDir string) {
+	for filePath := range y.files {
+		if workDir != "" {
+			f := y.files[filePath]
+			f.filePath = joinPathWithWorkingDirectoryPath(f.originalFilePath, workDir)
+
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", f.originalFilePath, f.filePath)
+			y.files[filePath] = f
+		}
+	}
 }
 
 // isPositionKey checks if key use the array position like agents[0].

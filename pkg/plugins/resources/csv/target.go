@@ -4,97 +4,94 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (c *CSV) Target(source string, dryRun bool) (changed bool, err error) {
-
-	changed, _, _, err = c.TargetFromSCM(source, nil, dryRun)
-	if err != nil {
-		return changed, err
-	}
-
-	return changed, err
-}
-
-// TargetFromSCM updates a scm repository based on the modified yaml file.
-func (c *CSV) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+// Target updates a scm repository based on the modified yaml file.
+func (c *CSV) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {
 		rootDir = scm.GetDirectory()
 	}
 
+	newValue := source
+	if c.spec.Value != "" {
+		newValue = c.spec.Value
+	}
+
+	resultTarget.Result = result.SUCCESS
 	for i := range c.contents {
 		filename := c.contents[i].FilePath
 
 		// Target doesn't support updating files on remote http location
 		if strings.HasPrefix(filename, "https://") ||
 			strings.HasPrefix(filename, "http://") {
-			return false, files, message, fmt.Errorf("URL scheme is not supported for CSV target: %q", c.spec.File)
+			return fmt.Errorf("URL scheme is not supported for CSV target: %q", c.spec.File)
 		}
 
 		if err := c.contents[i].Read(rootDir); err != nil {
-			return false, files, message, fmt.Errorf("file %q does not exist", c.contents[i].FilePath)
-		}
-
-		if len(c.spec.Value) == 0 {
-			c.spec.Value = source
+			return fmt.Errorf("file %q does not exist", c.contents[i].FilePath)
 		}
 
 		resourceFile := c.contents[i].FilePath
 
-		// Override value from source if not yet defined
-		if len(c.spec.Value) == 0 {
-			c.spec.Value = source
-		}
-
 		var queryResults []string
 		var err error
 
+		query := ""
 		switch len(c.spec.Query) > 0 {
 		case true:
+			query = c.spec.Query
 			queryResults, err = c.contents[i].MultipleQuery(c.spec.Query)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 		case false:
+			query = c.spec.Key
 			queryResult, err := c.contents[i].Query(c.spec.Key)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 			queryResults = append(queryResults, queryResult)
 
 		}
 
+		fileChanged := false
 		for _, queryResult := range queryResults {
-			switch queryResult == c.spec.Value {
+			resultTarget.OldInformation = queryResult
+			resultTarget.NewInformation = newValue
+
+			switch resultTarget.NewInformation == resultTarget.OldInformation {
 			case true:
-				logrus.Infof("%s Key '%s', from file '%v', is correctly set to %s'",
-					result.SUCCESS,
-					c.spec.Key,
-					c.contents[i].FilePath,
-					c.spec.Value)
+				resultTarget.Description = fmt.Sprintf("%s \n * Query %q correctly return %q from file %q",
+					resultTarget.Description,
+					query,
+					resultTarget.NewInformation,
+					c.contents[i].FilePath)
 
 			case false:
-				changed = true
-				logrus.Infof("%s Key '%s', from file '%v', is incorrectly set to %s and should be %s'",
-					result.ATTENTION,
-					c.spec.Key,
+				fileChanged = true
+				resultTarget.Changed = true
+				resultTarget.Files = append(resultTarget.Files, resourceFile)
+				resultTarget.Result = result.ATTENTION
+				resultTarget.Description = fmt.Sprintf("%s\n * Query %q, return update from %q to %q in file %q",
+					resultTarget.Description,
+					query,
+					resultTarget.OldInformation,
+					resultTarget.NewInformation,
 					c.contents[i].FilePath,
-					queryResult,
-					c.spec.Value)
+				)
+
 			}
 		}
 
-		if !changed || dryRun {
+		if !fileChanged || dryRun {
 			continue
 		}
 
@@ -104,26 +101,29 @@ func (c *CSV) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (cha
 			err = c.contents[i].PutMultiple(c.spec.Query, c.spec.Value)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 
 		case false:
 			err = c.contents[i].Put(c.spec.Key, c.spec.Value)
 
 			if err != nil {
-				return false, files, message, err
+				return err
 			}
 		}
 
 		err = c.contents[i].Write()
 		if err != nil {
-			return changed, files, message, err
+			return err
 		}
-
-		files = append(files, resourceFile)
-		message = fmt.Sprintf("Update key %q from file %q", c.spec.Key, c.spec.File)
 	}
 
-	return changed, files, message, err
+	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
+
+	if !dryRun {
+		resultTarget.Description = strings.ReplaceAll(resultTarget.Description, "should be", "")
+	}
+
+	return nil
 
 }

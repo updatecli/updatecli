@@ -151,7 +151,7 @@ func TestFile_Read(t *testing.T) {
 	tests := []struct {
 		name           string
 		spec           Spec
-		files          map[string]string
+		files          map[string]fileMetadata
 		mockedContents map[string]string
 		mockedError    error
 		wantedContents map[string]string
@@ -163,8 +163,11 @@ func TestFile_Read(t *testing.T) {
 			spec: Spec{
 				File: "/bar.txt",
 			},
-			files: map[string]string{
-				"/bar.txt": "",
+			files: map[string]fileMetadata{
+				"/bar.txt": {
+					originalPath: "/bar.txt",
+					path:         "/bar.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/bar.txt": "Hello World",
@@ -180,8 +183,11 @@ func TestFile_Read(t *testing.T) {
 				Line: 3,
 				File: "/foo.txt",
 			},
-			files: map[string]string{
-				"/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/foo.txt": {
+					originalPath: "/foo.txt",
+					path:         "/foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
@@ -197,8 +203,11 @@ func TestFile_Read(t *testing.T) {
 				Line: 5,
 				File: "/foo.txt",
 			},
-			files: map[string]string{
-				"/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/foo.txt": {
+					originalPath: "/foo.txt",
+					path:         "/foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/foo.txt": "Title\r\nGood Bye\r\nThe End",
@@ -213,8 +222,11 @@ func TestFile_Read(t *testing.T) {
 			spec: Spec{
 				File: "/not_existing.txt",
 			},
-			files: map[string]string{
-				"/not_existing.txt": "",
+			files: map[string]fileMetadata{
+				"/not_existing.txt": {
+					originalPath: "/not_existing.txt",
+					path:         "/not_existing.txt",
+				},
 			},
 			mockedError: fmt.Errorf("no such file or directory"),
 			wantedErr:   true,
@@ -225,8 +237,11 @@ func TestFile_Read(t *testing.T) {
 				File: "/not_existing.txt",
 				Line: 15,
 			},
-			files: map[string]string{
-				"/not_existing.txt": "",
+			files: map[string]fileMetadata{
+				"/not_existing.txt": {
+					originalPath: "/not_existing.txt",
+					path:         "/not_existing.txt",
+				},
 			},
 			mockedError: fmt.Errorf("no such file or directory"),
 			wantedErr:   true,

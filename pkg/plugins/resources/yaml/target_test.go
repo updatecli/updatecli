@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -14,7 +15,7 @@ func Test_Target(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]file
 		inputSourceValue string
 		mockedContents   map[string]string
 		mockedError      error
@@ -31,8 +32,11 @@ func Test_Target(t *testing.T) {
 				Value:  "obiwankenobi",
 				Indent: 4,
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -59,8 +63,11 @@ annotations:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -90,9 +97,15 @@ github:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"test.yaml": "",
-				"bar.yaml":  "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"bar.yaml": {
+					filePath:         "bar.yaml",
+					originalFilePath: "bar.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -131,9 +144,15 @@ github:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"test.yaml": "",
-				"bar.yaml":  "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"bar.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "bar.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -170,8 +189,11 @@ github:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			wantedResult: false,
 			wantedError:  true,
@@ -182,8 +204,11 @@ github:
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -208,8 +233,11 @@ github:
 				Key:   "github.ship",
 				Value: "obiwankenobi",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -229,8 +257,11 @@ github:
 				Key:   "github.ship",
 				Value: "obiwankenobi",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -256,14 +287,15 @@ github:
 				files:            tt.files,
 				indent:           tt.spec.Indent,
 			}
-			gotResult, gotErr := y.Target(tt.inputSourceValue, tt.dryRun)
+			gotResult := result.Target{}
+			gotErr := y.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantedResult, gotResult)
+			assert.Equal(t, tt.wantedResult, gotResult.Changed)
 
 			for filePath := range y.files {
 				defer os.Remove(filePath)
@@ -277,7 +309,7 @@ func Test_TargetFromSCM(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]file
 		scm              scm.ScmHandler
 		inputSourceValue string
 		mockedContents   map[string]string
@@ -296,8 +328,11 @@ func Test_TargetFromSCM(t *testing.T) {
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"/tmp/test.yaml": "",
+			files: map[string]file{
+				"/tmp/test.yaml": {
+					filePath:         "/tmp/test.yaml",
+					originalFilePath: "/tmp/test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -330,9 +365,15 @@ github:
 				Value:  "obiwankenobi",
 				Indent: 2,
 			},
-			files: map[string]string{
-				"/tmp/test.yaml": "",
-				"/tmp/bar.yaml":  "",
+			files: map[string]file{
+				"/tmp/test.yaml": {
+					filePath:         "/tmp/test.yaml",
+					originalFilePath: "/tmp/test.yaml",
+				},
+				"/tmp/bar.yaml": {
+					filePath:         "/tmp/bar.yaml",
+					originalFilePath: "/tmp/bar.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -378,15 +419,16 @@ github:
 				files:            tt.files,
 				indent:           tt.spec.Indent,
 			}
-			gotResult, gotFiles, _, gotErr := y.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
+			gotResult := result.Target{}
+			gotErr := y.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantedResult, gotResult)
-			assert.Equal(t, tt.wantedFiles, gotFiles)
+			assert.Equal(t, tt.wantedResult, gotResult.Changed)
+			assert.Equal(t, tt.wantedFiles, gotResult.Files)
 
 			for filePath := range y.files {
 				defer os.Remove(filePath)

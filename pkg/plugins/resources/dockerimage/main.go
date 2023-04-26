@@ -32,7 +32,7 @@ func New(spec interface{}) (*DockerImage, error) {
 
 	if len(newSpec.Architectures) > 0 {
 		if newSpec.Architecture != "" {
-			return nil, fmt.Errorf("Validation error in the resource of type 'dockerimage': the attributes `spec.architecture` and `spec.architecture` are mutually exclusive")
+			return nil, fmt.Errorf("validation error in the resource of type 'dockerimage': the attributes `spec.architecture` and `spec.architecture` are mutually exclusive")
 		}
 
 	} else {

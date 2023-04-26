@@ -12,9 +12,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Target ensure that a specific release exist on bitbucket, otherwise creates it
-func (g *Stash) Target(source string, dryRun bool) (bool, error) {
-
+func (g Stash) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget result.Target) error {
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
 	}
@@ -48,23 +46,30 @@ func (g *Stash) Target(source string, dryRun bool) (bool, error) {
 
 	if err != nil {
 		logrus.Debugf("Bitbucket Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
-		return false, err
+		return err
 	}
 
+	resultTarget.NewInformation = g.spec.Tag
 	for _, r := range releases {
 		if r.Tag == g.spec.Tag {
-			logrus.Infof("%s Release Tag %q already exist, nothing else to do", result.SUCCESS, g.spec.Tag)
-			return false, nil
+			resultTarget.OldInformation = resultTarget.NewInformation
+			resultTarget.Result = result.SUCCESS
+			resultTarget.Description = fmt.Sprintf("Stash release tag %q already exist", g.spec.Tag)
+			return nil
 		}
 	}
 
+	resultTarget.OldInformation = ""
+	resultTarget.Result = result.ATTENTION
+	resultTarget.Changed = true
+
 	if dryRun {
-		logrus.Infof("%s Release Tag %q doesn't exist, we need to create it", result.SUCCESS, g.spec.Tag)
-		return true, nil
+		resultTarget.Description = fmt.Sprintf("Stash release tag %q should be created", resultTarget.NewInformation)
+		return nil
 	}
 
 	if len(g.spec.Token) == 0 {
-		return true, fmt.Errorf("wrong configuration, missing parameter %q", "token")
+		return fmt.Errorf("wrong configuration, missing parameter %q", "token")
 	}
 
 	// Create a new release as it doesn't exist yet
@@ -88,19 +93,14 @@ func (g *Stash) Target(source string, dryRun bool) (bool, error) {
 	)
 
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	if resp.Status >= 400 {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-		return false, fmt.Errorf("error from Bitbucket api: %v", resp.Status)
+		return fmt.Errorf("error from Bitbucket api: %v", resp.Status)
 	}
 
-	logrus.Infof("Bitbucket Release %q successfully open on %q", release.Title, release.Link)
-
-	return true, nil
-}
-
-func (g Stash) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	return false, []string{}, "", fmt.Errorf("target not supported for the plugin Bitbucket Release")
+	resultTarget.Description = fmt.Sprintf("Stash release %q successfully open on %q", release.Title, release.Link)
+	return nil
 }

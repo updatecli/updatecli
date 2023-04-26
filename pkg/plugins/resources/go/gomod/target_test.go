@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestTarget(t *testing.T) {
@@ -62,13 +63,15 @@ func TestTarget(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
-			gotChanged, err := got.Target("", true)
+			gotResult := result.Target{}
+
+			err = got.Target("", nil, true, &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedChanged, gotChanged)
+			assert.Equal(t, tt.expectedChanged, gotResult.Changed)
 		})
 	}
 

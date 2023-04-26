@@ -36,7 +36,7 @@ REPORTS:
 {{- if .Targets -}}
 {{- "\t" -}}Target:
 {{ range $ID, $target := .Targets }}
-{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name }} (kind: {{ $target.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name }}{{"\n"}}
 {{- end }}
 {{ end }}
 {{- end -}}

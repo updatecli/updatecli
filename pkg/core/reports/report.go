@@ -70,7 +70,7 @@ type Report struct {
 	Result     string
 	Sources    map[string]Stage
 	Conditions map[string]Stage
-	Targets    map[string]Stage
+	Targets    map[string]*result.Target
 }
 
 // Init initializes a new report for a specific configuration
@@ -81,7 +81,7 @@ func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 
 	r.Sources = make(map[string]Stage, sourceNbr)
 	r.Conditions = make(map[string]Stage, conditionNbr)
-	r.Targets = make(map[string]Stage, targetNbr)
+	r.Targets = make(map[string]*result.Target, targetNbr)
 }
 
 // String returns a report as a string

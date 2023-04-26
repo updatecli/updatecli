@@ -16,50 +16,31 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, dryRun bool) (bool, error) {
-	changed, _, _, err := y.target(source, dryRun)
-	return changed, err
-}
+func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
-// TargetFromSCM updates a scm repository based on the modified yaml file.
-func (y *Yaml) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (bool, []string, string, error) {
-	joignedFiles := make(map[string]string)
-	for filePath := range y.files {
-		joignedFilePath := filePath
-		if scm != nil {
-			joignedFilePath = joinPathWithWorkingDirectoryPath(joignedFilePath, scm.GetDirectory())
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", filePath, joignedFilePath)
-		}
-		joignedFiles[joignedFilePath] = y.files[filePath]
+	if scm != nil {
+		y.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
-	y.files = joignedFiles
-
-	return y.target(source, dryRun)
-}
-
-func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error) {
-	var files []string
-	var message strings.Builder
 
 	// Test if target reference a file with a prefix like https:// or file://, as we don't know how to update those files.
-	for filePath := range y.files {
-		if text.IsURL(filePath) {
-			return false, files, message.String(), fmt.Errorf("unsupported filename prefix for %s", filePath)
+	for _, file := range y.files {
+		if text.IsURL(file.originalFilePath) {
+			return fmt.Errorf("unsupported filename prefix for %s", file.originalFilePath)
 		}
 
-		if strings.HasPrefix(filePath, "https://") ||
-			strings.HasPrefix(filePath, "http://") {
-			return false, files, message.String(), fmt.Errorf("URL scheme is not supported for YAML target: %q", filePath)
+		if strings.HasPrefix(file.originalFilePath, "https://") ||
+			strings.HasPrefix(file.originalFilePath, "http://") {
+			return fmt.Errorf("URL scheme is not supported for YAML target: %q", file.originalFilePath)
 		}
 
 		// Test at runtime if a file exist (no ForceCreate for kind: yaml)
-		if !y.contentRetriever.FileExists(filePath) {
-			return false, files, message.String(), fmt.Errorf("the yaml file %q does not exist", filePath)
+		if !y.contentRetriever.FileExists(file.filePath) {
+			return fmt.Errorf("the yaml file %q does not exist", file.originalFilePath)
 		}
 	}
 
 	if err := y.Read(); err != nil {
-		return false, files, message.String(), err
+		return fmt.Errorf("loading yaml file(s): %w", err)
 	}
 
 	valueToWrite := source
@@ -68,34 +49,44 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		logrus.Info("INFO: Using spec.Value instead of source input value.")
 	}
 
+	resultTarget.NewInformation = valueToWrite
+
+	// Use to craft message depending if we run Updatelci in dryrun mode or not
+	shouldMsg := " should be "
+
 	// loop over file(s)
 	notChanged := 0
-	originalContents := make(map[string]string)
+	//originalContents := make(map[string]string)
+
 	for filePath := range y.files {
-		originalContents[filePath] = y.files[filePath]
+		originFilePath := y.files[filePath].originalFilePath
+
+		//originalContents[filePath] = y.files[filePath].content
 
 		out := yaml.Node{}
-		err := yaml.Unmarshal([]byte(y.files[filePath]), &out)
+		err := yaml.Unmarshal([]byte(y.files[filePath].content), &out)
 
 		if err != nil {
-			return false, files, message.String(), fmt.Errorf("cannot unmarshal content of file %s: %v", filePath, err)
+			return fmt.Errorf("cannot unmarshal content of file %s: %w", originFilePath, err)
 		}
 
 		keyFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToWrite, 1)
 
+		resultTarget.OldInformation = oldVersion
+
 		if !keyFound {
-			return false, files, message.String(), fmt.Errorf("%s cannot find key '%s' from file '%s'",
-				result.FAILURE,
+			return fmt.Errorf("couldn't find key %q from file %q",
 				y.spec.Key,
-				filePath)
+				originFilePath)
 		}
 
 		if oldVersion == valueToWrite {
-			logrus.Infof("%s Key '%s', from file '%v', already set to %s, nothing else need to be done",
-				result.SUCCESS,
+			resultTarget.Result = result.SUCCESS
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
+				resultTarget.Description,
 				y.spec.Key,
-				filePath,
-				valueToWrite)
+				valueToWrite,
+				originFilePath)
 			notChanged++
 			continue
 		}
@@ -104,49 +95,59 @@ func (y *Yaml) target(source string, dryRun bool) (bool, []string, string, error
 		encoder := yaml.NewEncoder(buf)
 		defer encoder.Close()
 		encoder.SetIndent(y.indent)
-		err = encoder.Encode(&out)
 
+		err = encoder.Encode(&out)
 		if err != nil {
-			return false, files, message.String(), err
+			return fmt.Errorf("encoding yaml file: %w", err)
 		}
-		y.files[filePath] = buf.String()
+
+		f := y.files[filePath]
+		f.content = buf.String()
+		y.files[filePath] = f
+
 		buf.Reset()
 
-		files = append(files, filePath)
+		resultTarget.Changed = true
+		resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+		resultTarget.Result = result.ATTENTION
 
-		logrus.Infof("%s Key '%s', from file '%v', was updated from '%s' to '%s'",
-			result.ATTENTION,
+		resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
+			resultTarget.Description,
 			y.spec.Key,
-			filePath,
+			shouldMsg,
 			oldVersion,
-			valueToWrite)
+			valueToWrite,
+			originFilePath)
 
 		if !dryRun {
-			newFile, err := os.Create(filePath)
+			newFile, err := os.Create(y.files[filePath].filePath)
 
 			// https://staticcheck.io/docs/checks/#SA5001
 			//lint:ignore SA5001 We want to defer the file closing before exiting the function
 			defer newFile.Close()
 
 			if err != nil {
-				return false, files, message.String(), nil
+				return fmt.Errorf("creating file %q: %w", originFilePath, err)
 			}
 
-			err = y.contentRetriever.WriteToFile(y.files[filePath], filePath)
+			err = y.contentRetriever.WriteToFile(
+				y.files[filePath].content,
+				y.files[filePath].filePath)
+
 			if err != nil {
-				return false, files, message.String(), err
+				return fmt.Errorf("saving file %q: %w", originFilePath, err)
 			}
 		}
-		message.WriteString(fmt.Sprintf("Update key %q from file %q", y.spec.Key, filePath))
-
 	}
+
+	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
 
 	// If no file was updated, don't return an error
 	if notChanged == len(y.files) {
-		return false, files, message.String(), nil
+		return nil
 	}
 
-	sort.Strings(files)
+	sort.Strings(resultTarget.Files)
 
-	return true, files, message.String(), nil
+	return nil
 }
