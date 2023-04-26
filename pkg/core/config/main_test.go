@@ -18,7 +18,7 @@ import (
 // Mocking the context package
 type mockSourceContext struct {
 	Output string
-	Result string
+	Result result.Source
 }
 
 // Mocking the context package
@@ -96,7 +96,9 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
-						Result: result.SUCCESS,
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
 					},
 				},
 			},
@@ -135,7 +137,9 @@ var (
 			Context: context{
 				Sources: map[string]mockSourceContext{
 					"default": {
-						Result: result.FAILURE,
+						Result: result.Source{
+							Result: result.FAILURE,
+						},
 					},
 				},
 			},
@@ -200,7 +204,9 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
-						Result: result.SUCCESS,
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
 					},
 				},
 			},
@@ -295,7 +301,9 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
-						Result: result.SUCCESS,
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
 					},
 				},
 			},
