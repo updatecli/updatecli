@@ -3,7 +3,7 @@ package utils
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJoinFilePathWithWorkingDirectoryPath(t *testing.T) {
