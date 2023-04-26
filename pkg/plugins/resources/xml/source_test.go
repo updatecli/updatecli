@@ -3,17 +3,19 @@ package xml
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"gotest.tools/assert"
 )
 
 func TestSource(t *testing.T) {
 
 	testData := []struct {
-		name           string
-		spec           Spec
-		expectedResult string
+		name             string
+		spec             Spec
+		expectedResult   string
+		wantErr          bool
+		expectedErrorMsg string
 	}{
 		{
 			name: "scenario 1",
@@ -37,15 +39,17 @@ func TestSource(t *testing.T) {
 				File: "testdata/data_1.xml",
 				Path: "doNotExist",
 			},
-			expectedResult: "",
+			expectedResult:   "",
+			wantErr:          true,
+			expectedErrorMsg: "cannot find value for path \"doNotExist\" from file \"testdata/data_1.xml\"",
 		},
 		{
 			name: "scenario 3",
 			spec: Spec{
 				File: "testdata/data_1.xml",
-				Path: "//breakfast_menu[0]/name",
+				Path: "//breakfast_menu/food[0]/name",
 			},
-			expectedResult: "",
+			expectedResult: "Belgian Waffles",
 		},
 	}
 
@@ -59,7 +63,12 @@ func TestSource(t *testing.T) {
 			gotResult := result.Source{}
 			err = x.Source("", &gotResult)
 
-			require.NoError(t, err)
+			switch tt.wantErr {
+			case true:
+				require.ErrorContains(t, err, tt.expectedErrorMsg)
+			case false:
+				require.NoError(t, err)
+			}
 
 			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
