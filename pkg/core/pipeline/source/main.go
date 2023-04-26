@@ -98,8 +98,8 @@ func (s *Source) Run() (err error) {
 		}
 	}
 
-	if len(s.Output) == 0 {
-		s.Result.Result = result.ATTENTION
+	if len(s.Output) == 0 && s.Result.Result == result.SUCCESS {
+		logrus.Debugln("empty source detected")
 	}
 
 	return err
