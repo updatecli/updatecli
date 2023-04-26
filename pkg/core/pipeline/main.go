@@ -60,7 +60,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	// Init context resource size
 	p.Report.Sources = make(map[string]reports.Stage, len(config.Spec.Sources))
 	p.Report.Conditions = make(map[string]reports.Stage, len(config.Spec.Conditions))
-	p.Report.Targets = make(map[string]reports.Stage, len(config.Spec.Targets))
+	p.Report.Targets = make(map[string]*result.Target, len(config.Spec.Targets))
 	p.Report.Name = config.Spec.Name
 	p.Report.Result = result.SKIPPED
 
@@ -176,15 +176,14 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		p.Targets[id] = target.Target{
 			Config: config.Spec.Targets[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Result: result.Target{
+				Result: result.SKIPPED,
+			},
+			Scm: scmPointer,
 		}
 
-		p.Report.Targets[id] = reports.Stage{
-			Name:   config.Spec.Targets[id].Name,
-			Kind:   config.Spec.Targets[id].Kind,
-			Result: result.SKIPPED,
-		}
+		r := p.Targets[id].Result
+		p.Report.Targets[id] = &r
 	}
 	return nil
 
@@ -264,7 +263,7 @@ func (p *Pipeline) String() string {
 	result = result + fmt.Sprintf("%q:\n", "Targets")
 	for key, value := range p.Targets {
 		result = result + fmt.Sprintf("\t%q:\n", key)
-		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
+		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
 	}
 
 	return result

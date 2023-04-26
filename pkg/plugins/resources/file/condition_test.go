@@ -14,7 +14,7 @@ func TestFile_Condition(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]fileMetadata
 		inputSourceValue string
 		mockedContents   map[string]string
 		mockedError      error
@@ -29,8 +29,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Line: 3,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "current_version=1.2.3",
 			mockedContents: map[string]string{
@@ -46,8 +49,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Content: "Hello World",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "Hello World",
@@ -62,9 +68,15 @@ func TestFile_Condition(t *testing.T) {
 					"bar.txt",
 				},
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			wantedErr: true,
 		},
@@ -76,8 +88,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Content: "Hello World",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "1.2.3",
 			wantedErr:        true,
@@ -91,8 +106,11 @@ func TestFile_Condition(t *testing.T) {
 				MatchPattern:   "maven_(.*)",
 				ReplacePattern: "gradle_$1",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "1.2.3",
 			wantedErr:        true,
@@ -105,8 +123,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Line: 11,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "",
@@ -121,8 +142,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Line: 3,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "A first line\r\nAnother line\r\nSomething On The Specified Line",
@@ -137,8 +161,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Line: 5,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			wantedErr: true,
 		},
@@ -149,8 +176,11 @@ func TestFile_Condition(t *testing.T) {
 					"foo.txt",
 				},
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			wantedErr: true,
 		},
@@ -161,8 +191,11 @@ func TestFile_Condition(t *testing.T) {
 					"https://do.not.exists/foo",
 				},
 			},
-			files: map[string]string{
-				"https://do.not.exists/foo": "",
+			files: map[string]fileMetadata{
+				"https://do.not.exists/foo": {
+					originalPath: "https://do.not.exists/foo",
+					path:         "https://do.not.exists/foo",
+				},
 			},
 			mockedError: fmt.Errorf("URL %q not found or in error", "https://do.not.exists/foo"),
 			wantedErr:   true,
@@ -176,8 +209,11 @@ func TestFile_Condition(t *testing.T) {
 				Line:    2,
 				Content: "Not In All Files",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
@@ -196,9 +232,15 @@ func TestFile_Condition(t *testing.T) {
 				Line:    2,
 				Content: "Not In All Files",
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
@@ -218,9 +260,15 @@ func TestFile_Condition(t *testing.T) {
 				Line:    2,
 				Content: "In All Files",
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
@@ -257,7 +305,7 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]fileMetadata
 		scm              scm.ScmHandler
 		inputSourceValue string
 		mockedContents   map[string]string
@@ -275,8 +323,11 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				Content: "current_version=1.2.3",
 				Line:    3,
 			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/tmp/foo.txt": {
+					originalPath: "/tmp/foo.txt",
+					path:         "/tmp/foo.txt",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
@@ -297,8 +348,11 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				},
 				MatchPattern: "current_version.*",
 			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/tmp/foo.txt": {
+					originalPath: "/tmp/foo.txt",
+					path:         "/tmp/foo.txt",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
@@ -319,8 +373,11 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				},
 				ForceCreate: true,
 			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/tmp/foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
@@ -336,8 +393,11 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				},
 				MatchPattern: "^^[[[",
 			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/tmp/foo.txt": {
+					originalPath: "/tmp/foo.txt",
+					path:         "/tmp/foo.txt",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
@@ -353,8 +413,11 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				},
 				MatchPattern: "notMatching.*",
 			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/tmp/foo.txt": {
+					originalPath: "/tmp/foo.txt",
+					path:         "/tmp/foo.txt",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
