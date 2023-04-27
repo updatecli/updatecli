@@ -68,7 +68,7 @@ type Report struct {
 	Name       string
 	Err        string
 	Result     string
-	Sources    map[string]Stage
+	Sources    map[string]*result.Source
 	Conditions map[string]Stage
 	Targets    map[string]*result.Target
 }
@@ -79,7 +79,7 @@ func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 	r.Name = name
 	r.Result = result.FAILURE
 
-	r.Sources = make(map[string]Stage, sourceNbr)
+	r.Sources = make(map[string]*result.Source, sourceNbr)
 	r.Conditions = make(map[string]Stage, conditionNbr)
 	r.Targets = make(map[string]*result.Target, targetNbr)
 }

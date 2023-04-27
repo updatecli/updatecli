@@ -12,7 +12,7 @@ import (
 )
 
 // Source return the latest version
-func (y *Yaml) Source(workingDir string) (string, error) {
+func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	// By default workingDir is set to local directory
 	var filePath string
 
@@ -21,13 +21,13 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	// source core codebase.
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
-		return "", errors.New("fail getting current working directory")
+		return errors.New("fail getting current working directory")
 	}
 
 	if len(y.files) > 1 {
 		validationError := fmt.Errorf("validation error in sources of type 'yaml': the attributes `spec.files` can't contain more than one element for sources")
 		logrus.Errorf(validationError.Error())
-		return "", validationError
+		return validationError
 	}
 
 	if y.spec.Value != "" {
@@ -45,7 +45,7 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 	}
 
 	if err = y.Read(); err != nil {
-		return "", err
+		return fmt.Errorf("reading yaml file: %w", err)
 	}
 
 	fileContent := y.files[filePath].content
@@ -55,25 +55,24 @@ func (y *Yaml) Source(workingDir string) (string, error) {
 
 	err = yaml.Unmarshal([]byte(fileContent), &out)
 	if err != nil {
-		return "", fmt.Errorf("cannot unmarshal content of file %s: %v", originalFilePath, err)
+		return fmt.Errorf("unmarshalling content of file %s: %w", originalFilePath, err)
 	}
 
 	valueFound, value, _ := replace(&out, parseKey(y.spec.Key), y.spec.Value, 1)
 
 	if valueFound {
-		logrus.Infof("%s Value '%v' found for key %v in the yaml file %v",
-			result.SUCCESS,
+		resultSource.Result = result.SUCCESS
+		resultSource.Information = value
+		resultSource.Description = fmt.Sprintf("value %q found for key %q in the yaml file %q",
 			value,
 			y.spec.Key,
 			originalFilePath,
 		)
-		return value, nil
+		return nil
 	}
 
-	logrus.Infof("%s cannot find key '%s' from file '%s'",
-		result.FAILURE,
+	return fmt.Errorf("cannot find key %q from file %q",
 		y.spec.Key,
 		originalFilePath)
-	return "", nil
 
 }

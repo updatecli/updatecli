@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 )
 
@@ -100,16 +101,17 @@ func TestShell_Source(t *testing.T) {
 			gotErr := s.InitChangedIf()
 			require.NoError(t, gotErr)
 
-			source, err := s.Source(tt.workingDir)
+			gotResult := result.Source{}
+			err := s.Source(tt.workingDir, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantSource, source)
+				assert.Equal(t, tt.wantSource, gotResult.Information)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantSource, source)
+			assert.Equal(t, tt.wantSource, gotResult.Information)
 
 			assert.Equal(t, tt.wantCommand, mock.GotCommand.Cmd)
 		})

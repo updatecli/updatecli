@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"helm.sh/helm/v3/pkg/repo"
 )
 
 // Source return the latest version
-func (c *Chart) Source(workingDir string) (string, error) {
+func (c *Chart) Source(workingDir string, resultSource *result.Source) error {
 
 	if strings.HasPrefix(c.spec.URL, "oci://") {
-		return c.OCISource(workingDir)
+		return c.OCISource(workingDir, resultSource)
 	}
 
 	var index repo.IndexFile
@@ -22,44 +21,40 @@ func (c *Chart) Source(workingDir string) (string, error) {
 	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
 		index, err = c.GetRepoIndexFromURL()
 		if err != nil {
-			return "", err
+			return fmt.Errorf("getting repo index from url: %w", err)
 		}
 	} else {
 		index, err = c.GetRepoIndexFromFile(workingDir)
 		if err != nil {
-			return "", err
+			return fmt.Errorf("getting repo index from file: %w", err)
 		}
-	}
-
-	if err != nil {
-		return "", err
 	}
 
 	entriesVersion, found := index.Entries[c.spec.Name]
 	if !found {
-		return "", fmt.Errorf("helm chart %q not found from Helm Chart repository %q", c.spec.Name, c.spec.URL)
+		return fmt.Errorf("helm chart %q not found from Helm Chart repository %q", c.spec.Name, c.spec.URL)
 	}
 
 	versions := []string{}
-
 	for _, entry := range entriesVersion {
 		versions = append(versions, entry.Version)
 	}
 
 	c.foundVersion, err = c.versionFilter.Search(versions)
 	if err != nil {
-		return "", err
-	}
-	value := c.foundVersion.GetVersion()
-
-	if value != "" {
-		logrus.Infof("%s Helm Chart '%s' version '%v' is found from repository %s",
-			result.SUCCESS,
-			c.spec.Name,
-			value,
-			c.spec.URL)
+		return fmt.Errorf("filtering version: %w", err)
 	}
 
-	return value, nil
+	resultSource.Information = c.foundVersion.GetVersion()
+	if resultSource.Information == "" {
+		return fmt.Errorf("no Helm Chart version found for %q", c.spec.Name)
+	}
 
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = fmt.Sprintf("Helm Chart %q version %q is found from repository %q",
+		c.spec.Name,
+		resultSource.Information,
+		c.spec.URL)
+
+	return nil
 }

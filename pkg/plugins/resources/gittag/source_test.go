@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -284,14 +285,16 @@ func TestGitTag_Source(t *testing.T) {
 				versionFilter:    tt.versionFilter,
 				spec:             tt.spec,
 			}
-			gotValue, err := gr.Source(tt.workingDir)
+
+			gotResult := result.Source{}
+			err := gr.Source(tt.workingDir, &gotResult)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantValue, gotValue)
+			assert.Equal(t, tt.wantValue, gotResult.Information)
 		})
 	}
 }

@@ -1,25 +1,21 @@
 package release
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Gitlab) Source(workingDir string) (string, error) {
+func (g *Gitlab) Source(workingDir string, resultSource *result.Source) error {
 	versions, err := g.SearchReleases()
 
 	if err != nil {
-		logrus.Error(err)
-		return "", err
+		return fmt.Errorf("searching Gitlab releases: %w", err)
 	}
 
 	if len(versions) == 0 {
-		logrus.Infof("%s No Gitlab Release found. As a fallback you may be looking for git tags", result.ATTENTION)
-		return "", errors.New("no result found")
+		return fmt.Errorf("no Gitlab release found")
 	}
 
 	g.foundVersion, err = g.spec.VersionFilter.Search(versions)
@@ -27,25 +23,30 @@ func (g *Gitlab) Source(workingDir string) (string, error) {
 	if err != nil {
 		switch err {
 		case version.ErrNoVersionFound:
-			logrus.Infof("%s No Gitlab Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-			return "", errors.New("no result found")
+			return fmt.Errorf("no Gitlab Release tag found matching pattern %q of kind %q",
+				g.versionFilter.Pattern,
+				g.versionFilter.Kind,
+			)
 		default:
-			return "", err
+			return fmt.Errorf("filtering Gitlab release: %w", err)
 		}
 	}
 
-	value := g.foundVersion.GetVersion()
+	resultSource.Information = g.foundVersion.GetVersion()
 
-	logrus.Infof("Latest Release found: %v", g.foundVersion.GetVersion())
-
-	if len(value) == 0 {
-		logrus.Infof("%s No Gitlab Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", errors.New("no result found")
-	} else if len(value) > 0 {
-		logrus.Infof("%s Gitlab Release tag %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
-		return value, nil
+	if len(resultSource.Information) == 0 {
+		return fmt.Errorf("no Gitlab Release tag found matching pattern %q of kind %q",
+			g.versionFilter.Pattern,
+			g.versionFilter.Kind,
+		)
 	}
 
-	return "", fmt.Errorf("something unexpected happened in Gitlab source")
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = fmt.Sprintf("Gitlab release tag %q found matching pattern %q of kind %q",
+		resultSource.Information,
+		g.versionFilter.Pattern,
+		g.versionFilter.Kind,
+	)
+	return nil
 
 }
