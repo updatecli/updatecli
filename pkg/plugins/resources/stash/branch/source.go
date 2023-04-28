@@ -4,21 +4,19 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Stash) Source(workingDir string) (string, error) {
+func (g *Stash) Source(workingDir string, resultSource *result.Source) error {
 	versions, err := g.SearchBranches()
 
 	if err != nil {
-		return "", err
+		return fmt.Errorf("searching Bitbucket branches: %w", err)
 	}
 
 	if len(versions) == 0 {
-		logrus.Infof("%s No Bitbucket branches found", result.FAILURE)
-		return "", errors.New("no result found")
+		return errors.New("no Bitbucket branch found")
 	}
 
 	g.foundVersion, err = g.spec.VersionFilter.Search(versions)
@@ -26,23 +24,21 @@ func (g *Stash) Source(workingDir string) (string, error) {
 	if err != nil {
 		switch err {
 		case version.ErrNoVersionFound:
-			logrus.Infof("%s No Bitbucket branches found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-			return "", errors.New("no result found")
+			return fmt.Errorf("no Bitbucket branches found matching pattern %q", g.versionFilter.Pattern)
 		default:
-			return "", err
+			return fmt.Errorf("filtering branches: %w", err)
 		}
 	}
 
 	value := g.foundVersion.GetVersion()
 
 	if len(value) == 0 {
-		logrus.Infof("%s No Bitbucket branches found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", errors.New("no result found")
-	} else if len(value) > 0 {
-		logrus.Infof("%s Bitbucket branches %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
-		return value, nil
+		return fmt.Errorf("no Bitbucket branches found matching pattern %q", g.versionFilter.Pattern)
 	}
 
-	return "", fmt.Errorf("something unexpected happened in Bitbucket source")
+	resultSource.Information = value
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = fmt.Sprintf("Bitbucket branches %q found matching pattern %q", value, g.versionFilter.Pattern)
 
+	return nil
 }

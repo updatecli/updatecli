@@ -3,7 +3,7 @@ package toml
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJoinPathWithWorkingDirectoryPath(t *testing.T) {

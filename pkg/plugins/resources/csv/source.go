@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -13,15 +12,15 @@ var (
 	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
-func (c *CSV) Source(workingDir string) (string, error) {
+func (c *CSV) Source(workingDir string, resultSource *result.Source) error {
 
 	if len(c.contents) > 1 {
-		return "", errors.New("source only supports one file")
+		return errors.New("source only supports one file")
 	}
 
 	if (len(c.spec.Query) > 0 && c.spec.VersionFilter.IsZero()) ||
 		(len(c.spec.Query) == 0) && !c.spec.VersionFilter.IsZero() {
-		return "", ErrSpecVersionFilterRequireMultiple
+		return ErrSpecVersionFilterRequireMultiple
 	}
 
 	content := c.contents[0]
@@ -29,7 +28,7 @@ func (c *CSV) Source(workingDir string) (string, error) {
 	sourceOutput := ""
 
 	if err := content.Read(workingDir); err != nil {
-		return "", err
+		return fmt.Errorf("reading csv file: %w", err)
 	}
 
 	query := ""
@@ -39,12 +38,12 @@ func (c *CSV) Source(workingDir string) (string, error) {
 		queryResults, err := content.MultipleQuery(query)
 
 		if err != nil {
-			return "", err
+			return fmt.Errorf("running multi query: %w", err)
 		}
 
 		c.foundVersion, err = c.versionFilter.Search(queryResults)
 		if err != nil {
-			return "", err
+			return fmt.Errorf("filtering version: %w", err)
 		}
 		sourceOutput = c.foundVersion.GetVersion()
 
@@ -57,24 +56,24 @@ func (c *CSV) Source(workingDir string) (string, error) {
 			// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 			if strings.HasPrefix(err.Error(), "could not find value:") {
-				err := fmt.Errorf("%s cannot find value for path %q from file %q",
-					result.FAILURE,
+				err := fmt.Errorf("cannot find value for path %q from file %q",
 					c.spec.Key,
 					content.FilePath)
-				return "", err
+				return err
 			}
-			return "", err
+			return err
 		}
 
 		sourceOutput = queryResult.String()
 	}
 
-	logrus.Infof("%s Value %q, found in file %q, for key %q'",
-		result.SUCCESS,
+	resultSource.Result = result.SUCCESS
+	resultSource.Information = sourceOutput
+	resultSource.Description = fmt.Sprintf("csv value %q, found in file %q, for path %q",
 		sourceOutput,
 		content.FilePath,
 		query)
 
-	return sourceOutput, nil
+	return nil
 
 }

@@ -178,7 +178,7 @@ func New(option Option) (config Config, err error) {
 	// pullequests deprecated over actions
 	if len(config.Spec.PullRequests) > 0 {
 		if len(config.Spec.Actions) > 0 {
-			return config, fmt.Errorf("The `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated.")
+			return config, fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
 		}
 
 		logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
@@ -567,7 +567,7 @@ func (config *Config) Update(data interface{}) (err error) {
 				This func is design to constantly reevaluate if a configuration changed
 			*/
 
-			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result"})
+			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result", "Result"})
 			if err != nil {
 				return "", err
 			}
