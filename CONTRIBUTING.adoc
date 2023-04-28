@@ -75,7 +75,7 @@ type Spec struct {
 
 **Tags**
 
-Fields tags are an important components and can come from one of the two following module
+Fields tags are important components and can come from one of the two following modules:
 
 * https://github.com/go-yaml/yaml
 * https://github.com/invopop/jsonschema
@@ -84,13 +84,13 @@ Fields tags are an important components and can come from one of the two followi
 
 Fields comments are critical as they are used to generate Updatecli documentation available both from www.updatecli.io and your favorite IDE.
 
-Our objective is to have comment such as
+Our objective is to have `Spec` comments such as
 
 ```
-Short one line description of the parameter
+A short one-line description of the parameter
 
   compatible
-    <A list of compatible stage>
+    <A list of compatible stages>
     * source
     * condition
     * target
@@ -99,12 +99,12 @@ Short one line description of the parameter
     A short explanation of the default value. It's also the place for explaining if the value is inherited from the source output.
 
   remarks:
-    A list of information to be aware when using the parameter such
+    A list of information to be aware of when using the parameter such
     * info 1
     * info 2
 
   example:
-    If useful, a simple example about how to use it
+    If useful, a simple example of how to use it
 
 ```
 
