@@ -19,7 +19,7 @@ type Spec struct {
 	*/
 	Username string `yaml:",omitempty"`
 	/*
-		Token specifies the credential used to authenticate with Gitea API
+		"token" specifies the credential used to authenticate with Gitea API
 	*/
 	Token string `yaml:",omitempty"`
 }
