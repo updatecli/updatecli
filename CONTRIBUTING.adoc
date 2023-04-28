@@ -45,6 +45,7 @@ pkg
 │       ├── source.go
 │       ├── condition_test.go
 │       ├── condition.go
+│       ├── spec.go
 │       ├── target_test.go
 │       ├── target.go
 │       ├── main_test.go
@@ -55,15 +56,56 @@ pkg
 
 ===== 2. Define configuration
 
-In the `main.go`, you need to define the `struct` that you'll use to configure your workflow where the capitalized fields will be set when unmarshalling from your future configuration.yaml
+In the `spec.go`, you need to define the `struct` that you'll use to configure your workflow where the capitalized fields will be set when unmarshalling from your future configuration.yaml
 
 ```
-type Capitalized_package_name struct {
-	Field1        string
-	Field2        string
-	Field3        string
-	Field4        string
+/*
+    One multiline comment is required
+*/
+type Spec struct {
+  /*
+    One multiline comment is required per field
+  */
+	Field1        string `yaml:",omitempty"`
+	Field2        string `yaml:",omitempty" jsonschema:"required"`
+	Field3        string `yaml:",omitempty"`
+	Field4        string `yaml:",omitempty"`
 }
+```
+
+**Tags**
+
+Fields tags are an important components and can come from one of the two following module
+
+* https://github.com/go-yaml/yaml
+* https://github.com/invopop/jsonschema
+
+**Comments**
+
+Fields comments are critical as they are used to generate Updatecli documentation available both from www.updatecli.io and your favorite IDE.
+
+Our objective is to have comment such as
+
+```
+Short one line description of the parameter
+
+  compatible
+    <A list of compatible stage>
+    * source
+    * condition
+    * target
+
+  default:
+    A short explanation of the default value. It's also the place for explaining if the value is inherited from the source output.
+
+  remarks:
+    A list of information to be aware when using the parameter such
+    * info 1
+    * info 2
+
+  example:
+    If useful, a simple example about how to use it
+
 ```
 
 ===== 3. Respect the contract
