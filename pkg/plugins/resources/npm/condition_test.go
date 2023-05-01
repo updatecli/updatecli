@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -119,9 +120,10 @@ func TestCondition(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
-			gotVersion, err := got.Condition("")
+			gotResult := result.Condition{}
+			err = got.Condition("", nil, &gotResult)
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotVersion)
+			assert.Equal(t, tt.expectedResult, gotResult.Pass)
 		})
 	}
 
