@@ -8,38 +8,37 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Gitea) Condition(source string) (bool, error) {
-	if len(g.spec.Branch) == 0 {
-		g.spec.Branch = source
+func (g *Gitea) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+	if scm != nil {
+		logrus.Warningf("Condition not supported for the plugin GitHub Release")
+	}
+
+	branch := source
+	if g.spec.Branch != "" {
+		branch = g.spec.Branch
 	}
 
 	branches, err := g.SearchBranches()
 
-	if len(g.spec.Branch) == 0 {
-		g.spec.Branch = source
-	}
-
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		return err
 	}
 
 	if len(branches) == 0 {
-		logrus.Infof("%s No Gitea branch found.", result.ATTENTION)
-		return false, nil
+		return fmt.Errorf("no Gitea branch found")
 	}
 
-	for _, branch := range branches {
-		if branch == g.spec.Branch {
-			logrus.Infof("%s Gitea branch %q found", result.SUCCESS, branch)
-			return true, nil
+	for _, b := range branches {
+		if b == branch {
+			resultCondition.Result = result.SUCCESS
+			resultCondition.Pass = true
+			resultCondition.Description = fmt.Sprintf("Gitea branch %q found", b)
+			return nil
 		}
 	}
 
-	logrus.Infof("%s No Gitea branch found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-	return false, nil
-}
+	resultCondition.Result = result.FAILURE
+	resultCondition.Description = fmt.Sprintf("no Gitea branch found matching pattern %q", g.versionFilter.Pattern)
 
-func (g *Gitea) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("Condition not supported for the plugin GitHub Release")
+	return nil
 }
