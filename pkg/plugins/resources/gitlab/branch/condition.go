@@ -3,43 +3,36 @@ package branch
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Gitlab) Condition(source string) (bool, error) {
-	if len(g.spec.Branch) == 0 {
-		g.spec.Branch = source
+func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+	if scm != nil {
+		return fmt.Errorf("Condition not supported for the plugin Gitlab branch")
 	}
 
 	branches, err := g.SearchBranches()
-
-	if len(g.spec.Branch) == 0 {
-		g.spec.Branch = source
-	}
-
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		return fmt.Errorf("looking for Gitlab branch: %w", err)
 	}
 
 	if len(branches) == 0 {
-		logrus.Infof("%s No Gitlab branch found.", result.ATTENTION)
-		return false, nil
+		return fmt.Errorf("no Gitlab branch found")
 	}
 
-	for _, branch := range branches {
-		if branch == g.spec.Branch {
-			logrus.Infof("%s Gitlab branch %q found", result.SUCCESS, branch)
-			return true, nil
+	branch := source
+	if g.spec.Branch != "" {
+		branch = g.spec.Branch
+	}
+	for _, b := range branches {
+		if b == branch {
+			resultCondition.Pass = true
+			resultCondition.Result = result.SUCCESS
+			resultCondition.Description = fmt.Sprintf("Gitlab branch %q found", b)
+			return nil
 		}
 	}
 
-	logrus.Infof("%s No Gitlab branch found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-	return false, nil
-}
-
-func (g *Gitlab) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("Condition not supported for the plugin GitHub Release")
+	return fmt.Errorf("no Gitlab branch found matching pattern %q", g.versionFilter.Pattern)
 }
