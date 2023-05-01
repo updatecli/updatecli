@@ -9,17 +9,7 @@ import (
 )
 
 // Condition checks that a git branch exists
-func (gt *GitBranch) Condition(source string) error {
-	return gt.condition(source, nil, &result.Condition{})
-}
-
-// ConditionFromSCM test if a branch exists from a git repository specific from SCM
-func (gt *GitBranch) ConditionFromSCM(source string, scm scm.ScmHandler) error {
-
-	return gt.condition(source, nil, &result.Condition{})
-}
-
-func (gt *GitBranch) condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (gt *GitBranch) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 
 	if scm != nil {
 		path := scm.GetDirectory()
