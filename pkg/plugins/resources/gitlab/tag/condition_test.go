@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -53,7 +54,7 @@ func TestCondition(t *testing.T) {
 				Repository: "updatecli",
 			},
 			wantResult: false,
-			wantErr:    false,
+			wantErr:    true,
 		},
 		{
 			name: "repository should exist with no tag v0.1.11",
@@ -71,7 +72,7 @@ func TestCondition(t *testing.T) {
 				Tag:        "v0.1.11",
 			},
 			wantResult: false,
-			wantErr:    false,
+			wantErr:    true,
 		},
 		{
 			name: "repository should exist with tag v0.3.0",
@@ -100,7 +101,8 @@ func TestCondition(t *testing.T) {
 			g, gotErr := New(tt.manifest)
 			require.NoError(t, gotErr)
 
-			gotResult, gotErr := g.Condition("")
+			gotResult := result.Condition{}
+			gotErr = g.Condition("", nil, &gotResult)
 
 			if tt.wantErr {
 				require.Error(t, gotErr)
@@ -108,7 +110,7 @@ func TestCondition(t *testing.T) {
 				require.NoError(t, gotErr)
 			}
 
-			assert.Equal(t, tt.wantResult, gotResult)
+			assert.Equal(t, tt.wantResult, gotResult.Pass)
 
 		})
 
