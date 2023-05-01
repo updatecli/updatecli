@@ -12,38 +12,34 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// Condition test if a file content match the content provided via configuration.
-// If the configuration doesn't specify a value then it fall back to the source output
-func (f *File) Condition(source string) (bool, error) {
-	return f.checkCondition(source)
-}
-
 // ConditionFromSCM test if a file content from SCM match the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
-func (f *File) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+func (f *File) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 	if scm != nil {
 		f.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
 
-	return f.checkCondition(source)
-}
-
-func (f *File) checkCondition(source string) (bool, error) {
 	files := f.spec.Files
 	files = append(files, f.spec.File)
 
 	passing, err := f.condition(source)
 	if err != nil {
-		logrus.Infof("%s Condition on file errored: %s", result.FAILURE, err.Error())
-	} else {
-		if passing {
-			logrus.Infof("%s Condition on file %q passed", result.SUCCESS, files)
-		} else {
-			logrus.Infof("%s Condition on file %q did not pass", result.FAILURE, files)
-		}
+		return fmt.Errorf("file condition: %w", err)
 	}
 
-	return passing, err
+	switch passing {
+	case true:
+		resultCondition.Pass = true
+		resultCondition.Result = result.SUCCESS
+		resultCondition.Description = fmt.Sprintf("condition on file %q passed", files)
+
+	case false:
+		resultCondition.Pass = false
+		resultCondition.Result = result.FAILURE
+		resultCondition.Description = fmt.Sprintf("condition on file %q did not pass", files)
+	}
+
+	return nil
 }
 
 func (f *File) condition(source string) (bool, error) {
