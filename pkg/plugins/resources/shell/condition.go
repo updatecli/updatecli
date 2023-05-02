@@ -68,7 +68,7 @@ func (s *Shell) Condition(source string, scm scm.ScmHandler, resultCondition *re
 	case false:
 		resultCondition.Pass = false
 		resultCondition.Result = result.SUCCESS
-		resultCondition.Description = fmt.Sprintf("shell condition of type %q not passing", s.spec.ChangedIf)
+		resultCondition.Description = fmt.Sprintf("shell condition of type %q not passing", s.spec.ChangedIf.Kind)
 	}
 
 	return nil
