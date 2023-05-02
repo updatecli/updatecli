@@ -36,5 +36,9 @@ func (g *Gitea) Condition(source string, scm scm.ScmHandler, resultCondition *re
 		}
 	}
 
-	return fmt.Errorf("no Gitea tag found matching %q", g.spec.Tag)
+	resultCondition.Description = fmt.Sprintf("no Gitea tag found matching %q", g.spec.Tag)
+	resultCondition.Pass = false
+	resultCondition.Result = result.FAILURE
+
+	return nil
 }

@@ -38,5 +38,9 @@ func (g *Gitea) Condition(source string, scm scm.ScmHandler, resultCondition *re
 		}
 	}
 
-	return fmt.Errorf("no Gitea Release tag found matching pattern %q", g.versionFilter.Pattern)
+	resultCondition.Description = fmt.Sprintf("no Gitea Release tag found matching pattern %q", g.versionFilter.Pattern)
+	resultCondition.Result = result.FAILURE
+	resultCondition.Pass = false
+
+	return nil
 }

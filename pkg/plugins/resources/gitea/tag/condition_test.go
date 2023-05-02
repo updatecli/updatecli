@@ -56,9 +56,7 @@ func TestCondition(t *testing.T) {
 				Owner:      "updatecli",
 				Repository: "updatecli-action",
 			},
-			wantResult:     false,
-			wantErr:        true,
-			wantErrMessage: fmt.Errorf("no Gitea tag found matching \"\""),
+			wantResult: false,
 		},
 		{
 			name: "repository should exist with no tag v2.15.0",
@@ -93,9 +91,8 @@ func TestCondition(t *testing.T) {
 				Repository: "updatecli-action",
 				Tag:        "0.0.35",
 			},
-			wantResult:     false,
-			wantErr:        true,
-			wantErrMessage: fmt.Errorf("no Gitea tag found matching \"0.0.35\""),
+			wantResult: false,
+			wantErr:    false,
 		},
 	}
 
