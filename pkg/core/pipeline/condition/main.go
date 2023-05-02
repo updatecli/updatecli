@@ -21,7 +21,7 @@ var (
 // in order to update targets based on the source output
 type Condition struct {
 	// Result stores the condition result after a condition run.
-	Result string
+	Result result.Condition
 	// Config defines condition input parameters
 	Config Config
 	Scm    *scm.ScmHandler
@@ -42,7 +42,7 @@ type Config struct {
 
 // Run tests if a specific condition is true
 func (c *Condition) Run(source string) (err error) {
-	c.Result = result.FAILURE
+	c.Result.Result = result.FAILURE
 	ok := false
 
 	condition, err := resource.New(c.Config.ResourceConfig)
@@ -59,7 +59,7 @@ func (c *Condition) Run(source string) (err error) {
 
 	switch c.Scm == nil {
 	case true:
-		ok, err = condition.Condition(source)
+		err = condition.Condition(source, nil, &c.Result)
 		if err != nil {
 			return err
 		}
@@ -75,7 +75,7 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		ok, err = condition.ConditionFromSCM(source, s)
+		err = condition.Condition(source, s, &c.Result)
 		if err != nil {
 			return err
 		}
@@ -86,7 +86,7 @@ func (c *Condition) Run(source string) (err error) {
 		return nil
 	}
 
-	c.Result = result.SUCCESS
+	c.Result.Result = result.SUCCESS
 	return nil
 }
 
