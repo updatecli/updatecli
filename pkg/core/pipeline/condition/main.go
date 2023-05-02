@@ -43,7 +43,6 @@ type Config struct {
 // Run tests if a specific condition is true
 func (c *Condition) Run(source string) (err error) {
 	c.Result.Result = result.FAILURE
-	ok := false
 
 	condition, err := resource.New(c.Config.ResourceConfig)
 	if err != nil {
@@ -81,12 +80,21 @@ func (c *Condition) Run(source string) (err error) {
 		}
 	}
 
-	if ok == c.Config.FailWhen {
-		logrus.Printf("\t => expected condition result %t, got %t", c.Config.FailWhen, ok)
-		return nil
+	// FailWhen is used to reverse the expected condition value
+	// If failwhen is set to true, then we expected a condition returning "true" would be considered as a failure
+	if c.Config.FailWhen {
+		logrus.Debugf("Expected successful condition result to be %v", !c.Config.FailWhen)
+		if c.Result.Pass {
+			c.Result.Result = result.FAILURE
+			c.Result.Pass = false
+		} else {
+			c.Result.Result = result.SUCCESS
+			c.Result.Pass = true
+		}
 	}
 
-	c.Result.Result = result.SUCCESS
+	logrus.Infof("%s %s", c.Result.Result, c.Result.Description)
+
 	return nil
 }
 
