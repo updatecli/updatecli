@@ -56,6 +56,7 @@ func (cp *CargoPackage) condition(source string, resultCondition *result.Conditi
 
 	resultCondition.Result = result.FAILURE
 	resultCondition.Description = fmt.Sprintf("version %q doesn't exist\n", versionToCheck)
+	resultCondition.Pass = false
 
 	return nil
 }

@@ -60,6 +60,7 @@ func (a *AMI) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 	}
 
 	resultCondition.Result = result.FAILURE
+	resultCondition.Pass = false
 	resultCondition.Description = fmt.Sprintf("no AMI found matching criteria for region %s\n", a.Spec.Region)
 
 	return nil
