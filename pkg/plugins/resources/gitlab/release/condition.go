@@ -19,7 +19,11 @@ func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *r
 	}
 
 	if len(releases) == 0 {
-		return fmt.Errorf("no Gitlab release found")
+		resultCondition.Result = result.FAILURE
+		resultCondition.Pass = false
+		resultCondition.Description = "no Gitlab release found"
+
+		return nil
 	}
 
 	release := source
@@ -35,6 +39,9 @@ func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *r
 		}
 	}
 
-	return fmt.Errorf("no Gitlab release tag found matching pattern %q of kind %q", g.versionFilter.Pattern, g.versionFilter.Kind)
+	resultCondition.Result = result.FAILURE
+	resultCondition.Pass = false
+	resultCondition.Description = fmt.Sprintf("no Gitlab release tag found matching pattern %q of kind %q", g.versionFilter.Pattern, g.versionFilter.Kind)
 
+	return nil
 }

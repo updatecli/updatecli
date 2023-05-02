@@ -54,7 +54,6 @@ func TestCondition(t *testing.T) {
 				Repository: "updatecli",
 			},
 			wantResult: false,
-			wantErr:    true,
 		},
 		{
 			name: "repository should exist with no tag v0.1.11",
@@ -72,7 +71,6 @@ func TestCondition(t *testing.T) {
 				Tag:        "v0.1.11",
 			},
 			wantResult: false,
-			wantErr:    true,
 		},
 		{
 			name: "repository should exist with tag v0.3.0",

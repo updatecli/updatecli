@@ -74,7 +74,7 @@ func TestCondition(t *testing.T) {
 				Branch:     "donotexist",
 			},
 			wantResult: false,
-			wantErr:    true,
+			wantErr:    false,
 		},
 	}
 

@@ -18,7 +18,10 @@ func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *r
 	}
 
 	if len(branches) == 0 {
-		return fmt.Errorf("no Gitlab branch found")
+		resultCondition.Pass = false
+		resultCondition.Result = result.FAILURE
+		resultCondition.Description = "no Gitlab branch found"
+		return nil
 	}
 
 	branch := source
@@ -34,5 +37,9 @@ func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *r
 		}
 	}
 
-	return fmt.Errorf("no Gitlab branch found matching pattern %q", g.versionFilter.Pattern)
+	resultCondition.Result = result.FAILURE
+	resultCondition.Pass = false
+	resultCondition.Description = fmt.Sprintf("no Gitlab branch found matching pattern %q", g.versionFilter.Pattern)
+
+	return nil
 }

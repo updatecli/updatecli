@@ -92,6 +92,24 @@ func TestCondition(t *testing.T) {
 			wantResult: true,
 			wantErr:    false,
 		},
+		{
+			name: "repository should exist with no release v0.0.99",
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+			}{
+				URL:        "gitlab.com",
+				Token:      "",
+				Owner:      "olblak",
+				Repository: "updatecli",
+				Tag:        "v0.0.99",
+			},
+			wantResult: false,
+			wantErr:    false,
+		},
 	}
 
 	for _, tt := range tests {
