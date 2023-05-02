@@ -33,7 +33,7 @@ func (n Npm) Condition(source string, scm scm.ScmHandler, resultCondition *resul
 	for _, v := range versions {
 		if v == versionToCheck {
 			resultCondition.Pass = true
-			resultCondition.Result = result.FAILURE
+			resultCondition.Result = result.SUCCESS
 			resultCondition.Description = fmt.Sprintf("release version %q available", versionToCheck)
 			return nil
 		}
