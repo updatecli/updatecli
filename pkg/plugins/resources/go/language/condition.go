@@ -24,7 +24,7 @@ func (l *Language) Condition(source string, scm scm.ScmHandler, resultCondition 
 
 	versions, err := l.versions()
 	if err != nil {
-		return fmt.Errorf("searchin golang version: %w", err)
+		return fmt.Errorf("searching golang version: %w", err)
 	}
 
 	for _, v := range versions {
