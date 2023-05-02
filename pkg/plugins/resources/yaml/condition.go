@@ -85,7 +85,7 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 			)
 
 			resultCondition.Pass = true
-			resultCondition.Result = result.FAILURE
+			resultCondition.Result = result.SUCCESS
 
 			return nil
 		}
