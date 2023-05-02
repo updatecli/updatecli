@@ -54,7 +54,6 @@ func TestCondition(t *testing.T) {
 				Repository: "FOSDEM22",
 			},
 			wantResult: false,
-			wantErr:    true,
 		},
 		{
 			name: "repository should exist with no release 2.0.0",
@@ -72,7 +71,6 @@ func TestCondition(t *testing.T) {
 				Tag:        "2.0.0",
 			},
 			wantResult: false,
-			wantErr:    true,
 		},
 		{
 			name: "repository should exist with release v0.46.2",
