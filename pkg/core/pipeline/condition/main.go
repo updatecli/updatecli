@@ -21,7 +21,7 @@ var (
 // in order to update targets based on the source output
 type Condition struct {
 	// Result stores the condition result after a condition run.
-	Result string
+	Result result.Condition
 	// Config defines condition input parameters
 	Config Config
 	Scm    *scm.ScmHandler
@@ -42,8 +42,7 @@ type Config struct {
 
 // Run tests if a specific condition is true
 func (c *Condition) Run(source string) (err error) {
-	c.Result = result.FAILURE
-	ok := false
+	c.Result.Result = result.FAILURE
 
 	condition, err := resource.New(c.Config.ResourceConfig)
 	if err != nil {
@@ -59,7 +58,7 @@ func (c *Condition) Run(source string) (err error) {
 
 	switch c.Scm == nil {
 	case true:
-		ok, err = condition.Condition(source)
+		err = condition.Condition(source, nil, &c.Result)
 		if err != nil {
 			return err
 		}
@@ -75,18 +74,27 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		ok, err = condition.ConditionFromSCM(source, s)
+		err = condition.Condition(source, s, &c.Result)
 		if err != nil {
 			return err
 		}
 	}
 
-	if ok == c.Config.FailWhen {
-		logrus.Printf("\t => expected condition result %t, got %t", c.Config.FailWhen, ok)
-		return nil
+	// FailWhen is used to reverse the expected condition value
+	// If failwhen is set to true, then we expected a condition returning "true" would be considered as a failure
+	if c.Config.FailWhen {
+		logrus.Debugf("Expected successful condition result to be %v", !c.Config.FailWhen)
+		if c.Result.Pass {
+			c.Result.Result = result.FAILURE
+			c.Result.Pass = false
+		} else {
+			c.Result.Result = result.SUCCESS
+			c.Result.Pass = true
+		}
 	}
 
-	c.Result = result.SUCCESS
+	logrus.Infof("%s %s", c.Result.Result, c.Result.Description)
+
 	return nil
 }
 

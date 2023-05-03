@@ -4,16 +4,12 @@ import (
 	"fmt"
 
 	"github.com/beevik/etree"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (x *XML) Condition(source string) (bool, error) {
-	return x.ConditionFromSCM(source, nil)
-}
-
-func (x *XML) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+// Condition checks that a specific xml path contains the correct value at the specified path
+func (x *XML) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 
 	resourceFile := x.spec.File
 	if scm != nil {
@@ -27,45 +23,54 @@ func (x *XML) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) 
 
 	// Test at runtime if a file exist
 	if !x.contentRetriever.FileExists(resourceFile) {
-		return false, fmt.Errorf("file %q does not exist", resourceFile)
+		return fmt.Errorf("file %q does not exist", resourceFile)
 	}
 
 	if err := x.Read(resourceFile); err != nil {
-		return false, err
+		return err
 	}
 
 	doc := etree.NewDocument()
 
 	if err := doc.ReadFromString(x.currentContent); err != nil {
-		return false, err
+		return err
 	}
 
 	elem := doc.FindElement(x.spec.Path)
 
 	if elem == nil {
-		logrus.Infof("%s nothing found in path %q from file %q",
-			result.FAILURE,
+		resultCondition.Description = fmt.Sprintf("nothing found in path %q from file %q",
 			x.spec.Path,
-			resourceFile)
+			resourceFile,
+		)
 
-		return false, nil
+		resultCondition.Pass = false
+		resultCondition.Result = result.FAILURE
+
+		return nil
 	}
 
 	if value == elem.Text() {
-		logrus.Infof("%s Path %q, from file %q, is correctly set to %s",
+		resultCondition.Description = fmt.Sprintf("%s Path %q, from file %q, is correctly set to %s",
 			result.SUCCESS,
 			x.spec.Path,
 			resourceFile,
 			value)
-		return true, nil
+
+		resultCondition.Pass = true
+		resultCondition.Result = result.SUCCESS
+
+		return nil
 	}
 
-	logrus.Infof("%s Path %q, from file %q, is incorrectly set to %q and should be %q",
-		result.ATTENTION,
+	resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
 		x.spec.Path,
 		resourceFile,
 		elem.Text(),
-		value)
+		value,
+	)
+	resultCondition.Pass = false
+	resultCondition.Result = result.FAILURE
 
-	return false, nil
+	return nil
 }
