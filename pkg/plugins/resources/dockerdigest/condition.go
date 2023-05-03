@@ -11,7 +11,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (ds *DockerDigest) Condition(source string) (bool, error) {
+func (ds *DockerDigest) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+	if scm != nil {
+		logrus.Warningln("scm is not supported, ignoring")
+	}
+
 	refName := ds.spec.Image
 	switch ds.spec.Digest == "" {
 	case true:
@@ -22,29 +26,28 @@ func (ds *DockerDigest) Condition(source string) (bool, error) {
 
 	ref, err := name.ParseReference(refName)
 	if err != nil {
-		return false, fmt.Errorf("invalid image %s: %w", refName, err)
+		return fmt.Errorf("invalid image %s: %w", refName, err)
 	}
 	_, err = remote.Head(ref, ds.options...)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "unexpected status code 404") {
-			logrus.Infof("%s The Docker image %s doesn't exist.",
-				result.FAILURE,
+
+			resultCondition.Result = result.FAILURE
+			resultCondition.Pass = false
+			resultCondition.Description = fmt.Sprintf("the Docker image %s doesn't exist.",
 				refName,
 			)
-			return false, nil
+			return nil
 		}
-		return false, err
+		return err
 	}
 
-	logrus.Infof("%s The Docker image %s exists and is available.",
-		result.SUCCESS,
+	resultCondition.Result = result.SUCCESS
+	resultCondition.Pass = true
+	resultCondition.Description = fmt.Sprintf("the Docker image %s exists and is available.",
 		refName,
 	)
 
-	return err == nil, err
-}
-
-func (ds *DockerDigest) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return ds.Condition(source)
+	return nil
 }

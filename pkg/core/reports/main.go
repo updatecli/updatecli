@@ -30,7 +30,7 @@ REPORTS:
 {{- if .Conditions -}}
 {{- "\t" }}Condition:
 {{ range $ID, $condition := .Conditions }}
-{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name }} (kind: {{ $condition.Kind -}}){{"\n"}}
+{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name }}{{"\n"}}
 {{- end -}}
 {{- end -}}
 {{- if .Targets -}}

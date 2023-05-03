@@ -71,7 +71,7 @@ func (s *Source) Run() (err error) {
 
 	err = source.Source(workingDir, &s.Result)
 
-	s.Result.Name = s.Config.Name
+	s.Result.Name = s.Config.ResourceConfig.Name
 	s.Output = s.Result.Information
 
 	if err != nil {
@@ -89,8 +89,8 @@ func (s *Source) Run() (err error) {
 		logrus.Debugln("empty changelog found for the source")
 	}
 
-	if len(s.Config.Transformers) > 0 {
-		s.Output, err = s.Config.Transformers.Apply(s.Output)
+	if len(s.Config.ResourceConfig.Transformers) > 0 {
+		s.Output, err = s.Config.ResourceConfig.Transformers.Apply(s.Output)
 		if err != nil {
 			logrus.Errorf("%s %s", s.Result.Result, err)
 			s.Result.Result = result.FAILURE
@@ -121,12 +121,12 @@ func (c *Config) Validate() error {
 	missingParameters := []string{}
 
 	// Handle scmID deprecation
-	if len(c.DeprecatedSCMID) > 0 {
-		switch len(c.SCMID) {
+	if len(c.ResourceConfig.DeprecatedSCMID) > 0 {
+		switch len(c.ResourceConfig.SCMID) {
 		case 0:
 			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
-			c.SCMID = c.DeprecatedSCMID
-			c.DeprecatedSCMID = ""
+			c.ResourceConfig.SCMID = c.ResourceConfig.DeprecatedSCMID
+			c.ResourceConfig.DeprecatedSCMID = ""
 		default:
 			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
 				"scmID", "scmid", "scmID")
@@ -134,30 +134,30 @@ func (c *Config) Validate() error {
 	}
 
 	// Validate that kind is set
-	if len(c.Kind) == 0 {
+	if len(c.ResourceConfig.Kind) == 0 {
 		missingParameters = append(missingParameters, "kind")
 	}
 
 	// Handle depends_on deprecation
-	if len(c.DeprecatedDependsOn) > 0 {
-		switch len(c.DependsOn) == 0 {
+	if len(c.ResourceConfig.DeprecatedDependsOn) > 0 {
+		switch len(c.ResourceConfig.DependsOn) == 0 {
 		case true:
 			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
-			c.DependsOn = c.DeprecatedDependsOn
-			c.DeprecatedDependsOn = []string{}
+			c.ResourceConfig.DependsOn = c.ResourceConfig.DeprecatedDependsOn
+			c.ResourceConfig.DeprecatedDependsOn = []string{}
 		case false:
 			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
-			c.DeprecatedDependsOn = []string{}
+			c.ResourceConfig.DeprecatedDependsOn = []string{}
 		}
 	}
 
 	// Ensure kind is lowercase
-	if c.Kind != strings.ToLower(c.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.Kind)
-		c.Kind = strings.ToLower(c.Kind)
+	if c.ResourceConfig.Kind != strings.ToLower(c.ResourceConfig.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.ResourceConfig.Kind)
+		c.ResourceConfig.Kind = strings.ToLower(c.ResourceConfig.Kind)
 	}
 
-	err := c.Transformers.Validate()
+	err := c.ResourceConfig.Transformers.Validate()
 	if err != nil {
 		logrus.Errorln(err)
 		gotError = true

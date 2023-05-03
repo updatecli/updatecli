@@ -9,25 +9,19 @@ import (
 )
 
 // Condition checks that a git tag exists
-func (gt *GitTag) Condition(source string) (bool, error) {
-	return gt.condition(source)
-}
+func (gt *GitTag) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 
-// ConditionFromSCM test if a tag exists from a git repository specific from SCM
-func (gt *GitTag) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	path := scm.GetDirectory()
+	if scm != nil {
+		path := scm.GetDirectory()
 
-	if len(gt.spec.Path) > 0 {
-		logrus.Warningf("Path is defined and set to %q but is overridden by the scm definition %q",
-			gt.spec.Path,
-			path)
+		if len(gt.spec.Path) > 0 {
+			logrus.Debugf("path is defined and set to %q but is overridden by the scm definition %q",
+				gt.spec.Path,
+				path)
+		}
+		gt.spec.Path = path
 	}
-	gt.spec.Path = path
 
-	return gt.condition(source)
-}
-
-func (gt *GitTag) condition(source string) (bool, error) {
 	// If source input is empty, then it means that it was disabled by the user with `disablesourceinput: true`
 	if source != "" {
 		logrus.Infof("Source input value detected: using it as spec.versionfilter.pattern")
@@ -36,34 +30,30 @@ func (gt *GitTag) condition(source string) (bool, error) {
 
 	err := gt.Validate()
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	tags, err := gt.nativeGitHandler.Tags(gt.spec.Path)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	gt.foundVersion, err = gt.versionFilter.Search(tags)
 	if err != nil {
-		return false, err
+		return err
 	}
 	tag := gt.foundVersion.GetVersion()
 
 	if len(tag) == 0 {
-		err = fmt.Errorf("no git tag matching pattern %q, found", gt.versionFilter.Pattern)
-		return false, err
+		return fmt.Errorf("no git tag matching pattern %q, found", gt.versionFilter.Pattern)
 	}
 
 	if tag == gt.versionFilter.Pattern {
-		logrus.Printf("%s Git tag %q matching\n", result.SUCCESS, gt.versionFilter.Pattern)
-		return true, nil
+		resultCondition.Pass = true
+		resultCondition.Result = result.SUCCESS
+		resultCondition.Description = fmt.Sprintf("git tag %q matching\n", gt.versionFilter.Pattern)
+		return nil
 	}
 
-	logrus.Printf("%s Git Tag %q not matching %q\n",
-		result.FAILURE,
-		gt.versionFilter.Pattern,
-		tag)
-
-	return false, nil
+	return fmt.Errorf("git tag %q not matching %q", gt.versionFilter.Pattern, tag)
 }
