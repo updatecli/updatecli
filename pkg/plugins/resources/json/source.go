@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -13,22 +12,22 @@ var (
 	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
-func (j *Json) Source(workingDir string) (string, error) {
+func (j *Json) Source(workingDir string, resultSource *result.Source) error {
 
 	if len(j.contents) > 1 {
-		return "", errors.New("source only supports one file")
+		return errors.New("source only supports one file")
 	}
 
 	if (len(j.spec.Query) > 0 && j.spec.VersionFilter.IsZero()) ||
 		(len(j.spec.Query) == 0) && !j.spec.VersionFilter.IsZero() {
-		return "", ErrSpecVersionFilterRequireMultiple
+		return ErrSpecVersionFilterRequireMultiple
 	}
 
 	content := j.contents[0]
 
 	sourceOutput := ""
 	if err := content.Read(workingDir); err != nil {
-		return "", err
+		return fmt.Errorf("reading json file: %w", err)
 	}
 
 	query := ""
@@ -38,12 +37,12 @@ func (j *Json) Source(workingDir string) (string, error) {
 		queryResults, err := content.MultipleQuery(query)
 
 		if err != nil {
-			return "", err
+			return fmt.Errorf("running multiple query: %w", err)
 		}
 
 		j.foundVersion, err = j.versionFilter.Search(queryResults)
 		if err != nil {
-			return "", err
+			return fmt.Errorf("filtering information: %w", err)
 		}
 		sourceOutput = j.foundVersion.GetVersion()
 
@@ -60,19 +59,20 @@ func (j *Json) Source(workingDir string) (string, error) {
 					result.FAILURE,
 					j.spec.Key,
 					content.FilePath)
-				return "", err
+				return err
 			}
-			return "", err
+			return err
 		}
 
 		sourceOutput = queryResult.String()
 	}
 
-	logrus.Infof("%s Value %q, found in file %q, for key %q'",
-		result.SUCCESS,
+	resultSource.Information = sourceOutput
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = fmt.Sprintf("value %q, found in file %q, for key %q",
 		sourceOutput,
 		content.FilePath,
 		query)
 
-	return sourceOutput, nil
+	return nil
 }

@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestSource(t *testing.T) {
@@ -61,7 +62,8 @@ func TestSource(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := j.Source("")
+			gotResult := result.Source{}
+			err = j.Source("", &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -69,7 +71,7 @@ func TestSource(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}
 }

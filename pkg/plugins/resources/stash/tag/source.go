@@ -1,7 +1,6 @@
 package tag
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -9,17 +8,16 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Stash) Source(workingDir string) (string, error) {
+func (g *Stash) Source(workingDir string, resultSource *result.Source) error {
 	versions, err := g.SearchTags()
 
 	if err != nil {
 		logrus.Error(err)
-		return "", err
+		return fmt.Errorf("searching Bitbucket tags: %w", err)
 	}
 
 	if len(versions) == 0 {
-		logrus.Infof("%s No Bitbucket Tags found", result.ATTENTION)
-		return "", errors.New("no result found")
+		return fmt.Errorf("no Bitbucket tags found")
 	}
 
 	g.foundVersion, err = g.spec.VersionFilter.Search(versions)
@@ -27,23 +25,22 @@ func (g *Stash) Source(workingDir string) (string, error) {
 	if err != nil {
 		switch err {
 		case version.ErrNoVersionFound:
-			logrus.Infof("%s No Bitbucket tags found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-			return "", errors.New("no result found")
+			return fmt.Errorf("no Bitbucket tags found matching pattern %q", g.versionFilter.Pattern)
 		default:
-			return "", err
+			return fmt.Errorf("filtering Bitbucket tags: %w", err)
 		}
 	}
 
 	value := g.foundVersion.GetVersion()
 
 	if len(value) == 0 {
-		logrus.Infof("%s No Bitbucket tags found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-		return "", errors.New("no result found")
-	} else if len(value) > 0 {
-		logrus.Infof("%s Bitbucket tags %q found matching pattern %q", result.SUCCESS, value, g.versionFilter.Pattern)
-		return value, nil
+		return fmt.Errorf("no Bitbucket tags found matching pattern %q", g.versionFilter.Pattern)
 	}
 
-	return "", fmt.Errorf("something unexpected happened in Bitbucket source")
+	resultSource.Result = result.SUCCESS
+	resultSource.Information = value
+	resultSource.Description = fmt.Sprintf("Bitbucket tag %q found matching pattern %q", value, g.versionFilter.Pattern)
+
+	return nil
 
 }

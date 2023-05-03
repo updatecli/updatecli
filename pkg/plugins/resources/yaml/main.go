@@ -14,20 +14,86 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Spec defines a specification for a "yaml" resource
-// parsed from an updatecli manifest file
+/*
+"yaml"  defines the specification for manipulating "yaml" files.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// [source,condition,target] File contains the file path to take in account
+	/*
+		"file" defines the yaml file path to interact with.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		remark:
+			* "file" and "files" are mutually exclusive
+			* when used as a source or condition, the file path also accept the following protocols
+			* protocols "https://", "http://", and "file://" are supported in path for source and condition
+	*/
 	File string `yaml:",omitempty"`
-	// [source,condition,target] Files contains the file path(s) to take in account. For 'source': limited to one item
+	/*
+		"files" defines the list of yaml files path to interact with.
+
+		compatible:
+			* condition
+			* target
+
+		remark:
+			* file and files are mutually exclusive
+			* protocols "https://", "http://", and "file://" are supported in file path for source and condition
+	*/
 	Files []string `yaml:",omitempty"`
-	// [source,condition,target] Key is the YAML key to retrieve
+	/*
+		"key" defines the yaml key used to identify the yaml information to manipulate.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		remark:
+			* key is a simpler version of yamlpath accepts keys.
+
+		example:
+			* key: name
+			* key: agent.name
+			* key: agents[0].name
+
+	*/
 	Key string `yaml:",omitempty"`
-	// [source,condition,target] Value is the YAML value to set. Default value set to source output for condition and target
+	/*
+		"value" is the value associated with a yaml key.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		default:
+			When used from a condition or a target, the default value is set to linked source output.
+	*/
 	Value string `yaml:",omitempty"`
-	// [condition] allow checking for only the existence of a key (not its value)
+	/*
+		"keyonly" allows to only check if a key exist and do not return an error otherwise
+
+		compatible:
+			* condition
+
+		default:
+			false
+	*/
 	KeyOnly bool `yaml:",omitempty"`
-	// [target] Indent defines the yaml indentation for file updated by target of kind yaml. Default to 2
+	/*
+		"indent" allows to override the default yaml indentation for file updated by a target.
+
+		compatible:
+			* target
+
+		default:
+			default indentation is set to 2.
+	*/
 	Indent int `yaml:",omitempty"`
 }
 

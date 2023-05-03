@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 
 	"github.com/stretchr/testify/assert"
@@ -138,13 +139,14 @@ func TestSource(t *testing.T) {
 			if tt.mockedResponse {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode, tt.mockedHeaderFormat)
 			}
-			gotVersion, err := got.Source("")
+			gotResult := result.Source{}
+			err = got.Source("", &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotVersion)
+			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}
 

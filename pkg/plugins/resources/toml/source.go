@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -13,15 +12,15 @@ var (
 	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
-func (t *Toml) Source(workingDir string) (string, error) {
+func (t *Toml) Source(workingDir string, resultSource *result.Source) error {
 
 	if len(t.contents) > 1 {
-		return "", errors.New("source only supports one file")
+		return errors.New("source only supports one file")
 	}
 
 	if (len(t.spec.Query) > 0 && t.spec.VersionFilter.IsZero()) ||
 		(len(t.spec.Query) == 0) && !t.spec.VersionFilter.IsZero() {
-		return "", ErrSpecVersionFilterRequireMultiple
+		return ErrSpecVersionFilterRequireMultiple
 	}
 
 	content := t.contents[0]
@@ -29,7 +28,7 @@ func (t *Toml) Source(workingDir string) (string, error) {
 	sourceOutput := ""
 
 	if err := content.Read(workingDir); err != nil {
-		return "", err
+		return fmt.Errorf("reading toml file: %w", err)
 	}
 
 	query := ""
@@ -39,12 +38,12 @@ func (t *Toml) Source(workingDir string) (string, error) {
 		queryResults, err := content.MultipleQuery(query)
 
 		if err != nil {
-			return "", err
+			return fmt.Errorf("running multiple query: %w", err)
 		}
 
 		t.foundVersion, err = t.versionFilter.Search(queryResults)
 		if err != nil {
-			return "", err
+			return fmt.Errorf("filtering result: %w", err)
 		}
 		sourceOutput = t.foundVersion.GetVersion()
 
@@ -57,23 +56,22 @@ func (t *Toml) Source(workingDir string) (string, error) {
 			// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 			if strings.HasPrefix(err.Error(), "could not find value:") {
-				err := fmt.Errorf("%s cannot find value for path %q from file %q",
-					result.FAILURE,
+				return fmt.Errorf("cannot find value for path %q from file %q",
 					t.spec.Key,
 					content.FilePath)
-				return "", err
 			}
-			return "", err
+			return fmt.Errorf("running query: %w", err)
 		}
 
 		sourceOutput = queryResult.String()
 	}
 
-	logrus.Infof("%s Value %q, found in file %q, for key %q'",
-		result.SUCCESS,
+	resultSource.Information = sourceOutput
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = fmt.Sprintf("value %q, found in file %q, for key %q'",
 		sourceOutput,
 		content.FilePath,
 		query)
 
-	return sourceOutput, nil
+	return nil
 }

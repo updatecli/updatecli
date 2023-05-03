@@ -4,9 +4,11 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
-	"gotest.tools/assert"
 )
 
 func TestSource(t *testing.T) {
@@ -67,7 +69,7 @@ func TestSource(t *testing.T) {
 			},
 			expectedResult:   "",
 			wantErr:          true,
-			expectedErrorMsg: errors.New("✗ cannot find value for path \".doNotExist\" from file \"testdata/data.csv\""),
+			expectedErrorMsg: errors.New("cannot find value for path \".doNotExist\" from file \"testdata/data.csv\""),
 		},
 	}
 
@@ -78,7 +80,8 @@ func TestSource(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := c.Source("")
+			gotResult := result.Source{}
+			err = c.Source("", &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -86,7 +89,7 @@ func TestSource(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}
 }

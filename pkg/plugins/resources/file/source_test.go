@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -259,14 +260,15 @@ func TestFile_Source(t *testing.T) {
 			}
 			// Looping on the only filePath in 'files'
 			for filePath := range f.files {
-				source, gotErr := f.Source(filePath)
+				gotResult := result.Source{}
+				gotErr := f.Source(filePath, &gotResult)
 				if tt.wantedErr {
 					assert.Error(t, gotErr)
 					return
 				}
 
 				require.NoError(t, gotErr)
-				assert.Equal(t, tt.wantedContents[filePath], source)
+				assert.Equal(t, tt.wantedContents[filePath], gotResult.Information)
 			}
 		})
 	}
