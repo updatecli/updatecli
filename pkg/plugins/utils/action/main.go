@@ -30,7 +30,7 @@ const PULLREQUESTBODYTEMPLATE = `
       <p>
         Created automatically by <a href="https://www.updatecli.io/">Updatecli</a>
       </p>
-      <details><summary>Options</summary>
+      <details><summary>Options:</summary>
         <br />
         <p>Most of Updatecli configuration is done via Updatecli manifest(s).</p>
         <ul>
