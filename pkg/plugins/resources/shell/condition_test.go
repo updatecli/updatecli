@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestShell_Condition(t *testing.T) {
@@ -64,17 +65,17 @@ func TestShell_Condition(t *testing.T) {
 			gotErr := s.InitChangedIf()
 			require.NoError(t, gotErr)
 
-			gotResult, gotErr := s.Condition(tt.source)
+			gotResult := result.Condition{}
+			gotErr = s.Condition(tt.source, nil, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, gotErr)
-				assert.False(t, gotResult)
+				assert.False(t, gotResult.Pass)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantResult, gotResult)
-
+			assert.Equal(t, tt.wantResult, gotResult.Pass)
 			assert.Equal(t, tt.wantCommand, mock.GotCommand.Cmd)
 		})
 	}
@@ -128,16 +129,17 @@ func TestShell_ConditionFromSCM(t *testing.T) {
 			gotErr := s.InitChangedIf()
 			require.NoError(t, gotErr)
 
-			gotResult, gotErr := s.ConditionFromSCM(tt.source, &ms)
+			gotResult := result.Condition{}
+			gotErr = s.Condition(tt.source, &ms, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, gotErr)
-				assert.False(t, gotResult)
+				assert.False(t, gotResult.Pass)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantResult, gotResult)
+			assert.Equal(t, tt.wantResult, gotResult.Pass)
 
 			assert.Equal(t, tt.wantCommand, mce.GotCommand.Cmd)
 			assert.Equal(t, tt.scmDir, mce.GotCommand.Dir)

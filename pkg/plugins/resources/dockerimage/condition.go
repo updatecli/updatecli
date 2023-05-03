@@ -12,16 +12,15 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// ConditionFromSCM returns an error because it's not supported
-func (di *DockerImage) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	logrus.Warningf("SCM configuration is not supported for condition of type dockerimage. Remove the `scm` directive from condition to remove this warning message")
-	return di.Condition(source)
-}
-
 // Condition checks if a docker image with a specific tag is published
 // We assume that if we can't retrieve the docker image digest, then it means
 // it doesn't exist.
-func (di *DockerImage) Condition(source string) (bool, error) {
+func (di *DockerImage) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+
+	if scm != nil {
+		logrus.Warningf("SCM configuration is not supported for condition of type dockerimage. Remove the `scm` directive from condition to remove this warning message")
+	}
+
 	refName := di.spec.Image
 	switch di.spec.Tag == "" {
 	case true:
@@ -32,24 +31,44 @@ func (di *DockerImage) Condition(source string) (bool, error) {
 
 	ref, err := name.ParseReference(refName)
 	if err != nil {
-		return false, fmt.Errorf("invalid image %s: %w", refName, err)
+		return fmt.Errorf("invalid image %s: %w", refName, err)
 	}
 
-	if len(di.spec.Architectures) == 0 {
+	found := false
+	switch len(di.spec.Architectures) {
+	case 0:
 		// If only one architecture is specified, then di.options are already set: let's proceed
-		return checkImage(ref, di.spec.Architecture, di.options)
-	}
+		found, err = checkImage(ref, di.spec.Architecture, di.options)
+		if err != nil {
+			return err
+		}
 
-	for _, arch := range di.spec.Architectures {
-		remoteOptions := append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+	default:
+		for _, arch := range di.spec.Architectures {
+			remoteOptions := append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
 
-		found, err := checkImage(ref, arch, remoteOptions)
-		if !found || err != nil {
-			return false, err
+			found, err = checkImage(ref, arch, remoteOptions)
+			if err != nil {
+				return err
+			}
+			if found {
+				break
+			}
 		}
 	}
 
-	return true, err
+	if found {
+		resultCondition.Pass = true
+		resultCondition.Result = result.SUCCESS
+		resultCondition.Description = fmt.Sprintf("docker image %q:%q found", di.spec.Image, source)
+		return nil
+	}
+
+	resultCondition.Pass = false
+	resultCondition.Result = result.FAILURE
+	resultCondition.Description = fmt.Sprintf("docker image %q:%q not found", di.spec.Image, source)
+
+	return nil
 }
 
 // checkImage checks if a container reference exists on the "remote" registry with a given set of options

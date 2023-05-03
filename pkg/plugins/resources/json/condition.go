@@ -1,16 +1,15 @@
 package json
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (j *Json) Condition(source string) (bool, error) {
-	return j.ConditionFromSCM(source, nil)
-}
-
-func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+func (j *Json) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 	conditionResult := true
 
 	rootDir := ""
@@ -21,7 +20,7 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 	for i := range j.contents {
 
 		if err := j.contents[i].Read(rootDir); err != nil {
-			return false, err
+			return fmt.Errorf("reading json file: %w", err)
 		}
 
 		// Override value from source if not yet defined
@@ -37,14 +36,13 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
 
 			if err != nil {
-				return false, err
+				return err
 			}
 
 		case false:
 			queryResult, err := j.contents[i].Query(j.spec.Key)
-
 			if err != nil {
-				return false, err
+				return err
 			}
 
 			queryResults = []string{queryResult}
@@ -53,16 +51,16 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		for _, queryResult := range queryResults {
 			switch queryResult == j.spec.Value {
 			case true:
-				logrus.Infof("%s Key %q, from file %q, is correctly set to %q'",
-					result.SUCCESS,
+				resultCondition.Description = fmt.Sprintf("%s\nKey %q, from file %q, is correctly set to %q",
+					resultCondition.Description,
 					j.spec.Key,
 					j.contents[i].FilePath,
 					j.spec.Value)
 
 			case false:
 				conditionResult = false
-				logrus.Infof("%s Key %q, from file %q, is incorrectly set to %q and should be %q",
-					result.ATTENTION,
+				logrus.Infof("%s\nKey %q, from file %q, is incorrectly set to %q and should be %q",
+					resultCondition.Description,
 					j.spec.Key,
 					j.contents[i].FilePath,
 					queryResult,
@@ -71,5 +69,16 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		}
 
 	}
-	return conditionResult, nil
+
+	resultCondition.Description = strings.TrimPrefix(resultCondition.Description, "\n")
+
+	switch conditionResult {
+	case true:
+		resultCondition.Pass = true
+		resultCondition.Result = result.SUCCESS
+	case false:
+		resultCondition.Pass = false
+		resultCondition.Result = result.FAILURE
+	}
+	return nil
 }

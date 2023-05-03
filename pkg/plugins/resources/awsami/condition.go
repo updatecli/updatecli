@@ -11,13 +11,17 @@ import (
 )
 
 // Condition tests if an image matching the specific filters exists.
-func (a *AMI) Condition(source string) (bool, error) {
+func (a *AMI) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+
+	if scm != nil {
+		logrus.Warningf("condition with SCM is not supported, please remove the scm block")
+		return errors.New("condition with SCM is not supported")
+	}
 
 	// It's an error if the upstream source is empty and the user does not provide any filter
 	// then it mean
 	if source == "" && len(a.Spec.Filters) == 0 {
-		logrus.Errorln(ErrNoFilter)
-		return false, ErrSpecNotValid
+		return ErrNoFilter
 	}
 
 	isFilterDefined := func(filter string) (found bool) {
@@ -45,23 +49,19 @@ func (a *AMI) Condition(source string) (bool, error) {
 	foundAMI, err := a.getLatestAmiID()
 
 	if err != nil {
-		return false, err
+		return fmt.Errorf("getting latest AMI ID: %w", err)
 	}
 
 	if len(foundAMI) > 0 {
-		logrus.Infof("%s AMI %q found\n", result.SUCCESS, foundAMI)
-		return true, nil
+		resultCondition.Description = fmt.Sprintf("AMI %q found\n", foundAMI)
+		resultCondition.Result = result.SUCCESS
+		resultCondition.Pass = true
+		return nil
 	}
 
-	fmt.Printf("%s No AMI found matching criteria for region %s\n", result.FAILURE, a.Spec.Region)
+	resultCondition.Result = result.FAILURE
+	resultCondition.Pass = false
+	resultCondition.Description = fmt.Sprintf("no AMI found matching criteria for region %s\n", a.Spec.Region)
 
-	return false, nil
-}
-
-// ConditionFromSCM is a placeholder to validate the condition interface
-func (a *AMI) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-
-	fmt.Printf("%s Condition with SCM is not supported, please remove the scm block \n", result.FAILURE)
-
-	return false, errors.New("condition with SCM is not supported")
+	return nil
 }

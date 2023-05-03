@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -53,7 +54,6 @@ func TestCondition(t *testing.T) {
 				Repository: "FOSDEM22",
 			},
 			wantResult: false,
-			wantErr:    false,
 		},
 		{
 			name: "repository should exist with no release 2.0.0",
@@ -71,7 +71,6 @@ func TestCondition(t *testing.T) {
 				Tag:        "2.0.0",
 			},
 			wantResult: false,
-			wantErr:    false,
 		},
 		{
 			name: "repository should exist with release v0.46.2",
@@ -91,6 +90,24 @@ func TestCondition(t *testing.T) {
 			wantResult: true,
 			wantErr:    false,
 		},
+		{
+			name: "repository should exist with no release v0.0.99",
+			manifest: struct {
+				URL        string
+				Token      string
+				Owner      string
+				Repository string
+				Tag        string
+			}{
+				URL:        "gitlab.com",
+				Token:      "",
+				Owner:      "olblak",
+				Repository: "updatecli",
+				Tag:        "v0.0.99",
+			},
+			wantResult: false,
+			wantErr:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -100,7 +117,8 @@ func TestCondition(t *testing.T) {
 			g, gotErr := New(tt.manifest)
 			require.NoError(t, gotErr)
 
-			gotResult, gotErr := g.Condition("")
+			gotResult := result.Condition{}
+			gotErr = g.Condition("", nil, &gotResult)
 
 			if tt.wantErr {
 				require.Error(t, gotErr)
@@ -108,7 +126,7 @@ func TestCondition(t *testing.T) {
 				require.NoError(t, gotErr)
 			}
 
-			assert.Equal(t, tt.wantResult, gotResult)
+			assert.Equal(t, tt.wantResult, gotResult.Pass)
 
 		})
 

@@ -10,7 +10,12 @@ import (
 )
 
 // Condition tests if a specific version exist on the maven repository
-func (m *Maven) Condition(source string) (bool, error) {
+func (m *Maven) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+
+	if scm != nil {
+		logrus.Warningf("SCM configuration is not supported for maven condition, aborting")
+	}
+
 	if m.spec.Version == "" {
 		m.spec.Version = source
 	}
@@ -19,30 +24,28 @@ func (m *Maven) Condition(source string) (bool, error) {
 		// metadataURL contains the URL without username/password
 		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
 		if err != nil {
-			logrus.Errorf("Trying to parse Maven metadatal url: %s", err)
+			return fmt.Errorf("trying to parse Maven metadatal url: %s", err)
 		}
 
 		versions, err := metadataHandler.GetVersions()
 		if err != nil {
-			return false, err
+			return err
 		}
 
 		for _, version := range versions {
 			if version == m.spec.Version {
-				logrus.Infof("%s Version %s is available on the Maven Repository (%s)",
-					result.SUCCESS, m.spec.Version, metadataURL)
-				return true, nil
+				resultCondition.Pass = true
+				resultCondition.Result = result.SUCCESS
+				resultCondition.Description = fmt.Sprintf("Version %s is available on the Maven Repository (%s)",
+					m.spec.Version, metadataURL)
+				return nil
 			}
 		}
-
 	}
 
-	logrus.Infof("%s Version %s is not found for Maven artifact (%s/%s)",
-		result.FAILURE, m.spec.Version, m.spec.GroupID, m.spec.ArtifactID)
-	return false, nil
-}
-
-// ConditionFromSCM returns an error because it's not supported
-func (m *Maven) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("SCM configuration is not supported for maven condition, aborting")
+	resultCondition.Result = result.FAILURE
+	resultCondition.Pass = false
+	resultCondition.Description = fmt.Sprintf("Version %s is not found for Maven artifact (%s/%s)",
+		m.spec.Version, m.spec.GroupID, m.spec.ArtifactID)
+	return nil
 }
