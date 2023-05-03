@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -76,7 +77,8 @@ func TestDockerfile_Condition(t *testing.T) {
 				contentRetriever: &mockText,
 			}
 
-			gotChanged, gotErr := d.Condition(tt.inputSourceValue)
+			gotResult := result.Condition{}
+			gotErr := d.Condition(tt.inputSourceValue, nil, &gotResult)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
@@ -84,7 +86,7 @@ func TestDockerfile_Condition(t *testing.T) {
 
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantChanged, gotChanged)
+			assert.Equal(t, tt.wantChanged, gotResult.Pass)
 		})
 	}
 }
@@ -148,7 +150,8 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 				contentRetriever: &mockText,
 			}
 
-			gotChanged, gotErr := d.ConditionFromSCM(tt.inputSourceValue, tt.scm)
+			gotResult := result.Condition{}
+			gotErr := d.Condition(tt.inputSourceValue, tt.scm, &gotResult)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
@@ -156,7 +159,7 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantChanged, gotChanged)
+			assert.Equal(t, tt.wantChanged, gotResult.Pass)
 		})
 	}
 }

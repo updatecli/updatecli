@@ -8,18 +8,20 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (gr GitHubRelease) Condition(source string) (bool, error) {
-	versions, err := gr.ghHandler.SearchReleases(gr.typeFilter)
+func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+
+	if scm != nil {
+		logrus.Warningf("condition not supported for plugin GitHub Release used with scm")
+	}
 
 	expectedValue := source
-
 	if gr.spec.Tag != "" {
 		expectedValue = gr.spec.Tag
 	}
 
+	versions, err := gr.ghHandler.SearchReleases(gr.typeFilter)
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		return fmt.Errorf("searching GitHub release: %w", err)
 	}
 
 	if len(versions) == 0 {
@@ -29,27 +31,24 @@ func (gr GitHubRelease) Condition(source string) (bool, error) {
 
 			versions, err = gr.ghHandler.SearchTags()
 			if err != nil {
-				logrus.Errorf("%s", err)
-				return false, err
+				return fmt.Errorf("looking for GitHub release tag: %w", err)
 			}
 			if len(versions) == 0 {
-				return false, fmt.Errorf("no GitHub release or git tags found, exiting")
+				return fmt.Errorf("no GitHub release or git tags found")
 			}
 		case false:
-			return false, fmt.Errorf("no GitHub release found, exiting")
+			return fmt.Errorf("no GitHub release found")
 		}
 	}
 
 	for _, version := range versions {
 		if version == expectedValue {
-			logrus.Infof("%s Github Release version %q found", result.SUCCESS, expectedValue)
-			return true, nil
+			resultCondition.Pass = true
+			resultCondition.Result = result.SUCCESS
+			resultCondition.Description = fmt.Sprintf("GitHub release %q found", expectedValue)
+			return nil
 		}
 	}
 
-	return false, fmt.Errorf("%s Github Release %q not found", result.FAILURE, expectedValue)
-}
-
-func (ghr GitHubRelease) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("condition not supported for plugin GitHub Release used with scm")
+	return fmt.Errorf("GitHub release %q not found", expectedValue)
 }

@@ -1,11 +1,14 @@
 package awsami
 
 import (
-	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -14,23 +17,23 @@ func TestCondition(t *testing.T) {
 		return
 	}
 
-	for id, d := range dataset {
+	for _, d := range dataset {
 		d.ami.apiClient = mockDescribeImagesOutput{
 			Resp: d.mockedResponse,
 		}
-		got, err := d.ami.Condition("")
+		gotResult := result.Condition{}
+		err := d.ami.Condition("", nil, &gotResult)
 
-		if !errors.Is(err, d.expectedError) {
-			t.Errorf("[%d] Wrong error:\nExpected Error:\t%v\nGot:\t\t%v\n",
-				id, d.expectedError, err)
+		switch d.expectedError == nil {
+		case true:
+			require.NoError(t, err)
+		case false:
+			require.ErrorIs(t, d.expectedError, err)
+
 		}
 
-		if got != d.expectedCondition {
-			t.Errorf("[%d] Wrong AMI conditional result:\nExpected Result:\t\t%v\nGot:\t\t\t\t\t%v",
-				id,
-				d.expectedCondition,
-				got)
-		}
+		assert.Equal(t, d.expectedCondition, gotResult.Pass)
+
 	}
 
 	// Test inject image-id
@@ -55,16 +58,10 @@ func TestCondition(t *testing.T) {
 		},
 	}
 
-	exist, err := ami.Condition(imageID)
-	if err != nil {
-		t.Errorf("Unexpected error: %q",
-			err)
-	}
+	gotResult := result.Condition{}
+	err := ami.Condition(imageID, nil, &gotResult)
 
-	if !exist {
-		t.Errorf("[%s] Wrong AMI conditional result:\nExpected Result:\t\t%v\nGot:\t\t\t\t\t%v",
-			imageID,
-			true,
-			exist)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, true, gotResult.Pass)
+
 }

@@ -1,18 +1,21 @@
 package language
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
 	tests := []struct {
-		name           string
-		spec           Spec
-		expectedResult bool
-		expectedError  bool
+		name             string
+		spec             Spec
+		expectedResult   bool
+		expectedError    bool
+		expectedErrorMsg error
 	}{
 		{
 			name: "canonical test",
@@ -26,20 +29,26 @@ func TestCondition(t *testing.T) {
 			spec: Spec{
 				Version: "1.11.1111",
 			},
-			expectedResult: false,
+			expectedResult:   false,
+			expectedError:    true,
+			expectedErrorMsg: errors.New("golang version \"1.11.1111\" doesn't exist"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
-			foundVersion, err := got.Condition("")
+
+			gotResult := result.Condition{}
+			err = got.Condition("", nil, &gotResult)
 			if tt.expectedError {
-				assert.Error(t, err)
+				if assert.Error(t, err) {
+					assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
+				}
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, foundVersion)
+			assert.Equal(t, tt.expectedResult, gotResult.Pass)
 		})
 	}
 

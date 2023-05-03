@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -290,13 +291,14 @@ func TestFile_Condition(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, gotErr := f.Condition(tt.inputSourceValue)
+			gotResult := result.Condition{}
+			gotErr := f.Condition(tt.inputSourceValue, nil, &gotResult)
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return
 			}
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantedResult, gotResult)
+			assert.Equal(t, tt.wantedResult, gotResult.Pass)
 		})
 	}
 }
@@ -442,14 +444,15 @@ func TestFile_ConditionFromSCM(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, gotErr := f.ConditionFromSCM(tt.inputSourceValue, tt.scm)
+			gotResult := result.Condition{}
+			gotErr := f.Condition(tt.inputSourceValue, tt.scm, &gotResult)
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantedResult, gotResult)
+			assert.Equal(t, tt.wantedResult, gotResult.Pass)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
 			}

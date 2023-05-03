@@ -12,15 +12,10 @@ import (
 )
 
 // Condition checks if a specific chart version exist
-func (c *Chart) Condition(source string) (bool, error) {
-	return c.ConditionFromSCM(source, nil)
-}
-
-// ConditionFromSCM returns an error because it's not supported
-func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+func (c *Chart) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 
 	if strings.HasPrefix(c.spec.URL, "oci://") {
-		return c.OCICondition(source)
+		return c.OCICondition(source, scm, resultCondition)
 	}
 
 	if c.spec.Version != "" {
@@ -35,7 +30,7 @@ func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error
 	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
 		index, err = c.GetRepoIndexFromURL()
 		if err != nil {
-			return false, err
+			return err
 		}
 	} else {
 		rootDir := ""
@@ -44,7 +39,7 @@ func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error
 		}
 		index, err = c.GetRepoIndexFromFile(rootDir)
 		if err != nil {
-			return false, err
+			return err
 		}
 	}
 
@@ -54,11 +49,12 @@ func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error
 	}
 
 	if index.Has(c.spec.Name, c.spec.Version) {
-		logrus.Infof("%s Helm Chart '%s' is available on %s%s", result.SUCCESS, c.spec.Name, c.spec.URL, message)
-		return true, nil
+		resultCondition.Pass = true
+		resultCondition.Result = result.SUCCESS
+		resultCondition.Description = fmt.Sprintf("Helm Chart %q is available on %s%s", c.spec.Name, c.spec.URL, message)
+		return nil
 	}
 
-	logrus.Infof("%s Helm Chart '%s' isn't available on %s%s", result.FAILURE, c.spec.Name, c.spec.URL, message)
-	return false, nil
+	return fmt.Errorf("the Helm chart %q isn't available on %s%s", c.spec.Name, c.spec.URL, message)
 
 }

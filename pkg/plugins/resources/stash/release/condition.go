@@ -8,35 +8,46 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Stash) Condition(source string) (bool, error) {
-	releases, err := g.SearchReleases()
+func (g *Stash) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 
-	if len(g.spec.Tag) == 0 {
-		g.spec.Tag = source
+	if scm != nil {
+		logrus.Warningf("scm not supported, ignoring")
 	}
 
+	releases, err := g.SearchReleases()
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		return fmt.Errorf("looking for releases: %w", err)
+	}
+
+	release := source
+	if g.spec.Tag != "" {
+		release = g.spec.Tag
 	}
 
 	if len(releases) == 0 {
-		logrus.Infof("%s No Bitbucket release found. As a fallback you may be looking for git tags", result.ATTENTION)
-		return false, nil
+		resultCondition.Result = result.FAILURE
+		resultCondition.Pass = false
+		resultCondition.Description = fmt.Sprintf("no Bitbucket release found for repository %s/%s", g.spec.Owner, g.spec.Repository)
+		return nil
 	}
 
-	for _, release := range releases {
-		if release == g.spec.Tag {
-			logrus.Infof("%s Bitbucket Release tag %q found", result.SUCCESS, release)
-			return true, nil
+	for _, r := range releases {
+		if r == g.spec.Tag {
+			resultCondition.Result = result.SUCCESS
+			resultCondition.Pass = true
+			resultCondition.Description = fmt.Sprintf("bitbucket release tag %q found", release)
+			return nil
 		}
 	}
 
-	logrus.Infof("%s No Bitbucket Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-	return false, nil
+	resultCondition.Result = result.FAILURE
+	resultCondition.Pass = false
+	resultCondition.Description = fmt.Sprintf("no Bitbucket Release tag found matching %q for repository %s%s",
+		release,
+		g.spec.Owner,
+		g.spec.Repository,
+	)
 
-}
+	return nil
 
-func (g *Stash) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("Condition not supported for the plugin Bitbucket Release")
 }
