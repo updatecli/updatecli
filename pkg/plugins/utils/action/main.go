@@ -23,7 +23,7 @@ const PULLREQUESTBODYTEMPLATE = `
 
 <table>
   <tr>
-    <td width="80">
+    <td width="77">
       <img src="https://www.updatecli.io/images/updatecli.png" alt="Updatecli logo" width="50" height="50">
     </td>
     <td>
