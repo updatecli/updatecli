@@ -44,20 +44,17 @@ func (p *Pipeline) RunTargets() error {
 		target := p.Targets[id]
 		target.Config = p.Config.Spec.Targets[id]
 
-		report := p.Report.Targets[id]
-		// Update report name as the target configuration might has been updated (templated values)
-		report.Name = target.Config.Name
-
 		shouldSkipTarget := false
 
 		for _, parentTarget := range target.Config.DependsOn {
-			if p.Targets[parentTarget].Result == result.FAILURE {
+			if p.Targets[parentTarget].Result.Result == result.FAILURE {
 				logrus.Warningf("Parent target[%q] did not succeed. Skipping execution of the target[%q]", parentTarget, id)
 				shouldSkipTarget = true
-				target.Result = result.SKIPPED
+				target.Result.Result = result.SKIPPED
 			}
 		}
 
+		report := p.Report.Targets[id]
 		// No need to run this target as one of its dependency failed
 		if shouldSkipTarget {
 			p.Targets[id] = target
@@ -67,20 +64,25 @@ func (p *Pipeline) RunTargets() error {
 
 		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
 
+		report = &target.Result
+
+		// Update report name as the target configuration might has been updated (templated values)
+		report.Name = target.Config.Name
+
 		if err != nil {
 			p.Report.Result = result.FAILURE
-			target.Result = result.FAILURE
+			target.Result.Result = result.FAILURE
 
 			errs = append(errs, fmt.Errorf("something went wrong in target %q : %q", id, err))
 		}
 
-		report.Result = target.Result
+		report.Result = target.Result.Result
 
 		p.Targets[id] = target
 		p.Report.Targets[id] = report
 
-		if strings.Compare(target.Result, result.ATTENTION) == 0 {
-			isResultChanged = true
+		if target.Result.Changed {
+			isResultChanged = target.Result.Changed
 		}
 	}
 

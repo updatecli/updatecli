@@ -8,35 +8,40 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Gitlab) Condition(source string) (bool, error) {
-	releases, err := g.SearchReleases()
-
-	if len(g.spec.Tag) == 0 {
-		g.spec.Tag = source
+func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+	if scm != nil {
+		logrus.Warningf("Condition not supported for the plugin Gitlab release")
 	}
 
+	releases, err := g.SearchReleases()
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		return fmt.Errorf("looking for Gitlab release: %w", err)
 	}
 
 	if len(releases) == 0 {
-		logrus.Infof("%s No Gitlab release found. As a fallback you may be looking for git tags", result.ATTENTION)
-		return false, nil
+		resultCondition.Result = result.FAILURE
+		resultCondition.Pass = false
+		resultCondition.Description = "no Gitlab release found"
+
+		return nil
 	}
 
-	for _, release := range releases {
-		if release == g.spec.Tag {
-			logrus.Infof("%s Gitlab Release tag %q found", result.SUCCESS, release)
-			return true, nil
+	release := source
+	if g.spec.Tag != "" {
+		release = g.spec.Tag
+	}
+	for _, r := range releases {
+		if r == release {
+			resultCondition.Result = result.SUCCESS
+			resultCondition.Pass = true
+			resultCondition.Description = fmt.Sprintf("Gitlab release tag %q found", release)
+			return nil
 		}
 	}
 
-	logrus.Infof("%s No Gitlab Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-	return false, nil
+	resultCondition.Result = result.FAILURE
+	resultCondition.Pass = false
+	resultCondition.Description = fmt.Sprintf("no Gitlab release tag found matching pattern %q of kind %q", g.versionFilter.Pattern, g.versionFilter.Kind)
 
-}
-
-func (g *Gitlab) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("Condition not supported for the plugin Gitlab Release")
+	return nil
 }

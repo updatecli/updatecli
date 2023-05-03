@@ -14,20 +14,86 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Spec defines a specification for a "yaml" resource
-// parsed from an updatecli manifest file
+/*
+"yaml"  defines the specification for manipulating "yaml" files.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// [source,condition,target] File contains the file path to take in account
+	/*
+		"file" defines the yaml file path to interact with.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		remark:
+			* "file" and "files" are mutually exclusive
+			* when used as a source or condition, the file path also accept the following protocols
+			* protocols "https://", "http://", and "file://" are supported in path for source and condition
+	*/
 	File string `yaml:",omitempty"`
-	// [source,condition,target] Files contains the file path(s) to take in account. For 'source': limited to one item
+	/*
+		"files" defines the list of yaml files path to interact with.
+
+		compatible:
+			* condition
+			* target
+
+		remark:
+			* file and files are mutually exclusive
+			* protocols "https://", "http://", and "file://" are supported in file path for source and condition
+	*/
 	Files []string `yaml:",omitempty"`
-	// [source,condition,target] Key is the YAML key to retrieve
+	/*
+		"key" defines the yaml key used to identify the yaml information to manipulate.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		remark:
+			* key is a simpler version of yamlpath accepts keys.
+
+		example:
+			* key: name
+			* key: agent.name
+			* key: agents[0].name
+
+	*/
 	Key string `yaml:",omitempty"`
-	// [source,condition,target] Value is the YAML value to set. Default value set to source output for condition and target
+	/*
+		"value" is the value associated with a yaml key.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		default:
+			When used from a condition or a target, the default value is set to linked source output.
+	*/
 	Value string `yaml:",omitempty"`
-	// [condition] allow checking for only the existence of a key (not its value)
+	/*
+		"keyonly" allows to only check if a key exist and do not return an error otherwise
+
+		compatible:
+			* condition
+
+		default:
+			false
+	*/
 	KeyOnly bool `yaml:",omitempty"`
-	// [target] Indent defines the yaml indentation for file updated by target of kind yaml. Default to 2
+	/*
+		"indent" allows to override the default yaml indentation for file updated by a target.
+
+		compatible:
+			* target
+
+		default:
+			default indentation is set to 2.
+	*/
 	Indent int `yaml:",omitempty"`
 }
 
@@ -36,7 +102,13 @@ type Yaml struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
 	indent           int
-	files            map[string]string // map of file paths to file contents
+	files            map[string]file // map of file paths to file contents
+}
+
+type file struct {
+	originalFilePath string
+	filePath         string
+	content          string
 }
 
 // New returns a reference to a newly initialized Yaml object from a Spec
@@ -64,14 +136,22 @@ func New(spec interface{}) (*Yaml, error) {
 		newResource.indent = 2
 	}
 
-	newResource.files = make(map[string]string)
+	newResource.files = make(map[string]file)
 	// File as unique element of newResource.files
 	if len(newResource.spec.File) > 0 {
-		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
+		filePath := strings.TrimPrefix(newResource.spec.File, "file://")
+		newResource.files[filePath] = file{
+			originalFilePath: filePath,
+			filePath:         filePath,
+		}
 	}
 	// Files
 	for _, filePath := range newResource.spec.Files {
-		newResource.files[strings.TrimPrefix(filePath, "file://")] = ""
+		filePath := strings.TrimPrefix(filePath, "file://")
+		newResource.files[strings.TrimPrefix(filePath, "file://")] = file{
+			originalFilePath: filePath,
+			filePath:         filePath,
+		}
 	}
 
 	return newResource, nil
@@ -121,16 +201,31 @@ func (y *Yaml) Read() error {
 
 	// Retrieve files content
 	for filePath := range y.files {
-		if y.contentRetriever.FileExists(filePath) {
-			y.files[filePath], err = y.contentRetriever.ReadAll(filePath)
+		f := y.files[filePath]
+		if y.contentRetriever.FileExists(f.filePath) {
+			f.content, err = y.contentRetriever.ReadAll(f.filePath)
 			if err != nil {
 				return err
 			}
+			y.files[filePath] = f
+
 		} else {
-			return fmt.Errorf("%s The specified file %q does not exist", result.FAILURE, filePath)
+			return fmt.Errorf("%s The specified file %q does not exist", result.FAILURE, f.filePath)
 		}
 	}
 	return nil
+}
+
+func (y *Yaml) UpdateAbsoluteFilePath(workDir string) {
+	for filePath := range y.files {
+		if workDir != "" {
+			f := y.files[filePath]
+			f.filePath = joinPathWithWorkingDirectoryPath(f.originalFilePath, workDir)
+
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", f.originalFilePath, f.filePath)
+			y.files[filePath] = f
+		}
+	}
 }
 
 // isPositionKey checks if key use the array position like agents[0].

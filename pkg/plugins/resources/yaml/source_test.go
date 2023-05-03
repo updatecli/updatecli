@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -13,7 +14,7 @@ func Test_Source(t *testing.T) {
 	tests := []struct {
 		name           string
 		spec           Spec
-		files          map[string]string
+		files          map[string]file
 		mockedContents map[string]string
 		mockedError    error
 		wantedContents map[string]string
@@ -26,8 +27,11 @@ func Test_Source(t *testing.T) {
 				File: "test.yaml",
 				Key:  "annotations.github\\.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -47,8 +51,11 @@ annotations:
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -70,8 +77,11 @@ github:
 				},
 				Key: "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -94,9 +104,15 @@ github:
 				},
 				Key: "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml":     "",
-				"too-much.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"too-much.yaml": {
+					filePath:         "too-much.yaml",
+					originalFilePath: "too-much.yaml",
+				},
 			},
 			isErrorWanted: true,
 		},
@@ -109,8 +125,10 @@ github:
 				Key:   "github.owner",
 				Value: "olblak",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml"},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -130,8 +148,11 @@ github:
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -148,8 +169,11 @@ github:
 				File: "test.yaml",
 				Key:  "github.country",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -159,15 +183,18 @@ github:
 `,
 			},
 			isResultWanted: false,
-			isErrorWanted:  false,
+			isErrorWanted:  true,
 		},
 		{
 			name: "File does not exist",
 			spec: Spec{
 				File: "not_existing.yaml",
 			},
-			files: map[string]string{
-				"not_existing.yaml": "",
+			files: map[string]file{
+				"not_existing.yaml": {
+					filePath:         "not_existing.yaml",
+					originalFilePath: "not_existing.yaml",
+				},
 			},
 			mockedError:   fmt.Errorf("no such file or directory"),
 			isErrorWanted: true,
@@ -187,14 +214,16 @@ github:
 
 			// Looping on the only filePath in 'files'
 			for filePath := range y.files {
-				source, gotErr := y.Source("")
+				gotResult := result.Source{}
+
+				gotErr := y.Source("", &gotResult)
 				if tt.isErrorWanted {
 					assert.Error(t, gotErr)
 					return
 				}
 
 				require.NoError(t, gotErr)
-				assert.Equal(t, tt.wantedContents[filePath], source)
+				assert.Equal(t, tt.wantedContents[filePath], gotResult.Information)
 			}
 		})
 	}

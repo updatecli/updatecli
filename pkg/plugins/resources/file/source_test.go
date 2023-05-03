@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -13,7 +14,7 @@ func TestFile_Source(t *testing.T) {
 	tests := []struct {
 		name           string
 		spec           Spec
-		files          map[string]string
+		files          map[string]fileMetadata
 		mockedContents map[string]string
 		mockedError    error
 		wantedContents map[string]string
@@ -25,8 +26,11 @@ func TestFile_Source(t *testing.T) {
 			spec: Spec{
 				File: "/home/ucli/foo.txt",
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": "Hello World",
@@ -43,8 +47,11 @@ func TestFile_Source(t *testing.T) {
 					"/home/ucli/foo.txt",
 				},
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": "Hello World",
@@ -60,8 +67,11 @@ func TestFile_Source(t *testing.T) {
 				File: "/home/ucli/foo.txt",
 				Line: 3,
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": "Title\r\nGood Bye\r\nThe End",
@@ -76,8 +86,11 @@ func TestFile_Source(t *testing.T) {
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*freebsd_386.*",
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": `363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07  terraform_0.14.5_darwin_amd64.zip
@@ -105,8 +118,11 @@ func TestFile_Source(t *testing.T) {
 				File:         "/home/ucli/foo.txt",
 				MatchPattern: ".*terraform_.*_linux_.*",
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": `363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07  terraform_0.14.5_darwin_amd64.zip
@@ -138,9 +154,15 @@ func TestFile_Source(t *testing.T) {
 					"/home/ucli/bar.txt",
 				},
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
-				"/home/ucli/bar.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
+				"/home/ucli/bar.txt": {
+					originalPath: "/home/ucli/bar.txt",
+					path:         "/home/ucli/bar.txt",
+				},
 			},
 			wantedErr: true,
 		},
@@ -151,8 +173,11 @@ func TestFile_Source(t *testing.T) {
 				ReplacePattern: "gradle_$1",
 				File:           "/home/ucli/foo.txt",
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			wantedErr: true,
 		},
@@ -162,8 +187,11 @@ func TestFile_Source(t *testing.T) {
 				Content: "Hello world",
 				File:    "/home/ucli/foo.txt",
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			wantedErr: true,
 		},
@@ -173,8 +201,11 @@ func TestFile_Source(t *testing.T) {
 				ForceCreate: true,
 				File:        "/home/ucli/foo.txt",
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			wantedErr: true,
 		},
@@ -184,14 +215,17 @@ func TestFile_Source(t *testing.T) {
 				MatchPattern: "(d+:1",
 				File:         "/home/ucli/foo.txt",
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			wantedErr: true,
 		},
 		{
 			name:        "Failing case with non existing 'File'",
-			files:       map[string]string{},
+			files:       map[string]fileMetadata{},
 			mockedError: fmt.Errorf("no such file or directory"),
 			wantedErr:   true,
 		},
@@ -201,8 +235,11 @@ func TestFile_Source(t *testing.T) {
 				File: "/home/ucli/foo.txt",
 				Line: 3,
 			},
-			files: map[string]string{
-				"/home/ucli/foo.txt": "",
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.txt": {
+					originalPath: "/home/ucli/foo.txt",
+					path:         "/home/ucli/foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": "Don't worry\r\nBe happy",
@@ -223,14 +260,15 @@ func TestFile_Source(t *testing.T) {
 			}
 			// Looping on the only filePath in 'files'
 			for filePath := range f.files {
-				source, gotErr := f.Source(filePath)
+				gotResult := result.Source{}
+				gotErr := f.Source(filePath, &gotResult)
 				if tt.wantedErr {
 					assert.Error(t, gotErr)
 					return
 				}
 
 				require.NoError(t, gotErr)
-				assert.Equal(t, tt.wantedContents[filePath], source)
+				assert.Equal(t, tt.wantedContents[filePath], gotResult.Information)
 			}
 		})
 	}

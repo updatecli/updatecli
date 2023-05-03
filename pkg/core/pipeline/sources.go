@@ -37,15 +37,26 @@ func (p *Pipeline) RunSources() error {
 
 		shouldRunSource := true
 		for _, parentSource := range source.Config.DependsOn {
-			if p.Sources[parentSource].Result != result.SUCCESS {
+			if p.Sources[parentSource].Result.Result != result.SUCCESS {
 				logrus.Warningf("Parent source[%q] did not succeed. Skipping execution of the source[%q]", parentSource, id)
 				shouldRunSource = false
 			}
 		}
-		if shouldRunSource {
-			err = source.Run()
+
+		if !shouldRunSource {
+			continue
 		}
-		rpt.Result = source.Result
+
+		err = source.Run()
+		if err != nil {
+			source.Result.Result = result.FAILURE
+
+			p.Sources[id] = source
+			p.Report.Sources[id] = &source.Result
+
+			logrus.Errorf("%s %v\n", source.Result, err)
+			continue
+		}
 
 		if len(source.Changelog) > 0 {
 			logrus.Infof("\n\n%s:\n", strings.ToTitle("Changelog"))
@@ -53,17 +64,8 @@ func (p *Pipeline) RunSources() error {
 			logrus.Infof("%s\n", source.Changelog)
 		}
 
-		if err != nil {
-			logrus.Errorf("%s %v\n", source.Result, err)
-		}
-
-		if strings.Compare(source.Result, result.ATTENTION) == 0 {
-			logrus.Infof("\n%s empty source returned", source.Result)
-		}
-
 		p.Sources[id] = source
-		p.Report.Sources[id] = rpt
-
+		p.Report.Sources[id] = &source.Result
 	}
 
 	return err

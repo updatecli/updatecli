@@ -58,9 +58,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Actions = make(map[string]action.Action, len(config.Spec.Actions))
 
 	// Init context resource size
-	p.Report.Sources = make(map[string]reports.Stage, len(config.Spec.Sources))
-	p.Report.Conditions = make(map[string]reports.Stage, len(config.Spec.Conditions))
-	p.Report.Targets = make(map[string]reports.Stage, len(config.Spec.Targets))
+	p.Report.Sources = make(map[string]*result.Source, len(config.Spec.Sources))
+	p.Report.Conditions = make(map[string]*result.Condition, len(config.Spec.Conditions))
+	p.Report.Targets = make(map[string]*result.Target, len(config.Spec.Targets))
 	p.Report.Name = config.Spec.Name
 	p.Report.Result = result.SKIPPED
 
@@ -122,16 +122,14 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		// Init Sources[id]
 		p.Sources[id] = source.Source{
 			Config: config.Spec.Sources[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Result: result.Source{
+				Result: result.SKIPPED,
+			},
+			Scm: scmPointer,
 		}
 
-		p.Report.Sources[id] = reports.Stage{
-			Name:   config.Spec.Sources[id].Name,
-			Kind:   config.Spec.Sources[id].Kind,
-			Result: result.SKIPPED,
-		}
-
+		r := p.Sources[id].Result
+		p.Report.Sources[id] = &r
 	}
 
 	// Init conditions report
@@ -150,15 +148,15 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		p.Conditions[id] = condition.Condition{
 			Config: config.Spec.Conditions[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Result: result.Condition{
+				Result: result.SKIPPED,
+			},
+			Scm: scmPointer,
 		}
 
-		p.Report.Conditions[id] = reports.Stage{
-			Name:   config.Spec.Conditions[id].Name,
-			Kind:   config.Spec.Conditions[id].Kind,
-			Result: result.SKIPPED,
-		}
+		r := p.Conditions[id].Result
+		p.Report.Conditions[id] = &r
+
 	}
 
 	// Init target report
@@ -176,15 +174,14 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		p.Targets[id] = target.Target{
 			Config: config.Spec.Targets[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Result: result.Target{
+				Result: result.SKIPPED,
+			},
+			Scm: scmPointer,
 		}
 
-		p.Report.Targets[id] = reports.Stage{
-			Name:   config.Spec.Targets[id].Name,
-			Kind:   config.Spec.Targets[id].Kind,
-			Result: result.SKIPPED,
-		}
+		r := p.Targets[id].Result
+		p.Report.Targets[id] = &r
 	}
 	return nil
 
@@ -259,12 +256,12 @@ func (p *Pipeline) String() string {
 	result = result + fmt.Sprintf("%q:\n", "Conditions")
 	for key, value := range p.Conditions {
 		result = result + fmt.Sprintf("\t%q:\n", key)
-		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
+		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
 	}
 	result = result + fmt.Sprintf("%q:\n", "Targets")
 	for key, value := range p.Targets {
 		result = result + fmt.Sprintf("\t%q:\n", key)
-		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
+		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
 	}
 
 	return result

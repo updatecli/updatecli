@@ -46,10 +46,10 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		}
 
 		// Reports the result of the execution of this condition
-		rpt.Result = condition.Result
+		rpt.Result = condition.Result.Result
 
 		// If there was an error OR if the condition is not successful then defines the global result as false
-		if err != nil || condition.Result != result.SUCCESS {
+		if err != nil || condition.Result.Result != result.SUCCESS {
 			globalResult = false
 		}
 

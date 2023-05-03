@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestTarget(t *testing.T) {
@@ -109,7 +110,9 @@ func TestTarget(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := j.Target(tt.sourceInput, true)
+			gotResult := result.Target{}
+
+			err = j.Target(tt.sourceInput, nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -117,7 +120,7 @@ func TestTarget(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Changed)
 		})
 	}
 }

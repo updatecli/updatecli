@@ -21,7 +21,7 @@ var (
 // in order to update targets based on the source output
 type Condition struct {
 	// Result stores the condition result after a condition run.
-	Result string
+	Result result.Condition
 	// Config defines condition input parameters
 	Config Config
 	Scm    *scm.ScmHandler
@@ -42,16 +42,15 @@ type Config struct {
 
 // Run tests if a specific condition is true
 func (c *Condition) Run(source string) (err error) {
-	c.Result = result.FAILURE
-	ok := false
+	c.Result.Result = result.FAILURE
 
 	condition, err := resource.New(c.Config.ResourceConfig)
 	if err != nil {
 		return err
 	}
 
-	if len(c.Config.Transformers) > 0 {
-		source, err = c.Config.Transformers.Apply(source)
+	if len(c.Config.ResourceConfig.Transformers) > 0 {
+		source, err = c.Config.ResourceConfig.Transformers.Apply(source)
 		if err != nil {
 			return err
 		}
@@ -59,7 +58,7 @@ func (c *Condition) Run(source string) (err error) {
 
 	switch c.Scm == nil {
 	case true:
-		ok, err = condition.Condition(source)
+		err = condition.Condition(source, nil, &c.Result)
 		if err != nil {
 			return err
 		}
@@ -75,18 +74,27 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
-		ok, err = condition.ConditionFromSCM(source, s)
+		err = condition.Condition(source, s, &c.Result)
 		if err != nil {
 			return err
 		}
 	}
 
-	if ok == c.Config.FailWhen {
-		logrus.Printf("\t => expected condition result %t, got %t", c.Config.FailWhen, ok)
-		return nil
+	// FailWhen is used to reverse the expected condition value
+	// If failwhen is set to true, then we expected a condition returning "true" would be considered as a failure
+	if c.Config.FailWhen {
+		logrus.Debugf("Expected successful condition result to be %v", !c.Config.FailWhen)
+		if c.Result.Pass {
+			c.Result.Result = result.FAILURE
+			c.Result.Pass = false
+		} else {
+			c.Result.Result = result.SUCCESS
+			c.Result.Pass = true
+		}
 	}
 
-	c.Result = result.SUCCESS
+	logrus.Infof("%s %s", c.Result.Result, c.Result.Description)
+
 	return nil
 }
 
@@ -104,23 +112,23 @@ func (c *Config) Validate() error {
 	missingParameters := []string{}
 
 	// Validate that kind is set
-	if len(c.Kind) == 0 {
+	if len(c.ResourceConfig.Kind) == 0 {
 		missingParameters = append(missingParameters, "kind")
 	}
 
 	// Ensure kind is lowercase
-	if c.Kind != strings.ToLower(c.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.Kind)
-		c.Kind = strings.ToLower(c.Kind)
+	if c.ResourceConfig.Kind != strings.ToLower(c.ResourceConfig.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.ResourceConfig.Kind)
+		c.ResourceConfig.Kind = strings.ToLower(c.ResourceConfig.Kind)
 	}
 
 	// Handle scmID deprecation
-	if len(c.DeprecatedSCMID) > 0 {
-		switch len(c.SCMID) {
+	if len(c.ResourceConfig.DeprecatedSCMID) > 0 {
+		switch len(c.ResourceConfig.SCMID) {
 		case 0:
 			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
-			c.SCMID = c.DeprecatedSCMID
-			c.DeprecatedSCMID = ""
+			c.ResourceConfig.SCMID = c.ResourceConfig.DeprecatedSCMID
+			c.ResourceConfig.DeprecatedSCMID = ""
 		default:
 			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
 				"scmID", "scmid", "scmID")
@@ -128,15 +136,15 @@ func (c *Config) Validate() error {
 	}
 
 	// Handle depends_on deprecation
-	if len(c.DeprecatedDependsOn) > 0 {
-		switch len(c.DependsOn) == 0 {
+	if len(c.ResourceConfig.DeprecatedDependsOn) > 0 {
+		switch len(c.ResourceConfig.DependsOn) == 0 {
 		case true:
 			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
-			c.DependsOn = c.DeprecatedDependsOn
-			c.DeprecatedDependsOn = []string{}
+			c.ResourceConfig.DependsOn = c.ResourceConfig.DeprecatedDependsOn
+			c.ResourceConfig.DeprecatedDependsOn = []string{}
 		case false:
 			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
-			c.DeprecatedDependsOn = []string{}
+			c.ResourceConfig.DeprecatedDependsOn = []string{}
 		}
 	}
 
@@ -153,7 +161,7 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	err := c.Transformers.Validate()
+	err := c.ResourceConfig.Transformers.Validate()
 	if err != nil {
 		return err
 	}

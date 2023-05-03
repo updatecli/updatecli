@@ -69,77 +69,136 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 	switch kind {
 	case "aws/ami":
+
 		return awsami.New(rs.Spec)
+
 	case "cargopackage":
+
 		return cargopackage.New(rs.Spec, rs.SCMID != "")
+
 	case "csv":
+
 		return csv.New(rs.Spec)
+
 	case "dockerdigest":
+
 		return dockerdigest.New(rs.Spec)
+
 	case "dockerfile":
+
 		return dockerfile.New(rs.Spec)
+
 	case "dockerimage":
+
 		return dockerimage.New(rs.Spec)
-	case "githubrelease":
-		return githubrelease.New(rs.Spec)
+
 	case "gitbranch":
+
 		return gitbranch.New(rs.Spec)
-	case "gittag":
-		return gittag.New(rs.Spec)
+
 	case "gitea/branch":
+
 		return giteaBranch.New(rs.Spec)
+
 	case "gitea/tag":
+
 		return giteaTag.New(rs.Spec)
+
 	case "gitea/release":
+
 		return giteaRelease.New(rs.Spec)
+
+	case "githubrelease":
+
+		return githubrelease.New(rs.Spec)
+
 	case "gitlab/branch":
+
 		return gitlabBranch.New(rs.Spec)
+
 	case "gitlab/tag":
+
 		return gitlabTag.New(rs.Spec)
+
 	case "gitlab/release":
+
 		return gitlabRelease.New(rs.Spec)
+
+	case "gittag":
+
+		return gittag.New(rs.Spec)
+
 	case "golang":
+
 		return golang.New(rs.Spec)
+
 	case "golang/gomod":
+
 		return gomod.New(rs.Spec)
+
 	case "golang/module":
+
 		return gomodule.New(rs.Spec)
+
 	case "file":
+
 		return file.New(rs.Spec)
+
 	case "helmchart":
+
 		return helm.New(rs.Spec)
+
 	case "jenkins":
+
 		return jenkins.New(rs.Spec)
+
 	case "json":
+
 		return json.New(rs.Spec)
+
 	case "maven":
+
 		return maven.New(rs.Spec)
+
 	case "shell":
+
 		return shell.New(rs.Spec)
+
 	case "stash/branch":
+
 		return stashBranch.New(rs.Spec)
+
 	case "stash/tag":
+
 		return stashTag.New(rs.Spec)
+
 	case "toml":
+
 		return toml.New(rs.Spec)
+
 	case "yaml":
+
 		return yaml.New(rs.Spec)
+
 	case "xml":
+
 		return xml.New(rs.Spec)
+
 	case "npm":
+
 		return npm.New(rs.Spec)
+
 	default:
+
 		return nil, fmt.Errorf("%s Don't support resource kind: %v", result.FAILURE, rs.Kind)
 	}
 }
 
 // Resource allow to manipulate a resource that can be a source, a condition or a target
 type Resource interface {
-	Source(workingDir string) (string, error)
-	Condition(version string) (bool, error)
-	ConditionFromSCM(version string, scm scm.ScmHandler) (bool, error)
-	Target(source string, dryRun bool) (bool, error)
-	TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error)
+	Source(workingDir string, sourceResult *result.Source) error
+	Condition(version string, scm scm.ScmHandler, resultCondition *result.Condition) error
+	Target(source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
 	Changelog() string
 }
 

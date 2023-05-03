@@ -1,4 +1,4 @@
-name: Test Gitea scm
+name: Test Gitlab scm
 
 scms:
   gitlab:

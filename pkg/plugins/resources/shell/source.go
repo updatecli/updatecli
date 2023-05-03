@@ -2,18 +2,20 @@ package shell
 
 import (
 	"fmt"
+
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source returns the stdout of the shell command if its exit code is 0
 // otherwise an error is returned with the content of stderr
-func (s *Shell) Source(workingDir string) (string, error) {
+func (s *Shell) Source(workingDir string, resultSource *result.Source) error {
 
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
 	err := s.spec.Environments.Load()
 	if err != nil {
-		return "", &ExecutionFailedError{}
+		return &ExecutionFailedError{}
 	}
 
 	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "source"
@@ -30,12 +32,12 @@ func (s *Shell) Source(workingDir string) (string, error) {
 	// so we could collect information needed to validate that a command successfully as expected
 	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
-		return "", err
+		return fmt.Errorf("running precommand: %w", err)
 	}
 
 	scriptFilename, err := newShellScript(s.spec.Command)
 	if err != nil {
-		return "", fmt.Errorf("failed initializing source script - %s", err)
+		return fmt.Errorf("initializing source script: %w", err)
 	}
 
 	err = s.executeCommand(command{
@@ -44,15 +46,15 @@ func (s *Shell) Source(workingDir string) (string, error) {
 		Env: env.ToStringSlice(),
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed while running source script - %s", err)
+		return fmt.Errorf("running source script: %w", err)
 	}
 
 	// PostCommand is executed to collect information after running the shell command
 	// so we could collect information needed to validate that a command successfully as expected
 	err = s.success.PostCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
-		return "", err
+		return fmt.Errorf("running postcommand: %w", err)
 	}
 
-	return s.success.SourceResult()
+	return s.success.SourceResult(resultSource)
 }

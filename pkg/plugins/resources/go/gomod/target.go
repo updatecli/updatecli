@@ -3,69 +3,76 @@ package gomod
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target is not supported for the Golang resource
-func (g *GoMod) Target(source string, dryRun bool) (changed bool, err error) {
-
-	changed, _, _, err = g.TargetFromSCM(source, nil, dryRun)
-	return changed, err
-
-}
-
-// TargetFromSCM is not supported for the Golang resource
-func (g *GoMod) TargetFromSCM(source string, scm scm.ScmHandler, dryRun bool) (changed bool, files []string, message string, err error) {
+func (g *GoMod) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
 	version := source
 	if g.spec.Version != "" {
 		version = g.spec.Version
 	}
 
+	resultTarget.NewInformation = version
+
 	filename := g.filename
 	if scm != nil {
 		filename = utils.JoinFilePathWithWorkingDirectoryPath(g.filename, scm.GetDirectory())
 	}
 
-	oldVersion, newVersion, changed, err := g.setVersion(version, filename, dryRun)
+	resultTarget.OldInformation, resultTarget.NewInformation, resultTarget.Changed, err = g.setVersion(version, filename, dryRun)
 	if err != nil {
-		return false, files, message, err
+		return err
 	}
 
-	if !changed {
+	if !resultTarget.Changed {
 		switch g.kind {
 		case kindGolang:
-			message = fmt.Sprintf("go.mod already set Golang version to %q", newVersion)
+			resultTarget.Description = fmt.Sprintf("go.mod already set Golang version to %q", version)
 		case kindModule:
-			message = fmt.Sprintf("go.mod already has Module %q set to version %q", g.spec.Module, newVersion)
+			resultTarget.Description = fmt.Sprintf("go.mod already has Module %q set to version %q", g.spec.Module, version)
 		}
 
-		logrus.Infoln(message)
-		return changed, files, message, nil
+		resultTarget.Result = result.SUCCESS
+
+		return nil
 	}
+
+	resultTarget.Result = result.ATTENTION
 
 	if dryRun {
 		switch g.kind {
 		case kindGolang:
-			message = fmt.Sprintf("go.mod should update Golang version from %q to %q", oldVersion, newVersion)
+			resultTarget.Description = fmt.Sprintf("go.mod should update Golang version from %q to %q",
+				resultTarget.OldInformation,
+				resultTarget.NewInformation)
 		case kindModule:
-			message = fmt.Sprintf("go.mod should update Module path %q version from %q to %q", g.spec.Module, oldVersion, newVersion)
+			resultTarget.Description = fmt.Sprintf("go.mod should update Module path %q version from %q to %q",
+				g.spec.Module,
+				resultTarget.OldInformation,
+				resultTarget.NewInformation)
 		}
 
-		logrus.Infoln(message)
-		return changed, files, message, nil
+		return nil
 	}
 
-	files = []string{filename}
+	resultTarget.Files = append(resultTarget.Files, filename)
+
 	switch g.kind {
 	case kindGolang:
-		message = fmt.Sprintf("go.mod updated Golang version from %q to %q", oldVersion, newVersion)
+		resultTarget.Description = fmt.Sprintf("go.mod updated Golang version from %q to %q",
+			resultTarget.OldInformation,
+			resultTarget.NewInformation)
+
 	case kindModule:
-		message = fmt.Sprintf("go.mod updated Module path %q version from %q to %q", g.spec.Module, oldVersion, newVersion)
+		resultTarget.Description = fmt.Sprintf("go.mod updated Module path %q version from %q to %q",
+			g.spec.Module,
+			resultTarget.OldInformation,
+			resultTarget.NewInformation)
 	}
 
-	logrus.Infoln(message)
-	return changed, files, message, nil
+	return nil
 }

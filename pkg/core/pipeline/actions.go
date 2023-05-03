@@ -72,14 +72,15 @@ func (p *Pipeline) RunActions() error {
 
 		for _, t := range relatedTargets {
 			// We only care about target that have changed something
-			if p.Targets[t].Result != result.ATTENTION {
+			if !p.Targets[t].Result.Changed {
 				continue
 			}
 
 			actionTarget := reports.ActionTarget{
 				// Better for ID to use hash string
-				ID:    fmt.Sprintf("%x", sha256.Sum256([]byte(t))),
-				Title: p.Targets[t].Config.Name,
+				ID:          fmt.Sprintf("%x", sha256.Sum256([]byte(t))),
+				Title:       p.Targets[t].Config.Name,
+				Description: p.Targets[t].Result.Description,
 			}
 
 			if p.Sources[p.Targets[t].Config.SourceID].Changelog != "" {

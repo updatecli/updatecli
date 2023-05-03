@@ -14,7 +14,7 @@ docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windo
 
 == CONTRIBUTE
 
-They are multiple ways to contribute which don't necessarily involve coding, like providing feedback, improving documentation and processes.
+They're multiple ways to contribute which don't necessarily involve coding, like providing feedback, improving documentation and processes.
 Here I'll just highlight some of them:
 
 === FEEDBACK
@@ -27,13 +27,13 @@ The code is divided into two categories, core and plugins. The core is designed 
 
 ==== CORE
 
-This section is still evolving as they are many areas that need attention.
+This section is still evolving as they're many areas that need attention.
 
 ==== PLUGINS
 
 Plugins can be easily added by following this workflow:
 
-===== 1. Define Package name
+===== 1. Define package name
 
 Creating a new directory using your "packageName" under the directory `pkg/plugins` that will contain your go package similar to:
 
@@ -45,6 +45,7 @@ pkg
 │       ├── source.go
 │       ├── condition_test.go
 │       ├── condition.go
+│       ├── spec.go
 │       ├── target_test.go
 │       ├── target.go
 │       ├── main_test.go
@@ -55,15 +56,56 @@ pkg
 
 ===== 2. Define configuration
 
-In the `main.go`, you need to define the `struct` that you'll use to configure your workflow where the capitalized fields will be set when unmarshalling from your future configuration.yaml
+In the `spec.go`, you need to define the `struct` that you'll use to configure your workflow where the capitalized fields will be set when unmarshalling from your future configuration.yaml
 
 ```
-type Capitalized_package_name struct {
-	Field1        string
-	Field2        string
-	Field3        string
-	Field4        string
+/*
+    One multiline comment is required
+*/
+type Spec struct {
+  /*
+    One multiline comment is required per field
+  */
+	Field1        string `yaml:",omitempty"`
+	Field2        string `yaml:",omitempty" jsonschema:"required"`
+	Field3        string `yaml:",omitempty"`
+	Field4        string `yaml:",omitempty"`
 }
+```
+
+**Tags**
+
+Fields tags are important components and can come from one of the two following modules:
+
+* https://github.com/go-yaml/yaml
+* https://github.com/invopop/jsonschema
+
+**Comments**
+
+Fields comments are critical as they are used to generate Updatecli documentation available both from www.updatecli.io and your favorite IDE.
+
+Our objective is to have `Spec` comments such as
+
+```
+A short one-line description of the parameter
+
+  compatible
+    <A list of compatible stages>
+    * source
+    * condition
+    * target
+
+  default:
+    A short explanation of the default value. It's also the place for explaining if the value is inherited from the source output.
+
+  remarks:
+    A list of information to be aware of when using the parameter such
+    * info 1
+    * info 2
+
+  example:
+    If useful, a simple example of how to use it
+
 ```
 
 ===== 3. Respect the contract
@@ -105,11 +147,10 @@ type Spec interface {
 | Target
 | ```
 type Spec interface {
-    Target(source string, dryRun bool) (bool, error)
-    TargetFromSCM(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error)
+    Target(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error)
 
 ```
-| Define how a target file will be updated
+| Define how a target file is updated
 
 |===
 

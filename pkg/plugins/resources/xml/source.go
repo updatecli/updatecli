@@ -6,18 +6,17 @@ import (
 	"os"
 
 	"github.com/beevik/etree"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (x *XML) Source(workingDir string) (string, error) {
+func (x *XML) Source(workingDir string, resultSource *result.Source) error {
 
 	// By the default workingdir is set to the current working directory
 	// it would be better to have it empty by default but it must be changed in the
 	// source core codebase.
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
-		return "", errors.New("fail getting current working directory")
+		return errors.New("fail getting current working directory")
 	}
 
 	resourceFile := x.spec.File
@@ -28,37 +27,36 @@ func (x *XML) Source(workingDir string) (string, error) {
 
 	// Test at runtime if a file exist
 	if !x.contentRetriever.FileExists(resourceFile) {
-		return "", fmt.Errorf("file %q does not exist", resourceFile)
+		return fmt.Errorf("file %q does not exist", resourceFile)
 	}
 
 	if err := x.Read(resourceFile); err != nil {
-		return "", err
+		return fmt.Errorf("reading file: %w", err)
 	}
 
 	doc := etree.NewDocument()
 
 	if err := doc.ReadFromString(x.currentContent); err != nil {
-		return "", err
+		return fmt.Errorf("loading document: %w", err)
 	}
 
 	elem := doc.FindElement(x.spec.Path)
 
 	if elem == nil {
-		logrus.Infof("%s cannot find value for path %q from file %q",
-			result.FAILURE,
+		return fmt.Errorf("cannot find value for path %q from file %q",
 			x.spec.Path,
-			resourceFile)
-
-		return "", nil
+			resourceFile,
+		)
 	}
 
 	queryResult := elem.Text()
 
-	logrus.Infof("%s Value %q found at path %q in the xml file %q",
-		result.SUCCESS,
+	resultSource.Result = result.SUCCESS
+	resultSource.Information = queryResult
+	resultSource.Description = fmt.Sprintf("value %q found at path %q in the xml file %q",
 		queryResult,
 		x.spec.Path,
 		resourceFile)
 
-	return queryResult, nil
+	return nil
 }

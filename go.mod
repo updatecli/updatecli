@@ -8,7 +8,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/aws/aws-sdk-go v1.44.245
+	github.com/aws/aws-sdk-go v1.44.255
 	github.com/containerd/containerd v1.7.0 // indirect
 	github.com/fatih/color v1.15.0
 	github.com/go-git/go-git/v5 v5.6.1
@@ -35,7 +35,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8
-	github.com/beevik/etree v1.1.0
+	github.com/beevik/etree v1.1.3
 	github.com/drone/go-scm v1.29.1
 	github.com/google/go-containerregistry v0.14.0
 	github.com/goware/urlx v0.3.2
@@ -46,7 +46,6 @@ require (
 	golang.org/x/text v0.9.0
 	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
-	gotest.tools v2.2.0+incompatible
 )
 
 require (

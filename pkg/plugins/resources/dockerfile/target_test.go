@@ -138,19 +138,21 @@ CMD ["--help:golang"]
 
 			mockFile := &tt.mockFile
 
+			gotResult := result.Target{}
+
 			d := &Dockerfile{
 				spec:             tt.spec,
 				contentRetriever: mockFile,
 				parser:           newParser,
 			}
-			gotChanged, gotErr := d.Target(tt.inputSourceValue, tt.dryRun)
+			gotErr := d.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResult)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantChanged, gotChanged)
+			assert.Equal(t, tt.wantChanged, gotResult.Changed)
 			assert.Equal(t, tt.wantMockState.Contents[tt.spec.File], mockFile.Contents[tt.spec.File])
 		})
 	}
@@ -215,16 +217,19 @@ func TestFile_TargetFromSCM(t *testing.T) {
 				contentRetriever: &mockFile,
 				parser:           newParser,
 			}
-			gotChanged, gotFiles, gotMessage, gotErr := d.TargetFromSCM(tt.inputSourceValue, tt.scm, tt.dryRun)
+
+			gotResult := result.Target{}
+
+			gotErr := d.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantChanged, gotChanged)
-			assert.Equal(t, tt.wantFiles, gotFiles)
-			assert.Equal(t, tt.wantMessage, gotMessage)
+			assert.Equal(t, tt.wantChanged, gotResult.Changed)
+			assert.Equal(t, tt.wantFiles, gotResult.Files)
+			assert.Equal(t, tt.wantMessage, gotResult.Description)
 			assert.Equal(t, tt.wantMockState.Contents[filePath], mockFile.Contents[filePath])
 		})
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestShell_Target(t *testing.T) {
@@ -81,16 +82,18 @@ func TestShell_Target(t *testing.T) {
 			err := s.InitChangedIf()
 			require.NoError(t, err)
 
-			gotChanged, err := s.Target(tt.source, tt.dryrun)
+			gotResult := result.Target{}
+
+			err = s.Target(tt.source, nil, tt.dryrun, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.False(t, gotChanged)
+				assert.False(t, gotResult.Changed)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantChanged, gotChanged)
+			assert.Equal(t, tt.wantChanged, gotResult.Changed)
 
 			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
 			for _, wantEnv := range tt.commandEnv {
@@ -155,19 +158,20 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			err := s.InitChangedIf()
 			require.NoError(t, err)
 
-			gotChanged, gotFilesChanged, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)
+			gotResult := result.Target{}
+			err = s.Target(tt.source, &ms, tt.dryrun, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.False(t, gotChanged)
+				assert.False(t, gotResult.Changed)
 				return
 			}
 
 			require.NoError(t, err)
 
-			assert.Equal(t, len(tt.wantFilesChanged) > 0, gotChanged)
-			assert.Equal(t, tt.wantFilesChanged, gotFilesChanged)
-			assert.Equal(t, tt.wantMessage, gotMessage)
+			assert.Equal(t, len(tt.wantFilesChanged) > 0, gotResult.Changed)
+			assert.Equal(t, tt.wantFilesChanged, gotResult.Files)
+			assert.Equal(t, tt.wantMessage, gotResult.Description)
 
 			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
 			for _, wantEnv := range tt.commandEnv {

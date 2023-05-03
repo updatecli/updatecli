@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -99,7 +100,8 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := toml.Condition("")
+			gotResult := result.Condition{}
+			err = toml.Condition("", nil, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -107,7 +109,7 @@ func TestCondition(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Pass)
 		})
 	}
 }

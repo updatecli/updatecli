@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -38,13 +39,14 @@ func TestSource(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
-			gotVersion, err := got.Source("")
+			gotResult := result.Source{}
+			err = got.Source("", &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotVersion)
+			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}
 

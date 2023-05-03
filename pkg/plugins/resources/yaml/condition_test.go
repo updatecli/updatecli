@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -14,7 +15,7 @@ func Test_Condition(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]file
 		inputSourceValue string
 		mockedContents   map[string]string
 		mockedError      error
@@ -28,8 +29,11 @@ func Test_Condition(t *testing.T) {
 				File: "test.yaml",
 				Key:  "annotations.github\\.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -54,8 +58,11 @@ annotations:
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -83,8 +90,11 @@ github:
 				Key:   "github.owner",
 				Value: "olblak",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -112,9 +122,15 @@ github:
 				Key:   "github.owner",
 				Value: "olblak",
 			},
-			files: map[string]string{
-				"test.yaml":     "",
-				"too-much.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"too-much.yaml": {
+					filePath:         "too-much.yaml",
+					originalFilePath: "too-much.yaml",
+				},
 			},
 			isErrorWanted: true,
 		},
@@ -127,8 +143,11 @@ github:
 				Key:   "github.owner",
 				Value: "olblak",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -145,8 +164,11 @@ github:
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -165,8 +187,10 @@ github:
 				Key:     "github.owner",
 				KeyOnly: true,
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml"},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
@@ -192,8 +216,11 @@ github:
 				Key:     "github.country",
 				KeyOnly: true,
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
@@ -220,8 +247,11 @@ github:
 				KeyOnly: true,
 				Value:   "olblak",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
@@ -238,8 +268,11 @@ github:
 			spec: Spec{
 				File: "not_existing.yaml",
 			},
-			files: map[string]string{
-				"not_existing.yaml": "",
+			files: map[string]file{
+				"not_existing.yaml": {
+					filePath:         "not_existing.yaml",
+					originalFilePath: "not_existing.yaml",
+				},
 			},
 			mockedError:   fmt.Errorf("no such file or directory"),
 			isErrorWanted: true,
@@ -250,8 +283,11 @@ github:
 				File: "test.yaml",
 				Key:  "github.owner",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
 			},
 			inputSourceValue: "asterix",
 			mockedContents: map[string]string{
@@ -276,8 +312,11 @@ github:
 				File: "test.yaml",
 				Key:  "github.admin",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "asterix",
 			mockedContents: map[string]string{
@@ -296,8 +335,11 @@ github:
 				Key:   "github.owner",
 				Value: "asterix",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
 			},
 			inputSourceValue: "olblak",
 			isErrorWanted:    true,
@@ -309,8 +351,11 @@ github:
 				Key:   "github.owner",
 				Value: "olblak",
 			},
-			files: map[string]string{
-				"test.yaml": "",
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
 			},
 			mockedContents: map[string]string{
 				"test.yaml": `---
@@ -340,14 +385,15 @@ github:
 				contentRetriever: &mockedText,
 				files:            tt.files,
 			}
-			gotResult, gotErr := y.Condition(tt.inputSourceValue)
+			gotResult := result.Condition{}
+			gotErr := y.Condition(tt.inputSourceValue, nil, &gotResult)
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.isResultWanted, gotResult)
+			assert.Equal(t, tt.isResultWanted, gotResult.Pass)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
 			}
@@ -359,7 +405,7 @@ func Test_ConditionFromSCM(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]file
 		inputSourceValue string
 		mockedContents   map[string]string
 		mockedError      error
@@ -375,8 +421,11 @@ func Test_ConditionFromSCM(t *testing.T) {
 				Key:   "github.owner",
 				Value: "olblak",
 			},
-			files: map[string]string{
-				"/tmp/test.yaml": "",
+			files: map[string]file{
+				"/tmp/test.yaml": {
+					filePath:         "/tmp/test.yaml",
+					originalFilePath: "/tmp/test.yaml",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
@@ -406,8 +455,11 @@ github:
 				Key:   "github.owner",
 				Value: "olblak",
 			},
-			files: map[string]string{
-				"/tmp/test.yaml": "",
+			files: map[string]file{
+				"/tmp/test.yaml": {
+					filePath:         "/tmp/test.yaml",
+					originalFilePath: "/tmp/test.yaml",
+				},
 			},
 			scm: &scm.MockScm{
 				WorkingDir: "/tmp",
@@ -440,14 +492,15 @@ github:
 				contentRetriever: &mockedText,
 				files:            tt.files,
 			}
-			gotResult, gotErr := y.ConditionFromSCM(tt.inputSourceValue, tt.scm)
+			gotResult := result.Condition{}
+			gotErr := y.Condition(tt.inputSourceValue, tt.scm, &gotResult)
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.isResultWanted, gotResult)
+			assert.Equal(t, tt.isResultWanted, gotResult.Pass)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
 			}
