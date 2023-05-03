@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -384,14 +385,15 @@ github:
 				contentRetriever: &mockedText,
 				files:            tt.files,
 			}
-			gotResult, gotErr := y.Condition(tt.inputSourceValue)
+			gotResult := result.Condition{}
+			gotErr := y.Condition(tt.inputSourceValue, nil, &gotResult)
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.isResultWanted, gotResult)
+			assert.Equal(t, tt.isResultWanted, gotResult.Pass)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
 			}
@@ -490,14 +492,15 @@ github:
 				contentRetriever: &mockedText,
 				files:            tt.files,
 			}
-			gotResult, gotErr := y.ConditionFromSCM(tt.inputSourceValue, tt.scm)
+			gotResult := result.Condition{}
+			gotErr := y.Condition(tt.inputSourceValue, tt.scm, &gotResult)
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.isResultWanted, gotResult)
+			assert.Equal(t, tt.isResultWanted, gotResult.Pass)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
 			}
