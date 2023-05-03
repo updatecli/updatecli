@@ -21,23 +21,31 @@ const PULLREQUESTBODYTEMPLATE = `
 
 ---
 
-<details><summary>Updatecli options</summary>
-Most of Updatecli configuration is done via Updatecli manifest.
-<ul>
-<li>If you close this pullrequest, Updatecli will automatically reopen it, the next time it runs.</li>
-<li>If you close this pullrequest, and delete the base branch, Updatecli will automatically recreate it, erasing all previous commits made.</li>
-</ul>
-</details>
+<table>
+  <tr>
+    <td width="80">
+			<img src="https://www.updatecli.io/images/updatecli.png" alt="Updatecli logo" width="50" height="50">
+    </td>
+    <td>
+      <p>
+        Created automatically by <a href="https://www.updatecli.io/">Updatecli</a>
+			</p>
+			<details><summary>Options</summary>
+				<br />
+				<p>Most of Updatecli configuration is done via Updatecli manifest(s).</p>
+				<ul>
+					<li>If you close this pull request, Updatecli will automatically reopen it, the next time it runs.</li>
+					<li>If you close this pull request and delete the base branch, Updatecli will automatically recreate it, erasing all previous commits made.</li>
+				</ul>
+				<p>
+					Feel free to report any issues at <a href="https://github.com/updatecli/updatecli/issues">github.com/updatecli/updatecli</a>.<br />
+					If you find this tool useful, do not hesitate to star <a href="https://github.com/updatecli/updatecli/stargazers">our GitHub repository</a> as a sign of appreciation, and/or to tell us directly on our <a href="https://matrix.to/#/#Updatecli_community:gitter.im">chat</a>!
+				</p>
+			</details>
+		</td>
+	</tr>
+</table>
 
----
-
-Action triggered automatically by [Updatecli](https://www.updatecli.io).
-
-Feel free to report any issues at [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/issues/).
-If you find this tool useful, do not hesitate to star our GitHub repository [github.com/updatecli/updatecli](https://github.com/updatecli/updatecli/stargazers) as a sign of appreciation.
-Or tell us directly on our [chat](https://matrix.to/#/#Updatecli_community:gitter.im)
-
-<img src="https://www.updatecli.io/images/updatecli.png" alt="Updatecli logo" width="200" height="200">
 `
 
 // GeneratePullRequestBody generates the Pull Request's body based on PULLREQUESTBODY
