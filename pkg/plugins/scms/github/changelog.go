@@ -56,6 +56,8 @@ type queriedRelease struct {
 
 // Changelog returns a changelog description based on a release name
 func (g *Github) Changelog(version version.Version) (string, error) {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
 
 	// Github Release needs the original version, because the "found" version can be modified (semantic version without the prefix, transformed version, etc.)
 	versionName := version.OriginalVersion
@@ -93,7 +95,6 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 
 // ChangelogV3 returns a changelog description based on a release name using the GitHub api v3 version
 func (g *Github) ChangelogV3(version string) (string, error) {
-
 	URL := fmt.Sprintf("%s/repos/%s/%s/releases/tags/%s",
 		g.Spec.URL, g.Spec.Owner, g.Spec.Repository, version)
 
@@ -105,7 +106,11 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 		return "", err
 	}
 
+	// Guard the getTokenFromEnv() function call with a mutex to ensure that the environment variables are accessed safely
+	g.mu.Lock()
 	envToken := getTokenFromEnv()
+	g.mu.Unlock()
+
 	if envToken != "" {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", envToken))
 		req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
@@ -151,6 +156,11 @@ func (g *Github) ChangelogV3(version string) (string, error) {
 }
 
 func getTokenFromEnv() string {
+	// Lock the mutex to prevent concurrent access to the function
+	g := Github{}
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	if envToken := os.Getenv("UPDATECLI_GITHUB_TOKEN"); envToken != "" {
 		logrus.Debugln("GitHub token defined by environment variable UPDATECLI_GITHUB_TOKEN detected")
 		return envToken
@@ -160,5 +170,6 @@ func getTokenFromEnv() string {
 		logrus.Debugln("GitHub token defined by environment variable GITHUB_TOKEN detected")
 		return envToken
 	}
+
 	return ""
 }
