@@ -32,7 +32,7 @@ const PULLREQUESTBODYTEMPLATE = `
       </p>
       <details><summary>Options:</summary>
         <br />
-        <p>Most of Updatecli configuration is done via Updatecli manifest(s).</p>
+        <p>Most of Updatecli configuration is done via <a href="https://www.updatecli.io/docs/prologue/quick-start/">its manifest(s)</a>.</p>
         <ul>
           <li>If you close this pull request, Updatecli will automatically reopen it, the next time it runs.</li>
           <li>If you close this pull request and delete the base branch, Updatecli will automatically recreate it, erasing all previous commits made.</li>
