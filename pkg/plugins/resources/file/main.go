@@ -65,6 +65,7 @@ func New(spec interface{}) (*File, error) {
 	// File as unique element of newResource.files
 	if len(newResource.spec.File) > 0 {
 		f := fileMetadata{
+			path:         strings.TrimPrefix(newResource.spec.File, "file://"),
 			originalPath: strings.TrimPrefix(newResource.spec.File, "file://"),
 		}
 		newResource.files[newResource.spec.File] = f
@@ -72,6 +73,7 @@ func New(spec interface{}) (*File, error) {
 
 	for _, filePath := range newResource.spec.Files {
 		f := fileMetadata{
+			path:         strings.TrimPrefix(filePath, "file://"),
 			originalPath: strings.TrimPrefix(filePath, "file://"),
 		}
 		newResource.files[filePath] = f

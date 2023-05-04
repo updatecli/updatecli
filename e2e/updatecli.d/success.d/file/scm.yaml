@@ -1,0 +1,48 @@
+name: Test file resource without scm
+
+sources:
+  adopters: 
+    name: "Get content from ADOPTERS.md"
+    kind: file
+    scmid: updatecli
+    spec:
+      file: ADOPTERS.md
+
+  adoptersFileScheme: 
+    name: "Get content from ADOPTERS.md using file scheme"
+    kind: file
+    scmid: updatecli
+    spec:
+      file: file://ADOPTERS.md
+
+  adoptersHTTPSScheme: 
+    name: "Get content from ADOPTERS.md using https scheme"
+    kind: file
+    scmid: updatecli
+    spec:
+      file: https://raw.githubusercontent.com/updatecli/updatecli/main/ADOPTERS.md
+
+conditions:
+  adopters: 
+    name: "Validate ADOTPERS.md content"
+    sourceid: adopters
+    scmid: updatecli
+    kind: file
+    spec:
+      file: ADOPTERS.md
+
+targets:
+  adopters: 
+    name: "Update ADOPTERS.md content"
+    sourceid: adopters
+    kind: file
+    scmid: updatecli
+    spec:
+      file: ADOPTERS.md
+
+scms:
+  updatecli:
+    kind: git
+    spec:
+      url: https://github.com/updatecli/updatecli.git
+    
