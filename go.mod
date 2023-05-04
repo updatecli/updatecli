@@ -114,7 +114,7 @@ require (
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -136,7 +136,7 @@ require (
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-plugin v1.4.3 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.1 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-secure-stdlib/mlock v0.1.2 // indirect
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.3 // indirect
