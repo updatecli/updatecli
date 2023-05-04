@@ -8,36 +8,42 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Stash) Condition(source string) (bool, error) {
+func (g *Stash) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 
-	if len(g.spec.Tag) == 0 {
-		g.spec.Tag = source
+	if scm != nil {
+		logrus.Warningf("scm not supported, ignored")
+	}
+
+	tag := source
+	if g.spec.Tag != "" {
+		tag = g.spec.Tag
 	}
 
 	tags, err := g.SearchTags()
-
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		return fmt.Errorf("looking for tag: %w", err)
 	}
 
 	if len(tags) == 0 {
-		logrus.Infof("%s No Bitbucket Tags found.", result.ATTENTION)
-		return false, nil
+		resultCondition.Description = fmt.Sprintf("no Bitbucket Tags found for %s/%s", g.spec.Owner, g.spec.Repository)
+		resultCondition.Pass = false
+		resultCondition.Result = result.FAILURE
+		return nil
 	}
 
-	for _, tag := range tags {
-		if tag == g.spec.Tag {
-			logrus.Infof("%s Bitbucket tag %q found", result.SUCCESS, tag)
-			return true, nil
+	for _, t := range tags {
+		if t == g.spec.Tag {
+			resultCondition.Pass = true
+			resultCondition.Result = result.SUCCESS
+			resultCondition.Description = fmt.Sprintf("bitbucket tag %q found", tag)
+			return nil
 		}
 	}
 
-	logrus.Infof("%s No Bitbucket Tags found matching  %q", result.FAILURE, g.spec.Tag)
-	return false, nil
+	resultCondition.Description = fmt.Sprintf("no Bitbucket Tags found matching %q", tag)
+	resultCondition.Pass = false
+	resultCondition.Result = result.FAILURE
 
-}
+	return nil
 
-func (g *Stash) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("Condition not supported for the plugin GitHub Release")
 }

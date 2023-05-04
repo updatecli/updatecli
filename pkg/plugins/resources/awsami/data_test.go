@@ -41,7 +41,7 @@ var (
 			expectedGetAMI:    "",
 			expectedSource:    "",
 			expectedCondition: false,
-			expectedError:     ErrSpecNotValid,
+			expectedError:     ErrNoFilter,
 		},
 		{
 			ami: AMI{

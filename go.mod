@@ -8,7 +8,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/aws/aws-sdk-go v1.44.252
+	github.com/aws/aws-sdk-go v1.44.255
 	github.com/containerd/containerd v1.7.0 // indirect
 	github.com/fatih/color v1.15.0
 	github.com/go-git/go-git/v5 v5.6.1
@@ -35,7 +35,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8
-	github.com/beevik/etree v1.1.0
+	github.com/beevik/etree v1.1.3
 	github.com/drone/go-scm v1.29.1
 	github.com/google/go-containerregistry v0.13.0
 	github.com/goware/urlx v0.3.2
@@ -214,7 +214,7 @@ require (
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/mod v0.8.0
+	golang.org/x/mod v0.10.0
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect

@@ -2,7 +2,7 @@ package result
 
 // Source holds source execution result
 type Source struct {
-	// Name holds the target name
+	// Name holds the source name
 	Name string
 	/*
 		Result holds the source result, accepted values must be one:
