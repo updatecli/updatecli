@@ -14,6 +14,12 @@ func (a *AMI) Source(workingDir string, resultSource *result.Source) error {
 		strings.TrimRight(
 			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n "))
 
+	// It's an error if the upstream source is empty and the user does not provide any filter
+	// then it mean
+	if len(a.Spec.Filters) == 0 {
+		return ErrNoFilter
+	}
+
 	foundAMI, err := a.getLatestAmiID()
 
 	if err != nil {
