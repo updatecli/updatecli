@@ -34,7 +34,7 @@ jobs:
       - name: Show GoReleaser version
         run: goreleaser --version
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v2.8.1
+        uses: sigstore/cosign-installer@v3.0.3
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0.14.2
       - name: Login to DockerHub
