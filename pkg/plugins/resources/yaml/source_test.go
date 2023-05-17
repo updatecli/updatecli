@@ -25,7 +25,7 @@ func Test_Source(t *testing.T) {
 			name: "Passing Case with 'File' and complex key",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "annotations.github\\.owner",
+				Key:  "annotations.'github.owner'",
 			},
 			files: map[string]file{
 				"test.yaml": {

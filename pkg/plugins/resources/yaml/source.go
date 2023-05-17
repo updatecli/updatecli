@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/parser"
 )
 
 // Source return the latest version
@@ -51,16 +53,33 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	fileContent := y.files[filePath].content
 	originalFilePath := y.files[filePath].originalFilePath
 
-	var out yaml.Node
+	pathString := y.spec.Key
 
-	err = yaml.Unmarshal([]byte(fileContent), &out)
-	if err != nil {
-		return fmt.Errorf("unmarshalling content of file %s: %w", originalFilePath, err)
+	// Following warning should be removed in the futur once, the deprecated custom implementation
+	// is not used anymore.
+	if !strings.HasPrefix(pathString, "$.") {
+		logrus.Warningf("missing prefix \"$.\" for yamlpath query")
+		pathString = "$." + pathString
 	}
 
-	valueFound, value, _ := replace(&out, parseKey(y.spec.Key), y.spec.Value, 1)
+	urlPath, err := yaml.PathString(pathString)
+	if err != nil {
+		return fmt.Errorf("crafting yamlpath query: %w", err)
+	}
 
-	if valueFound {
+	file, err := parser.ParseBytes([]byte(fileContent), 0)
+	if err != nil {
+		return fmt.Errorf("parsing yaml file: %w", err)
+	}
+
+	node, err := urlPath.FilterFile(file)
+	if err != nil {
+		return fmt.Errorf("searching in yaml file: %w", err)
+	}
+
+	value := node.String()
+
+	if node != nil {
 		resultSource.Result = result.SUCCESS
 		resultSource.Information = value
 		resultSource.Description = fmt.Sprintf("value %q found for key %q in the yaml file %q",
@@ -74,5 +93,4 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	return fmt.Errorf("cannot find key %q from file %q",
 		y.spec.Key,
 		originalFilePath)
-
 }
