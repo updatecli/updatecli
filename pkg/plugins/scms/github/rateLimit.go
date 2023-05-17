@@ -15,7 +15,7 @@ func (a *RateLimit) Show() {
 		logrus.Warningf("Running out of GitHub Api resource, currently used %d remaining %d (reset at %s)",
 			a.Cost, a.Remaining, a.ResetAt)
 	} else {
-		logrus.Debugf("GitHub Api credit used used %d, remaining %d (reset at %s)",
+		logrus.Debugf("GitHub Api credit used %d, remaining %d (reset at %s)",
 			a.Cost, a.Remaining, a.ResetAt)
 	}
 }
