@@ -35,7 +35,7 @@ func New(spec interface{}) (*Json, error) {
 		return nil, err
 	}
 
-	// Deprecate message to remove in a futur updatelci version
+	// Deprecate message to remove in a future updatelci version
 	// cfr https://github.com/updatecli/updatecli/pull/944
 	if newSpec.Multiple {
 		logrus.Warningln("the setting multiple is now deprecated. you shoulbe be using the parameter \"query\" which allows you to specify an advanced query.")
