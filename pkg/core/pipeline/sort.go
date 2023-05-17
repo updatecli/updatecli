@@ -17,7 +17,7 @@ import (
 */
 
 var (
-	// ErrNotValidDependsOn is triggered when we define a non existing depends on value.
+	// ErrNotValidDependsOn is triggered when we define a nonexistent depends on value.
 	ErrNotValidDependsOn = errors.New("no valid depends_on value")
 	// ErrDependsOnLoopDetected is triggered when we define a dependency loop.
 	ErrDependsOnLoopDetected = errors.New("dependency loop detected")

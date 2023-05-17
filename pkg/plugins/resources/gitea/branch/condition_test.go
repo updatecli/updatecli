@@ -34,7 +34,7 @@ func TestCondition(t *testing.T) {
 				URL:        "codeberg.org",
 				Token:      "",
 				Owner:      "updatecli",
-				Repository: "updatecli-donotexist",
+				Repository: "updatecli-nonexistent",
 				Branch:     "v2",
 			},
 			wantResult: false,
