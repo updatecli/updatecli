@@ -22,7 +22,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/shurcooL/githubv4 v0.0.0-20230215024106-420ad0987b9b
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29 //indirect
-	github.com/sirupsen/logrus v1.9.1
+	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.2
 	go.mozilla.org/sops/v3 v3.7.3
