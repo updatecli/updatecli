@@ -109,7 +109,7 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 		g.GetDirectory())
 }
 
-// Push run `git push` on the Github remote branch if not already created.
+// Push run `git push` on the GitHub remote branch if not already created.
 func (g *Github) Push() error {
 
 	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
