@@ -98,13 +98,13 @@ func New(spec interface{}) (*Maven, error) {
 			mavenmetadata.New(u.String()))
 	}
 
-	mavenCentrallNotFound, err := isRepositoriesContainsMavenCentral(newSpec.Repositories)
+	mavenCentralNotFound, err := isRepositoriesContainsMavenCentral(newSpec.Repositories)
 
 	if err != nil {
 		return &Maven{}, err
 	}
 
-	if !mavenCentrallNotFound {
+	if !mavenCentralNotFound {
 		u, err := url.Parse(MavenCentralRepository)
 		if err != nil {
 			return &Maven{}, err
