@@ -21,7 +21,7 @@ sources:
 
 conditions:
   adopters: 
-    name: "Validate ADOTPERS.md content"
+    name: "Validate ADOPTERS.md content"
     sourceid: adopters
     kind: file
     spec:
