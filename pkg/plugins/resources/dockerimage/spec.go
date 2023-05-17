@@ -104,7 +104,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 	return &dockerimagespec
 }
 
-// NewFrilterFromValue tries to identify the closest tagFilter based on an existing tag
+// NewFilterFromValue tries to identify the closest tagFilter based on an existing tag
 func getTagFilterFromValue(tag string) (string, error) {
 
 	logrus.Debugf("Trying the identify the best versionFilter for %q", tag)
