@@ -1,4 +1,4 @@
-# Depreciation Warning message expected:
+# Deprecation Warning message expected:
 ## This manifest has a 'pullrequests:' top-level directive which is deprecated in favor of 'actions'
 name: Test GitHub Pullrequest
 
