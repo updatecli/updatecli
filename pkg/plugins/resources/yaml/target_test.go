@@ -28,7 +28,7 @@ func Test_Target(t *testing.T) {
 			name: "Passing case with both complex input source and specified value (specified value should be used)",
 			spec: Spec{
 				File:   "test.yaml",
-				Key:    "annotations.github\\.owner",
+				Key:    "annotations.'github.owner'",
 				Value:  "obiwankenobi",
 				Indent: 4,
 			},
@@ -48,9 +48,10 @@ annotations:
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
-				"test.yaml": `annotations:
-    github.owner: obiwankenobi
-    repository: charts
+				"test.yaml": `---
+annotations:
+  github.owner: obiwankenobi
+  repository: charts
 `,
 			},
 			wantedResult: true,
@@ -79,7 +80,8 @@ github:
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
-				"test.yaml": `github:
+				"test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
@@ -122,13 +124,15 @@ github:
 			},
 			// Note: the updated files don't contain separator anymore
 			wantedContents: map[string]string{
-				"test.yaml": `github:
+				"test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
-				"bar.yaml": `github:
-  owner: obiwankenobi
-  repository: charts
+				"bar.yaml": `---
+github:
+    owner: obiwankenobi
+    repository: charts
 `,
 			},
 			wantedResult: true,
@@ -169,7 +173,8 @@ github:
 			},
 			// Note: the updated file doesn't contain separator anymore
 			wantedContents: map[string]string{
-				"test.yaml": `github:
+				"test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
