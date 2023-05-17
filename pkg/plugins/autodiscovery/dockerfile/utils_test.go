@@ -14,7 +14,7 @@ func TestSearchFiles(t *testing.T) {
 		expectedfiles []string
 	}{
 		{
-			name:    "Nonimal case",
+			name:    "Nominal case",
 			rootDir: "test/testdata/",
 			expectedfiles: []string{
 				"test/testdata/Dockerfile",
