@@ -25,8 +25,8 @@ func AssertConfigSpecEqualByteArray(t *testing.T, spec *config.Spec, manifest st
 		yamlMarshalUnmarshal(t, manifest))
 }
 
-// yamlMarshalUmarshal is used to parse a manifest to ensure it's a valid yaml one.
-// yamlMarshalUmarshal is also used to trim single quotes from yaml values
+// yamlMarshalUnmarshal is used to parse a manifest to ensure it's a valid yaml one.
+// yamlMarshalUnmarshal is also used to trim single quotes from yaml values
 func yamlMarshalUnmarshal(t *testing.T, manifest string) string {
 
 	var spec config.Spec
