@@ -47,7 +47,7 @@ func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err 
 		return result, err
 	}
 
-	// Init Vertice
+	// Init Vertices
 	for key := range *sources {
 		index[key], err = d.AddVertex(key)
 
@@ -125,7 +125,7 @@ func SortedConditionsKeys(conditions *map[string]condition.Condition) (result []
 		return result, err
 	}
 
-	// Init Vertice
+	// Init Vertices
 	for key := range *conditions {
 		index[key], err = d.AddVertex(key)
 
@@ -202,7 +202,7 @@ func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err 
 		return result, err
 	}
 
-	// Init Vertice
+	// Init Vertices
 	for key := range *targets {
 		index[key], err = d.AddVertex(key)
 
