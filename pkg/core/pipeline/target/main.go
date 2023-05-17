@@ -99,7 +99,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 			return err
 		}
 
-		// Could be improve to show attention description in yello, success in green, failure in red
+		// Could be improve to show attention description in yellow, success in green, failure in red
 		logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
 
 		return nil
@@ -128,7 +128,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	// Could be improve to show attention description in yello, success in green, failure in red
+	// Could be improve to show attention description in yellow, success in green, failure in red
 	logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
 
 	isRemoteBranchUpToDate, err := s.IsRemoteBranchUpToDate()
