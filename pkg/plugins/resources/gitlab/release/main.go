@@ -13,7 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines settings used to interact with Gitlab release
+// Spec defines settings used to interact with GitLab release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
 	// [S][C][T] Owner specifies repository owner
@@ -22,9 +22,9 @@ type Spec struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [T] Title defines the Gitlab release title.
+	// [T] Title defines the GitLab release title.
 	Title string `yaml:",omitempty"`
-	// [C][T] Tag defines the Gitlab release tag.
+	// [C][T] Tag defines the GitLab release tag.
 	Tag string `yaml:",omitempty"`
 	// [T] Commitish defines the commit-ish such as `main`
 	Commitish string `yaml:",omitempty"`
@@ -42,7 +42,7 @@ const (
 	updatecliCredits string = "Made with ❤️️ by updatecli"
 )
 
-// Gitlab contains information to interact with Gitlab api
+// Gitlab contains information to interact with GitLab api
 type Gitlab struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
@@ -99,7 +99,7 @@ func New(spec interface{}) (*Gitlab, error) {
 	return &g, nil
 }
 
-// Retrieve git tags from a remote Gitlab repository
+// Retrieve git tags from a remote GitLab repository
 func (g *Gitlab) SearchReleases() ([]string, error) {
 
 	ctx := context.Background()
@@ -127,7 +127,7 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 		}
 
 		if resp.Status > 400 {
-			logrus.Debugf("Gitlab Api Response:\n%+v", resp)
+			logrus.Debugf("GitLab Api Response:\n%+v", resp)
 		}
 
 		for i := len(releases) - 1; i >= 0; i-- {
@@ -165,7 +165,7 @@ func (s Spec) Validate() error {
 	}
 
 	if gotError {
-		return fmt.Errorf("wrong Gitlab configuration")
+		return fmt.Errorf("wrong GitLab configuration")
 	}
 
 	return nil

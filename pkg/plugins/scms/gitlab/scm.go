@@ -37,7 +37,7 @@ func (g *Gitlab) Clone() (string, error) {
 	err := g.nativeGitHandler.Clone(g.Spec.User, g.Spec.Token, URL, g.GetDirectory())
 
 	if err != nil {
-		logrus.Errorf("failed cloning Gitlab repository %q", URL)
+		logrus.Errorf("failed cloning GitLab repository %q", URL)
 		return "", err
 	}
 
@@ -52,7 +52,7 @@ func (g *Gitlab) Clone() (string, error) {
 	}
 
 	if err != nil {
-		logrus.Errorf("initial Gitlab checkout failed for repository %q", URL)
+		logrus.Errorf("initial GitLab checkout failed for repository %q", URL)
 		return "", err
 	}
 
@@ -111,7 +111,7 @@ func (g *Gitlab) IsRemoteBranchUpToDate() (bool, error) {
 		g.GetDirectory())
 }
 
-// Push run `git push` to the corresponding Gitlab remote branch if not already created.
+// Push run `git push` to the corresponding GitLab remote branch if not already created.
 func (g *Gitlab) Push() error {
 
 	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)

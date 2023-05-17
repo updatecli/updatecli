@@ -11,7 +11,7 @@ import (
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
-// CreateAction opens a Pull Request on the Gitlab server
+// CreateAction opens a Pull Request on the GitLab server
 func (g *Gitlab) CreateAction(report reports.Action) error {
 
 	title := report.Title
@@ -19,11 +19,11 @@ func (g *Gitlab) CreateAction(report reports.Action) error {
 		title = g.spec.Title
 	}
 
-	// One Gitlab mergerequest body can contain multiple action report
+	// One GitLab mergerequest body can contain multiple action report
 	// It would be better to refactor CreateAction
 	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
 	if err != nil {
-		logrus.Warningf("something went wrong while generating Gitlab body: %s", err)
+		logrus.Warningf("something went wrong while generating GitLab body: %s", err)
 	}
 
 	if len(g.spec.Body) > 0 {
@@ -89,7 +89,7 @@ func (g *Gitlab) CreateAction(report reports.Action) error {
 
 	if err != nil {
 		if err.Error() == scm.ErrNotFound.Error() {
-			logrus.Infof("Gitlab pullrequest not created, skipping")
+			logrus.Infof("GitLab pullrequest not created, skipping")
 			return nil
 		}
 		return err
@@ -99,7 +99,7 @@ func (g *Gitlab) CreateAction(report reports.Action) error {
 		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
-	logrus.Infof("Gitlab pullrequest successfully opened on %q", pr.Link)
+	logrus.Infof("GitLab pullrequest successfully opened on %q", pr.Link)
 
 	return nil
 }

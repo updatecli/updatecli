@@ -18,7 +18,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
-// Spec defines settings used to interact with Gitlab release
+// Spec defines settings used to interact with GitLab release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
 	// CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
@@ -37,11 +37,11 @@ type Spec struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// User specifies the user of the git commit messages
 	User string `yaml:",omitempty"`
-	// Branch specifies which Gitlab repository branch to work on
+	// Branch specifies which GitLab repository branch to work on
 	Branch string `yaml:",omitempty"`
 }
 
-// Gitlab contains information to interact with Gitlab api
+// Gitlab contains information to interact with GitLab api
 type Gitlab struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
@@ -51,7 +51,7 @@ type Gitlab struct {
 	nativeGitHandler gitgeneric.GitHandler
 }
 
-// New returns a new valid Gitlab object.
+// New returns a new valid GitLab object.
 func New(spec interface{}, pipelineID string) (*Gitlab, error) {
 	var s Spec
 	var clientSpec client.Spec
