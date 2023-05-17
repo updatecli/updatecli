@@ -14,7 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 )
 
-// wanteScriptFilename is an utility used to get the filescript named generated
+// wantedScriptFilename is an utility used to get the filescript named generated
 // by Updatecli. Outside of testing, it's not supposed to be used by Updatecli
 // as it ignore error handling
 func wantedScriptFilename(t *testing.T, command string) string {
