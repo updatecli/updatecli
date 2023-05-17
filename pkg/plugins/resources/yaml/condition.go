@@ -1,11 +1,16 @@
 package yaml
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"gopkg.in/yaml.v3"
+
+	"github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/parser"
 )
 
 // Condition checks if a key exists in a yaml file
@@ -21,7 +26,6 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 	if err := y.Read(); err != nil {
 		return fmt.Errorf("reading yaml file: %w", err)
 	}
-	out := yaml.Node{}
 
 	// loop over the only file
 	for theFilePath := range y.files {
@@ -29,14 +33,32 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 		originalFilePath = y.files[theFilePath].originalFilePath
 	}
 
-	err := yaml.Unmarshal([]byte(fileContent), &out)
-
-	if err != nil {
-		return fmt.Errorf("parsing data: %w", err)
-	}
-
 	// If a source is provided, then the key 'Value' cannot be specified
 	valueToCheck := y.spec.Value
+
+	pathString := y.spec.Key
+
+	// Following warning should be removed in the futur once, the deprecated custom implementation
+	// is not used anymore.
+	if !strings.HasPrefix(pathString, "$.") {
+		logrus.Warningf("missing prefix \"$.\" for yamlpath query")
+		pathString = "$." + pathString
+	}
+
+	urlPath, err := yaml.PathString(pathString)
+	if err != nil {
+		return fmt.Errorf("crafting yamlpath query: %w", err)
+	}
+
+	file, err := parser.ParseBytes([]byte(fileContent), 0)
+	if err != nil {
+		return fmt.Errorf("parsing yaml file: %w", err)
+	}
+
+	node, err := urlPath.FilterFile(file)
+	if err != nil && !errors.Is(err, yaml.ErrNotFoundNode) {
+		return fmt.Errorf("searching in yaml file: %w", err)
+	}
 
 	// When user want to only check the existence of a YAML key
 	if y.spec.KeyOnly {
@@ -46,9 +68,7 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 			return validationError
 		}
 
-		valueFound, _, _ := replace(&out, parseKey(y.spec.Key), "", 1)
-
-		if valueFound {
+		if node != nil {
 			resultCondition.Result = result.SUCCESS
 			resultCondition.Pass = true
 			resultCondition.Description = fmt.Sprintf("key %q found in yaml file %q", y.spec.Key, y.spec.File)
@@ -74,10 +94,8 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 		valueToCheck = source
 	}
 
-	valueFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToCheck, 1)
-
-	if valueFound {
-		if oldVersion == valueToCheck {
+	if node != nil {
+		if node.String() == valueToCheck {
 			resultCondition.Description = fmt.Sprintf("key %q, in YAML file %q, is correctly set to %q",
 				y.spec.Key,
 				originalFilePath,
@@ -95,7 +113,7 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 		resultCondition.Description = fmt.Sprintf("key %q, in YAML file %q, is incorrectly set to %q and should be %q",
 			y.spec.Key,
 			originalFilePath,
-			oldVersion,
+			node.String(),
 			valueToCheck)
 		return nil
 	}

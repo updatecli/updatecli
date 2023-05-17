@@ -27,7 +27,7 @@ func Test_Condition(t *testing.T) {
 			name: "Passing Case with complex key",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "annotations.github\\.owner",
+				Key:  "annotations.'github.owner'",
 			},
 			files: map[string]file{
 				"test.yaml": {
