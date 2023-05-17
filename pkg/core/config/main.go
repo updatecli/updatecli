@@ -175,7 +175,7 @@ func New(option Option) (config Config, err error) {
 	}
 
 	/** Check for deprecated directives **/
-	// pullequests deprecated over actions
+	// pull requests deprecated over actions
 	if len(config.Spec.PullRequests) > 0 {
 		if len(config.Spec.Actions) > 0 {
 			return config, fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
