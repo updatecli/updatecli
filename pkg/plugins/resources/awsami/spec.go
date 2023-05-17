@@ -23,7 +23,7 @@ type Spec struct {
 	Filters Filters `yaml:",omitempty"`
 	// Region specifies the AWS region to use when looking for AMI
 	Region string `yaml:",omitempty"`
-	// Endpoint specifies the AWS endpoin to use when looking for AMI
+	// Endpoint specifies the AWS endpoint to use when looking for AMI
 	Endpoint string `yaml:",omitempty"`
 	// Dryrun allows to Check whether you have the required permissions for the action.
 	DryRun bool `yaml:",omitempty"`
