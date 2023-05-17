@@ -14,7 +14,7 @@ import (
 )
 
 /*
-	Result is the package containing the logic used by the Shell resource resource to identify
+	Result is the package containing the logic used by the Shell resource to identify
 	if a shell command result should be considered a success, a failure, or a warning
 */
 
