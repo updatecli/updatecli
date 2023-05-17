@@ -39,7 +39,7 @@ targets:
   #  disablesourceinput: true
   #  spec:
   #    branch: v1
-  alreadyexist:
+  alreadyexists:
     name: Test that the branch already exist.
     kind: gitbranch
     scmid: default
