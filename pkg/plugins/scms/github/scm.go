@@ -35,7 +35,7 @@ func (g *Github) Clone() (string, error) {
 	err = g.nativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
 
 	if err != nil {
-		logrus.Errorf("failed cloning GitHub repositotory %q", URL)
+		logrus.Errorf("failed cloning GitHub repository %q", URL)
 		return "", err
 	}
 
