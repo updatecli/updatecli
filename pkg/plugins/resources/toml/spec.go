@@ -10,7 +10,7 @@ import (
 type Spec struct {
 	// [s][c][t] File specifies the toml file to manipulate
 	File string `yaml:",omitempty"`
-	// [c][t] Files specifies a list of Json file to manipuate
+	// [c][t] Files specifies a list of Json file to manipulate
 	Files []string `yaml:",omitempty"`
 	// [s][c][t] Query allows to used advanced query. Override the parameter key
 	Query string `yaml:",omitempty"`

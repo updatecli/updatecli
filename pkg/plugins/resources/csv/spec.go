@@ -10,7 +10,7 @@ import (
 type Spec struct {
 	// [s][c][t] File specifies the csv file
 	File string `yaml:",omitempty"`
-	// [c][t] Files specifies a list of Json file to manipuate
+	// [c][t] Files specifies a list of Json file to manipulate
 	Files []string `yaml:",omitempty"`
 	// [s][c][t] Key specifies the csv query
 	Key string `yaml:",omitempty"`

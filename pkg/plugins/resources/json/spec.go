@@ -8,13 +8,13 @@ import (
 )
 
 type Spec struct {
-	// [s][c][t] File specifies the Json file to manipuate
+	// [s][c][t] File specifies the Json file to manipulate
 	File string `yaml:",omitempty"`
-	// [c][t] Files specifies a list of Json file to manipuate
+	// [c][t] Files specifies a list of Json file to manipulate
 	Files []string `yaml:",omitempty"`
-	// [s][c][t] Key specifies the Jsonpath key to manipuate
+	// [s][c][t] Key specifies the Jsonpath key to manipulate
 	Key string `yaml:",omitempty"`
-	// [s][c][t] Value specifies the Jsonpath key to manipuate. Default to source output
+	// [s][c][t] Value specifies the Jsonpath key to manipulate. Default to source output
 	Value string `yaml:",omitempty"`
 	// [s][c][t] Query allows to used advanced query. Override the parameter key
 	Query string `yaml:",omitempty"`
