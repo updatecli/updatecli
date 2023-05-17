@@ -135,7 +135,7 @@ func TestRegistrySettings(t *testing.T) {
 			},
 		},
 		{
-			name: "Failing case with all registry settingsd",
+			name: "Failing case with all registry settings",
 			Registry: cargo.Registry{
 				URL:     "https://crates.io",
 				RootDir: "/custom/dir",
