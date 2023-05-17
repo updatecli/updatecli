@@ -14,7 +14,7 @@ func (m *Maven) Source(workingDir string, resultSource *result.Source) error {
 		// metadataURL contains the URL without username/password
 		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
 		if err != nil {
-			logrus.Errorf("Trying to parse Maven metadatal url: %s", err)
+			logrus.Errorf("Trying to parse Maven metadata url: %s", err)
 		}
 
 		latestVersion, err := metadataHandler.GetLatestVersion()
