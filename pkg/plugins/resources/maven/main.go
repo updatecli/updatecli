@@ -129,7 +129,7 @@ func (m Maven) Validate() error {
 	errs := []error{}
 
 	if len(m.spec.Repository) > 0 && len(m.spec.Repositories) > 0 {
-		errs = append(errs, fmt.Errorf("parameter %q and %q are mutually exclusif",
+		errs = append(errs, fmt.Errorf("parameter %q and %q are mutually exclusive",
 			"repository",
 			"repositories"))
 	}
