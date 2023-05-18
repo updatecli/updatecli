@@ -354,7 +354,8 @@ github:
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
-				"/tmp/test.yaml": `github:
+				"/tmp/test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
@@ -402,11 +403,13 @@ github:
 			},
 			// Note: the updated files don't contain separator anymore
 			wantedContents: map[string]string{
-				"/tmp/test.yaml": `github:
+				"/tmp/test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
-				"/tmp/bar.yaml": `github:
+				"/tmp/bar.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
