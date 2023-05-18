@@ -41,7 +41,7 @@ func Test_Target(t *testing.T) {
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
 				"test.yaml": `---
-## This is a commment that should be preserved
+## This is a comment that should be preserved
 annotations:
   github.owner: olblak
   repository: charts
@@ -50,7 +50,7 @@ annotations:
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
 				"test.yaml": `---
-## This is a commment that should be preserved
+## This is a comment that should be preserved
 annotations:
   github.owner: obiwankenobi
   repository: charts
