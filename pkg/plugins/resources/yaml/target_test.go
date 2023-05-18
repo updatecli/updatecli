@@ -28,7 +28,7 @@ func Test_Target(t *testing.T) {
 			name: "Passing case with both complex input source and specified value (specified value should be used)",
 			spec: Spec{
 				File:   "test.yaml",
-				Key:    "annotations.'github.owner'",
+				Key:    "$.annotations.'github.owner'",
 				Value:  "obiwankenobi",
 				Indent: 4,
 			},
@@ -41,6 +41,7 @@ func Test_Target(t *testing.T) {
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
 				"test.yaml": `---
+## This is a commment that should be preserved
 annotations:
   github.owner: olblak
   repository: charts
@@ -49,6 +50,7 @@ annotations:
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
 				"test.yaml": `---
+## This is a commment that should be preserved
 annotations:
   github.owner: obiwankenobi
   repository: charts

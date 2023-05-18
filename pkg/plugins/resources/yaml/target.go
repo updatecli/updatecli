@@ -79,7 +79,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	for filePath := range y.files {
 		originFilePath := y.files[filePath].originalFilePath
 
-		yamlFile, err := parser.ParseBytes([]byte(y.files[filePath].content), 0)
+		yamlFile, err := parser.ParseBytes([]byte(y.files[filePath].content), parser.ParseComments)
 		if err != nil {
 			return fmt.Errorf("parsing yaml file: %w", err)
 		}
