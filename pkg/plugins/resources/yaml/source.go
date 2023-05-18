@@ -73,13 +73,12 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	}
 
 	node, err := urlPath.FilterFile(file)
-	if err != nil {
+	if err != nil && !errors.Is(err, yaml.ErrNotFoundNode) {
 		return fmt.Errorf("searching in yaml file: %w", err)
 	}
 
-	value := node.String()
-
 	if node != nil {
+		value := node.String()
 		resultSource.Result = result.SUCCESS
 		resultSource.Information = value
 		resultSource.Description = fmt.Sprintf("value %q found for key %q in the yaml file %q",
