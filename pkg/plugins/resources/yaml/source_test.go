@@ -206,11 +206,12 @@ github:
 				Contents: tt.mockedContents,
 				Err:      tt.mockedError,
 			}
-			y := &Yaml{
-				spec:             tt.spec,
-				contentRetriever: &mockedText,
-				files:            tt.files,
-			}
+
+			y, err := New(tt.spec)
+			y.contentRetriever = &mockedText
+			y.files = tt.files
+
+			assert.NoError(t, err)
 
 			// Looping on the only filePath in 'files'
 			for filePath := range y.files {

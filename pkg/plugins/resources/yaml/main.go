@@ -122,6 +122,8 @@ func New(spec interface{}) (*Yaml, error) {
 		contentRetriever: &text.Text{},
 	}
 
+	newResource.spec.Key = sanitizeYamlPathKey(newResource.spec.Key)
+
 	err = newResource.spec.Validate()
 	if err != nil {
 		return nil, err

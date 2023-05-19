@@ -60,75 +60,28 @@ func TestJoinPathWithWorkingDirectoryPath(t *testing.T) {
 	}
 }
 
-func TestParseKey(t *testing.T) {
+func TestSanitizeYamlPathKey(t *testing.T) {
 
 	testData := []struct {
 		key            string
-		expectedResult []string
+		expectedResult string
 	}{
-		{
-			key: `image`,
-			expectedResult: []string{
-				`image`,
-			},
-		},
-		{
-			key: `image.tag`,
-			expectedResult: []string{
-				`image`,
-				`tag`,
-			},
-		},
-		{
-			key: `image\.tag`,
-			expectedResult: []string{
-				`image.tag`,
-			},
-		},
-		{
-			key: `image.`,
-			expectedResult: []string{
-				`image`,
-			},
-		},
-		{
-			key: `image\.`,
-			expectedResult: []string{
-				`image.`,
-			},
-		},
-		{
-			key: `image*`,
-			expectedResult: []string{
-				`image*`,
-			},
-		},
-		{
-			key: `image\`,
-			expectedResult: []string{
-				`image`,
-			},
-		},
-		{
-			key: `image\\`,
-			expectedResult: []string{
-				`image\`,
-			},
-		},
-		{
-			key:            ``,
-			expectedResult: []string{},
-		},
+		{key: `image\.tag`, expectedResult: `$.'image.tag'`},
+		{key: `$.image\.tag`, expectedResult: `$.'image.tag'`},
+		{key: `image\.`, expectedResult: `$.'image.'`},
+		{key: `$.image\.`, expectedResult: `$.'image.'`},
+		{key: `image*`, expectedResult: `$.image*`},
+		{key: `image`, expectedResult: `$.image`},
+		{key: `image.tag`, expectedResult: `$.image.tag`},
+		{key: `image\`, expectedResult: `$.image\`},
+		{key: `image\\`, expectedResult: `$.image\\`},
 	}
 
 	for _, tt := range testData {
 		t.Run(tt.key, func(t *testing.T) {
-			gotResult := parseKey(tt.key)
+			gotResult := sanitizeYamlPathKey(tt.key)
 
-			assert.Equal(t, len(tt.expectedResult), len(gotResult))
-			for i := range tt.expectedResult {
-				assert.Equal(t, tt.expectedResult[i], gotResult[i])
-			}
+			assert.Equal(t, tt.expectedResult, gotResult)
 		})
 	}
 }

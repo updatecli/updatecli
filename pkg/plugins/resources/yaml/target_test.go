@@ -288,12 +288,13 @@ github:
 				Contents: tt.mockedContents,
 				Err:      tt.mockedError,
 			}
-			y := &Yaml{
-				spec:             tt.spec,
-				contentRetriever: &mockedText,
-				files:            tt.files,
-				indent:           tt.spec.Indent,
-			}
+
+			y, err := New(tt.spec)
+			y.contentRetriever = &mockedText
+			y.files = tt.files
+
+			assert.NoError(t, err)
+
 			gotResult := result.Target{}
 			gotErr := y.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResult)
 			if tt.wantedError {
@@ -423,12 +424,13 @@ github:
 				Contents: tt.mockedContents,
 				Err:      tt.mockedError,
 			}
-			y := &Yaml{
-				spec:             tt.spec,
-				contentRetriever: &mockedText,
-				files:            tt.files,
-				indent:           tt.spec.Indent,
-			}
+
+			y, err := New(tt.spec)
+			y.contentRetriever = &mockedText
+			y.files = tt.files
+
+			assert.NoError(t, err)
+
 			gotResult := result.Target{}
 			gotErr := y.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
 			if tt.wantedError {

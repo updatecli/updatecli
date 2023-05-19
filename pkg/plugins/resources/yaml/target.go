@@ -62,16 +62,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	notChanged := 0
 	//originalContents := make(map[string]string)
 
-	pathString := y.spec.Key
-
-	// Following warning should be removed in the futur once, the deprecated custom implementation
-	// is not used anymore.
-	if !strings.HasPrefix(pathString, "$.") {
-		logrus.Warningf("missing prefix \"$.\" for yamlpath query")
-		pathString = "$." + pathString
-	}
-
-	urlPath, err := yaml.PathString(pathString)
+	urlPath, err := yaml.PathString(y.spec.Key)
 	if err != nil {
 		return fmt.Errorf("crafting yamlpath query: %w", err)
 	}

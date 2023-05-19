@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -53,16 +52,7 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	fileContent := y.files[filePath].content
 	originalFilePath := y.files[filePath].originalFilePath
 
-	pathString := y.spec.Key
-
-	// Following warning should be removed in the futur once, the deprecated custom implementation
-	// is not used anymore.
-	if !strings.HasPrefix(pathString, "$.") {
-		logrus.Warningf("missing prefix \"$.\" for yamlpath query")
-		pathString = "$." + pathString
-	}
-
-	urlPath, err := yaml.PathString(pathString)
+	urlPath, err := yaml.PathString(y.spec.Key)
 	if err != nil {
 		return fmt.Errorf("crafting yamlpath query: %w", err)
 	}
