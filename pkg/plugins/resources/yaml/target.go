@@ -51,8 +51,11 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	resultTarget.NewInformation = valueToWrite
 
-	// Use to craft message depending if we run Updatecli in dryrun mode or not
-	shouldMsg := " should be "
+	shouldMsg := " "
+	if dryRun {
+  	// Use to craft message depending if we run Updatecli in dryrun mode or not
+		shouldMsg = " should be "
+	}
 
 	// loop over file(s)
 	notChanged := 0
@@ -81,7 +84,6 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		}
 
 		if oldVersion == valueToWrite {
-			resultTarget.Result = result.SUCCESS
 			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
 				resultTarget.Description,
 				y.spec.Key,
@@ -144,6 +146,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	// If no file was updated, don't return an error
 	if notChanged == len(y.files) {
+		resultTarget.Result = result.SUCCESS
 		return nil
 	}
 
