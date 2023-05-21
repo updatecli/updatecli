@@ -57,6 +57,7 @@ type Spec struct {
 			* key: $.agent.name
 			* key: $.agents[0].name
 			* key: $.agents[*].name
+			* key: $.'agents.name'
 
 		remark:
 			field path with key/value is not supported at the moment.
