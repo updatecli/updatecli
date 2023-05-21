@@ -53,7 +53,7 @@ type Gitlab struct {
 	versionFilter version.Filter
 }
 
-// New returns a new valid GitHub object.
+// New returns a new valid GitLab object.
 func New(spec interface{}) (*Gitlab, error) {
 	var s Spec
 	var clientSpec client.Spec
