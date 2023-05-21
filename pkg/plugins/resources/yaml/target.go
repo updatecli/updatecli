@@ -53,7 +53,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	shouldMsg := " "
 	if dryRun {
-  	// Use to craft message depending if we run Updatecli in dryrun mode or not
+  		// Use to craft message depending if we run Updatecli in dryrun mode or not
 		shouldMsg = " should be "
 	}
 
