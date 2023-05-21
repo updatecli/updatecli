@@ -42,7 +42,7 @@ type Spec struct {
 	*/
 	Files []string `yaml:",omitempty"`
 	/*
-		"key" defines the yaml key used to identify the yaml information to manipulate.
+		"key" defines the yaml keypath.
 
 		compatible:
 			* source
@@ -53,9 +53,14 @@ type Spec struct {
 			* key is a simpler version of yamlpath accepts keys.
 
 		example:
-			* key: name
-			* key: agent.name
-			* key: agents[0].name
+			* key: $.name
+			* key: $.agent.name
+			* key: $.agents[0].name
+			* key: $.agents[*].name
+
+		remark:
+			field path with key/value is not supported at the moment.
+			some help would be useful on https://github.com/goccy/go-yaml/issues/290
 
 	*/
 	Key string `yaml:",omitempty"`
