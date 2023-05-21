@@ -1,4 +1,4 @@
-name: Test YAML resource without scm
+name: Test duplicated YAML resource
 
 sources:
   scenario1:
@@ -75,11 +75,11 @@ targets:
     name: Update files content
     kind: yaml
     sourceid: scenario1
-    transformers:
-      - addsuffix: -beta
     spec:
       files:
-      - e2e/updatecli.d/success.d/yaml/noscm.yaml
-      - e2e/updatecli.d/success.d/yaml/duplicate.yaml
-      key: $.sources.scenario1.kind
-
+      - .github/workflows/go.yaml
+      #key: $.jobs.build.name
+      key: $.jobs.build.steps[id~go].uses
+      #key: $.jobs.build.steps[0].uses
+    transformers:
+      - addsuffix: -beta

@@ -16,7 +16,7 @@ sources:
     scmid: default
     spec:
       file: "updatecli/updatecli.d/updatecli.yaml"
-      key: "name"
+      key: "$.name"
 
 targets:
   jenkins:
@@ -25,7 +25,7 @@ targets:
     scmid: default
     spec:
       file: "updatecli/updatecli.d/updatecli.yaml"
-      key: "name"
+      key: "$.name"
 
 actions:
   prID1:
