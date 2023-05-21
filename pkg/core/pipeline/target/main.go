@@ -65,8 +65,6 @@ func (t *Target) Check() (bool, error) {
 // Run applies a specific target configuration
 func (t *Target) Run(source string, o *Options) (err error) {
 
-	var changed bool
-
 	if len(t.Config.ResourceConfig.Transformers) > 0 {
 		source, err = t.Config.ResourceConfig.Transformers.Apply(source)
 		if err != nil {
@@ -91,7 +89,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
-
 		err = target.Target(source, nil, o.DryRun, &t.Result)
 		if err != nil {
 			t.Result.Description = "something went wrong during pipeline execution"
@@ -106,11 +103,9 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	}
 
-	var message string
-	var files []string
-
 	_, err = t.Check()
 	if err != nil {
+		t.Result.Description = "something went wrong during pipeline execution"
 		t.Result.Result = result.FAILURE
 		return err
 	}
@@ -118,12 +113,14 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	s := *t.Scm
 
 	if err = s.Checkout(); err != nil {
+		t.Result.Description = "something went wrong during pipeline execution"
 		t.Result.Result = result.FAILURE
 		return err
 	}
 
 	err = target.Target(source, s, o.DryRun, &t.Result)
 	if err != nil {
+		t.Result.Description = "something went wrong during pipeline execution"
 		t.Result.Result = result.FAILURE
 		return err
 	}
@@ -133,6 +130,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	isRemoteBranchUpToDate, err := s.IsRemoteBranchUpToDate()
 	if err != nil {
+		t.Result.Description = "something went wrong during pipeline execution"
 		t.Result.Result = result.FAILURE
 		return err
 	}
@@ -146,7 +144,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	if !o.DryRun {
-		if changed {
+		if t.Result.Changed {
 			if t.Result.Description == "" {
 				t.Result.Result = result.FAILURE
 				return fmt.Errorf("target has no change message")
@@ -158,12 +156,12 @@ func (t *Target) Run(source string, o *Options) (err error) {
 			}
 
 			if o.Commit {
-				if err := s.Add(files); err != nil {
+				if err := s.Add(t.Result.Files); err != nil {
 					t.Result.Result = result.FAILURE
 					return err
 				}
 
-				if err = s.Commit(message); err != nil {
+				if err = s.Commit(t.Result.Description); err != nil {
 					t.Result.Result = result.FAILURE
 					return err
 				}
