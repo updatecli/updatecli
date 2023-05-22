@@ -228,7 +228,7 @@ func TestGoGit_RemoteURLs(t *testing.T) {
 		},
 		{
 			name:       "failing test with non-existing directory",
-			workingDir: "/notexisting",
+			workingDir: "/nonexistent",
 			wantErr:    true,
 		},
 	}

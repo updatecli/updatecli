@@ -4,12 +4,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 )
 
-// Spec defines settings used to interact with Gitlab pullrequest
+// Spec defines settings used to interact with GitLab pullrequest
 // It's a mapping of user input from a Updatecli manifest and it shouldn't modified
 type Spec struct {
 	client.Spec
 	/*
-		"sourcebranch" defines the branch name used as a source to create the Gitlab mergerequest.
+		"sourcebranch" defines the branch name used as a source to create the GitLab mergerequest.
 
 		default:
 			"sourcebranch" inherits the value from the scm branch if a scm of kind "gitlab" is specified by the action.
@@ -19,35 +19,35 @@ type Spec struct {
 	*/
 	SourceBranch string `yaml:",omitempty"`
 	/*
-		"targetbranch" defines the branch name used as a target to create the Gitlab mergerequest.
+		"targetbranch" defines the branch name used as a target to create the GitLab mergerequest.
 
 		default:
 			"targetbranch" inherits the value from the scm working branch if a scm of kind "gitlab" is specified by the action.
 
 		remark:
 			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
-			the Gitlab scm will create and use a working branch such as updatecli_xxxx
+			the GitLab scm will create and use a working branch such as updatecli_xxxx
 	*/
 	TargetBranch string `yaml:",omitempty"`
 	/*
-		"owner" defines the Gitlab repository owner.
+		"owner" defines the GitLab repository owner.
 
 		remark:
 			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
 	*/
 	Owner string `yaml:",omitempty" jsonschema:"required"`
 	/*
-		"repository" defines the Gitlab repository for a specific owner
+		"repository" defines the GitLab repository for a specific owner
 
 		remark:
 			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
 	*/
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	/*
-		"title" defines the Gitlab mergerequest title
+		"title" defines the GitLab mergerequest title
 
 		default:
-			A Gitlab mergerequest title is defined by one of the following location (first match)
+			A GitLab mergerequest title is defined by one of the following location (first match)
 				1. title is defined by the spec such as:
 
 					actions:

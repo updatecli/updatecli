@@ -175,7 +175,7 @@ func New(option Option) (config Config, err error) {
 	}
 
 	/** Check for deprecated directives **/
-	// pullequests deprecated over actions
+	// pullrequests deprecated over actions
 	if len(config.Spec.PullRequests) > 0 {
 		if len(config.Spec.Actions) > 0 {
 			return config, fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
@@ -578,7 +578,7 @@ func (config *Config) Update(data interface{}) (err error) {
 			case result.FAILURE:
 				return "", fmt.Errorf("parent source %q failed", s)
 			// If the result of the parent source execution is not SUCCESS or FAILURE, then it means it was either skipped or not already run.
-			// In this case, the function is return "as it" (literrally) to allow retry later (on a second configuration iteration)
+			// In this case, the function is return "as it" (literally) to allow retry later (on a second configuration iteration)
 			default:
 				return fmt.Sprintf("{{ source %q }}", s), nil
 			}

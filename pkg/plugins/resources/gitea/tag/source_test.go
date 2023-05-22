@@ -35,7 +35,7 @@ func TestSource(t *testing.T) {
 				URL:        "codeberg.org",
 				Token:      "",
 				Owner:      "updatecli",
-				Repository: "updatecli-dotnotexist",
+				Repository: "updatecli-nonexistent",
 			},
 			wantResult: "",
 			wantErr:    true,

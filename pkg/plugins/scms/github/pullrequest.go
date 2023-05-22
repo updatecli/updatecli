@@ -29,7 +29,7 @@ var (
 	ErrBadMergeMethod                = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
 )
 
-// PullRequest contains multiple fields mapped to Github V4 api
+// PullRequest contains multiple fields mapped to GitHub V4 api
 type PullRequestApi struct {
 	BaseRefName string
 	Body        string
@@ -279,7 +279,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
 	}
 
-	// The Github Api expects the merge method to be capital letter and don't allows empty value
+	// The GitHub Api expects the merge method to be capital letter and don't allows empty value
 	// hence the reason to set input.MergeMethod only if the value is not nil
 	if len(p.spec.MergeMethod) > 0 {
 		mergeMethod := githubv4.PullRequestMergeMethod(strings.ToUpper(p.spec.MergeMethod))

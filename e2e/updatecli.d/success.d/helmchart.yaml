@@ -47,7 +47,7 @@ sources:
     spec:
       name: epinio
 
-# Github Action is not configured yet to query oci registry
+# GitHub Action is not configured yet to query oci registry
 #  fromOCI:
 #    name: Get upgrade-responder
 #    kind: helmchart
@@ -84,7 +84,7 @@ conditions:
       name: epinio
       version: 1.0.0
 
-# # Github Action is not configured yet to query oci registry
+# # GitHub Action is not configured yet to query oci registry
 #  fromOCI:
 #    name: Get upgrade-responder
 #    kind: helmchart

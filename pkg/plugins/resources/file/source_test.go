@@ -224,13 +224,13 @@ func TestFile_Source(t *testing.T) {
 			wantedErr: true,
 		},
 		{
-			name:        "Failing case with non existing 'File'",
+			name:        "Failing case with nonexistent 'File'",
 			files:       map[string]fileMetadata{},
 			mockedError: fmt.Errorf("no such file or directory"),
 			wantedErr:   true,
 		},
 		{
-			name: "Failing case with 'File' and non existing 'Line' specified",
+			name: "Failing case with 'File' and nonexistent 'Line' specified",
 			spec: Spec{
 				File: "/home/ucli/foo.txt",
 				Line: 3,

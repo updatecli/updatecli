@@ -98,13 +98,13 @@ func New(spec interface{}) (*Maven, error) {
 			mavenmetadata.New(u.String()))
 	}
 
-	mavenCentrallNotFound, err := isRepositoriesContainsMavenCentral(newSpec.Repositories)
+	mavenCentralNotFound, err := isRepositoriesContainsMavenCentral(newSpec.Repositories)
 
 	if err != nil {
 		return &Maven{}, err
 	}
 
-	if !mavenCentrallNotFound {
+	if !mavenCentralNotFound {
 		u, err := url.Parse(MavenCentralRepository)
 		if err != nil {
 			return &Maven{}, err
@@ -129,7 +129,7 @@ func (m Maven) Validate() error {
 	errs := []error{}
 
 	if len(m.spec.Repository) > 0 && len(m.spec.Repositories) > 0 {
-		errs = append(errs, fmt.Errorf("parameter %q and %q are mutually exclusif",
+		errs = append(errs, fmt.Errorf("parameter %q and %q are mutually exclusive",
 			"repository",
 			"repositories"))
 	}

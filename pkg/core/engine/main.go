@@ -477,7 +477,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 					because it may change over pipeline execution
 					such as different source version filter
 
-					Starting the id with the autodiscovery pipelinid looks enough
+					Starting the id with the autodiscovery pipelineid looks enough
 					to avoid collision
 				*/
 				_, err := io.WriteString(hash, p.Config.Spec.PipelineID+"/"+manifest.Name)

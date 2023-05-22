@@ -53,7 +53,7 @@ type Gitea struct {
 	versionFilter version.Filter
 }
 
-// New returns a new valid Github object.
+// New returns a new valid GitHub object.
 func New(spec interface{}) (*Gitea, error) {
 	var s Spec
 	var clientSpec client.Spec

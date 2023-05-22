@@ -1,4 +1,4 @@
-name: Bump udpatecli version
+name: Bump updatecli version
 pipelineid: cac467f9bdc931266038f8cf363edc865370121deb3954b93e70d0588827a04f
 actions:
     default:

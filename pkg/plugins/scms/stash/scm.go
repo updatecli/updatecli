@@ -97,7 +97,7 @@ func (g *Stash) Add(files []string) error {
 	return nil
 }
 
-// IsRemoteBranchUpToDate checks if the branche reference name is published on
+// IsRemoteBranchUpToDate checks if the branch reference name is published on
 // on the default remote
 func (g *Stash) IsRemoteBranchUpToDate() (bool, error) {
 	return g.nativeGitHandler.IsLocalBranchPublished(
