@@ -12,7 +12,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Target ensure that a specific release exist on Gitlab, otherwise creates it
+// Target ensure that a specific release exist on GitLab, otherwise creates it
 func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
@@ -48,7 +48,7 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	)
 
 	if err != nil {
-		logrus.Debugf("Gitlab Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
+		logrus.Debugf("GitLab Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
 		return err
 	}
 
@@ -56,7 +56,7 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		if r.Tag == g.spec.Tag {
 			resultTarget.Result = result.SUCCESS
 			resultTarget.OldInformation = g.spec.Tag
-			resultTarget.Description = fmt.Sprintf("Gitlab release tag %q already exist", g.spec.Tag)
+			resultTarget.Description = fmt.Sprintf("GitLab release tag %q already exist", g.spec.Tag)
 			return nil
 		}
 	}
@@ -65,7 +65,7 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	resultTarget.Changed = true
 
 	if dryRun {
-		resultTarget.Description = fmt.Sprintf("Gitlab release tag %q doesn't exist, we need to create it", g.spec.Tag)
+		resultTarget.Description = fmt.Sprintf("GitLab release tag %q doesn't exist, we need to create it", g.spec.Tag)
 		return nil
 	}
 
@@ -99,10 +99,10 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 
 	if resp.Status >= 400 {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
-		return fmt.Errorf("error from Gitlab api: %v", resp.Status)
+		return fmt.Errorf("error from GitLab api: %v", resp.Status)
 	}
 
-	resultTarget.Description = fmt.Sprintf("Gitlab Release %q successfully opened on %q", release.Title, release.Link)
+	resultTarget.Description = fmt.Sprintf("GitLab Release %q successfully opened on %q", release.Title, release.Link)
 
 	return nil
 }

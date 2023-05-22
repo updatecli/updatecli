@@ -153,7 +153,7 @@ Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.335" +
 => Yes then proceed otherwise abort +
 
 . Targets: +
-Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.335"? +
+Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the GitHub repository olblak/charts to "2.335"? +
 => If yes then execute the action `default` opening a GitHub pull request to the "main" branch
 
 |===

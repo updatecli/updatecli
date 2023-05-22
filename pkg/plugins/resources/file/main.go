@@ -21,7 +21,7 @@ type Spec struct {
 	Line int `yaml:",omitempty"`
 	// Content specifies the content to take in account instead of the file content
 	Content string `yaml:",omitempty"`
-	// ForceCreate specifies if non existing file(s) should be created if they are targets
+	// ForceCreate specifies if nonexistent file(s) should be created if they are targets
 	ForceCreate bool `yaml:",omitempty"`
 	// MatchPattern specifies the regexp pattern to match on the file(s)
 	MatchPattern string `yaml:",omitempty"`

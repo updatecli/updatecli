@@ -59,7 +59,7 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	// Github Release needs the original version, because the "found" version can be modified (semantic version without the prefix, transformed version, etc.)
+	// GitHub Release needs the original version, because the "found" version can be modified (semantic version without the prefix, transformed version, etc.)
 	versionName := version.OriginalVersion
 
 	var query changelogQuery

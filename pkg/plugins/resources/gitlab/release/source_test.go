@@ -24,7 +24,7 @@ func TestSource(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "repository updatecli/updatecli-donotexist should not exist",
+			name: "repository updatecli/updatecli-nonexistent should not exist",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -35,7 +35,7 @@ func TestSource(t *testing.T) {
 				URL:        "gitlab.com",
 				Token:      "",
 				Owner:      "olblak",
-				Repository: "updatecli-donotexist",
+				Repository: "updatecli-nonexistent",
 			},
 			wantResult: "",
 			wantErr:    true,

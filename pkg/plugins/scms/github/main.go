@@ -37,7 +37,7 @@ type Spec struct {
 	Token string `yaml:",omitempty" jsonschema:"required"`
 	// URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
-	// Username specifies the username used to authenticate with Github API
+	// Username specifies the username used to authenticate with GitHub API
 	Username string `yaml:",omitempty"`
 	// User specifies the user of the git commit messages
 	User string `yaml:",omitempty"`
@@ -49,7 +49,7 @@ type Spec struct {
 	CommitMessage commit.Commit `yaml:",omitempty"`
 }
 
-// Github contains settings to interact with Github
+// GitHub contains settings to interact with GitHub
 type Github struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
@@ -60,7 +60,7 @@ type Github struct {
 	mu               sync.RWMutex
 }
 
-// Repository contains Github repository data
+// Repository contains GitHub repository data
 type Repository struct {
 	ID          string
 	Name        string
@@ -70,7 +70,7 @@ type Repository struct {
 	ParentOwner string
 }
 
-// New returns a new valid Github object.
+// New returns a new valid GitHub object.
 func New(s Spec, pipelineID string) (*Github, error) {
 	errs := s.Validate()
 
@@ -124,7 +124,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	return &g, nil
 }
 
-// Validate verifies if mandatory Github parameters are provided and return false if not.
+// Validate verifies if mandatory GitHub parameters are provided and return false if not.
 func (s *Spec) Validate() (errs []error) {
 	required := []string{}
 

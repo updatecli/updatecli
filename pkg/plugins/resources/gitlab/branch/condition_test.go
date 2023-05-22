@@ -23,7 +23,7 @@ func TestCondition(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "repository olblak/updatecli-donotexist should not exist",
+			name: "repository olblak/updatecli-nonexistent should not exist",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -34,7 +34,7 @@ func TestCondition(t *testing.T) {
 				URL:        "gitlab.com",
 				Token:      "",
 				Owner:      "olblak",
-				Repository: "updatecli-donotexist",
+				Repository: "updatecli-nonexistent",
 				Branch:     "v2",
 			},
 			wantResult: false,
@@ -59,7 +59,7 @@ func TestCondition(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name: "repository olblak/updatecli should not have branch donotexist",
+			name: "repository olblak/updatecli should not have branch nonexistent",
 			manifest: struct {
 				URL        string
 				Token      string
@@ -71,7 +71,7 @@ func TestCondition(t *testing.T) {
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
-				Branch:     "donotexist",
+				Branch:     "nonexistent",
 			},
 			wantResult: false,
 			wantErr:    false,

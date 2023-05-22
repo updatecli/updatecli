@@ -198,7 +198,7 @@ func TestFile_Read(t *testing.T) {
 			wantedResult: true,
 		},
 		{
-			name: "Failing case with non existing 'Line'",
+			name: "Failing case with nonexistent 'Line'",
 			spec: Spec{
 				Line: 5,
 				File: "/foo.txt",
@@ -218,7 +218,7 @@ func TestFile_Read(t *testing.T) {
 			wantedErr: true,
 		},
 		{
-			name: "Failing case with non existing 'File'",
+			name: "Failing case with nonexistent 'File'",
 			spec: Spec{
 				File: "/not_existing.txt",
 			},
@@ -232,7 +232,7 @@ func TestFile_Read(t *testing.T) {
 			wantedErr:   true,
 		},
 		{
-			name: "Failing case with non existing 'File' and a specified 'Line'",
+			name: "Failing case with nonexistent 'File' and a specified 'Line'",
 			spec: Spec{
 				File: "/not_existing.txt",
 				Line: 15,

@@ -7,7 +7,7 @@ import (
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 )
 
-// Gitlab contains information to interact with Gitlab api
+// Gitlab contains information to interact with GitLab api
 type Gitlab struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
@@ -25,7 +25,7 @@ type Gitlab struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 }
 
-// New returns a new valid Gitlab object.
+// New returns a new valid GitLab object.
 func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 
 	var clientSpec client.Spec

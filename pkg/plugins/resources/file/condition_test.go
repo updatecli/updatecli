@@ -155,7 +155,7 @@ func TestFile_Condition(t *testing.T) {
 			wantedResult: true,
 		},
 		{
-			name: "Failing case with non existing 'Line' specified",
+			name: "Failing case with nonexistent 'Line' specified",
 			spec: Spec{
 				Files: []string{
 					"foo.txt",
@@ -171,7 +171,7 @@ func TestFile_Condition(t *testing.T) {
 			wantedErr: true,
 		},
 		{
-			name: "Failing case with non existing 'Files'",
+			name: "Failing case with nonexistent 'Files'",
 			spec: Spec{
 				Files: []string{
 					"foo.txt",
@@ -186,7 +186,7 @@ func TestFile_Condition(t *testing.T) {
 			wantedErr: true,
 		},
 		{
-			name: "Failing case with non existing URL as 'Files'",
+			name: "Failing case with nonexistent URL as 'Files'",
 			spec: Spec{
 				Files: []string{
 					"https://do.not.exists/foo",

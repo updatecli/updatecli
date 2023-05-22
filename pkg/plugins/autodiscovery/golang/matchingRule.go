@@ -48,7 +48,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 			/*
 				Checks if module is matching the module constraint.
 				If both module constraint is empty and no modulename have been provided then we
-				assumg the rule is matching
+				assume the rule is matching
 
 				Otherwise we checks both that version and module name are matching.
 				Version matching uses semantic versioning constraints if possible otherwise
@@ -91,7 +91,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 
 			/*
 				Checks if the goVersion is matching the rule
-				The version constraint must be a valid semenatic version constraint.
+				The version constraint must be a valid semantic version constraint.
 			*/
 			if rule.GoVersion != "" {
 				if goVersion == "" {

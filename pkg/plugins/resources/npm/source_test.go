@@ -78,9 +78,9 @@ func TestSource(t *testing.T) {
 			expectedError:        true,
 		},
 		{
-			name: "Failing case of retrieving latest non existing package using private registry",
+			name: "Failing case of retrieving latest nonexistent package using private registry",
 			spec: Spec{
-				Name: "axiosnotexisting",
+				Name: "axiosnonexistent",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "~0",

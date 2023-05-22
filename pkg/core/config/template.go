@@ -109,7 +109,7 @@ func (t *Template) readSecretsFiles() error {
 	return nil
 }
 
-// ReadFile reads an udpatecli values file, it can also read encrypted sops files
+// ReadFile reads an updatecli values file, it can also read encrypted sops files
 func (t *Template) readFile(filename string, values *map[string]interface{}, encrypted bool) (err error) {
 
 	baseFilename := filepath.Base(filename)

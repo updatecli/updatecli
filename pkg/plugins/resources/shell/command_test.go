@@ -43,7 +43,7 @@ func TestNativeCommandExecutor_ExecuteCommand(t *testing.T) {
 			wantStdout:   "/",
 		},
 		{
-			name: "Runs command with exit code 0 in a non existing directory",
+			name: "Runs command with exit code 0 in a nonexistent directory",
 			cmd: command{
 				Cmd: "pwd",
 				Dir: "/toto",

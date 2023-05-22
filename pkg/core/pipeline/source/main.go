@@ -128,7 +128,7 @@ func (c *Config) Validate() error {
 			c.ResourceConfig.SCMID = c.ResourceConfig.DeprecatedSCMID
 			c.ResourceConfig.DeprecatedSCMID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"scmID", "scmid", "scmID")
 		}
 	}

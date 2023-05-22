@@ -84,7 +84,7 @@ func TestSource(t *testing.T) {
 			mockedHTTPStatusCode: existingPackageStatus,
 		},
 		{
-			name: "Failing case of retrieving non-existent package from a mocked private registry",
+			name: "Failing case of retrieving nonexistent package from a mocked private registry",
 			spec: Spec{
 				Registry: cargo.Registry{
 					URL: "https://crates.io/api/v1/crates",

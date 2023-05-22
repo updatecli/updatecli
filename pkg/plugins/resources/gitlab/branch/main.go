@@ -13,7 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines settings used to interact with Gitlab release
+// Spec defines settings used to interact with GitLab release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
 	// [S][C] Owner specifies repository owner
@@ -26,7 +26,7 @@ type Spec struct {
 	Branch string `yaml:",omitempty"`
 }
 
-// Gitlab contains information to interact with Gitlab api
+// Gitlab contains information to interact with GitLab api
 type Gitlab struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
@@ -37,7 +37,7 @@ type Gitlab struct {
 	versionFilter version.Filter
 }
 
-// New returns a new valid Gitlab object.
+// New returns a new valid GitLab object.
 func New(spec interface{}) (*Gitlab, error) {
 
 	var s Spec
@@ -85,7 +85,7 @@ func New(spec interface{}) (*Gitlab, error) {
 
 }
 
-// Retrieve Gitlab branches from a remote Gitlab repository
+// Retrieve GitLab branches from a remote GitLab repository
 func (g *Gitlab) SearchBranches() (tags []string, err error) {
 
 	// Timeout api query after 30sec
@@ -146,7 +146,7 @@ func (s Spec) Validate() error {
 	}
 
 	if gotError {
-		return fmt.Errorf("wrong Gitlab configuration")
+		return fmt.Errorf("wrong GitLab configuration")
 	}
 
 	return nil

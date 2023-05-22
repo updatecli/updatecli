@@ -24,7 +24,7 @@ func TestSource(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "repository olblak/updatecli-donotexist should not exist",
+			name: "repository olblak/updatecli-nonexistent should not exist",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -35,7 +35,7 @@ func TestSource(t *testing.T) {
 				URL:        "gitlab.com",
 				Token:      "",
 				Owner:      "updatecli",
-				Repository: "updatecli-donotexist",
+				Repository: "updatecli-nonexistent",
 			},
 			wantResult: "",
 			wantErr:    true,
@@ -61,7 +61,7 @@ func TestSource(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name: "repository should not have branch donotexist",
+			name: "repository should not have branch nonexistent",
 			manifest: struct {
 				URL           string
 				Token         string
@@ -75,7 +75,7 @@ func TestSource(t *testing.T) {
 				Repository: "updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "regex",
-					Pattern: "donotexist",
+					Pattern: "nonexistent",
 				},
 			},
 			wantResult: "",

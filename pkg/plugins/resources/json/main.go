@@ -35,10 +35,10 @@ func New(spec interface{}) (*Json, error) {
 		return nil, err
 	}
 
-	// Deprecate message to remove in a futur updatelci version
+	// Deprecate message to remove in a future updatecli version
 	// cfr https://github.com/updatecli/updatecli/pull/944
 	if newSpec.Multiple {
-		logrus.Warningln("the setting multiple is now deprecated. you shoulbe be using the parameter \"query\" which allows you to specify an advanced query.")
+		logrus.Warningln("the setting multiple is now deprecated. you should be using the parameter \"query\" which allows you to specify an advanced query.")
 		if len(newSpec.Key) > 0 && len(newSpec.Query) == 0 {
 			logrus.Printf("Instead of using the parameter key %q combined with multiple, we converted your setting to use the parameter query %q", newSpec.Key, newSpec.Query)
 			newSpec.Query = newSpec.Key

@@ -52,16 +52,16 @@ func TestDockerfile_Condition(t *testing.T) {
 			wantChanged: false,
 		},
 		{
-			name:             "Non existent Dockerfile",
+			name:             "Nonexistent Dockerfile",
 			inputSourceValue: "1.16",
 			spec: Spec{
-				File: "NOTEXISTING.Dockerfile",
+				File: "NONEXISTENT.Dockerfile",
 				Instruction: map[string]string{
 					"keyword": "FROM",
 					"matcher": "golang",
 				},
 			},
-			wantErr: fmt.Errorf("the file NOTEXISTING.Dockerfile does not exist"),
+			wantErr: fmt.Errorf("the file NONEXISTENT.Dockerfile does not exist"),
 		},
 	}
 	for _, tt := range tests {
@@ -122,10 +122,10 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 			},
 		},
 		{
-			name:             "Non existent Dockerfile",
+			name:             "Nonexistent Dockerfile",
 			inputSourceValue: "1.16",
 			spec: Spec{
-				File: "NOTEXISTING.Dockerfile",
+				File: "NONEXISTENT.Dockerfile",
 				Instruction: map[string]string{
 					"keyword": "FROM",
 					"matcher": "golang",
@@ -134,7 +134,7 @@ func TestDockerfile_ConditionFromSCM(t *testing.T) {
 			scm: &scm.MockScm{
 				WorkingDir: "/foo",
 			},
-			wantErr: fmt.Errorf("the file /foo/NOTEXISTING.Dockerfile does not exist"),
+			wantErr: fmt.Errorf("the file /foo/NONEXISTENT.Dockerfile does not exist"),
 		},
 	}
 	for _, tt := range tests {
