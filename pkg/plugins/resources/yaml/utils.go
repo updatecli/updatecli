@@ -20,7 +20,7 @@ func joinPathWithWorkingDirectoryPath(filePath, workingDir string) string {
 }
 
 /*
-sanitizeYamlPathKey is a helper function to migrate the depecrated yaml key
+sanitizeYamlPathKey is a helper function to migrate the deprecated yaml key
 to the new syntax. We start by displaying a warning message, and the next step,
 will be to return an error.
 */
