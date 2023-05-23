@@ -87,23 +87,12 @@ type Spec struct {
 			false
 	*/
 	KeyOnly bool `yaml:",omitempty"`
-	/*
-		"indent" allows to override the default yaml indentation for file updated by a target.
-
-		compatible:
-			* target
-
-		default:
-			default indentation is set to 2.
-	*/
-	Indent int `yaml:",omitempty"`
 }
 
 // Yaml defines a resource of kind "yaml"
 type Yaml struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
-	indent           int
 	files            map[string]file // map of file paths to file contents
 }
 
@@ -133,11 +122,6 @@ func New(spec interface{}) (*Yaml, error) {
 	err = newResource.spec.Validate()
 	if err != nil {
 		return nil, err
-	}
-
-	newResource.indent = newResource.spec.Indent
-	if newResource.indent <= 0 {
-		newResource.indent = 2
 	}
 
 	newResource.files = make(map[string]file)
@@ -188,9 +172,6 @@ func (s *Spec) Validate() error {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attributes `spec.files` contains duplicated values")
 	}
 
-	if s.Indent < 0 {
-		validationErrors = append(validationErrors, "Invalid spec for yaml resource: indentation must be a >= 0")
-	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
 		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))

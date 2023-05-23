@@ -27,10 +27,9 @@ func Test_Target(t *testing.T) {
 		{
 			name: "Passing case with both complex input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:   "test.yaml",
-				Key:    "$.annotations.'github.owner'",
-				Value:  "obiwankenobi",
-				Indent: 4,
+				File:  "test.yaml",
+				Key:   "$.annotations.'github.owner'",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -61,10 +60,9 @@ annotations:
 		{
 			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:   "test.yaml",
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				File:  "test.yaml",
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -97,9 +95,8 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -146,9 +143,8 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -191,10 +187,9 @@ github:
 		{
 			name: "Validation failure with an https:// URL instead of a file",
 			spec: Spec{
-				File:   "https://github.com/foo.yaml",
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				File:  "https://github.com/foo.yaml",
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -331,10 +326,9 @@ func Test_TargetFromSCM(t *testing.T) {
 		{
 			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:   "test.yaml",
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				File:  "test.yaml",
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"/tmp/test.yaml": {
@@ -370,9 +364,8 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"/tmp/test.yaml": {
