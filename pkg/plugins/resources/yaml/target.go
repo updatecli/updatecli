@@ -102,7 +102,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		}
 
 		if err := urlPath.ReplaceWithReader(yamlFile, strings.NewReader(valueToWrite)); err != nil {
-			panic(err)
+			return fmt.Errorf("replacing yaml key: %w", err)
 		}
 
 		f := y.files[filePath]
