@@ -40,7 +40,7 @@ conditions:
     disablesourceinput: true
     spec:
       file: 'fleet.d/grafana/fleet.yaml'
-      key: 'helm.chart'
+      key: '$.helm.chart'
       value: 'grafana'
   grafana-repository:
     name: 'Ensure Helm chart repository https://grafana.github.io/helm-charts is specified'
@@ -48,7 +48,7 @@ conditions:
     disablesourceinput: true
     spec:
       file: 'fleet.d/grafana/fleet.yaml'
-      key: 'helm.repo'
+      key: '$.helm.repo'
       value: 'https://grafana.github.io/helm-charts'
 targets:
   grafana:
@@ -56,7 +56,7 @@ targets:
     kind: 'yaml'
     spec:
       file: 'fleet.d/grafana/fleet.yaml'
-      key: 'helm.version'
+      key: '$.helm.version'
     sourceid: 'grafana'
 `},
 		},

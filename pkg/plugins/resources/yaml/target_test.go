@@ -27,10 +27,9 @@ func Test_Target(t *testing.T) {
 		{
 			name: "Passing case with both complex input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:   "test.yaml",
-				Key:    "annotations.github\\.owner",
-				Value:  "obiwankenobi",
-				Indent: 4,
+				File:  "test.yaml",
+				Key:   "$.annotations.'github.owner'",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -41,6 +40,7 @@ func Test_Target(t *testing.T) {
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
 				"test.yaml": `---
+## This is a comment that should be preserved
 annotations:
   github.owner: olblak
   repository: charts
@@ -48,9 +48,11 @@ annotations:
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
-				"test.yaml": `annotations:
-    github.owner: obiwankenobi
-    repository: charts
+				"test.yaml": `---
+## This is a comment that should be preserved
+annotations:
+  github.owner: obiwankenobi
+  repository: charts
 `,
 			},
 			wantedResult: true,
@@ -58,10 +60,9 @@ annotations:
 		{
 			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:   "test.yaml",
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				File:  "test.yaml",
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -79,7 +80,8 @@ github:
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
-				"test.yaml": `github:
+				"test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
@@ -93,9 +95,8 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -122,13 +123,15 @@ github:
 			},
 			// Note: the updated files don't contain separator anymore
 			wantedContents: map[string]string{
-				"test.yaml": `github:
+				"test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
-				"bar.yaml": `github:
-  owner: obiwankenobi
-  repository: charts
+				"bar.yaml": `---
+github:
+    owner: obiwankenobi
+    repository: charts
 `,
 			},
 			wantedResult: true,
@@ -140,9 +143,8 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -169,7 +171,8 @@ github:
 			},
 			// Note: the updated file doesn't contain separator anymore
 			wantedContents: map[string]string{
-				"test.yaml": `github:
+				"test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
@@ -184,10 +187,9 @@ github:
 		{
 			name: "Validation failure with an https:// URL instead of a file",
 			spec: Spec{
-				File:   "https://github.com/foo.yaml",
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				File:  "https://github.com/foo.yaml",
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -281,12 +283,13 @@ github:
 				Contents: tt.mockedContents,
 				Err:      tt.mockedError,
 			}
-			y := &Yaml{
-				spec:             tt.spec,
-				contentRetriever: &mockedText,
-				files:            tt.files,
-				indent:           tt.spec.Indent,
-			}
+
+			y, err := New(tt.spec)
+			y.contentRetriever = &mockedText
+			y.files = tt.files
+
+			assert.NoError(t, err)
+
 			gotResult := result.Target{}
 			gotErr := y.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResult)
 			if tt.wantedError {
@@ -323,10 +326,9 @@ func Test_TargetFromSCM(t *testing.T) {
 		{
 			name: "Passing case with both input source and specified value (specified value should be used)",
 			spec: Spec{
-				File:   "test.yaml",
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				File:  "test.yaml",
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"/tmp/test.yaml": {
@@ -347,7 +349,8 @@ github:
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
-				"/tmp/test.yaml": `github:
+				"/tmp/test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
@@ -361,9 +364,8 @@ github:
 					"test.yaml",
 					"bar.yaml",
 				},
-				Key:    "github.owner",
-				Value:  "obiwankenobi",
-				Indent: 2,
+				Key:   "github.owner",
+				Value: "obiwankenobi",
 			},
 			files: map[string]file{
 				"/tmp/test.yaml": {
@@ -395,11 +397,13 @@ github:
 			},
 			// Note: the updated files don't contain separator anymore
 			wantedContents: map[string]string{
-				"/tmp/test.yaml": `github:
+				"/tmp/test.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
-				"/tmp/bar.yaml": `github:
+				"/tmp/bar.yaml": `---
+github:
   owner: obiwankenobi
   repository: charts
 `,
@@ -413,12 +417,13 @@ github:
 				Contents: tt.mockedContents,
 				Err:      tt.mockedError,
 			}
-			y := &Yaml{
-				spec:             tt.spec,
-				contentRetriever: &mockedText,
-				files:            tt.files,
-				indent:           tt.spec.Indent,
-			}
+
+			y, err := New(tt.spec)
+			y.contentRetriever = &mockedText
+			y.files = tt.files
+
+			assert.NoError(t, err)
+
 			gotResult := result.Target{}
 			gotErr := y.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
 			if tt.wantedError {

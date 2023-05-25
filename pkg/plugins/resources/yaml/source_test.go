@@ -25,7 +25,7 @@ func Test_Source(t *testing.T) {
 			name: "Passing Case with 'File' and complex key",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "annotations.github\\.owner",
+				Key:  "annotations.'github.owner'",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -206,11 +206,12 @@ github:
 				Contents: tt.mockedContents,
 				Err:      tt.mockedError,
 			}
-			y := &Yaml{
-				spec:             tt.spec,
-				contentRetriever: &mockedText,
-				files:            tt.files,
-			}
+
+			y, err := New(tt.spec)
+			y.contentRetriever = &mockedText
+			y.files = tt.files
+
+			assert.NoError(t, err)
 
 			// Looping on the only filePath in 'files'
 			for filePath := range y.files {

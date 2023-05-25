@@ -6,35 +6,35 @@ sources:
     kind: yaml
     spec:
       file: e2e/updatecli.d/success.d/yaml/noscm.yaml
-      key: $.sources.scenario1.kind
+      key: sources.scenario1.kind
 
   scenario2:
     name: Basic yaml source
     kind: yaml
     spec:
       file: file://e2e/updatecli.d/success.d/yaml/noscm.yaml
-      key: $.sources.scenario1.kind
+      key: sources.scenario1.kind
 
   scenario21:
     name: Basic yaml source
     kind: yaml
     spec:
       file: file://e2e/updatecli.d/success.d/yaml/noscm.yaml
-      key: $.sources.scenario1.kind
+      key: sources.scenario1.kind
 
   scenario3:
     name: Test URL scheme
     kind: yaml
     spec:
       file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
-      key: $.name
+      key: name
 
   scenario31:
     name: Test URL scheme
     kind: yaml
     spec:
       file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
-      key: $.name
+      key: name
 
 conditions:
   scenario1:
@@ -45,7 +45,7 @@ conditions:
       files:
       - e2e/updatecli.d/success.d/yaml/noscm.yaml
       - e2e/updatecli.d/success.d/yaml/duplicate.yaml
-      key: $.sources.scenario1.kind
+      key: sources.scenario1.kind
       value: yaml
 
   scenario2:
@@ -56,7 +56,7 @@ conditions:
       files:
       - file://e2e/updatecli.d/success.d/yaml/noscm.yaml
       - file://e2e/updatecli.d/success.d/yaml/duplicate.yaml
-      key: $.sources.scenario1.kind
+      key: sources.scenario1.kind
       value: yaml
 
   scenario3:
@@ -67,7 +67,7 @@ conditions:
       files:
       - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml/noscm.yaml
       - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml/duplicate.yaml
-      key: $.sources.scenario1.kind
+      key: sources.scenario1.kind
       value: yaml
 
 targets:
@@ -81,5 +81,5 @@ targets:
       files:
       - e2e/updatecli.d/success.d/yaml/noscm.yaml
       - e2e/updatecli.d/success.d/yaml/duplicate.yaml
-      key: $.sources.scenario1.kind
+      key: sources.scenario1.kind
 

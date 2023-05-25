@@ -23,7 +23,7 @@ conditions:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: 'helm.chart'
+      key: '$.helm.chart'
       value: '{{ .ChartName }}'
   {{ .ConditionID }}-repository:
     name: 'Ensure Helm chart repository {{ .ChartRepository }} is specified'
@@ -34,7 +34,7 @@ conditions:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: 'helm.repo'
+      key: '$.helm.repo'
       value: '{{ .ChartRepository }}'
 targets:
   {{ .TargetID }}:
@@ -45,7 +45,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: 'helm.version'
+      key: '$.helm.version'
     sourceid: '{{ .SourceID }}'
 `
 )
