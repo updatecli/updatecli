@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/auth"
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
 
@@ -63,6 +64,7 @@ func init() {
 		diffCmd,
 		prepareCmd,
 		manifestCmd,
+		loginCmd,
 		showCmd,
 		versionCmd,
 		docsCmd,
@@ -74,6 +76,7 @@ func run(command string) error {
 
 	switch command {
 	case "apply":
+		auth.OauthAudience = reportAPI
 		if applyClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -94,6 +97,7 @@ func run(command string) error {
 			return err
 		}
 	case "diff":
+		auth.OauthAudience = reportAPI
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -129,6 +133,13 @@ func run(command string) error {
 
 	case "manifest/upgrade":
 		err := e.ManifestUpgrade(manifestUpgradeInPlace)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	case "login":
+		err := auth.Login(oAuthClientID, oAuthAuthDomain, reportAPI)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

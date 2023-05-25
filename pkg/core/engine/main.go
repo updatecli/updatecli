@@ -275,6 +275,15 @@ func (e *Engine) Run() (err error) {
 			logrus.Printf("Skipping due to:\n\t%s\n", err)
 			continue
 		}
+
+		if cmdoptions.Experimental {
+			err = pipeline.Report.Publish()
+			if err != nil &&
+				!errors.Is(err, reports.ErrNoBearerToken) &&
+				!errors.Is(err, reports.ErrNoOAuthAudience) {
+				logrus.Debugf("publish report: %w", err)
+			}
+		}
 	}
 
 	err = e.Reports.Show()
