@@ -1,7 +1,7 @@
 package yaml
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -12,8 +12,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"gopkg.in/yaml.v3"
+
+	"github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/parser"
 )
+
+// https://github.com/goccy/go-yaml/issues/217
 
 // Target updates a scm repository based on the modified yaml file.
 func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
@@ -61,27 +65,31 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	notChanged := 0
 	//originalContents := make(map[string]string)
 
+	urlPath, err := yaml.PathString(y.spec.Key)
+	if err != nil {
+		return fmt.Errorf("crafting yamlpath query: %w", err)
+	}
+
 	for filePath := range y.files {
 		originFilePath := y.files[filePath].originalFilePath
 
-		//originalContents[filePath] = y.files[filePath].content
-
-		out := yaml.Node{}
-		err := yaml.Unmarshal([]byte(y.files[filePath].content), &out)
-
+		yamlFile, err := parser.ParseBytes([]byte(y.files[filePath].content), parser.ParseComments)
 		if err != nil {
-			return fmt.Errorf("cannot unmarshal content of file %s: %w", originFilePath, err)
+			return fmt.Errorf("parsing yaml file: %w", err)
 		}
 
-		keyFound, oldVersion, _ := replace(&out, parseKey(y.spec.Key), valueToWrite, 1)
+		node, err := urlPath.FilterFile(yamlFile)
+		if err != nil {
+			if errors.Is(err, yaml.ErrNotFoundNode) {
+				return fmt.Errorf("couldn't find key %q from file %q",
+					y.spec.Key,
+					originFilePath)
+			}
+			return fmt.Errorf("searching in yaml file: %w", err)
+		}
 
+		oldVersion := node.String()
 		resultTarget.OldInformation = oldVersion
-
-		if !keyFound {
-			return fmt.Errorf("couldn't find key %q from file %q",
-				y.spec.Key,
-				originFilePath)
-		}
 
 		if oldVersion == valueToWrite {
 			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
@@ -93,21 +101,13 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			continue
 		}
 
-		buf := new(bytes.Buffer)
-		encoder := yaml.NewEncoder(buf)
-		defer encoder.Close()
-		encoder.SetIndent(y.indent)
-
-		err = encoder.Encode(&out)
-		if err != nil {
-			return fmt.Errorf("encoding yaml file: %w", err)
+		if err := urlPath.ReplaceWithReader(yamlFile, strings.NewReader(valueToWrite)); err != nil {
+			return fmt.Errorf("replacing yaml key: %w", err)
 		}
 
 		f := y.files[filePath]
-		f.content = buf.String()
+		f.content = yamlFile.String()
 		y.files[filePath] = f
-
-		buf.Reset()
 
 		resultTarget.Changed = true
 		resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)

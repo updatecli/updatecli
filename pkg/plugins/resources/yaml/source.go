@@ -8,7 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/parser"
 )
 
 // Source return the latest version
@@ -51,16 +52,23 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	fileContent := y.files[filePath].content
 	originalFilePath := y.files[filePath].originalFilePath
 
-	var out yaml.Node
-
-	err = yaml.Unmarshal([]byte(fileContent), &out)
+	urlPath, err := yaml.PathString(y.spec.Key)
 	if err != nil {
-		return fmt.Errorf("unmarshalling content of file %s: %w", originalFilePath, err)
+		return fmt.Errorf("crafting yamlpath query: %w", err)
 	}
 
-	valueFound, value, _ := replace(&out, parseKey(y.spec.Key), y.spec.Value, 1)
+	file, err := parser.ParseBytes([]byte(fileContent), 0)
+	if err != nil {
+		return fmt.Errorf("parsing yaml file: %w", err)
+	}
 
-	if valueFound {
+	node, err := urlPath.FilterFile(file)
+	if err != nil && !errors.Is(err, yaml.ErrNotFoundNode) {
+		return fmt.Errorf("searching in yaml file: %w", err)
+	}
+
+	if node != nil {
+		value := node.String()
 		resultSource.Result = result.SUCCESS
 		resultSource.Information = value
 		resultSource.Description = fmt.Sprintf("value %q found for key %q in the yaml file %q",
@@ -74,5 +82,4 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	return fmt.Errorf("cannot find key %q from file %q",
 		y.spec.Key,
 		originalFilePath)
-
 }

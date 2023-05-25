@@ -13,7 +13,7 @@ sources:
     kind: yaml
     spec:
       file: .clomonitor.yml
-      key: $.exemptions[0].reason
+      key: exemptions[0].reason
 
   scenario2:
     name: Basic yaml source
@@ -22,7 +22,7 @@ sources:
     spec:
       files:
         - .clomonitor.yml
-      key: $.exemptions[0].reason
+      key: exemptions[0].reason
 
 conditions:
   scenario1:
@@ -32,7 +32,7 @@ conditions:
     sourceid: scenario1
     spec:
       file: .clomonitor.yml
-      key: $.exemptions[0].reason
+      key: exemptions[0].reason
 
   scenario2:
     name: using files
@@ -42,7 +42,7 @@ conditions:
     spec:
       files:
       - .clomonitor.yml
-      key: $.exemptions[0].reason
+      key: exemptions[0].reason
 
 targets:
   scenario1:
@@ -52,7 +52,7 @@ targets:
     sourceid: scenario1
     spec:
       file: .clomonitor.yml
-      key: $.exemptions[0].reason
+      key: exemptions[0].reason
 
   scenario2:
     name: using files
@@ -62,4 +62,4 @@ targets:
     spec:
       files:
       - .clomonitor.yml
-      key: $.exemptions[0].reason
+      key: exemptions[0].reason
