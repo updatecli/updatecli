@@ -7,7 +7,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Source retrieves a specific version tag from Github Releases.
+// Source retrieves a specific version tag from GitHub Releases.
 func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) error {
 
 	versions, err := gr.ghHandler.SearchReleases(gr.typeFilter)
@@ -40,7 +40,7 @@ func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) 
 	value := gr.foundVersion.GetVersion()
 
 	if len(value) == 0 {
-		return fmt.Errorf("no Github Release version found matching pattern %q of kind %q",
+		return fmt.Errorf("no GitHub Release version found matching pattern %q of kind %q",
 			gr.versionFilter.Pattern,
 			gr.versionFilter.Kind,
 		)

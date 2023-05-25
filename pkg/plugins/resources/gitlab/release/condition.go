@@ -10,18 +10,18 @@ import (
 
 func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 	if scm != nil {
-		logrus.Warningf("Condition not supported for the plugin Gitlab release")
+		logrus.Warningf("Condition not supported for the plugin GitLab release")
 	}
 
 	releases, err := g.SearchReleases()
 	if err != nil {
-		return fmt.Errorf("looking for Gitlab release: %w", err)
+		return fmt.Errorf("looking for GitLab release: %w", err)
 	}
 
 	if len(releases) == 0 {
 		resultCondition.Result = result.FAILURE
 		resultCondition.Pass = false
-		resultCondition.Description = "no Gitlab release found"
+		resultCondition.Description = "no GitLab release found"
 
 		return nil
 	}
@@ -34,14 +34,14 @@ func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *r
 		if r == release {
 			resultCondition.Result = result.SUCCESS
 			resultCondition.Pass = true
-			resultCondition.Description = fmt.Sprintf("Gitlab release tag %q found", release)
+			resultCondition.Description = fmt.Sprintf("GitLab release tag %q found", release)
 			return nil
 		}
 	}
 
 	resultCondition.Result = result.FAILURE
 	resultCondition.Pass = false
-	resultCondition.Description = fmt.Sprintf("no Gitlab release tag found matching pattern %q of kind %q", g.versionFilter.Pattern, g.versionFilter.Kind)
+	resultCondition.Description = fmt.Sprintf("no GitLab release tag found matching pattern %q of kind %q", g.versionFilter.Pattern, g.versionFilter.Kind)
 
 	return nil
 }

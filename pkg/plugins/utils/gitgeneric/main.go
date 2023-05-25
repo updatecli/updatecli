@@ -27,7 +27,7 @@ type GitHandler interface {
 	Add(files []string, workingDir string) error
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error
 	Clone(username, password, URL, workingDir string) error
-	Commit(user, email, message, workingDir string, signingKey string, passprase string) error
+	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	GetChangedFiles(workingDir string) ([]string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)
 	IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error)
@@ -431,7 +431,7 @@ func (g GoGit) exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bo
 }
 
 // Commit run `git commit`.
-func (g GoGit) Commit(user, email, message, workingDir string, signingKey string, passprase string) error {
+func (g GoGit) Commit(user, email, message, workingDir string, signingKey string, passphrase string) error {
 
 	logrus.Debugf("stage: git-commit\n\n")
 
@@ -465,7 +465,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 	logrus.Debugf("status: %q\n", status)
 
 	if len(signingKey) > 0 {
-		key, err := sign.GetCommitSignKey(signingKey, passprase)
+		key, err := sign.GetCommitSignKey(signingKey, passphrase)
 		if err != nil {
 			return err
 		}

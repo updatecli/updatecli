@@ -24,7 +24,7 @@ func (m *Maven) Condition(source string, scm scm.ScmHandler, resultCondition *re
 		// metadataURL contains the URL without username/password
 		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
 		if err != nil {
-			return fmt.Errorf("trying to parse Maven metadatal url: %s", err)
+			return fmt.Errorf("trying to parse Maven metadata url: %s", err)
 		}
 
 		versions, err := metadataHandler.GetVersions()

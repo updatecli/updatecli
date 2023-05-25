@@ -11,3 +11,4 @@ We are adding public references of Updatecli but feel free to add your organizat
 * [Asciidoctor](https://github.com/asciidoctor/docker-asciidoctor/tree/main/updatecli)
 * [SUSE Rancher](https://github.com/rancherlabs/updatecli-automation)
 * [K3s](https://github.com/k3s-io/k3s/tree/master/updatecli)
+* [PrefectHQ](https://www.prefect.io/)

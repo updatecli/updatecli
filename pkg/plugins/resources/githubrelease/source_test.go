@@ -81,7 +81,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 		{
 			name: "Error: error while retrieving releases",
 			mockedGhHandler: &mockGhHandler{
-				releaseErr: fmt.Errorf("Unexexpected error while retrieving releases from GitHub."),
+				releaseErr: fmt.Errorf("Unexpected error while retrieving releases from GitHub."),
 			},
 			versionFilter: version.Filter{
 				Kind:    "latest",
@@ -92,7 +92,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 		{
 			name: "Error: error while retrieving releases",
 			mockedGhHandler: &mockGhHandler{
-				tagErr: fmt.Errorf("Unexexpected error while retrieving tags from GitHub."),
+				tagErr: fmt.Errorf("Unexpected error while retrieving tags from GitHub."),
 			},
 			versionFilter: version.Filter{
 				Kind:    "latest",

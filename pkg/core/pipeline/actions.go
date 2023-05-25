@@ -104,7 +104,7 @@ func (p *Pipeline) RunActions() error {
 		if actionTitle == "" && p.Config.Spec.Name != "" {
 			actionTitle = p.Config.Spec.Name
 		} else if actionTitle == "" && p.Config.Spec.Title != "" {
-			// The field "Title" is probably uselsss and need to be refactor in a later iteration
+			// The field "Title" is probably useless and need to be refactor in a later iteration
 			actionTitle = p.Config.Spec.Title
 		} else {
 			actionTitle = getActionTitle(action)

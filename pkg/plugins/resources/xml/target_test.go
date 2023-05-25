@@ -60,12 +60,12 @@ func TestTarget(t *testing.T) {
 			name: "Test 5",
 			spec: Spec{
 				File:  "testdata/data_2.xml",
-				Path:  "/name/donotexist",
+				Path:  "/name/nonexistent",
 				Value: "Bob",
 			},
 			expectedResult:   false,
 			wantErr:          true,
-			expectedErrorMsg: errors.New("nothing found at path \"/name/donotexist\" from file \"testdata/data_2.xml\""),
+			expectedErrorMsg: errors.New("nothing found at path \"/name/nonexistent\" from file \"testdata/data_2.xml\""),
 		},
 		{
 			name: "Test 6",

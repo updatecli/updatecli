@@ -65,12 +65,15 @@ func (t *Target) Check() (bool, error) {
 // Run applies a specific target configuration
 func (t *Target) Run(source string, o *Options) (err error) {
 
-	var changed bool
+	failTargetRun := func() {
+		t.Result.Result = result.FAILURE
+		t.Result.Description = "something went wrong during pipeline execution"
+	}
 
 	if len(t.Config.ResourceConfig.Transformers) > 0 {
 		source, err = t.Config.ResourceConfig.Transformers.Apply(source)
 		if err != nil {
-			t.Result.Result = result.FAILURE
+			failTargetRun()
 			return err
 		}
 	}
@@ -81,7 +84,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	target, err := resource.New(t.Config.ResourceConfig)
 	if err != nil {
-		t.Result.Result = result.FAILURE
+		failTargetRun()
 		return err
 	}
 
@@ -91,49 +94,43 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
-
 		err = target.Target(source, nil, o.DryRun, &t.Result)
 		if err != nil {
-			t.Result.Description = "something went wrong during pipeline execution"
-			t.Result.Result = result.FAILURE
+			failTargetRun()
 			return err
 		}
 
-		// Could be improve to show attention description in yello, success in green, failure in red
+		// Could be improve to show attention description in yellow, success in green, failure in red
 		logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
 
 		return nil
-
 	}
-
-	var message string
-	var files []string
 
 	_, err = t.Check()
 	if err != nil {
-		t.Result.Result = result.FAILURE
+		failTargetRun()
 		return err
 	}
 
 	s := *t.Scm
 
 	if err = s.Checkout(); err != nil {
-		t.Result.Result = result.FAILURE
+		failTargetRun()
 		return err
 	}
 
 	err = target.Target(source, s, o.DryRun, &t.Result)
 	if err != nil {
-		t.Result.Result = result.FAILURE
+		failTargetRun()
 		return err
 	}
 
-	// Could be improve to show attention description in yello, success in green, failure in red
+	// Could be improve to show attention description in yellow, success in green, failure in red
 	logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
 
 	isRemoteBranchUpToDate, err := s.IsRemoteBranchUpToDate()
 	if err != nil {
-		t.Result.Result = result.FAILURE
+		failTargetRun()
 		return err
 	}
 
@@ -146,25 +143,25 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	if !o.DryRun {
-		if changed {
+		if t.Result.Changed {
 			if t.Result.Description == "" {
-				t.Result.Result = result.FAILURE
+				failTargetRun()
 				return fmt.Errorf("target has no change message")
 			}
 
 			if len(t.Result.Files) == 0 {
-				t.Result.Result = result.FAILURE
+				failTargetRun()
 				return fmt.Errorf("no changed file to commit")
 			}
 
 			if o.Commit {
-				if err := s.Add(files); err != nil {
-					t.Result.Result = result.FAILURE
+				if err := s.Add(t.Result.Files); err != nil {
+					failTargetRun()
 					return err
 				}
 
-				if err = s.Commit(message); err != nil {
-					t.Result.Result = result.FAILURE
+				if err = s.Commit(t.Result.Description); err != nil {
+					failTargetRun()
 					return err
 				}
 			}
@@ -172,7 +169,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 		if o.Push {
 			if err := s.Push(); err != nil {
-				t.Result.Result = result.FAILURE
+				failTargetRun()
 				return err
 			}
 		}
@@ -229,7 +226,7 @@ func (c *Config) Validate() error {
 			c.ResourceConfig.SCMID = c.ResourceConfig.DeprecatedSCMID
 			c.ResourceConfig.DeprecatedSCMID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"scmID", "scmid", "scmID")
 		}
 	}
@@ -242,7 +239,7 @@ func (c *Config) Validate() error {
 			c.SourceID = c.DeprecatedSourceID
 			c.DeprecatedSourceID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"sourceID", "sourceid", "sourceID")
 		}
 	}

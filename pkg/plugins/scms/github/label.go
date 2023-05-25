@@ -57,7 +57,7 @@ type labelNode struct {
 	Description string
 }
 
-// repositoryLabelApi holds specific label information returned from Github API
+// repositoryLabelApi holds specific label information returned from GitHub API
 type repositoryLabelApi struct {
 	ID          string
 	Name        string

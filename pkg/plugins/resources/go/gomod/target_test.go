@@ -51,7 +51,7 @@ func TestTarget(t *testing.T) {
 			expectedChanged: true,
 		},
 		{
-			name: "Ensure Go version is alreadu up to date",
+			name: "Ensure Go version is already up to date",
 			spec: Spec{
 				File:    "testdata/go.mod",
 				Version: "1.20",

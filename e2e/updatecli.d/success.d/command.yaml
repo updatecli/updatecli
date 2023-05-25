@@ -24,7 +24,7 @@ sources:
 #    name: Should trigger an error
 #    kind: shell
 #    spec:
-#      command: "/bin/donotexit"
+#      command: "/bin/nonexistent"
 
 conditions:
   1:
@@ -47,7 +47,7 @@ conditions:
 #    name: Should trigger an error
 #    kind: shell
 #    spec:
-#      command: "/bin/donotexit"
+#      command: "/bin/nonexistent"
 
 targets:
   1:

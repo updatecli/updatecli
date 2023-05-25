@@ -10,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// isPullRequestExist queries a remote Gitlab instance to know if a pullrequest already exists.
+// isPullRequestExist queries a remote GitLab instance to know if a pullrequest already exists.
 func (g *Gitlab) isPullRequestExist() (bool, error) {
 	ctx := context.Background()
 	// Timeout api query after 30sec
@@ -66,7 +66,7 @@ func (g *Gitlab) isPullRequestExist() (bool, error) {
 	return false, nil
 }
 
-// isRemoteBranchesExist queries a remote Gitlab instance to know if both the pull-request source branch and the target branch exist.
+// isRemoteBranchesExist queries a remote GitLab instance to know if both the pull-request source branch and the target branch exist.
 func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 
 	var sourceBranch string
@@ -160,7 +160,7 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 	return false, nil
 }
 
-// inheritFromScm retrieve missing Gitlab settings from the Gitlab scm object.
+// inheritFromScm retrieve missing GitLab settings from the GitLab scm object.
 func (g *Gitlab) inheritFromScm() {
 
 	if g.scm != nil {

@@ -15,13 +15,13 @@ func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *r
 
 	tags, err := g.SearchTags()
 	if err != nil {
-		return fmt.Errorf("looking for Gitlab tags: %w", err)
+		return fmt.Errorf("looking for GitLab tags: %w", err)
 	}
 
 	if len(tags) == 0 {
 		resultCondition.Result = result.FAILURE
 		resultCondition.Pass = false
-		resultCondition.Description = "no Gitlab tag found"
+		resultCondition.Description = "no GitLab tag found"
 		return nil
 	}
 
@@ -33,14 +33,14 @@ func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *r
 		if t == tag {
 			resultCondition.Result = result.SUCCESS
 			resultCondition.Pass = true
-			resultCondition.Description = fmt.Sprintf("Gitlab tag %q found", t)
+			resultCondition.Description = fmt.Sprintf("GitLab tag %q found", t)
 			return nil
 		}
 	}
 
 	resultCondition.Result = result.FAILURE
 	resultCondition.Pass = false
-	resultCondition.Description = fmt.Sprintf("no Gitlab tag found matching pattern %q of kind %q", g.spec.VersionFilter.Pattern, g.spec.VersionFilter.Kind)
+	resultCondition.Description = fmt.Sprintf("no GitLab tag found matching pattern %q of kind %q", g.spec.VersionFilter.Pattern, g.spec.VersionFilter.Kind)
 
 	return nil
 }

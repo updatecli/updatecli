@@ -231,7 +231,7 @@ var (
 			ID: "3",
 			Config: Config{
 				Spec: Spec{
-					Name: `{{ pipeline "Source.kindd" }}`,
+					Name: `{{ pipeline "Source.kind_" }}`,
 					Sources: map[string]source.Config{
 						"default": {
 							ResourceConfig: resource.ResourceConfig{
@@ -254,7 +254,7 @@ var (
 					Name: "jenkins",
 				},
 			},
-			ExpectedUpdateErr: fmt.Errorf(`template: cfg:1:10: executing "cfg" at <pipeline "Source.kindd">: error calling pipeline: key not defined in configuration`),
+			ExpectedUpdateErr: fmt.Errorf(`template: cfg:1:10: executing "cfg" at <pipeline "Source.kind_">: error calling pipeline: key not defined in configuration`),
 		},
 		// Testing wrong function name
 		{

@@ -34,7 +34,7 @@ sources:
 
 conditions:
     workflowgo:
-        name: Ensure GA step is defined in Github Action named go
+        name: Ensure GA step is defined in GitHub Action named go
         kind: yaml
         spec:
             file: .github/workflows/go.yaml
@@ -44,7 +44,7 @@ conditions:
         disablesourceinput: true
 
     workflowrelease:
-        name: Ensure GA step is defined in Github Action named release
+        name: Ensure GA step is defined in GitHub Action named release
         kind: yaml
         spec:
             file: .github/workflows/release.yaml

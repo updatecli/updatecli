@@ -17,11 +17,11 @@ type Spec struct {
 	Token string `yaml:",omitempty" jsonschema:"required"`
 	// [s][c] URL specifies the default github url in case of GitHub enterprise
 	URL string `yaml:",omitempty"`
-	// [s][c] Username specifies the username used to authenticate with Github API
+	// [s][c] Username specifies the username used to authenticate with GitHub API
 	Username string `yaml:",omitempty"`
 	// [s] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [s][c] TypeFilter specifies the Github Release type to retrieve before applying the versionfilter rule
+	// [s][c] TypeFilter specifies the GitHub Release type to retrieve before applying the versionfilter rule
 	TypeFilter github.ReleaseType `yaml:",omitempty"`
 	// [c] Tag allows to check for a specific release tag, default to source output
 	Tag string `yaml:",omitempty"`
