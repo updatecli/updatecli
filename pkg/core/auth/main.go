@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	cv "github.com/nirasan/go-oauth-pkce-code-verifier"
 	"github.com/sirupsen/logrus"
@@ -51,7 +52,10 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 		authDomain, audience, clientID, codeChallenge, redirectURL)
 
 	// start a web server to listen on a callback URL
-	server := &http.Server{Addr: redirectURL}
+	server := &http.Server{
+		Addr:              redirectURL,
+		ReadHeaderTimeout: 60 * time.Second,
+	}
 
 	// define a handler that will get the authorization code, call the token endpoint, and close the HTTP server
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +63,11 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 		code := r.URL.Query().Get("code")
 		if code == "" {
 			fmt.Println("updatecli: Url Param 'code' is missing")
-			io.WriteString(w, "Error: could not find 'code' URL parameter\n")
+			_, err := io.WriteString(w, "Error: could not find 'code' URL parameter\n")
+			if err != nil {
+				logrus.Errorln(err)
+				return
+			}
 
 			// close the HTTP server and return
 			cleanup(server)
@@ -71,7 +79,11 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 		token, err := getAccessToken(authDomain, clientID, codeVerifier, code, redirectURL)
 		if err != nil {
 			fmt.Println("updatecli: could not get access token")
-			io.WriteString(w, "Error: could not retrieve access token\n")
+			_, err := io.WriteString(w, "Error: could not retrieve access token\n")
+			if err != nil {
+				logrus.Errorln(err)
+				return
+			}
 
 			// close the HTTP server and return
 			cleanup(server)
@@ -95,7 +107,11 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 		err = viper.WriteConfig()
 		if err != nil {
 			fmt.Println("updatecli: could not write config file")
-			io.WriteString(w, "Error: could not store access token\n")
+			_, err := io.WriteString(w, "Error: could not store access token\n")
+			if err != nil {
+				logrus.Errorln(err)
+				return
+			}
 
 			// close the HTTP server and return
 			cleanup(server)
@@ -103,13 +119,18 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 		}
 
 		// return an indication of success to the caller
-		io.WriteString(w, `
+		_, err = io.WriteString(w, `
 		<html>
 			<body>
 				<h1>Login successful!</h1>
 				<h2>You can close this window and return to the updatecli.</h2>
 			</body>
 		</html>`)
+
+		if err != nil {
+			logrus.Errorln(err)
+			return
+		}
 
 		fmt.Println("Successfully logged into updatecli API.")
 
@@ -141,7 +162,11 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 
 	// start the blocking web server loop
 	// this will exit when the handler gets fired and calls server.Close()
-	server.Serve(l)
+	err = server.Serve(l)
+	if err != nil {
+		logrus.Errorln(err)
+		return
+	}
 }
 
 // getAccessToken trades the authorization code retrieved from the first OAuth2 log for an access token
