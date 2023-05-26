@@ -132,6 +132,8 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				}, "/")
 			}
 
+			imageSourceSlug := strings.ReplaceAll(imageSource, "/", "_")
+
 			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageSource, image.tag, h.spec.Auths)
 
 			if sourceSpec == nil {
@@ -171,22 +173,22 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}{
 				ManifestName:               fmt.Sprintf("Bump Docker image %q for Helm chart %q", imageSource, chartName),
 				HasRegistry:                image.registry != "",
-				ConditionRegistryID:        imageSource + "-registry",
+				ConditionRegistryID:        imageSourceSlug + "-registry",
 				ConditionRegistryKey:       image.yamlRegistryPath,
 				ConditionRegistryName:      fmt.Sprintf("Ensure container registry %q is specified", image.registry),
 				ConditionRegistryValue:     image.registry,
-				ConditionRepositoryID:      imageSource + "-repository",
+				ConditionRepositoryID:      imageSourceSlug + "-repository",
 				ConditionRepositoryKey:     image.yamlRepositoryPath,
 				ConditionRepositoryName:    fmt.Sprintf("Ensure container repository %q is specified", image.repository),
 				ConditionRepositoryValue:   image.repository,
-				SourceID:                   imageSource,
+				SourceID:                   imageSourceSlug,
 				SourceName:                 fmt.Sprintf("Get latest %q container tag", imageSource),
 				SourceVersionFilterKind:    sourceSpec.VersionFilter.Kind,
 				SourceVersionFilterPattern: sourceSpec.VersionFilter.Pattern,
 				SourceImageName:            sourceSpec.Image,
 				SourceTagFilter:            sourceSpec.TagFilter,
 				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", imageSource, chartName),
-				TargetID:                   imageSource,
+				TargetID:                   imageSourceSlug,
 				TargetKey:                  image.yamlTagPath,
 				TargetChartName:            chartRelativeMetadataPath,
 				TargetFile:                 filepath.Base(foundValueFile),

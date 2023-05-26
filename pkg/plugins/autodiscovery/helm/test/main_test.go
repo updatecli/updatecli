@@ -115,7 +115,7 @@ targets:
     sourceid: 'epinio-ui'
 `, `name: 'Bump Docker Image "epinioteam/epinio-ui-qa" for Helm chart "epinio"'
 sources:
-  epinioteam/epinio-ui-qa:
+  epinioteam_epinio-ui-qa:
     name: 'Get latest "epinioteam/epinio-ui-qa" Container tag'
     kind: 'dockerimage'
     spec:
@@ -124,7 +124,7 @@ sources:
         kind: 'semver'
         pattern: '*'
 conditions:
-  epinioteam/epinio-ui-qa:
+  epinioteam_epinio-ui-qa:
     name: 'Ensure container repository "epinioteam/epinio-ui-qa" is specified'
     kind: 'yaml'
     spec:
@@ -133,7 +133,7 @@ conditions:
       value: 'epinioteam/epinio-ui-qa'
     disablesourceinput: true
 targets:
-  epinioteam/epinio-ui-qa:
+  epinioteam_epinio-ui-qa:
     name: 'Bump container image tag for image "epinioteam/epinio-ui-qa" in chart "epinio"'
     kind: 'helmchart'
     spec:
@@ -144,7 +144,7 @@ targets:
     sourceid: 'epinioteam/epinio-ui-qa'
 `, `name: 'Bump Docker Image "splatform/epinio-server" for Helm chart "epinio"'
 sources:
-  splatform/epinio-server:
+  splatform_epinio-server:
     name: 'Get latest "splatform/epinio-server" Container tag'
     kind: 'dockerimage'
     spec:
@@ -153,7 +153,7 @@ sources:
         kind: 'semver'
         pattern: '*'
 conditions:
-  splatform/epinio-server:
+  splatform_epinio-server:
     name: 'Ensure container repository "splatform/epinio-server" is specified'
     kind: 'yaml'
     spec:
@@ -162,7 +162,7 @@ conditions:
       value: 'splatform/epinio-server'
     disablesourceinput: true
 targets:
-  splatform/epinio-server:
+  splatform_epinio-server:
     name: 'Bump container image tag for image "splatform/epinio-server" in chart "epinio"'
     kind: 'helmchart'
     spec:
@@ -178,7 +178,7 @@ targets:
 			rootDir: "testdata-2/chart",
 			expectedPipelines: []string{`name: 'Bump Docker image "epinio/epinio-server" for Helm chart "sample"'
 sources:
-  epinio/epinio-server:
+  epinio_epinio-server:
     name: 'Get latest "epinio/epinio-server" container tag'
     kind: 'dockerimage'
     spec:
@@ -188,7 +188,7 @@ sources:
         kind: 'semver'
         pattern: '>=v1.8.0'
 conditions:
-  epinio/epinio-server-repository:
+  epinio_epinio-server-repository:
     disablesourceinput: true
     name: 'Ensure container repository "epinio/epinio-server" is specified'
     kind: 'yaml'
@@ -197,7 +197,7 @@ conditions:
       key: '$.image.repository'
       value: 'epinio/epinio-server'
 targets:
-  epinio/epinio-server:
+  epinio_epinio-server:
     name: 'Bump container image tag for image "epinio/epinio-server" in chart "sample"'
     kind: 'helmchart'
     spec:
@@ -205,11 +205,11 @@ targets:
       name: 'sample'
       key: '$.image.tag'
       VersionIncrement: 'minor'
-    sourceid: 'epinio/epinio-server'
+    sourceid: 'epinio_epinio-server'
 `,
 				`name: 'Bump Docker image "epinio/epinio-ui" for Helm chart "sample"'
 sources:
-  epinio/epinio-ui:
+  epinio_epinio-ui:
     name: 'Get latest "epinio/epinio-ui" container tag'
     kind: 'dockerimage'
     spec:
@@ -219,7 +219,7 @@ sources:
         kind: 'semver'
         pattern: '>=v1.8.0'
 conditions:
-  epinio/epinio-ui-repository:
+  epinio_epinio-ui-repository:
     disablesourceinput: true
     name: 'Ensure container repository "epinio/epinio-ui" is specified'
     kind: 'yaml'
@@ -228,7 +228,7 @@ conditions:
       key: '$.images.ui.repository'
       value: 'epinio/epinio-ui'
 targets:
-  epinio/epinio-ui:
+  epinio_epinio-ui:
     name: 'Bump container image tag for image "epinio/epinio-ui" in chart "sample"'
     kind: 'helmchart'
     spec:
@@ -236,7 +236,7 @@ targets:
       name: 'sample'
       key: '$.images.ui.tag'
       VersionIncrement: 'minor'
-    sourceid: 'epinio/epinio-ui'
+    sourceid: 'epinio_epinio-ui'
 `},
 		},
 		{
@@ -244,7 +244,7 @@ targets:
 			rootDir: "testdata-3/chart",
 			expectedPipelines: []string{`name: 'Bump Docker image "ghcr.io/epinio/epinio-server" for Helm chart "sample"'
 sources:
-  ghcr.io/epinio/epinio-server:
+  ghcr.io_epinio_epinio-server:
     name: 'Get latest "ghcr.io/epinio/epinio-server" container tag'
     kind: 'dockerimage'
     spec:
@@ -254,7 +254,7 @@ sources:
         kind: 'semver'
         pattern: '>=v1.8.0'
 conditions:
-  ghcr.io/epinio/epinio-server-registry:
+  ghcr.io_epinio_epinio-server-registry:
     disablesourceinput: true
     name: 'Ensure container registry "ghcr.io" is specified'
     kind: 'yaml'
@@ -262,7 +262,7 @@ conditions:
       file: 'sample/values.yaml'
       key: '$.image.registry'
       value: 'ghcr.io'
-  ghcr.io/epinio/epinio-server-repository:
+  ghcr.io_epinio_epinio-server-repository:
     disablesourceinput: true
     name: 'Ensure container repository "epinio/epinio-server" is specified'
     kind: 'yaml'
@@ -271,7 +271,7 @@ conditions:
       key: '$.image.repository'
       value: 'epinio/epinio-server'
 targets:
-  ghcr.io/epinio/epinio-server:
+  ghcr.io_epinio_epinio-server:
     name: 'Bump container image tag for image "ghcr.io/epinio/epinio-server" in chart "sample"'
     kind: 'helmchart'
     spec:
@@ -279,11 +279,11 @@ targets:
       name: 'sample'
       key: '$.image.tag'
       VersionIncrement: 'minor'
-    sourceid: 'ghcr.io/epinio/epinio-server'
+    sourceid: 'ghcr.io_epinio_epinio-server'
 `,
 				`name: 'Bump Docker image "ghcr.io/epinio/epinio-ui" for Helm chart "sample"'
 sources:
-  ghcr.io/epinio/epinio-ui:
+  ghcr.io_epinio_epinio-ui:
     name: 'Get latest "ghcr.io/epinio/epinio-ui" container tag'
     kind: 'dockerimage'
     spec:
@@ -293,7 +293,7 @@ sources:
         kind: 'semver'
         pattern: '>=v1.8.0'
 conditions:
-  ghcr.io/epinio/epinio-ui-registry:
+  ghcr.io_epinio_epinio-ui-registry:
     disablesourceinput: true
     name: 'Ensure container registry "ghcr.io" is specified'
     kind: 'yaml'
@@ -301,7 +301,7 @@ conditions:
       file: 'sample/values.yaml'
       key: '$.images.ui.registry'
       value: 'ghcr.io'
-  ghcr.io/epinio/epinio-ui-repository:
+  ghcr.io_epinio_epinio-ui-repository:
     disablesourceinput: true
     name: 'Ensure container repository "epinio/epinio-ui" is specified'
     kind: 'yaml'
@@ -310,7 +310,7 @@ conditions:
       key: '$.images.ui.repository'
       value: 'epinio/epinio-ui'
 targets:
-  ghcr.io/epinio/epinio-ui:
+  ghcr.io_epinio_epinio-ui:
     name: 'Bump container image tag for image "ghcr.io/epinio/epinio-ui" in chart "sample"'
     kind: 'helmchart'
     spec:
@@ -318,7 +318,7 @@ targets:
       name: 'sample'
       key: '$.images.ui.tag'
       VersionIncrement: 'minor'
-    sourceid: 'ghcr.io/epinio/epinio-ui'
+    sourceid: 'ghcr.io_epinio_epinio-ui'
 `},
 		},
 	}
