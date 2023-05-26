@@ -126,7 +126,7 @@ targets:
     kind: yaml
     spec:
       file: charts/jenkins/values.yaml
-      key: jenkins.controller.imageTag
+      key: $.jenkins.controller.imageTag
 
 actions:
   default:
