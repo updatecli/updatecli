@@ -281,7 +281,7 @@ func (e *Engine) Run() (err error) {
 			if err != nil &&
 				!errors.Is(err, reports.ErrNoBearerToken) &&
 				!errors.Is(err, reports.ErrNoOAuthAudience) {
-				logrus.Debugf("publish report: %w", err)
+				logrus.Debugf("publish report: %s", err)
 			}
 		}
 	}
