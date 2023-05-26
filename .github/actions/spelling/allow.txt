@@ -4,3 +4,6 @@ ssh
 ubuntu
 workarounds
 goccy
+nirasan
+skratchdot
+pkce
