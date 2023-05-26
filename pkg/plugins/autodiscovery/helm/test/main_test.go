@@ -40,7 +40,7 @@ conditions:
     kind: 'yaml'
     spec:
       file: 'epinio/Chart.yaml'
-      key: 'dependencies[0].name'
+      key: '$.dependencies[0].name'
       value: 'minio'
     disablesourceinput: true
 targets:
@@ -49,7 +49,7 @@ targets:
     kind: 'helmchart'
     spec:
       file: 'Chart.yaml'
-      key: 'dependencies[0].version'
+      key: '$.dependencies[0].version'
       name: 'epinio'
       versionincrement: 'minor'
     sourceid: 'minio'
@@ -70,7 +70,7 @@ conditions:
     kind: 'yaml'
     spec:
       file: 'epinio/Chart.yaml'
-      key: 'dependencies[1].name'
+      key: '$.dependencies[1].name'
       value: 'kubed'
     disablesourceinput: true
 targets:
@@ -79,7 +79,7 @@ targets:
     kind: 'helmchart'
     spec:
       file: 'Chart.yaml'
-      key: 'dependencies[1].version'
+      key: '$.dependencies[1].version'
       name: 'epinio'
       versionincrement: 'minor'
     sourceid: 'kubed'
@@ -100,7 +100,7 @@ conditions:
     kind: 'yaml'
     spec:
       file: 'epinio/Chart.yaml'
-      key: 'dependencies[2].name'
+      key: '$.dependencies[2].name'
       value: 'epinio-ui'
     disablesourceinput: true
 targets:
@@ -109,7 +109,7 @@ targets:
     kind: 'helmchart'
     spec:
       file: 'Chart.yaml'
-      key: 'dependencies[2].version'
+      key: '$.dependencies[2].version'
       name: 'epinio'
       versionincrement: 'minor'
     sourceid: 'epinio-ui'
@@ -129,7 +129,7 @@ conditions:
     kind: 'yaml'
     spec:
       file: 'epinio/values.yaml'
-      key: 'images.ui.repository'
+      key: '$.images.ui.repository'
       value: 'epinioteam/epinio-ui-qa'
     disablesourceinput: true
 targets:
@@ -138,7 +138,7 @@ targets:
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
-      key: 'images.ui.tag'
+      key: '$.images.ui.tag'
       name: 'epinio'
       versionincrement: 'minor'
     sourceid: 'epinioteam/epinio-ui-qa'
@@ -158,7 +158,7 @@ conditions:
     kind: 'yaml'
     spec:
       file: 'epinio/values.yaml'
-      key: 'image.repository'
+      key: '$.image.repository'
       value: 'splatform/epinio-server'
     disablesourceinput: true
 targets:
@@ -167,7 +167,7 @@ targets:
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
-      key: 'image.tag'
+      key: '$.image.tag'
       name: 'epinio'
       versionincrement: 'minor'
     sourceid: 'splatform/epinio-server'
@@ -195,5 +195,4 @@ targets:
 			}
 		})
 	}
-
 }

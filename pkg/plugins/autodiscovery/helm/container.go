@@ -148,7 +148,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}{
 				ManifestName:               fmt.Sprintf("Bump Docker image %q for Helm chart %q", image.repository, chartName),
 				ConditionID:                image.repository,
-				ConditionKey:               image.yamlRepositoryPath,
+				ConditionKey:               "$." + image.yamlRepositoryPath,
 				ConditionName:              fmt.Sprintf("Ensure container repository %q is specified", image.repository),
 				ConditionValue:             image.repository,
 				SourceID:                   image.repository,
@@ -159,7 +159,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				SourceTagFilter:            sourceSpec.TagFilter,
 				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", image.repository, chartName),
 				TargetID:                   image.repository,
-				TargetKey:                  image.yamlTagPath,
+				TargetKey:                  "$." + image.yamlTagPath,
 				TargetChartName:            chartRelativeMetadataPath,
 				TargetFile:                 filepath.Base(foundValueFile),
 				File:                       relativeFoundValueFile,

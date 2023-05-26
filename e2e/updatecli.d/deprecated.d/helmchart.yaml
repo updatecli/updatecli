@@ -103,7 +103,7 @@ targets:
     spec:
       name: chart/epinio
       file: Chart.yaml
-      key:  $.dependencies[0].version
+      key:  dependencies[0].version
 
   fakeAppVersion:
     name: Test Chart Update
@@ -114,7 +114,7 @@ targets:
       name: chart/epinio
       file: Chart.yaml
       appversion: true
-      key:  $.dependencies[1].version
+      key:  dependencies[1].version
       versionincrement: minor
 
   fakeVersionInc:
@@ -126,7 +126,7 @@ targets:
       name: chart/epinio
       file: Chart.yaml
       appversion: true
-      key:  $.dependencies[2].version
+      key:  dependencies[2].version
       versionincrement: minor,major
   noVersionInc:
     name: Test Chart Update
@@ -137,5 +137,5 @@ targets:
       name: chart/epinio
       file: Chart.yaml
       appversion: true
-      key:  $.dependencies[2].version
+      key:  dependencies[2].version
       versionincrement: none

@@ -177,7 +177,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				ChartRepository:            chartURL,
 				ConditionID:                release.Name,
 				ConditionName:              fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
-				ConditionKey:               fmt.Sprintf("releases[%d].chart", i),
+				ConditionKey:               fmt.Sprintf("$.releases[%d].chart", i),
 				ConditionValue:             release.Chart,
 				SourceID:                   release.Name,
 				SourceName:                 fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
@@ -186,7 +186,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				SourceVersionFilterPattern: "*",
 				TargetID:                   release.Name,
 				TargetName:                 fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
-				TargetKey:                  fmt.Sprintf("releases[%d].version", i),
+				TargetKey:                  fmt.Sprintf("$.releases[%d].version", i),
 				File:                       foundHelmfile,
 				ScmID:                      h.scmID,
 			}

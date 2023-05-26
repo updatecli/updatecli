@@ -163,7 +163,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				TargetID:             svc.Name,
 				TargetName:           fmt.Sprintf("[%s] Bump Docker image tag in %q", serviceImageName, relativeFoundDockerComposeFile),
 				TargetFile:           relativeFoundDockerComposeFile,
-				TargetKey:            fmt.Sprintf("services.%s.image", svc.Name),
+				TargetKey:            fmt.Sprintf("$.services.%s.image", svc.Name),
 				TargetPrefix:         serviceImageName + ":",
 				TagFilter:            sourceSpec.TagFilter,
 				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
