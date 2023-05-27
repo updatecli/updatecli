@@ -42,7 +42,7 @@ func (r Report) Publish() error {
 
 	bodyReader := bytes.NewReader(jsonBody)
 
-	url, err := url.JoinPath(auth.OauthAudience, "api", "pipelines")
+	url, err := url.JoinPath(auth.OauthAudience, "api", "pipeline", "reports")
 	if err != nil {
 		return fmt.Errorf("generating URL: %w", err)
 	}
