@@ -15,17 +15,30 @@ sources:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
 conditions:
-  {{ .ConditionID }}:
+{{- if .HasRegistry }}
+  {{ .ConditionRegistryID }}:
     disablesourceinput: true
-    name: '{{ .ConditionName }}'
+    name: '{{ .ConditionRegistryName }}'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: '{{ .ConditionKey }}'
-      value: '{{ .ConditionValue }}'
+      key: '{{ .ConditionRegistryKey }}'
+      value: '{{ .ConditionRegistryValue }}'
+{{- end }}
+  {{ .ConditionRepositoryID }}:
+    disablesourceinput: true
+    name: '{{ .ConditionRepositoryName }}'
+    kind: 'yaml'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+    spec:
+      file: '{{ .File }}'
+      key: '{{ .ConditionRepositoryKey }}'
+      value: '{{ .ConditionRepositoryValue }}'
 targets:
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
