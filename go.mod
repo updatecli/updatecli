@@ -33,7 +33,7 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.2.1
+	github.com/BurntSushi/toml v1.3.0
 	github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903
 	github.com/beevik/etree v1.2.0
 	github.com/drone/go-scm v1.29.1
