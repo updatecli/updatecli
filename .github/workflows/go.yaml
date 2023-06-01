@@ -1,6 +1,6 @@
 name: Go
 on:
-  workflow_dispatch:
+  workflow_dispatch: null
   push:
     branches:
       - main
@@ -29,7 +29,7 @@ jobs:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
           # we always use the latest patch version.
-          version: v1.52
+          version: v1.53
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:
