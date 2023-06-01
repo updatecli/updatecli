@@ -8,7 +8,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/aws/aws-sdk-go v1.44.270
+	github.com/aws/aws-sdk-go v1.44.273
 	github.com/containerd/containerd v1.7.0 // indirect
 	github.com/fatih/color v1.15.0
 	github.com/go-git/go-git/v5 v5.6.1
@@ -24,7 +24,7 @@ require (
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29 //indirect
 	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	go.mozilla.org/sops/v3 v3.7.3
 	golang.org/x/oauth2 v0.7.0
 	gopkg.in/yaml.v3 v3.0.1
