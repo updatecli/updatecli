@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -92,6 +93,8 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				continue
 			}
 
+			dependencyNameSlug := strings.ReplaceAll(dependency.Name, "/", "_")
+
 			params := struct {
 				ManifestName               string
 				ImageName                  string
@@ -116,14 +119,14 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				ChartName:                  chartName,
 				DependencyName:             dependency.Name,
 				DependencyRepository:       dependency.Repository,
-				ConditionID:                dependency.Name,
+				ConditionID:                dependencyNameSlug,
 				ConditionKey:               fmt.Sprintf("$.dependencies[%d].name", i),
 				FleetBundle:                chartName,
-				SourceID:                   dependency.Name,
+				SourceID:                   dependencyNameSlug,
 				SourceName:                 fmt.Sprintf("Get latest %q Helm chart version", dependency.Name),
 				SourceVersionFilterKind:    "semver",
 				SourceVersionFilterPattern: "*",
-				TargetID:                   dependency.Name,
+				TargetID:                   dependencyNameSlug,
 				TargetKey:                  fmt.Sprintf("$.dependencies[%d].version", i),
 				TargetChartName:            chartRelativeMetadataPath,
 				TargetFile:                 filepath.Base(foundChartFile),

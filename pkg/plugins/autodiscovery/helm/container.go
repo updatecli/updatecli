@@ -12,6 +12,7 @@ import (
 )
 
 type imageRef struct {
+	Registry   string
 	Repository string
 	Tag        string
 }
@@ -74,8 +75,10 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 		}
 
 		type imageData struct {
+			registry           string
 			repository         string
 			tag                string
+			yamlRegistryPath   string
 			yamlRepositoryPath string
 			yamlTagPath        string
 		}
@@ -89,10 +92,12 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				continue
 			}
 			images = append(images, imageData{
+				registry:           values.Image.Registry,
 				repository:         values.Image.Repository,
 				tag:                values.Image.Tag,
-				yamlRepositoryPath: "image.repository",
-				yamlTagPath:        "image.tag",
+				yamlRegistryPath:   "$.image.registry",
+				yamlRepositoryPath: "$.image.repository",
+				yamlTagPath:        "$.image.tag",
 			})
 
 		}
@@ -105,16 +110,31 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}
 
 			images = append(images, imageData{
+				registry:           values.Images[id].Registry,
 				repository:         values.Images[id].Repository,
 				tag:                values.Images[id].Tag,
-				yamlRepositoryPath: fmt.Sprintf("images.%s.repository", id),
-				yamlTagPath:        fmt.Sprintf("images.%s.tag", id),
+				yamlRegistryPath:   fmt.Sprintf("$.images.%s.registry", id),
+				yamlRepositoryPath: fmt.Sprintf("$.images.%s.repository", id),
+				yamlTagPath:        fmt.Sprintf("$.images.%s.tag", id),
 			})
 
 		}
 
 		for _, image := range images {
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(image.repository, image.tag, h.spec.Auths)
+			// Compose the container source considering the registry and repository
+			var imageSource string
+			if image.registry == "" {
+				imageSource = image.repository
+			} else {
+				imageSource = strings.Join([]string{
+					strings.Trim(image.registry, "/"),
+					strings.Trim(image.repository, "/"),
+				}, "/")
+			}
+
+			imageSourceSlug := strings.ReplaceAll(imageSource, "/", "_")
+
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageSource, image.tag, h.spec.Auths)
 
 			if sourceSpec == nil {
 				continue
@@ -128,10 +148,15 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 			params := struct {
 				ManifestName               string
-				ConditionID                string
-				ConditionKey               string
-				ConditionValue             string
-				ConditionName              string
+				HasRegistry                bool
+				ConditionRegistryID        string
+				ConditionRegistryKey       string
+				ConditionRegistryName      string
+				ConditionRegistryValue     string
+				ConditionRepositoryID      string
+				ConditionRepositoryKey     string
+				ConditionRepositoryName    string
+				ConditionRepositoryValue   string
 				SourceID                   string
 				SourceName                 string
 				SourceVersionFilterKind    string
@@ -146,20 +171,25 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				File                       string
 				ScmID                      string
 			}{
-				ManifestName:               fmt.Sprintf("Bump Docker image %q for Helm chart %q", image.repository, chartName),
-				ConditionID:                image.repository,
-				ConditionKey:               "$." + image.yamlRepositoryPath,
-				ConditionName:              fmt.Sprintf("Ensure container repository %q is specified", image.repository),
-				ConditionValue:             image.repository,
-				SourceID:                   image.repository,
-				SourceName:                 fmt.Sprintf("Get latest %q container tag", image.repository),
+				ManifestName:               fmt.Sprintf("Bump Docker image %q for Helm chart %q", imageSource, chartName),
+				HasRegistry:                image.registry != "",
+				ConditionRegistryID:        imageSourceSlug + "-registry",
+				ConditionRegistryKey:       image.yamlRegistryPath,
+				ConditionRegistryName:      fmt.Sprintf("Ensure container registry %q is specified", image.registry),
+				ConditionRegistryValue:     image.registry,
+				ConditionRepositoryID:      imageSourceSlug + "-repository",
+				ConditionRepositoryKey:     image.yamlRepositoryPath,
+				ConditionRepositoryName:    fmt.Sprintf("Ensure container repository %q is specified", image.repository),
+				ConditionRepositoryValue:   image.repository,
+				SourceID:                   imageSourceSlug,
+				SourceName:                 fmt.Sprintf("Get latest %q container tag", imageSource),
 				SourceVersionFilterKind:    sourceSpec.VersionFilter.Kind,
 				SourceVersionFilterPattern: sourceSpec.VersionFilter.Pattern,
 				SourceImageName:            sourceSpec.Image,
 				SourceTagFilter:            sourceSpec.TagFilter,
-				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", image.repository, chartName),
-				TargetID:                   image.repository,
-				TargetKey:                  "$." + image.yamlTagPath,
+				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", imageSource, chartName),
+				TargetID:                   imageSourceSlug,
+				TargetKey:                  image.yamlTagPath,
 				TargetChartName:            chartRelativeMetadataPath,
 				TargetFile:                 filepath.Base(foundValueFile),
 				File:                       relativeFoundValueFile,
