@@ -6,11 +6,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (g *Stash) setDirectory() {
+func (s *Stash) setDirectory() {
 
-	if _, err := os.Stat(g.Spec.Directory); os.IsNotExist(err) {
+	if _, err := os.Stat(s.Spec.Directory); os.IsNotExist(err) {
 
-		err := os.MkdirAll(g.Spec.Directory, 0755)
+		err := os.MkdirAll(s.Spec.Directory, 0755)
 		if err != nil {
 			logrus.Errorf("err - %s", err)
 		}

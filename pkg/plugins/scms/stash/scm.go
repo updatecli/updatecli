@@ -7,14 +7,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func (s *Stash) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
+	sourceBranch = s.Spec.Branch
+	workingBranch = s.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", s.pipelineID))
+	targetBranch = s.Spec.Branch
+
+	return sourceBranch, workingBranch, targetBranch
+}
+
 // GetDirectory returns the local git repository path.
-func (g *Stash) GetDirectory() (directory string) {
-	return g.Spec.Directory
+func (s *Stash) GetDirectory() (directory string) {
+	return s.Spec.Directory
 }
 
 // Clean deletes github working directory.
-func (g *Stash) Clean() error {
-	err := os.RemoveAll(g.Spec.Directory)
+func (s *Stash) Clean() error {
+	err := os.RemoveAll(s.Spec.Directory)
 	if err != nil {
 		return err
 	}
@@ -22,29 +30,31 @@ func (g *Stash) Clean() error {
 }
 
 // Clone run `git clone`.
-func (g *Stash) Clone() (string, error) {
+func (s *Stash) Clone() (string, error) {
 
 	URL := fmt.Sprintf("%v/scm/%v/%v.git",
-		g.Spec.URL,
-		g.Spec.Owner,
-		g.Spec.Repository)
+		s.Spec.URL,
+		s.Spec.Owner,
+		s.Spec.Repository)
 
-	g.setDirectory()
+	s.setDirectory()
 
-	err := g.nativeGitHandler.Clone(g.Spec.User, g.Spec.Token, URL, g.GetDirectory())
+	err := s.nativeGitHandler.Clone(s.Spec.User, s.Spec.Token, URL, s.GetDirectory())
 
 	if err != nil {
 		logrus.Errorf("failed cloning Bitbucket repository %q", URL)
 		return "", err
 	}
 
-	if len(g.HeadBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = g.nativeGitHandler.Checkout(
-			g.Spec.Username,
-			g.Spec.Token,
-			g.Spec.Branch,
-			g.HeadBranch,
-			g.GetDirectory(),
+	sourceBranch, workingBranch, _ := s.GetBranches()
+
+	if len(workingBranch) > 0 && len(s.GetDirectory()) > 0 {
+		err = s.nativeGitHandler.Checkout(
+			s.Spec.Username,
+			s.Spec.Token,
+			sourceBranch,
+			workingBranch,
+			s.GetDirectory(),
 			true)
 	}
 
@@ -53,19 +63,19 @@ func (g *Stash) Clone() (string, error) {
 		return "", err
 	}
 
-	return g.Spec.Directory, nil
+	return s.Spec.Directory, nil
 }
 
 // Commit run `git commit`.
-func (g *Stash) Commit(message string) error {
+func (s *Stash) Commit(message string) error {
 
 	// Generate the conventional commit message
-	commitMessage, err := g.Spec.CommitMessage.Generate(message)
+	commitMessage, err := s.Spec.CommitMessage.Generate(message)
 	if err != nil {
 		return err
 	}
 
-	err = g.nativeGitHandler.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory(), g.Spec.GPG.SigningKey, g.Spec.GPG.Passphrase)
+	err = s.nativeGitHandler.Commit(s.Spec.User, s.Spec.Email, commitMessage, s.GetDirectory(), s.Spec.GPG.SigningKey, s.Spec.GPG.Passphrase)
 	if err != nil {
 		return err
 	}
@@ -73,13 +83,15 @@ func (g *Stash) Commit(message string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g *Stash) Checkout() error {
-	err := g.nativeGitHandler.Checkout(
-		g.Spec.Username,
-		g.Spec.Token,
-		g.Spec.Branch,
-		g.HeadBranch,
-		g.Spec.Directory,
+func (s *Stash) Checkout() error {
+	sourceBranch, workingBranch, _ := s.GetBranches()
+
+	err := s.nativeGitHandler.Checkout(
+		s.Spec.Username,
+		s.Spec.Token,
+		sourceBranch,
+		workingBranch,
+		s.Spec.Directory,
 		false)
 	if err != nil {
 		return err
@@ -88,9 +100,9 @@ func (g *Stash) Checkout() error {
 }
 
 // Add run `git add`.
-func (g *Stash) Add(files []string) error {
+func (s *Stash) Add(files []string) error {
 
-	err := g.nativeGitHandler.Add(files, g.Spec.Directory)
+	err := s.nativeGitHandler.Add(files, s.Spec.Directory)
 	if err != nil {
 		return err
 	}
@@ -99,19 +111,21 @@ func (g *Stash) Add(files []string) error {
 
 // IsRemoteBranchUpToDate checks if the branch reference name is published on
 // on the default remote
-func (g *Stash) IsRemoteBranchUpToDate() (bool, error) {
-	return g.nativeGitHandler.IsLocalBranchPublished(
-		g.Spec.Branch,
-		g.HeadBranch,
-		g.Spec.Username,
-		g.Spec.Token,
-		g.GetDirectory())
+func (s *Stash) IsRemoteBranchUpToDate() (bool, error) {
+	sourceBranch, workingBranch, _ := s.GetBranches()
+
+	return s.nativeGitHandler.IsLocalBranchPublished(
+		sourceBranch,
+		workingBranch,
+		s.Spec.Username,
+		s.Spec.Token,
+		s.GetDirectory())
 }
 
 // Push run `git push` to the corresponding Bitbucket remote branch if not already created.
-func (g *Stash) Push() error {
+func (s *Stash) Push() error {
 
-	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
+	err := s.nativeGitHandler.Push(s.Spec.Username, s.Spec.Token, s.GetDirectory(), s.Spec.Force)
 	if err != nil {
 		return err
 	}
@@ -120,9 +134,9 @@ func (g *Stash) Push() error {
 }
 
 // PushTag push tags
-func (g *Stash) PushTag(tag string) error {
+func (s *Stash) PushTag(tag string) error {
 
-	err := g.nativeGitHandler.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
+	err := s.nativeGitHandler.PushTag(tag, s.Spec.Username, s.Spec.Token, s.GetDirectory(), s.Spec.Force)
 	if err != nil {
 		return err
 	}
@@ -131,14 +145,14 @@ func (g *Stash) PushTag(tag string) error {
 }
 
 // PushBranch push branch
-func (g *Stash) PushBranch(branch string) error {
+func (s *Stash) PushBranch(branch string) error {
 
-	err := g.nativeGitHandler.PushTag(
+	err := s.nativeGitHandler.PushTag(
 		branch,
-		g.Spec.Username,
-		g.Spec.Token,
-		g.GetDirectory(),
-		g.Spec.Force)
+		s.Spec.Username,
+		s.Spec.Token,
+		s.GetDirectory(),
+		s.Spec.Force)
 	if err != nil {
 		return err
 	}
@@ -146,6 +160,6 @@ func (g *Stash) PushBranch(branch string) error {
 	return nil
 }
 
-func (g *Stash) GetChangedFiles(workingDir string) ([]string, error) {
-	return g.nativeGitHandler.GetChangedFiles(workingDir)
+func (s *Stash) GetChangedFiles(workingDir string) ([]string, error) {
+	return s.nativeGitHandler.GetChangedFiles(workingDir)
 }
