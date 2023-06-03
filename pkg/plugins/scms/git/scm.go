@@ -6,6 +6,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func (g *Git) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
+	sourceBranch = g.spec.Branch
+	workingBranch = g.spec.Branch
+	targetBranch = g.spec.Branch
+
+	return sourceBranch, workingBranch, targetBranch
+}
+
 // Add run `git add`.
 func (g *Git) Add(files []string) error {
 	err := g.nativeGitHandler.Add(files, g.GetDirectory())
@@ -17,11 +25,13 @@ func (g *Git) Add(files []string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Git) Checkout() error {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
 	err := g.nativeGitHandler.Checkout(
 		g.spec.Username,
 		g.spec.Password,
-		g.spec.Branch,
-		g.remoteBranch,
+		sourceBranch,
+		workingBranch,
 		g.GetDirectory(),
 		false)
 
@@ -59,12 +69,14 @@ func (g *Git) Clone() (string, error) {
 		return "", err
 	}
 
-	if len(g.remoteBranch) > 0 && len(g.GetDirectory()) > 0 {
+	_, workingBranch, _ := g.GetBranches()
+
+	if len(workingBranch) > 0 && len(g.GetDirectory()) > 0 {
 		err := g.nativeGitHandler.Checkout(
 			g.spec.Username,
 			g.spec.Password,
 			g.spec.Branch,
-			g.remoteBranch,
+			workingBranch,
 			g.GetDirectory(),
 			true)
 
@@ -135,9 +147,11 @@ func (g *Git) PushBranch(branch string) error {
 
 // IsRemoteBranchUpToDate checks if the working branch should be push to remote
 func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
+	_, workingBranch, _ := g.GetBranches()
+
 	return g.nativeGitHandler.IsLocalBranchPublished(
 		g.spec.Branch,
-		g.remoteBranch,
+		workingBranch,
 		g.spec.Username,
 		g.spec.Password,
 		g.GetDirectory())
