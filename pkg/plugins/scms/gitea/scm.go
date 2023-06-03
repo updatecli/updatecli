@@ -7,6 +7,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func (g *Gitea) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
+
+	sourceBranch = g.Spec.Branch
+	workingBranch = g.Spec.Branch
+	targetBranch = g.Spec.Branch
+
+	if len(g.pipelineID) > 0 {
+		workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", g.pipelineID))
+	}
+
+	return sourceBranch, workingBranch, targetBranch
+}
+
 // GetDirectory returns the local git repository path.
 func (g *Gitea) GetDirectory() (directory string) {
 	return g.Spec.Directory
@@ -38,12 +51,14 @@ func (g *Gitea) Clone() (string, error) {
 		return "", err
 	}
 
-	if len(g.HeadBranch) > 0 && len(g.GetDirectory()) > 0 {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
+	if len(workingBranch) > 0 && len(g.GetDirectory()) > 0 {
 		err = g.nativeGitHandler.Checkout(
 			g.Spec.Username,
 			g.Spec.Token,
-			g.Spec.Branch,
-			g.HeadBranch,
+			sourceBranch,
+			workingBranch,
 			g.GetDirectory(),
 			true)
 	}
@@ -74,11 +89,13 @@ func (g *Gitea) Commit(message string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Gitea) Checkout() error {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
 	err := g.nativeGitHandler.Checkout(
 		g.Spec.Username,
 		g.Spec.Token,
-		g.Spec.Branch,
-		g.HeadBranch,
+		sourceBranch,
+		workingBranch,
 		g.Spec.Directory,
 		false)
 	if err != nil {
@@ -100,9 +117,11 @@ func (g *Gitea) Add(files []string) error {
 // IsRemoteBranchUpToDate checks if the branch reference name is published on
 // on the default remote
 func (g *Gitea) IsRemoteBranchUpToDate() (bool, error) {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
 	return g.nativeGitHandler.IsLocalBranchPublished(
-		g.Spec.Branch,
-		g.HeadBranch,
+		sourceBranch,
+		workingBranch,
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory())
