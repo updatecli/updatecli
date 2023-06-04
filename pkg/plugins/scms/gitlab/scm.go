@@ -20,6 +20,7 @@ func (g *Gitlab) GetBranches() (sourceBranch, workingBranch, targetBranch string
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// GetURL returns a "GitLab" git URL
 func (g *Gitlab) GetURL() string {
 	url := client.EnsureValidURL(g.Spec.URL)
 
