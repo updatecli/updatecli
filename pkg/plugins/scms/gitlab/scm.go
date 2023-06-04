@@ -20,6 +20,17 @@ func (g *Gitlab) GetBranches() (sourceBranch, workingBranch, targetBranch string
 	return sourceBranch, workingBranch, targetBranch
 }
 
+func (g *Gitlab) GetURL() string {
+	url := client.EnsureValidURL(g.Spec.URL)
+
+	URL := fmt.Sprintf("%s/%s/%s.git",
+		url,
+		g.Spec.Owner,
+		g.Spec.Repository)
+
+	return URL
+}
+
 // GetDirectory returns the local git repository path.
 func (g *Gitlab) GetDirectory() (directory string) {
 	return g.Spec.Directory
@@ -37,19 +48,16 @@ func (g *Gitlab) Clean() error {
 // Clone run `git clone`.
 func (g *Gitlab) Clone() (string, error) {
 
-	url := client.EnsureValidURL(g.Spec.URL)
-
-	URL := fmt.Sprintf("%s/%s/%s.git",
-		url,
-		g.Spec.Owner,
-		g.Spec.Repository)
-
 	g.setDirectory()
 
-	err := g.nativeGitHandler.Clone(g.Spec.User, g.Spec.Token, URL, g.GetDirectory())
+	err := g.nativeGitHandler.Clone(
+		g.Spec.User,
+		g.Spec.Token,
+		g.GetURL(),
+		g.GetDirectory())
 
 	if err != nil {
-		logrus.Errorf("failed cloning GitLab repository %q", URL)
+		logrus.Errorf("failed cloning GitLab repository %q", g.GetURL())
 		return "", err
 	}
 
@@ -66,7 +74,7 @@ func (g *Gitlab) Clone() (string, error) {
 	}
 
 	if err != nil {
-		logrus.Errorf("initial GitLab checkout failed for repository %q", URL)
+		logrus.Errorf("initial GitLab checkout failed for repository %q", g.GetURL())
 		return "", err
 	}
 

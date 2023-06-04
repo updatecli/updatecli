@@ -15,6 +15,16 @@ func (s *Stash) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// GetURL returns a "Stash" git URL
+func (s *Stash) GetURL() string {
+	URL := fmt.Sprintf("%v/scm/%v/%v.git",
+		s.Spec.URL,
+		s.Spec.Owner,
+		s.Spec.Repository)
+
+	return URL
+}
+
 // GetDirectory returns the local git repository path.
 func (s *Stash) GetDirectory() (directory string) {
 	return s.Spec.Directory
@@ -32,17 +42,16 @@ func (s *Stash) Clean() error {
 // Clone run `git clone`.
 func (s *Stash) Clone() (string, error) {
 
-	URL := fmt.Sprintf("%v/scm/%v/%v.git",
-		s.Spec.URL,
-		s.Spec.Owner,
-		s.Spec.Repository)
-
 	s.setDirectory()
 
-	err := s.nativeGitHandler.Clone(s.Spec.User, s.Spec.Token, URL, s.GetDirectory())
+	err := s.nativeGitHandler.Clone(
+		s.Spec.User,
+		s.Spec.Token,
+		s.GetURL(),
+		s.GetDirectory())
 
 	if err != nil {
-		logrus.Errorf("failed cloning Bitbucket repository %q", URL)
+		logrus.Errorf("failed cloning Bitbucket repository %q", s.GetURL())
 		return "", err
 	}
 
@@ -59,7 +68,7 @@ func (s *Stash) Clone() (string, error) {
 	}
 
 	if err != nil {
-		logrus.Errorf("initial Bitbucket checkout failed for repository %q", URL)
+		logrus.Errorf("initial Bitbucket checkout failed for repository %q", s.GetURL())
 		return "", err
 	}
 

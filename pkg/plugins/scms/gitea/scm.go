@@ -20,6 +20,16 @@ func (g *Gitea) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// GetURL returns a "Gitea" git URL
+func (g *Gitea) GetURL() string {
+	URL := fmt.Sprintf("%v/%v/%v.git",
+		g.Spec.URL,
+		g.Spec.Owner,
+		g.Spec.Repository)
+
+	return URL
+}
+
 // GetDirectory returns the local git repository path.
 func (g *Gitea) GetDirectory() (directory string) {
 	return g.Spec.Directory
@@ -37,17 +47,16 @@ func (g *Gitea) Clean() error {
 // Clone run `git clone`.
 func (g *Gitea) Clone() (string, error) {
 
-	URL := fmt.Sprintf("%v/%v/%v.git",
-		g.Spec.URL,
-		g.Spec.Owner,
-		g.Spec.Repository)
-
 	g.setDirectory()
 
-	err := g.nativeGitHandler.Clone(g.Spec.User, g.Spec.Token, URL, g.GetDirectory())
+	err := g.nativeGitHandler.Clone(
+		g.Spec.User,
+		g.Spec.Token,
+		g.GetURL(),
+		g.GetDirectory())
 
 	if err != nil {
-		logrus.Errorf("failed cloning Gitea repository %q", URL)
+		logrus.Errorf("failed cloning Gitea repository %q", g.GetURL())
 		return "", err
 	}
 
@@ -64,7 +73,7 @@ func (g *Gitea) Clone() (string, error) {
 	}
 
 	if err != nil {
-		logrus.Errorf("initial Gitea checkout failed for repository %q", URL)
+		logrus.Errorf("initial Gitea checkout failed for repository %q", g.GetURL())
 		return "", err
 	}
 

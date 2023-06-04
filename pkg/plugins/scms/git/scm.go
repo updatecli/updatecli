@@ -14,6 +14,11 @@ func (g *Git) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// GetURL returns a git URL
+func (g *Git) GetURL() string {
+	return g.spec.URL
+}
+
 // Add run `git add`.
 func (g *Git) Add(files []string) error {
 	err := g.nativeGitHandler.Add(files, g.GetDirectory())
@@ -61,11 +66,11 @@ func (g *Git) Clone() (string, error) {
 	err := g.nativeGitHandler.Clone(
 		g.spec.Username,
 		g.spec.Password,
-		g.spec.URL,
+		g.GetURL(),
 		g.GetDirectory())
 
 	if err != nil {
-		logrus.Errorf("failed cloning git repository %q - %s", g.spec.URL, err)
+		logrus.Errorf("failed cloning git repository %q - %s", g.GetURL(), err)
 		return "", err
 	}
 
@@ -81,7 +86,7 @@ func (g *Git) Clone() (string, error) {
 			true)
 
 		if err != nil {
-			logrus.Errorf("initial git checkout failed for repository %s - %s", g.spec.URL, err)
+			logrus.Errorf("initial git checkout failed for repository %s - %s", g.GetURL(), err)
 			return "", err
 		}
 	}

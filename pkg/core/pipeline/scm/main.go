@@ -37,6 +37,7 @@ type ScmHandler interface {
 	GetChangedFiles(workingDir string) ([]string, error)
 	IsRemoteBranchUpToDate() (bool, error)
 	GetBranches() (sourceBranch, workingBranch, targetBranch string)
+	GetURL() string
 }
 
 func New(config *Config, pipelineID string) (Scm, error) {

@@ -16,6 +16,17 @@ func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// GetURL returns a "GitHub " git URL
+func (g *Github) GetURL() string {
+	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
+	if err != nil {
+		logrus.Errorln(err)
+		return ""
+	}
+
+	return URL
+}
+
 // GetDirectory returns the local git repository path.
 func (g *Github) GetDirectory() (directory string) {
 	return g.Spec.Directory
@@ -32,19 +43,15 @@ func (g *Github) Clean() error {
 
 // Clone run `git clone`.
 func (g *Github) Clone() (string, error) {
-
-	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
-
-	if err != nil {
-		return "", err
-	}
-
 	g.setDirectory()
 
-	err = g.nativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
-
+	err := g.nativeGitHandler.Clone(
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetURL(),
+		g.GetDirectory())
 	if err != nil {
-		logrus.Errorf("failed cloning GitHub repository %q", URL)
+		logrus.Errorf("failed cloning GitHub repository %q", g.GetURL())
 		return "", err
 	}
 
@@ -61,7 +68,7 @@ func (g *Github) Clone() (string, error) {
 	}
 
 	if err != nil {
-		logrus.Errorf("initial git checkout failed for GitHub repository %q", URL)
+		logrus.Errorf("initial git checkout failed for GitHub repository %q", g.GetURL())
 		return "", err
 	}
 
