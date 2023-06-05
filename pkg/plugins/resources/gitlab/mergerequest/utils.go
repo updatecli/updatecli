@@ -75,8 +75,7 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 	var repository string
 
 	if g.scm != nil {
-		sourceBranch = g.scm.HeadBranch
-		targetBranch = g.scm.Spec.Branch
+		_, sourceBranch, targetBranch = g.scm.GetBranches()
 		owner = g.scm.Spec.Owner
 		repository = g.scm.Spec.Repository
 	}
@@ -164,8 +163,7 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 func (g *Gitlab) inheritFromScm() {
 
 	if g.scm != nil {
-		g.SourceBranch = g.scm.HeadBranch
-		g.TargetBranch = g.scm.Spec.Branch
+		_, g.SourceBranch, g.TargetBranch = g.scm.GetBranches()
 		g.Owner = g.scm.Spec.Owner
 		g.Repository = g.scm.Spec.Repository
 	}

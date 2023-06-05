@@ -128,10 +128,12 @@ func (p *PullRequest) CreateAction(report reports.Action) error {
 
 	p.repository = repository
 
+	sourceBranch, workingBranch, _ := p.gh.GetBranches()
+
 	// Check if they are changes that need to be published otherwise exit
 	matchingBranch, err := p.gh.nativeGitHandler.IsSimilarBranch(
-		p.gh.HeadBranch,
-		p.gh.Spec.Branch,
+		workingBranch,
+		sourceBranch,
 		p.gh.GetDirectory())
 
 	if err != nil {
@@ -339,10 +341,12 @@ func (p *PullRequest) OpenPullRequest() error {
 		return err
 	}
 
+	_, workingBranch, targetBranch := p.gh.GetBranches()
+
 	input := githubv4.CreatePullRequestInput{
 		RepositoryID:        githubv4.String(p.repository.ID),
-		BaseRefName:         githubv4.String(p.gh.Spec.Branch),
-		HeadRefName:         githubv4.String(p.gh.HeadBranch),
+		BaseRefName:         githubv4.String(targetBranch),
+		HeadRefName:         githubv4.String(workingBranch),
 		Title:               githubv4.String(p.Title),
 		Body:                githubv4.NewString(githubv4.String(bodyPR)),
 		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(!p.spec.MaintainerCannotModify)),
@@ -436,11 +440,13 @@ func (p *PullRequest) getRemotePullRequest() error {
 		name = githubv4.String(p.repository.ParentName)
 	}
 
+	_, workingBranch, targetBranch := p.gh.GetBranches()
+
 	variables := map[string]interface{}{
 		"owner":       owner,
 		"name":        name,
-		"baseRefName": githubv4.String(p.gh.Spec.Branch),
-		"headRefName": githubv4.String(p.gh.HeadBranch),
+		"baseRefName": githubv4.String(targetBranch),
+		"headRefName": githubv4.String(workingBranch),
 	}
 
 	err := p.gh.client.Query(context.Background(), &query, variables)
