@@ -47,8 +47,8 @@ type Gitea struct {
 	Spec Spec
 	// client handle the api authentication
 	client           client.Client
-	HeadBranch       string
 	nativeGitHandler gitgeneric.GitHandler
+	pipelineID       string
 }
 
 // New returns a new valid Gitea object.
@@ -106,7 +106,7 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 	g := Gitea{
 		Spec:             s,
 		client:           c,
-		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 	}
 

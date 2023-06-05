@@ -60,6 +60,9 @@ func (s *Source) Run() (err error) {
 	case false:
 		SCM := *s.Scm
 
+		s.Result.Scm.URL = SCM.GetURL()
+		s.Result.Scm.Branch.Source, s.Result.Scm.Branch.Working, s.Result.Scm.Branch.Target = SCM.GetBranches()
+
 		err = SCM.Checkout()
 		if err != nil {
 			s.Result.Result = result.FAILURE
