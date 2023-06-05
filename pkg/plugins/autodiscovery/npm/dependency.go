@@ -106,7 +106,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 				}
 
 				sourceVersionFilterKind := "semver"
-				sourceVersionFilterPattern := "*"
+				sourceVersionFilterPattern := dependencyVersion
 
 				if !n.spec.VersionFilter.IsZero() {
 					sourceVersionFilterKind = n.versionFilter.Kind
