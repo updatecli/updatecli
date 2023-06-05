@@ -18,7 +18,7 @@ type Spec struct {
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 	// ignorecontainer disables OCI container tag update when set to true
 	IgnoreContainer bool `yaml:",omitempty"`
-	// ignorechartdepency disables Helm chart dependencies update when set to true
+	// ignorechartdependency disables Helm chart dependencies update when set to true
 	IgnoreChartDependency bool `yaml:",omitempty"`
 	// Ignore specifies rule to ignore Helm chart update.
 	Ignore MatchingRules `yaml:",omitempty"`
