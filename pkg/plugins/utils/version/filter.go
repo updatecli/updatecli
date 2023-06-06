@@ -183,7 +183,8 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 				return "", err
 			}
 			return fmt.Sprintf(
-				"> %d.%d, < %d",
+				"%s || >%d.%d < %d",
+				version,
 				v.Major(), v.Minor(),
 				v.IncMajor().Major(),
 			), nil
@@ -203,7 +204,8 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 				return "", err
 			}
 			return fmt.Sprintf(
-				"> %d, < %d",
+				"%s || >%d < %d",
+				version,
 				v.Major(),
 				v.IncMajor().Major(),
 			), nil
