@@ -134,10 +134,20 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 			imageSourceSlug := strings.ReplaceAll(imageSource, "/", "_")
 
+			// Try to be smart by detecting the best versionfilter
 			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageSource, image.tag, h.spec.Auths)
-
 			if sourceSpec == nil {
 				continue
+			}
+
+			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
+			if !h.spec.VersionFilter.IsZero() {
+				sourceSpec.VersionFilter.Kind = h.versionFilter.Kind
+				sourceSpec.VersionFilter.Pattern, err = h.versionFilter.GreaterThanPattern(image.tag)
+				if err != nil {
+					logrus.Debugf("building version filter pattern: %s", err)
+					sourceSpec.VersionFilter.Pattern = "*"
+				}
 			}
 
 			tmpl, err := template.New("manifest").Parse(containerManifest)

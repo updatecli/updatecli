@@ -4,3 +4,7 @@ ssh
 ubuntu
 workarounds
 goccy
+ignorecontainer
+ignorechartdependency
+minoronly
+majoronly
