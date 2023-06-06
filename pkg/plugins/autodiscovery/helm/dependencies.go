@@ -87,6 +87,18 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 		deps := *dependencies
 		for i, dependency := range deps.Dependencies {
 
+			sourceVersionFilterKind := "semver"
+			sourceVersionFilterPattern := "*"
+
+			if !h.spec.VersionFilter.IsZero() {
+				sourceVersionFilterKind = h.versionFilter.Kind
+				sourceVersionFilterPattern, err = h.versionFilter.GreaterThanPattern(dependency.Version)
+				if err != nil {
+					logrus.Debugf("building version filter pattern: %s", err)
+					sourceVersionFilterPattern = "*"
+				}
+			}
+
 			tmpl, err := template.New("manifest").Parse(dependencyManifest)
 			if err != nil {
 				logrus.Debugln(err)
@@ -124,8 +136,8 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				FleetBundle:                chartName,
 				SourceID:                   dependencyNameSlug,
 				SourceName:                 fmt.Sprintf("Get latest %q Helm chart version", dependency.Name),
-				SourceVersionFilterKind:    "semver",
-				SourceVersionFilterPattern: "*",
+				SourceVersionFilterKind:    sourceVersionFilterKind,
+				SourceVersionFilterPattern: sourceVersionFilterPattern,
 				TargetID:                   dependencyNameSlug,
 				TargetKey:                  fmt.Sprintf("$.dependencies[%d].version", i),
 				TargetChartName:            chartRelativeMetadataPath,
