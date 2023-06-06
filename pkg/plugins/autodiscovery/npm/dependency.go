@@ -96,24 +96,19 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					continue
 				}
 
-				if !isVersionConstraint {
-					dependencyVersion = ">=" + dependencyVersion
-				}
-
-				if err != nil {
-					logrus.Debugln(err)
-					continue
-				}
-
 				sourceVersionFilterKind := "semver"
 				sourceVersionFilterPattern := dependencyVersion
 
-				if !n.spec.VersionFilter.IsZero() {
-					sourceVersionFilterKind = n.versionFilter.Kind
-					sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(dependencyVersion)
-					if err != nil {
-						logrus.Debugf("building version filter pattern: %s", err)
-						sourceVersionFilterPattern = "*"
+				if !isVersionConstraint {
+					sourceVersionFilterPattern = ">=" + dependencyVersion
+
+					if !n.spec.VersionFilter.IsZero() {
+						sourceVersionFilterKind = n.versionFilter.Kind
+						sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(dependencyVersion)
+						if err != nil {
+							logrus.Debugf("building version filter pattern: %s", err)
+							sourceVersionFilterPattern = "*"
+						}
 					}
 				}
 
