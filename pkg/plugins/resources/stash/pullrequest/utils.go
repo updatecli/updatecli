@@ -11,7 +11,7 @@ import (
 )
 
 // isPullRequestExist queries a remote Bitbucket instance to know if a pullrequest already exists.
-func (g *Stash) isPullRequestExist() (bool, error) {
+func (s *Stash) isPullRequestExist() (bool, error) {
 	ctx := context.Background()
 	// Timeout api query after 30sec
 	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
@@ -24,11 +24,11 @@ func (g *Stash) isPullRequestExist() (bool, error) {
 		Closed: false,
 	}
 
-	pullrequests, resp, err := g.client.PullRequests.List(
+	pullrequests, resp, err := s.client.PullRequests.List(
 		ctx,
 		strings.Join([]string{
-			g.Owner,
-			g.Repository}, "/"),
+			s.Owner,
+			s.Repository}, "/"),
 		optsSearch,
 	)
 
@@ -42,8 +42,8 @@ func (g *Stash) isPullRequestExist() (bool, error) {
 	}
 
 	for _, p := range pullrequests {
-		if p.Source == g.SourceBranch &&
-			p.Target == g.TargetBranch &&
+		if p.Source == s.SourceBranch &&
+			p.Target == s.TargetBranch &&
 			!p.Closed &&
 			!p.Merged {
 
@@ -58,34 +58,33 @@ func (g *Stash) isPullRequestExist() (bool, error) {
 }
 
 // isRemoteBranchesExist queries a remote Bitbucket instance to know if both the pull-request source branch and the target branch exist.
-func (g *Stash) isRemoteBranchesExist() (bool, error) {
+func (s *Stash) isRemoteBranchesExist() (bool, error) {
 
 	var sourceBranch string
 	var targetBranch string
 	var owner string
 	var repository string
 
-	if g.scm != nil {
-		sourceBranch = g.scm.HeadBranch
-		targetBranch = g.scm.Spec.Branch
-		owner = g.scm.Spec.Owner
-		repository = g.scm.Spec.Repository
+	if s.scm != nil {
+		_, sourceBranch, targetBranch = s.scm.GetBranches()
+		owner = s.scm.Spec.Owner
+		repository = s.scm.Spec.Repository
 	}
 
-	if len(g.spec.SourceBranch) > 0 {
-		sourceBranch = g.spec.SourceBranch
+	if len(s.spec.SourceBranch) > 0 {
+		sourceBranch = s.spec.SourceBranch
 	}
 
-	if len(g.spec.TargetBranch) > 0 {
-		targetBranch = g.spec.TargetBranch
+	if len(s.spec.TargetBranch) > 0 {
+		targetBranch = s.spec.TargetBranch
 	}
 
-	if len(g.spec.Owner) > 0 {
-		owner = g.spec.Owner
+	if len(s.spec.Owner) > 0 {
+		owner = s.spec.Owner
 	}
 
-	if len(g.spec.Repository) > 0 {
-		repository = g.spec.Repository
+	if len(s.spec.Repository) > 0 {
+		repository = s.spec.Repository
 	}
 
 	// Timeout api query after 30sec
@@ -93,11 +92,11 @@ func (g *Stash) isRemoteBranchesExist() (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	remoteBranches, resp, err := g.client.Git.ListBranches(
+	remoteBranches, resp, err := s.client.Git.ListBranches(
 		ctx,
 		strings.Join([]string{owner, repository}, "/"),
 		scm.ListOptions{
-			URL:  g.spec.URL,
+			URL:  s.spec.URL,
 			Page: 1,
 			Size: 30,
 		},
@@ -146,28 +145,27 @@ func (g *Stash) isRemoteBranchesExist() (bool, error) {
 }
 
 // inheritFromScm retrieve missing bitbucket settings from the bitbucket scm object.
-func (g *Stash) inheritFromScm() {
+func (s *Stash) inheritFromScm() {
 
-	if g.scm != nil {
-		g.SourceBranch = g.scm.HeadBranch
-		g.TargetBranch = g.scm.Spec.Branch
-		g.Owner = g.scm.Spec.Owner
-		g.Repository = g.scm.Spec.Repository
+	if s.scm != nil {
+		_, s.SourceBranch, s.TargetBranch = s.scm.GetBranches()
+		s.Owner = s.scm.Spec.Owner
+		s.Repository = s.scm.Spec.Repository
 	}
 
-	if len(g.spec.SourceBranch) > 0 {
-		g.SourceBranch = g.spec.SourceBranch
+	if len(s.spec.SourceBranch) > 0 {
+		s.SourceBranch = s.spec.SourceBranch
 	}
 
-	if len(g.spec.TargetBranch) > 0 {
-		g.TargetBranch = g.spec.TargetBranch
+	if len(s.spec.TargetBranch) > 0 {
+		s.TargetBranch = s.spec.TargetBranch
 	}
 
-	if len(g.spec.Owner) > 0 {
-		g.Owner = g.spec.Owner
+	if len(s.spec.Owner) > 0 {
+		s.Owner = s.spec.Owner
 	}
 
-	if len(g.spec.Repository) > 0 {
-		g.Repository = g.spec.Repository
+	if len(s.spec.Repository) > 0 {
+		s.Repository = s.spec.Repository
 	}
 }
