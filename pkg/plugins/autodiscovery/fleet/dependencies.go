@@ -84,6 +84,18 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			continue
 		}
 
+		sourceVersionFilterKind := "semver"
+		sourceVersionFilterPattern := "*"
+
+		if !f.spec.VersionFilter.IsZero() {
+			sourceVersionFilterKind = f.versionFilter.Kind
+			sourceVersionFilterPattern, err = f.versionFilter.GreaterThanPattern(data.Helm.Version)
+			if err != nil {
+				logrus.Debugf("building version filter pattern: %s", err)
+				sourceVersionFilterPattern = "*"
+			}
+		}
+
 		tmpl, err := template.New("manifest").Parse(manifestTemplate)
 		if err != nil {
 			logrus.Debugln(err)
@@ -114,8 +126,8 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			SourceID:                   data.Helm.Chart,
 			SourceName:                 fmt.Sprintf("Get latest %q Helm chart version", data.Helm.Chart),
 			SourceKind:                 "helmchart",
-			SourceVersionFilterKind:    "semver",
-			SourceVersionFilterPattern: "*",
+			SourceVersionFilterKind:    sourceVersionFilterKind,
+			SourceVersionFilterPattern: sourceVersionFilterPattern,
 			TargetID:                   data.Helm.Chart,
 			File:                       relativeFoundChartFile,
 			ScmID:                      f.scmID,
