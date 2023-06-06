@@ -1,4 +1,4 @@
-name: "Helm autodiscovery using git scm"
+name: "Helm autodiscovery bumping patch version only"
 scms:
   epinio:
     kind: git
@@ -6,18 +6,10 @@ scms:
       url: https://github.com/epinio/helm-charts.git
     
 autodiscovery:
-  # scmid is applied to all crawlers
   scmid: epinio
   crawlers:
     helm:
-      # To ignore specific path
-      #ignore:
-      #  # - path: <filepath relative to scm repository>
-      #  # - path: chart/*
-      #only:
-      #  # - path: <filepath relative to scm repository>
-      #  # - path: chart/*
       versionfilter:
         kind: semver
         pattern: patch
-#
+
