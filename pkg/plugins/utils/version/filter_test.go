@@ -269,6 +269,22 @@ func TestGreaterThanPattern(t *testing.T) {
 			version: "3.0", want: "3.x",
 		},
 		{
+			name: "Minor semver only pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "minoronly",
+			},
+			version: "3.1", want: "3.1 || >3.1 < 4",
+		},
+		{
+			name: "Major semver only pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "majoronly",
+			},
+			version: "3.1", want: "3.1 || >3",
+		},
+		{
 			name: "Patch semver pattern",
 			filter: Filter{
 				Kind:    SEMVERVERSIONKIND,

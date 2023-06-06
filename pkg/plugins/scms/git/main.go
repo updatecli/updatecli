@@ -40,7 +40,6 @@ type Spec struct {
 
 type Git struct {
 	spec             Spec
-	remoteBranch     string
 	nativeGitHandler gitgeneric.GitHandler
 }
 
@@ -62,7 +61,6 @@ func New(s Spec) (*Git, error) {
 
 	return &Git{
 		spec:             s,
-		remoteBranch:     nativeGitHandler.SanitizeBranchName(s.Branch),
 		nativeGitHandler: nativeGitHandler,
 	}, nil
 }

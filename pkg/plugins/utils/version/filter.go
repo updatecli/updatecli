@@ -177,6 +177,18 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 				"%d.x",
 				v.Major()), nil
 
+		case "minoronly":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf(
+				"%s || >%d.%d < %d",
+				version,
+				v.Major(), v.Minor(),
+				v.IncMajor().Major(),
+			), nil
+
 		case "major":
 			v, err := sv.NewVersion(version)
 			if err != nil {
@@ -185,6 +197,16 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 			return fmt.Sprintf(
 				">=%d",
 				v.Major()), nil
+
+		case "majoronly":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf(
+				"%s || >%d",
+				version, v.Major(),
+			), nil
 
 		case "", "*":
 			v, err := sv.NewVersion(version)
