@@ -1,0 +1,15 @@
+name: "Helm autodiscovery bumping patch version only"
+scms:
+  epinio:
+    kind: git
+    spec:
+      url: https://github.com/epinio/helm-charts.git
+    
+autodiscovery:
+  scmid: epinio
+  crawlers:
+    helm:
+      versionfilter:
+        kind: semver
+        pattern: patch
+
