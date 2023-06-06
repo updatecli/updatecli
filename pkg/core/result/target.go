@@ -21,8 +21,11 @@ type Target struct {
 	// Description stores the target execution description
 	Description string
 	// Files holds the list of files modified by a target execution
-	Files   []string
+	Files []string
+	// Changed specifies if the target was modify during the pipeline execution
 	Changed bool
+	// Scm stores scm information
+	Scm SCM
 }
 
 func (t *Target) String() string {

@@ -52,9 +52,8 @@ type Spec struct {
 // GitHub contains settings to interact with GitHub
 type Github struct {
 	// Spec contains inputs coming from updatecli configuration
-	Spec Spec
-	// HeadBranch is used when creating a temporary branch before opening a Pull Request
-	HeadBranch       string
+	Spec             Spec
+	pipelineID       string
 	client           GitHubClient
 	nativeGitHandler gitgeneric.GitHandler
 	mu               sync.RWMutex
@@ -103,7 +102,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 
 	g := Github{
 		Spec:             s,
-		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 	}
 

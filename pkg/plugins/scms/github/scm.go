@@ -1,11 +1,31 @@
 package github
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 
 	"github.com/sirupsen/logrus"
 )
+
+func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
+	sourceBranch = g.Spec.Branch
+	workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", g.pipelineID))
+	targetBranch = g.Spec.Branch
+
+	return sourceBranch, workingBranch, targetBranch
+}
+
+// GetURL returns a "GitHub " git URL
+func (g *Github) GetURL() string {
+	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
+	if err != nil {
+		logrus.Errorln(err)
+		return ""
+	}
+
+	return URL
+}
 
 // GetDirectory returns the local git repository path.
 func (g *Github) GetDirectory() (directory string) {
@@ -23,34 +43,32 @@ func (g *Github) Clean() error {
 
 // Clone run `git clone`.
 func (g *Github) Clone() (string, error) {
-
-	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
-
-	if err != nil {
-		return "", err
-	}
-
 	g.setDirectory()
 
-	err = g.nativeGitHandler.Clone(g.Spec.Username, g.Spec.Token, URL, g.GetDirectory())
-
+	err := g.nativeGitHandler.Clone(
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetURL(),
+		g.GetDirectory())
 	if err != nil {
-		logrus.Errorf("failed cloning GitHub repository %q", URL)
+		logrus.Errorf("failed cloning GitHub repository %q", g.GetURL())
 		return "", err
 	}
 
-	if len(g.HeadBranch) > 0 && len(g.GetDirectory()) > 0 {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
+	if len(workingBranch) > 0 && len(g.GetDirectory()) > 0 {
 		err = g.nativeGitHandler.Checkout(
 			g.Spec.Username,
 			g.Spec.Token,
-			g.Spec.Branch,
-			g.HeadBranch,
+			sourceBranch,
+			workingBranch,
 			g.GetDirectory(),
 			true)
 	}
 
 	if err != nil {
-		logrus.Errorf("initial git checkout failed for GitHub repository %q", URL)
+		logrus.Errorf("initial git checkout failed for GitHub repository %q", g.GetURL())
 		return "", err
 	}
 
@@ -75,11 +93,13 @@ func (g *Github) Commit(message string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Github) Checkout() error {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
 	err := g.nativeGitHandler.Checkout(
 		g.Spec.Username,
 		g.Spec.Token,
-		g.Spec.Branch,
-		g.HeadBranch,
+		sourceBranch,
+		workingBranch,
 		g.Spec.Directory,
 		false)
 	if err != nil {
@@ -90,7 +110,6 @@ func (g *Github) Checkout() error {
 
 // Add run `git add`.
 func (g *Github) Add(files []string) error {
-
 	err := g.nativeGitHandler.Add(files, g.Spec.Directory)
 	if err != nil {
 		return err
@@ -101,9 +120,11 @@ func (g *Github) Add(files []string) error {
 // IsRemoteBranchUpToDate checks if the branch reference name is published on
 // on the default remote
 func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
 	return g.nativeGitHandler.IsLocalBranchPublished(
-		g.Spec.Branch,
-		g.HeadBranch,
+		sourceBranch,
+		workingBranch,
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory())
