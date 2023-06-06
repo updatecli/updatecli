@@ -6,3 +6,5 @@ workarounds
 goccy
 ignorecontainer
 ignorechartdependency
+minoronly
+majoronly
