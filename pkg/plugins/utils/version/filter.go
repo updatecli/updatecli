@@ -204,10 +204,8 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 				return "", err
 			}
 			return fmt.Sprintf(
-				"%s || >%d < %d",
-				version,
-				v.Major(),
-				v.IncMajor().Major(),
+				"%s || >%d",
+				version, v.Major(),
 			), nil
 
 		case "", "*":
