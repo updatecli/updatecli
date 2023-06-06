@@ -14,8 +14,8 @@ scms:
       #repository: plugin-site
       #branch: master
       repository: app-dashboard
-      token: {{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}
-      username: {{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+      username: {{ requiredEnv "GITHUB_ACTOR" }}
       branch: main
 
 actions:
