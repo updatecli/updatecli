@@ -47,7 +47,7 @@ type Stash struct {
 	Spec Spec
 	// client handle the api authentication
 	client           client.Client
-	HeadBranch       string
+	pipelineID       string
 	nativeGitHandler gitgeneric.GitHandler
 }
 
@@ -106,7 +106,7 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 	g := Stash{
 		Spec:             s,
 		client:           c,
-		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 	}
 
@@ -117,18 +117,18 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 }
 
 // Retrieve git tags from a remote bitbucket repository
-func (g *Stash) SearchTags() (tags []string, err error) {
+func (s *Stash) SearchTags() (tags []string, err error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	references, resp, err := g.client.Git.ListTags(
+	references, resp, err := s.client.Git.ListTags(
 		ctx,
-		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
+		strings.Join([]string{s.Spec.Owner, s.Spec.Repository}, "/"),
 		scm.ListOptions{
-			URL:  g.Spec.URL,
+			URL:  s.Spec.URL,
 			Page: 1,
 			Size: 30,
 		},
