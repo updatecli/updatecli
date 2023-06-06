@@ -96,13 +96,20 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					continue
 				}
 
-				if !isVersionConstraint {
-					dependencyVersion = ">=" + dependencyVersion
-				}
+				sourceVersionFilterKind := "semver"
+				sourceVersionFilterPattern := dependencyVersion
 
-				if err != nil {
-					logrus.Debugln(err)
-					continue
+				if !isVersionConstraint {
+					sourceVersionFilterPattern = ">=" + dependencyVersion
+
+					if !n.spec.VersionFilter.IsZero() {
+						sourceVersionFilterKind = n.versionFilter.Kind
+						sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(dependencyVersion)
+						if err != nil {
+							logrus.Debugf("building version filter pattern: %s", err)
+							sourceVersionFilterPattern = "*"
+						}
+					}
 				}
 
 				tmpl, err := template.New("manifest").Parse(manifestTemplate)
@@ -136,8 +143,8 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					SourceName:                 fmt.Sprintf("Get %q package version", dependencyName),
 					SourceKind:                 "npm",
 					SourceNPMName:              dependencyName,
-					SourceVersionFilterKind:    "semver",
-					SourceVersionFilterPattern: dependencyVersion,
+					SourceVersionFilterKind:    sourceVersionFilterKind,
+					SourceVersionFilterPattern: sourceVersionFilterPattern,
 					TargetID:                   "npm",
 					TargetName:                 fmt.Sprintf("Bump %q package version to {{ source \"npm\" }}", dependencyName),
 					// NPM package allows dot in package name which has a different meaning in Dasel query
