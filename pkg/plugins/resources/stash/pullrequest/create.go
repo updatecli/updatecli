@@ -12,11 +12,11 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Bitbucket server
-func (g *Stash) CreateAction(report reports.Action) error {
+func (s *Stash) CreateAction(report reports.Action) error {
 
 	title := report.Title
-	if len(g.spec.Title) > 0 {
-		title = g.spec.Title
+	if len(s.spec.Title) > 0 {
+		title = s.spec.Title
 	}
 
 	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
@@ -24,12 +24,12 @@ func (g *Stash) CreateAction(report reports.Action) error {
 		logrus.Warningf("something wrong happened while generating stash pullrequest body: %s", err)
 	}
 
-	if len(g.spec.Body) > 0 {
-		body = g.spec.Body
+	if len(s.spec.Body) > 0 {
+		body = s.spec.Body
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.
-	exist, err := g.isPullRequestExist()
+	exist, err := s.isPullRequestExist()
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (g *Stash) CreateAction(report reports.Action) error {
 	}
 
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
-	ok, err := g.isRemoteBranchesExist()
+	ok, err := s.isRemoteBranchesExist()
 
 	if err != nil {
 		return err
@@ -54,6 +54,7 @@ func (g *Stash) CreateAction(report reports.Action) error {
 		Therefore we always try to open a pull request, we don't consider being an error if all conditions are not met
 		such as missing remote branches.
 	*/
+
 	if !ok {
 		logrus.Debugln("skipping pullrequest creation")
 		return nil
@@ -62,26 +63,26 @@ func (g *Stash) CreateAction(report reports.Action) error {
 	opts := scm.PullRequestInput{
 		Title:  title,
 		Body:   body,
-		Source: g.SourceBranch,
-		Target: g.TargetBranch,
+		Source: s.SourceBranch,
+		Target: s.TargetBranch,
 	}
 
 	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
 		title,
 		body,
-		g.SourceBranch,
-		g.TargetBranch)
+		s.SourceBranch,
+		s.TargetBranch)
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	pr, resp, err := g.client.PullRequests.Create(
+	pr, resp, err := s.client.PullRequests.Create(
 		ctx,
 		strings.Join([]string{
-			g.Owner,
-			g.Repository}, "/"),
+			s.Owner,
+			s.Repository}, "/"),
 		&opts,
 	)
 
