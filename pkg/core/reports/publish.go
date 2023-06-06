@@ -3,10 +3,12 @@ package reports
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/auth"
@@ -69,5 +71,21 @@ func (r Report) Publish() error {
 		logrus.Debugf("\n%v\n", string(body))
 	}
 
+	return nil
+}
+
+func (r Reports) Publish() error {
+
+	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
+	logrus.Infof("%s\n", strings.Repeat("=", len("Report")+1))
+
+	for _, report := range r {
+		err := report.Publish()
+		if err != nil &&
+			!errors.Is(err, ErrNoBearerToken) &&
+			!errors.Is(err, ErrNoOAuthAudience) {
+			logrus.Debugf("publish report: %s", err)
+		}
+	}
 	return nil
 }
