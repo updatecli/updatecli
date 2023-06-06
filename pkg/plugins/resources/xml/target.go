@@ -50,7 +50,7 @@ func (x *XML) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 		return fmt.Errorf("nothing found at path %q from file %q", x.spec.Path, resourceFile)
 	}
 
-	resultTarget.OldInformation = elem.Text()
+	resultTarget.Information = elem.Text()
 	resultTarget.NewInformation = value
 
 	if elem.Text() == value {

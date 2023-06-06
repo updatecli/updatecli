@@ -62,7 +62,7 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 		Especially considering that we may have multiple files to update
 	*/
-	resultTarget.OldInformation = "unknown"
+	resultTarget.Information = "unknown"
 
 	// If we're using a regexp for the target
 	if len(f.spec.MatchPattern) > 0 {

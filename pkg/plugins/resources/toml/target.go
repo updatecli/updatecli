@@ -73,7 +73,7 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 			case false:
 				changedFile = true
-				resultTarget.OldInformation = queryResult
+				resultTarget.Information = queryResult
 				resultTarget.Result = result.ATTENTION
 				resultTarget.Changed = true
 				resultTarget.Description = fmt.Sprintf("%s\nkey %q, from file %q, is incorrectly set to %q and should be %q",

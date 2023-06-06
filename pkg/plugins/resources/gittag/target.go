@@ -78,7 +78,7 @@ func (gt *GitTag) target(source string, dryRun bool, resultTarget *result.Target
 	}
 
 	if gt.foundVersion.GetVersion() == source {
-		resultTarget.OldInformation = source
+		resultTarget.Information = source
 		resultTarget.NewInformation = source
 		resultTarget.Result = result.SUCCESS
 		resultTarget.Description = fmt.Sprintf("git tag %q already exists", source)
