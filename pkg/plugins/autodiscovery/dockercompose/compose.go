@@ -30,16 +30,16 @@ type dockerComposeService struct {
 
 type dockercomposeServicesList []dockerComposeService
 
-func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
+func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 	var manifests [][]byte
 
-	foundDockerComposeFiles, err := searchDockerComposeFiles(h.rootDir, h.filematch)
+	foundDockerComposeFiles, err := searchDockerComposeFiles(d.rootDir, d.filematch)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, foundDockerComposefile := range foundDockerComposeFiles {
-		relativeFoundDockerComposeFile, err := filepath.Rel(h.rootDir, foundDockerComposefile)
+		relativeFoundDockerComposeFile, err := filepath.Rel(d.rootDir, foundDockerComposefile)
 		logrus.Debugf("parsing file %q", foundDockerComposefile)
 		if err != nil {
 			// Let's try the next one if it fails
@@ -91,9 +91,9 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			_, arch, _ := parsePlatform(svc.Spec.Platform)
 
 			// Test if the ignore rule based on path is respected
-			if len(h.spec.Ignore) > 0 {
-				if h.spec.Ignore.isMatchingRule(
-					h.rootDir,
+			if len(d.spec.Ignore) > 0 {
+				if d.spec.Ignore.isMatchingRule(
+					d.rootDir,
 					relativeFoundDockerComposeFile,
 					svc.Name,
 					svc.Spec.Image,
@@ -107,9 +107,9 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			}
 
 			// Test if the only rule based on path is respected
-			if len(h.spec.Only) > 0 {
-				if !h.spec.Only.isMatchingRule(
-					h.rootDir,
+			if len(d.spec.Only) > 0 {
+				if !d.spec.Only.isMatchingRule(
+					d.rootDir,
 					relativeFoundDockerComposeFile,
 					svc.Name,
 					svc.Spec.Image,
@@ -122,11 +122,20 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				}
 			}
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, serviceImageTag, h.spec.Auths)
-
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, serviceImageTag, d.spec.Auths)
 			if sourceSpec == nil {
 				logrus.Infoln("No source spec detected")
 				continue
+			}
+
+			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
+			if !d.spec.VersionFilter.IsZero() {
+				sourceSpec.VersionFilter.Kind = d.versionFilter.Kind
+				sourceSpec.VersionFilter.Pattern, err = d.versionFilter.GreaterThanPattern(serviceImageTag)
+				if err != nil {
+					logrus.Debugf("building version filter pattern: %s", err)
+					sourceSpec.VersionFilter.Pattern = "*"
+				}
 			}
 
 			if arch != "" {
@@ -168,7 +177,7 @@ func (h DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				TagFilter:            sourceSpec.TagFilter,
 				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
 				VersionFilterPattern: sourceSpec.VersionFilter.Pattern,
-				ScmID:                h.scmID,
+				ScmID:                d.scmID,
 			}
 
 			manifest := bytes.Buffer{}
