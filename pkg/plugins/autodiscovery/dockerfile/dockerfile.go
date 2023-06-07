@@ -116,6 +116,16 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				continue
 			}
 
+			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
+			if !h.spec.VersionFilter.IsZero() {
+				sourceSpec.VersionFilter.Kind = h.versionFilter.Kind
+				sourceSpec.VersionFilter.Pattern, err = h.versionFilter.GreaterThanPattern(imageTag)
+				if err != nil {
+					logrus.Debugf("building version filter pattern: %s", err)
+					sourceSpec.VersionFilter.Pattern = "*"
+				}
+			}
+
 			if instruction.arch != "" {
 				sourceSpec.Architecture = instruction.arch
 			}
