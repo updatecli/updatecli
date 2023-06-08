@@ -99,6 +99,14 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 				sourceVersionFilterKind := "semver"
 				sourceVersionFilterPattern := dependencyVersion
 
+				/*
+					Pattern order
+						1. Reuse version constraint defined from cargo.toml
+						2. If no version constraint defined then convert the version to ">=x.y.z"
+						3. If no version constraint defined but versionfilter defined in the manifest
+						   then we use that version filter kind and pattern
+				*/
+
 				if !isVersionConstraint {
 					sourceVersionFilterPattern = ">=" + dependencyVersion
 

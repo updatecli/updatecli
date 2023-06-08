@@ -68,9 +68,20 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		}
 	}
 
+	sourceVersionFilterKind := "semver"
 	sourceVersionFilterPattern := dependency.Version
+
 	if isStrictSemver(dependency.Version) {
-		sourceVersionFilterPattern = ">=" + sourceVersionFilterPattern
+		sourceVersionFilterPattern = ">=" + dependency.Version
+
+		if !c.spec.VersionFilter.IsZero() {
+			sourceVersionFilterKind = c.versionFilter.Kind
+			sourceVersionFilterPattern, err = c.versionFilter.GreaterThanPattern(dependency.Version)
+			if err != nil {
+				logrus.Debugf("building version filter pattern: %s", err)
+				sourceVersionFilterPattern = "*"
+			}
+		}
 	}
 
 	params := struct {
@@ -107,7 +118,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		DependencyName:             dependency.Name,
 		SourceID:                   dependency.Name,
 		SourceName:                 fmt.Sprintf("Get latest %q crate version", dependency.Name),
-		SourceVersionFilterKind:    "semver",
+		SourceVersionFilterKind:    sourceVersionFilterKind,
 		SourceVersionFilterPattern: sourceVersionFilterPattern,
 		ExistingSourceID:           fmt.Sprintf("%s-current-version", dependency.Name),
 		ExistingSourceKey:          existingSourceKey,
