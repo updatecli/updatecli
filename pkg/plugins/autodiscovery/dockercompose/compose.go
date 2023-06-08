@@ -132,6 +132,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			if !d.spec.VersionFilter.IsZero() {
 				sourceSpec.VersionFilter.Kind = d.versionFilter.Kind
 				sourceSpec.VersionFilter.Pattern, err = d.versionFilter.GreaterThanPattern(serviceImageTag)
+				sourceSpec.TagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceSpec.VersionFilter.Pattern = "*"
