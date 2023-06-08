@@ -120,6 +120,7 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 			if !h.spec.VersionFilter.IsZero() {
 				sourceSpec.VersionFilter.Kind = h.versionFilter.Kind
 				sourceSpec.VersionFilter.Pattern, err = h.versionFilter.GreaterThanPattern(imageTag)
+				sourceSpec.TagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceSpec.VersionFilter.Pattern = "*"
