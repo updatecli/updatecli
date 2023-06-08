@@ -144,6 +144,8 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			if !h.spec.VersionFilter.IsZero() {
 				sourceSpec.VersionFilter.Kind = h.versionFilter.Kind
 				sourceSpec.VersionFilter.Pattern, err = h.versionFilter.GreaterThanPattern(image.tag)
+				sourceSpec.TagFilter = ""
+
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceSpec.VersionFilter.Pattern = "*"
