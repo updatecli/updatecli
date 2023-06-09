@@ -47,7 +47,7 @@ type Gitlab struct {
 	Spec Spec
 	// client handle the api authentication
 	client           client.Client
-	HeadBranch       string
+	pipelineID       string
 	nativeGitHandler gitgeneric.GitHandler
 }
 
@@ -95,7 +95,7 @@ func New(spec interface{}, pipelineID string) (*Gitlab, error) {
 	g := Gitlab{
 		Spec:             s,
 		client:           c,
-		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 	}
 

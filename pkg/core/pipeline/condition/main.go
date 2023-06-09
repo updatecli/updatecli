@@ -69,6 +69,9 @@ func (c *Condition) Run(source string) (err error) {
 			return err
 		}
 
+		c.Result.Scm.URL = s.GetURL()
+		c.Result.Scm.Branch.Source, c.Result.Scm.Branch.Working, c.Result.Scm.Branch.Target = s.GetBranches()
+
 		err = s.Checkout()
 		if err != nil {
 			return err

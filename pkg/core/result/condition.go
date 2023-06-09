@@ -16,4 +16,6 @@ type Condition struct {
 	Pass bool
 	// Description stores the condition execution description.
 	Description string
+	// Scm stores scm information
+	Scm SCM
 }

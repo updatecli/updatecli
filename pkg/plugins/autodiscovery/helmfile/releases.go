@@ -147,6 +147,18 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				helmSourcespec.InlineKeyChain.Password = OCIPassword
 			}
 
+			sourceVersionFilterKind := "semver"
+			sourceVersionFilterPattern := "*"
+
+			if !h.spec.VersionFilter.IsZero() {
+				sourceVersionFilterKind = h.versionFilter.Kind
+				sourceVersionFilterPattern, err = h.versionFilter.GreaterThanPattern(release.Version)
+				if err != nil {
+					logrus.Debugf("building version filter pattern: %s", err)
+					sourceVersionFilterPattern = "*"
+				}
+			}
+
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
 				logrus.Debugln(err)
@@ -182,8 +194,8 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				SourceID:                   release.Name,
 				SourceName:                 fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
 				SourceKind:                 "helmchart",
-				SourceVersionFilterKind:    "semver",
-				SourceVersionFilterPattern: "*",
+				SourceVersionFilterKind:    sourceVersionFilterKind,
+				SourceVersionFilterPattern: sourceVersionFilterPattern,
 				TargetID:                   release.Name,
 				TargetName:                 fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
 				TargetKey:                  fmt.Sprintf("$.releases[%d].version", i),
