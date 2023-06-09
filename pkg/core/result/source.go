@@ -16,4 +16,6 @@ type Source struct {
 	Information string
 	// Description stores the source execution description
 	Description string
+	// Scm stores scm information
+	Scm SCM
 }

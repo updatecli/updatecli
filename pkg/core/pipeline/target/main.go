@@ -114,6 +114,9 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	s := *t.Scm
 
+	t.Result.Scm.URL = s.GetURL()
+	t.Result.Scm.Branch.Source, t.Result.Scm.Branch.Working, t.Result.Scm.Branch.Target = s.GetBranches()
+
 	if err = s.Checkout(); err != nil {
 		failTargetRun()
 		return err
