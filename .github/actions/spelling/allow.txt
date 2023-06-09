@@ -8,3 +8,5 @@ ignorecontainer
 ignorechartdependency
 minoronly
 majoronly
+nce
+WRONLY
