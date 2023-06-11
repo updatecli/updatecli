@@ -200,6 +200,7 @@ type Resource interface {
 	Condition(version string, scm scm.ScmHandler, resultCondition *result.Condition) error
 	Target(source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
 	Changelog() string
+	GetAtomicSpec() interface{}
 }
 
 // Need to do reflect of ResourceConfig
