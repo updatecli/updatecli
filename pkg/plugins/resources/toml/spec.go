@@ -41,6 +41,16 @@ var (
 	ErrWrongSpec error = errors.New("wrong spec content")
 )
 
+func (s Spec) Atomic() Spec {
+	return Spec{
+		File:  s.File,
+		Files: s.Files,
+		Query: s.Query,
+		Key:   s.Key,
+		Value: s.Value,
+	}
+}
+
 func (s *Spec) Validate() error {
 	var errs []error
 

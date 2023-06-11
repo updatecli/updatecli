@@ -13,7 +13,7 @@ import (
 // getLatestAmiID queries the AWS API to return the newest AMI image id.
 func (a *AMI) getLatestAmiID() (string, error) {
 	input := ec2.DescribeImagesInput{
-		DryRun:  &a.Spec.DryRun,
+		DryRun:  &a.spec.DryRun,
 		Filters: a.ec2Filters,
 	}
 
@@ -35,7 +35,7 @@ func (a *AMI) getLatestAmiID() (string, error) {
 
 	if nbImages := len(result.Images); nbImages > 0 {
 
-		switch a.Spec.SortBy {
+		switch a.spec.SortBy {
 		case "creationdateasc":
 			sort.Sort(ByCreationDateAsc(result.Images))
 		case "creationdatedesc":

@@ -12,11 +12,11 @@ import (
 func (a *AMI) Source(workingDir string, resultSource *result.Source) error {
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
 		strings.TrimRight(
-			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n "))
+			strings.ReplaceAll(a.spec.String(), "\n", "\n  "), "\n "))
 
 	// It's an error if the upstream source is empty and the user does not provide any filter
 	// then it mean
-	if len(a.Spec.Filters) == 0 {
+	if len(a.spec.Filters) == 0 {
 		return ErrNoFilter
 	}
 
@@ -35,7 +35,7 @@ func (a *AMI) Source(workingDir string, resultSource *result.Source) error {
 	}
 
 	resultSource.Result = result.FAILURE
-	resultSource.Description = fmt.Sprintf("no AMI found matching criteria in region %s\n", a.Spec.Region)
+	resultSource.Description = fmt.Sprintf("no AMI found matching criteria in region %s\n", a.spec.Region)
 
 	return nil
 }

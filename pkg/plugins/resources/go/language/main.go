@@ -10,7 +10,7 @@ import (
 
 // Language defines a resource of type "go language"
 type Language struct {
-	Spec Spec
+	spec Spec
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
 	Version       version.Version
@@ -36,7 +36,7 @@ func New(spec interface{}) (*Language, error) {
 	}
 
 	return &Language{
-		Spec:          newSpec,
+		spec:          newSpec,
 		versionFilter: newFilter,
 		webClient:     http.DefaultClient,
 	}, nil

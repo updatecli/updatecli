@@ -31,6 +31,14 @@ type Spec struct {
 	SortBy string `yaml:",omitempty"`
 }
 
+func (s Spec) Atomic() Spec {
+	return Spec{
+		Filters:  s.Filters,
+		Region:   s.Region,
+		Endpoint: s.Endpoint,
+	}
+}
+
 // String return Spec information as a string
 func (s *Spec) String() (output string) {
 	output = output + "Region:\t" + s.Region

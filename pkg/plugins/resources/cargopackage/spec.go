@@ -19,3 +19,11 @@ type Spec struct {
 	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
+
+func (s Spec) Atomic() Spec {
+	return Spec{
+		Registry: s.Registry,
+		Package:  s.Package,
+		Version:  s.Version,
+	}
+}

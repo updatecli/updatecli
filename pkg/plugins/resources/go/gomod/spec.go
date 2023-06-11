@@ -20,3 +20,11 @@ type Spec struct {
 	// Version Defines a specific golang version
 	Version string `yaml:",omitempty"`
 }
+
+func (s Spec) Atomic() Spec {
+	return Spec{
+		File:    s.File,
+		Module:  s.Module,
+		Version: s.Version,
+	}
+}

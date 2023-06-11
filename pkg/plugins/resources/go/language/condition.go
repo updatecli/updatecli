@@ -14,7 +14,7 @@ func (l *Language) Condition(source string, scm scm.ScmHandler, resultCondition 
 	if scm != nil {
 		logrus.Debugln("scm is not supported")
 	}
-	versionToCheck := l.Spec.Version
+	versionToCheck := l.spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source
 	}

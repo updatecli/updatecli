@@ -4,7 +4,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/mitchellh/mapstructure"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -18,31 +17,6 @@ const (
 	// NOINCREMENT disables chart version auto increment
 	NOINCREMENT string = "none"
 )
-
-// Spec defines a specification for an "helmchart" resource
-// parsed from an updatecli manifest file
-type Spec struct {
-	// [target] Defines the Helm Chart file to update.
-	File string `yaml:",omitempty"`
-	// [target] Defines the key to update within the file.
-	Key string `yaml:",omitempty"`
-	// [target] Defines the Chart name path like 'stable/chart'.
-	Name string `yaml:",omitempty"`
-	// [source,condition] Defines the chart location URL.
-	URL string `yaml:",omitempty"`
-	// [target] Defines the value to set for a key
-	Value string `yaml:",omitempty"`
-	// [source,condition] Defines the Chart version, default value set based on a source input value
-	Version string `yaml:",omitempty"`
-	// [target] Defines if a Chart changes, triggers, or not, a Chart version update, accepted values is a comma separated list of "none,major,minor,patch"
-	VersionIncrement string `yaml:",omitempty"`
-	// [target] Enable AppVersion update based in source input.
-	AppVersion bool `yaml:",omitempty"`
-	// VersionFilter provides parameters to specify version pattern and its type like 'regex', 'semver', or just 'latest'.
-	VersionFilter version.Filter `yaml:",omitempty"`
-	// Credentials used to authenticate with OCI registries
-	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
-}
 
 // Chart defines a resource of kind helmchart
 type Chart struct {

@@ -26,7 +26,7 @@ var (
 
 // AMI contains information to manipulate AWS AMI information
 type AMI struct {
-	Spec       Spec
+	spec       Spec
 	ec2Filters []*ec2.Filter
 	apiClient  ec2iface.EC2API
 }
@@ -89,7 +89,7 @@ func New(spec interface{}) (*AMI, error) {
 	}
 
 	return &AMI{
-		Spec:       newSpec,
+		spec:       newSpec,
 		ec2Filters: newFilters,
 		apiClient:  newClient,
 	}, nil

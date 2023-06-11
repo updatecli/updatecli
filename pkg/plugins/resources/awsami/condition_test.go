@@ -40,7 +40,7 @@ func TestCondition(t *testing.T) {
 	imageID := "ami-0a9972d9b4dbdabc7"
 
 	ami := AMI{
-		Spec: Spec{
+		spec: Spec{
 			Region:  "eu-west-1",
 			Filters: Filters{},
 		},

@@ -17,7 +17,7 @@ func (g *Language) Source(workingDir string, resultSource *result.Source) error 
 
 	if resultSource.Information == "" {
 		return fmt.Errorf("no Golang version found matching pattern %q",
-			g.Spec.VersionFilter.Pattern,
+			g.spec.VersionFilter.Pattern,
 		)
 	}
 

@@ -31,7 +31,7 @@ var (
 	dataset = DataSet{
 		{
 			ami: AMI{
-				Spec: Spec{
+				spec: Spec{
 					Filters: Filters{},
 				},
 			},
@@ -45,7 +45,7 @@ var (
 		},
 		{
 			ami: AMI{
-				Spec: Spec{
+				spec: Spec{
 					Region: "eu-west-1",
 					Filters: Filters{
 						{
@@ -85,7 +85,7 @@ var (
 		},
 		{
 			ami: AMI{
-				Spec: Spec{
+				spec: Spec{
 					Region: "eu-west-1",
 					Filters: Filters{
 						{
@@ -112,7 +112,7 @@ var (
 		},
 		{
 			ami: AMI{
-				Spec: Spec{
+				spec: Spec{
 					Filters: Filters{
 						{
 							Name:   "name",

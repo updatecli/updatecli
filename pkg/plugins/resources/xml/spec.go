@@ -16,6 +16,14 @@ var (
 	ErrSpecKeyUndefined  = errors.New("xml key undefined")
 )
 
+func (s Spec) Atomic() Spec {
+	return Spec{
+		File:  s.File,
+		Path:  s.Path,
+		Value: s.Value,
+	}
+}
+
 func (s *Spec) Validate() (errs []error) {
 	if len(s.File) == 0 {
 		errs = append(errs, errors.New(""))

@@ -20,13 +20,13 @@ func (a *AMI) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 
 	// It's an error if the upstream source is empty and the user does not provide any filter
 	// then it mean
-	if source == "" && len(a.Spec.Filters) == 0 {
+	if source == "" && len(a.spec.Filters) == 0 {
 		return ErrNoFilter
 	}
 
 	isFilterDefined := func(filter string) (found bool) {
-		for i := 0; i < len(a.Spec.Filters); i++ {
-			if strings.Compare(a.Spec.Filters[i].Name, filter) == 0 {
+		for i := 0; i < len(a.spec.Filters); i++ {
+			if strings.Compare(a.spec.Filters[i].Name, filter) == 0 {
 				found = true
 				break
 			}
@@ -36,7 +36,7 @@ func (a *AMI) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 
 	// Set image-id to source output if not yet defined
 	if !isFilterDefined("image-id") && len(source) > 0 {
-		a.Spec.Filters = append(a.Spec.Filters, Filter{
+		a.spec.Filters = append(a.spec.Filters, Filter{
 			Name:   "image-id",
 			Values: source,
 		})
@@ -44,7 +44,7 @@ func (a *AMI) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
 		strings.TrimRight(
-			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n "))
+			strings.ReplaceAll(a.spec.String(), "\n", "\n  "), "\n "))
 
 	foundAMI, err := a.getLatestAmiID()
 
@@ -61,7 +61,7 @@ func (a *AMI) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 
 	resultCondition.Result = result.FAILURE
 	resultCondition.Pass = false
-	resultCondition.Description = fmt.Sprintf("no AMI found matching criteria for region %s\n", a.Spec.Region)
+	resultCondition.Description = fmt.Sprintf("no AMI found matching criteria for region %s\n", a.spec.Region)
 
 	return nil
 }

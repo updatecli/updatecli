@@ -85,3 +85,12 @@ type Spec struct {
 	*/
 	Body string `yaml:",inline,omitempty"`
 }
+
+func (s Spec) Atomic() Spec {
+	return Spec{
+		SourceBranch: s.SourceBranch,
+		TargetBranch: s.TargetBranch,
+		Owner:        s.Owner,
+		Repository:   s.Repository,
+	}
+}
