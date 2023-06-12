@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	encodingJson "encoding/json"
+
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
@@ -40,6 +44,8 @@ import (
 )
 
 type ResourceConfig struct {
+	// ID represents a resource ID generated from it's atomic spec
+	ID uuid.UUID
 	// dependson specifies which resources must be executed before the current one
 	DependsOn []string `yaml:",omitempty"`
 	// name specifies the resource name
@@ -66,6 +72,8 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	if _, ok := GetResourceMapping()[kind]; !ok {
 		return nil, fmt.Errorf("⚠ Don't support resource kind: %v", rs.Kind)
 	}
+
+	defer rs.setID()
 
 	switch kind {
 	case "aws/ami":
@@ -237,5 +245,19 @@ func GetResourceMapping() map[string]interface{} {
 		"toml":           &toml.Spec{},
 		"xml":            &xml.Spec{},
 		"yaml":           &yaml.Spec{},
+	}
+}
+
+func (r *ResourceConfig) setID() {
+	jsonSpec, err := encodingJson.Marshal(r.Spec)
+	if err != nil {
+		logrus.Errorln(err)
+		r.ID = uuid.New()
+	}
+
+	r.ID, err = uuid.FromBytes(jsonSpec)
+	if err != nil {
+		logrus.Errorln(err)
+		r.ID = uuid.New()
 	}
 }
