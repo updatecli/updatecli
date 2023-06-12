@@ -9,7 +9,9 @@ extend-exclude = [
 extend-ignore-re = [
     "lQOs.*",
     "lIYEY.*",
-    "mDMEYi.*"
+    "mDMEYi.*",
+    "WRONLY",
+    "nce"
 ]
 
 [default.extend-words]
