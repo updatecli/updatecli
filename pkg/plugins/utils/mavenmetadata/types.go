@@ -13,22 +13,22 @@ type Handler interface {
 
 // metadata hold maven repository Metadata
 type metadata struct {
-	Metadata   xml.Name `xml:"metadata"`
-	GroupID    string   `xml:"groupId"`
-	ArtifactID string   `xml:"artifactId"`
-	Versioning version  `xml:"versioning"`
+	Metadata   xml.Name        `xml:"metadata"`
+	GroupID    string          `xml:"groupId"`
+	ArtifactID string          `xml:"artifactId"`
+	Versioning artifactVersion `xml:"versioning"`
 }
 
 // version hold Version information
-type version struct {
-	Versioning xml.Name `xml:"versioning"`
-	Latest     string   `xml:"latest"`
-	Release    string   `xml:"release"`
-	Versions   versions `xml:"versions"`
+type artifactVersion struct {
+	Versioning xml.Name         `xml:"versioning"`
+	Latest     string           `xml:"latest"`
+	Release    string           `xml:"release"`
+	Versions   artifactVersions `xml:"versions"`
 }
 
 // versions contains the list of available version
-type versions struct {
+type artifactVersions struct {
 	ID      xml.Name `xml:"versions"`
 	Version []string `xml:"version"`
 }
