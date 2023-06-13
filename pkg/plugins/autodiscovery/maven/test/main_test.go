@@ -1,7 +1,6 @@
 package test
 
 import (
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,6 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/test"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestDiscoverManifests(t *testing.T) {
