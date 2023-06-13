@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 type Data struct {
@@ -88,7 +89,7 @@ func Test_New(t *testing.T) {
 				spec: Spec{
 					Release: STABLE,
 				},
-				mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL),
+				mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL, version.Filter{}),
 			},
 		},
 		{
@@ -100,7 +101,7 @@ func Test_New(t *testing.T) {
 				spec: Spec{
 					Release: WEEKLY,
 				},
-				mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL),
+				mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL, version.Filter{}),
 			},
 		},
 		{
