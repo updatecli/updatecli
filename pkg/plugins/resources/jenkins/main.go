@@ -8,6 +8,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Spec defines a specification for a "jenkins" resource
@@ -57,7 +58,7 @@ func New(spec interface{}) (*Jenkins, error) {
 
 	return &Jenkins{
 		spec:             newSpec,
-		mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL),
+		mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL, version.Filter{}),
 	}, nil
 }
 

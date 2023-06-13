@@ -27,6 +27,17 @@ sources:
       groupid: "junit"
       artifactid: "junit"
 
+  getJunitVersion:
+    # https://repo.maven.apache.org/maven2/junit/junit/
+    kind: maven
+    spec:
+      repository: "repo.maven.apache.org/maven2"
+      groupid: "junit"
+      artifactid: "junit"
+      versionfilter:
+        kind: semver
+        pattern: "3.8.x"
+
 conditions:
   checkIfOlderJunitExist:
     kind: maven
