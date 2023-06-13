@@ -92,8 +92,8 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			repos = append(repos, repo.URL)
 		}
 
-		sourceVersionFilterKind := "latest"
-		sourceVersionFilterPattern := "latest"
+		sourceVersionFilterKind := m.versionFilter.Kind
+		sourceVersionFilterPattern := m.versionFilter.Pattern
 		if !m.spec.VersionFilter.IsZero() {
 			sourceVersionFilterKind = m.versionFilter.Kind
 			sourceVersionFilterPattern, err = m.versionFilter.GreaterThanPattern(parentPom.Version)
