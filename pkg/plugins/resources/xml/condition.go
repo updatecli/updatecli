@@ -51,8 +51,7 @@ func (x *XML) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 	}
 
 	if value == elem.Text() {
-		resultCondition.Description = fmt.Sprintf("%s Path %q, from file %q, is correctly set to %s",
-			result.SUCCESS,
+		resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is correctly set to %s",
 			x.spec.Path,
 			resourceFile,
 			value)
