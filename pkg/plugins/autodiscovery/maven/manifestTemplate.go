@@ -15,6 +15,9 @@ sources:
   {{- range $repo := .SourceRepositories }}
         - '{{ $repo }}'
   {{- end }}
+      versionfilter:
+        kind: '{{ .SourceVersionFilterKind }}'
+        pattern: '{{ .SourceVersionFilterPattern }}'
   {{- end }}
 conditions:
   {{ .ConditionArtifactID }}:

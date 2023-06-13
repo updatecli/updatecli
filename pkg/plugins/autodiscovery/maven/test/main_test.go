@@ -1,6 +1,7 @@
 package test
 
 import (
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -40,6 +41,10 @@ func TestDiscoverManifests(t *testing.T) {
 									},
 									GroupID:    "com.jcraft",
 									ArtifactID: "jsch",
+									VersionFilter: version.Filter{
+										Kind:    "latest",
+										Pattern: "latest",
+									},
 								},
 							},
 						},
@@ -100,6 +105,10 @@ func TestDiscoverManifests(t *testing.T) {
 									},
 									GroupID:    "io.jenkins.tools.bom",
 									ArtifactID: "bom-2.346.x",
+									VersionFilter: version.Filter{
+										Kind:    "latest",
+										Pattern: "latest",
+									},
 								},
 							},
 						},
@@ -159,6 +168,10 @@ func TestDiscoverManifests(t *testing.T) {
 									},
 									GroupID:    "org.jenkins-ci.plugins",
 									ArtifactID: "plugin",
+									VersionFilter: version.Filter{
+										Kind:    "latest",
+										Pattern: "latest",
+									},
 								},
 							},
 						},
@@ -212,13 +225,13 @@ func TestDiscoverManifests(t *testing.T) {
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			resource, err := m.New(
+			r, err := m.New(
 				m.Spec{
 					RootDir: tt.rootDir,
 				}, "", "")
 			require.NoError(t, err)
 
-			pipelines, err := resource.DiscoverManifests()
+			pipelines, err := r.DiscoverManifests()
 			require.NoError(t, err)
 
 			for i := range pipelines {

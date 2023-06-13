@@ -16,6 +16,9 @@ autodiscovery:
   scmid: default
   crawlers:
     maven:
+      versionfilter:
+        kind: semver
+        pattern: majoronly
       # To ignore specific path
       #ignore:
       #  - path: <filepath relative to scm repository>
