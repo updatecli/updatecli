@@ -102,7 +102,7 @@ func TestTarget(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			name: "Failing on non existing key by default",
+			name: "Failing on non-existing key by default",
 			spec: Spec{
 				File: "testdata/data.toml",
 				Key:  ".owner.age",
@@ -113,7 +113,7 @@ func TestTarget(t *testing.T) {
 			expectedErrorMsg: errors.New("could not find value for query \".owner.age\" from file \"testdata/data.toml\""),
 		},
 		{
-			name: "Successful update on non existing key",
+			name: "Successful update on non-existing key",
 			spec: Spec{
 				File:             "testdata/data.toml",
 				Key:              ".owner.age",
