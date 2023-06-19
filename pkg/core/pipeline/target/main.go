@@ -3,6 +3,7 @@ package target
 import (
 	"errors"
 	"fmt"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
@@ -43,6 +44,8 @@ type Config struct {
 	DisableSourceInput bool `yaml:",omitempty"`
 	// sourceid specifies where retrieving the default value
 	SourceID string `yaml:",omitempty"`
+	// condition is run to check if the target must be run or not
+	Condition *condition.Condition `yaml:",inline"`
 }
 
 // Check verifies if mandatory Targets parameters are provided and return false if not.
@@ -91,6 +94,21 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	// Ensure the result named contains the up to date target name
 	// after templating
 	t.Result.Name = t.Config.ResourceConfig.Name
+
+	// If there is a condition, applies it
+	if t.Config.Condition != nil {
+		err = t.Config.Condition.Run(source)
+		// If there is an error, this means that the condition rejects the execution
+		// of this target
+		if err != nil {
+			// We log the error...
+			logrus.Error(err)
+			// ... and we don't run the target
+			t.Result.Result = result.SKIPPED
+			t.Result.Description = "Skipped because of condition not met"
+			return nil
+		}
+	}
 
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
