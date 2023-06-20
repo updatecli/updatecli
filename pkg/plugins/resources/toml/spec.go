@@ -22,12 +22,12 @@ type Spec struct {
 	Multiple bool `yaml:",omitempty" jsonschema:"-"`
 	// [s] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [t] AllowsMissingKey allows non-existing keys. If the key does not exist, the key is created if AllowsMissingKey is true, otherwise an error is raised (the default)
-	/* 
-	  [t] AllowsMissingKey allows non-existing keys. If the key does not exist, the key is created if            AllowsMissingKey is true, otherwise an error is raised (the default)
+	/*
+	  [t] CreateMissingKey allows non-existing keys. If the key does not exist, the key is created if AllowsMissingKey
+	  is true, otherwise an error is raised (the default).
 	  Only supported if Key is used
-	*/ 
-	AllowsMissingKey bool `yaml:",omitempty"`
+	*/
+	CreateMissingKey bool `yaml:",omitempty"`
 }
 
 var (

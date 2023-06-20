@@ -117,7 +117,7 @@ func TestTarget(t *testing.T) {
 			spec: Spec{
 				File:             "testdata/data.toml",
 				Key:              ".owner.age",
-				AllowsMissingKey: true,
+				CreateMissingKey: true,
 			},
 			sourceInput:    "50",
 			expectedResult: true,

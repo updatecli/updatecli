@@ -52,7 +52,7 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			}
 
 		case false:
-			if t.spec.AllowsMissingKey {
+			if t.spec.CreateMissingKey {
 				queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
 				if err != nil {
 					return err
