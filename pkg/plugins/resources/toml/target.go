@@ -22,7 +22,7 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		// Target doesn't support updating files on remote http location
 		if strings.HasPrefix(filename, "https://") ||
 			strings.HasPrefix(filename, "http://") {
-			return fmt.Errorf("URL scheme is not supported for Json target: %q", t.spec.File)
+			return fmt.Errorf("URL scheme is not supported for Toml target: %q", t.spec.File)
 		}
 
 		if err := t.contents[i].Read(rootDir); err != nil {
@@ -52,12 +52,18 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			}
 
 		case false:
-			queryResult, err := t.contents[i].Query(t.spec.Key)
-			if err != nil {
-				return err
+			if t.spec.CreateMissingKey {
+				queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
+				if err != nil {
+					return err
+				}
+			} else {
+				queryResult, err := t.contents[i].Query(t.spec.Key)
+				if err != nil {
+					return err
+				}
+				queryResults = append(queryResults, queryResult)
 			}
-
-			queryResults = append(queryResults, queryResult)
 
 		}
 
