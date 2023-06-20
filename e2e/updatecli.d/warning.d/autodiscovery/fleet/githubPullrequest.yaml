@@ -28,3 +28,6 @@ autodiscovery:
       # - path: <filepath relative to scm repository>
       #only:
       #  - path: <filepath relative to scm repository>
+      versionfilter:
+        kind: semver
+        pattern: patch

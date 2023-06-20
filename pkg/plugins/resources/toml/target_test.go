@@ -101,6 +101,27 @@ func TestTarget(t *testing.T) {
 			sourceInput:    "Jack",
 			expectedResult: false,
 		},
+		{
+			name: "Failing on non-existing key by default",
+			spec: Spec{
+				File: "testdata/data.toml",
+				Key:  ".owner.age",
+			},
+			sourceInput:      "50",
+			expectedResult:   false,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find value for query \".owner.age\" from file \"testdata/data.toml\""),
+		},
+		{
+			name: "Successful update on non-existing key",
+			spec: Spec{
+				File:             "testdata/data.toml",
+				Key:              ".owner.age",
+				CreateMissingKey: true,
+			},
+			sourceInput:    "50",
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testData {

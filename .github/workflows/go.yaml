@@ -1,6 +1,6 @@
 name: Go
 on:
-  workflow_dispatch:
+  workflow_dispatch: null
   push:
     branches:
       - main
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.20.4
+          go-version: 1.20.5
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
@@ -29,7 +29,7 @@ jobs:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
           # we always use the latest patch version.
-          version: v1.52
+          version: v1.53
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:

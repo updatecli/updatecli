@@ -38,7 +38,9 @@ func (d *Dockerfile) target(source string, dryRun bool, resultTarget *result.Tar
 	}
 
 	if len(changedLines) == 0 {
-		logrus.Debugf("empty file detected %q, nothing to do", d.spec.File)
+		logrus.Debugf("no change detected %q, nothing else to do", d.spec.File)
+		resultTarget.Changed = false
+		resultTarget.Result = result.SUCCESS
 		return nil
 	}
 

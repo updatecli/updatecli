@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 var (
@@ -34,6 +35,8 @@ type Spec struct {
 	ArtifactID string `yaml:",omitempty"`
 	// Specifies the maven artifact version
 	Version string `yaml:",omitempty"`
+	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
 // Maven defines a resource of kind "maven"
@@ -76,7 +79,7 @@ func New(spec interface{}) (*Maven, error) {
 
 		newResource.metadataHandlers = append(
 			newResource.metadataHandlers,
-			mavenmetadata.New(u.String()))
+			mavenmetadata.New(u.String(), newSpec.VersionFilter))
 
 		return newResource, nil
 	}
@@ -95,7 +98,7 @@ func New(spec interface{}) (*Maven, error) {
 
 		newResource.metadataHandlers = append(
 			newResource.metadataHandlers,
-			mavenmetadata.New(u.String()))
+			mavenmetadata.New(u.String(), newSpec.VersionFilter))
 	}
 
 	mavenCentralNotFound, err := isRepositoriesContainsMavenCentral(newSpec.Repositories)
@@ -114,7 +117,7 @@ func New(spec interface{}) (*Maven, error) {
 
 		newResource.metadataHandlers = append(
 			newResource.metadataHandlers,
-			mavenmetadata.New(u.String()))
+			mavenmetadata.New(u.String(), newSpec.VersionFilter))
 	}
 
 	return newResource, nil
