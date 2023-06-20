@@ -50,7 +50,7 @@ func (g *Gitea) Clone() (string, error) {
 	g.setDirectory()
 
 	err := g.nativeGitHandler.Clone(
-		g.Spec.User,
+		g.Spec.Username,
 		g.Spec.Token,
 		g.GetURL(),
 		g.GetDirectory())
