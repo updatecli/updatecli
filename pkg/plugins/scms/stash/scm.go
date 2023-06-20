@@ -45,7 +45,7 @@ func (s *Stash) Clone() (string, error) {
 	s.setDirectory()
 
 	err := s.nativeGitHandler.Clone(
-		s.Spec.User,
+		s.Spec.Username,
 		s.Spec.Token,
 		s.GetURL(),
 		s.GetDirectory())
