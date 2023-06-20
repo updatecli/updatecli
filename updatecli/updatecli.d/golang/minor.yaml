@@ -30,7 +30,7 @@ autodiscovery:
     golang/gomod:
       versionfilter:
         kind: semver
-        pattern: minor
+        pattern: minoronly
       ignore:
         - modules:
             # Ignoring the following modules as they do not publish release
