@@ -20,6 +20,8 @@ var (
 
 // Target defines which file needs to be updated based on source output
 type Target struct {
+	// ID holds the resource ID
+	ID string
 	// Result store the condition result after a target run.
 	Result result.Target
 	Config Config
@@ -85,6 +87,12 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	target, err := resource.New(t.Config.ResourceConfig)
 	if err != nil {
 		failTargetRun()
+		return err
+	}
+
+	t.ID, err = resource.GetAtomicID(target)
+	if err != nil {
+		t.Result.Result = result.FAILURE
 		return err
 	}
 

@@ -1,13 +1,13 @@
 package resource
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"strings"
 
+	"encoding/base64"
 	encodingJson "encoding/json"
 
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
@@ -44,8 +44,6 @@ import (
 )
 
 type ResourceConfig struct {
-	// ID represents a resource ID generated from it's atomic spec
-	ID uuid.UUID
 	// dependson specifies which resources must be executed before the current one
 	DependsOn []string `yaml:",omitempty"`
 	// name specifies the resource name
@@ -72,8 +70,6 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	if _, ok := GetResourceMapping()[kind]; !ok {
 		return nil, fmt.Errorf("⚠ Don't support resource kind: %v", rs.Kind)
 	}
-
-	defer rs.setID()
 
 	switch kind {
 	case "aws/ami":
@@ -248,16 +244,16 @@ func GetResourceMapping() map[string]interface{} {
 	}
 }
 
-func (r *ResourceConfig) setID() {
-	jsonSpec, err := encodingJson.Marshal(r.Spec)
+func GetAtomicID(r Resource) (string, error) {
+
+	jsonSpec, err := encodingJson.Marshal(r.GetAtomicSpec())
+
 	if err != nil {
-		logrus.Errorln(err)
-		r.ID = uuid.New()
+		return "", err
 	}
 
-	r.ID, err = uuid.FromBytes(jsonSpec)
-	if err != nil {
-		logrus.Errorln(err)
-		r.ID = uuid.New()
-	}
+	hash := sha256.New()
+	hash.Write(jsonSpec)
+
+	return base64.URLEncoding.EncodeToString(hash.Sum(nil)), nil
 }

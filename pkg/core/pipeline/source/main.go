@@ -16,6 +16,8 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
+	// ID holds the resource ID
+	ID string
 	// Changelog holds the changelog description
 	Changelog string
 	// Result stores the source result after a source run.
@@ -41,6 +43,12 @@ var (
 func (s *Source) Run() (err error) {
 
 	source, err := resource.New(s.Config.ResourceConfig)
+	if err != nil {
+		s.Result.Result = result.FAILURE
+		return err
+	}
+
+	s.ID, err = resource.GetAtomicID(source)
 	if err != nil {
 		s.Result.Result = result.FAILURE
 		return err

@@ -20,6 +20,8 @@ var (
 // Condition defines which condition needs to be met
 // in order to update targets based on the source output
 type Condition struct {
+	// ID holds the resource ID
+	ID string
 	// Result stores the condition result after a condition run.
 	Result result.Condition
 	// Config defines condition input parameters
@@ -46,6 +48,12 @@ func (c *Condition) Run(source string) (err error) {
 
 	condition, err := resource.New(c.Config.ResourceConfig)
 	if err != nil {
+		return err
+	}
+
+	c.ID, err = resource.GetAtomicID(condition)
+	if err != nil {
+		c.Result.Result = result.FAILURE
 		return err
 	}
 
