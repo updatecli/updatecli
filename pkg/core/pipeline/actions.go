@@ -2,7 +2,9 @@ package pipeline
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -29,7 +31,7 @@ func (p *Pipeline) RunActions() error {
 	}
 
 	for id, action := range p.Actions {
-		relatedTargets, err := p.SearchAssociatedTargetsID(id)
+		relatedTargets, err := p.searchAssociatedTargetsID(id)
 		if err != nil {
 			logrus.Errorf(err.Error())
 			continue
@@ -62,7 +64,7 @@ func (p *Pipeline) RunActions() error {
 			return err
 		}
 
-		failedTargetIDs, attentionTargetIDs, _, skippedTargetIDs := p.GetTargetsIDByResult(relatedTargets)
+		failedTargetIDs, attentionTargetIDs, _, skippedTargetIDs := p.getTargetsIDByResult(relatedTargets)
 
 		/*
 			Better for ID to use hash string
@@ -78,7 +80,7 @@ func (p *Pipeline) RunActions() error {
 
 			actionTarget := reports.ActionTarget{
 				// Better for ID to use hash string
-				ID:          fmt.Sprintf("%x", sha256.Sum256([]byte(t))),
+				ID:          p.Targets[t].ID,
 				Title:       p.Targets[t].Config.Name,
 				Description: p.Targets[t].Result.Description,
 			}
@@ -117,7 +119,10 @@ func (p *Pipeline) RunActions() error {
 			pipelineTitle = p.Name
 		}
 
-		action.Report.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(p.Title+actionTitle)))
+		action.Report.ID, err = p.getActionID(id)
+		if err != nil {
+			return err
+		}
 		action.Report.Title = actionTitle
 		action.Report.PipelineTitle = pipelineTitle
 
@@ -160,8 +165,8 @@ func (p *Pipeline) RunActions() error {
 	return nil
 }
 
-// GetTargetsIDByResult return a list of target ID per result type
-func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
+// getTargetsIDByResult return a list of target ID per result type
+func (p *Pipeline) getTargetsIDByResult(targetIDs []string) (
 	failedTargetsID, attentionTargetsID, successTargetsID, skippedTargetsID []string) {
 
 	for _, targetID := range targetIDs {
@@ -184,8 +189,8 @@ func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
 	return failedTargetsID, attentionTargetsID, successTargetsID, skippedTargetsID
 }
 
-// SearchAssociatedTargetsID search for targets related to an action based on a scm configuration
-func (p *Pipeline) SearchAssociatedTargetsID(actionID string) ([]string, error) {
+// searchAssociatedTargetsID search for targets related to an action based on a scm configuration
+func (p *Pipeline) searchAssociatedTargetsID(actionID string) ([]string, error) {
 
 	scmid := p.Actions[actionID].Config.ScmID
 
@@ -217,4 +222,30 @@ func getActionTitle(action action.Action) string {
 		}
 	}
 	return "No action title could be found"
+}
+
+// getActionID generate an action ID based on each associated target ID
+func (p *Pipeline) getActionID(actionID string) (string, error) {
+
+	scmid := p.Actions[actionID].Config.ScmID
+
+	if len(scmid) == 0 {
+		return "", fmt.Errorf("scmid %q not found for the action id %q", scmid, actionID)
+	}
+	targetIDs := []string{}
+
+	for _, target := range p.Targets {
+		if target.Config.SCMID == scmid {
+			targetIDs = append(targetIDs, target.ID)
+		}
+	}
+
+	// Sort to ensure that that ID generated out of the target ID do not change
+	// over pipeline execution
+	sort.Strings(targetIDs)
+
+	hash := sha256.New()
+	hash.Write([]byte(strings.Join(targetIDs, "")))
+
+	return base64.URLEncoding.EncodeToString(hash.Sum(nil)), nil
 }
