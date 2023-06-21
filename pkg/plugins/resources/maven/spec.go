@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Spec defines a specification for a "maven" resource
@@ -21,6 +22,8 @@ type Spec struct {
 	ArtifactID string `yaml:",omitempty"`
 	// Specifies the maven artifact version
 	Version string `yaml:",omitempty"`
+	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
 func (s Spec) Atomic() Spec {
