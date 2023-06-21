@@ -2,9 +2,9 @@ scms:
   default:
     kind: github
     spec:
-      branch: master
-      owner: ruby
-      repository: ruby
+      branch: main
+      owner: updatecli
+      repository: updatecli
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
     disabled: false
@@ -21,11 +21,4 @@ conditions:
     kind: gittag
     scmid: default
     sourceid: default
-  master:
-    name: Get Latest committed branch
-    kind: gittag
-    scmid: default
-    disablesourceinput: true
-    spec:
-      tag: v3_2_2
 
