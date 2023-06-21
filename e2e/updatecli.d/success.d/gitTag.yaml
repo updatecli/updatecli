@@ -1,0 +1,31 @@
+scms:
+  default:
+    kind: github
+    spec:
+      branch: master
+      owner: ruby
+      repository: ruby
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+    disabled: false
+
+sources:
+  default:
+    name: Get Latest committed branch
+    kind: gittag
+    scmid: default
+
+conditions:
+  default:
+    name: Get Latest committed branch
+    kind: gittag
+    scmid: default
+    sourceid: default
+  master:
+    name: Get Latest committed branch
+    kind: gittag
+    scmid: default
+    disablesourceinput: true
+    spec:
+      tag: v3_2_2
+
