@@ -33,5 +33,4 @@ func (s Spec) Atomic() Spec {
 		URL:        s.URL,
 		Tag:        s.Tag,
 	}
-
 }
