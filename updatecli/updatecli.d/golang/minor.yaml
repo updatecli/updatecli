@@ -15,7 +15,7 @@ actions:
         # The action title is used to define the pullrequest title
         # Since we use the groupby: we need to be sure that the pullrequest title
         # is the same for all the subpipeline.
-        title: Bump Minor version for Golang module
+        title: Bump Minor version of Golang module
         kind: github/pullrequest
         scmid: default
         spec:

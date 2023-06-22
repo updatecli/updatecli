@@ -1,4 +1,4 @@
-name: "Bump Patch version for Golang module"
+name: "Bump Minor version for Golang module"
 
 scms:
   default:
@@ -12,15 +12,12 @@ scms:
 
 actions:
     default:
-        # The action title is used to define the pullrequest title
-        # Since we use the groupby: we need to be sure that the pullrequest title
-        # is the same for all the subpipeline.
-        title: Bump Patch version of Golang module
         kind: github/pullrequest
         scmid: default
         spec:
           labels:
             - "dependencies"
+            - "enhancement"
 
 autodiscovery:
   scmid: default
@@ -30,7 +27,7 @@ autodiscovery:
     golang/gomod:
       versionfilter:
         kind: semver
-        pattern: patch
+        pattern: majoronly
       ignore:
         - modules:
             # Ignoring the following modules as they do not publish release
@@ -44,7 +41,6 @@ autodiscovery:
             github.com/iancoleman/orderedmap: ""
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             golang.org/x/time: ""
-
       only:
         # This repository contains other go.sum file used for testing.
         # So we want to be sure that we only update the one at the root of the repository
