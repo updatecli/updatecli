@@ -753,7 +753,9 @@ func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 	listOfDatedTags := []DatedTag{}
 
 	err = tagrefs.ForEach(func(tagRef *plumbing.Reference) error {
-		revision := plumbing.Revision(tagRef.Name().String())
+		// cfr https://github.com/updatecli/updatecli/issues/1392
+		// using reference hash instead of reference name
+		revision := plumbing.Revision(tagRef.Hash().String())
 		tagCommitHash, err := r.ResolveRevision(revision)
 		if err != nil {
 			return err
