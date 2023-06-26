@@ -14,6 +14,8 @@ import (
 // Token return the token for a specific auth domain
 func Token(audience string) (string, error) {
 
+	audience = sanitizeTokenID(audience)
+
 	/*
 		Exit early if the environment variable "UPDATECLI_API_TOKEN"
 		contains a value.

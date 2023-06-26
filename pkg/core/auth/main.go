@@ -99,9 +99,9 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 		encodedAudience := make([]byte, base64.StdEncoding.EncodedLen(len(audience)))
 		base64.StdEncoding.Encode(encodedAudience, []byte(audience))
 
-		fmt.Printf("%q - %q", audience, string(encodedAudience[:]))
+		fmt.Printf("%q - %q", audience, sanitizeTokenID(string(encodedAudience[:])))
 
-		viper.Set(fmt.Sprintf("auths.%s.auth", string(encodedAudience[:])), token)
+		viper.Set(fmt.Sprintf("auths.%s.auth", sanitizeTokenID(string(encodedAudience[:]))), token)
 		viper.SetConfigFile(updatecliConfigPath)
 
 		err = viper.WriteConfig()
@@ -265,4 +265,10 @@ func initConfigFile() (string, error) {
 	}
 
 	return filepath.Join(updatecliConfigDir, "config.json"), nil
+}
+
+func sanitizeTokenID(token string) string {
+	token = strings.TrimPrefix(token, "https://")
+	token = strings.TrimPrefix(token, "http://")
+	return token
 }
