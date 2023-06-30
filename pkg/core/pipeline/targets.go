@@ -64,7 +64,7 @@ func (p *Pipeline) RunTargets() error {
 
 		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
 
-		report = &target.Result
+		report = target.Result
 
 		// Update report name as the target configuration might has been updated (templated values)
 		report.Name = target.Config.Name

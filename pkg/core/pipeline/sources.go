@@ -52,7 +52,7 @@ func (p *Pipeline) RunSources() error {
 			source.Result.Result = result.FAILURE
 
 			p.Sources[id] = source
-			p.Report.Sources[id] = &source.Result
+			p.Report.Sources[id] = source.Result
 
 			logrus.Errorf("%s %v\n", source.Result, err)
 			continue
@@ -65,7 +65,7 @@ func (p *Pipeline) RunSources() error {
 		}
 
 		p.Sources[id] = source
-		p.Report.Sources[id] = &source.Result
+		p.Report.Sources[id] = source.Result
 	}
 
 	return err
