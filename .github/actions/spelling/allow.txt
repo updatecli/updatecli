@@ -13,4 +13,6 @@ WRONLY
 nirasan
 skratchdot
 pkce
-
+errmsg
+authdata
+APIURL
