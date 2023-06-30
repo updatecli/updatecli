@@ -25,16 +25,26 @@ var (
 	DefaultReportURL = "app.updatecli.io"
 	// DefaultReportAPIURL defines the default updatecli report url
 	DefaultReportAPIURL = "app.updatecli.io/api"
+
+	// EnvReportURL defines the default environment variable use to define the updatecli report url
+	EnvReportURL = "UPDATECLI_REPORT_URL"
+	// EnvReportAPIURL defines the default environment variable use to define the updatecli report url
+	EnvReportAPIURL = "UPDATECLI_REPORT_API_URL"
 )
 
 // Publish publish a pipeline report to the updatecli api
 func (r Report) Publish() error {
 
-	reportApiURL, err := parseURL(auth.OauthAudience, "UPDATECLI_REPORT_API_URL", DefaultReportAPIURL)
+	err := r.updateID()
+	if err != nil {
+		return fmt.Errorf("generating report IDs: %w", err)
+	}
+
+	reportApiURL, err := parseURL(auth.OauthAudience, EnvReportAPIURL, DefaultReportAPIURL)
 	if err != nil {
 		return fmt.Errorf("parsing report API URL: %w", err)
 	}
-	reportURL, err := parseURL("", "UPDATECLI_REPORT_URL", DefaultReportURL)
+	reportURL, err := parseURL("", EnvReportURL, DefaultReportURL)
 	if err != nil {
 		return fmt.Errorf("parsing report URL: %w", err)
 	}
@@ -55,7 +65,7 @@ func (r Report) Publish() error {
 
 	bodyReader := bytes.NewReader(jsonBody)
 
-	u := reportApiURL.JoinPath("api", "pipeline", "reports")
+	u := reportApiURL.JoinPath("pipeline", "reports")
 	if err != nil {
 		return fmt.Errorf("generating URL: %w", err)
 	}
@@ -96,7 +106,8 @@ func (r Report) Publish() error {
 	}
 
 	d := struct {
-		ID string
+		ReportID string
+		Message  string
 	}{}
 
 	err = json.Unmarshal(data, &d)
@@ -105,7 +116,7 @@ func (r Report) Publish() error {
 		return err
 	}
 
-	logrus.Printf("\t* %q", reportURL.JoinPath("pipeline", "reports", d.ID).String())
+	logrus.Printf("Report available on:\n\t * %q", reportURL.JoinPath("pipeline", "reports", d.ReportID).String())
 
 	return nil
 }
@@ -113,14 +124,14 @@ func (r Report) Publish() error {
 func (r Reports) Publish() error {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Report")+1))
+	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
 
 	for _, report := range r {
 		err := report.Publish()
 		if err != nil &&
 			!errors.Is(err, ErrNoBearerToken) &&
 			!errors.Is(err, ErrNoReportAPIURL) {
-			logrus.Debugf("publish report: %s", err)
+			logrus.Errorf("publish report: %s", err)
 		}
 	}
 	return nil
@@ -136,7 +147,7 @@ func parseURL(param, env, def string) (url.URL, error) {
 		if err != nil {
 			return *u, fmt.Errorf("parsing URL: %w", err)
 		}
-	} else if os.Getenv("UPDATECLI_REPORT_URL") != "" {
+	} else if os.Getenv(env) != "" {
 		u, err = url.Parse(os.Getenv(env))
 		if err != nil {
 			return *u, fmt.Errorf("parsing URL: %w", err)
