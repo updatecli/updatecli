@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -42,14 +41,26 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 		clientID = OauthClientID
 	}
 
-	// construct the authorization URL (with Auth0 as the authorization provider)
-	authorizationURL := fmt.Sprintf(
-		"https://%s/authorize?audience=%s"+
-			"&scope=openid"+
-			"&response_type=code&client_id=%s"+
-			"&code_challenge=%s"+
-			"&code_challenge_method=S256&redirect_uri=%s",
-		authDomain, audience, clientID, codeChallenge, redirectURL)
+	authDomain = setDefaultHTTPSScheme(authDomain)
+	audience = setDefaultHTTPSScheme(audience)
+
+	authorizationURL, err := url.Parse(authDomain)
+	if err != nil {
+		logrus.Errorln(err)
+		return
+	}
+
+	authorizationURL = authorizationURL.JoinPath("authorize")
+
+	query := authorizationURL.Query()
+	query.Add("audience", audience)
+	query.Add("scope", "openid")
+	query.Add("response_type", "code")
+	query.Add("client_id", clientID)
+	query.Add("code_challenge", codeChallenge)
+	query.Add("code_challenge_method", "S256")
+	query.Add("redirect_uri", redirectURL)
+	authorizationURL.RawQuery = query.Encode()
 
 	// start a web server to listen on a callback URL
 	server := &http.Server{
@@ -59,11 +70,20 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 
 	// define a handler that will get the authorization code, call the token endpoint, and close the HTTP server
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
 		// get the authorization code
 		code := r.URL.Query().Get("code")
-		if code == "" {
-			fmt.Println("updatecli: Url Param 'code' is missing")
-			_, err := io.WriteString(w, "Error: could not find 'code' URL parameter\n")
+		error := r.URL.Query().Get("error")
+		errorDescription := r.URL.Query().Get("error_description")
+
+		if error != "" {
+			_, err := io.WriteString(w, fmt.Sprintf("Error:\n\t%s\n", error))
+			if err != nil {
+				logrus.Errorln(err)
+				return
+			}
+
+			_, err = io.WriteString(w, fmt.Sprintf("\t%s", errorDescription))
 			if err != nil {
 				logrus.Errorln(err)
 				return
@@ -74,17 +94,34 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 			return
 		}
 
-		// trade the authorization code and the code verifier for an access token
-		codeVerifier := CodeVerifier.String()
-		token, err := getAccessToken(authDomain, clientID, codeVerifier, code, redirectURL)
-		if err != nil {
-			fmt.Println("updatecli: could not get access token")
-			_, err := io.WriteString(w, "Error: could not retrieve access token\n")
+		if code == "" {
+			errmsg := "could not find 'code' URL parameter\n"
+			_, err := io.WriteString(w, fmt.Sprintf("Error: %s", errmsg))
 			if err != nil {
 				logrus.Errorln(err)
 				return
 			}
 
+			logrus.Debugln(errmsg)
+
+			// close the HTTP server and return
+			cleanup(server)
+			return
+		}
+
+		// trade the authorization code and the code verifier for an access token
+		codeVerifier := CodeVerifier.String()
+		token, err := getAccessToken(authDomain, clientID, codeVerifier, code, redirectURL)
+		if err != nil {
+
+			errmsg := "could not retrieve access token\n"
+			_, err := io.WriteString(w, fmt.Sprintf("Error: %s", errmsg))
+			if err != nil {
+				logrus.Errorln(err)
+				return
+			}
+
+			logrus.Debugln(errmsg)
 			// close the HTTP server and return
 			cleanup(server)
 			return
@@ -96,17 +133,27 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 			return
 		}
 
-		encodedAudience := make([]byte, base64.StdEncoding.EncodedLen(len(audience)))
-		base64.StdEncoding.Encode(encodedAudience, []byte(audience))
+		logrus.Debugf("Updatecli configuration located at %q", updatecliConfigPath)
 
-		fmt.Printf("%q - %q", audience, sanitizeTokenID(string(encodedAudience[:])))
+		encodedAudience := base64.StdEncoding.EncodeToString([]byte(sanitizeTokenID(audience)))
 
-		viper.Set(fmt.Sprintf("auths.%s.auth", sanitizeTokenID(string(encodedAudience[:]))), token)
 		viper.SetConfigFile(updatecliConfigPath)
+
+		if _, err := os.Stat(updatecliConfigPath); err == nil {
+			err = viper.ReadInConfig()
+			if err != nil {
+				logrus.Errorln(err)
+				// close the HTTP server and return
+				cleanup(server)
+				return
+			}
+		}
+
+		viper.Set(fmt.Sprintf("auths.%s.auth", strings.ToLower(encodedAudience)), token)
 
 		err = viper.WriteConfig()
 		if err != nil {
-			fmt.Println("updatecli: could not write config file")
+			logrus.Errorln("updatecli: could not write config file")
 			_, err := io.WriteString(w, "Error: could not store access token\n")
 			if err != nil {
 				logrus.Errorln(err)
@@ -132,7 +179,7 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 			return
 		}
 
-		fmt.Println("Successfully logged into updatecli API.")
+		logrus.Println("Successfully logged into updatecli API.")
 
 		// close the HTTP server
 		cleanup(server)
@@ -141,7 +188,7 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 	// parse the redirect URL for the port number
 	u, err := url.Parse(redirectURL)
 	if err != nil {
-		fmt.Printf("updatecli: bad redirect URL: %s\n", err)
+		logrus.Errorf("updatecli: bad redirect URL: %s\n", err)
 		os.Exit(1)
 	}
 
@@ -149,14 +196,19 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 	port := fmt.Sprintf(":%s", u.Port())
 	l, err := net.Listen("tcp", port)
 	if err != nil {
-		fmt.Printf("updatecli: can't listen to port %s: %s\n", port, err)
+		logrus.Errorf("updatecli: can't listen to port %s: %s\n", port, err)
 		os.Exit(1)
 	}
 
 	// open a browser window to the authorizationURL
-	err = open.Start(authorizationURL)
+	logrus.Debugf("Opening: %q", authorizationURL.String())
+
+	err = open.Start(authorizationURL.String())
 	if err != nil {
-		fmt.Printf("updatecli: can't open browser to URL %s: %s\n", authorizationURL, err)
+		logrus.Printf("updatecli: can't open browser to URL %s: %s\n",
+			authorizationURL.String(),
+			err,
+		)
 		os.Exit(1)
 	}
 
@@ -171,23 +223,29 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 
 // getAccessToken trades the authorization code retrieved from the first OAuth2 log for an access token
 func getAccessToken(issuer, clientID, codeVerifier, authorizationCode, callbackURL string) (string, error) {
-	// set the url and form-encoded data for the POST to the access token endpoint
-	url := fmt.Sprintf("https://%s/oauth/token", issuer)
+	u, err := url.Parse(issuer)
+	if err != nil {
+		return "", err
+	}
 
-	data := fmt.Sprintf(
-		"grant_type=authorization_code&client_id=%s"+
-			"&code_verifier=%s"+
-			"&code=%s"+
-			"&redirect_uri=%s",
-		clientID, codeVerifier, authorizationCode, callbackURL)
-	payload := strings.NewReader(data)
+	u = u.JoinPath("oauth", "token")
+
+	data := url.Values{}
+	data.Set("grant_type", "authorization_code")
+	data.Set("client_id", clientID)
+	data.Set("code_verifier", codeVerifier)
+	data.Set("code", authorizationCode)
+	data.Set("scope", "offline_access")
+	data.Set("redirect_uri", callbackURL)
+
+	payload := strings.NewReader(data.Encode())
 
 	// create the request and execute it
-	req, _ := http.NewRequest("POST", url, payload)
+	req, _ := http.NewRequest("POST", u.String(), payload)
 	req.Header.Add("content-type", "application/x-www-form-urlencoded")
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("updatecli: HTTP error: %s", err)
+		logrus.Printf("updatecli: HTTP error: %s", err)
 		return "", err
 	}
 
@@ -199,7 +257,7 @@ func getAccessToken(issuer, clientID, codeVerifier, authorizationCode, callbackU
 	// unmarshal the json into a string map
 	err = json.Unmarshal(body, &responseData)
 	if err != nil {
-		fmt.Printf("updatecli: JSON error: %s", err)
+		logrus.Printf("updatecli: JSON error: %s", err)
 		return "", err
 	}
 
@@ -216,7 +274,7 @@ func cleanup(server *http.Server) {
 }
 
 func getAvailablePort() (string, error) {
-	logrus.Debugln("searching for available port on localhost")
+	logrus.Debugln("searching available port on localhost")
 	port := 8080
 	maxPort := 8090
 
@@ -245,30 +303,4 @@ func getAvailablePort() (string, error) {
 		return "", fmt.Errorf("available port not found")
 	}
 	return strconv.Itoa(port), nil
-}
-
-// initConfigFile creates Updatecli config directory
-func initConfigFile() (string, error) {
-	userConfigDir, err := os.UserConfigDir()
-	if err != nil {
-		logrus.Errorln(err)
-		return "", err
-	}
-
-	updatecliConfigDir := filepath.Join(userConfigDir, "updatecli")
-
-	if _, err := os.Stat(updatecliConfigDir); os.IsNotExist(err) {
-		err := os.MkdirAll(updatecliConfigDir, 0755)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return filepath.Join(updatecliConfigDir, "config.json"), nil
-}
-
-func sanitizeTokenID(token string) string {
-	token = strings.TrimPrefix(token, "https://")
-	token = strings.TrimPrefix(token, "http://")
-	return token
 }

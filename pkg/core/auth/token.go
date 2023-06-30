@@ -13,9 +13,6 @@ import (
 
 // Token return the token for a specific auth domain
 func Token(audience string) (string, error) {
-
-	audience = sanitizeTokenID(audience)
-
 	/*
 		Exit early if the environment variable "UPDATECLI_API_TOKEN"
 		contains a value.
@@ -54,13 +51,11 @@ func Token(audience string) (string, error) {
 		return "", err
 	}
 
-	encodedAudience := make([]byte, base64.StdEncoding.EncodedLen(len(audience)))
-	base64.StdEncoding.Encode(encodedAudience, []byte(audience))
+	encodedAudience := base64.StdEncoding.EncodeToString([]byte(sanitizeTokenID(audience)))
 
-	for i := range data.Auths {
-		if strings.EqualFold(i, string(encodedAudience[:])) {
-			return data.Auths[i].Auth, nil
-		}
+	authdata, ok := data.Auths[strings.ToLower(encodedAudience)]
+	if ok {
+		return authdata.Auth, nil
 	}
 
 	return "", fmt.Errorf("token for domain %q not found", audience)
