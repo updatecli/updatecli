@@ -55,6 +55,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
+	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -62,7 +63,6 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
-	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	go.opentelemetry.io/otel v1.14.0 // indirect
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
