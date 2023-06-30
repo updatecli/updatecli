@@ -6,6 +6,8 @@ type SCM struct {
 	URL string
 	// Branch defines the different branches used by Updatecli
 	Branch GitBranch
+	// ID contains a uniq identifier for the condition
+	ID string
 }
 
 type GitBranch struct {
