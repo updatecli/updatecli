@@ -1,11 +1,11 @@
 ---
 archives:
-  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
       - goos: windows
         format: zip
@@ -46,7 +46,7 @@ before:
 brews:
   - name: updatecli
     folder: Formula
-    tap:
+    repository:
       owner: updatecli
       name: homebrew-updatecli
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
