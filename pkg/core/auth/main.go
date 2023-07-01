@@ -77,17 +77,8 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 		errorDescription := r.URL.Query().Get("error_description")
 
 		if error != "" {
-			_, err := io.WriteString(w, fmt.Sprintf("Error:\n\t%s\n", error))
-			if err != nil {
-				logrus.Errorln(err)
-				return
-			}
-
-			_, err = io.WriteString(w, fmt.Sprintf("\t%s", errorDescription))
-			if err != nil {
-				logrus.Errorln(err)
-				return
-			}
+			logrus.Errorf("Error:\n\t%s\n", error)
+			logrus.Errorf("\t%s", errorDescription)
 
 			// close the HTTP server and return
 			cleanup(server)
