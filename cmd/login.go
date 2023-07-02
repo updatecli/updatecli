@@ -15,8 +15,14 @@ var (
 
 	loginCmd = &cobra.Command{
 		Use:   "login",
-		Short: "login is an experimental feature to authenticate with an Updatecli backend service",
+		Short: "[Experimental] login authenticates with the Updatecli service.",
 		Run: func(cmd *cobra.Command, args []string) {
+
+			// TODO: To be removed once not experimental anymore
+			if !experimental {
+				logrus.Warningf("The 'login' feature requires the flag experimental to work, such as:\n\t`updatecli login --experimental`")
+				os.Exit(1)
+			}
 
 			switch len(args) {
 			case 0:
