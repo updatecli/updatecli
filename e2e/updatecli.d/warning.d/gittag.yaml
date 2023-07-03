@@ -1,0 +1,24 @@
+name: End to end test of the gittag resource without any gitpush action
+
+scms:
+  git-repo:
+    kind: git
+    spec:
+      branch: main
+      url: https://github.com/updatecli/updatecli.git
+
+sources:
+  echo-version:
+    name: Returns a (SemVer) valid version to be used with the gittag target, which must not exist in the repositories
+    kind: shell
+    spec:
+      command: echo "0.0.1"
+
+targets:
+  create-git-tag:
+    name: Create the git tag 'v0.0.1' in the git repository
+    kind: gittag
+    scmid: git-repo
+    sourceid: echo-version
+    spec:
+      message: "Created by Updatecli"
