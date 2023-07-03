@@ -33,3 +33,5 @@ coverage.txt
 
 manpages/*
 completions/*
+*.log
+e2e/test_results_e2e*yaml

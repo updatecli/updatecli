@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Target creates a tag if needed from a local git repository, without pushing the tag
@@ -55,7 +56,7 @@ func (gt *GitTag) target(source string, dryRun bool, resultTarget *result.Target
 	resultTarget.Files = []string{""}
 
 	// Fail if a pattern is specified
-	if gt.versionFilter.Pattern != "" {
+	if gt.spec.VersionFilter.Pattern != "" {
 		return fmt.Errorf("target validation error: spec.versionfilter.pattern is not allowed for targets of type gittag")
 	}
 
@@ -73,7 +74,8 @@ func (gt *GitTag) target(source string, dryRun bool, resultTarget *result.Target
 	}
 
 	gt.foundVersion, err = gt.versionFilter.Search(tags)
-	if err != nil && err.Error() != fmt.Sprintf("No version found matching pattern %q", source) {
+	notFoundError := &version.ErrNoVersionFoundForPattern{Pattern: source}
+	if err != nil && err.Error() != notFoundError.Error() {
 		return err
 	}
 

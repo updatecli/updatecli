@@ -2,7 +2,6 @@ package version
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,7 +104,7 @@ func TestSearch(t *testing.T) {
 			},
 			versions: []string{"updatecli-1.0", "updatecli-2.0", "updatecli-3.0"},
 			want:     Version{},
-			wantErr:  fmt.Errorf(`no version found matching pattern "^updatecli-4.(\\d*)$"`),
+			wantErr:  &ErrNoVersionFoundForPattern{Pattern: "^updatecli-4.(\\d*)$"},
 		},
 	}
 	for _, tt := range tests {
@@ -152,7 +151,7 @@ func TestValidate(t *testing.T) {
 				Kind:    "noExist",
 				Pattern: "~2",
 			},
-			wantErr: errors.New(`unsupported version kind "noExist"`),
+			wantErr: &ErrUnsupportedVersionKind{Kind: "noExist"},
 		},
 	}
 	for _, tt := range tests {
@@ -306,7 +305,8 @@ func TestGreaterThanPattern(t *testing.T) {
 				Kind:    SEMVERVERSIONKIND,
 				Pattern: "*",
 			},
-			version: "v0.0.0-20220606043923-3cf50f8a0a29", want: ">=0.0.0-20220606043923-3cf50f8a0a29",
+			version: "v0.0.0-20220606043923-3cf50f8a0a29",
+			want:    ">=0.0.0-20220606043923-3cf50f8a0a29",
 		},
 		{
 			name: "Wrong Semver Version",
@@ -314,7 +314,9 @@ func TestGreaterThanPattern(t *testing.T) {
 				Kind:    SEMVERVERSIONKIND,
 				Pattern: "*",
 			},
-			version: "v0.0.0_20220606043923-3cf50f8a0a29", want: "", wantErr: errors.New("wrong semantic versioning constraint \"v0.0.0_20220606043923-3cf50f8a0a29\""),
+			version: "v0.0.0_20220606043923-3cf50f8a0a29",
+			want:    "",
+			wantErr: &ErrIncorrectSemVerConstraint{SemVerConstraint: "v0.0.0_20220606043923-3cf50f8a0a29"},
 		},
 		{
 			name: "Wrong Semver Constraint",
@@ -322,7 +324,9 @@ func TestGreaterThanPattern(t *testing.T) {
 				Kind:    SEMVERVERSIONKIND,
 				Pattern: "*",
 			},
-			version: "1.0 - 2.0 !!!", want: "", wantErr: errors.New("wrong semantic versioning constraint \"1.0 - 2.0 !!!\""),
+			version: "1.0 - 2.0 !!!",
+			want:    "",
+			wantErr: &ErrIncorrectSemVerConstraint{SemVerConstraint: "1.0 - 2.0 !!!"},
 		},
 	}
 	for _, tt := range tests {
