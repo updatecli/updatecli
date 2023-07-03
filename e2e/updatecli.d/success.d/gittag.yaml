@@ -55,13 +55,19 @@ targets:
     kind: gittag
     scmid: git-repo
     sourceid: echo-version
+    spec:
+      message: "Created by Updatecli"
   create-git-tag-already-exist:
     name: Create the (already existing) latest tag in the git repository
     kind: gittag
     scmid: git-repo
     sourceid: src-git
+    spec:
+      message: "Created by Updatecli"
   create-github-tag:
     name: Create the git tag 'v0.0.1' in the GitHub repository
     kind: gittag
     scmid: github-repo
     sourceid: echo-version
+    spec:
+      message: "Created by Updatecli"
