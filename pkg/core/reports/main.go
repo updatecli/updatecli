@@ -14,6 +14,7 @@ const reportsTpl string = `
 
 REPORTS:
 
+
 {{ range . }}
 {{ if .Err }}
 {{- .Result }} {{ .Name -}}:{{"\n"}}
@@ -39,6 +40,9 @@ REPORTS:
 {{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name }}{{"\n"}}
 {{- end }}
 {{ end }}
+{{- if .ReportURL }}
+{{- "\t"}}=> Report available on {{ .ReportURL -}}{{"\n"}}
+{{- end -}}
 {{- end -}}
 {{ end }}
 `

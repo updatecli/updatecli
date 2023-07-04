@@ -33,7 +33,7 @@ var (
 )
 
 // Publish publish a pipeline report to the updatecli api
-func (r Report) Publish() error {
+func (r *Report) Publish() error {
 
 	err := r.updateID()
 	if err != nil {
@@ -116,23 +116,26 @@ func (r Report) Publish() error {
 		return err
 	}
 
-	logrus.Printf("Report available on:\n\t * %q", reportURL.JoinPath("pipeline", "reports", d.ReportID).String())
+	r.ReportURL = reportURL.JoinPath("pipeline", "reports", d.ReportID).String()
+	logrus.Printf("Report available on:\n\t * %q", r.ReportURL)
 
 	return nil
 }
 
-func (r Reports) Publish() error {
+func (r *Reports) Publish() error {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
 
-	for _, report := range r {
+	reports := *r
+	for i, report := range reports {
 		err := report.Publish()
 		if err != nil &&
 			!errors.Is(err, ErrNoBearerToken) &&
 			!errors.Is(err, ErrNoReportAPIURL) {
 			logrus.Errorf("publish report: %s", err)
 		}
+		reports[i] = report
 	}
 	return nil
 }
