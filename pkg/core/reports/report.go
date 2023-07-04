@@ -48,6 +48,9 @@ REPORTS:
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
+{{- if .reportURL }}
+Report available on {{ .reportURL -}}{{"\n"}}
+{{- end }}
 {{- "\t"}}Source:
 {{ range $ID, $source := .Sources }}
 {{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }} (kind: {{ $source.Kind -}}){{"\n"}}
@@ -78,6 +81,7 @@ type Report struct {
 	Sources    map[string]result.Source
 	Conditions map[string]result.Condition
 	Targets    map[string]result.Target
+	ReportURL  string
 }
 
 // Init initializes a new report for a specific configuration
@@ -135,11 +139,31 @@ func (r *Report) updateID() error {
 			return err
 		}
 
+		/*
+			Always generate a SCM Id even if the scm is empty.
+			I think this information could be useful to quickly identify this scenario
+			That being said, I may revisit this decision in the futur
+		*/
+		condition.Scm.ID, err = getSha256HashFromStruct(condition.Scm)
+		if err != nil {
+			return err
+		}
+
 		r.Conditions[i] = condition
 	}
 
 	for i, source := range r.Sources {
 		source.ID, err = getSha256HashFromStruct(source)
+		if err != nil {
+			return err
+		}
+
+		/*
+			Always generate a SCM Id even if the scm is empty.
+			I think this information could be useful to quickly identify this scenario
+			That being said, I may revisit this decision in the futur
+		*/
+		source.Scm.ID, err = getSha256HashFromStruct(source.Scm)
 		if err != nil {
 			return err
 		}
@@ -152,6 +176,17 @@ func (r *Report) updateID() error {
 		if err != nil {
 			return err
 		}
+
+		/*
+			Always generate a SCM Id even if the scm is empty.
+			I think this information could be useful to quickly identify this scenario
+			That being said, I may revisit this decision in the futur
+		*/
+		target.Scm.ID, err = getSha256HashFromStruct(target.Scm)
+		if err != nil {
+			return err
+		}
+
 		r.Targets[i] = target
 	}
 
