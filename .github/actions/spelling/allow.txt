@@ -10,3 +10,4 @@ minoronly
 majoronly
 nce
 WRONLY
+oidc
