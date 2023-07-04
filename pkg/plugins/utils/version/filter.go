@@ -68,7 +68,7 @@ func (f Filter) Validate() error {
 		}
 	}
 	if !ok {
-		return fmt.Errorf("unsupported version kind %q", f.Kind)
+		return &ErrUnsupportedVersionKind{Kind: f.Kind}
 	}
 	return nil
 }
@@ -124,10 +124,10 @@ func (f *Filter) Search(versions []string) (Version, error) {
 
 		return s.FoundVersion, nil
 	default:
-		return foundVersion, fmt.Errorf("unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
+		return foundVersion, &ErrUnsupportedVersionKindPattern{Pattern: f.Pattern, Kind: f.Kind}
 	}
 
-	return foundVersion, fmt.Errorf("no version found matching pattern %q", f.Pattern)
+	return foundVersion, &ErrNoVersionFoundForPattern{Pattern: f.Pattern}
 }
 
 // IsZero return true if filter is not initialized
@@ -218,7 +218,7 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 			fmt.Println(version)
 			_, err = sv.NewConstraint(version)
 			if err != nil {
-				return "", fmt.Errorf("wrong semantic versioning constraint %q", version)
+				return "", &ErrIncorrectSemVerConstraint{SemVerConstraint: version}
 			}
 			return version, nil
 
@@ -226,5 +226,5 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 			return f.Pattern, nil
 		}
 	}
-	return "", fmt.Errorf("kind %q not supported", f.Kind)
+	return "", &ErrUnsupportedVersionKind{Kind: f.Kind}
 }

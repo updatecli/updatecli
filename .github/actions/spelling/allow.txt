@@ -16,3 +16,4 @@ pkce
 errmsg
 authdata
 APIURL
+oidc
