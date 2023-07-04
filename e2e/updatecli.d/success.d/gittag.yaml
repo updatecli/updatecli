@@ -1,0 +1,73 @@
+name: End to end test of the gittag resource
+
+scms:
+  github-repo:
+    kind: github
+    spec:
+      branch: main
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+  git-repo:
+    kind: git
+    spec:
+      branch: main
+      url: https://github.com/updatecli/updatecli.git
+
+sources:
+  src-git:
+    name: Get the latest git tag through git
+    kind: gittag
+    scmid: git-repo
+  src-github:
+    name: Get the latest git tag through GitHub
+    kind: gittag
+    scmid: github-repo
+  echo-version:
+    name: Returns a (SemVer) valid version to be used with the gittag targets, which must not exist in the repositories
+    kind: shell
+    spec:
+      command: echo "0.0.1"
+
+
+conditions:
+  check-git:
+    name: Check the tag 'v0.30.0' exists in the git repository
+    kind: gittag
+    scmid: git-repo
+    disablesourceinput: true
+    spec:
+      versionfilter:
+        pattern: 'v0.30.0'
+  check-github:
+    name: Check the tag 'v0.30.0' exists in the GitHub repository
+    kind: gittag
+    scmid: github-repo
+    disablesourceinput: true
+    spec:
+      versionfilter:
+        pattern: 'v0.30.0'
+
+targets:
+  create-git-tag:
+    name: Create the git tag 'v0.0.1' in the git repository
+    kind: gittag
+    scmid: git-repo
+    sourceid: echo-version
+    spec:
+      message: "Created by Updatecli"
+  create-git-tag-already-exist:
+    name: Create the (already existing) latest tag in the git repository
+    kind: gittag
+    scmid: git-repo
+    sourceid: src-git
+    spec:
+      message: "Created by Updatecli"
+  create-github-tag:
+    name: Create the git tag 'v0.0.1' in the GitHub repository
+    kind: gittag
+    scmid: github-repo
+    sourceid: echo-version
+    spec:
+      message: "Created by Updatecli"
