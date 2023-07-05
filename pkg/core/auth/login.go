@@ -2,16 +2,16 @@ package auth
 
 import "fmt"
 
-func Login(clientID, authDomain, audience string) error {
+func Login(serviceURL, clientID, issuer, audience string) error {
 	port, err := getAvailablePort()
-
 	if err != nil {
 		return fmt.Errorf("get available port: %w", err)
 	}
 
 	authorizeUser(
+		serviceURL,
 		clientID,
-		authDomain,
+		issuer,
 		audience,
 		fmt.Sprintf("http://localhost:%s", port),
 	)

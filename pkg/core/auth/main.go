@@ -6,7 +6,6 @@ package auth
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -24,21 +23,30 @@ import (
 )
 
 // authorizeUser implements the PKCE OAuth2 flow.
-func authorizeUser(clientID, authDomain, audience, redirectURL string) {
+func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string) error {
 	// initialize the code verifier
 	var CodeVerifier, _ = cv.CreateCodeVerifier()
+	var err error
 
 	// Create code_challenge with S256 method
 	codeChallenge := CodeVerifier.CodeChallengeS256()
 
+	if frontURL != "" {
+		authDomain, audience, clientID, err = getOAUTHInfo(frontURL)
+		// We don't want to exit on error if we fail retrieving oauth config from the endpoint
+		if err != nil {
+			logrus.Errorln(err)
+		}
+	}
+
 	if authDomain == "" {
-		authDomain = OauthIssuer
+		authDomain = DefaultOauthIssuer
 	}
 	if audience == "" {
-		audience = OauthAudience
+		audience = DefaultOauthAudience
 	}
 	if clientID == "" {
-		clientID = OauthClientID
+		clientID = DefaultOauthClientID
 	}
 
 	authDomain = setDefaultHTTPSScheme(authDomain)
@@ -47,7 +55,7 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 	authorizationURL, err := url.Parse(authDomain)
 	if err != nil {
 		logrus.Errorln(err)
-		return
+		return err
 	}
 
 	authorizationURL = authorizationURL.JoinPath("authorize")
@@ -170,7 +178,7 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 			return
 		}
 
-		logrus.Println("Successfully logged into updatecli API.")
+		logrus.Println("Successfully logged into updatecli service.")
 
 		// close the HTTP server
 		cleanup(server)
@@ -206,55 +214,12 @@ func authorizeUser(clientID, authDomain, audience, redirectURL string) {
 	// start the blocking web server loop
 	// this will exit when the handler gets fired and calls server.Close()
 	err = server.Serve(l)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "Server closed") {
 		logrus.Errorln(err)
-		return
-	}
-}
-
-// getAccessToken trades the authorization code retrieved from the first OAuth2 log for an access token
-func getAccessToken(issuer, clientID, codeVerifier, authorizationCode, callbackURL string) (string, error) {
-	u, err := url.Parse(issuer)
-	if err != nil {
-		return "", err
+		return err
 	}
 
-	u = u.JoinPath("oauth", "token")
-
-	data := url.Values{}
-	data.Set("grant_type", "authorization_code")
-	data.Set("client_id", clientID)
-	data.Set("code_verifier", codeVerifier)
-	data.Set("code", authorizationCode)
-	data.Set("scope", "offline_access")
-	data.Set("redirect_uri", callbackURL)
-
-	payload := strings.NewReader(data.Encode())
-
-	// create the request and execute it
-	req, _ := http.NewRequest("POST", u.String(), payload)
-	req.Header.Add("content-type", "application/x-www-form-urlencoded")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		logrus.Printf("updatecli: HTTP error: %s", err)
-		return "", err
-	}
-
-	// process the response
-	defer res.Body.Close()
-	var responseData map[string]interface{}
-	body, _ := io.ReadAll(res.Body)
-
-	// unmarshal the json into a string map
-	err = json.Unmarshal(body, &responseData)
-	if err != nil {
-		logrus.Printf("updatecli: JSON error: %s", err)
-		return "", err
-	}
-
-	// retrieve the access token out of the map, and return to caller
-	accessToken := responseData["access_token"].(string)
-	return accessToken, nil
+	return nil
 }
 
 // cleanup closes the HTTP server
@@ -272,13 +237,11 @@ func getAvailablePort() (string, error) {
 	foundOpenPort := false
 
 	for port < maxPort {
-
 		host := fmt.Sprintf("localhost:%d", port)
 
 		logrus.Debugf("Trying %s\n", host)
 		ln, err := net.Listen("tcp", host)
 		if err != nil {
-			//fmt.Fprintf(os.Stderr, "\t * Can't listen on port %d: %s\n", port, err)
 			logrus.Debugf("can't listen on port %d: %s\n", port, err)
 			// move to next port
 			port = port + 1
