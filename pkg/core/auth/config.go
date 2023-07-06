@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-
-	"github.com/sirupsen/logrus"
 )
 
 // getOAUTHInfo querie the Udash website to retrieve OAUTH configuration
@@ -22,8 +20,7 @@ func getOAUTHInfo(endpointURL string) (issuer string, audience string, clientID 
 
 	URL, err := url.Parse(endpointURL)
 	if err != nil {
-		logrus.Errorln(err)
-		return
+		return "", "", "", fmt.Errorf("parsing endpoint URL %q: %v", endpointURL, err)
 	}
 
 	URL = URL.JoinPath("config.json")
