@@ -142,7 +142,7 @@ func (r *Report) updateID() error {
 		/*
 			Always generate a SCM Id even if the scm is empty.
 			I think this information could be useful to quickly identify this scenario
-			That being said, I may revisit this decision in the futur
+			That being said, I may revisit this decision in the future
 		*/
 		condition.Scm.ID, err = getSha256HashFromStruct(condition.Scm)
 		if err != nil {
@@ -161,7 +161,7 @@ func (r *Report) updateID() error {
 		/*
 			Always generate a SCM Id even if the scm is empty.
 			I think this information could be useful to quickly identify this scenario
-			That being said, I may revisit this decision in the futur
+			That being said, I may revisit this decision in the future
 		*/
 		source.Scm.ID, err = getSha256HashFromStruct(source.Scm)
 		if err != nil {
@@ -180,7 +180,7 @@ func (r *Report) updateID() error {
 		/*
 			Always generate a SCM Id even if the scm is empty.
 			I think this information could be useful to quickly identify this scenario
-			That being said, I may revisit this decision in the futur
+			That being said, I may revisit this decision in the future
 		*/
 		target.Scm.ID, err = getSha256HashFromStruct(target.Scm)
 		if err != nil {

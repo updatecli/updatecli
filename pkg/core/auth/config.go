@@ -7,7 +7,7 @@ import (
 	"net/url"
 )
 
-// getOAUTHInfo querie the Udash website to retrieve OAUTH configuration
+// getOAUTHInfo queries the Udash website to retrieve OAUTH configuration
 func getOAUTHInfo(endpointURL string) (issuer string, audience string, clientID string, err error) {
 
 	data := struct {

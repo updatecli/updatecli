@@ -17,3 +17,6 @@ errmsg
 authdata
 APIURL
 oidc
+udash
+Udash
+CLIENTID
