@@ -1,8 +1,10 @@
 name: Bump updatecli version
+
 pipelineid: cac467f9bdc931266038f8cf363edc865370121deb3954b93e70d0588827a04f
+
 actions:
     default:
-        title: '[updatecli] Bump updatecli version to {{ source "latestVersion" }}'
+        title: 'Bump updatecli version to {{ source "latestVersion" }}'
         kind: github/pullrequest
         spec:
             automerge: true
@@ -23,7 +25,7 @@ scms:
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
             commitmessage:
                 title: 'Bump updatecli version to {{ source "latestVersion" }}'
-        disabled: false
+
 sources:
     latestVersion:
         name: Get latest updatecli release
@@ -33,9 +35,17 @@ sources:
             repository: updatecli
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+
+conditions:
+    container:
+        name: "Ensure latest container image is publish"
+        kind: dockerimage
+        spec:
+          image: ghcr.io/updatecli/updatecli
+
 targets:
     bugReport:
-        name: '[bug-report] Update updatecli version to {{ source "latestVersion" }}'
+        name: 'Update updatecli version to {{ source "latestVersion" }}'
         kind: file
         spec:
             content: '**updatecli**: {{ source `latestVersion` }}'
@@ -43,4 +53,14 @@ targets:
             matchpattern: '\*\*updatecli\*\*: .*'
         scmid: default
         sourceid: latestVersion
-version: 0.34.0
+
+    cosign:
+        name: 'Update updatecli version to {{ source "latestVersion" }}'
+        kind: file
+        spec:
+            content: 'ghcr.io/updatecli/updatecli:{{ source `latestVersion` }}'
+            file: README.adoc
+            matchpattern: 'ghcr.io/updatecli/updatecli:.*'
+        scmid: default
+        sourceid: latestVersion
+
