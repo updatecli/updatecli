@@ -8,13 +8,17 @@ func Login(serviceURL, clientID, issuer, audience string) error {
 		return fmt.Errorf("get available port: %w", err)
 	}
 
-	authorizeUser(
+	err = authorizeUser(
 		serviceURL,
 		clientID,
 		issuer,
 		audience,
 		fmt.Sprintf("http://localhost:%s", port),
 	)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
