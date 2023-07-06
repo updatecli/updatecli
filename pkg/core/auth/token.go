@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,54 +13,91 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	// DefaultEnvVariableAPIURL defines the default environment variable used to retrieve API url
+	DefaultEnvVariableAPIURL string = "UPDATECLI_API_URL"
+	// DefaultEnvVariableToken defines the default environment variable used to retrieve API access token
+	DefaultEnvVariableToken string = "UPDATECLI_TOKEN"
+	// DefaultEnvVariableURL defines the default environment variable used to retrieve url
+	DefaultEnvVariableURL string = "UPDATECLI_URL"
+)
+
 // Token return the token for a specific auth domain
-func Token(audience string) (string, error) {
+func Token(audience string) (URL string, ApiURL string, Token string, err error) {
 	/*
-		Exit early if the environment variable "UPDATECLI_API_TOKEN"
-		contains a value.
+		Exit early if the environment variable "UPDATECLI_TOKEN" contains a value.
 	*/
-	if token := os.Getenv("UPDATECLI_API_TOKEN"); token != "" {
-		logrus.Debugln(`Environment variable UPDATECLI_API_TOKEN detected`)
-		return token, nil
+
+	if Audience != "" {
+		audience = Audience
+	}
+
+	if token := os.Getenv(DefaultEnvVariableToken); token != "" {
+		logrus.Debugf("Token detect via env variable %q", DefaultEnvVariableToken)
+
+		url := os.Getenv(DefaultEnvVariableURL)
+		api := os.Getenv(DefaultEnvVariableAPIURL)
+
+		if url == "" {
+			logrus.Warningf("environment variable %q detected but missing value for %q", DefaultEnvVariableToken, DefaultEnvVariableURL)
+		}
+		if api == "" {
+			logrus.Warningf("environment variable %q detected but missing value for %q", DefaultEnvVariableToken, DefaultEnvVariableAPIURL)
+		}
+
+		if token != "" && api != "" && url != "" {
+			return url, api, token, nil
+		}
+		logrus.Warningf("Due to previous warning message, ignoring environment variable")
 	}
 
 	configFile, err := initConfigFile()
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	if _, err := os.Stat(configFile); errors.Is(err, os.ErrNotExist) {
-		if errors.Is(err, os.ErrNotExist) {
-			return "", err
-		}
-		return "", err
+		return "", "", "", err
 	}
 
 	configContent, err := os.ReadFile(configFile)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	type authData struct {
-		Auth string
+		// Token stores the access token
+		Token string
+		// Api stores the api URL
+		Api string
+		// URL stores the front URL
+		URL string
 	}
 
 	data := struct {
-		Auths map[string]authData
+		Auths   map[string]authData
+		Default string
 	}{}
 
 	if err := json.Unmarshal(configContent, &data); err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
-	encodedAudience := base64.StdEncoding.EncodeToString([]byte(sanitizeTokenID(audience)))
-
-	authdata, ok := data.Auths[strings.ToLower(encodedAudience)]
-	if ok {
-		return authdata.Auth, nil
+	switch audience {
+	case "":
+		authdata, ok := data.Auths[data.Default]
+		if ok {
+			return authdata.URL, authdata.Api, authdata.Token, nil
+		}
+		return "", "", "", fmt.Errorf("no default token found")
+	default:
+		authdata, ok := data.Auths[sanitizeTokenID(audience)]
+		if ok {
+			return authdata.URL, authdata.Api, authdata.Token, nil
+		}
 	}
 
-	return "", fmt.Errorf("token for domain %q not found", audience)
+	return "", "", "", fmt.Errorf("token for domain %q not found", audience)
 }
 
 // getAccessToken trades the authorization code retrieved from the first OAuth2 log for an access token

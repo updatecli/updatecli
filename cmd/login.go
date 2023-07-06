@@ -9,13 +9,15 @@ import (
 )
 
 var (
-	oAuthClientID   string
-	oAuthAuthDomain string
-	reportAPI       string
+	oAuthClientID string
+	oAuthIssuer   string
+	oAuthAudience string
+	endpointURL   string
 
 	loginCmd = &cobra.Command{
-		Use:   "login",
-		Short: "[Experimental] login authenticates with the Updatecli service.",
+		Use:     "login url",
+		Short:   "[Experimental] login authenticates with the Updatecli service.",
+		Example: "updatecli login app.updatecli.io",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			// TODO: To be removed once not experimental anymore
@@ -29,7 +31,7 @@ var (
 				logrus.Errorf("missing URL to login to")
 				os.Exit(1)
 			case 1:
-				reportAPI = args[0]
+				endpointURL = args[0]
 			default:
 				logrus.Errorf("can only login to one URL at a time")
 				os.Exit(1)
@@ -46,5 +48,6 @@ var (
 
 func init() {
 	loginCmd.Flags().StringVar(&oAuthClientID, "oauth-clientId", "", "oauth-clientId defines the Oauth client ID")
-	loginCmd.Flags().StringVar(&oAuthAuthDomain, "oauth-authDomain", "", "oauth-authDomain defines the Oauth authentication URL")
+	loginCmd.Flags().StringVar(&oAuthIssuer, "oauth-issuer", "", "oauth-issuer defines the Oauth authentication URL")
+	loginCmd.Flags().StringVar(&oAuthAudience, "oauth-audience", "", "oauth-audience defines the Oauth audience URL")
 }

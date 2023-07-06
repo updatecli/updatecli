@@ -5,7 +5,6 @@ package auth
 */
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net"
@@ -20,6 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/viper"
+)
+
+var (
+	Audience string
 )
 
 // authorizeUser implements the PKCE OAuth2 flow.
@@ -37,16 +40,6 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string)
 		if err != nil {
 			logrus.Errorln(err)
 		}
-	}
-
-	if authDomain == "" {
-		authDomain = DefaultOauthIssuer
-	}
-	if audience == "" {
-		audience = DefaultOauthAudience
-	}
-	if clientID == "" {
-		clientID = DefaultOauthClientID
 	}
 
 	authDomain = setDefaultHTTPSScheme(authDomain)
@@ -134,8 +127,6 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string)
 
 		logrus.Debugf("Updatecli configuration located at %q", updatecliConfigPath)
 
-		encodedAudience := base64.StdEncoding.EncodeToString([]byte(sanitizeTokenID(audience)))
-
 		viper.SetConfigFile(updatecliConfigPath)
 
 		if _, err := os.Stat(updatecliConfigPath); err == nil {
@@ -148,7 +139,10 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string)
 			}
 		}
 
-		viper.Set(fmt.Sprintf("auths.%s.auth", strings.ToLower(encodedAudience)), token)
+		viper.Set(fmt.Sprintf("auths.%s.token", sanitizeTokenID(audience)), token)
+		viper.Set(fmt.Sprintf("auths.%s.api", sanitizeTokenID(audience)), audience)
+		viper.Set(fmt.Sprintf("auths.%s.url", sanitizeTokenID(audience)), frontURL)
+		viper.Set("default", sanitizeTokenID(audience))
 
 		err = viper.WriteConfig()
 		if err != nil {

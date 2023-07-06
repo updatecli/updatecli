@@ -76,7 +76,7 @@ func run(command string) error {
 
 	switch command {
 	case "apply":
-		auth.OauthAudience = reportAPI
+		auth.Audience = oAuthAudience
 		if applyClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -97,7 +97,7 @@ func run(command string) error {
 			return err
 		}
 	case "diff":
-		auth.OauthAudience = reportAPI
+		auth.Audience = oAuthAudience
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -139,7 +139,7 @@ func run(command string) error {
 		}
 
 	case "login":
-		err := auth.Login(oAuthClientID, oAuthAuthDomain, reportAPI)
+		err := auth.Login(endpointURL, oAuthClientID, oAuthIssuer, oAuthAudience)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

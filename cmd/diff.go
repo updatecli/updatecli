@@ -35,7 +35,7 @@ var (
 
 func init() {
 	diffCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
-	diffCmd.Flags().StringVar(&reportAPI, "reportAPI", "", "Set the report API URL where to publish pipeline reports")
+	diffCmd.Flags().StringVar(&oAuthAudience, "reportAPI", "", "Set the report API URL where to publish pipeline reports")
 	diffCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	diffCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	diffCmd.Flags().BoolVar(&diffClean, "clean", false, "Remove updatecli working directory like '--clean=true'")

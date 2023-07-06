@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -21,10 +20,6 @@ var (
 	ErrNoBearerToken error = fmt.Errorf("no bearer token found")
 	// ErrNoReportAPIURL is returned if we couldn't find an Updatecli report API
 	ErrNoReportAPIURL error = fmt.Errorf("no Updatecli API defined")
-	// DefaultReportURL defines the default updatecli report url
-	DefaultReportURL = "app.updatecli.io"
-	// DefaultReportAPIURL defines the default updatecli report url
-	DefaultReportAPIURL = "app.updatecli.io/api"
 
 	// EnvReportURL defines the default environment variable use to define the updatecli report url
 	EnvReportURL = "UPDATECLI_REPORT_URL"
@@ -40,18 +35,19 @@ func (r *Report) Publish() error {
 		return fmt.Errorf("generating report IDs: %w", err)
 	}
 
-	reportApiURL, err := parseURL(auth.OauthAudience, EnvReportAPIURL, DefaultReportAPIURL)
+	reportURLString, reportApiURLString, bearerToken, err := auth.Token("")
+	if err != nil {
+		return fmt.Errorf("get auth config: %w", err)
+	}
+
+	reportApiURL, err := url.Parse(reportApiURLString)
 	if err != nil {
 		return fmt.Errorf("parsing report API URL: %w", err)
 	}
-	reportURL, err := parseURL("", EnvReportURL, DefaultReportURL)
+
+	reportURL, err := url.Parse(reportURLString)
 	if err != nil {
 		return fmt.Errorf("parsing report URL: %w", err)
-	}
-
-	bearerToken, err := auth.Token(reportApiURL.String())
-	if err != nil {
-		return fmt.Errorf("get bearer token: %w", err)
 	}
 
 	if bearerToken == "" {
@@ -138,28 +134,4 @@ func (r *Reports) Publish() error {
 		reports[i] = report
 	}
 	return nil
-}
-
-// parseURL is a little helper function to parse an URL
-func parseURL(param, env, def string) (url.URL, error) {
-	var u *url.URL
-	var err error
-
-	if param != "" {
-		u, err = url.Parse(auth.OauthAudience)
-		if err != nil {
-			return *u, fmt.Errorf("parsing URL: %w", err)
-		}
-	} else if os.Getenv(env) != "" {
-		u, err = url.Parse(os.Getenv(env))
-		if err != nil {
-			return *u, fmt.Errorf("parsing URL: %w", err)
-		}
-	} else {
-		u, err = url.Parse(def)
-		if err != nil {
-			return *u, fmt.Errorf("parsing URL: %w", err)
-		}
-	}
-	return *u, nil
 }
