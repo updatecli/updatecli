@@ -28,7 +28,7 @@ func Test_Target(t *testing.T) {
 			name: "Passing case with both complex input source and specified value (specified value should be used)",
 			spec: Spec{
 				File:  "test.yaml",
-				Key:   "$.annotations.'github.owner'",
+				Key:   "$.annotations['github.owner']",
 				Value: "obiwankenobi",
 			},
 			files: map[string]file{
@@ -117,8 +117,8 @@ github:
 `,
 				"bar.yaml": `---
 github:
-    owner: asterix
-    repository: charts
+  owner: asterix
+  repository: charts
 `,
 			},
 			// Note: the updated files don't contain separator anymore
@@ -130,8 +130,8 @@ github:
 `,
 				"bar.yaml": `---
 github:
-    owner: obiwankenobi
-    repository: charts
+  owner: obiwankenobi
+  repository: charts
 `,
 			},
 			wantedResult: true,

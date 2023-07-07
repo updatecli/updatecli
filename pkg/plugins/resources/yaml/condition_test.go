@@ -27,7 +27,7 @@ func Test_Condition(t *testing.T) {
 			name: "Passing Case with complex key",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "annotations.'github.owner'",
+				Key:  "annotations['github.owner']",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -369,6 +369,41 @@ github:
 github:
   owner: olblak
   repository: charts
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing case with one 'Files' input source and only specified value",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+				},
+				Key:   "repos[?(@.repository == 'website')].owner",
+				Value: "updatecli",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+repos:
+  - owner: updatecli
+    repository: website
+  - owner: olblak
+    repository: updatecli
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+repos:
+  - owner: updatecli
+    repository: website
+  - owner: olblak
+    repository: updatecli
 `,
 			},
 			isResultWanted: true,
