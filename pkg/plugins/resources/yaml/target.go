@@ -1,7 +1,7 @@
 package yaml
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"os"
 	"sort"
@@ -13,11 +13,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 
-	"github.com/goccy/go-yaml"
-	"github.com/goccy/go-yaml/parser"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
+	"gopkg.in/yaml.v3"
 )
-
-// https://github.com/goccy/go-yaml/issues/217
 
 // Target updates a scm repository based on the modified yaml file.
 func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
@@ -64,48 +62,68 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	notChanged := 0
 	// originalContents := make(map[string]string)
 
-	urlPath, err := yaml.PathString(y.spec.Key)
+	urlPath, err := yamlpath.NewPath(y.spec.Key)
 	if err != nil {
 		return fmt.Errorf("crafting yamlpath query: %w", err)
 	}
 
+	var buf bytes.Buffer
+	e := yaml.NewEncoder(&buf)
+	defer e.Close()
+	e.SetIndent(2)
+
 	for filePath := range y.files {
+		buf = bytes.Buffer{}
 		originFilePath := y.files[filePath].originalFilePath
 
-		yamlFile, err := parser.ParseBytes([]byte(y.files[filePath].content), parser.ParseComments)
+		var n yaml.Node
+
+		err = yaml.Unmarshal([]byte(y.files[filePath].content), &n)
 		if err != nil {
 			return fmt.Errorf("parsing yaml file: %w", err)
 		}
 
-		node, err := urlPath.FilterFile(yamlFile)
+		nodes, err := urlPath.Find(&n)
 		if err != nil {
-			if errors.Is(err, yaml.ErrNotFoundNode) {
-				return fmt.Errorf("couldn't find key %q from file %q",
-					y.spec.Key,
-					originFilePath)
-			}
 			return fmt.Errorf("searching in yaml file: %w", err)
 		}
 
-		oldVersion := node.String()
-		resultTarget.Information = oldVersion
-
-		if oldVersion == valueToWrite {
-			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
-				resultTarget.Description,
+		if len(nodes) == 0 {
+			return fmt.Errorf("couldn't find key %q from file %q",
 				y.spec.Key,
-				valueToWrite,
 				originFilePath)
-			notChanged++
-			continue
 		}
 
-		if err := urlPath.ReplaceWithReader(yamlFile, strings.NewReader(valueToWrite)); err != nil {
-			return fmt.Errorf("replacing yaml key: %w", err)
+		var oldVersion string
+		for _, node := range nodes {
+			oldVersion = node.Value
+			resultTarget.Information = oldVersion
+
+			if oldVersion == valueToWrite {
+				resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
+					resultTarget.Description,
+					y.spec.Key,
+					valueToWrite,
+					originFilePath)
+				notChanged++
+				continue
+			}
+
+			node.Value = valueToWrite
 		}
 
 		f := y.files[filePath]
-		f.content = yamlFile.String()
+		err = e.Encode(&n)
+		if err != nil {
+			return fmt.Errorf("unable to marshal the yaml file: %w", err)
+		}
+
+		//
+		f.content = buf.String()
+		if strings.HasPrefix(y.files[filePath].content, "---\n") &&
+			!strings.HasPrefix(f.content, "---\n") {
+			f.content = "---\n" + f.content
+		}
 		y.files[filePath] = f
 
 		resultTarget.Changed = true
@@ -145,6 +163,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	// If no file was updated, don't return an error
 	if notChanged == len(y.files) {
+		resultTarget.Changed = false
 		resultTarget.Result = result.SUCCESS
 		return nil
 	}

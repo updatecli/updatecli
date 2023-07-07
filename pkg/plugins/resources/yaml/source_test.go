@@ -25,7 +25,7 @@ func Test_Source(t *testing.T) {
 			name: "Passing Case with 'File' and complex key",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "annotations.'github.owner'",
+				Key:  "annotations['github.owner']",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -198,6 +198,34 @@ github:
 			},
 			mockedError:   fmt.Errorf("no such file or directory"),
 			isErrorWanted: true,
+		},
+		{
+			name: "Passing Case with 'Files' array entry",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+				},
+				Key: "repos[?(@.repository == 'website')].owner",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+repos:
+  - owner: updatecli
+    repository: website
+  - owner: olblak
+    repository: updatecli
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": "updatecli",
+			},
+			isResultWanted: true,
 		},
 	}
 	for _, tt := range tests {
