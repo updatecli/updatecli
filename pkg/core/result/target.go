@@ -26,7 +26,7 @@ type Target struct {
 	Changed bool
 	// Scm stores scm information
 	Scm SCM
-	// ID contains a uniq identifier for the source
+	// ID contains a uniq identifier for the target
 	ID string
 }
 
