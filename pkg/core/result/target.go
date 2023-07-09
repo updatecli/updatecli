@@ -6,6 +6,8 @@ import "fmt"
 type Target struct {
 	// Name holds the target name
 	Name string
+	// DryRun defines if a target was executed in DryRun mode
+	DryRun bool
 	/*
 		Result holds the target result, accepted values must be one:
 			* "SUCCESS"
