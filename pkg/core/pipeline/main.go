@@ -58,9 +58,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Actions = make(map[string]action.Action, len(config.Spec.Actions))
 
 	// Init context resource size
-	p.Report.Sources = make(map[string]result.Source, len(config.Spec.Sources))
-	p.Report.Conditions = make(map[string]result.Condition, len(config.Spec.Conditions))
-	p.Report.Targets = make(map[string]result.Target, len(config.Spec.Targets))
+	p.Report.Sources = make(map[string]*result.Source, len(config.Spec.Sources))
+	p.Report.Conditions = make(map[string]*result.Condition, len(config.Spec.Conditions))
+	p.Report.Targets = make(map[string]*result.Target, len(config.Spec.Targets))
 	p.Report.Name = config.Spec.Name
 	p.Report.Result = result.SKIPPED
 
@@ -129,7 +129,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		}
 
 		r := p.Sources[id].Result
-		p.Report.Sources[id] = r
+		p.Report.Sources[id] = &r
 	}
 
 	// Init conditions report
@@ -155,7 +155,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		}
 
 		r := p.Conditions[id].Result
-		p.Report.Conditions[id] = r
+		p.Report.Conditions[id] = &r
 
 	}
 
@@ -181,7 +181,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		}
 
 		r := p.Targets[id].Result
-		p.Report.Targets[id] = r
+		p.Report.Targets[id] = &r
 	}
 	return nil
 

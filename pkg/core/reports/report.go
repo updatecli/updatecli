@@ -78,9 +78,9 @@ type Report struct {
 	Result string
 	// ID defines the report ID
 	ID         string
-	Sources    map[string]result.Source
-	Conditions map[string]result.Condition
-	Targets    map[string]result.Target
+	Sources    map[string]*result.Source
+	Conditions map[string]*result.Condition
+	Targets    map[string]*result.Target
 	ReportURL  string
 }
 
@@ -90,9 +90,9 @@ func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 	r.Name = name
 	r.Result = result.FAILURE
 
-	r.Sources = make(map[string]result.Source, sourceNbr)
-	r.Conditions = make(map[string]result.Condition, conditionNbr)
-	r.Targets = make(map[string]result.Target, targetNbr)
+	r.Sources = make(map[string]*result.Source, sourceNbr)
+	r.Conditions = make(map[string]*result.Condition, conditionNbr)
+	r.Targets = make(map[string]*result.Target, targetNbr)
 }
 
 // String returns a report as a string
