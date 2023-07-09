@@ -277,13 +277,6 @@ func (e *Engine) Run() (err error) {
 		}
 	}
 
-	if cmdoptions.Experimental {
-		err = e.Reports.Publish()
-		if err != nil {
-			logrus.Errorln(err)
-		}
-	}
-
 	err = e.Reports.Show()
 	if err != nil {
 		return err
