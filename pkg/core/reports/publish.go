@@ -3,7 +3,6 @@ package reports
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +28,8 @@ var (
 
 // Publish publish a pipeline report to the updatecli api
 func (r *Report) Publish() error {
+	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
+	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
 
 	err := r.updateID()
 	if err != nil {
@@ -37,7 +38,7 @@ func (r *Report) Publish() error {
 
 	reportURLString, reportApiURLString, bearerToken, err := auth.Token("")
 	if err != nil {
-		return fmt.Errorf("get auth config: %w", err)
+		return fmt.Errorf("retrieving service access token: %w", err)
 	}
 
 	reportApiURL, err := url.Parse(reportApiURLString)
@@ -115,23 +116,5 @@ func (r *Report) Publish() error {
 	r.ReportURL = reportURL.JoinPath("pipeline", "reports", d.ReportID).String()
 	logrus.Printf("Report available on:\n\t * %q", r.ReportURL)
 
-	return nil
-}
-
-func (r *Reports) Publish() error {
-
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
-
-	reports := *r
-	for i, report := range reports {
-		err := report.Publish()
-		if err != nil &&
-			!errors.Is(err, ErrNoBearerToken) &&
-			!errors.Is(err, ErrNoReportAPIURL) {
-			logrus.Errorf("publish report: %s", err)
-		}
-		reports[i] = report
-	}
 	return nil
 }

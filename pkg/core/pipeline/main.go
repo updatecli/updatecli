@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -238,8 +239,11 @@ func (p *Pipeline) Run() error {
 
 	if cmdoptions.Experimental {
 		err := p.Report.Publish()
-		if err != nil {
-			logrus.Warningln(err)
+		if err != nil &&
+			!errors.Is(err, reports.ErrNoBearerToken) &&
+			!errors.Is(err, reports.ErrNoReportAPIURL) {
+			logrus.Infof("Skipping report publishing")
+			logrus.Debugf("publish report: %s", err)
 		}
 	}
 
