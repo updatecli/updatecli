@@ -35,7 +35,7 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string)
 	codeChallenge := CodeVerifier.CodeChallengeS256()
 
 	if frontURL != "" {
-		authDomain, audience, clientID, err = getOAUTHInfo(frontURL)
+		authDomain, audience, clientID, err = getOauthInfo(frontURL)
 		// We don't want to exit on error if we fail retrieving oauth config from the endpoint
 		if err != nil {
 			logrus.Errorln(err)

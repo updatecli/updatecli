@@ -7,8 +7,8 @@ import (
 	"net/url"
 )
 
-// getOAUTHInfo queries the Udash website to retrieve OAUTH configuration
-func getOAUTHInfo(endpointURL string) (issuer string, audience string, clientID string, err error) {
+// getOauthInfo queries the Udash website to retrieve Oauth configuration
+func getOauthInfo(endpointURL string) (issuer string, audience string, clientID string, err error) {
 
 	data := struct {
 		Issuer   string `json:"OAUTH_DOMAIN,omitempty"`
