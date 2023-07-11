@@ -11,3 +11,4 @@ majoronly
 nce
 WRONLY
 oidc
+vmware
