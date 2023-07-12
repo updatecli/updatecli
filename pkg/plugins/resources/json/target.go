@@ -65,7 +65,7 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		}
 
 		for _, queryResult := range queryResults {
-			resultTarget.OldInformation = queryResult
+			resultTarget.Information = queryResult
 
 			switch queryResult == j.spec.Value {
 			case true:
@@ -84,7 +84,7 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 					j.spec.Key,
 					shouldMessage,
 					j.contents[i].FilePath,
-					resultTarget.OldInformation,
+					resultTarget.Information,
 					resultTarget.NewInformation)
 			}
 		}

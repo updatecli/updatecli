@@ -18,4 +18,6 @@ type Source struct {
 	Description string
 	// Scm stores scm information
 	Scm SCM
+	// ID contains a uniq identifier for the source
+	ID string
 }

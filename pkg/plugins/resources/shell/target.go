@@ -96,7 +96,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *res
 
 	if !resultTarget.Changed {
 		resultTarget.NewInformation = source
-		resultTarget.OldInformation = source
+		resultTarget.Information = source
 
 		resultTarget.Result = result.SUCCESS
 		logrus.Info("No change detected")
@@ -104,7 +104,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *res
 	}
 
 	resultTarget.Result = result.ATTENTION
-	resultTarget.OldInformation = "unknown"
+	resultTarget.Information = "unknown"
 
 	return nil
 }

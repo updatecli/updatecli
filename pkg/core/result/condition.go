@@ -18,4 +18,6 @@ type Condition struct {
 	Description string
 	// Scm stores scm information
 	Scm SCM
+	// ID contains a uniq identifier for the condition
+	ID string
 }

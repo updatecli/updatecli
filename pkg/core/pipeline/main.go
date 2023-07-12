@@ -1,10 +1,12 @@
 package pipeline
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -233,7 +235,16 @@ func (p *Pipeline) Run() error {
 			p.Report.Result = result.FAILURE
 			return fmt.Errorf("action stage:\t%q", err.Error())
 		}
+	}
 
+	if cmdoptions.Experimental {
+		err := p.Report.Publish()
+		if err != nil &&
+			!errors.Is(err, reports.ErrNoBearerToken) &&
+			!errors.Is(err, reports.ErrNoReportAPIURL) {
+			logrus.Infof("Skipping report publishing")
+			logrus.Debugf("publish report: %s", err)
+		}
 	}
 
 	return nil

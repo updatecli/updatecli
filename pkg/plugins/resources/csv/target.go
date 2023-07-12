@@ -64,10 +64,10 @@ func (c *CSV) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 
 		fileChanged := false
 		for _, queryResult := range queryResults {
-			resultTarget.OldInformation = queryResult
+			resultTarget.Information = queryResult
 			resultTarget.NewInformation = newValue
 
-			switch resultTarget.NewInformation == resultTarget.OldInformation {
+			switch resultTarget.NewInformation == resultTarget.Information {
 			case true:
 				resultTarget.Description = fmt.Sprintf("%s \n * Query %q correctly return %q from file %q",
 					resultTarget.Description,
@@ -83,7 +83,7 @@ func (c *CSV) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 				resultTarget.Description = fmt.Sprintf("%s\n * Query %q, return update from %q to %q in file %q",
 					resultTarget.Description,
 					query,
-					resultTarget.OldInformation,
+					resultTarget.Information,
 					resultTarget.NewInformation,
 					c.contents[i].FilePath,
 				)

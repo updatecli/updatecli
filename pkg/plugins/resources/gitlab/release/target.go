@@ -55,7 +55,7 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	for _, r := range releases {
 		if r.Tag == g.spec.Tag {
 			resultTarget.Result = result.SUCCESS
-			resultTarget.OldInformation = g.spec.Tag
+			resultTarget.Information = g.spec.Tag
 			resultTarget.Description = fmt.Sprintf("GitLab release tag %q already exist", g.spec.Tag)
 			return nil
 		}

@@ -96,14 +96,14 @@ func (gt *GitBranch) target(dryRun bool, resultTarget *result.Target) error {
 
 	if found {
 		resultTarget.Result = result.SUCCESS
-		resultTarget.OldInformation = gt.branch
+		resultTarget.Information = gt.branch
 		resultTarget.Description = fmt.Sprintf("git branch %q already exists", gt.branch)
 		return nil
 	}
 
 	resultTarget.Result = result.ATTENTION
 	resultTarget.Changed = true
-	resultTarget.OldInformation = ""
+	resultTarget.Information = ""
 
 	logrus.Debugf("git branch %q does not exist: creating it.", gt.branch)
 

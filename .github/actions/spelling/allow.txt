@@ -10,4 +10,13 @@ minoronly
 majoronly
 nce
 WRONLY
+nirasan
+skratchdot
+pkce
+errmsg
+authdata
+APIURL
 oidc
+udash
+Udash
+CLIENTID
