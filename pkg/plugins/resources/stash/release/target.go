@@ -52,14 +52,14 @@ func (g Stash) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	resultTarget.NewInformation = g.spec.Tag
 	for _, r := range releases {
 		if r.Tag == g.spec.Tag {
-			resultTarget.OldInformation = resultTarget.NewInformation
+			resultTarget.Information = resultTarget.NewInformation
 			resultTarget.Result = result.SUCCESS
 			resultTarget.Description = fmt.Sprintf("Stash release tag %q already exist", g.spec.Tag)
 			return nil
 		}
 	}
 
-	resultTarget.OldInformation = ""
+	resultTarget.Information = ""
 	resultTarget.Result = result.ATTENTION
 	resultTarget.Changed = true
 

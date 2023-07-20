@@ -23,7 +23,7 @@ func (g *GoMod) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		filename = utils.JoinFilePathWithWorkingDirectoryPath(g.filename, scm.GetDirectory())
 	}
 
-	resultTarget.OldInformation, resultTarget.NewInformation, resultTarget.Changed, err = g.setVersion(version, filename, dryRun)
+	resultTarget.Information, resultTarget.NewInformation, resultTarget.Changed, err = g.setVersion(version, filename, dryRun)
 	if err != nil {
 		return err
 	}
@@ -47,12 +47,12 @@ func (g *GoMod) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		switch g.kind {
 		case kindGolang:
 			resultTarget.Description = fmt.Sprintf("go.mod should update Golang version from %q to %q",
-				resultTarget.OldInformation,
+				resultTarget.Information,
 				resultTarget.NewInformation)
 		case kindModule:
 			resultTarget.Description = fmt.Sprintf("go.mod should update Module path %q version from %q to %q",
 				g.spec.Module,
-				resultTarget.OldInformation,
+				resultTarget.Information,
 				resultTarget.NewInformation)
 		}
 
@@ -64,13 +64,13 @@ func (g *GoMod) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	switch g.kind {
 	case kindGolang:
 		resultTarget.Description = fmt.Sprintf("go.mod updated Golang version from %q to %q",
-			resultTarget.OldInformation,
+			resultTarget.Information,
 			resultTarget.NewInformation)
 
 	case kindModule:
 		resultTarget.Description = fmt.Sprintf("go.mod updated Module path %q version from %q to %q",
 			g.spec.Module,
-			resultTarget.OldInformation,
+			resultTarget.Information,
 			resultTarget.NewInformation)
 	}
 

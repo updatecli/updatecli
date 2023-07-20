@@ -6,6 +6,8 @@ import "fmt"
 type Target struct {
 	// Name holds the target name
 	Name string
+	// DryRun defines if a target was executed in DryRun mode
+	DryRun bool
 	/*
 		Result holds the target result, accepted values must be one:
 			* "SUCCESS"
@@ -14,8 +16,8 @@ type Target struct {
 			* "SKIPPED"
 	*/
 	Result string
-	// OldInformation stores the old information detected by the target execution
-	OldInformation string
+	// Information stores the old information detected by the target execution
+	Information string
 	// NewInformation stores the new information updated by during the target execution
 	NewInformation string
 	// Description stores the target execution description
@@ -26,10 +28,12 @@ type Target struct {
 	Changed bool
 	// Scm stores scm information
 	Scm SCM
+	// ID contains a uniq identifier for the target
+	ID string
 }
 
 func (t *Target) String() string {
-	str := fmt.Sprintf("%q => %q", t.OldInformation, t.NewInformation)
+	str := fmt.Sprintf("%q => %q", t.Information, t.NewInformation)
 	str = str + fmt.Sprintf("\n%s - %s", t.Result, t.Description)
 	return str
 }

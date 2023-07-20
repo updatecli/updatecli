@@ -29,7 +29,7 @@ func (d *Dockerfile) target(source string, dryRun bool, resultTarget *result.Tar
 
 	// At the moment, this plugin do not return the currently used value
 	// This could be a useful improvement for the source
-	resultTarget.OldInformation = "unknown"
+	resultTarget.Information = "unknown"
 	resultTarget.NewInformation = source
 
 	newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions([]byte(dockerfileContent), source)
