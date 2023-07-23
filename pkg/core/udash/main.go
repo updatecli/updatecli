@@ -18,7 +18,6 @@ import (
 	cv "github.com/nirasan/go-oauth-pkce-code-verifier"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -127,11 +126,9 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string)
 
 		logrus.Debugf("Updatecli configuration located at %q", updatecliConfigPath)
 
-		viper.SetConfigFile(updatecliConfigPath)
-
-		if _, err := os.Stat(updatecliConfigPath); err == nil {
-			err = viper.ReadInConfig()
-			if err != nil {
+		data, err := readConfigFile()
+		if err != nil {
+			if !os.IsNotExist(err) {
 				logrus.Errorln(err)
 				// close the HTTP server and return
 				cleanup(server)
@@ -139,20 +136,21 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string)
 			}
 		}
 
-		viper.Set(fmt.Sprintf("auths.%s.token", sanitizeTokenID(audience)), token)
-		viper.Set(fmt.Sprintf("auths.%s.api", sanitizeTokenID(audience)), audience)
-		viper.Set(fmt.Sprintf("auths.%s.url", sanitizeTokenID(audience)), frontURL)
-		viper.Set("default", sanitizeTokenID(audience))
+		if data == nil {
+			data = &spec{}
+			data.Auths = make(map[string]authData)
+		}
 
-		err = viper.WriteConfig()
+		data.Auths[sanitizeTokenID(audience)] = authData{
+			Token: token,
+			Api:   audience,
+			URL:   frontURL,
+		}
+		data.Default = sanitizeTokenID(audience)
+
+		err = writeConfigFile(updatecliConfigPath, data)
 		if err != nil {
-			logrus.Errorln("updatecli: could not write config file")
-			_, err := io.WriteString(w, "Error: could not store access token\n")
-			if err != nil {
-				logrus.Errorln(err)
-				return
-			}
-
+			logrus.Errorln(err)
 			// close the HTTP server and return
 			cleanup(server)
 			return

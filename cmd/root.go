@@ -146,6 +146,13 @@ func run(command string) error {
 			return err
 		}
 
+	case "udash/logout":
+		err := udash.Logout(udashEndpointURL)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
 	// Show is deprecated
 	case "show", "manifest/show":
 		if showClean {

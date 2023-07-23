@@ -2,7 +2,6 @@ package udash
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,15 +10,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-)
-
-var (
-	// DefaultEnvVariableAPIURL defines the default environment variable used to retrieve API url
-	DefaultEnvVariableAPIURL string = "UPDATECLI_API_URL"
-	// DefaultEnvVariableToken defines the default environment variable used to retrieve API access token
-	DefaultEnvVariableToken string = "UPDATECLI_TOKEN"
-	// DefaultEnvVariableURL defines the default environment variable used to retrieve url
-	DefaultEnvVariableURL string = "UPDATECLI_URL"
 )
 
 // Token return the token for a specific auth domain
@@ -51,35 +41,8 @@ func Token(audience string) (URL string, ApiURL string, Token string, err error)
 		logrus.Warningf("Due to previous warning message, ignoring environment variable")
 	}
 
-	configFile, err := initConfigFile()
+	data, err := readConfigFile()
 	if err != nil {
-		return "", "", "", err
-	}
-
-	if _, err := os.Stat(configFile); errors.Is(err, os.ErrNotExist) {
-		return "", "", "", err
-	}
-
-	configContent, err := os.ReadFile(configFile)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	type authData struct {
-		// Token stores the access token
-		Token string
-		// Api stores the api URL
-		Api string
-		// URL stores the front URL
-		URL string
-	}
-
-	data := struct {
-		Auths   map[string]authData
-		Default string
-	}{}
-
-	if err := json.Unmarshal(configContent, &data); err != nil {
 		return "", "", "", err
 	}
 

@@ -22,8 +22,6 @@ func sanitizeTokenID(token string) string {
 	token = strings.TrimPrefix(token, "http://")
 	token = strings.TrimSuffix(token, "/")
 
-	// . are used by viper to split the key which is not compatible with dots used in URL
-	token = strings.ReplaceAll(token, ".", "_")
 	token = strings.ToLower(token)
 	return token
 }
@@ -45,5 +43,5 @@ func initConfigFile() (string, error) {
 		}
 	}
 
-	return filepath.Join(updatecliConfigDir, "config.json"), nil
+	return filepath.Join(updatecliConfigDir, "udash.json"), nil
 }
