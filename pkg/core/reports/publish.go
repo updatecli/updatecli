@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/auth"
+	"github.com/updatecli/updatecli/pkg/core/udash"
 )
 
 var (
@@ -36,7 +36,7 @@ func (r *Report) Publish() error {
 		return fmt.Errorf("generating report IDs: %w", err)
 	}
 
-	reportURLString, reportApiURLString, bearerToken, err := auth.Token("")
+	reportURLString, reportApiURLString, bearerToken, err := udash.Token("")
 	if err != nil {
 		return fmt.Errorf("retrieving service access token: %w", err)
 	}

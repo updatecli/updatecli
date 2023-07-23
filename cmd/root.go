@@ -4,9 +4,10 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/auth"
+
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/core/udash"
 
 	"github.com/updatecli/updatecli/pkg/core/engine"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -64,7 +65,7 @@ func init() {
 		diffCmd,
 		prepareCmd,
 		manifestCmd,
-		loginCmd,
+		udashCmd,
 		showCmd,
 		versionCmd,
 		docsCmd,
@@ -76,7 +77,7 @@ func run(command string) error {
 
 	switch command {
 	case "apply":
-		auth.Audience = oAuthAudience
+		udash.Audience = udashOAuthAudience
 		if applyClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -97,7 +98,7 @@ func run(command string) error {
 			return err
 		}
 	case "diff":
-		auth.Audience = oAuthAudience
+		udash.Audience = udashOAuthAudience
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -138,8 +139,8 @@ func run(command string) error {
 			return err
 		}
 
-	case "login":
-		err := auth.Login(endpointURL, oAuthClientID, oAuthIssuer, oAuthAudience)
+	case "udash/login":
+		err := udash.Login(udashEndpointURL, udashOAuthClientID, udashOAuthIssuer, udashOAuthAudience)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

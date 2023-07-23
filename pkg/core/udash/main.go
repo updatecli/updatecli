@@ -1,4 +1,4 @@
-package auth
+package udash
 
 /*
 	Package auth implements updatecli authentication with its backend
