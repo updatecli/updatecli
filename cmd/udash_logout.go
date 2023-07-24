@@ -12,12 +12,12 @@ var (
 	udashLogoutCmd = &cobra.Command{
 		Use:     "logout url",
 		Short:   "[Experimental] logout from an Updatecli service.",
-		Example: "updatecli logout app.updatecli.io",
+		Example: "updatecli udash logout app.updatecli.io",
 		Run: func(cmd *cobra.Command, args []string) {
 
 			// TODO: To be removed once not experimental anymore
 			if !experimental {
-				logrus.Warningf("The 'logout' feature requires the flag experimental to work, such as:\n\t`updatecli logout --experimental`")
+				logrus.Warningf("The 'logout' feature requires the flag experimental to work, such as:\n\t`updatecli udash logout --experimental https://app.updatecli.io`")
 				os.Exit(1)
 			}
 
