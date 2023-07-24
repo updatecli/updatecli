@@ -22,17 +22,17 @@ func Token(audience string) (URL string, ApiURL string, Token string, err error)
 		audience = Audience
 	}
 
-	if token := os.Getenv(DefaultEnvVariableToken); token != "" {
-		logrus.Debugf("Token detect via env variable %q", DefaultEnvVariableToken)
+	if token := os.Getenv(DefaultEnvVariableAccessToken); token != "" {
+		logrus.Debugf("Token detect via env variable %q", DefaultEnvVariableAccessToken)
 
 		url := os.Getenv(DefaultEnvVariableURL)
 		api := os.Getenv(DefaultEnvVariableAPIURL)
 
 		if url == "" {
-			logrus.Warningf("environment variable %q detected but missing value for %q", DefaultEnvVariableToken, DefaultEnvVariableURL)
+			logrus.Warningf("environment variable %q detected but missing value for %q", DefaultEnvVariableAccessToken, DefaultEnvVariableURL)
 		}
 		if api == "" {
-			logrus.Warningf("environment variable %q detected but missing value for %q", DefaultEnvVariableToken, DefaultEnvVariableAPIURL)
+			logrus.Warningf("environment variable %q detected but missing value for %q", DefaultEnvVariableAccessToken, DefaultEnvVariableAPIURL)
 		}
 
 		if token != "" && api != "" && url != "" {
