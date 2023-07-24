@@ -25,7 +25,7 @@ var (
 )
 
 // authorizeUser implements the PKCE OAuth2 flow.
-func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string) error {
+func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL, accessToken string) error {
 	// initialize the code verifier
 	var CodeVerifier, _ = cv.CreateCodeVerifier()
 	var err error
@@ -102,20 +102,23 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL string)
 
 		// trade the authorization code and the code verifier for an access token
 		codeVerifier := CodeVerifier.String()
-		token, err := getAccessToken(authDomain, clientID, codeVerifier, code, redirectURL)
-		if err != nil {
-
-			errmsg := "could not retrieve access token\n"
-			_, err := io.WriteString(w, fmt.Sprintf("Error: %s", errmsg))
+		token := accessToken
+		if accessToken == "" {
+			token, err = getAccessToken(authDomain, clientID, codeVerifier, code, redirectURL)
 			if err != nil {
-				logrus.Errorln(err)
+
+				errmsg := "could not retrieve access token\n"
+				_, err := io.WriteString(w, fmt.Sprintf("Error: %s", errmsg))
+				if err != nil {
+					logrus.Errorln(err)
+					return
+				}
+
+				logrus.Debugln(errmsg)
+				// close the HTTP server and return
+				cleanup(server)
 				return
 			}
-
-			logrus.Debugln(errmsg)
-			// close the HTTP server and return
-			cleanup(server)
-			return
 		}
 
 		updatecliConfigPath, err := initConfigFile()

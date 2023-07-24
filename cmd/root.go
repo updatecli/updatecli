@@ -140,7 +140,7 @@ func run(command string) error {
 		}
 
 	case "udash/login":
-		err := udash.Login(udashEndpointURL, udashOAuthClientID, udashOAuthIssuer, udashOAuthAudience)
+		err := udash.Login(udashEndpointURL, udashOAuthClientID, udashOAuthIssuer, udashOAuthAudience, udashOAuthAccessToken)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
