@@ -65,3 +65,17 @@ func writeConfigFile(configFileName string, data *spec) error {
 	}
 	return nil
 }
+
+func ConfigFilePath() (string, error) {
+	configFile, err := initConfigFile()
+	if err != nil {
+		return "", err
+	}
+
+	// Testing if configFile exists
+	if _, err = os.Open(configFile); err != nil {
+		return "", err
+	}
+
+	return configFile, nil
+}

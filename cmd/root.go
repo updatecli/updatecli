@@ -139,6 +139,15 @@ func run(command string) error {
 			return err
 		}
 
+	case "udash/config":
+		configFilePath, err := udash.ConfigFilePath()
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+		logrus.Infof("Config file located at %q", configFilePath)
+
 	case "udash/login":
 		err := udash.Login(udashEndpointURL, udashOAuthClientID, udashOAuthIssuer, udashOAuthAudience, udashOAuthAccessToken)
 		if err != nil {
