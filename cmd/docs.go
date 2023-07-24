@@ -17,7 +17,6 @@ var (
 
 		header := "---\n"
 		date := time.Now()
-		date.Format(time.RFC3339)
 
 		name := filepath.Base(s)
 		name = strings.ReplaceAll(name, "_", " ")
