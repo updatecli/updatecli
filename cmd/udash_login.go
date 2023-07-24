@@ -51,7 +51,7 @@ func init() {
 	udashLoginCmd.Flags().StringVar(&udashOAuthClientID, "oauth-clientId", "", "oauth-clientId defines the Oauth client ID")
 	udashLoginCmd.Flags().StringVar(&udashOAuthIssuer, "oauth-issuer", "", "oauth-issuer defines the Oauth authentication URL")
 	udashLoginCmd.Flags().StringVar(&udashOAuthAudience, "oauth-audience", "", "oauth-audience defines the Oauth audience URL")
-	udashLoginCmd.Flags().StringVar(&udashOAuthAccessToken, "oauth-access-token", "", "oauth-access-oken defines the Oauth access token")
+	udashLoginCmd.Flags().StringVar(&udashOAuthAccessToken, "oauth-access-token", "", "oauth-access-token defines the Oauth access token")
 
 	udashCmd.AddCommand(udashLoginCmd)
 }
