@@ -91,6 +91,7 @@ func (s *Source) Run() (err error) {
 	if s.Changelog == "" {
 		logrus.Debugln("empty changelog found for the source")
 	}
+	s.Result.Changelog = s.Changelog
 
 	if len(s.Config.ResourceConfig.Transformers) > 0 {
 		s.Output, err = s.Config.ResourceConfig.Transformers.Apply(s.Output)
