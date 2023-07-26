@@ -3,11 +3,11 @@ scms:
   default:
     kind: github
     spec:
-      owner: olblak
+      owner: updatecli-test
       repository: updatecli
       token: {{ requiredEnv "GITHUB_TOKEN" }}
       username: {{ requiredEnv "GITHUB_ACTOR" }}
-      branch: main
+      branch: e2e-tests-golang
 
 actions:
     default:
@@ -43,3 +43,6 @@ autodiscovery:
             github.com/iancoleman/orderedmap:
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             golang.org/x/time:
+            github.com/nirasan/go-oauth-pkce-code-verifier:
+            github.com/skratchdot/open-golang:
+
