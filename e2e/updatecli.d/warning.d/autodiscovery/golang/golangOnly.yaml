@@ -3,11 +3,11 @@ scms:
   default:
     kind: github
     spec:
-      owner: olblak
+      owner: updatecli-test
       repository: updatecli
-      token: {{ requiredEnv "GITHUB_TOKEN" }}
-      username: {{ requiredEnv "GITHUB_ACTOR" }}
-      branch: main
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      branch: e2e-tests-golang
 
 actions:
     default:
@@ -26,4 +26,5 @@ autodiscovery:
         kind: semver
         pattern: minor
       only:
-        - goversion: "*"
+        - goversion: "1.16"
+
