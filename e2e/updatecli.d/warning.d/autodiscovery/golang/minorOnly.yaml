@@ -3,11 +3,11 @@ scms:
   default:
     kind: github
     spec:
-      owner: olblak
+      owner: updatecli-test
       repository: updatecli
       token: {{ requiredEnv "GITHUB_TOKEN" }}
       username: {{ requiredEnv "GITHUB_ACTOR" }}
-      branch: main
+      branch: e2e-tests-golang
 
 actions:
     default:
@@ -30,4 +30,6 @@ autodiscovery:
         - modules:
             github.com/ProtonMail/go-crypto:
             github.com/shurcooL/githubv4:
+            github.com/nirasan/go-oauth-pkce-code-verifier:
+            github.com/skratchdot/open-golang:
 
