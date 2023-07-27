@@ -38,7 +38,7 @@ conditions:
         kind: yaml
         spec:
             file: .github/workflows/go.yaml
-            key: jobs.build.steps[0].id
+            key: $.jobs.build.steps[0].id
             value: go
         scmid: default
         disablesourceinput: true
@@ -48,7 +48,7 @@ conditions:
         kind: yaml
         spec:
             file: .github/workflows/release.yaml
-            key: jobs.build.steps[3].id
+            key: $.jobs.build.steps[3].id
             value: go
         scmid: default
         disablesourceinput: true
@@ -65,7 +65,7 @@ targets:
         kind: yaml
         spec:
             file: .github/workflows/release.yaml
-            key: jobs.build.steps[3].with.go-version
+            key: $.jobs.build.steps[3].with.go-version
         scmid: default
         sourceid: golang
 
@@ -74,7 +74,7 @@ targets:
         kind: yaml
         spec:
             file: .github/workflows/go.yaml
-            key: jobs.build.steps[0].with.go-version
+            key: $.jobs.build.steps[0].with.go-version
         scmid: default
         sourceid: golang
 
