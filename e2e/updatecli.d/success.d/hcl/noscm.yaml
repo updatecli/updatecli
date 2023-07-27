@@ -1,0 +1,56 @@
+name: Test HCL resources
+
+sources:
+  scenario1:
+    name: Basic HCL source
+    kind: hcl
+    spec:
+      file: pkg/plugins/resources/hcl/testdata/data.hcl
+      key: resource.person.john.first_name
+
+conditions:
+  scenario1:
+    name: Condition using source
+    kind: hcl
+    sourceid: scenario1
+    spec:
+      file: pkg/plugins/resources/hcl/testdata/data.hcl
+      key: resource.person.john.first_name
+
+  scenario2:
+    name: Condition using value
+    kind: hcl
+    sourceid: scenario1
+    spec:
+      file: pkg/plugins/resources/hcl/testdata/data.hcl
+      key: resource.person.john.surname
+      value: Doe
+
+
+targets:
+  update-file:
+    name: Update files content
+    kind: hcl
+    sourceid: scenario1
+    transformers:
+      - addsuffix: "y"
+    spec:
+      file: pkg/plugins/resources/hcl/testdata/data.hcl
+      key: resource.person.john.first_name
+
+  noop:
+    name: Update files content
+    kind: hcl
+    sourceid: scenario1
+    spec:
+      file: pkg/plugins/resources/hcl/testdata/data.hcl
+      key: resource.person.john.first_name
+
+  update-file-from-value:
+    name: Update files content
+    kind: hcl
+    sourceid: scenario1
+    spec:
+      file: pkg/plugins/resources/hcl/testdata/data.hcl
+      key: resource.person.john.first_name
+      value: Jonathon

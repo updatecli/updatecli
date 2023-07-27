@@ -1,0 +1,58 @@
+name: Test HCL resources
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/jenkins-infra/aws.git
+
+sources:
+  scenario1:
+    name: HCL source
+    kind: hcl
+    scmid: default
+    spec:
+      file: cik8s-cluster.tf
+      key: module.cik8s.version
+
+conditions:
+  scenario1:
+    name: Condition using source
+    kind: hcl
+    scmid: default
+    sourceid: scenario1
+    spec:
+      file: cik8s-cluster.tf
+      key: module.cik8s.version
+
+  scenario2:
+    name: Condition using value
+    kind: hcl
+    scmid: default
+    sourceid: scenario1
+    spec:
+      file: cik8s-cluster.tf
+      key: module.cik8s.source
+      value: terraform-aws-modules/eks/aws
+
+
+targets:
+  update-file:
+    name: Update files content
+    kind: hcl
+    sourceid: scenario1
+    scmid: default
+    transformers:
+      - addsuffix: -beta
+    spec:
+      file: cik8s-cluster.tf
+      key: module.cik8s.version
+
+  noop:
+    name: No update to files content
+    kind: hcl
+    sourceid: scenario1
+    scmid: default
+    spec:
+      file: cik8s-cluster.tf
+      key: module.cik8s.version
