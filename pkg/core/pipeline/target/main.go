@@ -1,8 +1,11 @@
 package target
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
@@ -22,16 +25,23 @@ var (
 type Target struct {
 	// Result store the condition result after a target run.
 	Result result.Target
+	// Config defines target input parameters
 	Config Config
+	// Commit defines if a target was executed in Commit mode
 	Commit bool
-	Push   bool
-	Clean  bool
+	// Push defines if a target was executed in Push mode
+	Push bool
+	// Clean defines if a target was executed in Clean mode
+	Clean bool
+	// DryRun defines if a target was executed in DryRun mode
 	DryRun bool
-	Scm    *scm.ScmHandler
+	// Scm stores scm information
+	Scm *scm.ScmHandler
 }
 
 // Config defines target parameters
 type Config struct {
+	// ResourceConfig defines target input parameters
 	resource.ResourceConfig `yaml:",inline"`
 	// ReportTitle contains the updatecli reports title for sources and conditions run
 	ReportTitle string `yaml:",omitempty"`
@@ -64,6 +74,15 @@ func (t *Target) Check() (bool, error) {
 
 // Run applies a specific target configuration
 func (t *Target) Run(source string, o *Options) (err error) {
+	var consoleOutput bytes.Buffer
+	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
+	/*
+		The last defer will be executed first,
+		so in this case we want to first save the console output
+		before setting back the logrus output to stdout.
+	*/
+	defer logrus.SetOutput(os.Stdout)
+	defer t.Result.SetConsoleOutput(&consoleOutput)
 
 	failTargetRun := func() {
 		t.Result.Result = result.FAILURE
@@ -192,6 +211,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
 }
 
+// Validate checks if a target configuration is valid
 func (c *Config) Validate() error {
 	// Handle scmID deprecation
 

@@ -1,5 +1,9 @@
 package result
 
+import (
+	"bytes"
+)
+
 // Source holds source execution result
 type Source struct {
 	// Name holds the source name
@@ -22,4 +26,11 @@ type Source struct {
 	ID string
 	//Changelog holds the changelog description
 	Changelog string
+	// ConsoleOutput stores the console output of the source execution
+	ConsoleOutput string
+}
+
+// SetConsoleOutput sets the console output of the source execution
+func (s *Source) SetConsoleOutput(out *bytes.Buffer) {
+	s.ConsoleOutput = out.String()
 }
