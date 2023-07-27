@@ -45,4 +45,3 @@ targets:
             matchpattern: 'VENOM_VERSION: .*'
         scmid: default
         sourceid: latestVersion
-version: 0.34.0
