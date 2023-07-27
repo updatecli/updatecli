@@ -40,7 +40,7 @@ conditions:
         kind: yaml
         spec:
             file: .github/workflows/go.yaml
-            key: jobs.build.steps[2].name
+            key: $.jobs.build.steps[2].name
             value: golangci-lint
         scmid: default
         disablesourceinput: true
@@ -54,7 +54,6 @@ targets:
                 captureindex: 0
         spec:
             file: .github/workflows/go.yaml
-            key: jobs.build.steps[2].with.version
+            key: $.jobs.build.steps[2].with.version
         scmid: default
         sourceid: default
-version: 0.34.0

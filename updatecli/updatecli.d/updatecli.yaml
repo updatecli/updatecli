@@ -63,4 +63,3 @@ targets:
             matchpattern: 'ghcr.io/updatecli/updatecli:.*'
         scmid: default
         sourceid: latestVersion
-
