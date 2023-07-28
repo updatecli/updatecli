@@ -54,20 +54,14 @@ func (p *Pipeline) RunTargets() error {
 			}
 		}
 
-		report := p.Report.Targets[id]
 		// No need to run this target as one of its dependency failed
 		if shouldSkipTarget {
 			p.Targets[id] = target
-			p.Report.Targets[id] = report
+			p.Report.Targets[id] = &target.Result
 			continue
 		}
 
 		err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
-
-		report = &target.Result
-
-		// Update report name as the target configuration might has been updated (templated values)
-		report.Name = target.Config.Name
 
 		if err != nil {
 			p.Report.Result = result.FAILURE
@@ -76,10 +70,8 @@ func (p *Pipeline) RunTargets() error {
 			errs = append(errs, fmt.Errorf("something went wrong in target %q : %q", id, err))
 		}
 
-		report.Result = target.Result.Result
-
 		p.Targets[id] = target
-		p.Report.Targets[id] = report
+		p.Report.Targets[id] = &target.Result
 
 		if target.Result.Changed {
 			isResultChanged = target.Result.Changed
