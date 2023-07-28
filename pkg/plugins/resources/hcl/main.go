@@ -3,6 +3,7 @@ package hcl
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/minamijoyo/hcledit/editor"
@@ -90,6 +91,30 @@ func (h *Hcl) Query(resourceFile file) (string, error) {
 	queryOutput = strings.TrimSpace(queryOutput)
 	queryOutput = strings.Trim(queryOutput, "\"")
 	return queryOutput, nil
+}
+
+func (h *Hcl) Apply(filePath string, valueToWrite string) error {
+	query := h.spec.Path
+
+	if _, err := strconv.Atoi(valueToWrite); err != nil {
+		valueToWrite = fmt.Sprintf(`"%s"`, valueToWrite)
+	}
+
+	resourceFile := h.files[filePath]
+
+	filter := editor.NewAttributeSetFilter(query, valueToWrite)
+	inStream := strings.NewReader(resourceFile.content)
+	outStream := new(bytes.Buffer)
+	err := editor.EditStream(inStream, outStream, resourceFile.filePath, filter)
+	if err != nil {
+		return err
+	}
+
+	resourceFile.content = outStream.String()
+
+	h.files[filePath] = resourceFile
+
+	return nil
 }
 
 // Read puts the content of the file(s) as value of the y.files map if the file(s) exist(s) or log the non existence of the file

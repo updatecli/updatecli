@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/minamijoyo/hcledit/editor"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -42,7 +41,7 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 
 	notChanged := 0
 
-	for _, f := range h.files {
+	for fileKey, f := range h.files {
 		resourceFile := f
 
 		currentValue, err := h.Query(resourceFile)
@@ -71,8 +70,14 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 			resourceFile.originalFilePath)
 
 		if !dryRun {
-			filter := editor.NewAttributeSetFilter(query, valueToWrite)
-			err = editor.UpdateFile(resourceFile.filePath, filter)
+
+			h.Apply(fileKey, valueToWrite)
+
+			h.contentRetriever.WriteToFile(
+				h.files[fileKey].content,
+				h.files[fileKey].filePath,
+			)
+
 			if err != nil {
 				return err
 			}
