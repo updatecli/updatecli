@@ -22,7 +22,7 @@ func TestTarget(t *testing.T) {
 			name: "Success - No change",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			sourceInput:    "John",
 			expectedResult: false,
@@ -31,7 +31,7 @@ func TestTarget(t *testing.T) {
 			name: "Success - Expected change",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			sourceInput:    "Jonathan",
 			expectedResult: true,
@@ -40,7 +40,7 @@ func TestTarget(t *testing.T) {
 			name: "Success - Expected change using Value",
 			spec: Spec{
 				File:  "testdata/data.hcl",
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 				Value: "Jonathan",
 			},
 			expectedResult: true,
@@ -49,7 +49,7 @@ func TestTarget(t *testing.T) {
 			name: "Success - Expected change replacing empty value",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.middle_name",
+				Path: "resource.person.john.middle_name",
 			},
 			sourceInput:    "Joe",
 			expectedResult: true,
@@ -58,7 +58,7 @@ func TestTarget(t *testing.T) {
 			name: "Failure - File does not exists",
 			spec: Spec{
 				File: "testdata/doNotExist.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			expectedResult:   false,
 			wantErr:          true,
@@ -68,7 +68,7 @@ func TestTarget(t *testing.T) {
 			name: "Failure - Path does not exists",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.not_exist",
+				Path: "resource.person.john.not_exist",
 			},
 			expectedResult:   false,
 			wantErr:          true,
@@ -78,7 +78,7 @@ func TestTarget(t *testing.T) {
 			name: "Failure - HTTP Target",
 			spec: Spec{
 				File: "http://localhost/doNotExist.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			expectedResult:   false,
 			wantErr:          true,

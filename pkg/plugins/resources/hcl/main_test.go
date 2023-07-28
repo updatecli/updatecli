@@ -20,7 +20,7 @@ func TestUpdateAbsoluteFilePath(t *testing.T) {
 			name: "Success - Empty working directory",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			workingDir:     "",
 			expectedResult: []string{"testdata/data.hcl"},
@@ -29,7 +29,7 @@ func TestUpdateAbsoluteFilePath(t *testing.T) {
 			name: "Success - Working directory",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			workingDir:     "/tmp",
 			expectedResult: []string{"/tmp/testdata/data.hcl"},
@@ -38,7 +38,7 @@ func TestUpdateAbsoluteFilePath(t *testing.T) {
 			name: "Success - Files with empty working directory",
 			spec: Spec{
 				Files: []string{"testdata/data.hcl", "testdata/data2.hcl"},
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 			},
 			workingDir:     "",
 			expectedResult: []string{"testdata/data.hcl", "testdata/data2.hcl"},
@@ -47,7 +47,7 @@ func TestUpdateAbsoluteFilePath(t *testing.T) {
 			name: "Success - Working directory",
 			spec: Spec{
 				Files: []string{"testdata/data.hcl", "testdata/data2.hcl"},
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 			},
 			workingDir:     "/tmp",
 			expectedResult: []string{"/tmp/testdata/data.hcl", "/tmp/testdata/data2.hcl"},

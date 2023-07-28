@@ -22,7 +22,7 @@ func TestCondition(t *testing.T) {
 			name: "Success - Using Value",
 			spec: Spec{
 				File:  "testdata/data.hcl",
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 				Value: "John",
 			},
 			source:         "",
@@ -32,7 +32,7 @@ func TestCondition(t *testing.T) {
 			name: "Success - Using Source",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			source:         "John",
 			expectedResult: true,
@@ -41,7 +41,7 @@ func TestCondition(t *testing.T) {
 			name: "Failure - Using Source",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			source:         "Jack",
 			expectedResult: false,
@@ -50,7 +50,7 @@ func TestCondition(t *testing.T) {
 			name: "Success - Empty",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.middle_name",
+				Path: "resource.person.john.middle_name",
 			},
 			source:         "",
 			expectedResult: true,
@@ -59,7 +59,7 @@ func TestCondition(t *testing.T) {
 			name: "Failure - File does not exists",
 			spec: Spec{
 				File: "testdata/doNotExist.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			source:           "",
 			wantErr:          true,
@@ -69,7 +69,7 @@ func TestCondition(t *testing.T) {
 			name: "Failure - Path does not exists",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.not_exist",
+				Path: "resource.person.john.not_exist",
 			},
 			source:           "",
 			wantErr:          true,
@@ -79,7 +79,7 @@ func TestCondition(t *testing.T) {
 			name: "Failure - Multiple Files",
 			spec: Spec{
 				Files: []string{"testdata/data.hcl", "testdata/data2.hcl"},
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 			},
 			wantErr:          true,
 			expectedErrorMsg: errors.New("✗ HCL condition only supports one file"),

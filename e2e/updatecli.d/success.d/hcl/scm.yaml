@@ -1,4 +1,4 @@
-name: Test HCL resources
+name: Test HCL plugin resource - SCM
 
 scms:
   default:
@@ -13,7 +13,7 @@ sources:
     scmid: default
     spec:
       file: cik8s-cluster.tf
-      key: module.cik8s.version
+      path: module.cik8s.version
 
 conditions:
   using-source:
@@ -23,7 +23,7 @@ conditions:
     sourceid: file
     spec:
       file: cik8s-cluster.tf
-      key: module.cik8s.version
+      path: module.cik8s.version
 
   using-value:
     name: Condition using value
@@ -32,7 +32,7 @@ conditions:
     sourceid: file
     spec:
       file: cik8s-cluster.tf
-      key: module.cik8s.source
+      path: module.cik8s.source
       value: terraform-aws-modules/eks/aws
 
 
@@ -46,7 +46,7 @@ targets:
       - addsuffix: -beta
     spec:
       file: cik8s-cluster.tf
-      key: module.cik8s.version
+      path: module.cik8s.version
 
   noop:
     name: No update to files content
@@ -55,4 +55,4 @@ targets:
     scmid: default
     spec:
       file: cik8s-cluster.tf
-      key: module.cik8s.version
+      path: module.cik8s.version

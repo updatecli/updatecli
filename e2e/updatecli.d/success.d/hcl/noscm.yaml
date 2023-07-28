@@ -1,4 +1,4 @@
-name: Test HCL resources
+name: Test HCL plugin resource
 
 sources:
   file:
@@ -6,14 +6,14 @@ sources:
     kind: hcl
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
-      key: resource.person.john.first_name
+      path: resource.person.john.first_name
 
   https:
     name: Read from HTTPs
     kind: hcl
     spec:
       file: https://raw.githubusercontent.com/updatecli-test/jenkins-infra-aws/main/cik8s-cluster.tf
-      key: module.cik8s.version
+      path: module.cik8s.version
 
 conditions:
   using-source:
@@ -22,7 +22,7 @@ conditions:
     sourceid: file
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
-      key: resource.person.john.first_name
+      path: resource.person.john.first_name
 
   using-value:
     name: Condition using value
@@ -30,7 +30,7 @@ conditions:
     sourceid: file
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
-      key: resource.person.john.surname
+      path: resource.person.john.surname
       value: Doe
 
   https:
@@ -39,7 +39,7 @@ conditions:
     sourceid: file
     spec:
       file: https://raw.githubusercontent.com/updatecli-test/jenkins-infra-aws/main/cik8s-cluster.tf
-      key: module.cik8s.version
+      path: module.cik8s.version
       value: "19.15.3"
 
 
@@ -52,7 +52,7 @@ targets:
       - addsuffix: "y"
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
-      key: resource.person.john.first_name
+      path: resource.person.john.first_name
 
   noop:
     name: No update to files content
@@ -60,7 +60,7 @@ targets:
     sourceid: file
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
-      key: resource.person.john.first_name
+      path: resource.person.john.first_name
 
   update-file-from-value:
     name: Update files content from value
@@ -68,5 +68,5 @@ targets:
     sourceid: file
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
-      key: resource.person.john.first_name
+      path: resource.person.john.first_name
       value: Jonathon

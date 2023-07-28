@@ -30,7 +30,7 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 		return fmt.Errorf("reading hcl file: %w", err)
 	}
 
-	query := h.spec.Key
+	query := h.spec.Path
 
 	valueToWrite := source
 	if h.spec.Value != "" {
@@ -53,7 +53,7 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 		resultTarget.Information = currentValue
 
 		if currentValue == valueToWrite {
-			resultTarget.Description = fmt.Sprintf("key %q already set to %q, from file %q, ",
+			resultTarget.Description = fmt.Sprintf("path %q already set to %q, from file %q, ",
 				query,
 				valueToWrite,
 				resourceFile.originalFilePath)

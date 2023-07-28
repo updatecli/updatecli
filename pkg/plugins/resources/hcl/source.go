@@ -31,10 +31,10 @@ func (h *Hcl) Source(workingDir string, resultSource *result.Source) error {
 
 	resultSource.Information = sourceOutput
 	resultSource.Result = result.SUCCESS
-	resultSource.Description = fmt.Sprintf("value %q, found in file %q, for key %q'",
+	resultSource.Description = fmt.Sprintf("value %q, found in file %q, for path %q'",
 		sourceOutput,
 		resourceFile.originalFilePath,
-		h.spec.Key)
+		h.spec.Path)
 
 	return nil
 }

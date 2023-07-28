@@ -19,7 +19,7 @@ func TestValidate(t *testing.T) {
 			name: "Success - File",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			wantErr: false,
 		},
@@ -27,20 +27,20 @@ func TestValidate(t *testing.T) {
 			name: "Success - Files",
 			spec: Spec{
 				Files: []string{"testdata/data.hcl"},
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 			},
 			wantErr: false,
 		},
 		{
 			name: "Failure - No file or files",
 			spec: Spec{
-				Key: "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			wantErr:          true,
 			expectedErrorMsg: errors.New("wrong spec content"),
 		},
 		{
-			name: "Failure - No key",
+			name: "Failure - No path",
 			spec: Spec{
 				File: "testdata/data.hcl",
 			},
@@ -52,7 +52,7 @@ func TestValidate(t *testing.T) {
 			spec: Spec{
 				File:  "testdata/data.hcl",
 				Files: []string{"testdata/data.hcl"},
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 			},
 			wantErr:          true,
 			expectedErrorMsg: errors.New("wrong spec content"),

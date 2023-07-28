@@ -39,7 +39,7 @@ type Spec struct {
 	*/
 	Files []string `yaml:",omitempty"`
 	/*
-		"key" defines the hcl attribute path.
+		"path" defines the hcl attribute path.
 
 		compatible:
 			* source
@@ -47,14 +47,14 @@ type Spec struct {
 			* target
 
 		example:
-			* key: resource.aws_instance.app_server.ami
-			* key: resource.helm_release.prometheus.version
-			* key: plugin.aws.version
+			* path: resource.aws_instance.app_server.ami
+			* path: resource.helm_release.prometheus.version
+			* path: plugin.aws.version
 
 	*/
-	Key string `yaml:",omitempty"`
+	Path string `yaml:",omitempty"`
 	/*
-		"value" is the value associated with a hcl key.
+		"value" is the value associated with a hcl path.
 
 		compatible:
 			* condition
@@ -69,8 +69,8 @@ type Spec struct {
 var (
 	// ErrSpecFileUndefined is returned if a file wasn't specified
 	ErrSpecFileUndefined = errors.New("hcl file undefined")
-	// ErrSpecKeyUndefined is returned if a key wasn't specified
-	ErrSpecKeyUndefined = errors.New("hcl key undefined")
+	// ErrSpecPathUndefined is returned if a path wasn't specified
+	ErrSpecPathUndefined = errors.New("hcl path undefined")
 	// ErrSpecFileAndFilesDefined when we both spec File and Files have been specified
 	ErrSpecFileAndFilesDefined = errors.New("parameter \"file\" and \"files\" are mutually exclusive")
 	// ErrWrongSpec is returned when the Spec has wrong content
@@ -83,8 +83,8 @@ func (s *Spec) Validate() error {
 	if len(s.File) == 0 && len(s.Files) == 0 {
 		errs = append(errs, ErrSpecFileUndefined)
 	}
-	if len(s.Key) == 0 {
-		errs = append(errs, ErrSpecKeyUndefined)
+	if len(s.Path) == 0 {
+		errs = append(errs, ErrSpecPathUndefined)
 	}
 
 	if len(s.File) > 0 && len(s.Files) > 0 {

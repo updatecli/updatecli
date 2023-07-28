@@ -39,7 +39,7 @@ func (h *Hcl) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 
 	if value == conditionOutput {
 		resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is correctly set to %q",
-			h.spec.Key,
+			h.spec.Path,
 			resourceFile.originalFilePath,
 			value)
 
@@ -50,7 +50,7 @@ func (h *Hcl) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 	}
 
 	resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
-		h.spec.Key,
+		h.spec.Path,
 		resourceFile.originalFilePath,
 		conditionOutput,
 		value,

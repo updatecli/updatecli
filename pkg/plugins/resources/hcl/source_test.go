@@ -21,7 +21,7 @@ func TestSource(t *testing.T) {
 			name: "Success - Query",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			expectedResult: "John",
 		},
@@ -29,7 +29,7 @@ func TestSource(t *testing.T) {
 			name: "Success - Query empty value",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.middle_name",
+				Path: "resource.person.john.middle_name",
 			},
 			expectedResult: "",
 		},
@@ -37,7 +37,7 @@ func TestSource(t *testing.T) {
 			name: "Success - Query integer",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.age",
+				Path: "resource.person.john.age",
 			},
 			expectedResult: "30",
 		},
@@ -45,7 +45,7 @@ func TestSource(t *testing.T) {
 			name: "Success - Query nested",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.nested.attr1",
+				Path: "resource.person.john.nested.attr1",
 			},
 			expectedResult: "val1",
 		},
@@ -53,7 +53,7 @@ func TestSource(t *testing.T) {
 			name: "Success - Query using Files",
 			spec: Spec{
 				Files: []string{"testdata/data.hcl"},
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 			},
 			expectedResult: "John",
 		},
@@ -61,7 +61,7 @@ func TestSource(t *testing.T) {
 			name: "Failure - File does not exists",
 			spec: Spec{
 				File: "testdata/doNotExist.hcl",
-				Key:  "resource.person.john.first_name",
+				Path: "resource.person.john.first_name",
 			},
 			wantErr:          true,
 			expectedErrorMsg: errors.New("reading hcl file: ✗ The specified file \"testdata/doNotExist.hcl\" does not exist"),
@@ -70,7 +70,7 @@ func TestSource(t *testing.T) {
 			name: "Failure - Path does not exists",
 			spec: Spec{
 				File: "testdata/data.hcl",
-				Key:  "resource.person.john.not_exist",
+				Path: "resource.person.john.not_exist",
 			},
 			wantErr:          true,
 			expectedErrorMsg: errors.New("✗ cannot find value for path \"resource.person.john.not_exist\" from file \"testdata/data.hcl\""),
@@ -79,7 +79,7 @@ func TestSource(t *testing.T) {
 			name: "Failure - Multiple Files",
 			spec: Spec{
 				Files: []string{"testdata/data.hcl", "testdata/data2.hcl"},
-				Key:   "resource.person.john.first_name",
+				Path:  "resource.person.john.first_name",
 			},
 			wantErr:          true,
 			expectedErrorMsg: errors.New("✗ HCL source only supports one file"),
