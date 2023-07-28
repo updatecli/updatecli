@@ -4,10 +4,10 @@ scms:
   default:
     kind: git
     spec:
-      url: https://github.com/jenkins-infra/aws.git
+      url: https://github.com/updatecli-test/jenkins-infra-aws.git
 
 sources:
-  scenario1:
+  file:
     name: HCL source
     kind: hcl
     scmid: default
@@ -16,20 +16,20 @@ sources:
       key: module.cik8s.version
 
 conditions:
-  scenario1:
+  using-source:
     name: Condition using source
     kind: hcl
     scmid: default
-    sourceid: scenario1
+    sourceid: file
     spec:
       file: cik8s-cluster.tf
       key: module.cik8s.version
 
-  scenario2:
+  using-value:
     name: Condition using value
     kind: hcl
     scmid: default
-    sourceid: scenario1
+    sourceid: file
     spec:
       file: cik8s-cluster.tf
       key: module.cik8s.source
@@ -40,7 +40,7 @@ targets:
   update-file:
     name: Update files content
     kind: hcl
-    sourceid: scenario1
+    sourceid: file
     scmid: default
     transformers:
       - addsuffix: -beta
@@ -51,7 +51,7 @@ targets:
   noop:
     name: No update to files content
     kind: hcl
-    sourceid: scenario1
+    sourceid: file
     scmid: default
     spec:
       file: cik8s-cluster.tf

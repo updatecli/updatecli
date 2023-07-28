@@ -1,37 +1,53 @@
 name: Test HCL resources
 
 sources:
-  scenario1:
-    name: Basic HCL source
+  file:
+    name: Read file
     kind: hcl
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
       key: resource.person.john.first_name
+
+  https:
+    name: Read from HTTPs
+    kind: hcl
+    spec:
+      file: https://raw.githubusercontent.com/updatecli-test/jenkins-infra-aws/main/cik8s-cluster.tf
+      key: module.cik8s.version
 
 conditions:
-  scenario1:
+  using-source:
     name: Condition using source
     kind: hcl
-    sourceid: scenario1
+    sourceid: file
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
       key: resource.person.john.first_name
 
-  scenario2:
+  using-value:
     name: Condition using value
     kind: hcl
-    sourceid: scenario1
+    sourceid: file
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
       key: resource.person.john.surname
       value: Doe
 
+  https:
+    name: Condition using HTTP
+    kind: hcl
+    sourceid: file
+    spec:
+      file: https://raw.githubusercontent.com/updatecli-test/jenkins-infra-aws/main/cik8s-cluster.tf
+      key: module.cik8s.version
+      value: "19.15.3"
+
 
 targets:
   update-file:
-    name: Update files content
+    name: Update files content from source
     kind: hcl
-    sourceid: scenario1
+    sourceid: file
     transformers:
       - addsuffix: "y"
     spec:
@@ -39,17 +55,17 @@ targets:
       key: resource.person.john.first_name
 
   noop:
-    name: Update files content
+    name: No update to files content
     kind: hcl
-    sourceid: scenario1
+    sourceid: file
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
       key: resource.person.john.first_name
 
   update-file-from-value:
-    name: Update files content
+    name: Update files content from value
     kind: hcl
-    sourceid: scenario1
+    sourceid: file
     spec:
       file: pkg/plugins/resources/hcl/testdata/data.hcl
       key: resource.person.john.first_name

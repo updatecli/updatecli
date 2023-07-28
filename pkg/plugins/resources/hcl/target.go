@@ -35,7 +35,7 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 	valueToWrite := source
 	if h.spec.Value != "" {
 		valueToWrite = h.spec.Value
-		logrus.Info("INFO: Using spec.Value instead of source input value.")
+		logrus.Debug("Using spec.Value instead of source input value.")
 	}
 
 	resultTarget.NewInformation = valueToWrite
