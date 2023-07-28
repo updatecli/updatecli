@@ -92,7 +92,11 @@ func TestQuery(t *testing.T) {
 
 			err = h.Read()
 
-			h.Apply("testdata/data.hcl", tt.value)
+			require.NoError(t, err)
+
+			err = h.Apply("testdata/data.hcl", tt.value)
+
+			require.NoError(t, err)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

@@ -71,16 +71,17 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 
 		if !dryRun {
 
-			h.Apply(fileKey, valueToWrite)
-
-			h.contentRetriever.WriteToFile(
-				h.files[fileKey].content,
-				h.files[fileKey].filePath,
-			)
-
-			if err != nil {
+			if err := h.Apply(fileKey, valueToWrite); err != nil {
 				return err
 			}
+
+			if err := h.contentRetriever.WriteToFile(
+				h.files[fileKey].content,
+				h.files[fileKey].filePath,
+			); err != nil {
+				return err
+			}
+
 		}
 	}
 
