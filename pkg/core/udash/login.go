@@ -2,6 +2,7 @@ package udash
 
 import "fmt"
 
+// Login will open a browser to authenticate a user and retrieve an access token
 func Login(serviceURL, clientID, issuer, audience, accessToken string) error {
 	port, err := getAvailablePort()
 	if err != nil {

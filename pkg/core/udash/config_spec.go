@@ -6,11 +6,15 @@ import (
 	"os"
 )
 
+// spec defines the structure of the config file
 type spec struct {
-	Auths   map[string]authData
+	// Auths stores the authentication data
+	Auths map[string]authData
+	// Default stores the default authentication data
 	Default string
 }
 
+// authData defines the structure of the authentication data
 type authData struct {
 	// Token stores the access token
 	Token string
@@ -20,6 +24,7 @@ type authData struct {
 	URL string
 }
 
+// readConfigFile reads the config file
 func readConfigFile() (*spec, error) {
 
 	configFile, err := initConfigFile()
@@ -45,6 +50,7 @@ func readConfigFile() (*spec, error) {
 	return &data, nil
 }
 
+// writeConfigFile writes the config file
 func writeConfigFile(configFileName string, data *spec) error {
 	d, err := json.Marshal(&data)
 	if err != nil {
@@ -66,6 +72,7 @@ func writeConfigFile(configFileName string, data *spec) error {
 	return nil
 }
 
+// ConfigFilePath returns the path of the config file
 func ConfigFilePath() (string, error) {
 	configFile, err := initConfigFile()
 	if err != nil {

@@ -1,4 +1,4 @@
-package reports
+package udash
 
 import (
 	"bytes"
@@ -11,32 +11,27 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/udash"
+	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
 var (
-	// ErrNoBearerToken is returned if we couldn't find a token in the local updatecli configuration file
-	ErrNoBearerToken error = fmt.Errorf("no bearer token found")
-	// ErrNoReportAPIURL is returned if we couldn't find an Updatecli report API
-	ErrNoReportAPIURL error = fmt.Errorf("no Updatecli API defined")
-
-	// EnvReportURL defines the default environment variable use to define the updatecli report url
-	EnvReportURL = "UPDATECLI_REPORT_URL"
-	// EnvReportAPIURL defines the default environment variable use to define the updatecli report url
-	EnvReportAPIURL = "UPDATECLI_REPORT_API_URL"
+	// ErrNoUdashBearerToken is returned if we couldn't find a token in the local updatecli configuration file
+	ErrNoUdashBearerToken error = fmt.Errorf("no bearer token found")
+	// ErrNoUdashAPIURL is returned if we couldn't find an Updatecli report API
+	ErrNoUdashAPIURL error = fmt.Errorf("no Updatecli API defined")
 )
 
 // Publish publish a pipeline report to the updatecli api
-func (r *Report) Publish() error {
+func Publish(r *reports.Report) error {
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
 
-	err := r.updateID()
+	err := r.UpdateID()
 	if err != nil {
 		return fmt.Errorf("generating report IDs: %w", err)
 	}
 
-	reportURLString, reportApiURLString, bearerToken, err := udash.Token("")
+	reportURLString, reportApiURLString, bearerToken, err := Token("")
 	if err != nil {
 		return fmt.Errorf("retrieving service access token: %w", err)
 	}
@@ -52,7 +47,7 @@ func (r *Report) Publish() error {
 	}
 
 	if bearerToken == "" {
-		return ErrNoBearerToken
+		return ErrNoUdashBearerToken
 	}
 
 	jsonBody, err := json.Marshal(r)

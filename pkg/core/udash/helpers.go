@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// setDefaultHTTPSScheme adds https:// to a URL if it doesn't already have a scheme
 func setDefaultHTTPSScheme(URL string) string {
 	if !strings.HasPrefix(URL, "http://") &&
 		!strings.HasPrefix(URL, "https://") {
@@ -17,6 +18,7 @@ func setDefaultHTTPSScheme(URL string) string {
 	return URL
 }
 
+// sanitizeTokenID removes the scheme and trailing slash from a URL
 func sanitizeTokenID(token string) string {
 	token = strings.TrimPrefix(token, "https://")
 	token = strings.TrimPrefix(token, "http://")

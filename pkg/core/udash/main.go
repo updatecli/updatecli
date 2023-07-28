@@ -224,6 +224,7 @@ func cleanup(server *http.Server) {
 	go server.Close()
 }
 
+// getAvailablePort returns an available port on localhost
 func getAvailablePort() (string, error) {
 	logrus.Debugln("searching available port on localhost")
 	port := 8080

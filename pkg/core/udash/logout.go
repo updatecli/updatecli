@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Logout remove a token from the local updatecli configuration file
 func Logout(url string) error {
 
 	updatecliConfigPath, err := initConfigFile()
