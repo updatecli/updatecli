@@ -48,13 +48,15 @@ type Config struct {
 func (c *Condition) Run(source string) (err error) {
 
 	var consoleOutput bytes.Buffer
-	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
+	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	logrus.SetOutput(io.MultiWriter(os.Stderr, &consoleOutput))
 	/*
 		The last defer will be executed first,
 		so in this case we want to first save the console output
 		before setting back the logrus output to stdout.
 	*/
-	defer logrus.SetOutput(os.Stdout)
+	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	defer logrus.SetOutput(os.Stderr)
 	defer c.Result.SetConsoleOutput(&consoleOutput)
 
 	c.Result.Result = result.FAILURE
