@@ -11,7 +11,7 @@ import (
 var (
 	udashLogoutCmd = &cobra.Command{
 		Use:     "logout url",
-		Short:   "[Experimental] logout from an Updatecli service.",
+		Short:   "[Experimental] logout from an Udash service.",
 		Example: "updatecli udash logout app.updatecli.io",
 		Run: func(cmd *cobra.Command, args []string) {
 
