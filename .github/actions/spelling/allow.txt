@@ -20,3 +20,5 @@ oidc
 udash
 Udash
 CLIENTID
+minamijoyo
+hcledit
