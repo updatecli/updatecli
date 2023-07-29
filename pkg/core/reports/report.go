@@ -125,7 +125,7 @@ func (r *Report) String(mode string) (report string, err error) {
 	return report, nil
 }
 
-func (r *Report) updateID() error {
+func (r *Report) UpdateID() error {
 	var err error
 
 	r.ID, err = getSha256HashFromStruct(*r)

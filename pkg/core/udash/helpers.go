@@ -1,4 +1,4 @@
-package auth
+package udash
 
 import (
 	"os"
@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// setDefaultHTTPSScheme adds https:// to a URL if it doesn't already have a scheme
 func setDefaultHTTPSScheme(URL string) string {
 	if !strings.HasPrefix(URL, "http://") &&
 		!strings.HasPrefix(URL, "https://") {
@@ -17,13 +18,12 @@ func setDefaultHTTPSScheme(URL string) string {
 	return URL
 }
 
+// sanitizeTokenID removes the scheme and trailing slash from a URL
 func sanitizeTokenID(token string) string {
 	token = strings.TrimPrefix(token, "https://")
 	token = strings.TrimPrefix(token, "http://")
 	token = strings.TrimSuffix(token, "/")
 
-	// . are used by viper to split the key which is not compatible with dots used in URL
-	token = strings.ReplaceAll(token, ".", "_")
 	token = strings.ToLower(token)
 	return token
 }
@@ -45,5 +45,5 @@ func initConfigFile() (string, error) {
 		}
 	}
 
-	return filepath.Join(updatecliConfigDir, "config.json"), nil
+	return filepath.Join(updatecliConfigDir, "udash.json"), nil
 }

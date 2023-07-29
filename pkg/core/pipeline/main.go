@@ -15,6 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/udash"
 )
 
 // Pipeline represent an updatecli run for a specific configuration
@@ -238,10 +239,10 @@ func (p *Pipeline) Run() error {
 	}
 
 	if cmdoptions.Experimental {
-		err := p.Report.Publish()
+		err := udash.Publish(&p.Report)
 		if err != nil &&
-			!errors.Is(err, reports.ErrNoBearerToken) &&
-			!errors.Is(err, reports.ErrNoReportAPIURL) {
+			!errors.Is(err, udash.ErrNoUdashBearerToken) &&
+			!errors.Is(err, udash.ErrNoUdashAPIURL) {
 			logrus.Infof("Skipping report publishing")
 			logrus.Debugf("publish report: %s", err)
 		}
