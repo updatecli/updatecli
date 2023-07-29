@@ -32,10 +32,6 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		condition := p.Conditions[id]
 		condition.Config = p.Config.Spec.Conditions[id]
 
-		rpt := p.Report.Conditions[id]
-		// Update report name as the condition configuration might has been updated (templated values)
-		rpt.Name = condition.Config.Name
-
 		logrus.Infof("\n%s\n", id)
 		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
@@ -45,16 +41,13 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 			logrus.Error(err)
 		}
 
-		// Reports the result of the execution of this condition
-		rpt.Result = condition.Result.Result
-
 		// If there was an error OR if the condition is not successful then defines the global result as false
 		if err != nil || condition.Result.Result != result.SUCCESS {
 			globalResult = false
 		}
 
 		p.Conditions[id] = condition
-		p.Report.Conditions[id] = rpt
+		p.Report.Conditions[id] = &condition.Result
 
 	}
 
