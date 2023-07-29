@@ -26,6 +26,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/go/gomod"
 	golang "github.com/updatecli/updatecli/pkg/plugins/resources/go/language"
 	gomodule "github.com/updatecli/updatecli/pkg/plugins/resources/go/module"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/hcl"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/json"
@@ -60,7 +61,6 @@ type ResourceConfig struct {
 
 // New returns a newly initialized Resource or an error
 func New(rs ResourceConfig) (resource Resource, err error) {
-
 	kind := strings.ToLower(rs.Kind)
 
 	if _, ok := GetResourceMapping()[kind]; !ok {
@@ -144,6 +144,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return file.New(rs.Spec)
 
+	case "hcl":
+
+		return hcl.New(rs.Spec)
+
 	case "helmchart":
 
 		return helm.New(rs.Spec)
@@ -204,7 +208,6 @@ type Resource interface {
 
 // Need to do reflect of ResourceConfig
 func GetResourceMapping() map[string]interface{} {
-
 	return map[string]interface{}{
 		"aws/ami":        &awsami.Spec{},
 		"cargopackage":   &cargopackage.Spec{},
@@ -225,6 +228,7 @@ func GetResourceMapping() map[string]interface{} {
 		"golang":         &golang.Spec{},
 		"golang/gomod":   &gomod.Spec{},
 		"golang/module":  &gomodule.Spec{},
+		"hcl":            &hcl.Spec{},
 		"helmchart":      &helm.Spec{},
 		"jenkins":        &jenkins.Spec{},
 		"json":           &json.Spec{},
