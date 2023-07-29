@@ -17,7 +17,7 @@ var (
 
 	udashLoginCmd = &cobra.Command{
 		Use:     "login url",
-		Short:   "[Experimental] login authenticates with the Updatecli service.",
+		Short:   "[Experimental] login authenticates with the Udash.",
 		Example: "updatecli udash login app.updatecli.io",
 		Run: func(cmd *cobra.Command, args []string) {
 
