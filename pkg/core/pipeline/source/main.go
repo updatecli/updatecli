@@ -1,7 +1,9 @@
 package source
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"os"
 	"strings"
 
@@ -24,7 +26,8 @@ type Source struct {
 	Output string
 	// Config defines a source specifications
 	Config Config
-	Scm    *scm.ScmHandler
+	// Scm stores scm information
+	Scm *scm.ScmHandler
 }
 
 // Config struct defines a source configuration
@@ -39,6 +42,18 @@ var (
 
 // Run execute actions defined by the source configuration
 func (s *Source) Run() (err error) {
+
+	var consoleOutput bytes.Buffer
+	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	logrus.SetOutput(io.MultiWriter(os.Stderr, &consoleOutput))
+	/*
+		The last defer will be executed first,
+		so in this case we want to first save the console output
+		before setting back the logrus output to stdout.
+	*/
+	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	defer logrus.SetOutput(os.Stderr)
+	defer s.Result.SetConsoleOutput(&consoleOutput)
 
 	source, err := resource.New(s.Config.ResourceConfig)
 	if err != nil {
@@ -91,6 +106,7 @@ func (s *Source) Run() (err error) {
 	if s.Changelog == "" {
 		logrus.Debugln("empty changelog found for the source")
 	}
+	s.Result.Changelog = s.Changelog
 
 	if len(s.Config.ResourceConfig.Transformers) > 0 {
 		s.Output, err = s.Config.ResourceConfig.Transformers.Apply(s.Output)
@@ -118,6 +134,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
 }
 
+// Validate checks if a source configuration is valid
 func (c *Config) Validate() error {
 	gotError := false
 
