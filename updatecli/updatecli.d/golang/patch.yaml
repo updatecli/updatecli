@@ -48,6 +48,7 @@ autodiscovery:
             github.com/nirasan/go-oauth-pkce-code-verifier:
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             github.com/skratchdot/open-golang:
+            k8s.io/utils:
 
       only:
         # This repository contains other go.sum file used for testing.
