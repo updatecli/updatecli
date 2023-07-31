@@ -72,6 +72,39 @@ func writeConfigFile(configFileName string, data *spec) error {
 	return nil
 }
 
+// updateConfigFile updates the config file
+func updateConfigFile(data authData) error {
+
+	updatecliConfigPath, err := initConfigFile()
+	if err != nil {
+		return err
+	}
+
+	d, err := readConfigFile()
+	if err != nil {
+		return err
+	}
+
+	if d == nil {
+		d = &spec{}
+		d.Auths = make(map[string]authData)
+	}
+
+	d.Auths[sanitizeTokenID(data.Api)] = authData{
+		Token: data.Token,
+		Api:   data.Api,
+		URL:   data.URL,
+	}
+	d.Default = sanitizeTokenID(data.Api)
+
+	err = writeConfigFile(updatecliConfigPath, d)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ConfigFilePath returns the path of the config file
 func ConfigFilePath() (string, error) {
 	configFile, err := initConfigFile()

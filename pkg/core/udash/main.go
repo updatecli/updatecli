@@ -44,6 +44,23 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL, access
 	authDomain = setDefaultHTTPSScheme(authDomain)
 	audience = setDefaultHTTPSScheme(audience)
 
+	// If accessToken is provided, we skip the oauth flow
+	if accessToken != "" {
+		logrus.Infof("Token detected via flag --oauth-access-token, skipping the oauth PKCE flow")
+		err = updateConfigFile(authData{
+			Token: accessToken,
+			Api:   audience,
+			URL:   frontURL,
+		})
+		if err != nil {
+			logrus.Errorln(err)
+			return nil
+		}
+		logrus.Println("Successfully logged into updatecli service.")
+
+		return nil
+	}
+
 	authorizationURL, err := url.Parse(authDomain)
 	if err != nil {
 		logrus.Errorln(err)
@@ -102,34 +119,27 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL, access
 
 		// trade the authorization code and the code verifier for an access token
 		codeVerifier := CodeVerifier.String()
-		token := accessToken
-		if accessToken == "" {
-			token, err = getAccessToken(authDomain, clientID, codeVerifier, code, redirectURL)
+		accessToken, err = getAccessToken(authDomain, clientID, codeVerifier, code, redirectURL)
+		if err != nil {
+
+			errmsg := "could not retrieve access token\n"
+			_, err := io.WriteString(w, fmt.Sprintf("Error: %s", errmsg))
 			if err != nil {
-
-				errmsg := "could not retrieve access token\n"
-				_, err := io.WriteString(w, fmt.Sprintf("Error: %s", errmsg))
-				if err != nil {
-					logrus.Errorln(err)
-					return
-				}
-
-				logrus.Debugln(errmsg)
-				// close the HTTP server and return
-				cleanup(server)
+				logrus.Errorln(err)
 				return
 			}
-		}
 
-		updatecliConfigPath, err := initConfigFile()
-		if err != nil {
-			logrus.Errorln(err)
+			logrus.Debugln(errmsg)
+			// close the HTTP server and return
+			cleanup(server)
 			return
 		}
 
-		logrus.Debugf("Updatecli configuration located at %q", updatecliConfigPath)
-
-		data, err := readConfigFile()
+		err = updateConfigFile(authData{
+			Token: accessToken,
+			Api:   audience,
+			URL:   frontURL,
+		})
 		if err != nil {
 			if !os.IsNotExist(err) {
 				logrus.Errorln(err)
@@ -137,26 +147,6 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL, access
 				cleanup(server)
 				return
 			}
-		}
-
-		if data == nil {
-			data = &spec{}
-			data.Auths = make(map[string]authData)
-		}
-
-		data.Auths[sanitizeTokenID(audience)] = authData{
-			Token: token,
-			Api:   audience,
-			URL:   frontURL,
-		}
-		data.Default = sanitizeTokenID(audience)
-
-		err = writeConfigFile(updatecliConfigPath, data)
-		if err != nil {
-			logrus.Errorln(err)
-			// close the HTTP server and return
-			cleanup(server)
-			return
 		}
 
 		// return an indication of success to the caller
