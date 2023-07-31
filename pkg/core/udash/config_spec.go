@@ -2,7 +2,6 @@ package udash
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 )
 
@@ -32,7 +31,7 @@ func readConfigFile() (*spec, error) {
 		return nil, err
 	}
 
-	if _, err := os.Stat(configFile); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(configFile); err != nil {
 		return nil, err
 	}
 
@@ -59,7 +58,7 @@ func writeConfigFile(configFileName string, data *spec) error {
 
 	// create file
 	f, err := os.Create(configFileName)
-	if err != nil {
+	if err != nil && !os.IsExist(err) {
 		return err
 	}
 	defer f.Close()
@@ -76,12 +75,12 @@ func writeConfigFile(configFileName string, data *spec) error {
 func updateConfigFile(data authData) error {
 
 	updatecliConfigPath, err := initConfigFile()
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
 	d, err := readConfigFile()
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
