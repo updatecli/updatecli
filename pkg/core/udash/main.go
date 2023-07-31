@@ -46,7 +46,7 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL, access
 
 	// If accessToken is provided, we skip the oauth flow
 	if accessToken != "" {
-		logrus.Infof("Token detected via flag --token, skipping the oauth PKCE flow")
+		logrus.Infof("Token detected via flag --oauth-access-token, skipping the oauth PKCE flow")
 		err = updateConfigFile(authData{
 			Token: accessToken,
 			Api:   audience,
