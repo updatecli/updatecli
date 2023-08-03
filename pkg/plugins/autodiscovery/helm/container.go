@@ -159,53 +159,55 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}
 
 			params := struct {
-				ManifestName               string
-				HasRegistry                bool
-				ConditionRegistryID        string
-				ConditionRegistryKey       string
-				ConditionRegistryName      string
-				ConditionRegistryValue     string
-				ConditionRepositoryID      string
-				ConditionRepositoryKey     string
-				ConditionRepositoryName    string
-				ConditionRepositoryValue   string
-				SourceID                   string
-				SourceName                 string
-				SourceVersionFilterKind    string
-				SourceVersionFilterPattern string
-				SourceImageName            string
-				SourceTagFilter            string
-				TargetName                 string
-				TargetID                   string
-				TargetKey                  string
-				TargetFile                 string
-				TargetChartName            string
-				File                       string
-				ScmID                      string
+				ManifestName                string
+				HasRegistry                 bool
+				ConditionRegistryID         string
+				ConditionRegistryKey        string
+				ConditionRegistryName       string
+				ConditionRegistryValue      string
+				ConditionRepositoryID       string
+				ConditionRepositoryKey      string
+				ConditionRepositoryName     string
+				ConditionRepositoryValue    string
+				SourceID                    string
+				SourceName                  string
+				SourceVersionFilterKind     string
+				SourceVersionFilterPattern  string
+				SourceImageName             string
+				SourceTagFilter             string
+				TargetName                  string
+				TargetID                    string
+				TargetKey                   string
+				TargetFile                  string
+				TargetChartName             string
+				TargetChartVersionIncrement string
+				File                        string
+				ScmID                       string
 			}{
-				ManifestName:               fmt.Sprintf("Bump Docker image %q for Helm chart %q", imageSource, chartName),
-				HasRegistry:                image.registry != "",
-				ConditionRegistryID:        imageSourceSlug + "-registry",
-				ConditionRegistryKey:       image.yamlRegistryPath,
-				ConditionRegistryName:      fmt.Sprintf("Ensure container registry %q is specified", image.registry),
-				ConditionRegistryValue:     image.registry,
-				ConditionRepositoryID:      imageSourceSlug + "-repository",
-				ConditionRepositoryKey:     image.yamlRepositoryPath,
-				ConditionRepositoryName:    fmt.Sprintf("Ensure container repository %q is specified", image.repository),
-				ConditionRepositoryValue:   image.repository,
-				SourceID:                   imageSourceSlug,
-				SourceName:                 fmt.Sprintf("Get latest %q container tag", imageSource),
-				SourceVersionFilterKind:    sourceSpec.VersionFilter.Kind,
-				SourceVersionFilterPattern: sourceSpec.VersionFilter.Pattern,
-				SourceImageName:            sourceSpec.Image,
-				SourceTagFilter:            sourceSpec.TagFilter,
-				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", imageSource, chartName),
-				TargetID:                   imageSourceSlug,
-				TargetKey:                  image.yamlTagPath,
-				TargetChartName:            chartRelativeMetadataPath,
-				TargetFile:                 filepath.Base(foundValueFile),
-				File:                       relativeFoundValueFile,
-				ScmID:                      h.scmID,
+				ManifestName:                fmt.Sprintf("Bump Docker image %q for Helm chart %q", imageSource, chartName),
+				HasRegistry:                 image.registry != "",
+				ConditionRegistryID:         imageSourceSlug + "-registry",
+				ConditionRegistryKey:        image.yamlRegistryPath,
+				ConditionRegistryName:       fmt.Sprintf("Ensure container registry %q is specified", image.registry),
+				ConditionRegistryValue:      image.registry,
+				ConditionRepositoryID:       imageSourceSlug + "-repository",
+				ConditionRepositoryKey:      image.yamlRepositoryPath,
+				ConditionRepositoryName:     fmt.Sprintf("Ensure container repository %q is specified", image.repository),
+				ConditionRepositoryValue:    image.repository,
+				SourceID:                    imageSourceSlug,
+				SourceName:                  fmt.Sprintf("Get latest %q container tag", imageSource),
+				SourceVersionFilterKind:     sourceSpec.VersionFilter.Kind,
+				SourceVersionFilterPattern:  sourceSpec.VersionFilter.Pattern,
+				SourceImageName:             sourceSpec.Image,
+				SourceTagFilter:             sourceSpec.TagFilter,
+				TargetName:                  fmt.Sprintf("Bump container image tag for image %q in chart %q", imageSource, chartName),
+				TargetID:                    imageSourceSlug,
+				TargetKey:                   image.yamlTagPath,
+				TargetChartName:             chartRelativeMetadataPath,
+				TargetChartVersionIncrement: h.spec.VersionIncrement,
+				TargetFile:                  filepath.Base(foundValueFile),
+				File:                        relativeFoundValueFile,
+				ScmID:                       h.scmID,
 			}
 
 			manifest := bytes.Buffer{}
