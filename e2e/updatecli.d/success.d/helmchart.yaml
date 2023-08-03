@@ -139,3 +139,15 @@ targets:
       appversion: true
       key:  $.dependencies[2].version
       versionincrement: none
+
+  valuesFile:
+    name: Test Chart Update
+    scmid: default
+    sourceid: default
+    kind: helmchart
+    spec:
+      name: chart/epinio
+      file: values.yaml
+      appversion: true
+      key:  $.image.epinio-ui.tag
+      versionincrement: minor

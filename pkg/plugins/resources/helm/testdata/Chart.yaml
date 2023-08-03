@@ -1,0 +1,7 @@
+apiVersion: v2
+name: webapp
+version: 0.3.0
+appVersion: 0.1.0
+dependencies:
+  - name: db
+    version: 1.0.0
