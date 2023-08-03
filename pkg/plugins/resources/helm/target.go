@@ -13,7 +13,6 @@ import (
 // Target updates helm chart, it receives the default source value and a "dry-run" flag
 // then return if it changed something or failed
 func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-
 	var out bytes.Buffer
 	err := c.ValidateTarget()
 	if err != nil {
@@ -25,7 +24,6 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		Key:  c.spec.Key,
 	}
 
-	c.spec.Value = source
 	if c.spec.Value != "" {
 		yamlSpec.Value = c.spec.Value
 	}
@@ -48,7 +46,7 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		chartPath = filepath.Join(scm.GetDirectory(), c.spec.Name)
 	}
 
-	err = c.MetadataUpdate(chartPath, dryRun)
+	err = c.MetadataUpdate(resultTarget.NewInformation, scm, dryRun, resultTarget)
 	if err != nil {
 		return err
 	}
