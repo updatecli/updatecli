@@ -12,4 +12,5 @@ autodiscovery:
       versionfilter:
         kind: semver
         pattern: patch
+      versionincrement: major
 
