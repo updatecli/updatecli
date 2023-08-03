@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -12,6 +13,9 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 	"helm.sh/helm/v3/pkg/action"
 	helm "helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/cli"
@@ -24,7 +28,6 @@ import (
 
 // DependencyUpdate updates the "Chart.lock" file if needed
 func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
-
 	client := action.NewDependency()
 	settings := cli.New()
 
@@ -33,7 +36,6 @@ func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
 		registry.ClientOptWriter(out),
 		registry.ClientOptCredentialsFile(settings.RegistryConfig),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -62,7 +64,6 @@ func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
 // GetRepoIndexFromFile loads an index file from a local file and does minimal validity checking.
 // It fails if API Version isn't set (ErrNoAPIVersion) or if the "unmarshal" operation fails.
 func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
-
 	URL := strings.TrimPrefix(c.spec.URL, "file://")
 
 	if rootDir != "" {
@@ -74,13 +75,11 @@ func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
 	}
 
 	rawIndexFile, err := os.Open(URL)
-
 	if err != nil {
 		return repo.IndexFile{}, err
 	}
 
 	data, err := io.ReadAll(rawIndexFile)
-
 	if err != nil {
 		return repo.IndexFile{}, err
 	}
@@ -137,7 +136,6 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 	}
 
 	data, err := io.ReadAll(res.Body)
-
 	if err != nil {
 		return repo.IndexFile{}, err
 	}
@@ -158,10 +156,13 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 }
 
 // MetadataUpdate updates a metadata if necessary and it bump the ChartVersion
-func (c *Chart) MetadataUpdate(chartPath string, dryRun bool) error {
+func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	md := helm.Metadata{}
 
-	metadataFilename := filepath.Join(chartPath, "Chart.yaml")
+	metadataFilename := filepath.Join(c.spec.Name, "Chart.yaml")
+	if scm != nil {
+		metadataFilename = filepath.Join(scm.GetDirectory(), metadataFilename)
+	}
 
 	file, err := os.Open(metadataFilename)
 	if err != nil {
@@ -170,79 +171,78 @@ func (c *Chart) MetadataUpdate(chartPath string, dryRun bool) error {
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
-
 	if err != nil {
 		return err
 	}
 
-	err = yml.Unmarshal(data, &md)
-
-	if err != nil {
+	if err := yml.Unmarshal(data, &md); err != nil {
 		return err
 	}
+
+	newVersion := md.Version
+	oldVersion := md.Version
 
 	// Init Chart Version if not set yet
 	if len(md.Version) == 0 {
-		md.Version = "0.0.0"
+		newVersion = "0.0.0"
 	}
-
-	oldVersion := md.Version
 
 forLoop:
 	for _, inc := range strings.Split(c.spec.VersionIncrement, ",") {
-		v, err := semver.NewVersion(md.Version)
+		v, err := semver.NewVersion(newVersion)
 		if err != nil {
 			return err
 		}
 
 		switch inc {
 		case MAJORVERSION:
-			md.Version = v.IncMajor().String()
+			newVersion = v.IncMajor().String()
 		case MINORVERSION:
-			md.Version = v.IncMinor().String()
+			newVersion = v.IncMinor().String()
 		case PATCHVERSION:
-			md.Version = v.IncPatch().String()
+			newVersion = v.IncPatch().String()
 		case NOINCREMENT:
 			// Reset Version to its initial value
-			md.Version = oldVersion
+			newVersion = oldVersion
 			break forLoop
 		default:
 			logrus.Warningf("Wrong increment rule %q, ignoring", inc)
 		}
 	}
 
-	if oldVersion != md.Version {
-		logrus.Infof("\tChart Version updated from %q to %q\n", oldVersion, md.Version)
+	if err := c.metadataYamlPathUpdate("$.version", newVersion, scm, dryRun, resultTarget); err != nil {
+		return err
 	}
 
 	if len(md.AppVersion) > 0 && c.spec.AppVersion {
-		if md.AppVersion != c.spec.Value {
-			logrus.Infof("\tAppVersion updated from %s to %s\n", md.AppVersion, c.spec.Value)
-			md.AppVersion = c.spec.Value
+		if err := c.metadataYamlPathUpdate("$.appVersion", source, scm, dryRun, resultTarget); err != nil {
+			return err
 		}
 	}
 
+	return nil
+}
+
+func (c *Chart) metadataYamlPathUpdate(key string, value string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+	yamlSpec := yaml.Spec{
+		File: filepath.Join(c.spec.Name, "Chart.yaml"),
+		Key:  key,
+	}
+
+	yamlResource, err := yaml.New(yamlSpec)
 	if err != nil {
 		return err
 	}
 
-	if !dryRun {
-		data, err := yml.Marshal(md)
-		if err != nil {
-			return err
-		}
+	metadataResultTarget := result.Target{}
+	if err := yamlResource.Target(value, scm, dryRun, &metadataResultTarget); err != nil {
+		return err
+	}
 
-		file, err := os.Create(metadataFilename)
-		if err != nil {
-			return err
-		}
-
-		defer file.Close()
-
-		_, err = file.Write(data)
-		if err != nil {
-			return err
-		}
+	if metadataResultTarget.Changed {
+		resultTarget.Description = fmt.Sprintf("%s\n%s",
+			resultTarget.Description,
+			metadataResultTarget.Description)
 	}
 
 	return nil
@@ -267,5 +267,4 @@ func (c *Chart) RequirementsUpdate(chartPath string) error {
 	}
 
 	return nil
-
 }
