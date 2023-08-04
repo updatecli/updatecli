@@ -66,5 +66,5 @@ var (
 )
 
 func init() {
-	docsCmd.Flags().StringVarP(&docsDir, "docs", "d", "./docs", "Specify the directory where to generate documentation files (default: './docs')")
+	docsCmd.Flags().StringVarP(&docsDir, "docs", "d", "./docs", "Specify the directory where to generate documentation files")
 }
