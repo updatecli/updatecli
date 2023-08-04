@@ -127,7 +127,7 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 
 	// I am struggling to find a way to mock the file system for the unit test
 	// when file is not in the current directory
-	// So I am using a work-around to make sure that the unit test work
+	// So I am using a condition to make sure that the unit test work
 	if filename != baseFilename {
 		t.fs = os.DirFS(filepath.Dir(filename))
 	}
