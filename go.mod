@@ -47,7 +47,7 @@ require (
 	github.com/nirasan/go-oauth-pkce-code-verifier v0.0.0-20220510032225-4f9f17eaec4c
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/tomwright/dasel v1.27.3
-	golang.org/x/text v0.11.0
+	golang.org/x/text v0.12.0
 	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
 )
