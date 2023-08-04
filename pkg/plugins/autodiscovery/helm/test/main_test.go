@@ -204,7 +204,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.image.tag'
-      VersionIncrement: ''
+      versionincrement: ''
     sourceid: 'epinio_epinio-server'
 `,
 				`name: 'Bump Docker image "epinio/epinio-ui" for Helm chart "sample"'
@@ -235,7 +235,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.images.ui.tag'
-      VersionIncrement: ''
+      versionincrement: ''
     sourceid: 'epinio_epinio-ui'
 `},
 		},
@@ -278,7 +278,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.image.tag'
-      VersionIncrement: ''
+      versionincrement: ''
     sourceid: 'ghcr.io_epinio_epinio-server'
 `,
 				`name: 'Bump Docker image "ghcr.io/epinio/epinio-ui" for Helm chart "sample"'
@@ -317,7 +317,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.images.ui.tag'
-      VersionIncrement: ''
+      versionincrement: ''
     sourceid: 'ghcr.io_epinio_epinio-ui'
 `},
 		},
