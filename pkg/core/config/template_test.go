@@ -10,22 +10,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestTemplateData contains all the data required to run a test
 type TestTemplateData struct {
-	ID               string
+	// ID is used to identify the test
+	ID string
+	// ManifestTemplate is the template to render
 	ManifestTemplate string
-	Values           string
+	// Values1 contains key/value extracted from the first values file
+	Values1 string
+	// Values2 would always be call after Values1 so values from Values2 will override values from Values1
+	Values2 string
+	// ExpectedManifest is the expected manifest after rendering the template
 	ExpectedManifest string
-	ExpectError      bool
+	// ExpectError is used to check if the test should return an error
+	ExpectError bool
 }
 
 var (
+	// testTemplates contains all the test cases
 	testTemplates = []TestTemplateData{
 		{
 			ID: "render value",
 			ManifestTemplate: `
       hello {{ .value }}
       `,
-			Values: `
+			Values1: `
+      value: my friend
+      `,
+			Values2: `
       value: world
       `,
 			ExpectedManifest: `
@@ -69,9 +81,10 @@ func TestTemplates(t *testing.T) {
 		t.Run(fmt.Sprintf("test template %s", testTemplate.ID), func(t *testing.T) {
 
 			template := Template{
-				ValuesFiles: []string{"values.yml"},
+				ValuesFiles: []string{"values1.yml", "values2.yml"},
 				fs: fstest.MapFS{
-					"values.yml": {Data: []byte(testTemplate.Values)},
+					"values1.yml": {Data: []byte(testTemplate.Values1)},
+					"values2.yml": {Data: []byte(testTemplate.Values2)},
 				},
 			}
 			expected := dedent.Dedent(testTemplate.ExpectedManifest)
