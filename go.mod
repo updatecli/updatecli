@@ -1,6 +1,6 @@
 module github.com/updatecli/updatecli
 
-go 1.20
+go 1.21
 
 require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11 // indirect
