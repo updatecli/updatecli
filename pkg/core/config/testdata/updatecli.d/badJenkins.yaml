@@ -1,0 +1,9 @@
+name: Bad manifestg
+sources:
+  - name: Get latest stable Jenkins version
+    url: https://updates.jenkins.io/stable/latestCore.txt
+    type: file
+    version:
+      kind: regex
+      regex: "(\\d+\\.\\d+)"
+      group: 1

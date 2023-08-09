@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -834,5 +835,107 @@ func TestIsTemplatedString(t *testing.T) {
 	for _, data := range dataset {
 		got := IsTemplatedString(data.Key)
 		assert.Equal(t, data.ExpectedResult, got)
+	}
+}
+
+func TestNew(t *testing.T) {
+	dataset := []struct {
+		id             string
+		option         Option
+		expectedResult []Config
+		expectedError  error
+	}{
+		{
+			id: "Test with a valid manifest containing one config",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/jenkins.yaml",
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a valid manifest containing two configs",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/multiJenkins.yaml",
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest stable Jenkins version",
+					},
+				},
+				{
+					Spec: Spec{
+						Name: "Get latest weekly Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a valid templated manifest containing two configs",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/multiJenkins.yaml",
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest stable Jenkins version",
+					},
+				},
+				{
+					Spec: Spec{
+						Name: "Get latest weekly Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a valid templated manifest containing two configs",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/multiTemplatedJenkins.tpl",
+				ValuesFiles:  []string{"testdata/values.yaml"},
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest stable Jenkins version",
+					},
+				},
+				{
+					Spec: Spec{
+						Name: "Get latest weekly Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a bad manifest containing one config",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/badJenkins.yaml",
+			},
+			expectedResult: []Config{},
+			expectedError:  errors.New("yaml: unmarshal errors:\n  line 3: cannot unmarshal !!seq into map[string]source.Config"),
+		},
+	}
+
+	for _, data := range dataset {
+		got, err := New(data.option)
+
+		switch data.expectedError {
+		case nil:
+			require.NoError(t, err)
+		default:
+			require.ErrorContains(t, err, data.expectedError.Error())
+		}
+
+		require.EqualValues(t, len(data.expectedResult), len(got))
+		for i := range data.expectedResult {
+			require.Equal(t, data.expectedResult[i].Spec.Title, got[i].Spec.Title)
+		}
 	}
 }
