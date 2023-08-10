@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"gopkg.in/yaml.v3"
 )
 
 // FileChecksum returns sha256 checksum based on a file content.
@@ -125,4 +127,25 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 
 	return value, nil
 
+}
+
+// unmarshalConfigSpec unmarshal an Updatecli config spec
+func unmarshalConfigSpec(in []byte, out *[]Spec) error {
+
+	r := bytes.NewReader(in)
+	dec := yaml.NewDecoder(r)
+
+	for {
+		var s Spec
+		if err := dec.Decode(&s); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+
+		*out = append(*out, s)
+	}
+
+	return nil
 }

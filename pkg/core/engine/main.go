@@ -208,7 +208,7 @@ func (e *Engine) LoadConfigurations() error {
 
 	for _, manifestFile := range manifestFiles {
 
-		loadedConfiguration, err := config.New(
+		loadedConfigurations, err := config.New(
 			config.Option{
 				ManifestFile:      manifestFile,
 				SecretsFiles:      e.Options.Config.SecretsFiles,
@@ -229,18 +229,22 @@ func (e *Engine) LoadConfigurations() error {
 			continue
 		}
 
-		newPipeline := pipeline.Pipeline{}
-		err = newPipeline.Init(
-			&loadedConfiguration,
-			e.Options.Pipeline)
+		for id := range loadedConfigurations {
+			newPipeline := pipeline.Pipeline{}
+			loadedConfiguration := loadedConfigurations[id]
 
-		if err == nil {
-			e.Pipelines = append(e.Pipelines, newPipeline)
-			e.configurations = append(e.configurations, loadedConfiguration)
-		} else {
-			// don't initially fail as init. of the pipeline still fails even with a successful validation
-			err := fmt.Errorf("%q - %s", manifestFile, err)
-			errs = append(errs, err)
+			err = newPipeline.Init(
+				&loadedConfiguration,
+				e.Options.Pipeline)
+
+			if err == nil {
+				e.Pipelines = append(e.Pipelines, newPipeline)
+				e.configurations = append(e.configurations, loadedConfiguration)
+			} else {
+				// don't initially fail as init. of the pipeline still fails even with a successful validation
+				err := fmt.Errorf("%q - %s", manifestFile, err)
+				errs = append(errs, err)
+			}
 		}
 	}
 
