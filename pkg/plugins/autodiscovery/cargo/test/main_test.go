@@ -51,10 +51,11 @@ conditions:
 targets:
   anyhow:
     name: 'Bump crate dependency "anyhow" to {{ source "anyhow" }}'
-    kind: 'toml'
+    kind: 'file'
     spec:
       file: 'Cargo.toml'
-      key: 'dependencies.anyhow'
+      matchpattern: 'anyhow( +)=(.*?)version( +)=( +)"(.*?)"(.*)'
+      replacepattern: 'anyhow${1}=${2}version${3}=${4}"{{ source "anyhow" }}"${6}'
     sourceid: 'anyhow'
 `, `name: 'Bump dependencies "rand" for "test-crate" crate'
 sources:
@@ -83,10 +84,11 @@ conditions:
 targets:
   rand:
     name: 'Bump crate dependency "rand" to {{ source "rand" }}'
-    kind: 'toml'
+    kind: 'file'
     spec:
       file: 'Cargo.toml'
-      key: 'dependencies.rand.version'
+      matchpattern: '(?m)\[dependencies\.rand\](\n)((.|\n)*)( )*version( )*=( )*"(.*)"'
+      replacepattern: '[dependencies.rand]${1}${2}${4}version${5}=${6}"{{ source "rand" }}"'
     sourceid: 'rand'
 `, `name: 'Bump dev-dependencies "futures" for "test-crate" crate'
 sources:
@@ -115,10 +117,11 @@ conditions:
 targets:
   futures:
     name: 'Bump crate dependency "futures" to {{ source "futures" }}'
-    kind: 'toml'
+    kind: 'file'
     spec:
       file: 'Cargo.toml'
-      key: 'dev-dependencies.futures.version'
+      matchpattern: '(?m)\[dev-dependencies\.futures\](\n)((.|\n)*)( )*version( )*=( )*"(.*)"'
+      replacepattern: '[dev-dependencies.futures]${1}${2}${4}version${5}=${6}"{{ source "futures" }}"'
     sourceid: 'futures'
 `},
 		},

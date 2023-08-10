@@ -55,11 +55,14 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 	} else {
 		ConditionQuery = fmt.Sprintf("%s.(?:-=%s).version", dependencyType, dependency.Name)
 	}
-	var TargetKey string
+	var TargetMatchPattern string
+	var TargetReplacePattern string
 	if dependency.Inlined {
-		TargetKey = fmt.Sprintf("%s.%s", dependencyType, dependency.Name)
+		TargetMatchPattern = fmt.Sprintf("%s( +)=(.*?)version( +)=( +)\"(.*?)\"(.*)", dependency.Name)
+		TargetReplacePattern = fmt.Sprintf("%s${1}=${2}version${3}=${4}\"{{ source \"%s\" }}\"${6}", dependency.Name, dependency.Name)
 	} else {
-		TargetKey = fmt.Sprintf("%s.%s.version", dependencyType, dependency.Name)
+		TargetMatchPattern = fmt.Sprintf("(?m)\\[%s\\.%s\\](\\n)((.|\\n)*)( )*version( )*=( )*\"(.*)\"", dependencyType, dependency.Name)
+		TargetReplacePattern = fmt.Sprintf("[%s.%s]${1}${2}${4}version${5}=${6}\"{{ source \"%s\" }}\"", dependencyType, dependency.Name, dependency.Name)
 	}
 	var Registry cargo.Registry
 	if dependency.Registry != "" {
@@ -102,7 +105,8 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		TargetID                   string
 		TargetName                 string
 		TargetFile                 string
-		TargetKey                  string
+		TargetMatchPattern         string
+		TargetReplacePattern       string
 		TargetCargoCleanupEnabled  bool
 		TargetWorkdir              string
 		ScmID                      string
@@ -130,7 +134,8 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		TargetID:                   dependency.Name,
 		TargetName:                 fmt.Sprintf("Bump crate dependency %q to {{ source %q }}", dependency.Name, dependency.Name),
 		TargetFile:                 filepath.Base(foundFile),
-		TargetKey:                  TargetKey,
+		TargetMatchPattern:         TargetMatchPattern,
+		TargetReplacePattern:       TargetReplacePattern,
 		TargetCargoCleanupEnabled:  targetCargoCleanupEnabled,
 		TargetWorkdir:              filepath.Dir(foundFile),
 		ScmID:                      c.scmID,
