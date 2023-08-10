@@ -59,12 +59,12 @@ func TestSource(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Passing case of retrieving none existing crate-test from the filesystem index",
+			name: "Passing case of retrieving nonexistent crate-test from the filesystem index",
 			spec: Spec{
 				Registry: cargo.Registry{
 					RootDir: dir,
 				},
-				Package: "non-existing-crate-test",
+				Package: "nonexistent-crate-test",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "~0.1",
@@ -107,7 +107,7 @@ func TestSource(t *testing.T) {
 						HeaderFormat: "Bearer %s",
 					},
 				},
-				Package: "crate-test-non-existing",
+				Package: "crate-test-nonexistent",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "~0.1",

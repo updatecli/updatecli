@@ -41,7 +41,7 @@ func TestCondition(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Retrieving non-existing rand version from the default index api",
+			name: "Retrieving nonexistent rand version from the default index api",
 			spec: Spec{
 				Package: "rand",
 				Version: "99.99.99",
@@ -62,7 +62,7 @@ func TestCondition(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Retrieving none existing not-crate-test from the filesystem index",
+			name: "Retrieving nonexistent not-crate-test from the filesystem index",
 			spec: Spec{
 				Registry: cargo.Registry{
 					RootDir: dir,
@@ -86,7 +86,7 @@ func TestCondition(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Retrieving non-existing yanked crate-test version from the filesystem index",
+			name: "Retrieving nonexistent yanked crate-test version from the filesystem index",
 			spec: Spec{
 				Registry: cargo.Registry{
 					RootDir: dir,
@@ -120,7 +120,7 @@ func TestCondition(t *testing.T) {
 			mockedHTTPStatusCode: existingPackageStatus,
 		},
 		{
-			name: "Retrieving non-existing crate-test version from the mocked private registry",
+			name: "Retrieving nonexistent crate-test version from the mocked private registry",
 			spec: Spec{
 				Registry: cargo.Registry{
 					URL: "https://crates.io/api/v1/crates",
@@ -142,7 +142,7 @@ func TestCondition(t *testing.T) {
 			mockedHTTPStatusCode: existingPackageStatus,
 		},
 		{
-			name: "Retrieving none existing non-crate-test from the mocked private registry",
+			name: "Retrieving nonexistent non-crate-test from the mocked private registry",
 			spec: Spec{
 				Registry: cargo.Registry{
 					URL: "https://crates.io/api/v1/crates",
