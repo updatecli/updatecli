@@ -142,7 +142,7 @@ func TestCondition(t *testing.T) {
 			mockedHTTPStatusCode: existingPackageStatus,
 		},
 		{
-			name: "Retrieving non-existing non-crate-test from the mocked private registry",
+			name: "Retrieving none existing non-crate-test from the mocked private registry",
 			spec: Spec{
 				Registry: cargo.Registry{
 					URL: "https://crates.io/api/v1/crates",
