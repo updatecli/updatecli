@@ -41,7 +41,7 @@ func TestCondition(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Retrieving non-existing rand version from the default index api",
+			name: "Retrieving nonexistent rand version from the default index api",
 			spec: Spec{
 				Package: "rand",
 				Version: "99.99.99",
@@ -62,6 +62,18 @@ func TestCondition(t *testing.T) {
 			expectedError:  false,
 		},
 		{
+			name: "Retrieving nonexistent not-crate-test from the filesystem index",
+			spec: Spec{
+				Registry: cargo.Registry{
+					RootDir: dir,
+				},
+				Package: "non-crate-test",
+				Version: "0.2.2",
+			},
+			expectedResult: false,
+			expectedError:  false,
+		},
+		{
 			name: "Retrieving existing yanked crate-test version from the filesystem index",
 			spec: Spec{
 				Registry: cargo.Registry{
@@ -74,7 +86,7 @@ func TestCondition(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Retrieving non-existing yanked crate-test version from the filesystem index",
+			name: "Retrieving nonexistent yanked crate-test version from the filesystem index",
 			spec: Spec{
 				Registry: cargo.Registry{
 					RootDir: dir,
@@ -108,7 +120,7 @@ func TestCondition(t *testing.T) {
 			mockedHTTPStatusCode: existingPackageStatus,
 		},
 		{
-			name: "Retrieving non-existing crate-test version from the mocked private registry",
+			name: "Retrieving nonexistent crate-test version from the mocked private registry",
 			spec: Spec{
 				Registry: cargo.Registry{
 					URL: "https://crates.io/api/v1/crates",
@@ -128,6 +140,28 @@ func TestCondition(t *testing.T) {
 			mockedToken:          "mytoken",
 			mockedHeaderFormat:   "Bearer %s",
 			mockedHTTPStatusCode: existingPackageStatus,
+		},
+		{
+			name: "Retrieving nonexistent non-crate-test from the mocked private registry",
+			spec: Spec{
+				Registry: cargo.Registry{
+					URL: "https://crates.io/api/v1/crates",
+					Auth: cargo.InlineKeyChain{
+						Token:        "mytoken",
+						HeaderFormat: "Bearer %s",
+					},
+				},
+				Package: "non-crate-test",
+				Version: "99.99.99",
+			},
+			expectedResult:       false,
+			expectedError:        false,
+			mockedResponse:       true,
+			mockedBody:           nonExistingPackageData,
+			mockedUrl:            "https://crates.io/api/v1/crates",
+			mockedToken:          "mytoken",
+			mockedHeaderFormat:   "Bearer %s",
+			mockedHTTPStatusCode: nonExistingPackageStatus,
 		},
 	}
 	for _, tt := range tests {
