@@ -59,7 +59,7 @@ func TestSource(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Passing case of retrieving non-existing crate-test from the filesystem index",
+			name: "Passing case of retrieving none existing crate-test from the filesystem index",
 			spec: Spec{
 				Registry: cargo.Registry{
 					RootDir: dir,
