@@ -2,7 +2,6 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -35,23 +34,6 @@ type Template struct {
 
 // Init parses a golang template then return an updatecli configuration as a struct
 func (t *Template) New(content []byte) ([]byte, error) {
-	funcMap := template.FuncMap{
-		// Retrieve value from environment variable, return error if not found
-		"requiredEnv": func(s string) (string, error) {
-			value := os.Getenv(s)
-			if value == "" {
-				return "", errors.New("no value found for environment variable " + s)
-			}
-			return value, nil
-		},
-		"pipeline": func(s string) (string, error) {
-			return fmt.Sprintf(`{{ pipeline %q }}`, s), nil
-		},
-		"source": func(s string) (string, error) {
-			return fmt.Sprintf(`{{ source %q }}`, s), nil
-		},
-	}
-
 	err := t.readValuesFiles(t.ValuesFiles, false)
 	if err != nil {
 		return []byte{}, err
@@ -68,7 +50,8 @@ func (t *Template) New(content []byte) ([]byte, error) {
 
 	tmpl, err := template.New("cfg").
 		Funcs(sprig.FuncMap()).
-		Funcs(funcMap). // add custom funcMap last so that it takes precedence
+		Funcs(helmFuncMap()).      // add helm funcMap
+		Funcs(updatecliFuncMap()). // add custom funcMap last so that it takes precedence
 		Parse(string(content))
 
 	if err != nil {
