@@ -1,0 +1,3 @@
+{
+    "name": "Get {{ .release.type }} Jenkins version"
+}
