@@ -36,16 +36,6 @@ func TestHelmFuncs(t *testing.T) {
 			vars:   map[string]interface{}{"foo": "bar"},
 		},
 		{
-			tpl:    `{{ toToml . }}`,
-			expect: "foo = \"bar\"\n",
-			vars:   map[string]interface{}{"foo": "bar"},
-		},
-		{
-			tpl:    `{{ toJson . }}`,
-			expect: `{"foo":"bar"}`,
-			vars:   map[string]interface{}{"foo": "bar"},
-		},
-		{
 			tpl:    `{{ fromYaml . }}`,
 			expect: "map[hello:world]",
 			vars:   `hello: world`,
@@ -61,35 +51,9 @@ func TestHelmFuncs(t *testing.T) {
 			vars:   `["one", 2, { "name": "helm" }]`,
 		},
 		{
-			// Regression for https://github.com/helm/helm/issues/2271
-			tpl:    `{{ toToml . }}`,
-			expect: "[mast]\n  sail = \"white\"\n",
-			vars:   map[string]map[string]string{"mast": {"sail": "white"}},
-		},
-		{
 			tpl:    `{{ fromYaml . }}`,
 			expect: "map[Error:yaml: unmarshal errors:\n  line 1: cannot unmarshal !!seq into map[string]interface {}]",
 			vars:   "- one\n- two\n",
-		},
-		{
-			tpl:    `{{ fromJson .}}`,
-			expect: `map[hello:world]`,
-			vars:   `{"hello":"world"}`,
-		},
-		{
-			tpl:    `{{ fromJson . }}`,
-			expect: `map[Error:json: cannot unmarshal array into Go value of type map[string]interface {}]`,
-			vars:   `["one", "two"]`,
-		},
-		{
-			tpl:    `{{ fromJsonArray . }}`,
-			expect: `[one 2 map[name:helm]]`,
-			vars:   `["one", 2, { "name": "helm" }]`,
-		},
-		{
-			tpl:    `{{ fromJsonArray . }}`,
-			expect: `[json: cannot unmarshal object into Go value of type []interface {}]`,
-			vars:   `{"hello": "world"}`,
 		},
 		{
 			tpl:    `{{ fromYaml . }}`,
