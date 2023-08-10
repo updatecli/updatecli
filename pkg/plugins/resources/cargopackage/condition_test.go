@@ -62,7 +62,7 @@ func TestCondition(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "Retrieving non existing not-crate-test from the filesystem index",
+			name: "Retrieving none existing not-crate-test from the filesystem index",
 			spec: Spec{
 				Registry: cargo.Registry{
 					RootDir: dir,
