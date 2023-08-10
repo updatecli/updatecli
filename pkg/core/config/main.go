@@ -92,11 +92,7 @@ func (config *Config) Reset() {
 }
 
 // New reads an updatecli configuration file
-func New(option Option) (config Config, err error) {
-
-	config.Reset()
-
-	config.filename = option.ManifestFile
+func New(option Option) (configs []Config, err error) {
 
 	dirname, basename := filepath.Split(option.ManifestFile)
 
@@ -104,7 +100,7 @@ func New(option Option) (config Config, err error) {
 	// templates values as in some situation those values changes for each run
 	pipelineID, err := FileChecksum(option.ManifestFile)
 	if err != nil {
-		return config, err
+		return configs, err
 	}
 
 	logrus.Infof("Loading Pipeline %q", option.ManifestFile)
@@ -113,15 +109,17 @@ func New(option Option) (config Config, err error) {
 	c, err := os.Open(option.ManifestFile)
 
 	if err != nil {
-		return config, err
+		return configs, err
 	}
 
 	defer c.Close()
 
 	content, err := io.ReadAll(c)
 	if err != nil {
-		return config, err
+		return configs, err
 	}
+
+	specs := []Spec{}
 
 	if !option.DisableTemplating {
 		// Try to template manifest no matter the extension
@@ -129,7 +127,7 @@ func New(option Option) (config Config, err error) {
 
 		cwd, err := os.Getwd()
 		if err != nil {
-			return config, err
+			return configs, err
 		}
 		fs := os.DirFS(cwd)
 
@@ -142,63 +140,78 @@ func New(option Option) (config Config, err error) {
 
 		content, err = t.New(content)
 		if err != nil {
-			return config, err
+			return configs, err
 		}
 
 	}
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml":
 
-		err = yaml.Unmarshal(content, &config.Spec)
+		err = unmarshalConfigSpec(content, &specs)
 		if err != nil {
-			return config, err
+			return configs, err
 		}
 
 	default:
-		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, config.filename)
-		return config, ErrConfigFileTypeNotSupported
+		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, option.ManifestFile)
+		return configs, ErrConfigFileTypeNotSupported
 	}
 
-	// config.PipelineID is required for config.Validate()
-	if len(config.Spec.PipelineID) == 0 {
-		config.Spec.PipelineID = pipelineID
-	}
+	configs = make([]Config, len(specs))
+	for id := range specs {
 
-	// By default Set config.Version to the current updatecli version
-	if len(config.Spec.Version) == 0 {
-		config.Spec.Version = version.Version
-	}
-
-	// Ensure there is a local SCM defined as specified
-	if err = config.EnsureLocalScm(); err != nil {
-		return config, err
-	}
-
-	/** Check for deprecated directives **/
-	// pullrequests deprecated over actions
-	if len(config.Spec.PullRequests) > 0 {
-		if len(config.Spec.Actions) > 0 {
-			return config, fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
+		configs[id].Reset()
+		configs[id].filename = option.ManifestFile
+		configs[id].Spec = specs[id]
+		// config.PipelineID is required for config.Validate()
+		if len(configs[id].Spec.PipelineID) == 0 {
+			configs[id].Spec.PipelineID = pipelineID
 		}
 
-		logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
+		// By default Set config.Version to the current updatecli version
+		if len(configs[id].Spec.Version) == 0 {
+			configs[id].Spec.Version = version.Version
+		}
 
-		config.Spec.Actions = config.Spec.PullRequests
-		config.Spec.PullRequests = nil
+		// Ensure there is a local SCM defined as specified
+		if err = configs[id].EnsureLocalScm(); err != nil {
+			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+			continue
+		}
+
+		/** Check for deprecated directives **/
+		// pullrequests deprecated over actions
+		if len(configs[id].Spec.PullRequests) > 0 {
+			if len(configs[id].Spec.Actions) > 0 {
+				err := fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
+				logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+				continue
+			}
+
+			logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
+
+			configs[id].Spec.Actions = configs[id].Spec.PullRequests
+			configs[id].Spec.PullRequests = nil
+		}
+
+		err = configs[id].Validate()
+		if err != nil {
+			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+			continue
+		}
+
+		if len(configs[id].Spec.Name) == 0 {
+			configs[id].Spec.Name = strings.ToTitle(basename)
+		}
+
+		err = configs[id].Validate()
+		if err != nil {
+			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+			continue
+		}
 	}
 
-	err = config.Validate()
-	if err != nil {
-		return config, err
-	}
-
-	if len(config.Spec.Name) == 0 {
-		config.Spec.Name = strings.ToTitle(basename)
-	}
-
-	err = config.Validate()
-
-	return config, err
+	return configs, err
 
 }
 
