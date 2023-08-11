@@ -26,7 +26,7 @@ func TestSource(t *testing.T) {
 			},
 		},
 		{
-			name: "Nominal case",
+			name: "Nominal case with hidden tag from digest",
 			spec: Spec{
 				Image:   "ghcr.io/updatecli/updatecli",
 				Tag:     "v0.35.0",
@@ -34,6 +34,16 @@ func TestSource(t *testing.T) {
 			},
 			expectedResult: result.Source{
 				Information: "@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
+			},
+		},
+		{
+			name: "Get latest digest reusing the tag prefix",
+			spec: Spec{
+				Image: "ghcr.io/updatecli/updatecli",
+				Tag:   "v0.35.0@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
+			},
+			expectedResult: result.Source{
+				Information: "v0.35.0@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
 			},
 		},
 	}
