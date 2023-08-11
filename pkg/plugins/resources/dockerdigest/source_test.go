@@ -25,6 +25,17 @@ func TestSource(t *testing.T) {
 				Information: "v0.35.0@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
 			},
 		},
+		{
+			name: "Nominal case",
+			spec: Spec{
+				Image:   "ghcr.io/updatecli/updatecli",
+				Tag:     "v0.35.0",
+				HideTag: true,
+			},
+			expectedResult: result.Source{
+				Information: "@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
+			},
+		},
 	}
 
 	for i := range TestCases {
@@ -35,7 +46,8 @@ func TestSource(t *testing.T) {
 
 			gotResult := result.Source{}
 
-			DockerDigest.Source("", &gotResult)
+			err = DockerDigest.Source("", &gotResult)
+			require.NoError(t, err)
 
 			assert.Equal(t, TestCases[i].expectedResult.Information, gotResult.Information)
 		})

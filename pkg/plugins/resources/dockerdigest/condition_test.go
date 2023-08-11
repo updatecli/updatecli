@@ -71,7 +71,8 @@ func TestCondition(t *testing.T) {
 
 			gotResult := result.Condition{}
 
-			DockerDigest.Condition(TestCases[i].sourceOutput, nil, &gotResult)
+			err = DockerDigest.Condition(TestCases[i].sourceOutput, nil, &gotResult)
+			require.NoError(t, err)
 
 			assert.Equal(t, TestCases[i].expectedResult.Pass, gotResult.Pass)
 		})
