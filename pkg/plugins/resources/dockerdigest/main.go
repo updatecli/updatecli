@@ -16,6 +16,9 @@ type Spec struct {
 		compatible:
 			* source
 			* condition
+
+		default:
+			amd64
 	*/
 	Architecture string `yaml:",omitempty"`
 	/*
@@ -45,6 +48,16 @@ type Spec struct {
 	*/
 	Digest                string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
+	/*
+		hideTag specifies if the tag should be hidden from the digest
+
+		compatible:
+			* source
+
+		default:
+			false
+	*/
+	HideTag bool `yaml:",omitempty"`
 }
 
 // DockerDigest defines a resource of kind "dockerDigest" to interact with a docker registry

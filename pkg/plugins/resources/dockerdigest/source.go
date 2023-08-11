@@ -27,11 +27,16 @@ func (ds *DockerDigest) Source(workingDir string, resultSource *result.Source) e
 		return fmt.Errorf("unable to retrieve image digest %s: %w", refName, err)
 	}
 
-	digestWithTag := ds.spec.Tag + "@" + digest.String()
-	imageDigest := ref.Context().Name() + ":" + digestWithTag
+	finalDigest := ds.spec.Tag + "@" + digest.String()
+	imageDigest := ref.Context().Name() + ":" + finalDigest
+
+	if ds.spec.HideTag {
+		imageDigest = ref.Context().Name() + "@" + digest.String()
+		finalDigest = "@" + digest.String()
+	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = digestWithTag
+	resultSource.Information = finalDigest
 	resultSource.Description = fmt.Sprintf("Docker Image Tag %s resolved to digest %s",
 		ref.String(), imageDigest)
 
