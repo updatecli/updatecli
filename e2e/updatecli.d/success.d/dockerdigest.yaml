@@ -56,6 +56,21 @@ conditions:
       image: "updatecli/updatecli"
       digest: "@sha256:5d86b9249e62a10655a207359cf8480e113284d4bcfd68cd088de5879e293408"
 
+  dockerhub2:
+    name: "Test if  Digest for docker image updatecli/updatecli:v0.35.1 exist"
+    kind: "dockerdigest"
+    sourceid: dockerhub
+    spec:
+      image: "updatecli/updatecli"
+
+  dockerhubWithTag:
+    name: "Test if  Digest for docker image updatecli/updatecli:v0.35.1 exist using both tag and digest"
+    kind: "dockerdigest"
+    disablesourceinput: true
+    spec:
+      image: "updatecli/updatecli"
+      digest: "v0.35.1@sha256:5d86b9249e62a10655a207359cf8480e113284d4bcfd68cd088de5879e293408"
+
   # Ghcr return an created time ordered list of container image tag
   ghcr.io:
     name: "Test if  Latest Tag  ghcr.io/updatecli/updatecli exist"

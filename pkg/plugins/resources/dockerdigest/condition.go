@@ -11,6 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+// Condition checks if a Docker image tag digest exists in a registry
 func (ds *DockerDigest) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 	if scm != nil {
 		logrus.Warningln("scm is not supported, ignoring")
@@ -19,9 +20,9 @@ func (ds *DockerDigest) Condition(source string, scm scm.ScmHandler, resultCondi
 	refName := ds.spec.Image
 	switch ds.spec.Digest == "" {
 	case true:
-		refName += "@" + source
+		refName = joinImageTagWithName(refName, source)
 	case false:
-		refName += ds.spec.Digest
+		refName = joinImageTagWithName(refName, ds.spec.Digest)
 	}
 
 	ref, err := name.ParseReference(refName)
@@ -50,4 +51,22 @@ func (ds *DockerDigest) Condition(source string, scm scm.ScmHandler, resultCondi
 	)
 
 	return nil
+}
+
+// joinImageTagWithName handles the different kind of join tag
+func joinImageTagWithName(image, tag string) string {
+	/*
+		if tag start with @sha256, we assume that the tag is a digest
+		if tag start with ':', we assume that the tag is a tag and not a digest
+	*/
+	if strings.HasPrefix(tag, ":") || strings.HasPrefix(tag, "@sha256") {
+		return image + tag
+	}
+
+	// if the tag doesnt' start with @sha256 then we assume the first part is a tag
+	if strings.Contains(tag, "@sha256") && !strings.HasPrefix(tag, "@sha256") {
+		return image + ":" + strings.TrimPrefix(tag, ":")
+	}
+
+	return image + "@" + tag
 }

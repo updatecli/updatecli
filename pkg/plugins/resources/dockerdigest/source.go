@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Source retrieve docker image tag digest from a registry
+// Source retrieves Docker image tag digest from a registry
 func (ds *DockerDigest) Source(workingDir string, resultSource *result.Source) error {
 	refName := ds.spec.Image
 	if ds.spec.Tag != "" {
@@ -26,10 +26,12 @@ func (ds *DockerDigest) Source(workingDir string, resultSource *result.Source) e
 	if err != nil {
 		return fmt.Errorf("unable to retrieve image digest %s: %w", refName, err)
 	}
-	imageDigest := ref.Context().Name() + "@" + digest.String()
+
+	digestWithTag := ds.spec.Tag + "@" + digest.String()
+	imageDigest := ref.Context().Name() + ":" + digestWithTag
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = digest.String()
+	resultSource.Information = digestWithTag
 	resultSource.Description = fmt.Sprintf("Docker Image Tag %s resolved to digest %s",
 		ref.String(), imageDigest)
 
