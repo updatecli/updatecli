@@ -1,0 +1,3 @@
+releases:
+  - type: lts
+  - type: weekly

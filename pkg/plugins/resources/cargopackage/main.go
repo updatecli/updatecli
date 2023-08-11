@@ -121,6 +121,10 @@ func (cp *CargoPackage) getVersions() (v string, versions []string, err error) {
 		}
 	}
 
+	if len(versions) == 0 {
+		// No versions found
+		return "", versions, nil
+	}
 	sort.Strings(versions)
 	cp.foundVersion, err = cp.versionFilter.Search(versions)
 	if err != nil {
@@ -192,8 +196,7 @@ func (cp *CargoPackage) getPackageDataFromFS(name string, indexDir string) (Pack
 	packageFilePath := filepath.Join(indexDir, packageDir, name)
 	packageInfoFile, err := os.Open(packageFilePath)
 	if err != nil {
-		logrus.Errorf("something went wrong while opening the package file %q\n", err)
-		return pd, err
+		return pd, nil
 	}
 	defer func(packageInfoFile *os.File) {
 		err := packageInfoFile.Close()
