@@ -43,7 +43,7 @@ func (ds *DockerDigest) Source(workingDir string, resultSource *result.Source) e
 	finalDigest := refTag + "@" + digest.String()
 	imageDigest := ref.Context().Name() + ":" + finalDigest
 
-	if ds.spec.HideTag {
+	if ds.spec.HiddenTag {
 		imageDigest = ref.Context().Name() + "@" + digest.String()
 		finalDigest = "@" + digest.String()
 	}

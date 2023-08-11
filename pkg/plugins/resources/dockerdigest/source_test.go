@@ -28,9 +28,9 @@ func TestSource(t *testing.T) {
 		{
 			name: "Nominal case with hidden tag from digest",
 			spec: Spec{
-				Image:   "ghcr.io/updatecli/updatecli",
-				Tag:     "v0.35.0",
-				HideTag: true,
+				Image:     "ghcr.io/updatecli/updatecli",
+				Tag:       "v0.35.0",
+				HiddenTag: true,
 			},
 			expectedResult: result.Source{
 				Information: "@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",

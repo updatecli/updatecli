@@ -49,7 +49,7 @@ type Spec struct {
 	Digest                string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
 	/*
-		hideTag specifies if the tag should be hidden from the digest
+		hiddenTag specifies if the tag should be hidden from the digest
 
 		compatible:
 			* source
@@ -57,7 +57,7 @@ type Spec struct {
 		default:
 			false
 	*/
-	HideTag bool `yaml:",omitempty"`
+	HiddenTag bool `yaml:",omitempty"`
 }
 
 // DockerDigest defines a resource of kind "dockerDigest" to interact with a docker registry
