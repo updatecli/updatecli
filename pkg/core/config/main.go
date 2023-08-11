@@ -142,10 +142,10 @@ func New(option Option) (configs []Config, err error) {
 		if err != nil {
 			return configs, err
 		}
-
 	}
+
 	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl", ".yaml", ".yml":
+	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
 
 		err = unmarshalConfigSpec(content, &specs)
 		if err != nil {
@@ -544,66 +544,13 @@ func (config *Config) ValidateManifestCompatibility() error {
 // Update updates its own configuration file
 // It's used when the configuration expected a value defined a runtime
 func (config *Config) Update(data interface{}) (err error) {
-	funcMap := template.FuncMap{
-		"pipeline": func(s string) (string, error) {
-			/*
-				Retrieve the value of a third location key from
-				the updatecli configuration.
-				It returns an error if a key doesn't exist
-				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
-				then we assume that the value will be set later in the run.
-				Otherwise it returns the value.
-				This func is design to constantly reevaluate if a configuration changed
-			*/
-
-			val, err := getFieldValueByQuery(data, strings.Split(s, "."))
-			if err != nil {
-				return "", err
-			}
-
-			if len(val) > 0 {
-				return val, nil
-			}
-			// If we couldn't find a value, then we return the function so we can retry
-			// later on.
-			return fmt.Sprintf("{{ pipeline %q }}", s), nil
-
-		},
-		"source": func(s string) (string, error) {
-			/*
-				Retrieve the value of a third location key from
-				the updatecli context.
-				It returns an error if a key doesn't exist
-				It returns {{ source "<key>" }} if a key exist but still set to zero value,
-				then we assume that the value will be set later in the run.
-				Otherwise it returns the value.
-				This func is design to constantly reevaluate if a configuration changed
-			*/
-
-			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result", "Result"})
-			if err != nil {
-				return "", err
-			}
-
-			switch sourceResult {
-			case result.SUCCESS:
-				return getFieldValueByQuery(data, []string{"Sources", s, "Output"})
-			case result.FAILURE:
-				return "", fmt.Errorf("parent source %q failed", s)
-			// If the result of the parent source execution is not SUCCESS or FAILURE, then it means it was either skipped or not already run.
-			// In this case, the function is return "as it" (literally) to allow retry later (on a second configuration iteration)
-			default:
-				return fmt.Sprintf("{{ source %q }}", s), nil
-			}
-		},
-	}
 
 	content, err := yaml.Marshal(config.Spec)
 	if err != nil {
 		return err
 	}
 
-	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
+	tmpl, err := template.New("cfg").Funcs(updatecliRuntimeFuncMap(data)).Parse(string(content))
 	if err != nil {
 		return err
 	}
