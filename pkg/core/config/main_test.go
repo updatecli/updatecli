@@ -859,6 +859,20 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			id: "Test with a valid manifest containing one json config",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/jenkins.json",
+				ValuesFiles:  []string{"testdata/values.json"},
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest Jenkins version",
+					},
+				},
+			},
+		},
+		{
 			id: "Test with a valid manifest containing two configs",
 			option: Option{
 				ManifestFile: "testdata/updatecli.d/multiJenkins.yaml",

@@ -145,7 +145,7 @@ func New(option Option) (configs []Config, err error) {
 	}
 
 	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl", ".yaml", ".yml":
+	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
 
 		err = unmarshalConfigSpec(content, &specs)
 		if err != nil {

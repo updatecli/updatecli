@@ -94,10 +94,12 @@ func (t *Template) readValuesFiles(valueFiles []string, encrypted bool) error {
 func (t *Template) readFile(filename string, values *map[string]interface{}, encrypted bool) (err error) {
 
 	baseFilename := filepath.Base(filename)
+	extension := filepath.Ext(baseFilename)
 
 	// Check if the file extension is either yaml or yml
-	if extension := filepath.Ext(baseFilename); strings.Compare(extension, ".yml") != 0 &&
-		strings.Compare(extension, ".yaml") != 0 {
+	if strings.Compare(extension, ".yml") != 0 &&
+		strings.Compare(extension, ".yaml") != 0 &&
+		strings.Compare(extension, ".json") != 0 {
 		err = fmt.Errorf("wrong file extension %q for file %q", extension, baseFilename)
 		logrus.Errorln(err)
 		return err
@@ -128,9 +130,19 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 	}
 
 	if encrypted {
-		content, err = decrypt.Data(content, "yaml")
-		if err != nil {
-			return err
+		switch extension {
+		case ".yaml", ".yml":
+			content, err = decrypt.Data(content, "yaml")
+			if err != nil {
+				return err
+			}
+		case ".json":
+			content, err = decrypt.Data(content, "json")
+			if err != nil {
+				return err
+			}
+		default:
+			err = fmt.Errorf("wrong file extension %q for file %q", extension, baseFilename)
 		}
 	}
 
