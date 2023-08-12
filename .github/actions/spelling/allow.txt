@@ -23,4 +23,4 @@ CLIENTID
 minamijoyo
 hcledit
 work-around
-hiddentag
+hidetag
