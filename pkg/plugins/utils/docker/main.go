@@ -7,12 +7,43 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 )
 
+// InlineKeyChain defines a keychain with OCI registry credentials
 type InlineKeyChain struct {
-	// [S][C][T] Username specifies the container registry username to use for authentication. Not compatible with token
+	/*
+		username specifies the container registry username to use for authentication.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		remark:
+			Not compatible with token
+	*/
 	Username string `yaml:",omitempty"`
-	// [S][C][T] Password specifies the container registry password to use for authentication. Not compatible with token
+	/*
+		password specifies the container registry password to use for authentication. Not compatible with token
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		remark:
+			Not compatible with token
+	*/
 	Password string `yaml:",omitempty"`
-	// [S][C][T] Token specifies the container registry token to use for authentication. Not compatible with username/password
+	/*
+		token specifies the container registry token to use for authentication.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		remark:
+			Not compatible with username/password
+	*/
 	Token string `yaml:",omitempty"`
 }
 
@@ -25,6 +56,7 @@ func (kc InlineKeyChain) Resolve(authn.Resource) (authn.Authenticator, error) {
 	}), nil
 }
 
+// Empty returns true if the keychain is empty
 func (kc InlineKeyChain) Empty() bool {
 	return kc.Username == "" && kc.Password == "" && kc.Token == ""
 }
