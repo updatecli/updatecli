@@ -41,6 +41,9 @@ type Spec struct {
 			* condition
 			* target
 
+		default:
+			when used from a condition or a target, the default value is set to linked source output
+
 	*/
 	Value string `yaml:",omitempty"`
 }
