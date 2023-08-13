@@ -9,6 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+// Source returns a value from a xml file
 func (x *XML) Source(workingDir string, resultSource *result.Source) error {
 
 	// By the default workingdir is set to the current working directory
