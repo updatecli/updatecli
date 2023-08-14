@@ -29,7 +29,7 @@ type Spec struct {
 		the path must be relative to chart root directory
 		the chart name is defined by the parameter "name"
 
-		compabile:
+		compatible:
 			* source
 			* condition
 			* target
