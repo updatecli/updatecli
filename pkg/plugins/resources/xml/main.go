@@ -56,6 +56,7 @@ func (x *XML) Read(filename string) error {
 	return nil
 }
 
+// Validate checks if the Spec is correctly defined
 func (x *XML) Validate() (err error) {
 	errs := x.spec.Validate()
 
