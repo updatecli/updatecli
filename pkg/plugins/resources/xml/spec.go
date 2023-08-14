@@ -20,7 +20,7 @@ type Spec struct {
 	*/
 	File string `yaml:",omitempty"`
 	/*
-		"path" defines the xml path used for doing the query
+		"path" defines the xpath query used for retrieving value from a XML document
 
 		compatible:
 			* source
@@ -34,7 +34,7 @@ type Spec struct {
 	*/
 	Path string `yaml:",omitempty"`
 	/*
-		"value" is the value associated with a xmlpath query.
+		"value" is the value associated with a xpath query.
 
 		compatible:
 			* source
