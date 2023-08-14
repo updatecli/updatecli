@@ -17,6 +17,9 @@ type InlineKeyChain struct {
 			* condition
 			* target
 
+		default:
+			by default credentials are fetch from the local environment such as `~/.docker/config.json`.
+
 		remark:
 			Not compatible with token
 	*/
@@ -29,6 +32,9 @@ type InlineKeyChain struct {
 			* condition
 			* target
 
+		default:
+			by default credentials are fetch from the local environment such as `~/.docker/config.json`.
+
 		remark:
 			Not compatible with token
 	*/
@@ -40,6 +46,9 @@ type InlineKeyChain struct {
 			* source
 			* condition
 			* target
+
+		default:
+			by default credentials are fetch from the local environment such as `~/.docker/config.json`.
 
 		remark:
 			Not compatible with username/password
