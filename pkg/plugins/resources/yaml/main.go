@@ -25,8 +25,7 @@ type Spec struct {
 
 		remark:
 			* "file" and "files" are mutually exclusive
-			* when used as a source or condition, the file path also accept the following protocols
-			* protocols "https://", "http://", and "file://" are supported in path for source and condition
+			* scheme "https://", "http://", and "file://" are supported in path for source and condition
 	*/
 	File string `yaml:",omitempty"`
 	/*
