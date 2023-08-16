@@ -19,6 +19,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/core/version"
 
 	"github.com/hexops/gotextdiff"
@@ -114,7 +115,8 @@ func New(option Option) (configs []Config, err error) {
 
 	defer c.Close()
 
-	content, err := io.ReadAll(c)
+	var content []byte
+	rawcontent, err := io.ReadAll(c)
 	if err != nil {
 		return configs, err
 	}
@@ -138,9 +140,20 @@ func New(option Option) (configs []Config, err error) {
 			fs:           fs,
 		}
 
-		content, err = t.New(content)
+		content, err = t.New(rawcontent)
 		if err != nil {
+			logrus.Errorf("Error while templating %q:\n---\n%s\n---\n\t%s\n", option.ManifestFile, string(rawcontent), err.Error())
 			return configs, err
+		}
+
+		if GolangTemplatingDiff {
+			diff := text.Diff(option.ManifestFile, string(rawcontent), string(content))
+			switch diff {
+			case "":
+				logrus.Debugf("no Golang templating detected\n", diff)
+			default:
+				logrus.Debugf("Golang templating change detected:\n---raw file content\n+++post Golang templating\n%v\n\n---\n", diff)
+			}
 		}
 	}
 
