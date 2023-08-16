@@ -147,12 +147,12 @@ func New(option Option) (configs []Config, err error) {
 		}
 
 		if GolangTemplatingDiff {
-			diff := text.Diff(option.ManifestFile, string(rawcontent), string(content))
+			diff := text.Diff("raw manifest", "templated manifest", string(rawcontent), string(content))
 			switch diff {
 			case "":
 				logrus.Debugf("no Golang templating detected\n", diff)
 			default:
-				logrus.Debugf("Golang templating change detected:\n---raw file content\n+++post Golang templating\n%v\n\n---\n", diff)
+				logrus.Debugf("Golang templating change detected:\n%s\n\n---\n", diff)
 			}
 		}
 	}
