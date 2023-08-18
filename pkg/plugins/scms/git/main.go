@@ -16,30 +16,118 @@ import (
 
 // Spec contains settings to manipulate a git repository.
 type Spec struct {
-	// URL specifies the git url
+	/*
+		"url" specifies the git url
+
+		compatible:
+			* scm
+
+		example:
+			* git@github.com:updatecli/updatecli.git
+			* https://github.com/updatecli/updatecli.git
+
+		remarks:
+			when using the ssh protocol, the user must have the right to clone the repository
+			based on its local ssh configuration
+	*/
 	URL string `yaml:",omitempty" jsonschema:"required"`
-	// Username specifies the username for http authentication
+	/*
+		"username" specifies the username when using the HTTP protocol
+
+		compatible
+			* scm
+	*/
 	Username string `yaml:",omitempty"`
-	// Password specifies the password for http authentication
+	/*
+		"password" specifies the password when using the HTTP protocol
+
+		compatible:
+			* scm
+	*/
 	Password string `yaml:",omitempty"`
-	// Branch specifies the git branch
+	/*
+		"branch" defines the git branch to work on.
+
+		compatible:
+			* scm
+
+		default:
+			main
+
+		remark:
+			depending on which resource references the GitHub scm, the behavior will be different.
+
+			If the scm is linked to a source or a condition (using scmid), the branch will be used to retrieve
+			file(s) from that branch.
+
+			If the scm is linked to target then Updatecli will push any changes to that branch
+
+			For more information, please refer to the following issue:
+			https://github.com/updatecli/updatecli/issues/1139
+	*/
 	Branch string `yaml:",omitempty"`
-	// User specifies the git commit author
+	/*
+		"user" specifies the user associated with new git commit messages created by Updatecli
+
+		compatible:
+			* scm
+	*/
 	User string `yaml:",omitempty"`
-	// Email specifies the git commit email
+	/*
+		"email" defines the email used to commit changes.
+
+		compatible:
+			* scm
+
+		default:
+			default set to your global git configuration
+	*/
 	Email string `yaml:",omitempty"`
-	// Directory specifies the directory to use for cloning the repository
+	/*
+		"directory" defines the local path where the git repository is cloned.
+
+		compatible:
+			* scm
+
+		remark:
+			Unless you know what you are doing, it is recommended to use the default value.
+			The reason is that Updatecli may automatically clean up the directory after a pipeline execution.
+
+		default:
+			/tmp/updatecli/<url>
+	*/
 	Directory string `yaml:",omitempty"`
-	// Force is used during the git push phase to run `git push --force`.
+	/*
+		"force" is used during the git push phase to run `git push --force`.
+
+		compatible:
+			* scm
+	*/
 	Force bool `yaml:",omitempty"`
-	// CommitMessage contains conventional commit metadata as type or scope, used to generate the final commit message.
+	/*
+		"commitMessage" is used to generate the final commit message.
+
+		compatible:
+			*
+
+		remark:
+			it worth mentioning that the commit message will be applied to all targets linked to the same scm.
+	*/
 	CommitMessage commit.Commit `yaml:",omitempty"`
-	// GPG key and passphrased used for commit signing
+	/*
+		"gpg" specifies the GPG key and passphrased used for commit signing
+
+		compatible:
+			* scm
+	*/
 	GPG sign.GPGSpec `yaml:",omitempty"`
 }
 
+// Git contains the git scm handler
 type Git struct {
-	spec             Spec
+	// spec contains the git scm specification
+	spec Spec
+	// nativeGitHandler is the native git handler
 	nativeGitHandler gitgeneric.GitHandler
 }
 

@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	// commitTpl is the template used to generate the commit message
 	commitTpl string = "{{ .Type}}{{if .Scope}}({{.Scope}}){{ end }}: {{ .Title }}" +
 		"{{ if .Body }}\n\n{{ .Body }}{{ end }}" +
 		"{{ if not .HideCredit }}\n\nMade with ❤️️ by updatecli{{end}}" +
@@ -21,25 +22,73 @@ var (
 	ErrEmptyCommitMessage error = errors.New("error: empty commit message")
 )
 
-// Commit contains conventional commit information
-// More information on what is conventional commits
-// -> https://www.conventionalcommits.org/en/v1.0.0/#summary
+/*
+Commit contains conventional commit information
+More information on what is conventional commits
+-> https://www.conventionalcommits.org/en/v1.0.0/#summary
+*/
 type Commit struct {
-	// Define commit type, like chore, fix, etc
+	/*
+		"type" defines the type of commit message such as "chore", "fix", "feat", etc. as
+		defined by the conventional commit specification. More information on
+		-> https://www.conventionalcommits.org/en/
+
+		default:
+			* chore
+	*/
 	Type string `yaml:",omitempty"`
-	// Define commit type scope
+	/*
+		"scope" defines the scope of the commit message as defined by the
+		conventional commit specification. More information on
+		-> https://www.conventionalcommits.org/en/
+
+		default:
+			none
+	*/
 	Scope string `yaml:",omitempty"`
-	// Define commit footer
+	/*
+		footers defines the footer of the commit message as defined by the
+		conventional commit specification. More information on
+		-> https://www.conventionalcommits.org/en/
+
+		default:
+			none
+	*/
 	Footers string `yaml:",omitempty"`
-	// Define commit title
+	/*
+		"title" defines the title of the commit message as defined by the
+		conventional commit specification. More information on
+		-> https://www.conventionalcommits.org/en/
+
+		default:
+			default is set to the target name or the target short description
+			if the name is not defined.
+	*/
 	Title string `yaml:",omitempty"`
-	// Define commit body
+	/*
+		"body" defines the commit body of the commit message as defined by the
+		conventional commit specification. More information on
+		-> https://www.conventionalcommits.org/en/
+
+		default:
+			none
+	*/
 	Body string `yaml:",omitempty"`
-	// Display updatecli credits inside commit message body
+	/*
+		"hideCredit" defines if updatecli credits should be displayed inside commit message body
+
+		please consider sponsoring the Updatecli project if you want to disable credits.
+		-> https://github.com/updatecli/updatecli
+
+		default:
+			false
+	*/
 	HideCredit bool `yaml:",omitempty"`
 }
 
-// Generate generates the conventional commit
+/*
+Generate generates the conventional commit
+*/
 func (c *Commit) Generate(raw string) (string, error) {
 
 	err := c.Validate()
@@ -71,8 +120,10 @@ func (c *Commit) Generate(raw string) (string, error) {
 	return commitMessage, nil
 }
 
-// ParseMessage parses a message then return the commit message title and its body.
-// The message title can't be longer than 72 characters
+/*
+ParseMessage parses a message then return the commit message title and its body.
+The message title can't be longer than 72 characters
+*/
 func (c *Commit) ParseMessage(message string) (Commit, error) {
 	var commit Commit
 
@@ -132,7 +183,9 @@ func (c *Commit) ParseMessage(message string) (Commit, error) {
 	return commit, nil
 }
 
-// Validate validates "conventional commit" default parameters.
+/*
+Validate validates "conventional commit" default parameters.
+*/
 func (c *Commit) Validate() error {
 	if len(c.Type) == 0 {
 		c.Type = "chore"
