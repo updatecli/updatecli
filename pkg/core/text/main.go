@@ -155,9 +155,9 @@ func (t *Text) ReadLine(location string, line int) (string, error) {
 }
 
 // Diff return a diff like string, comparing string A and string B
-func Diff(filename, originalFileContent, newFileContent string) string {
-	edits := myers.ComputeEdits(span.URIFromPath(filename), originalFileContent, newFileContent)
-	diff := fmt.Sprint(gotextdiff.ToUnified(filename, filename, originalFileContent, edits))
+func Diff(from, to, originalFileContent, newFileContent string) string {
+	edits := myers.ComputeEdits(span.URIFromPath(to), originalFileContent, newFileContent)
+	diff := fmt.Sprint(gotextdiff.ToUnified(from, to, originalFileContent, edits))
 	return diff
 }
 

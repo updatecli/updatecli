@@ -153,7 +153,7 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			contentType,
 
 			file.originalPath,
-			text.Diff(filePath, originalContents[filePath], file.content),
+			text.Diff(filePath, filePath, originalContents[filePath], file.content),
 		)
 
 		f.files[filePath] = file
