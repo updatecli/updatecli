@@ -154,7 +154,7 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 		logrus.Infof("%s\n\n```\n%s\n```\n\n",
 			description,
-			text.Diff(filePath, originalContents[filePath], file.content),
+			text.Diff(filePath, filePath, originalContents[filePath], file.content),
 		)
 
 		descriptions = append(descriptions, description)
