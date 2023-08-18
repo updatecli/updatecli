@@ -185,7 +185,15 @@ func (t *Target) Run(source string, o *Options) (err error) {
 					return err
 				}
 
-				if err = s.Commit(t.Result.Description); err != nil {
+				/*
+					not every target have a name as it wasn't mandatory in the past
+					so we use the description as a fallback
+				*/
+				commitMessage := t.Config.Name
+				if commitMessage == "" {
+					commitMessage = t.Result.Description
+				}
+				if err = s.Commit(commitMessage); err != nil {
 					failTargetRun()
 					return err
 				}
