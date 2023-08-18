@@ -6,6 +6,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
+
+	"github.com/updatecli/updatecli/pkg/core/config"
 )
 
 var (
@@ -23,6 +25,9 @@ var (
 			e.Options.Pipeline.Target.Clean = manifestShowClean
 
 			e.Options.Config.DisableTemplating = manifestShowDisableTemplating
+
+			// Showing templating diff may leak sensitive information such as credentials
+			config.GolangTemplatingDiff = true
 
 			err := run("manifest/show")
 			if err != nil {
