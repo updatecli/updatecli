@@ -19,6 +19,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/core/version"
 
 	"github.com/hexops/gotextdiff"
@@ -114,7 +115,8 @@ func New(option Option) (configs []Config, err error) {
 
 	defer c.Close()
 
-	content, err := io.ReadAll(c)
+	var templatedManifestContent []byte
+	rawManifestContent, err := io.ReadAll(c)
 	if err != nil {
 		return configs, err
 	}
@@ -138,16 +140,27 @@ func New(option Option) (configs []Config, err error) {
 			fs:           fs,
 		}
 
-		content, err = t.New(content)
+		templatedManifestContent, err = t.New(rawManifestContent)
 		if err != nil {
+			logrus.Errorf("Error while templating %q:\n---\n%s\n---\n\t%s\n", option.ManifestFile, string(rawManifestContent), err.Error())
 			return configs, err
+		}
+
+		if GolangTemplatingDiff {
+			diff := text.Diff("raw manifest", "templated manifest", string(rawManifestContent), string(templatedManifestContent))
+			switch diff {
+			case "":
+				logrus.Debugln("no Golang templating detected")
+			default:
+				logrus.Debugf("Golang templating change detected:\n%s\n\n---\n", diff)
+			}
 		}
 	}
 
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
 
-		err = unmarshalConfigSpec(content, &specs)
+		err = unmarshalConfigSpec(templatedManifestContent, &specs)
 		if err != nil {
 			return configs, err
 		}
