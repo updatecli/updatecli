@@ -8,6 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 )
 
+// GetBranches returns the source, working and target branches.
 func (g *Gitlab) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	sourceBranch = g.Spec.Branch
 	workingBranch = g.Spec.Branch
@@ -176,6 +177,7 @@ func (g *Gitlab) PushBranch(branch string) error {
 	return nil
 }
 
+// GetChangedFiles returns a list of changed files
 func (g *Gitlab) GetChangedFiles(workingDir string) ([]string, error) {
 	return g.nativeGitHandler.GetChangedFiles(workingDir)
 }
