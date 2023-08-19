@@ -80,7 +80,6 @@ type Spec struct {
 		repository specifies the name of a repository for a specific owner.
 
 		compatible:
-			* action
 			* scm
 	*/
 	Repository string `yaml:",omitempty" jsonschema:"required"`
@@ -108,7 +107,7 @@ type Spec struct {
 
 			If the scm is linked to target then Updatecli creates a new "working branch" based on the branch value.
 			The working branch created by Updatecli looks like "updatecli_<pipelineID>".
-			It is worth mentioning that it is not possible to by pass the working branch in the current situation.
+			It is worth mentioning that it is not possible to bypass the working branch in the current situation.
 			For more information, please refer to the following issue:
 			https://github.com/updatecli/updatecli/issues/1139
 

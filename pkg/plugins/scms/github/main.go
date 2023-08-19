@@ -136,6 +136,9 @@ type Spec struct {
 
 		compatible:
 			* scm
+
+		default:
+			false
 	*/
 	Force bool `yaml:",omitempty"`
 	/*

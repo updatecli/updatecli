@@ -112,6 +112,9 @@ type Spec struct {
 
 		remark:
 			it worth mentioning that the commit message will be applied to all targets linked to the same scm.
+
+		default:
+			false
 	*/
 	CommitMessage commit.Commit `yaml:",omitempty"`
 	/*
