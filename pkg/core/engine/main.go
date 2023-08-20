@@ -471,7 +471,13 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			}
 
 			switch p.Config.Spec.AutoDiscovery.GroupBy {
-			case autodiscovery.GROUPEBYALL:
+			/*
+				By default if groupeby is not se then we fallback to all
+				which means that we generate a single pipeline for all discovered manifests
+				The goal is to have a "safe" default behavior and to avoid to accidently generate
+				dozens pullrequests for a single updatecli run
+			*/
+			case autodiscovery.GROUPEBYALL, "":
 				manifest.PipelineID = p.Config.Spec.PipelineID
 			case autodiscovery.GROUPEBYINDIVIDUAL:
 				hash := sha256.New()
