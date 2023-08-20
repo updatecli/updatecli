@@ -23,29 +23,129 @@ import (
 
 // Spec represents the configuration input
 type Spec struct {
-	// Branch specifies which github branch to work on
+	/*
+		"branch" defines the git branch to work on.
+
+		compatible:
+			* scm
+
+		default:
+			main
+
+		remark:
+			depending on which resource references the GitHub scm, the behavior will be different.
+
+			If the scm is linked to a source or a condition (using scmid), the branch will be used to retrieve
+			file(s) from that branch.
+
+			If the scm is linked to target then Updatecli creates a new "working branch" based on the branch value.
+			The working branch created by Updatecli looks like "updatecli_<pipelineID>".
+			It is worth mentioning that it is not possible to by pass the working branch in the current situation.
+			For more information, please refer to the following issue:
+			https://github.com/updatecli/updatecli/issues/1139
+
+			If you need to push changes to a specific branch, you must use the plugin "git" instead of this
+
+	*/
 	Branch string `yaml:",omitempty"`
-	// Directory specifies where the github repository is cloned on the local disk
+	/*
+		"directory" defines the local path where the git repository is cloned.
+
+		compatible:
+			* scm
+
+		remark:
+			Unless you know what you are doing, it is recommended to use the default value.
+			The reason is that Updatecli may automatically clean up the directory after a pipeline execution.
+
+		default:
+			/tmp/updatecli/github/<owner>/<repository>
+	*/
 	Directory string `yaml:",omitempty"`
-	// Email specifies which emails to use when creating commits
+	/*
+		"email" defines the email used to commit changes.
+
+		compatible:
+			* scm
+
+		default:
+			default set to your global git configuration
+	*/
 	Email string `yaml:",omitempty"`
-	// Owner specifies repository owner
+	/*
+		"owner" defines the owner of a repository.
+
+		compatible:
+			* scm
+	*/
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
+	/*
+		repository specifies the name of a repository for a specific owner.
+
+		compatible:
+			* scm
+	*/
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// Token specifies the credential used to authenticate with
+	/*
+		"token" specifies the credential used to authenticate with GitHub API.
+
+		compatible:
+			* scm
+	*/
 	Token string `yaml:",omitempty" jsonschema:"required"`
-	// URL specifies the default github url in case of GitHub enterprise
+	/*
+		url specifies the default github url in case of GitHub enterprise
+
+		compatible:
+			* scm
+
+		default:
+			github.com
+	*/
 	URL string `yaml:",omitempty"`
-	// Username specifies the username used to authenticate with GitHub API
+	/*
+		"username" specifies the username used to authenticate with GitHub API.
+
+		compatible:
+			* scm
+
+		remark:
+			the token is usually enough to authenticate with GitHub API.
+	*/
 	Username string `yaml:",omitempty"`
-	// User specifies the user of the git commit messages
+	/*
+		"user" specifies the user associated with new git commit messages created by Updatecli
+
+		compatible:
+			* scm
+	*/
 	User string `yaml:",omitempty"`
-	// GPG key and passphrased used for commit signing
+	/*
+		"gpg" specifies the GPG key and passphrased used for commit signing
+
+		compatible:
+			* scm
+	*/
 	GPG sign.GPGSpec `yaml:",omitempty"`
-	// Force is used during the git push phase to run `git push --force`.
+	/*
+		"force" is used during the git push phase to run `git push --force`.
+
+		compatible:
+			* scm
+
+		default:
+			false
+	*/
 	Force bool `yaml:",omitempty"`
-	// CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	/*
+		"commitMessage" is used to generate the final commit message.
+
+		compatible:
+			* scm
+
+		remark:
+			it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
+	*/
 	CommitMessage commit.Commit `yaml:",omitempty"`
 }
 
