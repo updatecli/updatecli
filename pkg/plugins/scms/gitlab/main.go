@@ -28,7 +28,7 @@ type Spec struct {
 			* scm
 
 		remark:
-			it's worth mentioning that the commit message settings will be applied to all targets linked to the same scm.
+			it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
 	*/
 	CommitMessage commit.Commit `yaml:",omitempty"`
 	/*

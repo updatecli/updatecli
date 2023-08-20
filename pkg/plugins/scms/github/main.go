@@ -83,7 +83,6 @@ type Spec struct {
 		repository specifies the name of a repository for a specific owner.
 
 		compatible:
-			* action
 			* scm
 	*/
 	Repository string `yaml:",omitempty" jsonschema:"required"`
@@ -91,7 +90,6 @@ type Spec struct {
 		"token" specifies the credential used to authenticate with GitHub API.
 
 		compatible:
-			* action
 			* scm
 	*/
 	Token string `yaml:",omitempty" jsonschema:"required"`
@@ -99,7 +97,6 @@ type Spec struct {
 		url specifies the default github url in case of GitHub enterprise
 
 		compatible:
-			* action
 			* scm
 
 		default:
@@ -110,7 +107,6 @@ type Spec struct {
 		"username" specifies the username used to authenticate with GitHub API.
 
 		compatible:
-			* action
 			* scm
 
 		remark:
@@ -148,7 +144,7 @@ type Spec struct {
 			* scm
 
 		remark:
-			it's worth mentioning that the commit message settings will be applied to all targets linked to the same scm.
+			it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
 	*/
 	CommitMessage commit.Commit `yaml:",omitempty"`
 }

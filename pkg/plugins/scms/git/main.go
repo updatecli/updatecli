@@ -108,10 +108,10 @@ type Spec struct {
 		"commitMessage" is used to generate the final commit message.
 
 		compatible:
-			*
+			* scm
 
 		remark:
-			it worth mentioning that the commit message will be applied to all targets linked to the same scm.
+			it's worth mentioning that the commit message is applied to all targets linked to the same scm.
 
 		default:
 			false
