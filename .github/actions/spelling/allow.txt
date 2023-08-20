@@ -25,3 +25,5 @@ hcledit
 work-around
 hidetag
 xpath
+GROUPBYINDIVIDUAL
+GROUPBYALL

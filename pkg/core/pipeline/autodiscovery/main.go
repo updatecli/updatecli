@@ -70,7 +70,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 		spec: s,
 	}
 
-	for kind := range s.Crawlers {
+	for kind := range g.spec.Crawlers {
 		if workDir == "" {
 			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
