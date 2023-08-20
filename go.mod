@@ -38,7 +38,7 @@ require (
 	github.com/beevik/etree v1.2.0
 	github.com/drone/go-scm v1.29.1
 	github.com/goccy/go-yaml v1.11.0
-	github.com/google/go-containerregistry v0.15.2
+	github.com/google/go-containerregistry v0.16.1
 	github.com/goware/urlx v0.3.2
 	github.com/invopop/jsonschema v0.7.0
 	github.com/minamijoyo/hcledit v0.2.9
