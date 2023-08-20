@@ -28,7 +28,7 @@ require (
 	go.mozilla.org/sops/v3 v3.7.3
 	golang.org/x/oauth2 v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.12.2
+	helm.sh/helm/v3 v3.12.3
 	sigs.k8s.io/yaml v1.3.0
 )
 
