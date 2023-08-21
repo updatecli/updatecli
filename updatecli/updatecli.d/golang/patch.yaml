@@ -12,20 +12,17 @@ scms:
 
 actions:
     default:
-        # The action title is used to define the pullrequest title
-        # Since we use the groupby: we need to be sure that the pullrequest title
-        # is the same for all the subpipeline.
-        title: Bump Patch version of Golang module
         kind: github/pullrequest
         scmid: default
         spec:
+          automerge: true
           labels:
             - "dependencies"
 
 autodiscovery:
   scmid: default
   actionid:  default
-  groupby: all 
+  groupby: individual
   crawlers:
     golang/gomod:
       versionfilter:
