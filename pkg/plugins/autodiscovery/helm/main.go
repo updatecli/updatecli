@@ -87,6 +87,14 @@ func New(spec interface{}, rootDir, scmID string) (Helm, error) {
 		return Helm{}, err
 	}
 
+	/*
+		Due to https://github.com/updatecli/updatecli/issues/693
+		we don't want to increment the Chart version, each time a chart dependency is updated.
+	*/
+	if s.VersionIncrement == "" {
+		s.VersionIncrement = "none"
+	}
+
 	newFilter := s.VersionFilter
 	if s.VersionFilter.IsZero() {
 		// By default, helm versioning uses semantic versioning. Containers is not but...
