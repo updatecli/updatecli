@@ -48,10 +48,6 @@ targets:
     default:
         name: Update Golangci-lint version to {{ source "default" }}
         kind: yaml
-        transformers:
-            - findsubmatch:
-                pattern: v(\d*)\.(\d*)
-                captureindex: 0
         spec:
             file: .github/workflows/go.yaml
             key: $.jobs.build.steps[2].with.version
