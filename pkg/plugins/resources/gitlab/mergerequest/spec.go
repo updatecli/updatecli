@@ -35,14 +35,14 @@ type Spec struct {
 		remark:
 			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
 	*/
-	Owner string `yaml:",omitempty" jsonschema:"required"`
+	Owner string `yaml:",omitempty"`
 	/*
 		"repository" defines the GitLab repository for a specific owner
 
 		remark:
 			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
 	*/
-	Repository string `yaml:",omitempty" jsonschema:"required"`
+	Repository string `yaml:",omitempty"`
 	/*
 		"title" defines the GitLab mergerequest title
 

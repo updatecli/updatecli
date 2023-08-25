@@ -72,10 +72,6 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 
 	g.inheritFromScm()
 
-	if err != nil {
-		return Gitlab{}, nil
-	}
-
 	return g, nil
 
 }
