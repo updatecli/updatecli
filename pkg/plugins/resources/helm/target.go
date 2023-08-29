@@ -37,8 +37,6 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 
 	if err != nil {
 		return err
-	} else if err == nil && !resultTarget.Changed {
-		return nil
 	}
 
 	chartPath := c.spec.Name
