@@ -24,7 +24,7 @@ func TestReadFileFromBranch(t *testing.T) {
 			filePath: "README.adoc",
 		},
 		{
-			name:        "Read README.adoc from nonexisiting tag v0.0.42",
+			name:        "Read README.adoc from nonexistent tag v0.0.42",
 			repoDir:     "../../../../",
 			revision:    "v0.0.42",
 			filePath:    "README.adoc",
