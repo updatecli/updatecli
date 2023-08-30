@@ -20,7 +20,7 @@ func TestReadFileFromBranch(t *testing.T) {
 		{
 			name:     "Read README.adoc from tag v0.20.0 branch",
 			repoDir:  "../../../../",
-			revision: "v0.20.0",
+			revision: "main",
 			filePath: "README.adoc",
 		},
 		{
