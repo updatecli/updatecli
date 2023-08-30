@@ -90,3 +90,7 @@ UTF-8'(?!en)\w+'\S+
 
 # ignore long runs of a single character:
 \b([A-Za-z])\g{-1}{3,}\b
+
+# Terraform Hashes
+h1:[0-9A-Za-z\/=+]+
+zh:[0-9A-Za-z]+

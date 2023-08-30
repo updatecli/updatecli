@@ -2,11 +2,11 @@ package hcl
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/strings/slices"
 )
 
 func TestQuery(t *testing.T) {
