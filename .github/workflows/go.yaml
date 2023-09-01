@@ -31,6 +31,7 @@ jobs:
           # and must be specified without patch version:
           # we always use the latest patch version.
           version: v1.54.1
+          install-mode: "binary"
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:

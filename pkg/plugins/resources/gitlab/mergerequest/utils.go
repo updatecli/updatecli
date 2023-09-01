@@ -10,8 +10,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// isPullRequestExist queries a remote GitLab instance to know if a pullrequest already exists.
-func (g *Gitlab) isPullRequestExist() (bool, error) {
+// isMergeRequestExist queries a remote GitLab instance to know if a pullrequest already exists.
+func (g *Gitlab) isMergeRequestExist() (bool, error) {
 	ctx := context.Background()
 	// Timeout api query after 30sec
 	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
