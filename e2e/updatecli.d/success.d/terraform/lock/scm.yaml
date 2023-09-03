@@ -1,0 +1,74 @@
+name: Test Terraform Lock plugin resource from SCM
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli-test/jenkins-infra-aws.git
+
+sources:
+  kubernetes:
+    name: Get version from registry
+    kind: json
+    spec:
+      file: https://registry.terraform.io/v1/providers/hashicorp/kubernetes
+      key: version
+
+conditions:
+  using-value:
+    name: Condition using value
+    kind: terraform/lock
+    disablesourceinput: true
+    scmid: default
+    spec:
+      file: .terraform.lock.hcl
+      provider: hashicorp/kubernetes
+      platforms:
+        - linux_amd64
+      value: 2.22.0
+  using-value-with-url:
+    name: Condition using value
+    kind: terraform/lock
+    disablesourceinput: true
+    scmid: default
+    spec:
+      file: .terraform.lock.hcl
+      provider: registry.terraform.io/hashicorp/kubernetes
+      platforms:
+        - linux_amd64
+      value: 2.22.0
+
+targets:
+  update-file-from-source:
+    name: Update files content from source
+    kind: terraform/lock
+    sourceid: kubernetes
+    scmid: default
+    spec:
+      file: .terraform.lock.hcl
+      provider: hashicorp/kubernetes
+      platforms:
+        - linux_amd64
+
+  update-file-from-source-with-url:
+    name: Update files content from source with url
+    kind: terraform/lock
+    sourceid: kubernetes
+    scmid: default
+    spec:
+      file: .terraform.lock.hcl
+      provider: registry.terraform.io/hashicorp/kubernetes
+      platforms:
+        - linux_amd64
+
+  update-file-from-value:
+    name: Update files content from value
+    kind: terraform/lock
+    disablesourceinput: true
+    scmid: default
+    spec:
+      file: .terraform.lock.hcl
+      provider: hashicorp/kubernetes
+      platforms:
+        - linux_amd64
+      value: 2.23.0
