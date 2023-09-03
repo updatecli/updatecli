@@ -35,6 +35,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	stashBranch "github.com/updatecli/updatecli/pkg/plugins/resources/stash/branch"
 	stashTag "github.com/updatecli/updatecli/pkg/plugins/resources/stash/tag"
+	terraformLock "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/lock"
+	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -176,6 +178,14 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return stashTag.New(rs.Spec)
 
+	case "terraform/lock":
+
+		return terraformLock.New(rs.Spec)
+
+	case "terraform/provider":
+
+		return terraformProvider.New(rs.Spec)
+
 	case "toml":
 
 		return toml.New(rs.Spec)
@@ -209,36 +219,38 @@ type Resource interface {
 // Need to do reflect of ResourceConfig
 func GetResourceMapping() map[string]interface{} {
 	return map[string]interface{}{
-		"aws/ami":        &awsami.Spec{},
-		"cargopackage":   &cargopackage.Spec{},
-		"csv":            &csv.Spec{},
-		"dockerdigest":   &dockerdigest.Spec{},
-		"dockerfile":     &dockerfile.Spec{},
-		"dockerimage":    &dockerimage.Spec{},
-		"file":           &file.Spec{},
-		"gittag":         &gittag.Spec{},
-		"gitbranch":      &gitbranch.Spec{},
-		"gitea/branch":   &giteaBranch.Spec{},
-		"gitea/release":  &giteaRelease.Spec{},
-		"gitea/tag":      &giteaTag.Spec{},
-		"gitlab/branch":  &gitlabBranch.Spec{},
-		"gitlab/release": &gitlabRelease.Spec{},
-		"gitlab/tag":     &gitlabTag.Spec{},
-		"githubrelease":  &githubrelease.Spec{},
-		"golang":         &golang.Spec{},
-		"golang/gomod":   &gomod.Spec{},
-		"golang/module":  &gomodule.Spec{},
-		"hcl":            &hcl.Spec{},
-		"helmchart":      &helm.Spec{},
-		"jenkins":        &jenkins.Spec{},
-		"json":           &json.Spec{},
-		"maven":          &maven.Spec{},
-		"npm":            &npm.Spec{},
-		"shell":          &shell.Spec{},
-		"stash/branch":   &stashBranch.Spec{},
-		"stash/tag":      &stashTag.Spec{},
-		"toml":           &toml.Spec{},
-		"xml":            &xml.Spec{},
-		"yaml":           &yaml.Spec{},
+		"aws/ami":            &awsami.Spec{},
+		"cargopackage":       &cargopackage.Spec{},
+		"csv":                &csv.Spec{},
+		"dockerdigest":       &dockerdigest.Spec{},
+		"dockerfile":         &dockerfile.Spec{},
+		"dockerimage":        &dockerimage.Spec{},
+		"file":               &file.Spec{},
+		"gittag":             &gittag.Spec{},
+		"gitbranch":          &gitbranch.Spec{},
+		"gitea/branch":       &giteaBranch.Spec{},
+		"gitea/release":      &giteaRelease.Spec{},
+		"gitea/tag":          &giteaTag.Spec{},
+		"gitlab/branch":      &gitlabBranch.Spec{},
+		"gitlab/release":     &gitlabRelease.Spec{},
+		"gitlab/tag":         &gitlabTag.Spec{},
+		"githubrelease":      &githubrelease.Spec{},
+		"golang":             &golang.Spec{},
+		"golang/gomod":       &gomod.Spec{},
+		"golang/module":      &gomodule.Spec{},
+		"hcl":                &hcl.Spec{},
+		"helmchart":          &helm.Spec{},
+		"jenkins":            &jenkins.Spec{},
+		"json":               &json.Spec{},
+		"maven":              &maven.Spec{},
+		"npm":                &npm.Spec{},
+		"shell":              &shell.Spec{},
+		"stash/branch":       &stashBranch.Spec{},
+		"stash/tag":          &stashTag.Spec{},
+		"terraform/lock":     &terraformLock.Spec{},
+		"terraform/provider": &terraformProvider.Spec{},
+		"toml":               &toml.Spec{},
+		"xml":                &xml.Spec{},
+		"yaml":               &yaml.Spec{},
 	}
 }
