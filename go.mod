@@ -40,7 +40,7 @@ require (
 	github.com/goccy/go-yaml v1.11.0
 	github.com/google/go-containerregistry v0.15.2
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/hcl/v2 v2.17.1
+	github.com/hashicorp/hcl/v2 v2.18.0
 	github.com/hashicorp/terraform-registry-address v0.2.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/minamijoyo/hcledit v0.2.9
