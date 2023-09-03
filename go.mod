@@ -40,7 +40,7 @@ require (
 	github.com/goccy/go-yaml v1.11.0
 	github.com/google/go-containerregistry v0.15.2
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/hcl/v2 v2.17.0
+	github.com/hashicorp/hcl/v2 v2.18.0
 	github.com/hashicorp/terraform-registry-address v0.2.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/minamijoyo/hcledit v0.2.9
@@ -61,7 +61,6 @@ require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
-	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
