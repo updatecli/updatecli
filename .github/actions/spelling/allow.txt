@@ -27,3 +27,15 @@ hidetag
 xpath
 GROUPBYINDIVIDUAL
 GROUPBYALL
+hashicorp
+hclwrite
+cloudinit
+azuread
+azurerm
+hclsyntax
+zclconf
+cty
+tfupdate
+CBrack
+OBrack
+skipconstraints
