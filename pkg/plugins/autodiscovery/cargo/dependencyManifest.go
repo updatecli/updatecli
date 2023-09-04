@@ -48,13 +48,14 @@ targets:
 {{- if .TargetIDEnable }}
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
-    kind: 'toml'
+    kind: 'file'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{- end }}
     spec:
       file: '{{ .TargetFile }}'
-      key: '{{ .TargetKey }}'
+      matchpattern: '{{ .TargetMatchPattern }}'
+      replacepattern: '{{ .TargetReplacePattern }}'
     sourceid: '{{ .SourceID }}'
 {{- end }}
 {{- if .TargetCargoCleanupEnabled }}
