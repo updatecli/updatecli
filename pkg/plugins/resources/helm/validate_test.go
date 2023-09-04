@@ -20,7 +20,7 @@ func TestValidateTarget(t *testing.T) {
 				spec: Spec{
 					Name:             "My chart",
 					Key:              "container.image",
-					VersionIncrement: "none",
+					VersionIncrement: NOINCREMENT,
 				},
 			},
 		},
@@ -28,7 +28,7 @@ func TestValidateTarget(t *testing.T) {
 			chart: Chart{
 				spec: Spec{
 					Key:              "container.image",
-					VersionIncrement: "none",
+					VersionIncrement: NOINCREMENT,
 				},
 			},
 			wantErr:       true,
