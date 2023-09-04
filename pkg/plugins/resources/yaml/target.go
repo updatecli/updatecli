@@ -91,7 +91,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		resultTarget.Information = oldVersion
 
 		if oldVersion == valueToWrite {
-			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
 				resultTarget.Description,
 				y.spec.Key,
 				valueToWrite,
