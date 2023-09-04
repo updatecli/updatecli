@@ -27,10 +27,10 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.0.0",
 			expectedResult:            false,
-			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml", `,
+			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml"`,
 		},
 		{
-			name: "Success - No change with App Version",
+			name: "Success - change with only App Version",
 			spec: Spec{
 				Name:             "testdata",
 				File:             "Chart.yaml",
@@ -39,8 +39,8 @@ func TestTarget(t *testing.T) {
 				AppVersion:       true,
 			},
 			sourceInput:               "1.0.0",
-			expectedResult:            false,
-			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml", `,
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - No change with Version Increment",
@@ -52,7 +52,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.0.0",
 			expectedResult:            false,
-			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml", `,
+			expectedResultDescription: "key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - No change with Version Increment and App Version",
@@ -64,8 +64,8 @@ func TestTarget(t *testing.T) {
 				AppVersion:       true,
 			},
 			sourceInput:               "1.0.0",
-			expectedResult:            false,
-			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml", `,
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change",
@@ -87,10 +87,9 @@ func TestTarget(t *testing.T) {
 				Key:              "$.dependencies[0].version",
 				VersionIncrement: MAJORVERSION,
 			},
-			sourceInput:    "1.1.0",
-			expectedResult: true,
-			expectedResultDescription: `key "$.dependencies[0].version" should be updated from "1.0.0" to "1.1.0", in file "testdata/Chart.yaml"
-key "$.version" should be updated from "0.3.0" to "1.0.0", in file "testdata/Chart.yaml"`,
+			sourceInput:               "1.1.0",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change with App Version",
@@ -101,10 +100,9 @@ key "$.version" should be updated from "0.3.0" to "1.0.0", in file "testdata/Cha
 				VersionIncrement: NOINCREMENT,
 				AppVersion:       true,
 			},
-			sourceInput:    "1.1.0",
-			expectedResult: true,
-			expectedResultDescription: `key "$.dependencies[0].version" should be updated from "1.0.0" to "1.1.0", in file "testdata/Chart.yaml"
-key "$.appVersion" should be updated from "0.1.0" to "1.1.0", in file "testdata/Chart.yaml"`,
+			sourceInput:               "1.1.0",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change with Version Increment and App Version",
@@ -115,11 +113,9 @@ key "$.appVersion" should be updated from "0.1.0" to "1.1.0", in file "testdata/
 				VersionIncrement: MAJORVERSION,
 				AppVersion:       true,
 			},
-			sourceInput:    "1.1.0",
-			expectedResult: true,
-			expectedResultDescription: `key "$.dependencies[0].version" should be updated from "1.0.0" to "1.1.0", in file "testdata/Chart.yaml"
-key "$.version" should be updated from "0.3.0" to "1.0.0", in file "testdata/Chart.yaml"
-key "$.appVersion" should be updated from "0.1.0" to "1.1.0", in file "testdata/Chart.yaml"`,
+			sourceInput:               "1.1.0",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - No change using Value",
@@ -131,7 +127,7 @@ key "$.appVersion" should be updated from "0.1.0" to "1.1.0", in file "testdata/
 				VersionIncrement: NOINCREMENT,
 			},
 			expectedResult:            false,
-			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml", `,
+			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml"`,
 		},
 		{
 			name: "Success - Expected change using Value",
@@ -154,9 +150,8 @@ key "$.appVersion" should be updated from "0.1.0" to "1.1.0", in file "testdata/
 				VersionIncrement: MAJORVERSION,
 				Value:            "1.1.0",
 			},
-			expectedResult: true,
-			expectedResultDescription: `key "$.dependencies[0].version" should be updated from "1.0.0" to "1.1.0", in file "testdata/Chart.yaml"
-key "$.version" should be updated from "0.3.0" to "1.0.0", in file "testdata/Chart.yaml"`,
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change using Value with Version Increment and App Version",
@@ -168,10 +163,8 @@ key "$.version" should be updated from "0.3.0" to "1.0.0", in file "testdata/Cha
 				AppVersion:       true,
 				Value:            "1.1.0",
 			},
-			expectedResult: true,
-			expectedResultDescription: `key "$.dependencies[0].version" should be updated from "1.0.0" to "1.1.0", in file "testdata/Chart.yaml"
-key "$.version" should be updated from "0.3.0" to "1.0.0", in file "testdata/Chart.yaml"
-key "$.appVersion" should be updated from "0.1.0" to "1.1.0", in file "testdata/Chart.yaml"`,
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change with Version Increment to values.yaml",
@@ -181,10 +174,9 @@ key "$.appVersion" should be updated from "0.1.0" to "1.1.0", in file "testdata/
 				Key:              "$.version",
 				VersionIncrement: MAJORVERSION,
 			},
-			sourceInput:    "1.1.0",
-			expectedResult: true,
-			expectedResultDescription: `key "$.version" should be updated from "1.0.0" to "1.1.0", in file "testdata/values.yaml"
-key "$.version" should be updated from "0.3.0" to "1.0.0", in file "testdata/Chart.yaml"`,
+			sourceInput:               "1.1.0",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Failure - File does not exists",

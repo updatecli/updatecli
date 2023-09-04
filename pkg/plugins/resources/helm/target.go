@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -36,7 +37,7 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	err = yamlResource.Target(source, scm, dryRun, resultTarget)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to update chart %s: %s", c.spec.Name, err)
 	}
 
 	chartPath := c.spec.Name
@@ -46,12 +47,12 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 
 	err = c.MetadataUpdate(resultTarget.NewInformation, scm, dryRun, resultTarget)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to update chart metadata: %s", err)
 	}
 
 	err = c.RequirementsUpdate(chartPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to update chart requirements: %s", err)
 	}
 
 	if !dryRun {

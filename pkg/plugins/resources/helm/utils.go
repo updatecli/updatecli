@@ -209,6 +209,12 @@ func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, r
 		return err
 	}
 
+	if len(workingChartMetadata.AppVersion) > 0 && c.spec.AppVersion {
+		if err := c.metadataYamlPathUpdate("$.appVersion", source, scm, dryRun, resultTarget); err != nil {
+			return err
+		}
+	}
+
 	// Handle the situation where the version is not set yet
 	if workingChartMetadata.Version == "" {
 		workingChartMetadata.Version = "0.0.1"
@@ -219,6 +225,7 @@ func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, r
 	if computedVersion == "" {
 		computedVersion = "0.0.0"
 	}
+	initialComputedVersion := computedVersion
 
 forLoop:
 	for _, inc := range strings.Split(c.spec.VersionIncrement, ",") {
@@ -236,7 +243,7 @@ forLoop:
 			computedVersion = v.IncPatch().String()
 		case NOINCREMENT:
 			// Reset Version to its initial value
-			computedVersion = originChartMetadata.Version
+			computedVersion = initialComputedVersion
 			break forLoop
 		default:
 			logrus.Warningf("Wrong increment rule %q, ignoring", inc)
@@ -253,6 +260,10 @@ forLoop:
 		return err
 	}
 
+	if scm == nil && !resultTarget.Changed {
+		return nil
+	}
+
 	// If the work chart version is greater than the newly calculated version
 	// then we assume that a previous Updatecli execution already updated the chart version
 	// to a greater value than the one we computed in this execution.
@@ -260,22 +271,19 @@ forLoop:
 		computedVersion = workingChartMetadata.Version
 	}
 
-	if computedVersion != workingChartMetadata.Version {
-		resultTarget.Changed = true
-		resultTarget.Result = result.ATTENTION
-		resultTarget.Description = fmt.Sprintf("%s\nChart version updated to %s", resultTarget.Description, computedVersion)
+	if computedVersion != workingChartMetadata.Version && scm != nil {
+		// If the chart version is updated then we need to update the resultTarget if it wasn't already updated
+		if !resultTarget.Changed {
+			resultTarget.Description = fmt.Sprintf("Chart version updated to %s", computedVersion)
+			resultTarget.Changed = true
+			resultTarget.Result = result.ATTENTION
+		}
 
 		logrus.Debugf("Updating chart version from %q to %q", workingChartMetadata.Version, computedVersion)
 	}
 
 	if err := c.metadataYamlPathUpdate("$.version", computedVersion, scm, dryRun, resultTarget); err != nil {
 		return err
-	}
-
-	if len(workingChartMetadata.AppVersion) > 0 && c.spec.AppVersion {
-		if err := c.metadataYamlPathUpdate("$.appVersion", source, scm, dryRun, resultTarget); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -298,6 +306,8 @@ func (c *Chart) metadataYamlPathUpdate(key string, value string, scm scm.ScmHand
 	}
 
 	if metadataResultTarget.Changed {
+		resultTarget.Result = result.ATTENTION
+		resultTarget.Changed = true
 		resultTarget.Description = fmt.Sprintf("%s\n%s",
 			resultTarget.Description,
 			metadataResultTarget.Description)
