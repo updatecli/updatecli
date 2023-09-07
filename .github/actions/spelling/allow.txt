@@ -39,3 +39,5 @@ tfupdate
 CBrack
 OBrack
 skipconstraints
+CIVO
+Tanzu
