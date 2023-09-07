@@ -54,26 +54,24 @@ func TestGenerateSchema(t *testing.T) {
             "type": "string"
         },
         "conditions": {
-            "patternProperties": {
-                ".*": {
-                    "properties": {
-                        "sourceid": {
-                            "type": "string"
-                        },
-                        "disablesourceinput": {
-                            "type": "boolean"
-                        },
-                        "spec": true,
-                        "kind": {
-                            "type": "string"
-                        }
+            "additionalProperties": {
+                "properties": {
+                    "sourceid": {
+                        "type": "string"
                     },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                        "kind"
-                    ]
-                }
+                    "disablesourceinput": {
+                        "type": "boolean"
+                    },
+                    "spec": true,
+                    "kind": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "kind"
+                ]
             },
             "type": "object"
         }
