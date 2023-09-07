@@ -161,10 +161,10 @@ func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, r
 	var err error
 
 	/*
-		workingChartMetadata is the metadata of the chart we are working on.
+		currentChartMetadata is the metadata of the chart we are working on.
 		It can be modified by different Updatecli execution.
 	*/
-	var workingChartMetadata helm.Metadata
+	var currentChartMetadata helm.Metadata
 	/*
 		originChartMetadata is the metadata of the chart from the base from.
 		we want to be sure that we are not modifying the chart version more than needed
@@ -189,7 +189,6 @@ func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, r
 			return fmt.Errorf("unmarshalling %q: %w", metadataFilename, err)
 		}
 
-		//
 		metadataFilename = filepath.Join(scm.GetDirectory(), metadataFilename)
 	}
 
@@ -205,22 +204,31 @@ func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, r
 	}
 
 	// Unmarshal the working yaml file into a struct
-	if err := yml.Unmarshal(data, &workingChartMetadata); err != nil {
+	if err := yml.Unmarshal(data, &currentChartMetadata); err != nil {
 		return err
 	}
 
-	if len(workingChartMetadata.AppVersion) > 0 && c.spec.AppVersion {
+	if len(currentChartMetadata.AppVersion) > 0 && c.spec.AppVersion {
 		if err := c.metadataYamlPathUpdate("$.appVersion", source, scm, dryRun, resultTarget); err != nil {
 			return err
 		}
 	}
 
 	// Handle the situation where the version is not set yet
-	if workingChartMetadata.Version == "" {
-		workingChartMetadata.Version = "0.0.1"
+	if currentChartMetadata.Version == "" {
+		currentChartMetadata.Version = "0.0.1"
 	}
 
-	computedVersion := originChartMetadata.Version
+	computedVersion := ""
+	switch scm {
+	// If scm is not defined then we want to update the chart version from the current working chart
+	case nil:
+		computedVersion = currentChartMetadata.Version
+	default:
+		computedVersion = originChartMetadata.Version
+
+	}
+
 	// Init Chart Version if not set yet
 	if computedVersion == "" {
 		computedVersion = "0.0.0"
@@ -250,7 +258,7 @@ forLoop:
 		}
 	}
 
-	workingChartVersion, err := semver.NewVersion(workingChartMetadata.Version)
+	workingChartVersion, err := semver.NewVersion(currentChartMetadata.Version)
 	if err != nil {
 		return err
 	}
@@ -268,10 +276,10 @@ forLoop:
 	// then we assume that a previous Updatecli execution already updated the chart version
 	// to a greater value than the one we computed in this execution.
 	if workingChartVersion.GreaterThan(computedChartVersion) {
-		computedVersion = workingChartMetadata.Version
+		computedVersion = currentChartMetadata.Version
 	}
 
-	if computedVersion != workingChartMetadata.Version && scm != nil {
+	if computedVersion != currentChartMetadata.Version && scm != nil {
 		// If the chart version is updated then we need to update the resultTarget if it wasn't already updated
 		if !resultTarget.Changed {
 			resultTarget.Description = fmt.Sprintf("Chart version updated to %s", computedVersion)
@@ -279,7 +287,7 @@ forLoop:
 			resultTarget.Result = result.ATTENTION
 		}
 
-		logrus.Debugf("Updating chart version from %q to %q", workingChartMetadata.Version, computedVersion)
+		logrus.Debugf("Updating chart version from %q to %q", currentChartMetadata.Version, computedVersion)
 	}
 
 	if err := c.metadataYamlPathUpdate("$.version", computedVersion, scm, dryRun, resultTarget); err != nil {
@@ -289,6 +297,7 @@ forLoop:
 	return nil
 }
 
+// metadataYamlPathUpdate updates the Chart.yaml
 func (c *Chart) metadataYamlPathUpdate(key string, value string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	yamlSpec := yaml.Spec{
 		File: filepath.Join(c.spec.Name, "Chart.yaml"),
