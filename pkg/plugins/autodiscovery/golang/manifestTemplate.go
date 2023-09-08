@@ -13,7 +13,7 @@ sources:
         pattern: '{{ .VersionFilterPattern }}'
 targets:
   golangVersion:
-    name: Update Go version
+    name: {{ .TargetName }}
     kind: golang/gomod
     sourceid: golangVersion
     spec:
@@ -36,7 +36,7 @@ sources:
         pattern: '{{ .VersionFilterPattern }}'
 targets:
   golangModuleVersion:
-    name: Update {{ .Module }} Golang module version
+    name: {{ .TargetName }}
     kind: golang/gomod
     sourceid: golangModuleVersion
     spec:
