@@ -3,9 +3,9 @@ package dockerfile
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
-	"os"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -24,16 +24,12 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
-	foundDockerfiles, err := searchDockerfiles(
-		h.rootDir,
-		h.filematch)
-
+	foundDockerfiles, err := searchDockerfiles(h.rootDir, h.filematch)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, foundDockerfile := range foundDockerfiles {
-
 		logrus.Debugf("parsing file %q", foundDockerfile)
 
 		pwd, err := os.Getwd()

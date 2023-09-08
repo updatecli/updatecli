@@ -27,16 +27,12 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
-	foundValuesFiles, err := searchChartFiles(
-		h.rootDir,
-		[]string{"values.yaml", "values.yml"})
-
+	foundValuesFiles, err := searchChartFiles(h.rootDir, []string{"values.yaml", "values.yml"})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, foundValueFile := range foundValuesFiles {
-
 		logrus.Debugf("parsing file %q", foundValueFile)
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -44,7 +40,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 		}
 
 		relativeFoundValueFile, err := filepath.Rel(pwd, foundValueFile)
-
 		if err != nil {
 			// Jump to the next Helm chart if current failed
 			logrus.Errorln(err)
