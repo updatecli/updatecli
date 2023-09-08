@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"text/template"
 
@@ -130,11 +131,13 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterPattern,
 		GoModFile            string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		TargetName           string
 		ScmID                string
 	}{
 		GoModFile:            filename,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		TargetName:           `Bump Golang to {{ source "golangVersion" }}`,
 		ScmID:                scmID,
 	}
 
@@ -160,6 +163,7 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		VersionFilterPattern string
 		GoModTidyEnabled     bool
 		ScmID                string
+		TargetName           string
 	}{
 		GoModFile:            filename,
 		Module:               module,
@@ -167,6 +171,7 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		VersionFilterPattern: versionFilterPattern,
 		GoModTidyEnabled:     goModTidy,
 		ScmID:                scmID,
+		TargetName:           fmt.Sprintf("Bump %s to {{ source \"golangModuleVersion\" }}", module),
 	}
 
 	manifest := bytes.Buffer{}
