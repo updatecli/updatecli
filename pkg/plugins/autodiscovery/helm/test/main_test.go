@@ -51,7 +51,7 @@ targets:
       file: 'Chart.yaml'
       key: '$.dependencies[0].version'
       name: 'epinio'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'minio'
 `, `name: 'Bump dependency "kubed" for Helm chart "epinio"'
 sources:
@@ -81,7 +81,7 @@ targets:
       file: 'Chart.yaml'
       key: '$.dependencies[1].version'
       name: 'epinio'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'kubed'
 `, `name: 'Bump dependency "epinio-ui" for Helm chart "epinio"'
 sources:
@@ -111,7 +111,7 @@ targets:
       file: 'Chart.yaml'
       key: '$.dependencies[2].version'
       name: 'epinio'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'epinio-ui'
 `, `name: 'Bump Docker Image "epinioteam/epinio-ui-qa" for Helm chart "epinio"'
 sources:
@@ -140,7 +140,7 @@ targets:
       file: 'values.yaml'
       key: '$.images.ui.tag'
       name: 'epinio'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'epinioteam/epinio-ui-qa'
 `, `name: 'Bump Docker Image "splatform/epinio-server" for Helm chart "epinio"'
 sources:
@@ -169,7 +169,7 @@ targets:
       file: 'values.yaml'
       key: '$.image.tag'
       name: 'epinio'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'splatform/epinio-server'
 `},
 		},
@@ -204,7 +204,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.image.tag'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'epinio_epinio-server'
 `,
 				`name: 'Bump Docker image "epinio/epinio-ui" for Helm chart "sample"'
@@ -235,7 +235,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.images.ui.tag'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'epinio_epinio-ui'
 `},
 		},
@@ -278,7 +278,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.image.tag'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'ghcr.io_epinio_epinio-server'
 `,
 				`name: 'Bump Docker image "ghcr.io/epinio/epinio-ui" for Helm chart "sample"'
@@ -317,7 +317,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.images.ui.tag'
-      versionincrement: 'none'
+      versionincrement: ''
     sourceid: 'ghcr.io_epinio_epinio-ui'
 `},
 		},
