@@ -3,6 +3,7 @@ package golang
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -24,7 +25,11 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 	for _, foundFile := range foundFiles {
 		logrus.Debugf("parsing file %q", foundFile)
 
-		relativeFoundFile, err := filepath.Rel(g.rootDir, foundFile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
+		relativeFoundFile, err := filepath.Rel(pwd, foundFile)
 		if err != nil {
 			logrus.Debugln(err)
 			continue

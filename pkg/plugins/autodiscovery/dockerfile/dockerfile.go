@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"os"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -34,7 +35,13 @@ func (h Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 	for _, foundDockerfile := range foundDockerfiles {
 
 		logrus.Debugf("parsing file %q", foundDockerfile)
-		relativeFoundDockerfile, err := filepath.Rel(h.rootDir, foundDockerfile)
+
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
+
+		relativeFoundDockerfile, err := filepath.Rel(pwd, foundDockerfile)
 		if err != nil {
 			// Let try the next one if it fails
 			logrus.Debugln(err)

@@ -3,6 +3,7 @@ package dockercompose
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -39,7 +40,12 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 	}
 
 	for _, foundDockerComposefile := range foundDockerComposeFiles {
-		relativeFoundDockerComposeFile, err := filepath.Rel(d.rootDir, foundDockerComposefile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
+
+		relativeFoundDockerComposeFile, err := filepath.Rel(pwd, foundDockerComposefile)
 		logrus.Debugf("parsing file %q", foundDockerComposefile)
 		if err != nil {
 			// Let's try the next one if it fails

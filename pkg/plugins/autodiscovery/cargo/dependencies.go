@@ -3,6 +3,7 @@ package cargo
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"text/template"
@@ -164,7 +165,11 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 	for _, foundCargoFile := range foundCargoFiles {
 		logrus.Debugf("parsing file %q", foundCargoFile)
 
-		relativeFoundCargoFile, err := filepath.Rel(c.rootDir, foundCargoFile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
+		relativeFoundCargoFile, err := filepath.Rel(pwd, foundCargoFile)
 		if err != nil {
 			// Jump to the next Cargo if current failed
 			logrus.Debugln(err)

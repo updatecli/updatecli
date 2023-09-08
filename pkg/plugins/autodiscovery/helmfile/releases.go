@@ -3,6 +3,7 @@ package helmfile
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -55,7 +56,11 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 	for _, foundHelmfile := range foundHelmfileFiles {
 		logrus.Debugf("parsing file %q", foundHelmfile)
 
-		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundHelmfile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
+		relativeFoundChartFile, err := filepath.Rel(pwd, foundHelmfile)
 		if err != nil {
 			// Jump to the next Helmfile if current failed
 			logrus.Debugln(err)

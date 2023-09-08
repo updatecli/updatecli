@@ -3,6 +3,7 @@ package npm
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -24,7 +25,12 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 		logrus.Debugf("parsing file %q", foundFile)
 
-		relativeFoundFile, err := filepath.Rel(n.rootDir, foundFile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
+
+		relativeFoundFile, err := filepath.Rel(pwd, foundFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
 			logrus.Debugln(err)

@@ -3,6 +3,7 @@ package fleet
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -41,7 +42,11 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 	for _, foundFleetBundleFile := range foundFleetBundleFiles {
 		logrus.Debugf("parsing file %q", foundFleetBundleFile)
 
-		relativeFoundChartFile, err := filepath.Rel(f.rootDir, foundFleetBundleFile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
+		relativeFoundChartFile, err := filepath.Rel(pwd, foundFleetBundleFile)
 		if err != nil {
 			// Let's try the next chart if one fail
 			logrus.Debugln(err)

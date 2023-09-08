@@ -3,6 +3,7 @@ package maven
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -25,7 +26,11 @@ func (m Maven) discoverDependencyManagementsManifests() ([][]byte, error) {
 	}
 
 	for _, pomFile := range foundPomFiles {
-		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
+		relativePomFile, err := filepath.Rel(pwd, pomFile)
 		logrus.Debugf("parsing file %q", pomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail

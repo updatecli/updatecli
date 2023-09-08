@@ -3,6 +3,7 @@ package helm
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -37,8 +38,13 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 	for _, foundValueFile := range foundValuesFiles {
 
 		logrus.Debugf("parsing file %q", foundValueFile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			continue
+		}
 
-		relativeFoundValueFile, err := filepath.Rel(h.rootDir, foundValueFile)
+		relativeFoundValueFile, err := filepath.Rel(pwd, foundValueFile)
+
 		if err != nil {
 			// Jump to the next Helm chart if current failed
 			logrus.Errorln(err)
