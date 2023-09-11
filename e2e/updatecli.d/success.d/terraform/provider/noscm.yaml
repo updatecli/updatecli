@@ -3,10 +3,11 @@ name: Test Terraform Provider plugin resource
 sources:
   azurerm:
     name: Get version from registry
-    kind: json
+    kind: terraform/registry
     spec:
-      file: https://registry.terraform.io/v1/providers/hashicorp/azurerm
-      key: version
+      type: provider
+      namespace: hashicorp
+      name: azurerm
 
 conditions:
   using-value:
