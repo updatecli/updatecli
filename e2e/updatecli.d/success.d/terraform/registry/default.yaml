@@ -1,0 +1,60 @@
+name: Test Terraform Registry plugin resource
+
+sources:
+  kubernetes:
+    name: Get version from registry
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: hashicorp
+      name: kubernetes
+
+  terraform-aws-modules:
+    name: Get version from registry
+    kind: terraform/registry
+    spec:
+      type: module
+      namespace: terraform-aws-modules
+      name: vpc
+      targetsystem: aws
+
+conditions:
+  provider-using-value:
+    name: Condition using value
+    kind: terraform/registry
+    disablesourceinput: true
+    spec:
+      type: provider
+      namespace: hashicorp
+      name: kubernetes
+      version: 2.22.0
+
+  provider-using-source:
+    name: Condition using value
+    kind: terraform/registry
+    sourceid: kubernetes
+    spec:
+      type: provider
+      namespace: hashicorp
+      name: kubernetes
+
+  module-using-value:
+    name: Condition using value
+    kind: terraform/registry
+    disablesourceinput: true
+    spec:
+      type: module
+      namespace: terraform-aws-modules
+      name: vpc
+      targetsystem: aws
+      version: 5.1.0
+
+  module-using-source:
+    name: Condition using value
+    kind: terraform/registry
+    sourceid: terraform-aws-modules
+    spec:
+      type: module
+      namespace: terraform-aws-modules
+      name: vpc
+      targetsystem: aws

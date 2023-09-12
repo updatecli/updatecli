@@ -37,6 +37,7 @@ import (
 	stashTag "github.com/updatecli/updatecli/pkg/plugins/resources/stash/tag"
 	terraformLock "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/lock"
 	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
+	terraformRegistry "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/registry"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -178,6 +179,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return stashTag.New(rs.Spec)
 
+	case "terraform/file":
+
+		return hcl.New(rs.Spec)
+
 	case "terraform/lock":
 
 		return terraformLock.New(rs.Spec)
@@ -185,6 +190,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "terraform/provider":
 
 		return terraformProvider.New(rs.Spec)
+
+	case "terraform/registry":
+
+		return terraformRegistry.New(rs.Spec)
 
 	case "toml":
 
@@ -247,8 +256,10 @@ func GetResourceMapping() map[string]interface{} {
 		"shell":              &shell.Spec{},
 		"stash/branch":       &stashBranch.Spec{},
 		"stash/tag":          &stashTag.Spec{},
+		"terraform/file":     &hcl.Spec{},
 		"terraform/lock":     &terraformLock.Spec{},
 		"terraform/provider": &terraformProvider.Spec{},
+		"terraform/registry": &terraformRegistry.Spec{},
 		"toml":               &toml.Spec{},
 		"xml":                &xml.Spec{},
 		"yaml":               &yaml.Spec{},
