@@ -1,9 +1,12 @@
 package helmfile
 
 import (
+	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSearchFiles(t *testing.T) {
@@ -13,16 +16,16 @@ func TestSearchFiles(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	expectedFile := "test/testdata/helmfile.d/cik8s.yaml"
 
-	if len(gotFiles) == 0 {
-		t.Errorf("Expecting file %q but got none", expectedFile)
-		return
+	pwd, err := os.Getwd()
+	require.NoError(t, err)
+
+	expectedFiles := []string{
+		path.Join(pwd, "test/testdata/helmfile.d/cik8s.yaml"),
 	}
 
-	if gotFiles[0] != expectedFile {
-		t.Errorf("Expecting file %q but got %q", expectedFile, gotFiles[0])
-	}
+	assert.Equal(t, expectedFiles, gotFiles)
+
 }
 
 func TestListChartDependency(t *testing.T) {
