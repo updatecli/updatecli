@@ -1,6 +1,8 @@
 package golang
 
 import (
+	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,12 +25,20 @@ func TestSearchGoModFiles(t *testing.T) {
 		},
 	}
 
+	pwd, err := os.Getwd()
+	require.NoError(t, err)
+
 	for _, d := range dataset {
+
+		for i := range d.expectedFoundFiles {
+			d.expectedFoundFiles[i] = path.Join(pwd, d.expectedFoundFiles[i])
+		}
+
 		t.Run(d.name, func(t *testing.T) {
 			foundFiles, err := searchGoModFiles(d.rootDir)
 			require.NoError(t, err)
 
-			assert.Equal(t, foundFiles, d.expectedFoundFiles)
+			assert.Equal(t, d.expectedFoundFiles, foundFiles)
 		})
 	}
 }
