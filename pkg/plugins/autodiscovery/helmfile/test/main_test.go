@@ -28,7 +28,7 @@ func TestDiscoverManifests(t *testing.T) {
 			expectedPipelines: []config.Spec{
 				{
 
-					Name: "Bump \"datadog\" Helm Chart version for Helmfile \"helmfile.d/cik8s.yaml\"",
+					Name: "Bump \"datadog\" Helm Chart version for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 					Sources: map[string]source.Config{
 						"datadog": {
 							ResourceConfig: resource.ResourceConfig{
@@ -49,7 +49,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"datadog": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Ensure release \"datadog\" is specified for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Name: "Ensure release \"datadog\" is specified for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File:  "testdata/helmfile.d/cik8s.yaml",
@@ -64,7 +64,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"datadog": {
 							SourceID: "datadog",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"datadog\" Helm Chart Version for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Name: "Bump \"datadog\" Helm Chart Version for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/helmfile.d/cik8s.yaml",
@@ -76,7 +76,7 @@ func TestDiscoverManifests(t *testing.T) {
 				},
 				{
 
-					Name: "Bump \"docker-registry-secrets\" Helm Chart version for Helmfile \"helmfile.d/cik8s.yaml\"",
+					Name: "Bump \"docker-registry-secrets\" Helm Chart version for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 					Sources: map[string]source.Config{
 						"docker-registry-secrets": {
 							ResourceConfig: resource.ResourceConfig{
@@ -97,7 +97,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"docker-registry-secrets": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Ensure release \"docker-registry-secrets\" is specified for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Name: "Ensure release \"docker-registry-secrets\" is specified for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File:  "testdata/helmfile.d/cik8s.yaml",
@@ -111,7 +111,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"docker-registry-secrets": {
 							SourceID: "docker-registry-secrets",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"docker-registry-secrets\" Helm Chart Version for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Name: "Bump \"docker-registry-secrets\" Helm Chart Version for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/helmfile.d/cik8s.yaml",
@@ -123,7 +123,7 @@ func TestDiscoverManifests(t *testing.T) {
 				},
 				{
 
-					Name: "Bump \"myOCIChart\" Helm Chart version for Helmfile \"helmfile.d/cik8s.yaml\"",
+					Name: "Bump \"myOCIChart\" Helm Chart version for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 					Sources: map[string]source.Config{
 						"myOCIChart": {
 							ResourceConfig: resource.ResourceConfig{
@@ -144,7 +144,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"myOCIChart": {
 							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Ensure release \"myOCIChart\" is specified for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Name: "Ensure release \"myOCIChart\" is specified for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File:  "testdata/helmfile.d/cik8s.yaml",
@@ -159,7 +159,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"myOCIChart": {
 							SourceID: "myOCIChart",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Bump \"myOCIChart\" Helm Chart Version for Helmfile \"helmfile.d/cik8s.yaml\"",
+								Name: "Bump \"myOCIChart\" Helm Chart Version for Helmfile \"testdata/helmfile.d/cik8s.yaml\"",
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/helmfile.d/cik8s.yaml",

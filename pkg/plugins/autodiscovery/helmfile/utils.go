@@ -30,7 +30,11 @@ func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
 				continue
 			}
 			if match {
-				helmfiles = append(helmfiles, path)
+				absPath, err := filepath.Abs(path)
+				if err != nil {
+					return fmt.Errorf("get absolute path of %q: %s", path, err)
+				}
+				helmfiles = append(helmfiles, absPath)
 			}
 		}
 

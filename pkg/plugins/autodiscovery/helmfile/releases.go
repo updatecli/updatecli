@@ -88,7 +88,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 
 		// Retrieve chart dependencies for each chart
 
-		metadata, err := getHelmfileMetadata(foundHelmfile)
+		metadata, err := getHelmfileMetadata(relativeFoundChartFile)
 		if err != nil {
 			logrus.Debugln(err)
 			continue
@@ -204,7 +204,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				TargetID:                   release.Name,
 				TargetName:                 fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
 				TargetKey:                  fmt.Sprintf("$.releases[%d].version", i),
-				File:                       foundHelmfile,
+				File:                       relativeFoundChartFile,
 				ScmID:                      h.scmID,
 			}
 
