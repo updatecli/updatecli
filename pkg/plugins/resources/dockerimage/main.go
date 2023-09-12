@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -35,16 +36,14 @@ func New(spec interface{}) (*DockerImage, error) {
 
 	if len(newSpec.Architectures) > 0 {
 		if newSpec.Architecture != "" {
-			return nil, fmt.Errorf("validation error in the resource of type 'dockerimage': the attributes `spec.architecture` and `spec.architecture` are mutually exclusive")
+			return nil, fmt.Errorf("validation error in the resource of type 'dockerimage': the attributes `spec.architecture` and `spec.architectures` are mutually exclusive")
 		}
 	} else {
-		if newSpec.Architecture == "" {
-			newSpec.Architecture = "amd64"
+		if newSpec.Architecture != "" {
+			// Move the "single" architecture to the "multiple" (used everywhere) and discard it
+			newSpec.Architectures = append(newSpec.Architectures, newSpec.Architecture)
+			newSpec.Architecture = ""
 		}
-
-		// Move the "single" architecture to the "multiple" (used everywhere) and discard it
-		newSpec.Architectures = append(newSpec.Architectures, newSpec.Architecture)
-		newSpec.Architecture = ""
 	}
 
 	newFilter, err := newSpec.VersionFilter.Init()
@@ -99,7 +98,11 @@ func (di *DockerImage) createRef(source string) (name.Reference, error) {
 
 // checkImage checks if a container reference exists on the "remote" registry with a given set of options
 func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error) {
-	remoteOptions := append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+	var remoteOptions []remote.Option
+	if arch != "" {
+		remoteOptions = append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+	}
+
 	descriptor, err := remote.Get(ref, remoteOptions...)
 	if err != nil {
 		if strings.Contains(err.Error(), "unexpected status code 404") {
@@ -112,17 +115,24 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 		return false, err
 	}
 
-	_, err = descriptor.Image()
-	if err != nil {
-		if strings.Contains(err.Error(), "no child with platform") {
-			logrus.Infof("%s The Docker image %s (%s) doesn't exist.",
-				result.FAILURE,
-				ref.Name(),
-				arch,
-			)
-			return false, nil
+	if arch != "" {
+
+		if descriptor.MediaType == types.DockerManifestSchema1 || descriptor.MediaType == types.DockerManifestSchema1Signed {
+			return false, fmt.Errorf("architecture check not supported with MediaType %q", descriptor.MediaType)
 		}
-		return false, err
+
+		_, err = descriptor.Image()
+		if err != nil {
+			if strings.Contains(err.Error(), "no child with platform") {
+				logrus.Infof("%s The Docker image %s (%s) doesn't exist.",
+					result.FAILURE,
+					ref.Name(),
+					arch,
+				)
+				return false, nil
+			}
+			return false, err
+		}
 	}
 
 	logrus.Infof("%s The Docker image %s (%s) exists and is available.",

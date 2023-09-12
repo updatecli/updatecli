@@ -19,28 +19,36 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Success",
 			spec: Spec{
-				Image:         "jenkinsciinfra/wiki",
+				Image:         "ghcr.io/updatecli/updatecli",
 				Architectures: []string{"amd64"},
 			},
-			source:         "0.1.6",
+			source:         "v0.35.0",
+			expectedResult: true,
+		},
+		{
+			name: "Success - No architectures",
+			spec: Spec{
+				Image: "ghcr.io/updatecli/updatecli",
+			},
+			source:         "v0.35.0",
 			expectedResult: true,
 		},
 		{
 			name: "Failure - missing architecture",
 			spec: Spec{
-				Image:         "jenkinsciinfra/wiki",
-				Architectures: []string{"arm64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Architectures: []string{"i386"},
 			},
-			source:         "0.1.6",
+			source:         "v0.35.0",
 			expectedResult: false,
 		},
 		{
 			name: "Failure - one missing one not architecture",
 			spec: Spec{
-				Image:         "jenkinsciinfra/wiki",
-				Architectures: []string{"amd64", "arm64"},
+				Image:         "ghcr.io/updatecli/updatecli",
+				Architectures: []string{"amd64", "i386"},
 			},
-			source:         "0.1.6",
+			source:         "v0.35.0",
 			expectedResult: false,
 		},
 	}

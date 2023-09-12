@@ -19,25 +19,37 @@ func TestSource(t *testing.T) {
 		{
 			name: "Success",
 			spec: Spec{
-				Image: "jenkinsciinfra/wiki",
+				Image: "ghcr.io/updatecli/updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "0.1.6",
+					Pattern: "v0.35.0",
 				},
 				Architectures: []string{"amd64"},
 			},
-			expectedResult: "0.1.6",
+			expectedResult: "v0.35.0",
+			expectedError:  false,
+		},
+		{
+			name: "Success - no architecture",
+			spec: Spec{
+				Image: "ghcr.io/updatecli/updatecli",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "v0.35.0",
+				},
+			},
+			expectedResult: "v0.35.0",
 			expectedError:  false,
 		},
 		{
 			name: "Failure - missing architecture",
 			spec: Spec{
-				Image: "jenkinsciinfra/wiki",
+				Image: "ghcr.io/updatecli/updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "0.1.6",
+					Pattern: "v0.35.0",
 				},
-				Architectures: []string{"arm64"},
+				Architectures: []string{"i386"},
 			},
 			expectedError: true,
 		},

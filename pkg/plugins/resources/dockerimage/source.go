@@ -48,7 +48,13 @@ func (di *DockerImage) Source(workingDir string, resultSource *result.Source) er
 		return err
 	}
 
-	found, err := di.checkImage(ref, di.spec.Architectures[0])
+	architecture := ""
+
+	if len(di.spec.Architectures) > 0 {
+		architecture = di.spec.Architectures[0]
+	}
+
+	found, err := di.checkImage(ref, architecture)
 	if err != nil {
 		return err
 	}

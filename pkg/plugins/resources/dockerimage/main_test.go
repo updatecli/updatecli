@@ -55,7 +55,7 @@ func TestNew(t *testing.T) {
 				},
 			},
 			wantSpec: Spec{
-				Architectures: []string{"amd64"},
+				Architectures: nil,
 				Image:         "ghcr.io/updatecli/updatecli",
 				Tag:           "0.15.0",
 				InlineKeyChain: docker.InlineKeyChain{

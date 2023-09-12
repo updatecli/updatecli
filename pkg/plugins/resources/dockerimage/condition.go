@@ -23,14 +23,21 @@ func (di *DockerImage) Condition(source string, scm scm.ScmHandler, resultCondit
 
 	found := true
 
-	for _, arch := range di.spec.Architectures {
-		foundArchitecture, err := di.checkImage(ref, arch)
+	if len(di.spec.Architectures) == 0 {
+		found, err = di.checkImage(ref, "")
 		if err != nil {
 			return err
 		}
-		if !foundArchitecture {
-			found = false
-			break
+	} else {
+		for _, arch := range di.spec.Architectures {
+			foundArchitecture, err := di.checkImage(ref, arch)
+			if err != nil {
+				return err
+			}
+			if !foundArchitecture {
+				found = false
+				break
+			}
 		}
 	}
 
