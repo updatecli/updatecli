@@ -27,7 +27,11 @@ func searchGoModFiles(rootDir string) ([]string, error) {
 		}
 
 		if info.Name() == GoModFile {
-			foundFiles = append(foundFiles, path)
+			absPath, err := filepath.Abs(path)
+			if err != nil {
+				return fmt.Errorf("get absolute path of %q: %s", path, err)
+			}
+			foundFiles = append(foundFiles, absPath)
 		}
 
 		return nil

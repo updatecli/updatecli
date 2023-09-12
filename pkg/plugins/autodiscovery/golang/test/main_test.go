@@ -53,7 +53,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: `Bump gopkg.in/yaml.v3 to {{ source "golangModuleVersion" }}`,
 								Kind: "golang/gomod",
 								Spec: gomod.Spec{
-									File:   "go.mod",
+									File:   "testdata/noModule/go.mod",
 									Module: "gopkg.in/yaml.v3",
 								},
 							},
@@ -104,7 +104,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: `Bump Golang to {{ source "golangVersion" }}`,
 								Kind: "golang/gomod",
 								Spec: gomod.Spec{
-									File: "go.mod",
+									File: "testdata/noModule/go.mod",
 								},
 							},
 						},

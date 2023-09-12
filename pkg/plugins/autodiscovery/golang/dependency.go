@@ -19,7 +19,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 	foundFiles, err := searchGoModFiles(g.rootDir)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("search go.mod files: %s", err)
 	}
 
 	for _, foundFile := range foundFiles {
