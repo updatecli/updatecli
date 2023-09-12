@@ -179,6 +179,78 @@ func TestTarget(t *testing.T) {
 			expectedResultDescription: "key \"$.version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
+			name: "Success - Child chart patch update Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "Chart.yaml",
+				Key:              "$.dependencies[0].version",
+				VersionIncrement: CHILDDEPENDENT,
+			},
+			sourceInput:               "1.0.1",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.0.1\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.3.1\", in file \"testdata/Chart.yaml\"",
+		},
+		{
+			name: "Success - Child chart minor update Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "Chart.yaml",
+				Key:              "$.dependencies[0].version",
+				VersionIncrement: CHILDDEPENDENT,
+			},
+			sourceInput:               "1.1.0",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+		},
+		{
+			name: "Success - Child chart major update Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "Chart.yaml",
+				Key:              "$.dependencies[0].version",
+				VersionIncrement: CHILDDEPENDENT,
+			},
+			sourceInput:               "2.0.0",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"2.0.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+		},
+		{
+			name: "Success - Child chart major update with tilde Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "Chart.yaml",
+				Key:              "$.dependencies[0].version",
+				VersionIncrement: CHILDDEPENDENT,
+			},
+			sourceInput:               "~2.0.0",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"~2.0.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+		},
+		{
+			name: "Success - Child chart minor update with >= Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "Chart.yaml",
+				Key:              "$.dependencies[0].version",
+				VersionIncrement: CHILDDEPENDENT,
+			},
+			sourceInput:               ">=1.1.0",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \">=1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+		},
+		{
+			name: "Success - Child chart major and patch update Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "Chart.yaml",
+				Key:              "$.dependencies[0].version",
+				VersionIncrement: CHILDDEPENDENT,
+			},
+			sourceInput:               "2.0.5",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"2.0.5\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+		},
+		{
 			name: "Failure - File does not exists",
 			spec: Spec{
 				Name:             "testdata",

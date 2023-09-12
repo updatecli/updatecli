@@ -15,6 +15,8 @@ const (
 	MAJORVERSION string = "major"
 	// PATCHVERSION defines patch version identifier
 	PATCHVERSION string = "patch"
+	// CHILDDEPENDENT defines child dependent version identifier
+	CHILDDEPENDENT string = "child-dependent"
 	// NOINCREMENT disables chart version auto increment
 	NOINCREMENT string = "none"
 )
@@ -102,7 +104,7 @@ type Spec struct {
 	*/
 	Version string `yaml:",omitempty"`
 	/*
-		versionIncrement defines if a Chart changes, triggers, or not, a Chart version update, accepted values is a comma separated list of "none,major,minor,patch".
+		versionIncrement defines if a Chart changes, triggers, or not, a Chart version update, accepted values is a comma separated list of "none,major,minor,patch,child-dependent".
 
 		compatible:
 			* target

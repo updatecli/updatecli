@@ -253,6 +253,23 @@ forLoop:
 			// Reset Version to its initial value
 			computedVersion = initialComputedVersion
 			break forLoop
+		case CHILDDEPENDENT:
+			childOrig, err := semver.NewVersion(strings.Trim(resultTarget.Information, "~><=^"))
+			if err != nil {
+				return err
+			}
+			childNew, err := semver.NewVersion(strings.Trim(resultTarget.NewInformation, "~><=^"))
+			if err != nil {
+				return err
+			}
+
+			if childNew.Major() > childOrig.Major() {
+				computedVersion = v.IncMajor().String()
+			} else if childNew.Minor() > childOrig.Minor() {
+				computedVersion = v.IncMinor().String()
+			} else if childNew.Patch() > childOrig.Patch() {
+				computedVersion = v.IncPatch().String()
+			}
 		default:
 			logrus.Warningf("Wrong increment rule %q, ignoring", inc)
 		}
