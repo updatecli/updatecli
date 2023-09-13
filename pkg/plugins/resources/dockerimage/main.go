@@ -10,8 +10,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -106,10 +104,6 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 	descriptor, err := remote.Get(ref, remoteOptions...)
 	if err != nil {
 		if strings.Contains(err.Error(), "unexpected status code 404") {
-			logrus.Infof("%s The Docker image %s doesn't exist.",
-				result.FAILURE,
-				ref.Name(),
-			)
 			return false, nil
 		}
 		return false, err
@@ -124,22 +118,11 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 		_, err = descriptor.Image()
 		if err != nil {
 			if strings.Contains(err.Error(), "no child with platform") {
-				logrus.Infof("%s The Docker image %s (%s) doesn't exist.",
-					result.FAILURE,
-					ref.Name(),
-					arch,
-				)
 				return false, nil
 			}
 			return false, err
 		}
 	}
-
-	logrus.Infof("%s The Docker image %s (%s) exists and is available.",
-		result.SUCCESS,
-		ref.Name(),
-		arch,
-	)
 
 	return true, nil
 }
