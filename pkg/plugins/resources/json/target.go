@@ -69,6 +69,11 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 			switch queryResult == j.spec.Value {
 			case true:
+				resultTarget.Information = queryResult
+				resultTarget.NewInformation = queryResult
+				resultTarget.Result = result.SUCCESS
+				resultTarget.Changed = false
+
 				logrus.Infof("%s\nkey %q, from file %q, is correctly set to %q",
 					resultTarget.Description,
 					j.spec.Key,
@@ -78,6 +83,8 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			case false:
 				resultTarget.Result = result.ATTENTION
 				resultTarget.Changed = true
+				resultTarget.NewInformation = j.spec.Value
+				resultTarget.Information = queryResult
 
 				logrus.Infof("%s\nkey %q, from file %q, %supdated from %q to %q",
 					resultTarget.Description,
