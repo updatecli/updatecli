@@ -11,7 +11,6 @@ import (
 )
 
 func (di *DockerImage) Source(workingDir string, resultSource *result.Source) error {
-
 	repo, err := name.NewRepository(di.spec.Image)
 	if err != nil {
 		return fmt.Errorf("invalid repository %s: %w", di.spec.Image, err)
@@ -42,6 +41,26 @@ func (di *DockerImage) Source(workingDir string, resultSource *result.Source) er
 
 	if len(tag) == 0 {
 		return fmt.Errorf("no Docker Image Tag tag found matching pattern %q", di.versionFilter.Pattern)
+	}
+
+	ref, err := di.createRef(tag)
+	if err != nil {
+		return err
+	}
+
+	architecture := ""
+
+	if len(di.spec.Architectures) > 0 {
+		architecture = di.spec.Architectures[0]
+	}
+
+	found, err := di.checkImage(ref, architecture)
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return fmt.Errorf("no Docker Image for architecture %s", di.spec.Architectures[0])
 	}
 
 	resultSource.Result = result.SUCCESS
