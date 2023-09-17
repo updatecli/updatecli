@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -57,7 +58,6 @@ type AutoDiscovery struct {
 
 // New returns an initiated autodiscovery object
 func New(spec Config, workDir string) (*AutoDiscovery, error) {
-
 	var errs []error
 	var s Config
 
@@ -82,7 +82,6 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -150,12 +149,23 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 			g.crawlers = append(g.crawlers, crawler)
 
+		case "terraform":
+			crawler, err := terraform.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
 		case "maven":
 			crawler, err := maven.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -168,7 +178,6 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
