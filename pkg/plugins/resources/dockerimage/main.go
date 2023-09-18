@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -96,9 +97,14 @@ func (di *DockerImage) createRef(source string) (name.Reference, error) {
 
 // checkImage checks if a container reference exists on the "remote" registry with a given set of options
 func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error) {
+	os := "linux"
+	if di.spec.OperatingSystem != "" {
+		os = di.spec.OperatingSystem
+	}
+
 	var remoteOptions []remote.Option
 	if arch != "" {
-		remoteOptions = append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+		remoteOptions = append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: os}))
 	}
 
 	descriptor, err := remote.Get(ref, remoteOptions...)
@@ -118,6 +124,11 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 		_, err = descriptor.Image()
 		if err != nil {
 			if strings.Contains(err.Error(), "no child with platform") {
+				logrus.Infof("The Docker image %s (%s/%s) doesn't exist.",
+					ref.Name(),
+					os,
+					arch,
+				)
 				return false, nil
 			}
 			return false, err

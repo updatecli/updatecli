@@ -34,6 +34,16 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Success - operating system",
+			spec: Spec{
+				Image:           "eclipse-temurin",
+				Architecture:    "amd64",
+				OperatingSystem: "windows",
+			},
+			source:         "11.0.20.1_1-jdk-nanoserver-ltsc2022",
+			expectedResult: true,
+		},
+		{
 			name: "Failure - missing architecture",
 			spec: Spec{
 				Image:         "ghcr.io/updatecli/updatecli",
