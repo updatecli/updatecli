@@ -7,6 +7,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/core/registry"
 	"github.com/updatecli/updatecli/pkg/core/udash"
 
 	"github.com/updatecli/updatecli/pkg/core/engine"
@@ -16,12 +17,14 @@ import (
 )
 
 var (
-	cfgFile      string
-	valuesFiles  []string
-	secretsFiles []string
-	e            engine.Engine
-	verbose      bool
-	experimental bool
+	manifestFiles  []string
+	valuesFiles    []string
+	secretsFiles   []string
+	updatePolicies []string
+	e              engine.Engine
+	verbose        bool
+	experimental   bool
+	disableTLS     bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -78,6 +81,7 @@ func run(command string) error {
 	switch command {
 	case "apply":
 		udash.Audience = udashOAuthAudience
+
 		if applyClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -118,6 +122,7 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
+
 	case "prepare":
 		if prepareClean {
 			defer func() {
@@ -134,6 +139,45 @@ func run(command string) error {
 
 	case "manifest/upgrade":
 		err := e.ManifestUpgrade(manifestUpgradeInPlace)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	case "manifest/pull":
+		_, _, _, err := registry.Pull(manifestPullPolicyReference, disableTLS)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	case "manifest/push":
+		manifests := engine.GetFiles(manifestFiles)
+		err := registry.Push(manifests, valuesFiles, secretsFiles, manifestPushPolicyReference, disableTLS, manifestPushFileStore)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	// Show is deprecated
+	case "manifest/show", "show":
+		if showClean {
+			defer func() {
+				if err := e.Clean(); err != nil {
+					logrus.Errorf("error in show clean - %s", err)
+				}
+			}()
+		}
+
+		if !showDisablePrepare {
+			err := e.Prepare()
+			if err != nil {
+				logrus.Errorf("%s %s", result.FAILURE, err)
+				return err
+			}
+		}
+
+		err := e.Show()
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
@@ -162,30 +206,6 @@ func run(command string) error {
 			return err
 		}
 
-	// Show is deprecated
-	case "show", "manifest/show":
-		if showClean {
-			defer func() {
-				if err := e.Clean(); err != nil {
-					logrus.Errorf("error in show clean - %s", err)
-				}
-			}()
-		}
-
-		if !showDisablePrepare {
-			err := e.Prepare()
-			if err != nil {
-				logrus.Errorf("%s %s", result.FAILURE, err)
-				return err
-			}
-		}
-
-		err := e.Show()
-		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
-			return err
-		}
-
 	case "jsonschema":
 		err := engine.GenerateSchema(jsonschemaBaseID, jsonschemaDirectory)
 		if err != nil {
@@ -195,5 +215,24 @@ func run(command string) error {
 	default:
 		logrus.Warnf("Wrong command")
 	}
+	return nil
+}
+
+func getFilesFromRegistry() error {
+	if len(updatePolicies) == 0 {
+		return nil
+	}
+
+	for _, policy := range updatePolicies {
+		policyManifest, policyValues, policySecrets, err := registry.Pull(policy, disableTLS)
+		if err != nil {
+			return err
+		}
+
+		manifestFiles = append(policyManifest, manifestFiles...)
+		valuesFiles = append(policyValues, valuesFiles...)
+		secretsFiles = append(policySecrets, secretsFiles...)
+	}
+
 	return nil
 }
