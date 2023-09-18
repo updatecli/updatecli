@@ -48,8 +48,8 @@ func (e *Engine) Clean() (err error) {
 }
 
 // GetFiles return an array with every valid files.
-func GetFiles(root string) (files []string) {
-	if root == "" {
+func GetFiles(root []string) (files []string) {
+	if len(root) == 0 {
 		// Updatecli tries to load the file updatecli.yaml if no manifest provided
 		// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
 		// if there is no manifests in the directory updatecli.d then Updatecli returns no manifest files.
@@ -66,26 +66,39 @@ func GetFiles(root string) (files []string) {
 
 		if fs.IsDir() {
 			logrus.Debugf("Default Updatecli manifest directory detected %q", config.DefaultConfigDirname)
-			root = config.DefaultConfigDirname
+			root = []string{config.DefaultConfigDirname}
 		}
 	}
 
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	for _, r := range root {
+		err := filepath.Walk(r, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
+				os.Exit(1)
+			}
+			if info.Mode().IsRegular() {
+				files = append(files, path)
+			}
+			return nil
+		})
+
 		if err != nil {
-			logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
-			os.Exit(1)
+			logrus.Errorf("err - %s", err)
 		}
-		if info.Mode().IsRegular() {
-			files = append(files, path)
-		}
-		return nil
-	})
-
-	if err != nil {
-		logrus.Errorf("err - %s", err)
 	}
 
-	return files
+	// Remove duplicates manifest files
+	result := []string{}
+	exist := map[string]bool{}
+
+	for v := range files {
+		if !exist[files[v]] {
+			exist[files[v]] = true
+			result = append(result, files[v])
+		}
+	}
+
+	return result
 }
 
 // InitSCM search and clone only once SCM configurations found.
@@ -200,7 +213,7 @@ func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
 
-	manifestFiles := GetFiles(e.Options.Config.ManifestFile)
+	manifestFiles := GetFiles(e.Options.Manifests)
 
 	if len(manifestFiles) == 0 {
 		return ErrNoManifestDetected
