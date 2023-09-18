@@ -16,7 +16,12 @@ func (di *DockerImage) Condition(source string, scm scm.ScmHandler, resultCondit
 		logrus.Warningf("SCM configuration is not supported for condition of type dockerimage. Remove the `scm` directive from condition to remove this warning message")
 	}
 
-	ref, err := di.createRef(source)
+	version := source
+	if di.spec.Tag != "" {
+		version = di.spec.Tag
+	}
+
+	ref, err := di.createRef(version)
 	if err != nil {
 		return err
 	}
@@ -44,13 +49,13 @@ func (di *DockerImage) Condition(source string, scm scm.ScmHandler, resultCondit
 	if found {
 		resultCondition.Pass = true
 		resultCondition.Result = result.SUCCESS
-		resultCondition.Description = fmt.Sprintf("docker image %q:%q found", di.spec.Image, source)
+		resultCondition.Description = fmt.Sprintf("docker image %s:%s found", di.spec.Image, version)
 		return nil
 	}
 
 	resultCondition.Pass = false
 	resultCondition.Result = result.FAILURE
-	resultCondition.Description = fmt.Sprintf("docker image %q:%q not found", di.spec.Image, source)
+	resultCondition.Description = fmt.Sprintf("docker image %s:%s not found", di.spec.Image, version)
 
 	return nil
 }
