@@ -44,3 +44,6 @@ Tanzu
 rawstring
 targetsystem
 operatingsystem
+ltsc
+nanoserver
+temurin
