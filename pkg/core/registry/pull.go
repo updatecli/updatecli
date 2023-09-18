@@ -10,6 +10,7 @@ import (
 
 	spec "github.com/opencontainers/image-spec/specs-go/v1"
 	credentials "github.com/oras-project/oras-credentials-go"
+	"github.com/sirupsen/logrus"
 
 	oras "oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content"
@@ -59,7 +60,6 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 		return nil, nil, nil, fmt.Errorf("credstore from docker: %w", err)
 	}
 
-	// Note: The below code can be omitted if authentication is not required
 	repo.Client = &auth.Client{
 		Client:     retry.DefaultClient,
 		Cache:      auth.DefaultCache,
@@ -72,7 +72,6 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("copy: %w", err)
 	}
-	fmt.Println("manifest annotations:", manifestDescriptor)
 
 	manifestData, err := content.FetchAll(ctx, fs, manifestDescriptor)
 	if err != nil {
@@ -84,8 +83,6 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unmarshal manifest: %w", err)
 	}
-
-	fmt.Printf("%+v\n", spec.Layers)
 
 	for _, layer := range spec.Layers {
 		switch layer.MediaType {
@@ -105,12 +102,27 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 			}
 
 		default:
-			fmt.Printf("unknown media type: %q\n", layer.MediaType)
+			logrus.Warningf("unknown media type: %q\n", layer.MediaType)
 		}
 	}
 
+	logrus.Debugf("Manifests:\n")
 	for _, manifest := range manifests {
-		fmt.Printf("\n%q\n", manifest)
+		logrus.Debugf("\t*%q\n", manifest)
+	}
+
+	if len(values) > 0 {
+		logrus.Debugf("Values:\n")
+		for _, value := range values {
+			logrus.Debugf("\t*%q\n", value)
+		}
+	}
+
+	if len(secrets) > 0 {
+		logrus.Debugf("Secrets:\n")
+		for _, secret := range secrets {
+			logrus.Debugf("\t*%q\n", secret)
+		}
 	}
 
 	return manifests, values, secrets, nil

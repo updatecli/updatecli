@@ -18,7 +18,8 @@ func TestPush(t *testing.T) {
 		[]string{
 			"testdata/secrets.yaml",
 		},
-		"localhost:5000/myrepo:latest",
-		true)
+		[]string{"localhost:5000/myrepo:latest"},
+		true,
+		"")
 	require.NoError(t, err)
 }
