@@ -18,8 +18,6 @@ type Spec struct {
 	Architectures []string `yaml:",omitempty"`
 	// [S][C] architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
-	// [S][C] operatingsystem specifies the container image OS such as `linux`, defaults to `linux`
-	OperatingSystem string `yaml:",omitempty"`
 	// [S][C] image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
 	// [C] tag specifies the container image tag such as `latest`

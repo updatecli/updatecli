@@ -26,6 +26,16 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Success - Tag",
+			spec: Spec{
+				Image:         "ghcr.io/updatecli/updatecli",
+				Architectures: []string{"amd64"},
+				Tag:           "v0.35.0",
+			},
+			source:         "",
+			expectedResult: true,
+		},
+		{
 			name: "Success - No architectures",
 			spec: Spec{
 				Image: "ghcr.io/updatecli/updatecli",
@@ -36,18 +46,17 @@ func TestCondition(t *testing.T) {
 		{
 			name: "Success - operating system",
 			spec: Spec{
-				Image:           "eclipse-temurin",
-				Architecture:    "amd64",
-				OperatingSystem: "windows",
+				Image:        "ghcr.io/updatecli/updatecli",
+				Architecture: "linux/amd64",
 			},
-			source:         "11.0.20.1_1-jdk-nanoserver-ltsc2022",
+			source:         "v0.35.0",
 			expectedResult: true,
 		},
 		{
 			name: "Success - architecture with variant",
 			spec: Spec{
 				Image:        "eclipse-temurin",
-				Architecture: "arm/v7",
+				Architecture: "linux/arm/v7",
 			},
 			source:         "11.0.20.1_1-jdk-focal",
 			expectedResult: true,
