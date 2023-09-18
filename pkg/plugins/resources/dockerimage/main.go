@@ -104,7 +104,17 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 
 	var remoteOptions []remote.Option
 	if arch != "" {
-		remoteOptions = append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: os}))
+
+		architecture := arch
+
+		splitArchitecture := strings.Split(arch, "/")
+		variant := ""
+		if len(splitArchitecture) > 1 {
+			architecture = splitArchitecture[0]
+			variant = splitArchitecture[1]
+		}
+
+		remoteOptions = append(di.options, remote.WithPlatform(v1.Platform{OS: os, Architecture: architecture, Variant: variant}))
 	}
 
 	descriptor, err := remote.Get(ref, remoteOptions...)

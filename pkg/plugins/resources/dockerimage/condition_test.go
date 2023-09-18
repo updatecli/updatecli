@@ -44,6 +44,15 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Success - architecture with variant",
+			spec: Spec{
+				Image:        "eclipse-temurin",
+				Architecture: "arm/v7",
+			},
+			source:         "11.0.20.1_1-jdk-focal",
+			expectedResult: true,
+		},
+		{
 			name: "Failure - missing architecture",
 			spec: Spec{
 				Image:         "ghcr.io/updatecli/updatecli",
