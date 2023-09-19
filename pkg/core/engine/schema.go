@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -11,9 +10,7 @@ import (
 
 func GenerateSchema(baseSchemaID, schemaDir string) error {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Json Schema")+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle("Json Schema"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Json Schema")+4))
+	PrintTitle("Json Schema")
 
 	err := jsonschema.CloneCommentDirectory()
 

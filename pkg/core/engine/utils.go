@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -62,4 +63,11 @@ func GetFiles(root []string) (files []string) {
 	}
 
 	return result
+}
+
+// PrintTitle print a title
+func PrintTitle(title string) {
+	logrus.Infof("\n\n%s\n", strings.Repeat("+", len(title)+4))
+	logrus.Infof("+ %s +\n", strings.ToTitle(title))
+	logrus.Infof("%s\n\n", strings.Repeat("+", len(title)+4))
 }

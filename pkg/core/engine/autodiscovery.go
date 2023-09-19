@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
@@ -42,9 +41,8 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 		}
 	}
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Auto Discovery")+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle("Auto Discovery"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Auto Discovery")+4))
+	PrintTitle("Auto Discovery")
+
 	for id, p := range e.Pipelines {
 		if p.Config.Spec.AutoDiscovery.Crawlers == nil {
 			continue
@@ -56,9 +54,8 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			return nil
 		}
 
-		logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Name)+4))
-		logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
-		logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
+		PrintTitle(p.Name)
+
 		var actionConfig *action.Config
 		var autodiscoveryScm scm.Scm
 		var autodiscoveryAction action.Action

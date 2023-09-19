@@ -3,7 +3,6 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
@@ -11,9 +10,8 @@ import (
 
 // Prepare run every actions needed before going further.
 func (e *Engine) Prepare() (err error) {
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Prepare")+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle("Prepare"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Prepare")+4))
+
+	PrintTitle("Prepare")
 
 	var defaultCrawlersEnabled bool
 

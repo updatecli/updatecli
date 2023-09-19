@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -10,9 +9,7 @@ import (
 // Run runs the full process for one manifest
 func (e *Engine) Run() (err error) {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Pipeline")+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle("Pipeline"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Pipeline")+4))
+	PrintTitle("Pipeline")
 
 	for _, pipeline := range e.Pipelines {
 
