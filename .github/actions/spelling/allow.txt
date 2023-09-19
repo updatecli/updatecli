@@ -48,3 +48,4 @@ credstore
 addfiles
 myrepo
 zot
+temurin
