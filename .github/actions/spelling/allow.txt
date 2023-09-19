@@ -43,3 +43,8 @@ CIVO
 Tanzu
 rawstring
 targetsystem
+NArgs
+credstore
+addfiles
+myrepo
+zot
