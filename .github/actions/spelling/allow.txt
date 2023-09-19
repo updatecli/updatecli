@@ -49,3 +49,5 @@ addfiles
 myrepo
 zot
 temurin
+testcontainers
+pullpush
