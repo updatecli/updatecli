@@ -1,8 +1,0 @@
-version: '3'
-services:
-  registry:
-    image: ghcr.io/project-zot/zot-linux-amd64:v2.0.0-rc6
-    restart: always
-    ports:
-      - 5000:5000
-
