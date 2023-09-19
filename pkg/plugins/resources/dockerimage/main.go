@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -79,12 +80,7 @@ func (di *DockerImage) Changelog() string {
 
 func (di *DockerImage) createRef(source string) (name.Reference, error) {
 	refName := di.spec.Image
-	switch di.spec.Tag == "" {
-	case true:
-		refName += ":" + source
-	case false:
-		refName += ":" + di.spec.Tag
-	}
+	refName += ":" + source
 
 	ref, err := name.ParseReference(refName)
 	if err != nil {
@@ -97,8 +93,31 @@ func (di *DockerImage) createRef(source string) (name.Reference, error) {
 // checkImage checks if a container reference exists on the "remote" registry with a given set of options
 func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error) {
 	var remoteOptions []remote.Option
+	var queriedPlatform string
+
 	if arch != "" {
-		remoteOptions = append(di.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+		os := "linux"
+		architecture := arch
+		variant := ""
+
+		splitArchitecture := strings.Split(arch, "/")
+
+		if len(splitArchitecture) > 1 {
+			os = splitArchitecture[0]
+			architecture = splitArchitecture[1]
+		}
+
+		if len(splitArchitecture) > 2 {
+			variant = splitArchitecture[2]
+		}
+
+		platform := v1.Platform{OS: os, Architecture: architecture, Variant: variant}
+
+		queriedPlatform = platform.String()
+
+		remoteOptions = append(di.options, remote.WithPlatform(platform))
+
+		logrus.Debugf("Querying docker image %q, os: %q, arch: %q, variant %q", ref.Name(), platform.OS, platform.Architecture, platform.Variant)
 	}
 
 	descriptor, err := remote.Get(ref, remoteOptions...)
@@ -118,6 +137,10 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 		_, err = descriptor.Image()
 		if err != nil {
 			if strings.Contains(err.Error(), "no child with platform") {
+				logrus.Infof("The Docker image %s (%s) doesn't exist.",
+					ref.Name(),
+					queriedPlatform,
+				)
 				return false, nil
 			}
 			return false, err

@@ -42,9 +42,7 @@ func sanitizeRegistryEndpoint(repository string) string {
 
 // NewDockerImageSpecFromImage return a new docker image specification using an image provided as parameter
 func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.InlineKeyChain) *Spec {
-
 	tagFilter, err := getTagFilterFromValue(tag)
-
 	if err != nil {
 		// We couldn't identify a good versionFilter so we do not return any dockerimage spec
 		// At the time of writing, semantic versioning is the only way to have reliable results
@@ -106,7 +104,6 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 
 // getTagFilterFromValue tries to identify the closest tagFilter based on an existing tag
 func getTagFilterFromValue(tag string) (string, error) {
-
 	logrus.Debugf("Trying the identify the best versionFilter for %q", tag)
 
 	switch tag {
