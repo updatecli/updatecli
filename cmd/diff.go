@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/engine"
 
 	"github.com/spf13/cobra"
 )
@@ -23,9 +24,11 @@ var (
 				os.Exit(1)
 			}
 
-			e.Options.Manifests = manifestFiles
-			e.Options.Config.ValuesFiles = valuesFiles
-			e.Options.Config.SecretsFiles = secretsFiles
+			e.Options.Manifests = append(e.Options.Manifests, engine.Manifest{
+				Manifests: manifestFiles,
+				Values:    valuesFiles,
+				Secrets:   secretsFiles,
+			})
 
 			e.Options.Pipeline.Target.Commit = false
 			e.Options.Pipeline.Target.Push = false

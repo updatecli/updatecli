@@ -178,7 +178,6 @@ func (e *Engine) Prepare() (err error) {
 	}
 
 	err = e.LoadConfigurations()
-
 	if !errors.Is(err, ErrNoManifestDetected) && err != nil {
 		logrus.Errorln(err)
 		logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
@@ -213,52 +212,59 @@ func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
 
-	manifestFiles := GetFiles(e.Options.Manifests)
+	ErrNoManifestDetectedCounter := 0
 
-	if len(manifestFiles) == 0 {
-		return ErrNoManifestDetected
-	}
-
-	for _, manifestFile := range manifestFiles {
-
-		loadedConfigurations, err := config.New(
-			config.Option{
-				ManifestFile:      manifestFile,
-				SecretsFiles:      e.Options.Config.SecretsFiles,
-				ValuesFiles:       e.Options.Config.ValuesFiles,
-				DisableTemplating: e.Options.Config.DisableTemplating,
-			})
-
-		switch err {
-		case config.ErrConfigFileTypeNotSupported:
-			// Updatecli accepts either a single configuration file or a directory containing multiple configurations.
-			// When browsing files from a directory, Updatecli ignores unsupported files.
-			continue
-		case nil:
-			// nothing to do
-		default:
-			err = fmt.Errorf("%q - %s", manifestFile, err)
-			errs = append(errs, err)
+	for i := range e.Options.Manifests {
+		if e.Options.Manifests[i].IsZero() {
+			ErrNoManifestDetectedCounter++
 			continue
 		}
 
-		for id := range loadedConfigurations {
-			newPipeline := pipeline.Pipeline{}
-			loadedConfiguration := loadedConfigurations[id]
+		for _, manifestFile := range e.Options.Manifests[i].Manifests {
 
-			err = newPipeline.Init(
-				&loadedConfiguration,
-				e.Options.Pipeline)
+			loadedConfigurations, err := config.New(
+				config.Option{
+					ManifestFile:      manifestFile,
+					SecretsFiles:      e.Options.Manifests[i].Secrets,
+					ValuesFiles:       e.Options.Manifests[i].Values,
+					DisableTemplating: e.Options.Config.DisableTemplating,
+				})
 
-			if err == nil {
-				e.Pipelines = append(e.Pipelines, newPipeline)
-				e.configurations = append(e.configurations, loadedConfiguration)
-			} else {
-				// don't initially fail as init. of the pipeline still fails even with a successful validation
-				err := fmt.Errorf("%q - %s", manifestFile, err)
+			switch err {
+			case config.ErrConfigFileTypeNotSupported:
+				// Updatecli accepts either a single configuration file or a directory containing multiple configurations.
+				// When browsing files from a directory, Updatecli ignores unsupported files.
+				continue
+			case nil:
+				// nothing to do
+			default:
+				err = fmt.Errorf("%q - %s", manifestFile, err)
 				errs = append(errs, err)
+				continue
+			}
+
+			for id := range loadedConfigurations {
+				newPipeline := pipeline.Pipeline{}
+				loadedConfiguration := loadedConfigurations[id]
+
+				err = newPipeline.Init(
+					&loadedConfiguration,
+					e.Options.Pipeline)
+
+				if err == nil {
+					e.Pipelines = append(e.Pipelines, newPipeline)
+					e.configurations = append(e.configurations, loadedConfiguration)
+				} else {
+					// don't initially fail as init. of the pipeline still fails even with a successful validation
+					err := fmt.Errorf("%q - %s", manifestFile, err)
+					errs = append(errs, err)
+				}
 			}
 		}
+	}
+
+	if ErrNoManifestDetectedCounter == len(e.Options.Manifests) {
+		errs = append(errs, ErrNoManifestDetected)
 	}
 
 	if len(errs) > 0 {
@@ -267,6 +273,9 @@ func (e *Engine) LoadConfigurations() error {
 
 		for _, err := range errs {
 			e = fmt.Errorf("%s\n\t* %s", e.Error(), err)
+			if errors.Is(err, ErrNoManifestDetected) {
+				return err
+			}
 		}
 		return e
 	}

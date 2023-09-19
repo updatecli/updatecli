@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/engine"
 )
 
 var (
@@ -27,9 +28,11 @@ var (
 				os.Exit(1)
 			}
 
-			e.Options.Manifests = manifestFiles
-			e.Options.Config.ValuesFiles = valuesFiles
-			e.Options.Config.SecretsFiles = secretsFiles
+			e.Options.Manifests = append(e.Options.Manifests, engine.Manifest{
+				Manifests: manifestFiles,
+				Values:    valuesFiles,
+				Secrets:   secretsFiles,
+			})
 
 			e.Options.Pipeline.Target.Clean = manifestShowClean
 			e.Options.Config.DisableTemplating = manifestShowDisableTemplating

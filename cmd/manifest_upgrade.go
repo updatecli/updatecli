@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/engine"
 
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,11 @@ var (
 		Use:   "upgrade",
 		Short: "upgrade executes manifest upgrade task",
 		Run: func(cmd *cobra.Command, args []string) {
-			e.Options.Manifests = manifestFiles
+
+			e.Options.Manifests = append(e.Options.Manifests, engine.Manifest{
+				Manifests: manifestFiles,
+			})
+
 			e.Options.Config.DisableTemplating = true
 
 			err := run("manifest/upgrade")
