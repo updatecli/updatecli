@@ -135,6 +135,7 @@ docker_signs:
     args:
     - 'sign'
     - '${artifact}@${digest}'
+    - '--yes'
 
 docker_manifests:
   - name_template: 'updatecli/updatecli:{{ .Tag }}'
@@ -212,4 +213,4 @@ signs:
       - '--output-certificate=${certificate}'
       - '--output-signature=${signature}'
       - '${artifact}'
-
+      - '--yes'
