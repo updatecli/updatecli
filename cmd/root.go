@@ -145,15 +145,14 @@ func run(command string) error {
 		}
 
 	case "manifest/pull":
-		_, _, _, err := registry.Pull(manifestPullPolicyReference, disableTLS)
+		err := e.PullFromRegistry(manifestPullPolicyReference, disableTLS)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 	case "manifest/push":
-		manifests := engine.GetFiles(manifestFiles)
-		err := registry.Push(manifests, valuesFiles, secretsFiles, manifestPushPolicyReference, disableTLS, manifestPushFileStore)
+		err := e.PushToRegistry(manifestFiles, valuesFiles, secretsFiles, manifestPushPolicyReference, disableTLS, manifestPushFileStore)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
