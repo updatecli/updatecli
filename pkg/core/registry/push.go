@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	credentials "github.com/oras-project/oras-credentials-go"
@@ -18,6 +19,8 @@ import (
 // Push pushes updatecli manifest(s) as an OCI image to an OCI registry.
 func Push(manifests []string, values []string, secrets []string, policyReferenceNames []string, disableTLS bool, fileStore string) error {
 	var err error
+
+	logrus.Infof("Pushing Updatecli policy:\n\t* %s\n", strings.Join(policyReferenceNames, "\t* "))
 
 	if fileStore == "" {
 		fileStore, err = os.Getwd()

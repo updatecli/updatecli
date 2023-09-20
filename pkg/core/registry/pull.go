@@ -24,6 +24,8 @@ import (
 // Pull pulls an OCI image from a registry.
 func Pull(ociName string, disableTLS bool) (manifests []string, values []string, secrets []string, err error) {
 
+	logrus.Infof("Pulling Updatecli policy %q\n", ociName)
+
 	ref, err := registry.ParseReference(ociName)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("parse reference: %w", err)
@@ -50,6 +52,7 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	}
 
 	if disableTLS {
+		logrus.Debugln("TLS connection is disabled")
 		repo.PlainHTTP = true
 	}
 
@@ -124,6 +127,8 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 			logrus.Debugf("\t*%q\n", secret)
 		}
 	}
+
+	logrus.Debugf("policy successfully pulled in %s", store)
 
 	return manifests, values, secrets, nil
 }
