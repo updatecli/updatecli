@@ -19,8 +19,8 @@ var (
 		Use:   "apply NAME[:TAG|@DIGEST]",
 		Short: "apply checks if an update is needed then apply the changes",
 		Run: func(cmd *cobra.Command, args []string) {
-			updatePolicies = args
-			err := getFilesFromRegistry()
+			policyReferences = args
+			err := getPolicyFilesFromRegistry()
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)

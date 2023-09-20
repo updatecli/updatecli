@@ -17,8 +17,8 @@ var (
 		Use:   "prepare NAME[:TAG|@DIGEST]",
 		Short: "prepare run tasks needed for a run like `git clone`",
 		Run: func(cmd *cobra.Command, args []string) {
-			updatePolicies = args
-			err := getFilesFromRegistry()
+			policyReferences = args
+			err := getPolicyFilesFromRegistry()
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)

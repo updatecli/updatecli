@@ -17,14 +17,14 @@ import (
 )
 
 var (
-	manifestFiles  []string
-	valuesFiles    []string
-	secretsFiles   []string
-	updatePolicies []string
-	e              engine.Engine
-	verbose        bool
-	experimental   bool
-	disableTLS     bool
+	manifestFiles    []string
+	valuesFiles      []string
+	secretsFiles     []string
+	policyReferences []string
+	e                engine.Engine
+	verbose          bool
+	experimental     bool
+	disableTLS       bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -218,12 +218,12 @@ func run(command string) error {
 	return nil
 }
 
-func getFilesFromRegistry() error {
-	if len(updatePolicies) == 0 {
+func getPolicyFilesFromRegistry() error {
+	if len(policyReferences) == 0 {
 		return nil
 	}
 
-	for _, policy := range updatePolicies {
+	for _, policy := range policyReferences {
 		policyManifest, policyValues, policySecrets, err := registry.Pull(policy, disableTLS)
 		if err != nil {
 			return err

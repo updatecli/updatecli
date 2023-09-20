@@ -17,8 +17,8 @@ var (
 		Use:   "diff NAME[:TAG|@DIGEST]",
 		Short: "diff shows changes",
 		Run: func(cmd *cobra.Command, args []string) {
-			updatePolicies = args
-			err := getFilesFromRegistry()
+			policyReferences = args
+			err := getPolicyFilesFromRegistry()
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)

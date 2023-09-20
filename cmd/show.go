@@ -19,8 +19,8 @@ var (
 		Short: "**Deprecated in favor of updatecli manifest show** Print the configuration that will be executed",
 		Run: func(cmd *cobra.Command, args []string) {
 
-			updatePolicies = args
-			err := getFilesFromRegistry()
+			policyReferences = args
+			err := getPolicyFilesFromRegistry()
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)

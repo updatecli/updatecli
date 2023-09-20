@@ -21,8 +21,8 @@ var (
 		Use:   "show NAME[:TAG|@DIGEST]",
 		Short: "show manifest(s) which will be executed",
 		Run: func(cmd *cobra.Command, args []string) {
-			updatePolicies = args
-			err := getFilesFromRegistry()
+			policyReferences = args
+			err := getPolicyFilesFromRegistry()
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)
