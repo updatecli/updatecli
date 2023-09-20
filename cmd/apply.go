@@ -15,6 +15,13 @@ var (
 	applyPush   bool
 
 	applyCmd = &cobra.Command{
+		/*
+			Technically speaking we could have multiple policies to apply from the command line
+			but for clarity we will only allow one policy at a time.
+			This decision could be changed in the future.
+
+			The same rule would also apply to the 'diff' and show subcommand.
+		*/
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
 		Use:   "apply NAME[:TAG|@DIGEST]",
 		Short: "apply checks if an update is needed then apply the changes",
