@@ -21,7 +21,7 @@ func (e *Engine) LoadConfigurations() error {
 			continue
 		}
 
-		for _, manifestFile := range e.Options.Manifests[i].Manifests {
+		for _, manifestFile := range sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests) {
 
 			loadedConfigurations, err := config.New(
 				config.Option{
