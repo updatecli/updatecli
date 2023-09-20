@@ -51,3 +51,4 @@ zot
 temurin
 testcontainers
 pullpush
+fileStore
