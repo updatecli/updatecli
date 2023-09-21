@@ -83,7 +83,7 @@ func TestValidateVersionInc(t *testing.T) {
 					VersionIncrement: "nonei",
 				},
 			},
-			expectedError: "unrecognized increment rule \"nonei\", accepted values are a comma separated list of [major,minor,patch,child-dependent], or 'none' to disable version increment",
+			expectedError: "unrecognized increment rule \"nonei\", accepted values are a comma separated list of [major,minor,patch,auto], or 'none' to disable version increment",
 			wantErr:       true,
 		},
 		{
@@ -153,7 +153,7 @@ func TestValidateVersionInc(t *testing.T) {
 				spec: Spec{
 					Name:             "My chart",
 					Key:              "container.image",
-					VersionIncrement: "child-dependent",
+					VersionIncrement: "auto",
 				},
 			},
 		},
@@ -162,10 +162,10 @@ func TestValidateVersionInc(t *testing.T) {
 				spec: Spec{
 					Name:             "My chart",
 					Key:              "container.image",
-					VersionIncrement: "child-dependent,patch",
+					VersionIncrement: "auto,patch",
 				},
 			},
-			expectedError: "rule \"child-dependent\" is not compatible with others from \"child-dependent,patch\"",
+			expectedError: "rule \"auto\" is not compatible with others from \"auto,patch\"",
 			wantErr:       true,
 		},
 	}

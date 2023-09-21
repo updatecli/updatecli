@@ -253,7 +253,7 @@ forLoop:
 			// Reset Version to its initial value
 			computedVersion = initialComputedVersion
 			break forLoop
-		case CHILDDEPENDENT:
+		case AUTO:
 			childOrig, err := semver.NewVersion(strings.Trim(resultTarget.Information, "~><=^"))
 			if err != nil {
 				return err
