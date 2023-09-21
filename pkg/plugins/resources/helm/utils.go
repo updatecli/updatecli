@@ -254,20 +254,19 @@ forLoop:
 			computedVersion = initialComputedVersion
 			break forLoop
 		case AUTO:
-			childOrig, err := semver.NewVersion(strings.Trim(resultTarget.Information, "~><=^"))
-			if err != nil {
-				return err
-			}
-			childNew, err := semver.NewVersion(strings.Trim(resultTarget.NewInformation, "~><=^"))
-			if err != nil {
-				return err
+			origVer, oErr := semver.NewVersion(strings.Trim(resultTarget.Information, "~><=^"))
+			newVer, nErr := semver.NewVersion(strings.Trim(resultTarget.NewInformation, "~><=^"))
+
+			if oErr != nil || nErr != nil {
+				computedVersion = v.IncMinor().String()
+				continue
 			}
 
-			if childNew.Major() > childOrig.Major() {
+			if newVer.Major() > origVer.Major() {
 				computedVersion = v.IncMajor().String()
-			} else if childNew.Minor() > childOrig.Minor() {
+			} else if newVer.Minor() > origVer.Minor() {
 				computedVersion = v.IncMinor().String()
-			} else if childNew.Patch() > childOrig.Patch() {
+			} else if newVer.Patch() > origVer.Patch() {
 				computedVersion = v.IncPatch().String()
 			}
 		default:

@@ -251,6 +251,18 @@ func TestTarget(t *testing.T) {
 			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"2.0.5\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
+			name: "Success - Auto chart minor update Version Increment to Chart.yaml due to invalid semver target version",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "Chart.yaml",
+				Key:              "$.dependencies[0].version",
+				VersionIncrement: AUTO,
+			},
+			sourceInput:               "invalid.semver",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"invalid.semver\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+		},
+		{
 			name: "Failure - File does not exists",
 			spec: Spec{
 				Name:             "testdata",
