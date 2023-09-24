@@ -92,7 +92,7 @@ func (di *DockerImage) createRef(source string) (name.Reference, error) {
 
 // checkImage checks if a container reference exists on the "remote" registry with a given set of options
 func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error) {
-	var remoteOptions []remote.Option
+	var remoteOptions []remote.Option = di.options
 	var queriedPlatform string
 
 	if arch != "" {
@@ -115,7 +115,7 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 
 		queriedPlatform = platform.String()
 
-		remoteOptions = append(di.options, remote.WithPlatform(platform))
+		remoteOptions = append(remoteOptions, remote.WithPlatform(platform))
 
 		logrus.Debugf("Querying docker image %q, os: %q, arch: %q, variant %q", ref.Name(), platform.OS, platform.Architecture, platform.Variant)
 	}
