@@ -214,6 +214,16 @@ func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, r
 		}
 	}
 
+	/*
+	  We only want to update the Chart metadata if the chart has been modified during the current target execution.
+	  To make this process more idempotent in the context of a scm, we could also check if the helm chart
+	  has been modified during one of the previous target execution by comparing the current chart versus the one defined
+	  on the source branch. But the code complexity induced by this check is probably not worth the effort today.
+	*/
+	if !resultTarget.Changed {
+		return nil
+	}
+
 	// Handle the situation where the version is not set yet
 	if currentChartMetadata.Version == "" {
 		currentChartMetadata.Version = "0.0.1"
