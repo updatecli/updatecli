@@ -272,11 +272,11 @@ forLoop:
 				continue
 			}
 
-			if newVer.Major() > origVer.Major() {
+			if newVer.Major() != origVer.Major() {
 				computedVersion = v.IncMajor().String()
-			} else if newVer.Minor() > origVer.Minor() {
+			} else if newVer.Minor() != origVer.Minor() {
 				computedVersion = v.IncMinor().String()
-			} else if newVer.Patch() > origVer.Patch() {
+			} else if newVer.Patch() != origVer.Patch() {
 				computedVersion = v.IncPatch().String()
 			}
 		default:

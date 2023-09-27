@@ -263,6 +263,42 @@ func TestTarget(t *testing.T) {
 			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"invalid.semver\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
+			name: "Success - Auto chart major downgrade Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "values.yaml",
+				Key:              "$.otherVersion",
+				VersionIncrement: AUTO,
+			},
+			sourceInput:               "0.2.3",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.otherVersion\" should be updated from \"1.2.3\" to \"0.2.3\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+		},
+		{
+			name: "Success - Auto chart minor downgrade Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "values.yaml",
+				Key:              "$.otherVersion",
+				VersionIncrement: AUTO,
+			},
+			sourceInput:               "1.1.3",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.otherVersion\" should be updated from \"1.2.3\" to \"1.1.3\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+		},
+		{
+			name: "Success - Auto chart patch downgrade Version Increment to Chart.yaml",
+			spec: Spec{
+				Name:             "testdata",
+				File:             "values.yaml",
+				Key:              "$.otherVersion",
+				VersionIncrement: AUTO,
+			},
+			sourceInput:               "1.2.2",
+			expectedResult:            true,
+			expectedResultDescription: "key \"$.otherVersion\" should be updated from \"1.2.3\" to \"1.2.2\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.3.1\", in file \"testdata/Chart.yaml\"",
+		},
+		{
 			name: "Failure - File does not exists",
 			spec: Spec{
 				Name:             "testdata",
