@@ -278,6 +278,8 @@ forLoop:
 				computedVersion = v.IncMinor().String()
 			} else if newVer.Patch() != origVer.Patch() {
 				computedVersion = v.IncPatch().String()
+			} else {
+				computedVersion = v.IncMinor().String()
 			}
 		default:
 			logrus.Warningf("Wrong increment rule %q, ignoring", inc)
