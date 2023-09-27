@@ -28,6 +28,7 @@ var (
 			"golang/gomod":  golang.Spec{},
 			"helm":          helm.Spec{},
 			"helmfile":      helmfile.Spec{},
+			"terraform":     &terraform.Spec{},
 			"maven":         maven.Spec{},
 			"npm":           npm.Spec{},
 			"rancher/fleet": fleet.Spec{},

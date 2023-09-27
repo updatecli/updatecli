@@ -1,9 +1,6 @@
 package terraform
 
 import (
-	"errors"
-
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -44,29 +41,4 @@ type Spec struct {
 		"platforms" is the target platforms to request package checksums for.
 	*/
 	Platforms []string `yaml:",omitempty"`
-}
-
-var (
-	// ErrSpecPlatformsUndefined is returned if a platforms wasn't specified
-	ErrSpecPlatformsUndefined = errors.New("terraform platforms undefined")
-	// ErrWrongSpec is returned when the Spec has wrong content
-	ErrWrongSpec error = errors.New("wrong spec content")
-)
-
-func (s *Spec) Validate() error {
-	var errs []error
-
-	if len(s.Platforms) == 0 {
-		errs = append(errs, ErrSpecPlatformsUndefined)
-	}
-
-	for _, e := range errs {
-		logrus.Errorln(e)
-	}
-
-	if len(errs) > 0 {
-		return ErrWrongSpec
-	}
-
-	return nil
 }

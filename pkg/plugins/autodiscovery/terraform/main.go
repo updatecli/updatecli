@@ -29,9 +29,9 @@ func New(spec interface{}, rootDir, scmID string) (Terraform, error) {
 		return Terraform{}, err
 	}
 
-	err = s.Validate()
-	if err != nil {
-		return Terraform{}, err
+	if len(s.Platforms) == 0 {
+		logrus.Warningf("No platforms specified, we fallback to linux_amd64, linux_arm64, darwin_amd64, darwin_arm64")
+		s.Platforms = []string{"linux_amd64", "linux_arm64", "darwin_amd64", "darwin_arm64"}
 	}
 
 	newFilter := s.VersionFilter
