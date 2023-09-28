@@ -201,6 +201,10 @@ func TestDiscoverManifests(t *testing.T) {
 				return
 			}
 
+			// We sort both the pipelines and the expectedPipelines using the same algorithm
+			// to ensure the order is the same as map in Golang are unordered
+			test.SortConfigSpecArray(t, tt.expectedPipelines, pipelines)
+
 			for i := range pipelines {
 				test.AssertConfigSpecEqualByteArray(t, &tt.expectedPipelines[i], string(pipelines[i]))
 			}
