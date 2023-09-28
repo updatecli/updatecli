@@ -28,7 +28,7 @@ func AssertConfigSpecEqualByteArray(t *testing.T, spec *config.Spec, manifest st
 
 // SortConfigSpecArray allows to sort an array of config.Spec using the length of the name field as sorting
 // This function is used to sort a config.Spec array before comparing it to a manifest of type array of byte
-func SortConfigSpecArray(t *testing.T, configSpecs []config.Spec, byteSpecs [][]byte) error {
+func SortConfigSpecArray(t *testing.T, configSpecs []config.Spec, byteSpecs [][]byte) {
 
 	// We covert byteSpecs to an array of config.Spec so we can apply the same sort
 	// algorithm to both byteSpecs and configSpecs
@@ -55,8 +55,6 @@ func SortConfigSpecArray(t *testing.T, configSpecs []config.Spec, byteSpecs [][]
 		require.NoError(t, err)
 		byteSpecs[i] = buf.Bytes()
 	}
-
-	return nil
 }
 
 // yamlMarshalUnmarshal is used to parse a manifest to ensure it's a valid yaml one.
