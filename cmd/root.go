@@ -218,14 +218,15 @@ func run(command string) error {
 }
 
 func getPolicyFilesFromRegistry() error {
+
+	if len(policyReferences) == 0 {
+		return nil
+	}
+
 	// TODO: To be removed once not experimental anymore
 	if !experimental {
 		logrus.Warningf("The 'oci registry' feature requires the flag --experimental to be set")
 		os.Exit(1)
-	}
-
-	if len(policyReferences) == 0 {
-		return nil
 	}
 
 	for _, policy := range policyReferences {
