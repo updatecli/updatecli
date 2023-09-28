@@ -9,6 +9,8 @@ import (
 )
 
 const (
+	// AUTO defines automatic version identifier
+	AUTO string = "auto"
 	// MINORVERSION defines minor version identifier
 	MINORVERSION string = "minor"
 	// MAJORVERSION defines major version identifier
@@ -102,7 +104,7 @@ type Spec struct {
 	*/
 	Version string `yaml:",omitempty"`
 	/*
-		versionIncrement defines if a Chart changes, triggers, or not, a Chart version update, accepted values is a comma separated list of "none,major,minor,patch".
+		versionIncrement defines if a Chart changes, triggers, or not, a Chart version update, accepted values is a comma separated list of "none,major,minor,patch,auto".
 
 		compatible:
 			* target
