@@ -43,10 +43,6 @@ type Target struct {
 type Config struct {
 	// ResourceConfig defines target input parameters
 	resource.ResourceConfig `yaml:",inline"`
-	// ReportTitle contains the updatecli reports title for sources and conditions run
-	ReportTitle string `yaml:",omitempty"`
-	// ReportBody contains the updatecli reports body for sources and conditions run
-	ReportBody string `yaml:",omitempty"`
 	// ! Deprecated - please use all lowercase `sourceid`
 	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
 	// disablesourceinput disables the mechanism to retrieve a default value from a source. For example, if true, source information like changelog will not be accessible for a github/pullrequest action.
