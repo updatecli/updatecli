@@ -6,11 +6,11 @@ import (
 
 // Spec defines the Terraform parameters.
 type Spec struct {
-	// RootDir defines the root directory used to recursively search for .terraform.lock.hcl
+	// `rootdir` defines the root directory used to recursively search for `.terraform.lock.hcl`
 	RootDir string `yaml:",omitempty"`
-	// Ignore specifies rule to ignore .terraform.lock.hcl update.
+	// `ignore` specifies rule to ignore `.terraform.lock.hcl` update.
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only specify required rule to restrict .terraform.lock.hcl update.
+	// `only` specify required rule to restrict `.terraform.lock.hcl` update.
 	Only MatchingRules `yaml:",omitempty"`
 	/*
 		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
@@ -38,7 +38,10 @@ type Spec struct {
 	*/
 	VersionFilter version.Filter `yaml:",omitempty"`
 	/*
-		"platforms" is the target platforms to request package checksums for.
+		`platforms` is the target platforms to request package checksums for.
+
+		remarks:
+		* Fallback is linux_amd64, linux_arm64, darwin_amd64, darwin_arm64
 	*/
 	Platforms []string `yaml:",omitempty"`
 }
