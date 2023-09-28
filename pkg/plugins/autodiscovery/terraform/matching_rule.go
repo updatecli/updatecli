@@ -9,9 +9,21 @@ import (
 
 // MatchingRule allows to specifies rules to identify manifest
 type MatchingRule struct {
-	// Path specifies a go.mod path pattern, the pattern requires to match all of name, not just a substring.
+	// `path` specifies a `.terraform.lock.hcl` path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
-	// Modules specifies a list of module pattern.
+	/*
+		`providers` specifies a map of providers, the key is provider url as seen in the `.terraform.lock.hcl`,
+		the value is an optional semver version constraint.
+
+		examples:
+		```
+		- providers:
+		  # Ignoring provider updates for this provider
+		  registry.terraform.io/hashicorp/aws:
+		  # Ignore provider updates for this version
+		  registry.terraform.io/hashicorp/kubernetes: "1.x"
+		```
+	*/
 	Providers map[string]string
 }
 
