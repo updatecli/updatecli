@@ -63,14 +63,23 @@ func (t *TerraformLock) Target(source string, scm scm.ScmHandler, dryRun bool, r
 			continue
 		}
 
-		resultTarget.Changed = true
-		resultTarget.Files = append(resultTarget.Files, resourceFile.originalFilePath)
-		resultTarget.Result = result.ATTENTION
-		resultTarget.Description = fmt.Sprintf("%q updated from %q to %q in file %q",
+		description := fmt.Sprintf("%q updated from %q to %q in file %q",
 			address,
 			currentValue,
 			valueToWrite,
 			resourceFile.originalFilePath)
+
+		if currentValue == valueToWrite && !reflect.DeepEqual(currentHashes, remoteHashes) {
+			description = fmt.Sprintf("%q already set to %q, hashes for the provider have been updated in file %q",
+				address,
+				currentValue,
+				resourceFile.originalFilePath)
+		}
+
+		resultTarget.Changed = true
+		resultTarget.Files = append(resultTarget.Files, resourceFile.originalFilePath)
+		resultTarget.Result = result.ATTENTION
+		resultTarget.Description = description
 
 		if !dryRun {
 
