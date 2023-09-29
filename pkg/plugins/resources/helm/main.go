@@ -74,6 +74,15 @@ type Spec struct {
 	*/
 	Name string `yaml:",omitempty"`
 	/*
+		skippackaging defines if a Chart should be packaged or not.
+
+		compatible:
+			* target
+
+		default: false
+	*/
+	SkipPackaging bool `yaml:",omitempty"`
+	/*
 		url defines the Chart location URL.
 
 		compatible:
