@@ -42,7 +42,7 @@ require (
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.18.0
 	github.com/hashicorp/terraform-registry-address v0.2.0
-	github.com/invopop/jsonschema v0.8.0
+	github.com/invopop/jsonschema v0.10.0
 	github.com/minamijoyo/hcledit v0.2.10
 	github.com/minamijoyo/tfupdate v0.7.2
 	github.com/muesli/mango-cobra v1.2.0
