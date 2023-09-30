@@ -55,7 +55,7 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		return fmt.Errorf("unable to update chart requirements: %s", err)
 	}
 
-	if !dryRun {
+	if !dryRun && !c.spec.SkipPackaging {
 		err = c.DependencyUpdate(&out, chartPath)
 
 		logrus.Debug(out.String())
