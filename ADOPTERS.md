@@ -14,7 +14,6 @@ We are adding public references of Updatecli but feel free to add your organizat
 * [K3s](https://github.com/k3s-io/k3s/tree/master/updatecli)
 * [PrefectHQ](https://www.prefect.io/)
 * [Alfresco](https://www.alfresco.com/)
-* [k3s](https://k3s.io/)
 * [CIVO](http://civo.com/)
 * [Tanzu](http://tanzu.io/)
 * [Foresight Mining Software Corporation ](https://www.foresightmining.com/)
