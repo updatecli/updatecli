@@ -86,11 +86,11 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 				resultTarget.NewInformation = j.spec.Value
 				resultTarget.Information = queryResult
 
-				logrus.Infof("%s\nkey %q, from file %q, %supdated from %q to %q",
+				logrus.Infof("%s\nkey %q, from file %q, %s updated from %q to %q",
 					resultTarget.Description,
 					j.spec.Key,
-					shouldMessage,
 					j.contents[i].FilePath,
+					shouldMessage,
 					resultTarget.Information,
 					resultTarget.NewInformation)
 			}
