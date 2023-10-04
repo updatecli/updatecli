@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	spec "github.com/opencontainers/image-spec/specs-go/v1"
 	credentials "github.com/oras-project/oras-credentials-go"
 	"github.com/sirupsen/logrus"
 
@@ -19,6 +18,8 @@ import (
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
 	"oras.land/oras-go/v2/registry/remote/retry"
+
+	spec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // Pull pulls an OCI image from a registry.
@@ -34,14 +35,6 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	if ref.Reference == "" {
 		ref.Reference = ociDefaultTag
 	}
-
-	// Create a file store
-	store := filepath.Join(getReferencePath(ref.String())...)
-	fs, err := file.New(store)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("create file store: %w", err)
-	}
-	defer fs.Close()
 
 	// 1. Connect to a remote repository
 	ctx := context.Background()
@@ -68,6 +61,21 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 		Cache:      auth.DefaultCache,
 		Credential: credentials.Credential(credStore),
 	}
+
+	// 2.5 Get remote manifest digest
+
+	remoteManifestSpec, _, err := oras.Fetch(ctx, repo, ref.String(), oras.DefaultFetchOptions)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("fetch: %w", err)
+	}
+
+	// Create a file store
+	store := filepath.Join(getReferencePath(remoteManifestSpec.Digest.String())...)
+	fs, err := file.New(store)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("create file store: %w", err)
+	}
+	defer fs.Close()
 
 	// 3. Copy from the remote repository to the file store
 	tag := ociDefaultTag
@@ -135,19 +143,12 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 
 // getReferencePath returns the path to the file store for a given reference.
 func getReferencePath(ref string) []string {
-	refArray := []string{
+	refPath := []string{
 		os.TempDir(),
 		"updatecli",
 		"store",
 	}
-	refArray = append(
-		refArray,
-		strings.Split(
-			strings.ReplaceAll(
-				strings.ReplaceAll(
-					ref, ":", "/"),
-				".", "/"),
-			"/")...)
+	refPath = append(refPath, strings.TrimPrefix(ref, "sha256:"))
 
-	return refArray
+	return refPath
 }

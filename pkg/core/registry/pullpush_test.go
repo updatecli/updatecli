@@ -2,6 +2,8 @@ package registry
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"context"
@@ -60,16 +62,23 @@ func TestPushPullPolicy(t *testing.T) {
 		true)
 	require.NoError(t, err)
 
+	dirPath := []string{
+		os.TempDir(),
+		"updatecli",
+		"store",
+		"cf3da6a8f1e1073faef196e9bf168e43c2e25cb6291e1bfe1ec3b1c4918a7e5",
+	}
+
 	expectedManifest := []string{
-		fmt.Sprintf("/tmp/updatecli/store/localhost/%s/myrepo/latest/testdata/venom.yaml", port),
+		filepath.Join(append(dirPath, "tesdata/venom.yaml")...),
 	}
 
 	expectedValues := []string{
-		fmt.Sprintf("/tmp/updatecli/store/localhost/%s/myrepo/latest/testdata/values.yaml", port),
+		filepath.Join(append(dirPath, "tesdata/values.yaml")...),
 	}
 
 	expectedSecrets := []string{
-		fmt.Sprintf("/tmp/updatecli/store/localhost/%s/myrepo/latest/testdata/secrets.yaml", port),
+		filepath.Join(append(dirPath, "tesdata/secrets.yaml")...),
 	}
 
 	require.Equal(t, expectedManifest, gotManifests)
