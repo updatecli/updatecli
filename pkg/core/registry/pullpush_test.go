@@ -9,14 +9,11 @@ import (
 
 	"context"
 
-	credentials "github.com/oras-project/oras-credentials-go"
-	"github.com/sirupsen/logrus"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	oras "oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
-	"oras.land/oras-go/v2/registry/remote/auth"
-	"oras.land/oras-go/v2/registry/remote/retry"
 
 	"github.com/stretchr/testify/require"
 )
@@ -49,48 +46,107 @@ func TestPushPullPolicy(t *testing.T) {
 	port, err := zotC.MappedPort(ctx, "5000")
 	require.NoError(t, err)
 
-	err = Push(
-		"testdata/Policy.yaml",
-		[]string{
-			"testdata/venom.yaml",
+	testData := []struct {
+		name                      string
+		toPushPolicyName          []string
+		toPushpolicyFile          string
+		toPushManifestFiles       []string
+		toPushValueFiles          []string
+		toPushSecretFiles         []string
+		toPushFileStore           string
+		expectedPullManifestFiles []string
+		expectedPullValuesFiles   []string
+		expectedPullSecretsFiles  []string
+		disableTLS                bool
+	}{
+		{
+			name:                      "Validate that we can push and pull a policy using the latest tag",
+			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo:latest", port.Int())},
+			disableTLS:                true,
+			toPushpolicyFile:          "testdata/Policy.yaml",
+			toPushManifestFiles:       []string{"testdata/venom.yaml"},
+			toPushValueFiles:          []string{"testdata/values.yaml"},
+			toPushSecretFiles:         []string{"testdata/secrets.yaml"},
+			expectedPullManifestFiles: []string{"testdata/venom.yaml"},
+			expectedPullValuesFiles:   []string{"testdata/values.yaml"},
+			expectedPullSecretsFiles:  []string{"testdata/secrets.yaml"},
 		},
-		[]string{
-			"testdata/values.yaml",
+		{
+			name:                      "Validate that we can push and pull a policy without tag",
+			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Int())},
+			disableTLS:                true,
+			toPushpolicyFile:          "testdata/Policy.yaml",
+			toPushManifestFiles:       []string{"testdata/venom.yaml"},
+			toPushValueFiles:          []string{"testdata/values.yaml"},
+			toPushSecretFiles:         []string{"testdata/secrets.yaml"},
+			expectedPullManifestFiles: []string{"testdata/venom.yaml"},
+			expectedPullValuesFiles:   []string{"testdata/values.yaml"},
+			expectedPullSecretsFiles:  []string{"testdata/secrets.yaml"},
 		},
-		[]string{
-			"testdata/secrets.yaml",
+		{
+			name:                      "Validate that we can push and pull a policy without tag from a different filestore",
+			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Int())},
+			disableTLS:                true,
+			toPushpolicyFile:          "Policy.yaml",
+			toPushManifestFiles:       []string{"venom.yaml"},
+			toPushValueFiles:          []string{"values.yaml"},
+			toPushSecretFiles:         []string{"secrets.yaml"},
+			expectedPullManifestFiles: []string{"venom.yaml"},
+			expectedPullValuesFiles:   []string{"values.yaml"},
+			expectedPullSecretsFiles:  []string{"secrets.yaml"},
+			toPushFileStore:           "testdata",
 		},
-		[]string{fmt.Sprintf("localhost:%s/myrepo:latest", port)},
-		true,
-		"")
-	require.NoError(t, err)
-
-	gotManifests, gotValues, gotSecrets, err := Pull(
-		fmt.Sprintf("localhost:%s/myrepo:latest", port),
-		true)
-	require.NoError(t, err)
-
-	expectedManifest := []string{
-		"testdata/venom.yaml",
 	}
 
-	expectedValues := []string{
-		"testdata/values.yaml",
+	for _, data := range testData {
+
+		t.Run(data.name, func(t *testing.T) {
+			err = Push(
+				data.toPushpolicyFile,
+				data.toPushManifestFiles,
+				data.toPushValueFiles,
+				data.toPushSecretFiles,
+				data.toPushPolicyName,
+				data.disableTLS,
+				data.toPushFileStore)
+			require.NoError(t, err)
+
+			gotManifests, gotValues, gotSecrets, err := Pull(
+				data.toPushPolicyName[0],
+				data.disableTLS,
+			)
+			require.NoError(t, err)
+
+			expectedManifest, expectedValues, expectedSecrets, err := sanitizeDirPath(
+				data.toPushPolicyName[0],
+				data.disableTLS,
+				data.expectedPullManifestFiles,
+				data.expectedPullValuesFiles,
+				data.expectedPullSecretsFiles,
+			)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedManifest, gotManifests)
+			require.Equal(t, expectedValues, gotValues)
+			require.Equal(t, expectedSecrets, gotSecrets)
+		})
 	}
-
-	expectedSecrets := []string{
-		"testdata/secrets.yaml",
-	}
-
-	expectedManifest, expectedValues, expectedSecrets, err = sanitizeDirPath(fmt.Sprintf("localhost:%s/myrepo:latest", port), true, expectedManifest, expectedValues, expectedSecrets)
-	require.NoError(t, err)
-
-	require.Equal(t, expectedManifest, gotManifests)
-	require.Equal(t, expectedValues, gotValues)
-	require.Equal(t, expectedSecrets, gotSecrets)
 }
 
 func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valueFiles, secretfiles []string) ([]string, []string, []string, error) {
+
+	ref, err := registry.ParseReference(policyRef)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("parse reference: %w", err)
+	}
+
+	if ref.Reference == ociLatestTag || ref.Reference == "" {
+		ref.Reference, err = getLatestTagSortedBySemver(ref.Registry+"/"+ref.Repository, disableTLS)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("get latest tag sorted by semver: %w", err)
+		}
+	}
+
 	// 1. Connect to a remote repository
 	ctx := context.Background()
 
@@ -100,26 +156,17 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valueFile
 	}
 
 	if disableTLS {
-		logrus.Debugln("TLS connection is disabled")
 		repo.PlainHTTP = true
 	}
 
 	// 2. Get credentials from the docker credential store
-	storeOpts := credentials.StoreOptions{}
-	credStore, err := credentials.NewStoreFromDocker(storeOpts)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("credstore from docker: %w", err)
-	}
-
-	repo.Client = &auth.Client{
-		Client:     retry.DefaultClient,
-		Cache:      auth.DefaultCache,
-		Credential: credentials.Credential(credStore),
+	if err := getCredentialsFromDockerStore(repo); err != nil {
+		return nil, nil, nil, fmt.Errorf("ini repo settings: %w", err)
 	}
 
 	// 2.5 Get remote manifest digest
 
-	remoteManifestSpec, _, err := oras.Fetch(ctx, repo, policyRef, oras.DefaultFetchOptions)
+	remoteManifestSpec, _, err := oras.Fetch(ctx, repo, ref.String(), oras.DefaultFetchOptions)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fetch: %w", err)
 	}

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
+	"github.com/Masterminds/semver/v3"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,11 +34,11 @@ type PolicySpec struct {
 }
 
 // LoadPolicyFile loads an Updatecli compose file into a compose Spec
-func LoadPolicyFile(filename string) (*PolicySpec, error) {
+func LoadPolicyFile(filename, store string) (*PolicySpec, error) {
 
 	var policySpec PolicySpec
 
-	f, err := os.Open(filename)
+	f, err := os.Open(filepath.Join(store, filename))
 	if err != nil {
 		return nil, fmt.Errorf("opening Updatecli policy file %q: %s", filename, err)
 	}
@@ -47,10 +49,26 @@ func LoadPolicyFile(filename string) (*PolicySpec, error) {
 		return nil, fmt.Errorf("reading Updatecli policy file %q: %s", filename, err)
 	}
 
-	err = yaml.Unmarshal(policyFileByte, &policySpec)
-	if err != nil {
+	if err = yaml.Unmarshal(policyFileByte, &policySpec); err != nil {
 		return nil, fmt.Errorf("parsing Updatecli policy file %q: %s", filename, err)
 	}
 
+	if err = policySpec.Sanitize(); err != nil {
+		return nil, fmt.Errorf("validating Updatecli policy file %q: %s", filename, err)
+	}
+
 	return &policySpec, nil
+}
+
+// Sanitize validates the policy spec and set default values accordingly
+func (s *PolicySpec) Sanitize() error {
+	if s.Version == "" {
+		s.Version = "0.0.1"
+	}
+
+	_, err := semver.NewVersion(s.Version)
+	if err != nil {
+		return fmt.Errorf("invalid policy version %q: %s", s.Version, err)
+	}
+	return nil
 }

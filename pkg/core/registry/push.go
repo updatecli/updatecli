@@ -73,7 +73,7 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		Layers: fileDescriptors,
 	}
 
-	policySpec, err := LoadPolicyFile(policyMetadataFile)
+	policySpec, err := LoadPolicyFile(policyMetadataFile, fileStore)
 	if err != nil {
 		return fmt.Errorf("load policy file: %w", err)
 	}
@@ -108,9 +108,11 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 			continue
 		}
 
-		tag := ociDefaultTag
+		tag := policySpec.Version
 		if refName.Identifier() != "" {
-			tag = refName.Identifier()
+			logrus.Warningf("Tag %s is ignored in favor of %s. The tag must come from the Policy version",
+				refName.Identifier(),
+				policySpec.Version)
 		}
 
 		if err = fs.Tag(ctx, manifestDescriptor, tag); err != nil {

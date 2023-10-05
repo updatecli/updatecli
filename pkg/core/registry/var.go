@@ -9,6 +9,6 @@ var (
 	updatecliSecretMediaType string = "application/io.updatecli.policy.secret.alpha"
 	// ociArtifactType is the media type for updatecli OCI artifacts.
 	ociArtifactType string = "application/io.updatecli.policy.alpha"
-	// ociDefaultTag is the default tag for updatecli OCI images.
-	ociDefaultTag string = "latest"
+	// ociLatestTag is the default tag for updatecli OCI images.
+	ociLatestTag string = "latest"
 )

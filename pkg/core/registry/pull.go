@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	credentials "github.com/oras-project/oras-credentials-go"
 	"github.com/sirupsen/logrus"
 
 	oras "oras.land/oras-go/v2"
@@ -16,8 +15,6 @@ import (
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
-	"oras.land/oras-go/v2/registry/remote/auth"
-	"oras.land/oras-go/v2/registry/remote/retry"
 
 	spec "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -32,8 +29,13 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 		return nil, nil, nil, fmt.Errorf("parse reference: %w", err)
 	}
 
-	if ref.Reference == "" {
-		ref.Reference = ociDefaultTag
+	if ref.Reference == ociLatestTag || ref.Reference == "" {
+		fmt.Printf("%q\n", ref.Reference)
+		ref.Reference, err = getLatestTagSortedBySemver(ref.Registry+"/"+ref.Repository, disableTLS)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("get latest tag sorted by semver: %w", err)
+		}
+		logrus.Debugf("Latest tag founded %s", ref.String())
 	}
 
 	// 1. Connect to a remote repository
@@ -50,16 +52,8 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	}
 
 	// 2. Get credentials from the docker credential store
-	storeOpts := credentials.StoreOptions{}
-	credStore, err := credentials.NewStoreFromDocker(storeOpts)
-	if err != nil {
+	if err := getCredentialsFromDockerStore(repo); err != nil {
 		return nil, nil, nil, fmt.Errorf("credstore from docker: %w", err)
-	}
-
-	repo.Client = &auth.Client{
-		Client:     retry.DefaultClient,
-		Cache:      auth.DefaultCache,
-		Credential: credentials.Credential(credStore),
 	}
 
 	// 2.5 Get remote manifest digest
@@ -78,8 +72,7 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	defer fs.Close()
 
 	// 3. Copy from the remote repository to the file store
-	tag := ociDefaultTag
-	manifestDescriptor, err := oras.Copy(ctx, repo, tag, fs, tag, oras.DefaultCopyOptions)
+	manifestDescriptor, err := oras.Copy(ctx, repo, ref.Reference, fs, ref.Reference, oras.DefaultCopyOptions)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("copy: %w", err)
 	}
