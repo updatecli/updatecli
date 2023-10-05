@@ -152,7 +152,7 @@ func run(command string) error {
 		}
 
 	case "manifest/push":
-		err := e.PushToRegistry(manifestFiles, valuesFiles, secretsFiles, manifestPushPolicyReference, disableTLS, manifestPushFileStore)
+		err := e.PushToRegistry(manifestFiles, valuesFiles, secretsFiles, manifestPushPolicyReference, disableTLS, manifestPushPolicyFile, manifestPushFileStore)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

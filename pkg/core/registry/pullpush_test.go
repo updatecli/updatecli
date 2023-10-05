@@ -4,12 +4,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"context"
 
+	credentials "github.com/oras-project/oras-credentials-go"
+	"github.com/sirupsen/logrus"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	oras "oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
+	"oras.land/oras-go/v2/registry/remote/retry"
 
 	"github.com/stretchr/testify/require"
 )
@@ -43,6 +50,7 @@ func TestPushPullPolicy(t *testing.T) {
 	require.NoError(t, err)
 
 	err = Push(
+		"testdata/Policy.yaml",
 		[]string{
 			"testdata/venom.yaml",
 		},
@@ -62,26 +70,76 @@ func TestPushPullPolicy(t *testing.T) {
 		true)
 	require.NoError(t, err)
 
-	dirPath := []string{
-		os.TempDir(),
-		"updatecli",
-		"store",
-		"cf3da6a8f1e1073faef196e9bf168e43c2e25cb6291e1bfe1ec3b1c4918a7e5",
-	}
-
 	expectedManifest := []string{
-		filepath.Join(append(dirPath, "tesdata/venom.yaml")...),
+		"testdata/venom.yaml",
 	}
 
 	expectedValues := []string{
-		filepath.Join(append(dirPath, "tesdata/values.yaml")...),
+		"testdata/values.yaml",
 	}
 
 	expectedSecrets := []string{
-		filepath.Join(append(dirPath, "tesdata/secrets.yaml")...),
+		"testdata/secrets.yaml",
 	}
+
+	expectedManifest, expectedValues, expectedSecrets, err = sanitizeDirPath(fmt.Sprintf("localhost:%s/myrepo:latest", port), true, expectedManifest, expectedValues, expectedSecrets)
+	require.NoError(t, err)
 
 	require.Equal(t, expectedManifest, gotManifests)
 	require.Equal(t, expectedValues, gotValues)
 	require.Equal(t, expectedSecrets, gotSecrets)
+}
+
+func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valueFiles, secretfiles []string) ([]string, []string, []string, error) {
+	// 1. Connect to a remote repository
+	ctx := context.Background()
+
+	repo, err := remote.NewRepository(policyRef)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("new repository: %w", err)
+	}
+
+	if disableTLS {
+		logrus.Debugln("TLS connection is disabled")
+		repo.PlainHTTP = true
+	}
+
+	// 2. Get credentials from the docker credential store
+	storeOpts := credentials.StoreOptions{}
+	credStore, err := credentials.NewStoreFromDocker(storeOpts)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("credstore from docker: %w", err)
+	}
+
+	repo.Client = &auth.Client{
+		Client:     retry.DefaultClient,
+		Cache:      auth.DefaultCache,
+		Credential: credentials.Credential(credStore),
+	}
+
+	// 2.5 Get remote manifest digest
+
+	remoteManifestSpec, _, err := oras.Fetch(ctx, repo, policyRef, oras.DefaultFetchOptions)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("fetch: %w", err)
+	}
+
+	dirPath := []string{
+		os.TempDir(),
+		"updatecli",
+		"store",
+		strings.TrimPrefix(remoteManifestSpec.Digest.String(), "sha256:"),
+	}
+
+	addPrefix := func(files []string) {
+		for i := range files {
+			files[i] = filepath.Join(append(dirPath, files[i])...)
+		}
+	}
+
+	addPrefix(manifestFiles)
+	addPrefix(valueFiles)
+	addPrefix(secretfiles)
+
+	return manifestFiles, valueFiles, secretfiles, nil
 }

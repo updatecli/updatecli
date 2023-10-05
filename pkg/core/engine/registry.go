@@ -19,12 +19,12 @@ func (e *Engine) PullFromRegistry(policyReference string, disableTLS bool) (err 
 }
 
 // PushToRegistry pushes an Updatecli policy to an OCI registry.
-func (e *Engine) PushToRegistry(manifests, valuesFiles, secretsFiles, policyReference []string, disableTLS bool, fileStore string) error {
+func (e *Engine) PushToRegistry(manifests, valuesFiles, secretsFiles, policyReference []string, disableTLS bool, policyMetadataFile, fileStore string) error {
 
 	PrintTitle("Registry")
 
 	manifests = sanitizeUpdatecliManifestFilePath(manifests)
-	err := registry.Push(manifests, valuesFiles, secretsFiles, policyReference, disableTLS, fileStore)
+	err := registry.Push(policyMetadataFile, manifests, valuesFiles, secretsFiles, policyReference, disableTLS, fileStore)
 	if err != nil {
 		return err
 	}

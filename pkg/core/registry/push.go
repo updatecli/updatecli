@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/google/go-containerregistry/pkg/name"
 
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	credentials "github.com/oras-project/oras-credentials-go"
@@ -17,10 +20,10 @@ import (
 )
 
 // Push pushes updatecli manifest(s) as an OCI image to an OCI registry.
-func Push(manifests []string, values []string, secrets []string, policyReferenceNames []string, disableTLS bool, fileStore string) error {
+func Push(policyMetadataFile string, manifests []string, values []string, secrets []string, policyReferenceNames []string, disableTLS bool, fileStore string) error {
 	var err error
 
-	logrus.Infof("Pushing Updatecli policy:\n\t* %s\n", strings.Join(policyReferenceNames, "\t* "))
+	logrus.Infof("Pushing Updatecli policy:\n\t=> %s\n\n", strings.Join(policyReferenceNames, "\n\t=> "))
 
 	if fileStore == "" {
 		fileStore, err = os.Getwd()
@@ -69,19 +72,53 @@ func Push(manifests []string, values []string, secrets []string, policyReference
 	opts := oras.PackManifestOptions{
 		Layers: fileDescriptors,
 	}
+
+	policySpec, err := LoadPolicyFile(policyMetadataFile)
+	if err != nil {
+		return fmt.Errorf("load policy file: %w", err)
+	}
+
+	// Set default OCI annotations which are undestood by OCI registries
+	// https://github.com/opencontainers/image-spec/blob/main/annotations.md
+	opts.ManifestAnnotations = map[string]string{
+		"org.opencontainers.image.created":       time.Now().Format(time.RFC3339),
+		"org.opencontainers.image.authors":       strings.Join(policySpec.Authors, ", "),
+		"org.opencontainers.image.url":           policySpec.URL,
+		"org.opencontainers.image.documentation": policySpec.Documentation,
+		"org.opencontainers.image.source":        policySpec.Source,
+		"org.opencontainers.image.version":       policySpec.Version,
+		"org.opencontainers.image.vendor":        policySpec.Vendor,
+		"org.opencontainers.image.licenses":      strings.Join(policySpec.Licenses, ", "),
+		// I don't understand why if set, it creates a file locally named with the value
+		// To investigate...
+		//"org.opencontainers.image.title":       policySpec.Title,
+		"org.opencontainers.image.description": policySpec.Description,
+	}
+
 	manifestDescriptor, err := oras.PackManifest(ctx, fs, oras.PackManifestVersion1_1_RC4, ociArtifactType, opts)
 	if err != nil {
 		return fmt.Errorf("pack manifest: %w", err)
 	}
 
-	tag := "latest"
-	if err = fs.Tag(ctx, manifestDescriptor, tag); err != nil {
-		return fmt.Errorf("tag manifest: %w", err)
-	}
-
 	for i := range policyReferenceNames {
+
+		refName, err := name.ParseReference(policyReferenceNames[i])
+		if err != nil {
+			logrus.Errorf("parse reference: %s", err)
+			continue
+		}
+
+		tag := ociDefaultTag
+		if refName.Identifier() != "" {
+			tag = refName.Identifier()
+		}
+
+		if err = fs.Tag(ctx, manifestDescriptor, tag); err != nil {
+			return fmt.Errorf("tag manifest: %w", err)
+		}
+
 		// 3. Connect to a remote repository
-		repo, err := remote.NewRepository(policyReferenceNames[i])
+		repo, err := remote.NewRepository(refName.Name())
 		if err != nil {
 			return fmt.Errorf("connect to remote repository: %w", err)
 		}
