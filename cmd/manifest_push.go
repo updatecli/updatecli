@@ -35,7 +35,7 @@ var (
 
 func init() {
 	manifestPushCmd.Flags().StringVar(&manifestPushPolicyFile, "policy", "Policy.yaml", "Sets policy file containing policy metadata infomation")
-	manifestPushCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
+	manifestPushCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{"updatecli.d"}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
 	manifestPushCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	manifestPushCmd.Flags().StringArrayVarP(&manifestPushPolicyReference, "tag", "t", []string{}, `Name and optionally a tag (format: "name:tag")`)
 	manifestPushCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
