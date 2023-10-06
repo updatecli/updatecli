@@ -49,7 +49,7 @@ func TestPushPullPolicy(t *testing.T) {
 	testData := []struct {
 		name                      string
 		toPushPolicyName          []string
-		toPushpolicyFile          string
+		toPushPolicyFile          string
 		toPushManifestFiles       []string
 		toPushValueFiles          []string
 		toPushSecretFiles         []string
@@ -63,7 +63,7 @@ func TestPushPullPolicy(t *testing.T) {
 			name:                      "Validate that we can push and pull a policy using the latest tag",
 			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo:latest", port.Int())},
 			disableTLS:                true,
-			toPushpolicyFile:          "testdata/Policy.yaml",
+			toPushPolicyFile:          "testdata/Policy.yaml",
 			toPushManifestFiles:       []string{"testdata/venom.yaml"},
 			toPushValueFiles:          []string{"testdata/values.yaml"},
 			toPushSecretFiles:         []string{"testdata/secrets.yaml"},
@@ -75,7 +75,7 @@ func TestPushPullPolicy(t *testing.T) {
 			name:                      "Validate that we can push and pull a policy without tag",
 			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Int())},
 			disableTLS:                true,
-			toPushpolicyFile:          "testdata/Policy.yaml",
+			toPushPolicyFile:          "testdata/Policy.yaml",
 			toPushManifestFiles:       []string{"testdata/venom.yaml"},
 			toPushValueFiles:          []string{"testdata/values.yaml"},
 			toPushSecretFiles:         []string{"testdata/secrets.yaml"},
@@ -84,10 +84,10 @@ func TestPushPullPolicy(t *testing.T) {
 			expectedPullSecretsFiles:  []string{"testdata/secrets.yaml"},
 		},
 		{
-			name:                      "Validate that we can push and pull a policy without tag from a different filestore",
+			name:                      "Validate that we can push and pull a policy without tag from a different file store",
 			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Int())},
 			disableTLS:                true,
-			toPushpolicyFile:          "Policy.yaml",
+			toPushPolicyFile:          "Policy.yaml",
 			toPushManifestFiles:       []string{"venom.yaml"},
 			toPushValueFiles:          []string{"values.yaml"},
 			toPushSecretFiles:         []string{"secrets.yaml"},
@@ -102,7 +102,7 @@ func TestPushPullPolicy(t *testing.T) {
 
 		t.Run(data.name, func(t *testing.T) {
 			err = Push(
-				data.toPushpolicyFile,
+				data.toPushPolicyFile,
 				data.toPushManifestFiles,
 				data.toPushValueFiles,
 				data.toPushSecretFiles,
@@ -133,7 +133,7 @@ func TestPushPullPolicy(t *testing.T) {
 	}
 }
 
-func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valueFiles, secretfiles []string) ([]string, []string, []string, error) {
+func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFiles, secretsFiles []string) ([]string, []string, []string, error) {
 
 	ref, err := registry.ParseReference(policyRef)
 	if err != nil {
@@ -185,8 +185,8 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valueFile
 	}
 
 	addPrefix(manifestFiles)
-	addPrefix(valueFiles)
-	addPrefix(secretfiles)
+	addPrefix(valuesFiles)
+	addPrefix(secretsFiles)
 
-	return manifestFiles, valueFiles, secretfiles, nil
+	return manifestFiles, valuesFiles, secretsFiles, nil
 }

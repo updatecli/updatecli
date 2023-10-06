@@ -78,7 +78,7 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		return fmt.Errorf("load policy file: %w", err)
 	}
 
-	// Set default OCI annotations which are undestood by OCI registries
+	// Set default OCI annotations which are understood by OCI registries
 	// https://github.com/opencontainers/image-spec/blob/main/annotations.md
 	opts.ManifestAnnotations = map[string]string{
 		"org.opencontainers.image.created":       time.Now().Format(time.RFC3339),

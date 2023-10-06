@@ -25,10 +25,10 @@ type PolicySpec struct {
 	Vendor string `yaml:",omitempty"`
 	// Licenses is the policy license
 	Licenses []string `yaml:",omitempty"`
-	// I don't understand why if set, it creates a file locally named with the value
-	// To investigate...
-	// Disalbed for now
+	// I don't understand why if set, it creates a file locally named with the value of the title
+	// I'll need to investigate but I am disabling it for now.
 	// Title string `yaml:",omitempty"`
+
 	// Description is the policy description
 	Description string `yaml:",omitempty"`
 }
