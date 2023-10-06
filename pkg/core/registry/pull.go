@@ -30,7 +30,6 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	}
 
 	if ref.Reference == ociLatestTag || ref.Reference == "" {
-		fmt.Printf("%q\n", ref.Reference)
 		ref.Reference, err = getLatestTagSortedBySemver(ref.Registry+"/"+ref.Repository, disableTLS)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("get latest tag sorted by semver: %w", err)
