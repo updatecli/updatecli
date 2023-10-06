@@ -1,0 +1,47 @@
+name: Bump venom version
+pipelineid: 6a1c726e25648f93a45aa3b540ba8fd6307a62f92830404f55259bfbbc1b3c6f
+actions:
+    default:
+        title: '[updatecli] Bump Venom version to {{ source "latestVersion" }}'
+        kind: github/pullrequest
+        spec:
+            automerge: true
+            labels:
+                - chore
+                - skip-changelog
+        scmid: default
+scms:
+    default:
+        kind: github
+        spec:
+            branch: main
+            email: me@olblak.com
+            owner: updatecli
+            repository: updatecli
+            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+            user: updatecli
+            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            commitmessage:
+                title: 'Bump Venom version to {{ source "latestVersion" }}'
+        disabled: false
+sources:
+    latestVersion:
+        name: Get latest Venom release
+        kind: githubrelease
+        spec:
+            owner: ovh
+            repository: venom
+            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            versionfilter:
+                kind: semver
+targets:
+    goWorkflow:
+        name: Bump Venom version to {{ source "latestVersion" }}
+        kind: file
+        spec:
+            content: 'VENOM_VERSION: {{ source `latestVersion` }}'
+            file: .github/workflows/go.yaml
+            matchpattern: 'VENOM_VERSION: .*'
+        scmid: default
+        sourceid: latestVersion
