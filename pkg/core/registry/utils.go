@@ -37,15 +37,15 @@ func getLatestTagSortedBySemver(refName string, disableTLS bool) (string, error)
 		return "", fmt.Errorf("get tags: %w", err)
 	}
 
-	result := make([]*semver.Version, len(tags))
+	result := []*semver.Version{}
 	for i := range tags {
 		s, err := semver.NewVersion(tags[i])
 		if err != nil {
-			logrus.Warningf("Can't parse tag %q as a semver version - %q", tags[i], err)
+			logrus.Warningf("Ignoring tag %q - %q", tags[i], err)
 			continue
 		}
 
-		result[i] = s
+		result = append(result, s)
 	}
 
 	if len(result) == 0 {
