@@ -23,7 +23,7 @@ func (e *Engine) PushToRegistry(manifests, valuesFiles, secretsFiles, policyRefe
 
 	PrintTitle("Registry")
 
-	manifests = sanitizeUpdatecliManifestFilePath(manifests)
+	manifests = sanitizeUpdatecliManifestFilePath(manifests, fileStore)
 	err := registry.Push(policyMetadataFile, manifests, valuesFiles, secretsFiles, policyReference, disableTLS, fileStore)
 	if err != nil {
 		return err

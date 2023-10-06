@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,7 @@ import (
 /*
 sanitizeUpdatecliManifestFilePath receives a list of files (directory or file) and returns a list of files that could be accepted by Updatecli.
 */
-func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePaths []string) {
+func sanitizeUpdatecliManifestFilePath(rawFilePaths []string, rootDirFilePath string) (sanitizedFilePaths []string) {
 	if len(rawFilePaths) == 0 {
 		// Updatecli tries to load the file updatecli.yaml if no manifest provided
 		// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
@@ -37,13 +38,18 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 	}
 
 	for _, r := range rawFilePaths {
+		r = filepath.Join(rootDirFilePath, r)
 		err := filepath.Walk(r, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
-				os.Exit(1)
+				return fmt.Errorf("unable to walk %q: %s", path, err)
 			}
 			if info.Mode().IsRegular() {
-				sanitizedFilePaths = append(sanitizedFilePaths, path)
+				relativePath, err := filepath.Rel(rootDirFilePath, path)
+				if err != nil {
+					return fmt.Errorf("unable to get relative path for %q: %s", path, err)
+				}
+				sanitizedFilePaths = append(sanitizedFilePaths, relativePath)
 			}
 			return nil
 		})
