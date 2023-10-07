@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -51,7 +50,7 @@ func readFromURL(url string, line int) (string, error) {
 
 	// Otherwise retrieve the whole file content. Can be heavy.
 	logrus.Debugf("Reading content returned from the url %q", url)
-	bodyContent, err := ioutil.ReadAll(resp.Body)
+	bodyContent, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -73,7 +72,7 @@ func readFromFile(location string, line int) (string, error) {
 	}
 
 	// Otherwise retrieve the whole file content. Can be heavy.
-	fileContent, err := ioutil.ReadFile(location)
+	fileContent, err := os.ReadFile(location)
 	if err != nil {
 		return "", err
 	}
