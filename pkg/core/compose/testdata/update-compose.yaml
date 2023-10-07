@@ -5,4 +5,5 @@ env_files:
   - testdata/credentials.yaml
 
 policies: 
-  - policy: ghcr.io/olblak/policies/updatecli:latest
+  - policy: ghcr.io/updatecli/policies/autodiscovery:0.0.1-alpha
+  - policy: ghcr.io/updatecli/policies/autodiscovery:latest
