@@ -1,0 +1,8 @@
+environments:
+  UPDATECLI_TEST_GITHUB_ACTOR: 'me'
+
+env_files:
+  - testdata/credentials.yaml
+
+policies: 
+  - policy: ghcr.io/olblak/policies/updatecli:latest
