@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -10,9 +9,8 @@ import (
 
 // ManifestUpgrade load Updatecli Manifest to update them then written them back on disk
 func (e *Engine) ManifestUpgrade(saveToDisk bool) (err error) {
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len("Manifest Upgrade")+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle("Manifest Upgrade"))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len("Manifest Upgrade")+4))
+
+	PrintTitle("Manifest Upgrade")
 
 	err = e.LoadConfigurations()
 
