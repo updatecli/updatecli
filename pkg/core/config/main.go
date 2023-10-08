@@ -95,7 +95,7 @@ func (config *Config) Reset() {
 // New reads an updatecli configuration file
 func New(option Option) (configs []Config, err error) {
 
-	dirname, basename := filepath.Split(option.ManifestFile)
+	_, basename := filepath.Split(option.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
 	// templates values as in some situation those values changes for each run
@@ -134,7 +134,7 @@ func New(option Option) (configs []Config, err error) {
 		fs := os.DirFS(cwd)
 
 		t := Template{
-			CfgFile:      filepath.Join(dirname, basename),
+			CfgFile:      option.ManifestFile,
 			ValuesFiles:  option.ValuesFiles,
 			SecretsFiles: option.SecretsFiles,
 			fs:           fs,

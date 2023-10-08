@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -14,7 +14,7 @@ func ReadFile(file string) (data []byte, err error) {
 
 	defer f.Close()
 
-	data, err = ioutil.ReadAll(f)
+	data, err = io.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}
