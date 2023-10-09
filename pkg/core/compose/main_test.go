@@ -8,12 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/engine"
-	"github.com/updatecli/updatecli/pkg/core/tmp"
 )
 
 func TestGetPolicies(t *testing.T) {
-
-	tmpDir := tmp.Directory
 
 	testdata := []struct {
 		name              string
@@ -27,7 +24,10 @@ func TestGetPolicies(t *testing.T) {
 			expectedManifests: []engine.Manifest{
 				{
 					Manifests: []string{
-						filepath.Join(tmpDir, "store", "ghcr", "io", "olblak", "policies", "updatecli", "latest", "updatecli", "updatecli.d", "updatecli.yaml"),
+						filepath.Join("/", "tmp", "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "updatecli.d", "default.tpl"),
+					},
+					Values: []string{
+						filepath.Join("/", "tmp", "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "values.yaml"),
 					},
 				},
 			},
@@ -38,18 +38,20 @@ func TestGetPolicies(t *testing.T) {
 		},
 	}
 
-	for i := range testdata {
-		updateCompose, err := New(testdata[i].file)
-		require.NoError(t, err)
+	for _, data := range testdata {
+		t.Run(data.name, func(t *testing.T) {
+			updateCompose, err := New(data.file)
+			require.NoError(t, err)
 
-		gotManifests, err := updateCompose.GetPolicies(false)
-		require.NoError(t, err)
+			gotManifests, err := updateCompose.GetPolicies(false)
+			require.NoError(t, err)
 
-		assert.Equal(t, testdata[i].expectedManifests, gotManifests)
+			assert.Equal(t, data.expectedManifests, gotManifests)
 
-		for key, expectedValue := range testdata[i].expectedEnv {
-			gotValue := os.Getenv(key)
-			assert.Equal(t, expectedValue, gotValue)
-		}
+			for key, expectedValue := range data.expectedEnv {
+				gotValue := os.Getenv(key)
+				assert.Equal(t, expectedValue, gotValue)
+			}
+		})
 	}
 }
