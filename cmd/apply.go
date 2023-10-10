@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/engine"
+	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 
 	"github.com/spf13/cobra"
 )
@@ -33,7 +33,7 @@ var (
 				os.Exit(1)
 			}
 
-			e.Options.Manifests = append(e.Options.Manifests, engine.Manifest{
+			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
 				Manifests: manifestFiles,
 				Values:    valuesFiles,
 				Secrets:   secretsFiles,

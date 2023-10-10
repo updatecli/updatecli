@@ -27,5 +27,5 @@ var (
 
 func init() {
 	jsonschemaCmd.Flags().StringVarP(&jsonschemaDirectory, "directory", "d", "./", "Export schema to directory")
-	jsonschemaCmd.Flags().StringVarP(&jsonschemaBaseID, "baseid", "b", "https://www.updatecli.io/latest/schema", "Define schema baseid")
+	jsonschemaCmd.Flags().StringVarP(&jsonschemaBaseID, "baseid", "b", "https://www.updatecli.io/schema/latest", "Define schema baseid")
 }
