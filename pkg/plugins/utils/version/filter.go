@@ -164,49 +164,92 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			return fmt.Sprintf("%d.%d.x",
-				v.Major(),
-				v.Minor()), nil
+
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf("%d.%d.x",
+					v.Major(),
+					v.Minor()), nil
+			case false:
+				return fmt.Sprintf("%d.%d.x-0",
+					v.Major(),
+					v.Minor()), nil
+			}
 
 		case "minor":
 			v, err := sv.NewVersion(version)
 			if err != nil {
 				return "", err
 			}
-			return fmt.Sprintf(
-				"%d.x",
-				v.Major()), nil
+
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf(
+					"%d.x",
+					v.Major()), nil
+			case false:
+				return fmt.Sprintf(
+					"%d.x.x-0",
+					v.Major()), nil
+			}
 
 		case "minoronly":
 			v, err := sv.NewVersion(version)
 			if err != nil {
 				return "", err
 			}
-			return fmt.Sprintf(
-				"%s || >%d.%d < %d",
-				version,
-				v.Major(), v.Minor(),
-				v.IncMajor().Major(),
-			), nil
+
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf(
+					"%s || >%d.%d < %d",
+					version,
+					v.Major(), v.Minor(),
+					v.IncMajor().Major(),
+				), nil
+			case false:
+				return fmt.Sprintf(
+					"%s || >%d.%d.x-0 < %d",
+					version,
+					v.Major(), v.Minor(),
+					v.IncMajor().Major(),
+				), nil
+			}
 
 		case "major":
 			v, err := sv.NewVersion(version)
 			if err != nil {
 				return "", err
 			}
-			return fmt.Sprintf(
-				">=%d",
-				v.Major()), nil
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf(
+					">=%d",
+					v.Major()), nil
+
+			case false:
+				return fmt.Sprintf(
+					">=%d.x.x-0",
+					v.Major()), nil
+			}
 
 		case "majoronly":
 			v, err := sv.NewVersion(version)
 			if err != nil {
 				return "", err
 			}
-			return fmt.Sprintf(
-				"%s || >%d",
-				version, v.Major(),
-			), nil
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf(
+					"%s || >%d",
+					version, v.Major(),
+				), nil
+			case false:
+				return fmt.Sprintf(
+					"%s || >%s",
+					version, version,
+				), nil
+			}
 
 		case "", "*":
 			v, err := sv.NewVersion(version)
@@ -215,7 +258,6 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 				return ">=" + v.String(), nil
 			}
 
-			fmt.Println(version)
 			_, err = sv.NewConstraint(version)
 			if err != nil {
 				return "", &ErrIncorrectSemVerConstraint{SemVerConstraint: version}
