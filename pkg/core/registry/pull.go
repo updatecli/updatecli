@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	spec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 
 	oras "oras.land/oras-go/v2"
@@ -15,8 +16,6 @@ import (
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
-
-	spec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // Pull pulls an OCI image from a registry.

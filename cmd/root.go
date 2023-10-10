@@ -70,6 +70,7 @@ func init() {
 		manifestCmd,
 		udashCmd,
 		showCmd,
+		composeCmd,
 		versionCmd,
 		docsCmd,
 		manCmd,
@@ -79,7 +80,7 @@ func init() {
 func run(command string) error {
 
 	switch command {
-	case "apply":
+	case "apply", "compose/apply":
 		udash.Audience = udashOAuthAudience
 
 		if applyClean {
@@ -101,7 +102,7 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
-	case "diff":
+	case "diff", "compose/diff":
 		udash.Audience = udashOAuthAudience
 		if diffClean {
 			defer func() {
@@ -159,7 +160,7 @@ func run(command string) error {
 		}
 
 	// Show is deprecated
-	case "manifest/show", "show":
+	case "manifest/show", "show", "compose/show":
 		if showClean {
 			defer func() {
 				if err := e.Clean(); err != nil {

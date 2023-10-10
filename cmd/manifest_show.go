@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/engine"
+	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 )
 
 var (
@@ -28,7 +28,7 @@ var (
 				os.Exit(1)
 			}
 
-			e.Options.Manifests = append(e.Options.Manifests, engine.Manifest{
+			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
 				Manifests: manifestFiles,
 				Values:    valuesFiles,
 				Secrets:   secretsFiles,
