@@ -3,7 +3,7 @@ package compose
 import (
 	"fmt"
 
-	"github.com/updatecli/updatecli/pkg/core/engine"
+	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 )
 
@@ -28,8 +28,8 @@ func New(filename string) (Compose, error) {
 }
 
 // GetPolicies returns a list of policies defined in the compose file
-func (c *Compose) GetPolicies(disableTLS bool) ([]engine.Manifest, error) {
-	var manifests []engine.Manifest
+func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
+	var manifests []manifest.Manifest
 	var errs []error
 
 	if err := c.spec.Environments.SetEnv(); err != nil {
@@ -52,7 +52,7 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]engine.Manifest, error) {
 			policyValues = append(policyValues, c.spec.Policies[i].Values...)
 			policySecrets = append(policySecrets, c.spec.Policies[i].Secrets...)
 
-			manifests = append(manifests, engine.Manifest{
+			manifests = append(manifests, manifest.Manifest{
 				Manifests: policyManifest,
 				Values:    policyValues,
 				Secrets:   policySecrets,
