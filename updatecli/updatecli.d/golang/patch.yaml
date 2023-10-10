@@ -15,14 +15,15 @@ actions:
         kind: github/pullrequest
         scmid: default
         spec:
-          automerge: true
+          title: "Bump patch version for Golang module"
+          automerge: false
           labels:
             - "dependencies"
 
 autodiscovery:
   scmid: default
   actionid:  default
-  groupby: individual
+  groupby: all
   crawlers:
     golang/gomod:
       versionfilter:
@@ -46,6 +47,9 @@ autodiscovery:
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             github.com/skratchdot/open-golang:
             k8s.io/utils:
+            # We currently requires a RC version which is not handle by versionfilter
+            # # To remove once https://github.com/updatecli/updatecli/issues/1661 is done
+            github.com/opencontainers/image-spec:
 
       only:
         # This repository contains other go.sum file used for testing.
