@@ -64,6 +64,42 @@ func TestSearch(t *testing.T) {
 			},
 		},
 		{
+			name: "Passing case with filter semver and prerelease",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "3.x.x-0",
+			},
+			versions: []string{"1.0.0", "2.0.0", "3.0.0-rc1"},
+			want: Version{
+				ParsedVersion:   "3.0.0-rc1",
+				OriginalVersion: "3.0.0-rc1",
+			},
+		},
+		{
+			name: "Passing case with filter semver, prerelease, and minor update",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "1.x.x-0",
+			},
+			versions: []string{"1.1.0", "1.2.0", "1.3.0-rc1", "2.0.0"},
+			want: Version{
+				ParsedVersion:   "1.3.0-rc1",
+				OriginalVersion: "1.3.0-rc1",
+			},
+		},
+		{
+			name: "Passing case with filter semver and minor update",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "1.x.x",
+			},
+			versions: []string{"1.1.0", "1.2.0", "1.3.0-rc1", "2.0.0"},
+			want: Version{
+				ParsedVersion:   "1.2.0",
+				OriginalVersion: "1.2.0",
+			},
+		},
+		{
 			name: "Failing case with no semver (+pattern) found",
 			filter: Filter{
 				Kind:    SEMVERVERSIONKIND,
@@ -260,12 +296,28 @@ func TestGreaterThanPattern(t *testing.T) {
 			version: "3.0", want: ">=3",
 		},
 		{
+			name: "Major semver pattern with prerelease",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "major",
+			},
+			version: "3.0.0-rc1", want: ">=3.x.x-0",
+		},
+		{
 			name: "Minor semver pattern",
 			filter: Filter{
 				Kind:    SEMVERVERSIONKIND,
 				Pattern: "minor",
 			},
 			version: "3.0", want: "3.x",
+		},
+		{
+			name: "Minor semver pattern with prerelease",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "minor",
+			},
+			version: "3.0.0-rc1", want: "3.x.x-0",
 		},
 		{
 			name: "Minor semver only pattern",
@@ -282,6 +334,14 @@ func TestGreaterThanPattern(t *testing.T) {
 				Pattern: "majoronly",
 			},
 			version: "3.1", want: "3.1 || >3",
+		},
+		{
+			name: "Major semver only pattern with semver",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "majoronly",
+			},
+			version: "3.1.0-rc1", want: "3.1.0-rc1 || >3.1.0-rc1",
 		},
 		{
 			name: "Patch semver pattern",
