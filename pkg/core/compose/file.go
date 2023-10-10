@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"path/filepath"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -27,6 +29,23 @@ func LoadFile(filename string) (*Spec, error) {
 	err = yaml.Unmarshal(composeFileByte, &composeSpec)
 	if err != nil {
 		return nil, fmt.Errorf("parsing Updatecli compose file %q: %s", filename, err)
+	}
+
+	// Ensure that any relative file path is relative to the compose file
+	sanitizePath := func(path []string) {
+		for i := range path {
+			if !filepath.IsAbs(path[i]) {
+				path[i] = filepath.Join(filepath.Dir(filename), path[i])
+			}
+		}
+	}
+
+	sanitizePath(composeSpec.Env_files)
+
+	for i := range composeSpec.Policies {
+		sanitizePath(composeSpec.Policies[i].Config)
+		sanitizePath(composeSpec.Policies[i].Values)
+		sanitizePath(composeSpec.Policies[i].Secrets)
 	}
 
 	return &composeSpec, nil
