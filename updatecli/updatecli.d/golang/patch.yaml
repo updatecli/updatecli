@@ -15,14 +15,15 @@ actions:
         kind: github/pullrequest
         scmid: default
         spec:
-          automerge: true
+          title: "Bump patch version for Golang module"
+          automerge: false
           labels:
             - "dependencies"
 
 autodiscovery:
   scmid: default
   actionid:  default
-  groupby: individual
+  groupby: all
   crawlers:
     golang/gomod:
       versionfilter:

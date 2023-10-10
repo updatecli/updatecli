@@ -18,13 +18,14 @@ actions:
         kind: github/pullrequest
         scmid: default
         spec:
+          title: "Bump minor version for Golang module"
           labels:
             - "dependencies"
 
 autodiscovery:
   scmid: default
   actionid:  default
-  groupby: individual
+  groupby: all
   crawlers:
     golang/gomod:
       versionfilter:
