@@ -8,7 +8,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/aws/aws-sdk-go v1.45.1
+	github.com/aws/aws-sdk-go v1.45.24
 	github.com/containerd/containerd v1.7.6 // indirect
 	github.com/fatih/color v1.15.0
 	github.com/go-git/go-git/v5 v5.9.0
@@ -41,7 +41,7 @@ require (
 	github.com/google/go-containerregistry v0.15.2
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.18.1
-	github.com/hashicorp/terraform-registry-address v0.2.0
+	github.com/hashicorp/terraform-registry-address v0.2.2
 	github.com/invopop/jsonschema v0.8.0
 	github.com/joho/godotenv v1.5.1
 	github.com/minamijoyo/hcledit v0.2.10
@@ -51,9 +51,9 @@ require (
 	github.com/nirasan/go-oauth-pkce-code-verifier v0.0.0-20220510032225-4f9f17eaec4c
 	github.com/oras-project/oras-credentials-go v0.3.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/testcontainers/testcontainers-go v0.24.0
+	github.com/testcontainers/testcontainers-go v0.24.1
 	github.com/tomwright/dasel v1.27.3
-	github.com/zclconf/go-cty v1.14.0
+	github.com/zclconf/go-cty v1.14.1
 	golang.org/x/text v0.13.0
 	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
@@ -75,7 +75,7 @@ require (
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20230614215431-f32df32a01cd // indirect
-	github.com/hashicorp/terraform-svchost v0.0.1 // indirect
+	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/moby/patternmatcher v0.5.0 // indirect
