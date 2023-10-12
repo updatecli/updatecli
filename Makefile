@@ -22,15 +22,15 @@ build: ## Build updatecli as a "dirty snapshot" (no tag, no release, but all OS/
 
 .PHONY: build.all
 build.all: ## Build updatecli for "release" (tag or release and all OS/arch combinations)
-	goreleaser --clean --skip-publish
+	goreleaser --clean --skip=publish,sign
 
 .PHONY: release ## Create a new updatecli release including packages
-release: ## release.snapshot generate a snapshot release but do not published it (no tag, but all OS/arch combinations)
-	goreleaser --clean
+release: ## release generate a release
+	goreleaser release --clean --timeout=2h
 
 .PHONY: release.snapshot ## Create a new snapshot release without publishing assets
 release.snapshot: ## release.snapshot generate a snapshot release but do not published it (no tag, but all OS/arch combinations)
-	goreleaser --snapshot --clean --skip-publish
+	goreleaser release --snapshot --clean --skip=publish,sign
 
 .PHONY: diff
 diff: ## Run the "diff" updatecli's subcommand for smoke test
