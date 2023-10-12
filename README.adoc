@@ -50,14 +50,15 @@ You can download/copy the three files 'checksums.txt.pem', 'checksums.txt.sig', 
 Once you have the three files locally, you can execute the following command
 
 ```
-COSIGN_EXPERIMENTAL=1 cosign verify-blob --cert checksums.txt.pem --signature checksums.txt.sig checksums.txt
+cosign verify-blob --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' --cert https://github.com/updatecli/updatecli/releases/download/v0.63.0/checksums.txt.pem --signature https://github.com/updatecli/updatecli/releases/download/v0.63.0/checksums.txt.sig checksums.txt
 ```
-A successful output looks like 
+
+A successful output looks like
 
 ```
-tlog entry verified with uuid: 73f57e4c16b830ccb615e00814a3481a33365bf48f9bba1c1588886b3344d0ec index: 9085154
 Verified OK
 ```
+
 
 Now you can verify the assets checksum integrity.
 
@@ -65,6 +66,7 @@ Now you can verify the assets checksum integrity.
 
 Before verifying the file integrity, you should first verify the checksum file signature.
 Once you've download both the checksums.txt and your binary, you can verify the integrity of your file by running:
+
 ```
 sha256sum --ignore-missing -c checksums.txt
 ```
@@ -74,6 +76,7 @@ sha256sum --ignore-missing -c checksums.txt
 ```
 cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.63.0
 ```
+
 == Documentation
 
 The documentation of Updatecli is available at link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io], but you can also look at the `examples` section to get an overview.
