@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
@@ -17,8 +18,20 @@ func (e *Engine) LoadConfigurations() error {
 
 	for i := range e.Options.Manifests {
 		if e.Options.Manifests[i].IsZero() {
-			ErrNoManifestDetectedCounter++
-			continue
+
+			// If no manifest file is specified, we try to detect one
+			if _, err := os.Stat("updatecli.yaml"); err == nil {
+				e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, "updatecli.yaml")
+			}
+
+			if _, err := os.Stat("updatecli.d"); err == nil {
+				e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, "updatecli.d")
+			}
+
+			if len(e.Options.Manifests[i].Manifests) == 0 {
+				ErrNoManifestDetectedCounter++
+				continue
+			}
 		}
 
 		for _, manifestFile := range sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests, "") {
