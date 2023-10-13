@@ -46,7 +46,7 @@ conditions:
         disablesourceinput: true
 targets:
     default:
-        name: Update Golangci-lint version to {{ source "default" }}
+        name: 'ci: update Golangci-lint version to {{ source "default" }}'
         kind: yaml
         spec:
             file: .github/workflows/go.yaml

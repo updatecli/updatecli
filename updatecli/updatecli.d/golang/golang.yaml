@@ -55,13 +55,13 @@ conditions:
 
 targets:
     go.mod:
-        name: 'Update Golang version to {{ source "golang" }}'
+        name: 'deps: update Golang version to {{ source "golang" }}'
         kind: golang/gomod
         scmid: default
         sourceid: golang
 
     release:
-        name: '[release.yaml] Update Golang version to {{ source "golang" }}'
+        name: 'deps: update release workflow with Golang version to {{ source "golang" }}'
         kind: yaml
         spec:
             file: .github/workflows/release.yaml
@@ -70,7 +70,7 @@ targets:
         sourceid: golang
 
     workflowgo:
-        name: '[release.yaml] Update Golang version to {{ source "golang" }}'
+        name: 'deps: update build workflow with Golang version to {{ source "golang" }}'
         kind: yaml
         spec:
             file: .github/workflows/go.yaml
