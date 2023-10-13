@@ -37,7 +37,7 @@ sources:
                 kind: semver
 targets:
     goWorkflow:
-        name: Bump Venom version to {{ source "latestVersion" }}
+        name: 'ci: update Venom version to {{ source "latestVersion" }}'
         kind: file
         spec:
             content: 'VENOM_VERSION: {{ source `latestVersion` }}'

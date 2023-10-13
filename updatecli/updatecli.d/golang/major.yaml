@@ -46,9 +46,6 @@ autodiscovery:
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             github.com/skratchdot/open-golang:
             k8s.io/utils:
-            # We currently requires a RC version which is not handle by versionfilter
-            # To remove once https://github.com/updatecli/updatecli/issues/1661 is done
-            github.com/opencontainers/image-spec:
       only:
         # This repository contains other go.sum file used for testing.
         # So we want to be sure that we only update the one at the root of the repository
