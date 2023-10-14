@@ -1,14 +1,12 @@
 package engine
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -16,27 +14,6 @@ import (
 sanitizeUpdatecliManifestFilePath receives a list of files (directory or file) and returns a list of files that could be accepted by Updatecli.
 */
 func sanitizeUpdatecliManifestFilePath(rawFilePaths []string, rootDirPath string) (sanitizedFilePaths []string) {
-	if len(rawFilePaths) == 0 {
-		// Updatecli tries to load the file updatecli.yaml if no manifest provided
-		// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
-		// if there is no manifests in the directory updatecli.d then Updatecli returns no manifest files.
-		_, err := os.Stat(config.DefaultConfigFilename)
-		if !errors.Is(err, os.ErrNotExist) {
-			logrus.Debugf("Default Updatecli manifest detected %q", config.DefaultConfigFilename)
-			return []string{config.DefaultConfigFilename}
-		}
-
-		fs, err := os.Stat(config.DefaultConfigDirname)
-		if errors.Is(err, os.ErrNotExist) {
-			return []string{}
-		}
-
-		if fs.IsDir() {
-			logrus.Debugf("Default Updatecli manifest directory detected %q", config.DefaultConfigDirname)
-			rawFilePaths = []string{config.DefaultConfigDirname}
-		}
-	}
-
 	for _, r := range rawFilePaths {
 		r = filepath.Join(rootDirPath, r)
 		err := filepath.Walk(r, func(path string, info os.FileInfo, err error) error {
