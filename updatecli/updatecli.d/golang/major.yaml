@@ -1,4 +1,4 @@
-name: "Bump Minor version for Golang module"
+name: "Bump Major version for Golang module"
 
 scms:
   default:
