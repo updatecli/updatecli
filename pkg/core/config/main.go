@@ -45,27 +45,141 @@ type Config struct {
 
 // Spec contains pipeline configuration
 type Spec struct {
-	// Name defines a pipeline name
+	/*
+		"name" defines a pipeline name
+
+		example:
+			* "name: 'deps: update nodejs version to latest stable'"
+
+		remark:
+			* using a short sentence describing the pipeline is a good way to name your pipeline.
+			* using conventional commits convention is a good way to name your pipeline.
+			* "name" is often used a default values for other configuration such as pullrequest title.
+			* "name" shouldn't contain any dynamic information such as source output.
+	*/
 	Name string `yaml:",omitempty" jsonschema:"required"`
-	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	PipelineID string `yaml:",omitempty"`
-	// AutoDiscovery defines parameters to the autodiscovery feature
+	/*
+		"pipelineid" allows to identify a full pipeline run.
+
+		example:
+			* "pipelineid: nodejs/dependencies"
+			* "pipelineid: gomod/github.com/updatecli/updatecli"
+			* "pipelineid: autodiscovery/gomodules/minor"
+
+		remark:
+			* "pipelineid" is used to generate uniq branch name for target update relying on scm configuration.
+			* The same "pipelineid" may be used by different Updatecli manifest" to ensure they are updated in the same workflow including pullrequest.
+	*/
+	PipelineID string `yaml:",omitempty" jsonschema:"required"`
+	/*
+		"autodiscovery" defines the configuration to automatically discover new versions update.
+
+		example:
+		---
+		autodiscovery:
+			scmid: default
+			actionid:  default
+			groupby: all
+			crawlers:
+				golang/gomod:
+					versionfilter:
+					kind: semver
+					pattern: patch
+		---
+	*/
 	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
-	// Title is used for the full pipeline
-	Title string `yaml:",omitempty"`
-	// !Deprecated in favor of `actions`
+	/*
+		"title" is deprecated, please use "name" instead.
+	*/
+	Title string `yaml:",omitempty" jsonschema:"-"`
+	/*
+		!Deprecated in favor of `actions`
+	*/
 	PullRequests map[string]action.Config `yaml:",omitempty" jsonschema:"-"`
-	// Actions defines the list of action configurations which need to be managed
+	/*
+		"actions" defines the list of action configurations which need to be managed.
+
+		examples:
+		---
+		actions:
+			default:
+				kind: github/pullrequest
+				scmid: default
+				spec:
+					automerge: true
+					labels:
+						- "dependencies"
+		---
+	*/
 	Actions map[string]action.Config `yaml:",omitempty"`
-	// SCMs defines the list of repository configuration used to fetch content from.
+	/*
+		"scms" defines the list of repository configuration used to fetch content from.
+
+		examples:
+		---
+		scms:
+			default:
+				kind: github
+				spec:
+					owner: "updatecli"
+					repository: "updatecli"
+					token: "${{ env "GITHUB_TOKEN" }}"
+					branch: "main"
+		---
+
+	*/
 	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
-	// Sources defines the list of source configuration
+	/*
+		"sources" defines the list of Updatecli source definition.
+
+		example:
+		---
+		sources:
+			# Source to retrieve the latest version of nodejs
+			nodejs:
+				name: Get latest nodejs version
+				kind: json
+				spec:
+					file: https://nodejs.org/dist/index.json
+					key: .(lts!=false).version
+		---
+	*/
 	Sources map[string]source.Config `yaml:",omitempty"`
-	// Conditions defines the list of condition configuration
+	/*
+		"conditions" defines the list of Updatecli condition definition.
+
+		example:
+		---
+		conditions:
+			container:
+				name: Check if Updatecli container image for tag "v0.63.0" exists
+				kind: dockerimage
+				spec:
+					image: "updatecli/updatecli:latest"
+					tag: "v0.63.0"
+		---
+	*/
 	Conditions map[string]condition.Config `yaml:",omitempty"`
-	// Targets defines the list of target configuration
+	/*
+		"targets" defines the list of Updatecli target definition.
+
+		example:
+		---
+		targets:
+		  	default:
+		     	name: 'ci: update Golangci-lint version to {{ source "default" }}'
+		     	kind: yaml
+		     	spec:
+		         	file: .github/workflows/go.yaml
+		         	key: $.jobs.build.steps[2].with.version
+		     	scmid: default
+		     	sourceid: default
+		---
+	*/
 	Targets map[string]target.Config `yaml:",omitempty"`
-	// Version specifies the minimum updatecli version compatible with the manifest
+	/*
+		"version" defines the minimum Updatecli version compatible with the manifest
+	*/
 	Version string `yaml:",omitempty"`
 }
 
