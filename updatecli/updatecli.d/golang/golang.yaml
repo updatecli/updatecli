@@ -1,8 +1,9 @@
-name: Bump Golang Version
+name: "deps: update Golang Version"
+pipelineid: "golang"
 
 actions:
     default:
-        title: '[updatecli] Bump Golang version to {{ source "golang" }}'
+        title: 'deps: bump Golang version to {{ source "golang" }}'
         kind: github/pullrequest
         spec:
             labels:
@@ -20,8 +21,6 @@ scms:
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             user: updatecli
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-            commitmessage:
-                title: 'Bump Golang version to {{ source "golang" }}'
         disabled: false
 
 sources:
@@ -55,7 +54,7 @@ conditions:
 
 targets:
     go.mod:
-        name: 'deps: update Golang version to {{ source "golang" }}'
+        name: 'deps: update go.mod with Golang version to {{ source "golang" }}'
         kind: golang/gomod
         scmid: default
         sourceid: golang
@@ -77,4 +76,3 @@ targets:
             key: $.jobs.build.steps[0].with.go-version
         scmid: default
         sourceid: golang
-
