@@ -1,10 +1,10 @@
-name: Bump updatecli version
+name: "docs: bump updatecli version"
 
-pipelineid: cac467f9bdc931266038f8cf363edc865370121deb3954b93e70d0588827a04f
+pipelineid: "updatecli"
 
 actions:
     default:
-        title: 'Bump updatecli version to {{ source "latestVersion" }}'
+        title: 'deps: bump updatecli version to {{ source "latestVersion" }}'
         kind: github/pullrequest
         spec:
             automerge: true
