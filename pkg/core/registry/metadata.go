@@ -19,7 +19,7 @@ type PolicySpec struct {
 	Documentation string `yaml:",omitempty"`
 	// Source is the URL of the policy source code
 	Source string `yaml:",omitempty"`
-	// Version is the policy version
+	// Version is the policy version, it must be semantic versioning compliant without the leading v
 	Version string `yaml:",omitempty"`
 	// Vendor is the policy vendor
 	Vendor string `yaml:",omitempty"`
@@ -66,9 +66,13 @@ func (s *PolicySpec) Sanitize() error {
 		s.Version = "0.0.1"
 	}
 
-	_, err := semver.NewVersion(s.Version)
+	v, err := semver.NewVersion(s.Version)
 	if err != nil {
 		return fmt.Errorf("invalid policy version %q: %s", s.Version, err)
 	}
+
+	// Trim leading v
+	s.Version = v.String()
+
 	return nil
 }
