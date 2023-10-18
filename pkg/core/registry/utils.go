@@ -33,6 +33,7 @@ func getLatestTagSortedBySemver(refName string, disableTLS bool) (string, error)
 	ctx := context.Background()
 
 	tags, err := registry.Tags(ctx, repo)
+
 	if err != nil {
 		return "", fmt.Errorf("get tags: %w", err)
 	}
@@ -51,9 +52,14 @@ func getLatestTagSortedBySemver(refName string, disableTLS bool) (string, error)
 	if len(result) == 0 {
 		return "", fmt.Errorf("no valid semver tags found")
 	}
-	sort.Sort(semver.Collection(result))
 
-	return result[0].Original(), nil
+	sort.Sort(semver.Collection(result))
+	sort.Sort(sort.Reverse(semver.Collection(result)))
+
+	latestTag := result[0].Original()
+	logrus.Debugf("latest tag identified %q", latestTag)
+
+	return latestTag, nil
 }
 
 // getCredentialsFromDockerStore get the credentials from the docker credential store
