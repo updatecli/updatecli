@@ -867,7 +867,7 @@ func TestNew(t *testing.T) {
 			expectedResult: []Config{
 				{
 					Spec: Spec{
-						Name: "Get latest Jenkins version",
+						Name: "Get lts Jenkins version",
 					},
 				},
 			},
@@ -917,7 +917,7 @@ func TestNew(t *testing.T) {
 			expectedResult: []Config{
 				{
 					Spec: Spec{
-						Name: "Get latest stable Jenkins version",
+						Name: "Get latest lts Jenkins version",
 					},
 				},
 				{
@@ -949,7 +949,7 @@ func TestNew(t *testing.T) {
 
 		require.EqualValues(t, len(data.expectedResult), len(got))
 		for i := range data.expectedResult {
-			require.Equal(t, data.expectedResult[i].Spec.Title, got[i].Spec.Title)
+			require.Equal(t, data.expectedResult[i].Spec.Name, got[i].Spec.Name)
 		}
 	}
 }
