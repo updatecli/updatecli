@@ -591,6 +591,10 @@ func (config *Config) Validate() error {
 			fmt.Errorf("updatecli version compatibility error:\n%s", err))
 	}
 
+	if config.Spec.Title != "" {
+		logrus.Warningf("title is deprecated, please use name instead")
+	}
+
 	err = config.validateConditions()
 	if err != nil {
 		errs = append(

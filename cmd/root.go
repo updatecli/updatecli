@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -220,7 +221,7 @@ func run(command string) error {
 
 func getPolicyFilesFromRegistry() error {
 
-	if len(policyReferences) == 0 {
+	if slices.Equal(policyReferences, []string{""}) || slices.Equal(policyReferences, []string{}) {
 		return nil
 	}
 

@@ -33,7 +33,6 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("get latest tag sorted by semver: %w", err)
 		}
-		logrus.Debugf("Latest tag founded %s", ref.String())
 	}
 
 	// 1. Connect to a remote repository
@@ -55,7 +54,6 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	}
 
 	// 2.5 Get remote manifest digest
-
 	remoteManifestSpec, _, err := oras.Fetch(ctx, repo, ref.String(), oras.DefaultFetchOptions)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fetch: %w", err)
