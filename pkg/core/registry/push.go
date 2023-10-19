@@ -23,6 +23,11 @@ import (
 func Push(policyMetadataFile string, manifests []string, values []string, secrets []string, policyReferenceNames []string, disableTLS bool, fileStore string) error {
 	var err error
 
+	policySpec, err := LoadPolicyFile(policyMetadataFile)
+	if err != nil {
+		return fmt.Errorf("load policy file: %w", err)
+	}
+
 	logrus.Infof("Pushing Updatecli policy:\n\t=> %s\n\n", strings.Join(policyReferenceNames, "\n\t=> "))
 
 	if fileStore == "" {
@@ -73,11 +78,6 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		Layers: fileDescriptors,
 	}
 
-	policySpec, err := LoadPolicyFile(policyMetadataFile, fileStore)
-	if err != nil {
-		return fmt.Errorf("load policy file: %w", err)
-	}
-
 	// Set default OCI annotations which are understood by OCI registries
 	// https://github.com/opencontainers/image-spec/blob/main/annotations.md
 	opts.ManifestAnnotations = map[string]string{
@@ -109,11 +109,6 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		}
 
 		tag := policySpec.Version
-		if refName.Identifier() != "" {
-			logrus.Warningf("Tag %s is ignored in favor of %s. The tag must come from the Policy version",
-				refName.Identifier(),
-				policySpec.Version)
-		}
 
 		if err = fs.Tag(ctx, manifestDescriptor, tag); err != nil {
 			return fmt.Errorf("tag manifest: %w", err)

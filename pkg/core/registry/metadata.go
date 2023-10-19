@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
 	"gopkg.in/yaml.v3"
@@ -19,7 +18,7 @@ type PolicySpec struct {
 	Documentation string `yaml:",omitempty"`
 	// Source is the URL of the policy source code
 	Source string `yaml:",omitempty"`
-	// Version is the policy version
+	// Version is the policy version, it must be semantic versioning compliant without the leading v
 	Version string `yaml:",omitempty"`
 	// Vendor is the policy vendor
 	Vendor string `yaml:",omitempty"`
@@ -34,11 +33,11 @@ type PolicySpec struct {
 }
 
 // LoadPolicyFile loads an Updatecli compose file into a compose Spec
-func LoadPolicyFile(filename, store string) (*PolicySpec, error) {
+func LoadPolicyFile(filename string) (*PolicySpec, error) {
 
 	var policySpec PolicySpec
 
-	f, err := os.Open(filepath.Join(store, filename))
+	f, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("opening Updatecli policy file %q: %s", filename, err)
 	}
@@ -66,9 +65,13 @@ func (s *PolicySpec) Sanitize() error {
 		s.Version = "0.0.1"
 	}
 
-	_, err := semver.NewVersion(s.Version)
+	v, err := semver.NewVersion(s.Version)
 	if err != nil {
 		return fmt.Errorf("invalid policy version %q: %s", s.Version, err)
 	}
+
+	// Trim leading v
+	s.Version = v.String()
+
 	return nil
 }

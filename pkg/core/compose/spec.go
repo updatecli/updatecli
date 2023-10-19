@@ -10,8 +10,8 @@ type Spec struct {
 }
 
 type Policy struct {
-	// Config contains a list of config ids to be used for the policy
-	Configs []string `yaml:",omitempty"`
+	// Name contains the policy name
+	Name string `yaml:",omitempty"`
 	// Policy contains the policy OCI name
 	Policy string `yaml:",omitempty"`
 	// Config contains a list of Updatecli config file path
@@ -20,4 +20,25 @@ type Policy struct {
 	Values []string `yaml:",omitempty"`
 	// Secrets contains a list of Updatecli secret file path
 	Secrets []string `yaml:",omitempty"`
+}
+
+func (p Policy) IsZero() bool {
+
+	if len(p.Config) > 0 {
+		return false
+	}
+
+	if len(p.Values) > 0 {
+		return false
+	}
+
+	if len(p.Secrets) > 0 {
+		return false
+	}
+
+	if p.Policy != "" {
+		return false
+	}
+
+	return true
 }

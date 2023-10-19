@@ -47,7 +47,7 @@ func (e *Engine) LoadConfigurations() error {
 			}
 		}
 
-		for _, manifestFile := range sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests, "") {
+		for _, manifestFile := range sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests) {
 
 			loadedConfigurations, err := config.New(
 				config.Option{
