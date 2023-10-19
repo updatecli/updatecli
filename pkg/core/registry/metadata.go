@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
 	"gopkg.in/yaml.v3"
@@ -34,11 +33,11 @@ type PolicySpec struct {
 }
 
 // LoadPolicyFile loads an Updatecli compose file into a compose Spec
-func LoadPolicyFile(filename, store string) (*PolicySpec, error) {
+func LoadPolicyFile(filename string) (*PolicySpec, error) {
 
 	var policySpec PolicySpec
 
-	f, err := os.Open(filepath.Join(store, filename))
+	f, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("opening Updatecli policy file %q: %s", filename, err)
 	}

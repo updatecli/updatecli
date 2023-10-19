@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"path/filepath"
+
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 )
 
@@ -23,7 +26,38 @@ func (e *Engine) PushToRegistry(manifests, valuesFiles, secretsFiles, policyRefe
 
 	PrintTitle("Registry")
 
-	manifests = sanitizeUpdatecliManifestFilePath(manifests, fileStore)
+	joinWithFileStore := func(files []string) []string {
+		for i, file := range files {
+			if !filepath.IsAbs(file) {
+				files[i] = filepath.Join(fileStore, file)
+			}
+		}
+		return files
+	}
+
+	relativeFromFileStore := func(files []string) []string {
+		for i, file := range files {
+			relPath, err := filepath.Rel(fileStore, file)
+			if err != nil {
+				logrus.Errorf("Unable to get relative path from %s to %s", fileStore, file)
+				continue
+			}
+			files[i] = relPath
+		}
+		return files
+	}
+
+	// If policyMetadataFile is not an absolute path then we assume it is relative to fileStore
+	if !filepath.IsAbs(policyMetadataFile) {
+		policyMetadataFile = filepath.Join(fileStore, policyMetadataFile)
+	}
+
+	joinWithFileStore(manifests)
+
+	manifests = sanitizeUpdatecliManifestFilePath(manifests)
+
+	relativeFromFileStore(manifests)
+
 	err := registry.Push(policyMetadataFile, manifests, valuesFiles, secretsFiles, policyReference, disableTLS, fileStore)
 	if err != nil {
 		return err
