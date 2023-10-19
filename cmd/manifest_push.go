@@ -24,6 +24,23 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			manifestPushFileStore = args[0]
 
+			// Check if the user has specified at least one tag
+			if len(manifestPushPolicyReference) == 0 {
+				logrus.Errorf("At least one tag must be specified")
+				os.Exit(1)
+			}
+
+			// Default store to current working directory
+			if manifestPushFileStore == "" {
+				manifestPushFileStore, _ = os.Getwd()
+			}
+
+			// For some reason the StringArrayVarP does not work as expected
+			// so I have to manually check if the user has specified a manifest directory
+			if len(manifestFiles) == 0 {
+				manifestFiles = []string{"updatecli.d"}
+			}
+
 			err := run("manifest/push")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
