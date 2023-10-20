@@ -110,16 +110,16 @@ func (p *Pipeline) RunActions() error {
 			actionTitle = getActionTitle(action)
 		}
 
-		pipelineTitle := p.Config.Spec.Name
-		if pipelineTitle == "" && p.Config.Spec.Title != "" {
-			pipelineTitle = p.Config.Spec.Name
-		} else if pipelineTitle == "" && p.Name != "" {
-			pipelineTitle = p.Name
+		pipelineName := p.Config.Spec.Name
+		if pipelineName == "" && p.Config.Spec.Title != "" {
+			pipelineName = p.Config.Spec.Name
+		} else if pipelineName == "" && p.Name != "" {
+			pipelineName = p.Name
 		}
 
-		action.Report.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(p.Title+actionTitle)))
+		action.Report.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(p.Name)))
 		action.Report.Title = actionTitle
-		action.Report.PipelineTitle = pipelineTitle
+		action.Report.PipelineTitle = pipelineName
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {

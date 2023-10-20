@@ -13,22 +13,14 @@ import (
 /*
 sanitizeUpdatecliManifestFilePath receives a list of files (directory or file) and returns a list of files that could be accepted by Updatecli.
 */
-func sanitizeUpdatecliManifestFilePath(rawFilePaths []string, rootDirPath string) (sanitizedFilePaths []string) {
+func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePaths []string) {
 	for _, r := range rawFilePaths {
-		r = filepath.Join(rootDirPath, r)
 		err := filepath.Walk(r, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
 				return fmt.Errorf("unable to walk %q: %s", path, err)
 			}
 			if info.Mode().IsRegular() {
-				if rootDirPath != "" {
-					tmpPath := path
-					path, err = filepath.Rel(rootDirPath, path)
-					if err != nil {
-						return fmt.Errorf("unable to get relative path for %q: %s", tmpPath, err)
-					}
-				}
 				sanitizedFilePaths = append(sanitizedFilePaths, path)
 			}
 			return nil

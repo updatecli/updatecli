@@ -1,8 +1,5 @@
-title: Test Various target scenario
-
-scms:
-  local:
-    disabled: true
+name: Test Various target scenario
+pipelineid: e2e/command
 
 sources:
   1:

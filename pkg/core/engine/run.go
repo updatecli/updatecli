@@ -18,7 +18,7 @@ func (e *Engine) Run() (err error) {
 		e.Reports = append(e.Reports, pipeline.Report)
 
 		if err != nil {
-			logrus.Printf("Pipeline %q failed\n", pipeline.Title)
+			logrus.Printf("Pipeline %q failed\n", pipeline.Name)
 			logrus.Printf("Skipping due to:\n\t%s\n", err)
 			continue
 		}

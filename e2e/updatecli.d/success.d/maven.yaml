@@ -1,5 +1,6 @@
 ---
-title: Show a set of maven resources as a generic example
+name: Show a set of maven resources as a generic example
+pipelineid: "e2e/maven"
 
 scms:
   local:

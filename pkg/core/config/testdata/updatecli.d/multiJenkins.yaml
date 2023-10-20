@@ -1,5 +1,7 @@
 ---
 name: Get latest stable Jenkins version
+pipelineid: jenkins/stable
 
 ---
 name: Get latest weekly Jenkins version
+pipelineid: jenkins/weekly
