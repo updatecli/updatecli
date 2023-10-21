@@ -50,7 +50,7 @@ You can download/copy the three files 'checksums.txt.pem', 'checksums.txt.sig', 
 Once you have the three files locally, you can execute the following command
 
 ```
-cosign verify-blob --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' --cert https://github.com/updatecli/updatecli/releases/download/v0.64.0/checksums.txt.pem --signature https://github.com/updatecli/updatecli/releases/download/v0.64.0/checksums.txt.sig checksums.txt
+cosign verify-blob --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' --cert https://github.com/updatecli/updatecli/releases/download/v0.64.1/checksums.txt.pem --signature https://github.com/updatecli/updatecli/releases/download/v0.64.1/checksums.txt.sig checksums.txt
 ```
 
 A successful output looks like
@@ -74,7 +74,7 @@ sha256sum --ignore-missing -c checksums.txt
 **Verify Container signature**
 
 ```
-cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.64.0
+cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.64.1
 ```
 
 == Documentation
@@ -92,7 +92,7 @@ Our objective is to know if the Jenkins project published a new stable version, 
 |===
 |```
 ## updatecli.yaml
-title: Update Jenkins Version
+name: Update Jenkins Version
 
 scms:
   default:
@@ -115,7 +115,7 @@ sources:
 
 conditions:
   docker:
-    name: "Test if Docker Image Published on Registry"
+    name: "Test if Docker Image jenkins/jenkins is Published on DockerHub"
     kind: dockerimage
     spec:
       image: jenkins/jenkins
@@ -123,7 +123,7 @@ conditions:
 
 targets:
   bumpJenkins:
-    name: jenkins/jenkins docker tag
+    name: Update values.yaml to the latest Jenkins version
     scmID: default
     kind: yaml
     spec:
