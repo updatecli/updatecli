@@ -54,6 +54,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.24.1
 	github.com/tomwright/dasel v1.27.3
 	github.com/zclconf/go-cty v1.14.1
+	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
 	golang.org/x/text v0.13.0
 	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
@@ -91,7 +92,6 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.opentelemetry.io/otel v1.14.0 // indirect
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
-	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 )
