@@ -92,7 +92,7 @@ Our objective is to know if the Jenkins project published a new stable version, 
 |===
 |```
 ## updatecli.yaml
-title: Update Jenkins Version
+name: Update Jenkins Version
 
 scms:
   default:
@@ -115,7 +115,7 @@ sources:
 
 conditions:
   docker:
-    name: "Test if Docker Image Published on Registry"
+    name: "Test if Docker Image jenkins/jenkins is Published on DockerHub"
     kind: dockerimage
     spec:
       image: jenkins/jenkins
@@ -123,7 +123,7 @@ conditions:
 
 targets:
   bumpJenkins:
-    name: jenkins/jenkins docker tag
+    name: Update values.yaml to the latest Jenkins version
     scmID: default
     kind: yaml
     spec:
