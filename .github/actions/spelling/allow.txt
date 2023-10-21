@@ -55,3 +55,4 @@ fileStore
 skippackaging
 joho
 godotenv
+filechecksum
