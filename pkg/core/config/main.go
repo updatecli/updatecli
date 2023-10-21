@@ -295,7 +295,7 @@ func New(option Option) (configs []Config, err error) {
 			// there is less change for the pipeline name to change.
 			switch configs[id].Spec.Name {
 			case "":
-				logrus.Debugln("pipeline name undefined, we'll use the manifest filechecksum")
+				logrus.Debugln("pipeline name undefined, we'll use the manifest file checksum")
 				configs[id].Spec.PipelineID = fileChecksum
 			default:
 				logrus.Debugln("using pipeline name to generate the pipelineid")
