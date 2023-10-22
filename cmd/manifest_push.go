@@ -15,6 +15,8 @@ var (
 	manifestPushFileStore string
 	// manifestPushPolicyFile is the path to the policy file containing policy metadata information
 	manifestPushPolicyFile string
+	// manifestPushOverwrite is a boolean to overwrite existing manifest(s) in the registry
+	manifestPushOverwrite bool
 
 	// manifestPushCmd is the Cobra command to push OCI registry manifest(s)
 	manifestPushCmd = &cobra.Command{
@@ -57,6 +59,7 @@ func init() {
 	manifestPushCmd.Flags().StringArrayVarP(&manifestPushPolicyReference, "tag", "t", []string{}, `Name and optionally a tag (format: "name:tag")`)
 	manifestPushCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
 	manifestPushCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
+	manifestPushCmd.Flags().BoolVar(&manifestPushOverwrite, "overwrite", false, "Overwrite existing manifest(s) in the registry like '--overwrite=true'")
 
 	manifestCmd.AddCommand(manifestPushCmd)
 }
