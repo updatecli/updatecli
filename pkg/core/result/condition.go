@@ -2,7 +2,7 @@ package result
 
 import "bytes"
 
-// Conditions holds condition execution result
+// Condition holds condition execution result
 type Condition struct {
 	//Name holds the condition name
 	Name string

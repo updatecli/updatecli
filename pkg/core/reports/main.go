@@ -2,6 +2,7 @@ package reports
 
 import (
 	"bytes"
+	"fmt"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -97,4 +98,33 @@ func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skip
 	}
 
 	return successCounter, changedCounter, failedCounter, skippedCounter
+}
+
+func (r *Report) SetResult(inputResult string) error {
+
+	switch r.Result {
+
+	case result.SUCCESS:
+		switch inputResult {
+		case result.FAILURE:
+			r.Result = result.FAILURE
+		case result.ATTENTION:
+			r.Result = result.ATTENTION
+		}
+	case result.ATTENTION:
+		switch inputResult {
+		case result.FAILURE:
+			r.Result = result.FAILURE
+		}
+
+	case result.SKIPPED:
+		r.Result = inputResult
+
+	case result.FAILURE:
+		// nothing else to do
+
+	default:
+		return fmt.Errorf("something went wrong in handling resource result, unknowned report result %q", r.Result)
+	}
+	return nil
 }
