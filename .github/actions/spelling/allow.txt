@@ -56,3 +56,4 @@ skippackaging
 joho
 godotenv
 filechecksum
+errdef
