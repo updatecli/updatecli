@@ -77,7 +77,7 @@ func (p *Pipeline) RunTargets() error {
 			isResultChanged = target.Result.Changed
 		}
 
-		err = p.Report.SetResult(target.Result.Result)
+		err = p.Report.UpdateResult(target.Result.Result)
 		if err != nil {
 			return fmt.Errorf("unable to set report result: %s", err)
 		}

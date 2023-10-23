@@ -100,7 +100,7 @@ func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skip
 	return successCounter, changedCounter, failedCounter, skippedCounter
 }
 
-func (r *Report) SetResult(inputResult string) error {
+func (r *Report) UpdateResult(inputResult string) error {
 
 	switch r.Result {
 
@@ -121,10 +121,10 @@ func (r *Report) SetResult(inputResult string) error {
 		r.Result = inputResult
 
 	case result.FAILURE:
-		// nothing else to do
+		// nothing else to do, a failed report cannot be changed
 
 	default:
-		return fmt.Errorf("something went wrong in handling resource result, unknowned report result %q", r.Result)
+		return fmt.Errorf("something went wrong in handling resource result, unknown report result %q", r.Result)
 	}
 	return nil
 }

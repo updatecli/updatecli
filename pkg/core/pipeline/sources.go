@@ -65,7 +65,7 @@ func (p *Pipeline) RunSources() error {
 		p.Sources[id] = source
 		p.Report.Sources[id] = &source.Result
 
-		err = p.Report.SetResult(source.Result.Result)
+		err = p.Report.UpdateResult(source.Result.Result)
 		if err != nil {
 			return fmt.Errorf("unable to set report result: %s", err)
 		}

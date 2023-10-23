@@ -50,7 +50,7 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		p.Conditions[id] = condition
 		p.Report.Conditions[id] = &condition.Result
 
-		err = p.Report.SetResult(condition.Result.Result)
+		err = p.Report.UpdateResult(condition.Result.Result)
 		if err != nil {
 			return false, fmt.Errorf("unable to set report result: %s", err)
 		}
