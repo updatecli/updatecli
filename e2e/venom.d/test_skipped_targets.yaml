@@ -10,14 +10,14 @@ testcases:
       - script: 'find ../updatecli.d/skipped.targets.d -type f -name "*yaml" -exec cat {} \;'
         type: 'exec'
         assertions:
-          - 'result.code ShouldEqual 0'
+          - 'result.code ShouldEqual 1'
           - 'result.systemout ShouldContainSubstring "shouldNeverRun:"'
   - name: "Test that no target is ever run in this set of updatecli manifests"
     steps:
       - script: '../scripts/test_skipped_targets.bash'
         type: 'exec'
         assertions:
-          - 'result.code ShouldEqual 0'
+          - 'result.code ShouldEqual 1'
           - 'result.systemerr ShouldNotContainSubstring "{{ .message.warning }}"'
-          - 'result.systemerr ShouldNotContainSubstring "{{ .message.error }}"'
+          - 'result.systemerr ShouldContainSubstring "{{ .message.error }}"'
           - 'result.systemerr ShouldContainSubstring "- [shouldNeverRun]"'

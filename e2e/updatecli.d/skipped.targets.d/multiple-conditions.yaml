@@ -19,7 +19,6 @@ conditions:
     name: This conditions always fail
     sourceid: default
     kind: shell
-    failwhen: true
     spec:
       command: "false"
   condition3:
