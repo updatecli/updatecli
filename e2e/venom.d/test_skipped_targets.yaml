@@ -10,7 +10,7 @@ testcases:
       - script: 'find ../updatecli.d/skipped.targets.d -type f -name "*yaml" -exec cat {} \;'
         type: 'exec'
         assertions:
-          - 'result.code ShouldEqual 1'
+          - 'result.code ShouldEqual 0'
           - 'result.systemout ShouldContainSubstring "shouldNeverRun:"'
   - name: "Test that no target is ever run in this set of updatecli manifests"
     steps:
