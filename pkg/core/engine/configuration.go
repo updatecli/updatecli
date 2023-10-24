@@ -20,7 +20,8 @@ func (e *Engine) LoadConfigurations() error {
 	ErrNoManifestDetectedCounter := 0
 
 	for i := range e.Options.Manifests {
-		if e.Options.Manifests[i].IsZero() {
+		// If no manifest file is specified, we try to detect one
+		if len(e.Options.Manifests[i].Manifests) == 0 {
 			// Updatecli tries to load the file updatecli.yaml if no manifest was specified
 			// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
 			// if there is no manifests in the directory updatecli.d then Updatecli returns no manifest files.
