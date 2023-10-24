@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -49,6 +50,7 @@ func (p *Pipeline) RunSources() error {
 
 			p.Sources[id] = source
 			p.Report.Sources[id] = &source.Result
+			p.Report.Result = result.FAILURE
 
 			logrus.Errorf("%s %v\n", source.Result, err)
 			continue
@@ -62,6 +64,11 @@ func (p *Pipeline) RunSources() error {
 
 		p.Sources[id] = source
 		p.Report.Sources[id] = &source.Result
+
+		err = p.Report.UpdateResult(source.Result.Result)
+		if err != nil {
+			return fmt.Errorf("unable to set report result: %s", err)
+		}
 	}
 
 	return err

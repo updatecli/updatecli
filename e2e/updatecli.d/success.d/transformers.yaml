@@ -59,27 +59,32 @@ conditions:
     disablesourceinput: true
     spec:
       command: '[ "{{ source "add" }}" == "v1.0.0-alpha" ]'
+      shell: '/bin/bash'
   trim:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "trim" }}" == "1.0.0" ]'
+      shell: '/bin/bash'
   replacers:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "replacers" }}" == "1.0.0" ]'
+      shell: '/bin/bash'
   findsubmatch:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "findsubmatch" }}" == "1.0" ]'
+      shell: '/bin/bash'
   semverinc:
     name: "Expected"
     kind: shell
     disablesourceinput: true
     spec:
       command: '[ "{{ source "semverinc" }}" == "2.0.0" ]'
+      shell: '/bin/bash'
