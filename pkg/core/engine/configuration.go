@@ -8,6 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // ReadConfigurations read every strategies configuration.
@@ -67,6 +69,12 @@ func (e *Engine) LoadConfigurations() error {
 			default:
 				err = fmt.Errorf("%q - %s", manifestFile, err)
 				errs = append(errs, err)
+				e.Reports = append(e.Reports,
+					reports.Report{
+						Result: result.FAILURE,
+						Err:    err.Error(),
+					},
+				)
 				continue
 			}
 
@@ -85,6 +93,12 @@ func (e *Engine) LoadConfigurations() error {
 					// don't initially fail as init. of the pipeline still fails even with a successful validation
 					err := fmt.Errorf("%q - %s", manifestFile, err)
 					errs = append(errs, err)
+					e.Reports = append(e.Reports,
+						reports.Report{
+							Result: result.FAILURE,
+							Err:    err.Error(),
+						},
+					)
 				}
 			}
 		}
@@ -108,5 +122,4 @@ func (e *Engine) LoadConfigurations() error {
 	}
 
 	return nil
-
 }
