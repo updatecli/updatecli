@@ -47,6 +47,8 @@ autodiscovery:
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             github.com/skratchdot/open-golang: ""
             k8s.io/utils: ""
+            # https://pkg.go.dev/golang.org/x/exp?tab=versions
+            golang.org/x/exp:
 
       only:
         # This repository contains other go.sum file used for testing.

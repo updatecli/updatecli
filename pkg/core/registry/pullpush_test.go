@@ -58,6 +58,7 @@ func TestPushPullPolicy(t *testing.T) {
 		expectedPullValuesFiles   []string
 		expectedPullSecretsFiles  []string
 		disableTLS                bool
+		overwrite                 bool
 	}{
 		{
 			name:                      "Validate that we can push and pull a policy using the latest tag, even thought the tag is ignored",
@@ -108,7 +109,19 @@ func TestPushPullPolicy(t *testing.T) {
 				data.toPushSecretFiles,
 				data.toPushPolicyName,
 				data.disableTLS,
-				data.toPushFileStore)
+				data.toPushFileStore,
+				data.overwrite)
+			require.NoError(t, err)
+
+			err = Push(
+				data.toPushPolicyFile,
+				data.toPushManifestFiles,
+				data.toPushValueFiles,
+				data.toPushSecretFiles,
+				data.toPushPolicyName,
+				data.disableTLS,
+				data.toPushFileStore,
+				data.overwrite)
 			require.NoError(t, err)
 
 			gotManifests, gotValues, gotSecrets, err := Pull(

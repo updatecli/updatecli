@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
@@ -70,7 +71,7 @@ type Spec struct {
 			* "pipelineid" is used to generate uniq branch name for target update relying on scm configuration.
 			* The same "pipelineid" may be used by different Updatecli manifest" to ensure they are updated in the same workflow including pullrequest.
 	*/
-	PipelineID string `yaml:",omitempty" jsonschema:"required"`
+	PipelineID string `yaml:",omitempty"`
 	/*
 		"autodiscovery" defines the configuration to automatically discover new versions update.
 
@@ -209,7 +210,7 @@ func New(option Option) (configs []Config, err error) {
 
 	// We need to be sure to generate a file checksum before we inject
 	// templates values as in some situation those values changes for each run
-	pipelineID, err := FileChecksum(option.ManifestFile)
+	fileChecksum, err := FileChecksum(option.ManifestFile)
 	if err != nil {
 		return configs, err
 	}
@@ -288,7 +289,20 @@ func New(option Option) (configs []Config, err error) {
 		configs[id].Spec = specs[id]
 		// config.PipelineID is required for config.Validate()
 		if len(configs[id].Spec.PipelineID) == 0 {
-			configs[id].Spec.PipelineID = pipelineID
+			logrus.Debugln("pipelineid undefined, we'll try to generate one")
+
+			// If pipeline name is defined then we use it to generate a pipeline id
+			// there is less change for the pipeline name to change.
+			switch configs[id].Spec.Name {
+			case "":
+				logrus.Debugln("pipeline name undefined, we'll use the manifest file checksum")
+				configs[id].Spec.PipelineID = fileChecksum
+			default:
+				logrus.Debugln("using pipeline name to generate the pipelineid")
+				hash := sha256.New()
+				hash.Write([]byte(configs[id].Spec.Name))
+				configs[id].Spec.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+			}
 		}
 
 		// By default Set config.Version to the current updatecli version
