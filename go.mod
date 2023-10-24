@@ -49,7 +49,7 @@ require (
 	github.com/muesli/mango-cobra v1.2.0
 	github.com/muesli/roff v0.1.0
 	github.com/nirasan/go-oauth-pkce-code-verifier v0.0.0-20220510032225-4f9f17eaec4c
-	github.com/oras-project/oras-credentials-go v0.3.0
+	github.com/oras-project/oras-credentials-go v0.3.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/testcontainers/testcontainers-go v0.24.1
 	github.com/tomwright/dasel v1.27.3
