@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.46.4
 	github.com/containerd/containerd v1.7.6 // indirect
 	github.com/fatih/color v1.15.0
-	github.com/go-git/go-git/v5 v5.9.0
+	github.com/go-git/go-git/v5 v5.10.0
 	github.com/heimdalr/dag v1.3.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/lithammer/dedent v1.1.0
