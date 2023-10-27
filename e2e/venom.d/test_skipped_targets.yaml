@@ -17,7 +17,7 @@ testcases:
       - script: '../scripts/test_skipped_targets.bash'
         type: 'exec'
         assertions:
-          - 'result.code ShouldEqual 1'
+          - 'result.code ShouldEqual 0'
           - 'result.systemerr ShouldNotContainSubstring "{{ .message.warning }}"'
-          - 'result.systemerr ShouldContainSubstring "{{ .message.error }}"'
+          - 'result.systemerr ShouldNotContainSubstring "{{ .message.error }}"'
           - 'result.systemerr ShouldContainSubstring "- [shouldNeverRun]"'

@@ -1,14 +1,13 @@
 package pipeline
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// RunConditions run every condition for a given configuration config.
+// RunConditions run every conditions for a given configuration config.
 func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 
 	logrus.Infof("\n\n%s:\n", strings.ToTitle("conditions"))
@@ -50,10 +49,6 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		p.Conditions[id] = condition
 		p.Report.Conditions[id] = &condition.Result
 
-		err = p.Report.UpdateResult(condition.Result.Result)
-		if err != nil {
-			return false, fmt.Errorf("unable to set report result: %s", err)
-		}
 	}
 
 	return globalResult, nil
