@@ -57,3 +57,4 @@ joho
 godotenv
 filechecksum
 errdef
+chardata
