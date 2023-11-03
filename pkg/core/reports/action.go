@@ -3,6 +3,7 @@ package reports
 import (
 	"encoding/xml"
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/sirupsen/logrus"
@@ -14,11 +15,17 @@ type Action struct {
 	PipelineTitle string         `xml:"h3,omitempty"`
 	Description   string         `xml:"p,omitempty"`
 	Targets       []ActionTarget `xml:"details,omitempty"`
+	PipelineUrl   PipelineURL    `xml:"a,omitempty"`
 }
 
 type ActionTargetChangelog struct {
 	Title       string `xml:"summary,omitempty"`
 	Description string `xml:"pre,omitempty"`
+}
+
+type PipelineURL struct {
+	URL  string `xml:"href,attr"`
+	Name string `xml:",chardata"`
 }
 
 // String show an action report formatted as a string
@@ -80,7 +87,7 @@ func (a *Action) sort() {
 	}
 }
 
-// String show an action report formatted as a string
+// ToActionsString show an action report formatted as a string
 func (a Action) ToActionsString() string {
 	output, err := xml.MarshalIndent(
 		Actions{
@@ -93,4 +100,66 @@ func (a Action) ToActionsString() string {
 	}
 
 	return string(output[:])
+}
+
+// UpdatePipelineURL analyze the local environment to guess if Updatecli is executed from a CI pipeline
+func (a *Action) UpdatePipelineURL() {
+
+	// isGitHubActionWorkflow check if the current execution is running from a GitHub Action
+	isGitHubActionWorkflow := func() bool {
+		if os.Getenv("GITHUB_ACTION") != "" &&
+			os.Getenv("GITHUB_SERVER_URL") != "" &&
+			os.Getenv("GITHUB_REPOSITORY") != "" &&
+			os.Getenv("GITHUB_RUN_ID") != "" {
+			logrus.Debugln("Github Action pipeline detected")
+			return true
+		}
+		return false
+	}
+
+	// isJenkinsPipeline check if the current execution is running from a Jenkins pipeline
+	isJenkinsPipeline := func() bool {
+		if os.Getenv("JENKINS_URL") != "" &&
+			os.Getenv("BUILD_URL") != "" {
+			logrus.Debugln("Jenkins build detected")
+			return true
+		}
+		return false
+	}
+
+	// isGitLabCI check if the current execution is running from a GitLab CI pipeline
+	isGitLabCI := func() bool {
+		if os.Getenv("CI_SERVER_URL") != "" &&
+			os.Getenv("CI_JOB_URL") != "" {
+			logrus.Debugln("Gitlab CI pipeline detected")
+			return true
+		}
+		return false
+	}
+
+	// isStashCI check if the current execution is running from a Stash CI pipeline
+	isStashCI := func() bool {
+		if os.Getenv("STASH_URL") != "" &&
+			os.Getenv("STASH_JOB_URL") != "" {
+			logrus.Debugln("Stash CI pipeline detected")
+			return true
+		}
+		return false
+	}
+
+	if isGitHubActionWorkflow() {
+		a.PipelineUrl.Name = "GitHub Action pipeline link"
+		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("GITHUB_SERVER_URL")+"/%s/actions/runs/%s", os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"))
+	} else if isJenkinsPipeline() {
+		a.PipelineUrl.Name = "Jenkins pipeline link"
+		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("BUILD_URL"))
+	} else if isGitLabCI() {
+		a.PipelineUrl.Name = "GitLab CI pipeline link"
+		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("CI_SERVER_URL")+"/%s/-/jobs/%s", os.Getenv("CI_PROJECT_PATH"), os.Getenv("CI_JOB_ID"))
+	} else if isStashCI() {
+		a.PipelineUrl.Name = "Stash CI pipeline link"
+		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("STASH_URL")+"/%s/-/jobs/%s", os.Getenv("STASH_PROJECT_PATH"), os.Getenv("STASH_JOB_ID"))
+	} else {
+		logrus.Debugln("No CI pipeline detected")
+	}
 }
