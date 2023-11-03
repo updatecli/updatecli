@@ -58,3 +58,4 @@ godotenv
 filechecksum
 errdef
 chardata
+pipelineurl
