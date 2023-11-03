@@ -49,6 +49,13 @@ type Config struct {
 	ScmID string `yaml:",omitempty"`
 	// !Deprecated in favor of `scmid`
 	DeprecatedScmID string `yaml:"scmID,omitempty" jsonschema:"-"`
+	/*
+		pipelineurl defines if a link to the Updatecli pipeline CI job should be added to the report.
+
+		remarks:
+		* Only available for GitHub Action, GitLab, Jenkins
+	*/
+	PipelineURL bool `yaml:",omitempty"`
 }
 
 // Action is a struct used by an updatecli pipeline.

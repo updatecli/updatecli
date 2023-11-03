@@ -131,7 +131,9 @@ func (p *Pipeline) RunActions() error {
 			return fmt.Errorf("%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
 		}
 
-		action.Report.UpdatePipelineURL()
+		if action.Config.PipelineURL {
+			action.Report.UpdatePipelineURL()
+		}
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
