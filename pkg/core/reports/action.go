@@ -111,7 +111,7 @@ func (a *Action) UpdatePipelineURL() {
 			os.Getenv("GITHUB_SERVER_URL") != "" &&
 			os.Getenv("GITHUB_REPOSITORY") != "" &&
 			os.Getenv("GITHUB_RUN_ID") != "" {
-			logrus.Debugln("Github Action pipeline detected")
+			logrus.Debugln("GitHub Action pipeline detected")
 			return true
 		}
 		return false
@@ -131,7 +131,7 @@ func (a *Action) UpdatePipelineURL() {
 	isGitLabCI := func() bool {
 		if os.Getenv("CI_SERVER_URL") != "" &&
 			os.Getenv("CI_JOB_URL") != "" {
-			logrus.Debugln("Gitlab CI pipeline detected")
+			logrus.Debugln("GitLab CI pipeline detected")
 			return true
 		}
 		return false
