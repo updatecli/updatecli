@@ -137,16 +137,6 @@ func (a *Action) UpdatePipelineURL() {
 		return false
 	}
 
-	// isStashCI check if the current execution is running from a Stash CI pipeline
-	isStashCI := func() bool {
-		if os.Getenv("STASH_URL") != "" &&
-			os.Getenv("STASH_JOB_URL") != "" {
-			logrus.Debugln("Stash CI pipeline detected")
-			return true
-		}
-		return false
-	}
-
 	if isGitHubActionWorkflow() {
 		a.PipelineUrl.Name = "GitHub Action pipeline link"
 		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("GITHUB_SERVER_URL")+"/%s/actions/runs/%s", os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"))
@@ -156,9 +146,6 @@ func (a *Action) UpdatePipelineURL() {
 	} else if isGitLabCI() {
 		a.PipelineUrl.Name = "GitLab CI pipeline link"
 		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("CI_SERVER_URL")+"/%s/-/jobs/%s", os.Getenv("CI_PROJECT_PATH"), os.Getenv("CI_JOB_ID"))
-	} else if isStashCI() {
-		a.PipelineUrl.Name = "Stash CI pipeline link"
-		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("STASH_URL")+"/%s/-/jobs/%s", os.Getenv("STASH_PROJECT_PATH"), os.Getenv("STASH_JOB_ID"))
 	} else {
 		logrus.Debugln("No CI pipeline detected")
 	}
