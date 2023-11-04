@@ -55,7 +55,7 @@ type Config struct {
 		remarks:
 		* Only available for GitHub Action, GitLab, Jenkins
 	*/
-	PipelineURL bool `yaml:",omitempty"`
+	DisablePipelineURL bool `yaml:",omitempty"`
 }
 
 // Action is a struct used by an updatecli pipeline.
