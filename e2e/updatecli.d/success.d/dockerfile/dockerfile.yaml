@@ -1,4 +1,5 @@
 name: Test Dockerfile condition and target
+pipelineid: "e2e/dockerfile"
 
 sources:
   appVersion:
