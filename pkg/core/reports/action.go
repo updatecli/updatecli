@@ -131,7 +131,8 @@ func (a *Action) UpdatePipelineURL() {
 
 	// isGitLabCI check if the current execution is running from a GitLab CI pipeline
 	isGitLabCI := func() bool {
-		if os.Getenv("CI_SERVER_URL") != "" &&
+		if os.Getenv("GITLAB_CI") != "" &&
+			os.Getenv("CI_SERVER_URL") != "" &&
 			os.Getenv("CI_JOB_URL") != "" {
 			logrus.Debugln("GitLab CI pipeline detected")
 			return true
