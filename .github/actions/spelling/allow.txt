@@ -57,3 +57,7 @@ joho
 godotenv
 filechecksum
 errdef
+mcr
+nanoserver
+ltsc
+windowscore
