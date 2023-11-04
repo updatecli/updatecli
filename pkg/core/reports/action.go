@@ -15,7 +15,8 @@ type Action struct {
 	PipelineTitle string         `xml:"h3,omitempty"`
 	Description   string         `xml:"p,omitempty"`
 	Targets       []ActionTarget `xml:"details,omitempty"`
-	PipelineUrl   PipelineURL    `xml:"a,omitempty"`
+	// using a pointer to avoid empty tag
+	PipelineUrl *PipelineURL `xml:"a,omitempty"`
 }
 
 type ActionTargetChangelog struct {
@@ -138,12 +139,15 @@ func (a *Action) UpdatePipelineURL() {
 	}
 
 	if isGitHubActionWorkflow() {
+		a.PipelineUrl = &PipelineURL{}
 		a.PipelineUrl.Name = "GitHub Action pipeline link"
 		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("GITHUB_SERVER_URL")+"/%s/actions/runs/%s", os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"))
 	} else if isJenkinsPipeline() {
+		a.PipelineUrl = &PipelineURL{}
 		a.PipelineUrl.Name = "Jenkins pipeline link"
-		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("BUILD_URL"))
+		a.PipelineUrl.URL = os.Getenv("BUILD_URL")
 	} else if isGitLabCI() {
+		a.PipelineUrl = &PipelineURL{}
 		a.PipelineUrl.Name = "GitLab CI pipeline link"
 		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("CI_SERVER_URL")+"/%s/-/jobs/%s", os.Getenv("CI_PROJECT_PATH"), os.Getenv("CI_JOB_ID"))
 	} else {
