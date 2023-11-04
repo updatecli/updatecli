@@ -58,3 +58,7 @@ godotenv
 filechecksum
 errdef
 ADOPTE
+mcr
+nanoserver
+ltsc
+windowscore
