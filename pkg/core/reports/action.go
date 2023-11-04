@@ -105,8 +105,8 @@ func (a Action) ToActionsString() string {
 
 // UpdatePipelineURL analyze the local environment to guess if Updatecli is executed from a CI pipeline
 func (a *Action) UpdatePipelineURL() {
-
 	// isGitHubActionWorkflow check if the current execution is running from a GitHub Action
+	// ref. https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
 	isGitHubActionWorkflow := func() bool {
 		if os.Getenv("GITHUB_ACTION") != "" &&
 			os.Getenv("GITHUB_SERVER_URL") != "" &&
