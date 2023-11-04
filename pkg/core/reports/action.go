@@ -130,6 +130,7 @@ func (a *Action) UpdatePipelineURL() {
 	}
 
 	// isGitLabCI check if the current execution is running from a GitLab CI pipeline
+	// ref. https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
 	isGitLabCI := func() bool {
 		if os.Getenv("GITLAB_CI") != "" &&
 			os.Getenv("CI_SERVER_URL") != "" &&
