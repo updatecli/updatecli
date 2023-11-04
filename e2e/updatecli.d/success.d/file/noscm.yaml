@@ -1,36 +1,56 @@
 name: Test file resource without scm
 
 sources:
-  adopters: 
+  adopters:
     name: "Get content from ADOPTERS.md"
     kind: file
     spec:
       file: ADOPTERS.md
 
-  adoptersFileScheme: 
+  adoptersFileScheme:
     name: "Get content from ADOPTERS.md using file scheme"
     kind: file
     spec:
       file: file://ADOPTERS.md
 
-  adoptersHTTPSScheme: 
+  adoptersHTTPSScheme:
     name: "Get content from ADOPTERS.md using https scheme"
     kind: file
     spec:
       file: https://raw.githubusercontent.com/updatecli/updatecli/main/ADOPTERS.md
 
+  adoptersWithFilePattern:
+    name: "Get content from ADOPTERS.md"
+    kind: file
+    spec:
+      file: ADOPTE??.md
+
 conditions:
-  adopters: 
+  adopters:
     name: "Validate ADOPTERS.md content"
     sourceid: adopters
     kind: file
     spec:
       file: ADOPTERS.md
 
+  adoptersFilePattern:
+    name: "Validate ADOPTERS.md content"
+    sourceid: adopters
+    kind: file
+    spec:
+      file: ADOPTE??.md
+
 targets:
-  adopters: 
+  adopters:
     name: "Update ADOPTERS.md content"
     sourceid: adopters
     kind: file
     spec:
       file: ADOPTERS.md
+
+  adoptersFilePattern:
+    name: "Update ADOPTERS.md content"
+    sourceid: adopters
+    kind: file
+    spec:
+      file: ADOPTE??.md

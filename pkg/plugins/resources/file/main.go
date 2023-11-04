@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Spec defines a specification for a "file" resource
@@ -64,19 +65,34 @@ func New(spec interface{}) (*File, error) {
 	newResource.files = make(map[string]fileMetadata)
 	// File as unique element of newResource.files
 	if len(newResource.spec.File) > 0 {
-		f := fileMetadata{
-			path:         strings.TrimPrefix(newResource.spec.File, "file://"),
-			originalPath: strings.TrimPrefix(newResource.spec.File, "file://"),
+		foundFiles, err := utils.FindFilesMatchingPathPattern(newResource.spec.File)
+		if err != nil {
+			return nil, fmt.Errorf("unable to find files matching %q: %s", newResource.spec.File, err)
 		}
-		newResource.files[newResource.spec.File] = f
+
+		for _, filePath := range foundFiles {
+			f := fileMetadata{
+				path:         strings.TrimPrefix(filePath, "file://"),
+				originalPath: strings.TrimPrefix(filePath, "file://"),
+			}
+			newResource.files[filePath] = f
+		}
 	}
 
-	for _, filePath := range newResource.spec.Files {
-		f := fileMetadata{
-			path:         strings.TrimPrefix(filePath, "file://"),
-			originalPath: strings.TrimPrefix(filePath, "file://"),
+	for _, specFile := range newResource.spec.Files {
+		foundFiles, err := utils.FindFilesMatchingPathPattern(specFile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to find files matching %q: %s", newResource.spec.File, err)
 		}
-		newResource.files[filePath] = f
+
+		for _, filePath := range foundFiles {
+			f := fileMetadata{
+				path:         strings.TrimPrefix(filePath, "file://"),
+				originalPath: strings.TrimPrefix(filePath, "file://"),
+			}
+			newResource.files[filePath] = f
+		}
+
 	}
 
 	return newResource, nil
