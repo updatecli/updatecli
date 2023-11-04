@@ -119,6 +119,7 @@ func (a *Action) UpdatePipelineURL() {
 	}
 
 	// isJenkinsPipeline check if the current execution is running from a Jenkins pipeline
+	// ref. https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
 	isJenkinsPipeline := func() bool {
 		if os.Getenv("JENKINS_URL") != "" &&
 			os.Getenv("BUILD_URL") != "" {
