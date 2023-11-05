@@ -57,6 +57,8 @@ joho
 godotenv
 filechecksum
 errdef
+chardata
+pipelineurl
 mcr
 nanoserver
 ltsc
