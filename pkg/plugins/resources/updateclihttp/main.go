@@ -24,7 +24,6 @@ or an error if the provided Spec triggers a validation error.
 *
 */
 func New(spec interface{}) (*Http, error) {
-
 	newSpec := Spec{}
 
 	err := mapstructure.Decode(spec, &newSpec)
