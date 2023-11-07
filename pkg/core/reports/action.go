@@ -3,10 +3,10 @@ package reports
 import (
 	"encoding/xml"
 	"fmt"
-	"os"
 	"sort"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 )
 
 type Action struct {
@@ -105,55 +105,14 @@ func (a Action) ToActionsString() string {
 
 // UpdatePipelineURL analyze the local environment to guess if Updatecli is executed from a CI pipeline
 func (a *Action) UpdatePipelineURL() {
-	// isGitHubActionWorkflow check if the current execution is running from a GitHub Action
-	// ref. https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
-	isGitHubActionWorkflow := func() bool {
-		if os.Getenv("GITHUB_ACTION") != "" &&
-			os.Getenv("GITHUB_SERVER_URL") != "" &&
-			os.Getenv("GITHUB_REPOSITORY") != "" &&
-			os.Getenv("GITHUB_RUN_ID") != "" {
-			logrus.Debugln("GitHub Action pipeline detected")
-			return true
-		}
-		return false
+
+	detectedCi, err := ci.New()
+	if err != nil {
+		logrus.Debugf("No CI pipeline detected (%s)\n", err)
 	}
 
-	// isJenkinsPipeline check if the current execution is running from a Jenkins pipeline
-	// ref. https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
-	isJenkinsPipeline := func() bool {
-		if os.Getenv("JENKINS_URL") != "" &&
-			os.Getenv("BUILD_URL") != "" {
-			logrus.Debugln("Jenkins build detected")
-			return true
-		}
-		return false
-	}
-
-	// isGitLabCI check if the current execution is running from a GitLab CI pipeline
-	// ref. https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-	isGitLabCI := func() bool {
-		if os.Getenv("GITLAB_CI") != "" &&
-			os.Getenv("CI_SERVER_URL") != "" &&
-			os.Getenv("CI_JOB_URL") != "" {
-			logrus.Debugln("GitLab CI pipeline detected")
-			return true
-		}
-		return false
-	}
-
-	if isGitHubActionWorkflow() {
-		a.PipelineUrl = &PipelineURL{}
-		a.PipelineUrl.Name = "GitHub Action pipeline link"
-		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("GITHUB_SERVER_URL")+"/%s/actions/runs/%s", os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"))
-	} else if isJenkinsPipeline() {
-		a.PipelineUrl = &PipelineURL{}
-		a.PipelineUrl.Name = "Jenkins pipeline link"
-		a.PipelineUrl.URL = os.Getenv("BUILD_URL")
-	} else if isGitLabCI() {
-		a.PipelineUrl = &PipelineURL{}
-		a.PipelineUrl.Name = "GitLab CI pipeline link"
-		a.PipelineUrl.URL = fmt.Sprintf(os.Getenv("CI_SERVER_URL")+"/%s/-/jobs/%s", os.Getenv("CI_PROJECT_PATH"), os.Getenv("CI_JOB_ID"))
-	} else {
-		logrus.Debugln("No CI pipeline detected")
+	a.PipelineUrl = &PipelineURL{
+		Name: detectedCi.Name(),
+		URL:  detectedCi.URL(),
 	}
 }
