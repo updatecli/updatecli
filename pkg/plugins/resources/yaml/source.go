@@ -56,7 +56,7 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 
 	var results []string
 	switch y.spec.Engine {
-	case "go-yaml", "default", "":
+	case EngineGoYaml, EngineDefault, EngineUndefined:
 		urlPath, err := goyaml.PathString(y.spec.Key)
 		if err != nil {
 			return fmt.Errorf("crafting yamlpath query: %w", err)
@@ -75,7 +75,7 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 			results = append(results, node.String())
 		}
 
-	case "yamlpath":
+	case EngineYamlPath:
 		urlPath, err := yamlpath.NewPath(y.spec.Key)
 		if err != nil {
 			return fmt.Errorf("crafting yamlpath query: %w", err)

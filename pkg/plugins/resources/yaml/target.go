@@ -67,7 +67,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	// originalContents := make(map[string]string)
 
 	switch y.spec.Engine {
-	case "go-yaml", "default", "":
+	case EngineGoYaml, EngineDefault, EngineUndefined:
 		//
 		urlPath, err := goyaml.PathString(y.spec.Key)
 		if err != nil {
@@ -145,7 +145,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 				}
 			}
 		}
-	case "yamlpath":
+	case EngineYamlPath:
 		urlPath, err := yamlpath.NewPath(y.spec.Key)
 		if err != nil {
 			return fmt.Errorf("crafting yamlpath query: %w", err)
