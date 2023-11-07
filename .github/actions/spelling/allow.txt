@@ -64,4 +64,6 @@ mcr
 nanoserver
 ltsc
 windowscore
-
+gha
+githubactions
+gitlabci
