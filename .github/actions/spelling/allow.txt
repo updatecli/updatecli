@@ -20,6 +20,7 @@ oidc
 udash
 Udash
 CLIENTID
+vmware
 minamijoyo
 hcledit
 work-around
@@ -58,7 +59,10 @@ godotenv
 filechecksum
 errdef
 ADOPTE
+chardata
+pipelineurl
 mcr
 nanoserver
 ltsc
 windowscore
+
