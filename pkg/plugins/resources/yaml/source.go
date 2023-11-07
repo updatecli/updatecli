@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	goyaml "github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/parser"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 
-	"github.com/goccy/go-yaml"
-	"github.com/goccy/go-yaml/parser"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
+	"gopkg.in/yaml.v3"
 )
 
 // Source return the latest version
@@ -52,23 +54,59 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	fileContent := y.files[filePath].content
 	originalFilePath := y.files[filePath].originalFilePath
 
-	urlPath, err := yaml.PathString(y.spec.Key)
-	if err != nil {
-		return fmt.Errorf("crafting yamlpath query: %w", err)
+	var results []string
+	switch y.spec.Engine {
+	case EngineGoYaml, EngineDefault, EngineUndefined:
+		urlPath, err := goyaml.PathString(y.spec.Key)
+		if err != nil {
+			return fmt.Errorf("crafting yamlpath query: %w", err)
+		}
+
+		file, err := parser.ParseBytes([]byte(fileContent), 0)
+		if err != nil {
+			return fmt.Errorf("parsing yaml file: %w", err)
+		}
+
+		node, err := urlPath.FilterFile(file)
+		if err != nil && !errors.Is(err, goyaml.ErrNotFoundNode) {
+			return fmt.Errorf("searching in yaml file: %w", err)
+		}
+		if node != nil {
+			results = append(results, node.String())
+		}
+
+	case EngineYamlPath:
+		urlPath, err := yamlpath.NewPath(y.spec.Key)
+		if err != nil {
+			return fmt.Errorf("crafting yamlpath query: %w", err)
+		}
+
+		var n yaml.Node
+
+		err = yaml.Unmarshal([]byte(fileContent), &n)
+		if err != nil {
+			return fmt.Errorf("parsing yaml file: %w", err)
+		}
+
+		founds, err := urlPath.Find(&n)
+		if err != nil {
+			return fmt.Errorf("searching in yaml file: %w", err)
+		}
+
+		for i := range founds {
+			results = append(results, founds[i].Value)
+		}
+
+	default:
+		return fmt.Errorf("unsupported engine %q", y.spec.Engine)
+	}
+	if len(results) == 0 {
+		return fmt.Errorf("impossible to find any key for the specified path: %s", y.spec.Key)
 	}
 
-	file, err := parser.ParseBytes([]byte(fileContent), 0)
-	if err != nil {
-		return fmt.Errorf("parsing yaml file: %w", err)
-	}
-
-	node, err := urlPath.FilterFile(file)
-	if err != nil && !errors.Is(err, yaml.ErrNotFoundNode) {
-		return fmt.Errorf("searching in yaml file: %w", err)
-	}
-
-	if node != nil {
-		value := node.String()
+	if len(results) > 0 {
+		value := results[0]
+		// value := node.String()
 		resultSource.Result = result.SUCCESS
 		resultSource.Information = value
 		resultSource.Description = fmt.Sprintf("value %q found for key %q in the yaml file %q",

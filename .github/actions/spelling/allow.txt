@@ -20,6 +20,7 @@ oidc
 udash
 Udash
 CLIENTID
+vmware
 minamijoyo
 hcledit
 work-around
@@ -63,3 +64,4 @@ mcr
 nanoserver
 ltsc
 windowscore
+

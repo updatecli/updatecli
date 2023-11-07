@@ -16,6 +16,17 @@ It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
 	/*
+		"engine" defines the engine to use to manipulate the yaml file.
+
+		There is no one good Golang library to manipulate yaml files.
+		And each one of them have has its pros and cons so we decided to allow this customization based on user's needs.
+
+		remark:
+			* Accepted value is one of "yamlpath", "go-yaml","default" or nothing
+			* go-yaml, "default" and "" are equivalent
+	*/
+	Engine string `yaml:",omitempty"`
+	/*
 		"file" defines the yaml file path to interact with.
 
 		compatible:
@@ -51,12 +62,13 @@ type Spec struct {
 		remark:
 			* key is a simpler version of yamlpath accepts keys.
 
-		example:
+		example using default engine:
 			* key: $.name
 			* key: $.agent.name
 			* key: $.agents[0].name
 			* key: $.agents[*].name
 			* key: $.'agents.name'
+			* key: $.repos[?(@.repository == 'website')].owner" (require engine set to yamlpath)
 
 		remark:
 			field path with key/value is not supported at the moment.
