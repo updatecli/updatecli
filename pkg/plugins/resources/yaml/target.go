@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -15,6 +16,9 @@ import (
 
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 	"gopkg.in/yaml.v3"
+
+	goyaml "github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/parser"
 )
 
 // Target updates a scm repository based on the modified yaml file.
@@ -62,45 +66,37 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	notChanged := 0
 	// originalContents := make(map[string]string)
 
-	urlPath, err := yamlpath.NewPath(y.spec.Key)
-	if err != nil {
-		return fmt.Errorf("crafting yamlpath query: %w", err)
-	}
-
-	var buf bytes.Buffer
-	e := yaml.NewEncoder(&buf)
-	defer e.Close()
-	e.SetIndent(2)
-
-	for filePath := range y.files {
-		buf = bytes.Buffer{}
-		originFilePath := y.files[filePath].originalFilePath
-
-		var n yaml.Node
-
-		err = yaml.Unmarshal([]byte(y.files[filePath].content), &n)
+	switch y.spec.Engine {
+	case "go-yaml", "default", "":
+		//
+		urlPath, err := goyaml.PathString(y.spec.Key)
 		if err != nil {
-			return fmt.Errorf("parsing yaml file: %w", err)
+			return fmt.Errorf("crafting yamlpath query: %w", err)
 		}
 
-		nodes, err := urlPath.Find(&n)
-		if err != nil {
-			return fmt.Errorf("searching in yaml file: %w", err)
-		}
+		for filePath := range y.files {
+			originFilePath := y.files[filePath].originalFilePath
 
-		if len(nodes) == 0 {
-			return fmt.Errorf("couldn't find key %q from file %q",
-				y.spec.Key,
-				originFilePath)
-		}
+			yamlFile, err := parser.ParseBytes([]byte(y.files[filePath].content), parser.ParseComments)
+			if err != nil {
+				return fmt.Errorf("parsing yaml file: %w", err)
+			}
 
-		var oldVersion string
-		for _, node := range nodes {
-			oldVersion = node.Value
+			node, err := urlPath.FilterFile(yamlFile)
+			if err != nil {
+				if errors.Is(err, goyaml.ErrNotFoundNode) {
+					return fmt.Errorf("couldn't find key %q from file %q",
+						y.spec.Key,
+						originFilePath)
+				}
+				return fmt.Errorf("searching in yaml file: %w", err)
+			}
+
+			oldVersion := node.String()
 			resultTarget.Information = oldVersion
 
 			if oldVersion == valueToWrite {
-				resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
+				resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
 					resultTarget.Description,
 					y.spec.Key,
 					valueToWrite,
@@ -109,54 +105,145 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 				continue
 			}
 
-			node.Value = valueToWrite
-		}
+			if err := urlPath.ReplaceWithReader(yamlFile, strings.NewReader(valueToWrite)); err != nil {
+				return fmt.Errorf("replacing yaml key: %w", err)
+			}
 
-		f := y.files[filePath]
-		err = e.Encode(&n)
+			f := y.files[filePath]
+			f.content = yamlFile.String()
+			y.files[filePath] = f
+
+			resultTarget.Changed = true
+			resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+			resultTarget.Result = result.ATTENTION
+
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
+				resultTarget.Description,
+				y.spec.Key,
+				shouldMsg,
+				oldVersion,
+				valueToWrite,
+				originFilePath)
+
+			if !dryRun {
+				newFile, err := os.Create(y.files[filePath].filePath)
+
+				// https://staticcheck.io/docs/checks/#SA5001
+				//lint:ignore SA5001 We want to defer the file closing before exiting the function
+				defer newFile.Close()
+
+				if err != nil {
+					return fmt.Errorf("creating file %q: %w", originFilePath, err)
+				}
+
+				err = y.contentRetriever.WriteToFile(
+					y.files[filePath].content,
+					y.files[filePath].filePath)
+
+				if err != nil {
+					return fmt.Errorf("saving file %q: %w", originFilePath, err)
+				}
+			}
+		}
+	case "yamlpath":
+		urlPath, err := yamlpath.NewPath(y.spec.Key)
 		if err != nil {
-			return fmt.Errorf("unable to marshal the yaml file: %w", err)
+			return fmt.Errorf("crafting yamlpath query: %w", err)
 		}
 
-		//
-		f.content = buf.String()
-		if strings.HasPrefix(y.files[filePath].content, "---\n") &&
-			!strings.HasPrefix(f.content, "---\n") {
-			f.content = "---\n" + f.content
-		}
-		y.files[filePath] = f
+		var buf bytes.Buffer
+		e := yaml.NewEncoder(&buf)
+		defer e.Close()
+		e.SetIndent(2)
 
-		resultTarget.Changed = true
-		resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
-		resultTarget.Result = result.ATTENTION
+		for filePath := range y.files {
+			buf = bytes.Buffer{}
+			originFilePath := y.files[filePath].originalFilePath
 
-		resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
-			resultTarget.Description,
-			y.spec.Key,
-			shouldMsg,
-			oldVersion,
-			valueToWrite,
-			originFilePath)
+			var n yaml.Node
 
-		if !dryRun {
-			newFile, err := os.Create(y.files[filePath].filePath)
-
-			// https://staticcheck.io/docs/checks/#SA5001
-			//lint:ignore SA5001 We want to defer the file closing before exiting the function
-			defer newFile.Close()
-
+			err = yaml.Unmarshal([]byte(y.files[filePath].content), &n)
 			if err != nil {
-				return fmt.Errorf("creating file %q: %w", originFilePath, err)
+				return fmt.Errorf("parsing yaml file: %w", err)
 			}
 
-			err = y.contentRetriever.WriteToFile(
-				y.files[filePath].content,
-				y.files[filePath].filePath)
-
+			nodes, err := urlPath.Find(&n)
 			if err != nil {
-				return fmt.Errorf("saving file %q: %w", originFilePath, err)
+				return fmt.Errorf("searching in yaml file: %w", err)
+			}
+
+			if len(nodes) == 0 {
+				return fmt.Errorf("couldn't find key %q from file %q",
+					y.spec.Key,
+					originFilePath)
+			}
+
+			var oldVersion string
+			for _, node := range nodes {
+				oldVersion = node.Value
+				resultTarget.Information = oldVersion
+
+				if oldVersion == valueToWrite {
+					resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
+						resultTarget.Description,
+						y.spec.Key,
+						valueToWrite,
+						originFilePath)
+					notChanged++
+					continue
+				}
+
+				node.Value = valueToWrite
+			}
+
+			f := y.files[filePath]
+			err = e.Encode(&n)
+			if err != nil {
+				return fmt.Errorf("unable to marshal the yaml file: %w", err)
+			}
+
+			//
+			f.content = buf.String()
+			if strings.HasPrefix(y.files[filePath].content, "---\n") &&
+				!strings.HasPrefix(f.content, "---\n") {
+				f.content = "---\n" + f.content
+			}
+			y.files[filePath] = f
+
+			resultTarget.Changed = true
+			resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+			resultTarget.Result = result.ATTENTION
+
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
+				resultTarget.Description,
+				y.spec.Key,
+				shouldMsg,
+				oldVersion,
+				valueToWrite,
+				originFilePath)
+
+			if !dryRun {
+				newFile, err := os.Create(y.files[filePath].filePath)
+
+				// https://staticcheck.io/docs/checks/#SA5001
+				//lint:ignore SA5001 We want to defer the file closing before exiting the function
+				defer newFile.Close()
+
+				if err != nil {
+					return fmt.Errorf("creating file %q: %w", originFilePath, err)
+				}
+
+				err = y.contentRetriever.WriteToFile(
+					y.files[filePath].content,
+					y.files[filePath].filePath)
+
+				if err != nil {
+					return fmt.Errorf("saving file %q: %w", originFilePath, err)
+				}
 			}
 		}
+	default:
+		return fmt.Errorf("unsupported engine %q", y.spec.Engine)
 	}
 
 	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")

@@ -24,8 +24,9 @@ func Test_Source(t *testing.T) {
 		{
 			name: "Passing Case with 'File' and complex key",
 			spec: Spec{
-				File: "test.yaml",
-				Key:  "annotations['github.owner']",
+				File:   "test.yaml",
+				Key:    "$.annotations['github.owner']",
+				Engine: "yamlpath",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -49,7 +50,7 @@ annotations:
 			name: "Passing Case with 'File'",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "github.owner",
+				Key:  "$.github.owner",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -75,7 +76,7 @@ github:
 				Files: []string{
 					"test.yaml",
 				},
-				Key: "github.owner",
+				Key: "$.github.owner",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -102,7 +103,7 @@ github:
 					"test.yaml",
 					"too-much.yaml",
 				},
-				Key: "github.owner",
+				Key: "$.github.owner",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -122,7 +123,7 @@ github:
 				Files: []string{
 					"test.yaml",
 				},
-				Key:   "github.owner",
+				Key:   "$.github.owner",
 				Value: "olblak",
 			},
 			files: map[string]file{
@@ -146,7 +147,7 @@ github:
 			name: "Failing case with invalid YAML content (tabs)",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "github.owner",
+				Key:  "$.github.owner",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -167,7 +168,7 @@ github:
 			name: "'No result' case with key not found",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "github.country",
+				Key:  "$.github.country",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -205,7 +206,8 @@ github:
 				Files: []string{
 					"test.yaml",
 				},
-				Key: "repos[?(@.repository == 'website')].owner",
+				Key:    "$.repos[?(@.repository == 'website')].owner",
+				Engine: "yamlpath",
 			},
 			files: map[string]file{
 				"test.yaml": {
