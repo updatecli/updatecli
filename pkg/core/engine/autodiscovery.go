@@ -161,7 +161,9 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 
 			if actionConfig != nil {
 				manifest.Actions = make(map[string]action.Config)
-				if p.Config.Spec.AutoDiscovery.GroupBy == autodiscovery.GROUPBYALL && actionConfig.Title == "" {
+				if (p.Config.Spec.AutoDiscovery.GroupBy == autodiscovery.GROUPBYALL ||
+					p.Config.Spec.AutoDiscovery.GroupBy == "") &&
+					actionConfig.Title == "" {
 					/*
 						Normally the config spec name should never be empty as it is a required field according the jsonschema spec
 					*/
