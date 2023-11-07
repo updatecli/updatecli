@@ -19,7 +19,7 @@ type Spec struct {
 		"engine" defines the engine to use to manipulate the yaml file.
 
 		There is no one good Golang library to manipulate yaml files.
-		And each one of them have their own pros and cons so we decided to allow this customation based on the user's needs.
+		And each one of them have has its pros and cons so we decided to allow this customization based on user's needs.
 
 		remark:
 			* Accepted value is one of "yamlpath", "go-yaml","default" or nothing
