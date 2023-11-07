@@ -20,6 +20,7 @@ oidc
 udash
 Udash
 CLIENTID
+vmware
 minamijoyo
 hcledit
 work-around
@@ -57,3 +58,12 @@ joho
 godotenv
 filechecksum
 errdef
+chardata
+pipelineurl
+mcr
+nanoserver
+ltsc
+windowscore
+gha
+githubactions
+gitlabci

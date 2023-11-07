@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 )
 
 type Action struct {
@@ -14,11 +15,18 @@ type Action struct {
 	PipelineTitle string         `xml:"h3,omitempty"`
 	Description   string         `xml:"p,omitempty"`
 	Targets       []ActionTarget `xml:"details,omitempty"`
+	// using a pointer to avoid empty tag
+	PipelineUrl *PipelineURL `xml:"a,omitempty"`
 }
 
 type ActionTargetChangelog struct {
 	Title       string `xml:"summary,omitempty"`
 	Description string `xml:"pre,omitempty"`
+}
+
+type PipelineURL struct {
+	URL  string `xml:"href,attr"`
+	Name string `xml:",chardata"`
 }
 
 // String show an action report formatted as a string
@@ -80,7 +88,7 @@ func (a *Action) sort() {
 	}
 }
 
-// String show an action report formatted as a string
+// ToActionsString show an action report formatted as a string
 func (a Action) ToActionsString() string {
 	output, err := xml.MarshalIndent(
 		Actions{
@@ -93,4 +101,18 @@ func (a Action) ToActionsString() string {
 	}
 
 	return string(output[:])
+}
+
+// UpdatePipelineURL analyze the local environment to guess if Updatecli is executed from a CI pipeline
+func (a *Action) UpdatePipelineURL() {
+
+	detectedCi, err := ci.New()
+	if err != nil {
+		logrus.Debugf("No CI pipeline detected (%s)\n", err)
+	}
+
+	a.PipelineUrl = &PipelineURL{
+		Name: detectedCi.Name(),
+		URL:  detectedCi.URL(),
+	}
 }

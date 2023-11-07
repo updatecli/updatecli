@@ -26,8 +26,9 @@ func Test_Condition(t *testing.T) {
 		{
 			name: "Passing Case with complex key",
 			spec: Spec{
-				File: "test.yaml",
-				Key:  "annotations.'github.owner'",
+				File:   "test.yaml",
+				Key:    "$.annotations['github.owner']",
+				Engine: "yamlpath",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -56,7 +57,37 @@ annotations:
 			name: "Passing Case",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "github.owner",
+				Key:  "$.github.owner",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing Case using yamlpath engine",
+			spec: Spec{
+				File:   "test.yaml",
+				Key:    "$.github.owner",
+				Engine: "yamlpath",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -87,8 +118,40 @@ github:
 				Files: []string{
 					"test.yaml",
 				},
-				Key:   "github.owner",
+				Key:   "$.github.owner",
 				Value: "olblak",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing case with one 'Files' no input source and only specified value using yamlpath engine",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+				},
+				Key:    "$.github.owner",
+				Value:  "olblak",
+				Engine: "yamlpath",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -119,7 +182,7 @@ github:
 					"test.yaml",
 					"too-much.yaml",
 				},
-				Key:   "github.owner",
+				Key:   "$.github.owner",
 				Value: "olblak",
 			},
 			files: map[string]file{
@@ -140,7 +203,7 @@ github:
 				Files: []string{
 					"test.yaml",
 				},
-				Key:   "github.owner",
+				Key:   "$.github.owner",
 				Value: "olblak",
 			},
 			files: map[string]file{
@@ -162,7 +225,7 @@ github:
 			name: "Failing case with invalid YAML content (tabs)",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "github.owner",
+				Key:  "$.github.owner",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -184,8 +247,38 @@ github:
 			name: "Passing case with keyonly and input source",
 			spec: Spec{
 				File:    "test.yaml",
-				Key:     "github.owner",
+				Key:     "$.github.owner",
 				KeyOnly: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml"},
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing case with keyonly and input source using yamlpath engine",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "$.github.owner",
+				KeyOnly: true,
+				Engine:  "yamlpath",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -213,8 +306,39 @@ github:
 			name: "'No result' case with keyonly and input source",
 			spec: Spec{
 				File:    "test.yaml",
-				Key:     "github.country",
+				Key:     "$.github.country",
 				KeyOnly: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
+			},
+			inputSourceValue: "",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			isResultWanted: false,
+		},
+		{
+			name: "'No result' case with keyonly and input source using yamlpath engine",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "$.github.country",
+				KeyOnly: true,
+				Engine:  "yamlpath",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -243,7 +367,7 @@ github:
 			name: "Validation error with both keyonly and specified value",
 			spec: Spec{
 				File:    "test.yaml",
-				Key:     "github.owner",
+				Key:     "$.github.owner",
 				KeyOnly: true,
 				Value:   "olblak",
 			},
@@ -281,7 +405,7 @@ github:
 			name: "'No result' case (key found but not the correct value)",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "github.owner",
+				Key:  "$.github.owner",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -310,7 +434,7 @@ github:
 			name: "Failing case (key not found)",
 			spec: Spec{
 				File: "test.yaml",
-				Key:  "github.admin",
+				Key:  "$.github.admin",
 			},
 			files: map[string]file{
 				"test.yaml": {
@@ -332,7 +456,7 @@ github:
 			name: "Validation Failure with both source and specified value",
 			spec: Spec{
 				File:  "test.yaml",
-				Key:   "github.owner",
+				Key:   "$.github.owner",
 				Value: "asterix",
 			},
 			files: map[string]file{
@@ -348,7 +472,7 @@ github:
 			name: "Passing case with no input source and only specified value",
 			spec: Spec{
 				File:  "test.yaml",
-				Key:   "github.owner",
+				Key:   "$.github.owner",
 				Value: "olblak",
 			},
 			files: map[string]file{
@@ -369,6 +493,42 @@ github:
 github:
   owner: olblak
   repository: charts
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing case with one 'Files' input source and only specified value",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+				},
+				Key:    "repos[?(@.repository == 'website')].owner",
+				Value:  "updatecli",
+				Engine: "yamlpath",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+repos:
+  - owner: updatecli
+    repository: website
+  - owner: olblak
+    repository: updatecli
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+repos:
+  - owner: updatecli
+    repository: website
+  - owner: olblak
+    repository: updatecli
 `,
 			},
 			isResultWanted: true,
