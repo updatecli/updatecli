@@ -56,7 +56,7 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/zclconf/go-cty v1.14.1
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
-	golang.org/x/text v0.13.0
+	golang.org/x/text v0.14.0
 	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
 	oras.land/oras-go/v2 v2.3.1
