@@ -1,4 +1,5 @@
-title: CSV manipulation examples
+name: CSV manipulation examples
+pipelineid: "e2e/csv"
 
 sources:
   default:

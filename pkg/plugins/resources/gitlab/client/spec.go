@@ -9,7 +9,7 @@ type Spec struct {
 		default:
 			url defaults to "gitlab.com"
 	*/
-	URL string `yaml:",omitempty" jsonschema:"required"`
+	URL string `yaml:",omitempty"`
 	/*
 		"username" defines the username used to authenticate with GitLab
 	*/

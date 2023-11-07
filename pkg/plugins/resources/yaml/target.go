@@ -19,7 +19,6 @@ import (
 
 // Target updates a scm repository based on the modified yaml file.
 func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-
 	if scm != nil {
 		y.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
@@ -48,7 +47,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	valueToWrite := source
 	if y.spec.Value != "" {
 		valueToWrite = y.spec.Value
-		logrus.Info("INFO: Using spec.Value instead of source input value.")
+		logrus.Debug("Using spec.Value instead of source input value.")
 	}
 
 	resultTarget.NewInformation = valueToWrite
@@ -61,7 +60,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	// loop over file(s)
 	notChanged := 0
-	//originalContents := make(map[string]string)
+	// originalContents := make(map[string]string)
 
 	urlPath, err := yamlpath.NewPath(y.spec.Key)
 	if err != nil {
@@ -98,7 +97,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		var oldVersion string
 		for _, node := range nodes {
 			oldVersion = node.Value
-			resultTarget.OldInformation = oldVersion
+			resultTarget.Information = oldVersion
 
 			if oldVersion == valueToWrite {
 				resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",

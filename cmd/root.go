@@ -4,9 +4,12 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/auth"
+	"golang.org/x/exp/slices"
+
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/core/registry"
+	"github.com/updatecli/updatecli/pkg/core/udash"
 
 	"github.com/updatecli/updatecli/pkg/core/engine"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -15,12 +18,14 @@ import (
 )
 
 var (
-	cfgFile      string
-	valuesFiles  []string
-	secretsFiles []string
-	e            engine.Engine
-	verbose      bool
-	experimental bool
+	manifestFiles    []string
+	valuesFiles      []string
+	secretsFiles     []string
+	policyReferences []string
+	e                engine.Engine
+	verbose          bool
+	experimental     bool
+	disableTLS       bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -64,8 +69,9 @@ func init() {
 		diffCmd,
 		prepareCmd,
 		manifestCmd,
-		loginCmd,
+		udashCmd,
 		showCmd,
+		composeCmd,
 		versionCmd,
 		docsCmd,
 		manCmd,
@@ -75,8 +81,9 @@ func init() {
 func run(command string) error {
 
 	switch command {
-	case "apply":
-		auth.Audience = oAuthAudience
+	case "apply", "compose/apply":
+		udash.Audience = udashOAuthAudience
+
 		if applyClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -96,8 +103,8 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
-	case "diff":
-		auth.Audience = oAuthAudience
+	case "diff", "compose/diff":
+		udash.Audience = udashOAuthAudience
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -117,6 +124,7 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
+
 	case "prepare":
 		if prepareClean {
 			defer func() {
@@ -138,15 +146,31 @@ func run(command string) error {
 			return err
 		}
 
-	case "login":
-		err := auth.Login(endpointURL, oAuthClientID, oAuthIssuer, oAuthAudience)
+	case "manifest/pull":
+		err := e.PullFromRegistry(manifestPullPolicyReference, disableTLS)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	case "manifest/push":
+		err := e.PushToRegistry(
+			manifestFiles,
+			valuesFiles,
+			secretsFiles,
+			manifestPushPolicyReference,
+			disableTLS,
+			manifestPushPolicyFile,
+			manifestPushFileStore,
+			manifestPushOverwrite)
+
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 	// Show is deprecated
-	case "show", "manifest/show":
+	case "manifest/show", "show", "compose/show":
 		if showClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -169,6 +193,29 @@ func run(command string) error {
 			return err
 		}
 
+	case "udash/config":
+		configFilePath, err := udash.ConfigFilePath()
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+		logrus.Infof("Config file located at %q", configFilePath)
+
+	case "udash/login":
+		err := udash.Login(udashEndpointURL, udashOAuthClientID, udashOAuthIssuer, udashOAuthAudience, udashOAuthAccessToken)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	case "udash/logout":
+		err := udash.Logout(udashEndpointURL)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
 	case "jsonschema":
 		err := engine.GenerateSchema(jsonschemaBaseID, jsonschemaDirectory)
 		if err != nil {
@@ -178,5 +225,31 @@ func run(command string) error {
 	default:
 		logrus.Warnf("Wrong command")
 	}
+	return nil
+}
+
+func getPolicyFilesFromRegistry() error {
+
+	if slices.Equal(policyReferences, []string{""}) || slices.Equal(policyReferences, []string{}) {
+		return nil
+	}
+
+	// TODO: To be removed once not experimental anymore
+	if !experimental {
+		logrus.Warningf("The 'oci registry' feature requires the flag --experimental to be set")
+		os.Exit(1)
+	}
+
+	for _, policy := range policyReferences {
+		policyManifest, policyValues, policySecrets, err := registry.Pull(policy, disableTLS)
+		if err != nil {
+			return err
+		}
+
+		manifestFiles = append(policyManifest, manifestFiles...)
+		valuesFiles = append(policyValues, valuesFiles...)
+		secretsFiles = append(policySecrets, secretsFiles...)
+	}
+
 	return nil
 }

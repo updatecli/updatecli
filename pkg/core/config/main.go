@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/core/version"
 
 	"github.com/hexops/gotextdiff"
@@ -30,10 +32,6 @@ import (
 const (
 	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
 	LOCALSCMIDENTIFIER string = "local"
-	// DefaultConfigFilename defines the default updatecli configuration filename
-	DefaultConfigFilename string = "updatecli.yaml"
-	// DefaultConfigDirname defines the default updatecli manifest directory
-	DefaultConfigDirname string = "updatecli.d"
 )
 
 // Config contains cli configuration
@@ -48,27 +46,141 @@ type Config struct {
 
 // Spec contains pipeline configuration
 type Spec struct {
-	// Name defines a pipeline name
+	/*
+		"name" defines a pipeline name
+
+		example:
+			* "name: 'deps: update nodejs version to latest stable'"
+
+		remark:
+			* using a short sentence describing the pipeline is a good way to name your pipeline.
+			* using conventional commits convention is a good way to name your pipeline.
+			* "name" is often used a default values for other configuration such as pullrequest title.
+			* "name" shouldn't contain any dynamic information such as source output.
+	*/
 	Name string `yaml:",omitempty" jsonschema:"required"`
-	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	/*
+		"pipelineid" allows to identify a full pipeline run.
+
+		example:
+			* "pipelineid: nodejs/dependencies"
+			* "pipelineid: gomod/github.com/updatecli/updatecli"
+			* "pipelineid: autodiscovery/gomodules/minor"
+
+		remark:
+			* "pipelineid" is used to generate uniq branch name for target update relying on scm configuration.
+			* The same "pipelineid" may be used by different Updatecli manifest" to ensure they are updated in the same workflow including pullrequest.
+	*/
 	PipelineID string `yaml:",omitempty"`
-	// AutoDiscovery defines parameters to the autodiscovery feature
+	/*
+		"autodiscovery" defines the configuration to automatically discover new versions update.
+
+		example:
+		---
+		autodiscovery:
+			scmid: default
+			actionid:  default
+			groupby: all
+			crawlers:
+				golang/gomod:
+					versionfilter:
+					kind: semver
+					pattern: patch
+		---
+	*/
 	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
-	// Title is used for the full pipeline
-	Title string `yaml:",omitempty"`
-	// !Deprecated in favor of `actions`
+	/*
+		"title" is deprecated, please use "name" instead.
+	*/
+	Title string `yaml:",omitempty" jsonschema:"-"`
+	/*
+		!Deprecated in favor of `actions`
+	*/
 	PullRequests map[string]action.Config `yaml:",omitempty" jsonschema:"-"`
-	// Actions defines the list of action configurations which need to be managed
+	/*
+		"actions" defines the list of action configurations which need to be managed.
+
+		examples:
+		---
+		actions:
+			default:
+				kind: github/pullrequest
+				scmid: default
+				spec:
+					automerge: true
+					labels:
+						- "dependencies"
+		---
+	*/
 	Actions map[string]action.Config `yaml:",omitempty"`
-	// SCMs defines the list of repository configuration used to fetch content from.
+	/*
+		"scms" defines the list of repository configuration used to fetch content from.
+
+		examples:
+		---
+		scms:
+			default:
+				kind: github
+				spec:
+					owner: "updatecli"
+					repository: "updatecli"
+					token: "${{ env "GITHUB_TOKEN" }}"
+					branch: "main"
+		---
+
+	*/
 	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
-	// Sources defines the list of source configuration
+	/*
+		"sources" defines the list of Updatecli source definition.
+
+		example:
+		---
+		sources:
+			# Source to retrieve the latest version of nodejs
+			nodejs:
+				name: Get latest nodejs version
+				kind: json
+				spec:
+					file: https://nodejs.org/dist/index.json
+					key: .(lts!=false).version
+		---
+	*/
 	Sources map[string]source.Config `yaml:",omitempty"`
-	// Conditions defines the list of condition configuration
+	/*
+		"conditions" defines the list of Updatecli condition definition.
+
+		example:
+		---
+		conditions:
+			container:
+				name: Check if Updatecli container image for tag "v0.63.0" exists
+				kind: dockerimage
+				spec:
+					image: "updatecli/updatecli:latest"
+					tag: "v0.63.0"
+		---
+	*/
 	Conditions map[string]condition.Config `yaml:",omitempty"`
-	// Targets defines the list of target configuration
+	/*
+		"targets" defines the list of Updatecli target definition.
+
+		example:
+		---
+		targets:
+		  	default:
+		     	name: 'ci: update Golangci-lint version to {{ source "default" }}'
+		     	kind: yaml
+		     	spec:
+		         	file: .github/workflows/go.yaml
+		         	key: $.jobs.build.steps[2].with.version
+		     	scmid: default
+		     	sourceid: default
+		---
+	*/
 	Targets map[string]target.Config `yaml:",omitempty"`
-	// Version specifies the minimum updatecli version compatible with the manifest
+	/*
+		"version" defines the minimum Updatecli version compatible with the manifest
+	*/
 	Version string `yaml:",omitempty"`
 }
 
@@ -92,19 +204,15 @@ func (config *Config) Reset() {
 }
 
 // New reads an updatecli configuration file
-func New(option Option) (config Config, err error) {
+func New(option Option) (configs []Config, err error) {
 
-	config.Reset()
-
-	config.filename = option.ManifestFile
-
-	dirname, basename := filepath.Split(option.ManifestFile)
+	_, basename := filepath.Split(option.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
 	// templates values as in some situation those values changes for each run
-	pipelineID, err := FileChecksum(option.ManifestFile)
+	fileChecksum, err := FileChecksum(option.ManifestFile)
 	if err != nil {
-		return config, err
+		return configs, err
 	}
 
 	logrus.Infof("Loading Pipeline %q", option.ManifestFile)
@@ -113,15 +221,18 @@ func New(option Option) (config Config, err error) {
 	c, err := os.Open(option.ManifestFile)
 
 	if err != nil {
-		return config, err
+		return configs, err
 	}
 
 	defer c.Close()
 
-	content, err := io.ReadAll(c)
+	var templatedManifestContent []byte
+	rawManifestContent, err := io.ReadAll(c)
 	if err != nil {
-		return config, err
+		return configs, err
 	}
+
+	specs := []Spec{}
 
 	if !option.DisableTemplating {
 		// Try to template manifest no matter the extension
@@ -129,76 +240,115 @@ func New(option Option) (config Config, err error) {
 
 		cwd, err := os.Getwd()
 		if err != nil {
-			return config, err
+			return configs, err
 		}
 		fs := os.DirFS(cwd)
 
 		t := Template{
-			CfgFile:      filepath.Join(dirname, basename),
+			CfgFile:      option.ManifestFile,
 			ValuesFiles:  option.ValuesFiles,
 			SecretsFiles: option.SecretsFiles,
 			fs:           fs,
 		}
 
-		content, err = t.New(content)
+		templatedManifestContent, err = t.New(rawManifestContent)
 		if err != nil {
-			return config, err
+			logrus.Errorf("Error while templating %q:\n---\n%s\n---\n\t%s\n", option.ManifestFile, string(rawManifestContent), err.Error())
+			return configs, err
 		}
 
+		if GolangTemplatingDiff {
+			diff := text.Diff("raw manifest", "templated manifest", string(rawManifestContent), string(templatedManifestContent))
+			switch diff {
+			case "":
+				logrus.Debugln("no Golang templating detected")
+			default:
+				logrus.Debugf("Golang templating change detected:\n%s\n\n---\n", diff)
+			}
+		}
 	}
-	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl", ".yaml", ".yml":
 
-		err = yaml.Unmarshal(content, &config.Spec)
+	switch extension := filepath.Ext(basename); extension {
+	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
+
+		err = unmarshalConfigSpec(templatedManifestContent, &specs)
 		if err != nil {
-			return config, err
+			return configs, err
 		}
 
 	default:
-		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, config.filename)
-		return config, ErrConfigFileTypeNotSupported
+		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, option.ManifestFile)
+		return configs, ErrConfigFileTypeNotSupported
 	}
 
-	// config.PipelineID is required for config.Validate()
-	if len(config.Spec.PipelineID) == 0 {
-		config.Spec.PipelineID = pipelineID
-	}
+	configs = make([]Config, len(specs))
+	for id := range specs {
 
-	// By default Set config.Version to the current updatecli version
-	if len(config.Spec.Version) == 0 {
-		config.Spec.Version = version.Version
-	}
+		configs[id].Reset()
+		configs[id].filename = option.ManifestFile
+		configs[id].Spec = specs[id]
+		// config.PipelineID is required for config.Validate()
+		if len(configs[id].Spec.PipelineID) == 0 {
+			logrus.Debugln("pipelineid undefined, we'll try to generate one")
 
-	// Ensure there is a local SCM defined as specified
-	if err = config.EnsureLocalScm(); err != nil {
-		return config, err
-	}
-
-	/** Check for deprecated directives **/
-	// pullrequests deprecated over actions
-	if len(config.Spec.PullRequests) > 0 {
-		if len(config.Spec.Actions) > 0 {
-			return config, fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
+			// If pipeline name is defined then we use it to generate a pipeline id
+			// there is less change for the pipeline name to change.
+			switch configs[id].Spec.Name {
+			case "":
+				logrus.Debugln("pipeline name undefined, we'll use the manifest file checksum")
+				configs[id].Spec.PipelineID = fileChecksum
+			default:
+				logrus.Debugln("using pipeline name to generate the pipelineid")
+				hash := sha256.New()
+				hash.Write([]byte(configs[id].Spec.Name))
+				configs[id].Spec.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+			}
 		}
 
-		logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
+		// By default Set config.Version to the current updatecli version
+		if len(configs[id].Spec.Version) == 0 {
+			configs[id].Spec.Version = version.Version
+		}
 
-		config.Spec.Actions = config.Spec.PullRequests
-		config.Spec.PullRequests = nil
+		// Ensure there is a local SCM defined as specified
+		if err = configs[id].EnsureLocalScm(); err != nil {
+			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+			continue
+		}
+
+		/** Check for deprecated directives **/
+		// pullrequests deprecated over actions
+		if len(configs[id].Spec.PullRequests) > 0 {
+			if len(configs[id].Spec.Actions) > 0 {
+				err := fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
+				logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+				continue
+			}
+
+			logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
+
+			configs[id].Spec.Actions = configs[id].Spec.PullRequests
+			configs[id].Spec.PullRequests = nil
+		}
+
+		err = configs[id].Validate()
+		if err != nil {
+			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+			continue
+		}
+
+		if len(configs[id].Spec.Name) == 0 {
+			configs[id].Spec.Name = strings.ToTitle(basename)
+		}
+
+		err = configs[id].Validate()
+		if err != nil {
+			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+			continue
+		}
 	}
 
-	err = config.Validate()
-	if err != nil {
-		return config, err
-	}
-
-	if len(config.Spec.Name) == 0 {
-		config.Spec.Name = strings.ToTitle(basename)
-	}
-
-	err = config.Validate()
-
-	return config, err
+	return configs, err
 
 }
 
@@ -455,6 +605,10 @@ func (config *Config) Validate() error {
 			fmt.Errorf("updatecli version compatibility error:\n%s", err))
 	}
 
+	if config.Spec.Title != "" {
+		logrus.Warningf("title is deprecated, please use name instead")
+	}
+
 	err = config.validateConditions()
 	if err != nil {
 		errs = append(
@@ -531,66 +685,13 @@ func (config *Config) ValidateManifestCompatibility() error {
 // Update updates its own configuration file
 // It's used when the configuration expected a value defined a runtime
 func (config *Config) Update(data interface{}) (err error) {
-	funcMap := template.FuncMap{
-		"pipeline": func(s string) (string, error) {
-			/*
-				Retrieve the value of a third location key from
-				the updatecli configuration.
-				It returns an error if a key doesn't exist
-				It returns {{ pipeline "<key>" }} if a key exist but still set to zero value,
-				then we assume that the value will be set later in the run.
-				Otherwise it returns the value.
-				This func is design to constantly reevaluate if a configuration changed
-			*/
-
-			val, err := getFieldValueByQuery(data, strings.Split(s, "."))
-			if err != nil {
-				return "", err
-			}
-
-			if len(val) > 0 {
-				return val, nil
-			}
-			// If we couldn't find a value, then we return the function so we can retry
-			// later on.
-			return fmt.Sprintf("{{ pipeline %q }}", s), nil
-
-		},
-		"source": func(s string) (string, error) {
-			/*
-				Retrieve the value of a third location key from
-				the updatecli context.
-				It returns an error if a key doesn't exist
-				It returns {{ source "<key>" }} if a key exist but still set to zero value,
-				then we assume that the value will be set later in the run.
-				Otherwise it returns the value.
-				This func is design to constantly reevaluate if a configuration changed
-			*/
-
-			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result", "Result"})
-			if err != nil {
-				return "", err
-			}
-
-			switch sourceResult {
-			case result.SUCCESS:
-				return getFieldValueByQuery(data, []string{"Sources", s, "Output"})
-			case result.FAILURE:
-				return "", fmt.Errorf("parent source %q failed", s)
-			// If the result of the parent source execution is not SUCCESS or FAILURE, then it means it was either skipped or not already run.
-			// In this case, the function is return "as it" (literally) to allow retry later (on a second configuration iteration)
-			default:
-				return fmt.Sprintf("{{ source %q }}", s), nil
-			}
-		},
-	}
 
 	content, err := yaml.Marshal(config.Spec)
 	if err != nil {
 		return err
 	}
 
-	tmpl, err := template.New("cfg").Funcs(funcMap).Parse(string(content))
+	tmpl, err := template.New("cfg").Funcs(updatecliRuntimeFuncMap(data)).Parse(string(content))
 	if err != nil {
 		return err
 	}

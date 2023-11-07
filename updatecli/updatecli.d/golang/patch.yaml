@@ -1,4 +1,5 @@
-name: "Bump Patch version for Golang module"
+name: "deps: bump patch version for Golang package defined in go.mod"
+pipelineid: "golang/gomod/patch"
 
 scms:
   default:
@@ -12,20 +13,17 @@ scms:
 
 actions:
     default:
-        # The action title is used to define the pullrequest title
-        # Since we use the groupby: we need to be sure that the pullrequest title
-        # is the same for all the subpipeline.
-        title: Bump Patch version of Golang module
         kind: github/pullrequest
         scmid: default
         spec:
+          automerge: false
           labels:
             - "dependencies"
 
 autodiscovery:
   scmid: default
   actionid:  default
-  groupby: all 
+  groupby: all
   crawlers:
     golang/gomod:
       versionfilter:
@@ -45,9 +43,12 @@ autodiscovery:
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             golang.org/x/time: ""
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
-            github.com/nirasan/go-oauth-pkce-code-verifier:
+            github.com/nirasan/go-oauth-pkce-code-verifier: ""
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
-            github.com/skratchdot/open-golang:
+            github.com/skratchdot/open-golang: ""
+            k8s.io/utils: ""
+            # https://pkg.go.dev/golang.org/x/exp?tab=versions
+            golang.org/x/exp:
 
       only:
         # This repository contains other go.sum file used for testing.

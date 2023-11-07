@@ -15,39 +15,43 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/udash"
 )
 
 // Pipeline represent an updatecli run for a specific configuration
 type Pipeline struct {
-	Name  string // Name defines a pipeline name, used to improve human visualization
-	ID    string // ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title string // Title is used for the full pipeline
-
-	Sources    map[string]source.Source
+	// Name defines a pipeline name, used to improve human visualization
+	Name string
+	// ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	ID string
+	// Sources contains all sources defined in the configuration
+	Sources map[string]source.Source
+	// Conditions contains all conditions defined in the configuration
 	Conditions map[string]condition.Condition
-	Targets    map[string]target.Target
-	SCMs       map[string]scm.Scm
-	Actions    map[string]action.Action
-
+	// Targets contains all targets defined in the configuration
+	Targets map[string]target.Target
+	// SCMs contains all scms defined in the configuration
+	SCMs map[string]scm.Scm
+	// Actions contains all actions defined in the configuration
+	Actions map[string]action.Action
+	// Report contains the pipeline report
 	Report reports.Report
-
+	// Options contains all updatecli options for this specific pipeline
 	Options Options
-
+	// Config contains the pipeline configuration defined by the user
 	Config *config.Config
 }
 
 // Init initialize an updatecli context based on its configuration
 func (p *Pipeline) Init(config *config.Config, options Options) error {
 
-	if len(config.Spec.Title) > 0 {
-		p.Title = config.Spec.Title
-	} else {
-		p.Title = config.Spec.Name
+	p.Name = config.Spec.Name
+	if len(config.Spec.Title) > 0 && p.Name == "" {
+		p.Name = config.Spec.Title
 	}
 
 	p.Options = options
 
-	p.Name = config.Spec.Name
 	p.ID = config.Spec.PipelineID
 
 	p.Config = config
@@ -192,9 +196,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 // Run execute an single pipeline
 func (p *Pipeline) Run() error {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Title)+4))
-	logrus.Infof("# %s #\n", strings.ToTitle(p.Title))
-	logrus.Infof("%s\n", strings.Repeat("#", len(p.Title)+4))
+	logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Name)+4))
+	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
+	logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
 	if len(p.Sources) > 0 {
 		err := p.RunSources()
@@ -238,10 +242,10 @@ func (p *Pipeline) Run() error {
 	}
 
 	if cmdoptions.Experimental {
-		err := p.Report.Publish()
+		err := udash.Publish(&p.Report)
 		if err != nil &&
-			!errors.Is(err, reports.ErrNoBearerToken) &&
-			!errors.Is(err, reports.ErrNoReportAPIURL) {
+			!errors.Is(err, udash.ErrNoUdashBearerToken) &&
+			!errors.Is(err, udash.ErrNoUdashAPIURL) {
 			logrus.Infof("Skipping report publishing")
 			logrus.Debugf("publish report: %s", err)
 		}
@@ -254,7 +258,6 @@ func (p *Pipeline) Run() error {
 func (p *Pipeline) String() string {
 
 	result := fmt.Sprintf("%q: %q\n", "Name", p.Name)
-	result = result + fmt.Sprintf("%q: %q\n", "Title", p.Title)
 	result = result + fmt.Sprintf("%q: %q\n", "ID", p.ID)
 
 	result = result + fmt.Sprintf("%q:\n", "Sources")

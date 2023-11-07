@@ -2,18 +2,57 @@ package xml
 
 import "errors"
 
+/*
+"xml" defines the specification for manipulating "xml" files.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// [s][c][t] File defines the xml path to interact with
+	/*
+		"file" define the xml file path to interact with.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		remark:
+			* scheme "https://", "http://", and "file://" are supported in path for source and condition
+	*/
 	File string `yaml:",omitempty"`
-	// [s][c][t] Path defines the xmlPAth used for doing the query
+	/*
+		"path" defines the xpath query used for retrieving value from a XML document
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		example:
+			* path: "/project/parent/version"
+			* path: "//breakfast_menu/food[0]/name"
+			* path: "//book[@category='WEB']/title"
+	*/
 	Path string `yaml:",omitempty"`
-	// [s][c][t] Value specifies the value for a specific Path. Default value fetch from source input
+	/*
+		"value" is the value associated with a xpath query.
+
+		compatible:
+			* source
+			* condition
+			* target
+
+		default:
+			when used from a condition or a target, the default value is set to linked source output
+
+	*/
 	Value string `yaml:",omitempty"`
 }
 
 var (
+	// ErrSpecFileUndefined is returned when the file is not defined
 	ErrSpecFileUndefined = errors.New("xml file not specified")
-	ErrSpecKeyUndefined  = errors.New("xml key undefined")
+	// ErrSpecPathUndefined is returned when the path is not defined
+	ErrSpecPathUndefined = errors.New("xml path undefined")
 )
 
 func (s *Spec) Validate() (errs []error) {
@@ -21,7 +60,7 @@ func (s *Spec) Validate() (errs []error) {
 		errs = append(errs, errors.New(""))
 	}
 	if len(s.Path) == 0 {
-		errs = append(errs, errors.New("xml key not specified "))
+		errs = append(errs, ErrSpecPathUndefined)
 	}
 	return errs
 }

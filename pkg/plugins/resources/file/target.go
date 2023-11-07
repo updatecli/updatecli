@@ -120,8 +120,12 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	sort.Strings(files)
 
+	descriptions := []string{}
+
 	// Otherwise write the new content to the file(s), or nothing but logs if dry run is enabled
+	changedFiles := []string{}
 	for filePath, file := range f.files {
+		changedFiles = append(changedFiles, filePath)
 		var contentType string
 		var err error
 
@@ -143,23 +147,22 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			return err
 		}
 
-		resultTarget.Description = fmt.Sprintf("%s\nUpdated to %s %q in file %q\n",
-			resultTarget.Description,
-			contentType,
-			f.spec.Content,
-			file.originalPath)
-
-		logrus.Debugf("updated %s of file %q\n\n%s\n",
-			contentType,
-
+		description := fmt.Sprintf("%q updated with %s %q",
 			file.originalPath,
-			text.Diff(filePath, originalContents[filePath], file.content),
+			contentType,
+			inputContent)
+
+		logrus.Infof("%s\n\n```\n%s\n```\n\n",
+			description,
+			text.Diff(filePath, filePath, originalContents[filePath], file.content),
 		)
+
+		descriptions = append(descriptions, description)
 
 		f.files[filePath] = file
 	}
 
-	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
+	resultTarget.Description = fmt.Sprintf("%d file(s) updated with %q:\n\t* %s\n", len(descriptions), inputContent, strings.Join(changedFiles, "\n\t* "))
 
 	resultTarget.Result = result.ATTENTION
 	resultTarget.Changed = true

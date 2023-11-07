@@ -1,5 +1,7 @@
 package result
 
+import "bytes"
+
 // Conditions holds condition execution result
 type Condition struct {
 	//Name holds the condition name
@@ -20,4 +22,11 @@ type Condition struct {
 	Scm SCM
 	// ID contains a uniq identifier for the condition
 	ID string
+	// ConsoleOutput stores the console output of the condition execution
+	ConsoleOutput string
+}
+
+// SetConsoleOutput sets the console output of the condition execution
+func (c *Condition) SetConsoleOutput(out *bytes.Buffer) {
+	c.ConsoleOutput = out.String()
 }

@@ -1,8 +1,8 @@
-name: Bump venom version
-pipelineid: 6a1c726e25648f93a45aa3b540ba8fd6307a62f92830404f55259bfbbc1b3c6f
+name: "ci: bump Venom version"
+pipelineid: "venom"
 actions:
     default:
-        title: '[updatecli] Bump Venom version to {{ source "latestVersion" }}'
+        title: 'ci: bump Venom version to {{ source "latestVersion" }}'
         kind: github/pullrequest
         spec:
             automerge: true
@@ -21,8 +21,6 @@ scms:
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             user: updatecli
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-            commitmessage:
-                title: 'Bump Venom version to {{ source "latestVersion" }}'
         disabled: false
 sources:
     latestVersion:
@@ -37,7 +35,7 @@ sources:
                 kind: semver
 targets:
     goWorkflow:
-        name: Bump Venom version to {{ source "latestVersion" }}
+        name: 'ci: update Venom version to {{ source "latestVersion" }}'
         kind: file
         spec:
             content: 'VENOM_VERSION: {{ source `latestVersion` }}'

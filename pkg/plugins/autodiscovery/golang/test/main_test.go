@@ -50,7 +50,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"golangModuleVersion": {
 							SourceID: "golangModuleVersion",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Update gopkg.in/yaml.v3 Golang module version",
+								Name: `Bump gopkg.in/yaml.v3 to {{ source "golangModuleVersion" }}`,
 								Kind: "golang/gomod",
 								Spec: gomod.Spec{
 									File:   "go.mod",
@@ -101,7 +101,7 @@ func TestDiscoverManifests(t *testing.T) {
 						"golangVersion": {
 							SourceID: "golangVersion",
 							ResourceConfig: resource.ResourceConfig{
-								Name: "Update Go version",
+								Name: `Bump Golang to {{ source "golangVersion" }}`,
 								Kind: "golang/gomod",
 								Spec: gomod.Spec{
 									File: "go.mod",

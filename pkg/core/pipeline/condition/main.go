@@ -1,7 +1,10 @@
 package condition
 
 import (
+	"bytes"
 	"errors"
+	"io"
+	"os"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
@@ -24,7 +27,8 @@ type Condition struct {
 	Result result.Condition
 	// Config defines condition input parameters
 	Config Config
-	Scm    *scm.ScmHandler
+	// Scm stores scm information
+	Scm *scm.ScmHandler
 }
 
 // Config defines conditions input parameters
@@ -42,7 +46,21 @@ type Config struct {
 
 // Run tests if a specific condition is true
 func (c *Condition) Run(source string) (err error) {
+
+	var consoleOutput bytes.Buffer
+	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	logrus.SetOutput(io.MultiWriter(os.Stderr, &consoleOutput))
+	/*
+		The last defer will be executed first,
+		so in this case we want to first save the console output
+		before setting back the logrus output to stdout.
+	*/
+	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	defer logrus.SetOutput(os.Stderr)
+	defer c.Result.SetConsoleOutput(&consoleOutput)
+
 	c.Result.Result = result.FAILURE
+	c.Result.Name = c.Config.ResourceConfig.Name
 
 	condition, err := resource.New(c.Config.ResourceConfig)
 	if err != nil {
@@ -110,6 +128,7 @@ func (c Config) JSONSchema() *jschema.Schema {
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
 }
 
+// Validate checks if a condition configuration is valid
 func (c *Config) Validate() error {
 	gotError := false
 	missingParameters := []string{}

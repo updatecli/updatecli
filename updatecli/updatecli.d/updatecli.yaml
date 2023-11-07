@@ -1,10 +1,10 @@
-name: Bump updatecli version
+name: "docs: bump updatecli version"
 
-pipelineid: cac467f9bdc931266038f8cf363edc865370121deb3954b93e70d0588827a04f
+pipelineid: "updatecli"
 
 actions:
     default:
-        title: 'Bump updatecli version to {{ source "latestVersion" }}'
+        title: 'deps: bump updatecli version to {{ source "latestVersion" }}'
         kind: github/pullrequest
         spec:
             automerge: true
@@ -23,8 +23,6 @@ scms:
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             user: updatecli
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
-            commitmessage:
-                title: 'Bump updatecli version to {{ source "latestVersion" }}'
 
 sources:
     latestVersion:
@@ -35,6 +33,8 @@ sources:
             repository: updatecli
             token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
             username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            versionfilter:
+              kind: semver
 
 conditions:
     container:
@@ -45,7 +45,7 @@ conditions:
 
 targets:
     bugReport:
-        name: 'Update updatecli version to {{ source "latestVersion" }}'
+        name: 'docs: update updatecli version to {{ source "latestVersion" }}'
         kind: file
         spec:
             content: '**updatecli**: {{ source `latestVersion` }}'
@@ -54,12 +54,32 @@ targets:
         scmid: default
         sourceid: latestVersion
 
-    cosign:
-        name: 'Update updatecli version to {{ source "latestVersion" }}'
+    cosign-container:
+        name: 'docs: update issue template with Updatecli version to {{ source "latestVersion" }}'
         kind: file
         spec:
-            content: 'ghcr.io/updatecli/updatecli:{{ source `latestVersion` }}'
             file: README.adoc
-            matchpattern: 'ghcr.io/updatecli/updatecli:.*'
+            matchpattern: 'ghcr.io/updatecli/updatecli:(.*)'
+            replacepattern: 'ghcr.io/updatecli/updatecli:{{ source "latestVersion" }}'
+        scmid: default
+        sourceid: latestVersion
+
+    cosign-checksums-txt-sig:
+        name: 'docs: update checksums.txt.sig url with Updatecli version to {{ source "latestVersion" }}'
+        kind: file
+        spec:
+            file: README.adoc
+            matchpattern: '(.*)https://github.com/updatecli/updatecli/releases/download/(.*)/checksums.txt.sig(.*)'
+            replacepattern: '${1}https://github.com/updatecli/updatecli/releases/download/{{ source "latestVersion" }}/checksums.txt.sig${3}'
+        scmid: default
+        sourceid: latestVersion
+
+    cosign-checksums-txt-pem:
+        name: 'docs: update checksums.txt.pem url with Updatecli version to {{ source "latestVersion" }}'
+        kind: file
+        spec:
+            file: README.adoc
+            matchpattern: '(.*)https://github.com/updatecli/updatecli/releases/download/(.*)/checksums.txt.pem(.*)'
+            replacepattern: '${1}https://github.com/updatecli/updatecli/releases/download/{{ source "latestVersion" }}/checksums.txt.pem${3}'
         scmid: default
         sourceid: latestVersion

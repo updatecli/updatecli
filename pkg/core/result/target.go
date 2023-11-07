@@ -1,6 +1,9 @@
 package result
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 // Target holds target execution result
 type Target struct {
@@ -30,10 +33,17 @@ type Target struct {
 	Scm SCM
 	// ID contains a uniq identifier for the target
 	ID string
+	// ConsoleOutput stores the console output of the target execution
+	ConsoleOutput string
 }
 
 func (t *Target) String() string {
 	str := fmt.Sprintf("%q => %q", t.Information, t.NewInformation)
 	str = str + fmt.Sprintf("\n%s - %s", t.Result, t.Description)
 	return str
+}
+
+// SetConsoleOutput sets the console output of the target execution
+func (t *Target) SetConsoleOutput(out *bytes.Buffer) {
+	t.ConsoleOutput = out.String()
 }

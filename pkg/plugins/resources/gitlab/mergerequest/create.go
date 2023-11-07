@@ -2,16 +2,18 @@ package mergerequest
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
+
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
-// CreateAction opens a Pull Request on the GitLab server
+// CreateAction opens a Merge Request on the GitLab server
 func (g *Gitlab) CreateAction(report reports.Action) error {
 
 	title := report.Title
@@ -24,41 +26,41 @@ func (g *Gitlab) CreateAction(report reports.Action) error {
 	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
 	if err != nil {
 		logrus.Warningf("something went wrong while generating GitLab body: %s", err)
+		return fmt.Errorf("generate GitLab body: %s", err.Error())
 	}
 
 	if len(g.spec.Body) > 0 {
 		body = g.spec.Body
 	}
 
-	// Check if a pull-request is already opened then exit early if it does.
-	exist, err := g.isPullRequestExist()
+	// Check if a merge-request is already opened then exit early if it does.
+	exist, err := g.isMergeRequestExist()
 	if err != nil {
-		return err
+		return fmt.Errorf("check if a mergerequest already exist: %s", err.Error())
 	}
 
 	if exist {
+		logrus.Debugln("GitLab mergerequest already exist, nothing to do")
 		return nil
 	}
 
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
 	ok, err := g.isRemoteBranchesExist()
-
 	if err != nil {
-		return err
+		return fmt.Errorf("check if remote branches exist: %s", err.Error())
 	}
 
 	/*
-		Due to the following scenario, Updatecli always tries to open a Pullrequest
-			* A pullrequest has been "manually" closed via UI
-			* A previous Updatecli run failed during a Pullrequest creation for example due to network issues
+		Due to the following scenario, Updatecli always tries to open a mergerequest
+			* A mergerequest has been "manually" closed via UI
+			* A previous Updatecli run failed during a mergerequest creation for example due to network issues
 
 
-		Therefore we always try to open a pull request, we don't consider being an error if all conditions are not met
+		Therefore we always try to open a mergerequest, we don't consider being an error if all conditions are not met
 		such as missing remote branches.
 	*/
 	if !ok {
-		logrus.Debugln("skipping pullrequest creation")
-		return nil
+		return fmt.Errorf("remote branches %q and %q do not exist, we can't open a mergerequest", g.SourceBranch, g.TargetBranch)
 	}
 
 	opts := scm.PullRequestInput{
@@ -68,7 +70,7 @@ func (g *Gitlab) CreateAction(report reports.Action) error {
 		Target: g.TargetBranch,
 	}
 
-	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
+	logrus.Debugf("Title:\t%q\nBody:\t%v\nSource branch:\t%q\nTarget branch:\t%q\n",
 		title,
 		body,
 		g.SourceBranch,
@@ -92,14 +94,16 @@ func (g *Gitlab) CreateAction(report reports.Action) error {
 			logrus.Infof("GitLab pullrequest not created, skipping")
 			return nil
 		}
-		return err
+		logrus.Debugf("HTTP Response:\n\tReturn code: %d\n\n", resp.Status)
+
+		return fmt.Errorf("create GitLab mergerequest: %v", err)
 	}
 
 	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		logrus.Debugf("HTTP return code: %d\n\n", resp.Status)
 	}
 
-	logrus.Infof("GitLab pullrequest successfully opened on %q", pr.Link)
+	logrus.Infof("GitLab mergerequest successfully opened on %q", pr.Link)
 
 	return nil
 }

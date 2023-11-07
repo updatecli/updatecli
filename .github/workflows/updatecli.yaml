@@ -1,24 +1,25 @@
 name: updatecli
 on:
+  release:
   workflow_dispatch:
   push:
   pull_request:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    # Run every hour
-    - cron: '0 * * * *'
+    # Run at 12:00 on Friday.”
+    - cron: '0 12 * * 5'
 jobs:
   updatecli:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
       - name: "Setup updatecli"
-        uses: "updatecli/updatecli-action@v2.33.0"
+        uses: "updatecli/updatecli-action@v2"
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.20.1
+          go-version-file: 'go.mod'
         id: go
       - name: "Run updatecli in dryrun"
         run: "updatecli diff --config ./updatecli/updatecli.d --experimental"

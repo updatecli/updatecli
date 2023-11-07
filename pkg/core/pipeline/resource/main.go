@@ -26,6 +26,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/go/gomod"
 	golang "github.com/updatecli/updatecli/pkg/plugins/resources/go/language"
 	gomodule "github.com/updatecli/updatecli/pkg/plugins/resources/go/module"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/hcl"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/jenkins"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/json"
@@ -34,6 +35,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	stashBranch "github.com/updatecli/updatecli/pkg/plugins/resources/stash/branch"
 	stashTag "github.com/updatecli/updatecli/pkg/plugins/resources/stash/tag"
+	terraformLock "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/lock"
+	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
+	terraformRegistry "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/registry"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -60,7 +64,6 @@ type ResourceConfig struct {
 
 // New returns a newly initialized Resource or an error
 func New(rs ResourceConfig) (resource Resource, err error) {
-
 	kind := strings.ToLower(rs.Kind)
 
 	if _, ok := GetResourceMapping()[kind]; !ok {
@@ -144,6 +147,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return file.New(rs.Spec)
 
+	case "hcl":
+
+		return hcl.New(rs.Spec)
+
 	case "helmchart":
 
 		return helm.New(rs.Spec)
@@ -171,6 +178,22 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "stash/tag":
 
 		return stashTag.New(rs.Spec)
+
+	case "terraform/file":
+
+		return hcl.New(rs.Spec)
+
+	case "terraform/lock":
+
+		return terraformLock.New(rs.Spec)
+
+	case "terraform/provider":
+
+		return terraformProvider.New(rs.Spec)
+
+	case "terraform/registry":
+
+		return terraformRegistry.New(rs.Spec)
 
 	case "toml":
 
@@ -204,37 +227,41 @@ type Resource interface {
 
 // Need to do reflect of ResourceConfig
 func GetResourceMapping() map[string]interface{} {
-
 	return map[string]interface{}{
-		"aws/ami":        &awsami.Spec{},
-		"cargopackage":   &cargopackage.Spec{},
-		"csv":            &csv.Spec{},
-		"dockerdigest":   &dockerdigest.Spec{},
-		"dockerfile":     &dockerfile.Spec{},
-		"dockerimage":    &dockerimage.Spec{},
-		"file":           &file.Spec{},
-		"gittag":         &gittag.Spec{},
-		"gitbranch":      &gitbranch.Spec{},
-		"gitea/branch":   &giteaBranch.Spec{},
-		"gitea/release":  &giteaRelease.Spec{},
-		"gitea/tag":      &giteaTag.Spec{},
-		"gitlab/branch":  &gitlabBranch.Spec{},
-		"gitlab/release": &gitlabRelease.Spec{},
-		"gitlab/tag":     &gitlabTag.Spec{},
-		"githubrelease":  &githubrelease.Spec{},
-		"golang":         &golang.Spec{},
-		"golang/gomod":   &gomod.Spec{},
-		"golang/module":  &gomodule.Spec{},
-		"helmchart":      &helm.Spec{},
-		"jenkins":        &jenkins.Spec{},
-		"json":           &json.Spec{},
-		"maven":          &maven.Spec{},
-		"npm":            &npm.Spec{},
-		"shell":          &shell.Spec{},
-		"stash/branch":   &stashBranch.Spec{},
-		"stash/tag":      &stashTag.Spec{},
-		"toml":           &toml.Spec{},
-		"xml":            &xml.Spec{},
-		"yaml":           &yaml.Spec{},
+		"aws/ami":            &awsami.Spec{},
+		"cargopackage":       &cargopackage.Spec{},
+		"csv":                &csv.Spec{},
+		"dockerdigest":       &dockerdigest.Spec{},
+		"dockerfile":         &dockerfile.Spec{},
+		"dockerimage":        &dockerimage.Spec{},
+		"file":               &file.Spec{},
+		"gittag":             &gittag.Spec{},
+		"gitbranch":          &gitbranch.Spec{},
+		"gitea/branch":       &giteaBranch.Spec{},
+		"gitea/release":      &giteaRelease.Spec{},
+		"gitea/tag":          &giteaTag.Spec{},
+		"gitlab/branch":      &gitlabBranch.Spec{},
+		"gitlab/release":     &gitlabRelease.Spec{},
+		"gitlab/tag":         &gitlabTag.Spec{},
+		"githubrelease":      &githubrelease.Spec{},
+		"golang":             &golang.Spec{},
+		"golang/gomod":       &gomod.Spec{},
+		"golang/module":      &gomodule.Spec{},
+		"hcl":                &hcl.Spec{},
+		"helmchart":          &helm.Spec{},
+		"jenkins":            &jenkins.Spec{},
+		"json":               &json.Spec{},
+		"maven":              &maven.Spec{},
+		"npm":                &npm.Spec{},
+		"shell":              &shell.Spec{},
+		"stash/branch":       &stashBranch.Spec{},
+		"stash/tag":          &stashTag.Spec{},
+		"terraform/file":     &hcl.Spec{},
+		"terraform/lock":     &terraformLock.Spec{},
+		"terraform/provider": &terraformProvider.Spec{},
+		"terraform/registry": &terraformRegistry.Spec{},
+		"toml":               &toml.Spec{},
+		"xml":                &xml.Spec{},
+		"yaml":               &yaml.Spec{},
 	}
 }

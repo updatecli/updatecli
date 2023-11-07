@@ -128,13 +128,12 @@ dockers:
 
 docker_signs:
   - cmd: cosign
-    env:
-    - COSIGN_EXPERIMENTAL=1
     artifacts: manifests
     output: true
     args:
-    - 'sign'
-    - '${artifact}@${digest}'
+      - 'sign'
+      - '--yes'
+      - '${artifact}@${digest}'
 
 docker_manifests:
   - name_template: 'updatecli/updatecli:{{ .Tag }}'
@@ -202,14 +201,13 @@ sboms:
 
 signs:
   - cmd: cosign
-    env:
-    - COSIGN_EXPERIMENTAL=1
     certificate: '${artifact}.pem'
+    signature: "${artifact}.sig"
     output: true
     artifacts: checksum
     args:
       - sign-blob
+      - '--yes'
       - '--output-certificate=${certificate}'
       - '--output-signature=${signature}'
       - '${artifact}'
-

@@ -1,4 +1,5 @@
 name: Test GitLab scm
+pipelineid: gitlab/scm
 
 scms:
   gitlab:
@@ -58,4 +59,4 @@ actions:
     title: Bump xxx
     kind: gitlab/mergerequest
     scmid: gitlab
-    spec:
+

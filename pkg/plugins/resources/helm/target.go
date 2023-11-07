@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -13,7 +14,6 @@ import (
 // Target updates helm chart, it receives the default source value and a "dry-run" flag
 // then return if it changed something or failed
 func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-
 	var out bytes.Buffer
 	err := c.ValidateTarget()
 	if err != nil {
@@ -25,7 +25,6 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		Key:  c.spec.Key,
 	}
 
-	c.spec.Value = source
 	if c.spec.Value != "" {
 		yamlSpec.Value = c.spec.Value
 	}
@@ -38,9 +37,7 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	err = yamlResource.Target(source, scm, dryRun, resultTarget)
 
 	if err != nil {
-		return err
-	} else if err == nil && !resultTarget.Changed {
-		return nil
+		return fmt.Errorf("unable to update chart %s: %s", c.spec.Name, err)
 	}
 
 	chartPath := c.spec.Name
@@ -48,17 +45,17 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		chartPath = filepath.Join(scm.GetDirectory(), c.spec.Name)
 	}
 
-	err = c.MetadataUpdate(chartPath, dryRun)
+	err = c.MetadataUpdate(resultTarget.NewInformation, scm, dryRun, resultTarget)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to update chart metadata: %s", err)
 	}
 
 	err = c.RequirementsUpdate(chartPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to update chart requirements: %s", err)
 	}
 
-	if !dryRun {
+	if !dryRun && !c.spec.SkipPackaging {
 		err = c.DependencyUpdate(&out, chartPath)
 
 		logrus.Debug(out.String())
