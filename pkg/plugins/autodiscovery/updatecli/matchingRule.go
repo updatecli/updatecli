@@ -20,7 +20,6 @@ type MatchingRules []MatchingRule
 // isMatchingRules checks if a specific file content matches the "only" rule
 func (m MatchingRules) isMatchingRules(rootDir, filePath, policyName, policyVersion string) bool {
 	var ruleResults []bool
-	var finaleResult bool
 
 	if len(m) > 0 {
 		for _, rule := range m {
@@ -93,11 +92,11 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, policyName, policyVers
 				}
 			}
 			if isAllMatching {
-				finaleResult = true
+				return true
 			}
 			ruleResults = []bool{}
 		}
 	}
 
-	return finaleResult
+	return false
 }
