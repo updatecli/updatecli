@@ -28,6 +28,19 @@ func TestIsMatchingRules(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Scenario 1 - matching 1 rule",
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "Dockerfile",
+				},
+				MatchingRule{
+					Path: "alpine/Dockerfile",
+				},
+			},
+			filePath:       "Dockerfile",
+			expectedResult: true,
+		},
+		{
 			name: "Scenario 2 - matching all rule",
 			rules: MatchingRules{
 				MatchingRule{
@@ -47,6 +60,34 @@ func TestIsMatchingRules(t *testing.T) {
 				},
 			},
 			filePath:       "Dockerfile",
+			expectedResult: false,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "Dockerfile",
+				},
+				MatchingRule{
+					Images: []string{
+						"updatecli/updatecli:latest",
+					},
+				},
+			},
+			filePath:       "alpine/Dockerfile",
+			image:          "updatecli/updatecli:latest",
+			expectedResult: true,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "Dockerfile",
+					Images: []string{
+						"updatecli/updatecli:latest",
+					},
+				},
+			},
+			filePath:       "alpine/Dockerfile",
+			image:          "updatecli/updatecli:latest",
 			expectedResult: false,
 		},
 	}
