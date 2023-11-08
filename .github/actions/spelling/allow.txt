@@ -67,3 +67,5 @@ windowscore
 gha
 githubactions
 gitlabci
+githubaction
+netlify
