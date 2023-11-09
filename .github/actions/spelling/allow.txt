@@ -72,3 +72,4 @@ githubaction
 netlify
 longhornio
 searchpattern
+crds
