@@ -9,7 +9,7 @@ import (
 
 // MatchingRule allows to specifies rules to identify manifest
 type MatchingRule struct {
-	// Path specifies a Helmfile chart path pattern, the pattern requires to match all of name, not just a subpart of the path.
+	// Path specifies a Fleet bundle path pattern, the pattern requires to match all of name, not just a subpart of the path.
 	Path string
 	// Repositories specifies the list of Helm Chart repository to check
 	Repositories []string
