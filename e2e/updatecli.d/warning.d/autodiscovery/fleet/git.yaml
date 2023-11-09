@@ -9,10 +9,7 @@ autodiscovery:
   # scmid is applied to all crawlers
   scmid: fleet-lab
   crawlers:
-    helm:
-      # To ignore specific path
-      #ignore:
-      #  - path: <filepath relative to scm repository>
-      #only:
-      #  - path: <filepath relative to scm repository>
     rancher/fleet:
+      only:
+        - charts:
+            "cert-manager": ""
