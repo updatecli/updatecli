@@ -31,9 +31,7 @@ autodiscovery:
   #groupby: individual
   crawlers:
     npm:
-      # To ignore specific path
-      #ignore:
-      #  - path: <filepath relative to scm repository>
-      #only:
-      #  - path: <filepath relative to scm repository>
+      only:
+        - packages:
+            "axios": ""
 
