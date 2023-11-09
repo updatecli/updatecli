@@ -89,7 +89,7 @@ func TestFindFilesMatchingPathPattern(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.filepath, func(t *testing.T) {
-			gotFoundFiles, err := FindFilesMatchingPathPattern(data.filepath)
+			gotFoundFiles, err := FindFilesMatchingPathPattern("", data.filepath)
 			assert.NoError(t, err)
 			assert.Equal(t, data.expectedFoundFiles, gotFoundFiles)
 		})

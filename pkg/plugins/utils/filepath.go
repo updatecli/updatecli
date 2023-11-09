@@ -34,7 +34,7 @@ func JoinFilePathWithWorkingDirectoryPath(filePath, workingDir string) string {
 }
 
 // FindFilesMatchingPathPattern returns a list of files matching a file pattern
-func FindFilesMatchingPathPattern(filePathPattern string) ([]string, error) {
+func FindFilesMatchingPathPattern(rootDir, filePathPattern string) ([]string, error) {
 
 	if strings.HasPrefix(filePathPattern, "https://") ||
 		strings.HasPrefix(filePathPattern, "http://") {
@@ -48,7 +48,14 @@ func FindFilesMatchingPathPattern(filePathPattern string) ([]string, error) {
 
 	results := []string{}
 
-	rootDir := "."
+	if rootDir == "" {
+		var err error
+		rootDir, err = os.Getwd()
+		if err != nil {
+			return []string{}, fmt.Errorf("unable to get current working directory: %s", err)
+		}
+	}
+
 	if filepath.IsAbs(filePathPattern) {
 		rootDir = filepath.Dir(filePathPattern)
 	}
@@ -58,13 +65,19 @@ func FindFilesMatchingPathPattern(filePathPattern string) ([]string, error) {
 			logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
 			return fmt.Errorf("unable to walk %q: %s", path, err)
 		}
+
 		if info.Mode().IsRegular() {
-			match, err := filepath.Match(filePathPattern, path)
+			relPath, err := filepath.Rel(rootDir, path)
+			if err != nil {
+				return fmt.Errorf("unable to get relative path of %q: %s", path, err)
+			}
+
+			match, err := filepath.Match(filePathPattern, relPath)
 			if err != nil {
 				return fmt.Errorf("unable to match %q: %s", filePathPattern, err)
 			}
 			if match {
-				results = append(results, path)
+				results = append(results, relPath)
 			}
 		}
 		return nil
