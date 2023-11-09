@@ -70,3 +70,4 @@ gitlabci
 githubaction
 netlify
 longhornio
+crds
