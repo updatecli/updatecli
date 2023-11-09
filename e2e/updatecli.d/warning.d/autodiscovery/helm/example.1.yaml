@@ -10,11 +10,11 @@ autodiscovery:
   scmid: epinio
   crawlers:
     helm:
-      # To ignore specific path
-      #ignore:
-      #  # - path: <filepath relative to scm repository>
-      #  # - path: chart/*
-      #only:
-      #  # - path: <filepath relative to scm repository>
-      #  # - path: chart/*
-#
+      ignore:
+        - path: chart/epinio
+          dependencies:
+            "s3gw": ">0.0.1"
+        - path: chart/upgrade-responder
+          containers:
+            "longhornio/upgrade-responder": ""
+
