@@ -71,3 +71,4 @@ gitlabci
 githubaction
 netlify
 longhornio
+searchpattern
