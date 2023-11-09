@@ -48,22 +48,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 		chartRelativeMetadataPath := filepath.Dir(relativeFoundValueFile)
 		chartName := filepath.Base(chartRelativeMetadataPath)
 
-		// Test if the ignore rule based on path doesn't match
-		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundValueFile) {
-			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
-				chartName,
-				chartRelativeMetadataPath)
-			continue
-		}
-
-		// Test if the only rule based on path match
-		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundValueFile) {
-			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
-				chartName,
-				chartRelativeMetadataPath)
-			continue
-		}
-
 		// Retrieve chart dependencies for each chart
 		values, err := getValuesFileContent(foundValueFile)
 		if err != nil {
@@ -121,6 +105,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 		}
 
 		for _, image := range images {
+
 			// Compose the container source considering the registry and repository
 			var imageSource string
 			if image.registry == "" {
@@ -149,6 +134,22 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceSpec.VersionFilter.Pattern = "*"
+				}
+			}
+
+			// Test if the ignore rule based on path is respected
+			if len(h.spec.Ignore) > 0 {
+				if h.spec.Ignore.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", sourceSpec.Image, sourceSpec.Tag) {
+					logrus.Debugf("Ignoring container version update from file %q, as matching ignore rule(s)\n", relativeFoundValueFile)
+					continue
+				}
+			}
+
+			// Test if the only rule based on path is respected
+			if len(h.spec.Only) > 0 {
+				if !h.spec.Only.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", sourceSpec.Image, sourceSpec.Tag) {
+					logrus.Debugf("Ignoring container version update from %q, as not matching only rule(s)\n", relativeFoundValueFile)
+					continue
 				}
 			}
 
