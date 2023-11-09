@@ -53,22 +53,6 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 		chartRelativeMetadataPath := filepath.Dir(relativeFoundChartFile)
 		chartName := filepath.Base(chartRelativeMetadataPath)
 
-		// Test if the ignore rule based on path doesn't match
-		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundChartFile) {
-			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
-				chartName,
-				chartRelativeMetadataPath)
-			continue
-		}
-
-		// Test if the only rule based on path match
-		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundChartFile) {
-			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
-				chartName,
-				chartRelativeMetadataPath)
-			continue
-		}
-
 		// Retrieve chart dependencies for each chart
 		dependencies, err := getChartMetadata(foundChartFile)
 		if err != nil {
@@ -96,6 +80,22 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
+				}
+			}
+
+			// Test if the ignore rule based on path is respected
+			if len(h.spec.Ignore) > 0 {
+				if h.spec.Ignore.isMatchingRules(h.rootDir, chartRelativeMetadataPath, deps.Dependencies[i].Name, deps.Dependencies[i].Version, "", "") {
+					logrus.Debugf("Ignoring Dependency version update from file %q, as matching ignore rule(s)\n", relativeFoundChartFile)
+					continue
+				}
+			}
+
+			// Test if the only rule based on path is respected
+			if len(h.spec.Only) > 0 {
+				if !h.spec.Only.isMatchingRules(h.rootDir, chartRelativeMetadataPath, deps.Dependencies[i].Name, deps.Dependencies[i].Version, "", "") {
+					logrus.Debugf("Ignoring Dependency version update from %q, as not matching only rule(s)\n", relativeFoundChartFile)
+					continue
 				}
 			}
 

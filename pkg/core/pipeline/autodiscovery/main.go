@@ -5,6 +5,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -32,6 +33,7 @@ var (
 			"maven":         maven.Spec{},
 			"npm":           npm.Spec{},
 			"rancher/fleet": fleet.Spec{},
+			"updatecli":     updatecli.Spec{},
 		},
 	}
 	// AutodiscoverySpecs is a map of all Autodiscovery specification
@@ -46,6 +48,7 @@ var (
 		"maven":         &maven.Spec{},
 		"npm":           &npm.Spec{},
 		"rancher/fleet": &fleet.Spec{},
+		"updatecli":     updatecli.Spec{},
 	}
 )
 
@@ -189,6 +192,18 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		case "rancher/fleet":
 			crawler, err := fleet.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "updatecli":
+			crawler, err := updatecli.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)

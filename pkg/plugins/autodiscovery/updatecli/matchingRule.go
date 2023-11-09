@@ -1,4 +1,4 @@
-package npm
+package updatecli
 
 import (
 	"path/filepath"
@@ -9,16 +9,16 @@ import (
 
 // MatchingRule allows to specifies rules to identify manifest
 type MatchingRule struct {
-	// Path specifies a package.json path pattern, the pattern requires to match all of name, not just a substring.
+	// Path specifies a Updatecli compose filepath pattern, the pattern requires to match all of name, not just a subpart of the path.
 	Path string
-	// Packages specifies the list of NPM packages to check
-	Packages map[string]string
+	// Policies specifies a Updatecli policy
+	Policies map[string]string
 }
 
 type MatchingRules []MatchingRule
 
 // isMatchingRules checks if a specific file content matches the "only" rule
-func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVersion string) bool {
+func (m MatchingRules) isMatchingRules(rootDir, filePath, policyName, policyVersion string) bool {
 	var ruleResults []bool
 
 	if len(m) > 0 {
@@ -33,6 +33,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 				}
 
 				match, err := filepath.Match(rule.Path, filePath)
+
 				if err != nil {
 					logrus.Errorf("%s - %q", err, rule.Path)
 					continue
@@ -47,37 +48,38 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 				Checks if policy is matching the policy constraint.
 			*/
 
-			if len(rule.Packages) > 0 {
-				match := false
+			if len(rule.Policies) > 0 {
+				if policyName != "" {
+					match := false
+				outPolicy:
+					for rulePolicyName, rulePolicyVersion := range rule.Policies {
+						if policyName == rulePolicyName {
+							if rulePolicyVersion == "" {
+								match = true
+								break outPolicy
+							}
 
-			outPackage:
-				for rulePackageName, rulePackageVersion := range rule.Packages {
+							v, err := semver.NewVersion(policyVersion)
+							if err != nil {
+								match = policyVersion == rulePolicyVersion
+								logrus.Debugf("%q - %s", policyVersion, err)
+								break outPolicy
+							}
 
-					if packageName == rulePackageName {
-						if rulePackageVersion == "" {
-							match = true
-							break outPackage
+							c, err := semver.NewConstraint(rulePolicyVersion)
+							if err != nil {
+								match = policyVersion == rulePolicyVersion
+								logrus.Debugf("%q %s", err, rulePolicyVersion)
+								break outPolicy
+							}
+
+							match = c.Check(v)
+							break outPolicy
 						}
-
-						v, err := semver.NewVersion(packageVersion)
-						if err != nil {
-							match = packageVersion == rulePackageVersion
-							logrus.Debugf("%q - %s", packageVersion, err)
-							break outPackage
-						}
-
-						c, err := semver.NewConstraint(rulePackageVersion)
-						if err != nil {
-							match = packageVersion == rulePackageVersion
-							logrus.Debugf("%q %s", err, rulePackageVersion)
-							break outPackage
-						}
-
-						match = c.Check(v)
-						break outPackage
 					}
+					ruleResults = append(ruleResults, match)
 				}
-				ruleResults = append(ruleResults, match)
+
 			}
 
 			/*
@@ -94,7 +96,6 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 			}
 			ruleResults = []bool{}
 		}
-		return false
 	}
 
 	return false
