@@ -13,6 +13,14 @@ sources:
     spec:
       file: file://ADOPTERS.md
 
+  adoptersFileScheme2:
+    name: "Get content from ADOPTE??.md using file scheme"
+    kind: file
+    spec:
+      file: file://ADOPTE??.md
+      searchpattern: true
+
+
   adoptersHTTPSScheme:
     name: "Get content from ADOPTERS.md using https scheme"
     kind: file
@@ -24,6 +32,7 @@ sources:
     kind: file
     spec:
       file: ADOPTE??.md
+      searchpattern: true
 
 conditions:
   adopters:
@@ -34,11 +43,12 @@ conditions:
       file: ADOPTERS.md
 
   adoptersFilePattern:
-    name: "Validate ADOPTERS.md content"
+    name: "Validate ADOPTE??.md content"
     sourceid: adopters
     kind: file
     spec:
       file: ADOPTE??.md
+      searchpattern: true
 
 targets:
   adopters:
@@ -49,8 +59,9 @@ targets:
       file: ADOPTERS.md
 
   adoptersFilePattern:
-    name: "Update ADOPTERS.md content"
+    name: "Update ADOPTE??.md content"
     sourceid: adopters
     kind: file
     spec:
       file: ADOPTE??.md
+      searchpattern: true

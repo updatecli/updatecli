@@ -28,6 +28,8 @@ type Spec struct {
 	MatchPattern string `yaml:",omitempty"`
 	// ReplacePattern specifies the regexp replace pattern to apply on the file(s) content
 	ReplacePattern string `yaml:",omitempty"`
+	// SearchPattern specifies if the MatchPattern should be applied on the file(s) content or on the file(s) path
+	SearchPattern bool `yaml:",omitempty"`
 }
 
 // File defines a resource of kind "file"
@@ -62,39 +64,6 @@ func New(spec interface{}) (*File, error) {
 		return nil, err
 	}
 
-	newResource.files = make(map[string]fileMetadata)
-	// File as unique element of newResource.files
-	if len(newResource.spec.File) > 0 {
-		foundFiles, err := utils.FindFilesMatchingPathPattern(newResource.spec.File)
-		if err != nil {
-			return nil, fmt.Errorf("unable to find files matching %q: %s", newResource.spec.File, err)
-		}
-
-		for _, filePath := range foundFiles {
-			f := fileMetadata{
-				path:         strings.TrimPrefix(filePath, "file://"),
-				originalPath: strings.TrimPrefix(filePath, "file://"),
-			}
-			newResource.files[filePath] = f
-		}
-	}
-
-	for _, specFile := range newResource.spec.Files {
-		foundFiles, err := utils.FindFilesMatchingPathPattern(specFile)
-		if err != nil {
-			return nil, fmt.Errorf("unable to find files matching %q: %s", newResource.spec.File, err)
-		}
-
-		for _, filePath := range foundFiles {
-			f := fileMetadata{
-				path:         strings.TrimPrefix(filePath, "file://"),
-				originalPath: strings.TrimPrefix(filePath, "file://"),
-			}
-			newResource.files[filePath] = f
-		}
-
-	}
-
 	return newResource, nil
 }
 
@@ -105,6 +74,70 @@ func hasDuplicates(values []string) bool {
 	}
 
 	return len(values) != len(uniqueValues)
+}
+
+// initFiles initializes the f.files map
+func (f *File) initFiles(workDir string) error {
+	f.files = make(map[string]fileMetadata)
+
+	// File as unique element of newResource.files
+	if len(f.spec.File) > 0 {
+		var foundFiles []string
+		var err error
+		switch f.spec.SearchPattern {
+		case true:
+			foundFiles, err = utils.FindFilesMatchingPathPattern(workDir, f.spec.File)
+			if err != nil {
+				return fmt.Errorf("unable to find file matching %q: %s", f.spec.File, err)
+			}
+		case false:
+			foundFiles = append(foundFiles, f.spec.File)
+		}
+
+		for _, filePath := range foundFiles {
+			newFile := fileMetadata{
+				path:         strings.TrimPrefix(filePath, "file://"),
+				originalPath: strings.TrimPrefix(filePath, "file://"),
+			}
+			f.files[filePath] = newFile
+		}
+	}
+
+	for _, specFile := range f.spec.Files {
+		var foundFiles []string
+		var err error
+
+		switch f.spec.SearchPattern {
+		case true:
+			foundFiles, err = utils.FindFilesMatchingPathPattern(workDir, specFile)
+			if err != nil {
+				return fmt.Errorf("unable to find files matching %q: %s", f.spec.File, err)
+			}
+
+		case false:
+			foundFiles = append(foundFiles, f.spec.Files...)
+		}
+
+		for _, filePath := range foundFiles {
+			newFile := fileMetadata{
+				path:         strings.TrimPrefix(filePath, "file://"),
+				originalPath: strings.TrimPrefix(filePath, "file://"),
+			}
+			f.files[filePath] = newFile
+		}
+	}
+
+	for filePath := range f.files {
+		if workDir != "" {
+			file := f.files[filePath]
+			file.path = joinPathWithWorkingDirectoryPath(file.originalPath, workDir)
+
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalPath, file.path)
+			f.files[filePath] = file
+		}
+	}
+
+	return nil
 }
 
 func (f *File) UpdateAbsoluteFilePath(workDir string) {
