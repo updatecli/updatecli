@@ -16,5 +16,8 @@ autodiscovery:
       #  # - path: <filepath relative to scm repository>
       #  # - path: chart/*
       only:
-        - path: helmfile.d/*
-#
+        #- path: helmfile.d/*
+        - charts:
+            "kubewarden-crds": ""
+        - repositories:
+            - "https://charts.jetstack.io"
