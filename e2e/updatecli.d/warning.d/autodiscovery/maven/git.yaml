@@ -22,6 +22,7 @@ autodiscovery:
       # To ignore specific path
       #ignore:
       #  - path: <filepath relative to scm repository>
-      #only:
-      #  - path: <filepath relative to scm repository>
+      only:
+        - artifactids:
+            "mockito-core": ""
 
