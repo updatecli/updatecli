@@ -58,6 +58,7 @@ joho
 godotenv
 filechecksum
 errdef
+ADOPTE
 chardata
 pipelineurl
 mcr
@@ -70,4 +71,6 @@ gitlabci
 githubaction
 netlify
 longhornio
+searchpattern
 crds
+mockito
