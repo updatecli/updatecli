@@ -14,21 +14,112 @@ import (
 // Spec defines a specification for a "file" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// File contains the file path(s) to take in account and is incompatible with Files
+	/*
+
+	   `file` contains the file path
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+
+	   remarks:
+	       * `file` is incompatible with `files`
+	       * feel free to look at searchpattern attribute to search for files matching a pattern
+
+	*/
 	File string `yaml:",omitempty"`
-	// Files contains the file path(s) to take in account and is incompatible with File
+	/*
+
+	   `files` contains the file path(s)
+
+	   compatible:
+	       * condition
+	       * target
+
+	   remarks:
+	       * `files` is incompatible with `file`
+	       * feel free to look at searchpattern attribute to search for files matching a pattern
+
+	*/
 	Files []string `yaml:",omitempty"`
-	// Line contains the line of the file(s) to take in account
+	/*
+
+	   `line` contains the line of the file(s) to manipulate
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+
+	*/
 	Line int `yaml:",omitempty"`
-	// Content specifies the content to take in account instead of the file content
+	/*
+
+	   `content` specifies the content to manipulate
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+
+	*/
 	Content string `yaml:",omitempty"`
-	// ForceCreate specifies if nonexistent file(s) should be created if they are targets
+	/*
+
+	   `forcecreate`` defines if nonexistent file(s) should be created
+
+	   compatible:
+	       * target
+
+	*/
 	ForceCreate bool `yaml:",omitempty"`
-	// MatchPattern specifies the regexp pattern to match on the file(s)
+	/*
+
+	   `matchpattern` specifies the regexp pattern to match on the file(s)
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+
+	*/
 	MatchPattern string `yaml:",omitempty"`
-	// ReplacePattern specifies the regexp replace pattern to apply on the file(s) content
+	/*
+	   `replacepattern` specifies the regexp replace pattern to apply on the file(s) content
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+	*/
 	ReplacePattern string `yaml:",omitempty"`
-	// SearchPattern specifies if the MatchPattern should be applied on the file(s) content or on the file(s) path
+	/*
+	   `searchpattern` defines if the MatchPattern should be applied on the file(s) path
+
+	   If set to true, it modifies the behavior of the `file` and `files` attributes to search for files matching the pattern instead of searching for files with the exact name.
+	   When looking for file path pattern, it requires pattern to match all of name, not just a substring.
+
+	   The pattern syntax is:
+
+	   ```
+	       pattern:
+	           { term }
+	       term:
+	           '*'         matches any sequence of non-Separator characters
+	           '?'         matches any single non-Separator character
+	           '[' [ '^' ] { character-range } ']'
+	                       character class (must be non-empty)
+	           c           matches character c (c != '*', '?', '\\', '[')
+	           '\\' c      matches character c
+
+	       character-range:
+	           c           matches character c (c != '\\', '-', ']')
+	           '\\' c      matches character c
+	           lo '-' hi   matches character c for lo <= c <= hi
+	   ```
+
+	*/
 	SearchPattern bool `yaml:",omitempty"`
 }
 
