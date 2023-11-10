@@ -16,14 +16,6 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 	var validationErrors []string
 	var foundContent string
 
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return errors.New("fail getting current working directory")
-	}
-
 	if len(f.spec.Files) > 1 {
 		validationErrors = append(validationErrors, "validation error in source of type 'file': the attributes `spec.files` can't contain more than one element for sources")
 	}
@@ -41,13 +33,28 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
+	// By the default workingdir is set to the current working directory
+	// it would be better to have it empty by default but it must be changed in the
+	// source core codebase.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		return errors.New("fail getting current working directory")
+	}
 	// Ideally currentWorkingDirectory should be empty
-	if workingDir != currentWorkingDirectory {
-		f.UpdateAbsoluteFilePath(workingDir)
+	if workingDir == currentWorkingDirectory {
+		workingDir = ""
+	}
+
+	if err := f.initFiles(workingDir); err != nil {
+		return fmt.Errorf("init files: %w", err)
 	}
 
 	if err := f.Read(); err != nil {
 		return fmt.Errorf("reading file: %w", err)
+	}
+
+	if len(f.files) == 0 {
+		return fmt.Errorf("no file found")
 	}
 
 	// Looping on the only filePath in 'files'

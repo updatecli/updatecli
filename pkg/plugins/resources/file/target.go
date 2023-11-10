@@ -16,8 +16,14 @@ import (
 // Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
 func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+
+	workDir := ""
 	if scm != nil {
-		f.UpdateAbsoluteFilePath(scm.GetDirectory())
+		workDir = scm.GetDirectory()
+	}
+
+	if err := f.initFiles(workDir); err != nil {
+		return fmt.Errorf("init files: %w", err)
 	}
 
 	var files []string
