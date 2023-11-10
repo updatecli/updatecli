@@ -3,74 +3,119 @@ package fleet
 import (
 	"path/filepath"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 )
 
 // MatchingRule allows to specifies rules to identify manifest
 type MatchingRule struct {
-	// Path specifies a Fleet bundle path pattern, the pattern requires to match all of name, not just a substring.
+	// Path specifies a Fleet bundle path pattern, the pattern requires to match all of name, not just a subpart of the path.
 	Path string
+	// Repositories specifies the list of Helm Chart repository to check
+	Repositories []string
+	// Charts specifies the list of Helm Chart repository to check
+	Charts map[string]string
 }
 
 type MatchingRules []MatchingRule
 
-func (m MatchingRules) isMatchingIgnoreRule(rootDir, relativePath string) bool {
-	// Test if the ignore rule based on path is respected
-	result := false
+// isMatchingRules checks if a specific file content matches the "only" rule
+func (m MatchingRules) isMatchingRules(rootDir, filePath, repositoryURL, chartName, chartVersion string) bool {
+	var ruleResults []bool
 
 	if len(m) > 0 {
 		for _, rule := range m {
-			logrus.Infof("Rule: %q\n", rule.Path)
-			logrus.Infof("Relative Found: %q\n", relativePath)
-			switch filepath.IsAbs(rule.Path) {
-			case true:
-				match, err := filepath.Match(rule.Path, filepath.Join(rootDir, relativePath))
+			/*
+				Check if rule.Path is matching. Path accepts wildcard path
+			*/
+
+			if rule.Path != "" {
+				if filepath.IsAbs(rule.Path) {
+					filePath = filepath.Join(rootDir, filePath)
+				}
+
+				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
 					logrus.Errorf("%s - %q", err, rule.Path)
+					continue
 				}
+				ruleResults = append(ruleResults, match)
 				if match {
-					result = true
-				}
-			case false:
-				match, err := filepath.Match(rule.Path, relativePath)
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
+					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
-		}
-	}
 
-	return result
-}
+			/*
+				Checks if Chart Repository is matching the policy constraint.
+			*/
 
-func (m MatchingRules) isMatchingOnlyRule(rootDir, relativePath string) bool {
-	// Test if the only rule based on path is respected
-	result := false
-	if len(m) > 0 {
-		for _, rule := range m {
-			switch filepath.IsAbs(rule.Path) {
-			case true:
-				match, err := filepath.Match(rule.Path, filepath.Join(rootDir, relativePath))
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+			if len(rule.Repositories) > 0 {
+				match := false
+
+			outRepository:
+				for i := range rule.Repositories {
+
+					if repositoryURL == rule.Repositories[i] {
+						match = true
+						break outRepository
+					}
 				}
-				if match {
-					result = true
+				ruleResults = append(ruleResults, match)
+			}
+
+			/*
+				Checks if Chart Name is matching the policy constraint.
+			*/
+
+			if len(rule.Charts) > 0 {
+				match := false
+
+			outChartName:
+				for ruleReleaseName, ruleReleaseVersion := range rule.Charts {
+
+					if chartName == ruleReleaseName {
+						if ruleReleaseVersion == "" {
+							match = true
+							break outChartName
+						}
+
+						v, err := semver.NewVersion(chartVersion)
+						if err != nil {
+							match = chartVersion == ruleReleaseVersion
+							logrus.Debugf("%q - %s", chartVersion, err)
+							break outChartName
+						}
+
+						c, err := semver.NewConstraint(ruleReleaseVersion)
+						if err != nil {
+							match = chartVersion == ruleReleaseVersion
+							logrus.Debugf("%q %s", err, ruleReleaseVersion)
+							break outChartName
+						}
+
+						match = c.Check(v)
+						break outChartName
+					}
 				}
-			case false:
-				match, err := filepath.Match(rule.Path, relativePath)
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
+				ruleResults = append(ruleResults, match)
+			}
+
+			/*
+				If at least one rule is failing then we return false
+			*/
+			isAllMatching := true
+			for i := range ruleResults {
+				if !ruleResults[i] {
+					isAllMatching = false
 				}
 			}
+			if isAllMatching {
+				return true
+			}
+			ruleResults = []bool{}
 		}
+		return false
 	}
 
-	return result
+	return false
 }
