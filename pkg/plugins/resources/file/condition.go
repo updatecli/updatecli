@@ -15,8 +15,14 @@ import (
 // ConditionFromSCM test if a file content from SCM match the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
 func (f *File) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+
+	workDir := ""
 	if scm != nil {
-		f.UpdateAbsoluteFilePath(scm.GetDirectory())
+		workDir = scm.GetDirectory()
+	}
+
+	if err := f.initFiles(workDir); err != nil {
+		return fmt.Errorf("init files: %w", err)
 	}
 
 	files := f.spec.Files
