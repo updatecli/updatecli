@@ -10,4 +10,7 @@ autodiscovery:
   scmid: default
   crawlers:
     cargo:
+      only:
+        - crates:
+            "anyhow": ""
 
