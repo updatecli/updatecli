@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"path/filepath"
 
-	"github.com/Masterminds/semver/v3"
 	sv "github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
@@ -139,7 +138,7 @@ func getCrateMetadata(manifestPath string) (*crateMetadata, error) {
 }
 
 func isStrictSemver(version string) bool {
-	if _, err := semver.StrictNewVersion(version); err != nil {
+	if _, err := sv.StrictNewVersion(version); err != nil {
 		return false
 	}
 	return true
