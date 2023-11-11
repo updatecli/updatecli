@@ -26,7 +26,7 @@ const (
 type GitHandler interface {
 	Add(files []string, workingDir string) error
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error
-	Clone(username, password, URL, workingDir string, withSubmodules bool) error
+	Clone(username, password, URL, workingDir string, withSubmodules *bool) error
 	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	GetChangedFiles(workingDir string) ([]string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)
@@ -487,7 +487,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 }
 
 // Clone run `git clone`.
-func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules bool) error {
+func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool) error {
 
 	logrus.Debugf("stage: git-clone\n\n")
 
@@ -499,7 +499,7 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	}
 
 	submodule := git.DefaultSubmoduleRecursionDepth
-	if !withSubmodules {
+	if withSubmodules != nil && !*withSubmodules {
 		submodule = git.NoRecurseSubmodules
 	}
 

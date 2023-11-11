@@ -114,8 +114,8 @@ type Spec struct {
 			If you need to push changes to a specific branch, you must use the plugin "git" instead of this
 	*/
 	Branch string `yaml:",omitempty"`
-	// Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
-	Submodules bool `yaml:",omitempty"`
+	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
+	Submodules *bool `yaml:",omitempty"`
 }
 
 // Stash contains information to interact with Stash api

@@ -124,8 +124,8 @@ type Spec struct {
 			* scm
 	*/
 	GPG sign.GPGSpec `yaml:",omitempty"`
-	// Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
-	Submodules bool `yaml:",omitempty"`
+	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
+	Submodules *bool `yaml:",omitempty"`
 }
 
 // Git contains the git scm handler
@@ -193,8 +193,8 @@ func (gs *Spec) Merge(child interface{}) error {
 	if childGHSpec.Username != "" {
 		gs.Username = childGHSpec.Username
 	}
-	if childGHSpec.Submodules {
-		gs.Submodules = childGHSpec.Submodules
+	if childGHSpec.Submodules != nil {
+		gs.Submodules = gs.Submodules
 	}
 
 	return nil

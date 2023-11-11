@@ -11,7 +11,8 @@ import (
 func TestBranchIntegration(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
-	err := g.Clone("", "", "https://github.com/updatecli/updatecli-action.git", workingDir, true)
+	withSubmodules := true
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli-action.git", workingDir, &withSubmodules)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
