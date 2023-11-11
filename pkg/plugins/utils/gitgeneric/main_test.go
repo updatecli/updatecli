@@ -121,7 +121,7 @@ func TestSanitizeBranchName(t *testing.T) {
 func TestTagsIntegration(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
-	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir)
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, true)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -151,7 +151,7 @@ func TestTagsIntegration(t *testing.T) {
 func TestTagRefsIntegration(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
-	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir)
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, true)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -185,7 +185,7 @@ func TestTagRefsIntegration(t *testing.T) {
 func TestHashesIntegration(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
-	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir)
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, true)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}

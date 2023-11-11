@@ -147,6 +147,8 @@ type Spec struct {
 			it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
 	*/
 	CommitMessage commit.Commit `yaml:",omitempty"`
+	// Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
+	Submodules bool `yaml:",omitempty"`
 }
 
 // GitHub contains settings to interact with GitHub
