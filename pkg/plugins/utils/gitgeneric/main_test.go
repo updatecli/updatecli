@@ -1,8 +1,6 @@
 package gitgeneric
 
 import (
-	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -274,10 +272,7 @@ func TestSubmodulesEnabledContent(t *testing.T) {
 	}
 
 	for _, file := range checkFiles {
-		_, err = os.Stat(filepath.Join(workingDir, file))
-		if err != nil && errors.Is(err, fs.ErrNotExist) {
-			t.Errorf("Expect the submodule initialized: %q", err)
-		}
+		assert.FileExists(t, filepath.Join(workingDir, file))
 	}
 
 	os.Remove(workingDir)
@@ -300,14 +295,7 @@ func TestSubmodulesDisabledContent(t *testing.T) {
 	}
 
 	for _, file := range checkFiles {
-		_, err = os.Stat(filepath.Join(workingDir, file))
-		if err == nil {
-			t.Errorf("Expect the submodule to not be initialized: %q", err)
-		}
-
-		if !errors.Is(err, fs.ErrNotExist) {
-			t.Errorf("Expect the submodule to not contain the file: %q", err)
-		}
+		assert.NoFileExists(t, filepath.Join(workingDir, file))
 	}
 
 	os.Remove(workingDir)
