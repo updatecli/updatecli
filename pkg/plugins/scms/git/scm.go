@@ -67,7 +67,9 @@ func (g *Git) Clone() (string, error) {
 		g.spec.Username,
 		g.spec.Password,
 		g.GetURL(),
-		g.GetDirectory())
+		g.GetDirectory(),
+		g.spec.Submodules,
+	)
 
 	if err != nil {
 		logrus.Errorf("failed cloning git repository %q - %s", g.GetURL(), err)
