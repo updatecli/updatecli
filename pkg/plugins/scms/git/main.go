@@ -194,7 +194,7 @@ func (gs *Spec) Merge(child interface{}) error {
 		gs.Username = childGHSpec.Username
 	}
 	if childGHSpec.Submodules != nil {
-		gs.Submodules = gs.Submodules
+		gs.Submodules = childGHSpec.Submodules
 	}
 
 	return nil
