@@ -167,7 +167,7 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		{
-			name: "Passing case with submodules overridded when not defined in source",
+			name: "Passing case with submodules overridden when not defined in source",
 			spec: Spec{},
 			children: Spec{
 				Submodules: &trueValue,
@@ -177,7 +177,7 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		{
-			name: "Passing case with submodules overridded when defined in source",
+			name: "Passing case with submodules overridden when defined in source",
 			spec: Spec{
 				Submodules: &falseValue,
 			},
