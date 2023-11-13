@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -101,7 +101,7 @@ func TestRegistryAddressAPI(t *testing.T) {
 					statusCode := 200
 					return &http.Response{
 						StatusCode: statusCode,
-						Body:       ioutil.NopCloser(strings.NewReader(body)),
+						Body:       io.NopCloser(strings.NewReader(body)),
 					}, tt.mockedHttpError
 				},
 			}

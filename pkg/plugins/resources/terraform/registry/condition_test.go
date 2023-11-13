@@ -2,7 +2,7 @@ package registry
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -105,7 +105,7 @@ func TestCondition(t *testing.T) {
 					statusCode := 200
 					return &http.Response{
 						StatusCode: statusCode,
-						Body:       ioutil.NopCloser(strings.NewReader(body)),
+						Body:       io.NopCloser(strings.NewReader(body)),
 					}, tt.mockedHttpError
 				},
 			}
