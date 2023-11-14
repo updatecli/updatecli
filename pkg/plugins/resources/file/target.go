@@ -86,14 +86,31 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		for filePath, file := range f.files {
 			// Check if there is any match in the file
 			if !reg.MatchString(file.content) {
+				if f.spec.SearchPattern {
+					// When using both a file path pattern AND a content matching regex, then we want to ignore files that don't match the pattern
+					// as otherwise we trigger error for files we don't care about.
+					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+					delete(f.files, filePath)
+					continue
+				}
 				// We allow the possibility to match only some files. In that case, just a warning here
 				return fmt.Errorf("no line matched in file %q for pattern %q", filePath, f.spec.MatchPattern)
 			}
+			logrus.Debugf("Match found for pattern %q in file %q", f.spec.MatchPattern, filePath)
+
 			// Keep the original content for later comparison
 			originalContents[filePath] = file.content
 			file.content = reg.ReplaceAllString(file.content, inputContent)
 			f.files[filePath] = file
 		}
+
+		if len(f.files) == 0 {
+			resultTarget.Description = "no file found matching criteria"
+			resultTarget.Result = result.SKIPPED
+			resultTarget.Changed = false
+			return nil
+		}
+
 	} else {
 		for filePath, file := range f.files {
 			// Keep the original content for later comparison

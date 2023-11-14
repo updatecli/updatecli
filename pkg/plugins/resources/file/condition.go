@@ -85,6 +85,14 @@ func (f *File) condition(source string) (bool, error) {
 			}
 
 			if !reg.MatchString(file.content) {
+				if f.spec.SearchPattern {
+					// When using both a file path pattern AND a content matching regex, then we want to ignore files that don't match the pattern
+					// as otherwise we trigger error for files we don't care about.
+					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+					delete(f.files, filePath)
+					continue
+				}
+
 				logrus.Infof(
 					"%s %s did not match the pattern %q",
 					result.FAILURE,
@@ -93,6 +101,12 @@ func (f *File) condition(source string) (bool, error) {
 				)
 				return false, nil
 			}
+
+			if len(f.files) == 0 {
+				logrus.Debugf("no file found matching criteria")
+				return false, nil
+			}
+
 			logrus.Infof("%s %s matched the pattern %q", result.SUCCESS, logMessage, f.spec.MatchPattern)
 		}
 
