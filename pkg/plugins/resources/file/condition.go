@@ -85,6 +85,14 @@ func (f *File) condition(source string) (bool, error) {
 			}
 
 			if !reg.MatchString(file.content) {
+				if f.spec.SearchPattern && f.spec.IgnoreNotFound {
+					// If we are using a search pattern and we have ignore not found,
+					// then we don't want to return an error if the pattern is not found.
+					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+					delete(f.files, filePath)
+					continue
+				}
+
 				logrus.Infof(
 					"%s %s did not match the pattern %q",
 					result.FAILURE,

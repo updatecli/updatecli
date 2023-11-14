@@ -63,6 +63,7 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 		// If a matchPattern is specified, then retrieve the string matched and returns the (eventually) multi-line string
 		if len(f.spec.MatchPattern) > 0 {
 			reg, err := regexp.Compile(f.spec.MatchPattern)
+
 			if err != nil {
 				logrus.Errorf("validation error in source of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
 				return fmt.Errorf("compiling regex: %w", err)
@@ -70,6 +71,13 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 
 			// Check if there is any match in the file
 			if !reg.MatchString(f.files[filePath].content) {
+				if f.spec.SearchPattern && f.spec.IgnoreNotFound {
+					// If we are using a search pattern, then we don't want to return an error if the pattern is not found as we are searching in each files
+					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+					delete(f.files, filePath)
+					continue
+				}
+
 				return fmt.Errorf("no line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
 			matchedStrings := reg.FindAllString(f.files[filePath].content, -1)

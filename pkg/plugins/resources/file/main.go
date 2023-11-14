@@ -121,6 +121,13 @@ type Spec struct {
 
 	*/
 	SearchPattern bool `yaml:",omitempty"`
+	/*
+	   ignorenotfound defines if the MatchPattern should be ignored if not found
+
+	   remark:
+	       This attribute is only used when SearchPattern is set to true.
+	*/
+	IgnoreNotFound bool `yaml:",omitempty"`
 }
 
 // File defines a resource of kind "file"
