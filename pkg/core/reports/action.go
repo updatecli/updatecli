@@ -20,7 +20,7 @@ type Action struct {
 	PipelineUrl *PipelineURL `xml:"a,omitempty"`
 }
 
-// ActtionTargetChangelog is a struct used to store a target changelog
+// ActionTargetChangelog is a struct used to store a target changelog
 type ActionTargetChangelog struct {
 	Title       string `xml:"summary,omitempty"`
 	Description string `xml:"pre,omitempty"`
