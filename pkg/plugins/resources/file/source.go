@@ -71,8 +71,9 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 
 			// Check if there is any match in the file
 			if !reg.MatchString(f.files[filePath].content) {
-				if f.spec.SearchPattern && f.spec.IgnoreNotFound {
-					// If we are using a search pattern, then we don't want to return an error if the pattern is not found as we are searching in each files
+				if f.spec.SearchPattern {
+					// When using both a file path pattern AND a content matching regex, then we want to ignore files that don't match the pattern
+					// as otherwise we trigger error for files we don't care about.
 					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
 					delete(f.files, filePath)
 					continue
@@ -80,6 +81,13 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 
 				return fmt.Errorf("no line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
+
+			if len(f.files) == 0 {
+				resultSource.Description = "no file found matching criteria"
+				resultSource.Result = result.SKIPPED
+				return nil
+			}
+
 			matchedStrings := reg.FindAllString(f.files[filePath].content, -1)
 
 			foundContent = strings.Join(matchedStrings, "\n")
