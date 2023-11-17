@@ -39,6 +39,7 @@ import (
 	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
 	terraformRegistry "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/registry"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
+	updateclihttp "github.com/updatecli/updatecli/pkg/plugins/resources/updateclihttp"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
@@ -155,6 +156,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return helm.New(rs.Spec)
 
+	case "http":
+
+		return updateclihttp.New(rs.Spec)
+
 	case "jenkins":
 
 		return jenkins.New(rs.Spec)
@@ -249,6 +254,7 @@ func GetResourceMapping() map[string]interface{} {
 		"golang/module":      &gomodule.Spec{},
 		"hcl":                &hcl.Spec{},
 		"helmchart":          &helm.Spec{},
+		"http":               &updateclihttp.Spec{},
 		"jenkins":            &jenkins.Spec{},
 		"json":               &json.Spec{},
 		"maven":              &maven.Spec{},

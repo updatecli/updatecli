@@ -74,3 +74,9 @@ longhornio
 searchpattern
 crds
 mockito
+nofollowredirects
+returnresponseheader
+responseasserts
+updateclihttp
+Metadatas
+statuscode
