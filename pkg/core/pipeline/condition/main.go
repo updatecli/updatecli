@@ -74,15 +74,10 @@ func (c *Condition) Run(source string) (err error) {
 		}
 	}
 
-	switch c.Scm == nil {
-	case true:
-		err = condition.Condition(source, nil, &c.Result)
-		if err != nil {
-			return err
-		}
-	case false:
+	var s scm.ScmHandler
+	if c.Scm != nil {
 		// If scm is defined then clone the repository
-		s := *c.Scm
+		s = *c.Scm
 		if err != nil {
 			return err
 		}
@@ -94,11 +89,17 @@ func (c *Condition) Run(source string) (err error) {
 		if err != nil {
 			return err
 		}
+	}
 
-		err = condition.Condition(source, s, &c.Result)
-		if err != nil {
-			return err
-		}
+	ok, message, err := condition.Condition(source, s)
+	if ok {
+		c.Result.Result = result.SUCCESS
+	} else {
+		c.Result.Result = result.FAILURE
+	}
+	c.Result.Description = message
+	if err != nil {
+		return err
 	}
 
 	// FailWhen is used to reverse the expected condition value
