@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -100,8 +99,7 @@ func TestDockerfile_Condition(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult := result.Condition{}
-			gotErr := d.Condition(tt.inputSourceValue, tt.scm, &gotResult)
+			got, _, gotErr := d.Condition(tt.inputSourceValue, tt.scm)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
@@ -109,7 +107,7 @@ func TestDockerfile_Condition(t *testing.T) {
 
 			require.NoError(t, gotErr)
 
-			assert.Equal(t, tt.wantChanged, gotResult.Pass)
+			assert.Equal(t, tt.wantChanged, got)
 		})
 	}
 }

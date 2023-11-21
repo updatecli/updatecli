@@ -8,11 +8,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition test if the Dockerfile contains the correct key/value
-func (d *Dockerfile) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (d *Dockerfile) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	globalPass := true
 	descriptionList := []string{}
 
@@ -22,11 +21,11 @@ func (d *Dockerfile) Condition(source string, scm scm.ScmHandler, resultConditio
 		}
 
 		if !d.contentRetriever.FileExists(file) {
-			return fmt.Errorf("the file %s does not exist", file)
+			return false, "", fmt.Errorf("the file %s does not exist", file)
 		}
 		dockerfileContent, err := d.contentRetriever.ReadAll(file)
 		if err != nil {
-			return fmt.Errorf("reading dockerfile: %w", err)
+			return false, "", fmt.Errorf("reading dockerfile: %w", err)
 		}
 
 		logrus.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
@@ -49,16 +48,5 @@ func (d *Dockerfile) Condition(source string, scm scm.ScmHandler, resultConditio
 		}
 	}
 
-	resultCondition.Pass = globalPass
-
-	if globalPass {
-		resultCondition.Result = result.SUCCESS
-	} else {
-		resultCondition.Result = result.FAILURE
-	}
-
-	if len(descriptionList) > 0 {
-		resultCondition.Description = strings.Join(descriptionList, ", ")
-	}
-	return nil
+	return globalPass, strings.Join(descriptionList, ", "), nil
 }
