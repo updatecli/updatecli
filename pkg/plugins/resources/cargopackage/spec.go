@@ -5,7 +5,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for a "dockerimage" resource
+// Spec defines a specification for a "cargopackage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
 	// !deprecated, please use Registry.URL
