@@ -9,8 +9,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Condition tests if the response of the specified HTTP request meets assertion.
-// If the configuration doesn't specify any assertion, then it only checks for successful HTTP get result (HTTP/1xx, HTTP/2xx or HTTP/3xx)
+/*
+Condition tests if the response of the specified HTTP request meets assertion.
+If no assertion is specified, it only checks for successful HTTP response code (HTTP/1xx, HTTP/2xx or HTTP/3xx).
+*/
 func (h *Http) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 	resultCondition.Result = result.FAILURE
 	resultCondition.Pass = false

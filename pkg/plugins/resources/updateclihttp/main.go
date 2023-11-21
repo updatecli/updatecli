@@ -17,8 +17,12 @@ type Http struct {
 	httpReq    *http.Request
 }
 
-// New returns a reference to a newly initialized (TODO)
-// or an error if the provided Spec triggers a validation error.
+/*
+*
+New returns a reference to a newly initialized Http resource
+or an error if the provided Spec triggers a validation error.
+*
+*/
 func New(spec interface{}) (*Http, error) {
 
 	newSpec := Spec{}
