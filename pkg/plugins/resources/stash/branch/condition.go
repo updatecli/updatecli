@@ -5,10 +5,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Stash) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (g *Stash) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("scm not supported, ignoring")
@@ -20,7 +19,7 @@ func (g *Stash) Condition(source string, scm scm.ScmHandler, resultCondition *re
 
 	branches, err := g.SearchBranches()
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	branch := source
@@ -29,31 +28,18 @@ func (g *Stash) Condition(source string, scm scm.ScmHandler, resultCondition *re
 	}
 
 	if len(branches) == 0 {
-
-		resultCondition.Result = result.FAILURE
-		resultCondition.Pass = false
-		resultCondition.Description = fmt.Sprintf("no Bitbucket branch found for repository %s/%s", g.spec.Owner, g.spec.Repository)
-
-		return nil
+		return false, fmt.Sprintf("no Bitbucket branch found for repository %s/%s", g.spec.Owner, g.spec.Repository), nil
 	}
 
 	for _, b := range branches {
 		if b == g.spec.Branch {
-			resultCondition.Result = result.SUCCESS
-			resultCondition.Pass = true
-			resultCondition.Description = fmt.Sprintf("Bitbucket branch %q found for repository %s/%s", branch, g.spec.Owner, g.spec.Repository)
-
-			return nil
+			return true, fmt.Sprintf("Bitbucket branch %q found for repository %s/%s", branch, g.spec.Owner, g.spec.Repository), nil
 		}
 	}
 
-	resultCondition.Result = result.FAILURE
-	resultCondition.Pass = false
-	resultCondition.Description = fmt.Sprintf("no Bitbucket branch found matching %q for repository %s/%s",
+	return false, fmt.Sprintf("no Bitbucket branch found matching %q for repository %s/%s",
 		branch,
 		g.spec.Owner,
 		g.spec.Repository,
-	)
-
-	return nil
+	), nil
 }
