@@ -2,7 +2,7 @@ package mavenmetadata
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -145,7 +145,7 @@ func TestDefaultHandler_GetLatestVersion(t *testing.T) {
 						statusCode := tt.mockedHTTPStatusCode
 						return &http.Response{
 							StatusCode: statusCode,
-							Body:       ioutil.NopCloser(strings.NewReader(body)),
+							Body:       io.NopCloser(strings.NewReader(body)),
 						}, tt.mockedHttpError
 					},
 				},
@@ -200,7 +200,7 @@ func TestDefaultHandler_GetVersions(t *testing.T) {
 						statusCode := tt.mockedHTTPStatusCode
 						return &http.Response{
 							StatusCode: statusCode,
-							Body:       ioutil.NopCloser(strings.NewReader(body)),
+							Body:       io.NopCloser(strings.NewReader(body)),
 						}, tt.mockedHttpError
 					},
 				},

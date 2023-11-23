@@ -58,6 +58,7 @@ joho
 godotenv
 filechecksum
 errdef
+ADOPTE
 chardata
 pipelineurl
 mcr
@@ -67,3 +68,15 @@ windowscore
 gha
 githubactions
 gitlabci
+githubaction
+netlify
+longhornio
+searchpattern
+crds
+mockito
+nofollowredirects
+returnresponseheader
+responseasserts
+updateclihttp
+Metadatas
+statuscode

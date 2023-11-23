@@ -16,14 +16,6 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 	var validationErrors []string
 	var foundContent string
 
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return errors.New("fail getting current working directory")
-	}
-
 	if len(f.spec.Files) > 1 {
 		validationErrors = append(validationErrors, "validation error in source of type 'file': the attributes `spec.files` can't contain more than one element for sources")
 	}
@@ -41,13 +33,28 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
+	// By the default workingdir is set to the current working directory
+	// it would be better to have it empty by default but it must be changed in the
+	// source core codebase.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		return errors.New("fail getting current working directory")
+	}
 	// Ideally currentWorkingDirectory should be empty
-	if workingDir != currentWorkingDirectory {
-		f.UpdateAbsoluteFilePath(workingDir)
+	if workingDir == currentWorkingDirectory {
+		workingDir = ""
+	}
+
+	if err := f.initFiles(workingDir); err != nil {
+		return fmt.Errorf("init files: %w", err)
 	}
 
 	if err := f.Read(); err != nil {
 		return fmt.Errorf("reading file: %w", err)
+	}
+
+	if len(f.files) == 0 {
+		return fmt.Errorf("no file found")
 	}
 
 	// Looping on the only filePath in 'files'
@@ -56,6 +63,7 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 		// If a matchPattern is specified, then retrieve the string matched and returns the (eventually) multi-line string
 		if len(f.spec.MatchPattern) > 0 {
 			reg, err := regexp.Compile(f.spec.MatchPattern)
+
 			if err != nil {
 				logrus.Errorf("validation error in source of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
 				return fmt.Errorf("compiling regex: %w", err)
@@ -63,8 +71,23 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 
 			// Check if there is any match in the file
 			if !reg.MatchString(f.files[filePath].content) {
+				if f.spec.SearchPattern {
+					// When using both a file path pattern AND a content matching regex, then we want to ignore files that don't match the pattern
+					// as otherwise we trigger error for files we don't care about.
+					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+					delete(f.files, filePath)
+					continue
+				}
+
 				return fmt.Errorf("no line matched in the file %q for the pattern %q", filePath, f.spec.MatchPattern)
 			}
+
+			if len(f.files) == 0 {
+				resultSource.Description = "no file found matching criteria"
+				resultSource.Result = result.SKIPPED
+				return nil
+			}
+
 			matchedStrings := reg.FindAllString(f.files[filePath].content, -1)
 
 			foundContent = strings.Join(matchedStrings, "\n")

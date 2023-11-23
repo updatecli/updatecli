@@ -9,6 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 )
 
+// Action is a struct used to store the result of an action. It is used to generate pullrequest body
 type Action struct {
 	ID            string         `xml:"id,attr"`
 	Title         string         `xml:"-"`
@@ -19,11 +20,13 @@ type Action struct {
 	PipelineUrl *PipelineURL `xml:"a,omitempty"`
 }
 
+// ActionTargetChangelog is a struct used to store a target changelog
 type ActionTargetChangelog struct {
 	Title       string `xml:"summary,omitempty"`
 	Description string `xml:"pre,omitempty"`
 }
 
+// PipelineURL is a struct used to store a pipeline URL
 type PipelineURL struct {
 	URL  string `xml:"href,attr"`
 	Name string `xml:",chardata"`
@@ -109,6 +112,11 @@ func (a *Action) UpdatePipelineURL() {
 	detectedCi, err := ci.New()
 	if err != nil {
 		logrus.Debugf("No CI pipeline detected (%s)\n", err)
+	}
+
+	if detectedCi == nil {
+		// No CI pipeline detected
+		return
 	}
 
 	a.PipelineUrl = &PipelineURL{

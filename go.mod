@@ -28,7 +28,7 @@ require (
 	go.mozilla.org/sops/v3 v3.7.3
 	golang.org/x/oauth2 v0.12.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.13.1
+	helm.sh/helm/v3 v3.13.2
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -41,7 +41,7 @@ require (
 	github.com/google/go-containerregistry v0.15.2
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.18.1
-	github.com/hashicorp/terraform-registry-address v0.2.2
+	github.com/hashicorp/terraform-registry-address v0.2.3
 	github.com/invopop/jsonschema v0.8.0
 	github.com/joho/godotenv v1.5.1
 	github.com/minamijoyo/hcledit v0.2.10
@@ -161,7 +161,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.1 // indirect
