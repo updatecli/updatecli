@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("condition not supported for plugin GitHub Release used with scm")
@@ -21,7 +21,7 @@ func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler, resultCondi
 
 	versions, err := gr.ghHandler.SearchReleases(gr.typeFilter)
 	if err != nil {
-		return fmt.Errorf("searching GitHub release: %w", err)
+		return false, "", fmt.Errorf("searching GitHub release: %w", err)
 	}
 
 	if len(versions) == 0 {
@@ -31,24 +31,21 @@ func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler, resultCondi
 
 			versions, err = gr.ghHandler.SearchTags()
 			if err != nil {
-				return fmt.Errorf("looking for GitHub release tag: %w", err)
+				return false, "", fmt.Errorf("looking for GitHub release tag: %w", err)
 			}
 			if len(versions) == 0 {
-				return fmt.Errorf("no GitHub release or git tags found")
+				return false, "", fmt.Errorf("no GitHub release or git tags found")
 			}
 		case false:
-			return fmt.Errorf("no GitHub release found")
+			return false, "", fmt.Errorf("no GitHub release found")
 		}
 	}
 
 	for _, version := range versions {
 		if version == expectedValue {
-			resultCondition.Pass = true
-			resultCondition.Result = result.SUCCESS
-			resultCondition.Description = fmt.Sprintf("GitHub release %q found", expectedValue)
-			return nil
+			return true, fmt.Sprintf("GitHub release %q found", expectedValue), nil
 		}
 	}
 
-	return fmt.Errorf("GitHub release %q not found", expectedValue)
+	return false, fmt.Sprintf("GitHub release %q not found", expectedValue), nil
 }
