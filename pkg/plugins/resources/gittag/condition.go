@@ -5,11 +5,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition checks that a git tag exists
-func (gt *GitTag) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		path := scm.GetDirectory()
@@ -28,32 +27,29 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler, resultCondition *
 		gt.versionFilter.Pattern = source
 	}
 
-	err := gt.Validate()
+	err = gt.Validate()
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	tags, err := gt.nativeGitHandler.Tags(gt.spec.Path)
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	gt.foundVersion, err = gt.versionFilter.Search(tags)
 	if err != nil {
-		return err
+		return false, "", err
 	}
 	tag := gt.foundVersion.GetVersion()
 
 	if len(tag) == 0 {
-		return fmt.Errorf("no git tag matching pattern %q, found", gt.versionFilter.Pattern)
+		return false, fmt.Sprintf("no git tag matching pattern %q, found", gt.versionFilter.Pattern), nil
 	}
 
 	if tag == gt.versionFilter.Pattern {
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-		resultCondition.Description = fmt.Sprintf("git tag %q matching\n", gt.versionFilter.Pattern)
-		return nil
+		return true, fmt.Sprintf("git tag %q matching\n", gt.versionFilter.Pattern), nil
 	}
 
-	return fmt.Errorf("git tag %q not matching %q", gt.versionFilter.Pattern, tag)
+	return false, fmt.Sprintf("git tag %q not matching %q", gt.versionFilter.Pattern, tag), nil
 }
