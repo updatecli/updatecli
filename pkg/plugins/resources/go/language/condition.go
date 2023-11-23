@@ -1,16 +1,14 @@
 package language
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition checks if a specific stable Golang version is published
-func (l *Language) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (l *Language) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Debugln("scm is not supported")
 	}
@@ -19,22 +17,19 @@ func (l *Language) Condition(source string, scm scm.ScmHandler, resultCondition 
 		versionToCheck = source
 	}
 	if len(versionToCheck) == 0 {
-		return errors.New("no version defined")
+		return false, "", fmt.Errorf("no version defined")
 	}
 
 	versions, err := l.versions()
 	if err != nil {
-		return fmt.Errorf("searching golang version: %w", err)
+		return false, "", fmt.Errorf("searching golang version: %w", err)
 	}
 
 	for _, v := range versions {
 		if v == versionToCheck {
-			resultCondition.Pass = true
-			resultCondition.Result = result.SUCCESS
-			resultCondition.Description = fmt.Sprintf("Golang version %q available", versionToCheck)
-			return nil
+			return true, fmt.Sprintf("Golang version %q available", versionToCheck), nil
 		}
 	}
 
-	return fmt.Errorf("golang version %q doesn't exist", versionToCheck)
+	return false, fmt.Sprintf("golang version %q doesn't exist", versionToCheck), nil
 }
