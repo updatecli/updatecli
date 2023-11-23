@@ -14,7 +14,7 @@ import (
 
 // Condition test if a file content matches the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
-func (f *File) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (f *File) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	workDir := ""
 	if scm != nil {
@@ -22,7 +22,7 @@ func (f *File) Condition(source string, scm scm.ScmHandler, resultCondition *res
 	}
 
 	if err := f.initFiles(workDir); err != nil {
-		return fmt.Errorf("init files: %w", err)
+		return false, "", fmt.Errorf("init files: %w", err)
 	}
 
 	files := f.spec.Files
@@ -30,22 +30,18 @@ func (f *File) Condition(source string, scm scm.ScmHandler, resultCondition *res
 
 	passing, err := f.condition(source)
 	if err != nil {
-		return fmt.Errorf("file condition: %w", err)
+		return false, "", fmt.Errorf("file condition: %w", err)
 	}
 
 	switch passing {
 	case true:
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-		resultCondition.Description = fmt.Sprintf("condition on file %q passed", files)
+		return true, fmt.Sprintf("condition on file %q passed", files), nil
 
 	case false:
-		resultCondition.Pass = false
-		resultCondition.Result = result.FAILURE
-		resultCondition.Description = fmt.Sprintf("condition on file %q did not pass", files)
+		return false, fmt.Sprintf("condition on file %q did not pass", files), nil
 	}
 
-	return nil
+	return false, "", fmt.Errorf("Unexpected error happened on file. Please report to an issue.")
 }
 
 func (f *File) condition(source string) (bool, error) {
