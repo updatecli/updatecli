@@ -8,12 +8,11 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition checks if a Helm chart version exists on a OCI registry
 // It assumes that not being able to retrieve the OCI digest, means, the helm chart doesn't exist.
-func (c *Chart) OCICondition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (c *Chart) OCICondition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	refName := filepath.Join(strings.TrimPrefix(c.spec.URL, "oci://"), c.spec.Name)
 	switch c.spec.Version == "" {
@@ -25,20 +24,16 @@ func (c *Chart) OCICondition(source string, scm scm.ScmHandler, resultCondition 
 
 	ref, err := name.ParseReference(refName)
 	if err != nil {
-		return fmt.Errorf("invalid artifact %s: %w", refName, err)
+		return false, "", fmt.Errorf("invalid artifact %s: %w", refName, err)
 	}
 
 	_, err = remote.Head(ref, c.options...)
 	if err != nil {
 		if strings.Contains(err.Error(), "unexpected status code 404") {
-			return fmt.Errorf("the OCI Helm chart %s doesn't exist", ref.Name())
+			return false, fmt.Sprintf("the OCI Helm chart %s doesn't exist", ref.Name()), nil
 		}
-		return err
+		return false, "", err
 	}
 
-	resultCondition.Pass = true
-	resultCondition.Result = result.SUCCESS
-	resultCondition.Description = fmt.Sprintf("The OCI Helm chart %s exists and is available", ref.Name())
-
-	return nil
+	return true, fmt.Sprintf("The OCI Helm chart %s exists and is available", ref.Name()), nil
 }
