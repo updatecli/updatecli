@@ -6,23 +6,19 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 /*
 Condition tests if the response of the specified HTTP request meets assertion.
 If no assertion is specified, it only checks for successful HTTP response code (HTTP/1xx, HTTP/2xx or HTTP/3xx).
 */
-func (h *Http) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
-	resultCondition.Result = result.FAILURE
-	resultCondition.Pass = false
+func (h *Http) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	var failureMessages []string
-
 	conditionResult := true
 
 	httpRes, err := h.performHttpRequest()
 	if err != nil {
-		return err
+		return false, "", err
 	}
 	defer httpRes.Body.Close()
 
@@ -34,7 +30,7 @@ func (h *Http) Condition(source string, scm scm.ScmHandler, resultCondition *res
 	} else {
 		// Only return an error if the HTTP status code is a server-side error: not found is not an error (but a condition failure)
 		if httpRes.StatusCode >= http.StatusInternalServerError {
-			return &ErrHttpError{resStatusCode: httpRes.StatusCode}
+			return false, "", &ErrHttpError{resStatusCode: httpRes.StatusCode}
 		}
 		if httpRes.StatusCode >= http.StatusNotFound {
 			failureMessages = append(failureMessages, fmt.Sprintf("Received status code %d which is >= 400, e.g. client or server HTTP error", httpRes.StatusCode))
@@ -53,14 +49,9 @@ func (h *Http) Condition(source string, scm scm.ScmHandler, resultCondition *res
 		}
 	}
 
-	resultCondition.Pass = conditionResult
-	if conditionResult {
-		resultCondition.Result = result.SUCCESS
-		resultCondition.Description = fmt.Sprintf("[http] condition with URL: %q passed", h.spec.Url)
-	} else {
-		resultCondition.Result = result.FAILURE
-		resultCondition.Description = fmt.Sprintf("[http] condition with URL: %q did NOT pass with the following errors: %s", h.spec.Url, strings.Join(failureMessages, "\n"))
+	if !conditionResult {
+		return false, fmt.Sprintf("[http] condition with URL: %q did NOT pass with the following errors: %s", h.spec.Url, strings.Join(failureMessages, "\n")), nil
 	}
 
-	return nil
+	return true, fmt.Sprintf("[http] condition with URL: %q passed", h.spec.Url), nil
 }

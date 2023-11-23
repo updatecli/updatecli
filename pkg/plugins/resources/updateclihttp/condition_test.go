@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -133,24 +132,18 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			got := &result.Condition{}
-			gotErr := sut.Condition(tt.source, tt.scm, got)
+			got, _, gotErr := sut.Condition(tt.source, tt.scm)
 
 			if tt.wantErr != nil {
 				require.Error(t, gotErr)
-				assert.Equal(t, got.Result, result.FAILURE)
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.want, got.Pass)
+			assert.Equal(t, tt.want, got)
 
-			if tt.want {
-				assert.Equal(t, got.Result, result.SUCCESS)
-			} else {
-				assert.Equal(t, got.Result, result.FAILURE)
-			}
+			assert.Equal(t, got, tt.want)
 		})
 	}
 }
