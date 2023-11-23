@@ -5,11 +5,10 @@ import (
 
 	"github.com/beevik/etree"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition checks that a specific xml path contains the correct value at the specified path
-func (x *XML) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (x *XML) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	resourceFile := x.spec.File
 	if scm != nil {
@@ -23,53 +22,39 @@ func (x *XML) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 
 	// Test at runtime if a file exist
 	if !x.contentRetriever.FileExists(resourceFile) {
-		return fmt.Errorf("file %q does not exist", resourceFile)
+		return false, "", fmt.Errorf("file %q does not exist", resourceFile)
 	}
 
 	if err := x.Read(resourceFile); err != nil {
-		return err
+		return false, "", err
 	}
 
 	doc := etree.NewDocument()
 
 	if err := doc.ReadFromString(x.currentContent); err != nil {
-		return err
+		return false, "", err
 	}
 
 	elem := doc.FindElement(x.spec.Path)
 
 	if elem == nil {
-		resultCondition.Description = fmt.Sprintf("nothing found in path %q from file %q",
+		return false, fmt.Sprintf("nothing found in path %q from file %q",
 			x.spec.Path,
 			resourceFile,
-		)
-
-		resultCondition.Pass = false
-		resultCondition.Result = result.FAILURE
-
-		return nil
+		), nil
 	}
 
 	if value == elem.Text() {
-		resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is correctly set to %s",
+		return true, fmt.Sprintf("Path %q, from file %q, is correctly set to %s",
 			x.spec.Path,
 			resourceFile,
-			value)
-
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-
-		return nil
+			value), nil
 	}
 
-	resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
+	return false, fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
 		x.spec.Path,
 		resourceFile,
 		elem.Text(),
 		value,
-	)
-	resultCondition.Pass = false
-	resultCondition.Result = result.FAILURE
-
-	return nil
+	), nil
 }
