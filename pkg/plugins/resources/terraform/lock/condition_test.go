@@ -7,7 +7,6 @@ import (
 	"github.com/minamijoyo/tfupdate/lock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -139,16 +138,15 @@ func TestCondition(t *testing.T) {
 
 			l.lockIndex = lock.NewMockIndex(providerVersions)
 
-			gotResult := result.Condition{}
-			err = l.Condition(tt.source, nil, &gotResult)
+			gotResult, _, gotErr := l.Condition(tt.source, nil)
 
 			if tt.wantErr {
-				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
+				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())
 			} else {
-				require.NoError(t, err)
+				require.NoError(t, gotErr)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult.Pass)
+			assert.Equal(t, tt.expectedResult, gotResult)
 		})
 	}
 }
