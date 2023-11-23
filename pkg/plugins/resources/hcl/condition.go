@@ -7,9 +7,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (h *Hcl) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (h *Hcl) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if len(h.files) > 1 {
-		return fmt.Errorf("%s HCL condition only supports one file", result.FAILURE)
+		return false, "", fmt.Errorf("%s HCL condition only supports one file", result.FAILURE)
 	}
 
 	if scm != nil {
@@ -17,7 +17,7 @@ func (h *Hcl) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 	}
 
 	if err := h.Read(); err != nil {
-		return fmt.Errorf("reading hcl file: %w", err)
+		return false, "", fmt.Errorf("reading hcl file: %w", err)
 	}
 
 	// Always one
@@ -29,7 +29,7 @@ func (h *Hcl) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 	resourceFile := h.files[filePath]
 	conditionOutput, err := h.Query(resourceFile)
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	value := source
@@ -38,25 +38,16 @@ func (h *Hcl) Condition(source string, scm scm.ScmHandler, resultCondition *resu
 	}
 
 	if value == conditionOutput {
-		resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is correctly set to %q",
+		return true, fmt.Sprintf("Path %q, from file %q, is correctly set to %q",
 			h.spec.Path,
 			resourceFile.originalFilePath,
-			value)
-
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-
-		return nil
+			value), nil
 	}
 
-	resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
+	return false, fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
 		h.spec.Path,
 		resourceFile.originalFilePath,
 		conditionOutput,
 		value,
-	)
-	resultCondition.Pass = false
-	resultCondition.Result = result.FAILURE
-
-	return nil
+	), nil
 }
