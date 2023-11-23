@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *Toml) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (t *Toml) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	conditionResult := true
+
+	resultMessage := ""
 
 	rootDir := ""
 	if scm != nil {
@@ -20,7 +20,7 @@ func (t *Toml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 	for i := range t.contents {
 
 		if err := t.contents[i].Read(rootDir); err != nil {
-			return fmt.Errorf("reading toml file: %w", err)
+			return false, "", fmt.Errorf("reading toml file: %w", err)
 		}
 
 		// Override value from source if not yet defined
@@ -34,16 +34,14 @@ func (t *Toml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 		switch len(t.spec.Query) > 0 {
 		case true:
 			queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
-
 			if err != nil {
-				return err
+				return false, "", err
 			}
 
 		case false:
 			queryResult, err := t.contents[i].Query(t.spec.Key)
-
 			if err != nil {
-				return err
+				return false, "", err
 			}
 
 			queryResults = []string{queryResult}
@@ -52,16 +50,16 @@ func (t *Toml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 		for _, queryResult := range queryResults {
 			switch queryResult == t.spec.Value {
 			case true:
-				logrus.Infof("%s\nkey %q, from file %q, is correctly set to %q",
-					resultCondition.Description,
+				resultMessage = fmt.Sprintf("%s\nkey %q, from file %q, is correctly set to %q",
+					resultMessage,
 					t.spec.Key,
 					t.contents[i].FilePath,
 					t.spec.Value)
 
 			case false:
 				conditionResult = false
-				logrus.Infof("%s\nkey %q, from file %q, is incorrectly set to %q and should be %q",
-					resultCondition.Description,
+				resultMessage = fmt.Sprintf("%s\nkey %q, from file %q, is incorrectly set to %q and should be %q",
+					resultMessage,
 					t.spec.Key,
 					t.contents[i].FilePath,
 					queryResult,
@@ -71,16 +69,7 @@ func (t *Toml) Condition(source string, scm scm.ScmHandler, resultCondition *res
 
 	}
 
-	resultCondition.Description = strings.TrimPrefix(resultCondition.Description, "\n")
+	resultMessage = strings.TrimPrefix(resultMessage, "\n")
 
-	if conditionResult {
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-		return nil
-	}
-
-	resultCondition.Pass = false
-	resultCondition.Result = result.FAILURE
-
-	return nil
+	return conditionResult, resultMessage, nil
 }
