@@ -6,12 +6,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition checks that an Npm package version exist
-func (n Npm) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
-
+func (n Npm) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningf("SCM configuration is not supported for npm condition, aborting")
 
@@ -22,26 +20,19 @@ func (n Npm) Condition(source string, scm scm.ScmHandler, resultCondition *resul
 		versionToCheck = source
 	}
 	if len(versionToCheck) == 0 {
-		return errors.New("no version defined")
+		return false, "", errors.New("no version defined")
 	}
 
 	_, versions, err := n.getVersions()
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	for _, v := range versions {
 		if v == versionToCheck {
-			resultCondition.Pass = true
-			resultCondition.Result = result.SUCCESS
-			resultCondition.Description = fmt.Sprintf("release version %q available", versionToCheck)
-			return nil
+			return true, fmt.Sprintf("release version %q available", versionToCheck), nil
 		}
 	}
 
-	resultCondition.Result = result.FAILURE
-	resultCondition.Pass = false
-	resultCondition.Description = fmt.Sprintf("Version %q doesn't exist\n", versionToCheck)
-
-	return nil
+	return false, fmt.Sprintf("Version %q doesn't exist\n", versionToCheck), nil
 }
