@@ -4,11 +4,10 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition tests if the provided command (concatenated with the source) is executed with success
-func (s *Shell) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (s *Shell) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	var workingDir string
 	if scm != nil {
 		workingDir = scm.GetDirectory()
@@ -17,9 +16,9 @@ func (s *Shell) Condition(source string, scm scm.ScmHandler, resultCondition *re
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
-	err := s.spec.Environments.Load()
+	err = s.spec.Environments.Load()
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "condition"
@@ -33,12 +32,12 @@ func (s *Shell) Condition(source string, scm scm.ScmHandler, resultCondition *re
 
 	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	scriptFilename, err := newShellScript(s.appendSource(source))
 	if err != nil {
-		return fmt.Errorf("failed initializing source script - %s", err)
+		return false, "", fmt.Errorf("failed initializing source script - %s", err)
 	}
 
 	err = s.executeCommand(command{
@@ -47,29 +46,22 @@ func (s *Shell) Condition(source string, scm scm.ScmHandler, resultCondition *re
 		Env: env.ToStringSlice(),
 	})
 	if err != nil {
-		return fmt.Errorf("failed while running condition script - %s", err)
+		return false, "", fmt.Errorf("failed while running condition script - %s", err)
 	}
 
 	err = s.success.PostCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	ok, err := s.success.ConditionResult()
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
-	switch ok {
-	case true:
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-		resultCondition.Description = fmt.Sprintf("shell condition of type %q, passing", s.spec.ChangedIf.Kind)
-	case false:
-		resultCondition.Pass = false
-		resultCondition.Result = result.FAILURE
-		resultCondition.Description = fmt.Sprintf("shell condition of type %q not passing", s.spec.ChangedIf.Kind)
+	if ok {
+		return true, fmt.Sprintf("shell condition of type %q, passing", s.spec.ChangedIf.Kind), nil
 	}
 
-	return nil
+	return false, fmt.Sprintf("shell condition of type %q not passing", s.spec.ChangedIf.Kind), nil
 }
