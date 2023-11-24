@@ -110,7 +110,7 @@ A short one-line description of the parameter
 
 ===== 3. Respect the contract
 
-Your 'packageName' must provides a `struct` which implements the `Resource` interface by defining the following functions:
+Your 'packageName' must provide a `struct` which implements the `Resource` interface by defining the following functions:
 
 [cols="1,2a,2", options="header"]
 .Rules
