@@ -3,7 +3,7 @@ scms:
   fleet-lab:
     kind: git 
     spec:
-      url: https://github.com/olblak/fleet-lab.git
+      url: https://github.com/updatecli-test/fleet-lab.git
     
 autodiscovery:
   # scmid is applied to all crawlers

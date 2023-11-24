@@ -3,7 +3,7 @@ scms:
   fleet-lab:
     kind: github
     spec:
-      owner: olblak
+      owner: updatecli-test
       repository: fleet-lab
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
