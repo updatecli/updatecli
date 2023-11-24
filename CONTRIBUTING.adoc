@@ -110,7 +110,7 @@ A short one-line description of the parameter
 
 ===== 3. Respect the contract
 
-Your 'packageName' must respect at least one of the following interface contract by defining appropriated functions.
+Your 'packageName' must provides a `struct` which implements the `Resource` interface by defining the following functions:
 
 [cols="1,2a,2", options="header"]
 .Rules
@@ -121,34 +121,25 @@ Your 'packageName' must respect at least one of the following interface contract
 
 | Source
 | ```
-type Spec interface {
-    Source() (string, error)
-}
+Source(workingDir string, resultSource *result.Source) error
 ```
 | Defines how a version will be retrieved then passed the following stages
 
 | Changelog
 | ```
-type Changelog interface {
-    Changelog(release string) (string, error)
-}
+Changelog() string
 ```
 | Retrieve the changelog for a specific source.
 
 | Condition
 | ```
-type Spec interface {
-    Condition(version string) (bool, error)
-    ConditionFromSCM(version string, scm scm.Scm) (bool, error)
-}
+Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error)
 ```
 | Define a condition which has to pass in order to proceed
 
 | Target
 | ```
-type Spec interface {
-    Target(source string, scm scm.Scm, dryRun bool) (changed bool, files []string, message string, err error)
-
+Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error
 ```
 | Define how a target file is updated
 
