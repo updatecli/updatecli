@@ -20,9 +20,9 @@ import (
 
 // TestPushPull is a test for the Push and Pull functions
 func TestPushPullPolicy(t *testing.T) {
-	//if testing.Short() {
-	//	t.Skip("skipping integration test")
-	//}
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{

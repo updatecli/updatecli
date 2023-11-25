@@ -185,7 +185,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 					not every target have a name as it wasn't mandatory in the past
 					so we use the description as a fallback
 				*/
-				commitMessage := t.Config.Name
+				commitMessage := t.Config.ResourceConfig.Name
 				if commitMessage == "" {
 					commitMessage = t.Result.Description
 				}
