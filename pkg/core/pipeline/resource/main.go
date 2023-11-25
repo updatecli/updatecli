@@ -172,6 +172,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return maven.New(rs.Spec)
 
+	case "npm":
+
+		return npm.New(rs.Spec)
+
 	case "shell":
 
 		return shell.New(rs.Spec)
@@ -204,17 +208,13 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return toml.New(rs.Spec)
 
-	case "yaml":
-
-		return yaml.New(rs.Spec)
-
 	case "xml":
 
 		return xml.New(rs.Spec)
 
-	case "npm":
+	case "yaml":
 
-		return npm.New(rs.Spec)
+		return yaml.New(rs.Spec)
 
 	default:
 
