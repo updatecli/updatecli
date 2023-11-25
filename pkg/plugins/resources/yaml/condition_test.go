@@ -6,8 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -547,124 +545,14 @@ repos:
 
 			assert.NoError(t, err)
 
-			gotResult := result.Condition{}
-			gotErr := y.Condition(tt.inputSourceValue, nil, &gotResult)
+			gotResult, _, gotErr := y.Condition(tt.inputSourceValue, nil)
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.isResultWanted, gotResult.Pass)
-			for filePath := range tt.files {
-				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
-			}
-		})
-	}
-}
-
-func Test_ConditionFromSCM(t *testing.T) {
-	tests := []struct {
-		name             string
-		spec             Spec
-		files            map[string]file
-		inputSourceValue string
-		mockedContents   map[string]string
-		mockedError      error
-		wantedContents   map[string]string
-		isResultWanted   bool
-		isErrorWanted    bool
-		scm              scm.ScmHandler
-	}{
-		{
-			name: "Passing case with no input source and only specified value",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "github.owner",
-				Value: "olblak",
-			},
-			files: map[string]file{
-				"/tmp/test.yaml": {
-					filePath:         "/tmp/test.yaml",
-					originalFilePath: "/tmp/test.yaml",
-				},
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			mockedContents: map[string]string{
-				"/tmp/test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			wantedContents: map[string]string{
-				"/tmp/test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			isResultWanted: true,
-		},
-		{
-			name: "Passing case with one 'Files' no input source and only specified value",
-			spec: Spec{
-				Files: []string{
-					"test.yaml",
-				},
-				Key:   "github.owner",
-				Value: "olblak",
-			},
-			files: map[string]file{
-				"/tmp/test.yaml": {
-					filePath:         "/tmp/test.yaml",
-					originalFilePath: "/tmp/test.yaml",
-				},
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			mockedContents: map[string]string{
-				"/tmp/test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			wantedContents: map[string]string{
-				"/tmp/test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			isResultWanted: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockedText := text.MockTextRetriever{
-				Contents: tt.mockedContents,
-				Err:      tt.mockedError,
-			}
-
-			y, err := New(tt.spec)
-			y.contentRetriever = &mockedText
-			y.files = tt.files
-
-			assert.NoError(t, err)
-
-			gotResult := result.Condition{}
-			gotErr := y.Condition(tt.inputSourceValue, tt.scm, &gotResult)
-			if tt.isErrorWanted {
-				assert.Error(t, gotErr)
-				return
-			}
-
-			require.NoError(t, gotErr)
-			assert.Equal(t, tt.isResultWanted, gotResult.Pass)
+			assert.Equal(t, tt.isResultWanted, gotResult)
 			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
 			}

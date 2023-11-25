@@ -5,12 +5,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition checks that a Jenkins version exists and that the version
 // match a valid release type
-func (j Jenkins) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (j Jenkins) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("SCM configuration is not supported for Jenkins condition")
@@ -24,11 +23,11 @@ func (j Jenkins) Condition(source string, scm scm.ScmHandler, resultCondition *r
 
 	releaseType, err := ReleaseType(versionToCheck)
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	if releaseType != j.spec.Release {
-		return fmt.Errorf(
+		return false, "", fmt.Errorf(
 			"wrong Release Type '%s' detected : Jenkins version '%s' is a '%s' release",
 			j.spec.Release, versionToCheck, releaseType)
 	}
@@ -36,21 +35,15 @@ func (j Jenkins) Condition(source string, scm scm.ScmHandler, resultCondition *r
 	if len(versionToCheck) > 0 {
 		_, versions, err := j.getVersions()
 		if err != nil {
-			return err
+			return false, "", err
 		}
 
 		for _, v := range versions {
 			if v == versionToCheck {
-				resultCondition.Result = result.SUCCESS
-				resultCondition.Pass = true
-				resultCondition.Description = fmt.Sprintf("%s release version %q available\n", releaseType, versionToCheck)
-				return nil
+				return true, fmt.Sprintf("%s release version %q available\n", releaseType, versionToCheck), nil
 			}
 		}
 	}
 
-	resultCondition.Result = result.FAILURE
-	resultCondition.Pass = false
-	resultCondition.Description = fmt.Sprintf("version %q doesn't exist", versionToCheck)
-	return nil
+	return false, fmt.Sprintf("version %q doesn't exist", versionToCheck), nil
 }

@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (j *Json) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (j *Json) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	conditionResult := true
+	partialMessage := ""
 
 	rootDir := ""
 	if scm != nil {
@@ -20,7 +19,7 @@ func (j *Json) Condition(source string, scm scm.ScmHandler, resultCondition *res
 	for i := range j.contents {
 
 		if err := j.contents[i].Read(rootDir); err != nil {
-			return fmt.Errorf("reading json file: %w", err)
+			return false, "", fmt.Errorf("reading json file: %w", err)
 		}
 
 		// Override value from source if not yet defined
@@ -34,15 +33,14 @@ func (j *Json) Condition(source string, scm scm.ScmHandler, resultCondition *res
 		switch len(j.spec.Query) > 0 {
 		case true:
 			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
-
 			if err != nil {
-				return err
+				return false, "", err
 			}
 
 		case false:
 			queryResult, err := j.contents[i].Query(j.spec.Key)
 			if err != nil {
-				return err
+				return false, "", err
 			}
 
 			queryResults = []string{queryResult}
@@ -51,16 +49,16 @@ func (j *Json) Condition(source string, scm scm.ScmHandler, resultCondition *res
 		for _, queryResult := range queryResults {
 			switch queryResult == j.spec.Value {
 			case true:
-				resultCondition.Description = fmt.Sprintf("%s\nKey %q, from file %q, is correctly set to %q",
-					resultCondition.Description,
+				partialMessage = fmt.Sprintf("%s\nKey %q, from file %q, is correctly set to %q",
+					partialMessage,
 					j.spec.Key,
 					j.contents[i].FilePath,
 					j.spec.Value)
 
 			case false:
 				conditionResult = false
-				logrus.Infof("%s\nKey %q, from file %q, is incorrectly set to %q and should be %q",
-					resultCondition.Description,
+				partialMessage = fmt.Sprintf("%s\nKey %q, from file %q, is incorrectly set to %q and should be %q",
+					partialMessage,
 					j.spec.Key,
 					j.contents[i].FilePath,
 					queryResult,
@@ -70,15 +68,6 @@ func (j *Json) Condition(source string, scm scm.ScmHandler, resultCondition *res
 
 	}
 
-	resultCondition.Description = strings.TrimPrefix(resultCondition.Description, "\n")
-
-	switch conditionResult {
-	case true:
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-	case false:
-		resultCondition.Pass = false
-		resultCondition.Result = result.FAILURE
-	}
-	return nil
+	partialMessage = strings.TrimPrefix(partialMessage, "\n")
+	return conditionResult, partialMessage, nil
 }

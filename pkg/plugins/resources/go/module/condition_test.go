@@ -1,12 +1,10 @@
 package gomodule
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -39,25 +37,22 @@ func TestCondition(t *testing.T) {
 				Module:  "github.com/MakeNowJust/heredoc",
 				Version: "v0.0.0",
 			},
-			expectedResult:   true,
-			expectedError:    true,
-			expectedErrorMsg: errors.New("version \"v0.0.0\" doesn't exist"),
+			expectedResult: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
-			gotResult := result.Condition{}
-			err = got.Condition("", nil, &gotResult)
+			gotResult, _, gotErr := got.Condition("", nil)
 			if tt.expectedError {
-				if assert.Error(t, err) {
-					assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
+				if assert.Error(t, gotErr) {
+					assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())
 				}
 				return
 			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotResult.Pass)
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.expectedResult, gotResult)
 		})
 	}
 

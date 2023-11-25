@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -21,18 +20,16 @@ func TestCondition(t *testing.T) {
 		d.ami.apiClient = mockDescribeImagesOutput{
 			Resp: d.mockedResponse,
 		}
-		gotResult := result.Condition{}
-		err := d.ami.Condition("", nil, &gotResult)
+		got, _, gotErr := d.ami.Condition("", nil)
 
 		switch d.expectedError == nil {
 		case true:
-			require.NoError(t, err)
+			require.NoError(t, gotErr)
 		case false:
-			require.ErrorIs(t, d.expectedError, err)
-
+			require.ErrorIs(t, d.expectedError, gotErr)
 		}
 
-		assert.Equal(t, d.expectedCondition, gotResult.Pass)
+		assert.Equal(t, d.expectedCondition, got)
 
 	}
 
@@ -58,10 +55,9 @@ func TestCondition(t *testing.T) {
 		},
 	}
 
-	gotResult := result.Condition{}
-	err := ami.Condition(imageID, nil, &gotResult)
+	got, _, gotErr := ami.Condition(imageID, nil)
 
-	require.NoError(t, err)
-	assert.Equal(t, true, gotResult.Pass)
+	require.NoError(t, gotErr)
+	assert.Equal(t, true, got)
 
 }

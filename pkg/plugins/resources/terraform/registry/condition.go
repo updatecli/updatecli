@@ -10,7 +10,7 @@ import (
 )
 
 // Condition checks if a specific version is published
-func (t *TerraformRegistry) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (t *TerraformRegistry) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Debugln("scm is not supported")
 	}
@@ -21,20 +21,17 @@ func (t *TerraformRegistry) Condition(source string, scm scm.ScmHandler, resultC
 	}
 
 	if len(versionToCheck) == 0 {
-		return fmt.Errorf("%s version undefined", result.FAILURE)
+		return false, "", fmt.Errorf("%s version undefined", result.FAILURE)
 	}
 
 	versions, err := t.versions()
 	if err != nil {
-		return fmt.Errorf("%s retrieving terraform registry version: %w", result.FAILURE, err)
+		return false, "", fmt.Errorf("%s retrieving terraform registry version: %w", result.FAILURE, err)
 	}
 
 	if slices.Contains(versions, versionToCheck) {
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-		resultCondition.Description = fmt.Sprintf("Terraform registry version %q available", versionToCheck)
-		return nil
+		return true, fmt.Sprintf("Terraform registry version %q available", versionToCheck), nil
 	}
 
-	return fmt.Errorf("%s terraform registry version %q doesn't exist", result.FAILURE, versionToCheck)
+	return false, fmt.Sprintf("%s terraform registry version %q doesn't exist", result.FAILURE, versionToCheck), nil
 }

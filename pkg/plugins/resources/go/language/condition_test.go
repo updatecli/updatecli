@@ -1,12 +1,10 @@
 package language
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -29,9 +27,7 @@ func TestCondition(t *testing.T) {
 			spec: Spec{
 				Version: "1.11.1111",
 			},
-			expectedResult:   false,
-			expectedError:    true,
-			expectedErrorMsg: errors.New("golang version \"1.11.1111\" doesn't exist"),
+			expectedResult: false,
 		},
 	}
 	for _, tt := range tests {
@@ -39,8 +35,7 @@ func TestCondition(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
 
-			gotResult := result.Condition{}
-			err = got.Condition("", nil, &gotResult)
+			gotResult, _, err := got.Condition("", nil)
 			if tt.expectedError {
 				if assert.Error(t, err) {
 					assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -48,7 +43,7 @@ func TestCondition(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotResult.Pass)
+			assert.Equal(t, tt.expectedResult, gotResult)
 		})
 	}
 

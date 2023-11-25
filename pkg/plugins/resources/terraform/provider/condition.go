@@ -7,9 +7,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *TerraformProvider) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (t *TerraformProvider) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if len(t.files) > 1 {
-		return fmt.Errorf("%s terraform/lock condition only supports one file", result.FAILURE)
+		return false, "", fmt.Errorf("%s terraform/lock condition only supports one file", result.FAILURE)
 	}
 
 	if scm != nil {
@@ -17,7 +17,7 @@ func (t *TerraformProvider) Condition(source string, scm scm.ScmHandler, resultC
 	}
 
 	if err := t.Read(); err != nil {
-		return err
+		return false, "", err
 	}
 
 	// Always one
@@ -29,7 +29,7 @@ func (t *TerraformProvider) Condition(source string, scm scm.ScmHandler, resultC
 	resourceFile := t.files[filePath]
 	conditionOutputVersion, err := t.Query(resourceFile)
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	value := source
@@ -38,25 +38,16 @@ func (t *TerraformProvider) Condition(source string, scm scm.ScmHandler, resultC
 	}
 
 	if value == conditionOutputVersion {
-		resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is correctly set to %q",
+		return true, fmt.Sprintf("Path %q, from file %q, is correctly set to %q",
 			t.spec.Provider,
 			resourceFile.originalFilePath,
-			value)
-
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-
-		return nil
+			value), nil
 	}
 
-	resultCondition.Description = fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
+	return false, fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
 		t.spec.Provider,
 		resourceFile.originalFilePath,
 		conditionOutputVersion,
 		value,
-	)
-	resultCondition.Pass = false
-	resultCondition.Result = result.FAILURE
-
-	return nil
+	), nil
 }

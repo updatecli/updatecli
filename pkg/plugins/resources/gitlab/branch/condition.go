@@ -4,24 +4,20 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (g *Gitlab) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
-		return fmt.Errorf("Condition not supported for the plugin GitLab branch")
+		return false, "", fmt.Errorf("Condition not supported for the plugin GitLab branch")
 	}
 
 	branches, err := g.SearchBranches()
 	if err != nil {
-		return fmt.Errorf("looking for GitLab branch: %w", err)
+		return false, "", fmt.Errorf("looking for GitLab branch: %w", err)
 	}
 
 	if len(branches) == 0 {
-		resultCondition.Pass = false
-		resultCondition.Result = result.FAILURE
-		resultCondition.Description = "no GitLab branch found"
-		return nil
+		return false, "no GitLab branch found", nil
 	}
 
 	branch := source
@@ -30,16 +26,9 @@ func (g *Gitlab) Condition(source string, scm scm.ScmHandler, resultCondition *r
 	}
 	for _, b := range branches {
 		if b == branch {
-			resultCondition.Pass = true
-			resultCondition.Result = result.SUCCESS
-			resultCondition.Description = fmt.Sprintf("GitLab branch %q found", b)
-			return nil
+			return true, fmt.Sprintf("GitLab branch %q found", b), nil
 		}
 	}
 
-	resultCondition.Result = result.FAILURE
-	resultCondition.Pass = false
-	resultCondition.Description = fmt.Sprintf("no GitLab branch found matching pattern %q", g.versionFilter.Pattern)
-
-	return nil
+	return false, fmt.Sprintf("no GitLab branch found matching pattern %q", g.versionFilter.Pattern), nil
 }

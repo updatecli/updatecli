@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -10,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -83,11 +81,9 @@ func TestCondition(t *testing.T) {
 				Name:      "kubernetes",
 				Version:   "2.22.1111",
 			},
-			expectedResult:   false,
-			expectedUrl:      "https://registry.terraform.io/v1/providers/hashicorp/kubernetes",
-			expectedError:    true,
-			expectedErrorMsg: errors.New(`✗ terraform registry version "2.22.1111" doesn't exist`),
-			mockedHttpBody:   `{ "versions" : ["2.23.0"] }`,
+			expectedResult: false,
+			expectedUrl:    "https://registry.terraform.io/v1/providers/hashicorp/kubernetes",
+			mockedHttpBody: `{ "versions" : ["2.23.0"] }`,
 		},
 	}
 	for _, tt := range tests {
@@ -110,16 +106,15 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			gotResult := result.Condition{}
-			err = got.Condition(tt.source, nil, &gotResult)
+			gotResult, _, gotErr := got.Condition(tt.source, nil)
 			if tt.expectedError {
-				if assert.Error(t, err) {
-					assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
+				if assert.Error(t, gotErr) {
+					assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())
 				}
 				return
 			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotResult.Pass)
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.expectedResult, gotResult)
 		})
 	}
 }

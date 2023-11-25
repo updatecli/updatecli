@@ -91,17 +91,14 @@ func TestCondition(t *testing.T) {
 	}
 
 	for i := range TestCases {
-
 		t.Run(t.Name(), func(t *testing.T) {
 			DockerDigest, err := New(TestCases[i].spec)
 			require.NoError(t, err)
 
-			gotResult := result.Condition{}
+			got, _, gotErr := DockerDigest.Condition(TestCases[i].sourceOutput, nil)
 
-			err = DockerDigest.Condition(TestCases[i].sourceOutput, nil, &gotResult)
-			require.NoError(t, err)
-
-			assert.Equal(t, TestCases[i].expectedResult.Pass, gotResult.Pass)
+			require.NoError(t, gotErr)
+			assert.Equal(t, TestCases[i].expectedResult.Pass, got)
 		})
 	}
 }
