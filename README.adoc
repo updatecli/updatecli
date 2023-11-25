@@ -185,6 +185,7 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 ** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video]
 * 2023
 ** FOSDEM (BE) - Cloud Native Dependencies link:https://fosdem.org/2023/schedule/event/continuous_update_everything/[Video]
+** CIVO Cloud (UK) - Onward a Continuously Updated Kubernetes Marketplace link:https://www.youtube.com/watch?v=B2wmA627E4w[Video]
 
 == Links
 
