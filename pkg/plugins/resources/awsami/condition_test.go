@@ -20,7 +20,6 @@ func TestCondition(t *testing.T) {
 		d.ami.apiClient = mockDescribeImagesOutput{
 			Resp: d.mockedResponse,
 		}
-		// gotResult := result.Condition{}
 		got, _, gotErr := d.ami.Condition("", nil)
 
 		switch d.expectedError == nil {
