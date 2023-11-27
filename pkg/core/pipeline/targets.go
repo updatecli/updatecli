@@ -44,6 +44,10 @@ func (p *Pipeline) RunTargets() error {
 		target := p.Targets[id]
 		target.Config = p.Config.Spec.Targets[id]
 
+		// Ensure the result named contains the up to date target name after templating
+		target.Result.Name = target.Config.ResourceConfig.Name
+		target.Result.DryRun = target.DryRun
+
 		shouldSkipTarget := false
 
 		for _, parentTarget := range target.Config.DependsOn {

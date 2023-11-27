@@ -107,11 +107,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	// Ensure the result named contains the up to date target name
-	// after templating
-	t.Result.Name = t.Config.ResourceConfig.Name
-	t.Result.DryRun = o.DryRun
-
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
 		err = target.Target(source, nil, o.DryRun, &t.Result)

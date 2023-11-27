@@ -60,7 +60,6 @@ func (c *Condition) Run(source string) (err error) {
 	defer c.Result.SetConsoleOutput(&consoleOutput)
 
 	c.Result.Result = result.FAILURE
-	c.Result.Name = c.Config.ResourceConfig.Name
 
 	condition, err := resource.New(c.Config.ResourceConfig)
 	if err != nil {
