@@ -80,6 +80,7 @@ Deepmerge
 DEFAULTCOMMENT
 DEFAULTSEPARATOR
 dependson
+dependsonchange
 depguard
 deprecatedscm
 devroom

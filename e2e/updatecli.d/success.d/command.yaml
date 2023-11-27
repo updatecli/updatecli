@@ -80,9 +80,29 @@ targets:
 
   5:
     disablesourceinput: true
-    name: Should be succeeding
+    name: Should be succeeding and report change
     kind: shell
     dependson:
       - "1"
+    spec:
+      command: "echo done"
+
+  6:
+    disablesourceinput: true
+    name: Should be skipped
+    kind: shell
+    dependson:
+      - "1"
+    dependsonchange: true
+    spec:
+      command: "true"
+
+  7:
+    disablesourceinput: true
+    name: Should be run
+    kind: shell
+    dependson:
+      - "5"
+    dependsonchange: true
     spec:
       command: "true"
