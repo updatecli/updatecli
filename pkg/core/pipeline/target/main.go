@@ -43,6 +43,8 @@ type Target struct {
 type Config struct {
 	// ResourceConfig defines target input parameters
 	resource.ResourceConfig `yaml:",inline"`
+	// dependsonchange enables the mechanism to check if the dependant target(s) have made a change. If the dependant target(s) have not made a change the target will be skipped.
+	DependsOnChange bool `yaml:",omitempty"`
 	// ! Deprecated - please use all lowercase `sourceid`
 	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
 	// disablesourceinput disables the mechanism to retrieve a default value from a source. For example, if true, source information like changelog will not be accessible for a github/pullrequest action.
@@ -209,7 +211,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 // JSONSchema implements the json schema interface to generate the "target" jsonschema.
 func (Config) JSONSchema() *jschema.Schema {
-
 	type configAlias Config
 
 	anyOfSpec := resource.GetResourceMapping()
