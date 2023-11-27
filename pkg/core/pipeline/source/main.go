@@ -89,7 +89,6 @@ func (s *Source) Run() (err error) {
 
 	err = source.Source(workingDir, &s.Result)
 
-	s.Result.Name = s.Config.ResourceConfig.Name
 	s.Output = s.Result.Information
 
 	if err != nil {
