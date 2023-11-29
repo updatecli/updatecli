@@ -27,6 +27,10 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 		return errors.New("fail getting current working directory")
 	}
 
+	if y.spec.SearchPattern {
+		return fmt.Errorf("validation error in sources of type 'yaml': the attribute `spec.searchpattern` is not supported for source")
+	}
+
 	if len(y.files) > 1 {
 		validationError := fmt.Errorf("validation error in sources of type 'yaml': the attributes `spec.files` can't contain more than one element for sources")
 		logrus.Errorf(validationError.Error())
@@ -35,6 +39,22 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 
 	if y.spec.Value != "" {
 		logrus.Warnf("Key 'Value' is not used by source YAML")
+	}
+
+	if workingDir == currentWorkingDirectory {
+		workingDir = ""
+	}
+
+	if err := y.initFiles(workingDir); err != nil {
+		return fmt.Errorf("init files: %w", err)
+	}
+
+	if len(y.files) == 0 {
+		return fmt.Errorf("no yaml file found")
+	}
+
+	if len(y.files) > 1 {
+		return fmt.Errorf("multiple yaml files found, please specify only one file")
 	}
 
 	// loop over the only file

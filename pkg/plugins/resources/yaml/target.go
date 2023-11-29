@@ -24,8 +24,18 @@ import (
 // Target updates a scm repository based on the modified yaml file.
 func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var err error
+
+	workDir := ""
 	if scm != nil {
-		y.UpdateAbsoluteFilePath(scm.GetDirectory())
+		workDir = scm.GetDirectory()
+	}
+
+	if err := y.initFiles(workDir); err != nil {
+		return fmt.Errorf("init files: %w", err)
+	}
+
+	if len(y.files) == 0 {
+		return fmt.Errorf("no yaml file found")
 	}
 
 	// Test if target reference a file with a prefix like https:// or file://, as we don't know how to update those files.
@@ -121,6 +131,12 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 		node, err := urlPath.FilterFile(yamlFile)
 		if err != nil {
+			if y.spec.SearchPattern {
+				// If search pattern is true then we don't want to return an error
+				// as we are probably trying to identify a file matching the key
+				logrus.Debugf("ignoring file %q as we couldn't find key %q", originFilePath, y.spec.Key)
+				continue
+			}
 			if errors.Is(err, goyaml.ErrNotFoundNode) {
 				return 0, fmt.Errorf("couldn't find key %q from file %q",
 					y.spec.Key,
@@ -220,6 +236,12 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 		}
 
 		if len(nodes) == 0 {
+			if y.spec.SearchPattern {
+				// If search pattern is true then we don't want to return an error
+				// as we are probably trying to identify a file matching the key
+				logrus.Debugf("ignoreing file %q as we couldn't find key %q", originFilePath, y.spec.Key)
+				continue
+			}
 			return 0, fmt.Errorf("couldn't find key %q from file %q",
 				y.spec.Key,
 				originFilePath)

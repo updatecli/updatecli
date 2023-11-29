@@ -332,25 +332,25 @@ func Test_TargetFromSCM(t *testing.T) {
 				Value: "obiwankenobi",
 			},
 			files: map[string]file{
-				"/tmp/test.yaml": {
-					filePath:         "/tmp/test.yaml",
-					originalFilePath: "/tmp/test.yaml",
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
 				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
-				"/tmp/test.yaml": `---
+				"test.yaml": `---
 github:
   owner: olblak
   repository: charts
 `,
 			},
 			wantedFiles: []string{
-				"/tmp/test.yaml",
+				"test.yaml",
 			},
 			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
-				"/tmp/test.yaml": `---
+				"test.yaml": `---
 github:
   owner: obiwankenobi
   repository: charts
@@ -369,23 +369,23 @@ github:
 				Value: "obiwankenobi",
 			},
 			files: map[string]file{
-				"/tmp/test.yaml": {
-					filePath:         "/tmp/test.yaml",
-					originalFilePath: "/tmp/test.yaml",
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
 				},
-				"/tmp/bar.yaml": {
-					filePath:         "/tmp/bar.yaml",
-					originalFilePath: "/tmp/bar.yaml",
+				"bar.yaml": {
+					filePath:         "bar.yaml",
+					originalFilePath: "bar.yaml",
 				},
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
-				"/tmp/test.yaml": `---
+				"test.yaml": `---
 github:
   owner: olblak
   repository: charts
 `,
-				"/tmp/bar.yaml": `---
+				"bar.yaml": `---
 github:
   owner: asterix
   repository: charts
@@ -393,17 +393,17 @@ github:
 			},
 			// returned files are sorted
 			wantedFiles: []string{
-				"/tmp/bar.yaml",
-				"/tmp/test.yaml",
+				"bar.yaml",
+				"test.yaml",
 			},
 			// Note: the updated files don't contain separator anymore
 			wantedContents: map[string]string{
-				"/tmp/test.yaml": `---
+				"test.yaml": `---
 github:
   owner: obiwankenobi
   repository: charts
 `,
-				"/tmp/bar.yaml": `---
+				"bar.yaml": `---
 github:
   owner: obiwankenobi
   repository: charts

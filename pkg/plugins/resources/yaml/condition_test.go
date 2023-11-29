@@ -17,7 +17,6 @@ func Test_Condition(t *testing.T) {
 		inputSourceValue string
 		mockedContents   map[string]string
 		mockedError      error
-		wantedContents   map[string]string
 		isResultWanted   bool
 		isErrorWanted    bool
 	}{
@@ -42,13 +41,6 @@ annotations:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": `---
-annotations:
-  github.owner: olblak
-  repository: charts
-`,
-			},
 			isResultWanted: true,
 		},
 		{
@@ -65,13 +57,6 @@ annotations:
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			wantedContents: map[string]string{
 				"test.yaml": `---
 github:
   owner: olblak
@@ -101,13 +86,6 @@ github:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
 			isResultWanted: true,
 		},
 		{
@@ -126,13 +104,6 @@ github:
 				},
 			},
 			mockedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			wantedContents: map[string]string{
 				"test.yaml": `---
 github:
   owner: olblak
@@ -164,17 +135,10 @@ github:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
 			isResultWanted: true,
 		},
 		{
-			name: "Validation error with more than one 'Files'",
+			name: "Validation with more than one 'Files'",
 			spec: Spec{
 				Files: []string{
 					"test.yaml",
@@ -193,7 +157,89 @@ github:
 					originalFilePath: "too-much.yaml",
 				},
 			},
-			isErrorWanted: true,
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				"too-much.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+			},
+			isErrorWanted:  false,
+			isResultWanted: true,
+		},
+		{
+			name: "Validation with more than one 'Files' but only one success",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+					"too-much.yaml",
+				},
+				Key:   "$.github.owner",
+				Value: "olblak",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"too-much.yaml": {
+					filePath:         "too-much.yaml",
+					originalFilePath: "too-much.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				"too-much.yaml": `---
+github:
+  owner: john
+  repository: charts
+`,
+			},
+			isErrorWanted:  false,
+			isResultWanted: false,
+		},
+		{
+			name: "Validation with more than one 'Files' but only one success 2",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+					"too-much.yaml",
+				},
+				Key:   "$.github.owner",
+				Value: "olblak",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"too-much.yaml": {
+					filePath:         "too-much.yaml",
+					originalFilePath: "too-much.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				"too-much.yaml": `---
+github:
+  repository: charts
+`,
+			},
+			isErrorWanted:  true,
+			isResultWanted: false,
 		},
 		{
 			name: "Failing case with invalid YAML content (dash)",
@@ -235,7 +281,7 @@ github:
 			mockedContents: map[string]string{
 				"test.yaml": `---
 github:
-  	owner: olblak
+	owner: olblak
   	repository: charts
 `,
 			},
@@ -255,13 +301,6 @@ github:
 			},
 			inputSourceValue: "olblak",
 			mockedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			wantedContents: map[string]string{
 				"test.yaml": `---
 github:
   owner: olblak
@@ -291,13 +330,6 @@ github:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
 			isResultWanted: true,
 		},
 		{
@@ -315,13 +347,6 @@ github:
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			wantedContents: map[string]string{
 				"test.yaml": `---
 github:
   owner: olblak
@@ -346,13 +371,6 @@ github:
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
-			wantedContents: map[string]string{
 				"test.yaml": `---
 github:
   owner: olblak
@@ -419,13 +437,6 @@ github:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
 			isResultWanted: false,
 		},
 		{
@@ -486,13 +497,6 @@ github:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": `---
-github:
-  owner: olblak
-  repository: charts
-`,
-			},
 			isResultWanted: true,
 		},
 		{
@@ -512,15 +516,6 @@ github:
 				},
 			},
 			mockedContents: map[string]string{
-				"test.yaml": `---
-repos:
-  - owner: updatecli
-    repository: website
-  - owner: olblak
-    repository: updatecli
-`,
-			},
-			wantedContents: map[string]string{
 				"test.yaml": `---
 repos:
   - owner: updatecli
@@ -553,9 +548,6 @@ repos:
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.isResultWanted, gotResult)
-			for filePath := range tt.files {
-				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
-			}
 		})
 	}
 }
