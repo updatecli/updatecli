@@ -7,9 +7,15 @@ on:
     branches:
       - main
 
+permissions: {}
+
 jobs:
   update_release_draft:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
       - uses: release-drafter/release-drafter@v5
         with:
