@@ -3,13 +3,16 @@ on:
   workflow_dispatch: null
   release:
     types: [published]
-permissions:
-  contents: write
-  id-token: write
-  packages: write
+
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
       DOCKER_BUILDKIT: 1

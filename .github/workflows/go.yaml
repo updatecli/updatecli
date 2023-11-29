@@ -9,11 +9,17 @@ on:
       - main
   schedule:
     # Run full test once a day
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
+
+permissions: {}
+
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
     steps:
       # https://github.com/actions/setup-go
       - name: Set up Go
