@@ -239,7 +239,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 			if y.spec.SearchPattern {
 				// If search pattern is true then we don't want to return an error
 				// as we are probably trying to identify a file matching the key
-				logrus.Debugf("ignoreing file %q as we couldn't find key %q", originFilePath, y.spec.Key)
+				logrus.Debugf("ignoring file %q as we couldn't find key %q", originFilePath, y.spec.Key)
 				continue
 			}
 			return 0, fmt.Errorf("couldn't find key %q from file %q",
