@@ -50,10 +50,10 @@ func TestShell_Source(t *testing.T) {
 		{
 			name:        "Get a source from a successful command in working directory",
 			command:     "echo Hello",
-			shell:       "/bin/bash",
+			shell:       bashShell,
 			workingDir:  "/home/ucli",
 			wantSource:  "Hello",
-			wantCommand: "/bin/bash" + " " + wantedScriptFilename(t, "echo Hello"),
+			wantCommand: bashShell + " " + wantedScriptFilename(t, "echo Hello"),
 			wantErr:     false,
 			commandResult: commandResult{
 				ExitCode: 0,
@@ -63,7 +63,7 @@ func TestShell_Source(t *testing.T) {
 		{
 			name:       "Raise an error with a failing command in working directory",
 			command:    "false",
-			shell:      "/bin/bash",
+			shell:      bashShell,
 			workingDir: "/home/ucli",
 			wantSource: "",
 			wantErr:    true,
@@ -74,7 +74,7 @@ func TestShell_Source(t *testing.T) {
 		{
 			name:       "Raise an error with an empty command in working directory",
 			command:    "",
-			shell:      "/bin/bash",
+			shell:      bashShell,
 			workingDir: "/home/ucli",
 			wantSource: "",
 			wantErr:    true,

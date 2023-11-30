@@ -16,8 +16,11 @@ func (e *Engine) InitSCM() (err error) {
 	channel := make(chan int, 20)
 	defer wg.Wait()
 
-	for _, pipeline := range e.Pipelines {
-		for _, s := range pipeline.SCMs {
+	for i := range e.Pipelines {
+		pipeline := e.Pipelines[i]
+
+		for j := range pipeline.SCMs {
+			s := pipeline.SCMs[j]
 
 			if s.Handler != nil {
 				err = Clone(&s.Handler, channel, &hashes, &wg)
