@@ -128,13 +128,13 @@ func TestHTMLUnmarshal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for i := range tests {
+		t.Run(tests[i].name, func(t *testing.T) {
 			var gotOutput Actions
-			err := unmarshal([]byte(tt.report), &gotOutput)
+			err := unmarshal([]byte(tests[i].report), &gotOutput)
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.expectedOutput, gotOutput)
+			assert.Equal(t, tests[i].expectedOutput, gotOutput)
 		})
 	}
 }
@@ -250,10 +250,10 @@ func TestSort(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.report.sort()
-			assert.Equal(t, tt.expectedOutput, tt.report)
+	for i := range tests {
+		t.Run(tests[i].name, func(t *testing.T) {
+			tests[i].report.sort()
+			assert.Equal(t, tests[i].expectedOutput, tests[i].report)
 		})
 	}
 }
@@ -335,11 +335,11 @@ func TestMerge(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.report1.Merge(&tt.report2)
-			tt.report1.sort()
-			assert.Equal(t, tt.expectedOutput, tt.report1)
+	for i := range tests {
+		t.Run(tests[i].name, func(t *testing.T) {
+			tests[i].report1.Merge(&tests[i].report2)
+			tests[i].report1.sort()
+			assert.Equal(t, tests[i].expectedOutput, tests[i].report1)
 		})
 	}
 }
@@ -716,10 +716,10 @@ This is not a html formatted report
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotFinalReport := MergeFromString(tt.oldReport, tt.newReport)
-			assert.Equal(t, tt.expectedFinalReport, gotFinalReport)
+	for i := range tests {
+		t.Run(tests[i].name, func(t *testing.T) {
+			gotFinalReport := MergeFromString(tests[i].oldReport, tests[i].newReport)
+			assert.Equal(t, tests[i].expectedFinalReport, gotFinalReport)
 		})
 	}
 }

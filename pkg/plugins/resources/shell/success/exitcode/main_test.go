@@ -108,7 +108,8 @@ func TestSourceResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
+	for i := range dataset {
+		d := dataset[i]
 		t.Run(d.name, func(t *testing.T) {
 			c, gotErr := New(d.spec, &d.exitCode, &d.stdout)
 
@@ -206,7 +207,8 @@ func TestConditionResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
+	for i := range dataset {
+		d := dataset[i]
 		t.Run(d.name, func(t *testing.T) {
 			c, gotErr := New(d.spec, &d.exitCode, &d.stdout)
 
@@ -305,7 +307,8 @@ func TestTargetResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
+	for i := range dataset {
+		d := dataset[i]
 		t.Run(d.name, func(t *testing.T) {
 			c, gotErr := New(d.spec, &d.exitCode, &d.stdout)
 
