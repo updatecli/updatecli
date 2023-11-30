@@ -7,6 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	bashShell = "/bin/bash"
+)
+
 func TestShell_Condition(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -21,11 +25,11 @@ func TestShell_Condition(t *testing.T) {
 		{
 			name:        "Successful Condition",
 			command:     "echo Hello",
-			shell:       "/bin/bash",
+			shell:       bashShell,
 			source:      "1.2.3",
 			wantResult:  true,
 			wantErr:     false,
-			wantCommand: "/bin/bash" + " " + wantedScriptFilename(t, "echo Hello 1.2.3"),
+			wantCommand: bashShell + " " + wantedScriptFilename(t, "echo Hello 1.2.3"),
 			mockCommandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Hello",
@@ -34,11 +38,11 @@ func TestShell_Condition(t *testing.T) {
 		{
 			name:        "Failed Condition",
 			command:     "ls",
-			shell:       "/bin/bash",
+			shell:       bashShell,
 			source:      "1.2.3",
 			wantResult:  false,
 			wantErr:     false,
-			wantCommand: "/bin/bash" + " " + wantedScriptFilename(t, "ls 1.2.3"),
+			wantCommand: bashShell + " " + wantedScriptFilename(t, "ls 1.2.3"),
 			mockCommandResult: commandResult{
 				ExitCode: 1,
 				Stderr:   "ls: 1.2.3: No such file or directory",
