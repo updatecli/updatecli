@@ -27,7 +27,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.0.0",
 			expectedResult:            false,
-			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml"`,
+			expectedResultDescription: "no change detected:\n\t* key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - change with only App Version",
@@ -40,7 +40,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.0.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "no change detected:\n\t* key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.appVersion\" should be updated from \"0.1.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - No change with Version Increment",
@@ -52,7 +52,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.0.0",
 			expectedResult:            false,
-			expectedResultDescription: "key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "no change detected:\n\t* key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - No change with Version Increment and App Version",
@@ -65,7 +65,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.0.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "no change detected:\n\t* key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.appVersion\" should be updated from \"0.1.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change",
@@ -77,7 +77,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.1.0",
 			expectedResult:            true,
-			expectedResultDescription: `key "$.dependencies[0].version" should be updated from "1.0.0" to "1.1.0", in file "testdata/Chart.yaml"`,
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change with Version Increment",
@@ -89,7 +89,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.1.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change with App Version",
@@ -102,7 +102,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.1.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change with Version Increment and App Version",
@@ -115,7 +115,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.1.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - No change using Value",
@@ -127,7 +127,7 @@ func TestTarget(t *testing.T) {
 				VersionIncrement: NOINCREMENT,
 			},
 			expectedResult:            false,
-			expectedResultDescription: `key "$.dependencies[0].version" already set to "1.0.0", from file "testdata/Chart.yaml"`,
+			expectedResultDescription: "no change detected:\n\t* key \"$.dependencies[0].version\" already set to \"1.0.0\", from file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change using Value",
@@ -139,7 +139,7 @@ func TestTarget(t *testing.T) {
 				Value:            "1.1.0",
 			},
 			expectedResult:            true,
-			expectedResultDescription: `key "$.dependencies[0].version" should be updated from "1.0.0" to "1.1.0", in file "testdata/Chart.yaml"`,
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change using Value with Version Increment",
@@ -151,7 +151,7 @@ func TestTarget(t *testing.T) {
 				Value:            "1.1.0",
 			},
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change using Value with Version Increment and App Version",
@@ -164,7 +164,7 @@ func TestTarget(t *testing.T) {
 				Value:            "1.1.0",
 			},
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.appVersion\" should be updated from \"0.1.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Expected change with Version Increment to values.yaml",
@@ -176,7 +176,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.1.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/values.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Child chart patch update Version Increment to Chart.yaml",
@@ -188,7 +188,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.0.1",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.0.1\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.3.1\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.0.1\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.3.1\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart minor update Version Increment to Chart.yaml",
@@ -200,7 +200,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.1.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart major update Version Increment to Chart.yaml",
@@ -212,7 +212,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "2.0.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"2.0.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"2.0.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart major update with tilde Version Increment to Chart.yaml",
@@ -224,7 +224,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "~2.0.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"~2.0.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"~2.0.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart minor update with >= Version Increment to Chart.yaml",
@@ -236,7 +236,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               ">=1.1.0",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \">=1.1.0\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \">=1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart major and patch update Version Increment to Chart.yaml",
@@ -248,7 +248,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "2.0.5",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"2.0.5\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"2.0.5\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart minor update Version Increment to Chart.yaml due to invalid semver target version",
@@ -260,7 +260,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "invalid.semver",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"invalid.semver\", in file \"testdata/Chart.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"invalid.semver\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart major downgrade Version Increment to Chart.yaml",
@@ -272,7 +272,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "0.2.3",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.otherVersion\" should be updated from \"1.2.3\" to \"0.2.3\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.otherVersion\" should be updated from \"1.2.3\" to \"0.2.3\", in file \"testdata/values.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"1.0.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart minor downgrade Version Increment to Chart.yaml",
@@ -284,7 +284,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.1.3",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.otherVersion\" should be updated from \"1.2.3\" to \"1.1.3\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.otherVersion\" should be updated from \"1.2.3\" to \"1.1.3\", in file \"testdata/values.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart patch downgrade Version Increment to Chart.yaml",
@@ -296,7 +296,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.2.2",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.otherVersion\" should be updated from \"1.2.3\" to \"1.2.2\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.3.1\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.otherVersion\" should be updated from \"1.2.3\" to \"1.2.2\", in file \"testdata/values.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.3.1\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart semver metadata only change Version Increment to Chart.yaml",
@@ -308,7 +308,7 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:               "1.2.3-rc1",
 			expectedResult:            true,
-			expectedResultDescription: "key \"$.otherVersion\" should be updated from \"1.2.3\" to \"1.2.3-rc1\", in file \"testdata/values.yaml\"\nkey \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.otherVersion\" should be updated from \"1.2.3\" to \"1.2.3-rc1\", in file \"testdata/values.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Failure - File does not exists",
