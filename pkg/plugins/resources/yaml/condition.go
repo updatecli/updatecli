@@ -13,10 +13,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var (
-	ErrKeyNotFound = errors.New("key not found")
-)
-
 // Condition checks if a key exists in a yaml file
 func (y *Yaml) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
