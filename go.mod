@@ -42,7 +42,7 @@ require (
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.18.1
 	github.com/hashicorp/terraform-registry-address v0.2.3
-	github.com/invopop/jsonschema v0.8.0
+	github.com/invopop/jsonschema v0.12.0
 	github.com/joho/godotenv v1.5.1
 	github.com/minamijoyo/hcledit v0.2.10
 	github.com/minamijoyo/tfupdate v0.7.2
@@ -69,6 +69,8 @@ require (
 	github.com/Microsoft/hcsshim v0.11.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
@@ -91,6 +93,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
+	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.opentelemetry.io/otel v1.14.0 // indirect
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
@@ -192,7 +195,6 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
 	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
-	github.com/iancoleman/orderedmap v0.2.0
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
