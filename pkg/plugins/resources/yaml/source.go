@@ -49,11 +49,12 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("init files: %w", err)
 	}
 
-	if len(y.files) == 0 {
+	switch len(y.files) {
+	case 1:
+		//
+	case 0:
 		return fmt.Errorf("no yaml file found")
-	}
-
-	if len(y.files) > 1 {
+	default:
 		return fmt.Errorf("multiple yaml files found, please specify only one file")
 	}
 
@@ -102,7 +103,6 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 		}
 
 		var n yaml.Node
-
 		err = yaml.Unmarshal([]byte(fileContent), &n)
 		if err != nil {
 			return fmt.Errorf("parsing yaml file: %w", err)
@@ -126,7 +126,6 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 
 	if len(results) > 0 {
 		value := results[0]
-		// value := node.String()
 		resultSource.Result = result.SUCCESS
 		resultSource.Information = value
 		resultSource.Description = fmt.Sprintf("value %q found for key %q in the yaml file %q",
