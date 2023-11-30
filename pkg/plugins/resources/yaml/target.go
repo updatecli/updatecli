@@ -77,10 +77,13 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	// If no file was updated, don't return an error
 	if notChanged == len(y.files) {
+		resultTarget.Description = fmt.Sprintf("no change detected:\n\t* %s", strings.ReplaceAll(strings.TrimPrefix(resultTarget.Description, "\n"), "\n", "\n\t* "))
 		resultTarget.Changed = false
 		resultTarget.Result = result.SUCCESS
 		return nil
 	}
+
+	resultTarget.Description = fmt.Sprintf("change detected:\n\t* %s", strings.ReplaceAll(strings.TrimPrefix(resultTarget.Description, "\n"), "\n", "\n\t* "))
 
 	sort.Strings(resultTarget.Files)
 
