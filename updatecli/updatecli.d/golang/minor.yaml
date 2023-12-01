@@ -25,7 +25,7 @@ actions:
 autodiscovery:
   scmid: default
   actionid:  default
-  groupby: all
+  groupby: individual
   crawlers:
     golang/gomod:
       versionfilter:
