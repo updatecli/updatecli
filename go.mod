@@ -10,8 +10,8 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/aws/aws-sdk-go v1.45.28
 	github.com/containerd/containerd v1.7.6 // indirect
-	github.com/fatih/color v1.15.0
-	github.com/go-git/go-git/v5 v5.9.0
+	github.com/fatih/color v1.16.0
+	github.com/go-git/go-git/v5 v5.10.1
 	github.com/heimdalr/dag v1.3.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/lithammer/dedent v1.1.0
@@ -38,7 +38,7 @@ require (
 	github.com/beevik/etree v1.2.0
 	github.com/drone/go-scm v1.33.0
 	github.com/goccy/go-yaml v1.11.2
-	github.com/google/go-containerregistry v0.15.2
+	github.com/google/go-containerregistry v0.17.0
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.18.1
 	github.com/hashicorp/terraform-registry-address v0.2.3
@@ -56,7 +56,7 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/zclconf/go-cty v1.14.1
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
-	golang.org/x/text v0.13.0
+	golang.org/x/text v0.14.0
 	golang.org/x/time v0.3.0
 	gopkg.in/ini.v1 v1.67.0
 	oras.land/oras-go/v2 v2.3.1
@@ -119,7 +119,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/alecthomas/chroma v0.9.2 // indirect
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
@@ -210,7 +209,7 @@ require (
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -244,7 +243,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/skeema/knownhosts v1.2.0 // indirect
+	github.com/skeema/knownhosts v1.2.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
@@ -256,12 +255,12 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/mod v0.13.0
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/term v0.14.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	google.golang.org/api v0.126.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
