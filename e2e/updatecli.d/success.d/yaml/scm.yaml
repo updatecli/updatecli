@@ -63,3 +63,14 @@ targets:
       files:
       - .clomonitor.yml
       key: $.exemptions[0].reason
+
+  getGo-Version-File:
+    name: Test complex key
+    kind: yaml
+    sourceid: scenario1
+    spec:
+      engine: yamlpath
+      searchpattern: true
+      file: .github/workflows/*
+      key: $.jobs.updatecli.steps[?(@.id =='go')].uses
+

@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 /*
@@ -98,6 +99,33 @@ type Spec struct {
 			false
 	*/
 	KeyOnly bool `yaml:",omitempty"`
+	/*
+	   `searchpattern` defines if the MatchPattern should be applied on the file(s) path
+
+	   If set to true, it modifies the behavior of the `file` and `files` attributes to search for files matching the pattern instead of searching for files with the exact name.
+	   When looking for file path pattern, it requires pattern to match all of name, not just a substring.
+
+	   The pattern syntax is:
+
+	   ```
+	       pattern:
+	           { term }
+	       term:
+	           '*'         matches any sequence of non-Separator characters
+	           '?'         matches any single non-Separator character
+	           '[' [ '^' ] { character-range } ']'
+	                       character class (must be non-empty)
+	           c           matches character c (c != '*', '?', '\\', '[')
+	           '\\' c      matches character c
+
+	       character-range:
+	           c           matches character c (c != '\\', '-', ']')
+	           '\\' c      matches character c
+	           lo '-' hi   matches character c for lo <= c <= hi
+	   ```
+
+	*/
+	SearchPattern bool `yaml:",omitempty"`
 }
 
 // Yaml defines a resource of kind "yaml"
@@ -212,19 +240,83 @@ func (y *Yaml) Read() error {
 	return nil
 }
 
-func (y *Yaml) UpdateAbsoluteFilePath(workDir string) {
-	for filePath := range y.files {
-		if workDir != "" {
-			f := y.files[filePath]
-			f.filePath = joinPathWithWorkingDirectoryPath(f.originalFilePath, workDir)
-
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", f.originalFilePath, f.filePath)
-			y.files[filePath] = f
-		}
-	}
-}
-
 // Changelog returns the changelog for this resource, or an empty string if not supported
 func (y *Yaml) Changelog() string {
 	return ""
+}
+
+// initFiles initializes the f.files map
+func (y *Yaml) initFiles(workDir string) error {
+	y.files = make(map[string]file)
+
+	// File as unique element of newResource.files
+	if len(y.spec.File) > 0 {
+		var foundFiles []string
+		var err error
+		switch y.spec.SearchPattern {
+		case true:
+			foundFiles, err = utils.FindFilesMatchingPathPattern(workDir, y.spec.File)
+			if err != nil {
+				return fmt.Errorf("unable to find file matching %q: %s", y.spec.File, err)
+			}
+		case false:
+			foundFiles = append(foundFiles, y.spec.File)
+		}
+
+		for _, filePath := range foundFiles {
+			newFile := file{
+				filePath:         strings.TrimPrefix(filePath, "file://"),
+				originalFilePath: strings.TrimPrefix(filePath, "file://"),
+			}
+			y.files[filePath] = newFile
+		}
+	}
+
+	for _, specFile := range y.spec.Files {
+		var foundFiles []string
+		var err error
+
+		switch y.spec.SearchPattern {
+		case true:
+			foundFiles, err = utils.FindFilesMatchingPathPattern(workDir, specFile)
+			if err != nil {
+				return fmt.Errorf("unable to find files matching %q: %s", y.spec.File, err)
+			}
+
+		case false:
+			foundFiles = append(foundFiles, y.spec.Files...)
+		}
+
+		for _, filePath := range foundFiles {
+			newFile := file{
+				filePath:         strings.TrimPrefix(filePath, "file://"),
+				originalFilePath: strings.TrimPrefix(filePath, "file://"),
+			}
+			y.files[filePath] = newFile
+		}
+	}
+
+	for filePath := range y.files {
+		if workDir != "" {
+			file := y.files[filePath]
+			file.filePath = joinPathWithWorkingDirectoryPath(file.originalFilePath, workDir)
+
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalFilePath, file.filePath)
+			y.files[filePath] = file
+		}
+	}
+
+	return nil
+}
+
+func (y *Yaml) UpdateAbsoluteFilePath(workDir string) {
+	for filePath := range y.files {
+		if workDir != "" {
+			file := y.files[filePath]
+			file.filePath = joinPathWithWorkingDirectoryPath(file.originalFilePath, workDir)
+
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalFilePath, file.filePath)
+			y.files[filePath] = file
+		}
+	}
 }
