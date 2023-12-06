@@ -11,3 +11,11 @@ autodiscovery:
   scmid: default
   crawlers:
     dockercompose:
+      ignore:
+        # Ignoring images that don't have a tag or a tag not supported by Updatecli
+        - images:
+            - "postgres:alpine"
+            - "node:9-alpine"
+            - "jenkinsciinfra/evergreen-backend"
+            - "jenkins/evergreen"
+
