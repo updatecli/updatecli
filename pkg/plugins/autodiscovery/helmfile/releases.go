@@ -143,8 +143,6 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				}
 			}
 
-			logrus.Errorln(chartURL)
-
 			if len(h.spec.Ignore) > 0 {
 				if h.spec.Ignore.isMatchingRules(h.rootDir, relativeFoundChartFile, chartURL, chartName, release.Version) {
 					logrus.Debugf("Ignoring Helmfile release %q from %q, as matching ignore rule(s)\n", chartURL, helmfileFilename)
