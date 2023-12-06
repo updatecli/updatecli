@@ -81,3 +81,5 @@ updateclihttp
 Metadatas
 statuscode
 scmid
+jenkinsciinfra
+servercore
