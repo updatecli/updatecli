@@ -32,6 +32,9 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		condition := p.Conditions[id]
 		condition.Config = p.Config.Spec.Conditions[id]
 
+		// Ensure the result named contains the up to date condition name after templating
+		condition.Result.Name = condition.Config.ResourceConfig.Name
+
 		logrus.Infof("\n%s\n", id)
 		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 

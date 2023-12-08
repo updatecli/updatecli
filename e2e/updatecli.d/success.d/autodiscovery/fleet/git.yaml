@@ -1,0 +1,15 @@
+name: Fleet autodiscovery using Git scm
+scms:
+  fleet-lab:
+    kind: git 
+    spec:
+      url: https://github.com/updatecli-test/fleet-lab.git
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: fleet-lab
+  crawlers:
+    rancher/fleet:
+      only:
+        - charts:
+            "cert-manager": ""

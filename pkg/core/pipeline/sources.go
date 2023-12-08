@@ -28,6 +28,9 @@ func (p *Pipeline) RunSources() error {
 		source := p.Sources[id]
 		source.Config = p.Config.Spec.Sources[id]
 
+		// Ensure the result named contains the up to date source name after templating
+		source.Result.Name = source.Config.ResourceConfig.Name
+
 		logrus.Infof("\n%s\n", id)
 		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 

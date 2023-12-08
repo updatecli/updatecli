@@ -20,9 +20,9 @@ import (
 
 // TestPushPull is a test for the Push and Pull functions
 func TestPushPullPolicy(t *testing.T) {
-	//if testing.Short() {
-	//	t.Skip("skipping integration test")
-	//}
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
@@ -58,9 +58,10 @@ func TestPushPullPolicy(t *testing.T) {
 		expectedPullValuesFiles   []string
 		expectedPullSecretsFiles  []string
 		disableTLS                bool
+		overwrite                 bool
 	}{
 		{
-			name:                      "Validate that we can push and pull a policy using the latest tag",
+			name:                      "Validate that we can push and pull a policy using the latest tag, even thought the tag is ignored",
 			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo:latest", port.Int())},
 			disableTLS:                true,
 			toPushPolicyFile:          "testdata/Policy.yaml",
@@ -87,14 +88,14 @@ func TestPushPullPolicy(t *testing.T) {
 			name:                      "Validate that we can push and pull a policy without tag from a different file store",
 			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Int())},
 			disableTLS:                true,
-			toPushPolicyFile:          "Policy.yaml",
-			toPushManifestFiles:       []string{"venom.yaml"},
-			toPushValueFiles:          []string{"values.yaml"},
-			toPushSecretFiles:         []string{"secrets.yaml"},
-			expectedPullManifestFiles: []string{"venom.yaml"},
-			expectedPullValuesFiles:   []string{"values.yaml"},
-			expectedPullSecretsFiles:  []string{"secrets.yaml"},
-			toPushFileStore:           "testdata",
+			toPushPolicyFile:          "testdata/Policy.yaml",
+			toPushManifestFiles:       []string{"testdata/venom.yaml"},
+			toPushValueFiles:          []string{"testdata/values.yaml"},
+			toPushSecretFiles:         []string{"testdata/secrets.yaml"},
+			expectedPullManifestFiles: []string{"testdata/venom.yaml"},
+			expectedPullValuesFiles:   []string{"testdata/values.yaml"},
+			expectedPullSecretsFiles:  []string{"testdata/secrets.yaml"},
+			toPushFileStore:           ".",
 		},
 	}
 
@@ -108,7 +109,19 @@ func TestPushPullPolicy(t *testing.T) {
 				data.toPushSecretFiles,
 				data.toPushPolicyName,
 				data.disableTLS,
-				data.toPushFileStore)
+				data.toPushFileStore,
+				data.overwrite)
+			require.NoError(t, err)
+
+			err = Push(
+				data.toPushPolicyFile,
+				data.toPushManifestFiles,
+				data.toPushValueFiles,
+				data.toPushSecretFiles,
+				data.toPushPolicyName,
+				data.disableTLS,
+				data.toPushFileStore,
+				data.overwrite)
 			require.NoError(t, err)
 
 			gotManifests, gotValues, gotSecrets, err := Pull(

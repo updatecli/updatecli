@@ -9,28 +9,33 @@ on:
       - main
   schedule:
     # Run full test once a day
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
+permissions: {}
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       # https://github.com/actions/setup-go
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           cache: false
-          go-version: 1.21.3
+          go-version: 1.21.5
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
           # we always use the latest patch version.
-          version: v1.54.1
+          version: v1.55.2
           install-mode: "binary"
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v5

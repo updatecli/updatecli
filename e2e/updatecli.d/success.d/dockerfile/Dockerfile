@@ -1,0 +1,2 @@
+FROM alpine:3.18
+ARG APP_VERSION=1.0.0

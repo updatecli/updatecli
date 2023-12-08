@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -153,7 +154,16 @@ func run(command string) error {
 		}
 
 	case "manifest/push":
-		err := e.PushToRegistry(manifestFiles, valuesFiles, secretsFiles, manifestPushPolicyReference, disableTLS, manifestPushPolicyFile, manifestPushFileStore)
+		err := e.PushToRegistry(
+			manifestFiles,
+			valuesFiles,
+			secretsFiles,
+			manifestPushPolicyReference,
+			disableTLS,
+			manifestPushPolicyFile,
+			manifestPushFileStore,
+			manifestPushOverwrite)
+
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
@@ -220,7 +230,7 @@ func run(command string) error {
 
 func getPolicyFilesFromRegistry() error {
 
-	if len(policyReferences) == 0 {
+	if slices.Equal(policyReferences, []string{""}) || slices.Equal(policyReferences, []string{}) {
 		return nil
 	}
 

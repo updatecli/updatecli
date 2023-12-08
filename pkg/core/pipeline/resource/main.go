@@ -39,6 +39,7 @@ import (
 	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
 	terraformRegistry "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/registry"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
+	updateclihttp "github.com/updatecli/updatecli/pkg/plugins/resources/updateclihttp"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
@@ -155,6 +156,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return helm.New(rs.Spec)
 
+	case "http":
+
+		return updateclihttp.New(rs.Spec)
+
 	case "jenkins":
 
 		return jenkins.New(rs.Spec)
@@ -166,6 +171,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "maven":
 
 		return maven.New(rs.Spec)
+
+	case "npm":
+
+		return npm.New(rs.Spec)
 
 	case "shell":
 
@@ -199,17 +208,13 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return toml.New(rs.Spec)
 
-	case "yaml":
-
-		return yaml.New(rs.Spec)
-
 	case "xml":
 
 		return xml.New(rs.Spec)
 
-	case "npm":
+	case "yaml":
 
-		return npm.New(rs.Spec)
+		return yaml.New(rs.Spec)
 
 	default:
 
@@ -220,7 +225,7 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 // Resource allow to manipulate a resource that can be a source, a condition or a target
 type Resource interface {
 	Source(workingDir string, sourceResult *result.Source) error
-	Condition(version string, scm scm.ScmHandler, resultCondition *result.Condition) error
+	Condition(version string, scm scm.ScmHandler) (pass bool, message string, err error)
 	Target(source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
 	Changelog() string
 }
@@ -249,6 +254,7 @@ func GetResourceMapping() map[string]interface{} {
 		"golang/module":      &gomodule.Spec{},
 		"hcl":                &hcl.Spec{},
 		"helmchart":          &helm.Spec{},
+		"http":               &updateclihttp.Spec{},
 		"jenkins":            &jenkins.Spec{},
 		"json":               &json.Spec{},
 		"maven":              &maven.Spec{},

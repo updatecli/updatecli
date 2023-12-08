@@ -55,18 +55,6 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
-		// Test if the ignore rule based on path is respected
-		if len(n.spec.Ignore) > 0 && n.spec.Ignore.isMatchingIgnoreRule(n.rootDir, relativeFoundFile) {
-			logrus.Debugf("Ignoring %q as not matching rule(s)\n", foundFile)
-			continue
-		}
-
-		// Test if the only rule based on path is respected
-		if len(n.spec.Only) > 0 && !n.spec.Only.isMatchingOnlyRule(n.rootDir, relativeFoundFile) {
-			logrus.Debugf("Ignoring %q as not matching rule(s)\n", foundFile)
-			continue
-		}
-
 		data, err := loadPackageJsonData(foundFile)
 
 		if err != nil {
@@ -82,6 +70,20 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 			for dependencyName, dependencyVersion := range dependencies {
 				if !isVersionConstraintSupported(dependencyName, dependencyVersion) {
 					continue
+				}
+
+				if len(n.spec.Ignore) > 0 {
+					if n.spec.Ignore.isMatchingRules(n.rootDir, relativeFoundFile, dependencyName, dependencyVersion) {
+						logrus.Debugf("Ignoring NPM package %q from %q, as matching ignore rule(s)\n", dependencyName, relativeFoundFile)
+						continue
+					}
+				}
+
+				if len(n.spec.Only) > 0 {
+					if !n.spec.Only.isMatchingRules(n.rootDir, relativeFoundFile, dependencyName, dependencyVersion) {
+						logrus.Debugf("Ignoring NPM package %q from %q, as not matching only rule(s)\n", dependencyName, relativeFoundFile)
+						continue
+					}
 				}
 
 				isVersionConstraint := isVersionConstraintSpecified(

@@ -5,11 +5,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition checks that a git branch exists
-func (gt *GitBranch) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (gt *GitBranch) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		path := scm.GetDirectory()
@@ -29,28 +28,21 @@ func (gt *GitBranch) Condition(source string, scm scm.ScmHandler, resultConditio
 		gt.branch = source
 	}
 
-	err := gt.Validate()
+	err = gt.Validate()
 	if err != nil {
-		return fmt.Errorf("git tag validation: %w", err)
+		return false, "", fmt.Errorf("git tag validation: %w", err)
 	}
 
 	branches, err := gt.nativeGitHandler.Branches(gt.spec.Path)
 	if err != nil {
-		return fmt.Errorf("searching git branches: %w", err)
+		return false, "", fmt.Errorf("searching git branches: %w", err)
 	}
 
 	for _, b := range branches {
 		if b == gt.branch {
-			resultCondition.Pass = true
-			resultCondition.Result = result.SUCCESS
-			resultCondition.Description = fmt.Sprintf("git branch %q matching", gt.branch)
-			return nil
+			return true, fmt.Sprintf("git branch %q matching", gt.branch), nil
 		}
 	}
 
-	resultCondition.Pass = false
-	resultCondition.Result = result.FAILURE
-	resultCondition.Description = fmt.Sprintf("git branch %q not found", gt.branch)
-
-	return nil
+	return false, fmt.Sprintf("git branch %q not found", gt.branch), nil
 }

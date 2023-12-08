@@ -44,11 +44,19 @@ func (p *Pipeline) RunTargets() error {
 		target := p.Targets[id]
 		target.Config = p.Config.Spec.Targets[id]
 
+		// Ensure the result named contains the up to date target name after templating
+		target.Result.Name = target.Config.ResourceConfig.Name
+		target.Result.DryRun = target.DryRun
+
 		shouldSkipTarget := false
 
 		for _, parentTarget := range target.Config.DependsOn {
 			if p.Targets[parentTarget].Result.Result == result.FAILURE {
 				logrus.Warningf("Parent target[%q] did not succeed. Skipping execution of the target[%q]", parentTarget, id)
+				shouldSkipTarget = true
+				target.Result.Result = result.SKIPPED
+			} else if target.Config.DependsOnChange && !p.Targets[parentTarget].Result.Changed {
+				logrus.Infof("Parent target[%q] did not make a change. Skipping execution of the target[%q]", parentTarget, id)
 				shouldSkipTarget = true
 				target.Result.Result = result.SKIPPED
 			}

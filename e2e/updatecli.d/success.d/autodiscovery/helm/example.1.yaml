@@ -1,0 +1,20 @@
+name: "Helm autodiscovery using git scm"
+scms:
+  epinio:
+    kind: git
+    spec:
+      url: https://github.com/epinio/helm-charts.git
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: epinio
+  crawlers:
+    helm:
+      ignore:
+        - path: chart/epinio
+          dependencies:
+            "s3gw": ">0.0.1"
+        - path: chart/upgrade-responder
+          containers:
+            "longhornio/upgrade-responder": ""
+

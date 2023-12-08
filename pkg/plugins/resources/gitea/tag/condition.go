@@ -5,10 +5,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Gitea) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (g *Gitea) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningf("Condition not supported for the plugin Gitea tag")
 	}
@@ -20,25 +19,18 @@ func (g *Gitea) Condition(source string, scm scm.ScmHandler, resultCondition *re
 
 	tags, err := g.SearchTags()
 	if err != nil {
-		return fmt.Errorf("looking for Gitea tag: %w", err)
+		return false, "", fmt.Errorf("looking for Gitea tag: %w", err)
 	}
 
 	if len(tags) == 0 {
-		return fmt.Errorf("no Gitea Tags found")
+		return false, "", fmt.Errorf("no Gitea Tags found")
 	}
 
 	for _, t := range tags {
 		if t == tag {
-			resultCondition.Pass = true
-			resultCondition.Result = result.SUCCESS
-			resultCondition.Description = fmt.Sprintf("Gitea tag %q found", t)
-			return nil
+			return true, fmt.Sprintf("Gitea tag %q found", t), nil
 		}
 	}
 
-	resultCondition.Description = fmt.Sprintf("no Gitea tag found matching %q", g.spec.Tag)
-	resultCondition.Pass = false
-	resultCondition.Result = result.FAILURE
-
-	return nil
+	return false, fmt.Sprintf("no Gitea tag found matching %q", g.spec.Tag), nil
 }

@@ -1,4 +1,5 @@
-name: "Bump Minor version for Golang module"
+name: "deps: bump major version for Golang package defined in go.mod"
+pipelineid: "golang/gomod/major"
 
 scms:
   default:
@@ -42,13 +43,12 @@ autodiscovery:
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
             golang.org/x/time: ""
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
-            github.com/nirasan/go-oauth-pkce-code-verifier:
+            github.com/nirasan/go-oauth-pkce-code-verifier: ""
             # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
-            github.com/skratchdot/open-golang:
-            k8s.io/utils:
-            # We currently requires a RC version which is not handle by versionfilter
-            # To remove once https://github.com/updatecli/updatecli/issues/1661 is done
-            github.com/opencontainers/image-spec:
+            github.com/skratchdot/open-golang: ""
+            k8s.io/utils: ""
+            # https://pkg.go.dev/golang.org/x/exp?tab=versions
+            golang.org/x/exp:
       only:
         # This repository contains other go.sum file used for testing.
         # So we want to be sure that we only update the one at the root of the repository

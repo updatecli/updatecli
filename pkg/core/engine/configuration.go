@@ -3,9 +3,13 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // ReadConfigurations read every strategies configuration.
@@ -16,12 +20,37 @@ func (e *Engine) LoadConfigurations() error {
 	ErrNoManifestDetectedCounter := 0
 
 	for i := range e.Options.Manifests {
-		if e.Options.Manifests[i].IsZero() {
-			ErrNoManifestDetectedCounter++
-			continue
+		// If no manifest file is specified, we try to detect one
+		if len(e.Options.Manifests[i].Manifests) == 0 {
+			// Updatecli tries to load the file updatecli.yaml if no manifest was specified
+			// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
+			// if there is no manifests in the directory updatecli.d then Updatecli returns no manifest files.
+
+			// defaultManifestFilename defines the default updatecli configuration filename
+			defaultManifestFilename := "updatecli.yaml"
+			// defaultManifestDirname defines the default updatecli manifest directory
+			defaultManifestDirname := "updatecli.d"
+
+			// If no manifest file is specified, we try to detect one
+			if _, err := os.Stat(defaultManifestFilename); err == nil {
+				logrus.Debugf("Default Updatecli manifest detected %q", defaultManifestFilename)
+				e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, defaultManifestFilename)
+			}
+
+			if fs, err := os.Stat(defaultManifestDirname); err == nil {
+				if fs.IsDir() {
+					logrus.Debugf("Default Updatecli manifest directory detected %q", defaultManifestDirname)
+					e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, defaultManifestDirname)
+				}
+			}
+
+			if len(e.Options.Manifests[i].Manifests) == 0 {
+				ErrNoManifestDetectedCounter++
+				continue
+			}
 		}
 
-		for _, manifestFile := range sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests, "") {
+		for _, manifestFile := range sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests) {
 
 			loadedConfigurations, err := config.New(
 				config.Option{
@@ -41,6 +70,12 @@ func (e *Engine) LoadConfigurations() error {
 			default:
 				err = fmt.Errorf("%q - %s", manifestFile, err)
 				errs = append(errs, err)
+				e.Reports = append(e.Reports,
+					reports.Report{
+						Result: result.FAILURE,
+						Err:    err.Error(),
+					},
+				)
 				continue
 			}
 
@@ -59,6 +94,12 @@ func (e *Engine) LoadConfigurations() error {
 					// don't initially fail as init. of the pipeline still fails even with a successful validation
 					err := fmt.Errorf("%q - %s", manifestFile, err)
 					errs = append(errs, err)
+					e.Reports = append(e.Reports,
+						reports.Report{
+							Result: result.FAILURE,
+							Err:    err.Error(),
+						},
+					)
 				}
 			}
 		}
@@ -82,5 +123,4 @@ func (e *Engine) LoadConfigurations() error {
 	}
 
 	return nil
-
 }

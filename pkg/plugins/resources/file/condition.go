@@ -12,11 +12,17 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// ConditionFromSCM test if a file content from SCM match the content provided via configuration.
+// Condition test if a file content matches the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
-func (f *File) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (f *File) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+
+	workDir := ""
 	if scm != nil {
-		f.UpdateAbsoluteFilePath(scm.GetDirectory())
+		workDir = scm.GetDirectory()
+	}
+
+	if err := f.initFiles(workDir); err != nil {
+		return false, "", fmt.Errorf("init files: %w", err)
 	}
 
 	files := f.spec.Files
@@ -24,22 +30,18 @@ func (f *File) Condition(source string, scm scm.ScmHandler, resultCondition *res
 
 	passing, err := f.condition(source)
 	if err != nil {
-		return fmt.Errorf("file condition: %w", err)
+		return false, "", fmt.Errorf("file condition: %w", err)
 	}
 
 	switch passing {
 	case true:
-		resultCondition.Pass = true
-		resultCondition.Result = result.SUCCESS
-		resultCondition.Description = fmt.Sprintf("condition on file %q passed", files)
+		return true, fmt.Sprintf("condition on file %q passed", files), nil
 
 	case false:
-		resultCondition.Pass = false
-		resultCondition.Result = result.FAILURE
-		resultCondition.Description = fmt.Sprintf("condition on file %q did not pass", files)
+		return false, fmt.Sprintf("condition on file %q did not pass", files), nil
 	}
 
-	return nil
+	return false, "", fmt.Errorf("Unexpected error happened on file. Please report to an issue.")
 }
 
 func (f *File) condition(source string) (bool, error) {
@@ -79,6 +81,14 @@ func (f *File) condition(source string) (bool, error) {
 			}
 
 			if !reg.MatchString(file.content) {
+				if f.spec.SearchPattern {
+					// When using both a file path pattern AND a content matching regex, then we want to ignore files that don't match the pattern
+					// as otherwise we trigger error for files we don't care about.
+					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+					delete(f.files, filePath)
+					continue
+				}
+
 				logrus.Infof(
 					"%s %s did not match the pattern %q",
 					result.FAILURE,
@@ -87,6 +97,12 @@ func (f *File) condition(source string) (bool, error) {
 				)
 				return false, nil
 			}
+
+			if len(f.files) == 0 {
+				logrus.Debugf("no file found matching criteria")
+				return false, nil
+			}
+
 			logrus.Infof("%s %s matched the pattern %q", result.SUCCESS, logMessage, f.spec.MatchPattern)
 		}
 

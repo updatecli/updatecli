@@ -15,6 +15,8 @@ var (
 	manifestPushFileStore string
 	// manifestPushPolicyFile is the path to the policy file containing policy metadata information
 	manifestPushPolicyFile string
+	// manifestPushOverwrite is a boolean to overwrite existing manifest(s) in the registry
+	manifestPushOverwrite bool
 
 	// manifestPushCmd is the Cobra command to push OCI registry manifest(s)
 	manifestPushCmd = &cobra.Command{
@@ -23,6 +25,23 @@ var (
 		Short: "push manifest(s) to an OCI registry",
 		Run: func(cmd *cobra.Command, args []string) {
 			manifestPushFileStore = args[0]
+
+			// Check if the user has specified at least one tag
+			if len(manifestPushPolicyReference) == 0 {
+				logrus.Errorf("At least one tag must be specified")
+				os.Exit(1)
+			}
+
+			// Default store to current working directory
+			if manifestPushFileStore == "" {
+				manifestPushFileStore, _ = os.Getwd()
+			}
+
+			// For some reason the StringArrayVarP does not work as expected
+			// so I have to manually check if the user has specified a manifest directory
+			if len(manifestFiles) == 0 {
+				manifestFiles = []string{"updatecli.d"}
+			}
 
 			err := run("manifest/push")
 			if err != nil {
@@ -40,6 +59,7 @@ func init() {
 	manifestPushCmd.Flags().StringArrayVarP(&manifestPushPolicyReference, "tag", "t", []string{}, `Name and optionally a tag (format: "name:tag")`)
 	manifestPushCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
 	manifestPushCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
+	manifestPushCmd.Flags().BoolVar(&manifestPushOverwrite, "overwrite", false, "Overwrite existing manifest(s) in the registry like '--overwrite=true'")
 
 	manifestCmd.AddCommand(manifestPushCmd)
 }

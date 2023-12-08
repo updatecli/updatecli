@@ -1,0 +1,28 @@
+name: "Maven autodiscovery using git scm"
+scms:
+  default:
+    kind: git 
+    spec:
+      # Contains no repositories
+      #url: https://github.com/olblak/jira-ldap-syncer.git
+      #branch: master
+      
+      # Contains repositories
+      url: https://github.com/olblak/jenkins-datadog-plugin.git
+      branch: master
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  crawlers:
+    maven:
+      versionfilter:
+        kind: semver
+        pattern: majoronly
+      # To ignore specific path
+      #ignore:
+      #  - path: <filepath relative to scm repository>
+      only:
+        - artifactids:
+            "mockito-core": ""
+

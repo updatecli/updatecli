@@ -1,12 +1,10 @@
 package helm
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCondition(t *testing.T) {
@@ -31,9 +29,7 @@ func TestCondition(t *testing.T) {
 				Name:    "jenkins",
 				Version: "999",
 			},
-			expected:             false,
-			expectedError:        true,
-			expectedErrorMessage: errors.New("the Helm chart \"jenkins\" isn't available on https://kubernetes-charts.storage.googleapis.com for version '999'"),
+			expected: false,
 		},
 		{
 			chart: Spec{
@@ -41,9 +37,7 @@ func TestCondition(t *testing.T) {
 				Name:    "jenkins",
 				Version: "999",
 			},
-			expected:             false,
-			expectedError:        true,
-			expectedErrorMessage: errors.New("the Helm chart \"jenkins\" isn't available on https://charts.jenkins.io for version '999'"),
+			expected: false,
 		},
 		// Disabling the test for now as the GitHub Action doesn't have credentials nor allowed to anonymously query the ghcr.io API
 		//{
@@ -63,8 +57,6 @@ func TestCondition(t *testing.T) {
 		//		Version: "v9.9.9",
 		//	},
 		//	expected:             false,
-		//	expectedError:        true,
-		//	expectedErrorMessage: errors.New("the OCI Helm chart ghcr.io/olblak/charts/upgrade-responder:v9.9.9 doesn't exist"),
 		//},
 	}
 
@@ -73,19 +65,18 @@ func TestCondition(t *testing.T) {
 			got, err := New(tt.chart)
 			require.NoError(t, err)
 
-			gotResult := result.Condition{}
-			err = got.Condition("", nil, &gotResult)
+			gotResult, _, gotErr := got.Condition("", nil)
 
 			switch tt.expectedError {
 			case true:
-				if assert.Error(t, err) {
-					assert.Equal(t, tt.expectedErrorMessage.Error(), err.Error())
+				if assert.Error(t, gotErr) {
+					assert.Equal(t, tt.expectedErrorMessage.Error(), gotErr.Error())
 				}
 				return
 			case false:
-				require.NoError(t, err)
+				require.NoError(t, gotErr)
 			}
-			assert.Equal(t, tt.expected, gotResult.Pass)
+			assert.Equal(t, tt.expected, gotResult)
 		})
 	}
 }

@@ -3,6 +3,7 @@ package npm
 import (
 	"path/filepath"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,67 +11,91 @@ import (
 type MatchingRule struct {
 	// Path specifies a package.json path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
+	// Packages specifies the list of NPM packages to check
+	Packages map[string]string
 }
 
 type MatchingRules []MatchingRule
 
-func (m MatchingRules) isMatchingIgnoreRule(rootDir, relativePath string) bool {
-	// Test if the ignore rule based on path is respected
-	result := false
+// isMatchingRules checks if a specific file content matches the "only" rule
+func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVersion string) bool {
+	var ruleResults []bool
 
 	if len(m) > 0 {
 		for _, rule := range m {
-			logrus.Infof("Rule: %q\n", rule.Path)
-			logrus.Infof("Relative Found: %q\n", relativePath)
-			switch filepath.IsAbs(rule.Path) {
-			case true:
-				match, err := filepath.Match(rule.Path, filepath.Join(rootDir, relativePath))
+			/*
+				Check if rule.Path is matching. Path accepts wildcard path
+			*/
+
+			if rule.Path != "" {
+				if filepath.IsAbs(rule.Path) {
+					filePath = filepath.Join(rootDir, filePath)
+				}
+
+				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
 					logrus.Errorf("%s - %q", err, rule.Path)
+					continue
 				}
+				ruleResults = append(ruleResults, match)
 				if match {
-					result = true
-				}
-			case false:
-				match, err := filepath.Match(rule.Path, relativePath)
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
+					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
-		}
-	}
 
-	return result
-}
+			/*
+				Checks if policy is matching the policy constraint.
+			*/
 
-func (m MatchingRules) isMatchingOnlyRule(rootDir, relativePath string) bool {
-	// Test if the only rule based on path is respected
-	result := false
-	if len(m) > 0 {
-		for _, rule := range m {
-			switch filepath.IsAbs(rule.Path) {
-			case true:
-				match, err := filepath.Match(rule.Path, filepath.Join(rootDir, relativePath))
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+			if len(rule.Packages) > 0 {
+				match := false
+
+			outPackage:
+				for rulePackageName, rulePackageVersion := range rule.Packages {
+
+					if packageName == rulePackageName {
+						if rulePackageVersion == "" {
+							match = true
+							break outPackage
+						}
+
+						v, err := semver.NewVersion(packageVersion)
+						if err != nil {
+							match = packageVersion == rulePackageVersion
+							logrus.Debugf("%q - %s", packageVersion, err)
+							break outPackage
+						}
+
+						c, err := semver.NewConstraint(rulePackageVersion)
+						if err != nil {
+							match = packageVersion == rulePackageVersion
+							logrus.Debugf("%q %s", err, rulePackageVersion)
+							break outPackage
+						}
+
+						match = c.Check(v)
+						break outPackage
+					}
 				}
-				if match {
-					result = true
-				}
-			case false:
-				match, err := filepath.Match(rule.Path, relativePath)
-				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
-				}
-				if match {
-					result = true
+				ruleResults = append(ruleResults, match)
+			}
+
+			/*
+				If at least one rule is failing then we return false
+			*/
+			isAllMatching := true
+			for i := range ruleResults {
+				if !ruleResults[i] {
+					isAllMatching = false
 				}
 			}
+			if isAllMatching {
+				return true
+			}
+			ruleResults = []bool{}
 		}
+		return false
 	}
 
-	return result
+	return false
 }

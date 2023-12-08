@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
@@ -31,10 +32,6 @@ import (
 const (
 	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
 	LOCALSCMIDENTIFIER string = "local"
-	// DefaultConfigFilename defines the default updatecli configuration filename
-	DefaultConfigFilename string = "updatecli.yaml"
-	// DefaultConfigDirname defines the default updatecli manifest directory
-	DefaultConfigDirname string = "updatecli.d"
 )
 
 // Config contains cli configuration
@@ -49,27 +46,141 @@ type Config struct {
 
 // Spec contains pipeline configuration
 type Spec struct {
-	// Name defines a pipeline name
+	/*
+		"name" defines a pipeline name
+
+		example:
+			* "name: 'deps: update nodejs version to latest stable'"
+
+		remark:
+			* using a short sentence describing the pipeline is a good way to name your pipeline.
+			* using conventional commits convention is a good way to name your pipeline.
+			* "name" is often used a default values for other configuration such as pullrequest title.
+			* "name" shouldn't contain any dynamic information such as source output.
+	*/
 	Name string `yaml:",omitempty" jsonschema:"required"`
-	// PipelineID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	/*
+		"pipelineid" allows to identify a full pipeline run.
+
+		example:
+			* "pipelineid: nodejs/dependencies"
+			* "pipelineid: gomod/github.com/updatecli/updatecli"
+			* "pipelineid: autodiscovery/gomodules/minor"
+
+		remark:
+			* "pipelineid" is used to generate uniq branch name for target update relying on scm configuration.
+			* The same "pipelineid" may be used by different Updatecli manifest" to ensure they are updated in the same workflow including pullrequest.
+	*/
 	PipelineID string `yaml:",omitempty"`
-	// AutoDiscovery defines parameters to the autodiscovery feature
+	/*
+		"autodiscovery" defines the configuration to automatically discover new versions update.
+
+		example:
+		---
+		autodiscovery:
+			scmid: default
+			actionid:  default
+			groupby: all
+			crawlers:
+				golang/gomod:
+					versionfilter:
+					kind: semver
+					pattern: patch
+		---
+	*/
 	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
-	// Title is used for the full pipeline
-	Title string `yaml:",omitempty"`
-	// !Deprecated in favor of `actions`
+	/*
+		"title" is deprecated, please use "name" instead.
+	*/
+	Title string `yaml:",omitempty" jsonschema:"-"`
+	/*
+		!Deprecated in favor of `actions`
+	*/
 	PullRequests map[string]action.Config `yaml:",omitempty" jsonschema:"-"`
-	// Actions defines the list of action configurations which need to be managed
+	/*
+		"actions" defines the list of action configurations which need to be managed.
+
+		examples:
+		---
+		actions:
+			default:
+				kind: github/pullrequest
+				scmid: default
+				spec:
+					automerge: true
+					labels:
+						- "dependencies"
+		---
+	*/
 	Actions map[string]action.Config `yaml:",omitempty"`
-	// SCMs defines the list of repository configuration used to fetch content from.
+	/*
+		"scms" defines the list of repository configuration used to fetch content from.
+
+		examples:
+		---
+		scms:
+			default:
+				kind: github
+				spec:
+					owner: "updatecli"
+					repository: "updatecli"
+					token: "${{ env "GITHUB_TOKEN" }}"
+					branch: "main"
+		---
+
+	*/
 	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
-	// Sources defines the list of source configuration
+	/*
+		"sources" defines the list of Updatecli source definition.
+
+		example:
+		---
+		sources:
+			# Source to retrieve the latest version of nodejs
+			nodejs:
+				name: Get latest nodejs version
+				kind: json
+				spec:
+					file: https://nodejs.org/dist/index.json
+					key: .(lts!=false).version
+		---
+	*/
 	Sources map[string]source.Config `yaml:",omitempty"`
-	// Conditions defines the list of condition configuration
+	/*
+		"conditions" defines the list of Updatecli condition definition.
+
+		example:
+		---
+		conditions:
+			container:
+				name: Check if Updatecli container image for tag "v0.63.0" exists
+				kind: dockerimage
+				spec:
+					image: "updatecli/updatecli:latest"
+					tag: "v0.63.0"
+		---
+	*/
 	Conditions map[string]condition.Config `yaml:",omitempty"`
-	// Targets defines the list of target configuration
+	/*
+		"targets" defines the list of Updatecli target definition.
+
+		example:
+		---
+		targets:
+		  	default:
+		     	name: 'ci: update Golangci-lint version to {{ source "default" }}'
+		     	kind: yaml
+		     	spec:
+		         	file: .github/workflows/go.yaml
+		         	key: $.jobs.build.steps[2].with.version
+		     	scmid: default
+		     	sourceid: default
+		---
+	*/
 	Targets map[string]target.Config `yaml:",omitempty"`
-	// Version specifies the minimum updatecli version compatible with the manifest
+	/*
+		"version" defines the minimum Updatecli version compatible with the manifest
+	*/
 	Version string `yaml:",omitempty"`
 }
 
@@ -99,7 +210,7 @@ func New(option Option) (configs []Config, err error) {
 
 	// We need to be sure to generate a file checksum before we inject
 	// templates values as in some situation those values changes for each run
-	pipelineID, err := FileChecksum(option.ManifestFile)
+	fileChecksum, err := FileChecksum(option.ManifestFile)
 	if err != nil {
 		return configs, err
 	}
@@ -178,7 +289,20 @@ func New(option Option) (configs []Config, err error) {
 		configs[id].Spec = specs[id]
 		// config.PipelineID is required for config.Validate()
 		if len(configs[id].Spec.PipelineID) == 0 {
-			configs[id].Spec.PipelineID = pipelineID
+			logrus.Debugln("pipelineid undefined, we'll try to generate one")
+
+			// If pipeline name is defined then we use it to generate a pipeline id
+			// there is less change for the pipeline name to change.
+			switch configs[id].Spec.Name {
+			case "":
+				logrus.Debugln("pipeline name undefined, we'll use the manifest file checksum")
+				configs[id].Spec.PipelineID = fileChecksum
+			default:
+				logrus.Debugln("using pipeline name to generate the pipelineid")
+				hash := sha256.New()
+				hash.Write([]byte(configs[id].Spec.Name))
+				configs[id].Spec.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+			}
 		}
 
 		// By default Set config.Version to the current updatecli version
@@ -479,6 +603,10 @@ func (config *Config) Validate() error {
 		errs = append(
 			errs,
 			fmt.Errorf("updatecli version compatibility error:\n%s", err))
+	}
+
+	if config.Spec.Title != "" {
+		logrus.Warningf("title is deprecated, please use name instead")
 	}
 
 	err = config.validateConditions()

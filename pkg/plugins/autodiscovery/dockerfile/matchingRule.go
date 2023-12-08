@@ -23,34 +23,34 @@ type MatchingRules []MatchingRule
 func (m MatchingRules) isMatchingRule(rootDir, filePath, image, arch string) bool {
 	// Test if the ignore rule are respected
 	var ruleResults []bool
-	var finaleResult bool
 
 	if len(m) > 0 {
-		for _, matchingRule := range m {
+		for _, rule := range m {
 			var match bool
 			var err error
 
 			// Only check if path rule defined
-			if matchingRule.Path != "" && filePath != "" {
-				if filepath.IsAbs(matchingRule.Path) {
+			if rule.Path != "" {
+				if filepath.IsAbs(rule.Path) {
 					filePath = filepath.Join(rootDir, filePath)
 				}
 
-				match, err = filepath.Match(matchingRule.Path, filePath)
+				match, err = filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, matchingRule.Path)
+					logrus.Errorf("%s - %q", err, rule.Path)
+					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, matchingRule.Path)
+					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
 			// Only check if service rule defined.
-			if len(matchingRule.Archs) > 0 && arch != "" {
+			if len(rule.Archs) > 0 {
 				match := false
 			archs:
-				for _, a := range matchingRule.Archs {
+				for _, a := range rule.Archs {
 					if a == arch {
 						logrus.Debugf("arch %q matching rule %q", arch, a)
 						match = true
@@ -61,10 +61,10 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, image, arch string) boo
 			}
 
 			// Only check if image rule defined.
-			if len(matchingRule.Images) > 0 && image != "" {
+			if len(rule.Images) > 0 {
 				match := false
 			images:
-				for _, i := range matchingRule.Images {
+				for _, i := range rule.Images {
 					if strings.HasPrefix(image, i) {
 						logrus.Debugf("image %q matching rule %q", image, i)
 						match = true
@@ -73,24 +73,25 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, image, arch string) boo
 				}
 				ruleResults = append(ruleResults, match)
 			}
-		}
 
-		if len(ruleResults) == 0 {
-			return false
-		}
-
-		allMatchingRule := true
-		for i := range ruleResults {
-			if !ruleResults[i] {
-				allMatchingRule = false
-				break
+			if len(ruleResults) == 0 {
+				return false
 			}
-		}
 
-		if allMatchingRule {
-			finaleResult = true
+			isAllMatching := true
+			for i := range ruleResults {
+				if !ruleResults[i] {
+					isAllMatching = false
+					break
+				}
+			}
+
+			if isAllMatching {
+				return true
+			}
+			ruleResults = []bool{}
 		}
 	}
 
-	return finaleResult
+	return false
 }

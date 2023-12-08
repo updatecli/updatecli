@@ -3,6 +3,7 @@ package compose
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 )
@@ -41,23 +42,32 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 	}
 
 	for i := range c.spec.Policies {
+		if c.spec.Policies[i].IsZero() {
+			continue
+		}
+
+		logrus.Debugf("Initializing policy %q", c.spec.Policies[i].Name)
+
+		var policyManifest, policyValues, policySecrets []string
+		var err error
+
 		if c.spec.Policies[i].Policy != "" {
-			policyManifest, policyValues, policySecrets, err := registry.Pull(c.spec.Policies[i].Policy, disableTLS)
+			policyManifest, policyValues, policySecrets, err = registry.Pull(c.spec.Policies[i].Policy, disableTLS)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("pulling policy %q: %s", c.spec.Policies[i].Policy, err))
 				continue
 			}
-
-			policyManifest = append(policyManifest, c.spec.Policies[i].Config...)
-			policyValues = append(policyValues, c.spec.Policies[i].Values...)
-			policySecrets = append(policySecrets, c.spec.Policies[i].Secrets...)
-
-			manifests = append(manifests, manifest.Manifest{
-				Manifests: policyManifest,
-				Values:    policyValues,
-				Secrets:   policySecrets,
-			})
 		}
+
+		policyManifest = append(policyManifest, c.spec.Policies[i].Config...)
+		policyValues = append(policyValues, c.spec.Policies[i].Values...)
+		policySecrets = append(policySecrets, c.spec.Policies[i].Secrets...)
+
+		manifests = append(manifests, manifest.Manifest{
+			Manifests: policyManifest,
+			Values:    policyValues,
+			Secrets:   policySecrets,
+		})
 	}
 
 	if len(errs) > 0 {

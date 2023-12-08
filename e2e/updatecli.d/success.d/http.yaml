@@ -1,0 +1,80 @@
+name: End to end test of the 'http' resource kind
+pipelineid: "e2e/http"
+
+# Sources of type http returns either the body or a header
+sources:
+  # Returns the content of the 'maven-metadata.xml' file content as source (multi-line, direct HTTP/200)
+  getJenkinsWarArtifactMetadatas:
+    kind: http
+    spec:
+      url: https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml
+  # Returns the content of the 'checksums.txt' file content as source (multi-line, following redirections HTTP/3xx)
+  getUpdatecli0.65.1Checksums:
+    kind: http
+    spec:
+      url: https://github.com/updatecli/updatecli/releases/download/v0.65.1/checksums.txt # HTTP/302 (GitHub redirection to raw.githubusercontent.com)
+  ## Empty Source due to HTTP/3xx not followed (e.g. empty body)
+  getUpdatecli0.65.1ChecksumsNoFollow:
+    kind: http
+    spec:
+      url: https://github.com/updatecli/updatecli/releases/download/v0.65.1/checksums.txt # HTTP/302 (GitHub redirection to raw.githubusercontent.com)
+      request:
+        nofollowredirects: true # Default is false
+  # Returns the content of the Header 'Location' (e.g. the target of the HTTP redirect)
+  getRedirectLocationForUpdatecliLinuxAmd64Archive:
+    kind: http
+    spec:
+      url: https://github.com/updatecli/updatecli/releases/download/v0.65.1/updatecli_Linux_arm64.tar.gz
+      returnresponseheader: Location
+  # Returns the content of the 'maven-metadata.xml' file from the private URL (custom headers for the request)
+  getWithCustomRequest:
+    kind: http
+    spec:
+      url: https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml
+      request:
+        headers:
+          Authorization: 'Bearer Token'
+          Accept: 'application/xml'
+        verb: GET
+  ## Source fails with an error: the URL returns HTTP/404 (same for server-side errors such as HTTP/5xx)
+  # failOnHttpError:
+  #   kind: http
+  #   spec:
+  #     url: https://google.com/do-not-exist
+
+
+conditions:
+  # Returns 'true' if the specified URL returns HTTP/1xx, HTTP/2xx or HTTP/3xx
+  checkForURL:
+    kind: http
+    sourceid: getJenkinsWarArtifactMetadatas
+    spec:
+      url: https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml
+  ## Conditions returns 'false' as the URL returns HTTP/404
+  ## If there is an HTTP/500 (server side error) then the conditions fails with an ERROR (different than returning false which "skips" the pipeline)
+  # checkForNonExistingUrl:
+  #   kind: http
+  #   sourceid: getJenkinsWarArtifactMetadatas
+  #   spec:
+  #     url: https://google.com/do-not-exist
+  # Returns 'true' if the specified URL returns HTTP/1xx, HTTP/2xx or HTTP/3xx to the custom request (custom verb and headers)
+  checkWithCustomRequest:
+    kind: http
+    sourceid: getJenkinsWarArtifactMetadatas
+    spec:
+      url: https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml
+      request:
+        headers:
+          Authorization: 'Bearer Token'
+          Accept: 'application/xml'
+        verb: HEAD
+  # Returns 'true' if the response code is HTTP/302 and has header "Content-Type" set to "application/xhtml"
+  getUpdatecli0.65.1Checksums:
+    kind: http
+    sourceid: getJenkinsWarArtifactMetadatas
+    spec:
+      url: https://github.com/updatecli/updatecli/releases/download/v0.65.1/checksums.txt # HTTP/302 (GitHub redirection to raw.githubusercontent.com)
+      responseasserts:
+        statuscode: 302
+        headers:
+          Content-Type: "text/html; charset=utf-8"

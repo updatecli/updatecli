@@ -61,7 +61,7 @@ func New(spec interface{}) (*GitBranch, error) {
 func (gt *GitBranch) Validate() error {
 	validationErrors := []string{}
 	if gt.spec.Path == "" {
-		validationErrors = append(validationErrors, "Git working directory path is empty while it must be specified. Did you specify an `scmID` or a `spec.path`?")
+		validationErrors = append(validationErrors, "Git working directory path is empty while it must be specified. Did you specify a `scmid` or a `spec.path`?")
 	}
 
 	// Return all the validation errors if found any

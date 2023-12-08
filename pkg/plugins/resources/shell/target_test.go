@@ -25,11 +25,11 @@ func TestShell_Target(t *testing.T) {
 		{
 			name:              "runs a target that does not change anything and no dryrun",
 			command:           "do_not_change.sh",
-			shell:             "/bin/bash",
+			shell:             bashShell,
 			source:            "1.2.3",
 			wantChanged:       false,
 			wantErr:           false,
-			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "do_not_change.sh 1.2.3"),
+			wantCommandInMock: bashShell + " " + wantedScriptFilename(t, "do_not_change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "",
@@ -42,7 +42,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       true,
 			wantErr:           false,
-			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
+			wantCommandInMock: bashShell + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "1.2.3",
@@ -56,7 +56,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       false,
 			wantErr:           true,
-			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
+			wantCommandInMock: bashShell + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 2,
 				Stderr:   "Error: unable to change value to 1.2.3.",
@@ -126,14 +126,14 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			mockReturnedChangedFiles: []string{"pom.xml"},
 			wantMessage:              `ran shell command "change.sh 1.2.3"`,
 			wantErr:                  false,
-			wantCommandInMock:        "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
+			wantCommandInMock:        bashShell + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Changed value from 1.2.2 to 1.2.3.",
 			},
 			wantFilesChanged: []string{"pom.xml"},
 			commandEnv:       []string{"DRY_RUN=false"},
-			shell:            "/bin/bash",
+			shell:            bashShell,
 		},
 	}
 	for _, tt := range tests {

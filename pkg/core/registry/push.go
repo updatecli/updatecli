@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -14,14 +15,20 @@ import (
 	"github.com/sirupsen/logrus"
 	oras "oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/file"
+	"oras.land/oras-go/v2/errdef"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
 	"oras.land/oras-go/v2/registry/remote/retry"
 )
 
 // Push pushes updatecli manifest(s) as an OCI image to an OCI registry.
-func Push(policyMetadataFile string, manifests []string, values []string, secrets []string, policyReferenceNames []string, disableTLS bool, fileStore string) error {
+func Push(policyMetadataFile string, manifests []string, values []string, secrets []string, policyReferenceNames []string, disableTLS bool, fileStore string, overwrite bool) error {
 	var err error
+
+	policySpec, err := LoadPolicyFile(policyMetadataFile)
+	if err != nil {
+		return fmt.Errorf("load policy file: %w", err)
+	}
 
 	logrus.Infof("Pushing Updatecli policy:\n\t=> %s\n\n", strings.Join(policyReferenceNames, "\n\t=> "))
 
@@ -73,11 +80,6 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		Layers: fileDescriptors,
 	}
 
-	policySpec, err := LoadPolicyFile(policyMetadataFile, fileStore)
-	if err != nil {
-		return fmt.Errorf("load policy file: %w", err)
-	}
-
 	// Set default OCI annotations which are understood by OCI registries
 	// https://github.com/opencontainers/image-spec/blob/main/annotations.md
 	opts.ManifestAnnotations = map[string]string{
@@ -109,11 +111,6 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		}
 
 		tag := policySpec.Version
-		if refName.Identifier() != "" {
-			logrus.Warningf("Tag %s is ignored in favor of %s. The tag must come from the Policy version",
-				refName.Identifier(),
-				policySpec.Version)
-		}
 
 		if err = fs.Tag(ctx, manifestDescriptor, tag); err != nil {
 			return fmt.Errorf("tag manifest: %w", err)
@@ -140,6 +137,19 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 			Client:     retry.DefaultClient,
 			Cache:      auth.DefaultCache,
 			Credential: credentials.Credential(credStore),
+		}
+
+		_, _, err = repo.FetchReference(ctx, tag)
+		if err == nil && !overwrite {
+			logrus.Infof("tag %q already published for policy %s", tag, policyReferenceNames[i])
+			return nil
+		} else if err == nil {
+			logrus.Infof("overwriting, already published, tag %q for policy %s", tag, policyReferenceNames[i])
+
+		} else if errors.Is(err, errdef.ErrNotFound) {
+			logrus.Infof("publishing policy %s", tag)
+		} else {
+			return fmt.Errorf("check if %s is already published: %s", policyReferenceNames[i], err)
 		}
 
 		// 3. Copy from the file store to the remote repository

@@ -50,6 +50,8 @@ version: ## Run the "version" updatecli's subcommand for smoke test
 
 .PHONY: test
 test: ## Execute the Golang's tests for updatecli
+# Docker is required for the full integration test. Quick fail if it is not present and running
+	docker info
 	go test ./... -race -coverprofile=coverage.txt -covermode=atomic
 
 test-short: ## Execute the Golang's tests for updatecli

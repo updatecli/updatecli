@@ -3,7 +3,7 @@ package mavenmetadata
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -53,7 +53,7 @@ func (d *DefaultHandler) getMetadataFile() (metadata, error) {
 		return metadata{}, fmt.Errorf("HTTP error returned from %s: %v", d.metadataURL, res.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return metadata{}, err
 	}

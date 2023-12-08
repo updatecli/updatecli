@@ -36,6 +36,14 @@ sources:
       file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
       key: $.name
 
+  getGo-Version-File:
+    name: Test complex key
+    kind: yaml
+    spec:
+      engine: yamlpath
+      file: .github/workflows/updatecli.yaml
+      key: $.jobs.updatecli.steps[?(@.id =='go')].uses
+
 conditions:
   scenario1:
     name: Basic yaml condition

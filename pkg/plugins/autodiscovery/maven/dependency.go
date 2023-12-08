@@ -35,20 +35,6 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 			continue
 		}
 
-		// Test if the ignore rule based on path is respected
-		if len(m.spec.Ignore) > 0 && m.spec.Ignore.isMatchingIgnoreRule(m.rootDir, relativePomFile) {
-			logrus.Debugf("Ignoring pom.xml %q as not matching rule(s)\n",
-				pomFile)
-			continue
-		}
-
-		// Test if the only rule based on path is respected
-		if len(m.spec.Only) > 0 && !m.spec.Only.isMatchingOnlyRule(m.rootDir, relativePomFile) {
-			logrus.Debugf("Ignoring pom.xml %q as not matching rule(s)\n",
-				pomFile)
-			continue
-		}
-
 		doc := etree.NewDocument()
 		if err := doc.ReadFromFile(pomFile); err != nil {
 			logrus.Debugln(err)
@@ -109,6 +95,20 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
+				}
+			}
+
+			if len(m.spec.Ignore) > 0 {
+				if m.spec.Ignore.isMatchingRules(m.rootDir, relativePomFile, dependency.GroupID, dependency.ArtifactID, dependency.Version) {
+					logrus.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.GroupID, dependency.ArtifactID, relativePomFile)
+					continue
+				}
+			}
+
+			if len(m.spec.Only) > 0 {
+				if !m.spec.Only.isMatchingRules(m.rootDir, relativePomFile, dependency.GroupID, dependency.ArtifactID, dependency.Version) {
+					logrus.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.GroupID, dependency.ArtifactID, relativePomFile)
+					continue
 				}
 			}
 

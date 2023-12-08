@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/iancoleman/orderedmap"
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 )
@@ -230,12 +229,12 @@ func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{
 		case false:
 			spec := r.Reflect(anyOf[id])
 			resourceConfig.Properties.Set("spec", spec)
-			resourceConfig.Properties.Set("kind", jschema.Schema{
+			resourceConfig.Properties.Set("kind", &jschema.Schema{
 				Enum: []interface{}{id}})
 			resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
 
 		case true:
-			resourceConfig.Properties.Set("kind", jschema.Schema{
+			resourceConfig.Properties.Set("kind", &jschema.Schema{
 				Enum: []interface{}{id}})
 			resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
 
@@ -274,12 +273,12 @@ func AppendMapToJsonSchema(baseConfig interface{}, mapConfig map[string]interfac
 	resourceConfig := r.Reflect(baseConfig)
 
 	if resourceConfig.Properties == nil {
-		resourceConfig.Properties = orderedmap.New()
+		resourceConfig.Properties = jschema.NewProperties()
 	}
 
 	for key := range mapConfig {
 		if mapConfig[key] == nil {
-			resourceConfig.Properties.Set(key, "")
+			resourceConfig.Properties.Set(key, &jschema.Schema{})
 			continue
 		}
 

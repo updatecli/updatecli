@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 
 	"github.com/stretchr/testify/assert"
@@ -171,15 +170,14 @@ func TestCondition(t *testing.T) {
 			if tt.mockedResponse {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode, tt.mockedHeaderFormat)
 			}
-			gotResult := result.Condition{}
 
-			err = got.Condition("", nil, &gotResult)
+			gotPass, _, gotErr := got.Condition("", nil)
 			if tt.expectedError {
-				assert.Error(t, err)
+				assert.Error(t, gotErr)
 				return
 			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotResult.Pass)
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.expectedResult, gotPass)
 		})
 	}
 }

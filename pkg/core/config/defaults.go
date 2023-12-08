@@ -10,9 +10,9 @@ import (
 // GetChangelogTitle try to guess a specific target based on various information available for
 // a specific job
 func (config *Config) GetChangelogTitle(ID string, fallback string) (title string) {
-	if len(config.Spec.Title) > 0 {
+	if len(config.Spec.Name) > 0 {
 		// If a pipeline title has been defined, then use it for action title
-		title = config.Spec.Title
+		title = config.Spec.Name
 
 	} else if len(config.Spec.Targets) == 1 && len(config.Spec.Targets[ID].Name) > 0 {
 		// If we only have one target then we can use it as fallback.
@@ -21,8 +21,8 @@ func (config *Config) GetChangelogTitle(ID string, fallback string) (title strin
 	} else {
 		// At the moment, we don't have an easy way to describe what changed
 		// I am still thinking to a better solution.
-		logrus.Warning("**Fallback** Please add a title to you configuration using the field 'title: <your pipeline>'")
-		title = fmt.Sprintf("[%s] Bump version to %s",
+		logrus.Warning("**Fallback** Please add a name to your configuration using the field 'name: <your pipeline>'")
+		title = fmt.Sprintf("deps: [%s] Bump version to %s",
 			config.Spec.Sources[config.Spec.Targets[ID].SourceID].Kind,
 			fallback)
 	}
