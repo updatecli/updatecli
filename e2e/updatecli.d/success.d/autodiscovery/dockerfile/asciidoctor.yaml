@@ -11,3 +11,7 @@ autodiscovery:
   scmid: asciidoctor
   crawlers:
     dockerfile:
+      ignore:
+        - images:
+            - "base"
+            - "main-minimal"

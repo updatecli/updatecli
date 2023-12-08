@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
@@ -46,12 +45,6 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 	for id, p := range e.Pipelines {
 		if p.Config.Spec.AutoDiscovery.Crawlers == nil {
 			continue
-		}
-
-		// TODO: To be removed once not experimental anymore
-		if !cmdoptions.Experimental {
-			logrus.Warningf("The 'autodiscovery' feature requires the flag experimental to work, such as:\n\t`updatecli manifest show --experimental`")
-			return nil
 		}
 
 		PrintTitle(p.Name)

@@ -48,7 +48,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 		// At the time of writing, semantic versioning is the only way to have reliable results
 		// across the different registries.
 		// More information on https://github.com/updatecli/updatecli/issues/977
-		logrus.Warningln(err)
+		logrus.Warningf("analyzing OCI image %q: %s", image, err)
 		return nil
 	}
 
@@ -85,13 +85,13 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 		}
 
 		warningMessage := fmt.Sprintf(
-			"no credentials found for docker registry %q hosting image %q, among %q",
+			"relying on default docker configuration file as no credentials have been found for docker registry %q hosting image %q, among %q",
 			registry,
 			image,
 			strings.Join(registryAuths, ","))
 
 		if len(registryAuths) == 0 {
-			warningMessage = fmt.Sprintf("no credentials found for docker registry %q hosting image %q",
+			warningMessage = fmt.Sprintf("relying on default docker configuration file as no credentials have been found for docker registry %q hosting image %q",
 				registry,
 				image)
 		}
