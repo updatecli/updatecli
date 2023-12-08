@@ -83,3 +83,4 @@ statuscode
 scmid
 jenkinsciinfra
 servercore
+getsops
