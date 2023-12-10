@@ -67,7 +67,7 @@ type Spec struct {
 	Content string `yaml:",omitempty"`
 	/*
 
-	   `forcecreate`` defines if nonexistent file(s) should be created
+	   `forcecreate` defines if nonexistent file(s) should be created
 
 	   compatible:
 	       * target
