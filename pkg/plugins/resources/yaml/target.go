@@ -55,16 +55,20 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	resultTarget.NewInformation = valueToWrite
 
+	// notChanged is used to count the number of files that have not been updated
 	var notChanged int
+	// ignoredFiles is used to count the number of files that have been ignored for example because the key was not found and searchPattern is true
+	var ignoredFiles int
+
 	switch y.spec.Engine {
 	case EngineGoYaml, EngineDefault, EngineUndefined:
-		notChanged, err = y.goYamlTarget(valueToWrite, resultTarget, dryRun)
+		notChanged, ignoredFiles, err = y.goYamlTarget(valueToWrite, resultTarget, dryRun)
 		if err != nil {
 			return fmt.Errorf("updating yaml file: %w", err)
 		}
 
 	case EngineYamlPath:
-		notChanged, err = y.goYamlPathTarget(valueToWrite, resultTarget, dryRun)
+		notChanged, ignoredFiles, err = y.goYamlPathTarget(valueToWrite, resultTarget, dryRun)
 		if err != nil {
 			return fmt.Errorf("updating yaml file: %w", err)
 		}
@@ -75,8 +79,9 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
 
+	monitoredFiles := len(y.files) - ignoredFiles
 	// If no file was updated, don't return an error
-	if notChanged == len(y.files) {
+	if notChanged == monitoredFiles && monitoredFiles > 0 {
 		resultTarget.Description = fmt.Sprintf("no change detected:\n\t* %s", strings.ReplaceAll(strings.TrimPrefix(resultTarget.Description, "\n"), "\n", "\n\t* "))
 		resultTarget.Changed = false
 		resultTarget.Result = result.SUCCESS
@@ -117,11 +122,11 @@ func (y Yaml) validateTargetFilePath() error {
 	return nil
 }
 
-func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, err error) {
+func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
 
 	urlPath, err := goyaml.PathString(y.spec.Key)
 	if err != nil {
-		return 0, fmt.Errorf("crafting yamlpath query: %w", err)
+		return 0, ignoredFiles, fmt.Errorf("crafting yamlpath query: %w", err)
 	}
 
 	for filePath := range y.files {
@@ -129,23 +134,24 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 		yamlFile, err := parser.ParseBytes([]byte(y.files[filePath].content), parser.ParseComments)
 		if err != nil {
-			return 0, fmt.Errorf("parsing yaml file: %w", err)
+			return 0, ignoredFiles, fmt.Errorf("parsing yaml file: %w", err)
 		}
 
 		node, err := urlPath.FilterFile(yamlFile)
 		if err != nil {
-			if y.spec.SearchPattern {
-				// If search pattern is true then we don't want to return an error
-				// as we are probably trying to identify a file matching the key
-				logrus.Debugf("ignoring file %q as we couldn't find key %q", originFilePath, y.spec.Key)
-				continue
-			}
 			if errors.Is(err, goyaml.ErrNotFoundNode) {
-				return 0, fmt.Errorf("couldn't find key %q from file %q",
+				if y.spec.SearchPattern {
+					ignoredFiles++
+					// If search pattern is true then we don't want to return an error
+					// as we are probably trying to identify a file matching the key
+					logrus.Debugf("ignoring file %q: %s", originFilePath, err)
+					continue
+				}
+				return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q",
 					y.spec.Key,
 					originFilePath)
 			}
-			return 0, fmt.Errorf("searching in yaml file: %w", err)
+			return 0, ignoredFiles, fmt.Errorf("searching in yaml file: %w", err)
 		}
 
 		oldVersion := node.String()
@@ -162,7 +168,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 		}
 
 		if err := urlPath.ReplaceWithReader(yamlFile, strings.NewReader(valueToWrite)); err != nil {
-			return 0, fmt.Errorf("replacing yaml key: %w", err)
+			return 0, ignoredFiles, fmt.Errorf("replacing yaml key: %w", err)
 		}
 
 		f := y.files[filePath]
@@ -195,7 +201,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 			defer newFile.Close()
 
 			if err != nil {
-				return 0, fmt.Errorf("creating file %q: %w", originFilePath, err)
+				return 0, ignoredFiles, fmt.Errorf("creating file %q: %w", originFilePath, err)
 			}
 
 			err = y.contentRetriever.WriteToFile(
@@ -203,18 +209,18 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				y.files[filePath].filePath)
 
 			if err != nil {
-				return 0, fmt.Errorf("saving file %q: %w", originFilePath, err)
+				return 0, ignoredFiles, fmt.Errorf("saving file %q: %w", originFilePath, err)
 			}
 		}
 	}
 
-	return notChanged, nil
+	return notChanged, ignoredFiles, nil
 }
 
-func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, err error) {
+func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
 	urlPath, err := yamlpath.NewPath(y.spec.Key)
 	if err != nil {
-		return 0, fmt.Errorf("crafting yamlpath query: %w", err)
+		return 0, 0, fmt.Errorf("crafting yamlpath query: %w", err)
 	}
 
 	var buf bytes.Buffer
@@ -230,27 +236,29 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 
 		err = yaml.Unmarshal([]byte(y.files[filePath].content), &n)
 		if err != nil {
-			return 0, fmt.Errorf("parsing yaml file: %w", err)
+			return 0, ignoredFiles, fmt.Errorf("parsing yaml file: %w", err)
 		}
 
 		nodes, err := urlPath.Find(&n)
 		if err != nil {
-			return 0, fmt.Errorf("searching in yaml file: %w", err)
+			return 0, ignoredFiles, fmt.Errorf("searching in yaml file: %w", err)
 		}
 
 		if len(nodes) == 0 {
 			if y.spec.SearchPattern {
+				ignoredFiles++
 				// If search pattern is true then we don't want to return an error
 				// as we are probably trying to identify a file matching the key
 				logrus.Debugf("ignoring file %q as we couldn't find key %q", originFilePath, y.spec.Key)
 				continue
 			}
-			return 0, fmt.Errorf("couldn't find key %q from file %q",
+			return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q",
 				y.spec.Key,
 				originFilePath)
 		}
 
 		var oldVersion string
+		var notChangedNode int
 		for _, node := range nodes {
 			oldVersion = node.Value
 			resultTarget.Information = oldVersion
@@ -262,16 +270,22 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 					valueToWrite,
 					originFilePath)
 				notChanged++
+				notChangedNode++
 				continue
 			}
 
 			node.Value = valueToWrite
 		}
 
+		if notChangedNode == len(nodes) {
+			logrus.Debugf("no change detected for %s", originFilePath)
+			continue
+		}
+
 		f := y.files[filePath]
 		err = e.Encode(&n)
 		if err != nil {
-			return 0, fmt.Errorf("unable to marshal the yaml file: %w", err)
+			return 0, ignoredFiles, fmt.Errorf("unable to marshal the yaml file: %w", err)
 		}
 
 		//
@@ -308,7 +322,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 			defer newFile.Close()
 
 			if err != nil {
-				return 0, fmt.Errorf("creating file %q: %w", originFilePath, err)
+				return 0, ignoredFiles, fmt.Errorf("creating file %q: %w", originFilePath, err)
 			}
 
 			err = y.contentRetriever.WriteToFile(
@@ -316,9 +330,9 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 				y.files[filePath].filePath)
 
 			if err != nil {
-				return 0, fmt.Errorf("saving file %q: %w", originFilePath, err)
+				return 0, ignoredFiles, fmt.Errorf("saving file %q: %w", originFilePath, err)
 			}
 		}
 	}
-	return notChanged, nil
+	return notChanged, ignoredFiles, nil
 }
