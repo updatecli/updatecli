@@ -80,6 +80,13 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
 
 	monitoredFiles := len(y.files) - ignoredFiles
+
+	if monitoredFiles == 0 {
+		resultTarget.Description = "no yaml file found matching criteria"
+		resultTarget.Result = result.SKIPPED
+		return nil
+	}
+
 	// If no file was updated, don't return an error
 	if notChanged == monitoredFiles && monitoredFiles > 0 {
 		resultTarget.Description = fmt.Sprintf("no change detected:\n\t* %s", strings.ReplaceAll(strings.TrimPrefix(resultTarget.Description, "\n"), "\n", "\n\t* "))
