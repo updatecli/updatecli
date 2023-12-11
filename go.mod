@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.48.16
 	github.com/containerd/containerd v1.7.7 // indirect
 	github.com/fatih/color v1.16.0
-	github.com/getsops/sops/v3 v3.8.0
+	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/heimdalr/dag v1.4.0
 	github.com/hexops/gotextdiff v1.0.3
