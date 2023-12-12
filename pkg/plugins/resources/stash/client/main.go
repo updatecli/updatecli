@@ -7,6 +7,7 @@ import (
 
 	"github.com/drone/go-scm/scm"
 	"github.com/drone/go-scm/scm/driver/stash"
+	"github.com/drone/go-scm/scm/transport"
 	"github.com/drone/go-scm/scm/transport/oauth2"
 	"github.com/sirupsen/logrus"
 )
@@ -38,14 +39,23 @@ func New(s Spec) (Client, error) {
 	}
 
 	if len(s.Token) >= 0 {
-		client.Client = &http.Client{
-			Transport: &oauth2.Transport{
-				Source: oauth2.StaticTokenSource(
-					&scm.Token{
-						Token: s.Token,
-					},
-				),
-			},
+		if len(s.Username) >= 0 {
+			client.Client = &http.Client{
+				Transport: &transport.BasicAuth{
+					Username: s.Username,
+					Password: s.Token,
+				},
+			}
+		} else {
+			client.Client = &http.Client{
+				Transport: &oauth2.Transport{
+					Source: oauth2.StaticTokenSource(
+						&scm.Token{
+							Token: s.Token,
+						},
+					),
+				},
+			}
 		}
 	}
 
