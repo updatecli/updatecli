@@ -3,3 +3,7 @@ description: A test chart for updatecli
 name: test3
 version: 1.0.0
 
+dependencies:
+  - name: monitoring
+    repository: file://charts/monitoring
+
