@@ -24,5 +24,7 @@ autodiscovery:
       #  - path: <filepath relative to scm repository>
       only:
         - artifactids:
-            "mockito-core": ""
+            "plugin": ""
+          groupid:
+            "org.jenkins-ci": ""
 
