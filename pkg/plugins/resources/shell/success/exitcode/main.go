@@ -110,9 +110,9 @@ func (e *ExitCode) ConditionResult() (bool, error) {
 func (e *ExitCode) TargetResult() (bool, error) {
 	switch *e.exitCode {
 	case e.spec.Success:
-		return true, nil
-	case e.spec.Warning:
 		return false, nil
+	case e.spec.Warning:
+		return true, nil
 	case e.spec.Failure:
 		return false, fmt.Errorf("shell command failed. Expected exit code %d but got %d", e.spec.Success, *e.exitCode)
 	default:
