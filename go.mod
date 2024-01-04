@@ -32,7 +32,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
-	github.com/beevik/etree v1.2.0
+	github.com/beevik/etree v1.3.0
 	github.com/drone/go-scm v1.34.3
 	github.com/goccy/go-yaml v1.11.2
 	github.com/google/go-containerregistry v0.17.0
