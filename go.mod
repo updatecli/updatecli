@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/aws/aws-sdk-go v1.49.19
+	github.com/aws/aws-sdk-go v1.49.20
 	github.com/containerd/containerd v1.7.11 // indirect
 	github.com/fatih/color v1.16.0
 	github.com/getsops/sops/v3 v3.8.1
