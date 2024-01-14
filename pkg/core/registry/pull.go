@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -59,9 +60,29 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 		return nil, nil, nil, fmt.Errorf("fetch: %w", err)
 	}
 
-	// Create a file store
-	store := filepath.Join(getReferencePath(remoteManifestSpec.Digest.String())...)
-	fs, err := file.New(store)
+	// Create a file policyRootDir
+	policyRootDir := filepath.Join(getReferencePath(remoteManifestSpec.Digest.String())...)
+
+	policyRootDirFileInfo, err := os.Stat(policyRootDir)
+	// If store path exist and is a directory then we do nothing
+	if err == nil {
+		if policyRootDirFileInfo.IsDir() {
+			logrus.Debugf("\t* directory %s already exist, skipping pull", policyRootDir)
+			return nil, nil, nil, nil
+		}
+		// If store path is not a directory then we delete it
+		// so we can recreate it as a directory
+		err := os.Remove(policyRootDir)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("resetting file %s: %w", policyRootDir, err)
+		}
+	} else {
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, nil, nil, fmt.Errorf("getting information about %s: %w", policyRootDir, err)
+		}
+	}
+
+	fs, err := file.New(policyRootDir)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create file store: %w", err)
 	}
@@ -88,17 +109,17 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 		switch layer.MediaType {
 		case updatecliManifestMediaType:
 			if title, ok := layer.Annotations["org.opencontainers.image.title"]; ok && title != "" {
-				manifests = append(manifests, filepath.Join(store, title))
+				manifests = append(manifests, filepath.Join(policyRootDir, title))
 			}
 
 		case updatecliValueMediaType:
 			if title, ok := layer.Annotations["org.opencontainers.image.title"]; ok && title != "" {
-				values = append(values, filepath.Join(store, title))
+				values = append(values, filepath.Join(policyRootDir, title))
 			}
 
 		case updatecliSecretMediaType:
 			if title, ok := layer.Annotations["org.opencontainers.image.title"]; ok && title != "" {
-				secrets = append(secrets, filepath.Join(store, title))
+				secrets = append(secrets, filepath.Join(policyRootDir, title))
 			}
 
 		default:
@@ -125,7 +146,7 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 		}
 	}
 
-	logrus.Debugf("policy successfully pulled in %s", store)
+	logrus.Debugf("policy successfully pulled in %s", policyRootDir)
 
 	return manifests, values, secrets, nil
 }
