@@ -41,6 +41,8 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 
 	notChanged := 0
 
+	var descriptions []string
+
 	for fileKey, f := range h.files {
 		resourceFile := f
 
@@ -52,22 +54,22 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 		resultTarget.Information = currentValue
 
 		if currentValue == valueToWrite {
-			resultTarget.Description = fmt.Sprintf("path %q already set to %q, from file %q, ",
-				query,
-				valueToWrite,
-				resourceFile.originalFilePath)
+			descriptions = append(descriptions,
+				fmt.Sprintf("path %q already set to %q, from file %q, ",
+					query,
+					valueToWrite,
+					resourceFile.originalFilePath))
 			notChanged++
 			continue
 		}
 
-		resultTarget.Changed = true
 		resultTarget.Files = append(resultTarget.Files, resourceFile.originalFilePath)
-		resultTarget.Result = result.ATTENTION
-		resultTarget.Description = fmt.Sprintf("path %q updated from %q to %q in file %q",
-			query,
-			currentValue,
-			valueToWrite,
-			resourceFile.originalFilePath)
+		descriptions = append(descriptions,
+			fmt.Sprintf("path %q updated from %q to %q in file %q",
+				query,
+				currentValue,
+				valueToWrite,
+				resourceFile.originalFilePath))
 
 		if !dryRun {
 
@@ -85,10 +87,18 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 		}
 	}
 
+	sort.Strings(descriptions)
+	descriptionLines := strings.Join(descriptions, "\n\t")
+
 	if notChanged == len(h.files) {
 		resultTarget.Result = result.SUCCESS
+		resultTarget.Description = fmt.Sprintf("no changes detected:\n\t%s", descriptionLines)
 		return nil
 	}
+
+	resultTarget.Changed = true
+	resultTarget.Result = result.ATTENTION
+	resultTarget.Description = fmt.Sprintf("changes detected:\n\t%s", descriptionLines)
 
 	sort.Strings(resultTarget.Files)
 

@@ -45,6 +45,8 @@ func (t *TerraformLock) Target(source string, scm scm.ScmHandler, dryRun bool, r
 		return err
 	}
 
+	var descriptions []string
+
 	for fileKey, resourceFile := range t.files {
 
 		currentValue, currentHashes, err := t.Query(resourceFile)
@@ -55,31 +57,31 @@ func (t *TerraformLock) Target(source string, scm scm.ScmHandler, dryRun bool, r
 		resultTarget.Information = currentValue
 
 		if currentValue == valueToWrite && reflect.DeepEqual(currentHashes, remoteHashes) {
-			resultTarget.Description = fmt.Sprintf("%q already set to %q, from file %q, ",
-				address,
-				valueToWrite,
-				resourceFile.originalFilePath)
+			descriptions = append(descriptions,
+				fmt.Sprintf("%q already set to %q, from file %q, ",
+					address,
+					valueToWrite,
+					resourceFile.originalFilePath))
 			notChanged++
 			continue
 		}
 
-		description := fmt.Sprintf("%q updated from %q to %q in file %q",
-			address,
-			currentValue,
-			valueToWrite,
-			resourceFile.originalFilePath)
-
 		if currentValue == valueToWrite && !reflect.DeepEqual(currentHashes, remoteHashes) {
-			description = fmt.Sprintf("%q already set to %q, hashes for the provider have been updated in file %q",
-				address,
-				currentValue,
-				resourceFile.originalFilePath)
+			descriptions = append(descriptions,
+				fmt.Sprintf("%q already set to %q, hashes for the provider have been updated in file %q",
+					address,
+					currentValue,
+					resourceFile.originalFilePath))
+		} else {
+			descriptions = append(descriptions,
+				fmt.Sprintf("%q updated from %q to %q in file %q",
+					address,
+					currentValue,
+					valueToWrite,
+					resourceFile.originalFilePath))
 		}
 
-		resultTarget.Changed = true
 		resultTarget.Files = append(resultTarget.Files, resourceFile.originalFilePath)
-		resultTarget.Result = result.ATTENTION
-		resultTarget.Description = description
 
 		if !dryRun {
 
@@ -97,10 +99,18 @@ func (t *TerraformLock) Target(source string, scm scm.ScmHandler, dryRun bool, r
 		}
 	}
 
+	sort.Strings(descriptions)
+	descriptionLines := strings.Join(descriptions, "\n\t")
+
 	if notChanged == len(t.files) {
 		resultTarget.Result = result.SUCCESS
+		resultTarget.Description = fmt.Sprintf("no changes detected:\n\t%s", descriptionLines)
 		return nil
 	}
+
+	resultTarget.Changed = true
+	resultTarget.Result = result.ATTENTION
+	resultTarget.Description = fmt.Sprintf("changes detected:\n\t%s", descriptionLines)
 
 	sort.Strings(resultTarget.Files)
 
