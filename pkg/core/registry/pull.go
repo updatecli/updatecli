@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -61,6 +62,26 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 
 	// Create a file store
 	store := filepath.Join(getReferencePath(remoteManifestSpec.Digest.String())...)
+
+	storefile, err := os.Stat(store)
+	// If store path exist and is a directory then we do nothing
+	if err == nil {
+		if storefile.IsDir() {
+			logrus.Debugf("\t* directory %s already exist, skipping pull", store)
+			return nil, nil, nil, nil
+		}
+		// If store path is not a directory then we delete it
+		// so we can recreate it as a directory
+		err := os.Remove(store)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("resetting file %s: %w", store, err)
+		}
+	} else {
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, nil, nil, fmt.Errorf("getting information about %s: %w", store, err)
+		}
+	}
+
 	fs, err := file.New(store)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create file store: %w", err)
