@@ -93,8 +93,10 @@ func (c *Condition) Run(source string) (err error) {
 	ok, message, err := condition.Condition(source, s)
 	if ok {
 		c.Result.Result = result.SUCCESS
+		c.Result.Pass = true
 	} else {
 		c.Result.Result = result.FAILURE
+		c.Result.Pass = false
 	}
 	c.Result.Description = message
 	if err != nil {
