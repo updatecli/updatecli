@@ -74,7 +74,7 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 
 	// 3. Copy from the remote repository to the file store
 
-	// Fetch the remote mainfst
+	// Fetch the remote manifest
 
 	remoteManifests, remoteValues, remoteSecrets, err := getUpdatecliFilesFromManifestLayers(remoteManifestData, policyRootDir)
 
