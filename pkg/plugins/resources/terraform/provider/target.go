@@ -39,6 +39,8 @@ func (t *TerraformProvider) Target(source string, scm scm.ScmHandler, dryRun boo
 
 	notChanged := 0
 
+	var descriptions []string
+
 	for fileKey, resourceFile := range t.files {
 
 		currentValue, err := t.Query(resourceFile)
@@ -49,22 +51,22 @@ func (t *TerraformProvider) Target(source string, scm scm.ScmHandler, dryRun boo
 		resultTarget.Information = currentValue
 
 		if currentValue == valueToWrite {
-			resultTarget.Description = fmt.Sprintf("%q already set to %q, from file %q, ",
-				address,
-				valueToWrite,
-				resourceFile.originalFilePath)
+			descriptions = append(descriptions,
+				fmt.Sprintf("%q already set to %q, from file %q, ",
+					address,
+					valueToWrite,
+					resourceFile.originalFilePath))
 			notChanged++
 			continue
 		}
 
-		resultTarget.Changed = true
 		resultTarget.Files = append(resultTarget.Files, resourceFile.originalFilePath)
-		resultTarget.Result = result.ATTENTION
-		resultTarget.Description = fmt.Sprintf("%q updated from %q to %q in file %q",
-			address,
-			currentValue,
-			valueToWrite,
-			resourceFile.originalFilePath)
+		descriptions = append(descriptions,
+			fmt.Sprintf("%q updated from %q to %q in file %q",
+				address,
+				currentValue,
+				valueToWrite,
+				resourceFile.originalFilePath))
 
 		if !dryRun {
 
@@ -82,10 +84,18 @@ func (t *TerraformProvider) Target(source string, scm scm.ScmHandler, dryRun boo
 		}
 	}
 
+	sort.Strings(descriptions)
+	descriptionLines := strings.Join(descriptions, "\n\t")
+
 	if notChanged == len(t.files) {
 		resultTarget.Result = result.SUCCESS
+		resultTarget.Description = fmt.Sprintf("no changes detected:\n\t%s", descriptionLines)
 		return nil
 	}
+
+	resultTarget.Changed = true
+	resultTarget.Result = result.ATTENTION
+	resultTarget.Description = fmt.Sprintf("changes detected:\n\t%s", descriptionLines)
 
 	sort.Strings(resultTarget.Files)
 
