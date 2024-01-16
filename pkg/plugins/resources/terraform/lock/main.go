@@ -68,19 +68,21 @@ func New(spec interface{}) (*TerraformLock, error) {
 		}
 	}
 
-	lockIndex, err := lock.NewDefaultIndex()
-	if err != nil {
-		return nil, err
-	}
-
-	newResource.lockIndex = lockIndex
-
 	provider, err := terraformRegistryAddress.ParseProviderSource(newResource.spec.Provider)
 	if err != nil {
 		return nil, err
 	}
 
 	newResource.provider = provider
+
+	client, err := lock.NewProviderDownloaderClient(lock.TFRegistryConfig{
+		BaseURL: fmt.Sprintf("https://%s/", provider.Hostname),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	newResource.lockIndex = lock.NewIndex(client)
 
 	return newResource, nil
 }
