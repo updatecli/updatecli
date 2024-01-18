@@ -6,4 +6,5 @@ version: 1.0.0
 dependencies:
   - name: monitoring
     repository: file://charts/monitoring
-
+  - name: monitoring
+    condition: monitoring.enabled
