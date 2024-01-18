@@ -33,7 +33,6 @@ func TestNew(t *testing.T) {
 				URL:        "github.com",
 			},
 			want: Github{
-				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -57,7 +56,6 @@ func TestNew(t *testing.T) {
 				URL:        "github.com",
 			},
 			want: Github{
-				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -81,7 +79,6 @@ func TestNew(t *testing.T) {
 				Directory:  "/home/updatecli",
 			},
 			want: Github{
-				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -105,7 +102,6 @@ func TestNew(t *testing.T) {
 				Directory:  "/home/updatecli",
 			},
 			want: Github{
-				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -130,7 +126,6 @@ func TestNew(t *testing.T) {
 				URL:        "github.project.com",
 			},
 			want: Github{
-				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -155,7 +150,6 @@ func TestNew(t *testing.T) {
 				URL:        "http://github.project.com",
 			},
 			want: Github{
-				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -180,7 +174,6 @@ func TestNew(t *testing.T) {
 				URL:        "https://github.project.com",
 			},
 			want: Github{
-				HeadBranch: "updatecli_12345",
 				Spec: Spec{
 					Branch:     "main",
 					Repository: "updatecli",
@@ -205,17 +198,16 @@ func TestNew(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := New(tt.spec, tt.pipelineID)
-			if tt.wantErr {
+	for i := range tests {
+		t.Run(tests[i].name, func(t *testing.T) {
+			got, err := New(tests[i].spec, tests[i].pipelineID)
+			if tests[i].wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.want.Spec, got.Spec)
-			assert.Equal(t, tt.want.HeadBranch, got.HeadBranch)
+			assert.Equal(t, tests[i].want.Spec, got.Spec)
 			assert.NotNil(t, got.client)
 		})
 	}

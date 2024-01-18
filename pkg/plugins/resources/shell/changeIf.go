@@ -5,6 +5,7 @@ import (
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/result"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/checksum"
@@ -13,7 +14,7 @@ import (
 )
 
 /*
-	Result is the package containing the logic used by the Shell resource resource to identify
+	Result is the package containing the logic used by the Shell resource to identify
 	if a shell command result should be considered a success, a failure, or a warning
 */
 
@@ -29,13 +30,13 @@ type SpecChangedIf struct {
 	// Kind specifies the success criteria kind, accepted answer ["console/output","exitcode","file/checksum"]
 	Kind string `yaml:",omitempty"`
 	// Spec specifies the parameter for a specific success criteria kind
-	Spec map[string]interface{} `yaml:",omitempty"`
+	Spec interface{} `yaml:",omitempty"`
 }
 
 type Successer interface {
-	PreCommand() error
-	PostCommand() error
-	SourceResult() (string, error)
+	PreCommand(workingDir string) error
+	PostCommand(workingDir string) error
+	SourceResult(resultSource *result.Source) error
 	ConditionResult() (bool, error)
 	TargetResult() (bool, error)
 }

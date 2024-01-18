@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestSourceResult(t *testing.T) {
@@ -46,23 +47,24 @@ func TestSourceResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
-		t.Run(d.name, func(t *testing.T) {
-			c, gotErr := New(&d.exitCode, &d.stdout)
-			switch d.expectedNewError {
+	for i := range dataset {
+		t.Run(dataset[i].name, func(t *testing.T) {
+			c, gotErr := New(&dataset[i].exitCode, &dataset[i].stdout)
+			switch dataset[i].expectedNewError {
 			case true:
-				assert.Equal(t, gotErr, d.expectedNewErrorMessage)
+				assert.Equal(t, gotErr, dataset[i].expectedNewErrorMessage)
 				return
 			case false:
 				assert.NoError(t, gotErr)
 			}
 
-			gotSourceResult, gotErr := c.SourceResult()
+			gotResult := result.Source{}
+			gotErr = c.SourceResult(&gotResult)
 
-			assert.Equal(t, gotSourceResult, d.expectedResultOutput)
-			switch d.expectedError {
+			assert.Equal(t, dataset[i].expectedResultOutput, gotResult.Information)
+			switch dataset[i].expectedError {
 			case true:
-				assert.Equal(t, gotErr, d.expectedResultErrorMessage)
+				assert.Equal(t, gotErr, dataset[i].expectedResultErrorMessage)
 			}
 
 		})
@@ -107,7 +109,9 @@ func TestConditionResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
+	for i := range dataset {
+		d := dataset[i]
+
 		t.Run(d.name, func(t *testing.T) {
 			c, gotErr := New(&d.exitCode, &d.stdout)
 
@@ -174,7 +178,8 @@ func TestTargetResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
+	for i := range dataset {
+		d := dataset[i]
 		t.Run(d.name, func(t *testing.T) {
 			c, gotErr := New(&d.exitCode, &d.stdout)
 
@@ -205,7 +210,7 @@ func TestPreCommand(t *testing.T) {
 	c, gotErr := New(&exitCode, &stdout)
 	assert.NoError(t, gotErr)
 
-	if c.PreCommand() != nil {
+	if c.PreCommand("") != nil {
 		t.Fail()
 	}
 }
@@ -217,7 +222,7 @@ func TestPostCommand(t *testing.T) {
 	c, gotErr := New(&exitCode, &stdout)
 	assert.NoError(t, gotErr)
 
-	if c.PostCommand() != nil {
+	if c.PostCommand("") != nil {
 		t.Fail()
 	}
 }

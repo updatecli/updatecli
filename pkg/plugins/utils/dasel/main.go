@@ -1,7 +1,7 @@
 package dasel
 
 /*
- Dasel package provides an abastraction of https://github.com/TomWright/dasel/
+ Dasel package provides an abstraction of https://github.com/TomWright/dasel/
  So it's easier to integrate it in Updatecli by various data file such as Json,Toml, or csv
 */
 

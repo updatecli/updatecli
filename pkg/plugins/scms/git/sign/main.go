@@ -6,13 +6,22 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 )
 
+// GPGSpec defines the specification for manipulating gpg keys in the context of git commits.
 type GPGSpec struct {
-	// Defines the gpg key
+	/*
+		signingKey defines the gpg key used to sign the commit message
+
+		default:
+			none
+	*/
 	SigningKey string `yaml:",omitempty"`
-	// Define the gpg passphrase
+	/*
+		passphrase defines the gpg passphrase used to sign the commit message
+	*/
 	Passphrase string `yaml:",omitempty"`
 }
 
+// GetCommitSignKey returns the gpg key used to sign the commit message
 func GetCommitSignKey(armoredKeyRing string, keyPassphrase string) (*openpgp.Entity, error) {
 	s := strings.NewReader(armoredKeyRing)
 	es, err := openpgp.ReadArmoredKeyRing(s)

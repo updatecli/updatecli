@@ -53,7 +53,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File:  "testdata/helmfile.d/cik8s.yaml",
-									Key:   "releases[0].chart",
+									Key:   "$.releases[0].chart",
 									Value: "datadog/datadog",
 								},
 							},
@@ -68,7 +68,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/helmfile.d/cik8s.yaml",
-									Key:  "releases[0].version",
+									Key:  "$.releases[0].version",
 								},
 							},
 						},
@@ -101,7 +101,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File:  "testdata/helmfile.d/cik8s.yaml",
-									Key:   "releases[1].chart",
+									Key:   "$.releases[1].chart",
 									Value: "jenkins-infra/docker-registry-secrets",
 								},
 							},
@@ -115,7 +115,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/helmfile.d/cik8s.yaml",
-									Key:  "releases[1].version",
+									Key:  "$.releases[1].version",
 								},
 							},
 						},
@@ -148,7 +148,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File:  "testdata/helmfile.d/cik8s.yaml",
-									Key:   "releases[3].chart",
+									Key:   "$.releases[3].chart",
 									Value: "myOCIRegistry/myOCIChart",
 								},
 							},
@@ -163,7 +163,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "testdata/helmfile.d/cik8s.yaml",
-									Key:  "releases[3].version",
+									Key:  "$.releases[3].version",
 								},
 							},
 						},

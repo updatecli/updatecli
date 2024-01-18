@@ -1,0 +1,37 @@
+name: "NPM autodiscovery using git scm"
+scms:
+  #default:
+  #  kind: git 
+  #  spec:
+  #    url: https://github.com/olblak/plugin-site.git
+  #    branch: master
+  #    #url: https://github.com/updatecli/app-dashboard.git
+  #    #branch: main
+  default:
+    kind: github
+    spec:
+      owner: updatecli
+      #repository: plugin-site
+      #branch: master
+      repository: app-dashboard
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+      username: {{ requiredEnv "GITHUB_ACTOR" }}
+      branch: main
+
+actions:
+    default:
+        kind: github/pullrequest
+        scmid: default
+        
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  actionid:  default
+  groupby: all
+  #groupby: individual
+  crawlers:
+    npm:
+      versionfilter:
+        kind: semver
+        pattern: "majoronly"
+

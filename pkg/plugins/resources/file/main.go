@@ -8,32 +8,132 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Spec defines a specification for a "file" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// File contains the file path(s) to take in account and is incompatible with Files
+	/*
+
+	   `file` contains the file path
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+
+	   remarks:
+	       * `file` is incompatible with `files`
+	       * feel free to look at searchpattern attribute to search for files matching a pattern
+
+	*/
 	File string `yaml:",omitempty"`
-	// Files contains the file path(s) to take in account and is incompatible with File
+	/*
+
+	   `files` contains the file path(s)
+
+	   compatible:
+	       * condition
+	       * target
+
+	   remarks:
+	       * `files` is incompatible with `file`
+	       * feel free to look at searchpattern attribute to search for files matching a pattern
+
+	*/
 	Files []string `yaml:",omitempty"`
-	// Line contains the line of the file(s) to take in account
+	/*
+
+	   `line` contains the line of the file(s) to manipulate
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+
+	*/
 	Line int `yaml:",omitempty"`
-	// Content specifies the content to take in account instead of the file content
+	/*
+
+	   `content` specifies the content to manipulate
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+
+	*/
 	Content string `yaml:",omitempty"`
-	// ForceCreate specifies if non existing file(s) should be created if they are targets
+	/*
+
+	   `forcecreate` defines if nonexistent file(s) should be created
+
+	   compatible:
+	       * target
+
+	*/
 	ForceCreate bool `yaml:",omitempty"`
-	// MatchPattern specifies the regexp pattern to match on the file(s)
+	/*
+
+	   `matchpattern` specifies the regexp pattern to match on the file(s)
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+
+	*/
 	MatchPattern string `yaml:",omitempty"`
-	// ReplacePattern specifies the regexp replace pattern to apply on the file(s) content
+	/*
+	   `replacepattern` specifies the regexp replace pattern to apply on the file(s) content
+
+	   compatible:
+	       * source
+	       * condition
+	       * target
+	*/
 	ReplacePattern string `yaml:",omitempty"`
+	/*
+	   `searchpattern` defines if the MatchPattern should be applied on the file(s) path
+
+	   If set to true, it modifies the behavior of the `file` and `files` attributes to search for files matching the pattern instead of searching for files with the exact name.
+	   When looking for file path pattern, it requires pattern to match all of name, not just a substring.
+
+	   The pattern syntax is:
+
+	   ```
+	       pattern:
+	           { term }
+	       term:
+	           '*'         matches any sequence of non-Separator characters
+	           '?'         matches any single non-Separator character
+	           '[' [ '^' ] { character-range } ']'
+	                       character class (must be non-empty)
+	           c           matches character c (c != '*', '?', '\\', '[')
+	           '\\' c      matches character c
+
+	       character-range:
+	           c           matches character c (c != '\\', '-', ']')
+	           '\\' c      matches character c
+	           lo '-' hi   matches character c for lo <= c <= hi
+	   ```
+
+	*/
+	SearchPattern bool `yaml:",omitempty"`
 }
 
 // File defines a resource of kind "file"
 type File struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
-	files            map[string]string // map of file paths to file contents
+	files            map[string]fileMetadata // map of file
+}
+
+type fileMetadata struct {
+	originalPath string
+	path         string
+	content      string
 }
 
 // New returns a reference to a newly initialized File object from a Spec
@@ -55,16 +155,6 @@ func New(spec interface{}) (*File, error) {
 		return nil, err
 	}
 
-	newResource.files = make(map[string]string)
-	// File as unique element of newResource.files
-	if len(newResource.spec.File) > 0 {
-		newResource.files[strings.TrimPrefix(newResource.spec.File, "file://")] = ""
-	}
-	// Files
-	for _, filePath := range newResource.spec.Files {
-		newResource.files[strings.TrimPrefix(filePath, "file://")] = ""
-	}
-
 	return newResource, nil
 }
 
@@ -75,6 +165,82 @@ func hasDuplicates(values []string) bool {
 	}
 
 	return len(values) != len(uniqueValues)
+}
+
+// initFiles initializes the f.files map
+func (f *File) initFiles(workDir string) error {
+	f.files = make(map[string]fileMetadata)
+
+	// File as unique element of newResource.files
+	if len(f.spec.File) > 0 {
+		var foundFiles []string
+		var err error
+		switch f.spec.SearchPattern {
+		case true:
+			foundFiles, err = utils.FindFilesMatchingPathPattern(workDir, f.spec.File)
+			if err != nil {
+				return fmt.Errorf("unable to find file matching %q: %s", f.spec.File, err)
+			}
+		case false:
+			foundFiles = append(foundFiles, f.spec.File)
+		}
+
+		for _, filePath := range foundFiles {
+			newFile := fileMetadata{
+				path:         strings.TrimPrefix(filePath, "file://"),
+				originalPath: strings.TrimPrefix(filePath, "file://"),
+			}
+			f.files[filePath] = newFile
+		}
+	}
+
+	for _, specFile := range f.spec.Files {
+		var foundFiles []string
+		var err error
+
+		switch f.spec.SearchPattern {
+		case true:
+			foundFiles, err = utils.FindFilesMatchingPathPattern(workDir, specFile)
+			if err != nil {
+				return fmt.Errorf("unable to find files matching %q: %s", f.spec.File, err)
+			}
+
+		case false:
+			foundFiles = append(foundFiles, f.spec.Files...)
+		}
+
+		for _, filePath := range foundFiles {
+			newFile := fileMetadata{
+				path:         strings.TrimPrefix(filePath, "file://"),
+				originalPath: strings.TrimPrefix(filePath, "file://"),
+			}
+			f.files[filePath] = newFile
+		}
+	}
+
+	for filePath := range f.files {
+		if workDir != "" {
+			file := f.files[filePath]
+			file.path = joinPathWithWorkingDirectoryPath(file.originalPath, workDir)
+
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalPath, file.path)
+			f.files[filePath] = file
+		}
+	}
+
+	return nil
+}
+
+func (f *File) UpdateAbsoluteFilePath(workDir string) {
+	for filePath := range f.files {
+		if workDir != "" {
+			file := f.files[filePath]
+			file.path = joinPathWithWorkingDirectoryPath(file.originalPath, workDir)
+
+			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalPath, file.path)
+			f.files[filePath] = file
+		}
+	}
 }
 
 // Validate validates the object and returns an error (with all the failed validation messages) if not valid
@@ -116,7 +282,7 @@ func (s *Spec) Validate() error {
 
 	// Return all the validation errors if any
 	if len(validationErrors) > 0 {
-		return fmt.Errorf("Validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
+		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	return nil
@@ -128,11 +294,12 @@ func (f *File) Read() error {
 
 	// Retrieve files content
 	for filePath := range f.files {
-		if f.contentRetriever.FileExists(filePath) {
+		file := f.files[filePath]
+		if f.contentRetriever.FileExists(file.path) {
 			// Return the specified line if a positive number is specified by user in its manifest
 			// Note that in this case we're with a fileCount of 1 (as other cases wouldn't pass validation)
 			if f.spec.Line > 0 {
-				f.files[filePath], err = f.contentRetriever.ReadLine(filePath, f.spec.Line)
+				file.content, err = f.contentRetriever.ReadLine(file.path, f.spec.Line)
 				if err != nil {
 					return err
 				}
@@ -140,7 +307,7 @@ func (f *File) Read() error {
 
 			// Otherwise return the textual content
 			if f.spec.Line == 0 {
-				f.files[filePath], err = f.contentRetriever.ReadAll(filePath)
+				file.content, err = f.contentRetriever.ReadAll(file.path)
 				if err != nil {
 					return err
 				}
@@ -148,14 +315,15 @@ func (f *File) Read() error {
 		} else {
 			if f.spec.ForceCreate {
 				// f.files[filePath] is already set to "", no need for more except logging
-				logrus.Infof("Creating a new file at %q", filePath)
+				logrus.Infof("Creating a new file at %q", file.originalPath)
 			} else {
 				if f.spec.Line > 0 {
-					return fmt.Errorf("%s The specified line %d of the file %q does not exist.\n", result.FAILURE, f.spec.Line, filePath)
+					return fmt.Errorf("%s The specified line %d of the file %q does not exist", result.FAILURE, f.spec.Line, file.originalPath)
 				}
-				return fmt.Errorf("%s The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'.\n", result.FAILURE, filePath)
+				return fmt.Errorf("%s The specified file %q does not exist. If you want to create it, you must set the attribute 'spec.forcecreate' to 'true'", result.FAILURE, filePath)
 			}
 		}
+		f.files[filePath] = file
 	}
 	return nil
 }

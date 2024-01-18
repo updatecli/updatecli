@@ -47,7 +47,7 @@ sources:
     spec:
       name: epinio
 
-# Github Action is not configured yet to query oci registry
+# GitHub Action is not configured yet to query oci registry
 #  fromOCI:
 #    name: Get upgrade-responder
 #    kind: helmchart
@@ -84,7 +84,7 @@ conditions:
       name: epinio
       version: 1.0.0
 
-# # Github Action is not configured yet to query oci registry
+# # GitHub Action is not configured yet to query oci registry
 #  fromOCI:
 #    name: Get upgrade-responder
 #    kind: helmchart
@@ -103,7 +103,7 @@ targets:
     spec:
       name: chart/epinio
       file: Chart.yaml
-      key:  dependencies[0].version
+      key:  $.dependencies[0].version
 
   fakeAppVersion:
     name: Test Chart Update
@@ -114,7 +114,7 @@ targets:
       name: chart/epinio
       file: Chart.yaml
       appversion: true
-      key:  dependencies[1].version
+      key:  $.dependencies[1].version
       versionincrement: minor
 
   fakeVersionInc:
@@ -126,7 +126,7 @@ targets:
       name: chart/epinio
       file: Chart.yaml
       appversion: true
-      key:  dependencies[2].version
+      key:  $.dependencies[2].version
       versionincrement: minor,major
   noVersionInc:
     name: Test Chart Update
@@ -137,5 +137,17 @@ targets:
       name: chart/epinio
       file: Chart.yaml
       appversion: true
-      key:  dependencies[2].version
+      key:  $.dependencies[2].version
       versionincrement: none
+
+  valuesFile:
+    name: Test Chart Update
+    scmid: default
+    sourceid: default
+    kind: helmchart
+    spec:
+      name: chart/epinio
+      file: values.yaml
+      appversion: true
+      key:  $.image.epinio-ui.tag
+      versionincrement: minor

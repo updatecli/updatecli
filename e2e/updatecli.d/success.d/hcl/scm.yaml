@@ -1,0 +1,58 @@
+name: Test HCL plugin resource - SCM
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli-test/jenkins-infra-aws.git
+
+sources:
+  file:
+    name: HCL source
+    kind: hcl
+    scmid: default
+    spec:
+      file: cik8s-cluster.tf
+      path: module.cik8s.version
+
+conditions:
+  using-source:
+    name: Condition using source
+    kind: hcl
+    scmid: default
+    sourceid: file
+    spec:
+      file: cik8s-cluster.tf
+      path: module.cik8s.version
+
+  using-value:
+    name: Condition using value
+    kind: hcl
+    scmid: default
+    sourceid: file
+    spec:
+      file: cik8s-cluster.tf
+      path: module.cik8s.source
+      value: terraform-aws-modules/eks/aws
+
+
+targets:
+  update-file:
+    name: Update files content
+    kind: hcl
+    sourceid: file
+    scmid: default
+    transformers:
+      - addsuffix: -beta
+    spec:
+      file: cik8s-cluster.tf
+      path: module.cik8s.version
+
+  noop:
+    name: No update to files content
+    kind: hcl
+    sourceid: file
+    scmid: default
+    spec:
+      file: cik8s-cluster.tf
+      path: module.cik8s.version

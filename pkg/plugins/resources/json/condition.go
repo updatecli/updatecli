@@ -1,17 +1,15 @@
 package json
 
 import (
-	"github.com/sirupsen/logrus"
+	"fmt"
+	"strings"
+
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (j *Json) Condition(source string) (bool, error) {
-	return j.ConditionFromSCM(source, nil)
-}
-
-func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+func (j *Json) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	conditionResult := true
+	partialMessage := ""
 
 	rootDir := ""
 	if scm != nil {
@@ -21,7 +19,7 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 	for i := range j.contents {
 
 		if err := j.contents[i].Read(rootDir); err != nil {
-			return false, err
+			return false, "", fmt.Errorf("reading json file: %w", err)
 		}
 
 		// Override value from source if not yet defined
@@ -35,16 +33,14 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		switch len(j.spec.Query) > 0 {
 		case true:
 			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
-
 			if err != nil {
-				return false, err
+				return false, "", err
 			}
 
 		case false:
 			queryResult, err := j.contents[i].Query(j.spec.Key)
-
 			if err != nil {
-				return false, err
+				return false, "", err
 			}
 
 			queryResults = []string{queryResult}
@@ -53,16 +49,16 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		for _, queryResult := range queryResults {
 			switch queryResult == j.spec.Value {
 			case true:
-				logrus.Infof("%s Key %q, from file %q, is correctly set to %q'",
-					result.SUCCESS,
+				partialMessage = fmt.Sprintf("%s\nKey %q, from file %q, is correctly set to %q",
+					partialMessage,
 					j.spec.Key,
 					j.contents[i].FilePath,
 					j.spec.Value)
 
 			case false:
 				conditionResult = false
-				logrus.Infof("%s Key %q, from file %q, is incorrectly set to %q and should be %q",
-					result.ATTENTION,
+				partialMessage = fmt.Sprintf("%s\nKey %q, from file %q, is incorrectly set to %q and should be %q",
+					partialMessage,
 					j.spec.Key,
 					j.contents[i].FilePath,
 					queryResult,
@@ -71,5 +67,7 @@ func (j *Json) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error)
 		}
 
 	}
-	return conditionResult, nil
+
+	partialMessage = strings.TrimPrefix(partialMessage, "\n")
+	return conditionResult, partialMessage, nil
 }

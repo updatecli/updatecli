@@ -3,23 +3,24 @@ package npm
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source returns the latest npm package version
-func (n Npm) Source(workingDir string) (string, error) {
+func (n Npm) Source(workingDir string, resultSource *result.Source) error {
 	version, _, err := n.getVersions()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	if version != "" {
-		logrus.Infof("%s Version %s found for package name %q", result.SUCCESS, version, n.spec.Name)
-		return version, nil
+	if version == "" {
+		return fmt.Errorf("unknown version %s found for package name %s ", version, n.spec.Name)
 	}
 
-	logrus.Infof("%s Unknown version %s found for package name %s ", result.FAILURE, version, n.spec.Name)
+	resultSource.Information = version
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = fmt.Sprintf("version %s found for package name %q", version, n.spec.Name)
 
-	return "", fmt.Errorf("%s Unknown version %s found for package name %s ", result.FAILURE, version, n.spec.Name)
+	return nil
+
 }

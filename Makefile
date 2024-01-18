@@ -18,19 +18,19 @@ clean: ## Clean go test cache
 
 .PHONY: build
 build: ## Build updatecli as a "dirty snapshot" (no tag, no release, but all OS/arch combinations)
-	goreleaser build --snapshot --rm-dist
+	goreleaser build --snapshot --clean
 
 .PHONY: build.all
 build.all: ## Build updatecli for "release" (tag or release and all OS/arch combinations)
-	goreleaser --rm-dist --skip-publish
+	goreleaser --clean --skip=publish,sign
 
 .PHONY: release ## Create a new updatecli release including packages
-release: ## release.snapshot generate a snapshot release but do not published it (no tag, but all OS/arch combinations)
-	goreleaser --rm-dist
+release: ## release generate a release
+	goreleaser release --clean --timeout=2h
 
 .PHONY: release.snapshot ## Create a new snapshot release without publishing assets
 release.snapshot: ## release.snapshot generate a snapshot release but do not published it (no tag, but all OS/arch combinations)
-	goreleaser --snapshot --rm-dist --skip-publish
+	goreleaser release --snapshot --clean --skip=publish,sign
 
 .PHONY: diff
 diff: ## Run the "diff" updatecli's subcommand for smoke test
@@ -50,6 +50,8 @@ version: ## Run the "version" updatecli's subcommand for smoke test
 
 .PHONY: test
 test: ## Execute the Golang's tests for updatecli
+# Docker is required for the full integration test. Quick fail if it is not present and running
+	docker info
 	go test ./... -race -coverprofile=coverage.txt -covermode=atomic
 
 test-short: ## Execute the Golang's tests for updatecli

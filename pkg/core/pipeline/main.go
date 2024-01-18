@@ -1,10 +1,12 @@
 package pipeline
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -13,39 +15,43 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/udash"
 )
 
 // Pipeline represent an updatecli run for a specific configuration
 type Pipeline struct {
-	Name  string // Name defines a pipeline name, used to improve human visualization
-	ID    string // ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
-	Title string // Title is used for the full pipeline
-
-	Sources    map[string]source.Source
+	// Name defines a pipeline name, used to improve human visualization
+	Name string
+	// ID allows to identify a full pipeline run, this value is propagated into each target if not defined at that level
+	ID string
+	// Sources contains all sources defined in the configuration
+	Sources map[string]source.Source
+	// Conditions contains all conditions defined in the configuration
 	Conditions map[string]condition.Condition
-	Targets    map[string]target.Target
-	SCMs       map[string]scm.Scm
-	Actions    map[string]action.Action
-
+	// Targets contains all targets defined in the configuration
+	Targets map[string]target.Target
+	// SCMs contains all scms defined in the configuration
+	SCMs map[string]scm.Scm
+	// Actions contains all actions defined in the configuration
+	Actions map[string]action.Action
+	// Report contains the pipeline report
 	Report reports.Report
-
+	// Options contains all updatecli options for this specific pipeline
 	Options Options
-
+	// Config contains the pipeline configuration defined by the user
 	Config *config.Config
 }
 
 // Init initialize an updatecli context based on its configuration
 func (p *Pipeline) Init(config *config.Config, options Options) error {
 
-	if len(config.Spec.Title) > 0 {
-		p.Title = config.Spec.Title
-	} else {
-		p.Title = config.Spec.Name
+	p.Name = config.Spec.Name
+	if len(config.Spec.Title) > 0 && p.Name == "" {
+		p.Name = config.Spec.Title
 	}
 
 	p.Options = options
 
-	p.Name = config.Spec.Name
 	p.ID = config.Spec.PipelineID
 
 	p.Config = config
@@ -58,9 +64,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Actions = make(map[string]action.Action, len(config.Spec.Actions))
 
 	// Init context resource size
-	p.Report.Sources = make(map[string]reports.Stage, len(config.Spec.Sources))
-	p.Report.Conditions = make(map[string]reports.Stage, len(config.Spec.Conditions))
-	p.Report.Targets = make(map[string]reports.Stage, len(config.Spec.Targets))
+	p.Report.Sources = make(map[string]*result.Source, len(config.Spec.Sources))
+	p.Report.Conditions = make(map[string]*result.Condition, len(config.Spec.Conditions))
+	p.Report.Targets = make(map[string]*result.Target, len(config.Spec.Targets))
 	p.Report.Name = config.Spec.Name
 	p.Report.Result = result.SKIPPED
 
@@ -76,7 +82,6 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		if err != nil {
 			return err
 		}
-
 	}
 
 	// Init actions
@@ -123,16 +128,14 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		// Init Sources[id]
 		p.Sources[id] = source.Source{
 			Config: config.Spec.Sources[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Result: result.Source{
+				Result: result.SKIPPED,
+			},
+			Scm: scmPointer,
 		}
 
-		p.Report.Sources[id] = reports.Stage{
-			Name:   config.Spec.Sources[id].Name,
-			Kind:   config.Spec.Sources[id].Kind,
-			Result: result.SKIPPED,
-		}
-
+		r := p.Sources[id].Result
+		p.Report.Sources[id] = &r
 	}
 
 	// Init conditions report
@@ -151,15 +154,15 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		p.Conditions[id] = condition.Condition{
 			Config: config.Spec.Conditions[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Result: result.Condition{
+				Result: result.SKIPPED,
+			},
+			Scm: scmPointer,
 		}
 
-		p.Report.Conditions[id] = reports.Stage{
-			Name:   config.Spec.Conditions[id].Name,
-			Kind:   config.Spec.Conditions[id].Kind,
-			Result: result.SKIPPED,
-		}
+		r := p.Conditions[id].Result
+		p.Report.Conditions[id] = &r
+
 	}
 
 	// Init target report
@@ -177,15 +180,14 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		p.Targets[id] = target.Target{
 			Config: config.Spec.Targets[id],
-			Result: result.SKIPPED,
-			Scm:    scmPointer,
+			Result: result.Target{
+				Result: result.SKIPPED,
+			},
+			Scm: scmPointer,
 		}
 
-		p.Report.Targets[id] = reports.Stage{
-			Name:   config.Spec.Targets[id].Name,
-			Kind:   config.Spec.Targets[id].Kind,
-			Result: result.SKIPPED,
-		}
+		r := p.Targets[id].Result
+		p.Report.Targets[id] = &r
 	}
 	return nil
 
@@ -194,9 +196,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 // Run execute an single pipeline
 func (p *Pipeline) Run() error {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Title)+4))
-	logrus.Infof("# %s #\n", strings.ToTitle(p.Title))
-	logrus.Infof("%s\n", strings.Repeat("#", len(p.Title)+4))
+	logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Name)+4))
+	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
+	logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
 	if len(p.Sources) > 0 {
 		err := p.RunSources()
@@ -237,7 +239,16 @@ func (p *Pipeline) Run() error {
 			p.Report.Result = result.FAILURE
 			return fmt.Errorf("action stage:\t%q", err.Error())
 		}
+	}
 
+	if cmdoptions.Experimental {
+		err := udash.Publish(&p.Report)
+		if err != nil &&
+			!errors.Is(err, udash.ErrNoUdashBearerToken) &&
+			!errors.Is(err, udash.ErrNoUdashAPIURL) {
+			logrus.Infof("Skipping report publishing")
+			logrus.Debugf("publish report: %s", err)
+		}
 	}
 
 	return nil
@@ -247,7 +258,6 @@ func (p *Pipeline) Run() error {
 func (p *Pipeline) String() string {
 
 	result := fmt.Sprintf("%q: %q\n", "Name", p.Name)
-	result = result + fmt.Sprintf("%q: %q\n", "Title", p.Title)
 	result = result + fmt.Sprintf("%q: %q\n", "ID", p.ID)
 
 	result = result + fmt.Sprintf("%q:\n", "Sources")
@@ -260,13 +270,92 @@ func (p *Pipeline) String() string {
 	result = result + fmt.Sprintf("%q:\n", "Conditions")
 	for key, value := range p.Conditions {
 		result = result + fmt.Sprintf("\t%q:\n", key)
-		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
+		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
 	}
 	result = result + fmt.Sprintf("%q:\n", "Targets")
 	for key, value := range p.Targets {
 		result = result + fmt.Sprintf("\t%q:\n", key)
-		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
+		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
 	}
 
 	return result
+}
+
+func (p *Pipeline) Update() error {
+	err := p.Config.Update(p)
+	if err != nil {
+		return err
+	}
+
+	// Reset scm
+	for id, scmConfig := range p.Config.Spec.SCMs {
+		var err error
+
+		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
+		scmConfig := scmConfig
+
+		p.SCMs[id], err = scm.New(&scmConfig, p.Config.Spec.PipelineID)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Update scm pointer for each actions
+	for id := range p.Config.Spec.Actions {
+		action := p.Actions[id]
+
+		if len(p.Config.Spec.Actions[id].ScmID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Actions[id].ScmID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Actions[id].ScmID)
+			}
+
+			action.Scm = &sc
+		}
+		p.Actions[id] = action
+	}
+	// Update scm pointer for each condition
+	for id := range p.Config.Spec.Conditions {
+		condition := p.Conditions[id]
+
+		if len(p.Config.Spec.Conditions[id].SCMID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Conditions[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Conditions[id].SCMID)
+			}
+
+			condition.Scm = &sc.Handler
+		}
+		p.Conditions[id] = condition
+	}
+
+	// Update scm pointer for each sources
+	for id := range p.Config.Spec.Sources {
+		source := p.Sources[id]
+
+		if len(p.Config.Spec.Sources[id].SCMID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Sources[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Conditions[id].SCMID)
+			}
+			source.Scm = &sc.Handler
+		}
+		p.Sources[id] = source
+	}
+
+	// Update scm pointer for each target
+	for id := range p.Config.Spec.Targets {
+		target := p.Targets[id]
+
+		if len(p.Config.Spec.Targets[id].SCMID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Targets[id].SCMID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Targets[id].SCMID)
+			}
+			target.Scm = &sc.Handler
+		}
+		p.Targets[id] = target
+	}
+
+	return nil
 }

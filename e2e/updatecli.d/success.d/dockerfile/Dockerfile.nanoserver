@@ -1,0 +1,2 @@
+FROM mcr.microsoft.com/windows/nanoserver:ltsc2019
+ARG APP_VERSION=1.0.0

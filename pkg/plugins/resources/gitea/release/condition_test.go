@@ -1,6 +1,7 @@
 package release
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,8 +19,9 @@ func TestCondition(t *testing.T) {
 			Repository string
 			Tag        string
 		}
-		wantResult bool
-		wantErr    bool
+		wantResult     bool
+		wantErr        bool
+		wantErrMessage error
 	}{
 		{
 			name: "repository olblak/updatecli should not exist",
@@ -33,10 +35,11 @@ func TestCondition(t *testing.T) {
 				URL:        "codeberg.org",
 				Token:      "",
 				Owner:      "updatecli",
-				Repository: "updatecli-donotexist",
+				Repository: "updatecli-nonexistent",
 			},
-			wantResult: false,
-			wantErr:    true,
+			wantResult:     false,
+			wantErr:        true,
+			wantErrMessage: fmt.Errorf("looking for Gitea release: Not Found"),
 		},
 		{
 			name: "repository olblak/updatecli-mirror should exist but no release",
@@ -52,8 +55,9 @@ func TestCondition(t *testing.T) {
 				Owner:      "updatecli",
 				Repository: "demo-terminal",
 			},
-			wantResult: false,
-			wantErr:    false,
+			wantResult:     false,
+			wantErr:        true,
+			wantErrMessage: fmt.Errorf("no Gitea release found"),
 		},
 		{
 			name: "repository should exist with no release 2.0.0",
@@ -70,8 +74,9 @@ func TestCondition(t *testing.T) {
 				Repository: "demo-terminal",
 				Tag:        "2.0.0",
 			},
-			wantResult: false,
-			wantErr:    false,
+			wantResult:     false,
+			wantErr:        true,
+			wantErrMessage: fmt.Errorf("no Gitea release found"),
 		},
 		{
 			name: "repository should exist with release v2.15.0",
@@ -100,10 +105,12 @@ func TestCondition(t *testing.T) {
 			g, gotErr := New(tt.manifest)
 			require.NoError(t, gotErr)
 
-			gotResult, gotErr := g.Condition("")
+			gotResult, _, gotErr := g.Condition("", nil)
 
 			if tt.wantErr {
-				require.Error(t, gotErr)
+				if assert.Error(t, gotErr) {
+					assert.Equal(t, gotErr.Error(), tt.wantErrMessage.Error())
+				}
 			} else {
 				require.NoError(t, gotErr)
 			}

@@ -4,67 +4,57 @@ import (
 	"fmt"
 
 	"github.com/beevik/etree"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (x *XML) Condition(source string) (bool, error) {
-	return x.ConditionFromSCM(source, nil)
-}
+// Condition checks that a specific xml path contains the correct value at the specified path
+func (x *XML) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
-func (x *XML) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-
+	resourceFile := x.spec.File
 	if scm != nil {
-		x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+		resourceFile = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+	}
+
+	value := source
+	if len(x.spec.Value) > 0 {
+		value = x.spec.Value
 	}
 
 	// Test at runtime if a file exist
-	if !x.contentRetriever.FileExists(x.spec.File) {
-		return false, fmt.Errorf("the XML file %q does not exist", x.spec.File)
+	if !x.contentRetriever.FileExists(resourceFile) {
+		return false, "", fmt.Errorf("file %q does not exist", resourceFile)
 	}
 
-	if err := x.Read(); err != nil {
-		return false, err
+	if err := x.Read(resourceFile); err != nil {
+		return false, "", err
 	}
 
 	doc := etree.NewDocument()
 
 	if err := doc.ReadFromString(x.currentContent); err != nil {
-		return false, err
-	}
-
-	// Override value from source if not yet defined
-	if len(x.spec.Value) == 0 {
-		x.spec.Value = source
+		return false, "", err
 	}
 
 	elem := doc.FindElement(x.spec.Path)
 
 	if elem == nil {
-		logrus.Infof("%s nothing found in path '%s' from file '%s'",
-			result.FAILURE,
+		return false, fmt.Sprintf("nothing found in path %q from file %q",
 			x.spec.Path,
-			x.spec.File)
-
-		return false, nil
+			resourceFile,
+		), nil
 	}
 
-	if x.spec.Value == elem.Text() {
-		logrus.Infof("%s Path '%s', from file '%v', is correctly set to %s'",
-			result.SUCCESS,
+	if value == elem.Text() {
+		return true, fmt.Sprintf("Path %q, from file %q, is correctly set to %s",
 			x.spec.Path,
-			x.spec.File,
-			x.spec.Value)
-		return true, nil
+			resourceFile,
+			value), nil
 	}
 
-	logrus.Infof("%s Path '%s', from file '%v', is incorrectly set to %s and should be %s'",
-		result.ATTENTION,
+	return false, fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
 		x.spec.Path,
-		x.spec.File,
+		resourceFile,
 		elem.Text(),
-		x.spec.Value)
-
-	return false, nil
+		value,
+	), nil
 }

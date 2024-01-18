@@ -28,6 +28,19 @@ func TestIsMatchingRules(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Scenario 1.1 - matching 1 rule",
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "docker-compose.yaml",
+				},
+				MatchingRule{
+					Path: "docker-compose.yaml",
+				},
+			},
+			filePath:       "docker-compose.yaml",
+			expectedResult: true,
+		},
+		{
 			name: "Scenario 2 - matching all rule",
 			rules: MatchingRules{
 				MatchingRule{

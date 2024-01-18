@@ -3,25 +3,34 @@ package mavenmetadata
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // DefaultHandler is the default implementation for a maven metadata handler
 type DefaultHandler struct {
 	metadataURL string
 	webClient   httpclient.HTTPClient
+	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
+	versionFilter version.Filter
 }
 
 // New returns a newly initialized DefaultHandler object
-func New(metadataURL string) *DefaultHandler {
+func New(metadataURL string, versionFilter version.Filter) *DefaultHandler {
+
+	if versionFilter.IsZero() {
+		versionFilter.Kind = "latest"
+	}
+
 	return &DefaultHandler{
-		metadataURL: metadataURL,
-		webClient:   http.DefaultClient,
+		metadataURL:   metadataURL,
+		webClient:     http.DefaultClient,
+		versionFilter: versionFilter,
 	}
 }
 
@@ -44,7 +53,7 @@ func (d *DefaultHandler) getMetadataFile() (metadata, error) {
 		return metadata{}, fmt.Errorf("HTTP error returned from %s: %v", d.metadataURL, res.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return metadata{}, err
 	}
@@ -67,10 +76,24 @@ func (d *DefaultHandler) GetLatestVersion() (string, error) {
 		return "", err
 	}
 
-	if data.Versioning.Latest == "" {
-		return "", fmt.Errorf("%s No latest version found at %s", result.FAILURE, d.metadataURL)
+	switch d.versionFilter.Kind {
+	case "latest", "":
+		if data.Versioning.Latest == "" {
+			return "", fmt.Errorf("%s No latest version found at %s", result.FAILURE, d.metadataURL)
+		}
+		return data.Versioning.Latest, nil
+
+	default:
+		versions := []string{}
+		versions = append(versions, data.Versioning.Versions.Version...)
+
+		v, err := d.versionFilter.Search(versions)
+		if err != nil {
+			return "", err
+		}
+
+		return v.GetVersion(), nil
 	}
-	return data.Versioning.Latest, nil
 }
 
 func (d *DefaultHandler) GetVersions() ([]string, error) {

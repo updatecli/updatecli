@@ -1,5 +1,6 @@
 ---
-title: Show a set of maven resources as a generic example
+name: Show a set of maven resources as a generic example
+pipelineid: "e2e/maven"
 
 scms:
   local:
@@ -26,6 +27,17 @@ sources:
         - "https://repo.maven.apache.org/maven2"
       groupid: "junit"
       artifactid: "junit"
+
+  getJunitVersion:
+    # https://repo.maven.apache.org/maven2/junit/junit/
+    kind: maven
+    spec:
+      repository: "repo.maven.apache.org/maven2"
+      groupid: "junit"
+      artifactid: "junit"
+      versionfilter:
+        kind: semver
+        pattern: "3.8.x"
 
 conditions:
   checkIfOlderJunitExist:

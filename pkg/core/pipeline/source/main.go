@@ -1,7 +1,9 @@
 package source
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"os"
 	"strings"
 
@@ -19,12 +21,13 @@ type Source struct {
 	// Changelog holds the changelog description
 	Changelog string
 	// Result stores the source result after a source run.
-	Result string
+	Result result.Source
 	// Output contains the value retrieved from a source
 	Output string
 	// Config defines a source specifications
 	Config Config
-	Scm    *scm.ScmHandler
+	// Scm stores scm information
+	Scm *scm.ScmHandler
 }
 
 // Config struct defines a source configuration
@@ -39,9 +42,22 @@ var (
 
 // Run execute actions defined by the source configuration
 func (s *Source) Run() (err error) {
+
+	var consoleOutput bytes.Buffer
+	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	logrus.SetOutput(io.MultiWriter(os.Stderr, &consoleOutput))
+	/*
+		The last defer will be executed first,
+		so in this case we want to first save the console output
+		before setting back the logrus output to stdout.
+	*/
+	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	defer logrus.SetOutput(os.Stderr)
+	defer s.Result.SetConsoleOutput(&consoleOutput)
+
 	source, err := resource.New(s.Config.ResourceConfig)
 	if err != nil {
-		s.Result = result.FAILURE
+		s.Result.Result = result.FAILURE
 		return err
 	}
 
@@ -51,36 +67,37 @@ func (s *Source) Run() (err error) {
 	case true:
 		pwd, err := os.Getwd()
 		if err != nil {
-			s.Result = result.FAILURE
+			s.Result.Result = result.FAILURE
 			return err
 		}
 
 		workingDir = pwd
 	case false:
-
 		SCM := *s.Scm
 
-		if err != nil {
-			s.Result = result.FAILURE
-			return err
-		}
+		s.Result.Scm.URL = SCM.GetURL()
+		s.Result.Scm.Branch.Source, s.Result.Scm.Branch.Working, s.Result.Scm.Branch.Target = SCM.GetBranches()
 
 		err = SCM.Checkout()
-
 		if err != nil {
-			s.Result = result.FAILURE
+			s.Result.Result = result.FAILURE
 			return err
 		}
 
 		workingDir = SCM.GetDirectory()
 	}
 
-	s.Output, err = source.Source(workingDir)
-	s.Result = result.SUCCESS
+	err = source.Source(workingDir, &s.Result)
+
+	s.Output = s.Result.Information
+
 	if err != nil {
-		s.Result = result.FAILURE
+		s.Result.Result = result.FAILURE
+		logrus.Errorf("%s %s", s.Result.Result, err)
 		return err
 	}
+
+	logrus.Infof("%s %s", s.Result.Result, s.Result.Description)
 
 	// Once the source is executed, then it can retrieve its changelog
 	// Any error means an empty changelog
@@ -88,17 +105,19 @@ func (s *Source) Run() (err error) {
 	if s.Changelog == "" {
 		logrus.Debugln("empty changelog found for the source")
 	}
+	s.Result.Changelog = s.Changelog
 
-	if len(s.Config.Transformers) > 0 {
-		s.Output, err = s.Config.Transformers.Apply(s.Output)
+	if len(s.Config.ResourceConfig.Transformers) > 0 {
+		s.Output, err = s.Config.ResourceConfig.Transformers.Apply(s.Output)
 		if err != nil {
-			s.Result = result.FAILURE
+			logrus.Errorf("%s %s", s.Result.Result, err)
+			s.Result.Result = result.FAILURE
 			return err
 		}
 	}
 
-	if len(s.Output) == 0 {
-		s.Result = result.ATTENTION
+	if len(s.Output) == 0 && s.Result.Result == result.SUCCESS {
+		logrus.Debugln("empty source detected")
 	}
 
 	return err
@@ -114,49 +133,50 @@ func (Config) JSONSchema() *jschema.Schema {
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
 }
 
+// Validate checks if a source configuration is valid
 func (c *Config) Validate() error {
 	gotError := false
 
 	missingParameters := []string{}
 
 	// Handle scmID deprecation
-	if len(c.DeprecatedSCMID) > 0 {
-		switch len(c.SCMID) {
+	if len(c.ResourceConfig.DeprecatedSCMID) > 0 {
+		switch len(c.ResourceConfig.SCMID) {
 		case 0:
 			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
-			c.SCMID = c.DeprecatedSCMID
-			c.DeprecatedSCMID = ""
+			c.ResourceConfig.SCMID = c.ResourceConfig.DeprecatedSCMID
+			c.ResourceConfig.DeprecatedSCMID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusif, ignoring %q",
+			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"scmID", "scmid", "scmID")
 		}
 	}
 
 	// Validate that kind is set
-	if len(c.Kind) == 0 {
+	if len(c.ResourceConfig.Kind) == 0 {
 		missingParameters = append(missingParameters, "kind")
 	}
 
 	// Handle depends_on deprecation
-	if len(c.DeprecatedDependsOn) > 0 {
-		switch len(c.DependsOn) == 0 {
+	if len(c.ResourceConfig.DeprecatedDependsOn) > 0 {
+		switch len(c.ResourceConfig.DependsOn) == 0 {
 		case true:
 			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
-			c.DependsOn = c.DeprecatedDependsOn
-			c.DeprecatedDependsOn = []string{}
+			c.ResourceConfig.DependsOn = c.ResourceConfig.DeprecatedDependsOn
+			c.ResourceConfig.DeprecatedDependsOn = []string{}
 		case false:
 			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
-			c.DeprecatedDependsOn = []string{}
+			c.ResourceConfig.DeprecatedDependsOn = []string{}
 		}
 	}
 
 	// Ensure kind is lowercase
-	if c.Kind != strings.ToLower(c.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.Kind)
-		c.Kind = strings.ToLower(c.Kind)
+	if c.ResourceConfig.Kind != strings.ToLower(c.ResourceConfig.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.ResourceConfig.Kind)
+		c.ResourceConfig.Kind = strings.ToLower(c.ResourceConfig.Kind)
 	}
 
-	err := c.Transformers.Validate()
+	err := c.ResourceConfig.Transformers.Validate()
 	if err != nil {
 		logrus.Errorln(err)
 		gotError = true

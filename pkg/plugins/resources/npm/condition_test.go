@@ -119,9 +119,9 @@ func TestCondition(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
-			gotVersion, err := got.Condition("")
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotVersion)
+			gotResult, _, gotErr := got.Condition("", nil)
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.expectedResult, gotResult)
 		})
 	}
 

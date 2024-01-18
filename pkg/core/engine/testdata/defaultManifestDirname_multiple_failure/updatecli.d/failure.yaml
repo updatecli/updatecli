@@ -1,0 +1,9 @@
+name: Test
+
+sources:
+  adopters:
+    name: "Get content from ADOPTERS.md"
+    kind: file
+    scmid: updatecli
+    spec:
+      file: ADOPTERS.md

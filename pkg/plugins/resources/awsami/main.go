@@ -24,7 +24,7 @@ var (
 
 // https://docs.aws.amazon.com/sdk-for-go/api/service/ec2/#EC2.DescribeImages
 
-// AMI contains information to manipuliate AWS AMI information
+// AMI contains information to manipulate AWS AMI information
 type AMI struct {
 	Spec       Spec
 	ec2Filters []*ec2.Filter

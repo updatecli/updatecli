@@ -10,10 +10,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 )
 
-// wanteScriptFilename is an utility used to get the filescript named generated
+// wantedScriptFilename is an utility used to get the filescript named generated
 // by Updatecli. Outside of testing, it's not supposed to be used by Updatecli
 // as it ignore error handling
 func wantedScriptFilename(t *testing.T, command string) string {
@@ -49,10 +50,10 @@ func TestShell_Source(t *testing.T) {
 		{
 			name:        "Get a source from a successful command in working directory",
 			command:     "echo Hello",
-			shell:       "/bin/bash",
+			shell:       bashShell,
 			workingDir:  "/home/ucli",
 			wantSource:  "Hello",
-			wantCommand: "/bin/bash" + " " + wantedScriptFilename(t, "echo Hello"),
+			wantCommand: bashShell + " " + wantedScriptFilename(t, "echo Hello"),
 			wantErr:     false,
 			commandResult: commandResult{
 				ExitCode: 0,
@@ -62,7 +63,7 @@ func TestShell_Source(t *testing.T) {
 		{
 			name:       "Raise an error with a failing command in working directory",
 			command:    "false",
-			shell:      "/bin/bash",
+			shell:      bashShell,
 			workingDir: "/home/ucli",
 			wantSource: "",
 			wantErr:    true,
@@ -73,7 +74,7 @@ func TestShell_Source(t *testing.T) {
 		{
 			name:       "Raise an error with an empty command in working directory",
 			command:    "",
-			shell:      "/bin/bash",
+			shell:      bashShell,
 			workingDir: "/home/ucli",
 			wantSource: "",
 			wantErr:    true,
@@ -100,16 +101,17 @@ func TestShell_Source(t *testing.T) {
 			gotErr := s.InitChangedIf()
 			require.NoError(t, gotErr)
 
-			source, err := s.Source(tt.workingDir)
+			gotResult := result.Source{}
+			err := s.Source(tt.workingDir, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantSource, source)
+				assert.Equal(t, tt.wantSource, gotResult.Information)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantSource, source)
+			assert.Equal(t, tt.wantSource, gotResult.Information)
 
 			assert.Equal(t, tt.wantCommand, mock.GotCommand.Cmd)
 		})

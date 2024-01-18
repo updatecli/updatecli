@@ -10,7 +10,7 @@ import (
 type Spec struct {
 	// [s][c][t] File specifies the toml file to manipulate
 	File string `yaml:",omitempty"`
-	// [c][t] Files specifies a list of Json file to manipuate
+	// [c][t] Files specifies a list of Json file to manipulate
 	Files []string `yaml:",omitempty"`
 	// [s][c][t] Query allows to used advanced query. Override the parameter key
 	Query string `yaml:",omitempty"`
@@ -20,8 +20,14 @@ type Spec struct {
 	Value string `yaml:",omitempty"`
 	// [c][t] *Deprecated* Please look at query parameter to achieve similar objective
 	Multiple bool `yaml:",omitempty" jsonschema:"-"`
-	// [s]VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [s] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	/*
+	  [t] CreateMissingKey allows non-existing keys. If the key does not exist, the key is created if AllowsMissingKey
+	  is true, otherwise an error is raised (the default).
+	  Only supported if Key is used
+	*/
+	CreateMissingKey bool `yaml:",omitempty"`
 }
 
 var (

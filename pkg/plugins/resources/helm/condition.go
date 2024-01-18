@@ -8,19 +8,13 @@ import (
 	"helm.sh/helm/v3/pkg/repo"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Condition checks if a specific chart version exist
-func (c *Chart) Condition(source string) (bool, error) {
-	return c.ConditionFromSCM(source, nil)
-}
-
-// ConditionFromSCM returns an error because it's not supported
-func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
+func (c *Chart) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if strings.HasPrefix(c.spec.URL, "oci://") {
-		return c.OCICondition(source)
+		return c.OCICondition(source, scm)
 	}
 
 	if c.spec.Version != "" {
@@ -30,12 +24,11 @@ func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error
 	}
 
 	var index repo.IndexFile
-	var err error
 
 	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
 		index, err = c.GetRepoIndexFromURL()
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 	} else {
 		rootDir := ""
@@ -44,21 +37,19 @@ func (c *Chart) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error
 		}
 		index, err = c.GetRepoIndexFromFile(rootDir)
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 	}
 
-	message := ""
+	baseMessage := ""
 	if c.spec.Version != "" {
-		message = fmt.Sprintf(" for version '%s'", c.spec.Version)
+		baseMessage = fmt.Sprintf(" for version '%s'", c.spec.Version)
 	}
 
 	if index.Has(c.spec.Name, c.spec.Version) {
-		logrus.Infof("%s Helm Chart '%s' is available on %s%s", result.SUCCESS, c.spec.Name, c.spec.URL, message)
-		return true, nil
+		return true, fmt.Sprintf("Helm Chart %q is available on %s%s", c.spec.Name, c.spec.URL, baseMessage), nil
 	}
 
-	logrus.Infof("%s Helm Chart '%s' isn't available on %s%s", result.FAILURE, c.spec.Name, c.spec.URL, message)
-	return false, nil
+	return false, fmt.Sprintf("the Helm chart %q isn't available on %s%s", c.spec.Name, c.spec.URL, baseMessage), nil
 
 }

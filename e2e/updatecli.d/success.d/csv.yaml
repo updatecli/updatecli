@@ -1,4 +1,5 @@
-title: CSV manipulation examples
+name: CSV manipulation examples
+pipelineid: "e2e/csv"
 
 sources:
   default:
@@ -44,7 +45,7 @@ targets:
       value: John
 
   multiple:
-    name: Mulitple target update
+    name: Multiple target update
     kind: csv
     sourceid: default
     spec:

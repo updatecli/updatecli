@@ -37,7 +37,7 @@ targets:
       file: '{{ .TargetFile }}'
       key: '{{ .TargetKey }}'
       name: '{{ .TargetChartName }}'
-      versionincrement: 'minor'
+      versionincrement: '{{ .TargetChartVersionIncrement }}'
     sourceid: '{{ .SourceID }}'
 `
 )

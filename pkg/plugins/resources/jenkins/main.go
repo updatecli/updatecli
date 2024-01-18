@@ -8,14 +8,15 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Spec defines a specification for a "jenkins" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// Defines the release name like latest or weekly
+	// [s][c] Defines the release name. It accepts "stable" or "weekly"
 	Release string `yaml:",omitempty"`
-	// Defines a specific release version (condition only)
+	// [s][c] Defines a specific release version (condition only)
 	Version string `yaml:",omitempty"`
 }
 
@@ -57,7 +58,7 @@ func New(spec interface{}) (*Jenkins, error) {
 
 	return &Jenkins{
 		spec:             newSpec,
-		mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL),
+		mavenMetaHandler: mavenmetadata.New(jenkinsDefaultMetaURL, version.Filter{}),
 	}, nil
 }
 

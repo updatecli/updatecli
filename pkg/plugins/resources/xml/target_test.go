@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestTarget(t *testing.T) {
@@ -52,19 +53,19 @@ func TestTarget(t *testing.T) {
 				Value: "Alice",
 			},
 			expectedResult:   false,
-			expectedErrorMsg: errors.New("the XML file \"testdata/doNotExist.xml\" does not exist"),
+			expectedErrorMsg: errors.New("file \"testdata/doNotExist.xml\" does not exist"),
 			wantErr:          true,
 		},
 		{
 			name: "Test 5",
 			spec: Spec{
 				File:  "testdata/data_2.xml",
-				Path:  "/name/donotexist",
+				Path:  "/name/nonexistent",
 				Value: "Bob",
 			},
 			expectedResult:   false,
 			wantErr:          true,
-			expectedErrorMsg: errors.New("✗ nothing found at path \"/name/donotexist\" from file \"testdata/data_2.xml\""),
+			expectedErrorMsg: errors.New("nothing found at path \"/name/nonexistent\" from file \"testdata/data_2.xml\""),
 		},
 		{
 			name: "Test 6",
@@ -95,7 +96,8 @@ func TestTarget(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := x.Target("", true)
+			gotResult := result.Target{}
+			err = x.Target("", nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -103,7 +105,7 @@ func TestTarget(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Changed)
 		})
 	}
 

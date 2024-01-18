@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestTarget(t *testing.T) {
@@ -100,6 +101,27 @@ func TestTarget(t *testing.T) {
 			sourceInput:    "Jack",
 			expectedResult: false,
 		},
+		{
+			name: "Failing on non-existing key by default",
+			spec: Spec{
+				File: "testdata/data.toml",
+				Key:  ".owner.age",
+			},
+			sourceInput:      "50",
+			expectedResult:   false,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("could not find value for query \".owner.age\" from file \"testdata/data.toml\""),
+		},
+		{
+			name: "Successful update on non-existing key",
+			spec: Spec{
+				File:             "testdata/data.toml",
+				Key:              ".owner.age",
+				CreateMissingKey: true,
+			},
+			sourceInput:    "50",
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testData {
@@ -109,7 +131,9 @@ func TestTarget(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := j.Target(tt.sourceInput, true)
+			gotResult := result.Target{}
+
+			err = j.Target(tt.sourceInput, nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -117,7 +141,7 @@ func TestTarget(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, gotResult.Changed)
 		})
 	}
 }

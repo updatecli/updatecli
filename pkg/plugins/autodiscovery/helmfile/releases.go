@@ -65,22 +65,6 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 		helmfileRelativeMetadataPath := filepath.Dir(relativeFoundChartFile)
 		helmfileFilename := filepath.Base(helmfileRelativeMetadataPath)
 
-		// Test if the ignore rule based on path doesn't match
-		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundChartFile) {
-			logrus.Debugf("Ignoring Helmfile %q from %q, as not matching rule(s)\n",
-				helmfileFilename,
-				helmfileRelativeMetadataPath)
-			continue
-		}
-
-		// Test if the only rule based on path doesn't match
-		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundChartFile) {
-			logrus.Debugf("Ignoring Helmfile %q from %q, as not matching rule(s)\n",
-				helmfileFilename,
-				helmfileRelativeMetadataPath)
-			continue
-		}
-
 		// Retrieve chart dependencies for each chart
 
 		metadata, err := getHelmfileMetadata(foundHelmfile)
@@ -147,6 +131,32 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				helmSourcespec.InlineKeyChain.Password = OCIPassword
 			}
 
+			sourceVersionFilterKind := "semver"
+			sourceVersionFilterPattern := "*"
+
+			if !h.spec.VersionFilter.IsZero() {
+				sourceVersionFilterKind = h.versionFilter.Kind
+				sourceVersionFilterPattern, err = h.versionFilter.GreaterThanPattern(release.Version)
+				if err != nil {
+					logrus.Debugf("building version filter pattern: %s", err)
+					sourceVersionFilterPattern = "*"
+				}
+			}
+
+			if len(h.spec.Ignore) > 0 {
+				if h.spec.Ignore.isMatchingRules(h.rootDir, relativeFoundChartFile, chartURL, chartName, release.Version) {
+					logrus.Debugf("Ignoring Helmfile release %q from %q, as matching ignore rule(s)\n", chartURL, helmfileFilename)
+					continue
+				}
+			}
+
+			if len(h.spec.Only) > 0 {
+				if !h.spec.Only.isMatchingRules(h.rootDir, relativeFoundChartFile, chartURL, chartName, release.Version) {
+					logrus.Debugf("Ignoring Helmfile release %q from %q, as not matching only rule(s)\n", chartURL, helmfileFilename)
+					continue
+				}
+			}
+
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
 				logrus.Debugln(err)
@@ -177,16 +187,16 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				ChartRepository:            chartURL,
 				ConditionID:                release.Name,
 				ConditionName:              fmt.Sprintf("Ensure release %q is specified for Helmfile %q", release.Name, relativeFoundChartFile),
-				ConditionKey:               fmt.Sprintf("releases[%d].chart", i),
+				ConditionKey:               fmt.Sprintf("$.releases[%d].chart", i),
 				ConditionValue:             release.Chart,
 				SourceID:                   release.Name,
 				SourceName:                 fmt.Sprintf("Get latest %q Helm Chart Version", release.Name),
 				SourceKind:                 "helmchart",
-				SourceVersionFilterKind:    "semver",
-				SourceVersionFilterPattern: "*",
+				SourceVersionFilterKind:    sourceVersionFilterKind,
+				SourceVersionFilterPattern: sourceVersionFilterPattern,
 				TargetID:                   release.Name,
 				TargetName:                 fmt.Sprintf("Bump %q Helm Chart Version for Helmfile %q", release.Name, relativeFoundChartFile),
-				TargetKey:                  fmt.Sprintf("releases[%d].version", i),
+				TargetKey:                  fmt.Sprintf("$.releases[%d].version", i),
 				File:                       foundHelmfile,
 				ScmID:                      h.scmID,
 			}

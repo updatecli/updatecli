@@ -1,8 +1,5 @@
-title: Skip targets with only one (failing) condition
-
-scms:
-  local:
-    disabled: true
+name: Skip targets with only one (failing) condition
+pipelineid: skip/target
 
 sources:
   default:

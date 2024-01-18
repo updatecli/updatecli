@@ -1,0 +1,38 @@
+name: Test Terraform Provider plugin resource
+
+sources:
+  azurerm:
+    name: Get version from registry
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: hashicorp
+      name: azurerm
+
+conditions:
+  using-value:
+    name: Condition using value
+    kind: terraform/provider
+    disablesourceinput: true
+    spec:
+      file: pkg/plugins/resources/terraform/provider/testdata/versions.tf
+      provider: azurerm
+      value: 3.69.0
+
+targets:
+  update-file-from-source:
+    name: Update files content from source
+    kind: terraform/provider
+    sourceid: azurerm
+    spec:
+      file: pkg/plugins/resources/terraform/provider/testdata/versions.tf
+      provider: azurerm
+
+  update-file-from-value:
+    name: Update files content from value
+    kind: terraform/provider
+    sourceid: azurerm
+    spec:
+      file: pkg/plugins/resources/terraform/provider/testdata/versions.tf
+      provider: azurerm
+      value: 3.70.0

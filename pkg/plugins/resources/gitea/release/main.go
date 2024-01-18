@@ -16,23 +16,23 @@ import (
 // Spec defines settings used to interact with Gitea release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C][T] Owner specifies repository owner
+	// [S][C][T] owner specifies the repository owner
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T]Repository specifies the name of a repository for a specific owner
+	// [S][C][T] repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S] versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [T] Title defines the Gitea release title.
+	// [T] title defines the Gitea release title.
 	Title string `yaml:",omitempty"`
-	// [C][T] Tag defines the Gitea release tag.
+	// [C][T] tag defines the Gitea release tag.
 	Tag string `yaml:",omitempty"`
-	// [T] Commitish defines the commit-ish such as `main`
+	// [T] commitish defines the commit-ish such as `main`
 	Commitish string `yaml:",omitempty"`
-	// [T] Drescription defines if the new release description
-	Drescription string `yaml:",omitempty"`
-	// [T] Draft defines if the release is a draft release
+	// [T] description defines if the new release description
+	Description string `yaml:",omitempty"`
+	// [T] draft defines if the release is a draft release
 	Draft bool `yaml:",omitempty"`
-	// [T] Prerelease defines if the release is a pre-release release
+	// [T] prerelease defines if the release is a pre-release release
 	Prerelease bool `yaml:",omitempty"`
 }
 
@@ -53,7 +53,7 @@ type Gitea struct {
 	versionFilter version.Filter
 }
 
-// New returns a new valid Github object.
+// New returns a new valid GitHub object.
 func New(spec interface{}) (*Gitea, error) {
 	var s Spec
 	var clientSpec client.Spec
@@ -113,34 +113,43 @@ func New(spec interface{}) (*Gitea, error) {
 func (g *Gitea) SearchReleases() ([]string, error) {
 
 	ctx := context.Background()
-	// Timeout api query after 30sec
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	releases, resp, err := g.client.Releases.List(
-		ctx,
-		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-		scm.ReleaseListOptions{
-			Page:   1,
-			Size:   30,
-			Open:   true,
-			Closed: true,
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.Status > 400 {
-		logrus.Debugf("Gitea Api Response:\n%+v", resp)
-	}
 
 	results := []string{}
-	for i := len(releases) - 1; i >= 0; i-- {
-		if !releases[i].Draft {
-			results = append(results, releases[i].Tag)
+	page := 0
+	for {
+		// Timeout api query after 30sec
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		releases, resp, err := g.client.Releases.List(
+			ctx,
+			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
+			scm.ReleaseListOptions{
+				Page:   page,
+				Size:   30,
+				Open:   true,
+				Closed: true,
+			},
+		)
+
+		if err != nil {
+			return nil, err
 		}
+
+		if resp.Status > 400 {
+			logrus.Debugf("Gitea Api Response:\n%+v", resp)
+		}
+
+		for i := len(releases) - 1; i >= 0; i-- {
+			if !releases[i].Draft {
+				results = append(results, releases[i].Tag)
+			}
+		}
+
+		if page >= resp.Page.Last {
+			break
+		}
+		page++
+
 	}
 
 	return results, nil

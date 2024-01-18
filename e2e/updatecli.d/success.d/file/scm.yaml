@@ -1,0 +1,105 @@
+name: Test file resource without scm
+
+sources:
+  adopters: 
+    name: "Get content from ADOPTERS.md"
+    kind: file
+    scmid: updatecli
+    spec:
+      file: ADOPTERS.md
+
+  adoptersFileScheme: 
+    name: "Get content from ADOPTERS.md using file scheme"
+    kind: file
+    scmid: updatecli
+    spec:
+      file: file://ADOPTERS.md
+
+  adoptersFileScheme2: 
+    name: "Get content from ADOPTE??.md using file scheme"
+    kind: file
+    scmid: updatecli
+    spec:
+      file: file://ADOPTERS.md
+      searchpattern: true
+
+  adoptersFileScheme3: 
+    name: "Get content from ADOPTE??.md using file scheme"
+    kind: file
+    scmid: updatecli
+    spec:
+      files:
+        - file://ADOPTERS.md
+      searchpattern: true
+
+  adoptersHTTPSScheme: 
+    name: "Get content from ADOPTERS.md using https scheme"
+    kind: file
+    scmid: updatecli
+    spec:
+      file: https://raw.githubusercontent.com/updatecli/updatecli/main/ADOPTERS.md
+
+conditions:
+  adopters: 
+    name: "Validate ADOPTERS.md content"
+    sourceid: adopters
+    scmid: updatecli
+    kind: file
+    spec:
+      file: ADOPTERS.md
+
+  adopters2: 
+    name: "Validate ADOPTE??.md content"
+    sourceid: adopters
+    scmid: updatecli
+    kind: file
+    spec:
+      file: ADOPTE??.md
+      searchpattern: true
+
+  adopters3: 
+    name: "Validate ADOPTE??.md content"
+    sourceid: adopters
+    scmid: updatecli
+    kind: file
+    spec:
+      files:
+        - ADOPTE??.md
+        - ADOPTERS.md
+      searchpattern: true
+
+targets:
+  adopters: 
+    name: "Update ADOPTERS.md content"
+    sourceid: adopters
+    kind: file
+    scmid: updatecli
+    spec:
+      file: ADOPTERS.md
+
+  adopters2: 
+    name: "Update ADOPTE??.md content"
+    sourceid: adopters
+    kind: file
+    scmid: updatecli
+    spec:
+      file: ADOPTE??.md
+      searchpattern: true
+
+  adopters3: 
+    name: "Update ADOPTE??.md content"
+    sourceid: adopters
+    kind: file
+    scmid: updatecli
+    spec:
+      files:
+        - ADOPTE??.md
+        - ADOPTERS.md
+      searchpattern: true
+
+scms:
+  updatecli:
+    kind: git
+    spec:
+      url: https://github.com/updatecli/updatecli.git
+    

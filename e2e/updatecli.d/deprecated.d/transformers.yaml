@@ -1,4 +1,5 @@
 name: "Test transformers"
+pipelineid: test/transformers
 
 scms:
   local:

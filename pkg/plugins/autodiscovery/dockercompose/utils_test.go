@@ -76,7 +76,7 @@ func TestGetDockerComposeSpec(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			name:        "Case with a non existing file",
+			name:        "Case with a nonexistent file",
 			filename:    "does-not-exist.yaml",
 			expectedErr: true,
 		},

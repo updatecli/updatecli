@@ -33,7 +33,7 @@ func TestCondition(t *testing.T) {
 				URL:        "codeberg.org",
 				Token:      "",
 				Owner:      "updatecli",
-				Repository: "updatecli-donotexist",
+				Repository: "updatecli-nonexistent",
 				Branch:     "v2",
 			},
 			wantResult: false,
@@ -66,7 +66,7 @@ func TestCondition(t *testing.T) {
 			g, gotErr := New(tt.manifest)
 			require.NoError(t, gotErr)
 
-			gotResult, gotErr := g.Condition("")
+			gotPass, _, gotErr := g.Condition("", nil)
 
 			if tt.wantErr {
 				require.Error(t, gotErr)
@@ -74,7 +74,7 @@ func TestCondition(t *testing.T) {
 				require.NoError(t, gotErr)
 			}
 
-			assert.Equal(t, tt.wantResult, gotResult)
+			assert.Equal(t, tt.wantResult, gotPass)
 
 		})
 

@@ -1,8 +1,13 @@
 package reports
 
 import (
+	"crypto/sha256"
+	"fmt"
+
 	"bytes"
 	"text/template"
+
+	"encoding/json"
 
 	"github.com/sirupsen/logrus"
 
@@ -43,6 +48,9 @@ REPORTS:
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
+{{- if .reportURL }}
+Report available on {{ .reportURL -}}{{"\n"}}
+{{- end }}
 {{- "\t"}}Source:
 {{ range $ID, $source := .Sources }}
 {{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }} (kind: {{ $source.Kind -}}){{"\n"}}
@@ -65,12 +73,15 @@ REPORTS:
 
 // Report contains a list of Rules
 type Report struct {
-	Name       string
-	Err        string
-	Result     string
-	Sources    map[string]Stage
-	Conditions map[string]Stage
-	Targets    map[string]Stage
+	Name   string
+	Err    string
+	Result string
+	// ID defines the report ID
+	ID         string
+	Sources    map[string]*result.Source
+	Conditions map[string]*result.Condition
+	Targets    map[string]*result.Target
+	ReportURL  string
 }
 
 // Init initializes a new report for a specific configuration
@@ -79,9 +90,9 @@ func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
 	r.Name = name
 	r.Result = result.FAILURE
 
-	r.Sources = make(map[string]Stage, sourceNbr)
-	r.Conditions = make(map[string]Stage, conditionNbr)
-	r.Targets = make(map[string]Stage, targetNbr)
+	r.Sources = make(map[string]*result.Source, sourceNbr)
+	r.Conditions = make(map[string]*result.Condition, conditionNbr)
+	r.Targets = make(map[string]*result.Target, targetNbr)
 }
 
 // String returns a report as a string
@@ -112,4 +123,82 @@ func (r *Report) String(mode string) (report string, err error) {
 	report = buffer.String()
 
 	return report, nil
+}
+
+func (r *Report) UpdateID() error {
+	var err error
+
+	r.ID, err = getSha256HashFromStruct(*r)
+	if err != nil {
+		return err
+	}
+
+	for i, condition := range r.Conditions {
+		condition.ID, err = getSha256HashFromStruct(condition)
+		if err != nil {
+			return err
+		}
+
+		/*
+			Always generate a SCM Id even if the scm is empty.
+			I think this information could be useful to quickly identify this scenario
+			That being said, I may revisit this decision in the future
+		*/
+		condition.Scm.ID, err = getSha256HashFromStruct(condition.Scm)
+		if err != nil {
+			return err
+		}
+
+		r.Conditions[i] = condition
+	}
+
+	for i, source := range r.Sources {
+		source.ID, err = getSha256HashFromStruct(source)
+		if err != nil {
+			return err
+		}
+
+		/*
+			Always generate a SCM Id even if the scm is empty.
+			I think this information could be useful to quickly identify this scenario
+			That being said, I may revisit this decision in the future
+		*/
+		source.Scm.ID, err = getSha256HashFromStruct(source.Scm)
+		if err != nil {
+			return err
+		}
+
+		r.Sources[i] = source
+	}
+
+	for i, target := range r.Targets {
+		target.ID, err = getSha256HashFromStruct(target)
+		if err != nil {
+			return err
+		}
+
+		/*
+			Always generate a SCM Id even if the scm is empty.
+			I think this information could be useful to quickly identify this scenario
+			That being said, I may revisit this decision in the future
+		*/
+		target.Scm.ID, err = getSha256HashFromStruct(target.Scm)
+		if err != nil {
+			return err
+		}
+
+		r.Targets[i] = target
+	}
+
+	return nil
+}
+
+func getSha256HashFromStruct(input interface{}) (string, error) {
+
+	data, err := json.Marshal(input)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", sha256.Sum256(data)), nil
 }

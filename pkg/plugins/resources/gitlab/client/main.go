@@ -1,0 +1,58 @@
+package client
+
+import (
+	"net/http"
+	"strings"
+
+	"github.com/drone/go-scm/scm"
+	"github.com/drone/go-scm/scm/driver/gitlab"
+	"github.com/drone/go-scm/scm/transport/oauth2"
+)
+
+const (
+
+	// GITLABDOMAIN defines the default gitlab url
+	GITLABDOMAIN string = "gitlab.com"
+)
+
+type Client *scm.Client
+
+func New(s Spec) (Client, error) {
+
+	url := EnsureValidURL(s.URL)
+
+	client, err := gitlab.New(url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client.Client = &http.Client{}
+
+	if len(s.Token) >= 0 {
+		client.Client = &http.Client{
+			Transport: &oauth2.Transport{
+				Source: oauth2.StaticTokenSource(
+					&scm.Token{
+						Token: s.Token,
+					},
+				),
+			},
+		}
+	}
+
+	return client, nil
+
+}
+
+func EnsureValidURL(u string) string {
+	if u == "" {
+		u = GITLABDOMAIN
+	}
+
+	if !strings.HasPrefix(u, "https://") && !strings.HasPrefix(u, "http://") {
+		u = "https://" + u
+	}
+
+	return u
+}

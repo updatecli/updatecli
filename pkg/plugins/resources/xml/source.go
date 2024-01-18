@@ -1,48 +1,63 @@
 package xml
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/beevik/etree"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (x *XML) Source(workingDir string) (string, error) {
+// Source returns a value from a xml file
+func (x *XML) Source(workingDir string, resultSource *result.Source) error {
 
-	// To merge File path with current working dire, unless file is an http url
-	x.spec.File = joinPathWithWorkingDirectoryPath(x.spec.File, workingDir)
-
-	// Test at runtime if a file exist
-	if !x.contentRetriever.FileExists(x.spec.File) {
-		return "", fmt.Errorf("the XML file %q does not exist", x.spec.File)
+	// By the default workingdir is set to the current working directory
+	// it would be better to have it empty by default but it must be changed in the
+	// source core codebase.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		return errors.New("fail getting current working directory")
 	}
 
-	if err := x.Read(); err != nil {
-		return "", err
+	resourceFile := x.spec.File
+	// To merge File path with current working dire, unless file is an http url
+	if workingDir != currentWorkingDirectory {
+		resourceFile = joinPathWithWorkingDirectoryPath(x.spec.File, workingDir)
+	}
+
+	// Test at runtime if a file exist
+	if !x.contentRetriever.FileExists(resourceFile) {
+		return fmt.Errorf("file %q does not exist", resourceFile)
+	}
+
+	if err := x.Read(resourceFile); err != nil {
+		return fmt.Errorf("reading file: %w", err)
 	}
 
 	doc := etree.NewDocument()
 
 	if err := doc.ReadFromString(x.currentContent); err != nil {
-		return "", err
+		return fmt.Errorf("loading document: %w", err)
 	}
 
 	elem := doc.FindElement(x.spec.Path)
 
 	if elem == nil {
-		logrus.Infof("%s cannot find value for path '%s' from file '%s'",
-			result.FAILURE,
+		return fmt.Errorf("cannot find value for path %q from file %q",
 			x.spec.Path,
-			x.spec.File)
-
-		return "", nil
+			resourceFile,
+		)
 	}
 
 	queryResult := elem.Text()
 
-	logrus.Infof("%s Value %q found at path %q in the xml file %q",
-		result.SUCCESS, queryResult, x.spec.Path, x.spec.File)
+	resultSource.Result = result.SUCCESS
+	resultSource.Information = queryResult
+	resultSource.Description = fmt.Sprintf("value %q found at path %q in the xml file %q",
+		queryResult,
+		x.spec.Path,
+		resourceFile)
 
-	return queryResult, nil
+	return nil
 }

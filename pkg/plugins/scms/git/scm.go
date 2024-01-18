@@ -6,6 +6,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func (g *Git) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
+	sourceBranch = g.spec.Branch
+	workingBranch = g.spec.Branch
+	targetBranch = g.spec.Branch
+
+	return sourceBranch, workingBranch, targetBranch
+}
+
+// GetURL returns a git URL
+func (g *Git) GetURL() string {
+	return g.spec.URL
+}
+
 // Add run `git add`.
 func (g *Git) Add(files []string) error {
 	err := g.nativeGitHandler.Add(files, g.GetDirectory())
@@ -17,12 +30,16 @@ func (g *Git) Add(files []string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *Git) Checkout() error {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
 	err := g.nativeGitHandler.Checkout(
 		g.spec.Username,
 		g.spec.Password,
-		g.spec.Branch,
-		g.remoteBranch,
-		g.GetDirectory())
+		sourceBranch,
+		workingBranch,
+		g.GetDirectory(),
+		false)
+
 	if err != nil {
 		return err
 	}
@@ -49,18 +66,29 @@ func (g *Git) Clone() (string, error) {
 	err := g.nativeGitHandler.Clone(
 		g.spec.Username,
 		g.spec.Password,
-		g.spec.URL,
-		g.GetDirectory())
+		g.GetURL(),
+		g.GetDirectory(),
+		g.spec.Submodules,
+	)
 
 	if err != nil {
-		logrus.Errorf("err - %s", err)
+		logrus.Errorf("failed cloning git repository %q - %s", g.GetURL(), err)
 		return "", err
 	}
 
-	if len(g.remoteBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = g.Checkout()
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
+	if len(workingBranch) > 0 && len(g.GetDirectory()) > 0 {
+		err := g.nativeGitHandler.Checkout(
+			g.spec.Username,
+			g.spec.Password,
+			sourceBranch,
+			workingBranch,
+			g.GetDirectory(),
+			true)
+
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			logrus.Errorf("initial git checkout failed for repository %s - %s", g.GetURL(), err)
 			return "", err
 		}
 	}
@@ -106,6 +134,34 @@ func (g *Git) Push() error {
 
 	return nil
 
+}
+
+// PushBranch push tags
+func (g *Git) PushBranch(branch string) error {
+
+	err := g.nativeGitHandler.PushBranch(
+		branch,
+		g.spec.Username,
+		g.spec.Password,
+		g.GetDirectory(),
+		g.spec.Force)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// IsRemoteBranchUpToDate checks if the working branch should be push to remote
+func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
+	sourceBranch, workingBranch, _ := g.GetBranches()
+
+	return g.nativeGitHandler.IsLocalBranchPublished(
+		sourceBranch,
+		workingBranch,
+		g.spec.Username,
+		g.spec.Password,
+		g.GetDirectory())
 }
 
 // PushTag push tags

@@ -1,0 +1,45 @@
+name: Test Terraform Lock plugin resource
+
+sources:
+  kubernetes:
+    name: Get version from registry
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: hashicorp
+      name: kubernetes
+
+conditions:
+  using-value:
+    name: Condition using value
+    kind: terraform/lock
+    disablesourceinput: true
+    spec:
+      file: pkg/plugins/resources/terraform/lock/testdata/terraform.lock.hcl
+      provider: hashicorp/kubernetes
+      platforms:
+        - linux_amd64
+      value: 2.22.0
+
+  https:
+    name: Condition using HTTP
+    kind: terraform/lock
+    disablesourceinput: true
+    spec:
+      file: https://raw.githubusercontent.com/updatecli-test/jenkins-infra-aws/main/.terraform.lock.hcl
+      provider: hashicorp/kubernetes
+      platforms:
+        - linux_amd64
+      value: 2.22.0
+
+
+targets:
+  update-file-from-source:
+    name: Update files content from value
+    kind: terraform/lock
+    sourceid: kubernetes
+    spec:
+      file: pkg/plugins/resources/terraform/lock/testdata/terraform.lock.hcl
+      provider: hashicorp/kubernetes
+      platforms:
+        - linux_amd64

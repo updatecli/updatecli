@@ -14,19 +14,19 @@ import (
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [C] Architectures specifies a list of architectures to check container images for (conditions only)
+	// [C] architectures specifies a list of architectures to check container images for (conditions only)
 	Architectures []string `yaml:",omitempty"`
-	// [S][C] Architecture specifies the container image architecture such as `amd64`
+	// [S][C] architecture specifies the container image architecture such as `amd64`
 	Architecture string `yaml:",omitempty"`
-	// [S][C] Image specifies the container image such as `updatecli/updatecli`
+	// [S][C] image specifies the container image such as `updatecli/updatecli`
 	Image string `yaml:",omitempty"`
-	// [C] Tag specifies the container image tag such as `latest`
+	// [C] tag specifies the container image tag such as `latest`
 	Tag                   string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
-	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// [S] versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] TagFiter allows to restrict tags retrieved from a remote registry by using a regular expression.
-	TagFilter string
+	// [S] tagfilter allows to restrict tags retrieved from a remote registry by using a regular expression.
+	TagFilter string `yaml:",omitempty"`
 }
 
 func sanitizeRegistryEndpoint(repository string) string {
@@ -42,15 +42,13 @@ func sanitizeRegistryEndpoint(repository string) string {
 
 // NewDockerImageSpecFromImage return a new docker image specification using an image provided as parameter
 func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.InlineKeyChain) *Spec {
-
 	tagFilter, err := getTagFilterFromValue(tag)
-
 	if err != nil {
 		// We couldn't identify a good versionFilter so we do not return any dockerimage spec
 		// At the time of writing, semantic versioning is the only way to have reliable results
 		// across the different registries.
 		// More information on https://github.com/updatecli/updatecli/issues/977
-		logrus.Warningln(err)
+		logrus.Warningf("analyzing OCI image %q: %s", image, err)
 		return nil
 	}
 
@@ -87,13 +85,13 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 		}
 
 		warningMessage := fmt.Sprintf(
-			"no credentials found for docker registry %q hosting image %q, among %q",
+			"relying on default docker configuration file as no credentials have been found for docker registry %q hosting image %q, among %q",
 			registry,
 			image,
 			strings.Join(registryAuths, ","))
 
 		if len(registryAuths) == 0 {
-			warningMessage = fmt.Sprintf("no credentials found for docker registry %q hosting image %q",
+			warningMessage = fmt.Sprintf("relying on default docker configuration file as no credentials have been found for docker registry %q hosting image %q",
 				registry,
 				image)
 		}
@@ -104,9 +102,8 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 	return &dockerimagespec
 }
 
-// NewFrilterFromValue tries to identify the closest tagFilter based on an existing tag
+// getTagFilterFromValue tries to identify the closest tagFilter based on an existing tag
 func getTagFilterFromValue(tag string) (string, error) {
-
 	logrus.Debugf("Trying the identify the best versionFilter for %q", tag)
 
 	switch tag {

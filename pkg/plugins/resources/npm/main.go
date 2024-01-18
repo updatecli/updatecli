@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -248,7 +248,7 @@ func (n *Npm) getPackageData(packageName string) (Data, error) {
 		return Data{}, err
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
 		return Data{}, err
@@ -256,7 +256,7 @@ func (n *Npm) getPackageData(packageName string) (Data, error) {
 
 	err = json.Unmarshal(data, &d)
 	if err != nil {
-		logrus.Errorf("error unmarshaling json: %q", err)
+		logrus.Errorf("error unmarshalling json: %q", err)
 		return Data{}, err
 	}
 

@@ -1,0 +1,21 @@
+name: "Docker compose autodiscovery using git scm"
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/jenkins-infra/evergreen.git
+      branch: master
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  crawlers:
+    dockercompose:
+      ignore:
+        # Ignoring images that don't have a tag or a tag not supported by Updatecli
+        - images:
+            - "postgres:alpine"
+            - "node:9-alpine"
+            - "jenkinsciinfra/evergreen-backend"
+            - "jenkins/evergreen"
+

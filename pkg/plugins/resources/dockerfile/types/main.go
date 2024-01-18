@@ -6,7 +6,7 @@ type DockerfileParser interface {
 	ReplaceInstructions(dockerfileContent []byte, sourceValue string) ([]byte, ChangedLines, error)
 }
 
-// ChangedLine is struct to store a single (Dockerfile-)line change's informations
+// ChangedLine is struct to store a single (Dockerfile-)line change's information
 type ChangedLines map[int]LineDiff
 
 type LineDiff struct {

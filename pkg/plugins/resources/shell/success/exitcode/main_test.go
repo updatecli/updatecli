@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestSourceResult(t *testing.T) {
@@ -107,7 +108,8 @@ func TestSourceResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
+	for i := range dataset {
+		d := dataset[i]
 		t.Run(d.name, func(t *testing.T) {
 			c, gotErr := New(d.spec, &d.exitCode, &d.stdout)
 
@@ -119,9 +121,10 @@ func TestSourceResult(t *testing.T) {
 				assert.NoError(t, gotErr)
 			}
 
-			gotSourceResult, gotErr := c.SourceResult()
+			gotResult := result.Source{}
+			gotErr = c.SourceResult(&gotResult)
 
-			assert.Equal(t, gotSourceResult, d.expectedResultOutput)
+			assert.Equal(t, d.expectedResultOutput, gotResult.Information)
 			switch d.expectedError {
 			case true:
 				assert.Equal(t, gotErr.Error(), d.expectedResultErrorMessage)
@@ -204,7 +207,8 @@ func TestConditionResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
+	for i := range dataset {
+		d := dataset[i]
 		t.Run(d.name, func(t *testing.T) {
 			c, gotErr := New(d.spec, &d.exitCode, &d.stdout)
 
@@ -243,21 +247,9 @@ func TestTargetResult(t *testing.T) {
 		expectedNewErrorMessage    error
 	}{
 		{
-			name:                 "Test succeeded with no command output",
+			name:                 "Test succeeded exit code 0",
 			exitCode:             0,
-			stdout:               "",
-			expectedResultOutput: true,
-			spec: Spec{
-				Warning: 2,
-				Success: 0,
-				Failure: 1,
-			},
-		},
-		{
-			name:                 "Test succeeded with command output",
-			exitCode:             0,
-			stdout:               "1.2.3",
-			expectedResultOutput: true,
+			expectedResultOutput: false,
 			spec: Spec{
 				Warning: 2,
 				Success: 0,
@@ -267,8 +259,7 @@ func TestTargetResult(t *testing.T) {
 		{
 			name:                 "Triggered changed with command output",
 			exitCode:             2,
-			stdout:               "1.2.3",
-			expectedResultOutput: false,
+			expectedResultOutput: true,
 			spec: Spec{
 				Warning: 2,
 				Success: 0,
@@ -278,7 +269,6 @@ func TestTargetResult(t *testing.T) {
 		{
 			name:                       "Test failed with no command output",
 			exitCode:                   1,
-			stdout:                     "",
 			expectedResultOutput:       false,
 			expectedResultErrorMessage: errors.New("shell command failed. Expected exit code 0 but got 1"),
 			expectedError:              true,
@@ -303,7 +293,8 @@ func TestTargetResult(t *testing.T) {
 		},
 	}
 
-	for _, d := range dataset {
+	for i := range dataset {
+		d := dataset[i]
 		t.Run(d.name, func(t *testing.T) {
 			c, gotErr := New(d.spec, &d.exitCode, &d.stdout)
 
@@ -340,7 +331,7 @@ func TestPreCommand(t *testing.T) {
 	c, gotErr := New(spec, &exitCode, &stdout)
 	assert.NoError(t, gotErr)
 
-	if c.PreCommand() != nil {
+	if c.PreCommand("") != nil {
 		t.Fail()
 	}
 }
@@ -357,7 +348,7 @@ func TestPostCommand(t *testing.T) {
 	c, gotErr := New(spec, &exitCode, &stdout)
 	assert.NoError(t, gotErr)
 
-	if c.PostCommand() != nil {
+	if c.PostCommand("") != nil {
 		t.Fail()
 	}
 }

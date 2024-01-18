@@ -1,0 +1,21 @@
+policies:
+  - name: Local Updatecli Website Policies
+    config:
+      - updatecli/updatecli.d/
+
+  - name: Handle Nodejs version in githubaction
+    policy: ghcr.io/updatecli/policies/policies/nodejs/githubaction:latest
+    values:
+      - updatecli/values.d/scm.yaml
+      - updatecli/values.d/nodejs.yaml
+
+  - name: Handle Nodejs version in Netlify
+    policy: ghcr.io/updatecli/policies/policies/nodejs/netlify:0.1.0
+    values:
+      - updatecli/values.d/scm.yaml
+      - updatecli/values.d/nodejs.yaml
+
+  - name: Handle Hugo version in Netlify
+    policy: ghcr.io/updatecli/policies/policies/hugo/netlify:0.4.0@sha256:353d6cf2eb909c50bdb8d088f0df8ef53b0f90aec725a7a0c2b75ebe8d3352c1
+    values:
+      - updatecli/values.d/scm.yaml

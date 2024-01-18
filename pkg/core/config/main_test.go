@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -18,7 +19,7 @@ import (
 // Mocking the context package
 type mockSourceContext struct {
 	Output string
-	Result string
+	Result result.Source
 }
 
 // Mocking the context package
@@ -96,7 +97,9 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
-						Result: result.SUCCESS,
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
 					},
 				},
 			},
@@ -135,7 +138,9 @@ var (
 			Context: context{
 				Sources: map[string]mockSourceContext{
 					"default": {
-						Result: result.FAILURE,
+						Result: result.Source{
+							Result: result.FAILURE,
+						},
 					},
 				},
 			},
@@ -200,7 +205,9 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
-						Result: result.SUCCESS,
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
 					},
 				},
 			},
@@ -225,7 +232,7 @@ var (
 			ID: "3",
 			Config: Config{
 				Spec: Spec{
-					Name: `{{ pipeline "Source.kindd" }}`,
+					Name: `{{ pipeline "Source.kind_" }}`,
 					Sources: map[string]source.Config{
 						"default": {
 							ResourceConfig: resource.ResourceConfig{
@@ -248,7 +255,7 @@ var (
 					Name: "jenkins",
 				},
 			},
-			ExpectedUpdateErr: fmt.Errorf(`template: cfg:1:10: executing "cfg" at <pipeline "Source.kindd">: error calling pipeline: key not defined in configuration`),
+			ExpectedUpdateErr: fmt.Errorf(`template: cfg:1:10: executing "cfg" at <pipeline "Source.kind_">: error calling pipeline: key not defined in configuration`),
 		},
 		// Testing wrong function name
 		{
@@ -295,7 +302,9 @@ var (
 				Sources: map[string]mockSourceContext{
 					"default": {
 						Output: "2.289.2",
-						Result: result.SUCCESS,
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
 					},
 				},
 			},
@@ -826,5 +835,121 @@ func TestIsTemplatedString(t *testing.T) {
 	for _, data := range dataset {
 		got := IsTemplatedString(data.Key)
 		assert.Equal(t, data.ExpectedResult, got)
+	}
+}
+
+func TestNew(t *testing.T) {
+	dataset := []struct {
+		id             string
+		option         Option
+		expectedResult []Config
+		expectedError  error
+	}{
+		{
+			id: "Test with a valid manifest containing one config",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/jenkins.yaml",
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a valid manifest containing one json config",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/jenkins.json",
+				ValuesFiles:  []string{"testdata/values.json"},
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get lts Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a valid manifest containing two configs",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/multiJenkins.yaml",
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest stable Jenkins version",
+					},
+				},
+				{
+					Spec: Spec{
+						Name: "Get latest weekly Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a valid templated manifest containing two configs",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/multiJenkins.yaml",
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest stable Jenkins version",
+					},
+				},
+				{
+					Spec: Spec{
+						Name: "Get latest weekly Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a valid templated manifest containing two configs",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/multiTemplatedJenkins.tpl",
+				ValuesFiles:  []string{"testdata/values.yaml"},
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Get latest lts Jenkins version",
+					},
+				},
+				{
+					Spec: Spec{
+						Name: "Get latest weekly Jenkins version",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with a bad manifest containing one config",
+			option: Option{
+				ManifestFile: "testdata/updatecli.d/badJenkins.yaml",
+			},
+			expectedResult: []Config{},
+			expectedError:  errors.New("yaml: unmarshal errors:\n  line 3: cannot unmarshal !!seq into map[string]source.Config"),
+		},
+	}
+
+	for _, data := range dataset {
+		got, err := New(data.option)
+
+		switch data.expectedError {
+		case nil:
+			require.NoError(t, err)
+		default:
+			require.ErrorContains(t, err, data.expectedError.Error())
+		}
+
+		require.EqualValues(t, len(data.expectedResult), len(got))
+		for i := range data.expectedResult {
+			require.Equal(t, data.expectedResult[i].Spec.Name, got[i].Spec.Name)
+		}
 	}
 }

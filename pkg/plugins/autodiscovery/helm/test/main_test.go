@@ -22,7 +22,7 @@ func TestDiscoverManifests(t *testing.T) {
 	}{
 		{
 			name:    "Scenario 1",
-			rootDir: "testdata/chart",
+			rootDir: "testdata-1/chart",
 			expectedPipelines: []string{`name: 'Bump dependency "minio" for Helm chart "epinio"'
 sources:
   minio:
@@ -40,7 +40,7 @@ conditions:
     kind: 'yaml'
     spec:
       file: 'epinio/Chart.yaml'
-      key: 'dependencies[0].name'
+      key: '$.dependencies[0].name'
       value: 'minio'
     disablesourceinput: true
 targets:
@@ -49,9 +49,9 @@ targets:
     kind: 'helmchart'
     spec:
       file: 'Chart.yaml'
-      key: 'dependencies[0].version'
+      key: '$.dependencies[0].version'
       name: 'epinio'
-      versionincrement: 'minor'
+      versionincrement: ''
     sourceid: 'minio'
 `, `name: 'Bump dependency "kubed" for Helm chart "epinio"'
 sources:
@@ -70,7 +70,7 @@ conditions:
     kind: 'yaml'
     spec:
       file: 'epinio/Chart.yaml'
-      key: 'dependencies[1].name'
+      key: '$.dependencies[1].name'
       value: 'kubed'
     disablesourceinput: true
 targets:
@@ -79,9 +79,9 @@ targets:
     kind: 'helmchart'
     spec:
       file: 'Chart.yaml'
-      key: 'dependencies[1].version'
+      key: '$.dependencies[1].version'
       name: 'epinio'
-      versionincrement: 'minor'
+      versionincrement: ''
     sourceid: 'kubed'
 `, `name: 'Bump dependency "epinio-ui" for Helm chart "epinio"'
 sources:
@@ -100,7 +100,7 @@ conditions:
     kind: 'yaml'
     spec:
       file: 'epinio/Chart.yaml'
-      key: 'dependencies[2].name'
+      key: '$.dependencies[2].name'
       value: 'epinio-ui'
     disablesourceinput: true
 targets:
@@ -109,13 +109,13 @@ targets:
     kind: 'helmchart'
     spec:
       file: 'Chart.yaml'
-      key: 'dependencies[2].version'
+      key: '$.dependencies[2].version'
       name: 'epinio'
-      versionincrement: 'minor'
+      versionincrement: ''
     sourceid: 'epinio-ui'
 `, `name: 'Bump Docker Image "epinioteam/epinio-ui-qa" for Helm chart "epinio"'
 sources:
-  epinioteam/epinio-ui-qa:
+  epinioteam_epinio-ui-qa:
     name: 'Get latest "epinioteam/epinio-ui-qa" Container tag'
     kind: 'dockerimage'
     spec:
@@ -124,27 +124,27 @@ sources:
         kind: 'semver'
         pattern: '*'
 conditions:
-  epinioteam/epinio-ui-qa:
+  epinioteam_epinio-ui-qa:
     name: 'Ensure container repository "epinioteam/epinio-ui-qa" is specified'
     kind: 'yaml'
     spec:
       file: 'epinio/values.yaml'
-      key: 'images.ui.repository'
+      key: '$.images.ui.repository'
       value: 'epinioteam/epinio-ui-qa'
     disablesourceinput: true
 targets:
-  epinioteam/epinio-ui-qa:
+  epinioteam_epinio-ui-qa:
     name: 'Bump container image tag for image "epinioteam/epinio-ui-qa" in chart "epinio"'
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
-      key: 'images.ui.tag'
+      key: '$.images.ui.tag'
       name: 'epinio'
-      versionincrement: 'minor'
+      versionincrement: ''
     sourceid: 'epinioteam/epinio-ui-qa'
 `, `name: 'Bump Docker Image "splatform/epinio-server" for Helm chart "epinio"'
 sources:
-  splatform/epinio-server:
+  splatform_epinio-server:
     name: 'Get latest "splatform/epinio-server" Container tag'
     kind: 'dockerimage'
     spec:
@@ -153,24 +153,172 @@ sources:
         kind: 'semver'
         pattern: '*'
 conditions:
-  splatform/epinio-server:
+  splatform_epinio-server:
     name: 'Ensure container repository "splatform/epinio-server" is specified'
     kind: 'yaml'
     spec:
       file: 'epinio/values.yaml'
-      key: 'image.repository'
+      key: '$.image.repository'
       value: 'splatform/epinio-server'
     disablesourceinput: true
 targets:
-  splatform/epinio-server:
+  splatform_epinio-server:
     name: 'Bump container image tag for image "splatform/epinio-server" in chart "epinio"'
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
-      key: 'image.tag'
+      key: '$.image.tag'
       name: 'epinio'
-      versionincrement: 'minor'
+      versionincrement: ''
     sourceid: 'splatform/epinio-server'
+`},
+		},
+		{
+			name:    "Test the tag update for images referenced in the cart",
+			rootDir: "testdata-2/chart",
+			expectedPipelines: []string{`name: 'Bump Docker image "epinio/epinio-server" for Helm chart "sample"'
+sources:
+  epinio_epinio-server:
+    name: 'Get latest "epinio/epinio-server" container tag'
+    kind: 'dockerimage'
+    spec:
+      image: 'epinio/epinio-server'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionFilter:
+        kind: 'semver'
+        pattern: '>=v1.8.0'
+conditions:
+  epinio_epinio-server-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "epinio/epinio-server" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'sample/values.yaml'
+      key: '$.image.repository'
+      value: 'epinio/epinio-server'
+targets:
+  epinio_epinio-server:
+    name: 'Bump container image tag for image "epinio/epinio-server" in chart "sample"'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'sample'
+      key: '$.image.tag'
+      versionincrement: ''
+    sourceid: 'epinio_epinio-server'
+`,
+				`name: 'Bump Docker image "epinio/epinio-ui" for Helm chart "sample"'
+sources:
+  epinio_epinio-ui:
+    name: 'Get latest "epinio/epinio-ui" container tag'
+    kind: 'dockerimage'
+    spec:
+      image: 'epinio/epinio-ui'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionFilter:
+        kind: 'semver'
+        pattern: '>=v1.8.0'
+conditions:
+  epinio_epinio-ui-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "epinio/epinio-ui" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'sample/values.yaml'
+      key: '$.images.ui.repository'
+      value: 'epinio/epinio-ui'
+targets:
+  epinio_epinio-ui:
+    name: 'Bump container image tag for image "epinio/epinio-ui" in chart "sample"'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'sample'
+      key: '$.images.ui.tag'
+      versionincrement: ''
+    sourceid: 'epinio_epinio-ui'
+`},
+		},
+		{
+			name:    "Test the tag update for images referenced in the cart including the registry",
+			rootDir: "testdata-3/chart",
+			expectedPipelines: []string{`name: 'Bump Docker image "ghcr.io/epinio/epinio-server" for Helm chart "sample"'
+sources:
+  ghcr.io_epinio_epinio-server:
+    name: 'Get latest "ghcr.io/epinio/epinio-server" container tag'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/epinio/epinio-server'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionFilter:
+        kind: 'semver'
+        pattern: '>=v1.8.0'
+conditions:
+  ghcr.io_epinio_epinio-server-registry:
+    disablesourceinput: true
+    name: 'Ensure container registry "ghcr.io" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'sample/values.yaml'
+      key: '$.image.registry'
+      value: 'ghcr.io'
+  ghcr.io_epinio_epinio-server-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "epinio/epinio-server" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'sample/values.yaml'
+      key: '$.image.repository'
+      value: 'epinio/epinio-server'
+targets:
+  ghcr.io_epinio_epinio-server:
+    name: 'Bump container image tag for image "ghcr.io/epinio/epinio-server" in chart "sample"'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'sample'
+      key: '$.image.tag'
+      versionincrement: ''
+    sourceid: 'ghcr.io_epinio_epinio-server'
+`,
+				`name: 'Bump Docker image "ghcr.io/epinio/epinio-ui" for Helm chart "sample"'
+sources:
+  ghcr.io_epinio_epinio-ui:
+    name: 'Get latest "ghcr.io/epinio/epinio-ui" container tag'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/epinio/epinio-ui'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionFilter:
+        kind: 'semver'
+        pattern: '>=v1.8.0'
+conditions:
+  ghcr.io_epinio_epinio-ui-registry:
+    disablesourceinput: true
+    name: 'Ensure container registry "ghcr.io" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'sample/values.yaml'
+      key: '$.images.ui.registry'
+      value: 'ghcr.io'
+  ghcr.io_epinio_epinio-ui-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "epinio/epinio-ui" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'sample/values.yaml'
+      key: '$.images.ui.repository'
+      value: 'epinio/epinio-ui'
+targets:
+  ghcr.io_epinio_epinio-ui:
+    name: 'Bump container image tag for image "ghcr.io/epinio/epinio-ui" in chart "sample"'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'sample'
+      key: '$.images.ui.tag'
+      versionincrement: ''
+    sourceid: 'ghcr.io_epinio_epinio-ui'
 `},
 		},
 	}
@@ -195,5 +343,4 @@ targets:
 			}
 		})
 	}
-
 }

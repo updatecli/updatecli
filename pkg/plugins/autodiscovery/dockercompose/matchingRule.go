@@ -26,7 +26,6 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service, image, arch st
 	// Test if the ignore rule based on path is respected
 
 	var ruleResults []bool
-	var finaleResult bool
 
 	if len(m) > 0 {
 		for _, matchingRule := range m {
@@ -86,21 +85,21 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service, image, arch st
 				}
 				ruleResults = append(ruleResults, match)
 			}
-		}
 
-		allMatchingRule := true
-		for i := range ruleResults {
-			if !ruleResults[i] {
-				allMatchingRule = false
-				break
+			allMatchingRule := true
+			for i := range ruleResults {
+				if !ruleResults[i] {
+					allMatchingRule = false
+					break
+				}
 			}
-		}
 
-		if allMatchingRule {
-			finaleResult = true
+			if allMatchingRule {
+				return true
+			}
 		}
 
 	}
 
-	return finaleResult
+	return false
 }

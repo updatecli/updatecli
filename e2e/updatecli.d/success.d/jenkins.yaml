@@ -1,8 +1,5 @@
-title: "Bump Jenkins stable version"
-
-scms:
-  local:
-    disabled: true
+name: "Bump Jenkins stable version"
+pipelineid: "e2e/jenkins"
 
 sources:
   getLatestJenkinsStable:

@@ -12,54 +12,24 @@ package github
 */
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"strings"
-	"text/template"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/truncate"
+
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
-
-// PULLREQUESTBODY is the template used as a Pull Request description
-// Please note that triple backticks are concatenated with the literals, as they cannot be escaped
-const PULLREQUESTBODY = `
-# {{ .Title }}
-
-{{ if .Introduction }}
-{{ .Introduction }}
-{{ end }}
-
-
-## Report
-
-{{ .Report }}
-
-## Changelog
-
-<details><summary>Click to expand</summary>
-
-` + "````\n{{ .Description }}\n````" + `
-
-</details>
-
-## Remark
-
-This pull request was automatically created using [Updatecli](https://www.updatecli.io).
-
-Please report any issues with this tool [here](https://github.com/updatecli/updatecli/issues/)
-
-`
 
 var (
 	ErrAutomergeNotAllowOnRepository = errors.New("automerge is not allowed on repository")
 	ErrBadMergeMethod                = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
 )
 
-// PullRequest contains multiple fields mapped to Github V4 api
+// PullRequest contains multiple fields mapped to GitHub V4 api
 type PullRequestApi struct {
 	BaseRefName string
 	Body        string
@@ -89,15 +59,17 @@ type ActionSpec struct {
 	MergeMethod string `yaml:",omitempty"`
 	// Specifies to use the Pull Request title as commit message when using auto merge, only works for "squash" or "rebase"
 	UseTitleForAutoMerge bool `yaml:",omitempty"`
+	// Specifies if a Pull Request should be sent to the parent of a fork.
+	Parent bool `yaml:",omitempty"`
 }
 
 type PullRequest struct {
 	gh                *Github
-	Description       string
 	Report            string
 	Title             string
 	spec              ActionSpec
 	remotePullRequest PullRequestApi
+	repository        *Repository
 }
 
 // isMergeMethodValid ensure that we specified a valid merge method.
@@ -138,16 +110,30 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 	}, err
 }
 
-func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) error {
+func (p *PullRequest) CreateAction(report reports.Action) error {
 
-	p.Description = changelog
-	p.Report = pipelineReport
-	p.Title = title
+	// One GitHub pullrequest body can contain multiple action report
+	// It would be better to refactor CreateAction
+	p.Report = report.ToActionsString()
+	p.Title = report.Title
+
+	if p.spec.Title != "" {
+		p.Title = p.spec.Title
+	}
+
+	repository, err := p.gh.queryRepository()
+	if err != nil {
+		return err
+	}
+
+	p.repository = repository
+
+	sourceBranch, workingBranch, _ := p.gh.GetBranches()
 
 	// Check if they are changes that need to be published otherwise exit
 	matchingBranch, err := p.gh.nativeGitHandler.IsSimilarBranch(
-		p.gh.HeadBranch,
-		p.gh.Spec.Branch,
+		workingBranch,
+		sourceBranch,
 		p.gh.GetDirectory())
 
 	if err != nil {
@@ -155,9 +141,7 @@ func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) erro
 	}
 
 	if matchingBranch {
-		logrus.Debugf("No changes detected between branches %q and %q, skipping pullrequest creation",
-			p.gh.HeadBranch,
-			p.gh.Spec.Branch)
+		logrus.Debugf("GitHub pullrequest not needed")
 
 		return nil
 	}
@@ -194,39 +178,6 @@ func (p *PullRequest) CreateAction(title, changelog, pipelineReport string) erro
 	return nil
 }
 
-// generatePullRequestBody generates the Pull Request's body based on PULLREQUESTBODY
-func (p *PullRequest) generatePullRequestBody() (string, error) {
-	t := template.Must(template.New("pullRequest").Parse(PULLREQUESTBODY))
-
-	buffer := new(bytes.Buffer)
-
-	type params struct {
-		Introduction string
-		Title        string
-		Report       string
-		Description  string
-	}
-
-	err := t.Execute(buffer, params{
-		Introduction: p.spec.Description,
-		Description:  p.Description,
-		Report:       p.Report,
-		Title:        p.Title,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	// GitHub Issues/PRs messages have a max size limit on the
-	// message body payload.
-	// `body is too long (maximum is 65536 characters)`.
-	// To avoid that, we ensure to cap the message to 65k chars.
-	const MAX_CHARACTERS_PER_MESSAGE = 65000
-
-	return truncate.String(buffer.String(), MAX_CHARACTERS_PER_MESSAGE), nil
-}
-
 // updatePullRequest updates an existing Pull Request.
 func (p *PullRequest) updatePullRequest() error {
 
@@ -258,7 +209,7 @@ func (p *PullRequest) updatePullRequest() error {
 
 	title := p.Title
 
-	bodyPR, err := p.generatePullRequestBody()
+	bodyPR, err := utils.GeneratePullRequestBody(p.spec.Description, p.Report)
 	if err != nil {
 		return err
 	}
@@ -266,6 +217,7 @@ func (p *PullRequest) updatePullRequest() error {
 	labelsID := []githubv4.ID{}
 	repositoryLabels, err := p.gh.getRepositoryLabels()
 	if err != nil {
+		logrus.Debugf("Error fetching repository labels: %s", err.Error())
 		return err
 	}
 
@@ -280,6 +232,7 @@ func (p *PullRequest) updatePullRequest() error {
 
 	remotePRLabels, err := p.GetPullRequestLabelsInformation()
 	if err != nil {
+		logrus.Debugf("Error fetching labels information: %s", err.Error())
 		return err
 	}
 
@@ -289,14 +242,18 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	input := githubv4.UpdatePullRequestInput{
-		PullRequestID: githubv4.String(p.remotePullRequest.ID),
+		PullRequestID: githubv4.ID(p.remotePullRequest.ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
-		LabelIDs:      &labelsID,
+	}
+
+	if len(p.spec.Labels) != 0 {
+		input.LabelIDs = &labelsID
 	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
+		logrus.Debugf("Error updating pull-request: %s", err.Error())
 		return err
 	}
 
@@ -324,7 +281,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
 	}
 
-	// The Github Api expects the merge method to be capital letter and don't allows empty value
+	// The GitHub Api expects the merge method to be capital letter and don't allows empty value
 	// hence the reason to set input.MergeMethod only if the value is not nil
 	if len(p.spec.MergeMethod) > 0 {
 		mergeMethod := githubv4.PullRequestMergeMethod(strings.ToUpper(p.spec.MergeMethod))
@@ -352,23 +309,24 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 func (p *PullRequest) OpenPullRequest() error {
 
 	/*
-		mutation($input: CreatePullRequestInput!){
-		  createPullRequest(input:$input){
-			pullRequest{
-			  url
-			}
-		  }
-		}
+	   mutation($input: CreatePullRequestInput!){
+	     createPullRequest(input:$input){
+	       pullRequest{
+	         url
+	       }
+	     }
+	   }
 
-		{
-		  "input":{
-			"baseRefName": "x" ,
-			"repositoryId":"y",
-			"headRefName": "z",
-			"title",
-			"body",
-		  }
-		}
+	   {
+	     "input":{
+	       "baseRefName": "x" ,
+	       "repositoryId":"y",
+	       "headRefName": "z",
+	       "headRepositoryId": "",
+	       "title",
+	       "body",
+	     }
+	   }
 
 
 	*/
@@ -378,28 +336,33 @@ func (p *PullRequest) OpenPullRequest() error {
 		} `graphql:"createPullRequest(input: $input)"`
 	}
 
-	repositoryID, err := p.gh.queryRepositoryID()
+	bodyPR, err := utils.GeneratePullRequestBody(p.spec.Description, p.Report)
 	if err != nil {
 		return err
 	}
 
-	bodyPR, err := p.generatePullRequestBody()
-	if err != nil {
-		return err
-	}
+	_, workingBranch, targetBranch := p.gh.GetBranches()
 
 	input := githubv4.CreatePullRequestInput{
-		BaseRefName:         githubv4.String(p.gh.Spec.Branch),
-		RepositoryID:        githubv4.String(repositoryID),
-		HeadRefName:         githubv4.String(p.gh.HeadBranch),
+		RepositoryID:        githubv4.String(p.repository.ID),
+		BaseRefName:         githubv4.String(targetBranch),
+		HeadRefName:         githubv4.String(workingBranch),
 		Title:               githubv4.String(p.Title),
 		Body:                githubv4.NewString(githubv4.String(bodyPR)),
 		MaintainerCanModify: githubv4.NewBoolean(githubv4.Boolean(!p.spec.MaintainerCannotModify)),
 		Draft:               githubv4.NewBoolean(githubv4.Boolean(p.spec.Draft)),
 	}
 
+	if p.spec.Parent {
+		input.RepositoryID = githubv4.String(p.repository.ParentID)
+		input.HeadRepositoryID = githubv4.NewID(p.repository.ID)
+	}
+
+	logrus.Debugf("Opening pull-request against repo %s", input.RepositoryID)
+
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
+		logrus.Infof("\nError creating pull request:\n\n\t%s\n\n", err.Error())
 		return err
 	}
 
@@ -469,22 +432,36 @@ func (p *PullRequest) getRemotePullRequest() error {
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
+	owner := githubv4.String(p.repository.Owner)
+	name := githubv4.String(p.repository.Name)
+
+	if p.spec.Parent {
+		owner = githubv4.String(p.repository.ParentOwner)
+		name = githubv4.String(p.repository.ParentName)
+	}
+
+	_, workingBranch, targetBranch := p.gh.GetBranches()
+
 	variables := map[string]interface{}{
-		"owner":       githubv4.String(p.gh.Spec.Owner),
-		"name":        githubv4.String(p.gh.Spec.Repository),
-		"baseRefName": githubv4.String(p.gh.Spec.Branch),
-		"headRefName": githubv4.String(p.gh.HeadBranch),
+		"owner":       owner,
+		"name":        name,
+		"baseRefName": githubv4.String(targetBranch),
+		"headRefName": githubv4.String(workingBranch),
 	}
 
 	err := p.gh.client.Query(context.Background(), &query, variables)
-
 	if err != nil {
+		logrus.Debugf("Error getting existing pull-request: %s", err.Error())
 		return err
 	}
 
 	if len(query.Repository.PullRequests.Nodes) > 0 {
 		p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
-		return nil
+		// If a remote pullrequest already exist, then we reuse its body to generate the final one
+		p.Report = reports.MergeFromString(p.Report, p.remotePullRequest.Body)
+		logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.ID)
+	} else {
+		logrus.Debugf("No existing pull-request found in repo: %s/%s", owner, name)
 	}
 
 	return nil
@@ -520,9 +497,17 @@ func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, e
 		  }
 	*/
 
+	owner := githubv4.String(p.repository.Owner)
+	repo := githubv4.String(p.repository.Name)
+
+	if p.spec.Parent {
+		owner = githubv4.String(p.repository.ParentOwner)
+		repo = githubv4.String(p.repository.ParentName)
+	}
+
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(p.gh.Spec.Owner),
-		"repository": githubv4.String(p.gh.Spec.Repository),
+		"owner":      owner,
+		"repository": repo,
 		"number":     githubv4.Int(p.remotePullRequest.Number),
 		"before":     (*githubv4.String)(nil),
 	}

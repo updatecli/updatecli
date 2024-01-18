@@ -1,7 +1,6 @@
 package dockerfile
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,7 @@ func TestSearchFiles(t *testing.T) {
 		expectedfiles []string
 	}{
 		{
-			name:    "Nonimal case",
+			name:    "Nominal case",
 			rootDir: "test/testdata/",
 			expectedfiles: []string{
 				"test/testdata/Dockerfile",
@@ -150,7 +149,7 @@ func TestExtractArgName(t *testing.T) {
 			expectedArgName:      "jenkins_version",
 			expectedSuffix:       "",
 			expectedError:        true,
-			expectedErrorMessage: errors.New("more than one variable detected in the Dockerfile instruction. Updatecli do not support this at the moment"),
+			expectedErrorMessage: ErrTooManyVariables,
 		},
 	}
 
@@ -159,7 +158,7 @@ func TestExtractArgName(t *testing.T) {
 			gotPrefix, gotArgName, gotSuffix, gotErr := extractArgName(tt.input)
 
 			if tt.expectedError {
-				assert.EqualError(t, tt.expectedErrorMessage, gotErr.Error())
+				assert.EqualError(t, gotErr, tt.expectedErrorMessage.Error())
 			} else {
 				assert.NoError(t, gotErr)
 				assert.Equal(t, tt.expectedPrefix, gotPrefix)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -77,9 +78,9 @@ func TestSource(t *testing.T) {
 			expectedError:        true,
 		},
 		{
-			name: "Failing case of retrieving latest non existing package using private registry",
+			name: "Failing case of retrieving latest nonexistent package using private registry",
 			spec: Spec{
-				Name: "axiosnotexisting",
+				Name: "axiosnonexistent",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "~0",
@@ -119,13 +120,14 @@ func TestSource(t *testing.T) {
 			if tt.mockedResponse {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode)
 			}
-			gotVersion, err := got.Source("")
+			gotResult := result.Source{}
+			err = got.Source("", &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedResult, gotVersion)
+			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}
 

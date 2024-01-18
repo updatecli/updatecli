@@ -7,24 +7,6 @@ import (
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 )
 
-// Spec defines settings used to interact with Gitea pullrequest
-// It's a mapping of user input from a Updatecli manifest and it shouldn't modified
-type Spec struct {
-	client.Spec
-	// SourceBranch specifies the pullrequest source branch
-	SourceBranch string `yaml:",inline,omitempty"`
-	// TargetBranch specifies the pullrequest target branch
-	TargetBranch string `yaml:",inline,omitempty"`
-	// Owner specifies repository owner
-	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
-	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// Title defines the Gitea pullrequest title.
-	Title string `yaml:",inline,omitempty"`
-	// Body defines the Gitea pullrequest body
-	Body string `yaml:",inline,omitempty"`
-}
-
 // Gitea contains information to interact with Gitea api
 type Gitea struct {
 	// spec contains inputs coming from updatecli configuration
@@ -101,5 +83,4 @@ func New(spec interface{}, scm *giteascm.Gitea) (Gitea, error) {
 	}
 
 	return g, nil
-
 }

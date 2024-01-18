@@ -6,16 +6,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
-// TODO: find a way to test when there are multiple files but only some are successful
 func TestFile_Condition(t *testing.T) {
 	tests := []struct {
 		name             string
 		spec             Spec
-		files            map[string]string
+		files            map[string]fileMetadata
 		inputSourceValue string
 		mockedContents   map[string]string
 		mockedError      error
@@ -30,8 +28,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Line: 3,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "current_version=1.2.3",
 			mockedContents: map[string]string{
@@ -47,8 +48,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Content: "Hello World",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "Hello World",
@@ -63,9 +67,15 @@ func TestFile_Condition(t *testing.T) {
 					"bar.txt",
 				},
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			wantedErr: true,
 		},
@@ -77,8 +87,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Content: "Hello World",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "1.2.3",
 			wantedErr:        true,
@@ -92,8 +105,11 @@ func TestFile_Condition(t *testing.T) {
 				MatchPattern:   "maven_(.*)",
 				ReplacePattern: "gradle_$1",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "1.2.3",
 			wantedErr:        true,
@@ -106,8 +122,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Line: 11,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "",
@@ -122,8 +141,11 @@ func TestFile_Condition(t *testing.T) {
 				},
 				Line: 3,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			mockedContents: map[string]string{
 				"foo.txt": "A first line\r\nAnother line\r\nSomething On The Specified Line",
@@ -131,39 +153,48 @@ func TestFile_Condition(t *testing.T) {
 			wantedResult: true,
 		},
 		{
-			name: "Failing case with non existing 'Line' specified",
+			name: "Failing case with nonexistent 'Line' specified",
 			spec: Spec{
 				Files: []string{
 					"foo.txt",
 				},
 				Line: 5,
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			wantedErr: true,
 		},
 		{
-			name: "Failing case with non existing 'Files'",
+			name: "Failing case with nonexistent 'Files'",
 			spec: Spec{
 				Files: []string{
 					"foo.txt",
 				},
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			wantedErr: true,
 		},
 		{
-			name: "Failing case with non existing URL as 'Files'",
+			name: "Failing case with nonexistent URL as 'Files'",
 			spec: Spec{
 				Files: []string{
 					"https://do.not.exists/foo",
 				},
 			},
-			files: map[string]string{
-				"https://do.not.exists/foo": "",
+			files: map[string]fileMetadata{
+				"https://do.not.exists/foo": {
+					originalPath: "https://do.not.exists/foo",
+					path:         "https://do.not.exists/foo",
+				},
 			},
 			mockedError: fmt.Errorf("URL %q not found or in error", "https://do.not.exists/foo"),
 			wantedErr:   true,
@@ -177,8 +208,11 @@ func TestFile_Condition(t *testing.T) {
 				Line:    2,
 				Content: "Not In All Files",
 			},
-			files: map[string]string{
-				"foo.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
@@ -197,9 +231,15 @@ func TestFile_Condition(t *testing.T) {
 				Line:    2,
 				Content: "Not In All Files",
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
@@ -219,9 +259,15 @@ func TestFile_Condition(t *testing.T) {
 				Line:    2,
 				Content: "In All Files",
 			},
-			files: map[string]string{
-				"foo.txt": "",
-				"bar.txt": "",
+			files: map[string]fileMetadata{
+				"foo.txt": {
+					originalPath: "foo.txt",
+					path:         "foo.txt",
+				},
+				"bar.txt": {
+					originalPath: "bar.txt",
+					path:         "bar.txt",
+				},
 			},
 			inputSourceValue: "",
 			mockedContents: map[string]string{
@@ -243,154 +289,13 @@ func TestFile_Condition(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, gotErr := f.Condition(tt.inputSourceValue)
+			gotResult, _, gotErr := f.Condition(tt.inputSourceValue, nil)
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return
 			}
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantedResult, gotResult)
-		})
-	}
-}
-
-func TestFile_ConditionFromSCM(t *testing.T) {
-	tests := []struct {
-		name             string
-		spec             Spec
-		files            map[string]string
-		scm              scm.ScmHandler
-		inputSourceValue string
-		mockedContents   map[string]string
-		mockedError      error
-		wantedContents   map[string]string
-		wantedResult     bool
-		wantedErr        bool
-	}{
-		{
-			name: "Passing case with both 'Line' and 'Content' specified, 'Files' with a relative path, and no source",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-				},
-				Content: "current_version=1.2.3",
-				Line:    3,
-			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			mockedContents: map[string]string{
-				"/tmp/foo.txt": "Title\nGood Bye\ncurrent_version=1.2.3",
-			},
-			wantedContents: map[string]string{
-				"/tmp/foo.txt": "Title\nGood Bye\ncurrent_version=1.2.3",
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Passing case with 'MatchPattern' specified",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-				},
-				MatchPattern: "current_version.*",
-			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			mockedContents: map[string]string{
-				"/tmp/foo.txt": "Title\nGood Bye\ncurrent_version=1.2.3",
-			},
-			wantedContents: map[string]string{
-				"/tmp/foo.txt": "Title\nGood Bye\ncurrent_version=1.2.3",
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Validation failure with 'ForceCreate' specified",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-				},
-				ForceCreate: true,
-			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "1.2.3",
-			wantedErr:        true,
-		},
-		{
-			name: "Validation failure with invalid 'Regexp' specified",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-				},
-				MatchPattern: "^^[[[",
-			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			inputSourceValue: "1.2.3",
-			wantedErr:        true,
-		},
-		{
-			name: "Failing case with non matching 'MatchPattern' specified",
-			spec: Spec{
-				Files: []string{
-					"foo.txt",
-				},
-				MatchPattern: "notMatching.*",
-			},
-			files: map[string]string{
-				"/tmp/foo.txt": "",
-			},
-			scm: &scm.MockScm{
-				WorkingDir: "/tmp",
-			},
-			mockedContents: map[string]string{
-				"/tmp/foo.txt": "Title\r\nGood Bye\r\nThe End",
-			},
-			wantedContents: map[string]string{
-				"/tmp/foo.txt": "Title\r\nGood Bye\r\nThe End",
-			},
-			wantedResult: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockedText := text.MockTextRetriever{
-				Contents: tt.mockedContents,
-			}
-			f := &File{
-				spec:             tt.spec,
-				contentRetriever: &mockedText,
-				files:            tt.files,
-			}
-
-			gotResult, gotErr := f.ConditionFromSCM(tt.inputSourceValue, tt.scm)
-			if tt.wantedErr {
-				assert.Error(t, gotErr)
-				return
-			}
-
-			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantedResult, gotResult)
-			for filePath := range tt.files {
-				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
-			}
 		})
 	}
 }

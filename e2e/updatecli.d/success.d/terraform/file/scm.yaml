@@ -1,0 +1,39 @@
+name: Test Terraform File plugin resource - SCM
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli-test/jenkins-infra-aws.git
+
+sources:
+  terraform-aws-modules-eks:
+    name: Get version from registry
+    kind: terraform/registry
+    spec:
+      type: module
+      namespace: terraform-aws-modules
+      name: eks
+      targetsystem: aws
+
+conditions:
+  using-value:
+    name: Condition using value
+    kind: terraform/file
+    scmid: default
+    disablesourceinput: true
+    spec:
+      file: cik8s-cluster.tf
+      path: module.cik8s.source
+      value: terraform-aws-modules/eks/aws
+
+
+targets:
+  update-file:
+    name: Update files content
+    kind: terraform/file
+    sourceid: terraform-aws-modules-eks
+    scmid: default
+    spec:
+      file: cik8s-cluster.tf
+      path: module.cik8s.version

@@ -73,6 +73,12 @@ func (c *Chart) validateVersionInc() []error {
 	for _, inc := range versionIncrement {
 
 		switch inc {
+		case AUTO:
+			if len(versionIncrement) > 1 {
+				errs = append(
+					errs, fmt.Errorf("rule %q is not compatible with others from %q",
+						inc, c.spec.VersionIncrement))
+			}
 		case MAJORVERSION:
 			err := isNotDuplicated(acceptedRules, inc)
 			if err != nil {
@@ -103,7 +109,7 @@ func (c *Chart) validateVersionInc() []error {
 			}
 			acceptedRules = append(acceptedRules, inc)
 		default:
-			errs = append(errs, fmt.Errorf("unrecognized increment rule %q, accepted values are a comma separated list of [major,minor,patch], or 'none' to disable version increment", inc))
+			errs = append(errs, fmt.Errorf("unrecognized increment rule %q, accepted values are a comma separated list of [major,minor,patch,auto], or 'none' to disable version increment", inc))
 		}
 	}
 

@@ -1,8 +1,6 @@
 package version
 
 import (
-	"errors"
-	"fmt"
 	"sort"
 
 	sv "github.com/Masterminds/semver/v3"
@@ -16,13 +14,6 @@ type Semver struct {
 	FoundVersion Version
 	Strict       bool
 }
-
-var (
-	// ErrNoVersionFound return a error when no version couldn't be found
-	ErrNoVersionFound error = errors.New("no version found")
-	// ErrNoVersionsFound return a error when the versions list is empty
-	ErrNoVersionsFound error = errors.New("versions list empty")
-)
 
 // Init creates a new semver object
 func (s *Semver) Init(versions []string) error {
@@ -49,7 +40,7 @@ func (s *Semver) Init(versions []string) error {
 		return nil
 	}
 
-	return fmt.Errorf("no valid semantic version found")
+	return ErrNoValidSemVerFound
 }
 
 // Sort re-order a list of versions with the newest version first

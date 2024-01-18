@@ -1,13 +1,13 @@
 ---
 linters-settings:
   depguard:
-    list-type: blacklist
-    packages:
-      - github.com/alecthomas/assert
-      - github.com/magiconair/properties/assert
-    packages-with-error-message:
-      - github.com/alecthomas/assert: "use github.com/stretchr/testify/assert"
-      - github.com/magiconair/properties/assert: "use github.com/stretchr/testify/assert"
+    rules:
+      main:
+        deny:
+          - pkg: "github.com/alecthomas/assert"
+            desc: not allowed
+          - pkg: "github.com/magiconair/properties/assert"
+            desc: not allowed
   dupl:
     threshold: 100
   exhaustive:

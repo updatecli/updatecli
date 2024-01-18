@@ -63,7 +63,7 @@ func getParentFromPom(doc *etree.Document) parentPom {
 		p.Packaging = elem.Text()
 	}
 
-	if elem := parent.FindElement("./relavivePath"); elem != nil {
+	if elem := parent.FindElement("./relativePath"); elem != nil {
 		p.RelativePath = elem.Text()
 	}
 

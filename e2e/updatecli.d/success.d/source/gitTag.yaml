@@ -1,8 +1,7 @@
-title: "Test new gitTag resource"
+name: "Test new gitTag resource"
+pipelineid: "e2e/gitTag"
 
 scms:
-  local:
-    disabled: true
   updatecli:
     kind: git
     spec:
@@ -18,10 +17,7 @@ sources:
     name: Get latest updatecli test
     kind: gittag
     spec:
-      # comment following test until dockerimage and semver versionfilter move out from experimental
-      # more ctx on https://github.com/updatecli/updatecli/pull/816
-
-      #versionfilter:
-      #  kind: semver
-      #  pattern: "~0.1"
+      versionfilter:
+        kind: semver
+        pattern: "~0.1"
     scmid: updatecli

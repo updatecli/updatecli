@@ -1,0 +1,5 @@
+vendors: 
+  - "Updatecli Project"
+
+descriptions: |
+  This is a test policy to validate that it works as expected.

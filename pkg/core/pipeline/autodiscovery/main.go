@@ -3,36 +3,52 @@ package autodiscovery
 import (
 	"fmt"
 
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/golang"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/npm"
 )
 
 var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
 	DefaultCrawlerSpecs = Config{
 		Crawlers: CrawlersConfig{
+			"cargo":         cargo.Spec{},
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
+			"golang/gomod":  golang.Spec{},
 			"helm":          helm.Spec{},
 			"helmfile":      helmfile.Spec{},
+			"terraform":     &terraform.Spec{},
 			"maven":         maven.Spec{},
+			"npm":           npm.Spec{},
 			"rancher/fleet": fleet.Spec{},
+			"updatecli":     updatecli.Spec{},
 		},
 	}
 	// AutodiscoverySpecs is a map of all Autodiscovery specification
 	AutodiscoverySpecsMapping = map[string]interface{}{
+		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
+		"golang/gomod":  golang.Spec{},
 		"helm":          &helm.Spec{},
 		"helmfile":      &helmfile.Spec{},
+		"terraform":     &terraform.Spec{},
 		"maven":         &maven.Spec{},
+		"npm":           &npm.Spec{},
 		"rancher/fleet": &fleet.Spec{},
+		"updatecli":     updatecli.Spec{},
 	}
 )
 
@@ -47,7 +63,6 @@ type AutoDiscovery struct {
 
 // New returns an initiated autodiscovery object
 func New(spec Config, workDir string) (*AutoDiscovery, error) {
-
 	var errs []error
 	var s Config
 
@@ -60,96 +75,144 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 		spec: s,
 	}
 
-	for kind := range s.Crawlers {
-
+	for kind := range g.spec.Crawlers {
 		if workDir == "" {
 			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
 		}
 
-		// Commenting for now while refactoring
 		switch kind {
-		case "dockercompose":
-
-			dockerComposeCrawler, err := dockercompose.New(
+		case "cargo":
+			cargoCrawler, err := cargo.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
 
-			g.crawlers = append(g.crawlers, dockerComposeCrawler)
+			g.crawlers = append(g.crawlers, cargoCrawler)
+
+		case "dockercompose":
+			crawler, err := dockercompose.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
 
 		case "dockerfile":
-
-			dockerfileCrawler, err := dockerfile.New(
+			crawler, err := dockerfile.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
 
-			g.crawlers = append(g.crawlers, dockerfileCrawler)
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "golang/gomod":
+			crawler, err := golang.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
 
 		case "helm":
-
-			helmCrawler, err := helm.New(
+			crawler, err := helm.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
 
-			g.crawlers = append(g.crawlers, helmCrawler)
+			g.crawlers = append(g.crawlers, crawler)
 
 		case "helmfile":
-
-			helmfileCrawler, err := helmfile.New(
+			crawler, err := helmfile.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
 
-			g.crawlers = append(g.crawlers, helmfileCrawler)
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "terraform":
+			crawler, err := terraform.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
 
 		case "maven":
-			mavenCrawler, err := maven.New(
+			crawler, err := maven.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
 
-			g.crawlers = append(g.crawlers, mavenCrawler)
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "npm":
+			crawler, err := npm.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
 
 		case "rancher/fleet":
-			fleetCrawler, err := fleet.New(
+			crawler, err := fleet.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
 
-			g.crawlers = append(g.crawlers, fleetCrawler)
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "updatecli":
+			crawler, err := updatecli.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
 
 		default:
 			logrus.Infof("Crawler of type %q is not supported", kind)
@@ -178,10 +241,7 @@ func (g *AutoDiscovery) Run() ([][]byte, error) {
 
 		logrus.Printf("Manifest detected: %d\n", len(discoveredManifests))
 		if len(discoveredManifests) > 0 {
-
-			for i := range discoveredManifests {
-				totalDiscoveredManifests = append(totalDiscoveredManifests, discoveredManifests[i])
-			}
+			totalDiscoveredManifests = append(totalDiscoveredManifests, discoveredManifests...)
 		}
 	}
 

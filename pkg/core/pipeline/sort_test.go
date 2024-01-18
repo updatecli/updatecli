@@ -322,7 +322,8 @@ var (
 
 func TestSortedSourcesKeys(t *testing.T) {
 
-	for _, data := range sortedKeysDataset {
+	for i := range sortedKeysDataset {
+		data := sortedKeysDataset[i]
 		// Test Source
 		gotSortedSourcesKeys, err := SortedSourcesKeys(&data.Conf.Sources)
 		if err != nil && data.ExpectedSourcesErr != nil {
@@ -363,7 +364,8 @@ func TestSortedSourcesKeys(t *testing.T) {
 
 func TestSortedConditionsKeys(t *testing.T) {
 
-	for _, data := range sortedKeysDataset {
+	for i := range sortedKeysDataset {
+		data := sortedKeysDataset[i]
 		// Test Source
 		gotSortedConditionsKeys, err := SortedConditionsKeys(&data.Conf.Conditions)
 
@@ -404,7 +406,8 @@ func TestSortedConditionsKeys(t *testing.T) {
 
 func TestSortedTargetsKeys(t *testing.T) {
 
-	for _, data := range sortedKeysDataset {
+	for i := range sortedKeysDataset {
+		data := sortedKeysDataset[i]
 		// Test Source
 		gotSortedTargetsKeys, err := SortedTargetsKeys(&data.Conf.Targets)
 

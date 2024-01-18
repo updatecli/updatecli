@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestShell_Target(t *testing.T) {
@@ -24,11 +25,11 @@ func TestShell_Target(t *testing.T) {
 		{
 			name:              "runs a target that does not change anything and no dryrun",
 			command:           "do_not_change.sh",
-			shell:             "/bin/bash",
+			shell:             bashShell,
 			source:            "1.2.3",
 			wantChanged:       false,
 			wantErr:           false,
-			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "do_not_change.sh 1.2.3"),
+			wantCommandInMock: bashShell + " " + wantedScriptFilename(t, "do_not_change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "",
@@ -41,7 +42,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       true,
 			wantErr:           false,
-			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
+			wantCommandInMock: bashShell + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "1.2.3",
@@ -55,7 +56,7 @@ func TestShell_Target(t *testing.T) {
 			source:            "1.2.3",
 			wantChanged:       false,
 			wantErr:           true,
-			wantCommandInMock: "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
+			wantCommandInMock: bashShell + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 2,
 				Stderr:   "Error: unable to change value to 1.2.3.",
@@ -81,16 +82,18 @@ func TestShell_Target(t *testing.T) {
 			err := s.InitChangedIf()
 			require.NoError(t, err)
 
-			gotChanged, err := s.Target(tt.source, tt.dryrun)
+			gotResult := result.Target{}
+
+			err = s.Target(tt.source, nil, tt.dryrun, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.False(t, gotChanged)
+				assert.False(t, gotResult.Changed)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantChanged, gotChanged)
+			assert.Equal(t, tt.wantChanged, gotResult.Changed)
 
 			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
 			for _, wantEnv := range tt.commandEnv {
@@ -123,14 +126,14 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			mockReturnedChangedFiles: []string{"pom.xml"},
 			wantMessage:              `ran shell command "change.sh 1.2.3"`,
 			wantErr:                  false,
-			wantCommandInMock:        "/bin/bash" + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
+			wantCommandInMock:        bashShell + " " + wantedScriptFilename(t, "change.sh 1.2.3"),
 			commandResult: commandResult{
 				ExitCode: 0,
 				Stdout:   "Changed value from 1.2.2 to 1.2.3.",
 			},
 			wantFilesChanged: []string{"pom.xml"},
 			commandEnv:       []string{"DRY_RUN=false"},
-			shell:            "/bin/bash",
+			shell:            bashShell,
 		},
 	}
 	for _, tt := range tests {
@@ -155,19 +158,20 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			err := s.InitChangedIf()
 			require.NoError(t, err)
 
-			gotChanged, gotFilesChanged, gotMessage, err := s.TargetFromSCM(tt.source, &ms, tt.dryrun)
+			gotResult := result.Target{}
+			err = s.Target(tt.source, &ms, tt.dryrun, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.False(t, gotChanged)
+				assert.False(t, gotResult.Changed)
 				return
 			}
 
 			require.NoError(t, err)
 
-			assert.Equal(t, len(tt.wantFilesChanged) > 0, gotChanged)
-			assert.Equal(t, tt.wantFilesChanged, gotFilesChanged)
-			assert.Equal(t, tt.wantMessage, gotMessage)
+			assert.Equal(t, len(tt.wantFilesChanged) > 0, gotResult.Changed)
+			assert.Equal(t, tt.wantFilesChanged, gotResult.Files)
+			assert.Equal(t, tt.wantMessage, gotResult.Description)
 
 			assert.Equal(t, tt.wantCommandInMock, mock.GotCommand.Cmd)
 			for _, wantEnv := range tt.commandEnv {

@@ -33,7 +33,7 @@ func TestCondition(t *testing.T) {
 		},
 		{
 			chart: Spec{
-				URL:     "https://example.com",
+				URL:     "https://charts.jenkins.io",
 				Name:    "jenkins",
 				Version: "999",
 			},
@@ -56,7 +56,7 @@ func TestCondition(t *testing.T) {
 		//		Name:    "upgrade-responder",
 		//		Version: "v9.9.9",
 		//	},
-		//	expected: false,
+		//	expected:             false,
 		//},
 	}
 
@@ -65,15 +65,18 @@ func TestCondition(t *testing.T) {
 			got, err := New(tt.chart)
 			require.NoError(t, err)
 
-			gotVersion, err := got.Condition("")
+			gotResult, _, gotErr := got.Condition("", nil)
 
 			switch tt.expectedError {
 			case true:
-				assert.Error(t, err)
+				if assert.Error(t, gotErr) {
+					assert.Equal(t, tt.expectedErrorMessage.Error(), gotErr.Error())
+				}
+				return
 			case false:
-				require.NoError(t, err)
+				require.NoError(t, gotErr)
 			}
-			assert.Equal(t, tt.expected, gotVersion)
+			assert.Equal(t, tt.expected, gotResult)
 		})
 	}
 }

@@ -7,12 +7,22 @@ import (
 
 	"github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/reports"
+	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
 // CreateAction opens a Pull Request on the Gitea server
-func (g *Gitea) CreateAction(title, changelog, pipelineReport string) error {
+func (g *Gitea) CreateAction(report reports.Action) error {
 
-	body := changelog + "\n" + pipelineReport
+	title := report.Title
+
+	// One Gitea pullrequest body can contain multiple action report
+	// It would be better to refactor CreateAction
+	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
+
+	if err != nil {
+		logrus.Warningf("something wrong happened while generating gitea pullrequest body: %s", err)
+	}
 
 	if len(g.spec.Body) > 0 {
 		body = g.spec.Body

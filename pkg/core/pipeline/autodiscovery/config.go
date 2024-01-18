@@ -2,13 +2,24 @@ package autodiscovery
 
 // Config defines autodiscovery parameters
 type Config struct {
-	// Crawlers defines a map of crawler configuration where the key represent the crawler type
+	/*
+		Crawlers defines a map of crawler configuration where the key represent the crawler type
+	*/
 	Crawlers CrawlersConfig `yaml:",omitempty"`
-	// ScmID specifies a scmid configuration to use to generate the manifest
+	/*
+		scmid is a unique identifier used to retrieve the scm configuration from the configuration file.
+	*/
 	ScmId string `yaml:",omitempty"`
-	// ActionId specifies an action configuration to use to generate the manifest
+	/*
+		actionid is a unique identifier used to retrieve the action configuration from the configuration file.
+	*/
 	ActionId string `yaml:",omitempty"`
-	// GroupBy specifies how to group pipeline. The Accepted is one of "all", "individual"
+	/*
+		groupby specifies how to group pipeline. The Accepted is one of "all", "individual". Default is "all"
+
+		default:
+			all
+	*/
 	GroupBy GroupBy
 	// !Deprecated in favor of `actionid`
 	PullrequestId string `yaml:",omitempty"`

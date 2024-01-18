@@ -7,11 +7,13 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
 	"github.com/shurcooL/githubv4"
+
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
@@ -21,43 +23,155 @@ import (
 
 // Spec represents the configuration input
 type Spec struct {
-	// Branch specifies which github branch to work on
+	/*
+		"branch" defines the git branch to work on.
+
+		compatible:
+			* scm
+
+		default:
+			main
+
+		remark:
+			depending on which resource references the GitHub scm, the behavior will be different.
+
+			If the scm is linked to a source or a condition (using scmid), the branch will be used to retrieve
+			file(s) from that branch.
+
+			If the scm is linked to target then Updatecli creates a new "working branch" based on the branch value.
+			The working branch created by Updatecli looks like "updatecli_<pipelineID>".
+			It is worth mentioning that it is not possible to by pass the working branch in the current situation.
+			For more information, please refer to the following issue:
+			https://github.com/updatecli/updatecli/issues/1139
+
+			If you need to push changes to a specific branch, you must use the plugin "git" instead of this
+
+	*/
 	Branch string `yaml:",omitempty"`
-	// Directory specifies where the github repository is cloned on the local disk
+	/*
+		"directory" defines the local path where the git repository is cloned.
+
+		compatible:
+			* scm
+
+		remark:
+			Unless you know what you are doing, it is recommended to use the default value.
+			The reason is that Updatecli may automatically clean up the directory after a pipeline execution.
+
+		default:
+			/tmp/updatecli/github/<owner>/<repository>
+	*/
 	Directory string `yaml:",omitempty"`
-	// Email specifies which emails to use when creating commits
+	/*
+		"email" defines the email used to commit changes.
+
+		compatible:
+			* scm
+
+		default:
+			default set to your global git configuration
+	*/
 	Email string `yaml:",omitempty"`
-	// Owner specifies repository owner
+	/*
+		"owner" defines the owner of a repository.
+
+		compatible:
+			* scm
+	*/
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
+	/*
+		repository specifies the name of a repository for a specific owner.
+
+		compatible:
+			* scm
+	*/
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// Token specifies the credential used to authenticate with
+	/*
+		"token" specifies the credential used to authenticate with GitHub API.
+
+		compatible:
+			* scm
+	*/
 	Token string `yaml:",omitempty" jsonschema:"required"`
-	// URL specifies the default github url in case of GitHub enterprise
+	/*
+		url specifies the default github url in case of GitHub enterprise
+
+		compatible:
+			* scm
+
+		default:
+			github.com
+	*/
 	URL string `yaml:",omitempty"`
-	// Username specifies the username used to authenticate with Github API
+	/*
+		"username" specifies the username used to authenticate with GitHub API.
+
+		compatible:
+			* scm
+
+		remark:
+			the token is usually enough to authenticate with GitHub API.
+	*/
 	Username string `yaml:",omitempty"`
-	// User specifies the user of the git commit messages
+	/*
+		"user" specifies the user associated with new git commit messages created by Updatecli
+
+		compatible:
+			* scm
+	*/
 	User string `yaml:",omitempty"`
-	// GPG key and passphrased used for commit signing
+	/*
+		"gpg" specifies the GPG key and passphrased used for commit signing
+
+		compatible:
+			* scm
+	*/
 	GPG sign.GPGSpec `yaml:",omitempty"`
-	// Force is used during the git push phase to run `git push --force`.
+	/*
+		"force" is used during the git push phase to run `git push --force`.
+
+		compatible:
+			* scm
+
+		default:
+			false
+	*/
 	Force bool `yaml:",omitempty"`
-	// CommitMessage represents conventional commit metadata as type or scope, used to generate the final commit message.
+	/*
+		"commitMessage" is used to generate the final commit message.
+
+		compatible:
+			* scm
+
+		remark:
+			it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
+	*/
 	CommitMessage commit.Commit `yaml:",omitempty"`
+	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
+	Submodules *bool `yaml:",omitempty"`
 }
 
-// Github contains settings to interact with Github
+// GitHub contains settings to interact with GitHub
 type Github struct {
 	// Spec contains inputs coming from updatecli configuration
-	Spec Spec
-	// HeadBranch is used when creating a temporary branch before opening a Pull Request
-	HeadBranch       string
+	Spec             Spec
+	pipelineID       string
 	client           GitHubClient
 	nativeGitHandler gitgeneric.GitHandler
+	mu               sync.RWMutex
 }
 
-// New returns a new valid Github object.
+// Repository contains GitHub repository data
+type Repository struct {
+	ID          string
+	Name        string
+	Owner       string
+	ParentID    string
+	ParentName  string
+	ParentOwner string
+}
+
+// New returns a new valid GitHub object.
 func New(s Spec, pipelineID string) (*Github, error) {
 	errs := s.Validate()
 
@@ -90,7 +204,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 
 	g := Github{
 		Spec:             s,
-		HeadBranch:       nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", pipelineID)),
+		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 	}
 
@@ -111,7 +225,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	return &g, nil
 }
 
-// Validate verifies if mandatory Github parameters are provided and return false if not.
+// Validate verifies if mandatory GitHub parameters are provided and return false if not.
 func (s *Spec) Validate() (errs []error) {
 	required := []string{}
 
@@ -179,6 +293,9 @@ func (gs *Spec) Merge(child interface{}) error {
 	if childGHSpec.Username != "" {
 		gs.Username = childGHSpec.Username
 	}
+	if childGHSpec.Submodules != nil {
+		gs.Submodules = gs.Submodules
+	}
 
 	return nil
 }
@@ -226,18 +343,41 @@ func (g *Github) setDirectory() {
 	}
 }
 
-func (g *Github) queryRepositoryID() (string, error) {
+func (g *Github) queryRepository() (*Repository, error) {
 	/*
-		query($owner: String!, $name: String!) {
-			repository(owner: $owner, name: $name){
-				id
-			}
-		}
+			   query($owner: String!, $name: String!) {
+			       repository(owner: $owner, name: $name){
+			           id
+			           name
+		               owner {
+		                   login
+		               }
+			           parent {
+		                   id
+		                   name
+		                   owner {
+		                       login
+		                   }
+			           }
+			       }
+			   }
 	*/
 
 	var query struct {
 		Repository struct {
-			ID string
+			ID    string
+			Name  string
+			Owner struct {
+				Login string
+			}
+
+			Parent *struct {
+				ID    string
+				Name  string
+				Owner struct {
+					Login string
+				}
+			}
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 
@@ -250,9 +390,26 @@ func (g *Github) queryRepositoryID() (string, error) {
 
 	if err != nil {
 		logrus.Errorf("err - %s", err)
-		return "", err
+		return nil, err
 	}
 
-	return query.Repository.ID, nil
+	parentID := ""
+	parentName := ""
+	parentOwner := ""
+	if query.Repository.Parent != nil {
+		parentID = query.Repository.Parent.ID
+		parentName = query.Repository.Parent.Name
+		parentOwner = query.Repository.Parent.Owner.Login
+	}
 
+	result := &Repository{
+		ID:          query.Repository.ID,
+		Name:        query.Repository.Name,
+		Owner:       query.Repository.Owner.Login,
+		ParentID:    parentID,
+		ParentName:  parentName,
+		ParentOwner: parentOwner,
+	}
+
+	return result, nil
 }

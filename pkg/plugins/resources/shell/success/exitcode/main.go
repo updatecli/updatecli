@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 type Spec struct {
@@ -71,22 +72,27 @@ func (s Spec) Validate() error {
 }
 
 // PreCommand defines operations needed to be executed before the shell command
-func (e *ExitCode) PreCommand() error {
+func (e *ExitCode) PreCommand(workingDir string) error {
 	return nil
 }
 
 // PostCommand defines operations needed to be executed after the shell command
-func (e *ExitCode) PostCommand() error {
+func (e *ExitCode) PostCommand(workingDir string) error {
 	return nil
 }
 
 // SourceResult defines the success criteria for a source using the shell resource
-func (e *ExitCode) SourceResult() (string, error) {
+func (e *ExitCode) SourceResult(resultSource *result.Source) error {
 	switch *e.exitCode {
 	case e.spec.Success:
-		return *e.output, nil
+		resultSource.Information = *e.output
+		resultSource.Result = result.SUCCESS
+		resultSource.Description = "shell command successfully executed"
+
+		return nil
+
 	default:
-		return "", fmt.Errorf("shell command failed. Expected exit code %d but got %d", e.spec.Success, *e.exitCode)
+		return fmt.Errorf("shell command failed. Expected exit code %d but got %d", e.spec.Success, *e.exitCode)
 	}
 }
 
@@ -104,9 +110,9 @@ func (e *ExitCode) ConditionResult() (bool, error) {
 func (e *ExitCode) TargetResult() (bool, error) {
 	switch *e.exitCode {
 	case e.spec.Success:
-		return true, nil
-	case e.spec.Warning:
 		return false, nil
+	case e.spec.Warning:
+		return true, nil
 	case e.spec.Failure:
 		return false, fmt.Errorf("shell command failed. Expected exit code %d but got %d", e.spec.Success, *e.exitCode)
 	default:

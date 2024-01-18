@@ -1,11 +1,11 @@
 ---
 archives:
-  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
       - goos: windows
         format: zip
@@ -14,6 +14,27 @@ archives:
       - LICENSE
       - completions/*
       - manpages/*
+
+aurs:
+  - homepage:  https://www.updatecli.io
+    description: A declarative dependency management command line tool.
+    maintainers:
+      - 'Olivier Vernin <olivier at vernin dot me>'
+      - 'Jonathan Neidel <aur at jneidel dot com>'
+    license: 'Apache'
+    private_key: '{{ .Env.AUR_KEY }}'
+    git_url: 'ssh://aur@aur.archlinux.org/updatecli-bin.git'
+    package: |-
+      # bin
+      install -Dm755 "./updatecli" "${pkgdir}/usr/bin/updatecli"
+      # license
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+      # completions
+      install -Dm644 "./completions/updatecli.bash" "${pkgdir}/usr/share/bash-completion/completions/updatecli"
+      install -Dm644 "./completions/updatecli.zsh" "${pkgdir}/usr/share/zsh/site-functions/_updatecli"
+      install -Dm644 "./completions/updatecli.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/updatecli.fish"
+      # man pages
+      install -Dm644 "./manpages/updatecli.1.gz" "${pkgdir}/usr/share/man/man1/updatecli.1.gz"
 
 before:
   hooks:
@@ -25,7 +46,7 @@ before:
 brews:
   - name: updatecli
     folder: Formula
-    tap:
+    repository:
       owner: updatecli
       name: homebrew-updatecli
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
@@ -107,13 +128,12 @@ dockers:
 
 docker_signs:
   - cmd: cosign
-    env:
-    - COSIGN_EXPERIMENTAL=1
     artifacts: manifests
     output: true
     args:
-    - 'sign'
-    - '${artifact}@${digest}'
+      - 'sign'
+      - '--yes'
+      - '${artifact}@${digest}'
 
 docker_manifests:
   - name_template: 'updatecli/updatecli:{{ .Tag }}'
@@ -181,14 +201,13 @@ sboms:
 
 signs:
   - cmd: cosign
-    env:
-    - COSIGN_EXPERIMENTAL=1
     certificate: '${artifact}.pem'
+    signature: "${artifact}.sig"
     output: true
     artifacts: checksum
     args:
       - sign-blob
+      - '--yes'
       - '--output-certificate=${certificate}'
       - '--output-signature=${signature}'
       - '${artifact}'
-

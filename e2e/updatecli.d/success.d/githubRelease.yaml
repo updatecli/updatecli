@@ -1,4 +1,4 @@
-name: Test Github Release
+name: Test GitHub Release
 
 sources:
   default:
@@ -10,7 +10,7 @@ sources:
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
   prerelease:
-    name: Get Latest Github Action Prelease
+    name: Get Latest GitHub Action Prelease
     kind: githubrelease
     spec:
       owner: updatecli

@@ -13,8 +13,10 @@ import (
 // Spec defines a specification for a "dockerfile" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// File specifies the dockerimage file such as Dockerfile
-	File string `yaml:"file,omitempty"`
+	// File specifies the dockerimage file path to use and is incompatible with Files
+	File string `yaml:",omitempty"`
+	// Files specifies the dockerimage file path(s) to use and is incompatible with File
+	Files []string `yaml:",omitempty"`
 	// Instruction specifies a DockerImage instruction such as ENV
 	Instruction types.Instruction `yaml:"instruction,omitempty"`
 	// Value specifies the value for a specified Dockerfile instruction.
@@ -26,6 +28,7 @@ type Dockerfile struct {
 	parser           types.DockerfileParser
 	spec             Spec
 	contentRetriever text.TextRetriever
+	files            []string
 }
 
 // New returns a reference to a newly initialized Dockerfile object from a Spec
@@ -43,10 +46,19 @@ func New(spec interface{}) (*Dockerfile, error) {
 		return nil, err
 	}
 
+	fileList := newSpec.Files
+	if newSpec.File != "" {
+		if len(newSpec.Files) > 0 {
+			return nil, fmt.Errorf("parsing error: spec.file and spec.files are mutually exclusive")
+		}
+		fileList = append(fileList, newSpec.File)
+	}
+
 	newResource := &Dockerfile{
 		spec:             newSpec,
 		parser:           newParser,
 		contentRetriever: &text.Text{},
+		files:            fileList,
 	}
 
 	return newResource, nil

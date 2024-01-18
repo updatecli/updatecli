@@ -5,38 +5,33 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Gitea) Condition(source string) (bool, error) {
-	releases, err := g.SearchReleases()
+func (g *Gitea) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
-	if len(g.spec.Tag) == 0 {
-		g.spec.Tag = source
+	if scm != nil {
+		logrus.Warningf("Condition not supported for the plugin Gitea Release")
 	}
 
+	releases, err := g.SearchReleases()
 	if err != nil {
-		logrus.Error(err)
-		return false, err
+		return false, "", fmt.Errorf("looking for Gitea release: %w", err)
+	}
+
+	release := source
+	if g.spec.Tag != "" {
+		release = g.spec.Tag
 	}
 
 	if len(releases) == 0 {
-		logrus.Infof("%s No Gitea release found. As a fallback you may be looking for git tags", result.ATTENTION)
-		return false, nil
+		return false, "", fmt.Errorf("no Gitea release found")
 	}
 
-	for _, release := range releases {
-		if release == g.spec.Tag {
-			logrus.Infof("%s Gitea Release tag %q found", result.SUCCESS, release)
-			return true, nil
+	for _, r := range releases {
+		if r == release {
+			return true, fmt.Sprintf("Gitea release %q found", release), nil
 		}
 	}
 
-	logrus.Infof("%s No Gitea Release tag found matching pattern %q", result.FAILURE, g.versionFilter.Pattern)
-	return false, nil
-
-}
-
-func (g *Gitea) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return false, fmt.Errorf("Condition not supported for the plugin Gitea Release")
+	return false, fmt.Sprintf("no Gitea Release tag found matching pattern %q", g.versionFilter.Pattern), nil
 }

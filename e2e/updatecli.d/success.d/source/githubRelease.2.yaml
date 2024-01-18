@@ -1,9 +1,6 @@
 ---
-title: Test source githubRelease
-
-scms:
-  local:
-    disabled: true
+name: Test source githubRelease
+pipelineid: e2e/githubRelease
 
 sources:
   helm:

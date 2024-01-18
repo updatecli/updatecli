@@ -12,6 +12,7 @@ import (
 )
 
 type imageRef struct {
+	Registry   string
 	Repository string
 	Tag        string
 }
@@ -47,22 +48,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 		chartRelativeMetadataPath := filepath.Dir(relativeFoundValueFile)
 		chartName := filepath.Base(chartRelativeMetadataPath)
 
-		// Test if the ignore rule based on path doesn't match
-		if len(h.spec.Ignore) > 0 && h.spec.Ignore.isMatchingIgnoreRule(h.rootDir, relativeFoundValueFile) {
-			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
-				chartName,
-				chartRelativeMetadataPath)
-			continue
-		}
-
-		// Test if the only rule based on path match
-		if len(h.spec.Only) > 0 && !h.spec.Only.isMatchingOnlyRule(h.rootDir, relativeFoundValueFile) {
-			logrus.Debugf("Ignoring Helm Chart %q from %q, as not matching rule(s)\n",
-				chartName,
-				chartRelativeMetadataPath)
-			continue
-		}
-
 		// Retrieve chart dependencies for each chart
 		values, err := getValuesFileContent(foundValueFile)
 		if err != nil {
@@ -74,8 +59,10 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 		}
 
 		type imageData struct {
+			registry           string
 			repository         string
 			tag                string
+			yamlRegistryPath   string
 			yamlRepositoryPath string
 			yamlTagPath        string
 		}
@@ -89,10 +76,12 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				continue
 			}
 			images = append(images, imageData{
+				registry:           values.Image.Registry,
 				repository:         values.Image.Repository,
 				tag:                values.Image.Tag,
-				yamlRepositoryPath: "image.repository",
-				yamlTagPath:        "image.tag",
+				yamlRegistryPath:   "$.image.registry",
+				yamlRepositoryPath: "$.image.repository",
+				yamlTagPath:        "$.image.tag",
 			})
 
 		}
@@ -105,19 +94,63 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}
 
 			images = append(images, imageData{
+				registry:           values.Images[id].Registry,
 				repository:         values.Images[id].Repository,
 				tag:                values.Images[id].Tag,
-				yamlRepositoryPath: fmt.Sprintf("images.%s.repository", id),
-				yamlTagPath:        fmt.Sprintf("images.%s.tag", id),
+				yamlRegistryPath:   fmt.Sprintf("$.images.%s.registry", id),
+				yamlRepositoryPath: fmt.Sprintf("$.images.%s.repository", id),
+				yamlTagPath:        fmt.Sprintf("$.images.%s.tag", id),
 			})
 
 		}
 
 		for _, image := range images {
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(image.repository, image.tag, h.spec.Auths)
 
+			// Compose the container source considering the registry and repository
+			var imageSource string
+			if image.registry == "" {
+				imageSource = image.repository
+			} else {
+				imageSource = strings.Join([]string{
+					strings.Trim(image.registry, "/"),
+					strings.Trim(image.repository, "/"),
+				}, "/")
+			}
+
+			imageSourceSlug := strings.ReplaceAll(imageSource, "/", "_")
+
+			// Try to be smart by detecting the best versionfilter
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageSource, image.tag, h.spec.Auths)
 			if sourceSpec == nil {
 				continue
+			}
+
+			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
+			if !h.spec.VersionFilter.IsZero() {
+				sourceSpec.VersionFilter.Kind = h.versionFilter.Kind
+				sourceSpec.VersionFilter.Pattern, err = h.versionFilter.GreaterThanPattern(image.tag)
+				sourceSpec.TagFilter = ""
+
+				if err != nil {
+					logrus.Debugf("building version filter pattern: %s", err)
+					sourceSpec.VersionFilter.Pattern = "*"
+				}
+			}
+
+			// Test if the ignore rule based on path is respected
+			if len(h.spec.Ignore) > 0 {
+				if h.spec.Ignore.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", sourceSpec.Image, sourceSpec.Tag) {
+					logrus.Debugf("Ignoring container version update from file %q, as matching ignore rule(s)\n", relativeFoundValueFile)
+					continue
+				}
+			}
+
+			// Test if the only rule based on path is respected
+			if len(h.spec.Only) > 0 {
+				if !h.spec.Only.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", sourceSpec.Image, sourceSpec.Tag) {
+					logrus.Debugf("Ignoring container version update from %q, as not matching only rule(s)\n", relativeFoundValueFile)
+					continue
+				}
 			}
 
 			tmpl, err := template.New("manifest").Parse(containerManifest)
@@ -127,43 +160,55 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}
 
 			params := struct {
-				ManifestName               string
-				ConditionID                string
-				ConditionKey               string
-				ConditionValue             string
-				ConditionName              string
-				SourceID                   string
-				SourceName                 string
-				SourceVersionFilterKind    string
-				SourceVersionFilterPattern string
-				SourceImageName            string
-				SourceTagFilter            string
-				TargetName                 string
-				TargetID                   string
-				TargetKey                  string
-				TargetFile                 string
-				TargetChartName            string
-				File                       string
-				ScmID                      string
+				ManifestName                string
+				HasRegistry                 bool
+				ConditionRegistryID         string
+				ConditionRegistryKey        string
+				ConditionRegistryName       string
+				ConditionRegistryValue      string
+				ConditionRepositoryID       string
+				ConditionRepositoryKey      string
+				ConditionRepositoryName     string
+				ConditionRepositoryValue    string
+				SourceID                    string
+				SourceName                  string
+				SourceVersionFilterKind     string
+				SourceVersionFilterPattern  string
+				SourceImageName             string
+				SourceTagFilter             string
+				TargetName                  string
+				TargetID                    string
+				TargetKey                   string
+				TargetFile                  string
+				TargetChartName             string
+				TargetChartVersionIncrement string
+				File                        string
+				ScmID                       string
 			}{
-				ManifestName:               fmt.Sprintf("Bump Docker image %q for Helm chart %q", image.repository, chartName),
-				ConditionID:                image.repository,
-				ConditionKey:               image.yamlRepositoryPath,
-				ConditionName:              fmt.Sprintf("Ensure container repository %q is specified", image.repository),
-				ConditionValue:             image.repository,
-				SourceID:                   image.repository,
-				SourceName:                 fmt.Sprintf("Get latest %q container tag", image.repository),
-				SourceVersionFilterKind:    sourceSpec.VersionFilter.Kind,
-				SourceVersionFilterPattern: sourceSpec.VersionFilter.Pattern,
-				SourceImageName:            sourceSpec.Image,
-				SourceTagFilter:            sourceSpec.TagFilter,
-				TargetName:                 fmt.Sprintf("Bump container image tag for image %q in chart %q", image.repository, chartName),
-				TargetID:                   image.repository,
-				TargetKey:                  image.yamlTagPath,
-				TargetChartName:            chartRelativeMetadataPath,
-				TargetFile:                 filepath.Base(foundValueFile),
-				File:                       relativeFoundValueFile,
-				ScmID:                      h.scmID,
+				ManifestName:                fmt.Sprintf("Bump Docker image %q for Helm chart %q", imageSource, chartName),
+				HasRegistry:                 image.registry != "",
+				ConditionRegistryID:         imageSourceSlug + "-registry",
+				ConditionRegistryKey:        image.yamlRegistryPath,
+				ConditionRegistryName:       fmt.Sprintf("Ensure container registry %q is specified", image.registry),
+				ConditionRegistryValue:      image.registry,
+				ConditionRepositoryID:       imageSourceSlug + "-repository",
+				ConditionRepositoryKey:      image.yamlRepositoryPath,
+				ConditionRepositoryName:     fmt.Sprintf("Ensure container repository %q is specified", image.repository),
+				ConditionRepositoryValue:    image.repository,
+				SourceID:                    imageSourceSlug,
+				SourceName:                  fmt.Sprintf("Get latest %q container tag", imageSource),
+				SourceVersionFilterKind:     sourceSpec.VersionFilter.Kind,
+				SourceVersionFilterPattern:  sourceSpec.VersionFilter.Pattern,
+				SourceImageName:             sourceSpec.Image,
+				SourceTagFilter:             sourceSpec.TagFilter,
+				TargetName:                  fmt.Sprintf("Bump container image tag for image %q in chart %q", imageSource, chartName),
+				TargetID:                    imageSourceSlug,
+				TargetKey:                   image.yamlTagPath,
+				TargetChartName:             chartRelativeMetadataPath,
+				TargetChartVersionIncrement: h.spec.VersionIncrement,
+				TargetFile:                  filepath.Base(foundValueFile),
+				File:                        relativeFoundValueFile,
+				ScmID:                       h.scmID,
 			}
 
 			manifest := bytes.Buffer{}

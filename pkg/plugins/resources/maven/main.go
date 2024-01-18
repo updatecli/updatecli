@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 var (
@@ -34,6 +35,8 @@ type Spec struct {
 	ArtifactID string `yaml:",omitempty"`
 	// Specifies the maven artifact version
 	Version string `yaml:",omitempty"`
+	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
 // Maven defines a resource of kind "maven"
@@ -76,7 +79,7 @@ func New(spec interface{}) (*Maven, error) {
 
 		newResource.metadataHandlers = append(
 			newResource.metadataHandlers,
-			mavenmetadata.New(u.String()))
+			mavenmetadata.New(u.String(), newSpec.VersionFilter))
 
 		return newResource, nil
 	}
@@ -95,16 +98,16 @@ func New(spec interface{}) (*Maven, error) {
 
 		newResource.metadataHandlers = append(
 			newResource.metadataHandlers,
-			mavenmetadata.New(u.String()))
+			mavenmetadata.New(u.String(), newSpec.VersionFilter))
 	}
 
-	mavenCentrallNotFound, err := isRepositoriesContainsMavenCentral(newSpec.Repositories)
+	mavenCentralNotFound, err := isRepositoriesContainsMavenCentral(newSpec.Repositories)
 
 	if err != nil {
 		return &Maven{}, err
 	}
 
-	if !mavenCentrallNotFound {
+	if !mavenCentralNotFound {
 		u, err := url.Parse(MavenCentralRepository)
 		if err != nil {
 			return &Maven{}, err
@@ -114,7 +117,7 @@ func New(spec interface{}) (*Maven, error) {
 
 		newResource.metadataHandlers = append(
 			newResource.metadataHandlers,
-			mavenmetadata.New(u.String()))
+			mavenmetadata.New(u.String(), newSpec.VersionFilter))
 	}
 
 	return newResource, nil
@@ -129,7 +132,7 @@ func (m Maven) Validate() error {
 	errs := []error{}
 
 	if len(m.spec.Repository) > 0 && len(m.spec.Repositories) > 0 {
-		errs = append(errs, fmt.Errorf("parameter %q and %q are mutually exclusif",
+		errs = append(errs, fmt.Errorf("parameter %q and %q are mutually exclusive",
 			"repository",
 			"repositories"))
 	}

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
 )
 
 func TestCondition(t *testing.T) {
@@ -82,7 +82,7 @@ func TestCondition(t *testing.T) {
 			},
 			expectedResult:   false,
 			wantErr:          true,
-			expectedErrorMsg: errors.New("could not find value for query \".doNotExist\" from file \"testdata/data.csv\""),
+			expectedErrorMsg: errors.New("running query: could not find value for query \".doNotExist\" from file \"testdata/data.csv\""),
 		},
 	}
 
@@ -93,15 +93,16 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := c.Condition("")
+			got, _, gotErr := c.Condition("", nil)
 
 			if tt.wantErr {
-				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
-			} else {
-				require.NoError(t, err)
+				require.Error(t, gotErr)
+				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())
+				return
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.expectedResult, got)
 		})
 	}
 }

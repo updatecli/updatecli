@@ -42,8 +42,7 @@ func TestNew(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			// Only 1 architecture: there is an option for the platform
-			wantRemoteOptionsSize: 2,
+			wantRemoteOptionsSize: 1,
 		},
 		{
 			name: "Normal case with default (implicit) architecture",
@@ -56,7 +55,7 @@ func TestNew(t *testing.T) {
 				},
 			},
 			wantSpec: Spec{
-				Architectures: []string{"amd64"},
+				Architectures: nil,
 				Image:         "ghcr.io/updatecli/updatecli",
 				Tag:           "0.15.0",
 				InlineKeyChain: docker.InlineKeyChain{
@@ -68,8 +67,7 @@ func TestNew(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			// Only 1 architecture: there is an option for the platform
-			wantRemoteOptionsSize: 2,
+			wantRemoteOptionsSize: 1,
 		},
 		{
 			name: "Normal case with multiple architectures",
@@ -95,7 +93,6 @@ func TestNew(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			// Multiple architectures: there is NO option for the platform
 			wantRemoteOptionsSize: 1,
 		},
 		{
@@ -122,8 +119,7 @@ func TestNew(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			// Only 1 architecture: there is an option for the platform
-			wantRemoteOptionsSize: 2,
+			wantRemoteOptionsSize: 1,
 		},
 		{
 			name: "Invalid Spec provided (no password but username)",

@@ -1,27 +1,26 @@
 package csv
 
 import (
-	"github.com/sirupsen/logrus"
+	"fmt"
+	"strings"
+
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (c *CSV) Condition(source string) (bool, error) {
-	return c.ConditionFromSCM(source, nil)
-}
-
-func (c *CSV) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	conditionResult := true
+func (c *CSV) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	rootDir := ""
 	if scm != nil {
 		rootDir = scm.GetDirectory()
 	}
 
+	conditionResult := true
+	messages := []string{}
+
 	for i := range c.contents {
 
 		if err := c.contents[i].Read(rootDir); err != nil {
-			return false, err
+			return false, "", fmt.Errorf("reading csv file: %w", err)
 		}
 
 		// Override value from source if not yet defined
@@ -35,16 +34,14 @@ func (c *CSV) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) 
 		switch len(c.spec.Query) > 0 {
 		case true:
 			queryResults, err = c.contents[i].MultipleQuery(c.spec.Query)
-
 			if err != nil {
-				return false, err
+				return false, "", fmt.Errorf("running queries: %w", err)
 			}
 
 		case false:
 			queryResult, err := c.contents[i].Query(c.spec.Key)
-
 			if err != nil {
-				return false, err
+				return false, "", fmt.Errorf("running query: %w", err)
 			}
 
 			queryResults = []string{queryResult}
@@ -53,24 +50,21 @@ func (c *CSV) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) 
 		for _, queryResult := range queryResults {
 			switch queryResult == c.spec.Value {
 			case true:
-				logrus.Infof("%s Key %q, from file %q, is correctly set to %q'",
-					result.SUCCESS,
+				messages = append(messages, fmt.Sprintf("\nkey %q, from file %q, is correctly set to %q",
 					c.spec.Key,
 					c.contents[i].FilePath,
-					c.spec.Value)
+					c.spec.Value))
 
 			case false:
 				conditionResult = false
-				logrus.Infof("%s Key %q, from file %q, is incorrectly set to %q and should be %q",
-					result.ATTENTION,
+				messages = append(messages, fmt.Sprintf("\nkey %q, from file %q, is incorrectly set to %q and should be %q",
 					c.spec.Key,
 					c.contents[i].FilePath,
 					queryResult,
-					c.spec.Value)
+					c.spec.Value))
 			}
 		}
-
 	}
-	return conditionResult, nil
 
+	return conditionResult, strings.Join(messages, "\n"), nil
 }

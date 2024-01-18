@@ -3,14 +3,16 @@ package checksum
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 type Spec struct {
 	// Files specifies the list of file that Updatecli monitors to identify state change
-	Files []string
+	Files []string `yaml:",omitempty" jsonschema:"required"`
 }
 
 type Checksum struct {
@@ -61,23 +63,33 @@ func (s Spec) Validate() error {
 }
 
 // PreCommand defines operations needed to be executed before the shell command
-func (c *Checksum) PreCommand() error {
+func (c *Checksum) PreCommand(workingDir string) error {
 	for _, filename := range c.spec.Files {
-		c.preCommandMonitoredFiles[filename] = getChecksum(filename)
+		switch filepath.IsAbs(filename) {
+		case true:
+			c.preCommandMonitoredFiles[filename] = getChecksum(filename)
+		case false:
+			c.preCommandMonitoredFiles[filename] = getChecksum(filepath.Join(workingDir, filename))
+		}
 	}
 	return nil
 }
 
 // PostCommand defines operations needed to be executed after the shell command
-func (c *Checksum) PostCommand() error {
+func (c *Checksum) PostCommand(workingDir string) error {
 	for _, filename := range c.spec.Files {
-		c.postCommandMonitoredFiles[filename] = getChecksum(filename)
+		switch filepath.IsAbs(filename) {
+		case true:
+			c.postCommandMonitoredFiles[filename] = getChecksum(filename)
+		case false:
+			c.postCommandMonitoredFiles[filename] = getChecksum(filepath.Join(workingDir, filename))
+		}
 	}
 	return nil
 }
 
 // SourceResult defines the success criteria for a source using the shell resource
-func (c *Checksum) SourceResult() (string, error) {
+func (c *Checksum) SourceResult(resultSource *result.Source) error {
 	var missingFiles []string
 
 	changed := false
@@ -105,14 +117,18 @@ func (c *Checksum) SourceResult() (string, error) {
 		for i := range missingFiles {
 			logrus.Debugf("Missing files %q", missingFiles[i])
 		}
-		return *c.output, fmt.Errorf("missing monitored file checksum")
+		return fmt.Errorf("missing monitored file checksum")
 	}
 
 	if changed {
-		return *c.output, fmt.Errorf("monitored checksum changed")
+		return fmt.Errorf("monitored checksum changed")
 	}
 
-	return *c.output, nil
+	resultSource.Information = *c.output
+	resultSource.Result = result.SUCCESS
+	resultSource.Description = "monitored file checksum didn't changed"
+
+	return nil
 }
 
 // ConditionResult defines the success criteria for a condition using the shell resource

@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
 )
 
@@ -64,14 +65,15 @@ func TestSource(t *testing.T) {
 				},
 			}
 
-			got, gotErr := sut.Source(tt.workingDir)
+			gotResult := result.Source{}
+			gotErr := sut.Source(tt.workingDir, &gotResult)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, gotResult.Information)
 		})
 	}
 }

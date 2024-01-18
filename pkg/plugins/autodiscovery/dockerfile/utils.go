@@ -142,6 +142,10 @@ func searchInstructions(dockerfileContent []byte) ([]instruction, error) {
 			case true:
 				_, argName, _, err := extractArgName(platform)
 				if err != nil {
+					if errors.Is(err, ErrTooManyVariables) {
+						logrus.Debugf("%q instruction contains too many variables, which we can use in a reliable way", FromInstruction)
+						continue
+					}
 					logrus.Warningln(err)
 					continue
 				}
@@ -161,6 +165,10 @@ func searchInstructions(dockerfileContent []byte) ([]instruction, error) {
 				prefix, argName, suffix, err := extractArgName(value)
 
 				if err != nil {
+					if errors.Is(err, ErrTooManyVariables) {
+						logrus.Debugf("%q instruction contains too many variables, which we can use in a reliable way", FromInstruction)
+						continue
+					}
 					logrus.Warningln(err)
 					continue
 				}
@@ -245,7 +253,7 @@ func extractArgName(value string) (prefix, argName, suffix string, err error) {
 	founds := regexVariableName.FindAllStringSubmatch(value, -1)
 
 	if len(founds) > 1 {
-		err = errors.New("more than one variable detected in the Dockerfile instruction. Updatecli do not support this at the moment")
+		err = ErrTooManyVariables
 		return
 	}
 

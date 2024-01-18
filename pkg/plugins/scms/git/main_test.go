@@ -72,6 +72,9 @@ func TestSanitizeDirectoryName(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
+	trueValue := true
+	falseValue := false
+
 	tests := []struct {
 		name     string
 		spec     Spec
@@ -161,6 +164,28 @@ func TestMerge(t *testing.T) {
 				CommitMessage: commit.Commit{
 					Title: "Bye",
 				},
+			},
+		},
+		{
+			name: "Passing case with submodules overridden when not defined in source",
+			spec: Spec{},
+			children: Spec{
+				Submodules: &trueValue,
+			},
+			want: Spec{
+				Submodules: &trueValue,
+			},
+		},
+		{
+			name: "Passing case with submodules overridden when defined in source",
+			spec: Spec{
+				Submodules: &falseValue,
+			},
+			children: Spec{
+				Submodules: &trueValue,
+			},
+			want: Spec{
+				Submodules: &trueValue,
 			},
 		},
 		{

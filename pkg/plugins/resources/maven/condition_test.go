@@ -81,14 +81,14 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			got, gotErr := sut.Condition(tt.source)
+			gotResult, _, gotErr := sut.Condition(tt.source, nil)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return
 			}
 
 			require.NoError(t, gotErr)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, gotResult)
 		})
 	}
 }

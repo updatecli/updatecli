@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
 )
 
 func TestCondition(t *testing.T) {
@@ -85,15 +85,15 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, err := j.Condition("")
+			got, _, gotErr := j.Condition("", nil)
 
 			if tt.wantErr {
-				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
+				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())
 			} else {
-				require.NoError(t, err)
+				require.NoError(t, gotErr)
 			}
 
-			assert.Equal(t, tt.expectedResult, gotResult)
+			assert.Equal(t, tt.expectedResult, got)
 		})
 	}
 }

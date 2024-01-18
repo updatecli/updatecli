@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -120,7 +121,8 @@ func TestSanitizeBranchName(t *testing.T) {
 func TestTagsIntegration(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
-	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir)
+	withSubmodules := true
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -145,6 +147,72 @@ func TestTagsIntegration(t *testing.T) {
 	os.Remove(workingDir)
 }
 
+// Test that we can correctly retrieve a list of tag refs from a remote git repository
+// and that it's correctly ordered, starting with the oldest tag
+func TestTagRefsIntegration(t *testing.T) {
+	g := GoGit{}
+	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
+	withSubmodules := true
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules)
+	if err != nil {
+		t.Errorf("Don't expect error: %q", err)
+	}
+	defer os.RemoveAll(workingDir)
+
+	refs, err := g.TagRefs(workingDir)
+	if err != nil {
+		t.Errorf("Don't expect error: %q", err)
+	}
+
+	expectedRef := DatedTag{
+		When: time.Unix(1582144213, 0).In(time.FixedZone("", 1*60*60*1)), //tz "+0100"
+		Name: "v0.0.1",
+		Hash: "d0812d972468d97a3b7e70699f977854cfb83892",
+	}
+	found := false
+
+	// Test that the first tag from array is also the oldest one
+	if refs[0] == expectedRef {
+		found = true
+	}
+
+	if !found {
+		t.Errorf("Expected ref %v to be %v", expectedRef, refs[0])
+	}
+	os.Remove(workingDir)
+}
+
+// Test that we can correctly retrieve tag hashes from a remote git repository
+// and that it's correctly ordered, starting with the oldest tag
+func TestHashesIntegration(t *testing.T) {
+	g := GoGit{}
+	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
+	withSubmodules := true
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules)
+	if err != nil {
+		t.Errorf("Don't expect error: %q", err)
+	}
+	defer os.RemoveAll(workingDir)
+
+	hashes, err := g.TagHashes(workingDir)
+	if err != nil {
+		t.Errorf("Don't expect error: %q", err)
+	}
+
+	expectedHash := "d0812d972468d97a3b7e70699f977854cfb83892"
+	found := false
+
+	// Test that the first tag from array is also the oldest one
+	if hashes[0] == expectedHash {
+		found = true
+	}
+
+	if !found {
+		t.Errorf("Expected tag %q to be found in %q", expectedHash, hashes)
+	}
+	os.Remove(workingDir)
+}
+
 func TestGoGit_RemoteURLs(t *testing.T) {
 	cwd, _ := os.Getwd()
 
@@ -164,7 +232,7 @@ func TestGoGit_RemoteURLs(t *testing.T) {
 		},
 		{
 			name:       "failing test with non-existing directory",
-			workingDir: "/notexisting",
+			workingDir: "/nonexistent",
 			wantErr:    true,
 		},
 	}
@@ -185,4 +253,50 @@ func TestGoGit_RemoteURLs(t *testing.T) {
 			assert.NotEmpty(t, gotRemotes["origin"])
 		})
 	}
+}
+
+// Test that we can correctly retrieve submodule content from a remote git repository
+func TestSubmodulesEnabledContent(t *testing.T) {
+	g := GoGit{}
+	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli-submodules")
+	withSubmodules := true
+	err := g.Clone("", "", "https://github.com/updatecli-test/updatecli-submodules.git", workingDir, &withSubmodules)
+	if err != nil {
+		t.Errorf("Don't expect error: %q", err)
+	}
+	defer os.RemoveAll(workingDir)
+
+	checkFiles := []string{
+		"nocode/README.md",
+		"cargo-lab/Cargo.toml",
+	}
+
+	for _, file := range checkFiles {
+		assert.FileExists(t, filepath.Join(workingDir, file))
+	}
+
+	os.Remove(workingDir)
+}
+
+// Test that we can correctly retrieve submodule content from a remote git repository
+func TestSubmodulesDisabledContent(t *testing.T) {
+	g := GoGit{}
+	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli-submodules")
+	withSubmodules := false
+	err := g.Clone("", "", "https://github.com/updatecli-test/updatecli-submodules.git", workingDir, &withSubmodules)
+	if err != nil {
+		t.Errorf("Don't expect error: %q", err)
+	}
+	defer os.RemoveAll(workingDir)
+
+	checkFiles := []string{
+		"nocode/README.md",
+		"cargo-lab/Cargo.toml",
+	}
+
+	for _, file := range checkFiles {
+		assert.NoFileExists(t, filepath.Join(workingDir, file))
+	}
+
+	os.Remove(workingDir)
 }

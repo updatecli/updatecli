@@ -23,7 +23,7 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 
 	for _, id := range sortedConditionsKeys {
 		// Update pipeline before each condition run
-		err = p.Config.Update(p)
+		err = p.Update()
 		if err != nil {
 			globalResult = false
 			return globalResult, err
@@ -32,9 +32,8 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 		condition := p.Conditions[id]
 		condition.Config = p.Config.Spec.Conditions[id]
 
-		rpt := p.Report.Conditions[id]
-		// Update report name as the condition configuration might has been updated (templated values)
-		rpt.Name = condition.Config.Name
+		// Ensure the result named contains the up to date condition name after templating
+		condition.Result.Name = condition.Config.ResourceConfig.Name
 
 		logrus.Infof("\n%s\n", id)
 		logrus.Infof("%s\n", strings.Repeat("-", len(id)))
@@ -45,16 +44,13 @@ func (p *Pipeline) RunConditions() (globalResult bool, err error) {
 			logrus.Error(err)
 		}
 
-		// Reports the result of the execution of this condition
-		rpt.Result = condition.Result
-
 		// If there was an error OR if the condition is not successful then defines the global result as false
-		if err != nil || condition.Result != result.SUCCESS {
+		if err != nil || condition.Result.Result != result.SUCCESS {
 			globalResult = false
 		}
 
 		p.Conditions[id] = condition
-		p.Report.Conditions[id] = rpt
+		p.Report.Conditions[id] = &condition.Result
 
 	}
 

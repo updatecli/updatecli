@@ -46,8 +46,9 @@ func New(spec interface{}) (*XML, error) {
 	return &x, err
 }
 
-func (x *XML) Read() error {
-	textContent, err := x.contentRetriever.ReadAll(x.spec.File)
+// Read reads the file content
+func (x *XML) Read(filename string) error {
+	textContent, err := x.contentRetriever.ReadAll(filename)
 	if err != nil {
 		return err
 	}
@@ -55,6 +56,7 @@ func (x *XML) Read() error {
 	return nil
 }
 
+// Validate checks if the Spec is correctly defined
 func (x *XML) Validate() (err error) {
 	errs := x.spec.Validate()
 

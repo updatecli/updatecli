@@ -1,0 +1,44 @@
+name: Test Dockerfile condition and target
+pipelineid: "e2e/dockerfile"
+
+sources:
+  appVersion:
+    kind: shell
+    spec:
+      command: echo 1.0.0
+
+conditions:
+  checkForArgAppVersionForLinux:
+    kind: dockerfile
+    spec:
+      file: e2e/updatecli.d/success.d/dockerfile/Dockerfile
+      instruction:
+        keyword: "ARG"
+        matcher: "APP_VERSION"
+  checkForArgAppVersionForWindows:
+    kind: dockerfile
+    spec:
+      files:
+        - e2e/updatecli.d/success.d/dockerfile/Dockerfile.nanoserver
+        - e2e/updatecli.d/success.d/dockerfile/Dockerfile.windowscore
+      instruction:
+        keyword: "ARG"
+        matcher: "APP_VERSION"
+
+targets:
+  setAppVersionForLinux:
+    kind: dockerfile
+    spec:
+      file: e2e/updatecli.d/success.d/dockerfile/Dockerfile
+      instruction:
+        keyword: "ARG"
+        matcher: "APP_VERSION"
+  setAppVersionForWindows:
+    kind: dockerfile
+    spec:
+      files:
+        - e2e/updatecli.d/success.d/dockerfile/Dockerfile.nanoserver
+        - e2e/updatecli.d/success.d/dockerfile/Dockerfile.windowscore
+      instruction:
+        keyword: "ARG"
+        matcher: "APP_VERSION"

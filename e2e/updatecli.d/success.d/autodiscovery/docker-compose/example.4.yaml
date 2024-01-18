@@ -1,0 +1,16 @@
+name: "Docker compose autodiscovery using git scm"
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli/updatemonitor.git
+      branch: main
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  crawlers:
+    dockercompose:
+      versionfilter:
+        kind: semver
+        pattern: majoronly

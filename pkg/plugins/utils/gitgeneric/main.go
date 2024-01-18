@@ -19,22 +19,137 @@ import (
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+const (
+	DefaultRemoteReferenceName = "origin"
+)
+
 type GitHandler interface {
 	Add(files []string, workingDir string) error
-	Checkout(username, password, branch, remoteBranch, workingDir string) error
-	Clone(username, password, URL, workingDir string) error
-	Commit(user, email, message, workingDir string, signingKey string, passprase string) error
+	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error
+	Clone(username, password, URL, workingDir string, withSubmodules *bool) error
+	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	GetChangedFiles(workingDir string) ([]string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)
+	IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
+	NewBranch(branch, workingDir string) (bool, error)
 	Push(username string, password string, workingDir string, force bool) error
 	PushTag(tag string, username string, password string, workingDir string, force bool) error
+	PushBranch(branch string, username string, password string, workingDir string, force bool) error
 	RemoteURLs(workingDir string) (map[string]string, error)
 	SanitizeBranchName(branch string) string
 	Tags(workingDir string) (tags []string, err error)
+	TagHashes(workingDir string) (hashes []string, err error)
+	TagRefs(workingDir string) (refs []DatedTag, err error)
+	Branches(workingDir string) (branches []string, err error)
 }
 
 type GoGit struct {
+}
+
+/*
+IsLocalBranchPublished checks if the local working branch, contains any changes which should be published.
+
+  - `git diff` is not yet supported by the go-git library.
+    https://github.com/go-git/go-git/issues/36
+
+We retrieve:
+  - the latest commit from the local working branch
+  - the latest commit from the base branch
+  - the latest commit from the remote working branch if it exists.
+
+Based on those three information we decide if local changes should be published.
+
+If local working branch == local base branch and no remote working branch
+=> This means that base branch and working are similar so nothing need to be pushed
+
+If local working branch == local base branch != remote working branch
+=> This means that at some point the remote branch diverge from base branch
+
+If local working branch == local base branch == remote working branch
+=> This means that everything is up to date
+
+returns true if both the remote and local reference are similar.
+*/
+func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error) {
+
+	logrus.Debugln("Checking if local changes have been done that should be published")
+
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything excepted an empty string
+		Password: password,
+	}
+
+	// Check if base branch and working branch have the same reference
+	matching, err := g.IsSimilarBranch(baseBranch, workingBranch, workingDir)
+	if err != nil {
+		return false, err
+	}
+
+	gitRepository, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return false, err
+	}
+
+	workingBranchReferenceName := workingBranch
+	//
+	rem, err := gitRepository.Remote(DefaultRemoteReferenceName)
+	if err != nil {
+		logrus.Errorf("reference %q - %s", workingBranchReferenceName, err)
+		return false, err
+	}
+
+	listOptions := git.ListOptions{}
+	if !isAuthEmpty(&auth) {
+		listOptions.Auth = &auth
+	}
+
+	remoteRefs, err := rem.List(&listOptions)
+	if err != nil {
+		return false, err
+	}
+
+	var workingBranchRef *plumbing.Reference
+	var remoteRef *plumbing.Reference
+
+	workingBranchRef, err = gitRepository.Reference(plumbing.NewBranchReferenceName(workingBranchReferenceName), true)
+	if err != nil {
+		return false, err
+	}
+
+	// Looking for remote branch hash
+	for id := range remoteRefs {
+		if remoteRefs[id].Name().IsBranch() {
+			// We are looking for the remote branch matching the local one
+			if remoteRefs[id].Name().Short() != workingBranchReferenceName {
+				continue
+			}
+
+			remoteRef = remoteRefs[id]
+
+			// Local branch matches the remote one which means that local one is already
+			// up to date. Nothing else to do
+			if remoteRef.Hash().String() == workingBranchRef.Hash().String() {
+				return true, nil
+			}
+			break
+		}
+	}
+
+	if remoteRef == nil && matching {
+		/*
+			if there is no remote branch, and the local working
+			branch equal the base branch then it means that nothing changed
+		*/
+		return true, nil
+	}
+
+	/*
+		There is no way to git log between two branches at the moment using go-git
+		https://github.com/go-git/go-git/issues/69
+	*/
+
+	return false, nil
 }
 
 // IsSimilarBranch checks that the last commits of the two branches are similar then return
@@ -60,11 +175,12 @@ func (g GoGit) IsSimilarBranch(a, b, workingDir string) (bool, error) {
 	}
 
 	if refA.Hash().String() == refB.Hash().String() {
+		logrus.Debugf("no changes detected between branches %q and %q",
+			a, b)
 		return true, nil
 	}
 
 	return false, nil
-
 }
 
 func (g GoGit) GetChangedFiles(workingDir string) ([]string, error) {
@@ -131,7 +247,7 @@ func (g GoGit) Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir string) error {
+func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error {
 
 	logrus.Debugf("stage: git-checkout\n\n")
 
@@ -150,6 +266,18 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		logrus.Debugln(err)
 		return err
 	}
+
+	//// Retrieve local branch
+	//head, err := r.Head()
+	//if err != nil {
+	//	return err
+	//}
+
+	//if head.Name().IsBranch() {
+	//	if head.Name().Short() == branch {
+	//		return nil
+	//	}
+	//}
 
 	b := bytes.Buffer{}
 
@@ -188,8 +316,74 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 		Force:  true,
 	})
 
-	if err == plumbing.ErrReferenceNotFound {
-		// Checkout source branch without creating it yet
+	switch err {
+	case nil:
+		/*
+			Means that a local branch named remoteBranch already exist
+			so we want to be sure that the local branch is
+			aligned with the remote one.
+		*/
+
+		remote, err := r.Remote(DefaultRemoteReferenceName)
+		if err != nil {
+			return err
+		}
+
+		listOptions := git.ListOptions{}
+
+		if !isAuthEmpty(&auth) {
+			listOptions.Auth = &auth
+		}
+
+		refs, err := remote.List(&listOptions)
+
+		if err != nil {
+			return err
+		}
+
+		if !g.exists(
+			plumbing.NewBranchReferenceName(remoteBranch),
+			refs) {
+			logrus.Debugf("No remote name %q", remoteBranch)
+			return nil
+		}
+
+		remoteBranchRef := plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, remoteBranch)
+
+		remoteRef, err := r.Reference(remoteBranchRef, true)
+
+		if err != nil {
+			return err
+		}
+
+		if forceReset {
+			err = w.Reset(&git.ResetOptions{
+				Commit: remoteRef.Hash(),
+				Mode:   git.HardReset,
+			})
+
+			if err != nil {
+				logrus.Debugln(err)
+				return err
+			}
+		}
+
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(remoteBranch),
+			Create: false,
+			Keep:   false,
+			Force:  true,
+		})
+
+		if err != nil {
+			logrus.Debugln(err)
+			return err
+		}
+
+	case plumbing.ErrReferenceNotFound:
+		/*
+			Checkout source branch without creating it yet
+		*/
 
 		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
 
@@ -219,69 +413,9 @@ func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir str
 			return err
 		}
 
-	} else if err != plumbing.ErrReferenceNotFound && err != nil {
+	default:
 		logrus.Debugln(err)
 		return err
-	} else {
-
-		// Means that a local branch named remoteBranch already exist
-		// so we want to be sure that the local branch is
-		// aligned with the remote one.
-
-		remote, err := r.Remote("origin")
-		if err != nil {
-			return err
-		}
-
-		listOptions := git.ListOptions{}
-
-		if !isAuthEmpty(&auth) {
-			listOptions.Auth = &auth
-		}
-
-		refs, err := remote.List(&listOptions)
-
-		if err != nil {
-			return err
-		}
-
-		if !g.exists(
-			plumbing.NewBranchReferenceName(remoteBranch),
-			refs) {
-			logrus.Debugf("No remote name %q", remoteBranch)
-			return nil
-		}
-
-		remoteBranchRef := plumbing.NewRemoteReferenceName("origin", remoteBranch)
-
-		remoteRef, err := r.Reference(remoteBranchRef, true)
-
-		if err != nil {
-			return err
-		}
-
-		err = w.Reset(&git.ResetOptions{
-			Commit: remoteRef.Hash(),
-			Mode:   git.HardReset,
-		})
-
-		if err != nil {
-			logrus.Debugln(err)
-			return err
-		}
-
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(remoteBranch),
-			Create: false,
-			Keep:   false,
-			Force:  true,
-		})
-
-		if err != nil {
-			logrus.Debugln(err)
-			return err
-		}
-
 	}
 
 	return nil
@@ -297,7 +431,7 @@ func (g GoGit) exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bo
 }
 
 // Commit run `git commit`.
-func (g GoGit) Commit(user, email, message, workingDir string, signingKey string, passprase string) error {
+func (g GoGit) Commit(user, email, message, workingDir string, signingKey string, passphrase string) error {
 
 	logrus.Debugf("stage: git-commit\n\n")
 
@@ -331,7 +465,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 	logrus.Debugf("status: %q\n", status)
 
 	if len(signingKey) > 0 {
-		key, err := sign.GetCommitSignKey(signingKey, passprase)
+		key, err := sign.GetCommitSignKey(signingKey, passphrase)
 		if err != nil {
 			return err
 		}
@@ -353,7 +487,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 }
 
 // Clone run `git clone`.
-func (g GoGit) Clone(username, password, URL, workingDir string) error {
+func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool) error {
 
 	logrus.Debugf("stage: git-clone\n\n")
 
@@ -364,11 +498,16 @@ func (g GoGit) Clone(username, password, URL, workingDir string) error {
 		Password: password,
 	}
 
+	submodule := git.DefaultSubmoduleRecursionDepth
+	if withSubmodules != nil && !*withSubmodules {
+		submodule = git.NoRecurseSubmodules
+	}
+
 	var b bytes.Buffer
 	cloneOptions := git.CloneOptions{
 		URL:               URL,
 		Progress:          &b,
-		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+		RecurseSubmodules: submodule,
 	}
 
 	if !isAuthEmpty(&auth) {
@@ -551,27 +690,77 @@ func (g GoGit) SanitizeBranchName(branch string) string {
 	return branch
 }
 
-// Tags return a list of git tags ordered by creation time
-func (g GoGit) Tags(workingDir string) (tags []string, err error) {
+// TagHashes returns a list of the commit hashes for git tags ordered by creation time
+func (g GoGit) TagHashes(workingDir string) (hashes []string, err error) {
+	refs, err := g.TagRefs(workingDir)
+	if err != nil {
+		logrus.Errorf("problem finding tag references for %q, err: %s", workingDir, err)
+		return hashes, err
+	}
+
+	// Extract the list of tag hashes (ordered by time)
+	for _, ref := range refs {
+		hashes = append(hashes, ref.Hash)
+	}
+
+	logrus.Debugf("got tags: %v", hashes)
+
+	if len(hashes) == 0 {
+		err = errors.New("no tag found")
+		return hashes, err
+	}
+
+	return hashes, err
+
+}
+
+// Tags returns a list of the names for git tags ordered by creation time
+func (g GoGit) Tags(workingDir string) (names []string, err error) {
+	refs, err := g.TagRefs(workingDir)
+	if err != nil {
+		logrus.Errorf("problem finding tag references for %q, err: %s", workingDir, err)
+		return names, err
+	}
+
+	// Extract the list of tag names (ordered by time)
+	for _, ref := range refs {
+		names = append(names, ref.Name)
+	}
+
+	logrus.Debugf("got tags: %v", names)
+
+	if len(names) == 0 {
+		err = errors.New("no tag found")
+		return names, err
+	}
+
+	return names, err
+}
+
+type DatedTag struct {
+	When time.Time
+	Name string
+	Hash string
+}
+
+// TagRefs returns a list of git tags ordered by creation time
+func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
 		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
 		return tags, err
 	}
-
 	tagrefs, err := r.Tags()
 	if err != nil {
 		return tags, err
 	}
 
-	type DatedTag struct {
-		when time.Time
-		name string
-	}
 	listOfDatedTags := []DatedTag{}
 
 	err = tagrefs.ForEach(func(tagRef *plumbing.Reference) error {
-		revision := plumbing.Revision(tagRef.Name().String())
+		// cfr https://github.com/updatecli/updatecli/issues/1392
+		// using reference hash instead of reference name
+		revision := plumbing.Revision(tagRef.Hash().String())
 		tagCommitHash, err := r.ResolveRevision(revision)
 		if err != nil {
 			return err
@@ -585,8 +774,9 @@ func (g GoGit) Tags(workingDir string) (tags []string, err error) {
 		listOfDatedTags = append(
 			listOfDatedTags,
 			DatedTag{
-				name: tagRef.Name().Short(),
-				when: commit.Committer.When,
+				Name: tagRef.Name().Short(),
+				Hash: tagRef.Hash().String(),
+				When: commit.Committer.When,
 			},
 		)
 
@@ -598,28 +788,15 @@ func (g GoGit) Tags(workingDir string) (tags []string, err error) {
 
 	if len(listOfDatedTags) == 0 {
 		err = errors.New("no tag found")
-		return []string{}, err
+		return []DatedTag{}, err
 	}
 
 	// Sort tags by time
 	sort.Slice(listOfDatedTags, func(i, j int) bool {
-		return listOfDatedTags[i].when.Before(listOfDatedTags[j].when)
+		return listOfDatedTags[i].When.Before(listOfDatedTags[j].When)
 	})
 
-	// Extract the list of tags names (ordered by time)
-	for _, datedTag := range listOfDatedTags {
-		tags = append(tags, datedTag.name)
-	}
-
-	logrus.Debugf("got tags: %v", tags)
-
-	if len(tags) == 0 {
-		err = errors.New("no tag found")
-		return tags, err
-	}
-
-	return tags, err
-
+	return listOfDatedTags, err
 }
 
 // NewTag create a tag then return a boolean to indicate if
@@ -675,7 +852,7 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 
 	b := bytes.Buffer{}
 	po := &git.PushOptions{
-		RemoteName: "origin",
+		RemoteName: DefaultRemoteReferenceName,
 		Progress:   &b,
 		RefSpecs:   []config.RefSpec{refspec},
 	}
@@ -691,10 +868,10 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 
 	if err != nil {
 		if err == git.NoErrAlreadyUpToDate {
-			logrus.Info("origin remote was up to date, no push done")
+			logrus.Infof("%q remote was up to date, no push done", DefaultRemoteReferenceName)
 			return nil
 		}
-		logrus.Infof("push to remote origin error: %s", err)
+		logrus.Infof("push to remote %q error: %s", DefaultRemoteReferenceName, err)
 		return err
 	}
 

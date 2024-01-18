@@ -1,0 +1,16 @@
+name: "Updatecli autodiscovery using git scm"
+scms:
+  default:
+    kind: git 
+    spec:
+      url: https://github.com/updatecli/website.git
+      branch: master
+    
+autodiscovery:
+  scmid: default
+  crawlers:
+    updatecli:
+      versionfilter:
+#        kind: semver
+#        pattern: majoronly
+

@@ -58,7 +58,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "docker-compose.yaml",
-									Key:  "services.jenkins-lts.image",
+									Key:  "$.services.jenkins-lts.image",
 								},
 								Transformers: transformer.Transformers{
 									transformer.Transformer{
@@ -95,7 +95,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Kind: "yaml",
 								Spec: yaml.Spec{
 									File: "docker-compose.yaml",
-									Key:  "services.jenkins-weekly.image",
+									Key:  "$.services.jenkins-weekly.image",
 								},
 								Transformers: transformer.Transformers{
 									transformer.Transformer{

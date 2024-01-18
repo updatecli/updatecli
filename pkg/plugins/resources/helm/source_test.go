@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // TestSource is an integration tests that test that retrieving source value effectively works
@@ -78,7 +79,8 @@ func TestSource(t *testing.T) {
 			got, err := New(tt.chart)
 			require.NoError(t, err)
 
-			gotVersion, err := got.Source("")
+			gotResult := result.Source{}
+			err = got.Source("", &gotResult)
 
 			switch tt.expectedError {
 			case true:
@@ -86,7 +88,7 @@ func TestSource(t *testing.T) {
 			case false:
 				require.NoError(t, err)
 			}
-			assert.Equal(t, tt.expected, gotVersion)
+			assert.Equal(t, tt.expected, gotResult.Information)
 		})
 	}
 }

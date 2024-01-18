@@ -157,7 +157,7 @@ func TestAutoGuess(t *testing.T) {
 			},
 		},
 		{
-			name:       "Passing case with with existing github config  and a github repository (HTTPS URL)",
+			name:       "Passing case with existing github config  and a github repository (HTTPS URL)",
 			workingDir: "/tmp",
 			configUnderTest: Config{
 				Kind: "github",
@@ -217,7 +217,7 @@ func TestAutoGuess(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:       "Failing case with with existing git config  and a github repository (HTTPS URL)",
+			name:       "Failing case with existing git config  and a github repository (HTTPS URL)",
 			workingDir: "/tmp",
 			configUnderTest: Config{
 				Kind: "git",

@@ -1,0 +1,23 @@
+name: "Cargo compose autodiscovery using git scm"
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli-test/cargo-lab.git
+      branch: "main"
+  private-registry:
+    kind: git
+    spec:
+      url: "https://github.com/updatecli-test/fake-cargo-registry.git"
+      branch: "main"
+    
+autodiscovery:
+  scmid: default
+  crawlers:
+    cargo:
+      registries:
+        fake-private-git:
+          scmid: private-registry
+        fake-private-http:
+          url: "https://updatecli-test.github.io/fake-cargo-registry/api/v1/crates"
+

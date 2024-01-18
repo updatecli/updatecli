@@ -1,0 +1,2 @@
+FROM mcr.microsoft.com/windows/server:ltsc2022
+ARG APP_VERSION=1.0.0

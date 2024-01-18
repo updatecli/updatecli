@@ -32,7 +32,7 @@ conditions:
       url: "codeberg.org"
       owner: "updatecli"
       repository: "updatecli-action"
-      tag: "v2.15.0"
+      tag: "v2.15.2"
     failwhen: true
   sourcedefault:
     kind: "gitea/tag"

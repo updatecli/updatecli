@@ -7,22 +7,18 @@ import (
 )
 
 // Condition tests if the provided command (concatenated with the source) is executed with success
-func (s *Shell) Condition(source string) (bool, error) {
-	return s.condition(source, "")
-}
+func (s *Shell) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+	var workingDir string
+	if scm != nil {
+		workingDir = scm.GetDirectory()
+	}
 
-// ConditionFromSCM tests if the provided command (concatenated with the source) is executed with success from the SCM root directory
-func (s *Shell) ConditionFromSCM(source string, scm scm.ScmHandler) (bool, error) {
-	return s.condition(source, scm.GetDirectory())
-}
-
-func (s *Shell) condition(source, workingDir string) (bool, error) {
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
-	err := s.spec.Environments.Load()
+	err = s.spec.Environments.Load()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 
 	// Provides the "UPDATECLI_PIPELINE_STAGE" environment variable set to "condition"
@@ -34,14 +30,14 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		Value: "condition",
 	})
 
-	err = s.success.PreCommand()
+	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 
 	scriptFilename, err := newShellScript(s.appendSource(source))
 	if err != nil {
-		return false, fmt.Errorf("failed initializing source script - %s", err)
+		return false, "", fmt.Errorf("failed initializing source script - %s", err)
 	}
 
 	err = s.executeCommand(command{
@@ -50,13 +46,22 @@ func (s *Shell) condition(source, workingDir string) (bool, error) {
 		Env: env.ToStringSlice(),
 	})
 	if err != nil {
-		return false, fmt.Errorf("failed while running condition script - %s", err)
+		return false, "", fmt.Errorf("failed while running condition script - %s", err)
 	}
 
-	err = s.success.PostCommand()
+	err = s.success.PostCommand(s.getWorkingDirPath(workingDir))
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 
-	return s.success.ConditionResult()
+	ok, err := s.success.ConditionResult()
+	if err != nil {
+		return false, "", err
+	}
+
+	if ok {
+		return true, fmt.Sprintf("shell condition of type %q, passing", s.spec.ChangedIf.Kind), nil
+	}
+
+	return false, fmt.Sprintf("shell condition of type %q not passing", s.spec.ChangedIf.Kind), nil
 }

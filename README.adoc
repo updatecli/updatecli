@@ -1,11 +1,11 @@
 = Updatecli
 
+link:https://matrix.to/#/#Updatecli_community:gitter.im[image:https://img.shields.io/matrix/updatecli:matrix.org[]]
 link:https://github.com/updatecli/updatecli/blob/main/LICENSE[image:https://img.shields.io/github/license/updatecli/updatecli[GitHub]]
 link:https://goreportcard.com/report/github.com/updatecli/updatecli[image:https://goreportcard.com/badge/github.com/updatecli/updatecli[Go Report Card]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/total[GitHub Releases]]
 link:https://github.com/updatecli/updatecli/releases[image:https://img.shields.io/github/downloads/updatecli/updatecli/latest/total[GitHub Releases]]
 link:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main[image:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main[GitHub Workflow Status]]
-link:https://gitter.im/Updatecli/community#[image:https://img.shields.io/gitter/room/updatecli/community[Gitter]]
 link:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli[image:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli/badge[OpenSSF Scorecard]]
 link:https://bestpractices.coreinfrastructure.org/projects/6731[image:https://bestpractices.coreinfrastructure.org/projects/6731/badge[OpenSSF Best Practices]]
 
@@ -50,14 +50,15 @@ You can download/copy the three files 'checksums.txt.pem', 'checksums.txt.sig', 
 Once you have the three files locally, you can execute the following command
 
 ```
-COSIGN_EXPERIMENTAL=1 cosign verify-blob --cert checksums.txt.pem --signature checksums.txt.sig checksums.txt
+cosign verify-blob --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' --cert https://github.com/updatecli/updatecli/releases/download/v0.71.0/checksums.txt.pem --signature https://github.com/updatecli/updatecli/releases/download/v0.71.0/checksums.txt.sig checksums.txt
 ```
-A successful output looks like 
+
+A successful output looks like
 
 ```
-tlog entry verified with uuid: 73f57e4c16b830ccb615e00814a3481a33365bf48f9bba1c1588886b3344d0ec index: 9085154
 Verified OK
 ```
+
 
 Now you can verify the assets checksum integrity.
 
@@ -65,6 +66,7 @@ Now you can verify the assets checksum integrity.
 
 Before verifying the file integrity, you should first verify the checksum file signature.
 Once you've download both the checksums.txt and your binary, you can verify the integrity of your file by running:
+
 ```
 sha256sum --ignore-missing -c checksums.txt
 ```
@@ -72,9 +74,9 @@ sha256sum --ignore-missing -c checksums.txt
 **Verify Container signature**
 
 ```
-docker pull updatecli/updatecli:vx.y.z
-cosign verify updatecli/updatecli@sha256:<image_digest> 
+cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.71.0
 ```
+
 == Documentation
 
 The documentation of Updatecli is available at link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io], but you can also look at the `examples` section to get an overview.
@@ -90,7 +92,7 @@ Our objective is to know if the Jenkins project published a new stable version, 
 |===
 |```
 ## updatecli.yaml
-title: Update Jenkins Version
+name: Update Jenkins Version
 
 scms:
   default:
@@ -113,7 +115,7 @@ sources:
 
 conditions:
   docker:
-    name: "Test if Docker Image Published on Registry"
+    name: "Test if Docker Image jenkins/jenkins is Published on DockerHub"
     kind: dockerimage
     spec:
       image: jenkins/jenkins
@@ -121,12 +123,12 @@ conditions:
 
 targets:
   bumpJenkins:
-    name: jenkins/jenkins docker tag
+    name: Update values.yaml to the latest Jenkins version
     scmID: default
     kind: yaml
     spec:
       file: charts/jenkins/values.yaml
-      key: jenkins.controller.imageTag
+      key: $.jenkins.controller.imageTag
 
 actions:
   default:
@@ -153,7 +155,7 @@ Is there a docker image "jenkins/jenkins" from Dockerhub with the tag "2.335" +
 => Yes then proceed otherwise abort +
 
 . Targets: +
-Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the Github repository olblak/charts to "2.335"? +
+Do we have to update the key "jenkins.controller.imageTag" from file "./charts/jenkins/values.yaml" located on the GitHub repository olblak/charts to "2.335"? +
 => If yes then execute the action `default` opening a GitHub pull request to the "main" branch
 
 |===
@@ -181,6 +183,9 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 
 * 2022
 ** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video]
+* 2023
+** FOSDEM (BE) - Cloud Native Dependencies link:https://fosdem.org/2023/schedule/event/continuous_update_everything/[Video]
+** CIVO Cloud (UK) - Onward a Continuously Updated Kubernetes Marketplace link:https://www.youtube.com/watch?v=B2wmA627E4w[Video]
 
 == Links
 
@@ -188,3 +193,8 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 * link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 * link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
 * link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
+
+== Thanks to all the contributors ❤️
+
+link:https://github.com/updatecli/updatecli/graphs/contributors"[image:https://contrib.rocks/image?repo=updatecli/updatecli[]]
+

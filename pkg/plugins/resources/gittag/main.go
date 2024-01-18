@@ -18,6 +18,8 @@ type Spec struct {
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// Message associated to the git tag
 	Message string `yaml:",omitempty"`
+	// Key of the tag object to retrieve, default is tag "name" filters are always against tag name, this only controls the output; Current options are 'name' and 'hash'.
+	Key string `yaml:",omitempty"`
 }
 
 // GitTag defines a resource of kind "gittag"
@@ -60,6 +62,9 @@ func (gt *GitTag) Validate() error {
 	validationErrors := []string{}
 	if gt.spec.Path == "" {
 		validationErrors = append(validationErrors, "Git working directory path is empty while it must be specified. Did you specify an `scmID` or a `spec.path`?")
+	}
+	if gt.spec.Key != "" && gt.spec.Key != "hash" && gt.spec.Key != "name" {
+		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
 	}
 
 	// Return all the validation errors if found any

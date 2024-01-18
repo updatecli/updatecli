@@ -94,7 +94,7 @@ func TestJenkins_Condition(t *testing.T) {
 				mavenMetaHandler: tt.mockedMetadataHandler,
 			}
 
-			got, gotErr := sut.Condition(tt.source)
+			got, _, gotErr := sut.Condition(tt.source, nil)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

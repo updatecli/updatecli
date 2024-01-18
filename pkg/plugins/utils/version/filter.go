@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+
+	sv "github.com/Masterminds/semver/v3"
 )
 
 const (
@@ -28,15 +30,15 @@ var (
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
 type Filter struct {
-	// Specifies the version kind such as semver, regex, or latest
+	// specifies the version kind such as semver, regex, or latest
 	Kind string `yaml:",omitempty"`
-	// Specifies the version pattern according the version kind
+	// specifies the version pattern according the version kind
 	Pattern string `yaml:",omitempty"`
-	// Strict enforce strict versioning rule. Only used for semantic versioning at this time
+	// strict enforce strict versioning rule. Only used for semantic versioning at this time
 	Strict bool `yaml:",omitempty"`
 }
 
-// Init returns a new (copy) valid instanciated filter
+// Init returns a new (copy) valid instantiated filter
 func (f Filter) Init() (Filter, error) {
 	// Set default kind value to "latest"
 	if len(f.Kind) == 0 {
@@ -66,7 +68,7 @@ func (f Filter) Validate() error {
 		}
 	}
 	if !ok {
-		return fmt.Errorf("unsupported version kind %q", f.Kind)
+		return &ErrUnsupportedVersionKind{Kind: f.Kind}
 	}
 	return nil
 }
@@ -122,14 +124,149 @@ func (f *Filter) Search(versions []string) (Version, error) {
 
 		return s.FoundVersion, nil
 	default:
-		return foundVersion, fmt.Errorf("unsupported version kind %q with pattern %q", f.Kind, f.Pattern)
+		return foundVersion, &ErrUnsupportedVersionKindPattern{Pattern: f.Pattern, Kind: f.Kind}
 	}
 
-	return foundVersion, fmt.Errorf("no version found matching pattern %q", f.Pattern)
+	return foundVersion, &ErrNoVersionFoundForPattern{Pattern: f.Pattern}
 }
 
 // IsZero return true if filter is not initialized
 func (f Filter) IsZero() bool {
 	var empty Filter
 	return empty == f
+}
+
+// GreaterThanPattern returns a pattern that can be used to find newer version
+func (f *Filter) GreaterThanPattern(version string) (string, error) {
+	switch f.Kind {
+	case LATESTVERSIONKIND:
+		return LATESTVERSIONKIND, nil
+
+	case REGEXVERSIONKIND:
+		return f.Pattern, nil
+
+	case SEMVERVERSIONKIND:
+
+		switch f.Pattern {
+		case "prerelease":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+
+			return fmt.Sprintf(">=%d.%d.%d-%s <= %d.%d.%d",
+				v.Major(), v.Minor(), v.Patch(), v.Prerelease(),
+				v.Major(), v.Minor(), v.Patch(),
+			), nil
+
+		case "patch":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf("%d.%d.x",
+					v.Major(),
+					v.Minor()), nil
+			case false:
+				return fmt.Sprintf("%d.%d.x-0",
+					v.Major(),
+					v.Minor()), nil
+			}
+
+		case "minor":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf(
+					"%d.x",
+					v.Major()), nil
+			case false:
+				return fmt.Sprintf(
+					"%d.x.x-0",
+					v.Major()), nil
+			}
+
+		case "minoronly":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf(
+					"%s || >%d.%d < %d",
+					version,
+					v.Major(), v.Minor(),
+					v.IncMajor().Major(),
+				), nil
+			case false:
+				return fmt.Sprintf(
+					"%s || >%d.%d.x-0 < %d",
+					version,
+					v.Major(), v.Minor(),
+					v.IncMajor().Major(),
+				), nil
+			}
+
+		case "major":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf(
+					">=%d",
+					v.Major()), nil
+
+			case false:
+				return fmt.Sprintf(
+					">=%d.x.x-0",
+					v.Major()), nil
+			}
+
+		case "majoronly":
+			v, err := sv.NewVersion(version)
+			if err != nil {
+				return "", err
+			}
+			switch v.Prerelease() == "" {
+			case true:
+				return fmt.Sprintf(
+					"%s || >%d",
+					version, v.Major(),
+				), nil
+			case false:
+				return fmt.Sprintf(
+					"%s || >%s",
+					version, version,
+				), nil
+			}
+
+		case "", "*":
+			v, err := sv.NewVersion(version)
+			// If NewVersion do not fails then it means that version contains a valid semantic version
+			if err == nil {
+				return ">=" + v.String(), nil
+			}
+
+			_, err = sv.NewConstraint(version)
+			if err != nil {
+				return "", &ErrIncorrectSemVerConstraint{SemVerConstraint: version}
+			}
+			return version, nil
+
+		default:
+			return f.Pattern, nil
+		}
+	}
+	return "", &ErrUnsupportedVersionKind{Kind: f.Kind}
 }
