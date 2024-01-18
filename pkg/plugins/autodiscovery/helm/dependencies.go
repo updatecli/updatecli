@@ -74,7 +74,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 			sourceVersionFilterKind := "semver"
 			sourceVersionFilterPattern := "*"
 
-			if strings.HasPrefix(dependency.Repository, "file://") {
+			if strings.HasPrefix(dependency.Repository, "file://") || dependency.Repository == "" {
 				logrus.Debugf("Ignoring dependency %q for chart %q as it is a local dependency\n", chartName, dependency.Name)
 				continue
 			}
