@@ -139,6 +139,13 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 		}
 
+	case "manifest/init":
+
+		err := e.Scaffold(manifestInitPolicyRootDir)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+		}
+
 	case "manifest/upgrade":
 		err := e.ManifestUpgrade(manifestUpgradeInPlace)
 		if err != nil {
