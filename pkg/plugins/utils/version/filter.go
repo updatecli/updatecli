@@ -80,6 +80,10 @@ func (f *Filter) Search(versions []string) (Version, error) {
 
 	foundVersion := Version{}
 
+	if len(versions) == 0 {
+		return foundVersion, ErrNoVersionFound
+	}
+
 	switch f.Kind {
 	case LATESTVERSIONKIND:
 		if f.Pattern == LATESTVERSIONKIND {
