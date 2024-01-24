@@ -30,6 +30,18 @@ func TestSource(t *testing.T) {
 			expectedError:  false,
 		},
 		{
+			name: "Failure no version found",
+			spec: Spec{
+				Image: "ghcr.io/updatecli/updatecli",
+				VersionFilter: version.Filter{
+					Kind: "latest",
+				},
+				TagFilter:     "donotExist*",
+				Architectures: []string{"amd64"},
+			},
+			expectedError: true,
+		},
+		{
 			name: "Success - no architecture",
 			spec: Spec{
 				Image: "ghcr.io/updatecli/updatecli",
