@@ -66,16 +66,16 @@ name: Default pipeline name
 
 func (s *Scaffold) scaffoldConfig(rootDir string) error {
 
-	configDir = filepath.Join(rootDir, s.ConfigDir)
+	defaultConfigDir = filepath.Join(rootDir, s.ConfigDir)
 
-	if _, err := os.Stat(configDir); os.IsNotExist(err) {
-		err := os.MkdirAll(configDir, 0755)
+	if _, err := os.Stat(defaultConfigDir); os.IsNotExist(err) {
+		err := os.MkdirAll(defaultConfigDir, 0755)
 		if err != nil {
 			return err
 		}
 	}
 
-	configFilePath := filepath.Join(configDir, configFile)
+	configFilePath := filepath.Join(defaultConfigDir, configFile)
 
 	// If the config already exist, we don't overwrite it
 	if _, err := os.Stat(configFilePath); err == nil {

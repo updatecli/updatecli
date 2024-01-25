@@ -26,8 +26,7 @@ func TestRun(t *testing.T) {
 
 	assert.FileExists(t, filepath.Join(testRootDir, "README.md"))
 
-	assert.DirExists(t, filepath.Join(testRootDir, "values.d"))
-	assert.FileExists(t, filepath.Join(testRootDir, "values.d", "default.yaml"))
+	assert.FileExists(t, filepath.Join(testRootDir, "values.yaml"))
 
 	assert.FileExists(t, filepath.Join(testRootDir, "CHANGELOG.md"))
 
