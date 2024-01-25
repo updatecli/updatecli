@@ -100,7 +100,7 @@ func (p *PolicySpec) sanitize() {
 }
 
 // scaffoldPolicy scaffold a new Updatecli policy file
-func (s *Scaffold) scaffoldPolicy(p *PolicySpec, dirname, filename string) error {
+func (s *Scaffold) scaffoldPolicy(p *PolicySpec, dirname string) error {
 
 	p.sanitize()
 
@@ -111,7 +111,7 @@ func (s *Scaffold) scaffoldPolicy(p *PolicySpec, dirname, filename string) error
 		}
 	}
 
-	policyFilePath := filepath.Join(dirname, filename)
+	policyFilePath := filepath.Join(dirname, s.PolicyFile)
 
 	if _, err := os.Stat(policyFilePath); err == nil {
 		logrus.Infof("Skipping, policy already exist: %s", policyFilePath)
