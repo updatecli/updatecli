@@ -8,7 +8,6 @@ import (
 )
 
 var (
-	valuesFile     string = "default.yaml"
 	valuesTemplate string = `---
 # Values.yaml contains settings that be used from Updatecli manifest.
 # scm:
@@ -24,7 +23,7 @@ var (
 
 func (s *Scaffold) scaffoldValues(dirname string) error {
 
-	dirname = filepath.Join(dirname, "values.d")
+	dirname = filepath.Join(dirname)
 
 	if _, err := os.Stat(dirname); os.IsNotExist(err) {
 		err := os.MkdirAll(dirname, 0755)
@@ -33,7 +32,7 @@ func (s *Scaffold) scaffoldValues(dirname string) error {
 		}
 	}
 
-	valuesFilePath := filepath.Join(dirname, valuesFile)
+	valuesFilePath := filepath.Join(dirname, s.ValuesFile)
 
 	if _, err := os.Stat(valuesFilePath); err == nil {
 		logrus.Infof("Skipping, values already exist: %s", valuesFilePath)

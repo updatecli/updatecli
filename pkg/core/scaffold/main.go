@@ -7,20 +7,20 @@ import (
 var (
 	// defaultPolicyFile is the default policy file name
 	defaultPolicyFile = "Policy.yaml"
-	// defaultValuesDir is the default values directory name
-	defaultValuesDir = "values.d"
 	// defaultSecretsDir is the default secrets directory name
 	defaultSecretsDir = "secrets.d"
-	// configDir is the default config directory name
-	configDir = "updatecli.d"
+	// defaultConfigDir is the default config directory name
+	defaultConfigDir = "updatecli.d"
+	// defaultValuesFile is the default values file name
+	defaultValuesFile = "values.yaml"
 )
 
 // Scaffold is the main structure to scaffold a new Updatecli policy
 type Scaffold struct {
 	// PolicyFile is the policy file name
 	PolicyFile string
-	// ValuesDir is the values directory name
-	ValuesDir string
+	// ValuesFile is the values directory name
+	ValuesFile string
 	// SecretsDir is the secrets directory name
 	SecretsDir string
 	// ConfigDir is the config directory name
@@ -36,10 +36,10 @@ func (s *Scaffold) Init() {
 		}
 	}
 
-	setDefaultValues(&s.ConfigDir, configDir)
+	setDefaultValues(&s.ConfigDir, defaultConfigDir)
 	setDefaultValues(&s.PolicyFile, defaultPolicyFile)
 	setDefaultValues(&s.SecretsDir, defaultSecretsDir)
-	setDefaultValues(&s.ValuesDir, defaultValuesDir)
+	setDefaultValues(&s.ValuesFile, defaultValuesFile)
 }
 
 // Run scaffold a new Updatecli policy
@@ -47,7 +47,7 @@ func (s *Scaffold) Run(rootDir string) error {
 	s.Init()
 	logrus.Debugf("Initialize an Updatecli policy")
 
-	err := s.scaffoldPolicy(&PolicySpec{}, rootDir, s.PolicyFile)
+	err := s.scaffoldPolicy(&PolicySpec{}, rootDir)
 	if err != nil {
 		return err
 	}
