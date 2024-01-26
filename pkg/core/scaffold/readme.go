@@ -88,6 +88,9 @@ Feel free to look on the [Updatecli documentation](https://updatecli.io) to lear
 Another good starting point is to understand how to use [update-compose.yaml](https://www.updatecli.io/docs/core/compose/) to orchestrate multiple Updatecli policies.
 
 ## CONTRIBUTING
+
+This document has been generated from this [template](https://github.com/updatecli/updatecli/blob/main/pkg/core/scaffold/readme.go).
+Feel free to suggest any improvements or open an [issue](https://github.com/updatecli/updatecli/issues).
 `
 )
 
