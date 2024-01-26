@@ -36,8 +36,8 @@ func (c *Chart) Source(workingDir string, resultSource *result.Source) error {
 	}
 
 	versions := []string{}
-	for _, entry := range entriesVersion {
-		versions = append(versions, entry.Version)
+	for i := len(entriesVersion) - 1; i >= 0; i-- {
+		versions = append(versions, entriesVersion[i].Version)
 	}
 
 	c.foundVersion, err = c.versionFilter.Search(versions)
