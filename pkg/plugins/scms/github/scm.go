@@ -10,8 +10,12 @@ import (
 
 func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	sourceBranch = g.Spec.Branch
-	workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", g.pipelineID))
+	workingBranch = g.Spec.Branch
 	targetBranch = g.Spec.Branch
+
+	if len(g.pipelineID) > 0 {
+		workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, g.pipelineID))
+	}
 
 	return sourceBranch, workingBranch, targetBranch
 }

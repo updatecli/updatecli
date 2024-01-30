@@ -15,7 +15,7 @@ func (g *Gitlab) GetBranches() (sourceBranch, workingBranch, targetBranch string
 	targetBranch = g.Spec.Branch
 
 	if len(g.pipelineID) > 0 {
-		workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", g.pipelineID))
+		workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, g.pipelineID))
 	}
 
 	return sourceBranch, workingBranch, targetBranch
