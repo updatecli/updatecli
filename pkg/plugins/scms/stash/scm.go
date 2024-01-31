@@ -9,8 +9,12 @@ import (
 
 func (s *Stash) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	sourceBranch = s.Spec.Branch
-	workingBranch = s.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%v", s.pipelineID))
+	workingBranch = s.Spec.Branch
 	targetBranch = s.Spec.Branch
+
+	if len(s.pipelineID) > 0 {
+		workingBranch = s.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, s.pipelineID))
+	}
 
 	return sourceBranch, workingBranch, targetBranch
 }
