@@ -666,8 +666,8 @@ github.com/opencontainers/image-spec v1.1.0-rc6 h1:XDqvyKsJEbRtATzkgItUqBA7QHk58
 github.com/opencontainers/image-spec v1.1.0-rc6/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runc v1.1.7 h1:y2EZDS8sNng4Ksf0GUYNhKbTShZJPJg1FiXJNH/uoCk=
 github.com/opencontainers/runc v1.1.7/go.mod h1:CbUumNnWCuTGFukNXahoo/RFBZvDAgRh/smNYNOhA50=
-github.com/oras-project/oras-credentials-go v0.3.1 h1:sfGqZ8sjPifEaOtjHOQTPr8D+Tql4bpw58Dd9wjmm9w=
-github.com/oras-project/oras-credentials-go v0.3.1/go.mod h1:fFCebDQo0Do+gnM96uV9YUnRay0pwuRQupypvofsp4s=
+github.com/oras-project/oras-credentials-go v0.4.0 h1:bgFNcJXmUAK2G2QQBFO/ibQQsg2Fmm/2Do0b7AZNmvU=
+github.com/oras-project/oras-credentials-go v0.4.0/go.mod h1:LKP4jEA7/Nn1lgcI7rYWmOeKsKRzrxvS26a8h1l3UEY=
 github.com/ory/dockertest/v3 v3.10.0 h1:4K3z2VMe8Woe++invjaTB7VRyQXQy5UY+loujO4aNE4=
 github.com/ory/dockertest/v3 v3.10.0/go.mod h1:nr57ZbRWMqfsdGdFNLHz5jjNdDb7VVFnzAeW1n5N1Lg=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
