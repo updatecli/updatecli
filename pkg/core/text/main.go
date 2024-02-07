@@ -163,7 +163,6 @@ func Diff(from, to, originalFileContent, newFileContent string) string {
 // Show return a string where each line start with a tabulation
 // to increase visibility
 func Show(content string) (result string) {
-
 	result = result + "---\n"
 
 	for _, line := range strings.Split(content, "\n") {
@@ -173,7 +172,6 @@ func Show(content string) (result string) {
 	result = result + "---\n"
 
 	return result
-
 }
 
 // IsURL tests if a string is a valid http URL
@@ -201,7 +199,6 @@ func IsURL(location string) bool {
 
 // WriteToFile write a string to a file
 func (t *Text) WriteToFile(content string, location string) error {
-
 	// If path is not absolute then we specify it to the current directory
 	if !filepath.IsAbs(location) {
 		wd, err := os.Getwd()
@@ -222,12 +219,10 @@ func (t *Text) WriteToFile(content string, location string) error {
 		return err
 	}
 	return nil
-
 }
 
 // WriteLineToFile writes 'lineContent' to the line number 'lineNumber' in the file at 'location'
 func (t *Text) WriteLineToFile(lineContent, location string, lineNumber int) (err error) {
-
 	// Get actual content of the file
 	fileContent, err := t.ReadAll(location)
 	if err != nil {
@@ -235,7 +230,7 @@ func (t *Text) WriteLineToFile(lineContent, location string, lineNumber int) (er
 	}
 
 	// Open the file
-	file, err := os.OpenFile(location, os.O_WRONLY, 0644)
+	file, err := os.OpenFile(location, os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		return err
 	}
