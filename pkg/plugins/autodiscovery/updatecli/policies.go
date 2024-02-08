@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	// DefaultFilePattern specifies accepted Helm chart metadata filename
-	DefaultFilePattern [1]string = [1]string{"update-compose.yaml"}
+	// DefaultFiles specifies accepted Helm chart metadata filename
+	DefaultFiles []string = []string{"update-compose.yaml"}
 )
 
 // discoverUpdatecliPolicyManifests search recursively from a root directory for Updatecli compose file
@@ -21,7 +21,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 
 	foundUpdateComposeFiles, err := searchUpdatecliComposeFiles(
 		u.rootDir,
-		DefaultFilePattern[:])
+		u.files[:])
 
 	if err != nil {
 		return nil, err
