@@ -17,6 +17,31 @@ type Spec struct {
 	Ignore MatchingRules `yaml:",omitempty"`
 	// Only allows to specify rule to only "autodiscovery" manifest for a specific Updatecli based on a rule
 	Only MatchingRules `yaml:",omitempty"`
+	/* Files allows to specify a list of Files to analyze.
+
+	    The pattern syntax is:
+	       pattern:
+	         { term }
+	       term:
+	         '*'         matches any sequence of non-Separator characters
+	         '?'         matches any single non-Separator character
+	         '[' [ '^' ] { character-range } ']' character class (must be non-empty)
+	         c           matches character c (c != '*', '?', '\\', '[')
+	         '\\' c      matches character c
+
+		    character-range:
+		    	c           matches character c (c != '\\', '-', ']')
+	         '\\' c      matches character c
+	         lo '-' hi   matches character c for lo <= c <= hi
+
+	        Match requires pattern to match all of name, not just a substring.
+	        The only possible returned error is ErrBadPattern, when pattern
+	        is malformed.
+
+	        On Windows, escaping is disabled. Instead, '\\' is treated as
+	        path separator.
+	*/
+	Files []string `yaml:",omitempty"`
 	// Auths provides a map of registry credentials where the key is the registry URL without scheme
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 	/*
@@ -56,6 +81,8 @@ type Updatecli struct {
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
+	// files holds the list of files to analyze
+	files []string
 }
 
 // New return a new valid Updatecli object.
@@ -85,7 +112,13 @@ func New(spec interface{}, rootDir, scmID string) (Updatecli, error) {
 		newFilter.Pattern = "*"
 	}
 
+	files := DefaultFiles
+	if len(files) > 0 {
+		files = s.Files
+	}
+
 	return Updatecli{
+		files:         files,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,

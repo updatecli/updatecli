@@ -10,7 +10,7 @@ import (
 func TestSearchFiles(t *testing.T) {
 
 	gotFiles, err := searchUpdatecliComposeFiles(
-		"test/testdata/website", DefaultFilePattern[:])
+		"test/testdata/website", DefaultFiles[:])
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
