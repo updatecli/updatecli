@@ -187,6 +187,7 @@ func TestDiscoverManifests(t *testing.T) {
 			updatecli, err := updatecli.New(
 				updatecli.Spec{
 					RootDir: tt.rootDir,
+					Files:   []string{"update-compose.yaml"},
 				}, "", "")
 			require.NoError(t, err)
 
