@@ -1,0 +1,15 @@
+name: "Kubernetes autodiscovery"
+scms:
+  default:
+    kind: git
+    spec:
+      url: "https://github.com/jenkins-infra/release.git"
+      branch: master
+autodiscovery:
+  scmid: default
+  crawlers:
+    kubernetes:
+      digest: false
+      versionfilter:
+        kind: semver
+        pattern: majoronly
