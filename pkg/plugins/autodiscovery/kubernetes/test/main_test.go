@@ -112,9 +112,10 @@ targets:
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
+			digest := tt.digest
 			pod, err := kubernetes.New(
 				kubernetes.Spec{
-					Digest:  &tt.digest,
+					Digest:  &digest,
 					RootDir: tt.rootDir,
 				}, "", "")
 
