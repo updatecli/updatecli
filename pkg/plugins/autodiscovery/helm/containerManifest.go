@@ -11,7 +11,7 @@ sources:
     spec:
       image: '{{ .SourceImageName }}'
       tagfilter: '{{ .SourceTagFilter }}'
-      versionFilter:
+      versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
 conditions:
