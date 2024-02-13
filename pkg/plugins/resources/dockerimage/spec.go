@@ -48,7 +48,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 		// At the time of writing, semantic versioning is the only way to have reliable results
 		// across the different registries.
 		// More information on https://github.com/updatecli/updatecli/issues/977
-		logrus.Warningf("analyzing OCI image %q: %s", image, err)
+		logrus.Debugf("analyzing OCI image %q: %s", image, err)
 		return nil
 	}
 
@@ -182,4 +182,33 @@ func getTagFilterFromValue(tag string) (string, error) {
 
 	logrus.Warningf("=> No matching rule identified for Docker image tag %q, feel free to ignore this image with a manifest or to suggest a new rule on https://github.com/updatecli/updatecli/issues/new/choose", tag)
 	return "", fmt.Errorf("no tag pattern identify")
+}
+
+// ParseOCIReferenceInfo returns the OCI name, tag and digest from an OCI reference
+func ParseOCIReferenceInfo(reference string) (ociName, ociTag, ociDigest string, err error) {
+
+	iArray := strings.Split(reference, "@")
+	switch len(iArray) {
+	case 2:
+		ociName = iArray[0]
+		ociDigest = "@" + iArray[1]
+	case 1:
+		ociName = iArray[0]
+	}
+
+	imageArray := strings.Split(ociName, ":")
+	// Get container image name and tag
+	switch len(imageArray) {
+	case 2:
+		ociName = imageArray[0]
+		ociTag = imageArray[1]
+	case 1:
+		ociName = imageArray[0]
+	}
+
+	if ociDigest == "" && ociTag == "" {
+		ociTag = "latest"
+	}
+
+	return ociName, ociTag, ociDigest, nil
 }

@@ -77,3 +77,46 @@ func TestNewFilterFromValue(t *testing.T) {
 		})
 	}
 }
+
+func TestGetReferenceInfo(t *testing.T) {
+	tests := []struct {
+		reference         string
+		expectedOCIName   string
+		expectedOCITag    string
+		expectedOCIDigest string
+	}{
+		{
+			reference:         "golang:1.19.0",
+			expectedOCIName:   "golang",
+			expectedOCITag:    "1.19.0",
+			expectedOCIDigest: "",
+		},
+		{
+			reference:         "golang:1.22.0@sha256:56808813690dac3bb8b3550d373093d1a16c45f704ede7f58e39d2684636ffbe",
+			expectedOCIName:   "golang",
+			expectedOCITag:    "1.22.0",
+			expectedOCIDigest: "@sha256:56808813690dac3bb8b3550d373093d1a16c45f704ede7f58e39d2684636ffbe",
+		},
+		{
+			reference:         "golang@sha256:56808813690dac3bb8b3550d373093d1a16c45f704ede7f58e39d2684636ffbe",
+			expectedOCIName:   "golang",
+			expectedOCIDigest: "@sha256:56808813690dac3bb8b3550d373093d1a16c45f704ede7f58e39d2684636ffbe",
+		},
+		{
+			reference:       "golang",
+			expectedOCIName: "golang",
+			expectedOCITag:  "latest",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.reference, func(t *testing.T) {
+			gotImageName, gotImageTag, gotImageDigest, err := ParseOCIReferenceInfo(tt.reference)
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.expectedOCIName, gotImageName)
+			assert.Equal(t, tt.expectedOCITag, gotImageTag)
+			assert.Equal(t, tt.expectedOCIDigest, gotImageDigest)
+		})
+	}
+}
