@@ -35,7 +35,7 @@ func TestSource(t *testing.T) {
 				Name: "axios",
 				VersionFilter: version.Filter{
 					Kind:    "semver",
-					Pattern: "~0",
+					Pattern: "~0.27",
 				},
 			},
 			expectedResult: "0.27.2",
