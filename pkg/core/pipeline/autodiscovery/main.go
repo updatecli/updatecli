@@ -15,6 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/golang"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/ko"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/kubernetes"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/npm"
@@ -30,6 +31,7 @@ var (
 			"golang/gomod":  golang.Spec{},
 			"helm":          helm.Spec{},
 			"helmfile":      helmfile.Spec{},
+			"ko":            ko.Spec{},
 			"kubernetes":    kubernetes.Spec{},
 			"maven":         maven.Spec{},
 			"npm":           npm.Spec{},
@@ -46,6 +48,7 @@ var (
 		"golang/gomod":  &golang.Spec{},
 		"helm":          &helm.Spec{},
 		"helmfile":      &helmfile.Spec{},
+		"ko":            &ko.Spec{},
 		"kubernetes":    &kubernetes.Spec{},
 		"maven":         &maven.Spec{},
 		"npm":           &npm.Spec{},
@@ -147,6 +150,18 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		case "helmfile":
 			crawler, err := helmfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "ko":
+			crawler, err := ko.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
