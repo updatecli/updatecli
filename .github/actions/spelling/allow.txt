@@ -95,3 +95,4 @@ jira
 nodigest
 digest
 LOGDIR
+distroless
