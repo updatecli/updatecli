@@ -180,7 +180,7 @@ func getTagFilterFromValue(tag string) (string, error) {
 		}
 	}
 
-	logrus.Warningf("=> No matching rule identified for Docker image tag %q, feel free to ignore this image with a manifest or to suggest a new rule on https://github.com/updatecli/updatecli/issues/new/choose", tag)
+	logrus.Debugf("=> no matching rule identified for Docker image tag %q, feel free to ignore this image with a manifest or to suggest a new rule on https://github.com/updatecli/updatecli/issues/new/choose", tag)
 	return "", fmt.Errorf("no tag pattern identify")
 }
 
