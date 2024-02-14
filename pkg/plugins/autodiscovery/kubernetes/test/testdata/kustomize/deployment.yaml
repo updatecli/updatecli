@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    oncallPager: 800-555-1212
+  labels:
+    app: bingo
+  name: dev-nginx-deployment-001
+  namespace: my-namespace
+spec:
+  selector:
+    matchLabels:
+      app: bingo
+  template:
+    metadata:
+      annotations:
+        oncallPager: 800-555-1212
+      labels:
+        app: bingo
+    spec:
+      containers:
+      - image: nginx:1.20.0
+        name: nginx
