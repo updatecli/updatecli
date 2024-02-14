@@ -15,6 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/golang"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/kubernetes"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/npm"
 )
@@ -29,10 +30,11 @@ var (
 			"golang/gomod":  golang.Spec{},
 			"helm":          helm.Spec{},
 			"helmfile":      helmfile.Spec{},
-			"terraform":     &terraform.Spec{},
+			"kubernetes":    kubernetes.Spec{},
 			"maven":         maven.Spec{},
 			"npm":           npm.Spec{},
 			"rancher/fleet": fleet.Spec{},
+			"terraform":     &terraform.Spec{},
 			"updatecli":     updatecli.Spec{},
 		},
 	}
@@ -41,14 +43,15 @@ var (
 		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
-		"golang/gomod":  golang.Spec{},
+		"golang/gomod":  &golang.Spec{},
 		"helm":          &helm.Spec{},
 		"helmfile":      &helmfile.Spec{},
-		"terraform":     &terraform.Spec{},
+		"kubernetes":    &kubernetes.Spec{},
 		"maven":         &maven.Spec{},
 		"npm":           &npm.Spec{},
 		"rancher/fleet": &fleet.Spec{},
-		"updatecli":     updatecli.Spec{},
+		"terraform":     &terraform.Spec{},
+		"updatecli":     &updatecli.Spec{},
 	}
 )
 
@@ -144,6 +147,18 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		case "helmfile":
 			crawler, err := helmfile.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "kubernetes":
+			crawler, err := kubernetes.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)

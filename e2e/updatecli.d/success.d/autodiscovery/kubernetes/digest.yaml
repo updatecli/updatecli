@@ -1,0 +1,22 @@
+name: "Kubernetes autodiscovery"
+scms:
+  default:
+    kind: git
+    spec:
+      url: "https://github.com/jenkins-infra/release.git"
+      branch: master
+autodiscovery:
+  scmid: default
+  crawlers:
+    kubernetes:
+      digest: true
+      versionfilter:
+        kind: semver
+        pattern: minoronly
+      ## To ignore specific path
+      #ignore:
+      #  - images:
+      #      - "mcr.microsoft.com/dotnet/framework/sdk"
+      only:
+        - images:
+            - "mcr.microsoft.com/dotnet/framework/sdk"
