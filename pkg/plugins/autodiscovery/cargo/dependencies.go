@@ -113,7 +113,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		RegistryAuthToken          string
 		RegistryHeaderFormat       string
 	}{
-		ManifestName:               fmt.Sprintf("Bump %s %q for %q crate", dependencyType, dependency.Name, crateName),
+		ManifestName:               fmt.Sprintf("deps(cargo): bump %s %q for %q crate", dependencyType, dependency.Name, crateName),
 		CrateName:                  crateName,
 		DependencyName:             dependency.Name,
 		SourceID:                   dependency.Name,
@@ -128,7 +128,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		File:                       relativeFile,
 		TargetIDEnable:             isStrictSemver(dependency.Version),
 		TargetID:                   dependency.Name,
-		TargetName:                 fmt.Sprintf("Bump crate dependency %q to {{ source %q }}", dependency.Name, dependency.Name),
+		TargetName:                 fmt.Sprintf("deps(cargo): bump crate dependency %q to {{ source %q }}", dependency.Name, dependency.Name),
 		TargetFile:                 filepath.Base(foundFile),
 		TargetKey:                  TargetKey,
 		TargetCargoCleanupEnabled:  targetCargoCleanupEnabled,

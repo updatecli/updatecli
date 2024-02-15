@@ -8,13 +8,13 @@ sources:
       package: rand
       versionfilter:
         kind: semver
-        pattern: "~0.7"
-  
+        pattern: "~0.1"
+
 conditions:
   rand:
     name: Test if rand version exists
     kind: cargopackage
     spec:
       package: rand
-      version: 0.7.2
+      version: 0.1.1
 

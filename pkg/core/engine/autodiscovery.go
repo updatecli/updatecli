@@ -147,13 +147,19 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 				manifest.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
 			}
 
-			manifest.SCMs = make(map[string]scm.Config)
+			// Only add the scm if it is not already defined
+			if len(manifest.SCMs) == 0 {
+				manifest.SCMs = make(map[string]scm.Config)
+			}
 			for scmId, sc := range p.SCMs {
 				manifest.SCMs[scmId] = *sc.Config
 			}
 
 			if actionConfig != nil {
-				manifest.Actions = make(map[string]action.Config)
+				// Only initialize the action if it is not already defined
+				if len(manifest.Actions) == 0 {
+					manifest.Actions = make(map[string]action.Config)
+				}
 				if (p.Config.Spec.AutoDiscovery.GroupBy == autodiscovery.GROUPBYALL ||
 					p.Config.Spec.AutoDiscovery.GroupBy == "") &&
 					actionConfig.Title == "" {
