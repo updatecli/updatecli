@@ -13,6 +13,10 @@ import (
 // For Fields that requires it, we can use the struct Dockerfile
 // Spec defines the parameters which can be provided to the Dockerfile crawler.
 type Spec struct {
+	/*
+		digest provides parameters to specify if the generated manifest should use a digest on top of the tag.
+	*/
+	Digest *bool `yaml:",omitempty"`
 	// RootDir defines the root directory used to recursively search for Helm Chart
 	RootDir string `yaml:",omitempty"`
 	// Ignore allows to specify rule to ignore autodiscovery a specific Helm based on a rule
@@ -52,6 +56,8 @@ type Spec struct {
 
 // Dockerfile hold all information needed to generate Dockerfile manifest.
 type Dockerfile struct {
+	// digest holds the value of the digest parameter
+	digest bool
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootDir defines the root directory from where looking for Helm Chart
@@ -92,7 +98,13 @@ func New(spec interface{}, rootDir, scmID string) (Dockerfile, error) {
 		newFilter.Pattern = "*"
 	}
 
+	digest := true
+	if s.Digest != nil {
+		digest = *s.Digest
+	}
+
 	d := Dockerfile{
+		digest:        digest,
 		spec:          s,
 		rootDir:       dir,
 		filematch:     DefaultFileMatch,
@@ -108,10 +120,10 @@ func New(spec interface{}, rootDir, scmID string) (Dockerfile, error) {
 
 }
 
-func (h Dockerfile) DiscoverManifests() ([][]byte, error) {
+func (d Dockerfile) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Dockerfile"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Dockerfile")+1))
 
-	return h.discoverDockerfileManifests()
+	return d.discoverDockerfileManifests()
 }
