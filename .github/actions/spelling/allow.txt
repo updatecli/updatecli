@@ -84,3 +84,15 @@ scmid
 jenkinsciinfra
 servercore
 getsops
+dotnet
+Kustomize
+kustomize
+oncall
+accountapp
+nindent
+JIRA
+jira
+nodigest
+digest
+LOGDIR
+distroless

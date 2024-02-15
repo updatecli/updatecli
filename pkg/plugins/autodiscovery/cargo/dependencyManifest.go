@@ -10,7 +10,7 @@ sources:
     kind: 'cargopackage'
     spec:
       package: '{{ .DependencyName }}'
-      versionFilter:
+      versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
 {{- if .WithRegistry }}

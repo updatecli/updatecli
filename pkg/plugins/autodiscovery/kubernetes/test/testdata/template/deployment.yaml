@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "accountapp.fullname" . }}
+  labels: {{ include "accountapp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "accountapp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels: {{ include "accountapp.labels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: LDAP_URL
+              value: {{ .Values.ldap.url }}
+            - name: LDAP_MANAGER_DN
+              value: {{ .Values.ldap.managerDn }}
+            - name: LDAP_NEW_USER_BASE_DN
+              value: {{ .Values.ldap.newUserBaseDn }}
+            - name: JIRA_USERNAME
+              value: {{ .Values.jira.username }}
+            - name: JIRA_URL
+              value: {{ .Values.jira.url }}
+            - name: SEATS
+              value: {{ .Values.seats | quote }}
+            - name: SENIORITY
+              value: {{ .Values.seniority | quote }}
+            - name: SMTP_AUTH
+              value: {{ .Values.smtp.auth | quote }}
+            - name: SMTP_SERVER
+              value: {{ .Values.smtp.server }}
+            - name: SMTP_SENDER
+              value: {{ .Values.smtp.sender }}
+            - name: SMTP_PORT
+              value: {{ .Values.smtp.port | quote }}
+            - name: SMTP_USER
+              value: {{ .Values.smtp.user }}
+            - name: APP_URL
+              value: {{ .Values.appUrl }}
+            - name: ELECTION_CLOSE
+              value: {{ .Values.election.close }}
+            - name: ELECTION_OPEN
+              value: {{ .Values.election.open }}
+            - name: ELECTION_LOGDIR
+              value: {{ .Values.election.logDir }}
+            - name: ELECTION_CANDIDATES
+              value: {{ .Values.election.candidates }}
+            - name: DD_AGENT_SERVICE_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_AGENT_SERVICE_PORT
+              value: '8126'
+            - name: LDAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accountapp.fullname" . }}
+                  key: ldapPassword
+            - name: JIRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accountapp.fullname" . }}
+                  key: jiraPassword
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accountapp.fullname" . }}
+                  key: smtpPassword
+          ports:
+              - name: http
+                containerPort: 8080
+                protocol: TCP
+          livenessProbe:
+              httpGet:
+                  path: /login
+                  port: http
+                  scheme: HTTP
+              initialDelaySeconds: 30
+              timeoutSeconds: 5
+          readinessProbe:
+              httpGet:
+                  path: /login
+                  port: http
+                  scheme: HTTP
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+

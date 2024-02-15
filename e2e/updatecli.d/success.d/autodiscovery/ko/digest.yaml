@@ -1,0 +1,22 @@
+name: "Ko autodiscovery"
+scms:
+  default:
+    kind: git
+    spec:
+      url: "https://github.com/updatecli-test/knative-serving.git"
+      branch: main
+autodiscovery:
+  scmid: default
+  crawlers:
+    ko:
+      digest: true
+      versionfilter:
+        kind: semver
+        pattern: minoronly
+      ## To ignore specific path
+      #ignore:
+      #  - images:
+      #      - "gcr.io/distroless/static"
+      #only:
+      #  - images:
+      #      - "gcr.io/distroless/static"
