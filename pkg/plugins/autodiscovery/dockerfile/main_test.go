@@ -1,18 +1,13 @@
-package test
+package dockerfile
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	autodiscoveryDockerfile "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 )
 
 func TestDiscoverManifests(t *testing.T) {
-	// Disable condition testing with running short test
-	if testing.Short() {
-		return
-	}
 
 	testdata := []struct {
 		name              string
@@ -141,8 +136,8 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			digest := tt.digest
-			dockerfile, err := autodiscoveryDockerfile.New(
-				autodiscoveryDockerfile.Spec{
+			dockerfile, err := New(
+				Spec{
 					RootDir: tt.rootDir,
 					Digest:  &digest,
 				}, "", "")
