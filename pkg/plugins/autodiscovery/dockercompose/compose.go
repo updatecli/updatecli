@@ -66,26 +66,20 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				continue
 			}
 
-			// For the time being, it's not possible to retrieve a list of tag for a specific digest
-			// without a significant amount f api call. More information on following issue
-			// https://github.com/google/go-containerregistry/issues/1297
-			// until a better solution, we don't handle docker image digest
-			if strings.Contains(svc.Spec.Image, "@sha256") {
-				logrus.Debugf("Docker Digest is not supported at the moment for %q", svc.Spec.Image)
-				continue
+			imageName, imageTag, imageDigest, err := dockerimage.ParseOCIReferenceInfo(svc.Spec.Image)
+			if err != nil {
+				return nil, fmt.Errorf("parsing image %q: %s", svc.Spec.Image, err)
 			}
 
-			serviceImageArray := strings.Split(svc.Spec.Image, ":")
-
-			// Get container image name and tag
-			serviceImageName := ""
-			serviceImageTag := ""
-			switch len(serviceImageArray) {
-			case 2:
-				serviceImageName = serviceImageArray[0]
-				serviceImageTag = serviceImageArray[1]
-			case 1:
-				serviceImageName = serviceImageArray[0]
+			/*
+				For the time being, it's not possible to retrieve a list of tag for a specific digest
+				without a significant amount f api call. More information on following issue
+				https://github.com/google/go-containerregistry/issues/1297
+				until a better solution, we don't handle docker image digest
+			*/
+			if imageDigest != "" && imageTag == "" {
+				logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", svc.Spec.Image)
+				continue
 			}
 
 			_, arch, _ := parsePlatform(svc.Spec.Platform)
@@ -122,17 +116,25 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				}
 			}
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(serviceImageName, serviceImageTag, d.spec.Auths)
-			if sourceSpec == nil {
-				logrus.Infoln("No source spec detected")
-				continue
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, d.spec.Auths)
+
+			versionFilterKind := d.versionFilter.Kind
+			versionFilterPattern := d.versionFilter.Pattern
+			tagFilter := "*"
+			architecture := ""
+
+			if sourceSpec != nil {
+				versionFilterKind = sourceSpec.VersionFilter.Kind
+				versionFilterPattern = sourceSpec.VersionFilter.Pattern
+				tagFilter = sourceSpec.TagFilter
+				architecture = sourceSpec.Architecture
 			}
 
 			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
 			if !d.spec.VersionFilter.IsZero() {
-				sourceSpec.VersionFilter.Kind = d.versionFilter.Kind
-				sourceSpec.VersionFilter.Pattern, err = d.versionFilter.GreaterThanPattern(serviceImageTag)
-				sourceSpec.TagFilter = ""
+				versionFilterKind = d.versionFilter.Kind
+				versionFilterPattern, err = d.versionFilter.GreaterThanPattern(imageTag)
+				tagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceSpec.VersionFilter.Pattern = "*"
@@ -143,21 +145,34 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				sourceSpec.Architecture = arch
 			}
 
-			tmpl, err := template.New("manifest").Parse(manifestTemplate)
-			if err != nil {
-				logrus.Debugln(err)
-				continue
+			var tmpl *template.Template
+			if d.digest && sourceSpec != nil {
+				tmpl, err = template.New("manifest").Parse(manifestTemplateDigestAndLatest)
+				if err != nil {
+					return nil, err
+				}
+			} else if d.digest && sourceSpec == nil {
+				tmpl, err = template.New("manifest").Parse(manifestTemplateDigest)
+				if err != nil {
+					return nil, err
+				}
+			} else if !d.digest && sourceSpec != nil {
+				tmpl, err = template.New("manifest").Parse(manifestTemplateLatest)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				logrus.Infoln("No source spec detected")
+				return nil, nil
 			}
 
 			params := struct {
-				ManifestName         string
 				ImageName            string
+				ImageTag             string
 				ImageArchitecture    string
 				SourceID             string
-				SourceName           string
 				TargetID             string
 				TargetFile           string
-				TargetName           string
 				TargetKey            string
 				TargetPrefix         string
 				TagFilter            string
@@ -165,19 +180,17 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				VersionFilterPattern string
 				ScmID                string
 			}{
-				ManifestName:         fmt.Sprintf("Bump Docker image tag for %q", serviceImageName),
-				ImageName:            serviceImageName,
-				ImageArchitecture:    sourceSpec.Architecture,
+				ImageName:            imageName,
+				ImageTag:             imageTag,
+				ImageArchitecture:    architecture,
 				SourceID:             svc.Name,
-				SourceName:           fmt.Sprintf("[%s] Get latest Docker image tag", serviceImageName),
 				TargetID:             svc.Name,
-				TargetName:           fmt.Sprintf("[%s] Bump Docker image tag in %q", serviceImageName, relativeFoundDockerComposeFile),
 				TargetFile:           relativeFoundDockerComposeFile,
 				TargetKey:            fmt.Sprintf("$.services.%s.image", svc.Name),
-				TargetPrefix:         serviceImageName + ":",
-				TagFilter:            sourceSpec.TagFilter,
-				VersionFilterKind:    sourceSpec.VersionFilter.Kind,
-				VersionFilterPattern: sourceSpec.VersionFilter.Pattern,
+				TargetPrefix:         imageName + ":",
+				TagFilter:            tagFilter,
+				VersionFilterKind:    versionFilterKind,
+				VersionFilterPattern: versionFilterPattern,
 				ScmID:                d.scmID,
 			}
 
