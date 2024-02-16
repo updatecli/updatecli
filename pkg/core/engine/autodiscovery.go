@@ -20,6 +20,8 @@ import (
 )
 
 // LoadAutoDiscovery tries to guess available pipelines based on specific directory
+//
+//nolint:funlen
 func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 	// Default Autodiscovery pipeline
 	if defaultEnabled {
