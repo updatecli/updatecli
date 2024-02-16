@@ -22,6 +22,7 @@ type valuesContent struct {
 	Images map[string]imageRef
 }
 
+//nolint:funlen
 func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 	var manifests [][]byte
