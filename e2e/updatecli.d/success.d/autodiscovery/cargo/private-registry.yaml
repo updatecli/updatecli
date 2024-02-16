@@ -1,4 +1,4 @@
-name: "Cargo compose autodiscovery using git scm"
+name: "Cargo compose autodiscovery using git scm and private registry"
 scms:
   default:
     kind: git
@@ -20,4 +20,8 @@ autodiscovery:
           scmid: private-registry
         fake-private-http:
           url: "https://updatecli-test.github.io/fake-cargo-registry/api/v1/crates"
+      ignore:
+        - crates:
+            ## Ignore rand as not available in the private fake registry
+            rand: ""
 
