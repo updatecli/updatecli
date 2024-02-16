@@ -16,6 +16,10 @@ type Spec struct {
 		if empty, updatecli relies on OCI credentials such as the one used by Docker.
 	*/
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
+	/*
+		digest provides a parameter to specify if the generated manifest should use a digest on top of the tag when updating container.
+	*/
+	Digest *bool `yaml:",omitempty"`
 	// ignorecontainer disables OCI container tag update when set to true
 	IgnoreContainer bool `yaml:",omitempty"`
 	// ignorechartdependency disables Helm chart dependencies update when set to true
@@ -57,6 +61,8 @@ type Spec struct {
 
 // Helm hold all information needed to generate helm manifest.
 type Helm struct {
+	// digest holds the value of the digest parameter
+	digest bool
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootdir defines the root directory from where looking for Helm Chart
@@ -94,7 +100,13 @@ func New(spec interface{}, rootDir, scmID string) (Helm, error) {
 		newFilter.Pattern = "*"
 	}
 
+	digest := true
+	if s.Digest != nil {
+		digest = *s.Digest
+	}
+
 	return Helm{
+		digest:        digest,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,
