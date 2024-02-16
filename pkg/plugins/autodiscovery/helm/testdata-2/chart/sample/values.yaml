@@ -4,4 +4,4 @@ image:
 images:
   ui:
     repository: epinio/epinio-ui
-    tag: v1.8.0
+    tag: v1.8.0@sha256xxxxxxx

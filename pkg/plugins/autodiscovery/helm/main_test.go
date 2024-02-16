@@ -5,8 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -18,6 +16,7 @@ func TestDiscoverManifests(t *testing.T) {
 	testdata := []struct {
 		name              string
 		rootDir           string
+		digest            bool
 		expectedPipelines []string
 	}{
 		{
@@ -53,7 +52,8 @@ targets:
       name: 'epinio'
       versionincrement: ''
     sourceid: 'minio'
-`, `name: 'Bump dependency "kubed" for Helm chart "epinio"'
+`,
+				`name: 'Bump dependency "kubed" for Helm chart "epinio"'
 sources:
   kubed:
     name: 'Get latest "kubed" Helm chart version'
@@ -83,7 +83,8 @@ targets:
       name: 'epinio'
       versionincrement: ''
     sourceid: 'kubed'
-`, `name: 'Bump dependency "epinio-ui" for Helm chart "epinio"'
+`,
+				`name: 'Bump dependency "epinio-ui" for Helm chart "epinio"'
 sources:
   epinio-ui:
     name: 'Get latest "epinio-ui" Helm chart version'
@@ -113,80 +114,93 @@ targets:
       name: 'epinio'
       versionincrement: ''
     sourceid: 'epinio-ui'
-`, `name: 'Bump Docker Image "epinioteam/epinio-ui-qa" for Helm chart "epinio"'
-sources:
-  epinioteam_epinio-ui-qa:
-    name: 'Get latest "epinioteam/epinio-ui-qa" Container tag'
-    kind: 'dockerimage'
-    spec:
-      image: 'epinioteam/epinio-ui-qa'
-      versionfilter:
-        kind: 'semver'
-        pattern: '*'
-conditions:
-  epinioteam_epinio-ui-qa:
-    name: 'Ensure container repository "epinioteam/epinio-ui-qa" is specified'
-    kind: 'yaml'
-    spec:
-      file: 'epinio/values.yaml'
-      key: '$.images.ui.repository'
-      value: 'epinioteam/epinio-ui-qa'
-    disablesourceinput: true
-targets:
-  epinioteam_epinio-ui-qa:
-    name: 'Bump container image tag for image "epinioteam/epinio-ui-qa" in chart "epinio"'
-    kind: 'helmchart'
-    spec:
-      file: 'values.yaml'
-      key: '$.images.ui.tag'
-      name: 'epinio'
-      versionincrement: ''
-    sourceid: 'epinioteam/epinio-ui-qa'
-`, `name: 'Bump Docker Image "splatform/epinio-server" for Helm chart "epinio"'
+`,
+				`name: 'deps(helm): bump image "splatform/epinio-server" tag for chart "epinio"'
 sources:
   splatform_epinio-server:
-    name: 'Get latest "splatform/epinio-server" Container tag'
+    name: 'get latest image tag for "splatform/epinio-server"'
     kind: 'dockerimage'
     spec:
       image: 'splatform/epinio-server'
+      tagfilter: '^\d*(\.\d*){2}$'
       versionfilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=2.0.0'
 conditions:
-  splatform_epinio-server:
+  splatform_epinio-server-repository:
+    disablesourceinput: true
     name: 'Ensure container repository "splatform/epinio-server" is specified'
     kind: 'yaml'
     spec:
       file: 'epinio/values.yaml'
       key: '$.image.repository'
       value: 'splatform/epinio-server'
-    disablesourceinput: true
 targets:
   splatform_epinio-server:
-    name: 'Bump container image tag for image "splatform/epinio-server" in chart "epinio"'
+    name: 'deps(helm): bump image "splatform/epinio-server" tag'
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
-      key: '$.image.tag'
       name: 'epinio'
+      key: '$.image.tag'
       versionincrement: ''
-    sourceid: 'splatform/epinio-server'
+    sourceid: 'splatform_epinio-server'
+`,
+				`name: 'deps(helm): bump image "epinioteam/epinio-ui-qa" tag for chart "epinio"'
+sources:
+  epinioteam_epinio-ui-qa:
+    name: 'get latest image tag for "epinioteam/epinio-ui-qa"'
+    kind: 'dockerimage'
+    spec:
+      image: 'epinioteam/epinio-ui-qa'
+      tagfilter: '^\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=1.0.0'
+conditions:
+  epinioteam_epinio-ui-qa-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "epinioteam/epinio-ui-qa" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'epinio/values.yaml'
+      key: '$.images.ui.repository'
+      value: 'epinioteam/epinio-ui-qa'
+targets:
+  epinioteam_epinio-ui-qa:
+    name: 'deps(helm): bump image "epinioteam/epinio-ui-qa" tag'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'epinio'
+      key: '$.images.ui.tag'
+      versionincrement: ''
+    sourceid: 'epinioteam_epinio-ui-qa'
 `},
 		},
 		{
-			name:    "Test the tag update for images referenced in the cart",
+			name:    "Test the tag update for images referenced in the chart with digest",
 			rootDir: "testdata-2/chart",
-			expectedPipelines: []string{`name: 'Bump Docker image "epinio/epinio-server" for Helm chart "sample"'
+			digest:  true,
+			expectedPipelines: []string{`name: 'deps(helm): bump image "epinio/epinio-server" digest for chart "sample"'
 sources:
   epinio_epinio-server:
-    name: 'Get latest "epinio/epinio-server" container tag'
+    name: 'get latest "epinio/epinio-server" container tag'
     kind: 'dockerimage'
     spec:
       image: 'epinio/epinio-server'
       tagfilter: '^v\d*(\.\d*){2}$'
-      versionFilter:
+      versionfilter:
         kind: 'semver'
         pattern: '>=v1.8.0'
+  epinio_epinio-server-digest:
+    name: 'get latest image "epinio/epinio-server" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'epinio/epinio-server'
+      tag: '{{ source "epinio_epinio-server" }}'
+    dependson:
+      - 'epinio_epinio-server'
 conditions:
   epinio_epinio-server-repository:
     disablesourceinput: true
@@ -198,26 +212,34 @@ conditions:
       value: 'epinio/epinio-server'
 targets:
   epinio_epinio-server:
-    name: 'Bump container image tag for image "epinio/epinio-server" in chart "sample"'
+    name: 'deps(helm): bump image "epinio/epinio-server" digest'
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
       name: 'sample'
       key: '$.image.tag'
       versionincrement: ''
-    sourceid: 'epinio_epinio-server'
+    sourceid: 'epinio_epinio-server-digest'
 `,
-				`name: 'Bump Docker image "epinio/epinio-ui" for Helm chart "sample"'
+				`name: 'deps(helm): bump image "epinio/epinio-ui" digest for chart "sample"'
 sources:
   epinio_epinio-ui:
-    name: 'Get latest "epinio/epinio-ui" container tag'
+    name: 'get latest "epinio/epinio-ui" container tag'
     kind: 'dockerimage'
     spec:
       image: 'epinio/epinio-ui'
       tagfilter: '^v\d*(\.\d*){2}$'
-      versionFilter:
+      versionfilter:
         kind: 'semver'
         pattern: '>=v1.8.0'
+  epinio_epinio-ui-digest:
+    name: 'get latest image "epinio/epinio-ui" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'epinio/epinio-ui'
+      tag: '{{ source "epinio_epinio-ui" }}'
+    dependson:
+      - 'epinio_epinio-ui'
 conditions:
   epinio_epinio-ui-repository:
     disablesourceinput: true
@@ -229,28 +251,28 @@ conditions:
       value: 'epinio/epinio-ui'
 targets:
   epinio_epinio-ui:
-    name: 'Bump container image tag for image "epinio/epinio-ui" in chart "sample"'
+    name: 'deps(helm): bump image "epinio/epinio-ui" digest'
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
       name: 'sample'
       key: '$.images.ui.tag'
       versionincrement: ''
-    sourceid: 'epinio_epinio-ui'
+    sourceid: 'epinio_epinio-ui-digest'
 `},
 		},
 		{
 			name:    "Test the tag update for images referenced in the cart including the registry",
 			rootDir: "testdata-3/chart",
-			expectedPipelines: []string{`name: 'Bump Docker image "ghcr.io/epinio/epinio-server" for Helm chart "sample"'
+			expectedPipelines: []string{`name: 'deps(helm): bump image "ghcr.io/epinio/epinio-server" tag for chart "sample"'
 sources:
   ghcr.io_epinio_epinio-server:
-    name: 'Get latest "ghcr.io/epinio/epinio-server" container tag'
+    name: 'get latest image tag for "ghcr.io/epinio/epinio-server"'
     kind: 'dockerimage'
     spec:
       image: 'ghcr.io/epinio/epinio-server'
       tagfilter: '^v\d*(\.\d*){2}$'
-      versionFilter:
+      versionfilter:
         kind: 'semver'
         pattern: '>=v1.8.0'
 conditions:
@@ -272,7 +294,7 @@ conditions:
       value: 'epinio/epinio-server'
 targets:
   ghcr.io_epinio_epinio-server:
-    name: 'Bump container image tag for image "ghcr.io/epinio/epinio-server" in chart "sample"'
+    name: 'deps(helm): bump image "ghcr.io/epinio/epinio-server" tag'
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
@@ -281,15 +303,15 @@ targets:
       versionincrement: ''
     sourceid: 'ghcr.io_epinio_epinio-server'
 `,
-				`name: 'Bump Docker image "ghcr.io/epinio/epinio-ui" for Helm chart "sample"'
+				`name: 'deps(helm): bump image "ghcr.io/epinio/epinio-ui" tag for chart "sample"'
 sources:
   ghcr.io_epinio_epinio-ui:
-    name: 'Get latest "ghcr.io/epinio/epinio-ui" container tag'
+    name: 'get latest image tag for "ghcr.io/epinio/epinio-ui"'
     kind: 'dockerimage'
     spec:
       image: 'ghcr.io/epinio/epinio-ui'
       tagfilter: '^v\d*(\.\d*){2}$'
-      versionFilter:
+      versionfilter:
         kind: 'semver'
         pattern: '>=v1.8.0'
 conditions:
@@ -311,7 +333,7 @@ conditions:
       value: 'epinio/epinio-ui'
 targets:
   ghcr.io_epinio_epinio-ui:
-    name: 'Bump container image tag for image "ghcr.io/epinio/epinio-ui" in chart "sample"'
+    name: 'deps(helm): bump image "ghcr.io/epinio/epinio-ui" tag'
     kind: 'helmchart'
     spec:
       file: 'values.yaml'
@@ -325,20 +347,30 @@ targets:
 
 	for _, tt := range testdata {
 
+		digest := tt.digest
 		t.Run(tt.name, func(t *testing.T) {
-			helm, err := helm.New(
-				fleet.Spec{
+			helm, err := New(
+				Spec{
+					Digest:  &digest,
 					RootDir: tt.rootDir,
 				}, "", "")
 
 			require.NoError(t, err)
 
 			var pipelines []string
-			rawPipelines, err := helm.DiscoverManifests()
+			bytesPipelines, err := helm.DiscoverManifests()
 			require.NoError(t, err)
 
-			for i := range rawPipelines {
-				pipelines = append(pipelines, string(rawPipelines[i]))
+			assert.Equal(t, len(tt.expectedPipelines), len(bytesPipelines))
+
+			stringPipelines := []string{}
+			for i := range bytesPipelines {
+				stringPipelines = append(stringPipelines, string(bytesPipelines[i]))
+			}
+			//sort.Strings(stringPipelines)
+
+			for i := range stringPipelines {
+				pipelines = append(pipelines, stringPipelines...)
 				assert.Equal(t, tt.expectedPipelines[i], pipelines[i])
 			}
 		})
