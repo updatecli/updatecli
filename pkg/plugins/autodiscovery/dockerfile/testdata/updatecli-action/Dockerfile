@@ -2,7 +2,7 @@ ARG updatecli_version
 # Following FROM instruction should be ignore as we don't have enough information to guess the next one
 FROM updatecli/updatecli:${updatecli_version}
 
-FROM updatecli/updatecli:v0.25.0
+FROM updatecli/updatecli:v0.25.0@sha256:1fafb0905264413501df60d90a92ca32df8a2011cbfb4876ddff5ceb20c8f165
 
 ## As per https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
 # hadolint ignore=DL3002
