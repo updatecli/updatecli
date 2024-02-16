@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
+	httputils "github.com/updatecli/updatecli/pkg/plugins/utils/http"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -160,6 +161,8 @@ func (cp *CargoPackage) getPackageDataFromApi(name string, indexUrl string) (Pac
 		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
 		return PackageData{}, err
 	}
+
+	req.Header.Set("User-Agent", httputils.UserAgent)
 
 	if cp.registry.Auth.Token != "" {
 		format := "Bearer %s"
