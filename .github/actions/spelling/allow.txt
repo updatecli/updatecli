@@ -96,3 +96,4 @@ nodigest
 digest
 LOGDIR
 distroless
+httputils

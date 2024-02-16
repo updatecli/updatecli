@@ -1,13 +1,10 @@
-package fleet
+package cargo
 
 import (
 	"testing"
 
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -24,14 +21,14 @@ func TestDiscoverManifests(t *testing.T) {
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata",
-			expectedPipelines: []string{`name: 'Bump dependencies "anyhow" for "test-crate" crate'
+			expectedPipelines: []string{`name: 'deps(cargo): bump dependencies "anyhow" for "test-crate" crate'
 sources:
   anyhow:
     name: 'Get latest "anyhow" crate version'
     kind: 'cargopackage'
     spec:
       package: 'anyhow'
-      versionFilter:
+      versionfilter:
         kind: 'semver'
         pattern: '>=1.0.1'
   anyhow-current-version:
@@ -50,20 +47,20 @@ conditions:
     sourceid: 'anyhow-current-version'
 targets:
   anyhow:
-    name: 'Bump crate dependency "anyhow" to {{ source "anyhow" }}'
+    name: 'deps(cargo): bump crate dependency "anyhow" to {{ source "anyhow" }}'
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
       key: 'dependencies.anyhow'
     sourceid: 'anyhow'
-`, `name: 'Bump dependencies "rand" for "test-crate" crate'
+`, `name: 'deps(cargo): bump dependencies "rand" for "test-crate" crate'
 sources:
   rand:
     name: 'Get latest "rand" crate version'
     kind: 'cargopackage'
     spec:
       package: 'rand'
-      versionFilter:
+      versionfilter:
         kind: 'semver'
         pattern: '>=0.8.0'
   rand-current-version:
@@ -82,20 +79,20 @@ conditions:
     sourceid: 'rand-current-version'
 targets:
   rand:
-    name: 'Bump crate dependency "rand" to {{ source "rand" }}'
+    name: 'deps(cargo): bump crate dependency "rand" to {{ source "rand" }}'
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
       key: 'dependencies.rand.version'
     sourceid: 'rand'
-`, `name: 'Bump dev-dependencies "futures" for "test-crate" crate'
+`, `name: 'deps(cargo): bump dev-dependencies "futures" for "test-crate" crate'
 sources:
   futures:
     name: 'Get latest "futures" crate version'
     kind: 'cargopackage'
     spec:
       package: 'futures'
-      versionFilter:
+      versionfilter:
         kind: 'semver'
         pattern: '>=0.3.21'
   futures-current-version:
@@ -114,7 +111,7 @@ conditions:
     sourceid: 'futures-current-version'
 targets:
   futures:
-    name: 'Bump crate dependency "futures" to {{ source "futures" }}'
+    name: 'deps(cargo): bump crate dependency "futures" to {{ source "futures" }}'
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
@@ -127,8 +124,8 @@ targets:
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := cargo.New(
-				fleet.Spec{
+			c, err := New(
+				Spec{
 					RootDir: tt.rootDir,
 				}, "", "")
 
