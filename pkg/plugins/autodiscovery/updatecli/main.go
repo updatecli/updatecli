@@ -113,7 +113,7 @@ func New(spec interface{}, rootDir, scmID string) (Updatecli, error) {
 	}
 
 	files := DefaultFiles
-	if len(files) > 0 {
+	if len(s.Files) > 0 {
 		files = s.Files
 	}
 
