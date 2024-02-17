@@ -22,6 +22,7 @@ type valuesContent struct {
 	Images map[string]imageRef
 }
 
+//nolint:funlen
 func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 	var manifests [][]byte
@@ -69,68 +70,86 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 		var images []imageData
 
-		if values.Image.Repository != "" && values.Image.Tag != "" {
-			// Docker Image Digest isn't supported at this time.
-			if strings.HasSuffix(values.Image.Repository, "sha256") {
-				logrus.Debugf("Docker image digest detected, skipping as not supported yet")
-				continue
+		appendImages := func(registry, repository, tag, yamlRegistryPath, yamlRepositoryPath, yamlTagPath string) {
+			// In case a digest is specified in the repository, we want to remove it
+			if strings.Contains(repository, "@sha256") {
+				repository = strings.Split(repository, "@")[0]
 			}
-			images = append(images, imageData{
-				registry:           values.Image.Registry,
-				repository:         values.Image.Repository,
-				tag:                values.Image.Tag,
-				yamlRegistryPath:   "$.image.registry",
-				yamlRepositoryPath: "$.image.repository",
-				yamlTagPath:        "$.image.tag",
-			})
 
+			// In case a digest is specified in the tag, we want to remove it
+			if strings.Contains(tag, "@sha256") {
+				tagArray := strings.Split(tag, "@")
+				if len(tagArray) > 1 {
+					tag = tagArray[0]
+				}
+			}
+
+			if repository == "" {
+				return
+			}
+
+			images = append(images, imageData{
+				registry:           registry,
+				repository:         repository,
+				tag:                tag,
+				yamlRegistryPath:   yamlRegistryPath,
+				yamlRepositoryPath: yamlRepositoryPath,
+				yamlTagPath:        yamlTagPath,
+			})
 		}
 
+		appendImages(
+			values.Image.Registry,
+			values.Image.Repository,
+			values.Image.Tag,
+			"$.image.registry",
+			"$.image.repository",
+			"$.image.tag")
+
 		for id := range values.Images {
-			// Docker Image Digest isn't supported at this time.
-			if strings.HasSuffix(values.Images[id].Repository, "sha256") {
-				logrus.Debugf("Docker image digest detected, skipping as not supported yet")
-				continue
-			}
-
-			images = append(images, imageData{
-				registry:           values.Images[id].Registry,
-				repository:         values.Images[id].Repository,
-				tag:                values.Images[id].Tag,
-				yamlRegistryPath:   fmt.Sprintf("$.images.%s.registry", id),
-				yamlRepositoryPath: fmt.Sprintf("$.images.%s.repository", id),
-				yamlTagPath:        fmt.Sprintf("$.images.%s.tag", id),
-			})
-
+			appendImages(
+				values.Images[id].Registry,
+				values.Images[id].Repository,
+				values.Images[id].Tag,
+				fmt.Sprintf("$.images.%s.registry", id),
+				fmt.Sprintf("$.images.%s.repository", id),
+				fmt.Sprintf("$.images.%s.tag", id),
+			)
 		}
 
 		for _, image := range images {
 
 			// Compose the container source considering the registry and repository
-			var imageSource string
+			var imageName string
 			if image.registry == "" {
-				imageSource = image.repository
+				imageName = image.repository
 			} else {
-				imageSource = strings.Join([]string{
+				imageName = strings.Join([]string{
 					strings.Trim(image.registry, "/"),
 					strings.Trim(image.repository, "/"),
 				}, "/")
 			}
 
-			imageSourceSlug := strings.ReplaceAll(imageSource, "/", "_")
+			imageSourceSlug := strings.ReplaceAll(imageName, "/", "_")
 
 			// Try to be smart by detecting the best versionfilter
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageSource, image.tag, h.spec.Auths)
-			if sourceSpec == nil {
-				continue
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, image.tag, h.spec.Auths)
+
+			versionFilterKind := h.versionFilter.Kind
+			versionFilterPattern := h.versionFilter.Pattern
+			tagFilter := "*"
+
+			if sourceSpec != nil {
+				versionFilterKind = sourceSpec.VersionFilter.Kind
+				versionFilterPattern = sourceSpec.VersionFilter.Pattern
+				tagFilter = sourceSpec.TagFilter
 			}
 
 			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
 			if !h.spec.VersionFilter.IsZero() {
-				sourceSpec.VersionFilter.Kind = h.versionFilter.Kind
-				sourceSpec.VersionFilter.Pattern, err = h.versionFilter.GreaterThanPattern(image.tag)
-				sourceSpec.TagFilter = ""
-
+				versionFilterKind = h.versionFilter.Kind
+				versionFilterPattern, err = h.versionFilter.GreaterThanPattern(image.tag)
+				tagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceSpec.VersionFilter.Pattern = "*"
@@ -153,14 +172,31 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				}
 			}
 
-			tmpl, err := template.New("manifest").Parse(containerManifest)
-			if err != nil {
-				logrus.Errorln(err)
-				continue
+			var tmpl *template.Template
+			if h.digest && sourceSpec != nil {
+				tmpl, err = template.New("manifest").Parse(manifestTemplateDigestAndLatest)
+				if err != nil {
+					return nil, err
+				}
+			} else if h.digest && sourceSpec == nil {
+				tmpl, err = template.New("manifest").Parse(manifestTemplateDigest)
+				if err != nil {
+					return nil, err
+				}
+			} else if !h.digest && sourceSpec != nil {
+				tmpl, err = template.New("manifest").Parse(manifestTemplateLatest)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				logrus.Infoln("No source spec detected")
+				return nil, nil
 			}
 
 			params := struct {
-				ManifestName                string
+				ImageName                   string
+				ImageTag                    string
+				ChartName                   string
 				HasRegistry                 bool
 				ConditionRegistryID         string
 				ConditionRegistryKey        string
@@ -171,12 +207,10 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				ConditionRepositoryName     string
 				ConditionRepositoryValue    string
 				SourceID                    string
-				SourceName                  string
 				SourceVersionFilterKind     string
 				SourceVersionFilterPattern  string
 				SourceImageName             string
 				SourceTagFilter             string
-				TargetName                  string
 				TargetID                    string
 				TargetKey                   string
 				TargetFile                  string
@@ -185,7 +219,9 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				File                        string
 				ScmID                       string
 			}{
-				ManifestName:                fmt.Sprintf("Bump Docker image %q for Helm chart %q", imageSource, chartName),
+				ImageName:                   imageName,
+				ImageTag:                    image.tag,
+				ChartName:                   chartName,
 				HasRegistry:                 image.registry != "",
 				ConditionRegistryID:         imageSourceSlug + "-registry",
 				ConditionRegistryKey:        image.yamlRegistryPath,
@@ -196,12 +232,10 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				ConditionRepositoryName:     fmt.Sprintf("Ensure container repository %q is specified", image.repository),
 				ConditionRepositoryValue:    image.repository,
 				SourceID:                    imageSourceSlug,
-				SourceName:                  fmt.Sprintf("Get latest %q container tag", imageSource),
-				SourceVersionFilterKind:     sourceSpec.VersionFilter.Kind,
-				SourceVersionFilterPattern:  sourceSpec.VersionFilter.Pattern,
-				SourceImageName:             sourceSpec.Image,
-				SourceTagFilter:             sourceSpec.TagFilter,
-				TargetName:                  fmt.Sprintf("Bump container image tag for image %q in chart %q", imageSource, chartName),
+				SourceVersionFilterKind:     versionFilterKind,
+				SourceVersionFilterPattern:  versionFilterPattern,
+				SourceImageName:             imageName,
+				SourceTagFilter:             tagFilter,
 				TargetID:                    imageSourceSlug,
 				TargetKey:                   image.yamlTagPath,
 				TargetChartName:             chartRelativeMetadataPath,
@@ -213,6 +247,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
+				fmt.Println(err)
 				return nil, err
 			}
 
