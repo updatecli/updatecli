@@ -5,15 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 )
 
 func TestDiscoverManifests(t *testing.T) {
-	// Disable condition testing with running short test
-	if testing.Short() {
-		return
-	}
-
 	testdata := []struct {
 		name              string
 		rootDir           string
@@ -22,7 +16,7 @@ func TestDiscoverManifests(t *testing.T) {
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata",
-			expectedPipelines: []string{`name: 'Bump "grafana" Fleet bundle for "grafana" Helm chart'
+			expectedPipelines: []string{`name: 'deps(rancher/fleet): bump "grafana" Fleet bundle for "grafana" Helm chart'
 sources:
   grafana:
     name: 'Get latest "grafana" Helm chart version'
@@ -30,7 +24,7 @@ sources:
     spec:
       name: 'grafana'
       url: 'https://grafana.github.io/helm-charts'
-      versionFilter:
+      versionfilter:
         kind: 'semver'
         pattern: '*'
 conditions:
@@ -52,7 +46,7 @@ conditions:
       value: 'https://grafana.github.io/helm-charts'
 targets:
   grafana:
-    name: 'Bump chart grafana from Fleet bundle grafana'
+    name: 'deps(helm): bump chart "grafana" in Fleet bundle "grafana"'
     kind: 'yaml'
     spec:
       file: 'fleet.d/grafana/fleet.yaml'
@@ -65,8 +59,8 @@ targets:
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
-			fleet, err := fleet.New(
-				fleet.Spec{
+			fleet, err := New(
+				Spec{
 					RootDir: tt.rootDir,
 				}, "", "")
 
