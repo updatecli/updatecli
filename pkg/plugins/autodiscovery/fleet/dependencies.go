@@ -116,7 +116,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			File                       string
 			ScmID                      string
 		}{
-			ManifestName:               fmt.Sprintf("Bump %q Fleet bundle for %q Helm chart", chartName, data.Helm.Chart),
+			ManifestName:               fmt.Sprintf("deps(rancher/fleet): bump %q Fleet bundle for %q Helm chart", chartName, data.Helm.Chart),
 			ChartName:                  data.Helm.Chart,
 			ChartRepository:            data.Helm.Repo,
 			ConditionID:                data.Helm.Chart,

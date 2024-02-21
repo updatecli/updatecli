@@ -38,7 +38,7 @@ conditions:
       value: '{{ .ChartRepository }}'
 targets:
   {{ .TargetID }}:
-    name: 'Bump chart {{ .ChartName }} from Fleet bundle {{ .FleetBundle }}'
+    name: 'deps(helm): bump chart "{{ .ChartName }}" in Fleet bundle "{{ .FleetBundle }}"'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
