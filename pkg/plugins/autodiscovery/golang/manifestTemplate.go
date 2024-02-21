@@ -2,20 +2,20 @@ package golang
 
 var (
 	// goManifestTemplate is the Go template used to generate Golang manifest update
-	goManifestTemplate string = `name: 'Update Golang version'
+	goManifestTemplate string = `name: 'deps(golang): bump Go version'
 sources:
-  golangVersion:
-    name: 'Get latest golang version'
+  go:
+    name: 'Get latest Go version'
     kind: 'golang'
     spec:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
 targets:
-  golangVersion:
-    name: {{ .TargetName }}
-    kind: golang/gomod
-    sourceid: golangVersion
+  go:
+    name: 'deps(golang): bump Go version to {{ "{{" }} source "go" {{ "}}" }}'
+    kind: 'golang/gomod'
+    sourceid: 'go'
     spec:
       file: '{{ .GoModFile }}'
 {{- if .ScmID }}
@@ -24,9 +24,9 @@ targets:
 `
 
 	// goModuleManifestTemplate is the Go template used to generate Golang manifest update
-	goModuleManifestTemplate string = `name: 'Update Golang module {{ .Module }}'
+	goModuleManifestTemplate string = `name: 'deps(go): bump module {{ .Module }}'
 sources:
-  golangModuleVersion:
+  module:
     name: 'Get latest golang module {{ .Module }} version'
     kind: 'golang/module'
     spec:
@@ -35,10 +35,10 @@ sources:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
 targets:
-  golangModuleVersion:
-    name: {{ .TargetName }}
-    kind: golang/gomod
-    sourceid: golangModuleVersion
+  module:
+    name: 'deps(go): bump module {{ .Module }} to {{ "{{" }} source "module" {{ "}}" }}'
+    kind: 'golang/gomod'
+    sourceid: 'module'
     spec:
       file: '{{ .GoModFile }}'
       module: '{{ .Module }}'
@@ -46,27 +46,27 @@ targets:
     scmid: '{{ .ScmID }}'
 {{ end }}
 {{- if .GoModTidyEnabled }}
-  goModTidy:
-    name: Run Go mod tidy
+  tidy:
+    name: 'clean: go mod tidy'
     disablesourceinput: true
+    dependsonchange: true
     dependson:
-      - golangModuleVersion
-    kind: shell
+      - 'module'
+    kind: 'shell'
     spec:
-      command: go mod tidy
+      command: 'go mod tidy'
       environments:
         - name: HOME
         - name: PATH
       changedif:
-        kind: file/checksum
+        kind: 'file/checksum'
         spec:
           files:
-           - go.mod
-           - go.sum
+           - 'go.mod'
+           - 'go.sum'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
-{{ end }}
-
+{{- end }}
 `
 )
