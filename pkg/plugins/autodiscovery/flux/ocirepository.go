@@ -28,7 +28,6 @@ type ociRepositorySpecRef struct {
 
 func loadOCIRepository(filename string) (*ociRepository, error) {
 	var ociRepository ociRepository
-	var data []byte
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
