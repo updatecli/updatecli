@@ -97,3 +97,8 @@ digest
 LOGDIR
 distroless
 httputils
+fluxcd
+helmrelease
+Helmrelease
+Releasemanifests
+ocirepository
