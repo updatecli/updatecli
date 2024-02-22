@@ -102,3 +102,6 @@ helmrelease
 Helmrelease
 Releasemanifests
 ocirepository
+helmrepository
+ociregistry
+
