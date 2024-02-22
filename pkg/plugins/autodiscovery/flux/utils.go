@@ -33,7 +33,7 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 				// if it does, then we save it and move to the next file path
 				helmRepository, err := isHelmRepository(path)
 				if err != nil {
-					logrus.Debugf("Failed loading file %s as HelmRepository: %s", path, err.Error())
+					logrus.Debugf("Failed loading file %s as HelmRepository: %s", path, err)
 				}
 
 				if helmRepository != nil {
@@ -44,7 +44,7 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 				// if it does, then we save it and move to the next file path
 				ociRepository, err := loadOCIRepository(path)
 				if err != nil {
-					logrus.Debugf("Failed loading file %s as OCIRepository: %s", path, err.Error())
+					logrus.Debugf("Failed loading file %s as OCIRepository: %s", path, err)
 				}
 
 				if ociRepository != nil {
@@ -55,7 +55,7 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 				// if it does, then we save it and move to the next file path
 				helmRelease, err := loadHelmRelease(path)
 				if err != nil {
-					logrus.Debugf("Failed loading file %s as HelmRelease: %s", path, err.Error())
+					logrus.Debugf("Failed loading file %s as HelmRelease: %s", path, err)
 				}
 
 				if helmRelease != nil {

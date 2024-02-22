@@ -43,12 +43,12 @@ func loadHelmRelease(filename string) (*helmRelease, error) {
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("opening file %s:%s", filename, err.Error())
+		return nil, fmt.Errorf("opening file %s:%s", filename, err)
 	}
 
 	err = yaml.Unmarshal(data, &helmRelease)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshalling HelmRelease file %s: %s", filename, err.Error())
+		return nil, fmt.Errorf("unmarshalling HelmRelease file %s: %s", filename, err)
 	}
 
 	apiVersion := strings.Split(helmRelease.ApiVersion, "/")[0]

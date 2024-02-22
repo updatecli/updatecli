@@ -31,12 +31,12 @@ func loadOCIRepository(filename string) (*ociRepository, error) {
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("opening file %s: %s", filename, err.Error())
+		return nil, fmt.Errorf("opening file %s: %s", filename, err)
 	}
 
 	err = yaml.Unmarshal(data, &ociRepository)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshalling OCIRepository file %s: %s", filename, err.Error())
+		return nil, fmt.Errorf("unmarshalling OCIRepository file %s: %s", filename, err)
 	}
 
 	apiVersion := strings.Split(ociRepository.ApiVersion, "/")[0]

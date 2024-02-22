@@ -29,12 +29,12 @@ func isHelmRepository(filename string) (*helmRepository, error) {
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("opening file %s: %s", filename, err.Error())
+		return nil, fmt.Errorf("opening file %s: %s", filename, err)
 	}
 
 	err = yaml.Unmarshal(data, &helmRepository)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshalling HelmRepository file %s: %s", filename, err.Error())
+		return nil, fmt.Errorf("unmarshalling HelmRepository file %s: %s", filename, err)
 	}
 
 	if strings.Contains(helmRepository.ApiVersion, "source.toolkit.fluxcd.io") && helmRepository.Kind == "HelmRepository" {
