@@ -1,7 +1,6 @@
 package flux
 
 import (
-	"fmt"
 	"io/fs"
 	"path/filepath"
 
@@ -13,7 +12,7 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			logrus.Debugf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
