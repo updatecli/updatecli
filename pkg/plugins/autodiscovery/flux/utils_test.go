@@ -17,7 +17,7 @@ func TestSearchFluxFiles(t *testing.T) {
 
 	err = f.searchFluxFiles("testdata", defaultFluxFiles[:])
 	if err != nil {
-		t.Errorf("%s\n", err)
+		t.Error(err)
 	}
 
 	expectedHelmReleaseFile := []string{
