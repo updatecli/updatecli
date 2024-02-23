@@ -24,7 +24,11 @@ type Spec struct {
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 	// digest allows to specify if the generated manifest should use OCI digest on top of the tag
 	Digest *bool `yaml:",omitempty"`
-	// fileMatch allows to override default flux files
+	// HelmRelease bool `yaml:",omitempty"`
+	//
+	// default: true
+	HelmRelease *bool
+	// files allows to override default flux files
 	Files []string `yaml:",omitempty"`
 	// Ignore allows to specify rule to ignore autodiscovery a specific Flux helmrelease based on a rule
 	//
@@ -36,6 +40,10 @@ type Spec struct {
 	// default: empty
 	//
 	Only MatchingRules `yaml:",omitempty"`
+	// OCIRegistry allows to specify if OCIregistry should be updated
+	//
+	// default: true
+	OCIRegistry *bool `yaml:",omitempty"`
 	//RootDir defines the root directory used to recursively search for Flux files
 	//
 	// default: . (current working directory) or scm root directory
@@ -71,6 +79,8 @@ type Spec struct {
 type Flux struct {
 	// files defines the accepted Flux file name
 	files []string
+	// helmRelease defines if the generated manifest should be a HelmRelease
+	helmRelease bool
 	// digest defines if the generated manifest should use OCI digest on top of the tag
 	digest bool
 	// spec defines the settings provided via an updatecli manifest
@@ -79,6 +89,8 @@ type Flux struct {
 	rootDir string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
+	// ociRegistry defines if the OCI registry should be updated
+	ociRegistry bool
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
 	// helmRepositories is a list of HelmRepository
@@ -110,6 +122,16 @@ func New(spec interface{}, rootDir, scmID string) (Flux, error) {
 		return Flux{}, err
 	}
 
+	ociRegistry := true
+	if s.OCIRegistry != nil {
+		ociRegistry = *s.OCIRegistry
+	}
+
+	helmRelease := true
+	if s.HelmRelease != nil {
+		helmRelease = *s.HelmRelease
+	}
+
 	digest := true
 	if s.Digest != nil {
 		digest = *s.Digest
@@ -131,6 +153,8 @@ func New(spec interface{}, rootDir, scmID string) (Flux, error) {
 		digest:        digest,
 		spec:          s,
 		files:         files,
+		ociRegistry:   ociRegistry,
+		helmRelease:   helmRelease,
 		rootDir:       dir,
 		scmID:         scmID,
 		versionFilter: newFilter,
@@ -149,11 +173,15 @@ func (f Flux) DiscoverManifests() ([][]byte, error) {
 		return nil, err
 	}
 
-	helmReleasemanifests := f.discoverHelmreleaseManifests()
-	ociRepositoryManifests := f.discoverOCIRepositoryManifests()
+	if f.helmRelease {
+		helmReleasemanifests := f.discoverHelmreleaseManifests()
+		manifests = append(manifests, helmReleasemanifests...)
+	}
 
-	manifests = append(manifests, helmReleasemanifests...)
-	manifests = append(manifests, ociRepositoryManifests...)
+	if f.ociRegistry {
+		ociRepositoryManifests := f.discoverOCIRepositoryManifests()
+		manifests = append(manifests, ociRepositoryManifests...)
+	}
 
 	return manifests, err
 }
