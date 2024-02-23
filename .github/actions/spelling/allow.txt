@@ -104,4 +104,4 @@ Releasemanifests
 ocirepository
 helmrepository
 ociregistry
-
+gvk
