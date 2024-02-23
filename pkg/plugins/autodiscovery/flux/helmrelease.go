@@ -3,42 +3,16 @@ package flux
 import (
 	"fmt"
 	"os"
-	"strings"
 
-	"gopkg.in/yaml.v3"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta2"
+
+	"sigs.k8s.io/yaml"
 )
 
 // https://fluxcd.io/flux/components/helm/helmreleases/#writing-a-helmrelease-spec
 
-type helmRelease struct {
-	ApiVersion string            `yaml:"apiVersion,omitempty"`
-	Kind       string            `yaml:"kind,omitempty"`
-	Metadata   map[string]string `yaml:"metadata,omitempty"`
-	Spec       helmReleaseSpec   `yaml:"spec,omitempty"`
-}
-
-type helmReleaseSpec struct {
-	Chart helmReleaseChart `yaml:"chart,omitempty"`
-}
-
-type helmReleaseChart struct {
-	Spec helmReleaseChartSpec `yaml:"spec,omitempty"`
-}
-
-type helmReleaseChartSpec struct {
-	Chart     string        `yaml:"chart,omitempty"`
-	Version   string        `yaml:"version,omitempty"`
-	SourceRef sourceRefSpec `yaml:"sourceRef,omitempty"`
-}
-
-type sourceRefSpec struct {
-	Kind      string `yaml:"kind,omitempty"`
-	Name      string `yaml:"name,omitempty"`
-	Namespace string `yaml:"namespace,omitempty"`
-}
-
-func loadHelmRelease(filename string) (*helmRelease, error) {
-	var helmRelease helmRelease
+func loadHelmRelease(filename string) (*helmv2.HelmRelease, error) {
+	var helmRelease helmv2.HelmRelease
 	var data []byte
 
 	data, err := os.ReadFile(filename)
@@ -51,9 +25,8 @@ func loadHelmRelease(filename string) (*helmRelease, error) {
 		return nil, fmt.Errorf("unmarshalling HelmRelease file %s: %s", filename, err)
 	}
 
-	apiVersion := strings.Split(helmRelease.ApiVersion, "/")[0]
-
-	if strings.HasSuffix(apiVersion, "fluxcd.io") && helmRelease.Kind == "HelmRelease" {
+	gvk := helmRelease.GroupVersionKind()
+	if gvk.GroupKind().String() == "HelmRelease.helm.toolkit.fluxcd.io" {
 		return &helmRelease, nil
 	}
 

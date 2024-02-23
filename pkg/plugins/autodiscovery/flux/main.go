@@ -7,6 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+
+	fluxcd "github.com/fluxcd/source-controller/api/v1beta2"
 )
 
 var (
@@ -91,7 +93,7 @@ type Flux struct {
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
 	// helmRepositories is a list of HelmRepository
-	helmRepositories []helmRepository
+	helmRepositories []fluxcd.HelmRepository
 	// ociRepositories is a list of OCIRepository files found
 	ociRepositoryFiles []string
 	// helmReleaseFiles is a list of HelmRelease files found

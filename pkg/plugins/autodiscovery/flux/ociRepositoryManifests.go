@@ -34,7 +34,7 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 		}
 
 		ociName := strings.TrimPrefix(data.Spec.URL, "oci://")
-		ociVersion := data.Spec.Ref.Tag
+		ociVersion := data.Spec.Reference.Tag
 
 		// Skip pipeline if at least of the oci url or oci tag is not specified
 		if len(ociName) == 0 || len(ociVersion) == 0 {

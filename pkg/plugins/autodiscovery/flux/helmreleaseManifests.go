@@ -39,12 +39,16 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 
 		sourceRef := data.Spec.Chart.Spec.SourceRef
 		if sourceRef.Namespace == "" {
-			if namespace, ok := data.Metadata["namespace"]; ok {
-				sourceRef.Namespace = namespace
-			}
+			sourceRef.Namespace = data.GetNamespace()
 		}
 
-		helmRepositoryURL, _ := f.getHelmRepositoryURL(sourceRef)
+		helmRepositoryURL := ""
+		for _, helmRepository := range f.helmRepositories {
+			if helmRepository.GetName() == sourceRef.Name && helmRepository.GetNamespace() == sourceRef.Namespace {
+				helmRepositoryURL = helmRepository.Spec.URL
+				break
+			}
+		}
 
 		// Skip pipeline if at least of the helm chart or helm repository is not specified
 		if len(helmChartName) == 0 || len(helmChartVersion) == 0 || len(helmRepositoryURL) == 0 {
