@@ -17,7 +17,7 @@ autodiscovery:
       #  # - path: chart/*
       #only:
       #  #- path: helmfile.d/*
-      #  - charts:
+      #  - artifacts:
       #      "kubewarden-crds": ""
       #  - repositories:
       #      - "https://charts.jetstack.io"

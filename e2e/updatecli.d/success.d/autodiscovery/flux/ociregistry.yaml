@@ -12,12 +12,14 @@ autodiscovery:
   crawlers:
     flux:
       # To ignore specific path
-      #ignore:
-      #  # - path: <filepath relative to scm repository>
-      #  # - path: chart/*
+      ignore:
+        - artifacts:
+           "ghcr.io/kyverno/manifests/kyverno": ""
+        # - path: <filepath relative to scm repository>
+        # - path: chart/*
       #only:
       #  #- path: helmfile.d/*
-      #  - charts:
-      #      "kubewarden-crds": ""
+      #  - artifacts:
+      #      "ghcr.io/kyverno/manifests/kyverno": ""
       #  - repositories:
       #      - "https://charts.jetstack.io"
