@@ -40,10 +40,10 @@ type Spec struct {
 	// default: empty
 	//
 	Only MatchingRules `yaml:",omitempty"`
-	// OCIRegistry allows to specify if OCIregistry should be updated
+	// OCIRepository allows to specify if an OCIrepository should be updated
 	//
 	// default: true
-	OCIRegistry *bool `yaml:",omitempty"`
+	OCIRepository *bool `yaml:",omitempty"`
 	//RootDir defines the root directory used to recursively search for Flux files
 	//
 	// default: . (current working directory) or scm root directory
@@ -89,8 +89,8 @@ type Flux struct {
 	rootDir string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
-	// ociRegistry defines if the OCI registry should be updated
-	ociRegistry bool
+	// ociRepository defines if the OCI repository should be updated
+	ociRepository bool
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
 	// helmRepositories is a list of HelmRepository
@@ -122,9 +122,9 @@ func New(spec interface{}, rootDir, scmID string) (Flux, error) {
 		return Flux{}, err
 	}
 
-	ociRegistry := true
-	if s.OCIRegistry != nil {
-		ociRegistry = *s.OCIRegistry
+	ociRepository := true
+	if s.OCIRepository != nil {
+		ociRepository = *s.OCIRepository
 	}
 
 	helmRelease := true
@@ -153,7 +153,7 @@ func New(spec interface{}, rootDir, scmID string) (Flux, error) {
 		digest:        digest,
 		spec:          s,
 		files:         files,
-		ociRegistry:   ociRegistry,
+		ociRepository: ociRepository,
 		helmRelease:   helmRelease,
 		rootDir:       dir,
 		scmID:         scmID,
@@ -178,7 +178,7 @@ func (f Flux) DiscoverManifests() ([][]byte, error) {
 		manifests = append(manifests, helmReleasemanifests...)
 	}
 
-	if f.ociRegistry {
+	if f.ociRepository {
 		ociRepositoryManifests := f.discoverOCIRepositoryManifests()
 		manifests = append(manifests, ociRepositoryManifests...)
 	}

@@ -40,7 +40,7 @@ func TestIsMatchingRule(t *testing.T) {
 			rules: MatchingRules{
 				MatchingRule{
 					Path: "testdata/helmrelease.yaml",
-					Charts: map[string]string{
+					Artifacts: map[string]string{
 						"udash": "",
 					},
 				},

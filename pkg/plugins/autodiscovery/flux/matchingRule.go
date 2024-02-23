@@ -9,12 +9,20 @@ import (
 
 // MatchingRule allows to specifies rules to identify manifest
 type MatchingRule struct {
-	// Path specifies a Fleet bundle path pattern, the pattern requires to match all of name, not just a subpart of the path.
+	// Path specifies a Flux filepath pattern, the pattern requires to match all of name, not just a subpart of the path.
 	Path string
 	// Repositories specifies the list of Helm Chart repository to check
 	Repositories []string
-	// Charts specifies the list of Helm Chart repository to check
-	Charts map[string]string
+	// Artifacts specifies the list of artifacts to check
+	//
+	// The key is the artifact name and the value is the artifact version
+	//
+	// An artifact can be a Helm Chart when used in the context of Helmrelease
+	// or an OCIRepository when used in the context of OCIRepository
+	//
+	// If the value is empty, then the artifact name is enough to match
+	// If the value is a valid semver constraint, then the artifact version must match the constraint
+	Artifacts map[string]string
 }
 
 type MatchingRules []MatchingRule
@@ -67,11 +75,11 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, repositoryURL, chartNa
 				Checks if Chart Name is matching the policy constraint.
 			*/
 
-			if len(rule.Charts) > 0 {
+			if len(rule.Artifacts) > 0 {
 				match := false
 
 			outChartName:
-				for ruleReleaseName, ruleReleaseVersion := range rule.Charts {
+				for ruleReleaseName, ruleReleaseVersion := range rule.Artifacts {
 
 					if chartName == ruleReleaseName {
 						if ruleReleaseVersion == "" {

@@ -42,14 +42,14 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 		}
 
 		if len(f.spec.Ignore) > 0 {
-			if f.spec.Ignore.isMatchingRules(f.rootDir, relateFoundFluxFile, ociName, "", ociVersion) {
+			if f.spec.Ignore.isMatchingRules(f.rootDir, relateFoundFluxFile, "", ociName, ociVersion) {
 				logrus.Debugf("Ignoring OCI repository %q from %q, as matching ignore rule(s)\n", ociName, relateFoundFluxFile)
 				continue
 			}
 		}
 
 		if len(f.spec.Only) > 0 {
-			if !f.spec.Only.isMatchingRules(f.rootDir, relateFoundFluxFile, ociName, "", ociVersion) {
+			if !f.spec.Only.isMatchingRules(f.rootDir, relateFoundFluxFile, "", ociName, ociVersion) {
 				logrus.Debugf("Ignoring OCI repository %q from %q, as not matching only rule(s)\n", ociName, relateFoundFluxFile)
 				continue
 			}
