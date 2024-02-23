@@ -40,7 +40,7 @@ type Spec struct {
 	// default: empty
 	//
 	Only MatchingRules `yaml:",omitempty"`
-	// OCIRepository allows to specify if an OCIrepository should be updated
+	// OCIRepository allows to specify if an OCI repository should be updated
 	//
 	// default: true
 	OCIRepository *bool `yaml:",omitempty"`
