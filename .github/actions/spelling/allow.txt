@@ -105,3 +105,4 @@ ocirepository
 helmrepository
 ociregistry
 gvk
+kyverno
