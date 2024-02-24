@@ -126,6 +126,11 @@ type Spec struct {
 	GPG sign.GPGSpec `yaml:",omitempty"`
 	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
 	Submodules *bool `yaml:",omitempty"`
+	// workingBranch defines if Updatecli should use a temporary branch to work on.
+	// If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	//
+	// default: false
+	WorkingBranch *bool `yaml:",omitempty"`
 }
 
 // Git contains the git scm handler
@@ -134,10 +139,13 @@ type Git struct {
 	spec Spec
 	// nativeGitHandler is the native git handler
 	nativeGitHandler gitgeneric.GitHandler
+	// workingBranch is used to create a temporary branch to work on.
+	workingBranch bool
+	pipelineID    string
 }
 
 // New returns a new git object
-func New(s Spec) (*Git, error) {
+func New(s Spec, pipelineID string) (*Git, error) {
 	var err error
 	if len(s.Directory) == 0 {
 		s.Directory, err = newDirectory(s.URL)
@@ -150,11 +158,18 @@ func New(s Spec) (*Git, error) {
 		s.Branch = "main"
 	}
 
+	workingBranch := false
+	if s.WorkingBranch != nil {
+		workingBranch = *s.WorkingBranch
+	}
+
 	nativeGitHandler := gitgeneric.GoGit{}
 
 	return &Git{
 		spec:             s,
 		nativeGitHandler: nativeGitHandler,
+		workingBranch:    workingBranch,
+		pipelineID:       pipelineID,
 	}, nil
 }
 
