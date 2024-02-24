@@ -120,6 +120,11 @@ type Spec struct {
 	Branch string `yaml:",omitempty"`
 	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
 	Submodules *bool `yaml:",omitempty"`
+	// workingBranch defines if Updatecli should use a temporary branch to work on.
+	// If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	//
+	// default: true
+	WorkingBranch *bool `yaml:",omitempty"`
 }
 
 // Gitlab contains information to interact with GitLab api
@@ -132,6 +137,7 @@ type Gitlab struct {
 	pipelineID string
 	// nativeGitHandler is used to interact with the local git repository
 	nativeGitHandler gitgeneric.GitHandler
+	workingBranch    bool
 }
 
 // New returns a new valid GitLab object.
@@ -168,6 +174,12 @@ func New(spec interface{}, pipelineID string) (*Gitlab, error) {
 		s.Branch = "main"
 	}
 
+	workingBranch := true
+	if s.WorkingBranch != nil {
+		workingBranch = *s.WorkingBranch
+
+	}
+
 	c, err := client.New(clientSpec)
 
 	if err != nil {
@@ -180,6 +192,7 @@ func New(spec interface{}, pipelineID string) (*Gitlab, error) {
 		client:           c,
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
+		workingBranch:    workingBranch,
 	}
 
 	g.setDirectory()
