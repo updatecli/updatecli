@@ -149,6 +149,11 @@ type Spec struct {
 	CommitMessage commit.Commit `yaml:",omitempty"`
 	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
 	Submodules *bool `yaml:",omitempty"`
+	// workingBranch defines if Updatecli should use a temporary branch to work on.
+	// If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	//
+	// default: true
+	WorkingBranch *bool `yaml:",omitempty"`
 }
 
 // GitHub contains settings to interact with GitHub
@@ -159,6 +164,7 @@ type Github struct {
 	client           GitHubClient
 	nativeGitHandler gitgeneric.GitHandler
 	mu               sync.RWMutex
+	workingBranch    bool
 }
 
 // Repository contains GitHub repository data
@@ -202,10 +208,16 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	httpClient := oauth2.NewClient(context.Background(), src)
 	nativeGitHandler := gitgeneric.GoGit{}
 
+	workingBranch := true
+	if s.WorkingBranch != nil {
+		workingBranch = *s.WorkingBranch
+	}
+
 	g := Github{
 		Spec:             s,
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
+		workingBranch:    workingBranch,
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {
