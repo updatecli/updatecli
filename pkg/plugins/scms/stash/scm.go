@@ -12,7 +12,7 @@ func (s *Stash) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	workingBranch = s.Spec.Branch
 	targetBranch = s.Spec.Branch
 
-	if len(s.pipelineID) > 0 {
+	if len(s.pipelineID) > 0 && s.workingBranch {
 		workingBranch = s.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, s.pipelineID))
 	}
 

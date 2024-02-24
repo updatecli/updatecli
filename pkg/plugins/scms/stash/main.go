@@ -116,6 +116,11 @@ type Spec struct {
 	Branch string `yaml:",omitempty"`
 	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
 	Submodules *bool `yaml:",omitempty"`
+	// workingBranch defines if Updatecli should use a temporary branch to work on.
+	// If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	//
+	// default: true
+	WorkingBranch *bool `yaml:",omitempty"`
 }
 
 // Stash contains information to interact with Stash api
@@ -126,6 +131,7 @@ type Stash struct {
 	client           client.Client
 	pipelineID       string
 	nativeGitHandler gitgeneric.GitHandler
+	workingBranch    bool
 }
 
 // New returns a new valid Bitbucket object.
@@ -173,6 +179,11 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 		s.Branch = "main"
 	}
 
+	workingBranch := true
+	if s.WorkingBranch != nil {
+		workingBranch = *s.WorkingBranch
+	}
+
 	c, err := client.New(clientSpec)
 
 	if err != nil {
@@ -185,6 +196,7 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 		client:           c,
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
+		workingBranch:    workingBranch,
 	}
 
 	g.setDirectory()
