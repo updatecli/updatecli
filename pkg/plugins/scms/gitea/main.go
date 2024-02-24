@@ -116,6 +116,11 @@ type Spec struct {
 	Branch string `yaml:",omitempty"`
 	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
 	Submodules *bool `yaml:",omitempty"`
+	// workingBranch defines if Updatecli should use a temporary branch to work on.
+	// If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	//
+	// default: true
+	WorkingBranch *bool `yaml:",omitempty"`
 }
 
 // Gitea contains information to interact with Gitea api
@@ -126,6 +131,7 @@ type Gitea struct {
 	client           client.Client
 	nativeGitHandler gitgeneric.GitHandler
 	pipelineID       string
+	workingBranch    bool
 }
 
 // New returns a new valid Gitea object.
@@ -168,6 +174,11 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		s.Directory = path.Join(tmp.Directory, "gitea", s.Owner, s.Repository)
 	}
 
+	workingBranch := true
+	if s.WorkingBranch != nil {
+		workingBranch = *s.WorkingBranch
+	}
+
 	if len(s.Branch) == 0 {
 		logrus.Warningf("no git branch specified, fallback to %q", "main")
 		s.Branch = "main"
@@ -185,6 +196,7 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		client:           c,
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
+		workingBranch:    workingBranch,
 	}
 
 	g.setDirectory()
