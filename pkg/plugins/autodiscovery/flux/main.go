@@ -23,28 +23,32 @@ type Spec struct {
 	// auths provides a map of registry credentials where the key is the registry URL without scheme
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 	// digest allows to specify if the generated manifest should use OCI digest on top of the tag
-	Digest *bool `yaml:",omitempty"`
-	// HelmRelease bool `yaml:",omitempty"`
 	//
 	// default: true
-	HelmRelease *bool
+	Digest *bool `yaml:",omitempty"`
+	// helmRelease define if helmrelease file should be updated or not
+	//
+	// default: true
+	HelmRelease *bool `yaml:",omitempty"`
 	// files allows to override default flux files
+	//
+	// default: ["*.yaml", "*.yml"]
 	Files []string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific Flux helmrelease based on a rule
+	// ignore allows to specify rule to ignore autodiscovery a specific Flux helmrelease based on a rule
 	//
 	// default: empty
 	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific Flux helm release based on a rule
+	// only allows to specify rule to only autodiscover manifest for a specific Flux helm release based on a rule
 	//
 	// default: empty
 	//
 	Only MatchingRules `yaml:",omitempty"`
-	// OCIRepository allows to specify if an OCI repository should be updated
+	// OCIRepository allows to specify if OCI repository files should be updated
 	//
 	// default: true
 	OCIRepository *bool `yaml:",omitempty"`
-	//RootDir defines the root directory used to recursively search for Flux files
+	// rootDir defines the root directory used to recursively search for Flux files
 	//
 	// default: . (current working directory) or scm root directory
 	//

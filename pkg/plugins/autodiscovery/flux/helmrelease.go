@@ -12,14 +12,13 @@ import (
 // https://fluxcd.io/flux/components/helm/helmreleases/#writing-a-helmrelease-spec
 
 func loadHelmRelease(filename string) (*helmv2.HelmRelease, error) {
-	var helmRelease helmv2.HelmRelease
-	var data []byte
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("opening file %s:%s", filename, err)
 	}
 
+	helmRelease := helmv2.HelmRelease{}
 	err = yaml.Unmarshal(data, &helmRelease)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling HelmRelease file %s: %s", filename, err)

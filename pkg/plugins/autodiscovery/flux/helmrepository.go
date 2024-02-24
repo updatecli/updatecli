@@ -12,14 +12,12 @@ import (
 // https://fluxcd.io/flux/components/source/helmrepositories/#writing-a-helmrepository-spec
 
 func isHelmRepository(filename string) (*fluxcdv1.HelmRepository, error) {
-	var helmRepository fluxcdv1.HelmRepository
-	var data []byte
-
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("opening file %s: %s", filename, err)
 	}
 
+	helmRepository := fluxcdv1.HelmRepository{}
 	err = yaml.Unmarshal(data, &helmRepository)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling HelmRepository file %s: %s", filename, err)

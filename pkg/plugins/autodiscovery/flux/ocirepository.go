@@ -12,13 +12,13 @@ import (
 // https://fluxcd.io/flux/components/source/ocirepositories/#writing-an-ocirepository-spec
 
 func loadOCIRepository(filename string) (*fluxcdv1.OCIRepository, error) {
-	var ociRepository fluxcdv1.OCIRepository
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("opening file %s: %s", filename, err)
 	}
 
+	ociRepository := fluxcdv1.OCIRepository{}
 	err = yaml.Unmarshal(data, &ociRepository)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling OCIRepository file %s: %s", filename, err)

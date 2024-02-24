@@ -1,7 +1,7 @@
 package flux
 
 const (
-	// ociRepositoryManifestTemplateLatest is the Go template used to generate Flux manifests for ocirepository resources
+	// ociRepositoryManifestTemplateLatest is the Go template used to generate Flux manifests for ocirepository resources without digest
 	ociRepositoryManifestTemplateLatest string = `name: 'deps(flux): bump ociRepository "{{ .OCIName }}"'
 sources:
   oci:
@@ -25,6 +25,7 @@ targets:
       key: '$.spec.ref.tag'
     sourceid: 'oci'
 `
+	// ociRepositoryManifestTemplateDigestAndLatest is the Go template used to generate Flux manifests for ocirepository resources with digest and latest
 	ociRepositoryManifestTemplateDigestAndLatest string = `name: 'deps(flux): bump ociRepository "{{ .OCIName }}"'
 sources:
   oci:
@@ -56,7 +57,7 @@ targets:
       key: '$.spec.ref.tag'
     sourceid: 'oci-digest'
 `
-
+	// ociRepositoryManifestTemplateDigest is the Go template used to generate Flux manifests for ocirepository resources with digest without updating the tag.
 	ociRepositoryManifestTemplateDigest string = `name: 'deps(flux): bump ociRepository "{{ .OCIName }}"'
 sources:
   oci-digest:
