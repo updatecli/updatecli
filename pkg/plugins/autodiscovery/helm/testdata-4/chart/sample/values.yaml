@@ -1,0 +1,10 @@
+image:
+  registry: ghcr.io
+  repository: epinio/epinio-server
+images:
+  ui:
+    registry: ghcr.io
+    repository: epinio/epinio-ui
+  backend:
+    registry: ghcr.io
+    tag: 0.18.0
