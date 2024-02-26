@@ -1,0 +1,23 @@
+name: Test Flux Autodiscovery
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/updatecli-test/flux2-monitoring-example.git
+
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  crawlers:
+    flux:
+      # To ignore specific path
+      #ignore:
+      #  # - path: <filepath relative to scm repository>
+      #  # - path: chart/*
+      #only:
+      #  #- path: helmfile.d/*
+      #  - artifacts:
+      #      "kubewarden-crds": ""
+      #  - repositories:
+      #      - "https://charts.jetstack.io"
