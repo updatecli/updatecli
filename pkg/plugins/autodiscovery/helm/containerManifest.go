@@ -117,8 +117,6 @@ sources:
     spec:
       image: '{{ .ImageName }}'
       tag: '{{ .ImageTag }}'
-    dependson:
-      - '{{ .SourceID }}'
 conditions:
 {{- if .HasRegistry }}
   {{ .ConditionRegistryID }}:
