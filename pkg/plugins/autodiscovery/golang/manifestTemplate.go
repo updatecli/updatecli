@@ -58,6 +58,7 @@ targets:
       environments:
         - name: HOME
         - name: PATH
+      workdir: {{ .WorkDir }}
       changedif:
         kind: 'file/checksum'
         spec:

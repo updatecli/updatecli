@@ -47,6 +47,7 @@ targets:
       environments:
         - name: HOME
         - name: PATH
+      workdir: .
       changedif:
         kind: 'file/checksum'
         spec:
