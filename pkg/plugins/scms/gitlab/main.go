@@ -21,109 +21,96 @@ import (
 // Spec defines settings used to interact with GitLab release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	/*
-		"commitMessage" is used to generate the final commit message.
-
-		compatible:
-			* scm
-
-		remark:
-			it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
-	*/
-	CommitMessage commit.Commit `yaml:",omitempty"`
-	/*
-		"directory" defines the local path where the git repository is cloned.
-
-		compatible:
-			* scm
-
-		remark:
-			Unless you know what you are doing, it is recommended to use the default value.
-			The reason is that Updatecli may automatically clean up the directory after a pipeline execution.
-
-		default:
-			/tmp/updatecli/gitlab/<owner>/<repository>
-	*/
-	Directory string `yaml:",omitempty"`
-	/*
-		"email" defines the email used to commit changes.
-
-		compatible:
-			* scm
-
-		default:
-			default set to your global git configuration
-	*/
-	Email string `yaml:",omitempty"`
-	/*
-		"force" is used during the git push phase to run `git push --force`.
-
-		compatible:
-			* scm
-
-		default:
-			false
-	*/
-	Force bool `yaml:",omitempty"`
-	/*
-		"gpg" specifies the GPG key and passphrased used for commit signing
-
-		compatible:
-			* scm
-	*/
-	GPG sign.GPGSpec `yaml:",omitempty"`
-	/*
-		"owner" defines the owner of a repository.
-
-		compatible:
-			* scm
-	*/
-	Owner string `yaml:",omitempty" jsonschema:"required"`
-	/*
-		repository specifies the name of a repository for a specific owner.
-
-		compatible:
-			* action
-			* scm
-	*/
-	Repository string `yaml:",omitempty" jsonschema:"required"`
-	/*
-		"user" specifies the user associated with new git commit messages created by Updatecli
-
-		compatible:
-			* scm
-	*/
-	User string `yaml:",omitempty"`
-	/*
-		"branch" defines the git branch to work on.
-
-		compatible:
-			* scm
-
-		default:
-			main
-
-		remark:
-			depending on which resource references the GitLab scm, the behavior will be different.
-
-			If the scm is linked to a source or a condition (using scmid), the branch will be used to retrieve
-			file(s) from that branch.
-
-			If the scm is linked to target then Updatecli creates a new "working branch" based on the branch value.
-			The working branch created by Updatecli looks like "updatecli_<pipelineID>".
-			It is worth mentioning that it is not possible to bypass the working branch in the current situation.
-			For more information, please refer to the following issue:
-			https://github.com/updatecli/updatecli/issues/1139
-
-			If you need to push changes to a specific branch, you must use the plugin "git" instead of this
-	*/
-	Branch string `yaml:",omitempty"`
-	// Whether to checkout submodules: `true` to checkout submodules or `false` to skip.
-	Submodules *bool `yaml:",omitempty"`
-	// workingBranch defines if Updatecli should use a temporary branch to work on.
-	// If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	//  "commitMessage" is used to generate the final commit message.
 	//
-	// default: true
+	//  compatible:
+	//    * scm
+	//
+	//  remark:
+	//    it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
+	CommitMessage commit.Commit `yaml:",omitempty"`
+	//	"directory" defines the local path where the git repository is cloned.
+	//
+	//	compatible:
+	//	  * scm
+	//
+	//	remark:
+	//    Unless you know what you are doing, it is recommended to use the default value.
+	//	  The reason is that Updatecli may automatically clean up the directory after a pipeline execution.
+	//
+	//	default:
+	// 	  The default value is based on your local temporary directory like: (on Linux)
+	//	  /tmp/updatecli/gitlab/<owner>/<repository>
+	Directory string `yaml:",omitempty"`
+	//  "email" defines the email used to commit changes.
+	//
+	//  compatible:
+	//    * scm
+	//
+	//  default:
+	//    default set to your global git configuration
+	Email string `yaml:",omitempty"`
+	//  "force" is used during the git push phase to run `git push --force`.
+	//
+	//  compatible:
+	//    * scm
+	//
+	//  default:
+	//    false
+	Force bool `yaml:",omitempty"`
+	//  "gpg" specifies the GPG key and passphrased used for commit signing.
+	//
+	//  compatible:
+	//	  * scm
+	GPG sign.GPGSpec `yaml:",omitempty"`
+	//  "owner" defines the owner of a repository.
+	//
+	//  compatible:
+	//    * scm
+	Owner string `yaml:",omitempty" jsonschema:"required"`
+	//  repository specifies the name of a repository for a specific owner.
+	//
+	//  compatible:
+	//    * action
+	//    * scm
+	Repository string `yaml:",omitempty" jsonschema:"required"`
+	//  "user" specifies the user associated with new git commit messages created by Updatecli.
+	//
+	//  compatible:
+	//    * scm
+	User string `yaml:",omitempty"`
+	//  "branch" defines the git branch to work on.
+	//
+	//  compatible:
+	//    * scm
+	//
+	//  default:
+	//    main
+	//
+	//  remark:
+	//    depending on which resource references the GitLab scm, the behavior will be different.
+	//
+	//    If the scm is linked to a source or a condition (using scmid), the branch will be used to retrieve
+	//    file(s) from that branch.
+	//
+	//    If the scm is linked to target then Updatecli creates a new "working branch" based on the branch value.
+	//    The working branch created by Updatecli looks like "updatecli_<pipelineID>".
+	// 	  The working branch can be disabled using the "workingBranch" parameter set to false.
+	Branch string `yaml:",omitempty"`
+	//  "submodules" defines if Updatecli should checkout submodules.
+	//
+	//  compatible:
+	//	  * scm
+	//
+	//  default: true
+	Submodules *bool `yaml:",omitempty"`
+	//  "workingBranch" defines if Updatecli should use a temporary branch to work on.
+	//  If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	//
+	//  compatible:
+	//    * scm
+	//
+	//  default: true
 	WorkingBranch *bool `yaml:",omitempty"`
 }
 

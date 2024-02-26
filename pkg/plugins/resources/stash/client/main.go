@@ -15,17 +15,37 @@ import (
 // Spec defines a specification for a "bitbucket" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [S][C][T] URL specifies the default github url in case of Bitbucket enterprise
+	// "url" specifies the default stash url in case of Bitbucket enterprise
 	URL string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T] Username specifies the username used to authenticate with Bitbucket API
+	// "username" specifies the username used to authenticate with Bitbucket API
 	Username string `yaml:",omitempty"`
-	// [S][C][T] Token specifies the credential used to authenticate with
+	//  "token" specifies the credential used to authenticate with Stash API
+	//
+	//  remark:
+	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
+	//    but to use an environment variable or a SOPS file.
+	//
+	//    The value can be set to `{{ requiredEnv "GITEA_TOKEN"}}` to retrieve the token from the environment variable `GITHUB_TOKEN`
+	//	  or `{{ .gitea.token }}` to retrieve the token from a SOPS file.
+	//
+	//	  For more information, about a SOPS file, please refer to the following documentation:
+	//    https://github.com/getsops/sops
 	Token string `yaml:",omitempty"`
-	// [S][C][T] Token specifies the credential used to authenticate with
+	//  "password" specifies the credential used to authenticate with Stash API, it must be combined with "username"
+	//
+	//  remark:
+	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
+	//    but to use an environment variable or a SOPS file.
+	//
+	//    The value can be set to `{{ requiredEnv "GITEA_TOKEN"}}` to retrieve the token from the environment variable `GITHUB_TOKEN`
+	//	  or `{{ .gitea.token }}` to retrieve the token from a SOPS file.
+	//
+	//	  For more information, about a SOPS file, please refer to the following documentation:
+	//    https://github.com/getsops/sops
 	Password string `yaml:",omitempty"`
-	// Owner specifies repository owner
+	// "owner" defines repository owner
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
+	// "repository" defines the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 }
 

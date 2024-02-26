@@ -10,17 +10,21 @@ import (
 // Spec defines a specification for a "gitea" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	/*
-		"url" defines the Gitea url to interact with
-	*/
+	//  "url" defines the Gitea url to interact with
 	URL string `yaml:",omitempty" jsonschema:"required"`
-	/*
-		"username" defines the username used to authenticate with Gitea API
-	*/
+	//  "username" defines the username used to authenticate with Gitea API
 	Username string `yaml:",omitempty"`
-	/*
-		"token" specifies the credential used to authenticate with Gitea API
-	*/
+	//  "token" specifies the credential used to authenticate with Gitea API
+	//
+	//  remark:
+	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
+	//    but to use an environment variable or a SOPS file.
+	//
+	//    The value can be set to `{{ requiredEnv "GITEA_TOKEN"}}` to retrieve the token from the environment variable `GITHUB_TOKEN`
+	//	  or `{{ .gitea.token }}` to retrieve the token from a SOPS file.
+	//
+	//	  For more information, about a SOPS file, please refer to the following documentation:
+	//    https://github.com/getsops/sops
 	Token string `yaml:",omitempty"`
 }
 
