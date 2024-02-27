@@ -19,6 +19,7 @@ func TestSearchGoModFiles(t *testing.T) {
 			rootDir: "testdata",
 			expectedFoundFiles: []string{
 				"testdata/noModule/go.mod",
+				"testdata/noSumFile/go.mod",
 			},
 		},
 	}
