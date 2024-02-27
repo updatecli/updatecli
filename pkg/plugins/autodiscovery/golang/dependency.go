@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -37,8 +38,10 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 		}
 
 		goSumFound := false
-		goSumFilePath := filepath.Join(relativeWorkDir, "go.sum")
+		goSumFilePath := filepath.Join(filepath.Dir(foundFile), "go.sum")
+		fmt.Println(goSumFilePath)
 		if _, err := os.Stat(goSumFilePath); err == nil {
+			fmt.Println(goSumFound)
 			goSumFound = true
 		}
 

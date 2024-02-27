@@ -73,6 +73,46 @@ targets:
 `,
 			},
 		},
+		{
+			name:    "Golang Version",
+			rootDir: "testdata/noSumFile",
+			expectedPipelines: []string{`name: 'deps(go): bump module gopkg.in/yaml.v3'
+sources:
+  module:
+    name: 'Get latest golang module gopkg.in/yaml.v3 version'
+    kind: 'golang/module'
+    spec:
+      module: 'gopkg.in/yaml.v3'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=3.0.1'
+targets:
+  module:
+    name: 'deps(go): bump module gopkg.in/yaml.v3 to {{ source "module" }}'
+    kind: 'golang/gomod'
+    sourceid: 'module'
+    spec:
+      file: 'go.mod'
+      module: 'gopkg.in/yaml.v3'
+`, `name: 'deps(golang): bump Go version'
+sources:
+  go:
+    name: 'Get latest Go version'
+    kind: 'golang'
+    spec:
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=1.20.0'
+targets:
+  go:
+    name: 'deps(golang): bump Go version to {{ source "go" }}'
+    kind: 'golang/gomod'
+    sourceid: 'go'
+    spec:
+      file: 'go.mod'
+`,
+			},
+		},
 	}
 
 	for _, tt := range testdata {
