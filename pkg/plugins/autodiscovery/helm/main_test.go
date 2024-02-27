@@ -343,6 +343,11 @@ targets:
     sourceid: 'ghcr.io_epinio_epinio-ui'
 `},
 		},
+		{
+			name:              "Scenario 4 - missing required information",
+			rootDir:           "testdata-4/chart",
+			expectedPipelines: []string{},
+		},
 	}
 
 	for _, tt := range testdata {
