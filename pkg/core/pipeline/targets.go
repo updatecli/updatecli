@@ -62,6 +62,33 @@ func (p *Pipeline) RunTargets() error {
 			}
 		}
 
+		// Check if the target should be skipped
+		if !target.Config.DisableConditions && !shouldSkipTarget {
+			failingConditions := []string{}
+
+			switch len(target.Config.ConditionIDs) > 0 {
+			case true:
+				for _, conditionID := range target.Config.ConditionIDs {
+					if p.Conditions[conditionID].Result.Result != result.SUCCESS {
+						failingConditions = append(failingConditions, conditionID)
+					}
+				}
+			case false:
+				// if no condition is defined, we evaluate all conditions
+				for id, condition := range p.Conditions {
+					if condition.Result.Result != result.SUCCESS {
+						failingConditions = append(failingConditions, id)
+					}
+				}
+			}
+
+			if len(failingConditions) > 0 {
+				target.Result.ConsoleOutput = fmt.Sprintf("Conditions %v not met. Skipping execution of the target[%q]", failingConditions, id)
+				logrus.Infof(target.Result.ConsoleOutput)
+				shouldSkipTarget = true
+			}
+		}
+
 		// No need to run this target as one of its dependency failed
 		if shouldSkipTarget {
 			p.Targets[id] = target

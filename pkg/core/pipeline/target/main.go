@@ -43,14 +43,36 @@ type Target struct {
 type Config struct {
 	// ResourceConfig defines target input parameters
 	resource.ResourceConfig `yaml:",inline"`
-	// dependsonchange enables the mechanism to check if the dependant target(s) have made a change. If the dependant target(s) have not made a change the target will be skipped.
+	// dependsonchange enables the mechanism to check if the dependant target(s) have made a change.
+	// If the dependant target(s) have not made a change the target will be skipped.
+	//
+	// default:
+	//   false
 	DependsOnChange bool `yaml:",omitempty"`
 	// ! Deprecated - please use all lowercase `sourceid`
 	DeprecatedSourceID string `yaml:"sourceID,omitempty" jsonschema:"-"`
-	// disablesourceinput disables the mechanism to retrieve a default value from a source. For example, if true, source information like changelog will not be accessible for a github/pullrequest action.
+	// disablesourceinput disables the mechanism to retrieve a default value from a source.
+	// For example, if true, source information like changelog will not be accessible for a github/pullrequest action.
+	//
+	// default:
+	//  false
 	DisableSourceInput bool `yaml:",omitempty"`
-	// sourceid specifies where retrieving the default value
+	// sourceid specifies where retrieving the default value.
+	//
+	// default:
+	//   if only one source is defined, then sourceid is set to that sourceid.
 	SourceID string `yaml:",omitempty"`
+	// conditionsids specifies the list of conditions to be evaluated before running the target.
+	// if at least one condition is not met, the target will be skipped.
+	//
+	// default:
+	//   by default, all conditions are evaluated.
+	ConditionIDs []string `yaml:",omitempty"`
+	// disableconditions disables the mechanism to evaluate conditions before running the target.
+	//
+	// default:
+	//   false
+	DisableConditions bool `yaml:"disableconditions,omitempty"`
 }
 
 // Check verifies if mandatory Targets parameters are provided and return false if not.
