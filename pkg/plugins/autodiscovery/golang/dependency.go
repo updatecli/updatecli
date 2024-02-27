@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -35,13 +36,25 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
+		goSumFound := false
+		goSumFilePath := filepath.Join(relativeWorkDir, "go.sum")
+		if _, err := os.Stat(goSumFilePath); err == nil {
+			goSumFound = true
+		}
+
 		// If the Go binary is available then we can run `go mod tidy` in case of the go.mod modification
 		goModTidyEnabled := false
 		switch isGolangInstalled() {
 		case true:
-			goModTidyEnabled = true
+			// If both go and go.sum are present, then we can run `go mod tidy` after go.mod file change
+			if goSumFound {
+				goModTidyEnabled = true
+			}
+
 		case false:
-			logrus.Warning("Golang not detected so we can't run go mod tidy after go.mod file change")
+			if goSumFound {
+				logrus.Warningf("File %q detected but not Golang so we can't run go mod tidy if %s is modified", goSumFilePath, foundFile)
+			}
 		}
 
 		goVersion, goModules, err := getGoModContent(foundFile)
@@ -154,6 +167,7 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterPattern,
 }
 
 func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterPattern, scmID, workdir string, goModTidy bool) ([]byte, error) {
+
 	tmpl, err := template.New("manifest").Parse(goModuleManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
