@@ -1,0 +1,47 @@
+conditions:
+  succeed:
+    kind: shell
+    spec:
+      command: "true"
+      changedif:
+        kind: exitcode
+
+# Commenting because otherwise e2e tests fails as it looks for ERROR message
+#  failed:
+#    kind: shell
+#    spec:
+#      command: "false"
+#      changedif:
+#        kind: exitcode
+      
+targets:
+  alwaysrun:
+    name: "Target always executed because condition checking is disabled"
+    kind: shell
+    disableconditions: true
+    spec:
+      command: "echo 'this should always run'"
+
+# Commenting because otherwise e2e tests fails as it looks for ERROR message
+#  neverrun:
+#    name: "Target skipped because all conditions must succeed"
+#    kind: shell
+#    spec:
+#      command: "echo 'this should always run'"
+
+  succeed:
+    name: "Target should be executed as depends on condition succeed"
+    kind: shell
+    conditionids:
+     - succeed
+    spec:
+      command: "echo 'this should run'"
+
+# Commenting because otherwise e2e tests fails as it looks for ERROR message
+#  conditionFailed:
+#    name: "Target shouldn't be executed as depend on condition failed"
+#    kind: shell
+#    conditionids:
+#     - failed
+#    spec:
+#      command: "echo 'this shouldn't run'"
