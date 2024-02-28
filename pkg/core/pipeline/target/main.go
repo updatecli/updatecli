@@ -62,7 +62,7 @@ type Config struct {
 	// default:
 	//   if only one source is defined, then sourceid is set to that sourceid.
 	SourceID string `yaml:",omitempty"`
-	// conditionsids specifies the list of conditions to be evaluated before running the target.
+	// conditionids specifies the list of conditions to be evaluated before running the target.
 	// if at least one condition is not met, the target will be skipped.
 	//
 	// default:
