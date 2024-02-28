@@ -15,7 +15,7 @@ conditions:
       
 targets:
   alwaysrun:
-    name: "Target always executed because all conditions must succeed"
+    name: "Target always executed because condition checking is disabled"
     kind: shell
     disableconditions: true
     spec:
