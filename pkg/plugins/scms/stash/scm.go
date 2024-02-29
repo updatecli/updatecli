@@ -61,23 +61,6 @@ func (s *Stash) Clone() (string, error) {
 		return "", err
 	}
 
-	sourceBranch, workingBranch, _ := s.GetBranches()
-
-	if len(workingBranch) > 0 && len(s.GetDirectory()) > 0 {
-		err = s.nativeGitHandler.Checkout(
-			s.Spec.Username,
-			s.Spec.Token,
-			sourceBranch,
-			workingBranch,
-			s.GetDirectory(),
-			true)
-	}
-
-	if err != nil {
-		logrus.Errorf("initial Bitbucket checkout failed for repository %q", s.GetURL())
-		return "", err
-	}
-
 	return s.Spec.Directory, nil
 }
 
