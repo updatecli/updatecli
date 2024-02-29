@@ -254,7 +254,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				fmt.Println(err)
 				return nil, err
 			}
 
