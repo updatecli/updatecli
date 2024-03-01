@@ -188,6 +188,19 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		r := p.Targets[id].Result
 		p.Report.Targets[id] = &r
+
+		// Check for deprecated setups
+		if p.Targets[id].Config.Kind == "gittag" {
+			foundAssociatedGitPushAction := false
+			for _, actionConfig := range p.Actions {
+				if actionConfig.Config.ScmID == p.Targets[id].Config.SCMID {
+					foundAssociatedGitPushAction = true
+				}
+			}
+			if !foundAssociatedGitPushAction {
+				logrus.Warningf("The target %q of kind %q does not have any associated action of kind %q. The tag won't be pushed to the remote repository.", id, "gittag", "gitpush")
+			}
+		}
 	}
 	return nil
 

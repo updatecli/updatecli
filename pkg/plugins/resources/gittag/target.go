@@ -28,14 +28,7 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 		return nil
 	}
 
-	if scm != nil {
-		if err := scm.PushTag(source); err != nil {
-			logrus.Errorf("Git push tag error: %s", err)
-			return err
-		}
-	}
-
-	resultTarget.Description = fmt.Sprintf("git tag %q successfully created and pushed", source)
+	resultTarget.Description = fmt.Sprintf("git tag %q successfully created", source)
 	if gt.spec.Message != "" {
 		resultTarget.Description = gt.spec.Message
 	}
