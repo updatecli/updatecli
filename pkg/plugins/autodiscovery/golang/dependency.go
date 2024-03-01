@@ -2,7 +2,7 @@ package golang
 
 import (
 	"bytes"
-	"fmt"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -30,13 +30,31 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
+		relativeWorkDir, err := filepath.Rel(g.rootDir, filepath.Dir(foundFile))
+		if err != nil {
+			logrus.Debugln(err)
+			continue
+		}
+
+		goSumFound := false
+		goSumFilePath := filepath.Join(filepath.Dir(foundFile), "go.sum")
+		if _, err := os.Stat(goSumFilePath); err == nil {
+			goSumFound = true
+		}
+
 		// If the Go binary is available then we can run `go mod tidy` in case of the go.mod modification
 		goModTidyEnabled := false
 		switch isGolangInstalled() {
 		case true:
-			goModTidyEnabled = true
+			// If both go and go.sum are present, then we can run `go mod tidy` after go.mod file change
+			if goSumFound {
+				goModTidyEnabled = true
+			}
+
 		case false:
-			logrus.Warning("Golang not detected so we can't run go mod tidy after go.mod file change")
+			if goSumFound {
+				logrus.Warningf("File %q detected but not Golang so we can't run go mod tidy if %s is modified", goSumFilePath, foundFile)
+			}
 		}
 
 		goVersion, goModules, err := getGoModContent(foundFile)
@@ -74,6 +92,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				g.versionFilter.Kind,
 				goModuleVersionPattern,
 				g.scmID,
+				relativeWorkDir,
 				goModTidyEnabled)
 			if err != nil {
 				logrus.Debugf("skipping golang module %q module due to: %s", goModule, err)
@@ -131,13 +150,11 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterPattern,
 		GoModFile            string
 		VersionFilterKind    string
 		VersionFilterPattern string
-		TargetName           string
 		ScmID                string
 	}{
 		GoModFile:            filename,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
-		TargetName:           `Bump Golang to {{ source "golangVersion" }}`,
 		ScmID:                scmID,
 	}
 
@@ -149,7 +166,8 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterPattern,
 	return manifest.Bytes(), nil
 }
 
-func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterPattern, scmID string, goModTidy bool) ([]byte, error) {
+func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterPattern, scmID, workdir string, goModTidy bool) ([]byte, error) {
+
 	tmpl, err := template.New("manifest").Parse(goModuleManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
@@ -163,7 +181,7 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		VersionFilterPattern string
 		GoModTidyEnabled     bool
 		ScmID                string
-		TargetName           string
+		WorkDir              string
 	}{
 		GoModFile:            filename,
 		Module:               module,
@@ -171,7 +189,7 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		VersionFilterPattern: versionFilterPattern,
 		GoModTidyEnabled:     goModTidy,
 		ScmID:                scmID,
-		TargetName:           fmt.Sprintf("Bump %s to {{ source \"golangModuleVersion\" }}", module),
+		WorkDir:              workdir,
 	}
 
 	manifest := bytes.Buffer{}

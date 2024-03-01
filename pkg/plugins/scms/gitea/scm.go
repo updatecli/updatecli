@@ -13,7 +13,7 @@ func (g *Gitea) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	workingBranch = g.Spec.Branch
 	targetBranch = g.Spec.Branch
 
-	if len(g.pipelineID) > 0 {
+	if len(g.pipelineID) > 0 && g.workingBranch {
 		workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, g.pipelineID))
 	}
 
@@ -59,23 +59,6 @@ func (g *Gitea) Clone() (string, error) {
 
 	if err != nil {
 		logrus.Errorf("failed cloning Gitea repository %q", g.GetURL())
-		return "", err
-	}
-
-	sourceBranch, workingBranch, _ := g.GetBranches()
-
-	if len(workingBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = g.nativeGitHandler.Checkout(
-			g.Spec.Username,
-			g.Spec.Token,
-			sourceBranch,
-			workingBranch,
-			g.GetDirectory(),
-			true)
-	}
-
-	if err != nil {
-		logrus.Errorf("initial Gitea checkout failed for repository %q", g.GetURL())
 		return "", err
 	}
 

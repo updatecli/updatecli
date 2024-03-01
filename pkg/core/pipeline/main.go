@@ -201,49 +201,35 @@ func (p *Pipeline) Run() error {
 	logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
 	if len(p.Sources) > 0 {
-		err := p.RunSources()
-
-		if err != nil {
+		if err := p.RunSources(); err != nil {
 			p.Report.Result = result.FAILURE
 			return fmt.Errorf("sources stage:\t%q", err.Error())
 		}
 	}
 
 	if len(p.Conditions) > 0 {
-
-		ok, err := p.RunConditions()
-
-		if err != nil {
+		if err := p.RunConditions(); err != nil {
 			p.Report.Result = result.FAILURE
 			return fmt.Errorf("conditions stage:\t%q", err.Error())
-		} else if !ok {
-			logrus.Infof("\n%s condition not met, skipping pipeline\n", result.FAILURE)
-			return nil
 		}
-
 	}
 
 	if len(p.Targets) > 0 {
-		err := p.RunTargets()
-
-		if err != nil {
+		if err := p.RunTargets(); err != nil {
 			p.Report.Result = result.FAILURE
 			return fmt.Errorf("targets stage:\t%q", err.Error())
 		}
 	}
 
 	if len(p.Actions) > 0 {
-		err := p.RunActions()
-
-		if err != nil {
+		if err := p.RunActions(); err != nil {
 			p.Report.Result = result.FAILURE
 			return fmt.Errorf("action stage:\t%q", err.Error())
 		}
 	}
 
 	if cmdoptions.Experimental {
-		err := udash.Publish(&p.Report)
-		if err != nil &&
+		if err := udash.Publish(&p.Report); err != nil &&
 			!errors.Is(err, udash.ErrNoUdashBearerToken) &&
 			!errors.Is(err, udash.ErrNoUdashAPIURL) {
 			logrus.Infof("Skipping report publishing")

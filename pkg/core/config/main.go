@@ -529,6 +529,23 @@ func (config *Config) validateTargets() error {
 			}
 		}
 
+		if t.DisableConditions && len(t.ConditionIDs) > 0 {
+			logrus.Errorf("target %q has 'disableconditions' set to true and 'conditionids' defined (%v), it's not possible to disable conditions and define conditions at the same time", id, t.ConditionIDs)
+			return ErrBadConfig
+		}
+
+		undefinedConditions := []string{}
+		for _, conditionID := range t.ConditionIDs {
+			if _, ok := config.Spec.Conditions[conditionID]; !ok {
+				undefinedConditions = append(undefinedConditions, conditionID)
+			}
+		}
+
+		if len(undefinedConditions) > 0 {
+			logrus.Errorf("target %q has undefined conditionids: %v", id, undefinedConditions)
+			return ErrBadConfig
+		}
+
 		// Only check/guess the sourceID if the user did not disable it (default is enabled)
 		if !t.DisableSourceInput {
 			// Try to guess SourceID

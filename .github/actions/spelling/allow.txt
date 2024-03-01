@@ -97,3 +97,16 @@ digest
 LOGDIR
 distroless
 httputils
+fluxcd
+helmrelease
+Helmrelease
+Releasemanifests
+ocirepository
+helmrepository
+ociregistry
+gvk
+kyverno
+alwaysrun
+disableconditions
+neverrun
+conditionids

@@ -98,15 +98,22 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			})
 		}
 
-		appendImages(
-			values.Image.Registry,
-			values.Image.Repository,
-			values.Image.Tag,
-			"$.image.registry",
-			"$.image.repository",
-			"$.image.tag")
+		if values.Image.Tag != "" && values.Image.Repository != "" {
+			appendImages(
+				values.Image.Registry,
+				values.Image.Repository,
+				values.Image.Tag,
+				"$.image.registry",
+				"$.image.repository",
+				"$.image.tag")
+		}
 
 		for id := range values.Images {
+
+			if values.Images[id].Tag == "" || values.Images[id].Repository == "" {
+				continue
+			}
+
 			appendImages(
 				values.Images[id].Registry,
 				values.Images[id].Repository,
@@ -247,7 +254,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				fmt.Println(err)
 				return nil, err
 			}
 
