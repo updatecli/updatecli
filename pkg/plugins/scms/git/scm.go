@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -10,6 +11,10 @@ func (g *Git) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	sourceBranch = g.spec.Branch
 	workingBranch = g.spec.Branch
 	targetBranch = g.spec.Branch
+
+	if g.workingBranch && len(g.pipelineID) > 0 {
+		workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, g.pipelineID))
+	}
 
 	return sourceBranch, workingBranch, targetBranch
 }
@@ -74,23 +79,6 @@ func (g *Git) Clone() (string, error) {
 	if err != nil {
 		logrus.Errorf("failed cloning git repository %q - %s", g.GetURL(), err)
 		return "", err
-	}
-
-	sourceBranch, workingBranch, _ := g.GetBranches()
-
-	if len(workingBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err := g.nativeGitHandler.Checkout(
-			g.spec.Username,
-			g.spec.Password,
-			sourceBranch,
-			workingBranch,
-			g.GetDirectory(),
-			true)
-
-		if err != nil {
-			logrus.Errorf("initial git checkout failed for repository %s - %s", g.GetURL(), err)
-			return "", err
-		}
 	}
 
 	return g.spec.Directory, nil
