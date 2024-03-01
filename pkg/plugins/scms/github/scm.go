@@ -61,23 +61,6 @@ func (g *Github) Clone() (string, error) {
 		return "", err
 	}
 
-	sourceBranch, workingBranch, _ := g.GetBranches()
-
-	if len(workingBranch) > 0 && len(g.GetDirectory()) > 0 {
-		err = g.nativeGitHandler.Checkout(
-			g.Spec.Username,
-			g.Spec.Token,
-			sourceBranch,
-			workingBranch,
-			g.GetDirectory(),
-			true)
-	}
-
-	if err != nil {
-		logrus.Errorf("initial git checkout failed for GitHub repository %q", g.GetURL())
-		return "", err
-	}
-
 	return g.Spec.Directory, nil
 }
 
