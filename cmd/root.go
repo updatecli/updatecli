@@ -241,12 +241,6 @@ func getPolicyFilesFromRegistry() error {
 		return nil
 	}
 
-	// TODO: To be removed once not experimental anymore
-	if !experimental {
-		logrus.Warningf("The 'oci registry' feature requires the flag --experimental to be set")
-		os.Exit(1)
-	}
-
 	for _, policy := range policyReferences {
 		policyManifest, policyValues, policySecrets, err := registry.Pull(policy, disableTLS)
 		if err != nil {

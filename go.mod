@@ -22,7 +22,7 @@ require (
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29 //indirect
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.14.2
@@ -140,7 +140,6 @@ require (
 	github.com/shirou/gopsutil/v3 v3.23.11 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
-	github.com/stretchr/objx v0.5.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/urfave/cli v1.22.14 // indirect
