@@ -106,7 +106,7 @@ require (
 	github.com/fluxcd/pkg/apis/kustomize v1.3.0 // indirect
 	github.com/fluxcd/pkg/apis/meta v1.3.0 // indirect
 	github.com/getsops/gopgagent v0.0.0-20170926210634-4d7ea76ff71a // indirect
-	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-playground/validator/v10 v10.16.0 // indirect
