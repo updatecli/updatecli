@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/aws/aws-sdk-go v1.50.14
+	github.com/aws/aws-sdk-go v1.50.34
 	github.com/containerd/containerd v1.7.12 // indirect
 	github.com/fatih/color v1.16.0
 	github.com/getsops/sops/v3 v3.8.1
@@ -36,7 +36,7 @@ require (
 	github.com/drone/go-scm v1.35.0
 	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/source-controller/api v1.2.4
-	github.com/goccy/go-yaml v1.11.2
+	github.com/goccy/go-yaml v1.11.3
 	github.com/google/go-containerregistry v0.19.0
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.20.0
@@ -287,7 +287,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.starlark.net v0.0.0-20231121155337-90ade8b19d09 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/mod v0.15.0
+	golang.org/x/mod v0.16.0
 	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
