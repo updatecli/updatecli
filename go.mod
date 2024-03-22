@@ -33,7 +33,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/beevik/etree v1.3.0
-	github.com/drone/go-scm v1.35.0
+	github.com/drone/go-scm v1.35.1
 	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/source-controller/api v1.2.4
 	github.com/goccy/go-yaml v1.11.3
