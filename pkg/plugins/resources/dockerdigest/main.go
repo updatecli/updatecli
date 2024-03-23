@@ -1,6 +1,8 @@
 package dockerdigest
 
 import (
+	"strings"
+
 	"github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -92,11 +94,15 @@ func New(spec interface{}) (*DockerDigest, error) {
 	}
 
 	keychains = append(keychains, authn.DefaultKeychain)
-	arch := newSpec.Architecture
-	if arch == "" {
-		arch = "amd64"
+
+	os, architecture, variant := getOSArch(newSpec.Architecture)
+	platform := v1.Platform{Architecture: architecture, OS: os}
+
+	if variant != "" {
+		platform.Variant = variant
 	}
-	newResource.options = append(newResource.options, remote.WithPlatform(v1.Platform{Architecture: arch, OS: "linux"}))
+
+	newResource.options = append(newResource.options, remote.WithPlatform(platform))
 	newResource.options = append(newResource.options, remote.WithAuthFromKeychain(authn.NewMultiKeychain(keychains...)))
 	return newResource, nil
 
@@ -105,4 +111,28 @@ func New(spec interface{}) (*DockerDigest, error) {
 // Changelog returns the changelog for this resource, or an empty string if not supported
 func (d *DockerDigest) Changelog() string {
 	return ""
+}
+
+// getOSArch returns the os, architecture and variant from a string
+func getOSArch(input string) (os, architecture, variant string) {
+
+	if input == "" {
+		return "linux", "amd64", ""
+	}
+
+	os = "linux"
+	architecture = input
+	variant = ""
+
+	splitArchitecture := strings.Split(input, "/")
+
+	if len(splitArchitecture) > 1 {
+		os = splitArchitecture[0]
+		architecture = splitArchitecture[1]
+	}
+
+	if len(splitArchitecture) > 2 {
+		variant = splitArchitecture[2]
+	}
+	return os, architecture, variant
 }

@@ -14,18 +14,68 @@ import (
 // Spec defines a specification for a "dockerimage" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [C] architectures specifies a list of architectures to check container images for (conditions only)
+	// architectures specifies a list of architectures to check container images for (conditions only)
+	//
+	// compatible:
+	//   * condition
+	//   * source
+	//
+	// example: windows/amd64, linux/arm64, linux/arm64/v8
+	//
+	// default: linux/amd64
+	//
+	// remark:
+	//   If an architecture is undefined, Updatecli retrieves the digest of the image index
+	//   which can be used regardless of the architecture.
+	//   But if an architecture is specified then Updatecli retrieves a specific image digest.
+	//   More information on https://github.com/updatecli/updatecli/issues/1603
 	Architectures []string `yaml:",omitempty"`
-	// [S][C] architecture specifies the container image architecture such as `amd64`
+	// architecture specifies the container image architecture such as `amd64`
+	//
+	// compatible:
+	//   * condition
+	//   * source
+	//
+	// example: windows/amd64, linux/arm64, linux/arm64/v8
+	//
+	// default: linux/amd64
+	//
+	// remark:
+	//   If an architecture is undefined, Updatecli retrieves the digest of the image index
+	//   which can be used regardless of the architecture.
+	//   But if an architecture is specified then Updatecli retrieves a specific image digest.
+	//   More information on https://github.com/updatecli/updatecli/issues/1603
 	Architecture string `yaml:",omitempty"`
-	// [S][C] image specifies the container image such as `updatecli/updatecli`
+	// image specifies the container image such as `updatecli/updatecli`
+	//
+	// compatible:
+	//   * condition
+	//   * source
 	Image string `yaml:",omitempty"`
-	// [C] tag specifies the container image tag such as `latest`
+	// tag specifies the container image tag such as `latest`
+	//
+	// compatible:
+	//   * condition
+	//
+	// default: latest
 	Tag                   string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
-	// [S] versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   kind: latest
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] tagfilter allows to restrict tags retrieved from a remote registry by using a regular expression.
+	// tagfilter allows to restrict tags retrieved from a remote registry by using a regular expression.
+	//
+	// compatible:
+	//   * source
+	//
+	// example: ^v\d*(\.\d*){2}-alpine$
+	//
+	// default: none
 	TagFilter string `yaml:",omitempty"`
 }
 
