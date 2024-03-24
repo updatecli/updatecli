@@ -13,4 +13,8 @@ autodiscovery:
         kind: semver
         pattern: patch
       versionincrement: major
+      ignore:
+        - dependencies:
+            # s3gw project has been archived
+            "s3gw": ""
 
