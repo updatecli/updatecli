@@ -33,11 +33,11 @@ require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/beevik/etree v1.3.0
-	github.com/drone/go-scm v1.35.0
+	github.com/drone/go-scm v1.35.2
 	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/source-controller/api v1.2.4
 	github.com/goccy/go-yaml v1.11.3
-	github.com/google/go-containerregistry v0.19.0
+	github.com/google/go-containerregistry v0.19.1
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.20.0
 	github.com/hashicorp/terraform-registry-address v0.2.3
@@ -53,12 +53,12 @@ require (
 	github.com/testcontainers/testcontainers-go v0.27.0
 	github.com/tomwright/dasel v1.27.3
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
-	github.com/zclconf/go-cty v1.14.3
+	github.com/zclconf/go-cty v1.14.4
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 	golang.org/x/text v0.14.0
 	golang.org/x/time v0.5.0
 	gopkg.in/ini.v1 v1.67.0
-	oras.land/oras-go/v2 v2.4.0
+	oras.land/oras-go/v2 v2.5.0
 )
 
 require (
@@ -187,7 +187,7 @@ require (
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/docker/cli v24.0.7+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
-	github.com/docker/docker v24.0.7+incompatible // indirect
+	github.com/docker/docker v24.0.9+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -296,7 +296,7 @@ require (
 	google.golang.org/api v0.161.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/grpc v1.61.0 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
