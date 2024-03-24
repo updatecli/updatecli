@@ -23,6 +23,9 @@ autodiscovery:
   actionid: fleet-lab
   crawlers:
     rancher/fleet:
+      ignore:
+        - charts:
+            "gitea": ""
       # To ignore specific path
       #ignore:
       # - path: <filepath relative to scm repository>
