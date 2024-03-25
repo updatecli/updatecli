@@ -12,7 +12,7 @@ func (s *Stash) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	workingBranch = s.Spec.Branch
 	targetBranch = s.Spec.Branch
 
-	if len(s.pipelineID) > 0 {
+	if len(s.pipelineID) > 0 && s.workingBranch {
 		workingBranch = s.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, s.pipelineID))
 	}
 
@@ -58,23 +58,6 @@ func (s *Stash) Clone() (string, error) {
 
 	if err != nil {
 		logrus.Errorf("failed cloning Bitbucket repository %q", s.GetURL())
-		return "", err
-	}
-
-	sourceBranch, workingBranch, _ := s.GetBranches()
-
-	if len(workingBranch) > 0 && len(s.GetDirectory()) > 0 {
-		err = s.nativeGitHandler.Checkout(
-			s.Spec.Username,
-			s.Spec.Token,
-			sourceBranch,
-			workingBranch,
-			s.GetDirectory(),
-			true)
-	}
-
-	if err != nil {
-		logrus.Errorf("initial Bitbucket checkout failed for repository %q", s.GetURL())
 		return "", err
 	}
 

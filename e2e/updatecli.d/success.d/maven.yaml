@@ -7,12 +7,6 @@ scms:
     disabled: true
 
 sources:
-  getLatestJenkinsWarVersion:
-    kind: maven
-    spec:
-      repository: "http://repo.jenkins-ci.org/releases"
-      groupid: "org.jenkins-ci.main"
-      artifactid: "jenkins-war"
   getLatestJunitVersion:
     kind: maven
     spec:
