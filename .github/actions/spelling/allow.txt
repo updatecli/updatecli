@@ -110,3 +110,6 @@ alwaysrun
 disableconditions
 neverrun
 conditionids
+cuelang
+cuecontext
+cueyaml
