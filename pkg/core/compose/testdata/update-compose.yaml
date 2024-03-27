@@ -1,8 +1,6 @@
 environments:
   UPDATECLI_TEST_GITHUB_ACTOR: 'me'
-
 env_files:
   - credentials.yaml
-
-policies: 
-  - policy: ghcr.io/updatecli-test/policies/autodiscovery:0.0.1-alpha
+policies:
+  - policy: ghcr.io/updatecli-test/policies/autodiscovery:0.1.0@sha256:1a7b771acda10b9656f78d5d28461da2373767fe293795557a9d4da1881d60d3
