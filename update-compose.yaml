@@ -1,0 +1,39 @@
+policies:
+  - name: Local Updatecli Website Policies
+    config:
+      - updatecli/updatecli.d/
+    values:
+      - updatecli/values.d/scm.yaml
+
+  - name: Update Updatecli policies
+    policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.2.0@sha256:46e599fb7e874ee3f1c9cf5e4dd64b328a15d61d03e106176b19a07683afde29
+    values:
+      - updatecli/values.d/scm.yaml
+
+  - name: Golang Version
+    policy: ghcr.io/updatecli/policies/golang/version:0.1.0
+    values:
+      - updatecli/values.d/scm.yaml
+
+  - name: Major Golang Module update
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.6.0
+    values:
+      - updatecli/values.d/scm.yaml
+      - updatecli/values.d/golang_major.yaml
+
+  - name: Minor Golang Module update
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.6.0
+    values:
+      - updatecli/values.d/scm.yaml
+      - updatecli/values.d/golang_minor.yaml
+
+  - name: Patch Golang Module update
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.6.0
+    values:
+      - updatecli/values.d/scm.yaml
+      - updatecli/values.d/golang_patch.yaml
+
+  - name: Update golangci-lint
+    policy: ghcr.io/updatecli/policies/golangci-lint/githubaction:0.1.0
+    values: 
+      - updatecli/values.d/scm.yaml
