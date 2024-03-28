@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -234,6 +235,23 @@ func New(option Option) (configs []Config, err error) {
 
 	specs := []Spec{}
 
+	switch extension := filepath.Ext(basename); extension {
+	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
+		//
+	case ".cue":
+		if !cmdoptions.Experimental {
+			return configs, fmt.Errorf("cuelang support is experimental, please use '--experimental' flag to enable it")
+		}
+		rawManifestContent, err = readCueConfig(rawManifestContent)
+		if err != nil {
+			return configs, err
+		}
+
+	default:
+		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, option.ManifestFile)
+		return configs, ErrConfigFileTypeNotSupported
+	}
+
 	if !option.DisableTemplating {
 		// Try to template manifest no matter the extension
 		// templated manifest must respect its extension before and after templating
@@ -268,17 +286,9 @@ func New(option Option) (configs []Config, err error) {
 		}
 	}
 
-	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
-
-		err = unmarshalConfigSpec(templatedManifestContent, &specs)
-		if err != nil {
-			return configs, err
-		}
-
-	default:
-		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, option.ManifestFile)
-		return configs, ErrConfigFileTypeNotSupported
+	err = unmarshalConfigSpec(templatedManifestContent, &specs)
+	if err != nil {
+		return configs, err
 	}
 
 	configs = make([]Config, len(specs))
