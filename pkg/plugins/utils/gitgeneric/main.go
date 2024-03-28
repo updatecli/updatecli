@@ -247,187 +247,121 @@ func (g GoGit) Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g GoGit) Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error {
+// The function returns a boolean to indicate if the branch had to be reset based on the base branch.
+func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string) (bool, error) {
 
-	logrus.Debugf("stage: git-checkout\n\n")
+	// resetBranch is the newBranch has been reset to the basedBranch because it diverged.
+	var resetBranch bool
 
-	logrus.Debugf("checkout branch %q, based on %q to directory %q",
-		remoteBranch,
-		branch,
-		workingDir)
+	logrus.Debugf("checkout git branch %q, based on %q",
+		newBranch,
+		basedBranch)
 
-	r, err := git.PlainOpen(workingDir)
+	repository, err := git.PlainOpen(gitRepositoryPath)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	w, err := r.Worktree()
+	worktree, err := repository.Worktree()
 	if err != nil {
 		logrus.Debugln(err)
-		return err
+		return false, err
 	}
-
-	//// Retrieve local branch
-	//head, err := r.Head()
-	//if err != nil {
-	//	return err
-	//}
-
-	//if head.Name().IsBranch() {
-	//	if head.Name().Short() == branch {
-	//		return nil
-	//	}
-	//}
-
-	b := bytes.Buffer{}
 
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything except an empty string
 		Password: password,
 	}
 
-	pullOptions := git.PullOptions{
-		Force:    true,
-		Progress: &b,
-	}
-
-	if !isAuthEmpty(&auth) {
-		pullOptions.Auth = &auth
-	}
-
-	err = w.Pull(&pullOptions)
-
-	logrus.Debugln(b.String())
-	b.Reset()
-
-	if err != nil &&
-		err != git.ErrNonFastForwardUpdate &&
-		err != git.NoErrAlreadyUpToDate {
-		logrus.Debugln(err)
-		return err
-	}
-
-	// If remoteBranch already exist, use it
+	// Checkout source branch without creating it yet
+	// If newBranch already exist, use it
 	// otherwise use the one define in the spec
-	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(remoteBranch),
+	err = worktree.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(newBranch),
 		Create: false,
 		Keep:   false,
 		Force:  true,
 	})
 
 	switch err {
-	case nil:
-		/*
-			Means that a local branch named remoteBranch already exist
-			so we want to be sure that the local branch is
-			aligned with the remote one.
-		*/
-
-		remote, err := r.Remote(DefaultRemoteReferenceName)
-		if err != nil {
-			return err
-		}
-
-		listOptions := git.ListOptions{}
-
-		if !isAuthEmpty(&auth) {
-			listOptions.Auth = &auth
-		}
-
-		refs, err := remote.List(&listOptions)
-
-		if err != nil {
-			return err
-		}
-
-		if !g.exists(
-			plumbing.NewBranchReferenceName(remoteBranch),
-			refs) {
-			logrus.Debugf("No remote name %q", remoteBranch)
-			return nil
-		}
-
-		remoteBranchRef := plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, remoteBranch)
-
-		remoteRef, err := r.Reference(remoteBranchRef, true)
-
-		if err != nil {
-			return err
-		}
-
-		if forceReset {
-			err = w.Reset(&git.ResetOptions{
-				Commit: remoteRef.Hash(),
-				Mode:   git.HardReset,
-			})
-
-			if err != nil {
-				logrus.Debugln(err)
-				return err
-			}
-		}
-
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(remoteBranch),
-			Create: false,
-			Keep:   false,
-			Force:  true,
-		})
-
-		if err != nil {
-			logrus.Debugln(err)
-			return err
-		}
-
 	case plumbing.ErrReferenceNotFound:
-		/*
-			Checkout source branch without creating it yet
-		*/
+		// Means that the new branch doesn't exist
 
-		logrus.Debugf("branch '%v' doesn't exist, creating it from branch '%v'", remoteBranch, branch)
+		logrus.Debugf("new branch %q doesn't exist, creating it from branch %q", newBranch, basedBranch)
 
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(branch),
+		// First we need to checkout the based branch
+		err = worktree.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(basedBranch),
 			Create: false,
 			Keep:   false,
 			Force:  true,
 		})
 
 		if err != nil {
-			logrus.Debugf("branch: '%v' - \n\t%v", branch, err)
-			return err
+			logrus.Debugf("branch: %q - \n\t%v", basedBranch, err)
+			return false, err
 		}
 
-		// Checkout locale branch without creating it yet
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(remoteBranch),
+		// Then we create the new branch
+		err = worktree.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.NewBranchReferenceName(newBranch),
 			Create: true,
 			Keep:   false,
 			Force:  true,
 		})
-
-		logrus.Debugf("branch %q successfully created", remoteBranch)
-
 		if err != nil {
-			return err
+			return false, err
+		}
+
+		logrus.Debugf("branch %q successfully created", newBranch)
+
+	case nil:
+		// Means that a local branch named remoteBranch already exist
+		// so we want to be sure that the local branch is
+		// aligned with the remote one.
+		b := bytes.Buffer{}
+
+		// Todo in a seperated pullrequest, we should validate that we can remove the pull operation from the checkout function
+		// as we are already doing it in the clone function.
+
+		// Today the checkout function is call when Updatecli is started to clone git repositoryies
+		// then after each resource execution that depends on a git repository.
+		// For large repository, the pull can take a long time so ideally we would like to only do it once
+		// when Updatecli is started.
+		pullOptions := git.PullOptions{
+			Force:    true,
+			Progress: &b,
+		}
+
+		if !isAuthEmpty(&auth) {
+			pullOptions.Auth = &auth
+		}
+
+		err = worktree.Pull(&pullOptions)
+		logrus.Debugln(b.String())
+		b.Reset()
+		if err != nil &&
+			err != git.ErrNonFastForwardUpdate &&
+			err != git.NoErrAlreadyUpToDate {
+			logrus.Debugln(err)
+			return false, err
+		}
+
+		// If the newBranch diverged from the basedBranch, we need to reset it
+		resetBranch, err = resetNewBranchToBaseBranch(
+			plumbing.NewBranchReferenceName(newBranch),
+			plumbing.NewBranchReferenceName(basedBranch),
+			gitRepositoryPath,
+		)
+		if err != nil {
+			return false, fmt.Errorf("checking if %q is common ancestor with %q - %s", newBranch, basedBranch, err)
 		}
 
 	default:
-		logrus.Debugln(err)
-		return err
+		return false, fmt.Errorf("checking out branch %q - %s", newBranch, err)
 	}
 
-	return nil
-}
-
-func (g GoGit) exists(ref plumbing.ReferenceName, refs []*plumbing.Reference) bool {
-	for _, ref2 := range refs {
-		if ref.String() == ref2.Name().String() {
-			return true
-		}
-	}
-	return false
+	return resetBranch, nil
 }
 
 // Commit run `git commit`.
@@ -489,7 +423,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 // Clone run `git clone`.
 func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool) error {
 
-	logrus.Debugf("stage: git-clone\n\n")
+	logrus.Debugf("cloning git repository: %s in %s", URL, workingDir)
 
 	var repo *git.Repository
 
@@ -521,6 +455,8 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	b.Reset()
 
 	if err == git.ErrRepositoryAlreadyExists {
+
+		logrus.Debugf("repository already exists, trying to pull changes")
 		b.Reset()
 
 		repo, err = git.PlainOpen(workingDir)
@@ -562,6 +498,7 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 
 	} else if err != nil &&
 		err != git.NoErrAlreadyUpToDate {
+		logrus.Debugf("repository already up to date")
 		return err
 	}
 
@@ -571,7 +508,8 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		return err
 	}
 
-	b.WriteString("fetching remote branches")
+	logrus.Debugf("Fetching remote branches for resetting local ones")
+
 	for _, r := range remotes {
 
 		fetchOptions := git.FetchOptions{
