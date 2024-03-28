@@ -16,13 +16,13 @@ scms:
     default:
         kind: github
         spec:
-            branch: main
-            email: me@olblak.com
-            owner: updatecli
-            repository: updatecli
-            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-            user: updatecli
-            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            branch: '{{ .scm.branch }}'
+            email: '{{ .scm.email }}'
+            owner: '{{ .scm.owner }}'
+            repository: '{{ .scm.repository }}'
+            token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+            user: '{{ .scm.user }}'
+            username: '{{ requiredEnv "GITHUB_ACTOR" }}'
 
 sources:
     latestVersion:
@@ -31,8 +31,8 @@ sources:
         spec:
             owner: updatecli
             repository: updatecli
-            token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-            username: '{{ requiredEnv "UPDATECLI_GITHUB_ACTOR" }}'
+            token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+            username: '{{ requiredEnv "GITHUB_ACTOR" }}'
             versionfilter:
               kind: semver
 
