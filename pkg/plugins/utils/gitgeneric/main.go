@@ -320,7 +320,7 @@ func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositor
 		// Todo in a separated pullrequest, we should validate that we can remove the pull operation from the checkout function
 		// as we are already doing it in the clone function.
 
-		// Today the checkout function is call when Updatecli is started to clone git repositoryies
+		// Today the checkout function is call when Updatecli is started to clone git repositories
 		// then after each resource execution that depends on a git repository.
 		// For large repository, the pull can take a long time so ideally we would like to only do it once
 		// when Updatecli is started.
