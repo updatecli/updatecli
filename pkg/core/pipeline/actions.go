@@ -42,11 +42,6 @@ func (p *Pipeline) RunActions() error {
 			continue
 		}
 
-		if err != nil {
-			logrus.Errorf(err.Error())
-			continue
-		}
-
 		if _, ok := p.SCMs[action.Config.ScmID]; !ok {
 			return fmt.Errorf("scm id %q couldn't be found", action.Config.ScmID)
 		}
@@ -69,6 +64,17 @@ func (p *Pipeline) RunActions() error {
 			By having a actionID that combine both the pipelineID and the actionID, avoid collision
 			when two different pipeline open the same pullrequest based on the same action title
 		*/
+
+		// We try to find if any of the related targets have a branch reset
+		// Then we will set the action to have a branch reset and remove the previous action description
+		// as it's not relevant anymore
+		isBranchReset := false
+		for _, t := range relatedTargets {
+			if p.Targets[t].Result.Scm.BranchReset {
+				isBranchReset = true
+				break
+			}
+		}
 
 		for _, t := range relatedTargets {
 			// We only care about target that have changed something
@@ -137,6 +143,9 @@ func (p *Pipeline) RunActions() error {
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
+				if isBranchReset {
+					logrus.Infof("Git branch reset detected, the action will remove the previous action description")
+				}
 
 				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
 					actionTitle,
@@ -152,13 +161,14 @@ func (p *Pipeline) RunActions() error {
 			return nil
 		}
 
-		err = action.Handler.CreateAction(action.Report)
-
+		err = action.Handler.CreateAction(action.Report, isBranchReset)
 		if err != nil {
 			return err
 		}
 
 		p.Actions[id] = action
+		// We need to be sure that the description reset is  only run once per group of targets
+		isBranchReset = false
 	}
 	return nil
 }
