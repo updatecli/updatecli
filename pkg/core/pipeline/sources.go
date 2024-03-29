@@ -53,7 +53,7 @@ func (p *Pipeline) RunSources() error {
 			p.Sources[id] = source
 			p.Report.Sources[id] = &source.Result
 
-			logrus.Errorf("%s %v\n", source.Result, err)
+			logrus.Errorf("%s %v\n", source.Result.Result, err)
 			continue
 		}
 
