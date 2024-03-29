@@ -43,7 +43,7 @@ func (g *Git) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		g.GetDirectory(),
-		false)
+		g.spec.Force)
 
 	if err != nil {
 		return err
@@ -109,19 +109,12 @@ func (g *Git) Commit(message string) error {
 }
 
 // Push run `git push`.
-func (g *Git) Push() error {
-	err := g.nativeGitHandler.Push(
+func (g *Git) Push() (bool, error) {
+	return g.nativeGitHandler.Push(
 		g.spec.Username,
 		g.spec.Password,
 		g.GetDirectory(),
 		g.spec.Force)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-
 }
 
 // PushBranch push tags

@@ -73,7 +73,14 @@ func (g *Github) Commit(message string) error {
 		return err
 	}
 
-	err = g.nativeGitHandler.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory(), g.Spec.GPG.SigningKey, g.Spec.GPG.Passphrase)
+	err = g.nativeGitHandler.Commit(
+		g.Spec.User,
+		g.Spec.Email,
+		commitMessage,
+		g.GetDirectory(),
+		g.Spec.GPG.SigningKey,
+		g.Spec.GPG.Passphrase,
+	)
 	if err != nil {
 		return err
 	}
@@ -84,17 +91,14 @@ func (g *Github) Commit(message string) error {
 func (g *Github) Checkout() error {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
-	err := g.nativeGitHandler.Checkout(
+	return g.nativeGitHandler.Checkout(
 		g.Spec.Username,
 		g.Spec.Token,
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
-		false)
-	if err != nil {
-		return err
-	}
-	return nil
+		g.Spec.Force,
+	)
 }
 
 // Add run `git add`.
@@ -120,20 +124,26 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 }
 
 // Push run `git push` on the GitHub remote branch if not already created.
-func (g *Github) Push() error {
+func (g *Github) Push() (bool, error) {
 
-	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return g.nativeGitHandler.Push(
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory(),
+		g.Spec.Force,
+	)
 }
 
 // PushTag push tags
 func (g *Github) PushTag(tag string) error {
 
-	err := g.nativeGitHandler.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
+	err := g.nativeGitHandler.PushTag(
+		tag,
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory(),
+		g.Spec.Force,
+	)
 	if err != nil {
 		return err
 	}

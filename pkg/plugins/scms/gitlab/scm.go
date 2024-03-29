@@ -77,7 +77,14 @@ func (g *Gitlab) Commit(message string) error {
 		return err
 	}
 
-	err = g.nativeGitHandler.Commit(g.Spec.User, g.Spec.Email, commitMessage, g.GetDirectory(), g.Spec.GPG.SigningKey, g.Spec.GPG.Passphrase)
+	err = g.nativeGitHandler.Commit(
+		g.Spec.User,
+		g.Spec.Email,
+		commitMessage,
+		g.GetDirectory(),
+		g.Spec.GPG.SigningKey,
+		g.Spec.GPG.Passphrase,
+	)
 	if err != nil {
 		return err
 	}
@@ -94,7 +101,8 @@ func (g *Gitlab) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
-		false)
+		g.Spec.Force,
+	)
 	if err != nil {
 		return err
 	}
@@ -125,20 +133,26 @@ func (g *Gitlab) IsRemoteBranchUpToDate() (bool, error) {
 }
 
 // Push run `git push` to the corresponding GitLab remote branch if not already created.
-func (g *Gitlab) Push() error {
+func (g *Gitlab) Push() (bool, error) {
 
-	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return g.nativeGitHandler.Push(
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory(),
+		g.Spec.Force,
+	)
 }
 
 // PushTag push tags
 func (g *Gitlab) PushTag(tag string) error {
 
-	err := g.nativeGitHandler.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
+	err := g.nativeGitHandler.PushTag(
+		tag,
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory(),
+		g.Spec.Force,
+	)
 	if err != nil {
 		return err
 	}

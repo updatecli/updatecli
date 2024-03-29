@@ -91,7 +91,7 @@ func (g *Gitea) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
-		false)
+		g.Spec.Force)
 	if err != nil {
 		return err
 	}
@@ -122,14 +122,14 @@ func (g *Gitea) IsRemoteBranchUpToDate() (bool, error) {
 }
 
 // Push run `git push` to the corresponding Gitea remote branch if not already created.
-func (g *Gitea) Push() error {
+func (g *Gitea) Push() (bool, error) {
 
-	err := g.nativeGitHandler.Push(g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return g.nativeGitHandler.Push(
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory(),
+		g.Spec.Force,
+	)
 }
 
 // PushTag push tags
