@@ -9,6 +9,7 @@ policies:
     policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.2.0@sha256:46e599fb7e874ee3f1c9cf5e4dd64b328a15d61d03e106176b19a07683afde29
     values:
       - updatecli/values.d/scm.yaml
+      - updatecli/values.d/update-compose.yaml
 
   - name: Golang Version
     policy: ghcr.io/updatecli/policies/golang/version:0.1.0
