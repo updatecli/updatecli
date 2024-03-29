@@ -33,7 +33,7 @@ type GitHandler interface {
 	IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
 	NewBranch(branch, workingDir string) (bool, error)
-	Push(username string, password string, workingDir string, force bool) error
+	Push(username string, password string, workingDir string, force bool) (bool, error)
 	PushTag(tag string, username string, password string, workingDir string, force bool) error
 	PushBranch(branch string, username string, password string, workingDir string, force bool) error
 	RemoteURLs(workingDir string) (map[string]string, error)
@@ -247,11 +247,7 @@ func (g GoGit) Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-// The function returns a boolean to indicate if the branch had to be reset based on the base branch.
-func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string) (bool, error) {
-
-	// resetBranch is the newBranch has been reset to the basedBranch because it diverged.
-	var resetBranch bool
+func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool) error {
 
 	logrus.Debugf("checkout git branch %q, based on %q",
 		newBranch,
@@ -259,13 +255,13 @@ func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositor
 
 	repository, err := git.PlainOpen(gitRepositoryPath)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	worktree, err := repository.Worktree()
 	if err != nil {
 		logrus.Debugln(err)
-		return false, err
+		return err
 	}
 
 	auth := transportHttp.BasicAuth{
@@ -299,7 +295,7 @@ func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositor
 
 		if err != nil {
 			logrus.Debugf("branch: %q - \n\t%v", basedBranch, err)
-			return false, err
+			return err
 		}
 
 		// Then we create the new branch
@@ -310,7 +306,7 @@ func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositor
 			Force:  true,
 		})
 		if err != nil {
-			return false, err
+			return err
 		}
 
 		logrus.Debugf("branch %q successfully created", newBranch)
@@ -321,7 +317,7 @@ func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositor
 		// aligned with the remote one.
 		b := bytes.Buffer{}
 
-		// Todo in a seperated pullrequest, we should validate that we can remove the pull operation from the checkout function
+		// Todo in a separated pullrequest, we should validate that we can remove the pull operation from the checkout function
 		// as we are already doing it in the clone function.
 
 		// Today the checkout function is call when Updatecli is started to clone git repositoryies
@@ -338,30 +334,40 @@ func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositor
 		}
 
 		err = worktree.Pull(&pullOptions)
-		logrus.Debugln(b.String())
+		if b.String() != "" {
+			logrus.Debugln(b.String())
+		}
 		b.Reset()
 		if err != nil &&
 			err != git.ErrNonFastForwardUpdate &&
 			err != git.NoErrAlreadyUpToDate {
 			logrus.Debugln(err)
-			return false, err
+			return err
 		}
 
-		// If the newBranch diverged from the basedBranch, we need to reset it
-		resetBranch, err = resetNewBranchToBaseBranch(
-			plumbing.NewBranchReferenceName(newBranch),
-			plumbing.NewBranchReferenceName(basedBranch),
-			gitRepositoryPath,
-		)
-		if err != nil {
-			return false, fmt.Errorf("checking if %q is common ancestor with %q - %s", newBranch, basedBranch, err)
+		if forceReset {
+			logrus.Debugf("Checking if branch %q diverged from %q:", newBranch, basedBranch)
+			// If the newBranch diverged from the basedBranch, we need to reset it
+			resetBranch, err := resetNewBranchToBaseBranch(
+				plumbing.NewBranchReferenceName(newBranch),
+				plumbing.NewBranchReferenceName(basedBranch),
+				gitRepositoryPath,
+			)
+			if err != nil {
+				return err
+			}
+			if resetBranch {
+				logrus.Debugf("\tbranch %q reset to %q", newBranch, basedBranch)
+			} else {
+				logrus.Debugf("\tall good,branch %q is ahead of %q", newBranch, basedBranch)
+			}
 		}
 
 	default:
-		return false, fmt.Errorf("checking out branch %q - %s", newBranch, err)
+		return fmt.Errorf("checking out branch %q - %s", newBranch, err)
 	}
 
-	return resetBranch, nil
+	return nil
 }
 
 // Commit run `git commit`.
@@ -451,7 +457,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	b.WriteString(fmt.Sprintf("cloning git repository: %s in %s\n", URL, workingDir))
 	repo, err := git.PlainClone(workingDir, false, &cloneOptions)
 
-	logrus.Debugln(b.String())
+	if b.String() != "" {
+		logrus.Debugln(b.String())
+	}
 	b.Reset()
 
 	if err == git.ErrRepositoryAlreadyExists {
@@ -486,7 +494,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 
 		err = w.Pull(&pullOptions)
 
-		logrus.Debugln(b.String())
+		if b.String() != "" {
+			logrus.Debugln(b.String())
+		}
 		b.Reset()
 
 		if err != nil &&
@@ -523,7 +533,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 
 		err := r.Fetch(&fetchOptions)
 
-		logrus.Debugln(b.String())
+		if b.String() != "" {
+			logrus.Debugln(b.String())
+		}
 		b.Reset()
 
 		if err != nil &&
@@ -537,7 +549,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 }
 
 // Push run `git push`.
-func (g GoGit) Push(username string, password string, workingDir string, force bool) error {
+// The function returns a boolean to indicate if the push needed a force push or not.
+// and an error if something went wrong.
+func (g GoGit) Push(username string, password string, workingDir string, force bool) (bool, error) {
 
 	logrus.Debugf("stage: git-push\n\n")
 
@@ -548,17 +562,17 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// Retrieve local branch
 	head, err := r.Head()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if !head.Name().IsBranch() {
-		return fmt.Errorf("not pushing from a branch")
+		return false, fmt.Errorf("not pushing from a branch")
 	}
 
 	localBranch := strings.TrimPrefix(head.Name().String(), "refs/heads/")
@@ -569,14 +583,8 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 		localRefSpec,
 		localBranch))
 
-	if force {
-		refspec = config.RefSpec(fmt.Sprintf("+%s:refs/heads/%s",
-			localRefSpec,
-			localBranch))
-	}
-
 	if err := refspec.Validate(); err != nil {
-		return err
+		return false, err
 	}
 
 	b := bytes.Buffer{}
@@ -593,15 +601,51 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 
 	// Only push one branch at a time
 	err = r.Push(&pushOptions)
-
-	logrus.Debugln(b.String())
+	if b.String() != "" {
+		logrus.Debugln(b.String())
+	}
 	b.Reset()
 
-	if err != nil {
-		return err
+	if err == nil {
+		return false, nil
 	}
 
-	return nil
+	// Even if push --force is allowed by the configuration,
+	// we first want to see if the push is a fast forward or not.
+	if strings.Contains(err.Error(), git.ErrNonFastForwardUpdate.Error()) {
+		//if errors.Is(err, git.ErrNonFastForwardUpdate) {
+		if !force {
+			return false, fmt.Errorf("force push needed, use scm parameter \"force\" to true")
+		}
+
+		refspec = config.RefSpec(fmt.Sprintf("+%s:refs/heads/%s",
+			localRefSpec,
+			localBranch))
+
+		pushOptions = git.PushOptions{
+			Auth:     &auth,
+			Progress: &b,
+			RefSpecs: []config.RefSpec{refspec},
+		}
+
+		// Only push one branch at a time
+		err = r.Push(&pushOptions)
+
+		if b.String() != "" {
+			logrus.Debugln(b.String())
+		}
+		b.Reset()
+
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+
+	logrus.Errorf(git.ErrNonFastForwardUpdate.Error())
+	logrus.Errorf("push error: %s", err)
+
+	return false, err
 }
 
 // SanitizeBranchName replace wrong character in the branch name
