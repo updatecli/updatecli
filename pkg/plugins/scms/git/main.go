@@ -90,6 +90,10 @@ type Spec struct {
 	//
 	//  default:
 	//	  false
+	//
+	//  remark:
+	//    When force is set to true, Updatecli also recreate the working branches that
+	//    diverged from their base branch.
 	Force bool `yaml:",omitempty"`
 	//	"commitMessage" is used to generate the final commit message.
 	//
