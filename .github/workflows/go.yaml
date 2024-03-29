@@ -35,7 +35,7 @@ jobs:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
           # we always use the latest patch version.
-          version: v1.57.1
+          version: v1.57.2
           install-mode: "binary"
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v5
@@ -74,7 +74,7 @@ jobs:
           sudo chmod +x /usr/local/bin/venom
           ls -lha /usr/local/bin/venom
         env:
-          VENOM_VERSION: v1.1.0
+          VENOM_VERSION: v1.2.0
       - name: Show Venom version
         run: venom version
       - name: Run End to End tests
