@@ -31,14 +31,15 @@ var (
 
 // PullRequest contains multiple fields mapped to GitHub V4 api
 type PullRequestApi struct {
-	BaseRefName string
-	Body        string
-	HeadRefName string
-	ID          string
-	State       string
-	Title       string
-	Url         string
-	Number      int
+	ChangedFiles int
+	BaseRefName  string
+	Body         string
+	HeadRefName  string
+	ID           string
+	State        string
+	Title        string
+	Url          string
+	Number       int
 }
 
 // ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
@@ -173,6 +174,58 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 			return err
 		}
 	}
+
+	return nil
+}
+
+// closePullRequest closes an existing Pull Request using GitHub graphql api.
+func (p *PullRequest) closePullRequest(pullRequestID string) error {
+
+	// https://docs.github.com/en/graphql/reference/input-objects#closepullrequestinput
+
+	/*
+		  mutation($input: closePullRequestInput!){
+			closePullRequest(input:$input){
+			  pullRequest{
+				url
+			    title
+			    body
+			  }
+			}
+		  }
+
+		  {
+			"input": {
+			  "pullRequestId" : "yyy"
+			}
+		  }
+	*/
+	var mutation struct {
+		UpdatePullRequest struct {
+			PullRequest PullRequestApi
+		} `graphql:"closePullRequest(input: $input)"`
+	}
+
+	logrus.Debugf("Closing GitHub Pull Request")
+
+	input := githubv4.ClosePullRequestInput{
+		PullRequestID: githubv4.ID(pullRequestID),
+	}
+
+	err := p.addComment(pullRequestID, "Closing pull request as no changed file detected")
+	// Not returning an error if the comment failed to be added
+	// as the main purpose of this function is to close the pullrequest
+	if err != nil {
+		logrus.Errorf("Commenting pull request: %s", err.Error())
+	}
+
+	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	if err != nil {
+		logrus.Debugf("Error closing pull-request: %s", err.Error())
+		return err
+	}
+
+	logrus.Infof("\nPull request closed as no changed file detected in:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
 
 	return nil
 }
@@ -454,20 +507,40 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool) error {
 		return err
 	}
 
-	if len(query.Repository.PullRequests.Nodes) > 0 {
-		p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
-		// If a remote pullrequest already exist, then we reuse its body to generate the final one
-		logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.ID)
-		switch resetBody {
-		case false:
-			logrus.Debugf("Merging existing pull-request body with new report")
-			p.Report = reports.MergeFromString(p.Report, p.remotePullRequest.Body)
-		case true:
-			logrus.Debugf("Resetting pull-request body with new report")
-		}
-	} else {
+	// If no pull-request found, then we can exit
+	if len(query.Repository.PullRequests.Nodes) == 0 {
 		logrus.Debugf("No existing pull-request found in repo: %s/%s", owner, name)
+		return nil
 	}
+
+	p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
+	// If a remote pullrequest already exist, then we reuse its body to generate the final one
+	logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.ID)
+	switch resetBody {
+	case false:
+		logrus.Debugf("Merging existing pull-request body with new report")
+		p.Report = reports.MergeFromString(p.Report, p.remotePullRequest.Body)
+	case true:
+		logrus.Debugf("Resetting pull-request body with new report")
+	}
+
+	pullRequestID := query.Repository.PullRequests.Nodes[0].ID
+
+	// If the pull-request has no changed files, then we can exit
+	if query.Repository.PullRequests.Nodes[0].ChangedFiles == 0 {
+		// Not returning an error if the comment failed to be added
+		// as the main purpose of this function is to close the pullrequest
+		err = p.addComment(pullRequestID, "closing pullrequest as no changed file detected")
+		if err != nil {
+			logrus.Errorf("Commenting pull-request: %s", err.Error())
+		}
+		return p.closePullRequest(pullRequestID)
+	}
+
+	p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
+	// If a remote pullrequest already exist, then we reuse its body to generate the final one
+	p.Report = reports.MergeFromString(p.Report, p.remotePullRequest.Body)
+	logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.ID)
 
 	return nil
 }
