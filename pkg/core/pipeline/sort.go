@@ -105,10 +105,6 @@ func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err 
 
 	}
 
-	if err != nil {
-		return result, err
-	}
-
 	return result, err
 }
 
@@ -182,10 +178,6 @@ func SortedConditionsKeys(conditions *map[string]condition.Condition) (result []
 
 	}
 
-	if err != nil {
-		return result, err
-	}
-
 	return result, err
 }
 
@@ -257,10 +249,6 @@ func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err 
 		result[j] = val.(string)
 		j++
 
-	}
-
-	if err != nil {
-		return result, err
 	}
 
 	return result, err
