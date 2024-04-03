@@ -7,28 +7,36 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// IssueComment represents the data returned
-// by the GitHub API when adding a comment to an issue
-// cfr https://docs.github.com/en/graphql/reference/objects#issuecomment
-type IssueComment struct {
-	ID   string
-	URL  string
-	Body string
-}
-
 // addComment is mutation to add a comment to a GitHub pullrequest
-func (p *PullRequest) addComment(ID, body string) error {
+func (p *PullRequest) addComment(body string) error {
 
+	if p.remotePullRequest.ID == "" {
+		return nil
+	}
+
+	// cfr https://docs.github.com/en/graphql/reference/objects#issuecomment
 	var mutation struct {
 		AddComment struct {
-			Comment IssueComment
+			CommentEdge struct {
+				Node struct {
+					Body       string
+					Repository struct {
+						Id            string
+						Name          string
+						NameWithOwner string
+					}
+					Issue struct {
+						Number int
+					}
+				}
+			}
 		} `graphql:"addComment(input: $input)"`
 	}
 
-	logrus.Debugf("Commenting GitHub pull-request %s", ID)
+	logrus.Debugf("Commenting GitHub pull request %s", p.remotePullRequest.Url)
 
 	input := githubv4.AddCommentInput{
-		SubjectID: githubv4.ID(ID),
+		SubjectID: githubv4.ID(p.remotePullRequest.ID),
 		Body:      githubv4.String(body),
 	}
 
