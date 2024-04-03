@@ -27,7 +27,7 @@ import (
 var (
 	ErrAutomergeNotAllowOnRepository = errors.New("automerge is not allowed on repository")
 	ErrBadMergeMethod                = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
-	ErrPullResquestIsInCleanStatus   = errors.New("Pull request Pull request is in clean status")
+	ErrPullRequestIsInCleanStatus    = errors.New("Pull request Pull request is in clean status")
 )
 
 // PullRequest contains multiple fields mapped to GitHub V4 api
@@ -212,7 +212,7 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 			switch err.Error() {
 			case ErrAutomergeNotAllowOnRepository.Error():
 				logrus.Warningln("Automerge can't be enabled. Make sure to all it on the repository.")
-			case ErrPullResquestIsInCleanStatus.Error():
+			case ErrPullRequestIsInCleanStatus.Error():
 				logrus.Warningln("Automerge can't be enabled. Make sure to have branch protection rules enabled on the repository.")
 			default:
 				logrus.Debugf("Error enabling automerge: %s", err.Error())
