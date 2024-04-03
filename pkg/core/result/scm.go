@@ -8,6 +8,8 @@ type SCM struct {
 	Branch GitBranch
 	// ID contains a uniq identifier for the condition
 	ID string
+	// BranchReset defines if the scm branch was reset to the base branch during the pipeline execution
+	BranchReset bool
 }
 
 type GitBranch struct {

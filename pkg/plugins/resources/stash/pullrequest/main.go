@@ -90,7 +90,6 @@ func New(spec interface{}, scm *stashscm.Stash) (Stash, error) {
 	}
 
 	c, err := client.New(clientSpec)
-
 	if err != nil {
 		return Stash{}, err
 	}
@@ -103,10 +102,5 @@ func New(spec interface{}, scm *stashscm.Stash) (Stash, error) {
 
 	g.inheritFromScm()
 
-	if err != nil {
-		return Stash{}, nil
-	}
-
 	return g, nil
-
 }

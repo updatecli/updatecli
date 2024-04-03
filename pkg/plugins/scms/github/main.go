@@ -121,6 +121,10 @@ type Spec struct {
 	//
 	//	default:
 	//    false
+	//
+	//  remark:
+	//    When force is set to true, Updatecli also recreates the working branches that
+	//    diverged from their base branch.
 	Force bool `yaml:",omitempty"`
 	//	"commitMessage" is used to generate the final commit message.
 	//
@@ -297,7 +301,7 @@ func (gs *Spec) Merge(child interface{}) error {
 		gs.Username = childGHSpec.Username
 	}
 	if childGHSpec.Submodules != nil {
-		gs.Submodules = gs.Submodules
+		gs.Submodules = childGHSpec.Submodules
 	}
 
 	return nil

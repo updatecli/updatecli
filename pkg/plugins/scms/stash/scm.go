@@ -90,7 +90,7 @@ func (s *Stash) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		s.Spec.Directory,
-		false)
+		s.Spec.Force)
 	if err != nil {
 		return err
 	}
@@ -121,14 +121,13 @@ func (s *Stash) IsRemoteBranchUpToDate() (bool, error) {
 }
 
 // Push run `git push` to the corresponding Bitbucket remote branch if not already created.
-func (s *Stash) Push() error {
+func (s *Stash) Push() (bool, error) {
 
-	err := s.nativeGitHandler.Push(s.Spec.Username, s.Spec.Token, s.GetDirectory(), s.Spec.Force)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.nativeGitHandler.Push(
+		s.Spec.Username,
+		s.Spec.Token,
+		s.GetDirectory(),
+		s.Spec.Force)
 }
 
 // PushTag push tags

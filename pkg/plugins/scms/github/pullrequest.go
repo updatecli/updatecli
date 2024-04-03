@@ -110,7 +110,7 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 	}, err
 }
 
-func (p *PullRequest) CreateAction(report reports.Action) error {
+func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool) error {
 
 	// One GitHub pullrequest body can contain multiple action report
 	// It would be better to refactor CreateAction
@@ -147,7 +147,7 @@ func (p *PullRequest) CreateAction(report reports.Action) error {
 	}
 
 	// Check if there is already a pullRequest for current pipeline
-	err = p.getRemotePullRequest()
+	err = p.getRemotePullRequest(resetDescription)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,6 @@ func (p *PullRequest) CreateAction(report reports.Action) error {
 
 	// Once the remote Pull Request exists, we can than update it with additional information such as
 	// tags,assignee,etc.
-
 	err = p.updatePullRequest()
 	if err != nil {
 		return err
@@ -396,7 +395,7 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository() (bool, error) {
 }
 
 // getRemotePullRequest checks if a Pull Request already exists on GitHub and is in the state 'open' or 'closed'.
-func (p *PullRequest) getRemotePullRequest() error {
+func (p *PullRequest) getRemotePullRequest(resetBody bool) error {
 	/*
 			https://developer.github.com/v4/explorer/
 		# Query
@@ -458,8 +457,14 @@ func (p *PullRequest) getRemotePullRequest() error {
 	if len(query.Repository.PullRequests.Nodes) > 0 {
 		p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
 		// If a remote pullrequest already exist, then we reuse its body to generate the final one
-		p.Report = reports.MergeFromString(p.Report, p.remotePullRequest.Body)
 		logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.ID)
+		switch resetBody {
+		case false:
+			logrus.Debugf("Merging existing pull-request body with new report")
+			p.Report = reports.MergeFromString(p.Report, p.remotePullRequest.Body)
+		case true:
+			logrus.Debugf("Resetting pull-request body with new report")
+		}
 	} else {
 		logrus.Debugf("No existing pull-request found in repo: %s/%s", owner, name)
 	}

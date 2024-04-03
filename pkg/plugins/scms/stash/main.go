@@ -54,6 +54,13 @@ type Spec struct {
 	//
 	//  compatible:
 	//    * scm
+	//
+	//  default:
+	//    false
+	//
+	//  remark:
+	//    When force is set to true, Updatecli also recreate the working branches that
+	//    diverged from their base branch.
 	Force bool `yaml:",omitempty"`
 	//	"gpg" specifies the GPG key and passphrased used for commit signing
 	//

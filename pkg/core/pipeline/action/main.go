@@ -34,7 +34,7 @@ var (
 
 // ActionHandler interface defines required functions to be an action
 type ActionHandler interface {
-	CreateAction(report reports.Action) error
+	CreateAction(report reports.Action, resetDescription bool) error
 }
 
 // Config define action provided via an updatecli configuration

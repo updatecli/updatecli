@@ -180,6 +180,9 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 
 		logrus.Infof("\n\u26A0 While nothing change in the current pipeline run, according to the git history, some commits will be pushed\n")
+		t.Result.Description = fmt.Sprintf("%s\n\n%s", t.Result.Description, "While nothing change in the current pipeline run, according to the git history, some commits will be pushed")
+
+		t.Result.Result = result.ATTENTION
 	}
 
 	if !o.DryRun {
@@ -216,7 +219,8 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 
 		if o.Push {
-			if err := s.Push(); err != nil {
+			t.Result.Scm.BranchReset, err = s.Push()
+			if err != nil {
 				failTargetRun()
 				return err
 			}

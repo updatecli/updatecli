@@ -251,7 +251,7 @@ func (p *Pipeline) String() string {
 		result = result + fmt.Sprintf("\t%q:\n", key)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Changelog", value.Changelog)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Output", value.Output)
-		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
+		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
 	}
 	result = result + fmt.Sprintf("%q:\n", "Conditions")
 	for key, value := range p.Conditions {

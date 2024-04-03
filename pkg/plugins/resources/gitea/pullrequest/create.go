@@ -12,12 +12,13 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Gitea server
-func (g *Gitea) CreateAction(report reports.Action) error {
+func (g *Gitea) CreateAction(report reports.Action, resetDescription bool) error {
 
 	title := report.Title
 
 	// One Gitea pullrequest body can contain multiple action report
-	// It would be better to refactor CreateAction
+	// It would be better to refactor CreateAction to be able to reuse existing pullrequest description.
+	// similar to what we did for github pullrequest.
 	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
 
 	if err != nil {
