@@ -7,6 +7,6 @@ import (
 
 // CleanAction verify if existing action requires some operations
 func (g *Gitlab) CleanAction(report reports.Action) error {
-	logrus.Debugln("cleaning Gitlab merge request is not yet supported. Feel free to open an issue to mark your interest.")
+	logrus.Debugln("cleaning GitLab merge request is not yet supported. Feel free to open an issue to mark your interest.")
 	return nil
 }
