@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -153,8 +154,27 @@ func New(s Spec, pipelineID string) (*Git, error) {
 		s.Branch = "main"
 	}
 
-	workingBranch := false
-	if s.WorkingBranch != nil {
+	var workingBranch bool
+	switch s.WorkingBranch {
+	case nil:
+		workingBranch = false
+
+		if s.Force {
+			errorMsg := fmt.Sprintf(`
+Better safe than sorry.
+
+The scm force option set to true means that Updatecli is going to run "git push --force"
+Some target plugin, like the shell one, run "git commit -A" to catch all changes done by that target.
+Because the Git scm plugin has by default the workingBranch option set to false,
+Updatecli may be pushing unwanted changes to the branch %q.
+
+If you know what you are doing, please set the workingBranch option to false in your configuration file to ignore this error message.
+`, s.Branch)
+
+			logrus.Errorln(errorMsg)
+			return nil, errors.New("wrong configuration, better safe than sorry")
+		}
+	default:
 		workingBranch = *s.WorkingBranch
 	}
 
