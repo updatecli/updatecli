@@ -211,9 +211,9 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 		if err := p.EnablePullRequestAutoMerge(); err != nil {
 			switch err.Error() {
 			case ErrAutomergeNotAllowOnRepository.Error():
-				logrus.Warningln("Automerge can't be enabled. Make sure to all it on the repository.")
+				logrus.Errorln("Automerge can't be enabled. Make sure to all it on the repository.")
 			case ErrPullRequestIsInCleanStatus.Error():
-				logrus.Warningln("Automerge can't be enabled. Make sure to have branch protection rules enabled on the repository.")
+				logrus.Errorln("Automerge can't be enabled. Make sure to have branch protection rules enabled on the repository.")
 			default:
 				logrus.Debugf("Error enabling automerge: %s", err.Error())
 			}
