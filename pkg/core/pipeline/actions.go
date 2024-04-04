@@ -113,7 +113,7 @@ func (p *Pipeline) RunActions() error {
 
 		// Must action.Report.ID and action.Report.Title must be set after actionTarget are set
 		actionTitle := action.Title
-		// If an action spec do not have a title, then we use the one specified by the pipeline spec title
+		// If an action spec doesn't have a title, then we use the one specified by the pipeline spec title
 		if actionTitle == "" && p.Config.Spec.Name != "" {
 			actionTitle = p.Config.Spec.Name
 		} else if actionTitle == "" && p.Config.Spec.Title != "" {

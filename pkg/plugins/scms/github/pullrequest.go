@@ -112,7 +112,7 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 	}, err
 }
 
-// CleanAction verify if existing action requires some cleanup such as closing a pullrequest with no changes.
+// CleanAction verifies if an existing action requires some cleanup such as closing a pullrequest with no changes.
 func (p *PullRequest) CleanAction(report reports.Action) error {
 
 	repository, err := p.gh.queryRepository()
