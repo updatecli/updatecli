@@ -57,6 +57,14 @@ func MergeFromString(old, new string) string {
 	var oldReport Actions
 	var newReport Actions
 
+	if old == "" && new != "" {
+		return new
+	}
+
+	if old != "" && new == "" {
+		return old
+	}
+
 	err := unmarshal([]byte(old), &oldReport)
 	if err != nil {
 		logrus.Errorf("failed parsing old report: %s", err)
