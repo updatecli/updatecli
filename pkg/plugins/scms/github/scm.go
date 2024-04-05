@@ -97,7 +97,7 @@ func (g *Github) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
-		g.Spec.Force,
+		g.force,
 	)
 }
 
@@ -130,7 +130,7 @@ func (g *Github) Push() (bool, error) {
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
-		g.Spec.Force,
+		g.force,
 	)
 }
 
@@ -142,7 +142,7 @@ func (g *Github) PushTag(tag string) error {
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
-		g.Spec.Force,
+		g.force,
 	)
 	if err != nil {
 		return err
@@ -159,7 +159,7 @@ func (g *Github) PushBranch(branch string) error {
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
-		g.Spec.Force)
+		g.force)
 	if err != nil {
 		return err
 	}

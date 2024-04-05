@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -125,7 +126,7 @@ type Spec struct {
 	//  remark:
 	//    When force is set to true, Updatecli also recreates the working branches that
 	//    diverged from their base branch.
-	Force bool `yaml:",omitempty"`
+	Force *bool `yaml:",omitempty"`
 	//	"commitMessage" is used to generate the final commit message.
 	//
 	//	compatible:
@@ -153,6 +154,7 @@ type Spec struct {
 
 // GitHub contains settings to interact with GitHub
 type Github struct {
+	force bool
 	// Spec contains inputs coming from updatecli configuration
 	Spec             Spec
 	pipelineID       string
@@ -203,12 +205,40 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	httpClient := oauth2.NewClient(context.Background(), src)
 	nativeGitHandler := gitgeneric.GoGit{}
 
+	// By default, we create a working branch but if for some reason we don't want to create it
+	// Then we also need to update the force safeguard to avoid force pushing on the main branch.
 	workingBranch := true
 	if s.WorkingBranch != nil {
 		workingBranch = *s.WorkingBranch
 	}
 
+	force := true
+	if s.Force != nil {
+		force = *s.Force
+	}
+
+	if force {
+		if !workingBranch && s.Force == nil {
+			errorMsg := fmt.Sprintf(`
+Better safe than sorry.
+
+Updatecli may be pushing unwanted changes to the branch %q.
+
+The GitHub scm plugin has by default the force option set to true,
+The scm force option set to true means that Updatecli is going to run "git push --force"
+Some target plugin, like the shell one, run "git commit -A" to catch all changes done by that target.
+
+If you know what you are doing, please set the force option to true in your configuration file to ignore this error message.
+`, s.Branch)
+
+			logrus.Errorln(errorMsg)
+			return nil, errors.New("unclear configuration, better safe than sorry")
+
+		}
+	}
+
 	g := Github{
+		force:            force,
 		Spec:             s,
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
@@ -275,7 +305,7 @@ func (gs *Spec) Merge(child interface{}) error {
 	if childGHSpec.Email != "" {
 		gs.Email = childGHSpec.Email
 	}
-	if childGHSpec.Force {
+	if childGHSpec.Force != nil {
 		gs.Force = childGHSpec.Force
 	}
 	if childGHSpec.GPG != (sign.GPGSpec{}) {

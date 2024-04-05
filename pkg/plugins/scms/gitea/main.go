@@ -2,6 +2,7 @@ package gitea
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -61,7 +62,7 @@ type Spec struct {
 	//  remark:
 	//    When force is set to true, Updatecli also recreates the working branches that
 	//    diverged from their base branch.
-	Force bool `yaml:",omitempty"`
+	Force *bool `yaml:",omitempty"`
 	//	"gpg" specifies the GPG key and passphrased used for commit signing
 	//
 	//	compatible:
@@ -126,6 +127,7 @@ type Gitea struct {
 	nativeGitHandler gitgeneric.GitHandler
 	pipelineID       string
 	workingBranch    bool
+	force            bool
 }
 
 // New returns a new valid Gitea object.
@@ -168,9 +170,36 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		s.Directory = path.Join(tmp.Directory, "gitea", s.Owner, s.Repository)
 	}
 
+	// By default, we create a working branch but if for some reason we don't want to create it
+	// Then we also need to update the force safeguard to avoid force pushing on the main branch.
 	workingBranch := true
 	if s.WorkingBranch != nil {
 		workingBranch = *s.WorkingBranch
+	}
+
+	force := true
+	if s.Force != nil {
+		force = *s.Force
+	}
+
+	if force {
+		if !workingBranch && s.Force == nil {
+			errorMsg := fmt.Sprintf(`
+Better safe than sorry.
+
+Updatecli may be pushing unwanted changes to the branch %q.
+
+The Gitea scm plugin has by default the force option set to true,
+The scm force option set to true means that Updatecli is going to run "git push --force"
+Some target plugin, like the shell one, run "git commit -A" to catch all changes done by that target.
+
+If you know what you are doing, please set the force option to true in your configuration file to ignore this error message.
+`, s.Branch)
+
+			logrus.Errorln(errorMsg)
+			return nil, errors.New("unclear configuration, better safe than sorry")
+
+		}
 	}
 
 	if len(s.Branch) == 0 {
@@ -191,6 +220,7 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 		workingBranch:    workingBranch,
+		force:            force,
 	}
 
 	g.setDirectory()

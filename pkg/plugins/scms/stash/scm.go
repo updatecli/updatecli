@@ -90,7 +90,7 @@ func (s *Stash) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		s.Spec.Directory,
-		s.Spec.Force)
+		s.force)
 	if err != nil {
 		return err
 	}
@@ -127,13 +127,19 @@ func (s *Stash) Push() (bool, error) {
 		s.Spec.Username,
 		s.Spec.Token,
 		s.GetDirectory(),
-		s.Spec.Force)
+		s.force)
 }
 
 // PushTag push tags
 func (s *Stash) PushTag(tag string) error {
 
-	err := s.nativeGitHandler.PushTag(tag, s.Spec.Username, s.Spec.Token, s.GetDirectory(), s.Spec.Force)
+	err := s.nativeGitHandler.PushTag(
+		tag,
+		s.Spec.Username,
+		s.Spec.Token,
+		s.GetDirectory(),
+		s.force,
+	)
 	if err != nil {
 		return err
 	}
@@ -149,7 +155,7 @@ func (s *Stash) PushBranch(branch string) error {
 		s.Spec.Username,
 		s.Spec.Token,
 		s.GetDirectory(),
-		s.Spec.Force)
+		s.force)
 	if err != nil {
 		return err
 	}

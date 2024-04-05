@@ -101,7 +101,7 @@ func (g *Gitlab) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
-		g.Spec.Force,
+		g.force,
 	)
 	if err != nil {
 		return err
@@ -139,7 +139,7 @@ func (g *Gitlab) Push() (bool, error) {
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
-		g.Spec.Force,
+		g.force,
 	)
 }
 
@@ -151,7 +151,7 @@ func (g *Gitlab) PushTag(tag string) error {
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
-		g.Spec.Force,
+		g.force,
 	)
 	if err != nil {
 		return err
@@ -168,7 +168,7 @@ func (g *Gitlab) PushBranch(branch string) error {
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
-		g.Spec.Force)
+		g.force)
 	if err != nil {
 		return err
 	}
