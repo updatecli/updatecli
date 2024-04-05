@@ -91,7 +91,7 @@ func (g *Gitea) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
-		g.Spec.Force)
+		g.force)
 	if err != nil {
 		return err
 	}
@@ -128,14 +128,19 @@ func (g *Gitea) Push() (bool, error) {
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
-		g.Spec.Force,
+		g.force,
 	)
 }
 
 // PushTag push tags
 func (g *Gitea) PushTag(tag string) error {
 
-	err := g.nativeGitHandler.PushTag(tag, g.Spec.Username, g.Spec.Token, g.GetDirectory(), g.Spec.Force)
+	err := g.nativeGitHandler.PushTag(
+		tag,
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory(),
+		g.force)
 	if err != nil {
 		return err
 	}
@@ -151,7 +156,7 @@ func (g *Gitea) PushBranch(branch string) error {
 		g.Spec.Username,
 		g.Spec.Token,
 		g.GetDirectory(),
-		g.Spec.Force)
+		g.force)
 	if err != nil {
 		return err
 	}
