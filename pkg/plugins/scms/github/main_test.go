@@ -12,6 +12,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 )
 
+func boolPointer(b bool) *bool {
+	return &b
+}
+
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -236,7 +240,7 @@ func TestMerge(t *testing.T) {
 				GPG: sign.GPGSpec{
 					SigningKey: "mine",
 				},
-				Force: false,
+				Force: boolPointer(false),
 				CommitMessage: commit.Commit{
 					Title: "Bye",
 				},
@@ -254,7 +258,7 @@ func TestMerge(t *testing.T) {
 				GPG: sign.GPGSpec{
 					SigningKey: "theirs",
 				},
-				Force: true,
+				Force: boolPointer(true),
 				CommitMessage: commit.Commit{
 					Title: "Hello There",
 				},
@@ -272,7 +276,7 @@ func TestMerge(t *testing.T) {
 				GPG: sign.GPGSpec{
 					SigningKey: "theirs",
 				},
-				Force: true,
+				Force: boolPointer(true),
 				CommitMessage: commit.Commit{
 					Title: "Hello There",
 				},
@@ -293,7 +297,7 @@ func TestMerge(t *testing.T) {
 				GPG: sign.GPGSpec{
 					SigningKey: "mine",
 				},
-				Force: false,
+				Force: boolPointer(false),
 				CommitMessage: commit.Commit{
 					Title: "Bye",
 				},
@@ -314,7 +318,7 @@ func TestMerge(t *testing.T) {
 				GPG: sign.GPGSpec{
 					SigningKey: "mine",
 				},
-				Force: false,
+				Force: boolPointer(false),
 				CommitMessage: commit.Commit{
 					Title: "Bye",
 				},
@@ -335,7 +339,7 @@ func TestMerge(t *testing.T) {
 				GPG: sign.GPGSpec{
 					SigningKey: "mine",
 				},
-				Force: false,
+				Force: boolPointer(false),
 				CommitMessage: commit.Commit{
 					Title: "Bye",
 				},
