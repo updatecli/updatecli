@@ -2,6 +2,7 @@ package stash
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -61,7 +62,7 @@ type Spec struct {
 	//  remark:
 	//    When force is set to true, Updatecli also recreate the working branches that
 	//    diverged from their base branch.
-	Force bool `yaml:",omitempty"`
+	Force *bool `yaml:",omitempty"`
 	//	"gpg" specifies the GPG key and passphrased used for commit signing
 	//
 	//	compatible:
@@ -126,6 +127,7 @@ type Stash struct {
 	pipelineID       string
 	nativeGitHandler gitgeneric.GitHandler
 	workingBranch    bool
+	force            bool
 }
 
 // New returns a new valid Bitbucket object.
@@ -178,6 +180,31 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 		workingBranch = *s.WorkingBranch
 	}
 
+	force := true
+	if s.Force != nil {
+		force = *s.Force
+	}
+
+	if force {
+		if !workingBranch && s.Force == nil {
+			errorMsg := fmt.Sprintf(`
+Better safe than sorry.
+
+Updatecli may be pushing unwanted changes to the branch %q.
+
+The Stash scm plugin has by default the force option set to true,
+The scm force option set to true means that Updatecli is going to run "git push --force"
+Some target plugin, like the shell one, run "git commit -A" to catch all changes done by that target.
+
+If you know what you are doing, please set the force option to true in your configuration file to ignore this error message.
+`, s.Branch)
+
+			logrus.Errorln(errorMsg)
+			return nil, errors.New("unclear configuration, better safe than sorry")
+
+		}
+	}
+
 	c, err := client.New(clientSpec)
 
 	if err != nil {
@@ -191,6 +218,7 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 		workingBranch:    workingBranch,
+		force:            force,
 	}
 
 	g.setDirectory()
