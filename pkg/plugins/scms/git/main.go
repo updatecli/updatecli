@@ -172,7 +172,7 @@ If you know what you are doing, please set the workingBranch option to false in 
 `, s.Branch)
 
 			logrus.Errorln(errorMsg)
-			return nil, errors.New("wrong configuration, better safe than sorry")
+			return nil, errors.New("unclear configuration, better safe than sorry")
 		}
 	default:
 		workingBranch = *s.WorkingBranch
