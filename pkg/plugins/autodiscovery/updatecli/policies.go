@@ -80,7 +80,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 			}
 
 			if len(u.spec.Only) > 0 {
-				if !u.spec.Ignore.isMatchingRules(u.rootDir, relativeUpdateComposeFile, policyName, policyVersion) {
+				if !u.spec.Only.isMatchingRules(u.rootDir, relativeUpdateComposeFile, policyName, policyVersion) {
 					logrus.Debugf("Ignoring Updatecli policy %q from %q, as not matching only rule(s)\n", policyName, composeFilename)
 					continue
 				}
