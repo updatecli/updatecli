@@ -24,6 +24,8 @@ func (e *Engine) Run() (err error) {
 		}
 	}
 
+	e.Reports.Sort()
+
 	err = e.Reports.Show()
 	if err != nil {
 		return err
