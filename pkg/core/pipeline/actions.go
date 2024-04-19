@@ -11,7 +11,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (p *Pipeline) RunActions() error {
+// RunActions runs all actions defined in the configuration.
+// pipelineState is used to skip actions that are not related to the current pipeline state.
+func (p *Pipeline) RunActions(pipelineState string) error {
 
 	if len(p.Targets) == 0 {
 		logrus.Debugln("no target found, skipping action")
@@ -33,6 +35,12 @@ func (p *Pipeline) RunActions() error {
 		if err != nil {
 			logrus.Errorf(err.Error())
 			continue
+		}
+
+		for i := range relatedTargets {
+			if p.Targets[relatedTargets[i]].Result.Result != pipelineState {
+				continue
+			}
 		}
 
 		// Update pipeline before each condition run
