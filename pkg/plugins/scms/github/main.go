@@ -150,6 +150,13 @@ type Spec struct {
 	//
 	//  default: true
 	WorkingBranch *bool `yaml:",omitempty"`
+	//  "commitUsingApi" defines if Updatecli should use Github GraphQL API to create the commit.
+	//
+	//  compatible:
+	//	  * scm
+	//
+	//  default: false
+	CommitUsingAPI *bool `yaml:",omitempty"`
 }
 
 // GitHub contains settings to interact with GitHub
@@ -162,6 +169,7 @@ type Github struct {
 	nativeGitHandler gitgeneric.GitHandler
 	mu               sync.RWMutex
 	workingBranch    bool
+	commitUsingApi   bool
 }
 
 // Repository contains GitHub repository data
@@ -172,6 +180,7 @@ type Repository struct {
 	ParentID    string
 	ParentName  string
 	ParentOwner string
+	Status      string
 }
 
 // New returns a new valid GitHub object.
@@ -217,6 +226,11 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		force = *s.Force
 	}
 
+	commitUsingApi := false
+	if s.CommitUsingAPI != nil {
+		commitUsingApi = *s.CommitUsingAPI
+	}
+
 	if force {
 		if !workingBranch && s.Force == nil {
 			errorMsg := fmt.Sprintf(`
@@ -243,6 +257,7 @@ If you know what you are doing, please set the force option to true in your conf
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 		workingBranch:    workingBranch,
+		commitUsingApi:   commitUsingApi,
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {
@@ -380,7 +395,7 @@ func (g *Github) setDirectory() {
 	}
 }
 
-func (g *Github) queryRepository() (*Repository, error) {
+func (g *Github) queryRepository(sourceBranch string, workingBranch string) (*Repository, error) {
 	/*
 			   query($owner: String!, $name: String!) {
 			       repository(owner: $owner, name: $name){
@@ -408,6 +423,13 @@ func (g *Github) queryRepository() (*Repository, error) {
 				Login string
 			}
 
+			Ref *struct {
+				Name    string
+				Compare struct {
+					Status string
+				} `graphql:"compare(headRef: $headRef)"`
+			} `graphql:"ref(qualifiedName: $qualifiedName)"`
+
 			Parent *struct {
 				ID    string
 				Name  string
@@ -419,8 +441,10 @@ func (g *Github) queryRepository() (*Repository, error) {
 	}
 
 	variables := map[string]interface{}{
-		"owner": githubv4.String(g.Spec.Owner),
-		"name":  githubv4.String(g.Spec.Repository),
+		"owner":         githubv4.String(g.Spec.Owner),
+		"name":          githubv4.String(g.Spec.Repository),
+		"qualifiedName": githubv4.String(sourceBranch),
+		"headRef":       githubv4.String(workingBranch),
 	}
 
 	err := g.client.Query(context.Background(), &query, variables)
@@ -439,6 +463,11 @@ func (g *Github) queryRepository() (*Repository, error) {
 		parentOwner = query.Repository.Parent.Owner.Login
 	}
 
+	status := ""
+	if query.Repository.Ref != nil {
+		status = query.Repository.Ref.Compare.Status
+	}
+
 	result := &Repository{
 		ID:          query.Repository.ID,
 		Name:        query.Repository.Name,
@@ -446,6 +475,7 @@ func (g *Github) queryRepository() (*Repository, error) {
 		ParentID:    parentID,
 		ParentName:  parentName,
 		ParentOwner: parentOwner,
+		Status:      status,
 	}
 
 	return result, nil

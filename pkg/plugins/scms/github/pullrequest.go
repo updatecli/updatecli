@@ -115,7 +115,7 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 // CleanAction verifies if an existing action requires some cleanup such as closing a pullrequest with no changes.
 func (p *PullRequest) CleanAction(report reports.Action) error {
 
-	repository, err := p.gh.queryRepository()
+	repository, err := p.gh.queryRepository("", "")
 	if err != nil {
 		return err
 	}
@@ -155,26 +155,24 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 		p.Title = p.spec.Title
 	}
 
-	repository, err := p.gh.queryRepository()
+	sourceBranch, workingBranch, _ := p.gh.GetBranches()
+
+	repository, err := p.gh.queryRepository(sourceBranch, workingBranch)
 	if err != nil {
 		return err
 	}
 
 	p.repository = repository
 
-	sourceBranch, workingBranch, _ := p.gh.GetBranches()
-
 	// Check if they are changes that need to be published otherwise exit
-	matchingBranch, err := p.gh.nativeGitHandler.IsSimilarBranch(
-		workingBranch,
-		sourceBranch,
-		p.gh.GetDirectory())
+	isAhead := p.isAhead()
+	logrus.Debugf("Branch %s is %s of %s", workingBranch, p.repository.Status, sourceBranch)
 
 	if err != nil {
 		return err
 	}
 
-	if matchingBranch {
+	if !isAhead {
 		logrus.Debugf("GitHub pullrequest not needed")
 
 		return nil
@@ -269,6 +267,10 @@ func (p *PullRequest) closePullRequest() error {
 	}
 
 	return nil
+}
+
+func (p *PullRequest) isAhead() bool {
+	return p.repository.Status == "AHEAD"
 }
 
 // updatePullRequest updates an existing Pull Request.
@@ -429,12 +431,9 @@ func (p *PullRequest) OpenPullRequest() error {
 
 	_, workingBranch, targetBranch := p.gh.GetBranches()
 
-	equal, err := p.gh.nativeGitHandler.IsSimilarBranch(workingBranch, targetBranch, p.gh.GetDirectory())
-	if err != nil {
-		return fmt.Errorf("error comparing branches: %s", err.Error())
-	}
+	isAhead := p.isAhead()
 
-	if equal {
+	if !isAhead {
 		logrus.Debugf("GitHub pullrequest not needed")
 		return nil
 	}

@@ -29,6 +29,7 @@ type GitHandler interface {
 	Clone(username, password, URL, workingDir string, withSubmodules *bool) error
 	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	GetChangedFiles(workingDir string) ([]string, error)
+	GetLatestCommitHash(workingDir string) (string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)
 	IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
@@ -208,6 +209,21 @@ func (g GoGit) GetChangedFiles(workingDir string) ([]string, error) {
 	}
 
 	return filesChanged, nil
+}
+
+// GetLatestCommitHash returns the latest commit hash from the working directory
+func (g GoGit) GetLatestCommitHash(workingDir string) (string, error) {
+	gitRepository, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return "", err
+	}
+
+	head, err := gitRepository.Head()
+	if err != nil {
+		return "", err
+	}
+
+	return head.Hash().String(), nil
 }
 
 // Add run `git add`.

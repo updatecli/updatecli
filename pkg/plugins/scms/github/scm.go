@@ -1,11 +1,14 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
 
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -67,23 +70,97 @@ func (g *Github) Clone() (string, error) {
 // Commit run `git commit`.
 func (g *Github) Commit(message string) error {
 
+	workingDir := g.GetDirectory()
+
 	// Generate the conventional commit message
 	commitMessage, err := g.Spec.CommitMessage.Generate(message)
 	if err != nil {
 		return err
 	}
 
-	err = g.nativeGitHandler.Commit(
-		g.Spec.User,
-		g.Spec.Email,
-		commitMessage,
-		g.GetDirectory(),
-		g.Spec.GPG.SigningKey,
-		g.Spec.GPG.Passphrase,
-	)
+	if g.commitUsingApi {
+		err = g.CreateCommit(workingDir, commitMessage)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		err = g.nativeGitHandler.Commit(
+			g.Spec.User,
+			g.Spec.Email,
+			commitMessage,
+			workingDir,
+			g.Spec.GPG.SigningKey,
+			g.Spec.GPG.Passphrase,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type githubCommit struct {
+	CreateCommitOnBranch struct {
+		Commit struct {
+			URL string
+			OID string
+		}
+	} `graphql:"createCommitOnBranch(input:$input)"`
+}
+
+func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
+	var m githubCommit
+
+	_, workingBranch, _ := g.GetBranches()
+
+	// Make sure branch is published
+	g.PushBranch(workingBranch)
+
+	files, err := g.nativeGitHandler.GetChangedFiles(workingDir)
 	if err != nil {
 		return err
 	}
+	// process added / modified files:
+	additions := make([]githubv4.FileAddition, 0, len(files))
+	for _, f := range files {
+		fullPath := fmt.Sprintf("%s/%s", workingDir, f)
+		enc, err := utils.Base64EncodeFile(fullPath)
+		if err != nil {
+			return err
+		}
+		additions = append(additions, githubv4.FileAddition{
+			Path:     githubv4.String(f),
+			Contents: githubv4.Base64String(enc),
+		})
+	}
+
+	repositoryName := fmt.Sprintf("%s/%s", g.Spec.Owner, g.Spec.Repository)
+	headOid, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
+	if err != nil {
+		return err
+	}
+
+	input := githubv4.CreateCommitOnBranchInput{
+		Branch: githubv4.CommittableBranch{
+			RepositoryNameWithOwner: githubv4.NewString(githubv4.String(repositoryName)),
+			BranchName:              githubv4.NewString(githubv4.String(fmt.Sprintf("refs/heads/%s", workingBranch))),
+		},
+		ExpectedHeadOid: githubv4.GitObjectID(headOid),
+		Message: githubv4.CommitMessage{
+			Headline: githubv4.String(commitMessage),
+		},
+		FileChanges: &githubv4.FileChanges{
+			Additions: &additions,
+		},
+	}
+
+	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
+		return err
+	}
+
+	logrus.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
 	return nil
 }
 
@@ -125,6 +202,12 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 
 // Push run `git push` on the GitHub remote branch if not already created.
 func (g *Github) Push() (bool, error) {
+
+	// If the commit is done using the GitHub API, we don't need to push
+	// the commit as it is done in the same operation.
+	if g.commitUsingApi {
+		return true, nil
+	}
 
 	return g.nativeGitHandler.Push(
 		g.Spec.Username,
