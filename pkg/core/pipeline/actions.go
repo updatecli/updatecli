@@ -5,34 +5,54 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (p *Pipeline) RunActions() error {
+// RunActions runs all actions defined in the configuration.
+// pipelineState is used to skip actions that are not related to the current pipeline state.
+func (p *Pipeline) RunActions(pipelineState string, actionHashTable map[uint64]*action.Action) error {
 
-	if len(p.Targets) == 0 {
-		logrus.Debugln("no target found, skipping action")
+	// Early return
+	if len(p.Targets) == 0 || len(p.Actions) == 0 {
 		return nil
 	}
 
-	if len(p.Actions) == 0 {
-		logrus.Debugln("no action found, skipping")
-		return nil
-	}
+	for id := range p.Actions {
 
-	if len(p.Actions) > 0 {
-		logrus.Infof("\n\n%s\n", strings.ToTitle("Actions"))
-		logrus.Infof("%s\n\n", strings.Repeat("=", len("Actions")+1))
-	}
+		action := p.Actions[id]
 
-	for id, action := range p.Actions {
+		// Hash the action configuration to avoid running the same action multiple times.
+		// We use the hash of the action configuration. It worth mentioning because of:
+		// https://github.com/updatecli/updatecli/pull/1395
+		// it's difficult today to generate an unique hash for each action.
+		// so we may have situation where different actions doing the same thing
+		// will be applied multiple times.
+		actionHash, err := hashstructure.Hash(action.Config, nil)
+		if err != nil {
+			return err
+		}
+
+		// Skip action if already executed
+		if _, ok := actionHashTable[actionHash]; ok {
+			continue
+		}
+
+		actionHashTable[actionHash] = &action
+
 		relatedTargets, err := p.SearchAssociatedTargetsID(id)
 		if err != nil {
 			logrus.Errorf(err.Error())
 			continue
+		}
+
+		for i := range relatedTargets {
+			if p.Targets[relatedTargets[i]].Result.Result != pipelineState {
+				continue
+			}
 		}
 
 		// Update pipeline before each condition run
@@ -99,6 +119,9 @@ func (p *Pipeline) RunActions() error {
 			action.Report.Targets = append(action.Report.Targets, actionTarget)
 		}
 
+		logrus.Infof("\n%s - %s", p.Name, id)
+		logrus.Infof("%s\n\n", strings.Repeat("-", len(p.Name)+len(id)+3))
+
 		// No need to execute the action if no target require attention
 		if len(action.Report.Targets) == 0 {
 			if !p.Options.Target.DryRun {
@@ -108,6 +131,7 @@ func (p *Pipeline) RunActions() error {
 					return err
 				}
 			}
+			logrus.Infof("No additional step needed\n")
 			continue
 		}
 
