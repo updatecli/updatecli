@@ -101,7 +101,7 @@ func (g *Github) Commit(message string) error {
 	return nil
 }
 
-type githubCommit struct {
+type commitQuery struct {
 	CreateCommitOnBranch struct {
 		Commit struct {
 			URL string
@@ -111,7 +111,7 @@ type githubCommit struct {
 }
 
 func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
-	var m githubCommit
+	var m commitQuery
 
 	_, workingBranch, _ := g.GetBranches()
 
@@ -124,18 +124,10 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 	if err != nil {
 		return err
 	}
-	// process added / modified files:
-	additions := make([]githubv4.FileAddition, 0, len(files))
-	for _, f := range files {
-		fullPath := fmt.Sprintf("%s/%s", workingDir, f)
-		enc, err := utils.Base64EncodeFile(fullPath)
-		if err != nil {
-			return err
-		}
-		additions = append(additions, githubv4.FileAddition{
-			Path:     githubv4.String(f),
-			Contents: githubv4.Base64String(enc),
-		})
+
+	additions, err := processChangedFiles(workingDir, files)
+	if err != nil {
+		return err
 	}
 
 	repositoryName := fmt.Sprintf("%s/%s", g.Spec.Owner, g.Spec.Repository)
@@ -164,6 +156,22 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 
 	logrus.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
 	return nil
+}
+
+func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddition, error) {
+	additions := make([]githubv4.FileAddition, 0, len(files))
+	for _, f := range files {
+		fullPath := fmt.Sprintf("%s/%s", workingDir, f)
+		enc, err := utils.Base64EncodeFile(fullPath)
+		if err != nil {
+			return additions, err
+		}
+		additions = append(additions, githubv4.FileAddition{
+			Path:     githubv4.String(f),
+			Contents: githubv4.Base64String(enc),
+		})
+	}
+	return additions, nil
 }
 
 // Checkout create and then uses a temporary git branch.

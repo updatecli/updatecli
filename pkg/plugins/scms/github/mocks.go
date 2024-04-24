@@ -34,6 +34,11 @@ func (mock *MockGitHubClient) Query(ctx context.Context, q interface{}, variable
 		mt, _ := mock.mockedQuery.(*changelogQuery)
 		*qt = *mt
 		return mock.mockedErr
+	case *commitQuery:
+		qt, _ := q.(*commitQuery)
+		mt, _ := mock.mockedQuery.(*commitQuery)
+		*qt = *mt
+		return mock.mockedErr
 	default:
 		return fmt.Errorf("mock error: unsupported type for the provided query (%v)", q)
 	}
