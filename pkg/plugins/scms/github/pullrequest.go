@@ -573,7 +573,7 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool) error {
 		logrus.Debugf("Resetting pull-request body with new report")
 	}
 
-	logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.Url)
+	logrus.Infof("Existing GitHub pull request found: %s", p.remotePullRequest.Url)
 
 	return nil
 }
