@@ -76,11 +76,11 @@ func TestProcessChangedFiles(t *testing.T) {
 			want: []githubv4.FileAddition{
 				{
 					Path:     githubv4.String("file1.txt"),
-					Contents: githubv4.Base64String("dGVzdCBjb250ZW50MA=="),
+					Contents: githubv4.Base64String("dGVzdCBjb250ZW50MA=="), // no-spell-check-line
 				},
 				{
 					Path:     githubv4.String("file2.txt"),
-					Contents: githubv4.Base64String("dGVzdCBjb250ZW50MQ=="),
+					Contents: githubv4.Base64String("dGVzdCBjb250ZW50MQ=="), // no-spell-check-line
 				},
 			},
 			wantErr: false,
@@ -106,7 +106,8 @@ func TestProcessChangedFiles(t *testing.T) {
 					tempFile, err := os.Create(filepath.Join(tempDir, filepath.Base(file)))
 					require.NoError(t, err)
 					defer os.Remove(tempFile.Name())
-					tempFile.WriteString("test content" + strconv.Itoa(i))
+					_, err = tempFile.WriteString("test content" + strconv.Itoa(i))
+					require.NoError(t, err)
 				}
 			}
 
