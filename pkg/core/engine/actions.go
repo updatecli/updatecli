@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -27,11 +28,17 @@ func (e *Engine) runActions() error {
 
 	errs := []string{}
 
+	logrus.Infof("\n\n%s\n", strings.ToTitle("Actions"))
+	logrus.Infof("%s\n\n", strings.Repeat("=", len("Actions")+1))
+
+	// actionsHashTable is used to avoid running the same action multiple times.
+	actionsHashTable := make(map[uint64]*action.Action)
+
 	for _, pipelineState := range []string{result.ATTENTION, result.FAILURE, result.SUCCESS, result.SKIPPED} {
 		for id := range e.Pipelines {
 			pipeline := e.Pipelines[id]
 			if len(pipeline.Actions) > 0 {
-				if err := pipeline.RunActions(pipelineState); err != nil {
+				if err := pipeline.RunActions(pipelineState, actionsHashTable); err != nil {
 					errs = append(errs, err.Error())
 					pipeline.Report.Result = result.FAILURE
 					logrus.Errorf("action stage:\t%q", err.Error())
