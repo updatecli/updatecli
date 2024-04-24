@@ -111,3 +111,4 @@ disableconditions
 neverrun
 conditionids
 hom
+fileoperations

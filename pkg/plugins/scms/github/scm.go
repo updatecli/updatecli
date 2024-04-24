@@ -116,7 +116,9 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 	_, workingBranch, _ := g.GetBranches()
 
 	// Make sure branch is published
-	g.PushBranch(workingBranch)
+	if err := g.PushBranch(workingBranch); err != nil {
+		return err
+	}
 
 	files, err := g.nativeGitHandler.GetChangedFiles(workingDir)
 	if err != nil {

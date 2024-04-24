@@ -150,7 +150,7 @@ type Spec struct {
 	//
 	//  default: true
 	WorkingBranch *bool `yaml:",omitempty"`
-	//  "commitUsingApi" defines if Updatecli should use Github GraphQL API to create the commit.
+	//  "commitUsingApi" defines if Updatecli should use GitHub GraphQL API to create the commit.
 	//
 	//  compatible:
 	//	  * scm
