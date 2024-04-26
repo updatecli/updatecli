@@ -30,12 +30,7 @@ func (p *Pipeline) RunActions(pipelineState string) error {
 			continue
 		}
 
-		isMatchingState := true
-		for i := range relatedTargets {
-			if p.Targets[relatedTargets[i]].Result.Result != pipelineState {
-				isMatchingState = false
-			}
-		}
+		isMatchingState := p.isMatchingState(pipelineState, relatedTargets)
 
 		// No need to proceed if the action doesn't contain target in the right state.
 		if !isMatchingState {
@@ -253,4 +248,29 @@ func getActionTitle(action action.Action) string {
 		}
 	}
 	return "No action title could be found"
+}
+
+func (p *Pipeline) isMatchingState(state string, targets []string) bool {
+	var r bool
+	switch state {
+
+	// All targets must have the same state
+	case result.SUCCESS, result.FAILURE, result.SKIPPED:
+		r = true
+		for i := range targets {
+			if p.Targets[targets[i]].Result.Result != state {
+				r = false
+			}
+		}
+
+	// If at least one target is in ATTENTION state, then the action must be executed
+	default:
+		r = false
+		for i := range targets {
+			if p.Targets[targets[i]].Result.Result == state {
+				r = true
+			}
+		}
+	}
+	return r
 }
