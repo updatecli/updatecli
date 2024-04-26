@@ -164,20 +164,6 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 
 	p.repository = repository
 
-	// Check if they are changes that need to be published otherwise exit
-	isAhead := p.isAhead()
-	logrus.Debugf("Branch %s is %s of %s", workingBranch, p.repository.Status, sourceBranch)
-
-	if err != nil {
-		return err
-	}
-
-	if !isAhead {
-		logrus.Debugf("GitHub pullrequest not needed")
-
-		return nil
-	}
-
 	// Check if there is already a pullRequest for current pipeline
 	err = p.getRemotePullRequest(resetDescription)
 	if err != nil {
@@ -195,6 +181,18 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 	// tags,assignee,etc.
 	if err := p.updatePullRequest(); err != nil {
 		return err
+	}
+
+	// Check if they are changes that need to be published otherwise exit
+	// It's worth mentioning that at this time, changes have already been published
+	// The goal is just to not open a pull request if there is no changes
+	isAhead := p.isAhead()
+	logrus.Debugf("Branch %s is %s of %s", workingBranch, p.repository.Status, sourceBranch)
+
+	if !isAhead {
+		logrus.Debugf("GitHub pullrequest not needed")
+
+		return nil
 	}
 
 	// Now that the pullrequest has been updated with the new report, we can now close it if needed.
