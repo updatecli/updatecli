@@ -30,10 +30,16 @@ func (p *Pipeline) RunActions(pipelineState string) error {
 			continue
 		}
 
+		isMatchingState := true
 		for i := range relatedTargets {
 			if p.Targets[relatedTargets[i]].Result.Result != pipelineState {
-				continue
+				isMatchingState = false
 			}
+		}
+
+		// No need to proceed if the action doesn't contain target in the right state.
+		if !isMatchingState {
+			continue
 		}
 
 		// Update pipeline before each condition run
@@ -78,6 +84,11 @@ func (p *Pipeline) RunActions(pipelineState string) error {
 		}
 
 		for _, t := range relatedTargets {
+
+			// Skipping target that are not in the right state
+			if p.Targets[t].Result.Result != pipelineState {
+				continue
+			}
 			// We only care about target that have changed something
 			if !p.Targets[t].Result.Changed {
 				continue
