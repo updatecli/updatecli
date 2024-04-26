@@ -184,7 +184,12 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		logrus.Infof("\n\u26A0 While nothing change in the current pipeline run, according to the git history, some commits must be pushed\n")
 		t.Result.Description = fmt.Sprintf("%s\n\n%s", t.Result.Description, "While nothing change in the current pipeline run, according to the git history, some commits must pushed")
 
-		t.Result.Result = result.ATTENTION
+		// Even though the target has no changes, it has something to commit.
+		// We consider this result as "success" and not "attention" as the target has no changes.
+		// If later we decide to consider the result as "attention" then we also need to consider that the action
+		// will be trigger in priority. cfr https://github.com/updatecli/updatecli/issues/2039
+		// So we need to create a new resource stage to handle this case.
+		t.Result.Result = result.SUCCESS
 		t.Result.Changed = true
 		// Even though the target has left over changes, it has nothing to commit.
 		targetCommit = false
