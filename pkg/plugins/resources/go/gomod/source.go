@@ -25,7 +25,7 @@ func (g *GoMod) Source(workingDir string, resultSource *result.Source) error {
 	filename := g.filename
 	// To merge File path with current working dire, unless file is an http url
 	if workingDir != currentWorkingDirectory {
-		filename = utils.JoinFilePathWithWorkingDirectoryPath(filename, currentWorkingDirectory)
+		filename = utils.JoinFilePathWithWorkingDirectoryPath(filename, workingDir)
 	}
 
 	g.foundVersion, err = g.version(filename)
