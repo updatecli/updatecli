@@ -49,6 +49,14 @@ func TestSource(t *testing.T) {
 			},
 			expectedError: true,
 		},
+		{
+			name: "Test retrieving module from https",
+			spec: Spec{
+				File:   "https://raw.githubusercontent.com/updatecli/updatecli/v0.60.0/go.mod",
+				Module: "github.com/Masterminds/sprig/v3",
+			},
+			expectedResult: "v3.2.3",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

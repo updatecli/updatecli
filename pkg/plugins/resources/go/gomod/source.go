@@ -1,7 +1,9 @@
 package gomod
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 
@@ -12,7 +14,21 @@ import (
 func (g *GoMod) Source(workingDir string, resultSource *result.Source) error {
 	var err error
 
-	g.foundVersion, err = g.version(utils.JoinFilePathWithWorkingDirectoryPath(g.filename, workingDir))
+	// By the default workingdir is set to the current working directory
+	// it would be better to have it empty by default but it must be changed in the
+	// source core codebase.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		return errors.New("fail getting current working directory")
+	}
+
+	filename := g.filename
+	// To merge File path with current working dire, unless file is an http url
+	if workingDir != currentWorkingDirectory {
+		filename = utils.JoinFilePathWithWorkingDirectoryPath(filename, workingDir)
+	}
+
+	g.foundVersion, err = g.version(filename)
 	if err != nil {
 		return fmt.Errorf("searching version: %w", err)
 	}
