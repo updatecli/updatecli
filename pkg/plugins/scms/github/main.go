@@ -15,6 +15,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
@@ -228,7 +229,11 @@ func New(s Spec, pipelineID string) (*Github, error) {
 
 	commitUsingApi := false
 	if s.CommitUsingAPI != nil {
+		if !cmdoptions.Experimental {
+			return nil, fmt.Errorf("the commitusingapi option is an experimental behavior, please enable the experimental flag to use it")
+		}
 		commitUsingApi = *s.CommitUsingAPI
+
 	}
 
 	if force {
