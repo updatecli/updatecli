@@ -25,6 +25,13 @@ func TestCondition(t *testing.T) {
 		},
 		{
 			spec: Spec{
+				File:   "testdata/go.mod",
+				Module: "sigs.k8s.io/yaml",
+			},
+			expectedResult: true,
+		},
+		{
+			spec: Spec{
 				File:    "testdata/go.mod",
 				Module:  "sigs.k8s.io/yaml",
 				Version: "v0.0.99",

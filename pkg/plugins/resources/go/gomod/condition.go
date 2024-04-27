@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks if a specific stable Golang version is published
@@ -13,11 +14,12 @@ func (g *GoMod) Condition(source string, scm scm.ScmHandler) (pass bool, message
 		versionToCheck = source
 	}
 
-	if len(versionToCheck) == 0 {
-		return false, "no version defined", nil
+	filename := g.filename
+	if scm != nil {
+		filename = utils.JoinFilePathWithWorkingDirectoryPath(filename, scm.GetDirectory())
 	}
 
-	g.foundVersion, err = g.version(g.filename)
+	g.foundVersion, err = g.version(filename)
 	if err != nil {
 		if err == ErrModuleNotFound {
 			return false, "", fmt.Errorf("module path %q not found", g.spec.Module)
@@ -26,7 +28,15 @@ func (g *GoMod) Condition(source string, scm scm.ScmHandler) (pass bool, message
 		return false, "", fmt.Errorf("looking for Golang version: %w", err)
 	}
 
-	if g.foundVersion == versionToCheck {
+	if versionToCheck == "" && g.foundVersion != "" {
+		switch g.kind {
+		case kindGolang:
+			return true, fmt.Sprintf("Golang version %q found", g.foundVersion), nil
+
+		case kindModule:
+			return true, fmt.Sprintf("Module %q found", g.spec.Module), nil
+		}
+	} else if g.foundVersion == versionToCheck {
 		switch g.kind {
 		case kindGolang:
 			return true, fmt.Sprintf("Golang version %q found", g.foundVersion), nil
