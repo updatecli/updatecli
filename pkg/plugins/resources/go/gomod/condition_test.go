@@ -38,6 +38,15 @@ func TestCondition(t *testing.T) {
 			},
 			expectedResult: false,
 		},
+		{
+			name: "Test retrieving module from https",
+			spec: Spec{
+				File:    "https://raw.githubusercontent.com/updatecli/updatecli/v0.60.0/go.mod",
+				Module:  "github.com/Masterminds/sprig/v3",
+				Version: "v3.2.3",
+			},
+			expectedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -20,14 +20,18 @@ var (
 // version retrieve the version specified by a GO module
 func (g *GoMod) version(filename string) (string, error) {
 
-	data, err := os.ReadFile(filename)
-
-	if err != nil {
-		logrus.Errorln(err)
-		return "", fmt.Errorf("failed reading %q", filename)
+	// Test at runtime if a file exist
+	if !g.contentRetriever.FileExists(filename) {
+		return "", fmt.Errorf("file %q does not exist", filename)
 	}
 
-	modfile, err := modfile.Parse(filename, data, nil)
+	if err := g.Read(filename); err != nil {
+		return "", fmt.Errorf("reading file: %w", err)
+	}
+
+	data := g.currentContent
+
+	modfile, err := modfile.Parse(filename, []byte(data), nil)
 	if err != nil {
 		logrus.Errorln(err)
 		return "", fmt.Errorf("failed reading %q", filename)
