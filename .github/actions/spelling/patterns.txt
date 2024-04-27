@@ -94,3 +94,6 @@ UTF-8'(?!en)\w+'\S+
 # Terraform Hashes
 h1:[0-9A-Za-z\/=+]+
 zh:[0-9A-Za-z]+
+
+# marker to ignore all code on line
+^.*\/\/ no-spell-check-line$

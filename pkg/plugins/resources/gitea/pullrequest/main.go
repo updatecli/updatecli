@@ -65,7 +65,6 @@ func New(spec interface{}, scm *giteascm.Gitea) (Gitea, error) {
 	}
 
 	c, err := client.New(clientSpec)
-
 	if err != nil {
 		return Gitea{}, err
 	}
@@ -77,10 +76,6 @@ func New(spec interface{}, scm *giteascm.Gitea) (Gitea, error) {
 	}
 
 	g.inheritFromScm()
-
-	if err != nil {
-		return Gitea{}, nil
-	}
 
 	return g, nil
 }

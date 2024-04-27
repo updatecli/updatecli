@@ -113,3 +113,6 @@ conditionids
 cuelang
 cuecontext
 cueyaml
+hom
+fileoperations
+commitusingapi

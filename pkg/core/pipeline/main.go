@@ -1,12 +1,10 @@
 package pipeline
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -15,7 +13,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/core/udash"
 )
 
 // Pipeline represent an updatecli run for a specific configuration
@@ -221,22 +218,6 @@ func (p *Pipeline) Run() error {
 		}
 	}
 
-	if len(p.Actions) > 0 {
-		if err := p.RunActions(); err != nil {
-			p.Report.Result = result.FAILURE
-			return fmt.Errorf("action stage:\t%q", err.Error())
-		}
-	}
-
-	if cmdoptions.Experimental {
-		if err := udash.Publish(&p.Report); err != nil &&
-			!errors.Is(err, udash.ErrNoUdashBearerToken) &&
-			!errors.Is(err, udash.ErrNoUdashAPIURL) {
-			logrus.Infof("Skipping report publishing")
-			logrus.Debugf("publish report: %s", err)
-		}
-	}
-
 	return nil
 
 }
@@ -251,7 +232,7 @@ func (p *Pipeline) String() string {
 		result = result + fmt.Sprintf("\t%q:\n", key)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Changelog", value.Changelog)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Output", value.Output)
-		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result)
+		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
 	}
 	result = result + fmt.Sprintf("%q:\n", "Conditions")
 	for key, value := range p.Conditions {

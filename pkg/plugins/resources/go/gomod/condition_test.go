@@ -25,6 +25,13 @@ func TestCondition(t *testing.T) {
 		},
 		{
 			spec: Spec{
+				File:   "testdata/go.mod",
+				Module: "sigs.k8s.io/yaml",
+			},
+			expectedResult: true,
+		},
+		{
+			spec: Spec{
 				File:    "testdata/go.mod",
 				Module:  "sigs.k8s.io/yaml",
 				Version: "v0.0.99",
@@ -37,6 +44,15 @@ func TestCondition(t *testing.T) {
 				Version: "v0.0.99",
 			},
 			expectedResult: false,
+		},
+		{
+			name: "Test retrieving module from https",
+			spec: Spec{
+				File:    "https://raw.githubusercontent.com/updatecli/updatecli/v0.60.0/go.mod",
+				Module:  "github.com/Masterminds/sprig/v3",
+				Version: "v3.2.3",
+			},
+			expectedResult: true,
 		},
 	}
 	for _, tt := range tests {

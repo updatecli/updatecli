@@ -2,6 +2,7 @@ package reports
 
 import (
 	"bytes"
+	"sort"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -69,6 +70,32 @@ func (r *Reports) Show() error {
 	logrus.Infof(reports)
 
 	return nil
+}
+
+// Sort reports by result in the following order
+// SUCCESS > SKIPPED > ATTENTION > FAILURE > UNKNOWN
+func (r *Reports) Sort() {
+	reports := *r
+
+	sort.SliceStable(reports, func(i, j int) bool {
+		resultToInteger := func(state string) int {
+			switch state {
+			case result.SUCCESS:
+				return 0
+			case result.SKIPPED:
+				return 1
+			case result.ATTENTION:
+				return 2
+			case result.FAILURE:
+				return 3
+			default:
+				return 4
+			}
+		}
+
+		return resultToInteger(reports[i].Result) < resultToInteger(reports[j].Result)
+	})
+
 }
 
 // Summary display a summary of

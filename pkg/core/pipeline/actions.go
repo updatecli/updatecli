@@ -11,37 +11,34 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (p *Pipeline) RunActions() error {
+// RunActions runs all actions defined in the configuration.
+// pipelineState is used to skip actions that are not related to the current pipeline state.
+func (p *Pipeline) RunActions(pipelineState string) error {
 
-	if len(p.Targets) == 0 {
-		logrus.Debugln("no target found, skipping action")
+	// Early return
+	if len(p.Targets) == 0 || len(p.Actions) == 0 {
 		return nil
 	}
 
-	if len(p.Actions) == 0 {
-		logrus.Debugln("no action found, skipping")
-		return nil
-	}
+	for id := range p.Actions {
 
-	if len(p.Actions) > 0 {
-		logrus.Infof("\n\n%s\n", strings.ToTitle("Actions"))
-		logrus.Infof("%s\n\n", strings.Repeat("=", len("Actions")+1))
-	}
+		action := p.Actions[id]
 
-	for id, action := range p.Actions {
 		relatedTargets, err := p.SearchAssociatedTargetsID(id)
 		if err != nil {
 			logrus.Errorf(err.Error())
 			continue
 		}
 
-		// Update pipeline before each condition run
-		err = p.Update()
-		if err != nil {
-			logrus.Errorf(err.Error())
+		isMatchingState := p.isMatchingState(pipelineState, relatedTargets)
+
+		// No need to proceed if the action doesn't contain target in the right state.
+		if !isMatchingState {
 			continue
 		}
 
+		// Update pipeline before each condition run
+		err = p.Update()
 		if err != nil {
 			logrus.Errorf(err.Error())
 			continue
@@ -70,7 +67,23 @@ func (p *Pipeline) RunActions() error {
 			when two different pipeline open the same pullrequest based on the same action title
 		*/
 
+		// We try to find if any of the related targets have a branch reset
+		// Then we will set the action to have a branch reset and remove the previous action description
+		// as it's not relevant anymore
+		isBranchReset := false
 		for _, t := range relatedTargets {
+			if p.Targets[t].Result.Scm.BranchReset {
+				isBranchReset = true
+				break
+			}
+		}
+
+		for _, t := range relatedTargets {
+
+			// Skipping target that are not in the right state
+			if p.Targets[t].Result.Result != pipelineState {
+				continue
+			}
 			// We only care about target that have changed something
 			if !p.Targets[t].Result.Changed {
 				continue
@@ -93,14 +106,25 @@ func (p *Pipeline) RunActions() error {
 			action.Report.Targets = append(action.Report.Targets, actionTarget)
 		}
 
+		logrus.Infof("\n%s - %s", p.Name, id)
+		logrus.Infof("%s\n\n", strings.Repeat("-", len(p.Name)+len(id)+3))
+
 		// No need to execute the action if no target require attention
 		if len(action.Report.Targets) == 0 {
+			if !p.Options.Target.DryRun {
+				// At least we try to clean existing pullrequest
+				err = action.Handler.CleanAction(action.Report)
+				if err != nil {
+					return err
+				}
+			}
+			logrus.Infof("No additional step needed\n")
 			continue
 		}
 
 		// Must action.Report.ID and action.Report.Title must be set after actionTarget are set
 		actionTitle := action.Title
-		// If an action spec do not have a tittle, then we use the one specified by the pipeline spec title
+		// If an action spec doesn't have a title, then we use the one specified by the pipeline spec title
 		if actionTitle == "" && p.Config.Spec.Name != "" {
 			actionTitle = p.Config.Spec.Name
 		} else if actionTitle == "" && p.Config.Spec.Title != "" {
@@ -137,6 +161,9 @@ func (p *Pipeline) RunActions() error {
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
+				if isBranchReset {
+					logrus.Infof("Git branch reset detected, the action will remove the previous action description")
+				}
 
 				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
 					actionTitle,
@@ -152,13 +179,14 @@ func (p *Pipeline) RunActions() error {
 			return nil
 		}
 
-		err = action.Handler.CreateAction(action.Report)
-
+		err = action.Handler.CreateAction(action.Report, isBranchReset)
 		if err != nil {
 			return err
 		}
 
 		p.Actions[id] = action
+		// We need to be sure that the description reset is  only run once per group of targets
+		isBranchReset = false
 	}
 	return nil
 }
@@ -220,4 +248,29 @@ func getActionTitle(action action.Action) string {
 		}
 	}
 	return "No action title could be found"
+}
+
+func (p *Pipeline) isMatchingState(state string, targets []string) bool {
+	var r bool
+	switch state {
+
+	// All targets must have the same state
+	case result.SUCCESS, result.FAILURE, result.SKIPPED:
+		r = true
+		for i := range targets {
+			if p.Targets[targets[i]].Result.Result != state {
+				r = false
+			}
+		}
+
+	// If at least one target is in ATTENTION state, then the action must be executed
+	default:
+		r = false
+		for i := range targets {
+			if p.Targets[targets[i]].Result.Result == state {
+				r = true
+			}
+		}
+	}
+	return r
 }

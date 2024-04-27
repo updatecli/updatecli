@@ -69,6 +69,7 @@ func TestFindFilesMatchingPathPattern(t *testing.T) {
 		{
 			filepath: "*_test.go",
 			expectedFoundFiles: []string{
+				"fileoperations_test.go",
 				"filepath_test.go",
 			},
 		},
@@ -81,6 +82,8 @@ func TestFindFilesMatchingPathPattern(t *testing.T) {
 		{
 			filepath: "*.go",
 			expectedFoundFiles: []string{
+				"fileoperations.go",
+				"fileoperations_test.go",
 				"filepath.go",
 				"filepath_test.go",
 			},

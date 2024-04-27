@@ -12,13 +12,16 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Bitbucket server
-func (s *Stash) CreateAction(report reports.Action) error {
+func (s *Stash) CreateAction(report reports.Action, resetDescription bool) error {
 
 	title := report.Title
 	if len(s.spec.Title) > 0 {
 		title = s.spec.Title
 	}
 
+	// One Bitbucket pullrequest body can contain multiple action report
+	// It would be better to refactor CreateAction to be able to reuse existing pullrequest description.
+	// similar to what we did for github pullrequest.
 	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
 	if err != nil {
 		logrus.Warningf("something wrong happened while generating stash pullrequest body: %s", err)

@@ -7,9 +7,8 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # * is a special character in YAML so you have to quote this string
-    # Run at 12:00 on Friday.”
-    - cron: "0 12 * * 5"
+    # Run every hour
+    - cron: "0 * * * *"
 
 permissions: {}
 
@@ -24,6 +23,8 @@ jobs:
         uses: "actions/checkout@v4"
       - name: "Setup updatecli"
         uses: "updatecli/updatecli-action@v2"
+        with:
+          version: "v0.76.0-rc.4"
       - name: Set up Go
         uses: actions/setup-go@v5
         with:

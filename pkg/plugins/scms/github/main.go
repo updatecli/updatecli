@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
@@ -121,7 +123,11 @@ type Spec struct {
 	//
 	//	default:
 	//    false
-	Force bool `yaml:",omitempty"`
+	//
+	//  remark:
+	//    When force is set to true, Updatecli also recreates the working branches that
+	//    diverged from their base branch.
+	Force *bool `yaml:",omitempty"`
 	//	"commitMessage" is used to generate the final commit message.
 	//
 	//	compatible:
@@ -145,10 +151,18 @@ type Spec struct {
 	//
 	//  default: true
 	WorkingBranch *bool `yaml:",omitempty"`
+	//  "commitUsingApi" defines if Updatecli should use GitHub GraphQL API to create the commit.
+	//
+	//  compatible:
+	//	  * scm
+	//
+	//  default: false
+	CommitUsingAPI *bool `yaml:",omitempty"`
 }
 
 // GitHub contains settings to interact with GitHub
 type Github struct {
+	force bool
 	// Spec contains inputs coming from updatecli configuration
 	Spec             Spec
 	pipelineID       string
@@ -156,6 +170,7 @@ type Github struct {
 	nativeGitHandler gitgeneric.GitHandler
 	mu               sync.RWMutex
 	workingBranch    bool
+	commitUsingApi   bool
 }
 
 // Repository contains GitHub repository data
@@ -166,6 +181,7 @@ type Repository struct {
 	ParentID    string
 	ParentName  string
 	ParentOwner string
+	Status      string
 }
 
 // New returns a new valid GitHub object.
@@ -199,16 +215,54 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	httpClient := oauth2.NewClient(context.Background(), src)
 	nativeGitHandler := gitgeneric.GoGit{}
 
+	// By default, we create a working branch but if for some reason we don't want to create it
+	// Then we also need to update the force safeguard to avoid force pushing on the main branch.
 	workingBranch := true
 	if s.WorkingBranch != nil {
 		workingBranch = *s.WorkingBranch
 	}
 
+	force := true
+	if s.Force != nil {
+		force = *s.Force
+	}
+
+	commitUsingApi := false
+	if s.CommitUsingAPI != nil {
+		if !cmdoptions.Experimental {
+			return nil, fmt.Errorf("the commitusingapi option is an experimental behavior, please enable the experimental flag to use it")
+		}
+		commitUsingApi = *s.CommitUsingAPI
+
+	}
+
+	if force {
+		if !workingBranch && s.Force == nil {
+			errorMsg := fmt.Sprintf(`
+Better safe than sorry.
+
+Updatecli may be pushing unwanted changes to the branch %q.
+
+The GitHub scm plugin has by default the force option set to true,
+The scm force option set to true means that Updatecli is going to run "git push --force"
+Some target plugin, like the shell one, run "git commit -A" to catch all changes done by that target.
+
+If you know what you are doing, please set the force option to true in your configuration file to ignore this error message.
+`, s.Branch)
+
+			logrus.Errorln(errorMsg)
+			return nil, errors.New("unclear configuration, better safe than sorry")
+
+		}
+	}
+
 	g := Github{
+		force:            force,
 		Spec:             s,
 		pipelineID:       pipelineID,
 		nativeGitHandler: nativeGitHandler,
 		workingBranch:    workingBranch,
+		commitUsingApi:   commitUsingApi,
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {
@@ -271,7 +325,7 @@ func (gs *Spec) Merge(child interface{}) error {
 	if childGHSpec.Email != "" {
 		gs.Email = childGHSpec.Email
 	}
-	if childGHSpec.Force {
+	if childGHSpec.Force != nil {
 		gs.Force = childGHSpec.Force
 	}
 	if childGHSpec.GPG != (sign.GPGSpec{}) {
@@ -297,7 +351,7 @@ func (gs *Spec) Merge(child interface{}) error {
 		gs.Username = childGHSpec.Username
 	}
 	if childGHSpec.Submodules != nil {
-		gs.Submodules = gs.Submodules
+		gs.Submodules = childGHSpec.Submodules
 	}
 
 	return nil
@@ -346,7 +400,7 @@ func (g *Github) setDirectory() {
 	}
 }
 
-func (g *Github) queryRepository() (*Repository, error) {
+func (g *Github) queryRepository(sourceBranch string, workingBranch string) (*Repository, error) {
 	/*
 			   query($owner: String!, $name: String!) {
 			       repository(owner: $owner, name: $name){
@@ -374,6 +428,13 @@ func (g *Github) queryRepository() (*Repository, error) {
 				Login string
 			}
 
+			Ref *struct {
+				Name    string
+				Compare struct {
+					Status string
+				} `graphql:"compare(headRef: $headRef)"`
+			} `graphql:"ref(qualifiedName: $qualifiedName)"`
+
 			Parent *struct {
 				ID    string
 				Name  string
@@ -385,8 +446,10 @@ func (g *Github) queryRepository() (*Repository, error) {
 	}
 
 	variables := map[string]interface{}{
-		"owner": githubv4.String(g.Spec.Owner),
-		"name":  githubv4.String(g.Spec.Repository),
+		"owner":         githubv4.String(g.Spec.Owner),
+		"name":          githubv4.String(g.Spec.Repository),
+		"qualifiedName": githubv4.String(sourceBranch),
+		"headRef":       githubv4.String(workingBranch),
 	}
 
 	err := g.client.Query(context.Background(), &query, variables)
@@ -405,6 +468,11 @@ func (g *Github) queryRepository() (*Repository, error) {
 		parentOwner = query.Repository.Parent.Owner.Login
 	}
 
+	status := ""
+	if query.Repository.Ref != nil {
+		status = query.Repository.Ref.Compare.Status
+	}
+
 	result := &Repository{
 		ID:          query.Repository.ID,
 		Name:        query.Repository.Name,
@@ -412,6 +480,7 @@ func (g *Github) queryRepository() (*Repository, error) {
 		ParentID:    parentID,
 		ParentName:  parentName,
 		ParentOwner: parentOwner,
+		Status:      status,
 	}
 
 	return result, nil
