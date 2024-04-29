@@ -550,3 +550,18 @@ type refQuery struct {
 		}
 	} `graphql:"createRef(input:$input)"`
 }
+
+func (g *Github) createBranch(branchName string, repositoryId string, headOid string) error {
+	var query refQuery
+
+	input := githubv4.CreateRefInput{
+		RepositoryID: repositoryId,
+		Name:         githubv4.String(fmt.Sprintf("refs/heads/%s", branchName)),
+		Oid:          githubv4.GitObjectID(headOid),
+	}
+
+	if err := g.client.Mutate(context.Background(), &query, input, nil); err != nil {
+		return err
+	}
+	return nil
+}
