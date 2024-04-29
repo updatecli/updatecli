@@ -184,6 +184,12 @@ type Repository struct {
 	Status      string
 }
 
+type RepositoryRef struct {
+	ID               string
+	HeadOid          string
+	DefaultBranchOid string
+}
+
 // New returns a new valid GitHub object.
 func New(s Spec, pipelineID string) (*Github, error) {
 	errs := s.Validate()
@@ -484,4 +490,63 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string) (*Re
 	}
 
 	return result, nil
+}
+
+// Returns Git object ID of the latest commit on the branch and the default branch
+// of the repository.
+func (g *Github) queryHeadOid(workingBranch string) (*RepositoryRef, error) {
+	var query struct {
+		Repository struct {
+			ID    string
+			Name  string
+			Owner struct {
+				Login string
+			}
+
+			DefaultBranchRef *struct {
+				Name   string
+				Target struct {
+					Oid string
+				}
+			}
+
+			Ref *struct {
+				Name   string
+				Target struct {
+					Oid string
+				}
+			} `graphql:"ref(qualifiedName: $qualifiedName)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	variables := map[string]interface{}{
+		"owner":         githubv4.String(g.Spec.Owner),
+		"name":          githubv4.String(g.Spec.Repository),
+		"qualifiedName": githubv4.String(workingBranch),
+	}
+
+	err := g.client.Query(context.Background(), &query, variables)
+	if err != nil {
+		logrus.Errorf("err - %s", err)
+		return nil, err
+	}
+
+	headOid := ""
+	if query.Repository.Ref != nil {
+		headOid = query.Repository.Ref.Target.Oid
+	}
+
+	return &RepositoryRef{
+		ID:               query.Repository.ID,
+		HeadOid:          headOid,
+		DefaultBranchOid: query.Repository.DefaultBranchRef.Target.Oid,
+	}, nil
+}
+
+type refQuery struct {
+	CreateRef struct {
+		Ref struct {
+			Name string
+		}
+	} `graphql:"createRef(input:$input)"`
 }
