@@ -113,7 +113,7 @@ type commitQuery struct {
 func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 	var m commitQuery
 
-	_, workingBranch, _ := g.GetBranches()
+	sourceBranch, workingBranch, _ := g.GetBranches()
 
 	files, err := g.nativeGitHandler.GetChangedFiles(workingDir)
 	if err != nil {
@@ -133,7 +133,12 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 
 	headOid := repoRef.HeadOid
 	if headOid == "" {
-		headOid = repoRef.DefaultBranchOid
+		sourceBranchRepoRef, err := g.GetLatestCommitHash(sourceBranch)
+		if err != nil {
+			return err
+		}
+
+		headOid = sourceBranchRepoRef.HeadOid
 		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
 			return err
 		}
