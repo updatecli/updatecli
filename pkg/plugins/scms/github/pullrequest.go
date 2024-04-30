@@ -195,14 +195,6 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 		return nil
 	}
 
-	// Now that the pullrequest has been updated with the new report, we can now close it if needed.
-	if p.remotePullRequest.ChangedFiles == 0 {
-		logrus.Debugf("No changed file detected in pull request %s", p.remotePullRequest.Url)
-		// Not returning an error if the comment failed to be added
-		// as the main purpose of this function is to close the pullrequest
-		return p.closePullRequest()
-	}
-
 	if p.spec.AutoMerge {
 		if err := p.EnablePullRequestAutoMerge(); err != nil {
 			switch err.Error() {
