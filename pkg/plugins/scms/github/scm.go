@@ -113,7 +113,7 @@ type commitQuery struct {
 func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 	var m commitQuery
 
-	_, workingBranch, _ := g.GetBranches()
+	sourceBranch, workingBranch, _ := g.GetBranches()
 
 	files, err := g.nativeGitHandler.GetChangedFiles(workingDir)
 	if err != nil {
@@ -133,7 +133,12 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 
 	headOid := repoRef.HeadOid
 	if headOid == "" {
-		headOid = repoRef.DefaultBranchOid
+		sourceBranchRepoRef, err := g.GetLatestCommitHash(sourceBranch)
+		if err != nil {
+			return err
+		}
+
+		headOid = sourceBranchRepoRef.HeadOid
 		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
 			return err
 		}
@@ -227,7 +232,9 @@ func (g *Github) Push() (bool, error) {
 	// If the commit is done using the GitHub API, we don't need to push
 	// the commit as it is done in the same operation.
 	if g.commitUsingApi {
-		return true, nil
+		// the boolean indicate if the commit had to be force pushed
+		// which in the case of using the GitHub API is not handled here.
+		return false, nil
 	}
 
 	return g.nativeGitHandler.Push(
