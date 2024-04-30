@@ -45,23 +45,93 @@ type PullRequestApi struct {
 
 // ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
 type ActionSpec struct {
-	// Specifies if automerge is enabled for the new pullrequest
+	// automerge allows to enable/disable the automerge feature on new pullrequest
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   false
 	AutoMerge bool `yaml:",omitempty"`
-	// Specifies the Pull Request title
+	// title allows to override the pull request title
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   The default title is fetch from the first following location:
+	//   1. The action title
+	//   2. The target title if only one target
+	//   3. The pipeline target
+	//
 	Title string `yaml:",omitempty"`
-	// Specifies user input description used during pull body creation
+	// description allows to prepend information to the pullrequest description.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   empty
+	//
 	Description string `yaml:",omitempty"`
-	// Specifies repository labels used for the Pull Request. !! Labels must already exist on the repository
+	// labels specifies repository labels used for the Pull Request.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//    empty
+	//
+	// remark:
+	//   Labels must already exist on the repository
+	//
 	Labels []string `yaml:",omitempty"`
-	// Specifies if a Pull Request is set to draft, default false
+	// draft allows to set pull request in draft
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   false
 	Draft bool `yaml:",omitempty"`
-	// Specifies if maintainer can modify pullRequest
+	// maintainercannotmodify allows to specify if maintainer can modify pullRequest
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   false
 	MaintainerCannotModify bool `yaml:",omitempty"`
-	// Specifies which merge method is used to incorporate the Pull Request. Accept "merge", "squash", "rebase", or ""
+	// mergemethod allows to specifies what merge method is used to incorporate the pull request.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   ""
+	//
+	// remark:
+	//   Accept "merge", "squash", "rebase", or ""
 	MergeMethod string `yaml:",omitempty"`
-	// Specifies to use the Pull Request title as commit message when using auto merge, only works for "squash" or "rebase"
+	// usetitleforautomerge allows to specifies to use the Pull Request title as commit message when using auto merge,
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   ""
+	//
+	// remark:
+	//   Only works for "squash" or "rebase"
 	UseTitleForAutoMerge bool `yaml:",omitempty"`
-	// Specifies if a Pull Request should be sent to the parent of a fork.
+	// parent allows to specifies if a pull request should be sent to the parent of the current fork.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   false
+	//
 	Parent bool `yaml:",omitempty"`
 }
 
