@@ -177,22 +177,14 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 		}
 	}
 
+	if len(p.remotePullRequest.ID) == 0 {
+		return nil
+	}
+
 	// Once the remote Pull Request exists, we can than update it with additional information such as
 	// tags,assignee,etc.
 	if err := p.updatePullRequest(); err != nil {
 		return err
-	}
-
-	// Check if they are changes that need to be published otherwise exit
-	// It's worth mentioning that at this time, changes have already been published
-	// The goal is just to not open a pull request if there is no changes
-	isAhead := p.isAhead()
-	logrus.Debugf("Branch %s is %s of %s", workingBranch, p.repository.Status, sourceBranch)
-
-	if !isAhead {
-		logrus.Debugf("GitHub pullrequest not needed")
-
-		return nil
 	}
 
 	if p.spec.AutoMerge {
@@ -257,10 +249,6 @@ func (p *PullRequest) closePullRequest() error {
 	}
 
 	return nil
-}
-
-func (p *PullRequest) isAhead() bool {
-	return p.repository.Status == "AHEAD"
 }
 
 // updatePullRequest updates an existing Pull Request.
@@ -419,13 +407,25 @@ func (p *PullRequest) OpenPullRequest() error {
 		return err
 	}
 
-	_, workingBranch, targetBranch := p.gh.GetBranches()
+	sourceBranch, workingBranch, targetBranch := p.gh.GetBranches()
 
-	isAhead := p.isAhead()
+	logrus.Debugf("Branch %s is %s of %s", workingBranch, strings.ToLower(p.repository.Status), sourceBranch)
 
-	if !isAhead {
-		logrus.Debugf("GitHub pullrequest not needed")
+	// Check if they are changes that need to be published otherwise exit
+	// It's worth mentioning that at this time, changes have already been published
+	// The goal is just to not open a pull request if there is no changes
+	// https://docs.github.com/en/graphql/reference/enums#comparisonstatus
+	switch p.repository.Status {
+	case "AHEAD":
+		logrus.Debugf("Opening GitHub pull request")
+	case "DIVERGED":
+		logrus.Warningf("GitHub pull request creation skipped as branch %q diverged from %q", workingBranch, sourceBranch)
 		return nil
+	case "BEHIND", "IDENTICAL":
+		logrus.Debugf("GitHub pull request not needed")
+		return nil
+	default:
+		return fmt.Errorf("Unknown status %q", p.repository.Status)
 	}
 
 	input := githubv4.CreatePullRequestInput{
