@@ -115,11 +115,6 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 
 	_, workingBranch, _ := g.GetBranches()
 
-	// Make sure branch is published
-	if err := g.PushBranch(workingBranch); err != nil {
-		return err
-	}
-
 	files, err := g.nativeGitHandler.GetChangedFiles(workingDir)
 	if err != nil {
 		return err
@@ -131,9 +126,17 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 	}
 
 	repositoryName := fmt.Sprintf("%s/%s", g.Spec.Owner, g.Spec.Repository)
-	headOid, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
+	repoRef, err := g.GetLatestCommitHash(workingBranch)
 	if err != nil {
 		return err
+	}
+
+	headOid := repoRef.HeadOid
+	if headOid == "" {
+		headOid = repoRef.DefaultBranchOid
+		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
+			return err
+		}
 	}
 
 	input := githubv4.CreateCommitOnBranchInput{
@@ -172,6 +175,14 @@ func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddi
 		})
 	}
 	return additions, nil
+}
+
+func (g *Github) GetLatestCommitHash(workingBranch string) (*RepositoryRef, error) {
+	repoRef, err := g.queryHeadOid(workingBranch)
+	if err != nil {
+		return nil, err
+	}
+	return repoRef, nil
 }
 
 // Checkout create and then uses a temporary git branch.
