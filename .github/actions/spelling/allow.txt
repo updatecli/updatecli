@@ -113,3 +113,5 @@ conditionids
 hom
 fileoperations
 commitusingapi
+usetitleforautomerge
+
