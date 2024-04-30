@@ -232,7 +232,9 @@ func (g *Github) Push() (bool, error) {
 	// If the commit is done using the GitHub API, we don't need to push
 	// the commit as it is done in the same operation.
 	if g.commitUsingApi {
-		return true, nil
+		// the boolean indicate if the commit had to be force pushed
+		// which in the case of using the GitHub API is not handled here.
+		return false, nil
 	}
 
 	return g.nativeGitHandler.Push(
