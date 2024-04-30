@@ -58,7 +58,7 @@ func (p *Pipeline) RunActions() error {
 
 		// Ignoring skipped targets
 		if len(skippedTargetIDs) > 0 {
-			logrus.Warningf("%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
+			logrus.Debugf("%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
 		}
 
 		// If no target require attention while processing action in a attention state,
