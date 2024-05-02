@@ -23,7 +23,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/oauth2 v0.18.0
+	golang.org/x/oauth2 v0.19.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.14.4
 	sigs.k8s.io/yaml v1.4.0
@@ -294,7 +294,6 @@ require (
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	google.golang.org/api v0.161.0 // indirect
-	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/grpc v1.61.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
