@@ -115,3 +115,6 @@ fileoperations
 commitusingapi
 usetitleforautomerge
 maintainercannotmodify
+ianaindex
+freefair
+lombok
