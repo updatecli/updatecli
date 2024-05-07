@@ -35,6 +35,30 @@ const wikitextCoreMavenMetadata = `<?xml version="1.0" encoding="UTF-8"?>
 </metadata>
 `
 
+const gradleLombokPluginMetadata = `<?xml version='1.0' encoding='US-ASCII'?>
+<metadata>
+  <groupId>io.freefair.gradle</groupId>
+  <artifactId>lombok-plugin</artifactId>
+  <version>8.6</version>
+  <versioning>
+    <latest>8.6</latest>
+    <release>8.6</release>
+    <versions>
+      <version>8.0.1</version>
+      <version>8.1.0</version>
+      <version>8.2.0</version>
+      <version>8.2.1</version>
+      <version>8.2.2</version>
+      <version>8.3</version>
+      <version>8.4</version>
+      <version>8.6</version>
+    </versions>
+    <lastUpdated>20240215231139</lastUpdated>
+  </versioning>
+</metadata>`
+
+const invalidXMLEncoding = `<?xml version='1.0' encoding='SOMETHING'?>`
+
 const invalidXML = `<?xml version="1.0" encoding="UTF-8"?>
 <metadata>
 `
@@ -94,6 +118,13 @@ func TestDefaultHandler_GetLatestVersion(t *testing.T) {
 			want:                 "1.7.4.v20130429",
 		},
 		{
+			name:                 "Normal case, with US-ASCII encoding io.freefair.gradle:lombok-plugin on plugins.gradle.org/m2",
+			metadataURL:          "https://plugins.gradle.org/m2/io/freefair/gradle/lombok-plugin/maven-metadata.xml",
+			mockedHTTPStatusCode: 200,
+			mockedHttpBody:       gradleLombokPluginMetadata,
+			want:                 "8.6",
+		},
+		{
 			name: "Normal case with org.eclipse.mylyn.wikitext.wikitext.core on repo.jenkins-ci.org/releases using semver filter",
 			versionFilter: version.Filter{
 				Kind:    "semver",
@@ -131,6 +162,13 @@ func TestDefaultHandler_GetLatestVersion(t *testing.T) {
 			metadataURL:          "https://repo.jenkins-ci.org/releases/org/eclipse/mylyn/wikitext/wikitext.core/maven-metadata.xml",
 			mockedHTTPStatusCode: 200,
 			mockedHttpBody:       noLatestVersionMavenMetadata,
+			wantErr:              true,
+		},
+		{
+			name:                 "Case with invalid XML encoding",
+			metadataURL:          "https://repo.jenkins-ci.org/releases/org/eclipse/mylyn/wikitext/wikitext.core/maven-metadata.xml",
+			mockedHTTPStatusCode: 200,
+			mockedHttpBody:       invalidXMLEncoding,
 			wantErr:              true,
 		},
 	}
