@@ -74,6 +74,8 @@ type AutoDiscovery struct {
 }
 
 // New returns an initiated autodiscovery object
+//
+//nolint:funlen // This function is responsible to create all the crawlers
 func New(spec Config, workDir string) (*AutoDiscovery, error) {
 	var errs []error
 	var s Config
