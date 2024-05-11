@@ -68,6 +68,9 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			autodiscoveryScm, found = p.SCMs[p.Config.Spec.AutoDiscovery.ScmId]
 
 			if found {
+				if err = autodiscoveryScm.Handler.Checkout(); err != nil {
+					logrus.Errorf("git checkout: %s", err)
+				}
 				workDir = autodiscoveryScm.Handler.GetDirectory()
 			}
 		}
