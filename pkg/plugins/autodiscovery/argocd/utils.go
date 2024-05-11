@@ -33,7 +33,7 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 					continue
 				}
 
-				// First try to see if our file contains a HelmRelease definition
+				// First try to see if our file contains a Helm release definition
 				data, err := loadApplicationData(path)
 				if err != nil {
 					logrus.Debugf("Failed loading file %s as ArgoCD manifest: %s", path, err)
@@ -54,9 +54,11 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 	}
 
 	logrus.Debugf("%d Argocd manifest(s) found", len(manifestFiles))
-	for _, foundFile := range manifestFiles {
-		fileName := filepath.Base(filepath.Dir(foundFile))
-		logrus.Debugf("    * %q", fileName)
+	for _, manifestFile := range manifestFiles {
+		manifestFile, err = filepath.Rel(rootDir, manifestFile)
+		if err == nil {
+			logrus.Debugf("    * %q", manifestFile)
+		}
 	}
 
 	return manifestFiles, nil
@@ -66,8 +68,6 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 func loadApplicationData(filename string) (*ArgoCDApplicationSpec, error) {
 
 	var data ArgoCDApplicationSpec
-
-	fileName := filepath.Base(filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return nil, err
@@ -91,10 +91,15 @@ func loadApplicationData(filename string) (*ArgoCDApplicationSpec, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("ArgoCD manifest: %q\n", fileName)
-	logrus.Debugf("Helm Chart Name: %q\n", data.Spec.Source.Chart)
-	logrus.Debugf("Helm Repository URL: %q\n", data.Spec.Source.RepoURL)
-	logrus.Debugf("Version: %q\n", data.Spec.Source.TargetRevision)
+	// Only show debug message if we have a valid ArgoCDApplicationSpec
+	if data.Spec.Source.Chart != "" {
+		logrus.Debugf("ArgoCD manifest: %q\n", filename)
+		logrus.Debugf("Helm Chart Name: %q\n", data.Spec.Source.Chart)
+		logrus.Debugf("Helm Repository URL: %q\n", data.Spec.Source.RepoURL)
+		logrus.Debugf("Version: %q\n", data.Spec.Source.TargetRevision)
+		return &data, nil
+	}
 
-	return &data, nil
+	return nil, nil
+
 }

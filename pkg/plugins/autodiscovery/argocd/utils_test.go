@@ -7,7 +7,7 @@ import (
 func TestSearchFiles(t *testing.T) {
 
 	gotFiles, err := searchArgoCDFiles(
-		"testdata", ArgocdFilePatterns[:])
+		"testdata", ArgoCDFilePatterns[:])
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}

@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	// ArgocdFilePatterns specifies accepted Helm chart metadata file name
-	ArgocdFilePatterns [2]string = [2]string{"*.yaml", "*.yml"}
+	// ArgoCDFilePatterns specifies accepted Helm chart metadata file name
+	ArgoCDFilePatterns [2]string = [2]string{"*.yaml", "*.yml"}
 )
 
 // ArgoCDApplicationSpec is the information that we need to retrieve from Helm chart files.
@@ -33,7 +33,7 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 
 	foundFiles, err := searchArgoCDFiles(
 		f.rootDir,
-		ArgocdFilePatterns[:])
+		ArgoCDFilePatterns[:])
 
 	if err != nil {
 		return nil, err
