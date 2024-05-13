@@ -118,3 +118,8 @@ maintainercannotmodify
 ianaindex
 freefair
 lombok
+argocd
+ArgoCD
+argoproj
+kubeseal
+
