@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/aws/aws-sdk-go v1.52.0
 	github.com/containerd/containerd v1.7.12 // indirect
-	github.com/fatih/color v1.16.0
+	github.com/fatih/color v1.17.0
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/heimdalr/dag v1.4.0
