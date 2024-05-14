@@ -14,9 +14,14 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 	}{
 		{
-			name:    "Scenario 1",
-			rootDir: "testdata",
-			expectedPipelines: []string{`name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "sealed-secrets/manifest.yaml"'
+			name:              "ArgoCD manifests discovered no source",
+			rootDir:           "testdata/empty",
+			expectedPipelines: []string{},
+		},
+		{
+			name:    "ArgoCD manifests discovery with a single source",
+			rootDir: "testdata/sealed-secrets",
+			expectedPipelines: []string{`name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
 sources:
   sealed-secrets:
     name: 'Get latest "sealed-secrets" Helm chart version'
@@ -33,7 +38,7 @@ conditions:
     kind: 'yaml'
     disablesourceinput: true
     spec:
-      file: 'sealed-secrets/manifest.yaml'
+      file: 'manifest.yaml'
       key: '$.spec.source.chart'
       value: 'sealed-secrets'
   sealed-secrets-repository:
@@ -41,16 +46,57 @@ conditions:
     kind: 'yaml'
     disablesourceinput: true
     spec:
-      file: 'sealed-secrets/manifest.yaml'
+      file: 'manifest.yaml'
       key: '$.spec.source.repoURL'
       value: 'https://bitnami-labs.github.io/sealed-secrets'
 targets:
   sealed-secrets:
-    name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "sealed-secrets/manifest.yaml"'
+    name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
     kind: 'yaml'
     spec:
-      file: 'sealed-secrets/manifest.yaml'
+      file: 'manifest.yaml'
       key: '$.spec.source.targetRevision'
+    sourceid: 'sealed-secrets'
+`},
+		},
+		{
+			name:    "ArgoCD manifests discovery with several sources",
+			rootDir: "testdata/sealed-secrets_sources",
+			expectedPipelines: []string{`name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
+sources:
+  sealed-secrets:
+    name: 'Get latest "sealed-secrets" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'sealed-secrets'
+      url: 'https://bitnami-labs.github.io/sealed-secrets'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  sealed-secrets-name:
+    name: 'Ensure Helm chart name sealed-secrets is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.sources[0].chart'
+      value: 'sealed-secrets'
+  sealed-secrets-repository:
+    name: 'Ensure Helm chart repository https://bitnami-labs.github.io/sealed-secrets is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.sources[0].repoURL'
+      value: 'https://bitnami-labs.github.io/sealed-secrets'
+targets:
+  sealed-secrets:
+    name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
+    kind: 'yaml'
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.sources[0].targetRevision'
     sourceid: 'sealed-secrets'
 `},
 		},
