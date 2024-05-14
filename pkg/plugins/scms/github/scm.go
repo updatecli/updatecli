@@ -113,12 +113,7 @@ type commitQuery struct {
 func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 	var m commitQuery
 
-	_, workingBranch, _ := g.GetBranches()
-
-	// Make sure branch is published
-	if err := g.PushBranch(workingBranch); err != nil {
-		return err
-	}
+	sourceBranch, workingBranch, _ := g.GetBranches()
 
 	files, err := g.nativeGitHandler.GetChangedFiles(workingDir)
 	if err != nil {
@@ -131,9 +126,22 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 	}
 
 	repositoryName := fmt.Sprintf("%s/%s", g.Spec.Owner, g.Spec.Repository)
-	headOid, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
+	repoRef, err := g.GetLatestCommitHash(workingBranch)
 	if err != nil {
 		return err
+	}
+
+	headOid := repoRef.HeadOid
+	if headOid == "" {
+		sourceBranchRepoRef, err := g.GetLatestCommitHash(sourceBranch)
+		if err != nil {
+			return err
+		}
+
+		headOid = sourceBranchRepoRef.HeadOid
+		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
+			return err
+		}
 	}
 
 	input := githubv4.CreateCommitOnBranchInput{
@@ -172,6 +180,14 @@ func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddi
 		})
 	}
 	return additions, nil
+}
+
+func (g *Github) GetLatestCommitHash(workingBranch string) (*RepositoryRef, error) {
+	repoRef, err := g.queryHeadOid(workingBranch)
+	if err != nil {
+		return nil, err
+	}
+	return repoRef, nil
 }
 
 // Checkout create and then uses a temporary git branch.
@@ -216,7 +232,9 @@ func (g *Github) Push() (bool, error) {
 	// If the commit is done using the GitHub API, we don't need to push
 	// the commit as it is done in the same operation.
 	if g.commitUsingApi {
-		return true, nil
+		// the boolean indicate if the commit had to be force pushed
+		// which in the case of using the GitHub API is not handled here.
+		return false, nil
 	}
 
 	return g.nativeGitHandler.Push(

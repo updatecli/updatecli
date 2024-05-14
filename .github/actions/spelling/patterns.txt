@@ -97,3 +97,4 @@ zh:[0-9A-Za-z]+
 
 # marker to ignore all code on line
 ^.*\/\/ no-spell-check-line$
+
