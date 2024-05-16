@@ -2,6 +2,8 @@ package argocd
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSearchFiles(t *testing.T) {
@@ -12,15 +14,17 @@ func TestSearchFiles(t *testing.T) {
 		t.Errorf("%s\n", err)
 	}
 
-	expectedFile := "testdata/sealed-secrets/manifest.yaml"
-	if gotFiles[0] != expectedFile {
-		t.Errorf("Expecting file %q but got %q", expectedFile, gotFiles[0])
+	expectedFiles := []string{
+		"testdata/sealed-secrets/manifest.yaml",
+		"testdata/sealed-secrets_sources/manifest.yaml",
 	}
+
+	assert.Equal(t, gotFiles, expectedFiles)
 }
 
 func TestListChartDependency(t *testing.T) {
 
-	gotChartData, err := loadApplicationData(
+	gotChartData, err := readManifest(
 		"testdata/sealed-secrets/manifest.yaml")
 	if err != nil {
 		t.Errorf("%s\n", err)

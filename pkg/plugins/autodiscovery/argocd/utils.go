@@ -34,7 +34,7 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 				}
 
 				// First try to see if our file contains a Helm release definition
-				data, err := loadApplicationData(path)
+				data, err := readManifest(path)
 				if err != nil {
 					logrus.Debugf("Failed loading file %s as ArgoCD manifest: %s", path, err)
 					continue
@@ -64,8 +64,8 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 	return manifestFiles, nil
 }
 
-// loadApplicationData reads a Chart.yaml for information that could be automated
-func loadApplicationData(filename string) (*ArgoCDApplicationSpec, error) {
+// readManifest reads a Chart.yaml for information that could be automated
+func readManifest(filename string) (*ArgoCDApplicationSpec, error) {
 
 	var data ArgoCDApplicationSpec
 
@@ -86,18 +86,18 @@ func loadApplicationData(filename string) (*ArgoCDApplicationSpec, error) {
 	}
 
 	err = goyaml.Unmarshal(content, &data)
-
 	if err != nil {
 		return nil, err
 	}
 
-	// Only show debug message if we have a valid ArgoCDApplicationSpec
-	if data.Spec.Source.Chart != "" {
-		logrus.Debugf("ArgoCD manifest: %q\n", filename)
-		logrus.Debugf("Helm Chart Name: %q\n", data.Spec.Source.Chart)
-		logrus.Debugf("Helm Repository URL: %q\n", data.Spec.Source.RepoURL)
-		logrus.Debugf("Version: %q\n", data.Spec.Source.TargetRevision)
+	if !data.Spec.Source.IsZero() {
 		return &data, nil
+	}
+
+	for _, source := range data.Spec.Sources {
+		if !source.IsZero() {
+			return &data, nil
+		}
 	}
 
 	return nil, nil
