@@ -104,7 +104,7 @@ type Spec struct {
 	//    * scm
 	//
 	//  remark:
-	//    the token is usually enough to authenticate with GitHub API.
+	//    the token is usually enough to authenticate with GitHub API. Needed when working with GitHub private repositories.
 	Username string `yaml:",omitempty"`
 	//  "user" specifies the user associated with new git commit messages created by Updatecli
 	//
