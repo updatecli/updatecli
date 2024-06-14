@@ -489,8 +489,7 @@ func (p *PullRequest) OpenPullRequest() error {
 	case "AHEAD":
 		logrus.Debugf("Opening GitHub pull request")
 	case "DIVERGED":
-		logrus.Warningf("GitHub pull request creation skipped as branch %q diverged from %q", workingBranch, sourceBranch)
-		return nil
+		logrus.Debugf("Opening GitHub pull request even though the branch is diverged")
 	case "BEHIND", "IDENTICAL":
 		logrus.Debugf("GitHub pull request not needed")
 		return nil
