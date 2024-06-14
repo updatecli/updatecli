@@ -175,9 +175,11 @@ func getNewVersion(oldVersion, newVersion string) (string, error) {
 
 	if majorMinor.MatchString(oldVersion) {
 		return fmt.Sprintf("%d.%d", s.Major(), s.Minor()), nil
-	} else if majorMinorPatch.MatchString(oldVersion) {
-		return fmt.Sprintf("%d.%d.%d", s.Major(), s.Minor(), s.Patch()), nil
-	} else {
-		return newVersion, nil
 	}
+
+	if majorMinorPatch.MatchString(oldVersion) {
+		return fmt.Sprintf("%d.%d.%d", s.Major(), s.Minor(), s.Patch()), nil
+	}
+
+	return newVersion, nil
 }
