@@ -30,6 +30,7 @@ require (
 )
 
 require (
+	cuelang.org/go v0.8.0
 	github.com/BurntSushi/toml v1.4.0
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/beevik/etree v1.4.0
@@ -93,6 +94,7 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
+	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/containerd/typeurl/v2 v2.1.1 // indirect
@@ -289,7 +291,7 @@ require (
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/term v0.19.0 // indirect
-	golang.org/x/tools v0.18.0 // indirect
+	golang.org/x/tools v0.19.0 // indirect
 	google.golang.org/api v0.161.0 // indirect
 	google.golang.org/grpc v1.61.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
