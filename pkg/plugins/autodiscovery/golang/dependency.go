@@ -64,6 +64,10 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 		}
 
 		for goModule, goModuleVersion := range goModules {
+			// Skip golang module manifest if there is only one rule on the go version
+			if g.spec.Only.isGoVersionOnly() {
+				break
+			}
 			// Test if the ignore rule based on path is respected
 			if len(g.spec.Ignore) > 0 {
 				if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion) {
