@@ -16,6 +16,9 @@ import (
 
 var (
 	ErrModuleNotFound error = errors.New("GO module not found")
+
+	majorMinorRegex      *regexp.Regexp = regexp.MustCompile(`^\d+\.\d+$`)
+	majorMinorPatchRegex *regexp.Regexp = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 )
 
 // version retrieve the version specified by a GO module
@@ -170,14 +173,11 @@ func getNewVersion(oldVersion, newVersion string) (string, error) {
 		return "", fmt.Errorf("failed parsing go version %q", oldVersion)
 	}
 
-	majorMinor := regexp.MustCompile(`^\d+\.\d+$`)
-	majorMinorPatch := regexp.MustCompile(`^\d+\.\d+\.\d+$`)
-
-	if majorMinor.MatchString(oldVersion) {
+	if majorMinorRegex.MatchString(oldVersion) {
 		return fmt.Sprintf("%d.%d", s.Major(), s.Minor()), nil
 	}
 
-	if majorMinorPatch.MatchString(oldVersion) {
+	if majorMinorPatchRegex.MatchString(oldVersion) {
 		return fmt.Sprintf("%d.%d.%d", s.Major(), s.Minor(), s.Patch()), nil
 	}
 
