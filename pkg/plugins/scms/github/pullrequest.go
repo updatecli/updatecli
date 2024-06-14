@@ -486,11 +486,8 @@ func (p *PullRequest) OpenPullRequest() error {
 	// The goal is just to not open a pull request if there is no changes
 	// https://docs.github.com/en/graphql/reference/enums#comparisonstatus
 	switch p.repository.Status {
-	case "AHEAD":
+	case "AHEAD", "DIVERGED":
 		logrus.Debugf("Opening GitHub pull request")
-	case "DIVERGED":
-		logrus.Warningf("GitHub pull request creation skipped as branch %q diverged from %q", workingBranch, sourceBranch)
-		return nil
 	case "BEHIND", "IDENTICAL":
 		logrus.Debugf("GitHub pull request not needed")
 		return nil
