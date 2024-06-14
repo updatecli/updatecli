@@ -110,6 +110,9 @@ alwaysrun
 disableconditions
 neverrun
 conditionids
+cuelang
+cuecontext
+cueyaml
 hom
 fileoperations
 commitusingapi
