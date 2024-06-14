@@ -51,6 +51,14 @@ func TestTarget(t *testing.T) {
 			expectedChanged: true,
 		},
 		{
+			name: "Ensure Go version should be updated with major.minor.patch",
+			spec: Spec{
+				File:    "testdata/go.1.mod",
+				Version: "1.30.1",
+			},
+			expectedChanged: true,
+		},
+		{
 			name: "Ensure Go version is already up to date",
 			spec: Spec{
 				File:    "testdata/go.mod",
