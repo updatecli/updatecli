@@ -30,7 +30,7 @@ require (
 )
 
 require (
-	cuelang.org/go v0.8.0
+	cuelang.org/go v0.9.1
 	github.com/BurntSushi/toml v1.4.0
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/beevik/etree v1.4.0
