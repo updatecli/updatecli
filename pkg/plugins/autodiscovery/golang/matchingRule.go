@@ -142,10 +142,17 @@ func (m MatchingRules) isGoVersionOnly() bool {
 	if len(m) == 0 {
 		return false
 	}
+
+	goOnlyFound := 0
 	for _, rule := range m {
-		if rule.GoVersion != "" && len(rule.Modules) > 0 {
-			return false
+		if rule.GoVersion != "" && len(rule.Modules) == 0 {
+			goOnlyFound++
 		}
 	}
-	return true
+
+	if goOnlyFound == len(m) && goOnlyFound > 0 {
+		return true
+	}
+
+	return false
 }
