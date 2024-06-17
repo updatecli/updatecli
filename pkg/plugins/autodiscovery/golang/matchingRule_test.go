@@ -157,3 +157,74 @@ func TestIsMatchingRule(t *testing.T) {
 		})
 	}
 }
+
+func TestIsGoOnly(t *testing.T) {
+
+	dataset := []struct {
+		name           string
+		rules          MatchingRules
+		expectedResult bool
+	}{
+		{
+			name: "Only path specified",
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "go.mod",
+				},
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Only go version specified",
+			rules: MatchingRules{
+				MatchingRule{
+					GoVersion: "*",
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Multiple go version specified",
+			rules: MatchingRules{
+				MatchingRule{
+					GoVersion: "1.19.*",
+				},
+				MatchingRule{
+					GoVersion: ">=1.20.0",
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Go version specified with second go module rule",
+			rules: MatchingRules{
+				MatchingRule{
+					GoVersion: "1.19.*",
+				},
+				MatchingRule{
+					Modules: map[string]string{
+						"github.com/updatecli/updatecli": "1.0.0",
+					},
+				},
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Go version specified with go module within the same rule",
+			rules: MatchingRules{
+				MatchingRule{
+					GoVersion: "1.19.*",
+					Modules: map[string]string{
+						"github.com/updatecli/updatecli": "1.0.0",
+					},
+				},
+			},
+			expectedResult: false,
+		},
+	}
+
+	for _, d := range dataset {
+		gotReset := d.rules.isGoVersionOnly()
+		assert.Equal(t, d.expectedResult, gotReset)
+	}
+}
