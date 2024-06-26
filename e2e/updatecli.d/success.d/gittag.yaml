@@ -30,7 +30,6 @@ sources:
     spec:
       command: echo "0.0.1"
 
-
 conditions:
   check-git:
     name: Check the tag 'v0.30.0' exists in the git repository
@@ -71,3 +70,11 @@ targets:
     sourceid: echo-version
     spec:
       message: "Created by Updatecli"
+
+actions:
+  push-to-git:
+    kind: git/push
+    scmid: git-repo
+  push-to-github:
+    kind: git/push
+    scmid: github-repo

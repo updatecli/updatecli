@@ -127,6 +127,7 @@ GITLABDOMAIN
 gitlabscm
 gitops
 gittag
+gitpush
 gocognit
 goconst
 gocritic
