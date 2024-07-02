@@ -9,7 +9,7 @@ import (
 type Spec struct {
 	// [s][c][t] File specifies the .tool-versions file to manipulate
 	File string `yaml:",omitempty"`
-	// [c][t] Files specifies a list of Json file to manipulate
+	// [c][t] Files specifies a list of .tool-versions file to manipulate
 	Files []string `yaml:",omitempty"`
 	// [s][c][t] Key specifies the query to retrieve an information from a .tool-versions file
 	Key string `yaml:",omitempty"`
@@ -27,7 +27,7 @@ var (
 	// ErrSpecFileUndefined is returned if a file wasn't specified
 	ErrSpecFileUndefined = errors.New(".tool-versions file undefined")
 	// ErrSpecKeyUndefined is returned if a key wasn't specified
-	ErrSpecKeyUndefined = errors.New("tool-versions key or query undefined")
+	ErrSpecKeyUndefined = errors.New("tool-versions key undefined")
 	// ErrSpecFileAndFilesDefines when we both spec File and Files have been specified
 	ErrSpecFileAndFilesDefined = errors.New("parameter \"file\" and \"files\" are mutually exclusive")
 	// ErrWrongSpec is returned when the Spec has wrong content
@@ -43,6 +43,10 @@ func (s *Spec) Validate() error {
 
 	if len(s.File) > 0 && len(s.Files) > 0 {
 		errs = append(errs, ErrSpecFileAndFilesDefined)
+	}
+
+	if len(s.Key) == 0 && len(s.Key) == 0 {
+		errs = append(errs, ErrSpecKeyUndefined)
 	}
 
 	for _, e := range errs {

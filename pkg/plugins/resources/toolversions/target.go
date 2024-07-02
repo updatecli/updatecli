@@ -8,7 +8,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Target updates a scm repository based on the modified .tool-versions file.
 func (t *ToolVersions) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""

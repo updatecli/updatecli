@@ -39,6 +39,7 @@ import (
 	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
 	terraformRegistry "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/registry"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/toolversions"
 	updateclihttp "github.com/updatecli/updatecli/pkg/plugins/resources/updateclihttp"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -207,6 +208,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "toml":
 
 		return toml.New(rs.Spec)
+
+	case "toolversions":
+
+		return toolversions.New(rs.Spec)
 
 	case "xml":
 
