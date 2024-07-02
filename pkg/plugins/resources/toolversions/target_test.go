@@ -22,9 +22,10 @@ func TestTarget(t *testing.T) {
 		{
 			name: "Successful update workflow with a new key",
 			spec: Spec{
-				File:  "testdata/.tool-versions",
-				Key:   "doNotExist",
-				Value: "1.0.0",
+				File:             "testdata/.tool-versions",
+				Key:              "doNotExist",
+				Value:            "1.0.0",
+				CreateMissingKey: true,
 			},
 			expectedResult: true,
 			sourceInput:    "1.0.0",
@@ -58,6 +59,17 @@ func TestTarget(t *testing.T) {
 			sourceInput:      "M",
 			wantErr:          true,
 			expectedErrorMsg: errors.New("file \"newfile\" does not exist"),
+		},
+		{
+			name: "Failing on non-existing key by default",
+			spec: Spec{
+				File: "testdata/.tool-versions",
+				Key:  "doNotExist",
+			},
+			expectedResult:   false,
+			sourceInput:      "M",
+			wantErr:          true,
+			expectedErrorMsg: errors.New("key \"doNotExist\" does not exist. Use createMissingKey if you want to create the key."),
 		},
 	}
 

@@ -40,6 +40,10 @@ func (t *ToolVersions) Target(source string, scm scm.ScmHandler, dryRun bool, re
 
 		queryResult, _ := t.contents[i].Get(t.spec.Key)
 
+		if !t.spec.CreateMissingKey && queryResult == "" {
+			return fmt.Errorf("key %q does not exist. Use createMissingKey if you want to create the key.", t.spec.Key)
+		}
+
 		changedFile := false
 		switch queryResult == resultTarget.NewInformation {
 		case true:
