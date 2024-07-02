@@ -20,18 +20,18 @@ func TestTarget(t *testing.T) {
 		wantErr          bool
 	}{
 		{
-			name: "Test key do not exist",
+			name: "Successful update workflow with a new key",
 			spec: Spec{
 				File:  "testdata/.tool-versions",
 				Key:   "doNotExist",
 				Value: "1.0.0",
 			},
 			expectedResult: true,
-			sourceInput:    "M",
+			sourceInput:    "1.0.0",
 			wantErr:        false,
 		},
 		{
-			name: "Successful update workflow",
+			name: "Successful update workflow with an existing key and different value",
 			spec: Spec{
 				File: "testdata/.tool-versions",
 				Key:  "bats",
@@ -40,15 +40,24 @@ func TestTarget(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name: "Successful update workflow",
+			name: "Successful no update workflow",
 			spec: Spec{
 				File: "testdata/.tool-versions",
-				Key:  "commentedtool",
+				Key:  "golang",
+			},
+			expectedResult: false,
+			sourceInput:    "1.8.2",
+		},
+		{
+			name: "Test file do not exist",
+			spec: Spec{
+				File: "newfile",
+				Key:  "golang",
 			},
 			expectedResult:   false,
 			sourceInput:      "M",
 			wantErr:          true,
-			expectedErrorMsg: errors.New("could not find value for query \"commentedtool\" from file \"testdata/.tool-versions\""),
+			expectedErrorMsg: errors.New("file \"newfile\" does not exist"),
 		},
 	}
 

@@ -26,7 +26,7 @@ func (t *ToolVersions) Target(source string, scm scm.ScmHandler, dryRun bool, re
 		}
 
 		if err := t.contents[i].Read(rootDir); err != nil {
-			return fmt.Errorf("file %q does not exist", t.contents[i].FilePath)
+			return fmt.Errorf("file %q does not exist", filename)
 		}
 
 		if len(t.spec.Value) == 0 {
@@ -34,20 +34,36 @@ func (t *ToolVersions) Target(source string, scm scm.ScmHandler, dryRun bool, re
 		}
 		resultTarget.NewInformation = t.spec.Value
 
-		resourceFile := t.contents[i].FilePath
-
 		// Override value from source if not yet defined
 		if len(t.spec.Value) == 0 {
 			t.spec.Value = source
 		}
 
-		resultTarget.Description = fmt.Sprintf("%s\nkey %q, from file %q, is correctly set to %q",
-			resultTarget.Description,
-			t.spec.Key,
-			t.contents[i].FilePath,
-			t.spec.Value)
+		queryResult, _ := t.contents[i].Get(t.spec.Key)
 
-		if dryRun {
+		changedFile := false
+		switch queryResult == resultTarget.NewInformation {
+		case true:
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q, from file %q, is correctly set to %q",
+				resultTarget.Description,
+				t.spec.Key,
+				filename,
+				t.spec.Value)
+
+		case false:
+			changedFile = true
+			resultTarget.Information = queryResult
+			resultTarget.Result = result.ATTENTION
+			resultTarget.Changed = true
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q, from file %q, is incorrectly set to %q and should be %q",
+				resultTarget.Description,
+				t.spec.Key,
+				filename,
+				queryResult,
+				t.spec.Value)
+		}
+
+		if !changedFile || dryRun {
 			continue
 		}
 
@@ -61,7 +77,7 @@ func (t *ToolVersions) Target(source string, scm scm.ScmHandler, dryRun bool, re
 			return err
 		}
 
-		resultTarget.Files = append(resultTarget.Files, resourceFile)
+		resultTarget.Files = append(resultTarget.Files, filename)
 	}
 
 	resultTarget.Description = strings.TrimPrefix(resultTarget.Description, "\n")
