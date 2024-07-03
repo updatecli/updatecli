@@ -272,6 +272,7 @@ func GetResourceMapping() map[string]interface{} {
 		"terraform/provider": &terraformProvider.Spec{},
 		"terraform/registry": &terraformRegistry.Spec{},
 		"toml":               &toml.Spec{},
+		"toolversions":       &toolversions.Spec{},
 		"xml":                &xml.Spec{},
 		"yaml":               &yaml.Spec{},
 	}
