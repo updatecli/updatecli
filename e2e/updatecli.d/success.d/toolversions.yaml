@@ -15,7 +15,7 @@ conditions:
     sourceid: local
     spec:
       file: pkg/plugins/resources/toolversions/testdata/.tool-versions
-      key: owner.firstName
+      key: bats
   golang:
     name: Test value from .tool-versions
     kind: toolversions
@@ -26,11 +26,22 @@ conditions:
       value: "1.8.2"
 
 targets:
-  local:
-    name: Test value from .tool-versions
+  local-source:
+    name: Test sourceid new key from .tool-versions
     kind: toolversions
     sourceid: local
     spec:
       file: pkg/plugins/resources/toolversions/testdata/.tool-versions
       key: tool
-      value: "1.0.0"
+      createMissingKey: true
+  local-value:
+    name: Test new tool with value from .tool-versions
+    kind: toolversions
+    spec:
+      file: pkg/plugins/resources/toolversions/testdata/.tool-versions
+      key: new-tool
+      value: "2.0.0"
+      createMissingKey: true
+
+
+
