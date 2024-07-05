@@ -77,7 +77,9 @@ type Report struct {
 	Err    string
 	Result string
 	// ID defines the report ID
-	ID         string
+	ID string
+	// PipelineID represents the Updatecli manifest pipelineID
+	PipelineID string
 	Sources    map[string]*result.Source
 	Conditions map[string]*result.Condition
 	Targets    map[string]*result.Target

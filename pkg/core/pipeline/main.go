@@ -66,6 +66,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Report.Targets = make(map[string]*result.Target, len(config.Spec.Targets))
 	p.Report.Name = config.Spec.Name
 	p.Report.Result = result.SKIPPED
+	p.Report.PipelineID = config.Spec.PipelineID
 
 	// Init scm
 	for id, scmConfig := range config.Spec.SCMs {
@@ -185,6 +186,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		r := p.Targets[id].Result
 		p.Report.Targets[id] = &r
+
+		p.Report.Targets[id].DryRun = r.DryRun
 	}
 	return nil
 
