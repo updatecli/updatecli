@@ -1,4 +1,5 @@
 ---
+version: 2
 archives:
   - name_template: >-
       {{ .ProjectName }}_
@@ -45,7 +46,7 @@ before:
 
 brews:
   - name: updatecli
-    folder: Formula
+    directory: Formula
     repository:
       owner: updatecli
       name: homebrew-updatecli
@@ -83,7 +84,7 @@ builds:
 
 changelog:
   ## Delegate Changelog to release-drafter
-  skip: true
+  disable: true
 
 checksum:
   name_template: 'checksums.txt'
