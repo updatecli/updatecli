@@ -8,24 +8,18 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
 var (
-	// ErrNoUdashBearerToken is returned if we couldn't find a token in the local updatecli configuration file
-	ErrNoUdashBearerToken error = fmt.Errorf("no bearer token found")
 	// ErrNoUdashAPIURL is returned if we couldn't find an Updatecli report API
 	ErrNoUdashAPIURL error = fmt.Errorf("no Updatecli API defined")
 )
 
 // Publish publish a pipeline report to the updatecli api
 func Publish(r *reports.Report) error {
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
-
 	err := r.UpdateID()
 	if err != nil {
 		return fmt.Errorf("generating report IDs: %w", err)
@@ -46,10 +40,6 @@ func Publish(r *reports.Report) error {
 		return fmt.Errorf("parsing report URL: %w", err)
 	}
 
-	if bearerToken == "" {
-		return ErrNoUdashBearerToken
-	}
-
 	jsonBody, err := json.Marshal(r)
 	if err != nil {
 		return fmt.Errorf("marshaling json: %w", err)
@@ -58,9 +48,6 @@ func Publish(r *reports.Report) error {
 	bodyReader := bytes.NewReader(jsonBody)
 
 	u := reportApiURL.JoinPath("pipeline", "reports")
-	if err != nil {
-		return fmt.Errorf("generating URL: %w", err)
-	}
 
 	client := &http.Client{}
 
@@ -69,7 +56,9 @@ func Publish(r *reports.Report) error {
 		return err
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
+	if bearerToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
+	}
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -109,7 +98,6 @@ func Publish(r *reports.Report) error {
 	}
 
 	r.ReportURL = reportURL.JoinPath("pipeline", "reports", d.ReportID).String()
-	logrus.Printf("Report available on:\n\t * %q", r.ReportURL)
 
 	return nil
 }

@@ -13,7 +13,7 @@ import (
 const reportsTpl string = `
 =============================
 
-REPORTS:
+SUMMARY:
 
 
 {{ range . }}

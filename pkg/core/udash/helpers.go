@@ -47,3 +47,17 @@ func initConfigFile() (string, error) {
 
 	return filepath.Join(updatecliConfigDir, "udash.json"), nil
 }
+
+// IsConfigFile checks if the udash config file exists
+func IsConfigFile() (string, bool) {
+	configFile, err := initConfigFile()
+	if err != nil {
+		return configFile, false
+	}
+
+	if _, err := os.Stat(configFile); err != nil {
+		return configFile, false
+	}
+
+	return configFile, true
+}
