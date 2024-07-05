@@ -32,7 +32,7 @@ func (f *FileContent) Write() error {
 	}
 
 	defer newFile.Close()
-	err = writeToolVersions(fs, newFile, f.Entries)
+	err = writeToolVersions(newFile, f.Entries)
 	if err != nil {
 		return fmt.Errorf("unable to write to file %s: %w", f.FilePath, err)
 	}
@@ -41,7 +41,7 @@ func (f *FileContent) Write() error {
 }
 
 // writeToolVersions creates or overwrites the .tool-versions file with the provided entries.
-func writeToolVersions(fs afero.Fs, newFile afero.File, entries []Entry) error {
+func writeToolVersions(newFile afero.File, entries []Entry) error {
 	for _, entry := range entries {
 		line := fmt.Sprintf("%s %s\n", entry.Key, strings.TrimSpace(entry.Value))
 		if _, err := newFile.WriteString(line); err != nil {

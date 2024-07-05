@@ -8,19 +8,21 @@ import (
 )
 
 func TestWriteToolVersions(t *testing.T) {
-	fs := afero.NewMemMapFs()
-	filePath := ".tool-versions"
-	afero.WriteFile(fs, filePath, []byte(""), 0777)
-
-	entries := []Entry{
-		{Key: "nodejs", Value: "20.12.0"},
-		{Key: "go", Value: "1.20"},
-	}
 	t.Run("test writeToolVersions", func(t *testing.T) {
+
+		fs := afero.NewMemMapFs()
+		filePath := ".tool-versions"
+		err := afero.WriteFile(fs, filePath, []byte(""), 0777)
+		assert.NoError(t, err)
+
+		entries := []Entry{
+			{Key: "nodejs", Value: "20.12.0"},
+			{Key: "go", Value: "1.20"},
+		}
 		newFile, err := fs.Create(filePath)
 		assert.NoError(t, err)
 
-		err = writeToolVersions(fs, newFile, entries)
+		err = writeToolVersions(newFile, entries)
 		assert.NoError(t, err)
 
 		content, err := afero.ReadFile(fs, filePath)
