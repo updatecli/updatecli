@@ -52,7 +52,7 @@ func TestTarget(t *testing.T) {
 		{
 			name: "Test file do not exist",
 			spec: Spec{
-				File: "testdata/.new",
+				File: ".new",
 				Key:  "golang",
 			},
 			expectedResult:   false,
