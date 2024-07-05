@@ -1,7 +1,7 @@
 package toolversions
 
 /*
- Toolversions package provides an abstraction of the .tool-versions file.
+ toolversions package provides an abstraction of the .tool-versions file.
 */
 
 import (

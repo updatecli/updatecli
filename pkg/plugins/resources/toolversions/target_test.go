@@ -52,13 +52,13 @@ func TestTarget(t *testing.T) {
 		{
 			name: "Test file do not exist",
 			spec: Spec{
-				File: "newfile",
+				File: "testdata/.new",
 				Key:  "golang",
 			},
 			expectedResult:   false,
 			sourceInput:      "M",
 			wantErr:          true,
-			expectedErrorMsg: errors.New("file \"newfile\" does not exist"),
+			expectedErrorMsg: errors.New("file \".new\" does not exist"),
 		},
 		{
 			name: "Failing on non-existing key by default",

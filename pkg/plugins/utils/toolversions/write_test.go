@@ -8,7 +8,6 @@ import (
 )
 
 func TestWriteToolVersions(t *testing.T) {
-	// Use Afero's in-memory file system for testing
 	fs := afero.NewMemMapFs()
 	filePath := ".tool-versions"
 	afero.WriteFile(fs, filePath, []byte(""), 0777)
