@@ -7,7 +7,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/toolversions"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 var (
@@ -19,8 +18,6 @@ var (
 type ToolVersions struct {
 	spec     Spec
 	contents []toolversions.FileContent
-	// Holds both parsed version and original version (to allow retrieving metadata such as changelog)
-	foundVersion version.Version
 }
 
 func New(spec interface{}) (*ToolVersions, error) {
