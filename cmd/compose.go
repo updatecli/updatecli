@@ -18,4 +18,6 @@ var (
 		Use:   "compose",
 		Short: "compose executes specific Updatecli compose tasks such as diff or apply",
 	}
+	// policyFolder represents the policy folder
+	policyFolder string
 )
