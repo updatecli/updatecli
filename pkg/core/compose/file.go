@@ -74,6 +74,13 @@ func LoadFile(filename string) (*Spec, error) {
 	sanitizePath(composeSpec.Env_files)
 
 	for i := range composeSpec.Policies {
+		if composeSpec.Policies[i].Name == "" {
+			composeSpec.Policies[i].Name = fmt.Sprintf("policy-%d - local", i)
+			if composeSpec.Policies[i].Policy != "" {
+				composeSpec.Policies[i].Name = fmt.Sprintf("policy-%d- %s", i, composeSpec.Policies[i].Policy)
+
+			}
+		}
 		sanitizePath(composeSpec.Policies[i].Config)
 		sanitizePath(composeSpec.Policies[i].Values)
 		sanitizePath(composeSpec.Policies[i].Secrets)
