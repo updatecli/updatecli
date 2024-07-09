@@ -77,7 +77,7 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		policyValues = append(policyValues, c.spec.Policies[i].Values...)
 		policySecrets = append(policySecrets, c.spec.Policies[i].Secrets...)
 
-		showDetectedfiles := func(files []string, fileType string) {
+		showDetectedFiles := func(files []string, fileType string) {
 			switch len(files) {
 			case 0:
 				logrus.Debugf("\t%s: nothing detected", fileType)
@@ -91,9 +91,9 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 			}
 		}
 
-		showDetectedfiles(policyManifest, "manifest")
-		showDetectedfiles(policyValues, "value")
-		showDetectedfiles(policySecrets, "secret")
+		showDetectedFiles(policyManifest, "manifest")
+		showDetectedFiles(policyValues, "value")
+		showDetectedFiles(policySecrets, "secret")
 
 		manifests = append(manifests, manifest.Manifest{
 			Manifests: policyManifest,
