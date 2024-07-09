@@ -125,4 +125,5 @@ argocd
 ArgoCD
 argoproj
 kubeseal
-
+toolversions
+afero

@@ -39,6 +39,7 @@ import (
 	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
 	terraformRegistry "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/registry"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/toolversions"
 	updateclihttp "github.com/updatecli/updatecli/pkg/plugins/resources/updateclihttp"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -208,6 +209,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return toml.New(rs.Spec)
 
+	case "toolversions":
+
+		return toolversions.New(rs.Spec)
+
 	case "xml":
 
 		return xml.New(rs.Spec)
@@ -267,6 +272,7 @@ func GetResourceMapping() map[string]interface{} {
 		"terraform/provider": &terraformProvider.Spec{},
 		"terraform/registry": &terraformRegistry.Spec{},
 		"toml":               &toml.Spec{},
+		"toolversions":       &toolversions.Spec{},
 		"xml":                &xml.Spec{},
 		"yaml":               &yaml.Spec{},
 	}
