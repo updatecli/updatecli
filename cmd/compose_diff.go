@@ -43,7 +43,7 @@ var (
 )
 
 func init() {
-	composeDiffCmd.Flags().StringVarP(&composeCmdFile, "file", "f", "update-compose.yaml", "Define the update-compose file")
+	composeDiffCmd.Flags().StringVarP(&composeCmdFile, "file", "f", compose.GetDefaultComposeFilename(), "Define the Updatecli compose file name")
 	composeDiffCmd.Flags().BoolVar(&composeCmdClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	composeDiffCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 

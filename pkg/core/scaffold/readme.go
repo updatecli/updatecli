@@ -85,7 +85,7 @@ a semantic versioning point of view.
 
 Feel free to look on the [Updatecli documentation](https://updatecli.io) to learn more about how to use Updatecli.
 
-Another good starting point is to understand how to use [update-compose.yaml](https://www.updatecli.io/docs/core/compose/) to orchestrate multiple Updatecli policies.
+Another good starting point is to understand how to use [updatecli-compose.yaml](https://www.updatecli.io/docs/core/compose/) to orchestrate multiple Updatecli policies.
 
 ## CONTRIBUTING
 

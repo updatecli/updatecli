@@ -7,11 +7,15 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/compose"
 )
 
 var (
-	// DefaultFiles specifies accepted Helm chart metadata filename
-	DefaultFiles []string = []string{"update-compose.yaml"}
+	// DefaultFiles specifies accepted Updatecli compose filename
+	DefaultFiles []string = []string{
+		compose.DeprecatedDefaultComposeFilename,
+		compose.DefaultComposeFilename,
+	}
 )
 
 // discoverUpdatecliPolicyManifests search recursively from a root directory for Updatecli compose file

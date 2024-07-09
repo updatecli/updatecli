@@ -47,7 +47,7 @@ var (
 )
 
 func init() {
-	composeApplyCmd.Flags().StringVarP(&composeCmdFile, "file", "f", "update-compose.yaml", "Define the update-compose file")
+	composeApplyCmd.Flags().StringVarP(&composeCmdFile, "file", "f", compose.GetDefaultComposeFilename(), "Define the update-compose file")
 
 	composeApplyCmd.Flags().BoolVarP(&composeApplyCommit, "commit", "", true, "Record changes to the repository, '--commit=false'")
 	composeApplyCmd.Flags().BoolVarP(&composeApplyPush, "push", "", true, "Update remote refs '--push=false'")
