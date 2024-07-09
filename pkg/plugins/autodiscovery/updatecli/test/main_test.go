@@ -65,7 +65,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: `deps(updatecli/policy): bump "ghcr.io/updatecli/policies/policies/nodejs/githubaction" Updatecli version policy`,
 								Kind: "yaml",
 								Spec: yaml.Spec{
-									File: "testdata/website/update-compose.yaml",
+									File: "testdata/website/updatecli-compose.yaml",
 									Key:  "$.policies[1].policy",
 								},
 								Transformers: []transformer.Transformer{
@@ -115,7 +115,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: `deps(updatecli/policy): bump "ghcr.io/updatecli/policies/policies/nodejs/netlify" Updatecli version policy`,
 								Kind: "yaml",
 								Spec: yaml.Spec{
-									File: "testdata/website/update-compose.yaml",
+									File: "testdata/website/updatecli-compose.yaml",
 									Key:  "$.policies[2].policy",
 								},
 								Transformers: []transformer.Transformer{
@@ -165,7 +165,7 @@ func TestDiscoverManifests(t *testing.T) {
 								Name: `deps(updatecli/policy): bump "ghcr.io/updatecli/policies/policies/hugo/netlify" Updatecli version policy`,
 								Kind: "yaml",
 								Spec: yaml.Spec{
-									File: "testdata/website/update-compose.yaml",
+									File: "testdata/website/updatecli-compose.yaml",
 									Key:  "$.policies[3].policy",
 								},
 								Transformers: []transformer.Transformer{
@@ -187,7 +187,7 @@ func TestDiscoverManifests(t *testing.T) {
 			updatecli, err := updatecli.New(
 				updatecli.Spec{
 					RootDir: tt.rootDir,
-					Files:   []string{"update-compose.yaml"},
+					Files:   []string{"updatecli-compose.yaml"},
 				}, "", "")
 			require.NoError(t, err)
 
