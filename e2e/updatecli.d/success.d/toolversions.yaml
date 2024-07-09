@@ -1,0 +1,47 @@
+name: Basic .tool-versions Example
+
+sources:
+  local:
+    name: Get value from .tool-versions
+    kind: toolversions
+    spec:
+      file: pkg/plugins/resources/toolversions/testdata/.tool-versions
+      key: bats
+
+conditions:
+  local:
+    name: Test value from .tool-versions with sourceid
+    kind: toolversions
+    sourceid: local
+    spec:
+      file: pkg/plugins/resources/toolversions/testdata/.tool-versions
+      key: bats
+  golang:
+    name: Test value from .tool-versions
+    kind: toolversions
+    disablesourceinput: true
+    spec:
+      file: pkg/plugins/resources/toolversions/testdata/.tool-versions
+      key: "golang"
+      value: "1.8.2"
+
+targets:
+  local-source:
+    name: Test sourceid new key from .tool-versions
+    kind: toolversions
+    sourceid: local
+    spec:
+      file: pkg/plugins/resources/toolversions/testdata/.tool-versions
+      key: tool
+      createMissingKey: true
+  local-value:
+    name: Test new tool with value from .tool-versions
+    kind: toolversions
+    spec:
+      file: pkg/plugins/resources/toolversions/testdata/.tool-versions
+      key: new-tool
+      value: "2.0.0"
+      createMissingKey: true
+
+
+
