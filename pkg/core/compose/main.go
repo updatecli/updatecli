@@ -18,9 +18,23 @@ type Compose struct {
 func New(filename string) (Compose, error) {
 	var c Compose
 
+	logrus.Infof("\nLoading Updatecli compose file: %q", filename)
+
 	spec, err := LoadFile(filename)
 	if err != nil {
 		return c, err
+	}
+
+	switch len(spec.Policies) {
+	case 0:
+		logrus.Warningf("No policy defined in the compose file %q", filename)
+	case 1:
+		logrus.Infof("One policy detected:\n\t* Policy: %s", spec.Policies[0].Name)
+	default:
+		logrus.Infof("%d policies detected:", len(spec.Policies))
+		for i := range spec.Policies {
+			logrus.Infof("\t* Policy %d: %q", i, spec.Policies[i].Name)
+		}
 	}
 
 	c.spec = *spec
@@ -46,7 +60,7 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 			continue
 		}
 
-		logrus.Debugf("Initializing policy %q", c.spec.Policies[i].Name)
+		logrus.Infof("\nInitializing policy: %q\n", c.spec.Policies[i].Name)
 
 		var policyManifest, policyValues, policySecrets []string
 		var err error
@@ -62,6 +76,24 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		policyManifest = append(policyManifest, c.spec.Policies[i].Config...)
 		policyValues = append(policyValues, c.spec.Policies[i].Values...)
 		policySecrets = append(policySecrets, c.spec.Policies[i].Secrets...)
+
+		showDetectedfiles := func(files []string, fileType string) {
+			switch len(files) {
+			case 0:
+				logrus.Debugf("\t%s: nothing detected", fileType)
+			case 1:
+				logrus.Infof("\t%s: %q", fileType, files[0])
+			default:
+				logrus.Infof("\t%ss:", fileType)
+				for i := range files {
+					logrus.Infof("\t\t* %q", files[i])
+				}
+			}
+		}
+
+		showDetectedfiles(policyManifest, "manifest")
+		showDetectedfiles(policyValues, "value")
+		showDetectedfiles(policySecrets, "secret")
 
 		manifests = append(manifests, manifest.Manifest{
 			Manifests: policyManifest,
