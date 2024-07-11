@@ -1,5 +1,5 @@
 policies:
-  - name: Local Updatecli Website Policies
+  - name: Local Updatecli Policies
     config:
       - updatecli/updatecli.d/
     values:
