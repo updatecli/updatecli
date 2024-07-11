@@ -1,5 +1,0 @@
-spec:
-  files:
-    - "update-compose.yaml"
-  only:
-    - "update-compose.yaml"
