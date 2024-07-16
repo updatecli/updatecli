@@ -2,15 +2,19 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 
 	"github.com/Masterminds/semver/v3"
-	credentials "github.com/oras-project/oras-credentials-go"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
+	oras "oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/content"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
+	"oras.land/oras-go/v2/registry/remote/credentials"
 	"oras.land/oras-go/v2/registry/remote/retry"
 )
 
@@ -78,4 +82,58 @@ func getCredentialsFromDockerStore(repo *remote.Repository) error {
 	}
 
 	return nil
+}
+
+// FetchManifest fetches the OCI manifest from the remote repository
+func FetchManifest(ociName string, disableTLS bool) (v1.Descriptor, v1.Descriptor, error) {
+
+	ref, err := registry.ParseReference(ociName)
+	if err != nil {
+		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("parse reference: %w", err)
+	}
+
+	if ref.Reference == ociLatestTag || ref.Reference == "" {
+		ref.Reference, err = getLatestTagSortedBySemver(ref.Registry+"/"+ref.Repository, disableTLS)
+		if err != nil {
+			return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("get latest tag sorted by semver: %w", err)
+		}
+	}
+
+	// 1. Connect to a remote repository
+	ctx := context.Background()
+
+	repo, err := remote.NewRepository(ociName)
+	if err != nil {
+		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("new repository: %w", err)
+	}
+
+	if disableTLS {
+		logrus.Debugln("TLS connection is disabled")
+		repo.PlainHTTP = true
+	}
+
+	// 2. Get credentials from the docker credential store
+	if err := getCredentialsFromDockerStore(repo); err != nil {
+		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("credstore from docker: %w", err)
+	}
+
+	remoteManifestSpec, remoteManifestReader, err := oras.Fetch(ctx, repo, ref.String(), oras.DefaultFetchOptions)
+	if err != nil {
+		logrus.Debugf("unable to get image %s: %v", ociName, err)
+		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("fetch: %w", err)
+	}
+
+	remoteManifestData, err := content.ReadAll(remoteManifestReader, remoteManifestSpec)
+	if err != nil {
+		logrus.Debugf("unable to get image %s: %v", ociName, err)
+		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("fetch: %w", err)
+	}
+
+	manifestData := v1.Descriptor{}
+	err = json.Unmarshal(remoteManifestData, &manifestData)
+	if err != nil {
+		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("unmarshal: %w", err)
+	}
+
+	return remoteManifestSpec, manifestData, nil
 }
