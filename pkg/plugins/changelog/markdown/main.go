@@ -62,7 +62,7 @@ func ParseMarkdown(data []byte) (Sections, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("walking the markown: %s", err)
+		return nil, fmt.Errorf("walking the markdown: %s", err)
 	}
 
 	for i := range sections {
