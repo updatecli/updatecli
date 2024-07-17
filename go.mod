@@ -32,6 +32,7 @@ require (
 require (
 	cuelang.org/go v0.9.1
 	github.com/BurntSushi/toml v1.4.0
+	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/beevik/etree v1.4.0
 	github.com/drone/go-scm v1.38.0
@@ -76,7 +77,9 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.0.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
+	github.com/PuerkitoBio/goquery v1.9.2 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.24.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.26.6 // indirect

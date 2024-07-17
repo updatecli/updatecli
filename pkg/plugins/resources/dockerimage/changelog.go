@@ -31,14 +31,40 @@ func (di *DockerImage) Changelog() string {
 	if changelog, ok := manifestData.Annotations["org.opencontainers.image.changelog"]; ok {
 
 		url, err := url.Parse(changelog)
-
 		if err == nil && url.Scheme == "" {
+			return ""
+		}
+
+		if err != nil {
+			logrus.Debugf("unable to parse changelog URL: %v", err)
 			return ""
 		}
 
 		if !strings.HasSuffix(url.Path, ".md") {
 			logrus.Debugln("As of today changelog must be a markdown available on HTTP/HTTPS")
 			return ""
+		}
+
+		// Trying to be smart and redirect github url to raw content
+		// so we can try to parse it
+		// for example "https://github.com/updatecli/policies/tree/main/updatecli/policies/updatecli/autodiscovery/CHANGELOG.md"
+		// show be replaced by "
+		// https://github.com/updatecli/policies/blob/main/updatecli/policies/updatecli/autodiscovery/CHANGELOG.md?raw=true
+		if url.Host == "github.com" {
+			beforePath := url.Path
+			if strings.Split(url.Path, "/")[3] == "tree" {
+				s := strings.Split(url.Path, "/")
+				s[3] = "blob"
+				url.Path = strings.Join(s, "/")
+			}
+
+			if url.Query().Get("raw") == "" {
+				url.Query().Add("raw", "true")
+			}
+
+			if beforePath != url.Path {
+				logrus.Debugf("Redirecting %s to %s", beforePath, url.Path)
+			}
 		}
 
 		resp, err := http.Get(url.String())
@@ -65,9 +91,7 @@ func (di *DockerImage) Changelog() string {
 			return ""
 		}
 
-		return sections.GetSection(di.foundVersion.GetVersion())
-	} else {
-		logrus.Debugf("No changelog specified on Updatecli policy: %s", di.spec.Image)
+		return sections.GetSectionAsMarkdown(di.foundVersion.GetVersion())
 	}
 
 	return ""
