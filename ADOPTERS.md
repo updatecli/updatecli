@@ -19,3 +19,4 @@ We are adding public references of Updatecli but feel free to add your organizat
 * [Foresight Mining Software Corporation ](https://www.foresightmining.com/)
 * [Radio Bern RaBe](https://rabe.ch/)
 * [HM Courts & Tribunals Service ](https://www.gov.uk/government/organisations/hm-courts-and-tribunals-service)
+* [Bloomberg](https://www.bloomberg.com)
