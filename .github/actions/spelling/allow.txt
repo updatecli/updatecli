@@ -127,3 +127,4 @@ argoproj
 kubeseal
 toolversions
 afero
+Bloomberg
