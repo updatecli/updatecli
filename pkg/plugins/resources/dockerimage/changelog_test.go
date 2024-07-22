@@ -22,6 +22,12 @@ func TestChangelog(t *testing.T) {
 			expectedChangelog: "",
 		},
 		{
+			name:              "Get changelog from an Updatecli policy stored on Dockerhub with changelog labels",
+			image:             "olblak/updatecli-docusaurus",
+			version:           "0.1.0",
+			expectedChangelog: "Init release",
+		},
+		{
 			name:              "Get changelog from an Updatecli policy without labels defined",
 			image:             "ghcr.io/updatecli/policies/updatecli/autodiscovery",
 			version:           "0.2.0",
