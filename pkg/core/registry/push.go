@@ -17,8 +17,6 @@ import (
 	"oras.land/oras-go/v2/errdef"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
-	"oras.land/oras-go/v2/registry/remote/credentials"
-	"oras.land/oras-go/v2/registry/remote/retry"
 )
 
 // Push pushes updatecli manifest(s) as an OCI image to an OCI registry.
@@ -122,22 +120,15 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		if err != nil {
 			return fmt.Errorf("connect to remote repository: %w", err)
 		}
+		ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPush, auth.ActionPull)
 
 		if disableTLS {
 			repo.PlainHTTP = true
 		}
 
-		storeOpts := credentials.StoreOptions{}
-		credStore, err := credentials.NewStoreFromDocker(storeOpts)
-		if err != nil {
+		// 2. Get credentials from the docker credential store
+		if err := getCredentialsFromDockerStore(repo); err != nil {
 			return fmt.Errorf("credstore from docker: %w", err)
-		}
-
-		// Note: The below code can be omitted if authentication is not required
-		repo.Client = &auth.Client{
-			Client:     retry.DefaultClient,
-			Cache:      auth.DefaultCache,
-			Credential: credentials.Credential(credStore),
 		}
 
 		_, _, err = repo.FetchReference(ctx, tag)

@@ -35,6 +35,7 @@ func getLatestTagSortedBySemver(refName string, disableTLS bool) (string, error)
 	}
 
 	ctx := context.Background()
+	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull, auth.ActionPush)
 
 	tags, err := registry.Tags(ctx, repo)
 
@@ -69,7 +70,9 @@ func getLatestTagSortedBySemver(refName string, disableTLS bool) (string, error)
 // getCredentialsFromDockerStore get the credentials from the docker credential store
 func getCredentialsFromDockerStore(repo *remote.Repository) error {
 
-	storeOpts := credentials.StoreOptions{}
+	storeOpts := credentials.StoreOptions{
+		DetectDefaultNativeStore: true,
+	}
 	credStore, err := credentials.NewStoreFromDocker(storeOpts)
 	if err != nil {
 		return fmt.Errorf("credstore from docker: %w", err)
@@ -77,7 +80,7 @@ func getCredentialsFromDockerStore(repo *remote.Repository) error {
 
 	repo.Client = &auth.Client{
 		Client:     retry.DefaultClient,
-		Cache:      auth.DefaultCache,
+		Cache:      auth.NewSingleContextCache(),
 		Credential: credentials.Credential(credStore),
 	}
 
@@ -85,17 +88,17 @@ func getCredentialsFromDockerStore(repo *remote.Repository) error {
 }
 
 // FetchManifest fetches the OCI manifest from the remote repository
-func FetchManifest(ociName string, disableTLS bool) (v1.Descriptor, v1.Descriptor, error) {
+func FetchManifest(ociName string, disableTLS bool) (v1.Descriptor, error) {
 
 	ref, err := registry.ParseReference(ociName)
 	if err != nil {
-		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("parse reference: %w", err)
+		return v1.Descriptor{}, fmt.Errorf("parse reference: %w", err)
 	}
 
 	if ref.Reference == ociLatestTag || ref.Reference == "" {
 		ref.Reference, err = getLatestTagSortedBySemver(ref.Registry+"/"+ref.Repository, disableTLS)
 		if err != nil {
-			return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("get latest tag sorted by semver: %w", err)
+			return v1.Descriptor{}, fmt.Errorf("get latest tag sorted by semver: %w", err)
 		}
 	}
 
@@ -104,8 +107,10 @@ func FetchManifest(ociName string, disableTLS bool) (v1.Descriptor, v1.Descripto
 
 	repo, err := remote.NewRepository(ociName)
 	if err != nil {
-		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("new repository: %w", err)
+		return v1.Descriptor{}, fmt.Errorf("new repository: %w", err)
 	}
+
+	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull, auth.ActionPush)
 
 	if disableTLS {
 		logrus.Debugln("TLS connection is disabled")
@@ -114,26 +119,26 @@ func FetchManifest(ociName string, disableTLS bool) (v1.Descriptor, v1.Descripto
 
 	// 2. Get credentials from the docker credential store
 	if err := getCredentialsFromDockerStore(repo); err != nil {
-		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("credstore from docker: %w", err)
+		return v1.Descriptor{}, fmt.Errorf("credstore from docker: %w", err)
 	}
 
 	remoteManifestSpec, remoteManifestReader, err := oras.Fetch(ctx, repo, ref.String(), oras.DefaultFetchOptions)
 	if err != nil {
-		logrus.Debugf("unable to get image %s: %v", ociName, err)
-		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("fetch: %w", err)
+		return v1.Descriptor{}, fmt.Errorf("fetch remote manifest: %w", err)
 	}
+
+	defer remoteManifestReader.Close()
 
 	remoteManifestData, err := content.ReadAll(remoteManifestReader, remoteManifestSpec)
 	if err != nil {
-		logrus.Debugf("unable to get image %s: %v", ociName, err)
-		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("fetch: %w", err)
+		return v1.Descriptor{}, fmt.Errorf("fetch remote content: %w", err)
 	}
 
 	manifestData := v1.Descriptor{}
 	err = json.Unmarshal(remoteManifestData, &manifestData)
 	if err != nil {
-		return v1.Descriptor{}, v1.Descriptor{}, fmt.Errorf("unmarshal: %w", err)
+		return v1.Descriptor{}, fmt.Errorf("unmarshal: %w", err)
 	}
 
-	return remoteManifestSpec, manifestData, nil
+	return manifestData, nil
 }

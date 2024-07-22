@@ -14,6 +14,7 @@ import (
 	oras "oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
 
 	"github.com/stretchr/testify/require"
 )
@@ -167,6 +168,8 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFil
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("new repository: %w", err)
 	}
+
+	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull, auth.ActionPush)
 
 	if disableTLS {
 		repo.PlainHTTP = true
