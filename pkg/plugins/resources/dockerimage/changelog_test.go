@@ -14,18 +14,23 @@ func TestChangelog(t *testing.T) {
 		image             string
 		version           string
 		expectedChangelog string
+		skipInShort       bool
 	}{
 		{
 			name:              "Get changelog from a docker image without changelog labels",
 			image:             "updatecli/updatecli",
 			version:           "v0.80.0",
 			expectedChangelog: "",
+			// We can't test this testcase from pullrequest as we don't have access to Dockerhub credentials
+			skipInShort: true,
 		},
 		{
 			name:              "Get changelog from an Updatecli policy stored on Dockerhub with changelog labels",
 			image:             "olblak/updatecli-docusaurus",
 			version:           "0.1.0",
 			expectedChangelog: "Init release",
+			// We can't test this testcase from pullrequest as we don't have access to Dockerhub credentials
+			skipInShort: true,
 		},
 		{
 			name:              "Get changelog from an Updatecli policy without labels defined",
@@ -49,6 +54,11 @@ func TestChangelog(t *testing.T) {
 
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
+
+			if tt.skipInShort {
+				t.Skip("skipping test in short mode.")
+			}
+
 			di, err := New(Spec{
 				Image: tt.image,
 			})
