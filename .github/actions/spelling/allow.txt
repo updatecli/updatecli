@@ -132,3 +132,4 @@ goldmark
 GFM
 eod
 Rhai
+Bloomberg
