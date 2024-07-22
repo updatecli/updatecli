@@ -21,7 +21,7 @@ func TestChangelog(t *testing.T) {
 			image:             "updatecli/updatecli",
 			version:           "v0.80.0",
 			expectedChangelog: "",
-			// We can't test this testcase from pullrequest as we don't have access to Dockerhub credentials
+			// We can't test this scenario from pullrequest as we don't have access to Dockerhub credentials
 			skipInShort: true,
 		},
 		{
@@ -29,7 +29,7 @@ func TestChangelog(t *testing.T) {
 			image:             "olblak/updatecli-docusaurus",
 			version:           "0.1.0",
 			expectedChangelog: "Init release",
-			// We can't test this testcase from pullrequest as we don't have access to Dockerhub credentials
+			// We can't test this scenario from pullrequest as we don't have access to Dockerhub credentials
 			skipInShort: true,
 		},
 		{
