@@ -34,6 +34,7 @@ type GitHandler interface {
 	IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
 	NewBranch(branch, workingDir string) (bool, error)
+	Pull(username, password, gitRepositoryPath, branch string, singleBranch, forceReset bool) error
 	Push(username string, password string, workingDir string, force bool) (bool, error)
 	PushTag(tag string, username string, password string, workingDir string, force bool) error
 	PushBranch(branch string, username string, password string, workingDir string, force bool) error
@@ -622,7 +623,7 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 	}
 	b.Reset()
 
-	if err == nil {
+	if err == nil || err == git.NoErrAlreadyUpToDate {
 		return false, nil
 	}
 
@@ -900,4 +901,67 @@ func (g GoGit) RemoteURLs(workingDir string) (map[string]string, error) {
 // isAuthEmpty return true if no username/password are defined
 func isAuthEmpty(auth *transportHttp.BasicAuth) bool {
 	return auth.Username == "" && auth.Password == ""
+}
+
+// Pull run `git pull` on the local HEAD.
+func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, singleBranch, forceReset bool) error {
+
+	repository, err := git.PlainOpen(gitRepositoryPath)
+	if err != nil {
+		return err
+	}
+
+	ref, err := repository.Head()
+	if err != nil {
+		return fmt.Errorf("get branch head: %s", err)
+	}
+
+	logrus.Debugf("Pulling git branch %q", ref.Name())
+
+	worktree, err := repository.Worktree()
+	if err != nil {
+		logrus.Debugln(err)
+		return err
+	}
+
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything except an empty string
+		Password: password,
+	}
+
+	b := bytes.Buffer{}
+
+	pullOptions := git.PullOptions{
+		Force:        forceReset,
+		Progress:     &b,
+		SingleBranch: singleBranch,
+	}
+
+	if branch != "" {
+		pullOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
+	}
+
+	if !isAuthEmpty(&auth) {
+		pullOptions.Auth = &auth
+	}
+
+	err = worktree.Pull(&pullOptions)
+	if b.String() != "" {
+		logrus.Debugln(b.String())
+	}
+
+	if err != nil &&
+		err != git.ErrNonFastForwardUpdate &&
+		err != git.NoErrAlreadyUpToDate {
+		return fmt.Errorf("pulling remote branch %s", err)
+	}
+
+	ref, err = repository.Head()
+	if err != nil {
+		return fmt.Errorf("get branch head: %s", err)
+	}
+
+	logrus.Debugf("branch %q is now at %s", ref.Name(), ref.Hash())
+
+	return nil
 }
