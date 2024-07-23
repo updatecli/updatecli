@@ -17,6 +17,7 @@ import (
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
 // Pull pulls an OCI image from a registry.
@@ -41,6 +42,8 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("new repository: %w", err)
 	}
+
+	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull)
 
 	if disableTLS {
 		logrus.Debugln("TLS connection is disabled")

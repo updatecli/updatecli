@@ -127,4 +127,9 @@ argoproj
 kubeseal
 toolversions
 afero
+yuin
+goldmark
+GFM
+eod
+Rhai
 Bloomberg
