@@ -79,7 +79,22 @@ func (g *Github) Commit(message string) error {
 	}
 
 	if g.commitUsingApi {
+
+		_, workingBranch, _ := g.GetBranches()
+
 		err = g.CreateCommit(workingDir, commitMessage)
+		if err != nil {
+			return err
+		}
+
+		err = g.nativeGitHandler.Pull(
+			g.Spec.User,
+			g.Spec.Token,
+			workingDir,
+			workingBranch,
+			true,
+			true,
+		)
 		if err != nil {
 			return err
 		}
@@ -139,6 +154,9 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 		}
 
 		headOid = sourceBranchRepoRef.HeadOid
+
+		logrus.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
+
 		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
 			return err
 		}
@@ -232,9 +250,7 @@ func (g *Github) Push() (bool, error) {
 	// If the commit is done using the GitHub API, we don't need to push
 	// the commit as it is done in the same operation.
 	if g.commitUsingApi {
-		// the boolean indicate if the commit had to be force pushed
-		// which in the case of using the GitHub API is not handled here.
-		return false, nil
+		logrus.Debugf("commit done using GitHub API, normally nothing need to be push but we may have left over.")
 	}
 
 	return g.nativeGitHandler.Push(
