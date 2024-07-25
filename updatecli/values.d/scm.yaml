@@ -1,4 +1,5 @@
 scm:
+  commitusingapi: true
   enabled: true
   user: updatecli
   email: bot@updatecli.io
