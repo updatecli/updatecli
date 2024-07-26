@@ -29,10 +29,10 @@ func TestSource(t *testing.T) {
 				Name:      "kubernetes",
 			},
 			expectedResult: "2.23.0",
-			mockedHttpBody: `{ "versions" : ["2.23.0"] }`,
+			mockedHttpBody: `{ "versions" : [{ "version": "2.23.0" }] }`,
 		},
 		{
-			name: "Success - provider",
+			name: "Success - modules",
 			spec: Spec{
 				Type:         "module",
 				Namespace:    "terraform-aws-modules",
@@ -40,7 +40,7 @@ func TestSource(t *testing.T) {
 				TargetSystem: "aws",
 			},
 			expectedResult: "5.1.1",
-			mockedHttpBody: `{ "versions" : ["5.1.1"] }`,
+			mockedHttpBody: `{ "modules": [{ "versions" : [{ "version": "5.1.1" }] }] }`,
 		},
 	}
 	for _, tt := range tests {
