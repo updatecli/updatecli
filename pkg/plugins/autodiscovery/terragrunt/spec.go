@@ -9,9 +9,9 @@ type Spec struct {
 	// `rootdir` defines the root directory from where looking for terragrunt configuration
 	RootDir string `yaml:",omitempty"`
 	// `ignore` specifies rule to ignore `.terraform.lock.hcl` update.
-	//Ignore MatchingRules `yaml:",omitempty"`
+	Ignore MatchingRules `yaml:",omitempty"`
 	// `only` specify required rule to restrict `.terraform.lock.hcl` update.
-	//Only MatchingRules `yaml:",omitempty"`
+	Only MatchingRules `yaml:",omitempty"`
 	/*
 		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
 

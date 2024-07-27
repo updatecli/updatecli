@@ -47,7 +47,7 @@ func searchTerragruntFiles(rootDir string) ([]string, error) {
 	return foundFiles, nil
 }
 
-func getTerragruntModule(filename string) (module *terragruntModule, err error) {
+func getTerragruntModule(filename string, allowNoVersion bool) (module *terragruntModule, err error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func getTerragruntModule(filename string) (module *terragruntModule, err error) 
 			if err != nil {
 				return nil, err
 			}
-			module, err = getModuleFromUrl(source)
+			module, err = getModuleFromUrl(source, quotedSource, allowNoVersion)
 			if hclContext != nil {
 				module.hclContext = hclContext
 			}
@@ -131,22 +131,23 @@ func getSourceType(raw string) string {
 	return ""
 }
 
-func parseSourceUrl(raw string) (terragruntModuleSource, error) {
+func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion bool) (terragruntModuleSource, error) {
 	source := terragruntModuleSource{
-		rawSource: raw,
+		rawSource:       rawSource,
+		evaluatedSource: evaluatedSource,
 	}
-	sourceType := getSourceType(raw)
+	sourceType := getSourceType(evaluatedSource)
 	if sourceType == "" {
-		return source, fmt.Errorf("Could not get source type from source url %v", raw)
+		return source, fmt.Errorf("Could not get source type from source url %v", evaluatedSource)
 	}
 	source.sourceType = sourceType
 	if sourceType == SourceTypeRegistry || sourceType == SourceTypeGit || sourceType == SourceTypeGithub {
-		if sourceType == SourceTypeGit && strings.HasPrefix(raw, "git") {
-			raw = strings.Replace(raw, "git@", "git::ssh://", 1)
+		if sourceType == SourceTypeGit && strings.HasPrefix(evaluatedSource, "git") {
+			evaluatedSource = strings.Replace(evaluatedSource, "git@", "git::ssh://", 1)
 		}
-		u, err := url.Parse(raw)
+		u, err := url.Parse(evaluatedSource)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", raw, err)
+			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", evaluatedSource, err)
 			return source, err
 		}
 		params, err := url.ParseQuery(u.RawQuery)
@@ -172,8 +173,8 @@ func parseSourceUrl(raw string) (terragruntModuleSource, error) {
 			source.baseUrl = u.Path
 		}
 		version := strings.TrimPrefix(params.Get(param), "v")
-		if version == "" {
-			return source, fmt.Errorf("Could not get version from source url %v", raw)
+		if version == "" && !allowNoVersion {
+			return source, fmt.Errorf("Could not get version from source url %v", evaluatedSource)
 		}
 		source.version = version
 		return source, nil
@@ -182,8 +183,8 @@ func parseSourceUrl(raw string) (terragruntModuleSource, error) {
 	return source, nil
 }
 
-func getModuleFromUrl(raw string) (module *terragruntModule, err error) {
-	source, err := parseSourceUrl(raw)
+func getModuleFromUrl(evaluatedSource string, rawSource string, allowNoVersion bool) (module *terragruntModule, err error) {
+	source, err := parseSourceUrl(evaluatedSource, rawSource, allowNoVersion)
 	if err != nil {
 		return nil, err
 	}

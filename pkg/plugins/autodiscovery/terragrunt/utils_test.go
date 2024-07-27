@@ -23,6 +23,7 @@ func TestSearchTerragruntFiles(t *testing.T) {
 			expectedFoundFiles: []string{
 				"test/testdata/complex_localized.hcl",
 				"test/testdata/inlined.hcl",
+				"test/testdata/more_complex_localized.hcl",
 				"test/testdata/non_tfr.hcl",
 				"test/testdata/simple_localized.hcl",
 				"test/testdata/terragrunt.hcl",
@@ -59,10 +60,11 @@ func TestGetTerragruntModules(t *testing.T) {
 					},
 				},
 				source: terragruntModuleSource{
-					baseUrl:    "terraform-aws-modules/rdss/aws",
-					rawSource:  "tfr://terraform-aws-modules/rdss/aws?version=5.8.1",
-					version:    "5.8.1",
-					sourceType: SourceTypeRegistry,
+					baseUrl:         "terraform-aws-modules/rdss/aws",
+					rawSource:       "\"tfr://terraform-aws-modules/rdss/aws?version=5.8.1\"",
+					evaluatedSource: "tfr://terraform-aws-modules/rdss/aws?version=5.8.1",
+					version:         "5.8.1",
+					sourceType:      SourceTypeRegistry,
 				},
 			},
 		},
@@ -79,10 +81,11 @@ func TestGetTerragruntModules(t *testing.T) {
 					},
 				},
 				source: terragruntModuleSource{
-					baseUrl:    "terraform-aws-modules/aurora/aws",
-					rawSource:  "tfr://terraform-aws-modules/aurora/aws?version=5.8.1",
-					version:    "5.8.1",
-					sourceType: SourceTypeRegistry,
+					baseUrl:         "terraform-aws-modules/aurora/aws",
+					rawSource:       "local.base_source_url",
+					evaluatedSource: "tfr://terraform-aws-modules/aurora/aws?version=5.8.1",
+					version:         "5.8.1",
+					sourceType:      SourceTypeRegistry,
 				},
 				hclContext: &map[string]string{
 					"base_source_url": "tfr://terraform-aws-modules/aurora/aws?version=5.8.1",
@@ -102,14 +105,39 @@ func TestGetTerragruntModules(t *testing.T) {
 					},
 				},
 				source: terragruntModuleSource{
-					baseUrl:    "terraform-aws-modules/vpc/aws",
-					rawSource:  "tfr://terraform-aws-modules/vpc/aws?version=5.8.1",
-					version:    "5.8.1",
-					sourceType: SourceTypeRegistry,
+					baseUrl:         "terraform-aws-modules/vpc/aws",
+					rawSource:       "\"tfr://${local.module}?version=${local.module_version}\"",
+					evaluatedSource: "tfr://terraform-aws-modules/vpc/aws?version=5.8.1",
+					version:         "5.8.1",
+					sourceType:      SourceTypeRegistry,
 				},
 				hclContext: &map[string]string{
 					"module":         "terraform-aws-modules/vpc/aws",
 					"module_version": "5.8.1",
+				},
+			},
+		},
+		{
+			name: "Super Complex localized scenario",
+			file: "test/testdata/more_complex_localized.hcl",
+			expectedModule: &terragruntModule{
+				registryModule: &terraformRegistryAddress.Module{
+					Package: terraformRegistryAddress.ModulePackage{
+						Host:         "registry.terraform.io",
+						Namespace:    "terraform-aws-modules",
+						Name:         "auroravpc",
+						TargetSystem: "aws",
+					},
+				},
+				source: terragruntModuleSource{
+					baseUrl:         "terraform-aws-modules/auroravpc/aws",
+					rawSource:       "\"tfr://${local.module}?version=1.2.3\"",
+					evaluatedSource: "tfr://terraform-aws-modules/auroravpc/aws?version=1.2.3",
+					version:         "1.2.3",
+					sourceType:      SourceTypeRegistry,
+				},
+				hclContext: &map[string]string{
+					"module": "terraform-aws-modules/auroravpc/aws",
 				},
 			},
 		},
@@ -119,11 +147,12 @@ func TestGetTerragruntModules(t *testing.T) {
 			expectedModule: &terragruntModule{
 				registryModule: nil,
 				source: terragruntModuleSource{
-					protocol:   "git::ssh",
-					baseUrl:    "github.com:hashicorp/exampleLongNameForSorting.git",
-					rawSource:  "git@github.com:hashicorp/exampleLongNameForSorting.git?ref=v2.5.1",
-					version:    "2.5.1",
-					sourceType: SourceTypeGit,
+					protocol:        "git::https",
+					baseUrl:         "github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git",
+					rawSource:       "\"git::https://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref=v0.3.0\"",
+					evaluatedSource: "git::https://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref=v0.3.0",
+					version:         "0.3.0",
+					sourceType:      SourceTypeGit,
 				},
 			},
 		},
@@ -131,7 +160,7 @@ func TestGetTerragruntModules(t *testing.T) {
 
 	for _, d := range dataset {
 		t.Run(d.name, func(t *testing.T) {
-			module, err := getTerragruntModule(d.file)
+			module, err := getTerragruntModule(d.file, false)
 			require.NoError(t, err)
 			assert.Equal(t, module, d.expectedModule)
 		})
@@ -148,85 +177,94 @@ func TestToSourceUrl(t *testing.T) {
 			name:   "standard registry",
 			source: "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
 			expectedModule: terragruntModuleSource{
-				baseUrl:    "terraform-aws-modules/vpc/aws",
-				rawSource:  "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
-				version:    "3.3.0",
-				sourceType: SourceTypeRegistry,
+				baseUrl:         "terraform-aws-modules/vpc/aws",
+				rawSource:       "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
+				evaluatedSource: "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
+				version:         "3.3.0",
+				sourceType:      SourceTypeRegistry,
 			}}, {
 			name:   "non standard registry",
 			source: "tfr://registry.opentofu.org/terraform-aws-modules/vpc/aws?version=3.3.0",
 			expectedModule: terragruntModuleSource{
-				baseUrl:    "registry.opentofu.org/terraform-aws-modules/vpc/aws",
-				rawSource:  "tfr://registry.opentofu.org/terraform-aws-modules/vpc/aws?version=3.3.0",
-				version:    "3.3.0",
-				sourceType: SourceTypeRegistry,
+				baseUrl:         "registry.opentofu.org/terraform-aws-modules/vpc/aws",
+				rawSource:       "tfr://registry.opentofu.org/terraform-aws-modules/vpc/aws?version=3.3.0",
+				evaluatedSource: "tfr://registry.opentofu.org/terraform-aws-modules/vpc/aws?version=3.3.0",
+				version:         "3.3.0",
+				sourceType:      SourceTypeRegistry,
 			},
 		},
 		{
 			name:   "git http repo",
 			source: "git::https://github.com/terraform-aws-modules/terraform-aws-lambda.git?ref=v6.0.0",
 			expectedModule: terragruntModuleSource{
-				protocol:   "git::https",
-				baseUrl:    "github.com/terraform-aws-modules/terraform-aws-lambda.git",
-				rawSource:  "git::https://github.com/terraform-aws-modules/terraform-aws-lambda.git?ref=v6.0.0",
-				version:    "6.0.0",
-				sourceType: SourceTypeGit,
+				protocol:        "git::https",
+				baseUrl:         "github.com/terraform-aws-modules/terraform-aws-lambda.git",
+				rawSource:       "git::https://github.com/terraform-aws-modules/terraform-aws-lambda.git?ref=v6.0.0",
+				evaluatedSource: "git::https://github.com/terraform-aws-modules/terraform-aws-lambda.git?ref=v6.0.0",
+				version:         "6.0.0",
+				sourceType:      SourceTypeGit,
 			},
 		},
 		{
 			name:   "github repo",
 			source: "github.com/gruntwork-io/terraform-google-network.git//modules/vpc-network?ref=v0.2.9",
 			expectedModule: terragruntModuleSource{
-				baseUrl:    "github.com/gruntwork-io/terraform-google-network.git//modules/vpc-network",
-				rawSource:  "github.com/gruntwork-io/terraform-google-network.git//modules/vpc-network?ref=v0.2.9",
-				version:    "0.2.9",
-				sourceType: SourceTypeGithub,
+				baseUrl:         "github.com/gruntwork-io/terraform-google-network.git//modules/vpc-network",
+				rawSource:       "github.com/gruntwork-io/terraform-google-network.git//modules/vpc-network?ref=v0.2.9",
+				evaluatedSource: "github.com/gruntwork-io/terraform-google-network.git//modules/vpc-network?ref=v0.2.9",
+				version:         "0.2.9",
+				sourceType:      SourceTypeGithub,
 			},
 		},
 		{
 			name:   "local path",
 			source: "./random_module",
 			expectedModule: terragruntModuleSource{
-				sourceType: SourceTypeLocal,
-				rawSource:  "./random_module",
+				sourceType:      SourceTypeLocal,
+				rawSource:       "./random_module",
+				evaluatedSource: "./random_module",
 			},
 		},
 		{
 			name:   "http module",
 			source: "https://example.com/vpc-module?archive=zip",
 			expectedModule: terragruntModuleSource{
-				sourceType: SourceTypeHttp,
-				rawSource:  "https://example.com/vpc-module?archive=zip",
+				sourceType:      SourceTypeHttp,
+				rawSource:       "https://example.com/vpc-module?archive=zip",
+				evaluatedSource: "https://example.com/vpc-module?archive=zip",
 			},
 		},
 		{
 			name:   "mercurial module",
 			source: "hg::http://example.com/vpc.hg",
 			expectedModule: terragruntModuleSource{
-				sourceType: SourceTypeMercurial,
-				rawSource:  "hg::http://example.com/vpc.hg",
+				sourceType:      SourceTypeMercurial,
+				rawSource:       "hg::http://example.com/vpc.hg",
+				evaluatedSource: "hg::http://example.com/vpc.hg",
 			},
 		},
 		{
 			name:   "s3 module",
 			source: "s3::https://s3-eu-west-1.amazonaws.com/examplecorp-terraform-modules/vpc.zip",
 			expectedModule: terragruntModuleSource{
-				sourceType: SourceTypeS3,
-				rawSource:  "s3::https://s3-eu-west-1.amazonaws.com/examplecorp-terraform-modules/vpc.zip",
+				sourceType:      SourceTypeS3,
+				rawSource:       "s3::https://s3-eu-west-1.amazonaws.com/examplecorp-terraform-modules/vpc.zip",
+				evaluatedSource: "s3::https://s3-eu-west-1.amazonaws.com/examplecorp-terraform-modules/vpc.zip",
 			},
 		},
 		{
 			name:   "gcs module",
 			source: "gcs::https://www.googleapis.com/storage/v1/modules/foomodule.zip",
 			expectedModule: terragruntModuleSource{
-				sourceType: SourceTypeGCS,
-				rawSource:  "gcs::https://www.googleapis.com/storage/v1/modules/foomodule.zip",
+				sourceType:      SourceTypeGCS,
+				rawSource:       "gcs::https://www.googleapis.com/storage/v1/modules/foomodule.zip",
+				evaluatedSource: "gcs::https://www.googleapis.com/storage/v1/modules/foomodule.zip",
 			},
 		},
 	}
 	for _, d := range dataset {
 		t.Run(d.name, func(t *testing.T) {
-			module, err := parseSourceUrl(d.source)
+			module, err := parseSourceUrl(d.source, d.source, false)
 			require.NoError(t, err)
 			assert.Equal(t, module, d.expectedModule)
 		})

@@ -1,7 +1,7 @@
 package terragrunt
 
 // terraformProviderManifestTemplate is the Go template used to generate Terraform manifest update
-var terragruntModuleManifestTemplate string = `name: 'Bump Terraform module {{ .Module }} version'
+var terragruntModuleManifestTemplate = `name: 'Bump Terraform module {{ .Module }} version'
 {{- if .ModuleSourceScm }}
 scms:
   {{ .ModuleSourceScm }}:
@@ -13,8 +13,17 @@ sources:
   latestVersion:
     name: 'Get latest version of the {{ .Module }} module'
     kind: {{ .SourceTypeKind }}
-{{- if eq .SourceType "registry" }}
+{{- if .Transformers }}
+    transformers:
+{{- end }}
+{{- range .Transformers }}
+      - {{.Kind}}: {{.Value}}
+{{- end }}
     spec:
+      versionfilter:
+        kind: '{{ .VersionFilterKind }}'
+        pattern: '{{ .VersionFilterPattern }}'
+{{- if eq .SourceType "registry" }}
       type: module
 {{- if .ModuleHost }}
       hostname: {{ .ModuleHost }}
