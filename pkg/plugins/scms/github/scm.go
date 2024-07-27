@@ -88,7 +88,7 @@ func (g *Github) Commit(message string) error {
 		}
 
 		err = g.nativeGitHandler.Pull(
-			g.Spec.User,
+			g.Spec.Username,
 			g.Spec.Token,
 			workingDir,
 			workingBranch,
@@ -101,7 +101,7 @@ func (g *Github) Commit(message string) error {
 
 	} else {
 		err = g.nativeGitHandler.Commit(
-			g.Spec.Username,
+			g.Spec.User,
 			g.Spec.Email,
 			commitMessage,
 			workingDir,
