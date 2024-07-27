@@ -43,7 +43,7 @@ func SortConfigSpecArray(t *testing.T, configSpecs []config.Spec, byteSpecs [][]
 	})
 
 	sort.Slice(configSpecs, func(i, j int) bool {
-		return configSpecs[i].Name < configSpecs[j].Name
+		return len(configSpecs[i].Name) < len(configSpecs[j].Name)
 	})
 
 	// We convert back byteSpecs to an array of byte
