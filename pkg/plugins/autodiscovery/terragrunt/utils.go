@@ -108,9 +108,9 @@ func getSourceType(raw string) string {
 		return SourceTypeGit
 	}
 	// Next step is to get the part before :/
-	splitted := strings.Split(raw, "://")
-	if len(splitted) > 1 {
-		protocol := splitted[0]
+	split := strings.Split(raw, "://")
+	if len(split) > 1 {
+		protocol := split[0]
 		if protocol == "tfr" {
 			return SourceTypeRegistry
 		}
