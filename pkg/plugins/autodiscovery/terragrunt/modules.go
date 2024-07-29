@@ -183,7 +183,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		// The source is either inlined  we'll need to add a prefix to the version
 		prefix = strings.Replace(module.source.rawSource, module.source.version, "", 1)
 	} else if module.hclContext != nil {
-		// This means the the source is a complex parametrisation
+		// This means the source contains parameter(s)
 		// source could be:
 		// - local.base_url
 		// - tfr://${local.module}?version=${local.module_version}
