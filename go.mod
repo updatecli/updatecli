@@ -10,7 +10,7 @@ require (
 	github.com/fatih/color v1.17.0
 	github.com/getsops/sops/v3 v3.8.1
 	github.com/go-git/go-git/v5 v5.12.0
-	github.com/heimdalr/dag v1.4.0
+	github.com/heimdalr/dag v1.5.0
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/lithammer/dedent v1.1.0
 	github.com/mitchellh/hashstructure v1.1.0
