@@ -144,7 +144,7 @@ func TestRunTarget(t *testing.T) {
 		{
 			conf: config.Config{
 				Spec: config.Spec{
-					Name: "Test a case a skipped targed due to unchanged dependsonchange",
+					Name: "Test a case a skipped targeted due to unchanged dependsonchange",
 					Targets: map[string]target.Config{
 						"success": {
 							ResourceConfig: resource.ResourceConfig{
@@ -192,7 +192,7 @@ func TestRunTarget(t *testing.T) {
 		{
 			conf: config.Config{
 				Spec: config.Spec{
-					Name: "Test a case a skipped targed due to unchanged dependsonchange with and operator",
+					Name: "Test a case a skipped targeted due to unchanged dependsonchange with and operator",
 					Targets: map[string]target.Config{
 						"success": {
 							ResourceConfig: resource.ResourceConfig{
@@ -257,7 +257,7 @@ func TestRunTarget(t *testing.T) {
 		{
 			conf: config.Config{
 				Spec: config.Spec{
-					Name: "Test a case a skipped targed due to unchanged dependsonchange with OR operator",
+					Name: "Test a case a skipped targeted due to unchanged dependsonchange with OR operator",
 					Targets: map[string]target.Config{
 						"success": {
 							ResourceConfig: resource.ResourceConfig{
