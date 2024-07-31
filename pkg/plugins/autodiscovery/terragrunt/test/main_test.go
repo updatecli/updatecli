@@ -21,7 +21,7 @@ import (
 
 func TestDiscoverManifests(t *testing.T) {
 	expectedInlined := config.Spec{
-		Name: "Bump Terraform module terraform-aws-modules/rdss/aws version",
+		Name: "Bump Terragrunt module terraform-aws-modules/rdss/aws version",
 		Sources: map[string]source.Config{
 			"latestVersion": {
 				ResourceConfig: resource.ResourceConfig{
@@ -48,7 +48,7 @@ func TestDiscoverManifests(t *testing.T) {
 			"terragruntModuleFile": {
 				SourceID: "latestVersion",
 				ResourceConfig: resource.ResourceConfig{
-					Name: `Bump terraform-aws-modules/rdss/aws to {{ source "latestVersion" }}`,
+					Name: `deps: bump terraform-aws-modules/rdss/aws to {{ source "latestVersion" }}`,
 					Kind: "hcl",
 					Spec: hcl.Spec{
 						File: "inlined.hcl",
@@ -59,7 +59,7 @@ func TestDiscoverManifests(t *testing.T) {
 		},
 	}
 	expectedSimpleLocalized := config.Spec{
-		Name: "Bump Terraform module terraform-aws-modules/aurora/aws version",
+		Name: "Bump Terragrunt module terraform-aws-modules/aurora/aws version",
 		Sources: map[string]source.Config{
 			"latestVersion": {
 				ResourceConfig: resource.ResourceConfig{
@@ -86,7 +86,7 @@ func TestDiscoverManifests(t *testing.T) {
 			"terragruntModuleFile": {
 				SourceID: "latestVersion",
 				ResourceConfig: resource.ResourceConfig{
-					Name: `Bump terraform-aws-modules/aurora/aws to {{ source "latestVersion" }}`,
+					Name: `deps: bump terraform-aws-modules/aurora/aws to {{ source "latestVersion" }}`,
 					Kind: "hcl",
 					Spec: hcl.Spec{
 						File: "simple_localized.hcl",
@@ -97,7 +97,7 @@ func TestDiscoverManifests(t *testing.T) {
 		},
 	}
 	expectedComplexLocalized := config.Spec{
-		Name: "Bump Terraform module terraform-aws-modules/vpc/aws version",
+		Name: "Bump Terragrunt module terraform-aws-modules/vpc/aws version",
 		Sources: map[string]source.Config{
 			"latestVersion": {
 				ResourceConfig: resource.ResourceConfig{
@@ -121,7 +121,7 @@ func TestDiscoverManifests(t *testing.T) {
 			"terragruntModuleFile": {
 				SourceID: "latestVersion",
 				ResourceConfig: resource.ResourceConfig{
-					Name: `Bump terraform-aws-modules/vpc/aws to {{ source "latestVersion" }}`,
+					Name: `deps: bump terraform-aws-modules/vpc/aws to {{ source "latestVersion" }}`,
 					Kind: "hcl",
 					Spec: hcl.Spec{
 						File: "complex_localized.hcl",
@@ -132,7 +132,7 @@ func TestDiscoverManifests(t *testing.T) {
 		},
 	}
 	expectedSuperComplexLocalized := config.Spec{
-		Name: "Bump Terraform module terraform-aws-modules/auroravpc/aws version",
+		Name: "Bump Terragrunt module terraform-aws-modules/auroravpc/aws version",
 		Sources: map[string]source.Config{
 			"latestVersion": {
 				ResourceConfig: resource.ResourceConfig{
@@ -159,7 +159,7 @@ func TestDiscoverManifests(t *testing.T) {
 			"terragruntModuleFile": {
 				SourceID: "latestVersion",
 				ResourceConfig: resource.ResourceConfig{
-					Name: `Bump terraform-aws-modules/auroravpc/aws to {{ source "latestVersion" }}`,
+					Name: `deps: bump terraform-aws-modules/auroravpc/aws to {{ source "latestVersion" }}`,
 					Kind: "hcl",
 					Spec: hcl.Spec{
 						File: "more_complex_localized.hcl",
@@ -170,7 +170,7 @@ func TestDiscoverManifests(t *testing.T) {
 		},
 	}
 	expectedNonTfr := config.Spec{
-		Name: "Bump Terraform module github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git version",
+		Name: "Bump Terragrunt module github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git version",
 		SCMs: map[string]scm.Config{
 			"module": {
 				Kind: "git",
@@ -202,7 +202,7 @@ func TestDiscoverManifests(t *testing.T) {
 			"terragruntModuleFile": {
 				SourceID: "latestVersion",
 				ResourceConfig: resource.ResourceConfig{
-					Name: `Bump github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git to {{ source "latestVersion" }}`,
+					Name: `deps: bump github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git to {{ source "latestVersion" }}`,
 					Kind: "hcl",
 					Spec: hcl.Spec{
 						File: "non_tfr.hcl",

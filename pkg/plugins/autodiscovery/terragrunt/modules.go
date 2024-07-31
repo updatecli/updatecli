@@ -259,7 +259,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleSourceScmUrl:   ModuleSourceScmUrl,
 		ScmID:                t.scmID,
 		TargetPath:           targetPath,
-		TargetName:           fmt.Sprintf("Bump %s to {{ source \"latestVersion\" }}", module.ForDisplay()),
+		TargetName:           fmt.Sprintf("deps: bump %s to {{ source \"latestVersion\" }}", module.ForDisplay()),
 		Transformers:         transformers,
 		VersionFilterKind:    t.versionFilter.Kind,
 		VersionFilterPattern: versionFilterPattern,

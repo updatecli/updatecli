@@ -18,20 +18,20 @@ type MatchingRule struct {
 	// `path` specifies a terragrunt manifest path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
 	/*
-				`modules` specifies a map of modules, the key is module url as seen in the different terragrunt manifests,
-				the value is an optional semver version constraint.
+		`modules` specifies a map of modules, the key is module url as seen in the different terragrunt manifests,
+		the value is an optional semver version constraint.
 
-				examples:
-				```
-				- providers:
-			      # Ignore modules update for a specific registry
-			      tfr://registry.opentofu.org:
-		          # Ignore modules updates for a very specific module
-			      tfr://terraform-aws-modules/rdss/aws:
-				  registry.terraform.io/hashicorp/aws:
-				  # Ignore module updates for this version
-				  git@github.com:hashicorp/exampleLongNameForSorting.git: "1.x"
-				```
+		examples:
+		```
+		- providers:
+		  # Ignore modules update for a specific registry
+		  tfr://registry.opentofu.org:
+		  # Ignore modules updates for a very specific module
+		  tfr://terraform-aws-modules/rdss/aws:
+		  registry.terraform.io/hashicorp/aws:
+		  # Ignore module updates for this version
+		  git@github.com:hashicorp/exampleLongNameForSorting.git: "1.x"
+		```
 	*/
 	Modules map[string]string
 }
