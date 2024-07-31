@@ -159,23 +159,6 @@ func (p *Pipeline) isDependsOnMatchingTarget(target *target.Target) string {
 
 		parentTarget, booleanOperator = parseDependsOnValue(parentTarget)
 
-		//parentTargetArray := strings.Split(parentTarget, ":")
-		//switch len(parentTargetArray) {
-		//case 1:
-		//	parentTarget = parentTargetArray[0]
-		//	booleanOperator = andOperator
-		//case 2:
-		//	parentTarget = parentTargetArray[0]
-		//	booleanOperator = parentTargetArray[1]
-		//default:
-		//	counterRequiredDependsOn++
-		//	failingRequiredDependsOn = append(
-		//		failingRequiredDependsOn,
-		//		fmt.Sprintf("Invalid dependsOn format %q", parentTarget),
-		//	)
-		//	continue
-		//}
-
 		switch booleanOperator {
 		case andOperator:
 			counterRequiredDependsOn++
