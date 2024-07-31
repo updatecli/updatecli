@@ -63,7 +63,7 @@ var (
 				},
 			},
 			expectedOutput: "",
-			expectedErr:    fmt.Errorf("wrong semantic version input: \"major\""),
+			expectedErr:    fmt.Errorf("wrong semantic version input: \"1.x.y\""),
 		},
 		Data{
 			input: "1.0.0",
