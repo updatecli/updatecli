@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/hexops/gotextdiff"
@@ -15,19 +16,26 @@ import (
 
 var (
 	ErrModuleNotFound error = errors.New("GO module not found")
+
+	majorMinorRegex      *regexp.Regexp = regexp.MustCompile(`^\d+\.\d+$`)
+	majorMinorPatchRegex *regexp.Regexp = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 )
 
 // version retrieve the version specified by a GO module
 func (g *GoMod) version(filename string) (string, error) {
 
-	data, err := os.ReadFile(filename)
-
-	if err != nil {
-		logrus.Errorln(err)
-		return "", fmt.Errorf("failed reading %q", filename)
+	// Test at runtime if a file exist
+	if !g.contentRetriever.FileExists(filename) {
+		return "", fmt.Errorf("file %q does not exist", filename)
 	}
 
-	modfile, err := modfile.Parse(filename, data, nil)
+	if err := g.Read(filename); err != nil {
+		return "", fmt.Errorf("reading file: %w", err)
+	}
+
+	data := g.currentContent
+
+	modfile, err := modfile.Parse(filename, []byte(data), nil)
 	if err != nil {
 		logrus.Errorln(err)
 		return "", fmt.Errorf("failed reading %q", filename)
@@ -71,13 +79,13 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 
 	switch g.kind {
 	case kindGolang:
-		s, err := semver.NewVersion(version)
+
+		oldVersion = modFile.Go.Version
+		newVersion, err := getNewVersion(oldVersion, version)
 		if err != nil {
 			logrus.Errorln(err)
 			return "", "", false, fmt.Errorf("failed parsing go version %q", version)
 		}
-		oldVersion = modFile.Go.Version
-		newVersion = fmt.Sprintf("%d.%d", s.Major(), s.Minor())
 
 		if oldVersion != newVersion {
 			err = modFile.AddGoStmt(newVersion)
@@ -154,4 +162,24 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 	logrus.Debugf("%q updated\n", filename)
 
 	return oldVersion, newVersion, changed, nil
+}
+
+// getNewVersion returns the new version of a GO module.
+// It tries to detect if the version is a major.minor or major.minor.patch
+func getNewVersion(oldVersion, newVersion string) (string, error) {
+
+	s, err := semver.NewVersion(newVersion)
+	if err != nil {
+		return "", fmt.Errorf("failed parsing go version %q", oldVersion)
+	}
+
+	if majorMinorRegex.MatchString(oldVersion) {
+		return fmt.Sprintf("%d.%d", s.Major(), s.Minor()), nil
+	}
+
+	if majorMinorPatchRegex.MatchString(oldVersion) {
+		return fmt.Sprintf("%d.%d.%d", s.Major(), s.Minor(), s.Patch()), nil
+	}
+
+	return newVersion, nil
 }

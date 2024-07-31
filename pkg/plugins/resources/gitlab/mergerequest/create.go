@@ -14,7 +14,7 @@ import (
 )
 
 // CreateAction opens a Merge Request on the GitLab server
-func (g *Gitlab) CreateAction(report reports.Action) error {
+func (g *Gitlab) CreateAction(report reports.Action, resetDescription bool) error {
 
 	title := report.Title
 	if len(g.spec.Title) > 0 {
@@ -23,6 +23,8 @@ func (g *Gitlab) CreateAction(report reports.Action) error {
 
 	// One GitLab mergerequest body can contain multiple action report
 	// It would be better to refactor CreateAction
+	// to be able to reuse existing mergerequest description.
+	// similar to what we did for github pullrequest.
 	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
 	if err != nil {
 		logrus.Warningf("something went wrong while generating GitLab body: %s", err)

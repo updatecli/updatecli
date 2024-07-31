@@ -1,6 +1,7 @@
 [files]
 extend-exclude = [
   "go.mod",
+  "go.1.mod",
   "vale",
   "_typos.toml"
 ]
@@ -17,3 +18,4 @@ extend-ignore-re = [
 [default.extend-words]
 # Don't correct the surname "Teh"
 lQOsBGIqZEEBCACOnlRGd40w2SvqxFe0FRtBhruQIHLWpWAkYxz6otNRuCAkK7w1 = "lQOsBGIqZEEBCACOnlRGd40w2SvqxFe0FRtBhruQIHLWpWAkYxz6otNRuCAkK7w1"
+hom = "hom"

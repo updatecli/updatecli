@@ -174,16 +174,31 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
+	// targetCommit is used to avoid committing changes when the target has no changes.
+	targetCommit := true
 	if !t.Result.Changed {
 		if isRemoteBranchUpToDate {
 			return nil
 		}
 
-		logrus.Infof("\n\u26A0 While nothing change in the current pipeline run, according to the git history, some commits will be pushed\n")
+		logrus.Infof("\n\u26A0 While nothing change in the current pipeline run, according to the git history, some commits must be pushed\n")
+		t.Result.Description = fmt.Sprintf("%s\n\n%s", t.Result.Description, "While nothing change in the current pipeline run, according to the git history, some commits must pushed")
+
+		// Even though the target has no changes, it has something to commit.
+		// We consider this result as "success" and not "attention" as the target has no changes.
+		// If later we decide to consider the result as "attention" then we also need to consider that the action
+		// will be trigger in priority. cfr https://github.com/updatecli/updatecli/issues/2039
+		// So we need to create a new resource stage to handle this case.
+		t.Result.Result = result.SUCCESS
+		t.Result.Changed = true
+		// Even though the target has left over changes, it has nothing to commit.
+		targetCommit = false
 	}
 
 	if !o.DryRun {
-		if t.Result.Changed {
+		// o.Commit represents Global updatecli commit option
+		// targetCommit represents the local target commit option
+		if o.Commit && targetCommit {
 			if t.Result.Description == "" {
 				failTargetRun()
 				return fmt.Errorf("target has no change message")
@@ -194,29 +209,28 @@ func (t *Target) Run(source string, o *Options) (err error) {
 				return fmt.Errorf("no changed file to commit")
 			}
 
-			if o.Commit {
-				if err := s.Add(t.Result.Files); err != nil {
-					failTargetRun()
-					return err
-				}
+			if err := s.Add(t.Result.Files); err != nil {
+				failTargetRun()
+				return err
+			}
 
-				/*
-					not every target have a name as it wasn't mandatory in the past
-					so we use the description as a fallback
-				*/
-				commitMessage := t.Config.ResourceConfig.Name
-				if commitMessage == "" {
-					commitMessage = t.Result.Description
-				}
-				if err = s.Commit(commitMessage); err != nil {
-					failTargetRun()
-					return err
-				}
+			/*
+				not every target have a name as it wasn't mandatory in the past
+				so we use the description as a fallback
+			*/
+			commitMessage := t.Config.ResourceConfig.Name
+			if commitMessage == "" {
+				commitMessage = t.Result.Description
+			}
+			if err = s.Commit(commitMessage); err != nil {
+				failTargetRun()
+				return err
 			}
 		}
 
 		if o.Push {
-			if err := s.Push(); err != nil {
+			t.Result.Scm.BranchReset, err = s.Push()
+			if err != nil {
 				failTargetRun()
 				return err
 			}

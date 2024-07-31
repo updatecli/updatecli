@@ -98,9 +98,9 @@ func (r registryAddress) Hostname() string {
 
 func (r registryAddress) Path() string {
 	if r.registryType == TypeProvider {
-		return fmt.Sprintf("%s%s/%s", r.wellKnown.ProviderPath, r.provider.Namespace, r.provider.Type)
+		return fmt.Sprintf("%s%s/%s/versions", r.wellKnown.ProviderPath, r.provider.Namespace, r.provider.Type)
 	} else if r.registryType == TypeModule {
-		return r.wellKnown.ModulesPath + r.module.Package.ForRegistryProtocol()
+		return fmt.Sprintf("%s%s/versions", r.wellKnown.ModulesPath, r.module.Package.ForRegistryProtocol())
 	}
 
 	return ""

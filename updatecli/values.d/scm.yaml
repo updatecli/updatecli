@@ -1,0 +1,9 @@
+scm:
+  commitusingapi: true
+  enabled: true
+  user: updatecli
+  email: bot@updatecli.io
+  owner: updatecli
+  repository: updatecli
+  username: "updatecli-bot"
+  branch: main

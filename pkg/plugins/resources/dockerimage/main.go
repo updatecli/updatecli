@@ -73,11 +73,6 @@ func New(spec interface{}) (*DockerImage, error) {
 	return newResource, nil
 }
 
-// Changelog returns the changelog for this resource, or an empty string if not supported
-func (di *DockerImage) Changelog() string {
-	return ""
-}
-
 func (di *DockerImage) createRef(source string) (name.Reference, error) {
 	refName := di.spec.Image
 	refName += ":" + source

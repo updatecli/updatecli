@@ -2,6 +2,7 @@ package gitgeneric
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"sort"
 	"time"
@@ -167,4 +168,80 @@ func (g GoGit) PushBranch(branch string, username string, password string, worki
 	}
 
 	return nil
+}
+
+// isBranchCommonAncestor checks if a new branch has common ancestor with the latest
+// commit of the based branch.
+func isBranchCommonAncestor(newBranch, basedBranch plumbing.ReferenceName, gitRepositoryPath string) (bool, error) {
+	r, err := git.PlainOpen(gitRepositoryPath)
+
+	if err != nil {
+		logrus.Errorf("opening %q git directory err: %s", gitRepositoryPath, err)
+		return false, fmt.Errorf("opening %q git directory err: %s", gitRepositoryPath, err)
+	}
+
+	newBranchRefName, err := r.Reference(newBranch, true)
+	if err != nil {
+		return false, fmt.Errorf("getting new branch reference %q err: %s", newBranch, err)
+	}
+
+	basedBranchRefName, err := r.Reference(basedBranch, true)
+	if err != nil {
+		return false, fmt.Errorf("getting based branch reference %q err: %s", basedBranch, err)
+	}
+
+	newBranchRefCommit, err := r.CommitObject(newBranchRefName.Hash())
+	if err != nil {
+		return false, fmt.Errorf("getting commit object for new branch %q err: %s", newBranch, err)
+	}
+
+	basedBranchRefCommit, err := r.CommitObject(basedBranchRefName.Hash())
+	if err != nil {
+		return false, fmt.Errorf("getting commit object for based branch %q err: %s", basedBranch, err)
+	}
+
+	return basedBranchRefCommit.IsAncestor(newBranchRefCommit)
+}
+
+// resetNewBranchToBaseBranch reset the new branch to the latest commit of the based branch
+// if they don't have common ancestor
+func resetNewBranchToBaseBranch(newBranch, basedBranch plumbing.ReferenceName, gitRepositoryPath string) (bool, error) {
+
+	ok, err := isBranchCommonAncestor(newBranch, basedBranch, gitRepositoryPath)
+	if err != nil {
+		return false, err
+	}
+
+	// Nothing to do if the new branch has common ancestor with the based branch
+	if ok {
+		return false, nil
+	}
+
+	logrus.Warningf("branch %q diverged from %q, resetting it to %q", newBranch, basedBranch, basedBranch)
+
+	repository, err := git.PlainOpen(gitRepositoryPath)
+	if err != nil {
+		logrus.Errorf("opening %q git directory err: %s", gitRepositoryPath, err)
+		return false, fmt.Errorf("opening %q git directory err: %s", gitRepositoryPath, err)
+	}
+
+	ref, err := repository.Reference(basedBranch, true)
+	if err != nil {
+		return false, fmt.Errorf("reference %q - %s", basedBranch, err)
+	}
+
+	worktree, err := repository.Worktree()
+	if err != nil {
+		logrus.Debugln(err)
+		return false, err
+	}
+	err = worktree.Reset(&git.ResetOptions{
+		Commit: ref.Hash(),
+		Mode:   git.HardReset,
+	})
+
+	if err != nil {
+		return false, fmt.Errorf("resetting branch %q to %q - %s", newBranch, basedBranch, err)
+	}
+	return true, nil
 }

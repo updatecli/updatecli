@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/updatecli/updatecli/pkg/core/compose"
 )
 
 var (
@@ -13,6 +14,8 @@ var (
 	composeCmdDisableTemplating bool
 	// composeCmdFile represents the compose filename
 	composeCmdFile string
+	// composeDefaultCmdFile represents the default compose filename
+	composeDefaultCmdFile = compose.GetDefaultComposeFilename()
 	// composeCmd represents the compose command
 	composeCmd = &cobra.Command{
 		Use:   "compose",

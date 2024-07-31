@@ -32,8 +32,8 @@ func TestCondition(t *testing.T) {
 				Version:   "2.23.0",
 			},
 			expectedResult: true,
-			expectedUrl:    "https://registry.terraform.io/v1/providers/hashicorp/kubernetes",
-			mockedHttpBody: `{ "versions" : ["2.23.0"] }`,
+			expectedUrl:    "https://registry.terraform.io/v1/providers/hashicorp/kubernetes/versions",
+			mockedHttpBody: `{ "versions" : [{ "version": "2.23.0" }] }`,
 		},
 		{
 			name: "Success - module",
@@ -45,8 +45,8 @@ func TestCondition(t *testing.T) {
 				Version:      "5.1.1",
 			},
 			expectedResult: true,
-			expectedUrl:    "https://registry.terraform.io/v1/modules/terraform-aws-modules/vpc/aws",
-			mockedHttpBody: `{ "versions" : ["5.1.1"] }`,
+			expectedUrl:    "https://registry.terraform.io/v1/modules/terraform-aws-modules/vpc/aws/versions",
+			mockedHttpBody: `{ "modules": [{ "versions" : [{ "version": "5.1.1" }] }] }`,
 		},
 		{
 			name: "Success - provider source",
@@ -57,8 +57,8 @@ func TestCondition(t *testing.T) {
 			},
 			source:         "2.23.0",
 			expectedResult: true,
-			expectedUrl:    "https://registry.terraform.io/v1/providers/hashicorp/kubernetes",
-			mockedHttpBody: `{ "versions" : ["2.23.0"] }`,
+			expectedUrl:    "https://registry.terraform.io/v1/providers/hashicorp/kubernetes/versions",
+			mockedHttpBody: `{ "versions" : [{ "version": "2.23.0" }] }`,
 		},
 		{
 			name: "Success - module source",
@@ -70,8 +70,8 @@ func TestCondition(t *testing.T) {
 			},
 			source:         "5.1.1",
 			expectedResult: true,
-			expectedUrl:    "https://registry.terraform.io/v1/modules/terraform-aws-modules/vpc/aws",
-			mockedHttpBody: `{ "versions" : ["5.1.1"] }`,
+			expectedUrl:    "https://registry.terraform.io/v1/modules/terraform-aws-modules/vpc/aws/versions",
+			mockedHttpBody: `{ "modules": [{ "versions" : [{ "version": "5.1.1" }] }] }`,
 		},
 		{
 			name: "Failed - missing version",
@@ -82,8 +82,8 @@ func TestCondition(t *testing.T) {
 				Version:   "2.22.1111",
 			},
 			expectedResult: false,
-			expectedUrl:    "https://registry.terraform.io/v1/providers/hashicorp/kubernetes",
-			mockedHttpBody: `{ "versions" : ["2.23.0"] }`,
+			expectedUrl:    "https://registry.terraform.io/v1/providers/hashicorp/kubernetes/versions",
+			mockedHttpBody: `{ "versions" : [{ "version": "2.23.0" }] }`,
 		},
 	}
 	for _, tt := range tests {

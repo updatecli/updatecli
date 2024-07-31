@@ -3,6 +3,7 @@ package autodiscovery
 import (
 	"fmt"
 
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/argocd"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
@@ -27,6 +28,7 @@ var (
 	// DefaultGenericsSpecs defines the default builder that we want to run
 	DefaultCrawlerSpecs = Config{
 		Crawlers: CrawlersConfig{
+			"argocd":        argocd.Spec{},
 			"cargo":         cargo.Spec{},
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
@@ -46,6 +48,7 @@ var (
 	}
 	// AutodiscoverySpecs is a map of all Autodiscovery specification
 	AutodiscoverySpecsMapping = map[string]interface{}{
+		"argocd":        argocd.Spec{},
 		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
@@ -74,6 +77,8 @@ type AutoDiscovery struct {
 }
 
 // New returns an initiated autodiscovery object
+//
+//nolint:funlen // This function is responsible to create all the crawlers
 func New(spec Config, workDir string) (*AutoDiscovery, error) {
 	var errs []error
 	var s Config
@@ -94,6 +99,17 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 		}
 
 		switch kind {
+		case "argocd":
+			argocdCrawler, err := argocd.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, argocdCrawler)
 		case "cargo":
 			cargoCrawler, err := cargo.New(
 				g.spec.Crawlers[kind],

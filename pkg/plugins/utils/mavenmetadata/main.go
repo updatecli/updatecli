@@ -1,6 +1,7 @@
 package mavenmetadata
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"golang.org/x/text/encoding/ianaindex"
 )
 
 // DefaultHandler is the default implementation for a maven metadata handler
@@ -22,7 +24,6 @@ type DefaultHandler struct {
 
 // New returns a newly initialized DefaultHandler object
 func New(metadataURL string, versionFilter version.Filter) *DefaultHandler {
-
 	if versionFilter.IsZero() {
 		versionFilter.Kind = "latest"
 	}
@@ -62,8 +63,20 @@ func (d *DefaultHandler) getMetadataFile() (metadata, error) {
 
 	data := metadata{}
 
-	err = xml.Unmarshal(body, &data)
-	if err != nil {
+	decoder := xml.NewDecoder(bytes.NewBuffer(body))
+
+	decoder.CharsetReader = func(charset string, reader io.Reader) (io.Reader, error) {
+		enc, err := ianaindex.IANA.Encoding(charset)
+		if err != nil {
+			return nil, err
+		}
+		if enc == nil {
+			return nil, fmt.Errorf("no decoder found for: %s", charset)
+		}
+		return enc.NewDecoder().Reader(reader), nil
+	}
+
+	if err := decoder.Decode(&data); err != nil {
 		return metadata{}, err
 	}
 

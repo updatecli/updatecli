@@ -26,5 +26,5 @@ autodiscovery:
         kind: semver
         pattern: minor
       only:
-        - goversion: "1.16"
+        - goversion: "*"
 

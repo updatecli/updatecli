@@ -12,24 +12,22 @@ import (
 type PolicySpec struct {
 	// Authors is a list of authors of the policy
 	Authors []string `yaml:",omitempty"`
-	// URL is the URL of the policy source code
-	URL string `yaml:",omitempty"`
-	// Documentation is the URL of the policy documentation
-	Documentation string `yaml:",omitempty"`
-	// Source is the URL of the policy source code
-	Source string `yaml:",omitempty"`
-	// Version is the policy version, it must be semantic versioning compliant without the leading v
-	Version string `yaml:",omitempty"`
-	// Vendor is the policy vendor
-	Vendor string `yaml:",omitempty"`
-	// Licenses is the policy license
-	Licenses []string `yaml:",omitempty"`
-	// I don't understand why if set, it creates a file locally named with the value of the title
-	// I'll need to investigate but I am disabling it for now.
-	// Title string `yaml:",omitempty"`
-
+	// Changelog is the URL of the policy changelog
+	Changelog string `yaml:",omitempty"`
 	// Description is the policy description
 	Description string `yaml:",omitempty"`
+	// Documentation is the URL of the policy documentation
+	Documentation string `yaml:",omitempty"`
+	// Licenses is the policy license
+	Licenses []string `yaml:",omitempty"`
+	// Source is the URL of the policy source code
+	Source string `yaml:",omitempty"`
+	// Vendor is the policy vendor
+	Vendor string `yaml:",omitempty"`
+	// Version is the policy version, it must be semantic versioning compliant without the leading v
+	Version string `yaml:",omitempty"`
+	// URL is the URL of the policy source code
+	URL string `yaml:",omitempty"`
 }
 
 // LoadPolicyFile loads an Updatecli compose file into a compose Spec

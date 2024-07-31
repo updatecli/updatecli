@@ -11,38 +11,26 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+// RunActions runs all actions defined in the configuration.
 func (p *Pipeline) RunActions() error {
 
-	if len(p.Targets) == 0 {
-		logrus.Debugln("no target found, skipping action")
+	// Early return
+	if len(p.Targets) == 0 || len(p.Actions) == 0 {
 		return nil
 	}
 
-	if len(p.Actions) == 0 {
-		logrus.Debugln("no action found, skipping")
-		return nil
-	}
+	for id := range p.Actions {
 
-	if len(p.Actions) > 0 {
-		logrus.Infof("\n\n%s\n", strings.ToTitle("Actions"))
-		logrus.Infof("%s\n\n", strings.Repeat("=", len("Actions")+1))
-	}
+		action := p.Actions[id]
 
-	for id, action := range p.Actions {
-		relatedTargets, err := p.SearchAssociatedTargetsID(id)
+		relatedTargets, err := p.searchAssociatedTargetsID(id)
 		if err != nil {
 			logrus.Errorf(err.Error())
 			continue
 		}
 
 		// Update pipeline before each condition run
-		err = p.Update()
-		if err != nil {
-			logrus.Errorf(err.Error())
-			continue
-		}
-
-		if err != nil {
+		if err = p.Update(); err != nil {
 			logrus.Errorf(err.Error())
 			continue
 		}
@@ -57,24 +45,39 @@ func (p *Pipeline) RunActions() error {
 		action = p.Actions[id]
 		action.Config = p.Config.Spec.Actions[id]
 
-		err = action.Update()
-		if err != nil {
+		if err := action.Update(); err != nil {
 			return err
 		}
 
 		failedTargetIDs, attentionTargetIDs, _, skippedTargetIDs := p.GetTargetsIDByResult(relatedTargets)
 
-		/*
-			Better for ID to use hash string
-			By having a actionID that combine both the pipelineID and the actionID, avoid collision
-			when two different pipeline open the same pullrequest based on the same action title
-		*/
+		// Ignoring failed targets
+		if len(failedTargetIDs) > 0 {
+			logrus.Errorf("%d target(s) (%s) failed for action %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
+		}
 
+		// Ignoring skipped targets
+		if len(skippedTargetIDs) > 0 {
+			logrus.Debugf("%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
+		}
+
+		// If no target require attention while processing action in a attention state,
+		// then we skip the action
+		if len(attentionTargetIDs) == 0 {
+			continue
+		}
+
+		// We try to identify if any of the related targets have a branch reset.
+		// It it's the case then we set the action to have a branch reset
+		// and remove the previous action description as it may be outdated.
+		isBranchReset := false
 		for _, t := range relatedTargets {
-			// We only care about target that have changed something
-			if !p.Targets[t].Result.Changed {
-				continue
+			if p.Targets[t].Result.Scm.BranchReset {
+				isBranchReset = true
+				break
 			}
+		}
+		for _, t := range attentionTargetIDs {
 
 			actionTarget := reports.ActionTarget{
 				// Better for ID to use hash string
@@ -93,14 +96,13 @@ func (p *Pipeline) RunActions() error {
 			action.Report.Targets = append(action.Report.Targets, actionTarget)
 		}
 
-		// No need to execute the action if no target require attention
-		if len(action.Report.Targets) == 0 {
-			continue
-		}
+		logrus.Infof("\n%s - %s", p.Name, id)
+		logrus.Infof("%s\n\n", strings.Repeat("-", len(p.Name)+len(id)+3))
 
-		// Must action.Report.ID and action.Report.Title must be set after actionTarget are set
+		// Must action.Report.ID and action.Report.Title must be set
+		// after actionTarget is set
 		actionTitle := action.Title
-		// If an action spec do not have a tittle, then we use the one specified by the pipeline spec title
+		// If an action spec doesn't have a title, then we use the one specified by the pipeline spec title
 		if actionTitle == "" && p.Config.Spec.Name != "" {
 			actionTitle = p.Config.Spec.Name
 		} else if actionTitle == "" && p.Config.Spec.Title != "" {
@@ -121,18 +123,11 @@ func (p *Pipeline) RunActions() error {
 		action.Report.Title = actionTitle
 		action.Report.PipelineTitle = pipelineName
 
-		// Ignoring failed targets
-		if len(failedTargetIDs) > 0 {
-			logrus.Errorf("%d target(s) (%s) failed for action %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
-		}
-
-		// Ignoring skipped targets
-		if len(skippedTargetIDs) > 0 {
-			return fmt.Errorf("%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
-		}
-
 		if !action.Config.DisablePipelineURL {
 			action.Report.UpdatePipelineURL()
+		}
+		if isBranchReset {
+			logrus.Warningf("Git branch reset detected, the action must reset previous action description")
 		}
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
@@ -152,14 +147,37 @@ func (p *Pipeline) RunActions() error {
 			return nil
 		}
 
-		err = action.Handler.CreateAction(action.Report)
-
+		err = action.Handler.CreateAction(action.Report, isBranchReset)
 		if err != nil {
 			return err
 		}
 
+		isBranchReset = false
+
 		p.Actions[id] = action
 	}
+	return nil
+}
+
+// RunCleanActions executes clean up operation which depends on the action plugin.
+func (p *Pipeline) RunCleanActions() error {
+	var errs []string
+
+	// Early return
+	if len(p.Targets) == 0 || len(p.Actions) == 0 {
+		return nil
+	}
+
+	for _, action := range p.Actions {
+		if !p.Options.Target.DryRun {
+			// At least we try to clean existing pullrequest
+			err := action.Handler.CleanAction(action.Report)
+			if err != nil {
+				errs = append(errs, err.Error())
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -187,8 +205,8 @@ func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
 	return failedTargetsID, attentionTargetsID, successTargetsID, skippedTargetsID
 }
 
-// SearchAssociatedTargetsID search for targets related to an action based on a scm configuration
-func (p *Pipeline) SearchAssociatedTargetsID(actionID string) ([]string, error) {
+// searchAssociatedTargetsID search for targets related to an action based on a scm configuration
+func (p *Pipeline) searchAssociatedTargetsID(actionID string) ([]string, error) {
 
 	scmid := p.Actions[actionID].Config.ScmID
 

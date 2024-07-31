@@ -27,39 +27,111 @@ import (
 var (
 	ErrAutomergeNotAllowOnRepository = errors.New("automerge is not allowed on repository")
 	ErrBadMergeMethod                = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
+	ErrPullRequestIsInCleanStatus    = errors.New("Pull request Pull request is in clean status")
 )
 
 // PullRequest contains multiple fields mapped to GitHub V4 api
 type PullRequestApi struct {
-	BaseRefName string
-	Body        string
-	HeadRefName string
-	ID          string
-	State       string
-	Title       string
-	Url         string
-	Number      int
+	ChangedFiles int
+	BaseRefName  string
+	Body         string
+	HeadRefName  string
+	ID           string
+	State        string
+	Title        string
+	Url          string
+	Number       int
 }
 
 // ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
 type ActionSpec struct {
-	// Specifies if automerge is enabled for the new pullrequest
+	// automerge allows to enable/disable the automerge feature on new pullrequest
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   false
 	AutoMerge bool `yaml:",omitempty"`
-	// Specifies the Pull Request title
+	// title allows to override the pull request title
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   The default title is fetch from the first following location:
+	//   1. The action title
+	//   2. The target title if only one target
+	//   3. The pipeline target
+	//
 	Title string `yaml:",omitempty"`
-	// Specifies user input description used during pull body creation
+	// description allows to prepend information to the pullrequest description.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   empty
+	//
 	Description string `yaml:",omitempty"`
-	// Specifies repository labels used for the Pull Request. !! Labels must already exist on the repository
+	// labels specifies repository labels used for the Pull Request.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//    empty
+	//
+	// remark:
+	//   Labels must already exist on the repository
+	//
 	Labels []string `yaml:",omitempty"`
-	// Specifies if a Pull Request is set to draft, default false
+	// draft allows to set pull request in draft
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   false
 	Draft bool `yaml:",omitempty"`
-	// Specifies if maintainer can modify pullRequest
+	// maintainercannotmodify allows to specify if maintainer can modify pullRequest
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   false
 	MaintainerCannotModify bool `yaml:",omitempty"`
-	// Specifies which merge method is used to incorporate the Pull Request. Accept "merge", "squash", "rebase", or ""
+	// mergemethod allows to specifies what merge method is used to incorporate the pull request.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   ""
+	//
+	// remark:
+	//   Accept "merge", "squash", "rebase", or ""
 	MergeMethod string `yaml:",omitempty"`
-	// Specifies to use the Pull Request title as commit message when using auto merge, only works for "squash" or "rebase"
+	// usetitleforautomerge allows to specifies to use the Pull Request title as commit message when using auto merge,
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   ""
+	//
+	// remark:
+	//   Only works for "squash" or "rebase"
 	UseTitleForAutoMerge bool `yaml:",omitempty"`
-	// Specifies if a Pull Request should be sent to the parent of a fork.
+	// parent allows to specifies if a pull request should be sent to the parent of the current fork.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   false
+	//
 	Parent bool `yaml:",omitempty"`
 }
 
@@ -110,7 +182,39 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 	}, err
 }
 
-func (p *PullRequest) CreateAction(report reports.Action) error {
+// CleanAction verifies if an existing action requires some cleanup such as closing a pullrequest with no changes.
+func (p *PullRequest) CleanAction(report reports.Action) error {
+
+	repository, err := p.gh.queryRepository("", "")
+	if err != nil {
+		return err
+	}
+
+	p.repository = repository
+
+	// Check if there is already a pullRequest for current pipeline
+	err = p.getRemotePullRequest(false)
+	if err != nil {
+		return err
+	}
+
+	if p.remotePullRequest.ID == "" {
+		logrus.Debugln("nothing to clean")
+		return nil
+	}
+
+	if p.remotePullRequest.ChangedFiles == 0 {
+		logrus.Debugf("No changed file detected at pull request:\n\t%s", p.remotePullRequest.Url)
+		// Not returning an error if the comment failed to be added
+		// as the main purpose of this function is to close the pullrequest
+		return p.closePullRequest()
+	}
+
+	return nil
+}
+
+// CreateAction creates a new GitHub Pull Request or update an existing one.
+func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool) error {
 
 	// One GitHub pullrequest body can contain multiple action report
 	// It would be better to refactor CreateAction
@@ -121,58 +225,97 @@ func (p *PullRequest) CreateAction(report reports.Action) error {
 		p.Title = p.spec.Title
 	}
 
-	repository, err := p.gh.queryRepository()
+	sourceBranch, workingBranch, _ := p.gh.GetBranches()
+
+	repository, err := p.gh.queryRepository(sourceBranch, workingBranch)
 	if err != nil {
 		return err
 	}
 
 	p.repository = repository
 
-	sourceBranch, workingBranch, _ := p.gh.GetBranches()
-
-	// Check if they are changes that need to be published otherwise exit
-	matchingBranch, err := p.gh.nativeGitHandler.IsSimilarBranch(
-		workingBranch,
-		sourceBranch,
-		p.gh.GetDirectory())
-
-	if err != nil {
-		return err
-	}
-
-	if matchingBranch {
-		logrus.Debugf("GitHub pullrequest not needed")
-
-		return nil
-	}
-
 	// Check if there is already a pullRequest for current pipeline
-	err = p.getRemotePullRequest()
+	err = p.getRemotePullRequest(resetDescription)
 	if err != nil {
 		return err
 	}
 
-	// If there is not already a Pull Request ID then no existing PR so let's open it
+	// If we didn't find a Pull Request ID then it means we need to create a new pullrequest.
 	if len(p.remotePullRequest.ID) == 0 {
-		err = p.OpenPullRequest()
-		if err != nil {
+		if err := p.OpenPullRequest(); err != nil {
 			return err
 		}
+	}
+
+	if len(p.remotePullRequest.ID) == 0 {
+		return nil
 	}
 
 	// Once the remote Pull Request exists, we can than update it with additional information such as
 	// tags,assignee,etc.
-
-	err = p.updatePullRequest()
-	if err != nil {
+	if err := p.updatePullRequest(); err != nil {
 		return err
 	}
 
 	if p.spec.AutoMerge {
-		err = p.EnablePullRequestAutoMerge()
-		if err != nil {
+		if err := p.EnablePullRequestAutoMerge(); err != nil {
+			switch err.Error() {
+			case ErrAutomergeNotAllowOnRepository.Error():
+				logrus.Errorln("Automerge can't be enabled. Make sure to all it on the repository.")
+			case ErrPullRequestIsInCleanStatus.Error():
+				logrus.Errorln("Automerge can't be enabled. Make sure to have branch protection rules enabled on the repository.")
+			default:
+				logrus.Debugf("Error enabling automerge: %s", err.Error())
+			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+// closePullRequest closes an existing Pull Request using GitHub graphql api.
+func (p *PullRequest) closePullRequest() error {
+
+	// https://docs.github.com/en/graphql/reference/input-objects#closepullrequestinput
+	/*
+		  mutation($input: closePullRequestInput!){
+			closePullRequest(input:$input){
+			  pullRequest{
+				url
+			    title
+			    body
+			  }
+			}
+		  }
+
+		  {
+			"input": {
+			  "pullRequestId" : "yyy"
+			}
+		  }
+	*/
+	var mutation struct {
+		UpdatePullRequest struct {
+			PullRequest PullRequestApi
+		} `graphql:"closePullRequest(input: $input)"`
+	}
+
+	input := githubv4.ClosePullRequestInput{
+		PullRequestID: githubv4.ID(p.remotePullRequest.ID),
+	}
+
+	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	if err != nil {
+		logrus.Debugf("Closing pull request: %s", err.Error())
+		return err
+	}
+
+	msg := "Pull request closed as no changed file detected"
+	logrus.Infof("%s at:\n\n\t%s\n\n", msg, mutation.UpdatePullRequest.PullRequest.Url)
+	err = p.addComment(msg)
+	if err != nil {
+		logrus.Errorf("Commenting pull-request: %s", err.Error())
 	}
 
 	return nil
@@ -275,8 +418,6 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 		return ErrAutomergeNotAllowOnRepository
 	}
 
-	var mutation mutationEnablePullRequestAutoMerge
-
 	input := githubv4.EnablePullRequestAutoMergeInput{
 		PullRequestID: githubv4.String(p.remotePullRequest.ID),
 	}
@@ -296,6 +437,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 		}
 	}
 
+	var mutation mutationEnablePullRequestAutoMerge
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 
 	if err != nil {
@@ -330,18 +472,30 @@ func (p *PullRequest) OpenPullRequest() error {
 
 
 	*/
-	var mutation struct {
-		CreatePullRequest struct {
-			PullRequest PullRequestApi
-		} `graphql:"createPullRequest(input: $input)"`
-	}
-
 	bodyPR, err := utils.GeneratePullRequestBody(p.spec.Description, p.Report)
 	if err != nil {
 		return err
 	}
 
-	_, workingBranch, targetBranch := p.gh.GetBranches()
+	sourceBranch, workingBranch, targetBranch := p.gh.GetBranches()
+
+	logrus.Debugf("Branch %s is %s of %s", workingBranch, strings.ToLower(p.repository.Status), sourceBranch)
+
+	// Check if they are changes that need to be published otherwise exit
+	// It's worth mentioning that at this time, changes have already been published
+	// The goal is just to not open a pull request if there is no changes
+	// https://docs.github.com/en/graphql/reference/enums#comparisonstatus
+	switch p.repository.Status {
+	case "AHEAD":
+		logrus.Debugf("Opening GitHub pull request")
+	case "DIVERGED":
+		logrus.Debugf("Opening GitHub pull request even though the branch is diverged")
+	case "BEHIND", "IDENTICAL":
+		logrus.Debugf("GitHub pull request not needed")
+		return nil
+	default:
+		return fmt.Errorf("Unknown status %q", p.repository.Status)
+	}
 
 	input := githubv4.CreatePullRequestInput{
 		RepositoryID:        githubv4.String(p.repository.ID),
@@ -358,7 +512,13 @@ func (p *PullRequest) OpenPullRequest() error {
 		input.HeadRepositoryID = githubv4.NewID(p.repository.ID)
 	}
 
-	logrus.Debugf("Opening pull-request against repo %s", input.RepositoryID)
+	logrus.Debugf("Opening pull-request against repo from %q to %q", input.BaseRefName, input.HeadRefName)
+
+	var mutation struct {
+		CreatePullRequest struct {
+			PullRequest PullRequestApi
+		} `graphql:"createPullRequest(input: $input)"`
+	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
@@ -396,9 +556,9 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository() (bool, error) {
 }
 
 // getRemotePullRequest checks if a Pull Request already exists on GitHub and is in the state 'open' or 'closed'.
-func (p *PullRequest) getRemotePullRequest() error {
+func (p *PullRequest) getRemotePullRequest(resetBody bool) error {
 	/*
-			https://developer.github.com/v4/explorer/
+		https://developer.github.com/v4/explorer/
 		# Query
 		query getPullRequests(
 			$owner: String!,
@@ -455,14 +615,23 @@ func (p *PullRequest) getRemotePullRequest() error {
 		return err
 	}
 
-	if len(query.Repository.PullRequests.Nodes) > 0 {
-		p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
-		// If a remote pullrequest already exist, then we reuse its body to generate the final one
-		p.Report = reports.MergeFromString(p.Report, p.remotePullRequest.Body)
-		logrus.Debugf("Existing pull-request found: %s", p.remotePullRequest.ID)
-	} else {
+	// If no pull-request found, then we can exit
+	if len(query.Repository.PullRequests.Nodes) == 0 {
 		logrus.Debugf("No existing pull-request found in repo: %s/%s", owner, name)
+		return nil
 	}
+
+	p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
+	// If a remote pullrequest already exist, then we reuse its body to generate the final one
+	switch resetBody {
+	case false:
+		logrus.Debugf("Merging existing pull-request body with new report")
+		p.Report = reports.MergeFromString(p.remotePullRequest.Body, p.Report)
+	case true:
+		logrus.Debugf("Resetting pull-request body with new report")
+	}
+
+	logrus.Infof("Existing GitHub pull request found: %s", p.remotePullRequest.Url)
 
 	return nil
 }

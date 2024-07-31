@@ -45,7 +45,7 @@ type distTags struct {
 type versions struct {
 	Name       string
 	Version    string
-	Deprecated string
+	Deprecated interface{}
 }
 
 type Data struct {

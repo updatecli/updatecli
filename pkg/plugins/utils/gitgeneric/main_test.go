@@ -300,3 +300,49 @@ func TestSubmodulesDisabledContent(t *testing.T) {
 
 	os.Remove(workingDir)
 }
+
+func TestLatestCommitHash(t *testing.T) {
+	g := GoGit{}
+	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli-submodules")
+	withSubmodules := false
+
+	tests := []struct {
+		name       string
+		cloneUrl   string
+		workingDir string
+		wantErr    bool
+	}{
+		{
+			name:       "passing test with cloned repository",
+			workingDir: workingDir,
+			cloneUrl:   "https://github.com/updatecli-test/updatecli-submodules.git",
+			wantErr:    false,
+		},
+		{
+			name:       "failing test with existing directory with no git in it",
+			workingDir: "/nonexistent/tmp/dir",
+			cloneUrl:   "",
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer os.RemoveAll(workingDir)
+			if tt.cloneUrl != "" {
+				err := g.Clone("", "", tt.cloneUrl, tt.workingDir, &withSubmodules)
+				if err != nil {
+					t.Errorf("unexpected error: %q", err)
+				}
+			}
+			hash, err := g.GetLatestCommitHash(workingDir)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Len(t, hash, 40)
+		})
+	}
+}

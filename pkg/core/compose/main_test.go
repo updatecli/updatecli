@@ -20,7 +20,7 @@ func TestGetPolicies(t *testing.T) {
 	}{
 		{
 			name: "Test getPolicies with environment variables",
-			file: "testdata/update-compose.yaml",
+			file: "testdata/updatecli-compose.yaml",
 			expectedManifests: []manifest.Manifest{
 				{
 					Manifests: []string{

@@ -136,3 +136,23 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 
 	return false
 }
+
+func (m MatchingRules) isGoVersionOnly() bool {
+	// If there is no rule then we assume it is not only go version
+	if len(m) == 0 {
+		return false
+	}
+
+	goOnlyFound := 0
+	for _, rule := range m {
+		if rule.GoVersion != "" && len(rule.Modules) == 0 {
+			goOnlyFound++
+		}
+	}
+
+	if goOnlyFound == len(m) && goOnlyFound > 0 {
+		return true
+	}
+
+	return false
+}

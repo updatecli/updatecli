@@ -29,9 +29,9 @@ type ScmHandler interface {
 	Clone() (string, error)
 	Checkout() error
 	GetDirectory() (directory string)
-	Push() error
 	Commit(message string) error
 	Clean() error
+	Push() (bool, error)
 	PushTag(tag string) error
 	PushBranch(branch string) error
 	GetChangedFiles(workingDir string) ([]string, error)

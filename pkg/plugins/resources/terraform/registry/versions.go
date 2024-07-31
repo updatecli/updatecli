@@ -2,6 +2,7 @@ package registry
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -10,9 +11,48 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type versionResponse struct {
-	Source   string   `json:"source"`
-	Versions []string `json:"versions"`
+type versionItem struct {
+	Version string `json:"version"`
+}
+
+type moduleVersionListingItem struct {
+	Source   string        `json:"source"`
+	Versions []versionItem `json:"versions"`
+}
+
+type moduleVersionListing struct {
+	Modules []moduleVersionListingItem `json:"modules"`
+}
+
+func (m *moduleVersionListing) versions() (versions []versionItem, err error) {
+	if len(m.Modules) != 1 {
+		return nil, fmt.Errorf("did not received exactly one module from the api")
+	}
+	return m.Modules[0].Versions, nil
+}
+
+func (m *moduleVersionListing) scm() (scm string, err error) {
+	if len(m.Modules) != 1 {
+		return "", fmt.Errorf("did not received exactly one module from the api")
+	}
+	return m.Modules[0].Source, nil
+}
+
+type providerVersionListing struct {
+	Versions []versionItem `json:"versions"`
+}
+
+func (m *providerVersionListing) versions() (versions []versionItem, err error) {
+	return m.Versions, nil
+}
+
+func (m *providerVersionListing) scm() (scm string, err error) {
+	return "", nil
+}
+
+type versionListing interface {
+	versions() (versions []versionItem, err error)
+	scm() (scm string, err error)
 }
 
 func (t *TerraformRegistry) versions() (versions []string, err error) {
@@ -38,14 +78,32 @@ func (t *TerraformRegistry) versions() (versions []string, err error) {
 		return nil, err
 	}
 
-	versionsInfo := versionResponse{}
+	var versionListing versionListing
+	if t.registryAddress.registryType == TypeProvider {
+		versionListing = &providerVersionListing{}
+	} else if t.registryAddress.registryType == TypeModule {
+		versionListing = &moduleVersionListing{}
+	} else {
+		// Unreachable
+		return []string{}, err
+	}
 
-	err = json.Unmarshal(data, &versionsInfo)
+	err = json.Unmarshal(data, versionListing)
 	if err != nil {
 		return nil, err
 	}
 
-	versions = versionsInfo.Versions
+	var rawVersions []versionItem
+
+	rawVersions, err = versionListing.versions()
+	if err != nil {
+		return nil, err
+	}
+
+	versions = make([]string, len(rawVersions))
+	for i, version := range rawVersions {
+		versions[i] = version.Version
+	}
 
 	sort.Strings(versions)
 	t.Version, err = t.versionFilter.Search(versions)
@@ -53,7 +111,10 @@ func (t *TerraformRegistry) versions() (versions []string, err error) {
 		return nil, err
 	}
 
-	t.scm = versionsInfo.Source
+	t.scm, err = versionListing.scm()
+	if err != nil {
+		return nil, err
+	}
 
 	return versions, nil
 }

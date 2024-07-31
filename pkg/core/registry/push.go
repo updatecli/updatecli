@@ -11,14 +11,12 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	credentials "github.com/oras-project/oras-credentials-go"
 	"github.com/sirupsen/logrus"
 	oras "oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/errdef"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
-	"oras.land/oras-go/v2/registry/remote/retry"
 )
 
 // Push pushes updatecli manifest(s) as an OCI image to an OCI registry.
@@ -95,9 +93,10 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		// To investigate...
 		//"org.opencontainers.image.title":       policySpec.Title,
 		"org.opencontainers.image.description": policySpec.Description,
+		"org.opencontainers.image.changelog":   policySpec.Changelog,
 	}
 
-	manifestDescriptor, err := oras.PackManifest(ctx, fs, oras.PackManifestVersion1_1_RC4, ociArtifactType, opts)
+	manifestDescriptor, err := oras.PackManifest(ctx, fs, oras.PackManifestVersion1_1, ociArtifactType, opts)
 	if err != nil {
 		return fmt.Errorf("pack manifest: %w", err)
 	}
@@ -121,22 +120,15 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		if err != nil {
 			return fmt.Errorf("connect to remote repository: %w", err)
 		}
+		ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPush, auth.ActionPull)
 
 		if disableTLS {
 			repo.PlainHTTP = true
 		}
 
-		storeOpts := credentials.StoreOptions{}
-		credStore, err := credentials.NewStoreFromDocker(storeOpts)
-		if err != nil {
+		// 2. Get credentials from the docker credential store
+		if err := getCredentialsFromDockerStore(repo); err != nil {
 			return fmt.Errorf("credstore from docker: %w", err)
-		}
-
-		// Note: The below code can be omitted if authentication is not required
-		repo.Client = &auth.Client{
-			Client:     retry.DefaultClient,
-			Cache:      auth.DefaultCache,
-			Credential: credentials.Credential(credStore),
 		}
 
 		_, _, err = repo.FetchReference(ctx, tag)
