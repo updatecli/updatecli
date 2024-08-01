@@ -16,6 +16,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/flux"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/githubaction"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/golang"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/helmfile"
@@ -34,6 +35,7 @@ var (
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
 			"flux":          flux.Spec{},
+			"github/action": githubaction.Spec{},
 			"golang/gomod":  golang.Spec{},
 			"helm":          helm.Spec{},
 			"helmfile":      helmfile.Spec{},
@@ -54,6 +56,7 @@ var (
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
 		"flux":          &flux.Spec{},
+		"github/action": &githubaction.Spec{},
 		"golang/gomod":  &golang.Spec{},
 		"helm":          &helm.Spec{},
 		"helmfile":      &helmfile.Spec{},
@@ -148,6 +151,18 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		case "flux":
 			crawler, err := flux.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "github/action":
+			crawler, err := githubaction.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
