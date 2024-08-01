@@ -1,0 +1,17 @@
+name: "Terragrunt autodiscovery using git scm"
+scms:
+  terragrunt-example:
+    kind: git
+    spec:
+      url: https://github.com/updatecli-test/terragrunt-example
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: terragrunt-example
+  crawlers:
+    terragrunt:
+      ignore:
+        - path: prod
+        - modules:
+            "tfr://registry.opentofu.org": ""
+
