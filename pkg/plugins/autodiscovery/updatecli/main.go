@@ -1,6 +1,7 @@
 package updatecli
 
 import (
+	"path"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -95,7 +96,10 @@ func New(spec interface{}, rootDir, scmID string) (Updatecli, error) {
 	}
 
 	dir := rootDir
-	if len(s.RootDir) > 0 {
+	if path.IsAbs(s.RootDir) {
+		if scmID != "" {
+			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+		}
 		dir = s.RootDir
 	}
 

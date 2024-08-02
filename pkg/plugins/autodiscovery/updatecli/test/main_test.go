@@ -186,9 +186,8 @@ func TestDiscoverManifests(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			updatecli, err := updatecli.New(
 				updatecli.Spec{
-					RootDir: tt.rootDir,
-					Files:   []string{"updatecli-compose.yaml"},
-				}, "", "")
+					Files: []string{"updatecli-compose.yaml"},
+				}, tt.rootDir, "")
 			require.NoError(t, err)
 
 			pipelines, err := updatecli.DiscoverManifests()
