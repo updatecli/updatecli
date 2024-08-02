@@ -23,17 +23,6 @@ var (
 	ErrDependsOnLoopDetected = errors.New("dependency loop detected")
 )
 
-// isValidateDependsOn test if we are referencing an exist resource key
-func isValidDependsOn(dependsOn string, index map[string]string) bool {
-
-	for val := range index {
-		if strings.Compare(dependsOn, val) == 0 {
-			return true
-		}
-	}
-	return false
-}
-
 // SortedSourcesKeys return a a list of resources by building a DAG
 func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err error) {
 
@@ -212,6 +201,7 @@ func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err 
 	for key, s := range *targets {
 		if len(s.Config.DependsOn) > 0 {
 			for _, dep := range s.Config.DependsOn {
+				dep, _ = parseDependsOnValue(dep)
 				if !isValidDependsOn(dep, index) {
 					logrus.Errorf("%s: %q", ErrNotValidDependsOn, dep)
 					return result, ErrNotValidDependsOn

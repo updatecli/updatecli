@@ -6,6 +6,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/argocd"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terragrunt"
+
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
 
 	"github.com/mitchellh/mapstructure"
@@ -41,6 +43,7 @@ var (
 			"npm":           npm.Spec{},
 			"rancher/fleet": fleet.Spec{},
 			"terraform":     &terraform.Spec{},
+			"terragrunt":    &terragrunt.Spec{},
 			"updatecli":     updatecli.Spec{},
 		},
 	}
@@ -217,6 +220,18 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		case "terraform":
 			crawler, err := terraform.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "terragrunt":
+			crawler, err := terragrunt.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId)
