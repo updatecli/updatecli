@@ -356,9 +356,8 @@ targets:
 		t.Run(tt.name, func(t *testing.T) {
 			helm, err := New(
 				Spec{
-					Digest:  &digest,
-					RootDir: tt.rootDir,
-				}, "", "")
+					Digest: &digest,
+				}, tt.rootDir, "")
 
 			require.NoError(t, err)
 
