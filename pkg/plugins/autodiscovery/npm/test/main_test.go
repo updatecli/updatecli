@@ -118,9 +118,7 @@ func TestDiscoverManifests(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			resource, err := NPMAutodiscovery.New(
-				NPMAutodiscovery.Spec{
-					RootDir: tt.rootDir,
-				}, "", "")
+				NPMAutodiscovery.Spec{}, tt.rootDir, "")
 			require.NoError(t, err)
 
 			pipelines, err := resource.DiscoverManifests()

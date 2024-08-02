@@ -7,6 +7,8 @@ import (
 	"strings"
 	"text/template"
 
+	"path"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
@@ -23,8 +25,15 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
+	searchFromDir := d.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if d.spec.RootDir != "" && !path.IsAbs(d.spec.RootDir) {
+		searchFromDir = filepath.Join(d.rootDir, d.spec.RootDir)
+	}
+
 	foundDockerfiles, err := searchDockerfiles(
-		d.rootDir,
+		searchFromDir,
 		d.filematch)
 
 	if err != nil {

@@ -10,6 +10,8 @@ import (
 // searchFluxFiles will look, recursively, for every files containing a flux helmrelease or helmrepository from a root directory.
 func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 
+	logrus.Debugf("Looking for Flux file(s) in %q", rootDir)
+
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			logrus.Debugf("prevent panic by handling failure accessing a path %q: %v\n", path, err)

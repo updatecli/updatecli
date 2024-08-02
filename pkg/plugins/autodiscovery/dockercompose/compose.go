@@ -3,6 +3,7 @@ package dockercompose
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -33,7 +34,14 @@ type dockercomposeServicesList []dockerComposeService
 func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 	var manifests [][]byte
 
-	foundDockerComposeFiles, err := searchDockerComposeFiles(d.rootDir, d.filematch)
+	searchFromDir := d.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if d.spec.RootDir != "" && !path.IsAbs(d.spec.RootDir) {
+		searchFromDir = filepath.Join(d.rootDir, d.spec.RootDir)
+	}
+
+	foundDockerComposeFiles, err := searchDockerComposeFiles(searchFromDir, d.filematch)
 	if err != nil {
 		return nil, err
 	}

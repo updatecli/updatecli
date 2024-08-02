@@ -3,6 +3,7 @@ package argocd
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"text/template"
 
@@ -41,8 +42,15 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
+	searchFromDir := f.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if f.spec.RootDir != "" && !path.IsAbs(f.spec.RootDir) {
+		searchFromDir = filepath.Join(f.rootDir, f.spec.RootDir)
+	}
+
 	foundFiles, err := searchArgoCDFiles(
-		f.rootDir,
+		searchFromDir,
 		ArgoCDFilePatterns[:])
 
 	if err != nil {

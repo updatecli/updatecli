@@ -3,6 +3,7 @@ package ko
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"text/template"
 
@@ -19,10 +20,16 @@ func (k Ko) discoverContainerManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
-	koFiles, err := searchKosFiles(
-		k.rootDir,
-		DefaultKoFiles)
+	searchFromDir := k.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if k.spec.RootDir != "" && !path.IsAbs(k.spec.RootDir) {
+		searchFromDir = filepath.Join(k.rootDir, k.spec.RootDir)
+	}
 
+	koFiles, err := searchKosFiles(
+		searchFromDir,
+		DefaultKoFiles)
 	if err != nil {
 		return nil, err
 	}

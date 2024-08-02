@@ -3,6 +3,7 @@ package updatecli
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"text/template"
 
@@ -23,8 +24,15 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
+	searchFromDir := u.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if u.spec.RootDir != "" && !path.IsAbs(u.spec.RootDir) {
+		searchFromDir = filepath.Join(u.rootDir, u.spec.RootDir)
+	}
+
 	foundUpdateComposeFiles, err := searchUpdatecliComposeFiles(
-		u.rootDir,
+		searchFromDir,
 		u.files[:])
 
 	if err != nil {

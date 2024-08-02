@@ -3,6 +3,7 @@ package terragrunt
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -55,7 +56,14 @@ type terragruntTransformer struct {
 func (t Terragrunt) discoverTerragruntManifests() ([][]byte, error) {
 	var manifests [][]byte
 
-	foundFiles, err := searchTerragruntFiles(t.rootDir)
+	searchFromDir := t.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if t.spec.RootDir != "" && !path.IsAbs(t.spec.RootDir) {
+		searchFromDir = filepath.Join(t.rootDir, t.spec.RootDir)
+	}
+
+	foundFiles, err := searchTerragruntFiles(searchFromDir)
 	if err != nil {
 		return nil, err
 	}

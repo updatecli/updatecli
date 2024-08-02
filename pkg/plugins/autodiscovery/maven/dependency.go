@@ -3,6 +3,7 @@ package maven
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"text/template"
 
@@ -16,8 +17,15 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
+	searchFromDir := m.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if m.spec.RootDir != "" && !path.IsAbs(m.spec.RootDir) {
+		searchFromDir = filepath.Join(m.rootDir, m.spec.RootDir)
+	}
+
 	foundPomFiles, err := searchPomFiles(
-		m.rootDir,
+		searchFromDir,
 		pomFileName)
 
 	if err != nil {

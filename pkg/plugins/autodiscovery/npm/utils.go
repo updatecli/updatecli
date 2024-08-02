@@ -23,6 +23,8 @@ func searchPackageJsonFiles(rootDir string) ([]string, error) {
 
 	foundFiles := []string{}
 
+	logrus.Debugf("Looking for package.json files in %q", rootDir)
+
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {

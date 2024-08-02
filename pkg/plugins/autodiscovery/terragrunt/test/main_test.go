@@ -233,9 +233,7 @@ func TestDiscoverManifests(t *testing.T) {
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
 			resource, err := terragrunt.New(
-				terragrunt.Spec{
-					RootDir: tt.rootDir,
-				}, "", "")
+				terragrunt.Spec{}, tt.rootDir, "")
 			require.NoError(t, err)
 
 			pipelines, err := resource.DiscoverManifests()

@@ -6,12 +6,15 @@ import (
 	"path/filepath"
 
 	"github.com/beevik/etree"
+	"github.com/sirupsen/logrus"
 )
 
 // searchPomFiles will look, recursively, for every files named Chart.yaml from a root directory.
 func searchPomFiles(rootDir string, files []string) ([]string, error) {
 
 	pomFiles := []string{}
+
+	logrus.Debugf("Looking for Maven pom.xml files in %q", rootDir)
 
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {

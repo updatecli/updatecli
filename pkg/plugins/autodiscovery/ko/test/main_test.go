@@ -125,9 +125,8 @@ targets:
 
 			pod, err := ko.New(
 				ko.Spec{
-					Digest:  &digest,
-					RootDir: tt.rootDir,
-				}, "", "")
+					Digest: &digest,
+				}, tt.rootDir, "")
 
 			require.NoError(t, err)
 

@@ -3,6 +3,7 @@ package helm
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -32,8 +33,15 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
+	searchFromDir := h.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if h.spec.RootDir != "" && !path.IsAbs(h.spec.RootDir) {
+		searchFromDir = filepath.Join(h.rootDir, h.spec.RootDir)
+	}
+
 	foundChartFiles, err := searchChartFiles(
-		h.rootDir,
+		searchFromDir,
 		ChartValidFiles[:])
 
 	if err != nil {

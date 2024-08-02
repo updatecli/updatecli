@@ -3,6 +3,7 @@ package npm
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -14,7 +15,14 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
-	foundFiles, err := searchPackageJsonFiles(n.rootDir)
+	searchFromDir := n.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if n.spec.RootDir != "" && !path.IsAbs(n.spec.RootDir) {
+		searchFromDir = filepath.Join(n.rootDir, n.spec.RootDir)
+	}
+
+	foundFiles, err := searchPackageJsonFiles(searchFromDir)
 
 	if err != nil {
 		return nil, err
