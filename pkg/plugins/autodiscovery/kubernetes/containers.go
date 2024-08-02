@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"text/template"
 
@@ -19,8 +20,15 @@ func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
+	searchFromDir := k.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if k.spec.RootDir != "" && !path.IsAbs(k.spec.RootDir) {
+		searchFromDir = filepath.Join(k.rootDir, k.spec.RootDir)
+	}
+
 	kubernetesFiles, err := searchKubernetesFiles(
-		k.rootDir,
+		searchFromDir,
 		k.files)
 
 	if err != nil {

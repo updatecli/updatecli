@@ -115,9 +115,8 @@ targets:
 			digest := tt.digest
 			pod, err := kubernetes.New(
 				kubernetes.Spec{
-					Digest:  &digest,
-					RootDir: tt.rootDir,
-				}, "", "")
+					Digest: &digest,
+				}, tt.rootDir, "")
 
 			require.NoError(t, err)
 

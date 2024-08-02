@@ -16,6 +16,8 @@ func searchKubernetesFiles(rootDir string, files []string) ([]string, error) {
 
 	kubernetesFiles := []string{}
 
+	logrus.Debugf("Looking for Kubernetes file(s) in %q", rootDir)
+
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
