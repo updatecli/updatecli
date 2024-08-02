@@ -114,6 +114,10 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			manifests = append(manifests, moduleManifest)
 		}
 
+		if g.spec.Only.isGoModuleOnly() {
+			return manifests, nil
+		}
+
 		// Test if the ignore rule based on path is respected
 		if len(g.spec.Ignore) > 0 {
 			if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, "", "") {
