@@ -177,9 +177,7 @@ func TestDiscoverManifests(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			helmfile, err := helmfile.New(
-				helmfile.Spec{
-					RootDir: tt.rootDir,
-				}, "", "")
+				helmfile.Spec{}, tt.rootDir, "")
 			require.NoError(t, err)
 
 			pipelines, err := helmfile.DiscoverManifests()
