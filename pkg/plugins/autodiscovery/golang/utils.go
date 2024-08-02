@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/mod/modfile"
 )
 
@@ -18,6 +19,8 @@ const (
 func searchGoModFiles(rootDir string) ([]string, error) {
 
 	foundFiles := []string{}
+
+	logrus.Debugf("Looking for Go mod file(s) in %q", rootDir)
 
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {

@@ -3,6 +3,7 @@ package golang
 import (
 	"bytes"
 	"os"
+	"path"
 	"path/filepath"
 	"text/template"
 
@@ -15,7 +16,14 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
-	foundFiles, err := searchGoModFiles(g.rootDir)
+	searchFromDir := g.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if g.spec.RootDir != "" && !path.IsAbs(g.spec.RootDir) {
+		searchFromDir = filepath.Join(g.rootDir, g.spec.RootDir)
+	}
+
+	foundFiles, err := searchGoModFiles(searchFromDir)
 
 	if err != nil {
 		return nil, err
