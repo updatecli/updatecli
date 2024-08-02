@@ -3,6 +3,7 @@ package cargo
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"sort"
 	"text/template"
@@ -152,8 +153,15 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 	var manifests [][]byte
 
+	searchFromDir := c.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if c.spec.RootDir != "" && !path.IsAbs(c.spec.RootDir) {
+		searchFromDir = filepath.Join(c.rootDir, c.spec.RootDir)
+	}
+
 	foundCargoFiles, err := findCargoFiles(
-		c.rootDir,
+		searchFromDir,
 		ValidFiles[:],
 	)
 
