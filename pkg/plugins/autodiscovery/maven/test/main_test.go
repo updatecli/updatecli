@@ -226,9 +226,7 @@ func TestDiscoverManifests(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			r, err := m.New(
-				m.Spec{
-					RootDir: tt.rootDir,
-				}, "", "")
+				m.Spec{}, tt.rootDir, "")
 			require.NoError(t, err)
 
 			pipelines, err := r.DiscoverManifests()
