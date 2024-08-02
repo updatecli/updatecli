@@ -138,9 +138,8 @@ targets:
 			digest := tt.digest
 			dockerfile, err := New(
 				Spec{
-					RootDir: tt.rootDir,
-					Digest:  &digest,
-				}, "", "")
+					Digest: &digest,
+				}, tt.rootDir, "")
 			require.NoError(t, err)
 
 			rawPipelines, err := dockerfile.DiscoverManifests()
