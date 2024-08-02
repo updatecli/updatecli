@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
+	"github.com/sirupsen/logrus"
 	terraformAutoDiscovery "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
 	"github.com/zclconf/go-cty/cty"
@@ -25,6 +26,8 @@ const (
 // It will skip Terraform lock files and hcl files not containing terraform block
 func searchTerragruntFiles(rootDir string) ([]string, error) {
 	foundFiles := []string{}
+
+	logrus.Debugf("Looking for Terragrunt modules in %q", rootDir)
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
