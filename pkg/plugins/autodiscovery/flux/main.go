@@ -1,6 +1,8 @@
 package flux
 
 import (
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -115,7 +117,10 @@ func New(spec interface{}, rootDir, scmID string) (Flux, error) {
 	}
 
 	dir := rootDir
-	if len(s.RootDir) > 0 {
+	if path.IsAbs(s.RootDir) {
+		if scmID != "" {
+			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+		}
 		dir = s.RootDir
 	}
 
@@ -172,7 +177,14 @@ func (f Flux) DiscoverManifests() ([][]byte, error) {
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Flux"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Flux")+1))
 
-	err := f.searchFluxFiles(f.rootDir, f.files)
+	searchFromDir := f.rootDir
+	// If the spec.RootDir is an absolute path, then it as already been set
+	// correctly in the New function.
+	if f.spec.RootDir != "" && !path.IsAbs(f.spec.RootDir) {
+		searchFromDir = filepath.Join(f.rootDir, f.spec.RootDir)
+	}
+
+	err := f.searchFluxFiles(searchFromDir, f.files)
 	if err != nil {
 		return nil, err
 	}

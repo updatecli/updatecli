@@ -168,9 +168,8 @@ targets:
 			digest := tt.digest
 			flux, err := New(
 				Spec{
-					Digest:  &digest,
-					RootDir: tt.rootDir,
-				}, "", "")
+					Digest: &digest,
+				}, tt.rootDir, "")
 
 			require.NoError(t, err)
 
