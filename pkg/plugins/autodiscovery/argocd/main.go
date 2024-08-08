@@ -22,9 +22,12 @@ type Spec struct {
 	//  kind - semver
 	//    versionfilter of kind `semver` uses semantic versioning as version filtering
 	//    pattern accepts one of:
-	//      `patch` - patch only update patch version
-	//      `minor` - minor only update minor version
-	//      `major` - major only update major versions
+	//      `prerelease` - Updatecli tries to identify the latest "prerelease" whatever it means
+	//      `patch` - Updatecli only handles patch version update
+	//      `minor` - Updatecli handles patch AND minor version update
+	//      `minoronly` - Updatecli handles minor version only
+	//      `major` - Updatecli handles patch, minor, AND major version update
+	//      `majoronly` - Updatecli only handles major version update
 	//      `a version constraint` such as `>= 1.0.0`
 	//
 	//  kind - regex
