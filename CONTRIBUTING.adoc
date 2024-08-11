@@ -1,10 +1,10 @@
-= CONTRIBUTING
+= Contributing
 :toc: preamble
 :toclevels: 3
 
 Thanks for your interest in this project, feel free to ask any questions you may have.
 
-== REQUIREMENTS
+== Requirements
 
 To build the project, make sure that you link:golang[https://go.dev/] installed, link:https://www.gnu.org/software/make/[GNU Make] and link:https://goreleaser.com/install/[goreleaser installed], then execute the command `make build`, or use Docker with:
 
@@ -12,16 +12,16 @@ To build the project, make sure that you link:golang[https://go.dev/] installed,
 docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windows -e GOARCH=386 golang:1.16 go build -v
 ```
 
-== CONTRIBUTE
+== Contribute
 
-They're multiple ways to contribute which don't necessarily involve coding, like providing feedback, improving documentation and processes.
+They're multiple ways to contribute which don't necessarily involve coding, like providing feedback, financially, improving documentation and processes.
 Here I'll just highlight some of them:
 
-=== FEEDBACK
+=== Feedback
 
 It's significantly harder to build a solution that could be used by different people. It involves many different skills hard to master and it's easy to get stuck in local optimum. So feel free to reach out to say what's wrong and what could be improved.
 
-=== CODE
+=== Code
 
 The code is divided into two categories, core and plugins. The core is designed to be independent and to provide the skeleton for the application, while the plugins define how things are automated for a specific use-case. The easiest part is probably plugins as it allows you to contribute independently to the process you are looking to automate.
 
@@ -29,7 +29,12 @@ The code is divided into two categories, core and plugins. The core is designed 
 
 This section is still evolving as they're many areas that need attention.
 
-==== PLUGINS
+==== Financially
+
+If you're using this project and it's saving you time, consider supporting it financially. It's a great way to show appreciation and to help the project grow.
+You can sponsor the project on GitHub at link:https://github.com/sponsors/olblak[link]
+
+==== Plugins
 
 Plugins can be easily added by following this workflow:
 
@@ -188,7 +193,7 @@ targets:
 ```
 
 
-=== DOCUMENTATION
+=== Documentation
 
 If you spot phrasing issues or just a lack of documentation, feel free to open link:https://github.com/updatecli/updatecli/issues[an issue] and/or link:https://github.com/updatecli/updatecli/pulls[a pull request].
 https://github.com/updatecli/website[website]

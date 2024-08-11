@@ -1,5 +1,7 @@
 = Updatecli
 
+image:https://www.updatecli.io/images/updatecli.png[alt=Updatecli,float="right",align="center",width=200,height=200]
+
 link:https://matrix.to/#/#Updatecli_community:gitter.im[image:https://img.shields.io/matrix/updatecli:matrix.org[]]
 link:https://github.com/updatecli/updatecli/blob/main/LICENSE[image:https://img.shields.io/github/license/updatecli/updatecli[GitHub]]
 link:https://goreportcard.com/report/github.com/updatecli/updatecli[image:https://goreportcard.com/badge/github.com/updatecli/updatecli[Go Report Card]]
@@ -165,6 +167,17 @@ More information link:https://www.updatecli.io/docs/prologue/introduction/[here]
 
 ---
 
+== Roadmap
+
+We use the GitHub milestone link:https://github.com/updatecli/updatecli/milestone/73[**Next**] to prioritize our effort. As our requirements evolve we regularly add plugins or improve existing ones.
+
+If you ever need a specific integration, feel free to either:
+
+1. Contribute it, we are more than happy to help. link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[Link]
+2. Comment on existing issues as we may prioritize issues affecting other users. link:https://github.com/updatecli/updatecli/issues[Link]
+3. Sponsor financially the project link:https://github.com/sponsors/olblak[link]
+4. Feel free to reach out to mailto:contact@updatecli.io[contact@updatecli.io,role=email] to see how we can help you.
+
 == Contributing
 
 As a community-oriented project, all contributions are greatly appreciated!
@@ -186,6 +199,8 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 * 2023
 ** FOSDEM (BE) - Cloud Native Dependencies link:https://fosdem.org/2023/schedule/event/continuous_update_everything/[Video]
 ** CIVO Cloud (UK) - Onward a Continuously Updated Kubernetes Marketplace link:https://www.youtube.com/watch?v=B2wmA627E4w[Video]
+* 2024
+** DevOps Days 15 year anniversary celebration (BE) - Continuously Update Everything
 
 == Links
 
@@ -198,3 +213,6 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 
 link:https://github.com/updatecli/updatecli/graphs/contributors"[image:https://contrib.rocks/image?repo=updatecli/updatecli[]]
 
+== Thanks to the sponsors ❤️
+
+link:https://www.prefect.io/[image:https://avatars.githubusercontent.com/u/41086007?v=4[alt=PrefectHQ,height=200, width=200]]
