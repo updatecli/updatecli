@@ -16,6 +16,7 @@ import (
 	terraformAutoDiscovery "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/gocty"
 )
 
 const (
@@ -258,7 +259,15 @@ func evaluateHcl(rawSource string, hclContent []byte, hclFileName string) (strin
 	}
 	stringValues := make(map[string]string)
 	for localName, localValue := range localsValue {
-		stringValues[localName] = localValue.AsString()
+		if localValue.Type() == cty.String {
+			stringValues[localName] = localValue.AsString()
+		} else {
+			var strVal string
+			err := gocty.FromCtyValue(localValue, &strVal)
+			if err == nil {
+				stringValues[localName] = strVal
+			}
+		}
 	}
 	return sourceValue.AsString(), &stringValues, nil
 }
