@@ -242,7 +242,8 @@ func evaluateHcl(rawSource string, hclContent []byte, hclFileName string) (strin
 		for attrName, attr := range blockContent {
 			attrValue, diags := attr.Expr.Value(&hcl.EvalContext{})
 			if diags.HasErrors() {
-				return "", nil, fmt.Errorf("failed to get attributes value %s: %v", attrName, diags.Error())
+				logrus.Debugf("Skipping attribute %s: %v", attrName, diags.Error())
+				continue
 			}
 			localsValue[attrName] = attrValue
 		}
