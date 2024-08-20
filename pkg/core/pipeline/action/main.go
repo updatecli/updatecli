@@ -261,7 +261,7 @@ func (a *Action) generateActionHandler() error {
 		a.Handler = &g
 
 	default:
-		logrus.Errorf("scm of kind %q is not supported", a.Config.Kind)
+		logrus.Errorf("action of kind %q is not supported", a.Config.Kind)
 	}
 
 	return nil
