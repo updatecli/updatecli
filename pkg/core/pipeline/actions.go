@@ -170,10 +170,12 @@ func (p *Pipeline) RunCleanActions() error {
 
 	for _, action := range p.Actions {
 		if !p.Options.Target.DryRun {
-			// At least we try to clean existing pullrequest
-			err := action.Handler.CleanAction(action.Report)
-			if err != nil {
-				errs = append(errs, err.Error())
+			if action.Handler != nil {
+				// At least we try to clean existing pullrequest
+				err := action.Handler.CleanAction(action.Report)
+				if err != nil {
+					errs = append(errs, err.Error())
+				}
 			}
 		}
 	}
