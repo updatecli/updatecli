@@ -1,7 +1,13 @@
 package temurin
 
 type Spec struct {
-	// ReleaseLine specifies the type of Temurin Release to retrieve: 'lts' (default), feature.
+	// ReleaseLine specifies the type of Temurin Release to retrieve.
+	//
+	// default: "lts"
+	// 
+	// Allowed values:
+	// * "lts"
+	// * "feature"
 	ReleaseLine string `yaml:",omitempty"`
 	// ReleaseType specifies the type of Temurin release: 'ga' (default), 'ea' (nightly releases).
 	ReleaseType string `yaml:",omitempty"`
