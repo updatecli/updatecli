@@ -39,6 +39,9 @@ func New(spec interface{}) (*Temurin, error) {
 	if newSpec.Architecture == "" {
 		newSpec.Architecture = "x64"
 	}
+	if newSpec.Project == "" {
+		newSpec.Project = "jdk"
+	}
 	if newSpec.OperatingSystem == "" {
 		newSpec.OperatingSystem = "linux"
 	}

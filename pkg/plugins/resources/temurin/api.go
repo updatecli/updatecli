@@ -187,9 +187,10 @@ func (t Temurin) apiGetReleaseName() (result string, err error) {
 	}
 
 	apiEndpoint := fmt.Sprintf(
-		"%s?heap_size=normal&image_type=%s&page=0&page_size=10&project=jdk&release_type=%s&semver=true&sort_method=DEFAULT&sort_order=DESC&vendor=eclipse&version=%s",
+		"%s?heap_size=normal&image_type=%s&page=0&page_size=10&project=%s&release_type=%s&semver=true&sort_method=DEFAULT&sort_order=DESC&vendor=eclipse&version=%s",
 		releaseNamesEndpoint,
 		t.spec.ImageType,
+		t.spec.Project,
 		t.spec.ReleaseType,
 		// Mandatory URL encoding otherwise empty responses or HTTP errors
 		url.QueryEscape(versionRange),
@@ -221,12 +222,13 @@ func (t Temurin) apiGetReleaseName() (result string, err error) {
 
 func (t Temurin) apiGetInstallerUrl(releaseName string) (result string, err error) {
 	apiEndpoint := fmt.Sprintf(
-		"%s/%s/%s/%s/%s/hotspot/normal/eclipse?project=jdk",
+		"%s/%s/%s/%s/%s/hotspot/normal/eclipse?project=%s",
 		installersEndpoint,
 		releaseName,
 		t.spec.OperatingSystem,
 		t.spec.Architecture,
 		t.spec.ImageType,
+		t.spec.Project,
 	)
 
 	logrus.Debugf("[temurin] using API endpoint %q", apiEndpoint)
@@ -241,12 +243,13 @@ func (t Temurin) apiGetInstallerUrl(releaseName string) (result string, err erro
 
 func (t Temurin) apiGetChecksumUrl(releaseName string) (result string, err error) {
 	apiEndpoint := fmt.Sprintf(
-		"%s/%s/%s/%s/%s/hotspot/normal/eclipse?project=jdk",
+		"%s/%s/%s/%s/%s/hotspot/normal/eclipse?project=%s",
 		checksumsEndpoint,
 		releaseName,
 		t.spec.OperatingSystem,
 		t.spec.Architecture,
 		t.spec.ImageType,
+		t.spec.Project,
 	)
 
 	logrus.Debugf("[temurin] using API endpoint %q", apiEndpoint)
@@ -262,12 +265,13 @@ func (t Temurin) apiGetChecksumUrl(releaseName string) (result string, err error
 
 func (t Temurin) apiGetSignatureUrl(releaseName string) (result string, err error) {
 	apiEndpoint := fmt.Sprintf(
-		"%s/%s/%s/%s/%s/hotspot/normal/eclipse?project=jdk",
+		"%s/%s/%s/%s/%s/hotspot/normal/eclipse?project=%s",
 		signaturesEndpoint,
 		releaseName,
 		t.spec.OperatingSystem,
 		t.spec.Architecture,
 		t.spec.ImageType,
+		t.spec.Project,
 	)
 
 	logrus.Debugf("[temurin] using API endpoint %q", apiEndpoint)

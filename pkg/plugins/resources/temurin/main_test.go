@@ -23,6 +23,7 @@ func TestNew(t *testing.T) {
 				ImageType:       "jdk",
 				ReleaseType:     "ga",
 				Result:          "version",
+				Project:         "jdk",
 			},
 		},
 		{

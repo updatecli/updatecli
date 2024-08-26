@@ -172,3 +172,4 @@ specificversion
 risc
 riscv
 riscv64
+shenandoah

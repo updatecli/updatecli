@@ -80,32 +80,9 @@ conditions:
     kind: file
     disablesourceinput: true
     spec:
-      file: '{{ source "getLatestLTSLinuxAMD64InstallerURL" }}'
-
-  checkGetLatestLTSLinuxAMD64ChecksumUrl:
-    name: Check if getLatestLTSLinuxAMD64ChecksumUrl returns an existing URL
-    kind: file
-    disablesourceinput: true
-    spec:
-      file: '{{ source "getLatestLTSLinuxAMD64ChecksumUrl" }}'
-
-  checkGetInstallerUrlJDK17WindowsAMD64:
-    name: Check if getInstallerUrlJDK17WindowsAMD64 returns an existing URL
-    kind: file
-    disablesourceinput: true
-    spec:
-      file: '{{ source "getInstallerUrlJDK17WindowsAMD64" }}'
-
-  checkGetChecksumJRE17LinuxS390x:
-    name: Check if getChecksumJRE17LinuxS390x returns an existing URL
-    kind: file
-    disablesourceinput: true
-    spec:
-      file: '{{ source "getChecksumJRE17LinuxS390x" }}'
-
-  checkGetSignatureUrlCustomVersionWindows:
-    name: Check if getSignatureUrlCustomVersionWindows returns an existing URL
-    kind: file
-    disablesourceinput: true
-    spec:
-      file: '{{ source "getSignatureUrlCustomVersionWindows" }}'
+      files:
+        - '{{ source "getLatestLTSLinuxAMD64InstallerURL" }}'
+        - '{{ source "getLatestLTSLinuxAMD64ChecksumUrl" }}'
+        - '{{ source "getInstallerUrlJDK17WindowsAMD64" }}'
+        - '{{ source "getChecksumJRE17LinuxS390x" }}'
+        - '{{ source "getSignatureUrlCustomVersionWindows" }}'
