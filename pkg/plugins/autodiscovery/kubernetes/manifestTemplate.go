@@ -22,7 +22,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .TargetFile }}'
-      key: '{{ .TargetKey}}'
+      key: "{{ .TargetKey}}"
     sourceid: '{{ .SourceID }}'
     transformers:
       - addprefix: '{{ .TargetPrefix }}'
@@ -55,7 +55,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .TargetFile }}'
-      key: '{{ .TargetKey}}'
+      key: "{{ .TargetKey}}"
     sourceid: '{{ .SourceID }}-digest'
     transformers:
       - addprefix: '{{ .TargetPrefix }}'

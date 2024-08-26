@@ -26,6 +26,7 @@ func TestSearchFiles(t *testing.T) {
 			expectedResults: []string{
 				"test/testdata/kustomize/deployment.yaml",
 				"test/testdata/latest/pod.yaml",
+				"test/testdata/prow/prow.yaml",
 				"test/testdata/success/pod.yaml",
 				"test/testdata/template/deployment.yaml",
 			},

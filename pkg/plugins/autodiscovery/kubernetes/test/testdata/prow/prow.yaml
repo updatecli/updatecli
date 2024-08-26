@@ -1,0 +1,41 @@
+presubmits:
+  "*":
+    - name: pull-updatecli-diff
+      always_run: true
+      decorate: true
+      optional: false
+      spec:
+        containers:
+          - image: ghcr.io/updatecli/updatecli:v0.82.2
+            args:
+              - compose
+              - diff
+postsubmits:
+  updatecli/updatecli:
+    - name: pull-updatecli-apply
+      decorate: true
+      branches:
+        - "^main$"
+      spec:
+        containers:
+          - image: ghcr.io/updatecli/updatecli:v0.82.2
+            name: updatecli
+            args:
+              - compose
+              - apply
+
+periodics:
+  - cron: "0 * * * *" # Every hour
+    name: pull-updatecli-apply-cron
+    decorate: true
+    extra_refs:
+      - org: updatecli
+        repo: updatecli
+        base_ref: main
+    spec:
+      containers:
+        - image: ghcr.io/updatecli/updatecli:v0.82.2
+          name: updatecli
+          args:
+            - compose
+            - apply
