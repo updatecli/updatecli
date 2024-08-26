@@ -1,0 +1,88 @@
+name: "Test Adoptium Temurin Versions Resource"
+pipelineid: e2e/adoptium
+
+sources:
+  ## Returns last LTS (implicit default)
+  getLastDefaultVersion:
+    kind: temurin
+
+  ## Returns last feature release (explicit)
+  getLastFeatureVersion:
+    kind: temurin
+    spec:
+      releaseline: feature # Can be 'lts' (default), 'feature', 'feature'
+
+  ## Returns last LTS Nightly
+  getLastLTSNightlyVersion:
+    kind: temurin
+    spec:
+      releaseline: lts
+      releasetype: ea # Can be 'ga' (default), 'ea'
+
+  ## Returns last feature nightly release (EA)
+  # Result: 22+21-ea-beta
+  getLastFeatureNightlyVersion:
+    kind: temurin
+    spec:
+      releaseline: feature
+      releasetype: ea
+
+  ## Returns Last GA of the 17 version line
+  getLastGA17Version:
+    kind: temurin
+    spec:
+      releaseline: feature
+      releasetype: ga
+      featureversion: 17 # TODO: Validated against the list of available releases
+
+  # Returns the installer URL for the latest x64 Linux JDK in the LTS version line
+  getLatestLTSLinuxAMD64InstallerURL:
+    kind: temurin
+    spec:
+      result: installer_url # Can be 'version' (default), 'name', 'installer_url', 'checksum_url', 'signature_url'
+
+  ## Returns the installer checksum URL for the latest x64 Linux JDK in the LTS version line
+  getLatestLTSLinuxAMD64ChecksumUrl:
+    kind: temurin
+    spec:
+      result: checksum_url # Can be 'version' (default), 'name', 'installer_url', 'checksum_url', 'signature_url'
+
+  ## Returns the installer download URL for the latest x64 Windows JDK in the LTS version line
+  getInstallerUrlJDK17WindowsAMD64:
+    kind: temurin
+    spec:
+      result: installer_url
+      featureversion: 17
+      operatingsystem: windows
+
+  ## Returns Checksum URL for latest JRE on the s390x Linux 17 line
+  getChecksumJRE17LinuxS390x:
+    kind: temurin
+    spec:
+      featureversion: 17
+      operatingsystem: linux
+      architecture: s390x # Follows Temurin conventions: can be 'x64' (default), 'x86', 'x32', 'ppc64', 'ppc64le', 's390x', 'aarch64', 'arm', 'sparcv9', 'riscv64'
+      imagetype: jre  # Follows Temurin conventions: can be 'jdk' (default), 'jre', 'testimage', 'debugimage', 'staticlibs', 'sources', 'sbom'
+      result: checksum_url
+
+  ## Returns Signature URL of the latest JRE for the Windows 17.0.9+9 release
+  getSignatureUrlCustomVersionWindows:
+    kind: temurin
+    spec:
+      featureversion: 17
+      operatingsystem: windows
+      result: signature_url
+
+# Make sure that found URLs exist
+conditions:
+  checkGetLatestLTSLinuxAMD64InstallerURL:
+    name: Check if getLatestLTSLinuxAMD64InstallerURL returns an existing URL
+    kind: file
+    disablesourceinput: true
+    spec:
+      files:
+        - '{{ source "getLatestLTSLinuxAMD64InstallerURL" }}'
+        - '{{ source "getLatestLTSLinuxAMD64ChecksumUrl" }}'
+        - '{{ source "getInstallerUrlJDK17WindowsAMD64" }}'
+        - '{{ source "getChecksumJRE17LinuxS390x" }}'
+        - '{{ source "getSignatureUrlCustomVersionWindows" }}'
