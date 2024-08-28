@@ -3,7 +3,7 @@ module github.com/updatecli/updatecli
 go 1.23.0
 
 require (
-	github.com/Masterminds/semver/v3 v3.2.1
+	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/aws/aws-sdk-go v1.55.1
 	github.com/containerd/containerd v1.7.12 // indirect
