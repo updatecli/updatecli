@@ -69,7 +69,7 @@ func TestGetKubernetesManifestData(t *testing.T) {
 			expectedErrorMsg: "yaml: line 19: could not find expected ':'",
 		},
 		{
-			name:           "case: wrong flavour",
+			name:           "case: wrong flavor",
 			filepath:       "test/testdata/prow/prow.yaml",
 			expectedResult: []string{},
 		},
@@ -118,7 +118,7 @@ func TestGetProwManifestData(t *testing.T) {
 			},
 		},
 		{
-			name:           "case: wrong flavour",
+			name:           "case: wrong flavor",
 			filepath:       "test/testdata/success/pod.yaml",
 			expectedResult: []string{},
 		},

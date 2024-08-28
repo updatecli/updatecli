@@ -86,11 +86,11 @@ func getManifestData[T any](filename, logPrefix string) (*T, error) {
 }
 
 // getProwManifestData reads a Prow file for information that could be automatically updated.
-func getProwManifestData(filename string) (*prowFlavourManifestSpec, error) {
-	return getManifestData[prowFlavourManifestSpec](filename, "Prow")
+func getProwManifestData(filename string) (*prowFlavorManifestSpec, error) {
+	return getManifestData[prowFlavorManifestSpec](filename, "Prow")
 }
 
 // getKubernetesManifestData reads a Kubernetes file for information that could be automatically updated.
-func getKubernetesManifestData(filename string) (*kubernetesFlavourManifestSpec, error) {
-	return getManifestData[kubernetesFlavourManifestSpec](filename, "Kubernetes")
+func getKubernetesManifestData(filename string) (*kubernetesFlavorManifestSpec, error) {
+	return getManifestData[kubernetesFlavorManifestSpec](filename, "Kubernetes")
 }

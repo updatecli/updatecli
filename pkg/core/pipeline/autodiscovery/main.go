@@ -213,7 +213,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId,
-				kubernetes.FlavourKubernetes)
+				kubernetes.FlavorKubernetes)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -273,7 +273,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId,
-				kubernetes.FlavourProw)
+				kubernetes.FlavorProw)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue

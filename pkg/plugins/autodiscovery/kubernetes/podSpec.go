@@ -1,14 +1,14 @@
 package kubernetes
 
-// kubernetesFlavourManifestSpec represents FlavourKubernetes manifest
-type kubernetesFlavourManifestSpec struct {
+// kubernetesFlavorManifestSpec represents FlavorKubernetes manifest
+type kubernetesFlavorManifestSpec struct {
 	ApiVersion string          `yaml:"apiVersion,omitempty"`
 	Kind       string          `yaml:"kind,omitempty"`
 	Spec       podTemplateSpec `yaml:"spec,omitempty"`
 }
 
-// prowManifestSpec represents FlavourProw manifest
-type prowFlavourManifestSpec struct {
+// prowManifestSpec represents FlavorProw manifest
+type prowFlavorManifestSpec struct {
 	ProwPreSubmitJobs  map[string][]podControllerSpec `yaml:"presubmits,omitempty"`
 	ProwPostSubmitJobs map[string][]podControllerSpec `yaml:"postsubmits,omitempty"`
 	ProwPeriodicJobs   []podControllerSpec            `yaml:"periodics,omitempty"`

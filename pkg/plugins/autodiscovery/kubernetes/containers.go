@@ -45,7 +45,7 @@ func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
 			continue
 		}
 
-		if k.flavour == FlavourKubernetes {
+		if k.flavor == FlavorKubernetes {
 			data, err := getKubernetesManifestData(kubernetesFile)
 			if err != nil {
 				logrus.Debugln(err)
@@ -106,7 +106,7 @@ func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
 
 				manifests = append(manifests, manifest)
 			}
-		} else if k.flavour == FlavourProw {
+		} else if k.flavor == FlavorProw {
 			data, err := getProwManifestData(kubernetesFile)
 			if err != nil {
 				logrus.Debugln(err)

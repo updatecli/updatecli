@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	FlavourKubernetes string = "kubernetes"
-	FlavourProw       string = "prow"
+	FlavorKubernetes string = "kubernetes"
+	FlavorProw       string = "prow"
 )
 
 // Spec defines the parameters which can be provided to the Kubernetes builder.
@@ -95,12 +95,12 @@ type Kubernetes struct {
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
-	// flavour holds which type of crawler to use, either classic kubernetes, or prow
-	flavour string
+	// flavor holds which type of crawler to use, either classic kubernetes, or prow
+	flavor string
 }
 
 // New return a new valid Kubernetes object.
-func New(spec interface{}, rootDir, scmID, flavour string) (Kubernetes, error) {
+func New(spec interface{}, rootDir, scmID, flavor string) (Kubernetes, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -147,7 +147,7 @@ func New(spec interface{}, rootDir, scmID, flavour string) (Kubernetes, error) {
 		scmID:         scmID,
 		files:         files,
 		versionFilter: newFilter,
-		flavour:       flavour,
+		flavor:        flavor,
 	}, nil
 
 }
