@@ -1,22 +1,25 @@
 package kubernetes
 
-// kubernetesManifestSpec represents Kubernetes manifest
-type kubernetesManifestSpec struct {
+// kubernetesFlavourManifestSpec represents FlavourKubernetes manifest
+type kubernetesFlavourManifestSpec struct {
 	ApiVersion string          `yaml:"apiVersion,omitempty"`
 	Kind       string          `yaml:"kind,omitempty"`
 	Spec       podTemplateSpec `yaml:"spec,omitempty"`
-	// [ProwJobs](https://docs.prow.k8s.io/docs/jobs/) follows the Kubernetes spec
-	ProwPreSubmitJobs  map[string][]podTemplate2Spec `yaml:"presubmits,omitempty"`
-	ProwPostSubmitJobs map[string][]podTemplate2Spec `yaml:"postsubmits,omitempty"`
-	ProwPeriodicJobs   []podTemplate2Spec            `yaml:"periodics,omitempty"`
+}
+
+// prowManifestSpec represents FlavourProw manifest
+type prowFlavourManifestSpec struct {
+	ProwPreSubmitJobs  map[string][]podControllerSpec `yaml:"presubmits,omitempty"`
+	ProwPostSubmitJobs map[string][]podControllerSpec `yaml:"postsubmits,omitempty"`
+	ProwPeriodicJobs   []podControllerSpec            `yaml:"periodics,omitempty"`
 }
 
 type podTemplateSpec struct {
-	Containers []containerSpec  `yaml:"containers,omitempty"`
-	Template   podTemplate2Spec `yaml:"template,omitempty"`
+	Containers []containerSpec   `yaml:"containers,omitempty"`
+	Template   podControllerSpec `yaml:"template,omitempty"`
 }
 
-type podTemplate2Spec struct {
+type podControllerSpec struct {
 	Spec templateSpec `yaml:"spec,omitempty"`
 	Name string       `yaml:"name,omitempty"`
 }

@@ -18,11 +18,13 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		digest            bool
+		flavour           string
 		expectedPipelines []string
 	}{
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata/success",
+			flavour: kubernetes.FlavourKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
 sources:
   updatecli:
@@ -49,6 +51,7 @@ targets:
 		{
 			name:    "Scenario 2 - Kustomize",
 			rootDir: "testdata/kustomize",
+			flavour: kubernetes.FlavourKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "nginx"'
 sources:
   nginx:
@@ -76,6 +79,7 @@ targets:
 			name:    "Scenario - latest and digest",
 			rootDir: "testdata/success",
 			digest:  true,
+			flavour: kubernetes.FlavourKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
 sources:
   updatecli:
@@ -111,6 +115,7 @@ targets:
 			name:    "Scenario - prow",
 			rootDir: "testdata/prow",
 			digest:  true,
+			flavour: kubernetes.FlavourProw,
 			expectedPipelines: []string{`name: 'deps: bump container image "ghcr.io/updatecli/updatecli" for repo "*" and presubmit test "pull-updatecli-diff"'
 sources:
   ghcr.io/updatecli/updatecli:
@@ -209,7 +214,7 @@ targets:
 			pod, err := kubernetes.New(
 				kubernetes.Spec{
 					Digest: &digest,
-				}, tt.rootDir, "")
+				}, tt.rootDir, "", tt.flavour)
 
 			require.NoError(t, err)
 

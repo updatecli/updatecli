@@ -45,155 +45,29 @@ func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
 			continue
 		}
 
-		data, err := getKubernetesManifestData(kubernetesFile)
-		if err != nil {
-			logrus.Debugln(err)
-			continue
-		}
-
-		if data == nil {
-			continue
-		}
-
-		for i, container := range data.Spec.Containers {
-
-			containerName := container.Name
-			if containerName == "" {
-				containerName = container.Image
-			}
-
-			manifest, err := k.generateContainerManifest(
-				fmt.Sprintf("$.spec.containers[%d].image", i),
-				containerName,
-				container.Image,
-				relativeFoundKubernetesFile,
-				"")
-
+		if k.flavour == FlavourKubernetes {
+			data, err := getKubernetesManifestData(kubernetesFile)
 			if err != nil {
 				logrus.Debugln(err)
 				continue
 			}
-
-			if manifest == nil {
+			if data == nil {
 				continue
 			}
 
-			manifests = append(manifests, manifest)
-		}
+			for i, container := range data.Spec.Containers {
 
-		for i, container := range data.Spec.Template.Spec.Containers {
-
-			containerName := container.Name
-			if containerName == "" {
-				containerName = container.Image
-			}
-
-			manifest, err := k.generateContainerManifest(
-				fmt.Sprintf("$.spec.template.spec.containers[%d].image", i),
-				containerName,
-				container.Image,
-				relativeFoundKubernetesFile,
-				"")
-
-			if err != nil {
-				logrus.Debugln(err)
-				continue
-			}
-
-			if manifest == nil {
-				continue
-			}
-
-			manifests = append(manifests, manifest)
-		}
-
-		// Prow Presubmit
-		for repo, tests := range data.ProwPreSubmitJobs {
-			for i, test := range tests {
-				for j, container := range test.Spec.Containers {
-					containerName := container.Name
-					if containerName == "" {
-						imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
-						if err != nil {
-							logrus.Debugln(err)
-							continue
-						}
-						containerName = imageName
-					}
-					manifest, err := k.generateContainerManifest(
-						fmt.Sprintf("$.presubmits.'%s'[%d].spec.containers[%d].image", repo, i, j),
-						containerName,
-						container.Image,
-						relativeFoundKubernetesFile,
-						fmt.Sprintf(" for repo %q and presubmit test %q", repo, test.Name))
-
-					if err != nil {
-						logrus.Debugln(err)
-						continue
-					}
-
-					if manifest == nil {
-						continue
-					}
-
-					manifests = append(manifests, manifest)
-				}
-			}
-		}
-
-		// Prow Postsubmit
-		for repo, tests := range data.ProwPostSubmitJobs {
-			for i, test := range tests {
-				for j, container := range test.Spec.Containers {
-					containerName := container.Name
-					if containerName == "" {
-						imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
-						if err != nil {
-							logrus.Debugln(err)
-							continue
-						}
-						containerName = imageName
-					}
-					manifest, err := k.generateContainerManifest(
-						fmt.Sprintf("$.postsubmits.'%s'[%d].spec.containers[%d].image", repo, i, j),
-						containerName,
-						container.Image,
-						relativeFoundKubernetesFile,
-						fmt.Sprintf(" for repo %q and postsubmit test %q", repo, test.Name))
-
-					if err != nil {
-						logrus.Debugln(err)
-						continue
-					}
-
-					if manifest == nil {
-						continue
-					}
-
-					manifests = append(manifests, manifest)
-				}
-			}
-		}
-
-		// Prow Periodics
-		for i, test := range data.ProwPeriodicJobs {
-			for j, container := range test.Spec.Containers {
 				containerName := container.Name
 				if containerName == "" {
-
-					imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
-					if err != nil {
-						logrus.Debugln(err)
-						continue
-					}
-					containerName = imageName
+					containerName = container.Image
 				}
+
 				manifest, err := k.generateContainerManifest(
-					fmt.Sprintf("$.periodics[%d].spec.containers[%d].image", i, j),
+					fmt.Sprintf("$.spec.containers[%d].image", i),
 					containerName,
 					container.Image,
 					relativeFoundKubernetesFile,
-					fmt.Sprintf(" for periodic test %q", test.Name))
+					"")
 
 				if err != nil {
 					logrus.Debugln(err)
@@ -205,6 +79,142 @@ func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
 				}
 
 				manifests = append(manifests, manifest)
+			}
+
+			for i, container := range data.Spec.Template.Spec.Containers {
+
+				containerName := container.Name
+				if containerName == "" {
+					containerName = container.Image
+				}
+
+				manifest, err := k.generateContainerManifest(
+					fmt.Sprintf("$.spec.template.spec.containers[%d].image", i),
+					containerName,
+					container.Image,
+					relativeFoundKubernetesFile,
+					"")
+
+				if err != nil {
+					logrus.Debugln(err)
+					continue
+				}
+
+				if manifest == nil {
+					continue
+				}
+
+				manifests = append(manifests, manifest)
+			}
+		} else if k.flavour == FlavourProw {
+			data, err := getProwManifestData(kubernetesFile)
+			if err != nil {
+				logrus.Debugln(err)
+				continue
+			}
+			if data == nil {
+				continue
+			}
+
+			// Prow Presubmit
+			for repo, tests := range data.ProwPreSubmitJobs {
+				for i, test := range tests {
+					for j, container := range test.Spec.Containers {
+						containerName := container.Name
+						if containerName == "" {
+							imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
+							if err != nil {
+								logrus.Debugln(err)
+								continue
+							}
+							containerName = imageName
+						}
+						manifest, err := k.generateContainerManifest(
+							fmt.Sprintf("$.presubmits.'%s'[%d].spec.containers[%d].image", repo, i, j),
+							containerName,
+							container.Image,
+							relativeFoundKubernetesFile,
+							fmt.Sprintf(" for repo %q and presubmit test %q", repo, test.Name))
+
+						if err != nil {
+							logrus.Debugln(err)
+							continue
+						}
+
+						if manifest == nil {
+							continue
+						}
+
+						manifests = append(manifests, manifest)
+					}
+				}
+			}
+
+			// Prow Postsubmit
+			for repo, tests := range data.ProwPostSubmitJobs {
+				for i, test := range tests {
+					for j, container := range test.Spec.Containers {
+						containerName := container.Name
+						if containerName == "" {
+							imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
+							if err != nil {
+								logrus.Debugln(err)
+								continue
+							}
+							containerName = imageName
+						}
+						manifest, err := k.generateContainerManifest(
+							fmt.Sprintf("$.postsubmits.'%s'[%d].spec.containers[%d].image", repo, i, j),
+							containerName,
+							container.Image,
+							relativeFoundKubernetesFile,
+							fmt.Sprintf(" for repo %q and postsubmit test %q", repo, test.Name))
+
+						if err != nil {
+							logrus.Debugln(err)
+							continue
+						}
+
+						if manifest == nil {
+							continue
+						}
+
+						manifests = append(manifests, manifest)
+					}
+				}
+			}
+
+			// Prow Periodics
+			for i, test := range data.ProwPeriodicJobs {
+				for j, container := range test.Spec.Containers {
+					containerName := container.Name
+					if containerName == "" {
+
+						imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
+						if err != nil {
+							logrus.Debugln(err)
+							continue
+						}
+						containerName = imageName
+					}
+					manifest, err := k.generateContainerManifest(
+						fmt.Sprintf("$.periodics[%d].spec.containers[%d].image", i, j),
+						containerName,
+						container.Image,
+						relativeFoundKubernetesFile,
+						fmt.Sprintf(" for periodic test %q", test.Name))
+
+					if err != nil {
+						logrus.Debugln(err)
+						continue
+					}
+
+					if manifest == nil {
+						continue
+					}
+
+					manifests = append(manifests, manifest)
+				}
 			}
 		}
 

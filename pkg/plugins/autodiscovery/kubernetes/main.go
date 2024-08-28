@@ -10,6 +10,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
+var (
+	FlavourKubernetes string = "kubernetes"
+	FlavourProw       string = "prow"
+)
+
 // Spec defines the parameters which can be provided to the Kubernetes builder.
 type Spec struct {
 	// Auths provides a map of registry credentials where the key is the registry URL without scheme
@@ -90,10 +95,12 @@ type Kubernetes struct {
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
+	// flavour holds which type of crawler to use, either classic kubernetes, or prow
+	flavour string
 }
 
 // New return a new valid Kubernetes object.
-func New(spec interface{}, rootDir, scmID string) (Kubernetes, error) {
+func New(spec interface{}, rootDir, scmID, flavour string) (Kubernetes, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -140,6 +147,7 @@ func New(spec interface{}, rootDir, scmID string) (Kubernetes, error) {
 		scmID:         scmID,
 		files:         files,
 		versionFilter: newFilter,
+		flavour:       flavour,
 	}, nil
 
 }
