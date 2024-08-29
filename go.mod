@@ -5,7 +5,7 @@ go 1.23.0
 replace github.com/drone/go-scm => github.com/olblak/go-scm v1.26.1-0.20240829085250-adc387402cba
 
 require (
-	github.com/Masterminds/semver/v3 v3.2.1
+	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/aws/aws-sdk-go v1.55.1
 	github.com/containerd/containerd v1.7.12 // indirect
