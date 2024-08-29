@@ -152,10 +152,10 @@ func New(spec interface{}, rootDir, scmID, flavor string) (Kubernetes, error) {
 
 }
 
-func (f Kubernetes) DiscoverManifests() ([][]byte, error) {
+func (k Kubernetes) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Kubernetes"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Kubernetes")+1))
 
-	return f.discoverContainerManifests()
+	return k.discoverContainerManifests()
 }
