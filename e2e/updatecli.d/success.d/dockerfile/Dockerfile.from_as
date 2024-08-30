@@ -1,2 +1,2 @@
-FROM eclipse-temurin:${JAVA_VERSION}-jdk-jammy AS jdk
-FROM --platform=linux/amd64 eclipse-mosquitto:2.0 AS mqtt
+FROM eclipse-temurin:${JAVA_VERSION}-jdk-jammy AS jdk1
+FROM --platform=linux/amd64 eclipse-mosquito:2.0 AS mqtt

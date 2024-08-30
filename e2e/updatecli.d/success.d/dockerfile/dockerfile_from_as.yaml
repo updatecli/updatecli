@@ -5,7 +5,7 @@ sources:
   sayHello:
     kind: shell
     spec:
-      command: echo hello
+      command: echo jdk2
   sayWorld:
     kind: shell
     spec:
