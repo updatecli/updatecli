@@ -1,0 +1,30 @@
+name: Test Dockerfile condition and target
+pipelineid: "e2e/dockerfile_from_as"
+
+sources:
+  sayHello:
+    kind: shell
+    spec:
+      command: echo hello
+  sayWorld:
+    kind: shell
+    spec:
+      command: echo world
+
+targets:
+  setFromAliasToHello:
+    sourceID: sayHello
+    kind: dockerfile
+    spec:
+      file: e2e/updatecli.d/success.d/dockerfile/Dockerfile.from_as
+      instruction:
+        keyword: "FROM-AS"
+        matcher: "jdk"
+  setFromAliasToWorld:
+    sourceID: sayWorld
+    kind: dockerfile
+    spec:
+      file: e2e/updatecli.d/success.d/dockerfile/Dockerfile.from_as
+      instruction:
+        keyword: "FROM-AS"
+        matcher: "mqtt"
