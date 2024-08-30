@@ -198,6 +198,7 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 
 var supportedKeywordsInitializers = map[string]keywords.Logic{
 	"from":        keywords.From{},
+	"from-as":     keywords.From{Alias: true},
 	"run":         nil,
 	"cmd":         nil,
 	"label":       keywords.Label{},

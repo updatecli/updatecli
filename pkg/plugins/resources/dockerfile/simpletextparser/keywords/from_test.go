@@ -157,6 +157,7 @@ func TestFrom_ReplaceLine(t *testing.T) {
 		source       string
 		originalLine string
 		matcher      string
+		alias        bool
 		want         string
 	}{
 		{
@@ -179,6 +180,22 @@ func TestFrom_ReplaceLine(t *testing.T) {
 			originalLine: "FROM alpine:3.12 AS builder",
 			matcher:      "alpine",
 			want:         "FROM alpine:3.14 AS builder",
+		},
+		{
+			name:         "Match and change alias with aliasing",
+			source:       "newBuilder",
+			originalLine: "FROM alpine:3.12 AS builder",
+			matcher:      "builder",
+			want:         "FROM alpine:3.12 AS newBuilder",
+			alias:        true,
+		},
+		{
+			name:         "No change alias without aliasing",
+			source:       "newBuilder",
+			originalLine: "FROM alpine:3.12",
+			matcher:      "builder",
+			want:         "FROM alpine:3.12",
+			alias:        true,
 		},
 		{
 			name:         "Match and change with same name in alias",
@@ -337,7 +354,7 @@ func TestFrom_ReplaceLine(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := From{}
+			f := From{Alias: tt.alias}
 
 			got := f.ReplaceLine(tt.source, tt.originalLine, tt.matcher)
 			assert.Equal(t, tt.want, got)
@@ -351,6 +368,7 @@ func TestFrom_IsLineMatching(t *testing.T) {
 		name         string
 		originalLine string
 		matcher      string
+		alias        bool
 		want         bool
 	}{
 		{
@@ -358,6 +376,27 @@ func TestFrom_IsLineMatching(t *testing.T) {
 			originalLine: "FROM alpine:3.12",
 			matcher:      "alpine",
 			want:         true,
+		},
+		{
+			name:         "Match on alias",
+			originalLine: "FROM alpine:3.12 AS builder",
+			matcher:      "builder",
+			alias:        true,
+			want:         true,
+		},
+		{
+			name:         "Non Match on alias",
+			originalLine: "FROM alpine:3.12 AS builder",
+			matcher:      "alpine",
+			alias:        true,
+			want:         false,
+		},
+		{
+			name:         "Non Match on empty alias",
+			originalLine: "FROM alpine:3.12",
+			matcher:      "alpine",
+			alias:        true,
+			want:         false,
 		},
 		{
 			name:         "Match (lower case instruction)",
@@ -428,7 +467,7 @@ func TestFrom_IsLineMatching(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := From{}
+			f := From{Alias: tt.alias}
 
 			got := f.IsLineMatching(tt.originalLine, tt.matcher)
 			assert.Equal(t, tt.want, got)
@@ -497,6 +536,7 @@ func TestFrom_GetValue(t *testing.T) {
 		originalLine string
 		matcher      string
 		stage        string
+		alias        bool
 		want         string
 		wantErr      bool
 	}{
@@ -506,6 +546,20 @@ func TestFrom_GetValue(t *testing.T) {
 			originalLine: "FROM alpine:3.12 AS builder",
 			want:         "alpine:3.12",
 			wantErr:      false,
+		},
+		{
+			name:         "Match on alias",
+			originalLine: "FROM alpine:3.12 AS builder",
+			want:         "builder",
+			alias:        true,
+			wantErr:      false,
+		},
+		{
+			name:         "Error on alias without alias",
+			originalLine: "FROM alpine:3.12",
+			want:         "alpine",
+			alias:        true,
+			wantErr:      true,
 		},
 		{
 			name:         "Lowercase Match",
@@ -537,7 +591,7 @@ func TestFrom_GetValue(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := From{}
+			a := From{Alias: tt.alias}
 
 			got, gotErr := a.GetValue(tt.originalLine, tt.matcher)
 			if tt.wantErr {
