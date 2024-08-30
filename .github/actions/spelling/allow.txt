@@ -173,3 +173,4 @@ risc
 riscv
 riscv64
 shenandoah
+mosquitto
