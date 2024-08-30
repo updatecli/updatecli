@@ -118,6 +118,11 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue st
 	return []byte(newDockerfileContent), changed, nil
 }
 
+func (m MobyParser) GetInstruction(dockerfileContent []byte) []types.StageInstructionValue {
+	var stagesInstruction []types.StageInstructionValue
+	return stagesInstruction
+}
+
 func (m MobyParser) String() string {
 	return fmt.Sprintf("%s %s", m.Instruction, m.Value)
 }

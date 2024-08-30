@@ -93,6 +93,41 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 	return newDockerfile.Bytes(), changedLines, nil
 }
 
+func (s SimpleTextDockerfileParser) GetInstruction(dockerfileContent []byte) []types.StageInstructionValue {
+	var stagesInstruction []types.StageInstructionValue
+	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
+	stageCounter := -1
+	currentStageName := ""
+	stageScanner := keywords.From{}
+	for scanner.Scan() {
+		originalLine := scanner.Text()
+		if stageName, err := stageScanner.GetStageName(originalLine); err == nil {
+			currentStageName = stageName
+			stageCounter += 1
+		} else if s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
+			stageName := currentStageName
+			if stageName == "" {
+				// Use stage counter
+				stageName = fmt.Sprintf("%d", stageCounter)
+			}
+			if value, err := s.KeywordLogic.GetValue(originalLine, s.Matcher); err == nil {
+				stageValue := types.StageInstructionValue{
+					StageName: stageName,
+					Value:     value,
+				}
+				if len(stagesInstruction) > 0 && stagesInstruction[len(stagesInstruction)-1].StageName == stageName {
+					// Value can be overwritten
+					stagesInstruction = stagesInstruction[:len(stagesInstruction)-1]
+				}
+				stagesInstruction = append(stagesInstruction, stageValue)
+			}
+		}
+
+	}
+
+	return stagesInstruction
+}
+
 func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfileParser, error) {
 
 	var newParser SimpleTextDockerfileParser
@@ -127,7 +162,7 @@ var supportedKeywordsInitializers = map[string]keywords.Logic{
 	"from":        keywords.From{},
 	"run":         nil,
 	"cmd":         nil,
-	"label":       nil,
+	"label":       keywords.Label{},
 	"maintainer":  nil,
 	"expose":      nil,
 	"add":         nil,

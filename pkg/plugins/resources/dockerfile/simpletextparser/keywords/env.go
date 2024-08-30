@@ -38,3 +38,23 @@ func (a Env) IsLineMatching(originalLine, matcher string) bool {
 
 	return found
 }
+
+func (a Env) GetValue(originalLine, matcher string) (string, error) {
+	if a.IsLineMatching(originalLine, matcher) {
+		// With an ARG instruction, we just need the rest of the 2nd "word"
+		parsedLine := strings.Fields(originalLine)
+		argValue := parsedLine[1]
+		// Legacy Docker allows for env without equals
+		if !strings.Contains(argValue, "=") && len(parsedLine) >= 3 {
+			argValue = fmt.Sprintf("%s=%s", argValue, parsedLine[2])
+		}
+		splittedArgValue := strings.Split(argValue, "=")
+		if len(splittedArgValue) < 2 {
+			// ENV without value
+			return "", nil
+		} else {
+			return splittedArgValue[1], nil
+		}
+	}
+	return "", fmt.Errorf("Value not found in line")
+}

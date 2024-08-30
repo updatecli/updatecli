@@ -180,3 +180,87 @@ func TestFrom_IsLineMatching(t *testing.T) {
 		})
 	}
 }
+
+func Test_GetStageName(t *testing.T) {
+	tests := []struct {
+		name         string
+		originalLine string
+		want         string
+		wantErr      bool
+	}{
+		{
+			name:         "No stage name",
+			originalLine: "FROM alpine:3.12",
+			want:         "",
+		},
+		{
+			name:         "Non From line",
+			originalLine: "ENV alpine=3.12",
+			wantErr:      true,
+		},
+		{
+			name:         "Empty line",
+			originalLine: "",
+			wantErr:      true,
+		},
+		{
+			name:         "Stage Name",
+			originalLine: "FROM alpine:3.12 AS builder",
+			want:         "builder",
+		},
+		{
+			name:         "Stage Name lowercase",
+			originalLine: "from alpine:3.12 as builder",
+			want:         "builder",
+		},
+
+		{
+			name:         "Stage name and comment",
+			originalLine: "FROM alpine:3.12 AS alpine",
+			want:         "alpine",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := From{}
+
+			got, gotErr := f.GetStageName(tt.originalLine)
+			if tt.wantErr {
+				assert.Error(t, gotErr)
+			} else {
+				assert.Equal(t, tt.want, got)
+			}
+
+		})
+	}
+}
+
+func TestFrom_GetValue(t *testing.T) {
+	tests := []struct {
+		name         string
+		originalLine string
+		matcher      string
+		want         string
+		wantErr      bool
+	}{
+		{
+			name:         "Match",
+			originalLine: "FROM alpine:3.12 AS alpine",
+			matcher:      "TERRAFORM_VERSION",
+			wantErr:      true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := From{}
+
+			got, gotErr := a.GetValue(tt.originalLine, tt.matcher)
+			if tt.wantErr {
+				assert.Error(t, gotErr)
+			} else {
+				assert.Equal(t, tt.want, got)
+			}
+
+		})
+	}
+}

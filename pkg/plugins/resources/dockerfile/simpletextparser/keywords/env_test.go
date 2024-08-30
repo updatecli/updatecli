@@ -155,3 +155,91 @@ func TestEnv_IsLineMatching(t *testing.T) {
 		})
 	}
 }
+
+func TestEnv_GetValue(t *testing.T) {
+	tests := []struct {
+		name         string
+		originalLine string
+		matcher      string
+		want         string
+		wantErr      bool
+	}{
+		{
+			name:         "Match",
+			originalLine: "ENV TERRAFORM_VERSION=0.13.6",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "0.13.6",
+			wantErr:      false,
+		}, {
+			name:         "Match Space (legacy)",
+			originalLine: "ENV TERRAFORM_VERSION 0.13.6",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "0.13.6",
+			wantErr:      false,
+		},
+
+		{
+			name:         "Match (lower case instruction)",
+			originalLine: "env TERRAFORM_VERSION=0.13.6",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "0.13.6",
+			wantErr:      false,
+		},
+		{
+			name:         "Match default value",
+			originalLine: "ENV TERRAFORM_VERSION",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      false,
+		},
+		{
+			name:         "Match empty value",
+			originalLine: "ENV TERRAFORM_VERSION=",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      false,
+		},
+		{
+			name:         "No Match at all",
+			originalLine: "ENV GOLANG_VERSION=1.15.7",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      true,
+		},
+		{
+			name:         "No Match for key but value",
+			originalLine: "ENV GOLANG_VERSION=TERRAFORM_VERSION",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      true,
+		},
+		{
+			name:         "No Match for lower case key",
+			originalLine: "ENV terraform_version=0.13.6",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      true,
+		},
+		{
+			name:         "Empty line",
+			originalLine: "",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := Env{}
+
+			got, gotErr := a.GetValue(tt.originalLine, tt.matcher)
+			if tt.wantErr {
+				assert.Error(t, gotErr)
+			} else {
+				assert.Equal(t, tt.want, got)
+			}
+
+		})
+	}
+}

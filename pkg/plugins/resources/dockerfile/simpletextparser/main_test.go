@@ -62,6 +62,20 @@ func TestInstruction_setKeywordLogic(t *testing.T) {
 			wantLogic: keywords.Env{},
 		},
 		{
+			name: "'LABEL' instruction",
+			parser: SimpleTextDockerfileParser{
+				Keyword: "LABEL",
+			},
+			wantLogic: keywords.Label{},
+		},
+		{
+			name: "'label' instruction",
+			parser: SimpleTextDockerfileParser{
+				Keyword: "label",
+			},
+			wantLogic: keywords.Label{},
+		},
+		{
 			name: "Not supported (yet) instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "ONBUILD",
@@ -237,6 +251,37 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 			},
 			expectedChanges: types.ChangedLines{},
 		},
+		{
+			name:              "Change org.opencontainers.image.version LABEL instruction",
+			fixtureDockerfile: "LABEL.Dockerfile",
+			givenSource:       "0.14.1",
+			givenInstruction: map[string]string{
+				"keyword": "LABEL",
+				"matcher": "org.opencontainers.image.version",
+			},
+			expectedChanges: types.ChangedLines{
+				3: types.LineDiff{
+					Original: "LABEL org.opencontainers.image.version=0.14.0",
+					New:      "LABEL org.opencontainers.image.version=0.14.1",
+				},
+				7: types.LineDiff{
+					Original: "label org.opencontainers.image.version=0.14.0",
+					New:      "label org.opencontainers.image.version=0.14.1",
+				},
+				11: types.LineDiff{
+					Original: "LABEL org.opencontainers.image.version",
+					New:      "LABEL org.opencontainers.image.version=0.14.1",
+				},
+				19: types.LineDiff{
+					Original: "LABEL org.opencontainers.image.version",
+					New:      "LABEL org.opencontainers.image.version=0.14.1",
+				},
+				20: types.LineDiff{
+					Original: "label org.opencontainers.image.version=0.14.0",
+					New:      "label org.opencontainers.image.version=0.14.1",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -283,71 +328,92 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 	}
 }
 
-func TestNewSimpleTextDockerfileParser(t *testing.T) {
+func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 	tests := []struct {
-		name             string
-		input            map[string]string
-		want             SimpleTextDockerfileParser
-		wantErrorMessage string
+		name              string
+		fixtureDockerfile string
+		givenInstruction  map[string]string
+		expectedResult    []types.StageInstructionValue
 	}{
 		{
-			name: "Normal case with ARG",
-			input: map[string]string{
+			name:              "parse ARG Dockerfile",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenInstruction: map[string]string{
 				"keyword": "ARG",
-				"matcher": "JENKINS_VERSION",
+				"matcher": "HELM_VERSION",
 			},
-			want: SimpleTextDockerfileParser{
-				Keyword:      "ARG",
-				Matcher:      "JENKINS_VERSION",
-				KeywordLogic: keywords.Arg{},
+			expectedResult: []types.StageInstructionValue{
+				types.StageInstructionValue{StageName: "builder", Value: "3.0.0"},
+				types.StageInstructionValue{StageName: "tester", Value: "3.0.0"},
+				types.StageInstructionValue{StageName: "reporter", Value: ""},
 			},
 		},
 		{
-			name: "Missing key 'keyword'",
-			input: map[string]string{
-				"matcher": "JENKINS_VERSION",
+			name:              "parse Arg Dockerfile (lowercase)",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenInstruction: map[string]string{
+				"keyword": "arg",
+				"matcher": "helm_version",
 			},
-			wantErrorMessage: "Cannot parse instruction: No key 'keyword' found in the instruction map[matcher:JENKINS_VERSION].",
+			expectedResult: []types.StageInstructionValue{
+				types.StageInstructionValue{StageName: "base", Value: ""},
+				types.StageInstructionValue{StageName: "6", Value: ""},
+			},
 		},
 		{
-			name: "Missing key 'matcher'",
-			input: map[string]string{
+			name:              "parse Env Dockerfile",
+			fixtureDockerfile: "ENV.Dockerfile",
+			givenInstruction: map[string]string{
+				"keyword": "ENV",
+				"matcher": "TERRAFORM_VERSION",
+			},
+			expectedResult: []types.StageInstructionValue{
+				types.StageInstructionValue{StageName: "normal-upper-case-equal", Value: "0.14.0"},
+				types.StageInstructionValue{StageName: "normal-upper-case-space", Value: "\"0.14.0\""},
+				types.StageInstructionValue{StageName: "normal-lower-case-equal", Value: "0.14.0"},
+				types.StageInstructionValue{StageName: "default-multi-instructions-first", Value: "0.14.0"},
+			},
+		},
+		{
+			name:              "Overwriting label",
+			fixtureDockerfile: "LABEL.Dockerfile",
+			givenInstruction: map[string]string{
+				"keyword": "LABEL",
+				"matcher": "org.opencontainers.image.version",
+			},
+			expectedResult: []types.StageInstructionValue{
+				types.StageInstructionValue{StageName: "builder", Value: "0.14.0"},
+				types.StageInstructionValue{StageName: "tester", Value: "0.14.0"},
+				types.StageInstructionValue{StageName: "reporter", Value: ""},
+				types.StageInstructionValue{StageName: "base", Value: "0.14.0"},
+			},
+		},
+		{
+			name:              "Instruction not matched",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenInstruction: map[string]string{
 				"keyword": "ARG",
+				"matcher": "CUSTOM_VERSION",
 			},
-			wantErrorMessage: "Cannot parse instruction: No key 'matcher' found in the instruction map[].",
-		},
-		{
-			name: "Normal case with unused keys",
-			input: map[string]string{
-				"keyword": "FROM",
-				"matcher": "golang",
-				"regex":   "true",
-			},
-			want: SimpleTextDockerfileParser{
-				Keyword:      "FROM",
-				Matcher:      "golang",
-				KeywordLogic: keywords.From{},
-			},
-		},
-		{
-			name: "Unknown instruction",
-			input: map[string]string{
-				"keyword": "QUIK",
-				"matcher": "JENKINS_VERSION",
-			},
-			wantErrorMessage: fmt.Sprintf("%s Unknown keyword \"QUIK\" provided for Dockerfile's instruction.", result.FAILURE),
+			expectedResult: nil,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotParser, gotErr := NewSimpleTextDockerfileParser(tt.input)
-
-			if tt.wantErrorMessage != "" {
-				assert.NotNil(t, gotErr)
-				assert.Equal(t, tt.wantErrorMessage, gotErr.Error())
+			parserUnderTest, err := NewSimpleTextDockerfileParser(tt.givenInstruction)
+			if err != nil {
+				t.Errorf("Error while calling NewSimpleTextDockerfileParser with argument %v.", tt.givenInstruction)
 			}
 
-			assert.Equal(t, tt.want, gotParser)
+			originalDockerfile, err := os.ReadFile("./test_fixtures/" + tt.fixtureDockerfile)
+			if err != nil {
+				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
+			}
+
+			got := parserUnderTest.GetInstruction(originalDockerfile)
+
+			assert.Equal(t, tt.expectedResult, got)
 		})
 	}
 }

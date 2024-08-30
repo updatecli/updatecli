@@ -39,3 +39,20 @@ func (f From) IsLineMatching(originalLine, matcher string) bool {
 
 	return found
 }
+
+func (f From) GetStageName(originalLine string) (string, error) {
+	if f.IsLineMatching(originalLine, "") {
+		parsedLine := strings.Fields(originalLine)
+		if len(parsedLine) < 3 || strings.ToLower(parsedLine[2]) != "as" {
+			// No stage name
+			return "", nil
+		}
+		// At this stage we have a stage name, it will be the 4th token
+		return parsedLine[3], nil
+	}
+	return "", fmt.Errorf("Value not found in line")
+}
+
+func (a From) GetValue(originalLine, matcher string) (string, error) {
+	return "", fmt.Errorf("GetValue not supported for FROM")
+}
