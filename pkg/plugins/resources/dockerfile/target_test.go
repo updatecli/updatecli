@@ -158,6 +158,47 @@ CMD ["--help:golang"]
 				},
 			},
 		},
+		{
+			name:             "FROM with text parser and stage selection",
+			inputSourceValue: "1.16",
+			spec: Spec{
+				Stage: "builder",
+				Instruction: map[string]interface{}{
+					"keyword": "FROM",
+					"matcher": "golang",
+				},
+			},
+			mockFile: text.MockTextRetriever{
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
+			},
+			files:       []string{"FROM.Dockerfile"},
+			wantChanged: true,
+			wantMockState: text.MockTextRetriever{
+				Contents: map[string]string{
+					"FROM.Dockerfile": `FROM golang:1.16 AS builder
+ARG golang=3.0.0
+LABEL org.opencontainers.image.version=1.0.0
+COPY ./golang .
+RUN go get -d -v ./... && echo golang
+FROM golang
+WORKDIR /go/src/app
+FROM ubuntu:20.04 AS golang
+RUN apt-get update
+FROM ubuntu:20.04
+RUN apt-get update
+LABEL golang="${GOLANG_VERSION}"
+VOLUME /tmp / golang
+USER golang
+WORKDIR /home/updatecli
+COPY --from=golang --chown=updatecli:golang /go/src/app/dist/updatecli /usr/bin/golang
+ENTRYPOINT [ "/usr/bin/golang" ]
+CMD ["--help:golang"]
+`,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

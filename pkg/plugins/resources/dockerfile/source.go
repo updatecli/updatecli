@@ -4,12 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/types"
 )
 
 func (df *Dockerfile) Source(workingDir string, resultSource *result.Source) error {
@@ -51,36 +49,16 @@ func (df *Dockerfile) Source(workingDir string, resultSource *result.Source) err
 
 		logrus.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
 
-		stageValues := df.parser.GetInstruction([]byte(dockerfileContent))
-		stageName := "last stage"
-		if len(stageValues) == 0 {
-			return fmt.Errorf("could not get source value %q for %s in the dockerfile %q",
-				resultSource.Name,
-				stageName,
-				file,
-			)
-		}
-		var value *types.StageInstructionValue
+		value := df.parser.GetInstruction([]byte(dockerfileContent), df.spec.Stage)
+		stageInfo := "last stage"
 		if df.spec.Stage != "" {
-			for _, stageInstruction := range stageValues {
-				if stageInstruction.StageName == df.spec.Stage {
-					value = &stageInstruction
-				}
-				break
-			}
-			stageName := fmt.Sprintf("stage %q", df.spec.Stage)
-			if value == nil {
-				return fmt.Errorf("could not find %s in %q", stageName, file)
-			}
-		} else {
-			// No Stage name provider, using last
-			value = &stageValues[len(stageValues)-1]
+			stageInfo = fmt.Sprintf("stage %q", df.spec.Stage)
 		}
 		resultSource.Result = result.SUCCESS
-		resultSource.Information = value.Value
+		resultSource.Information = value
 		resultSource.Description = fmt.Sprintf("value %q found for %s in the dockerfile file %q",
-			value.Value,
-			stageName,
+			value,
+			stageInfo,
 			file,
 		)
 		return nil

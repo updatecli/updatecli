@@ -37,6 +37,23 @@ func TestDockerfile_Source(t *testing.T) {
 			files: []string{"SOURCE.Dockerfile"},
 		},
 		{
+			name: "FROM Uppercase",
+			spec: Spec{
+				Stage: "builder",
+				Instruction: map[string]interface{}{
+					"keyword": "FROM",
+					"matcher": "golang",
+				},
+			},
+			expectedResult: "golang:1.15",
+			mockFile: text.MockTextRetriever{
+				Contents: map[string]string{
+					"SOURCE.Dockerfile": dockerfileFixture,
+				},
+			},
+			files: []string{"SOURCE.Dockerfile"},
+		},
+		{
 			name: "LABEL lowercase",
 			spec: Spec{
 				Instruction: map[string]interface{}{
@@ -77,7 +94,7 @@ func TestDockerfile_Source(t *testing.T) {
 					"matcher": "org.opencontainers.image.source",
 				},
 			},
-			wantErr: fmt.Errorf("could not get source value \"\" for last stage in the dockerfile \"SOURCE.Dockerfile\""),
+			expectedResult: "",
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": dockerfileFixture,
@@ -162,7 +179,7 @@ LABEL org.opencontainers.image.version=1.0.0
 					"matcher": "org.opencontainers.image.version",
 				},
 			},
-			wantErr: fmt.Errorf("could not find stage \"tester\" in \"SOURCE.Dockerfile\""),
+			expectedResult: "",
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": `FROM golang:1.15 AS builder

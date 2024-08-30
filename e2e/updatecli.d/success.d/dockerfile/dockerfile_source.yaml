@@ -3,7 +3,7 @@ pipelineid: "e2e/dockerfile_source"
 
 sources:
   updatecli:
-    name: Last Github release
+    name: Last updatecli release
     kind: githubrelease
     spec:
       owner: updatecli

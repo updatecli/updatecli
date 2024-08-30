@@ -113,6 +113,7 @@ func TestSimpleTextDockerfileParser_FindInstruction(t *testing.T) {
 		name              string
 		fixtureDockerfile string
 		givenInstruction  map[string]string
+		givenStage        string
 		expected          bool
 	}{
 		{
@@ -123,6 +124,16 @@ func TestSimpleTextDockerfileParser_FindInstruction(t *testing.T) {
 				"keyword": "FROM",
 				"matcher": "golang",
 			},
+		},
+		{
+			name:              "Not Find Instruction ARG golang and stage",
+			fixtureDockerfile: "FROM.Dockerfile",
+			expected:          false,
+			givenInstruction: map[string]string{
+				"keyword": "ARG",
+				"matcher": "golang",
+			},
+			givenStage: "tester",
 		},
 		{
 			name:              "Find Instruction from golang",
@@ -164,7 +175,7 @@ func TestSimpleTextDockerfileParser_FindInstruction(t *testing.T) {
 				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
 			}
 
-			got := parserUnderTest.FindInstruction(originalDockerfile)
+			got := parserUnderTest.FindInstruction(originalDockerfile, tt.givenStage)
 
 			assert.Equal(t, tt.expected, got)
 		})
@@ -178,6 +189,7 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 		givenSource          string
 		givenInstruction     map[string]string
 		expectedChanges      types.ChangedLines
+		stage                string
 		expectedErrorMessage string // If undefined (e.g. equals to empty string), then no error is expected
 	}{
 		{
@@ -226,6 +238,22 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 				},
 				27: types.LineDiff{
 					Original: "ARG HELM_VERSION",
+					New:      "ARG HELM_VERSION=4.5.6",
+				},
+			},
+		},
+		{
+			name:              "Change HELM_VERSION ARG instruction in stage builder",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenSource:       "4.5.6",
+			givenInstruction: map[string]string{
+				"keyword": "ARG",
+				"matcher": "HELM_VERSION",
+			},
+			stage: "builder",
+			expectedChanges: types.ChangedLines{
+				3: types.LineDiff{
+					Original: "ARG HELM_VERSION=3.0.0",
 					New:      "ARG HELM_VERSION=4.5.6",
 				},
 			},
@@ -295,7 +323,7 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
 			}
 
-			gotContent, gotChanges, gotError := parserUnderTest.ReplaceInstructions(originalDockerfile, tt.givenSource)
+			gotContent, gotChanges, gotError := parserUnderTest.ReplaceInstructions(originalDockerfile, tt.givenSource, tt.stage)
 
 			// Check for expected errors
 			if tt.expectedErrorMessage != "" {
@@ -331,62 +359,49 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 	tests := []struct {
 		name              string
+		stage             string
 		fixtureDockerfile string
 		givenInstruction  map[string]string
-		expectedResult    []types.StageInstructionValue
+		expectedResult    string
 	}{
 		{
-			name:              "parse ARG Dockerfile",
+			name:              "parse ARG Dockerfile builder",
 			fixtureDockerfile: "ARG.Dockerfile",
 			givenInstruction: map[string]string{
 				"keyword": "ARG",
 				"matcher": "HELM_VERSION",
 			},
-			expectedResult: []types.StageInstructionValue{
-				{StageName: "builder", Value: "3.0.0"},
-				{StageName: "tester", Value: "3.0.0"},
-				{StageName: "reporter", Value: ""},
-			},
+			stage:          "builder",
+			expectedResult: "3.0.0",
 		},
 		{
-			name:              "parse Arg Dockerfile (lowercase)",
+			name:              "parse ARG Dockerfile tester",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenInstruction: map[string]string{
+				"keyword": "ARG",
+				"matcher": "HELM_VERSION",
+			},
+			stage:          "tester",
+			expectedResult: "3.0.0",
+		},
+		{
+			name:              "parse ARG Dockerfile reporter",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenInstruction: map[string]string{
+				"keyword": "ARG",
+				"matcher": "HELM_VERSION",
+			},
+			stage:          "reporter",
+			expectedResult: "",
+		},
+		{
+			name:              "parse Arg Dockerfile (lowercase) and no stage",
 			fixtureDockerfile: "ARG.Dockerfile",
 			givenInstruction: map[string]string{
 				"keyword": "arg",
 				"matcher": "helm_version",
 			},
-			expectedResult: []types.StageInstructionValue{
-				{StageName: "base", Value: ""},
-				{StageName: "6", Value: ""},
-			},
-		},
-		{
-			name:              "parse Env Dockerfile",
-			fixtureDockerfile: "ENV.Dockerfile",
-			givenInstruction: map[string]string{
-				"keyword": "ENV",
-				"matcher": "TERRAFORM_VERSION",
-			},
-			expectedResult: []types.StageInstructionValue{
-				{StageName: "normal-upper-case-equal", Value: "0.14.0"},
-				{StageName: "normal-upper-case-space", Value: "\"0.14.0\""},
-				{StageName: "normal-lower-case-equal", Value: "0.14.0"},
-				{StageName: "default-multi-instructions-first", Value: "0.14.0"},
-			},
-		},
-		{
-			name:              "Overwriting label",
-			fixtureDockerfile: "LABEL.Dockerfile",
-			givenInstruction: map[string]string{
-				"keyword": "LABEL",
-				"matcher": "org.opencontainers.image.version",
-			},
-			expectedResult: []types.StageInstructionValue{
-				{StageName: "builder", Value: "0.14.0"},
-				{StageName: "tester", Value: "0.14.0"},
-				{StageName: "reporter", Value: ""},
-				{StageName: "base", Value: "0.14.0"},
-			},
+			expectedResult: "",
 		},
 		{
 			name:              "Instruction not matched",
@@ -395,7 +410,7 @@ func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 				"keyword": "ARG",
 				"matcher": "CUSTOM_VERSION",
 			},
-			expectedResult: nil,
+			expectedResult: "",
 		},
 	}
 
@@ -411,7 +426,7 @@ func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
 			}
 
-			got := parserUnderTest.GetInstruction(originalDockerfile)
+			got := parserUnderTest.GetInstruction(originalDockerfile, tt.stage)
 
 			assert.Equal(t, tt.expectedResult, got)
 		})

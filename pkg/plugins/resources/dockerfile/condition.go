@@ -30,7 +30,7 @@ func (d *Dockerfile) Condition(source string, scm scm.ScmHandler) (pass bool, me
 
 		logrus.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
 
-		found := d.parser.FindInstruction([]byte(dockerfileContent))
+		found := d.parser.FindInstruction([]byte(dockerfileContent), d.spec.Stage)
 
 		switch found {
 		case true:

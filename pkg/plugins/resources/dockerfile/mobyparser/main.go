@@ -27,7 +27,7 @@ var (
 	positionKeyRegex = regexp.MustCompile(`^(.*)\[[[:digit:]]*\]\[[[:digit:]]*\]$`)
 )
 
-func (m MobyParser) FindInstruction(dockerfileContent []byte) bool {
+func (m MobyParser) FindInstruction(dockerfileContent []byte, stage string) bool {
 
 	data, err := parser.Parse(bytes.NewReader(dockerfileContent))
 	if err != nil {
@@ -62,7 +62,7 @@ func (m MobyParser) FindInstruction(dockerfileContent []byte) bool {
 	return true
 }
 
-func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue string) ([]byte, types.ChangedLines, error) {
+func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue, stage string) ([]byte, types.ChangedLines, error) {
 
 	changed := make(types.ChangedLines)
 
@@ -118,10 +118,9 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue st
 	return []byte(newDockerfileContent), changed, nil
 }
 
-func (m MobyParser) GetInstruction(dockerfileContent []byte) []types.StageInstructionValue {
-	var stagesInstruction []types.StageInstructionValue
+func (m MobyParser) GetInstruction(dockerfileContent []byte, stage string) string {
 	// Not implemented
-	return stagesInstruction
+	return ""
 }
 
 func (m MobyParser) String() string {
