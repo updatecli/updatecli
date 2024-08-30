@@ -3,8 +3,6 @@ package keywords
 import (
 	"fmt"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
 type From struct {
@@ -77,7 +75,7 @@ func (f From) parseTokens(originalLine string) (fromToken, error) {
 	// Whatever remains is the raw image
 	tokens.image = rawImage
 	currentTokenIndex += 1
-	// We may have reach the end of the from directorive
+	// We may have reach the end of the from directive
 	if currentTokenIndex >= lineLength {
 		return tokens, nil
 	}
@@ -154,7 +152,6 @@ func (f From) ReplaceLine(source, originalLine, matcher string) string {
 func (f From) IsLineMatching(originalLine, matcher string) bool {
 	tokens, err := f.parseTokens(originalLine)
 	if err != nil {
-		logrus.Tracef("Skipping dockerfile line due to: %s", err)
 		return false
 	}
 

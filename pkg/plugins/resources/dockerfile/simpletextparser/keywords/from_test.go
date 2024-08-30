@@ -378,7 +378,7 @@ func TestFrom_IsLineMatching(t *testing.T) {
 			want:         true,
 		},
 		{
-			name:         "Match and change with platforming",
+			name:         "Match and change with platform",
 			originalLine: "FROM --platform=linux/amd64 alpine:3.12",
 			matcher:      "alpine",
 			want:         true,
