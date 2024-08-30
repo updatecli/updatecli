@@ -92,23 +92,24 @@ func TestDockerfile_Target(t *testing.T) {
 			wantMockState: text.MockTextRetriever{
 				Contents: map[string]string{
 					"FROM.Dockerfile": `FROM golang:1.16 AS builder
-		ARG golang=3.0.0
-		COPY ./golang .
-		RUN go get -d -v ./... && echo golang
-		FROM golang:1.16
-		WORKDIR /go/src/app
-		FROM ubuntu:20.04 AS golang
-		RUN apt-get update
-		FROM ubuntu:20.04
-		RUN apt-get update
-		LABEL golang="${GOLANG_VERSION}"
-		VOLUME /tmp / golang
-		USER golang
-		WORKDIR /home/updatecli
-		COPY --from=golang --chown=updatecli:golang /go/src/app/dist/updatecli /usr/bin/golang
-		ENTRYPOINT [ "/usr/bin/golang" ]
-		CMD ["--help:golang"]
-		`,
+ARG golang=3.0.0
+LABEL org.opencontainers.image.version=1.0.0
+COPY ./golang .
+RUN go get -d -v ./... && echo golang
+FROM golang:1.16
+WORKDIR /go/src/app
+FROM ubuntu:20.04 AS golang
+RUN apt-get update
+FROM ubuntu:20.04
+RUN apt-get update
+LABEL golang="${GOLANG_VERSION}"
+VOLUME /tmp / golang
+USER golang
+WORKDIR /home/updatecli
+COPY --from=golang --chown=updatecli:golang /go/src/app/dist/updatecli /usr/bin/golang
+ENTRYPOINT [ "/usr/bin/golang" ]
+CMD ["--help:golang"]
+`,
 				},
 			},
 		},
@@ -181,7 +182,10 @@ func TestDockerfile_Target(t *testing.T) {
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantChanged, gotResult.Changed)
-			assert.Equal(t, tt.wantMockState.Contents[tt.spec.File], mockFile.Contents[tt.spec.File])
+			assert.Equal(t, len(tt.files), len(gotResult.Files))
+			for _, file := range tt.files {
+				assert.Equal(t, tt.wantMockState.Contents[file], mockFile.Contents[file])
+			}
 		})
 	}
 }
