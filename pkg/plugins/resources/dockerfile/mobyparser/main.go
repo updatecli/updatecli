@@ -120,6 +120,7 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue st
 
 func (m MobyParser) GetInstruction(dockerfileContent []byte) []types.StageInstructionValue {
 	var stagesInstruction []types.StageInstructionValue
+	// Not implemented
 	return stagesInstruction
 }
 

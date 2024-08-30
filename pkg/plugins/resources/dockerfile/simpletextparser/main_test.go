@@ -343,9 +343,9 @@ func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 				"matcher": "HELM_VERSION",
 			},
 			expectedResult: []types.StageInstructionValue{
-				types.StageInstructionValue{StageName: "builder", Value: "3.0.0"},
-				types.StageInstructionValue{StageName: "tester", Value: "3.0.0"},
-				types.StageInstructionValue{StageName: "reporter", Value: ""},
+				{StageName: "builder", Value: "3.0.0"},
+				{StageName: "tester", Value: "3.0.0"},
+				{StageName: "reporter", Value: ""},
 			},
 		},
 		{
@@ -356,8 +356,8 @@ func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 				"matcher": "helm_version",
 			},
 			expectedResult: []types.StageInstructionValue{
-				types.StageInstructionValue{StageName: "base", Value: ""},
-				types.StageInstructionValue{StageName: "6", Value: ""},
+				{StageName: "base", Value: ""},
+				{StageName: "6", Value: ""},
 			},
 		},
 		{
@@ -368,10 +368,10 @@ func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 				"matcher": "TERRAFORM_VERSION",
 			},
 			expectedResult: []types.StageInstructionValue{
-				types.StageInstructionValue{StageName: "normal-upper-case-equal", Value: "0.14.0"},
-				types.StageInstructionValue{StageName: "normal-upper-case-space", Value: "\"0.14.0\""},
-				types.StageInstructionValue{StageName: "normal-lower-case-equal", Value: "0.14.0"},
-				types.StageInstructionValue{StageName: "default-multi-instructions-first", Value: "0.14.0"},
+				{StageName: "normal-upper-case-equal", Value: "0.14.0"},
+				{StageName: "normal-upper-case-space", Value: "\"0.14.0\""},
+				{StageName: "normal-lower-case-equal", Value: "0.14.0"},
+				{StageName: "default-multi-instructions-first", Value: "0.14.0"},
 			},
 		},
 		{
@@ -382,10 +382,10 @@ func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 				"matcher": "org.opencontainers.image.version",
 			},
 			expectedResult: []types.StageInstructionValue{
-				types.StageInstructionValue{StageName: "builder", Value: "0.14.0"},
-				types.StageInstructionValue{StageName: "tester", Value: "0.14.0"},
-				types.StageInstructionValue{StageName: "reporter", Value: ""},
-				types.StageInstructionValue{StageName: "base", Value: "0.14.0"},
+				{StageName: "builder", Value: "0.14.0"},
+				{StageName: "tester", Value: "0.14.0"},
+				{StageName: "reporter", Value: ""},
+				{StageName: "base", Value: "0.14.0"},
 			},
 		},
 		{
