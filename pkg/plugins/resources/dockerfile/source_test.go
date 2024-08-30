@@ -102,7 +102,7 @@ func TestDockerfile_Source(t *testing.T) {
 			},
 			files: []string{"SOURCE.Dockerfile", "LABEL2.Dockerfile"},
 		}, {
-			name: "Inexistant files",
+			name: "No files specified",
 			spec: Spec{
 				Instruction: map[string]interface{}{
 					"keyword": "LABEL",
@@ -154,7 +154,7 @@ LABEL org.opencontainers.image.version=1.0.0
 			files: []string{"SOURCE.Dockerfile"},
 		},
 		{
-			name: "MultiStage inexisting stage",
+			name: "Non existing stage",
 			spec: Spec{
 				Stage: "tester",
 				Instruction: map[string]interface{}{
