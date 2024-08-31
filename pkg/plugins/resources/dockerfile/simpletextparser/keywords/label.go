@@ -35,12 +35,12 @@ func (a Label) GetValue(originalLine, matcher string) (string, error) {
 	if a.IsLineMatching(originalLine, matcher) {
 		// With an ARG instruction, we just need the rest of the 2nd "word"
 		parsedLine := strings.Fields(originalLine)
-		splittedArgValue := strings.Split(parsedLine[1], "=")
-		if len(splittedArgValue) < 2 {
+		splitArgValue := strings.Split(parsedLine[1], "=")
+		if len(splitArgValue) < 2 {
 			// ARG without value
 			return "", nil
 		} else {
-			return splittedArgValue[1], nil
+			return splitArgValue[1], nil
 		}
 	}
 	return "", fmt.Errorf("Value not found in line")

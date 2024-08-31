@@ -48,12 +48,12 @@ func (a Env) GetValue(originalLine, matcher string) (string, error) {
 		if !strings.Contains(argValue, "=") && len(parsedLine) >= 3 {
 			argValue = fmt.Sprintf("%s=%s", argValue, parsedLine[2])
 		}
-		splittedArgValue := strings.Split(argValue, "=")
-		if len(splittedArgValue) < 2 {
+		splitArgValue := strings.Split(argValue, "=")
+		if len(splitArgValue) < 2 {
 			// ENV without value
 			return "", nil
 		} else {
-			return splittedArgValue[1], nil
+			return splitArgValue[1], nil
 		}
 	}
 	return "", fmt.Errorf("Value not found in line")

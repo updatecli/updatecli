@@ -127,11 +127,11 @@ func (f From) ReplaceLine(source, originalLine, matcher string) string {
 	// Source can be in the form [<tag>][@<digest>]
 	tag := source
 	digest := ""
-	splittedSource := strings.Split(source, "@")
-	if len(splittedSource) == 2 {
+	splitSource := strings.Split(source, "@")
+	if len(splitSource) == 2 {
 		// We have a digest
-		tag = splittedSource[0]
-		digest = splittedSource[1]
+		tag = splitSource[0]
+		digest = splitSource[1]
 	}
 	tokens.tag = tag
 	tokens.digest = digest
