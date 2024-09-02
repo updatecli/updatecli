@@ -17,9 +17,7 @@ var (
 )
 
 func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
-
 	var manifests [][]byte
-
 	searchFromDir := k.rootDir
 	// If the spec.RootDir is an absolute path, then it as already been set
 	// correctly in the New function.
@@ -40,77 +38,24 @@ func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
 
 		relativeFoundKubernetesFile, err := filepath.Rel(k.rootDir, kubernetesFile)
 		if err != nil {
-			// Let's try the next chart if one fail
 			logrus.Debugln(err)
 			continue
 		}
 
-		data, err := getKubernetesManifestData(kubernetesFile)
-		if err != nil {
-			logrus.Debugln(err)
-			continue
+		switch k.flavor {
+		case FlavorKubernetes:
+			manifests = append(manifests, k.discoverKubernetesManifest(kubernetesFile, relativeFoundKubernetesFile)...)
+		case FlavorProw:
+			manifests = append(manifests, k.discoverProwManifest(kubernetesFile, relativeFoundKubernetesFile)...)
+		default:
+			return nil, fmt.Errorf("Kubernetes manifest %q not supported", k.flavor)
 		}
-
-		if data == nil {
-			continue
-		}
-
-		for i, container := range data.Spec.Containers {
-
-			containerName := container.Name
-			if containerName == "" {
-				containerName = container.Image
-			}
-
-			manifest, err := k.generateContainerManifest(
-				fmt.Sprintf("$.spec.containers[%d].image", i),
-				containerName,
-				container.Image,
-				relativeFoundKubernetesFile)
-
-			if err != nil {
-				logrus.Debugln(err)
-				continue
-			}
-
-			if manifest == nil {
-				continue
-			}
-
-			manifests = append(manifests, manifest)
-		}
-
-		for i, container := range data.Spec.Template.Spec.Containers {
-
-			containerName := container.Name
-			if containerName == "" {
-				containerName = container.Image
-			}
-
-			manifest, err := k.generateContainerManifest(
-				fmt.Sprintf("$.spec.template.spec.containers[%d].image", i),
-				containerName,
-				container.Image,
-				relativeFoundKubernetesFile)
-
-			if err != nil {
-				logrus.Debugln(err)
-				continue
-			}
-
-			if manifest == nil {
-				continue
-			}
-
-			manifests = append(manifests, manifest)
-		}
-
 	}
 
 	return manifests, nil
 }
 
-func (k Kubernetes) generateContainerManifest(targetKey, containerName, containerImage, relativeFoundKubernetesFile string) ([]byte, error) {
+func (k Kubernetes) generateContainerManifest(targetKey, containerName, containerImage, relativeFoundKubernetesFile, manifestNameSuffix string) ([]byte, error) {
 	var err error
 
 	if containerImage == "" {
@@ -203,7 +148,8 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		TargetFile           string
 		ScmID                string
 	}{
-		ManifestName:         fmt.Sprintf("deps: bump container image %q", containerName),
+
+		ManifestName:         fmt.Sprintf("deps: bump container image %q%s", containerName, manifestNameSuffix),
 		ImageName:            imageName,
 		ImageTag:             imageTag,
 		SourceID:             sourceId,
