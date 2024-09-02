@@ -1,0 +1,54 @@
+name: Test Dockerfile source
+pipelineid: "e2e/dockerfile_source"
+
+sources:
+  updatecli:
+    name: Last updatecli release
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+  testerVersion:
+    name: Get Tester stage version
+    kind: dockerfile
+    spec:
+      file: e2e/updatecli.d/success.d/dockerfile/Dockerfile.source
+      stage: "tester"
+      instruction:
+        keyword: "LABEL"
+        matcher: "org.opencontainers.image.test_version"
+    transformers:
+      - trimprefix: '"'
+      - trimsuffix: '"'
+      - semverinc: patch
+  baseVersion:
+    name: Get Base version
+    kind: dockerfile
+    spec:
+      file: e2e/updatecli.d/success.d/dockerfile/Dockerfile.source
+      instruction:
+        keyword: "LABEL"
+        matcher: "org.opencontainers.image.version"
+
+targets:
+  setAppVersion:
+    kind: dockerfile
+    spec:
+      file: e2e/updatecli.d/success.d/dockerfile/Dockerfile.source
+      instruction:
+        keyword: "ARG"
+        matcher: "UPDATECLI_VERSION"
+    sourceid: updatecli
+  setTestVersion:
+    kind: dockerfile
+    spec:
+      files:
+        - e2e/updatecli.d/success.d/dockerfile/Dockerfile.source
+      instruction:
+        keyword: "LABEL"
+        matcher: "org.opencontainers.image.test_version"
+    sourceid: testerVersion
+    dependson:
+      - setAppVersion
+    dependsonchange: true

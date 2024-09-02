@@ -39,6 +39,24 @@ func TestDockerfile_Condition(t *testing.T) {
 			wantChanged: true,
 		},
 		{
+			name:             "Not Found FROM with text parser and stage selection",
+			inputSourceValue: "1.16",
+			spec: Spec{
+				Instruction: map[string]string{
+					"keyword": "FROM",
+					"matcher": "ubuntu",
+				},
+				Stage: "builder",
+			},
+			files: []string{"FROM.Dockerfile"},
+			mockTest: text.MockTextRetriever{
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
+			},
+			wantChanged: false,
+		},
+		{
 			name:             "Found FROM with text parser and absolute path",
 			inputSourceValue: "1.16",
 			spec: Spec{

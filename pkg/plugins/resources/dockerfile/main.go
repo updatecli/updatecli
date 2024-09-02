@@ -21,6 +21,12 @@ type Spec struct {
 	Instruction types.Instruction `yaml:"instruction,omitempty"`
 	// Value specifies the value for a specified Dockerfile instruction.
 	Value string `yaml:"value,omitempty"`
+	// Stage can be used to further refined the scope
+	// For Sources:
+	// - If not defined, the last stage will be considered
+	// For Condition and Targets:
+	// - If not defined, all stages will be considered
+	Stage string `yaml:"value,omitempty"`
 }
 
 // Dockerfile defines a resource of kind "dockerfile"

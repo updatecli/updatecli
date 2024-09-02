@@ -148,3 +148,85 @@ func TestArg_IsLineMatching(t *testing.T) {
 		})
 	}
 }
+
+func TestArg_GetValue(t *testing.T) {
+	tests := []struct {
+		name         string
+		originalLine string
+		matcher      string
+		want         string
+		wantErr      bool
+	}{
+		{
+			name:         "Match",
+			originalLine: "ARG TERRAFORM_VERSION=0.13.6",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "0.13.6",
+		},
+		{
+			name:         "Match (lower case instruction)",
+			originalLine: "arg TERRAFORM_VERSION=0.13.6",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "0.13.6",
+		},
+		{
+			name:         "Match default value",
+			originalLine: "ARG TERRAFORM_VERSION",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+		},
+		{
+			name:         "Match empty value",
+			originalLine: "ARG TERRAFORM_VERSION=",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+		},
+		{
+			name:         "No Match at all",
+			originalLine: "ARG GOLANG_VERSION=1.15.7",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      true,
+		},
+		{
+			name:         "No Match for key but value",
+			originalLine: "ARG GOLANG_VERSION=TERRAFORM_VERSION",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      true,
+		},
+		{
+			name:         "No Match for lower case key",
+			originalLine: "ARG terraform_version=0.13.6",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      true,
+		},
+		{
+			name:         "Empty line",
+			originalLine: "",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "",
+			wantErr:      true,
+		},
+		{
+			name:         "Match and comment",
+			originalLine: "ARG TERRAFORM_VERSION=0.13.6 # Pin tf version",
+			matcher:      "TERRAFORM_VERSION",
+			want:         "0.13.6",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := Arg{}
+
+			got, gotErr := a.GetValue(tt.originalLine, tt.matcher)
+			if tt.wantErr {
+				assert.Error(t, gotErr)
+			} else {
+				assert.Equal(t, tt.want, got)
+			}
+
+		})
+	}
+}
