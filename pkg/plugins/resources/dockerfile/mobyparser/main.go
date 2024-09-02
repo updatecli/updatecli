@@ -120,6 +120,7 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue, s
 
 func (m MobyParser) GetInstruction(dockerfileContent []byte, stage string) string {
 	// Not implemented
+	logrus.Warningf("Get Instruction is not yet supported for the MobyParser, if needed switch to the simpletextparser")
 	return ""
 }
 
