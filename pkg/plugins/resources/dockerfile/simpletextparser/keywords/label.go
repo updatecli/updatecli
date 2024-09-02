@@ -13,7 +13,7 @@ func (a Label) ReplaceLine(source, originalLine, matcher string) string {
 		return originalLine
 	}
 
-	// With an ARG instruction, we only need to use the 2nd "word"
+	// With an LABEL instruction, we only need to use the 2nd "word"
 	parsedLine := strings.Fields(originalLine)
 
 	parsedLine[1] = matcher + "=" + source
@@ -33,11 +33,11 @@ func (a Label) IsLineMatching(originalLine, matcher string) bool {
 
 func (a Label) GetValue(originalLine, matcher string) (string, error) {
 	if a.IsLineMatching(originalLine, matcher) {
-		// With an ARG instruction, we just need the rest of the 2nd "word"
+		// With an LABEL instruction, we just need the rest of the 2nd "word"
 		parsedLine := strings.Fields(originalLine)
 		splitArgValue := strings.Split(parsedLine[1], "=")
 		if len(splitArgValue) < 2 {
-			// ARG without value
+			// LABEL without value
 			return "", nil
 		} else {
 			return splitArgValue[1], nil

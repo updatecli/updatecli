@@ -41,7 +41,7 @@ func (a Env) IsLineMatching(originalLine, matcher string) bool {
 
 func (a Env) GetValue(originalLine, matcher string) (string, error) {
 	if a.IsLineMatching(originalLine, matcher) {
-		// With an ARG instruction, we just need the rest of the 2nd "word"
+		// With an ENV instruction, we just need the rest of the 2nd "word"
 		parsedLine := strings.Fields(originalLine)
 		argValue := parsedLine[1]
 		// Legacy Docker allows for env without equals

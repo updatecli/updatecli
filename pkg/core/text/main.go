@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -15,6 +14,7 @@ import (
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
 	"github.com/sirupsen/logrus"
+	httputils "github.com/updatecli/updatecli/pkg/plugins/utils/http"
 )
 
 type TextRetriever interface {
@@ -29,8 +29,9 @@ type Text struct{}
 
 // readFromURL reads a text content from an http/https url
 func readFromURL(url string, line int) (string, error) {
+	client := httputils.NewRetryClient()
 	// #nosec G107 // url is always "user-defined" so it's tainted by nature
-	resp, err := http.Get(url)
+	resp, err := client.Get(url)
 	if err != nil {
 		return "", err
 	}
