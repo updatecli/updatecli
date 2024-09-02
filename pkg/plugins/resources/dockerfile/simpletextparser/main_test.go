@@ -259,6 +259,22 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 			},
 		},
 		{
+			name:              "Change builder name in stage builder",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenSource:       "new_builder",
+			givenInstruction: map[string]string{
+				"keyword": "FROM-AS",
+				"matcher": "builder",
+			},
+			stage: "builder",
+			expectedChanges: types.ChangedLines{
+				1: types.LineDiff{
+					Original: "FROM golang:1.15 AS builder",
+					New:      "FROM golang:1.15 AS new_builder",
+				},
+			},
+		},
+		{
 			name:              "Instruction not matched",
 			fixtureDockerfile: "FROM.Dockerfile",
 			givenSource:       "4.5.6",

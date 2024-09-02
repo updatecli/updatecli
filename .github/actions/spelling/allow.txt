@@ -173,6 +173,7 @@ risc
 riscv
 riscv64
 shenandoah
+mosquitto
 Presubmit
 presubmits
 Postsubmit

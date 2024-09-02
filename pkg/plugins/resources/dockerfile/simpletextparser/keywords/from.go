@@ -6,6 +6,7 @@ import (
 )
 
 type From struct {
+	Alias bool
 }
 type fromToken struct {
 	keyword  string
@@ -125,20 +126,26 @@ func (f From) ReplaceLine(source, originalLine, matcher string) string {
 	// Reconstruct the image
 	// And image can be in the form <name>[:<tag>][@<digest>]
 	// Source can be in the form [<tag>][@<digest>]
-	tag := source
-	digest := ""
-	splitSource := strings.Split(source, "@")
-	if len(splitSource) == 2 {
-		// We have a digest
-		tag = splitSource[0]
-		digest = splitSource[1]
+	if !f.Alias {
+		tag := source
+		digest := ""
+		splitSource := strings.Split(source, "@")
+		if len(splitSource) == 2 {
+			// We have a digest
+			tag = splitSource[0]
+			digest = splitSource[1]
+		}
+		tokens.tag = tag
+		tokens.digest = digest
 	}
-	tokens.tag = tag
-	tokens.digest = digest
 	lineTokens = append(lineTokens, tokens.getImageRef())
 	// Add alias if present
 	if tokens.aliasKw != "" {
-		lineTokens = append(lineTokens, tokens.aliasKw, tokens.alias)
+		alias := tokens.alias
+		if f.Alias {
+			alias = source
+		}
+		lineTokens = append(lineTokens, tokens.aliasKw, alias)
 	}
 	// Add comment if present
 	if tokens.comment != "" {
@@ -155,7 +162,14 @@ func (f From) IsLineMatching(originalLine, matcher string) bool {
 		return false
 	}
 
-	return strings.HasPrefix(tokens.image, matcher)
+	toMatch := tokens.image
+	if f.Alias {
+		toMatch = tokens.alias
+	}
+	if toMatch == "" {
+		return false
+	}
+	return strings.HasPrefix(toMatch, matcher)
 }
 
 func (f From) GetStageName(originalLine string) (string, error) {
@@ -173,6 +187,9 @@ func (f From) GetValue(originalLine, matcher string) (string, error) {
 	}
 	if !f.IsLineMatching(originalLine, matcher) {
 		return "", fmt.Errorf("FROM line not matching")
+	}
+	if f.Alias {
+		return tokens.alias, nil
 	}
 	return tokens.getImageRef(), nil
 }

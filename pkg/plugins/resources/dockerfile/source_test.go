@@ -54,6 +54,40 @@ func TestDockerfile_Source(t *testing.T) {
 			files: []string{"SOURCE.Dockerfile"},
 		},
 		{
+			name: "FROM-AS",
+			spec: Spec{
+				Stage: "builder",
+				Instruction: map[string]interface{}{
+					"keyword": "FROM-AS",
+					"matcher": "builder",
+				},
+			},
+			expectedResult: "builder",
+			mockFile: text.MockTextRetriever{
+				Contents: map[string]string{
+					"SOURCE.Dockerfile": dockerfileFixture,
+				},
+			},
+			files: []string{"SOURCE.Dockerfile"},
+		},
+		{
+			name: "FROM-AS lowercase",
+			spec: Spec{
+				Stage: "builder",
+				Instruction: map[string]interface{}{
+					"keyword": "from-as",
+					"matcher": "builder",
+				},
+			},
+			expectedResult: "builder",
+			mockFile: text.MockTextRetriever{
+				Contents: map[string]string{
+					"SOURCE.Dockerfile": dockerfileFixture,
+				},
+			},
+			files: []string{"SOURCE.Dockerfile"},
+		},
+		{
 			name: "LABEL lowercase",
 			spec: Spec{
 				Instruction: map[string]interface{}{
