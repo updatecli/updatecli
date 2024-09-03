@@ -79,3 +79,4 @@
 ^CODEOWNERS$
 ignore$
 ^pkg/plugins/autodiscovery/terragrunt/test/testdata/not_hcl.txt$
+
