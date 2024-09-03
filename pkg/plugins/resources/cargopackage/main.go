@@ -86,8 +86,7 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 		return nil, err
 	}
 
-	webClient := http.DefaultClient
-	webClient.Transport = httpclient.NewThrottledTransport(1*time.Second, 1, http.DefaultTransport)
+	webClient := httpclient.NewThrottledClient(1*time.Second, 1, http.DefaultTransport)
 	newResource := &CargoPackage{
 		spec:          newSpec,
 		versionFilter: newFilter,

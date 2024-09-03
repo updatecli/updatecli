@@ -72,7 +72,8 @@ func TestFile_ReadFromUrl(t *testing.T) {
 				location = fmt.Sprintf("%s/%s", server.URL, tt.location)
 			}
 
-			content, err := readFromURL(location, 0)
+			tr := Text{}
+			content, err := tr.readFromURL(location, 0)
 			if tt.expectedErr != nil {
 				assert.Error(t, err)
 				assert.Equal(t, tt.expectedErr, err)

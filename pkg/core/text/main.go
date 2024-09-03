@@ -14,7 +14,7 @@ import (
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
 	"github.com/sirupsen/logrus"
-	httputils "github.com/updatecli/updatecli/pkg/plugins/utils/http"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 type TextRetriever interface {
@@ -23,15 +23,20 @@ type TextRetriever interface {
 	WriteToFile(content string, location string) error
 	WriteLineToFile(lineContent, location string, lineNumber int) error
 	FileExists(location string) bool
+	SetHttpClient(client httpclient.HTTPClient)
 }
 
-type Text struct{}
+type Text struct {
+	httpClient httpclient.HTTPClient
+}
 
 // readFromURL reads a text content from an http/https url
-func readFromURL(url string, line int) (string, error) {
-	client := httputils.NewRetryClient()
+func (t *Text) readFromURL(url string, line int) (string, error) {
+	if t.httpClient == nil {
+		t.httpClient = httpclient.NewRetryClient()
+	}
 	// #nosec G107 // url is always "user-defined" so it's tainted by nature
-	resp, err := client.Get(url)
+	resp, err := t.httpClient.Get(url)
 	if err != nil {
 		return "", err
 	}
@@ -105,7 +110,7 @@ func getLine(reader io.Reader, line int) string {
 func (t *Text) ReadAll(location string) (string, error) {
 	if IsURL(location) {
 		logrus.Debugf("URL detected for location %q", location)
-		content, err := readFromURL(location, 0)
+		content, err := t.readFromURL(location, 0)
 		if err != nil {
 			return "", err
 		}
@@ -132,7 +137,7 @@ func (t *Text) ReadAll(location string) (string, error) {
 // "https://", or file url "file://" or filepath (default)
 func (t *Text) ReadLine(location string, line int) (string, error) {
 	if IsURL(location) {
-		content, err := readFromURL(location, line)
+		content, err := t.readFromURL(location, line)
 		if err != nil {
 			return "", err
 		}
@@ -264,7 +269,7 @@ func (t *Text) FileExists(location string) bool {
 	if IsURL(location) {
 		logrus.Debugf("URL detected for file %q", location)
 		// Try to only get the first line of the remote URL
-		_, err := readFromURL(location, 1)
+		_, err := t.readFromURL(location, 1)
 
 		// No error means that the remote URL exists (1XX, 2XX or 3XX)
 		return err == nil
@@ -276,4 +281,8 @@ func (t *Text) FileExists(location string) bool {
 	}
 
 	return true
+}
+
+func (t *Text) SetHttpClient(client httpclient.HTTPClient) {
+	t.httpClient = client
 }

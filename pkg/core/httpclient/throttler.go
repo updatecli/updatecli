@@ -26,3 +26,9 @@ func NewThrottledTransport(limitPeriod time.Duration, requestCount int, transpor
 		rateLimiter:         rate.NewLimiter(rate.Every(limitPeriod), requestCount),
 	}
 }
+
+func NewThrottledClient(limitPeriod time.Duration, requestCount int, transportWrap http.RoundTripper) HTTPClient {
+	client := http.DefaultClient
+	client.Transport = NewThrottledTransport(limitPeriod, requestCount, transportWrap)
+	return client
+}

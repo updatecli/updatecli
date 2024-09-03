@@ -1,4 +1,4 @@
-package http
+package httpclient
 
 import (
 	"bytes"
@@ -34,7 +34,7 @@ func shouldRetry(err error, resp *http.Response) bool {
 }
 
 func drainBody(resp *http.Response) error {
-	if resp.Body != nil {
+	if resp != nil && resp.Body != nil {
 		if _, err := io.Copy(io.Discard, resp.Body); err != nil {
 			return err
 		}
@@ -82,12 +82,12 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func NewRetryClient() *http.Client {
+func NewRetryClient() HTTPClient {
 	transport := &retryTransport{
 		transport: &http.Transport{},
 	}
 
-	return &http.Client{
-		Transport: transport,
-	}
+	client := http.DefaultClient
+	client.Transport = transport
+	return client
 }
