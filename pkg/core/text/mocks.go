@@ -3,6 +3,8 @@ package text
 import (
 	"fmt"
 	"strings"
+
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 // MockTextRetriever is a stub implementation of the `TextRetriever` interface to be used in our unit test suites.
@@ -52,4 +54,8 @@ func (mtr *MockTextRetriever) WriteToFile(content string, location string) error
 func (mtr *MockTextRetriever) FileExists(location string) bool {
 	_, exists := mtr.Contents[location]
 	return exists
+}
+
+func (mtr *MockTextRetriever) SetHttpClient(client httpclient.HTTPClient) {
+	// No-op
 }

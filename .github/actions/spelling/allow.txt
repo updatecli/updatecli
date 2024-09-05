@@ -173,3 +173,10 @@ risc
 riscv
 riscv64
 shenandoah
+Presubmit
+presubmits
+Postsubmit
+postsubmits
+postsubmit
+Periodics
+periodics

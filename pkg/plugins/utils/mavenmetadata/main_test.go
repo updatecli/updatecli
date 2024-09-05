@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -85,10 +86,10 @@ func TestNew(t *testing.T) {
 			repositoryURL: "https://somewhere",
 			want: &DefaultHandler{
 				metadataURL: "https://somewhere",
-				webClient:   http.DefaultClient,
 				versionFilter: version.Filter{
 					Kind: "latest",
 				},
+				contentRetriever: &text.Text{},
 			},
 		},
 	}
@@ -174,21 +175,18 @@ func TestDefaultHandler_GetLatestVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sut := DefaultHandler{
-				metadataURL:   tt.metadataURL,
-				versionFilter: tt.versionFilter,
-				webClient: &httpclient.MockClient{
-					DoFunc: func(req *http.Request) (*http.Response, error) {
-						body := tt.mockedHttpBody
-						statusCode := tt.mockedHTTPStatusCode
-						return &http.Response{
-							StatusCode: statusCode,
-							Body:       io.NopCloser(strings.NewReader(body)),
-						}, tt.mockedHttpError
-					},
-				},
-			}
+			sut := New(tt.metadataURL, tt.versionFilter)
 
+			sut.contentRetriever.SetHttpClient(&httpclient.MockClient{
+				DoFunc: func(req *http.Request) (*http.Response, error) {
+					body := tt.mockedHttpBody
+					statusCode := tt.mockedHTTPStatusCode
+					return &http.Response{
+						StatusCode: statusCode,
+						Body:       io.NopCloser(strings.NewReader(body)),
+					}, tt.mockedHttpError
+				},
+			})
 			got, err := sut.GetLatestVersion()
 
 			if tt.wantErr {
@@ -229,20 +227,17 @@ func TestDefaultHandler_GetVersions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sut := DefaultHandler{
-				metadataURL:   tt.metadataURL,
-				versionFilter: version.Filter{},
-				webClient: &httpclient.MockClient{
-					DoFunc: func(req *http.Request) (*http.Response, error) {
-						body := tt.mockedHttpBody
-						statusCode := tt.mockedHTTPStatusCode
-						return &http.Response{
-							StatusCode: statusCode,
-							Body:       io.NopCloser(strings.NewReader(body)),
-						}, tt.mockedHttpError
-					},
+			sut := New(tt.metadataURL, version.Filter{})
+			sut.contentRetriever.SetHttpClient(&httpclient.MockClient{
+				DoFunc: func(req *http.Request) (*http.Response, error) {
+					body := tt.mockedHttpBody
+					statusCode := tt.mockedHTTPStatusCode
+					return &http.Response{
+						StatusCode: statusCode,
+						Body:       io.NopCloser(strings.NewReader(body)),
+					}, tt.mockedHttpError
 				},
-			}
+			})
 
 			got, err := sut.GetVersions()
 

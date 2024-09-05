@@ -40,7 +40,7 @@ FROM ubuntu AS golang
 
 FROM ubuntu:20.04
 
-arg helm_version
+arg helm_version # here
 
 LABEL maintainer="Olblak <me@olblak.com>"
 

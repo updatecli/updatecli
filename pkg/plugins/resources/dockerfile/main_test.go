@@ -125,6 +125,7 @@ func TestDockerfile_New(t *testing.T) {
 
 const dockerfileFixture = `FROM golang:1.15 AS builder
 ARG golang=3.0.0
+LABEL org.opencontainers.image.version=1.0.0
 COPY ./golang .
 RUN go get -d -v ./... && echo golang
 FROM golang

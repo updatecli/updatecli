@@ -78,3 +78,5 @@
 ^\Qpkg/plugins/scms/git/sign/main_test.go\E$
 ^CODEOWNERS$
 ignore$
+^pkg/plugins/autodiscovery/terragrunt/test/testdata/not_hcl.txt$
+

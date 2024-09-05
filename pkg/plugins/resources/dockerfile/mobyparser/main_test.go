@@ -307,7 +307,7 @@ func TestReplaceNode(t *testing.T) {
 
 func TestMobyParser_FindInstruction(t *testing.T) {
 	for i, data := range datasets {
-		found := data.spec.FindInstruction([]byte(data.dockerfile))
+		found := data.spec.FindInstruction([]byte(data.dockerfile), "")
 
 		if found != data.expectedFound {
 			t.Errorf("%d: Expected %s %s finding to be '%t', got '%t'",
