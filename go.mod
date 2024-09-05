@@ -1,6 +1,6 @@
 module github.com/updatecli/updatecli
 
-go 1.23.0
+go 1.23.1
 
 replace github.com/drone/go-scm => github.com/olblak/go-scm v1.26.1-0.20240829085250-adc387402cba
 
