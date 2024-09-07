@@ -6,7 +6,7 @@ import (
 	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
-// Spec defines settings used to interact with Bitbucket pullrequest
+// Spec defines settings used to interact with Bitbucket Server pullrequest
 // It's a mapping of user input from a Updatecli manifest and it shouldn't modified
 type Spec struct {
 	client.Spec
@@ -24,7 +24,7 @@ type Spec struct {
 	Body string `yaml:",inline,omitempty"`
 }
 
-// Bitbucket contains information to interact with Bitbucket api
+// Stash contains information to interact with Bitbucket Server API
 type Stash struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
@@ -42,9 +42,8 @@ type Stash struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 }
 
-// New returns a new valid Bitbucket object.
+// New returns a new valid Bitbucket Server object.
 func New(spec interface{}, scm *stashscm.Stash) (Stash, error) {
-
 	var clientSpec client.Spec
 	var s Spec
 

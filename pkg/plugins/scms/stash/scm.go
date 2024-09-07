@@ -45,7 +45,6 @@ func (s *Stash) Clean() error {
 
 // Clone run `git clone`.
 func (s *Stash) Clone() (string, error) {
-
 	s.setDirectory()
 
 	err := s.nativeGitHandler.Clone(
@@ -55,7 +54,6 @@ func (s *Stash) Clone() (string, error) {
 		s.GetDirectory(),
 		s.Spec.Submodules,
 	)
-
 	if err != nil {
 		logrus.Errorf("failed cloning Bitbucket repository %q", s.GetURL())
 		return "", err
@@ -66,7 +64,6 @@ func (s *Stash) Clone() (string, error) {
 
 // Commit run `git commit`.
 func (s *Stash) Commit(message string) error {
-
 	// Generate the conventional commit message
 	commitMessage, err := s.Spec.CommitMessage.Generate(message)
 	if err != nil {
@@ -99,7 +96,6 @@ func (s *Stash) Checkout() error {
 
 // Add run `git add`.
 func (s *Stash) Add(files []string) error {
-
 	err := s.nativeGitHandler.Add(files, s.Spec.Directory)
 	if err != nil {
 		return err
@@ -120,9 +116,8 @@ func (s *Stash) IsRemoteBranchUpToDate() (bool, error) {
 		s.GetDirectory())
 }
 
-// Push run `git push` to the corresponding Bitbucket remote branch if not already created.
+// Push run `git push` to the corresponding Bitbucket Server remote branch if not already created.
 func (s *Stash) Push() (bool, error) {
-
 	return s.nativeGitHandler.Push(
 		s.Spec.Username,
 		s.Spec.Token,
@@ -132,7 +127,6 @@ func (s *Stash) Push() (bool, error) {
 
 // PushTag push tags
 func (s *Stash) PushTag(tag string) error {
-
 	err := s.nativeGitHandler.PushTag(
 		tag,
 		s.Spec.Username,
@@ -149,7 +143,6 @@ func (s *Stash) PushTag(tag string) error {
 
 // PushBranch push branch
 func (s *Stash) PushBranch(branch string) error {
-
 	err := s.nativeGitHandler.PushTag(
 		branch,
 		s.Spec.Username,
