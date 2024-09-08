@@ -7,7 +7,7 @@ replace github.com/drone/go-scm => github.com/olblak/go-scm v1.26.1-0.2024082908
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/aws/aws-sdk-go v1.55.1
+	github.com/aws/aws-sdk-go v1.55.5
 	github.com/containerd/containerd v1.7.18 // indirect
 	github.com/fatih/color v1.17.0
 	github.com/getsops/sops/v3 v3.9.0
