@@ -1,5 +1,6 @@
 name: "deps: bump patch version for Golang module"
 pipelineid: "golang/gomod/patch"
+groupby: individual
 
 spec:
   versionfilter:
