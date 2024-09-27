@@ -352,6 +352,14 @@ func TestGreaterThanPattern(t *testing.T) {
 			version: "3.0", want: "3.0.x",
 		},
 		{
+			name: "Prerelease semver pattern",
+			filter: Filter{
+				Kind:    SEMVERVERSIONKIND,
+				Pattern: "prerelease",
+			},
+			version: "3.0", want: ">=3.0.0-0 <= 3.0.0",
+		},
+		{
 			name: "Version constraint semver pattern",
 			filter: Filter{
 				Kind:    SEMVERVERSIONKIND,
