@@ -3,7 +3,7 @@ scms:
   default:
     kind: git
     spec:
-      url: "https://github.com/knative/infra.git"
+      url: "https://github.com/updatecli-test/knative-infra.git"
       branch: main
 autodiscovery:
   scmid: default
@@ -13,3 +13,6 @@ autodiscovery:
       rootdir: prow/jobs/custom
       files:
         - infra.yaml
+      ignore:
+        - images:
+            - "us-docker.pkg.dev/k8s-infra-prow/images/configurator"
