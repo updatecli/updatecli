@@ -158,8 +158,13 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 				return "", err
 			}
 
+			prerelease := v.Prerelease()
+			if prerelease == "" {
+				prerelease = "0"
+			}
+
 			return fmt.Sprintf(">=%d.%d.%d-%s <= %d.%d.%d",
-				v.Major(), v.Minor(), v.Patch(), v.Prerelease(),
+				v.Major(), v.Minor(), v.Patch(), prerelease,
 				v.Major(), v.Minor(), v.Patch(),
 			), nil
 
