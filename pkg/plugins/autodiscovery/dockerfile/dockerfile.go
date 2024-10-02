@@ -2,7 +2,6 @@ package dockerfile
 
 import (
 	"bytes"
-	"fmt"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -18,6 +17,11 @@ var (
 	DefaultFileMatch []string = []string{
 		"Dockerfile",
 		"Dockerfile.*",
+	}
+	// GlobalIgnore specifies a list of globally ignored docker image, like the `scratch` image which
+	// never needs to be updated as it's not a "real" image
+	ScratchIgnore MatchingRule = MatchingRule{
+		Images: []string{"scratch"},
 	}
 )
 
@@ -53,7 +57,7 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 		dirname := filepath.Dir(relativeFoundDockerfile)
 		basename := filepath.Base(relativeFoundDockerfile)
 
-		instructions, err := parseDockerfile(foundDockerfile)
+		instructions, args, err := parseDockerfile(foundDockerfile)
 		if err != nil {
 			logrus.Debugln(err)
 			continue
@@ -63,11 +67,51 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 			continue
 		}
 
+		// Let's build a list of stage name to ignore
+		ignoreStage := []string{}
 		for _, instruction := range instructions {
+			if instruction.Alias != "" {
+				ignoreStage = append(ignoreStage, instruction.Alias)
+			}
+		}
+		globalIgnore := MatchingRules{ScratchIgnore}
+		if len(ignoreStage) > 0 {
+			globalIgnore = append(globalIgnore, MatchingRule{
+				Images: ignoreStage,
+			})
+		}
 
-			imageName, imageTag, imageDigest, err := dockerimage.ParseOCIReferenceInfo(instruction.image)
-			if err != nil {
-				return nil, fmt.Errorf("parsing image %q: %s", instruction.image, err)
+		for _, instruction := range instructions {
+			// Replace args when needed
+
+			targetMatcher := instruction.Image
+			targetInstruction := instruction.Keyword
+			image := instruction.Image
+			tag := instruction.Tag
+			digest := instruction.Digest
+			platform := instruction.Platform
+			for arg_type, fromArg := range instruction.Args {
+				arg, ok := args[fromArg.Name]
+				if !ok {
+					continue
+				}
+				switch arg_type {
+				case "image":
+					image = strings.Replace(image, "${"+fromArg.Name+"}", arg.Value, -1)
+				case "tag":
+					value := arg.Value
+					if value == "" {
+						// Consider latest
+						value = "latest"
+					}
+					tag = strings.Replace(tag, "${"+fromArg.Name+"}", value, -1)
+				case "digest":
+					digest = strings.Replace(digest, "${"+fromArg.Name+"}", arg.Value, -1)
+				case "platform":
+					platform = strings.Replace(platform, "${"+fromArg.Name+"}", arg.Value, -1)
+				}
+				targetMatcher = fromArg.Name
+				targetInstruction = arg.Keyword
 			}
 
 			/*
@@ -76,9 +120,19 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				// https://github.com/google/go-containerregistry/issues/1297
 				// until a better solution, we don't handle docker image digest
 			*/
-			if imageDigest != "" && imageTag == "" {
-				logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", instruction.image)
+			if digest != "" && tag == "" {
+				logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", image)
 				continue
+			}
+
+			// Remove globally ignore images
+			if len(globalIgnore) > 0 {
+				if globalIgnore.isMatchingRule(d.rootDir, relativeFoundDockerfile, image, platform) {
+					logrus.Debugf("Ignoring Dockerfile %q from %q, as global matching ignore rule(s)\n",
+						basename,
+						dirname)
+					continue
+				}
 			}
 
 			// Test if the ignore rule based on path is respected
@@ -86,8 +140,8 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				if d.spec.Ignore.isMatchingRule(
 					d.rootDir,
 					relativeFoundDockerfile,
-					instruction.image,
-					instruction.arch,
+					image,
+					platform,
 				) {
 
 					logrus.Debugf("Ignoring Dockerfile %q from %q, as matching ignore rule(s)\n",
@@ -102,8 +156,8 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				if !d.spec.Only.isMatchingRule(
 					d.rootDir,
 					relativeFoundDockerfile,
-					instruction.image,
-					instruction.arch) {
+					image,
+					platform) {
 
 					logrus.Debugf("Ignoring Dockerfile %q from %q, as not matching only rule(s)\n",
 						basename,
@@ -112,7 +166,7 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				}
 			}
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, d.spec.Auths)
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(image, tag, d.spec.Auths)
 
 			if sourceSpec == nil && !d.digest {
 				logrus.Debugln("no source spec detected")
@@ -132,7 +186,7 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
 			if !d.spec.VersionFilter.IsZero() {
 				versionFilterKind = d.versionFilter.Kind
-				versionFilterPattern, err = d.versionFilter.GreaterThanPattern(imageTag)
+				versionFilterPattern, err = d.versionFilter.GreaterThanPattern(tag)
 				tagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
@@ -143,17 +197,6 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 			if err != nil {
 				logrus.Debugln(err)
 				continue
-			}
-
-			targetMatcher := ""
-			// Depending on the instruction the matcher will be different
-			switch instruction.name {
-			case "FROM":
-				targetMatcher = imageName
-			case "ARG":
-				targetMatcher = instruction.value
-				targetMatcher = strings.TrimPrefix(targetMatcher, instruction.trimArgPrefix)
-				targetMatcher = strings.TrimSuffix(targetMatcher, instruction.trimArgSuffix)
 			}
 
 			var tmpl *template.Template
@@ -190,13 +233,13 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				VersionFilterKind    string
 				VersionFilterPattern string
 			}{
-				ImageName:            imageName,
-				ImageTag:             imageTag,
+				ImageName:            image,
+				ImageTag:             tag,
 				ScmID:                d.scmID,
-				SourceID:             imageName,
-				TargetID:             imageName,
+				SourceID:             image,
+				TargetID:             image,
 				TargetFile:           relativeFoundDockerfile,
-				TargetKeyword:        instruction.name,
+				TargetKeyword:        targetInstruction,
 				TargetMatcher:        targetMatcher,
 				TagFilter:            tagFilter,
 				VersionFilterKind:    versionFilterKind,

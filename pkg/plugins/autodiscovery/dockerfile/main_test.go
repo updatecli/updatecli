@@ -130,6 +130,41 @@ targets:
     sourceid: 'updatecli/updatecli'
 `},
 		},
+		{
+			name:    "Scenario 4: Reuse base image and scratch",
+			rootDir: "testdata/scratch-and-base",
+			digest:  true,
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "updatecli/updatecli" digest'
+sources:
+  updatecli/updatecli:
+    name: 'get latest image tag for "updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.25.0'
+  updatecli/updatecli-digest:
+    name: 'get latest image "updatecli/updatecli" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'updatecli/updatecli'
+      tag: '{{ source "updatecli/updatecli" }}'
+    dependson:
+      - 'updatecli/updatecli'
+targets:
+  updatecli/updatecli:
+    name: 'deps(dockerfile): bump image "updatecli/updatecli" digest'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'updatecli_version'
+    sourceid: 'updatecli/updatecli-digest'
+`},
+		},
 	}
 
 	for _, tt := range testdata {

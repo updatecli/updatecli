@@ -235,13 +235,13 @@ func TestArg_GetTokens(t *testing.T) {
 	tests := []struct {
 		name         string
 		originalLine string
-		want         *SimpleTokens
+		want         SimpleTokens
 		wantErr      bool
 	}{
 		{
 			name:         "Default Case",
 			originalLine: "ARG TERRAFORM_VERSION=0.13.6",
-			want: &SimpleTokens{
+			want: SimpleTokens{
 				Keyword: "ARG",
 				Name:    "TERRAFORM_VERSION",
 				Value:   "0.13.6",
@@ -250,7 +250,7 @@ func TestArg_GetTokens(t *testing.T) {
 		{
 			name:         "Lower case",
 			originalLine: "arg TERRAFORM_VERSION=0.13.6",
-			want: &SimpleTokens{
+			want: SimpleTokens{
 				Keyword: "arg",
 				Name:    "TERRAFORM_VERSION",
 				Value:   "0.13.6",
@@ -259,7 +259,7 @@ func TestArg_GetTokens(t *testing.T) {
 		{
 			name:         "No Value",
 			originalLine: "ARG TERRAFORM_VERSION",
-			want: &SimpleTokens{
+			want: SimpleTokens{
 				Keyword: "ARG",
 				Name:    "TERRAFORM_VERSION",
 				Value:   "",
@@ -268,7 +268,7 @@ func TestArg_GetTokens(t *testing.T) {
 		{
 			name:         "Comment",
 			originalLine: "ARG TERRAFORM_VERSION=0.13.6 # Pin tf version",
-			want: &SimpleTokens{
+			want: SimpleTokens{
 				Keyword: "ARG",
 				Name:    "TERRAFORM_VERSION",
 				Value:   "0.13.6",

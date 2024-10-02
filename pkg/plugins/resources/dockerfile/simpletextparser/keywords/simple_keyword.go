@@ -60,14 +60,14 @@ func (s SimpleKeyword) GetValue(originalLine, matcher string) (string, error) {
 	return "", fmt.Errorf("Value not found in line")
 }
 
-func (s SimpleKeyword) getTokens(originalLine string) (*SimpleTokens, error) {
+func (s SimpleKeyword) getTokens(originalLine string) (SimpleTokens, error) {
+	tokens := SimpleTokens{}
 	parsedLine := strings.Fields(originalLine)
 	lineLength := len(parsedLine)
 	if lineLength < 2 {
 		// Empty or malformed line
-		return nil, fmt.Errorf("Got an empty or malformed line")
+		return tokens, fmt.Errorf("Got an empty or malformed line")
 	}
-	tokens := &SimpleTokens{}
 	if strings.ToLower(parsedLine[0]) != strings.ToLower(s.Keyword) {
 		return tokens, fmt.Errorf("Expected %q keyword: %q", s.Keyword, parsedLine[0])
 	}
@@ -86,6 +86,8 @@ func (s SimpleKeyword) getTokens(originalLine string) (*SimpleTokens, error) {
 			tokens.Value = splitArgValue[1]
 		}
 	}
+	// Ensure we don't store the quotes
+	tokens.Value = strings.Trim(tokens.Value, "\"")
 
 	if lineLength > commentIndex {
 		// We may have a comment
