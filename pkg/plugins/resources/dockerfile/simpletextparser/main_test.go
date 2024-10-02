@@ -38,42 +38,42 @@ func TestInstruction_setKeywordLogic(t *testing.T) {
 			parser: SimpleTextDockerfileParser{
 				Keyword: "ARG",
 			},
-			wantLogic: keywords.Arg{},
+			wantLogic: keywords.SimpleKeyword{Keyword: "arg"},
 		},
 		{
 			name: "'arg' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "arg",
 			},
-			wantLogic: keywords.Arg{},
+			wantLogic: keywords.SimpleKeyword{Keyword: "arg"},
 		},
 		{
 			name: "'ENV' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "ENV",
 			},
-			wantLogic: keywords.Env{},
+			wantLogic: keywords.SimpleKeyword{Keyword: "env"},
 		},
 		{
 			name: "'env' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "env",
 			},
-			wantLogic: keywords.Env{},
+			wantLogic: keywords.SimpleKeyword{Keyword: "env"},
 		},
 		{
 			name: "'LABEL' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "LABEL",
 			},
-			wantLogic: keywords.Label{},
+			wantLogic: keywords.SimpleKeyword{Keyword: "label"},
 		},
 		{
 			name: "'label' instruction",
 			parser: SimpleTextDockerfileParser{
 				Keyword: "label",
 			},
-			wantLogic: keywords.Label{},
+			wantLogic: keywords.SimpleKeyword{Keyword: "label"},
 		},
 		{
 			name: "Not supported (yet) instruction",
@@ -395,13 +395,13 @@ func TestSimpleTextDockerfileParser_GetInstruction(t *testing.T) {
 			expectedResult: "",
 		},
 		{
-			name:              "parse Arg Dockerfile (lowercase) and no stage",
+			name:              "parse SimpleKeyword Dockerfile (lowercase) and no stage",
 			fixtureDockerfile: "ARG.Dockerfile",
 			givenInstruction: map[string]string{
 				"keyword": "arg",
 				"matcher": "helm_version",
 			},
-			expectedResult: "",
+			expectedResult: "#",
 		},
 		{
 			name:              "Instruction not matched",

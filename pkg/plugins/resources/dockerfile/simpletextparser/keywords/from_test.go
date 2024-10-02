@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFrom_GetToken(t *testing.T) {
+func TestFrom_GetTokens(t *testing.T) {
 	tests := []struct {
 		name         string
 		originalLine string
-		want         fromToken
+		want         FromToken
 		wantErr      error
 	}{
 		{
@@ -47,99 +47,185 @@ func TestFrom_GetToken(t *testing.T) {
 		{
 			name:         "Correct comment",
 			originalLine: "FROM alpine # correct comment",
-			want:         fromToken{keyword: "FROM", image: "alpine", comment: "# correct comment"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Tag: "latest", Comment: "# correct comment"},
 		},
 		{
 			name:         "Match Spec with platform no tag no digest with alias",
 			originalLine: "FROM --platform=linux/amd64 alpine AS builder",
-			want:         fromToken{keyword: "FROM", platform: "--platform=linux/amd64", image: "alpine", alias: "builder", aliasKw: "AS"},
+			want:         FromToken{Keyword: "FROM", Platform: "linux/amd64", Image: "alpine", Tag: "latest", Alias: "builder", AliasKw: "AS"},
 		},
 		{
 			name:         "Match Spec with platform no tag no digest with alias lowercase",
 			originalLine: "from --platform=linux/amd64 alpine as builder",
-			want:         fromToken{keyword: "from", platform: "--platform=linux/amd64", image: "alpine", alias: "builder", aliasKw: "as"},
+			want:         FromToken{Keyword: "from", Platform: "linux/amd64", Image: "alpine", Tag: "latest", Alias: "builder", AliasKw: "as"},
 		},
 		{
 			name:         "Match Spec with platform no tag no digest no alias",
 			originalLine: "FROM --platform=linux/amd64 alpine",
-			want:         fromToken{keyword: "FROM", platform: "--platform=linux/amd64", image: "alpine"},
+			want:         FromToken{Keyword: "FROM", Platform: "linux/amd64", Image: "alpine", Tag: "latest"},
 		},
 		{
 			name:         "Match Spec no platform no tag no digest with alias",
 			originalLine: "FROM alpine AS builder",
-			want:         fromToken{keyword: "FROM", image: "alpine", alias: "builder", aliasKw: "AS"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Tag: "latest", Alias: "builder", AliasKw: "AS"},
 		},
 		{
 			name:         "Match Spec no platform no tag no digest no alias",
 			originalLine: "FROM alpine",
-			want:         fromToken{keyword: "FROM", image: "alpine"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Tag: "latest"},
 		},
 		{
 			name:         "Match Spec with platform with tag no digest with alias",
 			originalLine: "FROM --platform=linux/amd64 alpine:3.12 AS builder",
-			want:         fromToken{keyword: "FROM", platform: "--platform=linux/amd64", image: "alpine", tag: "3.12", alias: "builder", aliasKw: "AS"},
+			want:         FromToken{Keyword: "FROM", Platform: "linux/amd64", Image: "alpine", Tag: "3.12", Alias: "builder", AliasKw: "AS"},
 		},
 		{
 			name:         "Match Spec with platform with tag no digest no alias",
 			originalLine: "FROM --platform=linux/amd64 alpine:3.12",
-			want:         fromToken{keyword: "FROM", platform: "--platform=linux/amd64", image: "alpine", tag: "3.12"},
+			want:         FromToken{Keyword: "FROM", Platform: "linux/amd64", Image: "alpine", Tag: "3.12"},
 		},
 		{
 			name:         "Match Spec no platform with tag no digest no alias",
 			originalLine: "FROM alpine:3.12 AS builder",
-			want:         fromToken{keyword: "FROM", image: "alpine", tag: "3.12", alias: "builder", aliasKw: "AS"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Tag: "3.12", Alias: "builder", AliasKw: "AS"},
 		},
 		{
 			name:         "Match Spec no platform with tag no digest no alias",
 			originalLine: "FROM alpine:3.12",
-			want:         fromToken{keyword: "FROM", image: "alpine", tag: "3.12"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Tag: "3.12"},
 		},
 		{
 			name:         "Match Spec with platform no tag with digest with alias",
 			originalLine: "FROM --platform=linux/amd64 alpine@sha256:732 AS builder",
-			want:         fromToken{keyword: "FROM", platform: "--platform=linux/amd64", image: "alpine", digest: "sha256:732", alias: "builder", aliasKw: "AS"},
+			want:         FromToken{Keyword: "FROM", Platform: "linux/amd64", Image: "alpine", Digest: "sha256:732", Alias: "builder", AliasKw: "AS"},
 		},
 		{
 			name:         "Match Spec with platform no tag with digest no alias",
 			originalLine: "FROM --platform=linux/amd64 alpine@sha256:732",
-			want:         fromToken{keyword: "FROM", platform: "--platform=linux/amd64", image: "alpine", digest: "sha256:732"},
+			want:         FromToken{Keyword: "FROM", Platform: "linux/amd64", Image: "alpine", Digest: "sha256:732"},
 		},
 		{
 			name:         "Match Spec no platform no tag with digest with alias",
 			originalLine: "FROM alpine@sha256:732 AS builder",
-			want:         fromToken{keyword: "FROM", image: "alpine", digest: "sha256:732", alias: "builder", aliasKw: "AS"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Digest: "sha256:732", Alias: "builder", AliasKw: "AS"},
 		},
 		{
 			name:         "Match Spec no platform no tag with digest no alias",
 			originalLine: "FROM alpine@sha256:732",
-			want:         fromToken{keyword: "FROM", image: "alpine", digest: "sha256:732"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Digest: "sha256:732"},
 		},
 		{
 			name:         "Match Spec with platform with tag with digest with alias",
 			originalLine: "FROM --platform=linux/amd64 alpine:3.12@sha256:732 AS builder",
-			want:         fromToken{keyword: "FROM", platform: "--platform=linux/amd64", image: "alpine", tag: "3.12", digest: "sha256:732", alias: "builder", aliasKw: "AS"},
+			want:         FromToken{Keyword: "FROM", Platform: "linux/amd64", Image: "alpine", Tag: "3.12", Digest: "sha256:732", Alias: "builder", AliasKw: "AS"},
 		},
 		{
 			name:         "Match Spec with platform with tag with digest no alias",
 			originalLine: "FROM --platform=linux/amd64 alpine:3.12@sha256:732",
-			want:         fromToken{keyword: "FROM", platform: "--platform=linux/amd64", image: "alpine", tag: "3.12", digest: "sha256:732"},
+			want:         FromToken{Keyword: "FROM", Platform: "linux/amd64", Image: "alpine", Tag: "3.12", Digest: "sha256:732"},
 		},
 		{
 			name:         "Match Spec no platform with tag with digest with alias",
 			originalLine: "FROM alpine:3.12@sha256:732 AS builder",
-			want:         fromToken{keyword: "FROM", image: "alpine", tag: "3.12", digest: "sha256:732", alias: "builder", aliasKw: "AS"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Tag: "3.12", Digest: "sha256:732", Alias: "builder", AliasKw: "AS"},
 		},
 		{
 			name:         "Match Spec no platform with tag with digest no alias",
 			originalLine: "FROM alpine:3.12@sha256:732",
-			want:         fromToken{keyword: "FROM", image: "alpine", tag: "3.12", digest: "sha256:732"},
+			want:         FromToken{Keyword: "FROM", Image: "alpine", Tag: "3.12", Digest: "sha256:732"},
+		},
+		{
+			name:         "Arged Platform",
+			originalLine: "FROM --platform=${PLATFORM} alpine:3.12",
+			want: FromToken{
+				Keyword:  "FROM",
+				Image:    "alpine",
+				Tag:      "3.12",
+				Platform: "${PLATFORM}",
+				Args: map[string]*FromTokenArgs{
+					"platform": {
+						Name: "PLATFORM",
+					},
+				},
+			},
+		},
+		{
+			name:         "Arged image",
+			originalLine: "FROM ${image}:latest",
+			want: FromToken{
+				Keyword: "FROM",
+				Image:   "${image}",
+				Tag:     "latest",
+				Args: map[string]*FromTokenArgs{
+					"image": {
+						Name: "image",
+					},
+				},
+			},
+		},
+		{
+			name:         "Arged version",
+			originalLine: "FROM alpine:3.${version}",
+			want: FromToken{
+				Keyword: "FROM",
+				Image:   "alpine",
+				Tag:     "3.${version}",
+				Args: map[string]*FromTokenArgs{
+					"tag": {
+						Prefix: "3.",
+						Name:   "version",
+					},
+				},
+			},
+		},
+		{
+			name:         "Arged digest",
+			originalLine: "FROM alpine:3@${digest}",
+			want: FromToken{
+				Keyword: "FROM",
+				Image:   "alpine",
+				Tag:     "3",
+				Digest:  "${digest}",
+				Args: map[string]*FromTokenArgs{
+					"digest": {
+						Name: "digest",
+					},
+				},
+			},
+		},
+		{
+			name:         "Full Arged",
+			originalLine: "FROM --platform=${system}/amd64 jenkins-${jenkins-type}:${jenkins-version}@${jenkins-digest}",
+			want: FromToken{
+				Keyword:  "FROM",
+				Platform: "${system}/amd64",
+				Image:    "jenkins-${jenkins-type}",
+				Tag:      "${jenkins-version}",
+				Digest:   "${jenkins-digest}",
+				Args: map[string]*FromTokenArgs{
+					"platform": {
+						Name:   "system",
+						Suffix: "/amd64",
+					},
+					"image": {
+						Prefix: "jenkins-",
+						Name:   "jenkins-type",
+					},
+					"tag": {
+						Name: "jenkins-version",
+					},
+					"digest": {
+						Name: "jenkins-digest",
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := From{}
 
-			got, gotErr := f.parseTokens(tt.originalLine)
+			got, gotErr := f.GetTokens(tt.originalLine)
 			if tt.wantErr != nil {
 				assert.Error(t, gotErr)
 				assert.Equal(t, tt.wantErr, gotErr)
@@ -540,6 +626,75 @@ func TestFrom_GetValue(t *testing.T) {
 			a := From{}
 
 			got, gotErr := a.GetValue(tt.originalLine, tt.matcher)
+			if tt.wantErr {
+				assert.Error(t, gotErr)
+			} else {
+				assert.Equal(t, tt.want, got)
+			}
+
+		})
+	}
+}
+
+func TestFrom_ParseTokenArgs(t *testing.T) {
+	tests := []struct {
+		name    string
+		token   string
+		want    *FromTokenArgs
+		wantErr bool
+	}{
+
+		{
+			name:  "Default Case",
+			token: "2.235-lts",
+			want:  nil,
+		},
+		{
+			name:  "Only Name",
+			token: "${alpine_version}",
+			want: &FromTokenArgs{
+				Prefix: "",
+				Suffix: "",
+				Name:   "alpine_version",
+			},
+		},
+		{
+			name:    "Too many variables",
+			token:   "${jenkins_release_type}-${jenkins_version}",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:  "Only prefix",
+			token: "alpine-${alpine_version}",
+			want: &FromTokenArgs{
+				Prefix: "alpine-",
+				Suffix: "",
+				Name:   "alpine_version",
+			},
+		},
+		{
+			name:  "Only suffix",
+			token: "${jenkins_release_type}-latest",
+			want: &FromTokenArgs{
+				Prefix: "",
+				Suffix: "-latest",
+				Name:   "jenkins_release_type",
+			},
+		},
+		{
+			name:  "Prefix and Suffix",
+			token: "linux-${jenkins_release_type}-latest",
+			want: &FromTokenArgs{
+				Prefix: "linux-",
+				Suffix: "-latest",
+				Name:   "jenkins_release_type",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotErr := parseArg(tt.token)
 			if tt.wantErr {
 				assert.Error(t, gotErr)
 			} else {
