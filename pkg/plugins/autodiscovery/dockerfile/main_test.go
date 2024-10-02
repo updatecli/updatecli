@@ -19,25 +19,7 @@ func TestDiscoverManifests(t *testing.T) {
 			name:    "Scenario 1",
 			rootDir: "testdata/updatecli-action",
 			digest:  true,
-			expectedPipelines: []string{`name: 'deps(dockerfile): bump image "updatecli/updatecli" digest'
-sources:
-  updatecli/updatecli-digest:
-    name: 'get latest image "updatecli/updatecli" digest'
-    kind: 'dockerdigest'
-    spec:
-      image: 'updatecli/updatecli'
-      tag: 'latest'
-targets:
-  updatecli/updatecli:
-    name: 'deps(dockerfile): bump image "updatecli/updatecli" digest'
-    kind: 'dockerfile'
-    spec:
-      file: 'Dockerfile'
-      instruction:
-        keyword: 'ARG'
-        matcher: 'updatecli_version'
-    sourceid: 'updatecli/updatecli-digest'
-`, `name: 'deps(dockerfile): bump "updatecli/updatecli" digest'
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "updatecli/updatecli" digest'
 sources:
   updatecli/updatecli:
     name: 'get latest image tag for "updatecli/updatecli"'

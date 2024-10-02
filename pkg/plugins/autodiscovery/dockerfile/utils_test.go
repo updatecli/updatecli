@@ -47,7 +47,7 @@ func TestGetDockerfileData(t *testing.T) {
 			name:     "Default case",
 			filepath: "testdata/Dockerfile",
 			expectedInstruction: []keywords.FromToken{
-				keywords.FromToken{
+				{
 					Keyword:  "FROM",
 					Image:    "updatecli/updatecli",
 					Tag:      "v0.37.0",
@@ -58,19 +58,19 @@ func TestGetDockerfileData(t *testing.T) {
 						},
 					},
 				},
-				keywords.FromToken{
+				{
 					Keyword: "FROM",
 					Image:   "updatecli/updatecli",
 					Tag:     "v0.38.0",
 				},
-				keywords.FromToken{
+				{
 					Keyword: "FROM",
 					Image:   "updatecli/updatecli",
 					Tag:     "v0.36.0",
 					Alias:   "builder",
 					AliasKw: "as",
 				},
-				keywords.FromToken{
+				{
 					Keyword: "FROM",
 					Image:   "alpine",
 					Tag:     "${alpine_version}",
@@ -84,7 +84,7 @@ func TestGetDockerfileData(t *testing.T) {
 				},
 			},
 			expectedArgs: map[string]keywords.SimpleTokens{
-				"alpine_version": keywords.SimpleTokens{
+				"alpine_version": {
 					Keyword: "ARG",
 					Name:    "alpine_version",
 					Value:   "3.16.3",
@@ -95,7 +95,7 @@ func TestGetDockerfileData(t *testing.T) {
 			name:     "Alpine case with ARG",
 			filepath: "testdata/alpine/Dockerfile",
 			expectedInstruction: []keywords.FromToken{
-				keywords.FromToken{
+				{
 					Keyword:  "FROM",
 					Platform: "linux/ppc64",
 					Image:    "alpine",
@@ -108,7 +108,7 @@ func TestGetDockerfileData(t *testing.T) {
 						},
 					},
 				},
-				keywords.FromToken{
+				{
 					Keyword:  "FROM",
 					Platform: "${platform}",
 					Image:    "debian",
@@ -122,13 +122,13 @@ func TestGetDockerfileData(t *testing.T) {
 						},
 					},
 				},
-				keywords.FromToken{
+				{
 					Keyword:  "FROM",
 					Platform: "windows/ppc64",
 					Image:    "opensuse",
 					Tag:      "15.4",
 				},
-				keywords.FromToken{
+				{
 					Keyword:  "FROM",
 					Platform: "linux/ppc64",
 					Image:    "alpine",
@@ -138,17 +138,17 @@ func TestGetDockerfileData(t *testing.T) {
 				},
 			},
 			expectedArgs: map[string]keywords.SimpleTokens{
-				"alpine_version": keywords.SimpleTokens{
+				"alpine_version": {
 					Keyword: "ARG",
 					Name:    "alpine_version",
 					Value:   "3.16.3",
 				},
-				"debian_version": keywords.SimpleTokens{
+				"debian_version": {
 					Keyword: "ARG",
 					Name:    "debian_version",
 					Value:   "8",
 				},
-				"platform": keywords.SimpleTokens{
+				"platform": {
 					Keyword: "ARG",
 					Name:    "platform",
 					Value:   "linux/arch64",

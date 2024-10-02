@@ -135,7 +135,7 @@ func TestFrom_GetTokens(t *testing.T) {
 			want:         FromToken{Keyword: "FROM", Image: "alpine", Tag: "3.12", Digest: "sha256:732"},
 		},
 		{
-			name:         "Arged Platform",
+			name:         "Parameterized Platform",
 			originalLine: "FROM --platform=${PLATFORM} alpine:3.12",
 			want: FromToken{
 				Keyword:  "FROM",
@@ -150,7 +150,7 @@ func TestFrom_GetTokens(t *testing.T) {
 			},
 		},
 		{
-			name:         "Arged image",
+			name:         "Parameterized image",
 			originalLine: "FROM ${image}:latest",
 			want: FromToken{
 				Keyword: "FROM",
@@ -164,7 +164,7 @@ func TestFrom_GetTokens(t *testing.T) {
 			},
 		},
 		{
-			name:         "Arged version",
+			name:         "Parameterized version",
 			originalLine: "FROM alpine:3.${version}",
 			want: FromToken{
 				Keyword: "FROM",
@@ -179,7 +179,7 @@ func TestFrom_GetTokens(t *testing.T) {
 			},
 		},
 		{
-			name:         "Arged digest",
+			name:         "Parameterized digest",
 			originalLine: "FROM alpine:3@${digest}",
 			want: FromToken{
 				Keyword: "FROM",
@@ -194,7 +194,7 @@ func TestFrom_GetTokens(t *testing.T) {
 			},
 		},
 		{
-			name:         "Full Arged",
+			name:         "Full Parameterized",
 			originalLine: "FROM --platform=${system}/amd64 jenkins-${jenkins-type}:${jenkins-version}@${jenkins-digest}",
 			want: FromToken{
 				Keyword:  "FROM",
