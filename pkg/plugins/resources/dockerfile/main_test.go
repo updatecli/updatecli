@@ -32,7 +32,7 @@ func TestDockerfile_New(t *testing.T) {
 			wantParser: simpletextparser.SimpleTextDockerfileParser{
 				Keyword:      "ARG",
 				Matcher:      "foo",
-				KeywordLogic: keywords.Arg{},
+				KeywordLogic: keywords.SimpleKeyword{Keyword: "arg"},
 			},
 			wantFiles: []string{"Dockerfile"},
 		},
@@ -48,7 +48,7 @@ func TestDockerfile_New(t *testing.T) {
 			wantParser: simpletextparser.SimpleTextDockerfileParser{
 				Keyword:      "ARG",
 				Matcher:      "foo",
-				KeywordLogic: keywords.Arg{},
+				KeywordLogic: keywords.SimpleKeyword{Keyword: "arg"},
 			},
 			wantFiles: []string{"Dockerfile.alpine", "Dockerfile.windows"},
 		},

@@ -109,6 +109,22 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 	return newDockerfile.Bytes(), changedLines, nil
 }
 
+func (s SimpleTextDockerfileParser) GetInstructionTokens(dockerfileContent []byte) []keywords.Tokens {
+	var instructions []keywords.Tokens
+	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if s.KeywordLogic.IsLineMatching(line, s.Matcher) {
+			token, err := s.KeywordLogic.GetTokens(line)
+			if err != nil {
+				continue
+			}
+			instructions = append(instructions, token)
+		}
+	}
+	return instructions
+}
+
 func (s SimpleTextDockerfileParser) GetInstruction(dockerfileContent []byte, stage string) string {
 	type stageValue struct {
 		StageName string
