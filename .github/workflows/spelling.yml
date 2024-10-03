@@ -57,18 +57,19 @@ name: Check Spelling
 #     ... otherwise adjust the `with:` as you wish
 
 on:
-  push:
-    branches:
-      - "**"
-    tags-ignore:
-      - "**"
-  pull_request_target:
-    branches:
-      - "**"
-    types:
-      - "opened"
-      - "reopened"
-      - "synchronize"
+  workflow_dispatch:
+  # push:
+  #  branches:
+  #    - "**"
+  #  tags-ignore:
+  #    - "**"
+  #pull_request_target:
+  #  branches:
+  #    - "**"
+  #  types:
+  #    - "opened"
+  #   - "reopened"
+  #    - "synchronize"
 
 permissions: {}
 
@@ -91,7 +92,7 @@ jobs:
     steps:
       - name: check-spelling
         id: spelling
-        uses: check-spelling/check-spelling@v0.0.21
+        uses: check-spelling/check-spelling@v0.0.22
         with:
           suppress_push_for_open_pull_request: 1
           checkout: true
@@ -102,17 +103,17 @@ jobs:
           use_sarif: ${{ (!github.event.pull_request || (github.event.pull_request.head.repo.full_name == github.repository)) && 1 }}
           extra_dictionary_limit: 10
           dictionary_source_prefixes: |
-            {"cspell": "https://raw.githubusercontent.com/check-spelling/cspell-dicts/v20220816/dictionaries/", "cspell1": "https://raw.githubusercontent.com/check-spelling/cspell-dicts/v20230509/dictionaries/"}
-          extra_dictionaries: cspell1:software-terms/dict/softwareTerms.txt
-            cspell1:golang/dict/go.txt
-            cspell1:npm/dict/npm.txt
-            cspell1:node/dict/node.txt
-            cspell1:python/src/python/python-lib.txt
-            cspell1:aws/aws.txt
-            cspell1:html/dict/html.txt
-            cspell1:k8s/dict/k8s.txt
-            cspell1:python/src/common/extra.txt
-            cspell1:filetypes/filetypes.txt
-            cspell1:django/dict/django.txt
-            cspell1:docker/src/docker-words.txt
-            cspell1:fullstack/dict/fullstack.txt
+            {"cspell": "https://raw.githubusercontent.com/check-spelling/cspell-dicts/v20230509/dictionaries/"}
+          extra_dictionaries: cspell:software-terms/dict/softwareTerms.txt
+            cspell:golang/dict/go.txt
+            cspell:npm/dict/npm.txt
+            cspell:node/dict/node.txt
+            cspell:python/src/python/python-lib.txt
+            cspell:aws/aws.txt
+            cspell:html/dict/html.txt
+            cspell:k8s/dict/k8s.txt
+            cspell:python/src/common/extra.txt
+            cspell:filetypes/filetypes.txt
+            cspell:django/dict/django.txt
+            cspell:docker/src/docker-words.txt
+            cspell:fullstack/dict/fullstack.txt
