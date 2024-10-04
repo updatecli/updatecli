@@ -19,9 +19,9 @@ var (
 		"Dockerfile",
 		"Dockerfile.*",
 	}
-	// GlobalIgnore specifies a list of globally ignored docker image, like the `scratch` image which
+	// scratchIgnore specifies a list of globally ignored docker image, like the `scratch` image which
 	// never needs to be updated as it's not a "real" image
-	ScratchIgnore MatchingRule = MatchingRule{
+	scratchIgnore MatchingRule = MatchingRule{
 		Images: []string{"scratch"},
 	}
 )
@@ -37,14 +37,13 @@ func (d Dockerfile) generateManifest(
 	image, tag, digest, platform := instruction.Image, instruction.Tag, instruction.Digest, instruction.Platform
 	for arg_type, fromArg := range instruction.Args {
 		if arg, ok := args[fromArg.Name]; ok {
+			if arg.Value == "" {
+				continue
+			}
 			switch arg_type {
 			case "image":
 				image = strings.Replace(image, "${"+fromArg.Name+"}", arg.Value, -1)
 			case "tag":
-				if arg.Value == "" {
-					// Not enough information, should quit
-					return nil, nil
-				}
 				tag = strings.Replace(tag, "${"+fromArg.Name+"}", arg.Value, -1)
 			case "digest":
 				digest = strings.Replace(digest, "${"+fromArg.Name+"}", arg.Value, -1)
@@ -54,6 +53,19 @@ func (d Dockerfile) generateManifest(
 			targetMatcher = fromArg.Name
 			targetInstruction = arg.Keyword
 		}
+	}
+	/*
+		We need to ensure that we don't have unresolved arg in the image source, a case
+		Where this could happen is e.g:
+		ARG updatecli_version
+		FROM updatecli/updatecli:${updatecli_version}
+		In this case, we cannot infer the version from the arg, and should ignore it
+	*/
+	if strings.Contains(image, "${") ||
+		strings.Contains(tag, "${") ||
+		strings.Contains(platform, "${") ||
+		strings.Contains(digest, "${") {
+		return nil, nil
 	}
 
 	/*
@@ -240,7 +252,7 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 				ignoreStage = append(ignoreStage, instruction.Alias)
 			}
 		}
-		globalIgnore := MatchingRules{ScratchIgnore}
+		globalIgnore := MatchingRules{scratchIgnore}
 		if len(ignoreStage) > 0 {
 			globalIgnore = append(globalIgnore, MatchingRule{
 				Images: ignoreStage,
