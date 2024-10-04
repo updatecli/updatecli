@@ -1,0 +1,32 @@
+name: "Test updating precommit hook version"
+
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/pre-commit/pre-commit
+  "github.com/asottile/setup-cfg-fmt":
+    kind: git
+    spec:
+      url: https://github.com/asottile/setup-cfg-fmt
+
+sources:
+  cfg-mgmt:
+    name: Get Latest cfg-fmt versoin
+    kind: gittag
+    scmid: "github.com/asottile/setup-cfg-fmt"
+    spec:
+      versionfilter:
+        kind: semver
+        pattern: ">=2.5.0"
+
+targets:
+  cfg-fmt:
+    name: update hook version
+    kind: yaml
+    scmid: default
+    sourceid: cfg-mgmt
+    spec:
+      file: .pre-commit-config.yaml
+      key: "$.repos[?(@.repo == 'https://github.com/asottile/setup-cfg-fmt')].rev"
+      engine: yamlpath

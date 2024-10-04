@@ -1,0 +1,12 @@
+name: "Precommit autodiscovery using git scm"
+scms:
+  precommit:
+    kind: git
+    spec:
+      url: https://github.com/pre-commit/pre-commit
+    
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: precommit
+  crawlers:
+    precommit:

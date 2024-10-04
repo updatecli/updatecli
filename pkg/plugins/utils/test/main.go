@@ -30,7 +30,7 @@ func AssertConfigSpecEqualByteArray(t *testing.T, spec *config.Spec, manifest st
 // This function is used to sort a config.Spec array before comparing it to a manifest of type array of byte
 func SortConfigSpecArray(t *testing.T, configSpecs []config.Spec, byteSpecs [][]byte) {
 
-	// We covert byteSpecs to an array of config.Spec so we can apply the same sort
+	// We convert byteSpecs to an array of config.Spec so we can apply the same sort
 	// algorithm to both byteSpecs and configSpecs
 	tmpSpecs := make([]config.Spec, len(byteSpecs))
 	for i := range byteSpecs {
