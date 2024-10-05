@@ -12,7 +12,7 @@ scms:
 
 sources:
   cfg-mgmt:
-    name: Get Latest cfg-fmt versoin
+    name: Get Latest cfg-fmt version
     kind: gittag
     scmid: "github.com/asottile/setup-cfg-fmt"
     spec:
