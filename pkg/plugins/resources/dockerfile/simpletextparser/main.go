@@ -109,6 +109,22 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 	return newDockerfile.Bytes(), changedLines, nil
 }
 
+func (s SimpleTextDockerfileParser) GetInstructionTokens(dockerfileContent []byte) []keywords.Tokens {
+	var instructions []keywords.Tokens
+	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if s.KeywordLogic.IsLineMatching(line, s.Matcher) {
+			token, err := s.KeywordLogic.GetTokens(line)
+			if err != nil {
+				continue
+			}
+			instructions = append(instructions, token)
+		}
+	}
+	return instructions
+}
+
 func (s SimpleTextDockerfileParser) GetInstruction(dockerfileContent []byte, stage string) string {
 	type stageValue struct {
 		StageName string
@@ -200,7 +216,7 @@ var supportedKeywordsInitializers = map[string]keywords.Logic{
 	"from":        keywords.From{},
 	"run":         nil,
 	"cmd":         nil,
-	"label":       keywords.Label{},
+	"label":       keywords.SimpleKeyword{Keyword: "label"},
 	"maintainer":  nil,
 	"expose":      nil,
 	"add":         nil,
@@ -209,8 +225,8 @@ var supportedKeywordsInitializers = map[string]keywords.Logic{
 	"volume":      nil,
 	"user":        nil,
 	"workdir":     nil,
-	"arg":         keywords.Arg{},
-	"env":         keywords.Env{},
+	"arg":         keywords.SimpleKeyword{Keyword: "arg"},
+	"env":         keywords.SimpleKeyword{Keyword: "env"},
 	"onbuild":     nil,
 	"stopsignal":  nil,
 	"healthcheck": nil,
