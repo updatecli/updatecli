@@ -67,7 +67,8 @@ type Config struct {
 	//
 	// default:
 	//   by default, all conditions are evaluated.
-	ConditionIDs []string `yaml:",omitempty"`
+	// ! Deprecated - please use DependsOn with `condition#conditionid` keys
+	DeprecatedConditionIDs []string `yaml:"conditionids,omitempty"`
 	// disableconditions disables the mechanism to evaluate conditions before running the target.
 	//
 	// default:

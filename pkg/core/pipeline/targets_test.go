@@ -327,7 +327,7 @@ func TestRunTarget(t *testing.T) {
 			err := p.Init(&data.conf, Options{})
 			require.NoError(t, err)
 
-			err = p.RunTargets()
+			err = p.Run()
 			require.NoError(t, err)
 
 			require.Equal(t, len(data.expectedTargetsResult), len(p.Targets))
