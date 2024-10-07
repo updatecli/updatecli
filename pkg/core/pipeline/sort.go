@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/heimdalr/dag"
@@ -16,6 +17,16 @@ import (
 	with the three following functions
 */
 
+const (
+	rootVertex         string = "root"
+	dummyCategory      string = "dummy"
+	sourceCategory     string = "source"
+	conditionCategory  string = "condition"
+	targetCategory     string = "target"
+	andBooleanOperator string = "and"
+	orBooleanOperator  string = "or"
+)
+
 var (
 	// ErrNotValidDependsOn is triggered when we define a nonexistent depends on value.
 	ErrNotValidDependsOn = errors.New("no valid depends_on value")
@@ -23,223 +34,161 @@ var (
 	ErrDependsOnLoopDetected = errors.New("dependency loop detected")
 )
 
-// SortedSourcesKeys return a a list of resources by building a DAG
-func SortedSourcesKeys(sources *map[string]source.Source) (result []string, err error) {
-
-	d := dag.NewDAG()
-
-	index := map[string]string{}
-
-	index["root"], err = d.AddVertex("root")
-
-	if err != nil {
-		return result, err
-	}
-
-	// Init Vertices
-	for key := range *sources {
-		index[key], err = d.AddVertex(key)
-
-		if err != nil {
-			return result, err
-		}
-
-		err = d.AddEdge(index["root"], index[key])
-		if err != nil {
-			return result, err
-		}
-	}
-
-	// Update vertices dependencies based on depends_on
-	for key, s := range *sources {
-		if len(s.Config.DependsOn) > 0 {
-			for _, dep := range s.Config.DependsOn {
-				if !isValidDependsOn(dep, index) {
-					logrus.Errorf("%s:%q", ErrNotValidDependsOn, dep)
-					return result, ErrNotValidDependsOn
-				}
-				err = d.AddEdge(index[key], index[dep])
-				if err != nil {
-					if strings.Contains(err.Error(), "would create a loop") {
-						logrus.Errorf("Dependency loop detected between Sources[%q] and Sources[%q]",
-							key,
-							dep)
-						return result, ErrDependsOnLoopDetected
-					}
-					return result, err
-				}
-
-			}
-		}
-	}
-
-	d.ReduceTransitively()
-
-	tmpResult, err := d.GetOrderedDescendants(index["root"])
-
-	if err != nil {
-		return result, err
-	}
-
-	result = make([]string, len(tmpResult))
-
-	j := 0
-	for i := (len(tmpResult) - 1); i >= 0; i-- {
-		val, err := d.GetVertex(tmpResult[i])
-		if err != nil {
-			return result, err
-		}
-		result[j] = val.(string)
-		j++
-
-	}
-
-	return result, err
+type Dependency struct {
+	ID       string
+	Operator string
 }
 
-// SortedConditionsKeys return a a list of resources by building a DAG
-func SortedConditionsKeys(conditions *map[string]condition.Condition) (result []string, err error) {
-
-	d := dag.NewDAG()
-
-	index := map[string]string{}
-
-	index["root"], err = d.AddVertex("root")
-
-	if err != nil {
-		return result, err
-	}
-
-	// Init Vertices
-	for key := range *conditions {
-		index[key], err = d.AddVertex(key)
-
-		if err != nil {
-			return result, err
-		}
-
-		err = d.AddEdge(index["root"], index[key])
-		if err != nil {
-			return result, err
-		}
-	}
-
-	// Update vertices dependencies based on depends_on
-	for key, s := range *conditions {
-		if len(s.Config.DependsOn) > 0 {
-			for _, dep := range s.Config.DependsOn {
-				if !isValidDependsOn(dep, index) {
-					logrus.Errorf("%s:%q", ErrNotValidDependsOn, dep)
-					return result, ErrNotValidDependsOn
-				}
-				err = d.AddEdge(index[key], index[dep])
-				if err != nil {
-					if strings.Contains(err.Error(), "would create a loop") {
-						logrus.Errorf("Dependency loop detected between Conditions[%q] and Conditions[%q]",
-							key,
-							dep)
-						return result, ErrDependsOnLoopDetected
-					}
-					return result, err
-				}
-			}
-		}
-	}
-
-	d.ReduceTransitively()
-
-	tmpResult, err := d.GetOrderedDescendants(index["root"])
-
-	if err != nil {
-		return result, err
-	}
-
-	result = make([]string, len(tmpResult))
-
-	j := 0
-	for i := (len(tmpResult) - 1); i >= 0; i-- {
-		val, err := d.GetVertex(tmpResult[i])
-		if err != nil {
-			return result, err
-		}
-		result[j] = val.(string)
-		j++
-
-	}
-
-	return result, err
+type Node struct {
+	ID              string
+	Category        string
+	DependsOn       []Dependency
+	DependsOnChange bool
+	Result          string
+	Changed         bool
 }
 
-// SortedTargetsKeys return a a list of resources by building a DAG
-func SortedTargetsKeys(targets *map[string]target.Target) (result []string, err error) {
+func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, DependsOnChange bool) (err error) {
+	// Add the category to the id
+	ID := fmt.Sprintf("%s#%s", Category, id)
+	// Craft the dendencies
+	var deps []Dependency
+	for _, dependency := range DependsOn {
+		key, booleanOperator, category := parseDependsOnValue(dependency)
+		if category == "" {
+			// By default dependencies should be handled inside of one's category
+			category = Category
+		}
+		deps = append(deps, Dependency{ID: fmt.Sprintf("%s#%s", category, key), Operator: booleanOperator})
+	}
+	// Add the node to the graph
+	node := Node{ID: ID, Category: Category, DependsOn: deps, DependsOnChange: DependsOnChange}
+	err = dag.AddVertexByID(ID, node)
+	if err != nil {
+		return nil
+	}
+	// Make the node depends on root
+	err = dag.AddEdge(rootVertex, ID)
+	return err
+}
+
+func handleResourceDependencies(dag *dag.DAG, ID, Category string, additionalDependencies []string) (err error) {
+	myId := fmt.Sprintf("%s#%s", Category, ID)
+	// Update vertices dependencies based on depends_on
+	rawNode, err := dag.GetVertex(myId)
+	if err != nil {
+		return nil
+	}
+	node, ok := rawNode.(Node)
+	if !ok {
+		return fmt.Errorf("Could not reconstruct node")
+	}
+
+	var deps []string
+	deps = append(deps, additionalDependencies...)
+	for _, dep := range node.DependsOn {
+		deps = append(deps, dep.ID)
+	}
+	for _, depId := range deps {
+		_, err = dag.GetVertex(depId)
+		if err != nil {
+			logrus.Errorf("no valid depends_on value: %q", depId)
+			return ErrNotValidDependsOn
+		}
+		err = dag.AddEdge(depId, myId)
+		if err != nil {
+			if strings.Contains(err.Error(), "would create a loop") {
+				logrus.Errorf("Dependency loop detected between %q and %q",
+					depId,
+					myId)
+				return ErrDependsOnLoopDetected
+			}
+			return err
+		}
+	}
+	if Category == conditionCategory {
+
+	}
+	return err
+}
+
+// SortedResources return a list of resources by building a DAG
+func SortedResources(sources *map[string]source.Source, conditions *map[string]condition.Condition, targets *map[string]target.Target) (result *dag.DAG, err error) {
 
 	d := dag.NewDAG()
+	d.Options(dag.Options{VertexHashFunc: func(v interface{}) interface{} {
+		switch n := v.(type) {
+		case Node:
+			return n.ID
+		}
+		return v
+	}})
 
-	index := map[string]string{}
-
-	index["root"], err = d.AddVertex("root")
+	err = d.AddVertexByID(rootVertex, Node{ID: rootVertex, Category: dummyCategory})
 
 	if err != nil {
 		return result, err
 	}
-
-	// Init Vertices
-	for key := range *targets {
-		index[key], err = d.AddVertex(key)
-
-		if err != nil {
-			return result, err
-		}
-
-		err = d.AddEdge(index["root"], index[key])
+	// Add sources to dag
+	for id, resource := range *sources {
+		err = addResourceToDag(d, id, sourceCategory, resource.Config.DependsOn, false)
 		if err != nil {
 			return result, err
 		}
 	}
-
-	// Update vertices dependencies based on depends_on
-	for key, s := range *targets {
-		if len(s.Config.DependsOn) > 0 {
-			for _, dep := range s.Config.DependsOn {
-				dep, _ = parseDependsOnValue(dep)
-				if !isValidDependsOn(dep, index) {
-					logrus.Errorf("%s: %q", ErrNotValidDependsOn, dep)
-					return result, ErrNotValidDependsOn
+	// Add conditions to dag
+	for id, resource := range *conditions {
+		err = addResourceToDag(d, id, conditionCategory, resource.Config.DependsOn, false)
+		if err != nil {
+			return result, err
+		}
+	}
+	// Add target to dag
+	for id, resource := range *targets {
+		err = addResourceToDag(d, id, targetCategory, resource.Config.DependsOn, resource.Config.DependsOnChange)
+		if err != nil {
+			return result, err
+		}
+	}
+	// Now that the dag is complete, we can add the `depends_on` vertice
+	for id := range *sources {
+		err = handleResourceDependencies(d, id, sourceCategory, nil)
+	}
+	for id := range *conditions {
+		additionalDepIds := []string{}
+		condition := (*conditions)[id]
+		if condition.Config.SourceID != "" {
+			additionalDepIds = append(additionalDepIds, fmt.Sprintf("source#%s", condition.Config.SourceID))
+		}
+		err = handleResourceDependencies(d, id, conditionCategory, additionalDepIds)
+	}
+	for id := range *targets {
+		additionalDepIds := []string{}
+		target := (*targets)[id]
+		if target.Config.SourceID != "" {
+			additionalDepIds = append(additionalDepIds, fmt.Sprintf("source#%s", target.Config.SourceID))
+		}
+		// For targets we need to handle the condition sorting
+		// By default, a target depends on all conditions, and they are treated as an and dependency
+		// This behaviour can be deactivated by setting DisableConditions to false
+		if !target.Config.DisableConditions {
+			switch len(target.Config.DeprecatedConditionIDs) > 0 {
+			case true:
+				for _, conditionID := range target.Config.DeprecatedConditionIDs {
+					additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
 				}
-				err = d.AddEdge(index[key], index[dep])
-				if err != nil {
-					if strings.Contains(err.Error(), "would create a loop") {
-						logrus.Errorf("Dependency loop detected between Targets[%q] and Targets[%q]",
-							key,
-							dep)
-						return result, ErrDependsOnLoopDetected
-					}
-					return result, err
+			case false:
+				// if no condition is defined, we evaluate all conditions
+				for conditionID := range *conditions {
+					additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
 				}
 			}
 		}
+		err = handleResourceDependencies(d, id, targetCategory, additionalDepIds)
 	}
-
-	d.ReduceTransitively()
-
-	tmpResult, err := d.GetOrderedDescendants(index["root"])
-
 	if err != nil {
 		return result, err
 	}
-
-	result = make([]string, len(tmpResult))
-
-	j := 0
-	for i := (len(tmpResult) - 1); i >= 0; i-- {
-		val, err := d.GetVertex(tmpResult[i])
-		if err != nil {
-			return result, err
-		}
-		result[j] = val.(string)
-		j++
-
-	}
-
-	return result, err
+	d.ReduceTransitively()
+	return d, err
 }
