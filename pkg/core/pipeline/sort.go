@@ -170,7 +170,7 @@ func SortedResources(sources *map[string]source.Source, conditions *map[string]c
 		}
 		// For targets we need to handle the condition sorting
 		// By default, a target depends on all conditions, and they are treated as an and dependency
-		// This behaviour can be deactivated by setting DisableConditions to false
+		// This behavior can be deactivated by setting DisableConditions to false
 		if !target.Config.DisableConditions {
 			switch len(target.Config.DeprecatedConditionIDs) > 0 {
 			case true:

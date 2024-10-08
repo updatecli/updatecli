@@ -283,14 +283,14 @@ func (p *Pipeline) Run() error {
 		p.Report.Result = result.FAILURE
 		return fmt.Errorf("could not create dag from spec:\t%q", err.Error())
 	}
-	leafs, err := resources.DescendantsFlow(rootVertex, nil, p.runFlowCallback)
+	leaves, err := resources.DescendantsFlow(rootVertex, nil, p.runFlowCallback)
 	if err != nil {
 		p.Report.Result = result.FAILURE
 		return fmt.Errorf("could not parse dag from spec:\t%q", err.Error())
 	}
 
 	hasError := false
-	for _, leaf := range leafs {
+	for _, leaf := range leaves {
 		if leaf.ID == rootVertex {
 			// ignore
 			continue
