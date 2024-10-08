@@ -98,8 +98,7 @@ func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 					dep.ID,
 					myId)
 				return ErrDependsOnLoopDetected
-			}
-			if err.Error() == fmt.Sprintf("edge between '%s' and '%s' is already known", dep.ID, myId) {
+			} else if err.Error() == fmt.Sprintf("edge between '%s' and '%s' is already known", dep.ID, myId) {
 				// This can happens as we have 4 ways to add dependencies:
 				// 1. DependsOn
 				// 2. SourceID (For `conditions` and `targets`)
@@ -107,8 +106,9 @@ func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 				// 4. RunTime Deps
 				// We can ignore this
 				err = nil
+			} else {
+				return err
 			}
-			return err
 		}
 	}
 	return err
@@ -116,7 +116,6 @@ func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 
 // SortedResources return a list of resources by building a DAG
 func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
-
 	d := dag.NewDAG()
 	d.Options(dag.Options{VertexHashFunc: func(v interface{}) interface{} {
 		switch n := v.(type) {
@@ -125,7 +124,6 @@ func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
 		}
 		return v
 	}})
-
 	// Add a dummy root to ensure we have a starting point for the transversal
 	err = d.AddVertexByID(rootVertex, Node{ID: rootVertex, Category: dummyCategory})
 	if err != nil {

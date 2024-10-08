@@ -6,11 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 )
 
 /*
@@ -18,95 +14,14 @@ import (
 func TestRun(t *testing.T) {
 
 	testdata := []struct {
-		conf                     config.Config
+		confPath                 string
 		expectedSourcesResult    map[string]string
 		expectedConditionsResult map[string]string
 		expectedTargetsResult    map[string]string
 		expectedPipelineResult   string
 	}{
 		{
-			conf: config.Config{
-				Spec: config.Spec{
-					Name:       "Test Various target scenario",
-					PipelineID: "e2e/command",
-					Sources: map[string]source.Config{
-						"1": {
-							resource.ResourceConfig{
-								Kind: "shell",
-								Name: "Should be succeeding",
-								Spec: shell.Spec{
-									Command: "echo 1.2.3",
-								},
-							},
-						},
-					},
-					Conditions: map[string]condition.Config{
-						"1": {
-							ResourceConfig: resource.ResourceConfig{
-								Kind: "shell",
-								Name: "Should be succeeding",
-								Spec: shell.Spec{
-									Command: "true",
-								},
-							},
-							DisableSourceInput: true,
-						},
-					},
-					Targets: map[string]target.Config{
-						"1": {
-							ResourceConfig: resource.ResourceConfig{
-								Kind: "shell",
-								Name: "Should be succeeding",
-								Spec: shell.Spec{
-									Command: "true",
-								},
-							},
-							DisableSourceInput: true,
-						},
-						"5": {
-							ResourceConfig: resource.ResourceConfig{
-								Kind: "shell",
-								Name: "Should be succeeding and report change",
-								Spec: shell.Spec{
-									Command: "echo done",
-								},
-								DependsOn: []string{
-									"1",
-								},
-							},
-							DisableSourceInput: true,
-						},
-						"6": {
-							ResourceConfig: resource.ResourceConfig{
-								Kind: "shell",
-								Name: "Should be skipped",
-								Spec: shell.Spec{
-									Command: "true",
-								},
-								DependsOn: []string{
-									"1",
-								},
-							},
-							DependsOnChange:    true,
-							DisableSourceInput: true,
-						},
-						"7": {
-							ResourceConfig: resource.ResourceConfig{
-								Kind: "shell",
-								Name: "Should be run",
-								Spec: shell.Spec{
-									Command: "true",
-								},
-								DependsOn: []string{
-									"5",
-								},
-							},
-							DependsOnChange:    true,
-							DisableSourceInput: true,
-						},
-					},
-				},
-			},
+			confPath: "../../../e2e/updatecli.d/success.d/command.yaml",
 			expectedSourcesResult: map[string]string{
 				"1": "✔",
 			},
@@ -124,12 +39,17 @@ func TestRun(t *testing.T) {
 	}
 
 	for _, data := range testdata {
-		t.Run(data.conf.Spec.Name, func(t *testing.T) {
-			p := Pipeline{}
-			err := p.Init(&data.conf, Options{})
-			require.NoError(t, err)
-
-			err = p.Run()
+		c, _ := config.New(config.Option{
+			ManifestFile: data.confPath,
+		})
+		p := Pipeline{}
+		_ = p.Init(&c[0], Options{
+			Target: target.Options{
+				DryRun: true,
+			},
+		})
+		t.Run(p.Config.Spec.Name, func(t *testing.T) {
+			err := p.Run()
 			if err != nil {
 				logrus.Errorf("Got error running test: %s", err)
 			}
