@@ -703,7 +703,7 @@ func compareDag(expected [][]string, got []string) (err error) {
 
 	// If we've processed all 'expected' sublists and matched them correctly, return true
 	if index != len(got) {
-		return fmt.Errorf("Leafs are not equals")
+		return fmt.Errorf("leaves are not equals")
 	}
 	return nil
 }

@@ -33,7 +33,7 @@ func (p *Pipeline) isDependsOnMatchingResource(leaf *Node, depsResults map[strin
 	counterOptionalDependsOn := 0
 
 	for _, dependency := range leaf.DependsOn {
-		dependencyResult, _ := depsResults[dependency.ID]
+		dependencyResult := depsResults[dependency.ID]
 		booleanOperator := dependency.Operator
 
 		switch booleanOperator {
