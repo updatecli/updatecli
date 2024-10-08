@@ -737,6 +737,32 @@ func TestSortedResourcesKeys(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "Scenario 11: SourceID and Explicit Dep",
+			Conf: Pipeline{
+				Sources: map[string]source.Source{
+					"1": {},
+				},
+				Conditions: map[string]condition.Condition{
+					"1": {
+						Config: condition.Config{
+							ResourceConfig: resource.ResourceConfig{
+								DependsOn: []string{"source#1"},
+							},
+							SourceID: "1",
+						},
+					},
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#1", Parents: []string{"root"}},
+				},
+				{
+					{Id: "condition#1", Parents: []string{"root", "source#1"}},
+				},
+			},
+		},
 	}
 
 	for _, data := range testdata {
