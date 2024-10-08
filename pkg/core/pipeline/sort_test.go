@@ -763,6 +763,78 @@ func TestSortedResourcesKeys(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "Scenario 12: DeprecatedConditionsId",
+			Conf: Pipeline{
+				Conditions: map[string]condition.Condition{
+					"1": {},
+					"2": {},
+					"3": {},
+				},
+				Targets: map[string]target.Target{
+					"1": {},
+					"2": {
+						Config: target.Config{
+							DeprecatedConditionIDs: []string{"1"},
+						},
+					},
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "condition#1", Parents: []string{"root"}},
+					{Id: "condition#2", Parents: []string{"root"}},
+					{Id: "condition#3", Parents: []string{"root"}},
+				},
+				{
+					{Id: "target#1", Parents: []string{"root", "condition#1", "condition#2", "condition#3"}},
+					{Id: "target#2", Parents: []string{"root", "condition#1"}},
+				},
+			},
+		},
+		{
+			Name: "Scenario 13: Cargo Autodiscovery",
+			Conf: Pipeline{
+				Sources: map[string]source.Source{
+					"directories":                 {},
+					"directories-current-version": {},
+				},
+				Conditions: map[string]condition.Condition{
+					"directories": {
+						Config: condition.Config{SourceID: "directories"},
+					},
+				},
+				Targets: map[string]target.Target{
+					"lock": {
+						Config: target.Config{
+							ResourceConfig:     resource.ResourceConfig{DependsOn: []string{"directories"}},
+							DisableSourceInput: true,
+						},
+					},
+					"directories": {
+						Config: target.Config{
+							SourceID: "directories",
+							ResourceConfig: resource.ResourceConfig{
+								Name: "deps(cargo): bump crate dependency \"directories\" to {{ source \"directories\" }}",
+							},
+						},
+					},
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#directories", Parents: []string{"root"}},
+					{Id: "source#directories-current-version", Parents: []string{"root"}},
+				},
+				{
+					{Id: "condition#directories", Parents: []string{"root", "source#directories"}},
+				},
+				{
+					{Id: "target#lock", Parents: []string{"root", "condition#directories", "target#directories"}},
+					{Id: "target#directories", Parents: []string{"root", "source#directories", "condition#directories"}},
+				},
+			},
+		},
 	}
 
 	for _, data := range testdata {
