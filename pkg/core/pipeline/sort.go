@@ -99,6 +99,15 @@ func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 					myId)
 				return ErrDependsOnLoopDetected
 			}
+			if err.Error() == fmt.Sprintf("edge between '%s' and '%s' is already known", dep.ID, myId) {
+				// This can happens as we have 4 ways to add dependencies:
+				// 1. DependsOn
+				// 2. SourceID (For `conditions` and `targets`)
+				// 3. ConditionIds (For `targets`)
+				// 4. RunTime Deps
+				// We can ignore this
+				err = nil
+			}
 			return err
 		}
 	}
