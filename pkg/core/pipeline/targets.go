@@ -32,7 +32,6 @@ func (p *Pipeline) RunTarget(id string) (r string, changed bool, err error) {
 	if err != nil {
 		p.Report.Result = result.FAILURE
 		target.Result.Result = result.FAILURE
-
 		err = fmt.Errorf("something went wrong in target %q : %q", id, err)
 	}
 

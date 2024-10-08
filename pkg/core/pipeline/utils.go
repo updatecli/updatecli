@@ -3,6 +3,8 @@ package pipeline
 import (
 	"fmt"
 	"strings"
+	"text/template"
+	"text/template/parse"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -103,4 +105,44 @@ func (p *Pipeline) isDependsOnMatchingResource(leaf *Node, depsResults map[strin
 	}
 
 	return "Dependson not met."
+}
+
+// ExtractCustomKeys parses a Go template and extracts custom keys from
+// specific template actions: {{ source "sourceId" }}, {{ condition "conditionid" }},
+// and {{ target "targetid" }}. It returns a map where the keys are the action types
+// ("source", "condition", "target") and the values are slices of strings representing
+// the IDs extracted from the corresponding actions in the template.
+func ExtractDepsFromTemplate(tmplStr string) ([]string, error) {
+	tmpl, err := template.New("dummy").
+		Funcs(template.FuncMap{
+			"pipeline":  func(id string) string { return id },
+			"source":    func(id string) string { return id },
+			"condition": func(id string) string { return id },
+			"target":    func(id string) string { return id },
+		}).Parse(tmplStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing template: %v", err)
+	}
+	results := []string{}
+
+	// Walk through the parsed template' s tree nodes
+	for _, node := range tmpl.Tree.Root.Nodes {
+		if actionNode, ok := node.(*parse.ActionNode); ok {
+			for _, command := range actionNode.Pipe.Cmds {
+				if len(command.Args) > 1 {
+					if identifierNode, ok := command.Args[0].(*parse.IdentifierNode); ok {
+						if stringNode, ok := command.Args[1].(*parse.StringNode); ok {
+							if identifierNode.Ident == sourceCategory ||
+								identifierNode.Ident == conditionCategory ||
+								identifierNode.Ident == targetCategory ||
+								identifierNode.Ident == pipelineCategory {
+								results = append(results, fmt.Sprintf("%s#%s", identifierNode.Ident, stringNode.Text))
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return results, nil
 }
