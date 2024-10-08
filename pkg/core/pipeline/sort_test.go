@@ -1,24 +1,29 @@
 package pipeline
 
 import (
-	"fmt"
-	"reflect"
 	"sort"
 	"strings"
 	"testing"
 
-	"github.com/sirupsen/logrus"
+	"github.com/heimdalr/dag"
+	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/file"
 )
+
+type ResultLeaf struct {
+	Id      string
+	Parents []string
+}
 
 func TestSortedResourcesKeys(t *testing.T) {
 	testdata := []struct {
 		Name           string
 		Conf           Pipeline
-		ExpectedResult [][]string
+		ExpectedResult [][]ResultLeaf
 		ExpectedErr    error
 	}{{
 		Name: "Scenario 1",
@@ -94,10 +99,22 @@ func TestSortedResourcesKeys(t *testing.T) {
 				},
 			},
 		},
-		ExpectedResult: [][]string{
-			{"source#3", "condition#3", "target#3"},
-			{"source#2", "condition#2", "target#2"},
-			{"source#1", "condition#1", "target#1"},
+		ExpectedResult: [][]ResultLeaf{
+			{
+				{Id: "source#3", Parents: []string{"root"}},
+				{Id: "condition#3", Parents: []string{"root"}},
+				{Id: "target#3", Parents: []string{"root"}},
+			},
+			{
+				{Id: "source#2", Parents: []string{"root", "source#3"}},
+				{Id: "condition#2", Parents: []string{"root", "condition#3"}},
+				{Id: "target#2", Parents: []string{"root", "target#3"}},
+			},
+			{
+				{Id: "source#1", Parents: []string{"root", "source#2", "source#3"}},
+				{Id: "condition#1", Parents: []string{"root", "condition#2"}},
+				{Id: "target#1", Parents: []string{"root", "target#2"}},
+			},
 		},
 	},
 		{
@@ -201,19 +218,27 @@ func TestSortedResourcesKeys(t *testing.T) {
 					},
 				},
 			},
-			ExpectedResult: [][]string{
-				{"source#4",
-					"condition#4",
-					"target#4"},
-				{"source#2",
-					"condition#2",
-					"target#2"},
-				{"source#3",
-					"condition#3",
-					"target#3"},
-				{"source#1",
-					"condition#1",
-					"target#1"},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#4", Parents: []string{"root"}},
+					{Id: "condition#4", Parents: []string{"root"}},
+					{Id: "target#4", Parents: []string{"root"}},
+				},
+				{
+					{Id: "source#2", Parents: []string{"root", "source#4"}},
+					{Id: "condition#2", Parents: []string{"root", "condition#4"}},
+					{Id: "target#2", Parents: []string{"root", "target#4"}},
+				},
+				{
+					{Id: "source#3", Parents: []string{"root", "source#2"}},
+					{Id: "condition#3", Parents: []string{"root", "condition#2"}},
+					{Id: "target#3", Parents: []string{"root", "target#2"}},
+				},
+				{
+					{Id: "source#1", Parents: []string{"root", "source#3"}},
+					{Id: "condition#1", Parents: []string{"root", "condition#3"}},
+					{Id: "target#1", Parents: []string{"root", "target#3"}},
+				},
 			},
 		},
 		{
@@ -254,7 +279,7 @@ func TestSortedResourcesKeys(t *testing.T) {
 					},
 				},
 			},
-			ExpectedResult: [][]string{},
+			ExpectedResult: [][]ResultLeaf{},
 			ExpectedErr:    ErrNotValidDependsOn,
 		},
 		{
@@ -377,14 +402,33 @@ func TestSortedResourcesKeys(t *testing.T) {
 					},
 				},
 			},
-			ExpectedResult: [][]string{
-				{"target#4"},
-				{"source#4", "source#3", "condition#4"},
-				{"condition#3", "condition#2"},
-				{"source#2", "condition#1"},
-				{"target#3", "target#1"},
-				{"target#2"},
-				{"source#1"},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "target#4", Parents: []string{"root"}},
+				},
+				{
+					{Id: "source#4", Parents: []string{"root", "target#4"}},
+					{Id: "source#3", Parents: []string{"root", "target#4"}},
+					{Id: "condition#4", Parents: []string{"root", "target#4"}},
+				},
+				{
+					{Id: "condition#3", Parents: []string{"root", "source#3", "source#4"}},
+					{Id: "condition#2", Parents: []string{"root", "condition#4"}},
+				},
+				{
+					{Id: "source#2", Parents: []string{"root", "condition#2", "condition#3"}},
+					{Id: "condition#1", Parents: []string{"root", "condition#2"}},
+				},
+				{
+					{Id: "target#3", Parents: []string{"root", "source#2"}},
+					{Id: "target#1", Parents: []string{"root", "condition#1"}},
+				},
+				{
+					{Id: "target#2", Parents: []string{"root", "target#3", "target#1"}},
+				},
+				{
+					{Id: "source#1", Parents: []string{"root", "target#2"}},
+				},
 			},
 		},
 		{
@@ -453,7 +497,7 @@ func TestSortedResourcesKeys(t *testing.T) {
 					},
 				},
 			},
-			ExpectedResult: [][]string{},
+			ExpectedResult: [][]ResultLeaf{},
 			ExpectedErr:    ErrDependsOnLoopDetected,
 		},
 		{
@@ -469,9 +513,16 @@ func TestSortedResourcesKeys(t *testing.T) {
 					"1": {},
 				},
 			},
-			ExpectedResult: [][]string{
-				{"condition#1", "condition#2", "condition#3", "condition#4"},
-				{"target#1"},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "condition#1", Parents: []string{"root"}},
+					{Id: "condition#2", Parents: []string{"root"}},
+					{Id: "condition#3", Parents: []string{"root"}},
+					{Id: "condition#4", Parents: []string{"root"}},
+				},
+				{
+					{Id: "target#1", Parents: []string{"root", "condition#1", "condition#2", "condition#3", "condition#4"}},
+				},
 			},
 		},
 		{
@@ -507,10 +558,18 @@ func TestSortedResourcesKeys(t *testing.T) {
 					},
 				},
 			},
-			ExpectedResult: [][]string{
-				{"condition#2", "condition#3"},
-				{"condition#1", "condition#4"},
-				{"target#1"},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "condition#2", Parents: []string{"root"}},
+					{Id: "condition#3", Parents: []string{"root"}},
+				},
+				{
+					{Id: "condition#1", Parents: []string{"root", "condition#2"}},
+					{Id: "condition#4", Parents: []string{"root", "condition#2"}},
+				},
+				{
+					{Id: "target#1", Parents: []string{"root", "condition#1", "condition#4"}},
+				},
 			},
 		},
 		{
@@ -553,11 +612,20 @@ func TestSortedResourcesKeys(t *testing.T) {
 					},
 				},
 			},
-			ExpectedResult: [][]string{
-				{"condition#1"},
-				{"source#1"},
-				{"source#2"},
-				{"condition#2", "target#1"},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "condition#1", Parents: []string{"root"}},
+				},
+				{
+					{Id: "source#1", Parents: []string{"root", "condition#1"}},
+				},
+				{
+					{Id: "source#2", Parents: []string{"root", "source#1"}},
+				},
+				{
+					{Id: "condition#2", Parents: []string{"root", "source#2"}},
+					{Id: "target#1", Parents: []string{"root", "source#2"}},
+				},
 			},
 		},
 		{
@@ -582,7 +650,6 @@ func TestSortedResourcesKeys(t *testing.T) {
 					"5": {
 						Config: target.Config{
 							ResourceConfig: resource.ResourceConfig{
-
 								DependsOn: []string{
 									"1",
 								},
@@ -604,7 +671,6 @@ func TestSortedResourcesKeys(t *testing.T) {
 					"7": {
 						Config: target.Config{
 							ResourceConfig: resource.ResourceConfig{
-
 								DependsOn: []string{
 									"5",
 								},
@@ -615,19 +681,72 @@ func TestSortedResourcesKeys(t *testing.T) {
 					},
 				},
 			},
-			ExpectedResult: [][]string{
-				{"source#1", "condition#1"},
-				{"target#1"},
-				{"target#5"},
-				{"target#6", "target#7"},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#1", Parents: []string{"root"}},
+					{Id: "condition#1", Parents: []string{"root"}},
+				},
+				{
+					{Id: "target#1", Parents: []string{"root", "condition#1"}},
+				},
+				{
+					{Id: "target#5", Parents: []string{"root", "condition#1", "target#1"}},
+					{Id: "target#6", Parents: []string{"root", "condition#1", "target#1"}},
+				},
+				{
+					{Id: "target#7", Parents: []string{"root", "condition#1", "target#5"}},
+				},
+			},
+		},
+		{
+			Name: "Scenario 10: Runtime Dependency",
+			Conf: Pipeline{
+				Sources: map[string]source.Source{
+					"1": {},
+					"2": {},
+					"3": {},
+					"4": {},
+				},
+				Conditions: map[string]condition.Condition{
+					"1": {
+						Config: condition.Config{
+							ResourceConfig: resource.ResourceConfig{
+								Spec: file.Spec{
+									Files: []string{
+										"{{ source \"1\" }}",
+										"{{ source \"2\" }}",
+										"{{ source \"3\" }}",
+										"{{ source \"4\" }}",
+									},
+								},
+							},
+							DisableSourceInput: true,
+						},
+					},
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#1", Parents: []string{"root"}},
+					{Id: "source#2", Parents: []string{"root"}},
+					{Id: "source#3", Parents: []string{"root"}},
+					{Id: "source#4", Parents: []string{"root"}},
+				},
+				{
+					{Id: "condition#1", Parents: []string{"root", "source#1", "source#2", "source#3", "source#4"}},
+				},
 			},
 		},
 	}
 
 	for _, data := range testdata {
 		t.Run(data.Name, func(t *testing.T) {
-			// Test Source
-			gotSortedDag, err := SortedResources(&data.Conf.Sources, &data.Conf.Conditions, &data.Conf.Targets)
+			p := Pipeline{
+				Sources:    data.Conf.Sources,
+				Conditions: data.Conf.Conditions,
+				Targets:    data.Conf.Targets,
+			}
+			gotSortedDag, err := p.SortedResources()
 
 			if err != nil && data.ExpectedErr != nil {
 				if strings.Compare(err.Error(), data.ExpectedErr.Error()) != 0 {
@@ -648,26 +767,8 @@ func TestSortedResourcesKeys(t *testing.T) {
 				return
 			}
 			results, err := gotSortedDag.GetOrderedDescendants(rootVertex)
-			logrus.Errorf("Got: %s", results)
-			logrus.Errorf("Expected: %s", data.ExpectedResult)
 
-			err = compareDag(data.ExpectedResult, results)
-			if err != nil && data.ExpectedErr != nil {
-				if strings.Compare(err.Error(), data.ExpectedErr.Error()) != 0 {
-					t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q",
-						data.ExpectedErr,
-						err.Error())
-				}
-
-			} else if err != nil && data.ExpectedErr == nil {
-				t.Errorf("Unexpected error:\nExpected:\t\tnil\nGot:\t\t\t%q",
-					err.Error())
-
-			} else if err == nil && data.ExpectedErr != nil {
-				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\tnil",
-					data.ExpectedErr)
-			}
-
+			compareDag(t, data.ExpectedResult, results, gotSortedDag)
 		})
 	}
 }
@@ -675,26 +776,39 @@ func TestSortedResourcesKeys(t *testing.T) {
 // compareDag allows to test that the resulted orderedDescendant of a dag
 // match the expected result.
 // As the sibling order is not guarantee, we need to  handle that
-func compareDag(expected [][]string, got []string) (err error) {
+func compareDag(t *testing.T, expected [][]ResultLeaf, got []string, d *dag.DAG) {
 	//{ Keep track of the current index in 'got'
 	index := 0
 	// Iterate over each sublist in 'expected'
 	for _, sublist := range expected {
 		// If remaining 'got' is smaller than current 'expected' sublist, return false
-		if index+len(sublist) > len(got) {
-			return fmt.Errorf("Not enough elem remaining in array")
-		}
+		require.GreaterOrEqual(t, len(got), index+len(sublist))
 
+		// Extract Ids from sublist
+		sublistStr := []string{}
+		for _, i := range sublist {
+			sublistStr = append(sublistStr, i.Id)
+		}
 		// Extract the slice from 'got' to compare with current sublist
 		gotSublist := got[index : index+len(sublist)]
 
 		// Sort both the current 'expected' sublist and the corresponding 'got' sublist
-		sort.Strings(sublist)
+		sort.Strings(sublistStr)
 		sort.Strings(gotSublist)
 
-		// Check if they match
-		if !reflect.DeepEqual(sublist, gotSublist) {
-			return fmt.Errorf("Sibblings are not equals")
+		// require.Equal(t, sublistStr, gotSublist)
+		// Check if they have the required dependencies
+		for _, l := range sublist {
+			parents, _ := d.GetParents(l.Id)
+			parentIds := []string{}
+			for k := range parents {
+				parentIds = append(parentIds, k)
+			}
+			expectedParents := []string{}
+			expectedParents = append(expectedParents, l.Parents...)
+			sort.Strings(expectedParents)
+			sort.Strings(parentIds)
+			require.Equal(t, expectedParents, parentIds)
 		}
 
 		// Move the index forward by the length of the current sublist
@@ -702,8 +816,5 @@ func compareDag(expected [][]string, got []string) (err error) {
 	}
 
 	// If we've processed all 'expected' sublists and matched them correctly, return true
-	if index != len(got) {
-		return fmt.Errorf("leaves are not equals")
-	}
-	return nil
+	require.Equal(t, index, len(got))
 }

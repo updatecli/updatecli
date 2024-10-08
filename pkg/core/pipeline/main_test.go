@@ -114,7 +114,7 @@ func TestRun(t *testing.T) {
 				"1": "✔",
 			},
 			expectedTargetsResult: map[string]string{
-				"1": "✔",
+				"1": "-",
 				"5": "-",
 				"6": "-",
 				"7": "-",
@@ -130,6 +130,9 @@ func TestRun(t *testing.T) {
 			require.NoError(t, err)
 
 			err = p.Run()
+			if err != nil {
+				logrus.Errorf("Got error running test: %s", err)
+			}
 			require.NoError(t, err)
 
 			require.Equal(t, len(data.expectedSourcesResult), len(p.Sources))
@@ -142,7 +145,6 @@ func TestRun(t *testing.T) {
 			}
 			require.Equal(t, len(data.expectedTargetsResult), len(p.Targets))
 			for id, result := range p.Targets {
-				logrus.Errorf("Target %s", id)
 				require.Equal(t, data.expectedTargetsResult[id], result.Result.Result)
 			}
 			require.Equal(t, data.expectedPipelineResult, p.Report.Result)

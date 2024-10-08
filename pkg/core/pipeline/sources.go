@@ -23,5 +23,6 @@ func (p *Pipeline) RunSource(id string) (r string, err error) {
 		logrus.Infof("%s\n", strings.Repeat("-", len("Changelog")+1))
 		logrus.Infof("%s\n", source.Changelog)
 	}
+	p.Sources[id] = source
 	return source.Result.Result, err
 }

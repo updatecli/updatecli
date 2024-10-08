@@ -7,9 +7,7 @@ import (
 
 	"github.com/heimdalr/dag"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"gopkg.in/yaml.v3"
 )
 
 /*
@@ -23,6 +21,7 @@ const (
 	sourceCategory     string = "source"
 	conditionCategory  string = "condition"
 	targetCategory     string = "target"
+	pipelineCategory   string = "pipeline"
 	andBooleanOperator string = "and"
 	orBooleanOperator  string = "or"
 )
@@ -48,7 +47,7 @@ type Node struct {
 	Changed         bool
 }
 
-func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, DependsOnChange bool) (err error) {
+func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, DependsOnChange bool, additionalDependencies []string) (err error) {
 	// Add the category to the id
 	ID := fmt.Sprintf("%s#%s", Category, id)
 	// Craft the dendencies
@@ -61,6 +60,9 @@ func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, Dep
 		}
 		deps = append(deps, Dependency{ID: fmt.Sprintf("%s#%s", category, key), Operator: booleanOperator})
 	}
+	for _, dependency := range additionalDependencies {
+		deps = append(deps, Dependency{ID: dependency, Operator: andBooleanOperator})
+	}
 	// Add the node to the graph
 	node := Node{ID: ID, Category: Category, DependsOn: deps, DependsOnChange: DependsOnChange}
 	err = dag.AddVertexByID(ID, node)
@@ -72,7 +74,7 @@ func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, Dep
 	return err
 }
 
-func handleResourceDependencies(dag *dag.DAG, ID, Category string, additionalDependencies []string) (err error) {
+func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 	myId := fmt.Sprintf("%s#%s", Category, ID)
 	// Update vertices dependencies based on depends_on
 	rawNode, err := dag.GetVertex(myId)
@@ -84,36 +86,27 @@ func handleResourceDependencies(dag *dag.DAG, ID, Category string, additionalDep
 		return fmt.Errorf("Could not reconstruct node")
 	}
 
-	var deps []string
-	deps = append(deps, additionalDependencies...)
 	for _, dep := range node.DependsOn {
-		deps = append(deps, dep.ID)
-	}
-	for _, depId := range deps {
-		_, err = dag.GetVertex(depId)
+		_, err = dag.GetVertex(dep.ID)
 		if err != nil {
-			logrus.Errorf("no valid depends_on value: %q", depId)
 			return ErrNotValidDependsOn
 		}
-		err = dag.AddEdge(depId, myId)
+		err = dag.AddEdge(dep.ID, myId)
 		if err != nil {
 			if strings.Contains(err.Error(), "would create a loop") {
-				logrus.Errorf("Dependency loop detected between %q and %q",
-					depId,
+				logrus.Debugf("Dependency loop detected between %q and %q",
+					dep.ID,
 					myId)
 				return ErrDependsOnLoopDetected
 			}
 			return err
 		}
 	}
-	if Category == conditionCategory {
-
-	}
 	return err
 }
 
 // SortedResources return a list of resources by building a DAG
-func SortedResources(sources *map[string]source.Source, conditions *map[string]condition.Condition, targets *map[string]target.Target) (result *dag.DAG, err error) {
+func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
 
 	d := dag.NewDAG()
 	d.Options(dag.Options{VertexHashFunc: func(v interface{}) interface{} {
@@ -124,71 +117,102 @@ func SortedResources(sources *map[string]source.Source, conditions *map[string]c
 		return v
 	}})
 
+	// Add a dummy root to ensure we have a starting point for the transversal
 	err = d.AddVertexByID(rootVertex, Node{ID: rootVertex, Category: dummyCategory})
-
 	if err != nil {
 		return result, err
 	}
 	// Add sources to dag
-	for id, resource := range *sources {
-		err = addResourceToDag(d, id, sourceCategory, resource.Config.DependsOn, false)
+	for id, resource := range p.Sources {
+		// Marshal to parse runtimeDeps
+		s, err := yaml.Marshal(resource.Config)
+		if err != nil {
+			return result, err
+		}
+		additionalDepIds, err := ExtractDepsFromTemplate(string(s))
+		if err != nil {
+			return result, err
+		}
+		err = addResourceToDag(d, id, sourceCategory, resource.Config.DependsOn, false, additionalDepIds)
 		if err != nil {
 			return result, err
 		}
 	}
 	// Add conditions to dag
-	for id, resource := range *conditions {
-		err = addResourceToDag(d, id, conditionCategory, resource.Config.DependsOn, false)
+	for id, resource := range p.Conditions {
+		// Marshal to parse runtimeDeps
+		s, err := yaml.Marshal(resource.Config)
+		if err != nil {
+			return result, err
+		}
+		additionalDepIds, err := ExtractDepsFromTemplate(string(s))
+		if err != nil {
+			return result, err
+		}
+		if resource.Config.SourceID != "" {
+			additionalDepIds = append(additionalDepIds, fmt.Sprintf("source#%s", resource.Config.SourceID))
+		}
+		err = addResourceToDag(d, id, conditionCategory, resource.Config.DependsOn, false, additionalDepIds)
 		if err != nil {
 			return result, err
 		}
 	}
 	// Add target to dag
-	for id, resource := range *targets {
-		err = addResourceToDag(d, id, targetCategory, resource.Config.DependsOn, resource.Config.DependsOnChange)
+	for id, resource := range p.Targets {
+		// Marshal to parse runtimeDeps
+		s, err := yaml.Marshal(resource.Config)
+		if err != nil {
+			return result, err
+		}
+		additionalDepIds, err := ExtractDepsFromTemplate(string(s))
+		if err != nil {
+			return result, err
+		}
+		if resource.Config.SourceID != "" {
+			additionalDepIds = append(additionalDepIds, fmt.Sprintf("source#%s", resource.Config.SourceID))
+		}
+		// For targets we need to handle the condition sorting
+		// By default, a target depends on all conditions, and they are treated as an and dependency
+		// This behavior can be deactivated by setting DisableConditions to false
+		if !resource.Config.DisableConditions {
+			switch len(resource.Config.DeprecatedConditionIDs) > 0 {
+			case true:
+				for _, conditionID := range resource.Config.DeprecatedConditionIDs {
+					additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
+				}
+			case false:
+				// if no condition is defined, we evaluate all conditions
+				for conditionID := range p.Conditions {
+					additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
+				}
+			}
+		}
+		err = addResourceToDag(d, id, targetCategory, resource.Config.DependsOn, resource.Config.DependsOnChange, additionalDepIds)
 		if err != nil {
 			return result, err
 		}
 	}
 	// Now that the dag is complete, we can add the `depends_on` vertice
-	for id := range *sources {
-		err = handleResourceDependencies(d, id, sourceCategory, nil)
+	for id := range p.Sources {
+		err = handleResourceDependencies(d, id, sourceCategory)
+		if err != nil {
+			return result, err
+		}
 	}
-	for id := range *conditions {
-		additionalDepIds := []string{}
-		condition := (*conditions)[id]
-		if condition.Config.SourceID != "" {
-			additionalDepIds = append(additionalDepIds, fmt.Sprintf("source#%s", condition.Config.SourceID))
+	for id := range p.Conditions {
+		err = handleResourceDependencies(d, id, conditionCategory)
+		if err != nil {
+			return result, err
 		}
-		err = handleResourceDependencies(d, id, conditionCategory, additionalDepIds)
 	}
-	for id := range *targets {
-		additionalDepIds := []string{}
-		target := (*targets)[id]
-		if target.Config.SourceID != "" {
-			additionalDepIds = append(additionalDepIds, fmt.Sprintf("source#%s", target.Config.SourceID))
+	for id := range p.Targets {
+		err = handleResourceDependencies(d, id, targetCategory)
+		if err != nil {
+			return result, err
 		}
-		// For targets we need to handle the condition sorting
-		// By default, a target depends on all conditions, and they are treated as an and dependency
-		// This behavior can be deactivated by setting DisableConditions to false
-		if !target.Config.DisableConditions {
-			switch len(target.Config.DeprecatedConditionIDs) > 0 {
-			case true:
-				for _, conditionID := range target.Config.DeprecatedConditionIDs {
-					additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
-				}
-			case false:
-				// if no condition is defined, we evaluate all conditions
-				for conditionID := range *conditions {
-					additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
-				}
-			}
-		}
-		err = handleResourceDependencies(d, id, targetCategory, additionalDepIds)
 	}
 	if err != nil {
 		return result, err
 	}
-	d.ReduceTransitively()
 	return d, err
 }

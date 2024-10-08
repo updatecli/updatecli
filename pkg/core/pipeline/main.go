@@ -278,7 +278,7 @@ func (p *Pipeline) Run() error {
 	logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
 	p.Report.Result = result.SUCCESS
-	resources, err := SortedResources(&p.Sources, &p.Conditions, &p.Targets)
+	resources, err := p.SortedResources()
 	if err != nil {
 		p.Report.Result = result.FAILURE
 		return fmt.Errorf("could not create dag from spec:\t%q", err.Error())
@@ -297,7 +297,7 @@ func (p *Pipeline) Run() error {
 		}
 		if leaf.Error != nil {
 			logrus.Infof("\n")
-			logrus.Errorf("something went wrong in %q : %q", leaf.ID, err)
+			logrus.Errorf("something went wrong in %q : %s", leaf.ID, leaf.Error)
 			logrus.Infof("\n")
 			hasError = true
 		}
