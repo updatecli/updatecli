@@ -227,11 +227,10 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	}
 
 	consoleOutput := ""
-	dependsOnMatchingResource := p.isDependsOnMatchingResource(&leaf, deps)
-	if dependsOnMatchingResource != "" {
+	shouldSkip := p.shouldSkipResource(&leaf, deps)
+	if shouldSkip {
 		logrus.Debugf("Skipping %s[%q] because of dependsOn conditions", leaf.Category, id)
 		leaf.Result = result.SKIPPED
-		consoleOutput = dependsOnMatchingResource
 	}
 
 	if leaf.Result != result.SKIPPED {

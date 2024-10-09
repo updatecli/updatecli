@@ -6,11 +6,12 @@ import (
 	"text/template"
 	"text/template/parse"
 
+	"github.com/heimdalr/dag"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// isDependsOnMatchingResource checks if the resource dependsOn conditions are met.
+// shouldSkipREsource checks if the resource dependsOn conditions are met.
 // if not, the resource is skipped.
 // a dependsOn value must follow one of the three following format:
 // dependsOn:
@@ -23,88 +24,47 @@ import (
 // "and" the boolean operator is optional and can be used to specify that all conditions must be met
 // "or" the boolean operator is optional and can be used to specify that at least one condition must be met
 // if the boolean operator is not provided, it defaults to "and"
-func (p *Pipeline) isDependsOnMatchingResource(leaf *Node, depsResults map[string]*Node) string {
+func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) bool {
 	// exit early
 	if len(leaf.DependsOn) == 0 {
-		return ""
+		return false
 	}
 
-	failingRequiredDependsOn := []string{}
-	failingOptionalDependsOn := []string{}
-	counterRequiredDependsOn := 0
-	counterOptionalDependsOn := 0
-
+	shouldSkip := true
 	for _, dependency := range leaf.DependsOn {
 		dependencyResult := depsResults[dependency.ID]
 		booleanOperator := dependency.Operator
 
 		switch booleanOperator {
 		case andBooleanOperator:
-			counterRequiredDependsOn++
+			if leaf.DependsOnChange && dependencyResult.Category == targetCategory {
+				if !dependencyResult.Changed {
+					// And operator but dep is not changed
+					return true
+				}
+			} else {
+				if dependencyResult.Result == result.FAILURE {
+					// And operator but dep is failed
+					return true
+				}
+			}
+			shouldSkip = false
 		case orBooleanOperator:
-			counterOptionalDependsOn++
-		default:
-			counterRequiredDependsOn++
-			failingRequiredDependsOn = append(
-				failingRequiredDependsOn,
-				fmt.Sprintf("Invalid boolean operator %q", booleanOperator),
-			)
-			continue
-		}
-
-		// We always fail first if the dependsOn target failed.
-		if dependencyResult.Result == result.FAILURE {
-			switch booleanOperator {
-			case andBooleanOperator:
-				failingRequiredDependsOn = append(
-					failingRequiredDependsOn,
-					fmt.Sprintf("Required Parent %q did not succeed.", dependency))
-			case orBooleanOperator:
-				failingOptionalDependsOn = append(
-					failingRequiredDependsOn,
-					fmt.Sprintf("Parent %q did not succeed.", dependency))
-			}
-			//}
-		} else if leaf.DependsOnChange && dependencyResult.Changed {
-			switch booleanOperator {
-			case andBooleanOperator:
-				failingRequiredDependsOn = append(failingRequiredDependsOn,
-					fmt.Sprintf("Required Parent %q changed.", dependency),
-				)
-			case orBooleanOperator:
-				failingOptionalDependsOn = append(failingRequiredDependsOn,
-					fmt.Sprintf("Parent %q changed.", dependency),
-				)
+			if leaf.DependsOnChange && dependencyResult.Category == targetCategory {
+				if dependencyResult.Changed {
+					// And operator but dep is not changed
+					shouldSkip = false
+				}
+			} else {
+				if dependencyResult.Result == result.SUCCESS {
+					// And operator but dep is failed
+					shouldSkip = false
+				}
 			}
 		}
 	}
+	return shouldSkip
 
-	if counterRequiredDependsOn > 0 {
-		if counterRequiredDependsOn == len(failingRequiredDependsOn) {
-			logrus.Debugf(
-				"All required dependsOn matched:\n\t* %s",
-				strings.Join(failingRequiredDependsOn, "\n\t *"))
-			return ""
-		}
-		logrus.Debugf(
-			"%v required dependsOn matched over %v:\n\t* %s",
-			len(failingRequiredDependsOn),
-			counterRequiredDependsOn,
-			strings.Join(failingRequiredDependsOn, "\n\t* "),
-		)
-	}
-
-	if len(failingOptionalDependsOn) > 0 {
-		logrus.Debugf(
-			"%v optional dependsOn matched over %v:\n\t* %s",
-			len(failingOptionalDependsOn),
-			counterOptionalDependsOn,
-			strings.Join(failingOptionalDependsOn, "\n\t* "),
-		)
-		return ""
-	}
-
-	return "Dependson not met."
 }
 
 // ExtractCustomKeys parses a Go template and extracts custom keys from
@@ -145,4 +105,87 @@ func ExtractDepsFromTemplate(tmplStr string) ([]string, error) {
 		}
 	}
 	return results, nil
+}
+
+func (p *Pipeline) traverseAndWriteDot(d *dag.DAG, node string, dotOutput *strings.Builder, visited map[string]bool) error {
+	if visited[node] {
+		return nil
+	}
+	visited[node] = true
+
+	successors, err := d.GetDescendants(node)
+	if err != nil {
+		return err
+	}
+
+	if node != rootVertex {
+
+		parts := strings.Split(node, "#")
+		if len(parts) <= 1 {
+			return nil
+		}
+		nodeType := parts[0]
+		name := strings.Join(parts[1:], "#")
+		var shape, color, kind string
+		switch nodeType {
+		case sourceCategory:
+			shape = "ellipse"
+			color = "lightblue"
+			if source, ok := p.Sources[name]; ok {
+				if source.Config.Name != "" {
+					name = source.Config.Name
+				}
+				kind = source.Config.Kind
+			}
+		case conditionCategory:
+			shape = "diamond"
+			color = "orange"
+			if condition, ok := p.Conditions[name]; ok {
+				if condition.Config.Name != "" {
+					name = condition.Config.Name
+				}
+				kind = condition.Config.Kind
+			}
+		case targetCategory:
+			shape = "box"
+			color = "lightyellow"
+			if target, ok := p.Targets[name]; ok {
+				if target.Config.Name != "" {
+					name = target.Config.Name
+				}
+				kind = target.Config.Name
+			}
+		}
+		dotOutput.WriteString(fmt.Sprintf("    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n", node, name, kind, shape, color))
+	}
+	for successor := range successors {
+		if node != rootVertex {
+			dotOutput.WriteString(fmt.Sprintf("    %q -> %q;\n", node, successor))
+		}
+		err = p.traverseAndWriteDot(d, successor, dotOutput, visited)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Pipeline) Graph() error {
+
+	resources, err := p.SortedResources()
+	if err != nil {
+		return err
+	}
+	resources.ReduceTransitively()
+	// Start writing the DOT graph
+	var dotOutput strings.Builder
+	dotOutput.WriteString("digraph G {\n")
+	visited := make(map[string]bool)
+	err = p.traverseAndWriteDot(resources, rootVertex, &dotOutput, visited)
+	if err != nil {
+		return err
+	}
+	dotOutput.WriteString("}\n")
+	logrus.Infof("%s", dotOutput.String())
+	return nil
 }
