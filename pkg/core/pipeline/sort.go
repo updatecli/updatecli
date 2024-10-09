@@ -182,16 +182,9 @@ func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
 		// By default, a target depends on all conditions, and they are treated as an and dependency
 		// This behavior can be deactivated by setting DisableConditions to false
 		if !resource.Config.DisableConditions {
-			switch len(resource.Config.DeprecatedConditionIDs) > 0 {
-			case true:
-				for _, conditionID := range resource.Config.DeprecatedConditionIDs {
-					additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
-				}
-			case false:
-				// if no condition is defined, we evaluate all conditions
-				for conditionID := range p.Conditions {
-					additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
-				}
+			// if no condition is defined, we evaluate all conditions
+			for conditionID := range p.Conditions {
+				additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
 			}
 		}
 		err = addResourceToDag(d, id, targetCategory, resource.Config.DependsOn, resource.Config.DependsOnChange, additionalDepIds)

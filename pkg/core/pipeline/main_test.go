@@ -29,12 +29,12 @@ func TestRun(t *testing.T) {
 				"1": "✔",
 			},
 			expectedTargetsResult: map[string]string{
-				"1": "-",
-				"5": "-",
+				"1": "✔",
+				"5": "⚠",
 				"6": "-",
-				"7": "-",
+				"7": "✔",
 			},
-			expectedPipelineResult: "✔",
+			expectedPipelineResult: "⚠",
 		},
 	}
 

@@ -2,16 +2,18 @@ package pipeline
 
 import (
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/heimdalr/dag"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/file"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 )
 
 type ResultLeaf struct {
@@ -23,80 +25,90 @@ func TestSortedResourcesKeys(t *testing.T) {
 	testdata := []struct {
 		Name           string
 		Conf           Pipeline
+		Sources        map[string]source.Config
+		Conditions     map[string]condition.Config
+		Targets        map[string]target.Config
 		ExpectedResult [][]ResultLeaf
 		ExpectedErr    error
 	}{{
 		Name: "Scenario 1",
-		Conf: Pipeline{
-			Sources: map[string]source.Source{
-				"1": {
-					Config: source.Config{
-						ResourceConfig: resource.ResourceConfig{
-							DependsOn: []string{
-								"2",
-								"3",
-							},
-						},
+		Sources: map[string]source.Config{
+			"1": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"2",
+						"3",
 					},
 				},
-				"2": {
-					Config: source.Config{
-						ResourceConfig: resource.ResourceConfig{
-							DependsOn: []string{
-								"3",
-							},
-						},
-					},
-				},
-				"3": {},
 			},
-			Conditions: map[string]condition.Condition{
-				"1": {
-					Config: condition.Config{
-						ResourceConfig: resource.ResourceConfig{
-							DependsOn: []string{
-								"2",
-							},
-						},
+			"2": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"3",
 					},
 				},
-				"2": {
-					Config: condition.Config{
-						ResourceConfig: resource.ResourceConfig{
-							DependsOn: []string{
-								"3",
-							},
-						},
-					},
-				},
-				"3": {},
 			},
-			Targets: map[string]target.Target{
-				"1": {
-					Config: target.Config{
-						ResourceConfig: resource.ResourceConfig{
-							DependsOn: []string{
-								"2",
-							},
-						},
-						DisableConditions: true,
+			"3": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+				},
+			},
+		},
+		Conditions: map[string]condition.Config{
+			"1": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"2",
 					},
 				},
-				"2": {
-					Config: target.Config{
-						ResourceConfig: resource.ResourceConfig{
-							DependsOn: []string{
-								"3",
-							},
-						},
-						DisableConditions: true,
+				DisableSourceInput: true,
+			},
+			"2": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"3",
 					},
 				},
-				"3": {
-					Config: target.Config{
-						DisableConditions: true,
+				DisableSourceInput: true,
+			},
+			"3": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+				},
+				DisableSourceInput: true,
+			},
+		},
+		Targets: map[string]target.Config{
+			"1": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"2",
 					},
 				},
+				DisableConditions:  true,
+				DisableSourceInput: true,
+			},
+			"2": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"3",
+					},
+				},
+				DisableConditions:  true,
+				DisableSourceInput: true,
+			},
+			"3": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+				},
+				DisableConditions:  true,
+				DisableSourceInput: true,
 			},
 		},
 		ExpectedResult: [][]ResultLeaf{
@@ -119,103 +131,110 @@ func TestSortedResourcesKeys(t *testing.T) {
 	},
 		{
 			Name: "Scenario 2",
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"3",
 						},
 					},
-					"2": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"4",
-								},
-							},
-						},
-					},
-					"3": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"4": {},
 				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"4",
 						},
 					},
-					"2": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"4",
-								},
-							},
-						},
-					},
-					"3": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"4": {},
 				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
-							DisableConditions: true,
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
-					"2": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"4",
-								},
-							},
-							DisableConditions: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"3",
 						},
 					},
-					"3": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-							DisableConditions: true,
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"4",
 						},
 					},
-					"4": {
-						Config: target.Config{
-							DisableConditions: true,
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
+					DisableSourceInput: true,
+				},
+				"4": {
+
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"3",
+						},
+					},
+					DisableSourceInput: true,
+					DisableConditions:  true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"4",
+						},
+					},
+					DisableSourceInput: true,
+					DisableConditions:  true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
+						},
+					},
+					DisableSourceInput: true,
+					DisableConditions:  true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{
@@ -243,40 +262,37 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 		{
 			Name: "Scenario 3",
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
 				},
-				Conditions: map[string]condition.Condition{
-					"2": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
+			},
+			Conditions: map[string]condition.Config{
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"3",
 						},
 					},
+					DisableSourceInput: true,
 				},
-				Targets: map[string]target.Target{
-					"3": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"4",
-								},
-							},
-							DisableConditions: true,
+			},
+			Targets: map[string]target.Config{
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"4",
 						},
 					},
+					DisableSourceInput: true,
+					DisableConditions:  true,
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{},
@@ -284,122 +300,118 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 		{
 			Name: "Scenario 4",
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"target#2",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"condition#3",
-									"condition#2",
-								},
-							},
-						},
-					},
-					"3": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"target#4",
-								},
-							},
-						},
-					},
-					"4": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"target#4",
-								},
-							},
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#2",
 						},
 					},
 				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"condition#2",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"condition#4",
-								},
-							},
-						},
-					},
-					"3": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"source#4",
-									"source#3",
-								},
-							},
-						},
-					},
-					"4": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"target#4",
-								},
-							},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#3",
+							"condition#2",
 						},
 					},
 				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"condition#1",
-								},
-							},
-							DisableConditions: true,
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#4",
 						},
 					},
-					"2": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"target#1",
-									"target#3",
-								},
-							},
-							DisableConditions: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#4",
 						},
 					},
-					"3": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"source#2",
-								},
-							},
-							DisableConditions: true,
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#2",
 						},
 					},
-					"4": {
-						Config: target.Config{
-							DisableConditions: true,
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#4",
 						},
 					},
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"source#4",
+							"source#3",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#4",
+						},
+					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#1",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#1",
+							"target#3",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"source#2",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{
@@ -433,68 +445,64 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 		{
 			Name: "Scenario 5",
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
 				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
 						},
 					},
 				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-							DisableConditions: true,
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
-					"2": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
-							DisableConditions: true,
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
 						},
 					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{},
@@ -502,15 +510,38 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 		{
 			Name: "Scenario 6: Target Without all condition",
-			Conf: Pipeline{
-				Conditions: map[string]condition.Condition{
-					"1": {},
-					"2": {},
-					"3": {},
-					"4": {},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
 				},
-				Targets: map[string]target.Target{
-					"1": {},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{
@@ -526,36 +557,46 @@ func TestSortedResourcesKeys(t *testing.T) {
 			},
 		},
 		{
-			Name: "Scenario 7: Target With condition ids",
-			Conf: Pipeline{
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
+			Name: "Scenario 7: Target With deprecated condition ids",
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
-					"2": {},
-					"3": {},
-					"4": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
+					DisableSourceInput: true,
 				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							DeprecatedConditionIDs: []string{"1", "4"},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DeprecatedConditionIDs: []string{"1", "4"},
+					DisableSourceInput:     true,
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{
@@ -574,41 +615,44 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 		{
 			Name: "Scenario 8: Source Id creates an inferred deps",
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"condition#1",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#1",
 						},
 					},
 				},
-				Conditions: map[string]condition.Condition{
-					"1": {},
-					"2": {
-						Config: condition.Config{
-							SourceID: "2",
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
 						},
 					},
 				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							SourceID:          "2",
-							DisableConditions: true,
-						},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					SourceID: "2",
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					SourceID:          "2",
+					DisableConditions: true,
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
 					},
 				},
 			},
@@ -630,55 +674,56 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 		{
 			Name: "Scenario 9: DependsOnChange",
-			Conf: Pipeline{
-
-				Sources: map[string]source.Source{
-					"1": {},
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
 				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							DisableSourceInput: true,
-						}},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
 				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							DisableSourceInput: true,
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"5": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
 						},
 					},
-					"5": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
-							DisableSourceInput: true,
+					DisableSourceInput: true,
+				},
+				"6": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
 						},
 					},
-					"6": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
-							DependsOnChange:    true,
-							DisableSourceInput: true,
+					DependsOnChange:    true,
+					DisableSourceInput: true,
+				},
+				"7": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"5",
 						},
 					},
-					"7": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"5",
-								},
-							},
-							DependsOnChange:    true,
-							DisableSourceInput: true,
-						},
-					},
+					DependsOnChange:    true,
+					DisableSourceInput: true,
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{
@@ -700,29 +745,42 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 		{
 			Name: "Scenario 10: Runtime Dependency",
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {},
-					"2": {},
-					"3": {},
-					"4": {},
+			Sources: map[string]source.Config{
+				"1": {
+					resource.ResourceConfig{
+						Kind: "shell",
+					},
 				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								Spec: file.Spec{
-									Files: []string{
-										"{{ source \"1\" }}",
-										"{{ source \"2\" }}",
-										"{{ source \"3\" }}",
-										"{{ source \"4\" }}",
-									},
-								},
+				"2": {
+					resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+				"3": {
+					resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+				"4": {
+					resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "file",
+						Spec: file.Spec{
+							Files: []string{
+								"{{ source \"1\" }}",
+								"{{ source \"2\" }}",
+								"{{ source \"3\" }}",
+								"{{ source \"4\" }}",
 							},
-							DisableSourceInput: true,
 						},
 					},
+					DisableSourceInput: true,
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{
@@ -739,19 +797,20 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 		{
 			Name: "Scenario 11: SourceID and Explicit Dep",
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {},
-				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{"source#1"},
-							},
-							SourceID: "1",
-						},
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
 					},
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind:      "shell",
+						DependsOn: []string{"source#1"},
+					},
+					SourceID: "1",
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{
@@ -764,74 +823,28 @@ func TestSortedResourcesKeys(t *testing.T) {
 			},
 		},
 		{
-			Name: "Scenario 12: DeprecatedConditionsId",
-			Conf: Pipeline{
-				Conditions: map[string]condition.Condition{
-					"1": {},
-					"2": {},
-					"3": {},
+			Name: "Scenario 12: Runtime Dependency in sources",
+			Sources: map[string]source.Config{
+				"1": {
+					resource.ResourceConfig{
+						Kind: "shell",
+					},
 				},
-				Targets: map[string]target.Target{
-					"1": {},
-					"2": {
-						Config: target.Config{
-							DeprecatedConditionIDs: []string{"1"},
+				"2": {
+					resource.ResourceConfig{
+						Kind: "shell",
+						Spec: shell.Spec{
+							Command: "echo {{ source \"1\"}}",
 						},
 					},
 				},
 			},
 			ExpectedResult: [][]ResultLeaf{
 				{
-					{Id: "condition#1", Parents: []string{"root"}},
-					{Id: "condition#2", Parents: []string{"root"}},
-					{Id: "condition#3", Parents: []string{"root"}},
+					{Id: "source#1", Parents: []string{"root"}},
 				},
 				{
-					{Id: "target#1", Parents: []string{"root", "condition#1", "condition#2", "condition#3"}},
-					{Id: "target#2", Parents: []string{"root", "condition#1"}},
-				},
-			},
-		},
-		{
-			Name: "Scenario 13: Cargo Autodiscovery",
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"directories":                 {},
-					"directories-current-version": {},
-				},
-				Conditions: map[string]condition.Condition{
-					"directories": {
-						Config: condition.Config{SourceID: "directories"},
-					},
-				},
-				Targets: map[string]target.Target{
-					"lock": {
-						Config: target.Config{
-							ResourceConfig:     resource.ResourceConfig{DependsOn: []string{"directories"}},
-							DisableSourceInput: true,
-						},
-					},
-					"directories": {
-						Config: target.Config{
-							SourceID: "directories",
-							ResourceConfig: resource.ResourceConfig{
-								Name: "deps(cargo): bump crate dependency \"directories\" to {{ source \"directories\" }}",
-							},
-						},
-					},
-				},
-			},
-			ExpectedResult: [][]ResultLeaf{
-				{
-					{Id: "source#directories", Parents: []string{"root"}},
-					{Id: "source#directories-current-version", Parents: []string{"root"}},
-				},
-				{
-					{Id: "condition#directories", Parents: []string{"root", "source#directories"}},
-				},
-				{
-					{Id: "target#lock", Parents: []string{"root", "condition#directories", "target#directories"}},
-					{Id: "target#directories", Parents: []string{"root", "source#directories", "condition#directories"}},
+					{Id: "source#2", Parents: []string{"root", "source#1"}},
 				},
 			},
 		},
@@ -839,33 +852,57 @@ func TestSortedResourcesKeys(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.Name, func(t *testing.T) {
-			p := Pipeline{
-				Sources:    data.Conf.Sources,
-				Conditions: data.Conf.Conditions,
-				Targets:    data.Conf.Targets,
+			sources := map[string]source.Source{}
+			for k, v := range data.Sources {
+				err := v.Validate()
+				if err != nil {
+					logrus.Errorf("Failed to validate source config %s", err)
+				}
+				sources[k] = source.Source{
+					Config: v,
+				}
 			}
+			conditions := map[string]condition.Condition{}
+			for k, v := range data.Conditions {
+				err := v.Validate()
+				if err != nil {
+					logrus.Errorf("Failed to validate source config %s", err)
+				}
+				conditions[k] = condition.Condition{
+					Config: v,
+				}
+			}
+			targets := map[string]target.Target{}
+			for k, v := range data.Targets {
+				err := v.Validate()
+				if err != nil {
+					logrus.Errorf("Failed to validate source config %s", err)
+				}
+				targets[k] = target.Target{
+					Config: v,
+				}
+			}
+			p := Pipeline{
+				Sources:    sources,
+				Conditions: conditions,
+				Targets:    targets,
+				Config: &config.Config{
+					Spec: config.Spec{
+						Sources:    data.Sources,
+						Conditions: data.Conditions,
+						Targets:    data.Targets,
+					},
+				},
+			}
+			// _ = p.Update()
 			gotSortedDag, err := p.SortedResources()
 
-			if err != nil && data.ExpectedErr != nil {
-				if strings.Compare(err.Error(), data.ExpectedErr.Error()) != 0 {
-					t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q",
-						data.ExpectedErr,
-						err.Error())
-				}
-			} else if err != nil && data.ExpectedErr == nil {
-				t.Errorf("Unexpected error:\nExpected:\t\tnil\nGot:\t\t\t%q",
-					err.Error())
-
-			} else if err == nil && data.ExpectedErr != nil {
-				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\tnil",
-					data.ExpectedErr)
-			}
+			require.Equal(t, data.ExpectedErr, err)
 
 			if gotSortedDag == nil {
 				return
 			}
-			results, err := gotSortedDag.GetOrderedDescendants(rootVertex)
-
+			results, _ := gotSortedDag.GetOrderedDescendants(rootVertex)
 			compareDag(t, data.ExpectedResult, results, gotSortedDag)
 		})
 	}
