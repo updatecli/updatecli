@@ -67,7 +67,8 @@ type Config struct {
 	//
 	// default:
 	//   by default, all conditions are evaluated.
-	ConditionIDs []string `yaml:",omitempty"`
+	// ! Deprecated - please use DependsOn with `condition#conditionid` keys
+	DeprecatedConditionIDs []string `yaml:"conditionids,omitempty"`
 	// disableconditions disables the mechanism to evaluate conditions before running the target.
 	//
 	// default:
@@ -303,6 +304,21 @@ func (c *Config) Validate() error {
 		default:
 			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"sourceID", "sourceid", "sourceID")
+		}
+	}
+
+	// Handle ConditionIDs deprecation
+	if len(c.DeprecatedConditionIDs) > 0 {
+		if len(c.ResourceConfig.DependsOn) > 0 {
+			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q", "conditionids", "dependson", "conditionids")
+		} else {
+			logrus.Warningf("%q is deprecated in favor of %q", "conditionids", "dependson")
+			for _, condition := range c.DeprecatedConditionIDs {
+				logrus.Warningf("%q is deprecated in favor of %q: %s", "conditionids", "dependson", condition)
+				c.ResourceConfig.DependsOn = append(c.ResourceConfig.DependsOn, fmt.Sprintf("condition#%s", condition))
+			}
+			c.DeprecatedConditionIDs = []string{}
+			c.DisableConditions = true
 		}
 	}
 

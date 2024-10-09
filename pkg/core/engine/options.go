@@ -8,7 +8,8 @@ import (
 
 // Options defines application specific behaviors
 type Options struct {
-	Config    config.Option
-	Pipeline  pipeline.Options
-	Manifests []manifest.Manifest
+	Config         config.Option
+	Pipeline       pipeline.Options
+	Manifests      []manifest.Manifest
+	DisplayFlavour string
 }

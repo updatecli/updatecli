@@ -15,6 +15,7 @@ var (
 	manifestShowClean             bool
 	manifestShowDisablePrepare    bool
 	manifestShowDisableTemplating bool
+	manifestShowGraph             bool
 
 	manifestShowCmd = &cobra.Command{
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
@@ -36,6 +37,7 @@ var (
 
 			e.Options.Pipeline.Target.Clean = manifestShowClean
 			e.Options.Config.DisableTemplating = manifestShowDisableTemplating
+			e.Options.DisplayFlavour = "graph"
 
 			// Showing templating diff may leak sensitive information such as credentials
 			config.GolangTemplatingDiff = true
@@ -57,6 +59,7 @@ func init() {
 	manifestShowCmd.Flags().BoolVar(&manifestShowDisablePrepare, "disable-prepare", false, "--disable-prepare skip the Updatecli 'prepare' stage")
 	manifestShowCmd.Flags().BoolVar(&manifestShowDisableTemplating, "disable-templating", false, "Disable manifest templating")
 	manifestShowCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
+	manifestShowCmd.Flags().BoolVar(&manifestShowGraph, "graph", false, "Output in graph format")
 
 	manifestCmd.AddCommand(manifestShowCmd)
 }
