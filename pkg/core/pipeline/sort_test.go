@@ -850,7 +850,8 @@ func TestSortedResourcesKeys(t *testing.T) {
 		},
 	}
 
-	for _, data := range testdata {
+	for i := range testdata {
+		data := &testdata[i]
 		t.Run(data.Name, func(t *testing.T) {
 			sources := map[string]source.Source{}
 			for k, v := range data.Sources {
