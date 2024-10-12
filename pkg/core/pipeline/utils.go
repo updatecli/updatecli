@@ -153,14 +153,30 @@ func (p *Pipeline) traverseAndWriteDot(d *dag.DAG, node string, dotOutput *strin
 				if target.Config.Name != "" {
 					name = target.Config.Name
 				}
-				kind = target.Config.Name
+				kind = target.Config.Kind
 			}
 		}
-		dotOutput.WriteString(fmt.Sprintf("    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n", node, name, kind, shape, color))
+
+		dotOutput.WriteString(
+			fmt.Sprintf(
+				"    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n",
+				node,
+				strings.ReplaceAll(name, `"`, `\"`),
+				kind,
+				shape,
+				color,
+			),
+		)
 	}
 	for successor := range successors {
 		if node != rootVertex {
-			dotOutput.WriteString(fmt.Sprintf("    %q -> %q;\n", node, successor))
+			dotOutput.WriteString(
+				fmt.Sprintf(
+					"    %q -> %q;\n",
+					node,
+					successor,
+				),
+			)
 		}
 		err = p.traverseAndWriteDot(d, successor, dotOutput, visited)
 		if err != nil {
