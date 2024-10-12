@@ -747,22 +747,22 @@ func TestSortedResourcesKeys(t *testing.T) {
 			Name: "Scenario 10: Runtime Dependency",
 			Sources: map[string]source.Config{
 				"1": {
-					resource.ResourceConfig{
+					ResourceConfig: resource.ResourceConfig{
 						Kind: "shell",
 					},
 				},
 				"2": {
-					resource.ResourceConfig{
+					ResourceConfig: resource.ResourceConfig{
 						Kind: "shell",
 					},
 				},
 				"3": {
-					resource.ResourceConfig{
+					ResourceConfig: resource.ResourceConfig{
 						Kind: "shell",
 					},
 				},
 				"4": {
-					resource.ResourceConfig{
+					ResourceConfig: resource.ResourceConfig{
 						Kind: "shell",
 					},
 				},
@@ -826,12 +826,12 @@ func TestSortedResourcesKeys(t *testing.T) {
 			Name: "Scenario 12: Runtime Dependency in sources",
 			Sources: map[string]source.Config{
 				"1": {
-					resource.ResourceConfig{
+					ResourceConfig: resource.ResourceConfig{
 						Kind: "shell",
 					},
 				},
 				"2": {
-					resource.ResourceConfig{
+					ResourceConfig: resource.ResourceConfig{
 						Kind: "shell",
 						Spec: shell.Spec{
 							Command: "echo {{ source \"1\"}}",
