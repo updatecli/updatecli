@@ -65,6 +65,7 @@ func init() {
 				logrus.Debugf("No CI pipeline detected (%s)\n", err)
 			}
 			if detectedCi.IsDebug() {
+				logrus.Infof("CI pipeline detected in Debug Mode - hence enabling debug mode")
 				logrus.SetLevel(logrus.DebugLevel)
 			}
 		}
