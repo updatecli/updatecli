@@ -138,6 +138,24 @@ func TestIsDebug(t *testing.T) {
 			expect:          GitLabCi{},
 			expectedIsDebug: false,
 		},
+		{
+			name: "GitLab CI - CI_DEBUG_TRACE set to false",
+			env: map[string]string{
+				"GITLAB_CI":      "http://example.com",
+				"CI_DEBUG_TRACE": "false",
+			},
+			expect:          GitLabCi{},
+			expectedIsDebug: false,
+		},
+		{
+			name: "GitLab CI - CI_DEBUG_TRACE set to true",
+			env: map[string]string{
+				"GITLAB_CI":      "http://example.com",
+				"CI_DEBUG_TRACE": "true",
+			},
+			expect:          GitLabCi{},
+			expectedIsDebug: true,
+		},
 	}
 
 	for _, tt := range tests {
