@@ -35,7 +35,7 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 		)
 
 		if err != nil {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+			logrus.Debugf("RC: %s\n", err)
 			return false, err
 		}
 
