@@ -10,6 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 	"github.com/updatecli/updatecli/pkg/core/udash"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 
 	"github.com/updatecli/updatecli/pkg/core/engine"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -58,6 +59,14 @@ func init() {
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if verbose {
 			logrus.SetLevel(logrus.DebugLevel)
+		} else {
+			detectedCi, err := ci.New()
+			if err != nil {
+				logrus.Debugf("No CI pipeline detected (%s)\n", err)
+			}
+			if detectedCi.IsDebug() {
+				logrus.SetLevel(logrus.DebugLevel)
+			}
 		}
 		if experimental {
 			cmdoptions.Experimental = true

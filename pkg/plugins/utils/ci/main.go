@@ -9,6 +9,7 @@ import (
 type CIEngine interface {
 	URL() string
 	Name() string
+	IsDebug() bool
 }
 
 // New returns a newly initialized CIEngine or an error

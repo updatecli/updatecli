@@ -15,3 +15,7 @@ func (g GitLabCi) Name() string {
 func (g GitLabCi) URL() string {
 	return fmt.Sprintf(os.Getenv("CI_SERVER_URL")+"/%s/-/jobs/%s", os.Getenv("CI_PROJECT_PATH"), os.Getenv("CI_JOB_ID"))
 }
+
+func (gha GitLabCi) IsDebug() bool {
+	return false
+}
