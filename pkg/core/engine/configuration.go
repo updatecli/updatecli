@@ -88,8 +88,8 @@ func (e *Engine) LoadConfigurations() error {
 					e.Options.Pipeline)
 
 				if err == nil {
-					e.Pipelines = append(e.Pipelines, newPipeline)
-					e.configurations = append(e.configurations, loadedConfiguration)
+					e.Pipelines = append(e.Pipelines, &newPipeline)
+					e.configurations = append(e.configurations, &loadedConfiguration)
 				} else {
 					// don't initially fail as init. of the pipeline still fails even with a successful validation
 					err := fmt.Errorf("%q - %s", manifestFile, err)

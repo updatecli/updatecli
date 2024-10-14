@@ -16,8 +16,8 @@ var (
 
 // Engine defined parameters for a specific engine run.
 type Engine struct {
-	configurations []config.Config
-	Pipelines      []pipeline.Pipeline
+	configurations []*config.Config
+	Pipelines      []*pipeline.Pipeline
 	Options        Options
 	Reports        reports.Reports
 }
