@@ -61,6 +61,10 @@ type ResourceConfig struct {
 	// dependson:
 	//   - condition#myCondition:and
 	//   - source#mySource
+	//
+	// remarks:
+	//   The parameters "sourceid" and "conditionsids" affect the order of resource execution.
+	//   To avoid circular dependencies, the depended resource may need to remove any conditionids or set "disablesourceinput to true".
 	DependsOn []string `yaml:",omitempty"`
 	// name specifies the resource name
 	Name string `yaml:",omitempty"`
