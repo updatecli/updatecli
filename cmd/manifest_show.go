@@ -37,7 +37,15 @@ var (
 
 			e.Options.Pipeline.Target.Clean = manifestShowClean
 			e.Options.Config.DisableTemplating = manifestShowDisableTemplating
-			e.Options.DisplayFlavour = "graph"
+
+			if manifestShowGraph {
+				// TODO: To be removed once not experimental anymore
+				if !experimental {
+					logrus.Warningf("The '--graph' flag requires the flag experimental to work.")
+					os.Exit(1)
+				}
+				e.Options.DisplayFlavour = "graph"
+			}
 
 			// Showing templating diff may leak sensitive information such as credentials
 			config.GolangTemplatingDiff = true
