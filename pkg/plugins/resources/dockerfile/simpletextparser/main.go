@@ -15,11 +15,12 @@ import (
 type SimpleTextDockerfileParser struct {
 	Keyword      string `yaml:"keyword,omitempty"`
 	Matcher      string `yaml:"matcher,omitempty"`
+	Stage        string `yaml:"stage,omitempty"`
 	KeywordLogic keywords.Logic
 }
 
-func (s SimpleTextDockerfileParser) FindInstruction(dockerfileContent []byte) bool {
-	if found, originalLine := s.hasMatch(dockerfileContent); found {
+func (s SimpleTextDockerfileParser) FindInstruction(dockerfileContent []byte, stage string) bool {
+	if found, originalLine := s.hasMatch(dockerfileContent, stage); found {
 		logrus.Infof("%s Line %q found, matching the keyword %q and the matcher %q.", result.SUCCESS, originalLine, s.Keyword, s.Matcher)
 		return true
 	}
@@ -28,13 +29,21 @@ func (s SimpleTextDockerfileParser) FindInstruction(dockerfileContent []byte) bo
 	return false
 }
 
-func (s SimpleTextDockerfileParser) hasMatch(dockerfileContent []byte) (bool, string) {
+func (s SimpleTextDockerfileParser) hasMatch(dockerfileContent []byte, stage string) (bool, string) {
 	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
 
 	// For each line of the dockerfile
+	// Make sure we handle the stage
+	currentStageName := ""
+	stageScanner := keywords.From{}
 	for scanner.Scan() {
 		originalLine := scanner.Text()
-
+		if stageName, err := stageScanner.GetStageName(originalLine); err == nil {
+			currentStageName = stageName
+		}
+		if stage != "" && currentStageName != stage {
+			continue
+		}
 		if s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
 			// Immediately returns if there is match: the result of a condition is the same with one or multiple matches
 			return true, originalLine
@@ -44,11 +53,11 @@ func (s SimpleTextDockerfileParser) hasMatch(dockerfileContent []byte) (bool, st
 	return false, ""
 }
 
-func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte, sourceValue string) ([]byte, types.ChangedLines, error) {
+func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte, sourceValue, stage string) ([]byte, types.ChangedLines, error) {
 
 	changedLines := make(types.ChangedLines)
 
-	if found, _ := s.hasMatch(dockerfileContent); !found {
+	if found, _ := s.hasMatch(dockerfileContent, stage); !found {
 		return dockerfileContent, changedLines, fmt.Errorf("%s No line found matching the keyword %q and the matcher %q.", result.FAILURE, s.Keyword, s.Matcher)
 	}
 
@@ -56,13 +65,20 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
 	linePosition := 0
 
+	// Make sure we handle the stage
+	currentStageName := ""
+	stageScanner := keywords.From{}
 	// For each line of the dockerfile
 	for scanner.Scan() {
 		originalLine := scanner.Text()
 		newLine := originalLine
 		linePosition += 1
 
-		if s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
+		if stageName, err := stageScanner.GetStageName(originalLine); err == nil {
+			currentStageName = stageName
+		}
+
+		if ((stage != "" && stage == currentStageName) || stage == "") && s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
 			// if strings.HasPrefix(strings.ToLower(originalLine), strings.ToLower(d.spec.Instruction.Keyword)) {
 			newLine = s.KeywordLogic.ReplaceLine(sourceValue, originalLine, s.Matcher)
 
@@ -91,6 +107,79 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 		_, _ = newDockerfile.WriteString(newLine + "\n")
 	}
 	return newDockerfile.Bytes(), changedLines, nil
+}
+
+func (s SimpleTextDockerfileParser) GetInstructionTokens(dockerfileContent []byte) []keywords.Tokens {
+	var instructions []keywords.Tokens
+	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if s.KeywordLogic.IsLineMatching(line, s.Matcher) {
+			token, err := s.KeywordLogic.GetTokens(line)
+			if err != nil {
+				continue
+			}
+			instructions = append(instructions, token)
+		}
+	}
+	return instructions
+}
+
+func (s SimpleTextDockerfileParser) GetInstruction(dockerfileContent []byte, stage string) string {
+	type stageValue struct {
+		StageName string
+		Value     string
+	}
+	var stagesInstruction []stageValue
+	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
+	stageCounter := -1
+	currentStageName := ""
+	stageScanner := keywords.From{}
+	for scanner.Scan() {
+		originalLine := scanner.Text()
+		if stageName, err := stageScanner.GetStageName(originalLine); err == nil {
+			currentStageName = stageName
+			stageCounter += 1
+		}
+		if stage != "" && stage != currentStageName {
+			continue
+		}
+		if s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
+			stageName := currentStageName
+			if stageName == "" {
+				// Use stage counter
+				stageName = fmt.Sprintf("%d", stageCounter)
+			}
+			if value, err := s.KeywordLogic.GetValue(originalLine, s.Matcher); err == nil {
+				stageValue := stageValue{
+					StageName: stageName,
+					Value:     value,
+				}
+				if len(stagesInstruction) > 0 && stagesInstruction[len(stagesInstruction)-1].StageName == stageName {
+					// Value can be overwritten
+					stagesInstruction = stagesInstruction[:len(stagesInstruction)-1]
+				}
+				stagesInstruction = append(stagesInstruction, stageValue)
+			}
+		}
+
+	}
+	var instruction string
+	if len(stagesInstruction) == 0 {
+		// Found nothing
+		return ""
+	}
+	if stage == "" {
+		// No Stage selected, return info for last one
+		return stagesInstruction[len(stagesInstruction)-1].Value
+	}
+	// We have a stage name, let's try to find it
+	for _, currentStage := range stagesInstruction {
+		if currentStage.StageName == stage {
+			instruction = currentStage.Value
+		}
+	}
+	return instruction
 }
 
 func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfileParser, error) {
@@ -127,7 +216,7 @@ var supportedKeywordsInitializers = map[string]keywords.Logic{
 	"from":        keywords.From{},
 	"run":         nil,
 	"cmd":         nil,
-	"label":       nil,
+	"label":       keywords.SimpleKeyword{Keyword: "label"},
 	"maintainer":  nil,
 	"expose":      nil,
 	"add":         nil,
@@ -136,8 +225,8 @@ var supportedKeywordsInitializers = map[string]keywords.Logic{
 	"volume":      nil,
 	"user":        nil,
 	"workdir":     nil,
-	"arg":         keywords.Arg{},
-	"env":         keywords.Env{},
+	"arg":         keywords.SimpleKeyword{Keyword: "arg"},
+	"env":         keywords.SimpleKeyword{Keyword: "env"},
 	"onbuild":     nil,
 	"stopsignal":  nil,
 	"healthcheck": nil,

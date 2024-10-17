@@ -19,25 +19,7 @@ func TestDiscoverManifests(t *testing.T) {
 			name:    "Scenario 1",
 			rootDir: "testdata/updatecli-action",
 			digest:  true,
-			expectedPipelines: []string{`name: 'deps(dockerfile): bump image "updatecli/updatecli" digest'
-sources:
-  updatecli/updatecli-digest:
-    name: 'get latest image "updatecli/updatecli" digest'
-    kind: 'dockerdigest'
-    spec:
-      image: 'updatecli/updatecli'
-      tag: 'latest'
-targets:
-  updatecli/updatecli:
-    name: 'deps(dockerfile): bump image "updatecli/updatecli" digest'
-    kind: 'dockerfile'
-    spec:
-      file: 'Dockerfile'
-      instruction:
-        keyword: 'ARG'
-        matcher: 'updatecli_version'
-    sourceid: 'updatecli/updatecli-digest'
-`, `name: 'deps(dockerfile): bump "updatecli/updatecli" digest'
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "updatecli/updatecli" digest'
 sources:
   updatecli/updatecli:
     name: 'get latest image tag for "updatecli/updatecli"'
@@ -130,6 +112,41 @@ targets:
     sourceid: 'updatecli/updatecli'
 `},
 		},
+		{
+			name:    "Scenario 4: Reuse base image and scratch",
+			rootDir: "testdata/scratch-and-base",
+			digest:  true,
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "updatecli/updatecli" digest'
+sources:
+  updatecli/updatecli:
+    name: 'get latest image tag for "updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.25.0'
+  updatecli/updatecli-digest:
+    name: 'get latest image "updatecli/updatecli" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'updatecli/updatecli'
+      tag: '{{ source "updatecli/updatecli" }}'
+    dependson:
+      - 'updatecli/updatecli'
+targets:
+  updatecli/updatecli:
+    name: 'deps(dockerfile): bump image "updatecli/updatecli" digest'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'updatecli_version'
+    sourceid: 'updatecli/updatecli-digest'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -138,9 +155,8 @@ targets:
 			digest := tt.digest
 			dockerfile, err := New(
 				Spec{
-					RootDir: tt.rootDir,
-					Digest:  &digest,
-				}, "", "")
+					Digest: &digest,
+				}, tt.rootDir, "")
 			require.NoError(t, err)
 
 			rawPipelines, err := dockerfile.DiscoverManifests()

@@ -145,7 +145,7 @@ func applySemVerInc(input, semVerInc string) (string, error) {
 
 	v, err := semver.NewVersion(input)
 	if err != nil {
-		return "", fmt.Errorf("wrong semantic version input: %q", semVerInc)
+		return "", fmt.Errorf("wrong semantic version input: %q", input)
 	}
 
 	rules := strings.Split(semVerInc, ",")

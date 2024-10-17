@@ -54,7 +54,7 @@ func TestSource(t *testing.T) {
 				Repository: "updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "regex",
-					Pattern: "main",
+					Pattern: "^main$",
 				},
 			},
 			wantResult: "main",

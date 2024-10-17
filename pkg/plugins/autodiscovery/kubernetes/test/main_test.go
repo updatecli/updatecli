@@ -18,11 +18,13 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		digest            bool
+		flavor            string
 		expectedPipelines []string
 	}{
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata/success",
+			flavor:  kubernetes.FlavorKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
 sources:
   updatecli:
@@ -40,7 +42,7 @@ targets:
     kind: 'yaml'
     spec:
       file: 'pod.yaml'
-      key: '$.spec.containers[0].image'
+      key: "$.spec.containers[0].image"
     sourceid: 'updatecli'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
@@ -49,6 +51,7 @@ targets:
 		{
 			name:    "Scenario 2 - Kustomize",
 			rootDir: "testdata/kustomize",
+			flavor:  kubernetes.FlavorKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "nginx"'
 sources:
   nginx:
@@ -66,7 +69,7 @@ targets:
     kind: 'yaml'
     spec:
       file: 'deployment.yaml'
-      key: '$.spec.template.spec.containers[0].image'
+      key: "$.spec.template.spec.containers[0].image"
     sourceid: 'nginx'
     transformers:
       - addprefix: 'nginx:'
@@ -76,6 +79,7 @@ targets:
 			name:    "Scenario - latest and digest",
 			rootDir: "testdata/success",
 			digest:  true,
+			flavor:  kubernetes.FlavorKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
 sources:
   updatecli:
@@ -101,7 +105,101 @@ targets:
     kind: 'yaml'
     spec:
       file: 'pod.yaml'
-      key: '$.spec.containers[0].image'
+      key: "$.spec.containers[0].image"
+    sourceid: 'updatecli-digest'
+    transformers:
+      - addprefix: 'ghcr.io/updatecli/updatecli:'
+`},
+		},
+		{
+			name:    "Scenario - prow",
+			rootDir: "testdata/prow",
+			digest:  true,
+			flavor:  kubernetes.FlavorProw,
+			expectedPipelines: []string{`name: 'deps: bump container image "ghcr.io/updatecli/updatecli" for repo "*" and presubmit test "pull-updatecli-diff"'
+sources:
+  ghcr.io/updatecli/updatecli:
+    name: 'get latest container image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.82.2'
+  ghcr.io/updatecli/updatecli-digest:
+    name: 'get latest container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tag: '{{ source "ghcr.io/updatecli/updatecli" }}'
+    dependson:
+      - 'ghcr.io/updatecli/updatecli'
+targets:
+  ghcr.io/updatecli/updatecli:
+    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    kind: 'yaml'
+    spec:
+      file: 'prow.yaml'
+      key: "$.presubmits.'*'[0].spec.containers[0].image"
+    sourceid: 'ghcr.io/updatecli/updatecli-digest'
+    transformers:
+      - addprefix: 'ghcr.io/updatecli/updatecli:'
+`, `name: 'deps: bump container image "updatecli" for repo "updatecli/updatecli" and postsubmit test "pull-updatecli-apply"'
+sources:
+  updatecli:
+    name: 'get latest container image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.82.2'
+  updatecli-digest:
+    name: 'get latest container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tag: '{{ source "updatecli" }}'
+    dependson:
+      - 'updatecli'
+targets:
+  updatecli:
+    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    kind: 'yaml'
+    spec:
+      file: 'prow.yaml'
+      key: "$.postsubmits.'updatecli/updatecli'[0].spec.containers[0].image"
+    sourceid: 'updatecli-digest'
+    transformers:
+      - addprefix: 'ghcr.io/updatecli/updatecli:'
+`, `name: 'deps: bump container image "updatecli" for periodic test "pull-updatecli-apply-cron"'
+sources:
+  updatecli:
+    name: 'get latest container image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.82.2'
+  updatecli-digest:
+    name: 'get latest container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tag: '{{ source "updatecli" }}'
+    dependson:
+      - 'updatecli'
+targets:
+  updatecli:
+    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    kind: 'yaml'
+    spec:
+      file: 'prow.yaml'
+      key: "$.periodics[0].spec.containers[0].image"
     sourceid: 'updatecli-digest'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
@@ -115,9 +213,8 @@ targets:
 			digest := tt.digest
 			pod, err := kubernetes.New(
 				kubernetes.Spec{
-					Digest:  &digest,
-					RootDir: tt.rootDir,
-				}, "", "")
+					Digest: &digest,
+				}, tt.rootDir, "", tt.flavor)
 
 			require.NoError(t, err)
 
@@ -128,6 +225,8 @@ targets:
 			if len(rawPipelines) == 0 {
 				t.Errorf("No pipelines found for %s", tt.name)
 			}
+
+			assert.Equal(t, len(tt.expectedPipelines), len(rawPipelines))
 
 			for i := range rawPipelines {
 				// We expect manifest generated by the autodiscovery to use the yaml syntax

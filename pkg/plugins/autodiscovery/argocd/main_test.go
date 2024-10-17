@@ -106,9 +106,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			argocd, err := New(
-				Spec{
-					RootDir: tt.rootDir,
-				}, "", "")
+				Spec{}, tt.rootDir, "")
 
 			require.NoError(t, err)
 

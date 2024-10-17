@@ -136,9 +136,8 @@ targets:
 			digest := tt.digest
 			composefile, err := New(
 				Spec{
-					Digest:  &digest,
-					RootDir: tt.rootDir,
-				}, "", "")
+					Digest: &digest,
+				}, tt.rootDir, "")
 
 			require.NoError(t, err)
 

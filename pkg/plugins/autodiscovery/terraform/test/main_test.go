@@ -185,11 +185,10 @@ func TestDiscoverManifests(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resource, err := terraform.New(
 				terraform.Spec{
-					RootDir:   tt.rootDir,
 					Platforms: tt.platforms,
 					Only:      tt.only,
 					Ignore:    tt.ignore,
-				}, "", "")
+				}, tt.rootDir, "")
 			require.NoError(t, err)
 
 			pipelines, err := resource.DiscoverManifests()

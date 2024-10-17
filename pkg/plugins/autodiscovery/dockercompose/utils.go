@@ -16,6 +16,8 @@ import (
 func searchDockerComposeFiles(rootDir string, filePatterns []string) ([]string, error) {
 	dockerComposeFiles := []string{}
 
+	logrus.Debugf("Looking for Docker compose file(s) in %q", rootDir)
+
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)

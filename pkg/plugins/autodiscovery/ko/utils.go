@@ -14,6 +14,8 @@ import (
 // searchKosFiles will look, recursively, for every Ko files.
 func searchKosFiles(rootDir string, files []string) ([]string, error) {
 
+	logrus.Debugf("Looking for Ko files in %q", rootDir)
+
 	koFiles := []string{}
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {

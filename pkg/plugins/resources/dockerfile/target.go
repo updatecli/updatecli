@@ -35,7 +35,7 @@ func (d *Dockerfile) Target(source string, scm scm.ScmHandler, dryRun bool, resu
 
 		logrus.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
 
-		newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions([]byte(dockerfileContent), source)
+		newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions([]byte(dockerfileContent), source, d.spec.Stage)
 		if err != nil {
 			return err
 		}

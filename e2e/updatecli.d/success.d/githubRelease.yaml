@@ -10,7 +10,7 @@ sources:
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
   prerelease:
-    name: Get Latest GitHub Action Prelease
+    name: Get Latest GitHub Action Prerelease
     kind: githubrelease
     spec:
       owner: updatecli
@@ -40,7 +40,7 @@ conditions:
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
   prerelease:
-    name: Check Latest GitHub Action Prelease
+    name: Check Latest GitHub Action Prerelease
     kind: githubrelease
     sourceid: prerelease
     spec:

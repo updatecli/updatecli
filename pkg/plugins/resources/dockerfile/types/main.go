@@ -2,8 +2,9 @@ package types
 
 // DockerfileParser is an interface that any updatecli's Dockerfile parser must verifies to be used
 type DockerfileParser interface {
-	FindInstruction(dockerfileContent []byte) bool
-	ReplaceInstructions(dockerfileContent []byte, sourceValue string) ([]byte, ChangedLines, error)
+	FindInstruction(dockerfileContent []byte, stage string) bool
+	GetInstruction(dockerfileContent []byte, stage string) string
+	ReplaceInstructions(dockerfileContent []byte, sourceValue, stage string) ([]byte, ChangedLines, error)
 }
 
 // ChangedLine is struct to store a single (Dockerfile-)line change's information

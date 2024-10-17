@@ -1,12 +1,18 @@
 package kubernetes
 
 import (
+	"path"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+)
+
+var (
+	FlavorKubernetes string = "kubernetes"
+	FlavorProw       string = "prow"
 )
 
 // Spec defines the parameters which can be provided to the Kubernetes builder.
@@ -89,10 +95,12 @@ type Kubernetes struct {
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
+	// flavor holds which type of crawler to use, either classic kubernetes, or prow
+	flavor string
 }
 
 // New return a new valid Kubernetes object.
-func New(spec interface{}, rootDir, scmID string) (Kubernetes, error) {
+func New(spec interface{}, rootDir, scmID, flavor string) (Kubernetes, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -101,7 +109,10 @@ func New(spec interface{}, rootDir, scmID string) (Kubernetes, error) {
 	}
 
 	dir := rootDir
-	if len(s.RootDir) > 0 {
+	if path.IsAbs(s.RootDir) {
+		if scmID != "" {
+			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+		}
 		dir = s.RootDir
 	}
 
@@ -136,14 +147,15 @@ func New(spec interface{}, rootDir, scmID string) (Kubernetes, error) {
 		scmID:         scmID,
 		files:         files,
 		versionFilter: newFilter,
+		flavor:        flavor,
 	}, nil
 
 }
 
-func (f Kubernetes) DiscoverManifests() ([][]byte, error) {
+func (k Kubernetes) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Kubernetes"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Kubernetes")+1))
 
-	return f.discoverContainerManifests()
+	return k.discoverContainerManifests()
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser/keywords"
 )
 
 func TestSearchFiles(t *testing.T) {
@@ -19,6 +20,7 @@ func TestSearchFiles(t *testing.T) {
 				"testdata/Dockerfile",
 				"testdata/alpine/Dockerfile",
 				"testdata/jenkins/Dockerfile",
+				"testdata/scratch-and-base/Dockerfile",
 				"testdata/updatecli-action/Dockerfile",
 			},
 		},
@@ -38,58 +40,118 @@ func TestGetDockerfileData(t *testing.T) {
 	testdata := []struct {
 		name                string
 		filepath            string
-		expectedInstruction []instruction
+		expectedInstruction []keywords.FromToken
+		expectedArgs        map[string]keywords.SimpleTokens
 	}{
 		{
 			name:     "Default case",
 			filepath: "testdata/Dockerfile",
-			expectedInstruction: []instruction{
+			expectedInstruction: []keywords.FromToken{
 				{
-					name:  "FROM",
-					value: "updatecli/updatecli:v0.37.0",
-					image: "updatecli/updatecli:v0.37.0",
+					Keyword:  "FROM",
+					Image:    "updatecli/updatecli",
+					Tag:      "v0.37.0",
+					Platform: "${BUILDPLATFORM}",
+					Args: map[string]*keywords.FromTokenArgs{
+						"platform": {
+							Name: "BUILDPLATFORM",
+						},
+					},
 				},
 				{
-					name:  "FROM",
-					value: "updatecli/updatecli:v0.38.0",
-					image: "updatecli/updatecli:v0.38.0",
+					Keyword: "FROM",
+					Image:   "updatecli/updatecli",
+					Tag:     "v0.38.0",
 				},
 				{
-					name:  "FROM",
-					value: "updatecli/updatecli:v0.36.0",
-					image: "updatecli/updatecli:v0.36.0",
+					Keyword: "FROM",
+					Image:   "updatecli/updatecli",
+					Tag:     "v0.36.0",
+					Alias:   "builder",
+					AliasKw: "as",
 				},
 				{
-					name:          "ARG",
-					value:         "alpine_version",
-					image:         "alpine:3.16.3",
-					trimArgPrefix: "alpine:",
+					Keyword: "FROM",
+					Image:   "alpine",
+					Tag:     "${alpine_version}",
+					Alias:   "base",
+					AliasKw: "AS",
+					Args: map[string]*keywords.FromTokenArgs{
+						"tag": {
+							Name: "alpine_version",
+						},
+					},
+				},
+			},
+			expectedArgs: map[string]keywords.SimpleTokens{
+				"alpine_version": {
+					Keyword: "ARG",
+					Name:    "alpine_version",
+					Value:   "3.16.3",
 				},
 			},
 		},
 		{
 			name:     "Alpine case with ARG",
 			filepath: "testdata/alpine/Dockerfile",
-			expectedInstruction: []instruction{
+			expectedInstruction: []keywords.FromToken{
 				{
-					name:          "ARG",
-					value:         "alpine_version",
-					image:         "alpine:3.16.3",
-					trimArgPrefix: "alpine:",
-					arch:          "ppc64",
+					Keyword:  "FROM",
+					Platform: "linux/ppc64",
+					Image:    "alpine",
+					Tag:      "${alpine_version}",
+					Alias:    "alpine",
+					AliasKw:  "AS",
+					Args: map[string]*keywords.FromTokenArgs{
+						"tag": {
+							Name: "alpine_version",
+						},
+					},
 				},
 				{
-					name:          "ARG",
-					value:         "debian_version",
-					image:         "debian:8",
-					trimArgPrefix: "debian:",
-					arch:          "arch64",
+					Keyword:  "FROM",
+					Platform: "${platform}",
+					Image:    "debian",
+					Tag:      "${debian_version}",
+					Args: map[string]*keywords.FromTokenArgs{
+						"platform": {
+							Name: "platform",
+						},
+						"tag": {
+							Name: "debian_version",
+						},
+					},
 				},
 				{
-					name:  "FROM",
-					value: "opensuse:15.4",
-					image: "opensuse:15.4",
-					arch:  "ppc64",
+					Keyword:  "FROM",
+					Platform: "windows/ppc64",
+					Image:    "opensuse",
+					Tag:      "15.4",
+				},
+				{
+					Keyword:  "FROM",
+					Platform: "linux/ppc64",
+					Image:    "alpine",
+					Tag:      "${alpine_version}${debian_version}",
+					Alias:    "alpine",
+					AliasKw:  "AS",
+				},
+			},
+			expectedArgs: map[string]keywords.SimpleTokens{
+				"alpine_version": {
+					Keyword: "ARG",
+					Name:    "alpine_version",
+					Value:   "3.16.3",
+				},
+				"debian_version": {
+					Keyword: "ARG",
+					Name:    "debian_version",
+					Value:   "8",
+				},
+				"platform": {
+					Keyword: "ARG",
+					Name:    "platform",
+					Value:   "linux/arch64",
 				},
 			},
 		},
@@ -97,74 +159,10 @@ func TestGetDockerfileData(t *testing.T) {
 
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
-			gotInstructions, err := parseDockerfile(tt.filepath)
+			gotInstructions, gotArgs, err := parseDockerfile(tt.filepath)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedInstruction, gotInstructions)
-		})
-	}
-}
-
-func TestExtractArgName(t *testing.T) {
-	testdata := []struct {
-		name                 string
-		input                string
-		expectedPrefix       string
-		expectedArgName      string
-		expectedSuffix       string
-		expectedError        bool
-		expectedErrorMessage error
-	}{
-		{
-			name:            "Default case",
-			input:           "${alpine_version}",
-			expectedPrefix:  "",
-			expectedArgName: "alpine_version",
-			expectedSuffix:  "",
-		},
-		{
-			name:            "Default case",
-			input:           "2.235-lts",
-			expectedPrefix:  "",
-			expectedArgName: "",
-			expectedSuffix:  "",
-		},
-		{
-			name:            "Default case",
-			input:           "${jenkins_version}-lts",
-			expectedPrefix:  "",
-			expectedArgName: "jenkins_version",
-			expectedSuffix:  "-lts",
-		},
-		{
-			name:            "Default case",
-			input:           "lts-${jenkins_version}",
-			expectedPrefix:  "lts-",
-			expectedArgName: "jenkins_version",
-			expectedSuffix:  "",
-		},
-		{
-			name:                 "Default case",
-			input:                "${jenkins_release_type}-${jenkins_version}",
-			expectedPrefix:       "lts-",
-			expectedArgName:      "jenkins_version",
-			expectedSuffix:       "",
-			expectedError:        true,
-			expectedErrorMessage: ErrTooManyVariables,
-		},
-	}
-
-	for _, tt := range testdata {
-		t.Run(tt.name, func(t *testing.T) {
-			gotPrefix, gotArgName, gotSuffix, gotErr := extractArgName(tt.input)
-
-			if tt.expectedError {
-				assert.EqualError(t, gotErr, tt.expectedErrorMessage.Error())
-			} else {
-				assert.NoError(t, gotErr)
-				assert.Equal(t, tt.expectedPrefix, gotPrefix)
-				assert.Equal(t, tt.expectedArgName, gotArgName)
-				assert.Equal(t, tt.expectedSuffix, gotSuffix)
-			}
+			assert.Equal(t, tt.expectedArgs, gotArgs)
 		})
 	}
 }
