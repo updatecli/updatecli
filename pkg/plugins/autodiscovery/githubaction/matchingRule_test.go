@@ -12,12 +12,13 @@ func TestIsMatchingRule(t *testing.T) {
 		rules          MatchingRules
 		name           string
 		filePath       string
-		repository     string
+		action         string
 		reference      string
 		rootDir        string
 		expectedResult bool
 	}{
 		{
+			name: "Test matching with only path",
 			rules: MatchingRules{
 				MatchingRule{
 					Path: "testdata/helmrelease.yaml",
@@ -27,6 +28,7 @@ func TestIsMatchingRule(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Test matching with subpath",
 			rules: MatchingRules{
 				MatchingRule{
 					Path: "testdata/helmrelease.yaml",
@@ -36,6 +38,7 @@ func TestIsMatchingRule(t *testing.T) {
 			expectedResult: false,
 		},
 		{
+			name: "test matching with path and action",
 			rules: MatchingRules{
 				MatchingRule{
 					Path: "testdata/helmrelease.yaml",
@@ -45,9 +48,10 @@ func TestIsMatchingRule(t *testing.T) {
 				},
 			},
 			filePath:       "testdata/helmrelease.yaml",
-			expectedResult: true,
+			expectedResult: false,
 		},
 		{
+			name: "test failing path but matching action",
 			rules: MatchingRules{
 				MatchingRule{
 					Path: "testdata/helmrelease.yaml",
@@ -57,8 +61,8 @@ func TestIsMatchingRule(t *testing.T) {
 				},
 			},
 			filePath:       "testdata/updatecli/.github/workflows/updatecli.yaml",
-			repository:     "updatecli/updatecli",
-			expectedResult: true,
+			action:         "updatecli/updatecli",
+			expectedResult: false,
 		},
 	}
 
@@ -67,7 +71,7 @@ func TestIsMatchingRule(t *testing.T) {
 			gotResult := d.rules.isMatchingRules(
 				d.rootDir,
 				d.filePath,
-				d.repository,
+				d.action,
 				d.reference)
 
 			assert.Equal(t, d.expectedResult, gotResult)
