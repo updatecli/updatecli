@@ -25,21 +25,25 @@ scms:
     kind: 'git'
     spec:
       url: "https://github.com/actions/checkout.git"
-      password: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      password: 'xxx'
 
 sources:
   release:
+    dependson:
+      - 'condition#release:and'
     name: 'Get latest GitHub Release for actions/checkout'
     kind: 'githubrelease'
     spec:
       owner: 'actions'
       repository: 'checkout'
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      token: 'xxx'
       versionfilter:
         kind: 'semver'
         pattern: '*'
 
   tag:
+    dependson:
+      - 'condition#tag:and'
     name: 'Get latest tag for actions/checkout'
     kind: 'gittag'
     scmid: 'github-action'
@@ -49,6 +53,8 @@ sources:
         pattern: '*'
 
   branch:
+    dependson:
+      - 'condition#branch:and'
     name: 'Get latest branch for actions/checkout'
     kind: 'gitbranch'
     scmid: 'github-action'
@@ -65,8 +71,8 @@ conditions:
     spec:
       owner: actions
       repository: checkout
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      tag: '{{ source "release" }}'
+      token: 'xxx'
+      tag: 'v4'
 
   tag:
     name: 'Check if actions/checkout@v4 is a tag'
@@ -74,7 +80,9 @@ conditions:
     scmid: 'github-action'
     disablesourceinput: true
     spec:
-      tag: 'v4'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^v4$'
 
   branch:
     name: 'Check if actions/checkout@v4 is a branch'
@@ -86,11 +94,12 @@ conditions:
 
 targets:
   release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
     name: 'deps(github): bump Action release for actions/checkout from v4 to {{ source "release" }}'
     kind: 'yaml'
     sourceid: 'release'
-    conditionids:
-      - 'release'
     transformers:
       - addprefix: '"actions/checkout@'
       - addsuffix: '"'
@@ -99,11 +108,12 @@ targets:
       key: '$.jobs.updatecli.steps[0].uses'
 
   tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
     name: 'deps(github): bump Action tag for actions/checkout from v4 to {{ source "tag" }}'
     kind: 'yaml'
     sourceid: 'tag'
-    conditionids:
-      - 'tag'
     transformers:
       - addprefix: '"actions/checkout@'
       - addsuffix: '"'
@@ -112,11 +122,12 @@ targets:
       key: '$.jobs.updatecli.steps[0].uses'
 
   branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
     kind: yaml
     sourceid: branch
-    conditionids:
-      - branch
     transformers:
       - addprefix: '"actions/checkout@'
       - addsuffix: '"'

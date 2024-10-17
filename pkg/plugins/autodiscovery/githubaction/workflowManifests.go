@@ -11,6 +11,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	// referenceLatest specifies the latest version of an action
+	referenceLatest = "latest"
+)
+
 func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 
 	var manifests [][]byte
@@ -67,6 +72,11 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 						logrus.Debugf("Ignoring GitHub Action %q as not matching only rule(s)\n", actionName)
 						continue
 					}
+				}
+
+				if reference == referenceLatest {
+					logrus.Debugf("Ignoring GitHub Action %q as it uses latest tag\n", actionName)
+					continue
 				}
 
 				versionFilterKind, versionFilterPattern := detectVersionFilter(reference)
@@ -135,5 +145,5 @@ func detectVersionFilter(reference string) (string, string) {
 		return "semver", "*"
 	}
 
-	return "latest", "latest"
+	return referenceLatest, referenceLatest
 }

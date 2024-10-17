@@ -124,8 +124,8 @@ func New(spec interface{}, rootDir, scmID string) (GitHubAction, error) {
 	newFilter := s.VersionFilter
 	if s.VersionFilter.IsZero() {
 		// By default, helm versioning uses semantic versioning.
-		newFilter.Kind = "semver"
-		newFilter.Pattern = "*"
+		newFilter.Kind = defaultVersionFilterKind
+		newFilter.Pattern = defaultVersionFilterPattern
 	}
 
 	return GitHubAction{

@@ -13,6 +13,8 @@ scms:
 
 sources:
   release:
+    dependson:
+      - 'condition#release:and'
     name: 'Get latest GitHub Release for {{ .ActionName }}'
     kind: 'githubrelease'
     spec:
@@ -24,6 +26,8 @@ sources:
         pattern: '{{ .VersionFilterPattern }}'
 
   tag:
+    dependson:
+      - 'condition#tag:and'
     name: 'Get latest tag for {{ .ActionName }}'
     kind: 'gittag'
     scmid: 'github-action'
@@ -33,6 +37,8 @@ sources:
         pattern: '{{ .VersionFilterPattern }}'
 
   branch:
+    dependson:
+      - 'condition#branch:and'
     name: 'Get latest branch for {{ .ActionName }}'
     kind: 'gitbranch'
     scmid: 'github-action'
@@ -50,7 +56,7 @@ conditions:
       owner: {{ .Owner }}
       repository: {{ .Repository }}
       token: '{{ .Token }}'
-      tag: '{{ "{{" }} source "release" {{ "}}" }}'
+      tag: '{{ .Reference }}'
 
   tag:
     name: 'Check if {{ .ActionName }}@{{ .Reference }} is a tag'
@@ -58,7 +64,9 @@ conditions:
     scmid: 'github-action'
     disablesourceinput: true
     spec:
-      tag: '{{ .Reference }}'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^{{ .Reference }}$'
 
   branch:
     name: 'Check if {{ .ActionName }}@{{ .Reference }} is a branch'
@@ -70,11 +78,12 @@ conditions:
 
 targets:
   release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
     name: 'deps(github): bump Action release for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "release" {{ "}}" }}'
     kind: 'yaml'
     sourceid: 'release'
-    conditionids:
-      - 'release'
     transformers:
       - addprefix: '"{{ .ActionName }}@'
       - addsuffix: '"'
@@ -83,11 +92,12 @@ targets:
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
 
   tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
     name: 'deps(github): bump Action tag for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "tag" {{ "}}" }}'
     kind: 'yaml'
     sourceid: 'tag'
-    conditionids:
-      - 'tag'
     transformers:
       - addprefix: '"{{ .ActionName }}@'
       - addsuffix: '"'
@@ -96,11 +106,12 @@ targets:
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
 
   branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
     name: 'deps(github): bump Action branch for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "branch" {{ "}}" }}'
     kind: yaml
     sourceid: branch
-    conditionids:
-      - branch
     transformers:
       - addprefix: '"{{ .ActionName }}@'
       - addsuffix: '"'
