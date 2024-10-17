@@ -36,7 +36,7 @@ jobs:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
           # we always use the latest patch version.
-          version: v1.60.1
+          version: v1.61.0
           install-mode: "binary"
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v6
