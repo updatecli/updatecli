@@ -5,7 +5,7 @@ policies:
     values:
       - updatecli/values.d/scm.yaml
   - name: Update Updatecli policies
-    policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.2.0@sha256:46e599fb7e874ee3f1c9cf5e4dd64b328a15d61d03e106176b19a07683afde29
+    policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.5.0@sha256:947817644fb89e27f7b7121b822328c2d47364c7a3a08241e4d2ac1a5897020c
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/updatecli-compose.yaml
