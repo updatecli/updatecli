@@ -12,3 +12,7 @@ func (j Jenkins) Name() string {
 func (j Jenkins) URL() string {
 	return os.Getenv("BUILD_URL")
 }
+
+func (gha Jenkins) IsDebug() bool {
+	return false
+}
