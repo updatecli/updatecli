@@ -47,7 +47,24 @@ import (
 )
 
 type ResourceConfig struct {
-	// dependson specifies which resources must be executed before the current one
+	// "dependson" allows to specify the order of execution of resources
+	// It accepts a list of rules like "(resourceType#)resourceId(:booleanOperator)"
+	//
+	// The resourceType is optional and can be one of "condition", "source" or "target"
+	// By default the resourceType is the current resource type
+	//
+	// The resourceId is the name of the resource to depend on
+	//
+	// The booleanOperator is optional and can be "AND" or "OR"
+	//
+	// examples:
+	// dependson:
+	//   - condition#myCondition:and
+	//   - source#mySource
+	//
+	// remarks:
+	//   The parameters "sourceid" and "conditionsids" affect the order of resource execution.
+	//   To avoid circular dependencies, the depended resource may need to remove any conditionids or set "disablesourceinput to true".
 	DependsOn []string `yaml:",omitempty"`
 	// name specifies the resource name
 	Name string `yaml:",omitempty"`

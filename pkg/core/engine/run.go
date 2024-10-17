@@ -9,7 +9,8 @@ func (e *Engine) Run() (err error) {
 
 	PrintTitle("Pipeline")
 
-	for _, pipeline := range e.Pipelines {
+	for i := range e.Pipelines {
+		pipeline := e.Pipelines[i]
 
 		err := pipeline.Run()
 
