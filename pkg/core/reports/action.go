@@ -1,9 +1,11 @@
 package reports
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"sort"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
@@ -44,7 +46,6 @@ func (a *Action) String() string {
 }
 
 func (a *Action) Merge(sourceAction *Action) {
-
 	var c, d []ActionTarget
 
 	switch len(a.Targets) > len(sourceAction.Targets) {
@@ -106,9 +107,23 @@ func (a Action) ToActionsString() string {
 	return string(output[:])
 }
 
+// ToActionsMarkdownString show an action report formatted as a string using markdown
+func (a Action) ToActionsMarkdownString() string {
+	tmpl, err := template.New("actions").Parse(markdownReportTemplate)
+	if err != nil {
+		logrus.Errorf("error: %v\n", err)
+	}
+
+	manifest := bytes.Buffer{}
+	if err := tmpl.Execute(&manifest, a); err != nil {
+		logrus.Debugln(err)
+		logrus.Errorf("error: %v\n", err)
+	}
+	return manifest.String()
+}
+
 // UpdatePipelineURL analyze the local environment to guess if Updatecli is executed from a CI pipeline
 func (a *Action) UpdatePipelineURL() {
-
 	detectedCi, err := ci.New()
 	if err != nil {
 		logrus.Debugf("No CI pipeline detected (%s)\n", err)
