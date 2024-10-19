@@ -4,13 +4,6 @@ const (
 	// workflowManifestTemplate is the Go template used to generate GitHub action workflow manifests
 	workflowManifestTemplate string = `name: 'deps: bump {{ .ActionName }} GitHub workflow'
 
-scms:
-  github-action:
-    kind: 'git'
-    spec:
-      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
-      password: '{{ .Token }}'
-
 sources:
   release:
     dependson:
@@ -30,8 +23,9 @@ sources:
       - 'condition#tag:and'
     name: 'Get latest tag for {{ .ActionName }}'
     kind: 'gittag'
-    scmid: 'github-action'
     spec:
+      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
+      password: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -41,8 +35,9 @@ sources:
       - 'condition#branch:and'
     name: 'Get latest branch for {{ .ActionName }}'
     kind: 'gitbranch'
-    scmid: 'github-action'
     spec:
+      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
+      password: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -61,9 +56,10 @@ conditions:
   tag:
     name: 'Check if {{ .ActionName }}@{{ .Reference }} is a tag'
     kind: 'gittag'
-    scmid: 'github-action'
     disablesourceinput: true
     spec:
+      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
+      password: '{{ .Token }}'
       versionfilter:
         kind: 'regex'
         pattern: '^{{ .Reference }}$'
@@ -71,10 +67,11 @@ conditions:
   branch:
     name: 'Check if {{ .ActionName }}@{{ .Reference }} is a branch'
     kind: 'gitbranch'
-    scmid: 'github-action'
     disablesourceinput: true
     spec:
       branch: '{{ .Reference }}'
+      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
+      password: '{{ .Token }}'
 
 targets:
   release:

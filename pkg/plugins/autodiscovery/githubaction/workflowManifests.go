@@ -4,16 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/template"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
-)
-
-var (
-	// referenceLatest specifies the latest version of an action
-	referenceLatest = "latest"
 )
 
 func (g GitHubAction) discoverWorkflowManifests() [][]byte {
@@ -74,8 +70,11 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					}
 				}
 
-				if reference == referenceLatest {
-					logrus.Debugf("Ignoring GitHub Action %q as it uses latest tag\n", actionName)
+				if slices.Contains([]string{"latest", "master", "main"}, reference) {
+					logrus.Debugf("Ignoring GitHub Action %q as it uses the reference %q \n",
+						actionName,
+						reference,
+					)
 					continue
 				}
 
@@ -139,11 +138,12 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 	return manifests
 }
 
+// detectVersionFilter tries to identify the kind of versionfilter
 func detectVersionFilter(reference string) (string, string) {
 
 	if _, err := semver.NewVersion(reference); err == nil {
 		return "semver", "*"
 	}
 
-	return referenceLatest, referenceLatest
+	return "latest", "latest"
 }

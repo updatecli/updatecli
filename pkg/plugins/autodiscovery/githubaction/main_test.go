@@ -20,13 +20,6 @@ func TestDiscoverManifests(t *testing.T) {
 			token:   "xxx",
 			expectedPipelines: []string{`name: 'deps: bump actions/checkout GitHub workflow'
 
-scms:
-  github-action:
-    kind: 'git'
-    spec:
-      url: "https://github.com/actions/checkout.git"
-      password: 'xxx'
-
 sources:
   release:
     dependson:
@@ -46,8 +39,9 @@ sources:
       - 'condition#tag:and'
     name: 'Get latest tag for actions/checkout'
     kind: 'gittag'
-    scmid: 'github-action'
     spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -57,8 +51,9 @@ sources:
       - 'condition#branch:and'
     name: 'Get latest branch for actions/checkout'
     kind: 'gitbranch'
-    scmid: 'github-action'
     spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -77,9 +72,10 @@ conditions:
   tag:
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
-    scmid: 'github-action'
     disablesourceinput: true
     spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -87,10 +83,11 @@ conditions:
   branch:
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
-    scmid: 'github-action'
     disablesourceinput: true
     spec:
       branch: 'v4'
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
 
 targets:
   release:
