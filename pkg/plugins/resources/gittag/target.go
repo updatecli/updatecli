@@ -11,13 +11,34 @@ import (
 
 // Target creates a tag if needed from a local git repository, without pushing the tag
 func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-	if scm != nil {
-		if len(gt.spec.Path) > 0 {
-			logrus.Warningf("Path setting value %q overridden by the scm configuration (value %q)",
-				gt.spec.Path,
-				scm.GetDirectory())
+	var err error
+
+	if gt.spec.Path != "" && scm != nil {
+		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+			gt.spec.Path,
+			scm.GetDirectory())
+	}
+
+	if gt.spec.URL != "" && scm != nil {
+		logrus.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
+			gt.spec.URL,
+			scm.GetURL())
+	}
+
+	if gt.spec.URL != "" {
+		gt.directory, err = gt.clone()
+		if err != nil {
+			return err
 		}
-		gt.spec.Path = scm.GetDirectory()
+	} else if gt.spec.Path != "" {
+		gt.directory = gt.spec.Path
+	} else if scm != nil {
+		gt.directory = scm.GetDirectory()
+	}
+
+	err = gt.Validate()
+	if err != nil {
+		return err
 	}
 
 	if err := gt.target(source, dryRun, resultTarget); err != nil {
@@ -28,14 +49,22 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 		return nil
 	}
 
-	if scm != nil {
+	if gt.spec.URL != "" || gt.spec.Path != "" {
+		if err := gt.nativeGitHandler.PushTag(source, "", gt.spec.Password, gt.directory, false); err != nil {
+			logrus.Errorf("Git push tag error: %s", err)
+		}
+	} else if scm != nil {
 		if err := scm.PushTag(source); err != nil {
 			logrus.Errorf("Git push tag error: %s", err)
 			return err
 		}
 	}
 
-	resultTarget.Description = fmt.Sprintf("git tag %q successfully created and pushed", source)
+	resultTarget.Description = fmt.Sprintf(
+		"git tag %q successfully created and pushed",
+		source,
+	)
+
 	if gt.spec.Message != "" {
 		resultTarget.Description = gt.spec.Message
 	}
@@ -68,7 +97,7 @@ func (gt *GitTag) target(source string, dryRun bool, resultTarget *result.Target
 
 	// Check if the provided tag (from source input value) already exists
 	gt.versionFilter.Pattern = source
-	tags, err := gt.nativeGitHandler.Tags(gt.spec.Path)
+	tags, err := gt.nativeGitHandler.Tags(gt.directory)
 	if err != nil {
 		return err
 	}
@@ -98,7 +127,7 @@ func (gt *GitTag) target(source string, dryRun bool, resultTarget *result.Target
 		return nil
 	}
 
-	_, err = gt.nativeGitHandler.NewTag(source, gt.spec.Message, gt.spec.Path)
+	_, err = gt.nativeGitHandler.NewTag(source, gt.spec.Message, gt.directory)
 	if err != nil {
 		return err
 	}
