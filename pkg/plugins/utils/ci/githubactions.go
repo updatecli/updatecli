@@ -17,5 +17,5 @@ func (gha GitHubActions) URL() string {
 }
 
 func (gha GitHubActions) IsDebug() bool {
-	return (os.Getenv("ACTIONS_RUNNER_DEBUG") == "true" || os.Getenv("ACTIONS_STEP_DEBUG") == "true")
+	return (os.Getenv("ACTIONS_RUNNER_DEBUG") == True || os.Getenv("ACTIONS_STEP_DEBUG") == True)
 }

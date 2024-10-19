@@ -18,5 +18,5 @@ func (g GitLabCi) URL() string {
 
 func (gha GitLabCi) IsDebug() bool {
 	// See https://docs.gitlab.com/ee/ci/variables/index.html#enable-debug-logging
-	return os.Getenv("CI_DEBUG_TRACE") == "true"
+	return os.Getenv("CI_DEBUG_TRACE") == True
 }
