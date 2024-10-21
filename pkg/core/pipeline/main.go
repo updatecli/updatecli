@@ -309,6 +309,7 @@ func (p *Pipeline) Run() error {
 	if len(p.Targets) > 0 {
 		successCounter := 0
 		skippedCounter := 0
+		attentionCounter := 0
 		for id := range p.Targets {
 			switch p.Targets[id].Result.Result {
 			case result.FAILURE:
@@ -318,14 +319,19 @@ func (p *Pipeline) Run() error {
 				successCounter++
 			case result.SKIPPED:
 				skippedCounter++
+			case result.ATTENTION:
+				attentionCounter++
 			}
 		}
 
 		if len(p.Targets) == skippedCounter {
 			p.Report.Result = result.SKIPPED
 			return nil
+		} else if len(p.Targets) == successCounter+skippedCounter {
+			p.Report.Result = result.SUCCESS
+		} else if attentionCounter > 0 {
+			p.Report.Result = result.ATTENTION
 		}
-		p.Report.Result = result.SUCCESS
 	}
 
 	return nil
