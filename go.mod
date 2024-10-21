@@ -27,7 +27,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.16.1
+	helm.sh/helm/v3 v3.16.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
