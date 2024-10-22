@@ -62,17 +62,22 @@ type Config struct {
 	// default:
 	//   if only one source is defined, then sourceid is set to that sourceid.
 	SourceID string `yaml:",omitempty"`
+	// ! Deprecated - please use DependsOn with `condition#conditionid` keys
+	//
 	// conditionids specifies the list of conditions to be evaluated before running the target.
 	// if at least one condition is not met, the target will be skipped.
 	//
 	// default:
 	//   by default, all conditions are evaluated.
-	// ! Deprecated - please use DependsOn with `condition#conditionid` keys
 	DeprecatedConditionIDs []string `yaml:"conditionids,omitempty"`
-	// disableconditions disables the mechanism to evaluate conditions before running the target.
+	// disableconditions disables the mechanism to evaluate all conditions before running the target.
 	//
 	// default:
 	//   false
+	//
+	// remark:
+	//  It's possible to only monitor specific conditions by setting disableconditions to true
+	//  and using DependsOn with `condition#conditionid` keys
 	DisableConditions bool `yaml:"disableconditions,omitempty"`
 }
 
