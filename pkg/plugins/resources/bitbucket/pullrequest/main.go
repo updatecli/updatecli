@@ -24,7 +24,7 @@ type Spec struct {
 	Body string `yaml:",inline,omitempty"`
 }
 
-// Stash contains information to interact with Bitbucket Server API
+// Bitbucket contains information to interact with Bitbucket Cloud API
 type Bitbucket struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
