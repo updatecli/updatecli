@@ -12,7 +12,7 @@ scms:
       token: '{{ env "BITBUCKET_TOKEN" }}'
       # {{ else if (and (env "BITBUCKET_USER") (env "BITBUCKET_APP_PASSWORD")) }}
       username: '{{ env "BITBUCKET_USER" }}'
-      #password: '{{ env "BITBUCKET_APP_PASSWORD" }}'
+      password: '{{ env "BITBUCKET_APP_PASSWORD" }}'
       # {{ end }}
 
 sources:
