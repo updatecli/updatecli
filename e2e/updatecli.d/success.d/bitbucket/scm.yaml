@@ -5,14 +5,14 @@ scms:
   bitbucket:
     kind: bitbucket
     spec:
-      owner: "mcwarman-playground"
-      repository: "updatecli-test"
+      owner: "updatecli"
+      repository: "updatecli"
       branch: main
       # {{ if (env "BITBUCKET_TOKEN") }}
       token: '{{ env "BITBUCKET_TOKEN" }}'
       # {{ else if (and (env "BITBUCKET_USER") (env "BITBUCKET_APP_PASSWORD")) }}
       username: '{{ env "BITBUCKET_USER" }}'
-      password: '{{ env "BITBUCKET_APP_PASSWORD" }}'
+      #password: '{{ env "BITBUCKET_APP_PASSWORD" }}'
       # {{ end }}
 
 sources:
@@ -21,7 +21,7 @@ sources:
     kind: file
     scmid: bitbucket
     spec:
-      file: README.md
+      file: README.adoc
 
 conditions:
   readme:
@@ -30,7 +30,7 @@ conditions:
     sourceid: readme
     scmid: bitbucket
     spec:
-      file: README.md
+      file: README.adoc
 
 targets:
   readme:
@@ -39,7 +39,7 @@ targets:
     disablesourceinput: true
     scmid: bitbucket
     spec:
-      file: README.md
+      file: README.adoc
       content: "# Title"
       line: 1
 
