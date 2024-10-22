@@ -9,7 +9,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/containerd/containerd v1.7.18 // indirect
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/getsops/sops/v3 v3.9.1
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/heimdalr/dag v1.5.0
@@ -57,7 +57,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.34.0
 	github.com/tomwright/dasel v1.27.3
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
-	github.com/yuin/goldmark v1.7.4
+	github.com/yuin/goldmark v1.7.8
 	github.com/zclconf/go-cty v1.15.0
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 	golang.org/x/text v0.19.0
