@@ -44,9 +44,9 @@ func TestRunSources(t *testing.T) {
 				},
 			},
 			expectedSourcesResult: map[string]string{
-				"success": "✔",
+				"success": result.SUCCESS,
 			},
-			expectedPipelineResult: "✔",
+			expectedPipelineResult: result.SUCCESS,
 		},
 		{
 			conf: config.Config{

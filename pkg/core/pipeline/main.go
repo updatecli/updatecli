@@ -276,6 +276,8 @@ func (p *Pipeline) Run() error {
 	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
 	logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
+	p.Report.Result = result.SUCCESS
+
 	resources, err := p.SortedResources()
 	if err != nil {
 		p.Report.Result = result.FAILURE
