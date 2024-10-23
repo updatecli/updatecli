@@ -5,10 +5,13 @@ import (
 	"os"
 )
 
+var True = "true"
+
 // CIEngine is an interface which allows to detects based on environment variable if Updatecli is executed from a CI environment like Jenkins or GitLab CI
 type CIEngine interface {
 	URL() string
 	Name() string
+	IsDebug() bool
 }
 
 // New returns a newly initialized CIEngine or an error
