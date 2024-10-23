@@ -38,7 +38,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.1.0-beta.0-proton
 	github.com/beevik/etree v1.4.1
 	github.com/drone/go-scm v1.38.8
-	github.com/fluxcd/helm-controller/api v0.37.4
+	github.com/fluxcd/helm-controller/api v1.1.0
 	github.com/fluxcd/source-controller/api v1.4.1
 	github.com/goccy/go-yaml v1.12.0
 	github.com/google/go-containerregistry v0.20.2
@@ -125,7 +125,7 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.3.0 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v1.3.0 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v1.6.1 // indirect
 	github.com/fluxcd/pkg/apis/meta v1.6.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/getsops/gopgagent v0.0.0-20240527072608-0c14999532fe // indirect
