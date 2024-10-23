@@ -2,8 +2,8 @@ package pullrequest
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/stash/client"
-	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 )
 
 // Spec defines settings used to interact with Bitbucket Server pullrequest
@@ -24,14 +24,14 @@ type Spec struct {
 	Body string `yaml:",inline,omitempty"`
 }
 
-// Stash contains information to interact with Bitbucket Server API
-type Stash struct {
+// Bitbucket contains information to interact with Bitbucket Cloud API
+type Bitbucket struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
 	// client handle the api authentication
 	client client.Client
 	// scm allows to interact with a scm object
-	scm *stashscm.Stash
+	scm *bitbucket.Bitbucket
 	// SourceBranch specifies the pullrequest source branch.
 	SourceBranch string `yaml:",inline,omitempty"`
 	// TargetBranch specifies the pullrequest target branch
@@ -43,7 +43,7 @@ type Stash struct {
 }
 
 // New returns a new valid Bitbucket Server object.
-func New(spec interface{}, scm *stashscm.Stash) (Stash, error) {
+func New(spec interface{}, scm *bitbucket.Bitbucket) (Bitbucket, error) {
 	var clientSpec client.Spec
 	var s Spec
 
@@ -51,12 +51,12 @@ func New(spec interface{}, scm *stashscm.Stash) (Stash, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return Stash{}, err
+		return Bitbucket{}, err
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return Stash{}, nil
+		return Bitbucket{}, nil
 	}
 
 	if scm != nil {
@@ -73,33 +73,27 @@ func New(spec interface{}, scm *stashscm.Stash) (Stash, error) {
 			clientSpec.Owner = scm.Spec.Owner
 		}
 
-		if len(clientSpec.URL) == 0 && len(scm.Spec.URL) > 0 {
-			clientSpec.URL = scm.Spec.URL
-		}
-
 		if len(clientSpec.Username) == 0 && len(scm.Spec.Username) > 0 {
 			clientSpec.Username = scm.Spec.Username
 		}
-	}
 
-	// Sanitize modifies the clientSpec so it must be done once initialization is completed
-	err = clientSpec.Sanitize()
-	if err != nil {
-		return Stash{}, err
+		if len(clientSpec.Password) == 0 && len(scm.Spec.Password) > 0 {
+			clientSpec.Password = scm.Spec.Password
+		}
 	}
 
 	c, err := client.New(clientSpec)
 	if err != nil {
-		return Stash{}, err
+		return Bitbucket{}, err
 	}
 
-	g := Stash{
+	b := Bitbucket{
 		spec:   s,
 		client: c,
 		scm:    scm,
 	}
 
-	g.inheritFromScm()
+	b.inheritFromScm()
 
-	return g, nil
+	return b, nil
 }
