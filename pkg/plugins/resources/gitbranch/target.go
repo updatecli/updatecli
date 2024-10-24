@@ -11,14 +11,27 @@ import (
 // Target creates and pushes a git tag based on the SCM configuration
 func (gt *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
-	if scm != nil {
-		if len(gt.spec.Path) > 0 {
-			logrus.Warningf("Path setting value %q overridden by the scm configuration (value %q)",
-				gt.spec.Path,
-				scm.GetDirectory())
-		}
+	if gt.spec.Path != "" && scm != nil {
+		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+			gt.spec.Path,
+			scm.GetDirectory())
+	}
 
-		gt.spec.Path = scm.GetDirectory()
+	if gt.spec.URL != "" && scm != nil {
+		logrus.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
+			gt.spec.URL,
+			scm.GetURL())
+	}
+
+	if gt.spec.URL != "" {
+		gt.directory, err = gt.clone()
+		if err != nil {
+			return err
+		}
+	} else if gt.spec.Path != "" {
+		gt.directory = gt.spec.Path
+	} else if scm != nil {
+		gt.directory = scm.GetDirectory()
 	}
 
 	gt.branch = source
@@ -44,14 +57,20 @@ func (gt *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resu
 	}
 
 	if !resultTarget.Changed {
-		resultTarget.Description = fmt.Sprintf("the git branch %q already exist on the specified remote.", gt.branch)
+		resultTarget.Description = fmt.Sprintf(
+			"the git branch %q already exist on the specified remote.",
+			gt.branch,
+		)
 		return nil
 	}
 
 	logrus.Printf("git branch %q has been created.", gt.branch)
 
 	if scm == nil {
-		resultTarget.Description = fmt.Sprintf("The git branch %q created but missing scm configuration to push it", gt.branch)
+		resultTarget.Description = fmt.Sprintf(
+			"The git branch %q created but missing scm configuration to push it",
+			gt.branch,
+		)
 		return nil
 	}
 
@@ -79,7 +98,7 @@ func (gt *GitBranch) target(dryRun bool, resultTarget *result.Target) error {
 	}
 
 	// Check if the provided branch (from source input value) already exists
-	branches, err := gt.nativeGitHandler.Branches(gt.spec.Path)
+	branches, err := gt.nativeGitHandler.Branches(gt.directory)
 	if err != nil {
 		return err
 	}

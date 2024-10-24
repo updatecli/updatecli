@@ -312,6 +312,7 @@ func (p *Pipeline) Run() error {
 		successCounter := 0
 		skippedCounter := 0
 		attentionCounter := 0
+
 		for id := range p.Targets {
 			switch p.Targets[id].Result.Result {
 			case result.FAILURE:

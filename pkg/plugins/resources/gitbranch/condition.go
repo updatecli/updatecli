@@ -10,22 +10,34 @@ import (
 // Condition checks that a git branch exists
 func (gt *GitBranch) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
-	if scm != nil {
-		path := scm.GetDirectory()
-
-		if len(gt.spec.Path) > 0 {
-			logrus.Warningf("Path is defined and set to %q but is overridden by the scm definition %q",
-				gt.spec.Path,
-				path)
-		}
-		gt.spec.Path = path
+	if gt.spec.Path != "" && scm != nil {
+		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+			gt.spec.Path,
+			scm.GetDirectory())
 	}
 
-	gt.branch = gt.spec.Branch
+	if gt.spec.URL != "" && scm != nil {
+		logrus.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
+			gt.spec.URL,
+			scm.GetURL())
+	}
+
+	if gt.spec.URL != "" {
+		gt.directory, err = gt.clone()
+		if err != nil {
+			return false, "", err
+		}
+
+	} else if gt.spec.Path != "" {
+		gt.directory = gt.spec.Path
+	} else if scm != nil {
+		gt.directory = scm.GetDirectory()
+	}
+
+	gt.branch = source
 	// If source input is empty, then it means that it was disabled by the user with `disablesourceinput: true`
-	if source != "" {
-		logrus.Infof("Source input value detected")
-		gt.branch = source
+	if gt.spec.Branch != "" {
+		gt.branch = gt.spec.Branch
 	}
 
 	err = gt.Validate()
@@ -33,7 +45,7 @@ func (gt *GitBranch) Condition(source string, scm scm.ScmHandler) (pass bool, me
 		return false, "", fmt.Errorf("git tag validation: %w", err)
 	}
 
-	branches, err := gt.nativeGitHandler.Branches(gt.spec.Path)
+	branches, err := gt.nativeGitHandler.Branches(gt.directory)
 	if err != nil {
 		return false, "", fmt.Errorf("searching git branches: %w", err)
 	}
