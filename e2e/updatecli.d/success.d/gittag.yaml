@@ -100,3 +100,18 @@ targets:
     sourceid: echo-version
     spec:
       message: "Created by Updatecli"
+  update-git-url:
+    name: Create the git tag 'v0.0.1' in the GitHub repository using url
+    kind: "gittag"
+    sourceid: echo-version
+    spec:
+      url: "https://github.com/updatecli/updatecli.git"
+      message: "Created by Updatecli"
+  update-git-path:
+    name: Create the git tag 'v0.0.1' in the GitHub repository using path
+    kind: "gittag"
+    sourceid: echo-version
+    spec:
+      # Relative path are relative to where Updatecli is executed
+      path: "./"
+      message: "Created by Updatecli"
