@@ -45,6 +45,10 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 		return false, "", err
 	}
 
+	if gt.directory == "" {
+		return false, "", fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+	}
+
 	tags, err := gt.nativeGitHandler.Tags(gt.directory)
 	if err != nil {
 		return false, "", err

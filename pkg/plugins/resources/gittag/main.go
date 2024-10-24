@@ -106,9 +106,7 @@ func New(spec interface{}) (*GitTag, error) {
 // Validate tests that tag struct is correctly configured
 func (gt *GitTag) Validate() error {
 	validationErrors := []string{}
-	if gt.directory == "" {
-		validationErrors = append(validationErrors, "Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
-	}
+
 	if gt.spec.Key != "" && gt.spec.Key != "hash" && gt.spec.Key != "name" {
 		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
 	}

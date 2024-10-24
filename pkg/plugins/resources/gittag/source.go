@@ -27,6 +27,10 @@ func (gt *GitTag) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("validate git tag: %w", err)
 	}
 
+	if gt.directory == "" {
+		return fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+	}
+
 	refs, err := gt.nativeGitHandler.TagRefs(gt.directory)
 	if err != nil {
 		return fmt.Errorf("retrieving tag refs: %w", err)

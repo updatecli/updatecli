@@ -41,6 +41,10 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 		return err
 	}
 
+	if gt.directory == "" {
+		return fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+	}
+
 	if err := gt.target(source, dryRun, resultTarget); err != nil {
 		return err
 	}
