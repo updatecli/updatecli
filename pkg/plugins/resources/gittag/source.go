@@ -8,23 +8,36 @@ import (
 
 // Source returns the latest git tag based on create time
 func (gt *GitTag) Source(workingDir string, resultSource *result.Source) error {
+	var err error
 
-	if len(gt.spec.Path) == 0 && len(workingDir) > 0 {
-		gt.spec.Path = workingDir
+	gt.directory = workingDir
+
+	if gt.spec.URL != "" {
+		gt.directory, err = gt.clone()
+		if err != nil {
+			return err
+		}
+
+	} else if gt.spec.Path != "" {
+		gt.directory = gt.spec.Path
 	}
 
-	err := gt.Validate()
+	err = gt.Validate()
 	if err != nil {
 		return fmt.Errorf("validate git tag: %w", err)
 	}
 
-	refs, err := gt.nativeGitHandler.TagRefs(gt.spec.Path)
+	if gt.directory == "" {
+		return fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+	}
+
+	refs, err := gt.nativeGitHandler.TagRefs(gt.directory)
 	if err != nil {
 		return fmt.Errorf("retrieving tag refs: %w", err)
 	}
 
 	if len(refs) == 0 {
-		return fmt.Errorf("no tags found at path %q", gt.spec.Path)
+		return fmt.Errorf("no tags found at path %q", gt.directory)
 	}
 
 	var tags []string
