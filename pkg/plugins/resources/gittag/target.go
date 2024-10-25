@@ -2,6 +2,7 @@ package gittag
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -45,7 +46,12 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 		return fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
 	}
 
-	if err := gt.target(source, dryRun, resultTarget); err != nil {
+	tagName := source
+	if gt.spec.VersionFilter.Pattern != "" {
+		tagName = gt.spec.VersionFilter.Pattern
+	}
+
+	if err := gt.target(tagName, dryRun, resultTarget); err != nil {
 		return err
 	}
 
@@ -54,11 +60,11 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 	}
 
 	if gt.spec.URL != "" || gt.spec.Path != "" {
-		if err := gt.nativeGitHandler.PushTag(source, "", gt.spec.Password, gt.directory, false); err != nil {
+		if err := gt.nativeGitHandler.PushTag(tagName, gt.spec.Username, gt.spec.Password, gt.directory, false); err != nil {
 			logrus.Errorf("Git push tag error: %s", err)
 		}
 	} else if scm != nil {
-		if err := scm.PushTag(source); err != nil {
+		if err := scm.PushTag(tagName); err != nil {
 			logrus.Errorf("Git push tag error: %s", err)
 			return err
 		}
@@ -66,7 +72,7 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 
 	resultTarget.Description = fmt.Sprintf(
 		"git tag %q successfully created and pushed",
-		source,
+		tagName,
 	)
 
 	if gt.spec.Message != "" {
@@ -76,7 +82,12 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 	return nil
 }
 
-func (gt *GitTag) target(source string, dryRun bool, resultTarget *result.Target) error {
+func (gt *GitTag) target(tagName string, dryRun bool, resultTarget *result.Target) error {
+
+	if tagName == "" {
+		return fmt.Errorf("no tag specify")
+	}
+
 	// Ensure that a git message is present to annotate the tag to create
 	if len(gt.spec.Message) == 0 {
 		// absence of a message is not blocking: warn the user and continue
@@ -88,11 +99,6 @@ func (gt *GitTag) target(source string, dryRun bool, resultTarget *result.Target
 	// to know why the following line is needed at the moment
 	resultTarget.Files = []string{""}
 
-	// Fail if a pattern is specified
-	if gt.spec.VersionFilter.Pattern != "" {
-		return fmt.Errorf("target validation error: spec.versionfilter.pattern is not allowed for targets of type gittag")
-	}
-
 	// Fail if the git tag resource cannot be validated
 	err := gt.Validate()
 	if err != nil {
@@ -100,43 +106,49 @@ func (gt *GitTag) target(source string, dryRun bool, resultTarget *result.Target
 	}
 
 	// Check if the provided tag (from source input value) already exists
-	gt.versionFilter.Pattern = source
+	gt.versionFilter.Pattern = tagName
 	tags, err := gt.nativeGitHandler.Tags(gt.directory)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "no tag found") {
+
+		logrus.Errorf("Error while searching for tags: %s", err)
 		return err
 	}
 
-	gt.foundVersion, err = gt.versionFilter.Search(tags)
-	notFoundError := &version.ErrNoVersionFoundForPattern{Pattern: source}
-	if err != nil && err.Error() != notFoundError.Error() {
-		return err
+	// Some tags have been found so we can search for the tag name if it already exists
+	if len(tags) > 0 {
+		gt.foundVersion, err = gt.versionFilter.Search(tags)
+		notFoundError := &version.ErrNoVersionFoundForPattern{Pattern: tagName}
+		if err != nil && err.Error() != notFoundError.Error() {
+			return err
+		}
+
+		if gt.foundVersion.GetVersion() == tagName {
+			resultTarget.Information = tagName
+			resultTarget.NewInformation = tagName
+			resultTarget.Result = result.SUCCESS
+			resultTarget.Description = fmt.Sprintf("git tag %q already exists", tagName)
+			return nil
+		}
+
 	}
 
-	if gt.foundVersion.GetVersion() == source {
-		resultTarget.Information = source
-		resultTarget.NewInformation = source
-		resultTarget.Result = result.SUCCESS
-		resultTarget.Description = fmt.Sprintf("git tag %q already exists", source)
-		return nil
-	}
-
-	resultTarget.NewInformation = source
+	resultTarget.NewInformation = tagName
 	resultTarget.Result = result.ATTENTION
 	resultTarget.Changed = true
 
 	if dryRun {
 		// Dry run: no changes to apply.
 		// Return early without creating tag but notify that a change should be made.
-		resultTarget.Description = fmt.Sprintf("git tag %q should be created", source)
+		resultTarget.Description = fmt.Sprintf("git tag %q should be created", tagName)
 		return nil
 	}
 
-	_, err = gt.nativeGitHandler.NewTag(source, gt.spec.Message, gt.directory)
+	_, err = gt.nativeGitHandler.NewTag(tagName, gt.spec.Message, gt.directory)
 	if err != nil {
 		return err
 	}
 
-	resultTarget.Description = fmt.Sprintf("git tag %q created", source)
+	resultTarget.Description = fmt.Sprintf("git tag %q created", tagName)
 	if gt.spec.Message != "" {
 		resultTarget.Description = gt.spec.Message
 	}
