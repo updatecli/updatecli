@@ -97,7 +97,7 @@ func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, passw
 	//
 	rem, err := gitRepository.Remote(DefaultRemoteReferenceName)
 	if err != nil {
-		logrus.Errorf("reference %q - %s", workingBranchReferenceName, err)
+		logrus.Debugf("reference %q - %s", workingBranchReferenceName, err)
 		return false, err
 	}
 
@@ -165,14 +165,14 @@ func (g GoGit) IsSimilarBranch(a, b, workingDir string) (bool, error) {
 
 	refA, err := gitRepository.Reference(plumbing.NewBranchReferenceName(a), true)
 	if err != nil {
-		logrus.Errorf("reference %q - %s", a, err)
+		logrus.Debugf("reference %q - %s", a, err)
 		return false, err
 	}
 
 	refB, err := gitRepository.Reference(plumbing.NewBranchReferenceName(b), true)
 
 	if err != nil {
-		logrus.Errorf("reference %q - %s", b, err)
+		logrus.Debugf("reference %q - %s", b, err)
 		return false, err
 	}
 
@@ -693,7 +693,7 @@ func (g GoGit) SanitizeBranchName(branch string) string {
 func (g GoGit) TagHashes(workingDir string) (hashes []string, err error) {
 	refs, err := g.TagRefs(workingDir)
 	if err != nil {
-		logrus.Errorf("problem finding tag references for %q, err: %s", workingDir, err)
+		logrus.Debugf("List git hashes in directory %q, err: %s", workingDir, err)
 		return hashes, err
 	}
 
@@ -717,7 +717,7 @@ func (g GoGit) TagHashes(workingDir string) (hashes []string, err error) {
 func (g GoGit) Tags(workingDir string) (names []string, err error) {
 	refs, err := g.TagRefs(workingDir)
 	if err != nil {
-		logrus.Errorf("problem finding tag references for %q, err: %s", workingDir, err)
+		logrus.Debugf("List git tags in directory %q, err: %s", workingDir, err)
 		return names, err
 	}
 
@@ -746,7 +746,7 @@ type DatedTag struct {
 func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
-		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
+		logrus.Debugf("opening %q git directory err: %s", workingDir, err)
 		return tags, err
 	}
 	tagrefs, err := r.Tags()
@@ -805,13 +805,13 @@ func (g GoGit) NewTag(tag, message, workingDir string) (bool, error) {
 	r, err := git.PlainOpen(workingDir)
 
 	if err != nil {
-		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
+		logrus.Debugf("opening %q git directory err: %s", workingDir, err)
 		return false, err
 	}
 
 	h, err := r.Head()
 	if err != nil {
-		logrus.Errorf("get HEAD error: %s", err)
+		logrus.Debugf("get HEAD error: %s", err)
 		return false, err
 	}
 
@@ -819,7 +819,7 @@ func (g GoGit) NewTag(tag, message, workingDir string) (bool, error) {
 		Message: message,
 	})
 	if err != nil {
-		logrus.Errorf("create git tag error: %s", err)
+		logrus.Debugf("create git tag error: %s", err)
 		return false, err
 	}
 	return true, nil
@@ -836,7 +836,7 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 	r, err := git.PlainOpen(workingDir)
 
 	if err != nil {
-		logrus.Errorf("opening %q git directory err: %s", workingDir, err)
+		logrus.Debugf("opening %q git directory err: %s", workingDir, err)
 		return err
 	}
 

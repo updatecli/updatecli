@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
@@ -18,10 +19,8 @@ type Scm struct {
 	PipelineID string
 }
 
-var (
-	// ErrWrongConfig is returned when a scm has missing attributes which are mandatory
-	ErrWrongConfig = errors.New("wrong scm configuration")
-)
+// ErrWrongConfig is returned when a scm has missing attributes which are mandatory
+var ErrWrongConfig = errors.New("wrong scm configuration")
 
 // ScmHandler is an interface offering common functions for a source control manager like git or github
 type ScmHandler interface {
@@ -41,7 +40,6 @@ type ScmHandler interface {
 }
 
 func New(config *Config, pipelineID string) (Scm, error) {
-
 	s := Scm{
 		Config:     config,
 		PipelineID: pipelineID,
@@ -63,9 +61,16 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	switch s.Config.Kind {
+	case "bitbucket":
+		g, err := bitbucket.New(s.Config.Spec, s.PipelineID)
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
+
 	case "stash":
 		g, err := stash.New(s.Config.Spec, s.PipelineID)
-
 		if err != nil {
 			return err
 		}
@@ -74,7 +79,6 @@ func (s *Scm) GenerateSCM() error {
 
 	case "gitea":
 		g, err := gitea.New(s.Config.Spec, s.PipelineID)
-
 		if err != nil {
 			return err
 		}
@@ -83,7 +87,6 @@ func (s *Scm) GenerateSCM() error {
 
 	case "gitlab":
 		g, err := gitlab.New(s.Config.Spec, s.PipelineID)
-
 		if err != nil {
 			return err
 		}
@@ -99,7 +102,6 @@ func (s *Scm) GenerateSCM() error {
 		}
 
 		g, err := github.New(githubSpec, s.PipelineID)
-
 		if err != nil {
 			return err
 		}
@@ -115,7 +117,6 @@ func (s *Scm) GenerateSCM() error {
 		}
 
 		g, err := git.New(gitSpec, s.PipelineID)
-
 		if err != nil {
 			return err
 		}
