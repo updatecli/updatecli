@@ -64,6 +64,14 @@ type Spec struct {
 	// 	  * condition
 	// 	  * target
 	Password string `yaml:",omitempty"`
+	// "sourcebranch" defines the branch name used as a source to create the new Git branch.
+	//
+	// compatible:
+	//  * target
+	//
+	// remark:
+	//  * sourcebranch is required when the scmid is not defined.
+	SourceBranch string `yaml:",omitempty"`
 }
 
 // GitTag defines a resource of kind "gittag"
