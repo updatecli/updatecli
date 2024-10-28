@@ -446,8 +446,6 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 // Clone run `git clone`.
 func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool) error {
 
-	logrus.Debugf("cloning git repository: %s in %s", URL, workingDir)
-
 	var repo *git.Repository
 
 	auth := transportHttp.BasicAuth{
