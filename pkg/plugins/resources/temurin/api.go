@@ -187,11 +187,13 @@ func (t Temurin) apiGetReleaseName() (result string, err error) {
 	}
 
 	apiEndpoint := fmt.Sprintf(
-		"%s?heap_size=normal&image_type=%s&page=0&page_size=10&project=%s&release_type=%s&semver=true&sort_method=DEFAULT&sort_order=DESC&vendor=eclipse&version=%s",
+		"%s?heap_size=normal&image_type=%s&page=0&page_size=10&project=%s&release_type=%s&architecture=%s&os=%s&semver=true&sort_method=DEFAULT&sort_order=DESC&vendor=eclipse&version=%s",
 		releaseNamesEndpoint,
 		t.spec.ImageType,
 		t.spec.Project,
 		t.spec.ReleaseType,
+		t.spec.Architecture,
+		t.spec.OperatingSystem,
 		// Mandatory URL encoding otherwise empty responses or HTTP errors
 		url.QueryEscape(versionRange),
 	)
