@@ -1,9 +1,6 @@
 package gitbranch
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
@@ -43,6 +40,14 @@ type Spec struct {
 	//	remarks:
 	//		when using the ssh protocol, the user must have the right to clone the repository
 	//		based on its local ssh configuration
+	SourceBranch string `yaml:",omitempty"`
+	// "sourcebranch" defines the branch name used as a source to create the new Git branch.
+	//
+	// compatible:
+	//  * target
+	//
+	// remark:
+	//  * sourcebranch is required when the scmid is not defined.
 	URL string `yaml:",omitempty" jsonschema:"required"`
 	//	"username" specifies the username when using the HTTP protocol
 	//
@@ -97,21 +102,6 @@ func New(spec interface{}) (*GitBranch, error) {
 	}
 
 	return newResource, nil
-}
-
-// Validate tests that tag struct is correctly configured
-func (gb *GitBranch) Validate() error {
-	validationErrors := []string{}
-	if gb.directory == "" {
-		validationErrors = append(validationErrors, "Unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
-	}
-
-	// Return all the validation errors if found any
-	if len(validationErrors) > 0 {
-		return fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
-	}
-
-	return nil
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported

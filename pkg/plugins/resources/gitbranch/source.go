@@ -21,9 +21,8 @@ func (gb *GitBranch) Source(workingDir string, resultSource *result.Source) erro
 		gb.directory = gb.spec.Path
 	}
 
-	err = gb.Validate()
-	if err != nil {
-		return fmt.Errorf("validating git branch: %w", err)
+	if gb.directory == "" {
+		return fmt.Errorf("Unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
 	}
 
 	tags, err := gb.nativeGitHandler.Branches(gb.directory)
