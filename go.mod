@@ -40,7 +40,7 @@ require (
 	github.com/drone/go-scm v1.38.8
 	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/source-controller/api v1.4.1
-	github.com/goccy/go-yaml v1.12.0
+	github.com/goccy/go-yaml v1.13.0
 	github.com/google/go-containerregistry v0.20.2
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.22.0
@@ -132,7 +132,6 @@ require (
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-playground/validator/v10 v10.16.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
@@ -167,7 +166,6 @@ require (
 	go.opentelemetry.io/otel v1.30.0 // indirect
 	go.opentelemetry.io/otel/metric v1.30.0 // indirect
 	go.opentelemetry.io/otel/trace v1.30.0 // indirect
-	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20240930140551-af27646dc61f // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240930140551-af27646dc61f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240930140551-af27646dc61f // indirect
@@ -298,12 +296,12 @@ require (
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.starlark.net v0.0.0-20231121155337-90ade8b19d09 // indirect
-	golang.org/x/crypto v0.27.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/mod v0.21.0
-	golang.org/x/net v0.29.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
-	golang.org/x/term v0.24.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	google.golang.org/api v0.199.0 // indirect
 	google.golang.org/grpc v1.67.1 // indirect

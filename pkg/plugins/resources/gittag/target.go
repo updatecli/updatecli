@@ -60,10 +60,27 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 	}
 
 	if gt.spec.URL != "" || gt.spec.Path != "" {
+		if err = gt.nativeGitHandler.Checkout(gt.spec.Username, gt.spec.Password, gt.spec.SourceBranch, gt.spec.SourceBranch, gt.directory, false); err != nil {
+			logrus.Errorf("Git checkout branch error: %s", err)
+			return err
+		}
+
 		if err := gt.nativeGitHandler.PushTag(tagName, gt.spec.Username, gt.spec.Password, gt.directory, false); err != nil {
 			logrus.Errorf("Git push tag error: %s", err)
+			return err
 		}
 	} else if scm != nil {
+
+		sourceBranch, _, _ := scm.GetBranches()
+		// Not specifying a username/password won't be an issue as it's only used to pull changes when the git branch already
+		// ecists on the remote. In this case, we already know that it doesn't.
+		// That being said, we may have a racing issue if the branch is created between the time Updatecli executed and the time
+		// this code is executed so the current execution would fail but not then next one.
+		if err = gt.nativeGitHandler.Checkout("", "", sourceBranch, sourceBranch, sourceBranch, false); err != nil {
+			logrus.Errorf("Git checkout branch error: %s", err)
+			return err
+		}
+
 		if err := scm.PushTag(tagName); err != nil {
 			logrus.Errorf("Git push tag error: %s", err)
 			return err
