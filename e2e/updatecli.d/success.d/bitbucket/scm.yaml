@@ -1,0 +1,50 @@
+name: Test Bitbucket scm
+pipelineid: bitbucket/scm
+
+scms:
+  bitbucket:
+    kind: bitbucket
+    spec:
+      owner: "updatecli"
+      repository: "updatecli"
+      branch: main
+      # {{ if (env "BITBUCKET_TOKEN") }}
+      token: '{{ env "BITBUCKET_TOKEN" }}'
+      # {{ else if (and (env "BITBUCKET_USER") (env "BITBUCKET_APP_PASSWORD")) }}
+      username: '{{ env "BITBUCKET_USER" }}'
+      password: '{{ env "BITBUCKET_APP_PASSWORD" }}'
+      # {{ end }}
+
+sources:
+  readme:
+    name: Retrieve readme file content
+    kind: file
+    scmid: bitbucket
+    spec:
+      file: README.adoc
+
+conditions:
+  readme:
+    name: Retrieve readme file content
+    kind: file
+    sourceid: readme
+    scmid: bitbucket
+    spec:
+      file: README.adoc
+
+targets:
+  readme:
+    name: Update README title
+    kind: file
+    disablesourceinput: true
+    scmid: bitbucket
+    spec:
+      file: README.adoc
+      content: "# Title"
+      line: 1
+
+actions:
+  default:
+    title: Change readme title
+    kind: bitbucket/pullrequest
+    scmid: bitbucket

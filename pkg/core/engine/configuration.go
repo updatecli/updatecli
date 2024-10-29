@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -114,7 +115,7 @@ func (e *Engine) LoadConfigurations() error {
 		e := errors.New("failed loading pipeline(s)")
 
 		for _, err := range errs {
-			e = fmt.Errorf("%s\n\t* %s", e.Error(), err)
+			e = fmt.Errorf("%s\n\t* %s", e.Error(), strings.ReplaceAll(err.Error(), "\n", "\n\t\t* "))
 			if errors.Is(err, ErrNoManifestDetected) {
 				return err
 			}

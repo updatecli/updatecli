@@ -29,6 +29,18 @@ sources:
     kind: shell
     spec:
       command: echo "0.0.1"
+  src-giturl:
+    name: "Get the latest git tag through git using a url"
+    kind: gittag
+    spec:
+      url: "https://github.com/updatecli/updatecli.git"
+  src-git-path:
+    name: "Get the latest git tag through git using a local path"
+    kind: gittag
+    spec:
+      # Relative path are relative to where Updatecli is executed
+      path: "./"
+
 
 
 conditions:
@@ -48,6 +60,23 @@ conditions:
     spec:
       versionfilter:
         pattern: 'v0.30.0'
+  check-git-url:
+    name: "Check the tag 'v0.30.0' exists using a url"
+    kind: "gittag"
+    disablesourceinput: true
+    spec:
+      url: "https://github.com/updatecli/updatecli.git"
+      versionfilter:
+        pattern: "v0.30.0"
+  check-git-path:
+    name: "Check the tag 'v0.30.0' exists using local path"
+    kind: "gittag"
+    disablesourceinput: true
+    spec:
+      # Relative path are relative to where Updatecli is executed
+      path: "./"
+      versionfilter:
+        pattern: "v0.30.0"
 
 targets:
   create-git-tag:
@@ -70,4 +99,19 @@ targets:
     scmid: github-repo
     sourceid: echo-version
     spec:
+      message: "Created by Updatecli"
+  update-git-url:
+    name: Create the git tag 'v0.0.1' in the GitHub repository using url
+    kind: "gittag"
+    sourceid: echo-version
+    spec:
+      url: "https://github.com/updatecli/updatecli.git"
+      message: "Created by Updatecli"
+  update-git-path:
+    name: Create the git tag 'v0.0.1' in the GitHub repository using path
+    kind: "gittag"
+    sourceid: echo-version
+    spec:
+      # Relative path are relative to where Updatecli is executed
+      path: "./"
       message: "Created by Updatecli"

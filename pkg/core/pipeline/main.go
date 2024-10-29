@@ -277,6 +277,7 @@ func (p *Pipeline) Run() error {
 	logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
 	p.Report.Result = result.SUCCESS
+
 	resources, err := p.SortedResources()
 	if err != nil {
 		p.Report.Result = result.FAILURE
@@ -305,6 +306,37 @@ func (p *Pipeline) Run() error {
 		p.Report.Result = result.FAILURE
 		return ErrRunTargets
 	}
+
+	// set pipeline report result
+	if len(p.Targets) > 0 {
+		successCounter := 0
+		skippedCounter := 0
+		attentionCounter := 0
+
+		for id := range p.Targets {
+			switch p.Targets[id].Result.Result {
+			case result.FAILURE:
+				p.Report.Result = result.FAILURE
+				return nil
+			case result.SUCCESS:
+				successCounter++
+			case result.SKIPPED:
+				skippedCounter++
+			case result.ATTENTION:
+				attentionCounter++
+			}
+		}
+
+		if len(p.Targets) == skippedCounter {
+			p.Report.Result = result.SKIPPED
+			return nil
+		} else if len(p.Targets) == successCounter+skippedCounter {
+			p.Report.Result = result.SUCCESS
+		} else if attentionCounter > 0 {
+			p.Report.Result = result.ATTENTION
+		}
+	}
+
 	return nil
 
 }

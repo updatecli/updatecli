@@ -1,4 +1,4 @@
-package stash
+package bitbucket
 
 import (
 	"context"
@@ -12,14 +12,14 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
-	"github.com/updatecli/updatecli/pkg/plugins/resources/stash/client"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
-// Spec defines settings used to interact with Bitbucket Server release
+// Spec defines settings used to interact with Bitbucket Cloud release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
 	//  "commitMessage" is used to generate the final commit message.
@@ -41,7 +41,7 @@ type Spec struct {
 	//
 	//  default:
 	//    The default value is based on your local temporary directory like: (on Linux)
-	//    /tmp/updatecli/stash/<owner>/<repository>
+	//    /tmp/updatecli/bitbucket/<owner>/<repository>
 	Directory string `yaml:",omitempty"`
 	//  "email" defines the email used to commit changes.
 	//
@@ -92,7 +92,7 @@ type Spec struct {
 	//    main
 	//
 	//  remark:
-	//    depending on which resource references the Stash scm, the behavior will be different.
+	//    depending on which resource references the Bitbucket Cloud scm, the behavior will be different.
 	//
 	//    If the scm is linked to a source or a condition (using scmid), the branch will be used to retrieve
 	//    file(s) from that branch.
@@ -118,8 +118,8 @@ type Spec struct {
 	WorkingBranch *bool `yaml:",omitempty"`
 }
 
-// Stash contains information to interact with Stash api
-type Stash struct {
+// Bitbucket contains information to interact with Bitbucket Cloud API
+type Bitbucket struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
 	// client handle the api authentication
@@ -130,8 +130,8 @@ type Stash struct {
 	force            bool
 }
 
-// New returns a new valid Bitbucket Server object.
-func New(spec interface{}, pipelineID string) (*Stash, error) {
+// New returns a new valid Bitbucket Cloud object.
+func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
 	var s Spec
 	var clientSpec client.Spec
 
@@ -139,33 +139,23 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return &Stash{}, err
-	}
-
-	err = clientSpec.Sanitize()
-	if err != nil {
-		return &Stash{}, err
-	}
-
-	err = clientSpec.Validate()
-	if err != nil {
-		return &Stash{}, err
+		return &Bitbucket{}, err
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return &Stash{}, nil
+		return &Bitbucket{}, nil
 	}
 
 	s.Spec = clientSpec
 
 	err = s.Validate()
 	if err != nil {
-		return &Stash{}, err
+		return &Bitbucket{}, err
 	}
 
 	if s.Directory == "" {
-		s.Directory = path.Join(tmp.Directory, "stash", s.Owner, s.Repository)
+		s.Directory = path.Join(tmp.Directory, "bitbucket", s.Owner, s.Repository)
 	}
 
 	if len(s.Branch) == 0 {
@@ -205,11 +195,11 @@ If you know what you are doing, please set the force option to true in your conf
 
 	c, err := client.New(clientSpec)
 	if err != nil {
-		return &Stash{}, err
+		return &Bitbucket{}, err
 	}
 
 	nativeGitHandler := gitgeneric.GoGit{}
-	g := Stash{
+	g := Bitbucket{
 		Spec:             s,
 		client:           c,
 		pipelineID:       pipelineID,
@@ -224,17 +214,17 @@ If you know what you are doing, please set the force option to true in your conf
 }
 
 // Retrieve git tags from a remote Bitbucket Server repository
-func (s *Stash) SearchTags() (tags []string, err error) {
+func (b *Bitbucket) SearchTags() (tags []string, err error) {
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	references, resp, err := s.client.Git.ListTags(
+	references, resp, err := b.client.Git.ListTags(
 		ctx,
-		strings.Join([]string{s.Spec.Owner, s.Spec.Repository}, "/"),
+		strings.Join([]string{b.Spec.Owner, b.Spec.Repository}, "/"),
 		scm.ListOptions{
-			URL:  s.Spec.URL,
+			URL:  client.URL(),
 			Page: 1,
 			Size: 30,
 		},
@@ -263,7 +253,7 @@ func (s *Spec) Validate() error {
 	}
 
 	if gotError {
-		return fmt.Errorf("wrong bitbucket configuration")
+		return fmt.Errorf("wrong Bitbucket Cloud configuration")
 	}
 
 	return nil
