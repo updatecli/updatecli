@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
-	"strings"
 	"text/template"
+
+	"net/url"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
@@ -37,24 +38,25 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 
 		for jobID, job := range data.Jobs {
 			for stepID, step := range job.Steps {
-				action := strings.Split(step.Uses, "@")
-
-				// If the action doesn't contain a reference then we skip it
-				if len(action) < 2 {
+				URL, owner, repository, reference := parseActionName(step.Uses)
+				switch reference {
+				case "":
+					continue
+				case "main", "master":
 					continue
 				}
 
-				actionName := action[0]
-				reference := action[1]
+				actionName := ""
+				if URL == "" {
+					actionName = owner + "/" + repository
+					URL = "https://github.com"
+				} else {
+					actionName, err = url.JoinPath(URL, owner, repository)
+					if err != nil {
+						logrus.Errorf("building URL: %s", err)
+					}
 
-				// If the action name is incomplete then we skip it
-				actionNameArray := strings.Split(actionName, "/")
-				if len(actionNameArray) < 2 {
-					continue
 				}
-
-				owner := strings.Split(actionName, "/")[0]
-				repository := strings.Split(actionName, "/")[1]
 
 				if len(g.spec.Ignore) > 0 {
 					if g.spec.Ignore.isMatchingRules(g.rootDir, relateFoundFile, actionName, reference) {
@@ -102,6 +104,7 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					File                 string
 					ImageName            string
 					JobID                string
+					URL                  string
 					Owner                string
 					Repository           string
 					VersionFilterKind    string
@@ -114,6 +117,7 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					Reference:            reference,
 					File:                 relateFoundFile,
 					JobID:                jobID,
+					URL:                  URL,
 					Owner:                owner,
 					Repository:           repository,
 					VersionFilterKind:    versionFilterKind,

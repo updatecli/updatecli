@@ -13,6 +13,7 @@ sources:
     spec:
       owner: '{{ .Owner }}'
       repository: '{{ .Repository }}'
+      url: '{{ .URL }}'
       token: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
@@ -24,7 +25,7 @@ sources:
     name: 'Get latest tag for {{ .ActionName }}'
     kind: 'gittag'
     spec:
-      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
+      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
@@ -36,7 +37,7 @@ sources:
     name: 'Get latest branch for {{ .ActionName }}'
     kind: 'gitbranch'
     spec:
-      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
+      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
@@ -48,8 +49,9 @@ conditions:
     kind: 'githubrelease'
     disablesourceinput: true
     spec:
-      owner: {{ .Owner }}
-      repository: {{ .Repository }}
+      owner: '{{ .Owner }}'
+      repository: '{{ .Repository }}'
+      url: '{{ .URL }}'
       token: '{{ .Token }}'
       tag: '{{ .Reference }}'
 
@@ -58,7 +60,7 @@ conditions:
     kind: 'gittag'
     disablesourceinput: true
     spec:
-      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
+      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
       versionfilter:
         kind: 'regex'
@@ -70,7 +72,7 @@ conditions:
     disablesourceinput: true
     spec:
       branch: '{{ .Reference }}'
-      url: "https://github.com/{{ .Owner }}/{{ .Repository }}.git"
+      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
 
 targets:

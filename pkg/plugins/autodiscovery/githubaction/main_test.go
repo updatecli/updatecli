@@ -29,6 +29,7 @@ sources:
     spec:
       owner: 'actions'
       repository: 'checkout'
+      url: 'https://github.com'
       token: 'xxx'
       versionfilter:
         kind: 'semver'
@@ -64,8 +65,9 @@ conditions:
     kind: 'githubrelease'
     disablesourceinput: true
     spec:
-      owner: actions
-      repository: checkout
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
 
