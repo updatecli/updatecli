@@ -16,11 +16,11 @@ sources:
     name: Get Latest committed branch
     kind: gitbranch
     scmid: default
-  path:
-    name: Get Latest committed branch
-    kind: gitbranch
-    spec:
-      path: ./
+#  path:
+#    name: Get Latest committed branch
+#    kind: gitbranch
+#    spec:
+#      path: ./
   url:
     name: Get latest committed branch from url
     kind: gitbranch
@@ -40,12 +40,12 @@ conditions:
     disablesourceinput: true
     spec:
       branch: master
-  path:
-    name: Get Latest committed branch
-    kind: gitbranch
-    sourceid: path
-    spec:
-      path: ./
+#  path:
+#    name: Get Latest committed branch
+#    kind: gitbranch
+#    sourceid: path
+#    spec:
+#      path: ./
   url:
     name: Get latest committed branch from url
     kind: gitbranch
