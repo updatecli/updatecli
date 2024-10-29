@@ -322,7 +322,6 @@ func New(option Option) (configs []Config, err error) {
 
 		// Ensure there is a local SCM defined as specified
 		if err = configs[id].EnsureLocalScm(); err != nil {
-			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
 			continue
 		}
 
@@ -331,7 +330,7 @@ func New(option Option) (configs []Config, err error) {
 		if len(configs[id].Spec.PullRequests) > 0 {
 			if len(configs[id].Spec.Actions) > 0 {
 				err := fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
-				logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+				logrus.Errorf("Skipping manifest %q:\n\t%s", option.ManifestFile, err.Error())
 				continue
 			}
 
@@ -343,7 +342,6 @@ func New(option Option) (configs []Config, err error) {
 
 		err = configs[id].Validate()
 		if err != nil {
-			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
 			continue
 		}
 
@@ -353,7 +351,6 @@ func New(option Option) (configs []Config, err error) {
 
 		err = configs[id].Validate()
 		if err != nil {
-			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
 			continue
 		}
 	}
