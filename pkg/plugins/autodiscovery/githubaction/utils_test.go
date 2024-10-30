@@ -35,6 +35,7 @@ func TestParseActionName(t *testing.T) {
 		expectedOwner      string
 		expectedRepository string
 		expectedReference  string
+		expectedDirectory  string
 	}{
 		{
 			name:               "complete action name",
@@ -83,22 +84,25 @@ func TestParseActionName(t *testing.T) {
 			expectedOwner:      "anchore",
 			expectedRepository: "sbom-action",
 			expectedReference:  "v1",
+			expectedDirectory:  "download-syft",
 		},
 		{
 			name:               "GitHub action with subdirectory without reference",
 			input:              "anchore/sbom-action/download-syft",
 			expectedOwner:      "anchore",
 			expectedRepository: "sbom-action",
+			expectedDirectory:  "download-syft",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotURL, gotOwner, gotRepository, gotReference := parseActionName(tt.input)
+			gotURL, gotOwner, gotRepository, gotDirectory, gotReference := parseActionName(tt.input)
 			assert.Equal(t, tt.expectedURL, gotURL)
 			assert.Equal(t, tt.expectedOwner, gotOwner)
 			assert.Equal(t, tt.expectedRepository, gotRepository)
 			assert.Equal(t, tt.expectedReference, gotReference)
+			assert.Equal(t, tt.expectedDirectory, gotDirectory)
 		})
 	}
 }

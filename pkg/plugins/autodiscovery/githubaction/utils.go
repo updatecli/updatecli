@@ -61,13 +61,13 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error
 
 // parseActionName will parse the action name from the input string.
 // and then try to identify which part is the owner and which part is the repository.
-func parseActionName(input string) (URL, owner, repository, reference string) {
+func parseActionName(input string) (URL, owner, repository, directory, reference string) {
 
 	parseURL := strings.Split(input, "@")
 
 	switch len(parseURL) {
 	case 0:
-		return "", "", "", ""
+		return "", "", "", "", ""
 	case 1:
 		reference = ""
 	case 2:
@@ -78,7 +78,7 @@ func parseActionName(input string) (URL, owner, repository, reference string) {
 	u, err := url.Parse(input)
 	if err != nil {
 		logrus.Debugf("parsing URL: %s", err)
-		return "", "", "", ""
+		return "", "", "", "", ""
 	}
 
 	path := strings.TrimPrefix(u.Path, "/")
@@ -86,7 +86,7 @@ func parseActionName(input string) (URL, owner, repository, reference string) {
 
 	switch len(parseURL) {
 	case 0, 1:
-		return "", "", "", ""
+		return "", "", "", "", ""
 	default:
 
 		// for some reason, analyzing an URL without a scheme leads to
@@ -111,6 +111,10 @@ func parseActionName(input string) (URL, owner, repository, reference string) {
 		owner = p[0]
 		repository = p[1]
 
-		return URL, owner, repository, reference
+		if len(p) > 2 {
+			directory = strings.Join(p[2:], "/")
+		}
+
+		return URL, owner, repository, directory, reference
 	}
 }

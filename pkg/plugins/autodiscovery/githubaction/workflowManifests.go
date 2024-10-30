@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strings"
 	"text/template"
 
 	"net/url"
@@ -38,7 +39,7 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 
 		for jobID, job := range data.Jobs {
 			for stepID, step := range job.Steps {
-				URL, owner, repository, reference := parseActionName(step.Uses)
+				URL, owner, repository, directory, reference := parseActionName(step.Uses)
 				switch reference {
 				case "":
 					continue
@@ -56,6 +57,10 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 						logrus.Errorf("building URL: %s", err)
 					}
 
+				}
+
+				if directory != "" {
+					actionName = strings.Join([]string{actionName, directory}, "/")
 				}
 
 				if len(g.spec.Ignore) > 0 {
