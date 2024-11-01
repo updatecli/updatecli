@@ -1,8 +1,10 @@
 package githubaction
 
 import (
+	"fmt"
 	"io/fs"
 	"net/url"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -117,4 +119,87 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 
 		return URL, owner, repository, directory, reference
 	}
+}
+
+func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err error) {
+	if URL == "" {
+		URL = defaultGitProviderURL
+	}
+
+	u, err := url.Parse(URL)
+
+	if err != nil {
+		return "", "", fmt.Errorf("parsing URL: %s", err)
+	}
+
+	defaultGitHubToken := func() string {
+		if os.Getenv("UPDATECLI_GITHUB_TOKEN") != "" {
+			logrus.Debugf("environment  variable UPDATECLI_GITHUB_TOKEN detected, using it values as GitHub token")
+			return os.Getenv("UPDATECLI_GITHUB_TOKEN")
+		} else if os.Getenv("GITHUB_TOKEN") != "" {
+			logrus.Debugf("environment  variable GITHUB_TOKEN detected, using it values as GitHub token")
+			return os.Getenv("GITHUB_TOKEN")
+		}
+		logrus.Debugln("no GitHub token defined, please provide a GitHub token via the setting `token` or one of the environment variable UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN.")
+		return ""
+	}
+
+	defaultGiteaToken := func() string {
+		if os.Getenv("UPDATECLI_GITEA_TOKEN") != "" {
+			logrus.Debugf("environment  variable UPDATECLI_GITEA_TOKEN detected, using it values as Gitea token")
+			return os.Getenv("UPDATECLI_GITEA_TOKEN")
+		} else if os.Getenv("GITEA_TOKEN") != "" {
+			logrus.Debugf("environment  variable GITEA_TOKEN detected, using it values as Gitea token")
+			return os.Getenv("GITEA_TOKEN")
+		}
+		logrus.Debugln("no Gitea token defined, please provide a Gitea token via the setting `token` or one of the environment variable UPDATECLI_GITEA_TOKEN or GITEA_TOKEN.")
+		return ""
+	}
+
+	for hostname, cred := range ga.credentials {
+		if u.Hostname() == hostname {
+			kind = cred.Kind
+			token = cred.Token
+			if token == "" {
+				switch kind {
+				case kindGitHub:
+					token = defaultGitHubToken()
+				case kindGitea, kindForgejo:
+					token = defaultGiteaToken()
+				default:
+					logrus.Debugf("unknown kind %q for git provider %q specified in parameter, fallback to github", kind, hostname)
+				}
+			}
+			return kind, token, nil
+		}
+	}
+
+	if ga.credentials == nil {
+		ga.credentials = make(map[string]gitProviderToken)
+	}
+
+	switch u.Hostname() {
+	case "gitea.com", "codeberg.org", "code.forgejo.org":
+		kind = kindGitea
+		token = defaultGiteaToken()
+
+		ga.credentials[u.Hostname()] = gitProviderToken{
+			Kind:  kind,
+			Token: token,
+		}
+
+	case "github.com":
+		kind = kindGitHub
+		token = defaultGitHubToken()
+		ga.credentials[u.Hostname()] = gitProviderToken{
+			Kind:  kind,
+			Token: token,
+		}
+	default:
+		logrus.Debugf("unknown git provider %q, fallback to github", u.Hostname())
+		kind = kindGitHub
+		token = defaultGitHubToken()
+	}
+
+	return kind, token, nil
 }

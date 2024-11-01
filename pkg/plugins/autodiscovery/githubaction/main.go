@@ -1,8 +1,6 @@
 package githubaction
 
 import (
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -15,6 +13,10 @@ var (
 	defaultWorkflowFiles        []string = []string{"*.yaml", "*.yml"}
 	defaultVersionFilterPattern string   = "*"
 	defaultVersionFilterKind    string   = "semver"
+	kindGitea                   string   = "gitea"
+	kindGitHub                  string   = "github"
+	kindForgejo                 string   = "forgejo"
+	defaultGitProviderURL       string   = "https://github.com"
 )
 
 // Spec defines the parameters which can be provided to the Github Action crawler.
@@ -58,15 +60,14 @@ type Spec struct {
 	//	and its type like regex, semver, or just latest.
 	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Token allows to specify a GitHub token to use for GitHub API requests
-	//
-	// default:
-	//   Default value is set to {{ requiredEnv "GITHUB_TOKEN }} for using the default environment variable
-	Token string `yaml:",omitempty"`
+	// Credentials allows to specify the credentials to use to authenticate to the git provider
+	Credentials map[string]gitProviderToken `yaml:",omitempty"`
 }
 
 // GitHubAction holds all information needed to generate GitHubAction manifest.
 type GitHubAction struct {
+	// credentials defines the credentials to use to authenticate to the git provider
+	credentials map[string]gitProviderToken
 	// files defines the accepted GitHub Action workflow file name
 	files []string
 	// spec defines the settings provided via an updatecli manifest
@@ -81,6 +82,23 @@ type GitHubAction struct {
 	workflowFiles []string
 	// token allows to specify a GitHub token to use for GitHub API requests
 	token string
+}
+
+type gitProviderToken struct {
+	// Kind defines the Kind of git provider to use
+	//
+	// accepted values: ['github','gitea','forgejo']
+	Kind string `yaml:",omitempty"`
+	// Token defines the Token to use to authenticate to the git provider
+	//
+	// The default value depeneds on the action domain
+	// For 'github.com', the default value is set to first environment detected
+	//  1. "UPDATECLI_GITHUB_TOKEN"
+	//  2. "GITHUB_TOKEN"
+	//
+	// For 'gitea.com' and 'codeberg.org', the default value is set to first environment detected
+	//  1. "GITEA_TOKEN"
+	Token string `yaml:",omitempty"`
 }
 
 // New return a new valid Flux object.
@@ -109,18 +127,6 @@ func New(spec interface{}, rootDir, scmID string) (GitHubAction, error) {
 		files = s.Files
 	}
 
-	token := s.Token
-	if token == "" {
-		if os.Getenv("UPDATECLI_GITHUB_TOKEN") != "" {
-			token = os.Getenv("UPDATECLI_GITHUB_TOKEN")
-		} else if os.Getenv("GITHUB_TOKEN") != "" {
-			token = os.Getenv("GITHUB_TOKEN")
-		} else {
-			logrus.Errorln("no GitHub token defined, please provide a GitHub token via the setting `token` or the UPDATECLI_GITHUB_TOKEN environment variable.")
-			return GitHubAction{}, fmt.Errorf("no GitHub token defined")
-		}
-	}
-
 	newFilter := s.VersionFilter
 	if s.VersionFilter.IsZero() {
 		// By default, helm versioning uses semantic versioning.
@@ -129,12 +135,12 @@ func New(spec interface{}, rootDir, scmID string) (GitHubAction, error) {
 	}
 
 	return GitHubAction{
+		credentials:   s.Credentials,
 		spec:          s,
 		files:         files,
 		rootDir:       dir,
 		scmID:         scmID,
 		versionFilter: newFilter,
-		token:         token,
 	}, nil
 
 }

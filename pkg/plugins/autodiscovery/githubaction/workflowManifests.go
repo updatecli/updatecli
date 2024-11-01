@@ -2,7 +2,6 @@ package githubaction
 
 import (
 	"bytes"
-	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -50,13 +49,19 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 				actionName := ""
 				if URL == "" {
 					actionName = owner + "/" + repository
-					URL = "https://github.com"
+					URL = defaultGitProviderURL
 				} else {
 					actionName, err = url.JoinPath(URL, owner, repository)
 					if err != nil {
 						logrus.Errorf("building URL: %s", err)
 					}
 
+				}
+
+				kind, token, err := g.getGitProviderKind(URL)
+				if err != nil {
+					logrus.Debugf("getting credentials: %s", err)
+					continue
 				}
 
 				if directory != "" {
@@ -95,11 +100,22 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					}
 				}
 
-				tmpl, err := template.New("manifest").Parse(workflowManifestTemplate)
-				if err != nil {
-					fmt.Println(err)
-
-					logrus.Debugln(err)
+				var tmpl *template.Template
+				switch kind {
+				case kindGitHub:
+					tmpl, err = template.New("manifest").Parse(workflowManifestGitHubTemplate)
+					if err != nil {
+						logrus.Debugln(err)
+						continue
+					}
+				case kindGitea:
+					tmpl, err = template.New("manifest").Parse(workflowManifestGiteaTemplate)
+					if err != nil {
+						logrus.Debugln(err)
+						continue
+					}
+				default:
+					logrus.Errorf("unsupported git provider kind %q, skipping", kind)
 					continue
 				}
 
@@ -129,7 +145,7 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					VersionFilterPattern: versionFilterPattern,
 					ScmID:                g.scmID,
 					StepID:               stepID,
-					Token:                g.token,
+					Token:                token,
 				}
 
 				manifest := bytes.Buffer{}

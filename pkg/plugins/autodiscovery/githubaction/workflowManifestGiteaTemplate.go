@@ -1,15 +1,15 @@
 package githubaction
 
 const (
-	// workflowManifestTemplate is the Go template used to generate GitHub action workflow manifests
-	workflowManifestTemplate string = `name: 'deps: bump {{ .ActionName }} GitHub workflow'
+	// workflowManifestGiteaTemplate is the Go template used to generate Gitea action workflow manifests
+	workflowManifestGiteaTemplate string = `name: 'deps: bump {{ .ActionName }} Gitea workflow'
 
 sources:
   release:
     dependson:
       - 'condition#release:and'
-    name: 'Get latest GitHub Release for {{ .ActionName }}'
-    kind: 'githubrelease'
+    name: 'Get latest Gitea Release for {{ .ActionName }}'
+    kind: 'gitearelease'
     spec:
       owner: '{{ .Owner }}'
       repository: '{{ .Repository }}'
@@ -45,8 +45,8 @@ sources:
 
 conditions:
   release:
-    name: 'Check if {{ .ActionName }}@{{ .Reference }} is a GitHub release'
-    kind: 'githubrelease'
+    name: 'Check if {{ .ActionName }}@{{ .Reference }} is a Gitea release'
+    kind: 'gitearelease'
     disablesourceinput: true
     spec:
       owner: '{{ .Owner }}'
@@ -80,7 +80,7 @@ targets:
     dependson:
       - 'condition#release:and'
     disableconditions: true
-    name: 'deps(github): bump Action release for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "release" {{ "}}" }}'
+    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "release" {{ "}}" }}'
     kind: 'yaml'
     sourceid: 'release'
     transformers:
@@ -94,7 +94,7 @@ targets:
     dependson:
       - 'condition#tag:and'
     disableconditions: true
-    name: 'deps(github): bump Action tag for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "tag" {{ "}}" }}'
+    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "tag" {{ "}}" }}'
     kind: 'yaml'
     sourceid: 'tag'
     transformers:
@@ -108,7 +108,7 @@ targets:
     dependson:
       - 'condition#branch:and'
     disableconditions: true
-    name: 'deps(github): bump Action branch for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "branch" {{ "}}" }}'
+    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "branch" {{ "}}" }}'
     kind: yaml
     sourceid: branch
     transformers:
