@@ -273,9 +273,8 @@ targets:
 		t.Run(tt.name, func(t *testing.T) {
 			g, err := New(
 				Spec{
-					RootDir:     tt.rootDir,
 					Credentials: tt.credentials,
-				}, "", "")
+				}, tt.rootDir, "")
 
 			require.NoError(t, err)
 
