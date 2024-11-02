@@ -40,7 +40,7 @@ require (
 	github.com/drone/go-scm v1.38.8
 	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/source-controller/api v1.4.1
-	github.com/goccy/go-yaml v1.13.2
+	github.com/goccy/go-yaml v1.13.3
 	github.com/google/go-containerregistry v0.20.2
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.22.0
