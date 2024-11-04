@@ -36,6 +36,10 @@ var (
 			"dockercompose": dockercompose.Spec{},
 			"dockerfile":    dockerfile.Spec{},
 			"flux":          flux.Spec{},
+			// gitea/action share the same behavior as github/action
+			// so we use the last one.
+			// The day we have a specific behavior for gitea/action
+			// then we will add it to the default autodiscovery.
 			"github/action": githubaction.Spec{},
 			"golang/gomod":  golang.Spec{},
 			"helm":          helm.Spec{},
@@ -60,6 +64,7 @@ var (
 		"dockerfile":    &dockerfile.Spec{},
 		"flux":          &flux.Spec{},
 		"github/action": &githubaction.Spec{},
+		"gitea/action":  &githubaction.Spec{},
 		"golang/gomod":  &golang.Spec{},
 		"helm":          &helm.Spec{},
 		"helmfile":      &helmfile.Spec{},
@@ -166,7 +171,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 			g.crawlers = append(g.crawlers, crawler)
 
-		case "github/action":
+		case "github/action", "gitea/action":
 			crawler, err := githubaction.New(
 				g.spec.Crawlers[kind],
 				workDir,
