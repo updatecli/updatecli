@@ -1,0 +1,48 @@
+name: updatecli
+on:
+  release:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # Run at 12:00 on Friday.”
+    - cron: "0 12 * * 5"
+
+permissions: {}
+
+jobs:
+  updatecli:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: "Checkout"
+        uses: "https://gitea.com/actions/checkout@v4"
+    #  - name: "Setup updatecli"
+    #    uses: "updatecli/updatecli-action@v2"
+    #  - name: Set up Go
+    #    uses: actions/setup-go@v5
+    #    with:
+    #      go-version-file: "go.mod"
+    #    id: go
+    #  - name: "Run updatecli in dryrun"
+    #    run: "updatecli diff --config ./updatecli/updatecli.d --experimental"
+    #    env:
+    #      UPDATECLI_GITHUB_ACTOR: ${{ github.actor }}
+    #      UPDATECLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #  - uses: tibdex/github-app-token@v2.1
+    #    id: generate_token
+    #    if: github.ref == 'refs/heads/main'
+    #    with:
+    #      app_id: ${{ secrets.UPDATECLIBOT_APP_ID }}
+    #      private_key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
+    #  - name: "Run updatecli"
+    #    if: github.ref == 'refs/heads/main'
+    #    run: "updatecli apply --config ./updatecli/updatecli.d --experimental"
+    #    env:
+    #      UPDATECLI_GITHUB_ACTOR: ${{ secrets.UPDATECLI_BOT_GITHUB_ACTOR }}
+    #      UPDATECLI_GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}

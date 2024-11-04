@@ -40,7 +40,7 @@ type PullRequestApi struct {
 	State        string
 	Title        string
 	Url          string
-	Number       int
+	Number       int32
 }
 
 // ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
