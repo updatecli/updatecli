@@ -86,6 +86,9 @@ targets:
     transformers:
       - addprefix: '"{{ .ActionName }}@'
       - addsuffix: '"'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
@@ -100,6 +103,9 @@ targets:
     transformers:
       - addprefix: '"{{ .ActionName }}@'
       - addsuffix: '"'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
@@ -114,6 +120,9 @@ targets:
     transformers:
       - addprefix: '"{{ .ActionName }}@'
       - addsuffix: '"'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
