@@ -64,7 +64,11 @@ func getTerragruntModule(filename string, allowNoVersion bool) (module *terragru
 
 	for _, block := range hclfile.Body().Blocks() {
 		if block.Type() == "terraform" {
-			quotedSource := strings.TrimSpace(string(block.Body().GetAttribute("source").Expr().BuildTokens(nil).Bytes()))
+			sourceBlock := block.Body().GetAttribute("source")
+			if sourceBlock == nil {
+				return nil, nil
+			}
+			quotedSource := strings.TrimSpace(string(sourceBlock.Expr().BuildTokens(nil).Bytes()))
 			source, hclContext, err := evaluateHcl(quotedSource, data, filename)
 			if err != nil {
 				return nil, err
