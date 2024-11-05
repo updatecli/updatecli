@@ -26,6 +26,7 @@ func TestSearchTerragruntFiles(t *testing.T) {
 				"test/testdata/more_complex_localized.hcl",
 				"test/testdata/non_tfr.hcl",
 				"test/testdata/simple_localized.hcl",
+				"test/testdata/terraform_without_source.hcl",
 				"test/testdata/terragrunt.hcl",
 			},
 		},
@@ -155,6 +156,11 @@ func TestGetTerragruntModules(t *testing.T) {
 					sourceType:      SourceTypeGit,
 				},
 			},
+		},
+		{
+			name:           "Terragrunt terraform block without source",
+			file:           "test/testdata/terraform_without_source.hcl",
+			expectedModule: nil,
 		},
 	}
 
