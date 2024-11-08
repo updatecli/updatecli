@@ -102,14 +102,14 @@ func (t *Target) Check() (bool, error) {
 func (t *Target) Run(source string, o *Options) (err error) {
 	var consoleOutput bytes.Buffer
 	// By default logrus logs to stderr, so I guess we want to keep this behavior...
-	logrus.SetOutput(io.MultiWriter(os.Stderr, &consoleOutput))
+	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
 	/*
 		The last defer will be executed first,
 		so in this case we want to first save the console output
 		before setting back the logrus output to stdout.
 	*/
 	// By default logrus logs to stderr, so I guess we want to keep this behavior...
-	defer logrus.SetOutput(os.Stderr)
+	defer logrus.SetOutput(os.Stdout)
 	defer t.Result.SetConsoleOutput(&consoleOutput)
 
 	failTargetRun := func() {
