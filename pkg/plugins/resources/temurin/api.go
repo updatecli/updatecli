@@ -155,14 +155,14 @@ func (t Temurin) apiParseVersion(version string) (result parsedVersion, err erro
 	return result, nil
 }
 
-func (t Temurin) apiGetReleaseName() (result string, err error) {
+func (t Temurin) apiGetReleaseNames() (result []string, err error) {
 	var versionRange string
 
 	// If user specified a custom version, we have to normalize and validate it
 	if t.spec.SpecificVersion != "" {
 		parsedVersion, err := t.apiParseVersion(t.spec.SpecificVersion)
 		if err != nil {
-			return "", err
+			return []string{}, err
 		}
 
 		versionRange = fmt.Sprintf("(%d.%d.%d, %d.%d.%d]",
@@ -179,7 +179,7 @@ func (t Temurin) apiGetReleaseName() (result string, err error) {
 		if featureVersion == 0 {
 			featureVersion, err = t.apiGetLastFeatureRelease()
 			if err != nil {
-				return "", err
+				return []string{}, err
 			}
 		}
 
@@ -213,13 +213,8 @@ func (t Temurin) apiGetReleaseName() (result string, err error) {
 		return result, fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details.")
 	}
 
-	if len(apiResult.Releases) == 0 {
-		logrus.Debug("[temurin] empty response for 'release_names'.")
-		return result, fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details.")
-	}
-
 	// Return only the most recent, e.g. the first one (sort is DESC in the URL)
-	return apiResult.Releases[0], nil
+	return apiResult.Releases, nil
 }
 
 func (t Temurin) apiGetInstallerUrl(releaseName string) (result string, err error) {
