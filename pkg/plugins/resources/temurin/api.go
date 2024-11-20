@@ -27,8 +27,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		logrus.Errorf("something went wrong while performing a request to %q :\n%q\n", url, err)
-		return []byte{}, "", err
+		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", url, err)
 	}
 
 	req.Header.Set("User-Agent", httputils.UserAgent)
@@ -37,8 +36,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	res, err := webClient.Do(req)
 	if err != nil {
-		logrus.Errorf("something went wrong while performing a request to %q :\n%q\n", url, err)
-		return []byte{}, "", err
+		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", url, err)
 	}
 	defer res.Body.Close()
 
@@ -46,7 +44,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	if res.StatusCode >= 400 {
 		_, _ = httputil.DumpResponse(res, false)
-		return []byte{}, "", fmt.Errorf("[temurin] Caught HTTP error %d from the API.\n", res.StatusCode)
+		return []byte{}, "", fmt.Errorf("Got an HTTP error %d from the API.\n", res.StatusCode)
 	}
 
 	locationHeader = res.Header.Get("Location")
@@ -54,8 +52,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	body, err = io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Errorf("something went wrong while performing a request to %q :\n%q\n", url, err)
-		return []byte{}, "", err
+		return []byte{}, "", fmt.Errorf("something went wrong while decoding the answer of the request %q:\n%s\n", url, err)
 	}
 
 	return body, locationHeader, nil
@@ -142,13 +139,11 @@ func (t Temurin) apiParseVersion(version string) (result parsedVersion, err erro
 
 	body, err := t.apiGetBody(apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while parsing the version %q with the Temurin API available operating systems %q\n", version, err)
-		return result, err
+		return result, fmt.Errorf("the version %q is not a valid Temurin version.\nAPI response was: %q", version, err)
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		logrus.Errorf("something went wrong while decoding response from Temurin API %q\n", err)
 		return result, err
 	}
 
