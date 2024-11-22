@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
@@ -30,6 +31,15 @@ func New(spec interface{}) (*Temurin, error) {
 	err := mapstructure.Decode(spec, &newSpec)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(newSpec.Platforms) > 0 {
+		if newSpec.Architecture != "" {
+			return nil, fmt.Errorf("[temurin] `spec.platform` and `spec.architecture` are mutually exclusive.")
+		}
+		if newSpec.OperatingSystem != "" {
+			return nil, fmt.Errorf("[temurin] `spec.platform` and `spec.operatingsystem` are mutually exclusive.")
+		}
 	}
 
 	// Set defaults
@@ -71,7 +81,7 @@ func New(spec interface{}) (*Temurin, error) {
 		return nil, err
 	}
 	if !slices.Contains(architectures, newResource.spec.Architecture) {
-		return nil, fmt.Errorf("[temurin] Specified architecture %q is not a valid Temurin architecture (%v)", newResource.spec.Architecture, architectures)
+		return nil, fmt.Errorf("[temurin] Specified architecture %q is not a valid Temurin architecture (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list)", newResource.spec.Architecture)
 	}
 
 	operatingSystems, err := newResource.apiGetOperatingSystems()
@@ -79,11 +89,28 @@ func New(spec interface{}) (*Temurin, error) {
 		return nil, err
 	}
 	if !slices.Contains(operatingSystems, newResource.spec.OperatingSystem) {
-		return nil, fmt.Errorf("[temurin] Specified operating system ('os') %q is not a valid Temurin architecture (%v)", newResource.spec.OperatingSystem, operatingSystems)
+		return nil, fmt.Errorf("[temurin] Specified operating system %q is not a valid Temurin architecture (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list)", newResource.spec.OperatingSystem)
 	}
 
 	if newSpec.ReleaseType != "ea" && newSpec.ReleaseType != "ga" {
 		return nil, fmt.Errorf("[temurin] Specified release type %q is invalid: Temurin only accepts 'ga' (stable builds) or 'ea' (nightly builds).", newResource.spec.ReleaseType)
+	}
+
+	for _, platform := range newSpec.Platforms {
+		splitPlatform := strings.Split(platform, "/")
+		if len(splitPlatform) > 2 {
+			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: too much items specified.", platform)
+		}
+		if len(splitPlatform) < 2 {
+			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: it misses a CPU architecture.", platform)
+		}
+		if !slices.Contains(operatingSystems, splitPlatform[0]) {
+			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: %q is not a valid Operating System (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list).", platform, splitPlatform[0])
+		}
+		if !slices.Contains(architectures, splitPlatform[1]) {
+			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: %q is not a valid Architecture (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list).", platform, splitPlatform[1])
+		}
+
 	}
 
 	/** End of validations **/
