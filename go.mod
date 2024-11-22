@@ -1,6 +1,6 @@
 module github.com/updatecli/updatecli
 
-go 1.23.2
+go 1.23.3
 
 replace github.com/drone/go-scm => github.com/olblak/go-scm v1.26.1-0.20240829085250-adc387402cba
 
@@ -25,7 +25,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/oauth2 v0.23.0
+	golang.org/x/oauth2 v0.24.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.16.2
 	sigs.k8s.io/yaml v1.4.0
@@ -40,10 +40,10 @@ require (
 	github.com/drone/go-scm v1.38.8
 	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/source-controller/api v1.4.1
-	github.com/goccy/go-yaml v1.13.4
+	github.com/goccy/go-yaml v1.14.0
 	github.com/google/go-containerregistry v0.20.2
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/hcl/v2 v2.22.0
+	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/hashicorp/terraform-registry-address v0.2.3
 	github.com/invopop/jsonschema v0.12.0
 	github.com/joho/godotenv v1.5.1
@@ -60,7 +60,7 @@ require (
 	github.com/yuin/goldmark v1.7.8
 	github.com/zclconf/go-cty v1.15.0
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
-	golang.org/x/text v0.19.0
+	golang.org/x/text v0.20.0
 	golang.org/x/time v0.6.0
 	gopkg.in/ini.v1 v1.67.0
 	oras.land/oras-go/v2 v2.5.0
@@ -297,9 +297,9 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.starlark.net v0.0.0-20231121155337-90ade8b19d09 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
-	golang.org/x/mod v0.21.0
+	golang.org/x/mod v0.22.0
 	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect

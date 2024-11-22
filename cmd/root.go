@@ -54,6 +54,9 @@ func Execute() {
 }
 
 func init() {
+
+	logrus.SetOutput(os.Stdout)
+
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "debug", "", false, "Debug Output")
 	rootCmd.PersistentFlags().BoolVarP(&experimental, "experimental", "", false, "Enable Experimental mode")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
