@@ -25,6 +25,7 @@ import (
 // "or" the boolean operator is optional and can be used to specify that at least one condition must be met
 // if the boolean operator is not provided, it defaults to "and"
 func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) bool {
+
 	// exit early
 	if len(leaf.DependsOn) == 0 {
 		return false
@@ -35,6 +36,9 @@ func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) 
 		dependencyResult := depsResults[dependency.ID]
 		booleanOperator := dependency.Operator
 
+		if leaf.DependsOnChange && dependencyResult.Category != targetCategory {
+			continue
+		}
 		switch booleanOperator {
 		case andBooleanOperator:
 			if leaf.DependsOnChange && dependencyResult.Category == targetCategory {
@@ -52,12 +56,12 @@ func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) 
 		case orBooleanOperator:
 			if leaf.DependsOnChange && dependencyResult.Category == targetCategory {
 				if dependencyResult.Changed {
-					// And operator but dep is not changed
+					// Or operator but dep is not changed
 					shouldSkip = false
 				}
 			} else {
 				if dependencyResult.Result == result.SUCCESS {
-					// And operator but dep is failed
+					// Or operator but dep is failed
 					shouldSkip = false
 				}
 			}

@@ -35,6 +35,20 @@ func TestRun(t *testing.T) {
 				"7": "✔",
 			},
 			expectedPipelineResult: "⚠",
+		}, {
+			confPath: "../../../e2e/updatecli.d/success.d/dependsonchangeor.yaml",
+			expectedSourcesResult: map[string]string{
+				"1": "✔",
+			},
+			expectedConditionsResult: map[string]string{
+				"1": "✔",
+			},
+			expectedTargetsResult: map[string]string{
+				"1": "✔",
+				"2": "✔",
+				"3": "-",
+			},
+			expectedPipelineResult: "✔",
 		},
 	}
 
