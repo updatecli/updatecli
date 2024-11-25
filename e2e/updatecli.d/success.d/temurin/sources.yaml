@@ -1,5 +1,5 @@
-name: "Test Adoptium Temurin Versions Resource"
-pipelineid: e2e/adoptium
+name: "Test Adoptium Temurin Versions Sources"
+pipelineid: e2e/temurin/sources
 
 sources:
   ## Returns last LTS (implicit default)

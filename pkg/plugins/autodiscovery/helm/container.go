@@ -230,6 +230,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				TargetKey                   string
 				TargetFile                  string
 				TargetChartName             string
+				TargetChartSkipPackaging    bool
 				TargetChartVersionIncrement string
 				File                        string
 				ScmID                       string
@@ -254,6 +255,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				TargetID:                    imageSourceSlug,
 				TargetKey:                   image.yamlTagPath,
 				TargetChartName:             chartRelativeMetadataPath,
+				TargetChartSkipPackaging:    h.spec.SkipPackaging,
 				TargetChartVersionIncrement: h.spec.VersionIncrement,
 				TargetFile:                  filepath.Base(foundValueFile),
 				File:                        relativeFoundValueFile,

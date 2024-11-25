@@ -48,6 +48,7 @@ targets:
       file: '{{ .TargetFile }}'
       name: '{{ .TargetChartName }}'
       key: '{{ .TargetKey }}'
+      skippackaging: {{ .TargetChartSkipPackaging }}
       versionincrement: '{{ .TargetChartVersionIncrement }}'
     sourceid: '{{ .SourceID }}'
 `
@@ -106,6 +107,7 @@ targets:
       file: '{{ .TargetFile }}'
       name: '{{ .TargetChartName }}'
       key: '{{ .TargetKey }}'
+      skippackaging: {{ .TargetChartSkipPackaging }}
       versionincrement: '{{ .TargetChartVersionIncrement }}'
     sourceid: '{{ .SourceID }}-digest'
 `
@@ -153,6 +155,7 @@ targets:
       file: '{{ .TargetFile }}'
       name: '{{ .TargetChartName }}'
       key: '{{ .TargetKey }}'
+      skippackaging: {{ .TargetChartSkipPackaging }}
       versionincrement: '{{ .TargetChartVersionIncrement }}'
     sourceid: '{{ .SourceID }}-digest'
 `

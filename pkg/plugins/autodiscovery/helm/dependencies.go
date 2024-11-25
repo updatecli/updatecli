@@ -136,6 +136,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				TargetID                    string
 				TargetKey                   string
 				TargetChartName             string
+				TargetChartSkipPackaging    bool
 				TargetChartVersionIncrement string
 				TargetFile                  string
 				File                        string
@@ -155,6 +156,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				TargetID:                    dependencyNameSlug,
 				TargetKey:                   fmt.Sprintf("$.dependencies[%d].version", i),
 				TargetChartName:             chartRelativeMetadataPath,
+				TargetChartSkipPackaging:    h.spec.SkipPackaging,
 				TargetChartVersionIncrement: h.spec.VersionIncrement,
 				TargetFile:                  filepath.Base(foundChartFile),
 				File:                        relativeFoundChartFile,
