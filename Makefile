@@ -6,7 +6,7 @@ DOCKER_BUILDKIT=1
 export DOCKER_BUILDKIT
 
 # Used by the test-e2e system
-VENOM_VAR_binpath ?= $(CURDIR)/dist/updatecli_$(shell go env GOOS)_$(shell go env GOARCH)
+VENOM_VAR_binpath ?= $(CURDIR)/dist/updatecli_$(shell go env GOOS)_$(shell go env GOARCH)_v1
 export VENOM_VAR_binpath
 VENOM_VAR_rootpath ?= $(CURDIR)
 export VENOM_VAR_rootpath
@@ -58,15 +58,11 @@ test-short: ## Execute the Golang's tests for updatecli
 	go test ./... -short
 
 .PHONY: test-e2e
-test-e2e: $(VENOM_VAR_binpath)/updatecli ## Execute updatecli end to end tests
+test-e2e: ## Execute updatecli end to end tests
 	@echo "==\nUsing the following updatecli binary (from variable 'VENOM_VAR_binpath'): $(VENOM_VAR_binpath)/updatecli\n=="
 	@test -n "$$GITHUB_TOKEN" || { echo "Undefined required variable 'GITHUB_TOKEN'"; exit 1; }
 	@test -n "$$GITHUB_ACTOR" || { echo "Undefined required variable 'GITHUB_ACTOR'"; exit 1; }
 	time venom run e2e/venom.d/* --output-dir ./e2e --format yaml
-
-# Not PHONY
-$(VENOM_VAR_binpath)/updatecli:
-	go build -o $(VENOM_VAR_binpath)/updatecli
 
 .PHONY: lint
 lint: ## Execute the Golang's linters on updatecli's source code
