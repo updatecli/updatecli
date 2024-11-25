@@ -1,45 +1,54 @@
 name: "ci: bump Venom version"
 pipelineid: "venom"
 actions:
-    default:
-        title: 'ci: bump Venom version to {{ source "latestVersion" }}'
-        kind: github/pullrequest
-        spec:
-            automerge: true
-            labels:
-                - chore
-                - skip-changelog
-        scmid: default
+  default:
+    title: 'ci: bump Venom version to {{ source "latestVersion" }}'
+    kind: github/pullrequest
+    spec:
+      automerge: true
+      labels:
+        - chore
+        - skip-changelog
+    scmid: default
 scms:
-    default:
-        kind: github
-        spec:
-            branch: '{{ .scm.branch }}'
-            email: '{{ .scm.email }}'
-            owner: '{{ .scm.owner }}'
-            repository: '{{ .scm.repository }}'
-            token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-            user: '{{ .scm.user }}'
-            username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-        disabled: false
+  default:
+    kind: github
+    spec:
+      branch: "{{ .scm.branch }}"
+      email: "{{ .scm.email }}"
+      owner: "{{ .scm.owner }}"
+      repository: "{{ .scm.repository }}"
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      user: "{{ .scm.user }}"
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+    disabled: false
 sources:
-    latestVersion:
-        name: Get latest Venom release
-        kind: githubrelease
-        spec:
-            owner: ovh
-            repository: venom
-            token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-            username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-            versionfilter:
-                kind: semver
+  latestVersion:
+    name: Get latest Venom release
+    kind: githubrelease
+    spec:
+      owner: ovh
+      repository: venom
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      versionfilter:
+        kind: semver
 targets:
-    goWorkflow:
-        name: 'ci: update Venom version to {{ source "latestVersion" }}'
-        kind: file
-        spec:
-            content: 'VENOM_VERSION: {{ source `latestVersion` }}'
-            file: .github/workflows/go.yaml
-            matchpattern: 'VENOM_VERSION: .*'
-        scmid: default
-        sourceid: latestVersion
+  goWorkflow:
+    name: 'ci: update Venom version to {{ source "latestVersion" }}'
+    kind: file
+    spec:
+      content: 'VENOM_VERSION: {{ source "latestVersion" }}'
+      file: .github/workflows/go.yaml
+      matchpattern: "VENOM_VERSION: .*"
+    scmid: default
+    sourceid: latestVersion
+  contributing-doc:
+    name: 'CONTRIBUTING documentation: update Venom version to {{ source "latestVersion" }}'
+    kind: file
+    spec:
+      file: CONTRIBUTING.adoc
+      matchpattern: 'venom version # expect .*'
+      replacepattern: 'venom version # expect {{ source "latestVersion" }}'
+    scmid: default
+    sourceid: latestVersion
