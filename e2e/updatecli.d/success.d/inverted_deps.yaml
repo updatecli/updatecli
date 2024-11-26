@@ -1,0 +1,28 @@
+name: Invert dep
+pipelineid: e2e/chained
+
+sources:
+  1:
+    name: Source 1
+    kind: shell
+    spec:
+      command: "true"
+    dependson:
+      - "condition#1"
+conditions:
+  1:
+    disablesourceinput: true
+    name: Condition 1
+    kind: shell
+    spec:
+      command: "true"
+    dependson:
+      - "target#1"
+targets:
+  1:
+    disablesourceinput: true
+    disableconditions: true
+    name: Target 1
+    kind: shell
+    spec:
+      command: "true"
