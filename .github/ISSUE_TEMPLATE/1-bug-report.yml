@@ -47,6 +47,19 @@ body:
     required: false
 - type: textarea
   attributes:
+    label: Pipeline Graph
+    description: |
+      Graph output of your pipeline, can be obtained with
+      ```bash
+      updatecli manifest show --graph --graph-flavour mermaid --experimental --config <your-pipeline.yaml>
+      ```
+    value: |
+      ```mermaid
+      ```
+  validations:
+    required: false
+- type: textarea
+  attributes:
     label: Anything else?
     description: |
       Links? References? Screenshots? Anything that will give us more context about the issue you are encountering!
