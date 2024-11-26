@@ -199,7 +199,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 					"    %s%s\"%s (%s)\"%s\n",
 					node,
 					openingBracket,
-					strings.ReplaceAll(name, `"`, `\"`),
+					strings.ReplaceAll(name, `"`, `:#quot;`),
 					kind,
 					closingBracket,
 				),
