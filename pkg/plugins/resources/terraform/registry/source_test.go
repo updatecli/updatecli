@@ -16,7 +16,7 @@ func TestSource(t *testing.T) {
 	tests := []struct {
 		name            string
 		spec            Spec
-		expectedResult  string
+		expectedResult  []result.SourceInformation
 		expectedError   bool
 		mockedHttpBody  string
 		mockedHttpError error
@@ -28,7 +28,9 @@ func TestSource(t *testing.T) {
 				Namespace: "hashicorp",
 				Name:      "kubernetes",
 			},
-			expectedResult: "2.23.0",
+			expectedResult: []result.SourceInformation{{
+				Value: "2.23.0",
+			}},
 			mockedHttpBody: `{ "versions" : [{ "version": "2.23.0" }] }`,
 		},
 		{
@@ -39,7 +41,9 @@ func TestSource(t *testing.T) {
 				Name:         "vpc",
 				TargetSystem: "aws",
 			},
-			expectedResult: "5.1.1",
+			expectedResult: []result.SourceInformation{{
+				Value: "5.1.1",
+			}},
 			mockedHttpBody: `{ "modules": [{ "versions" : [{ "version": "5.1.1" }] }] }`,
 		},
 	}

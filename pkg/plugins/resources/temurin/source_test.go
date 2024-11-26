@@ -25,7 +25,7 @@ func TestSource(t *testing.T) {
 		mockedLocationHeader string
 		mockedParsedVersion  parsedVersion
 		mockedHttpError      error
-		want                 string
+		want                 []result.SourceInformation
 		wantStatus           string
 		wantErr              string
 	}{
@@ -33,8 +33,10 @@ func TestSource(t *testing.T) {
 			name:           "Normal case with latest LTS and default",
 			mockedReleases: []string{"jdk-21.0.4+7", "jdk-21.0.3+8", "jdk-21.0.2+4"},
 			spec:           Spec{},
-			want:           "jdk-21.0.4+7",
-			wantStatus:     result.SUCCESS,
+			want: []result.SourceInformation{{
+				Value: "jdk-21.0.4+7",
+			}},
+			wantStatus: result.SUCCESS,
 		},
 		{
 			name:                 "Normal case with installer_url and defaults",
@@ -43,7 +45,9 @@ func TestSource(t *testing.T) {
 			spec: Spec{
 				Result: "installer_url",
 			},
-			want:       "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz",
+			want: []result.SourceInformation{{
+				Value: "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz",
+			}},
 			wantStatus: result.SUCCESS,
 		},
 		{
@@ -53,7 +57,9 @@ func TestSource(t *testing.T) {
 			spec: Spec{
 				Result: "checksum_url",
 			},
-			want:       "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz.sha256.txt",
+			want: []result.SourceInformation{{
+				Value: "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz.sha256.txt",
+			}},
 			wantStatus: result.SUCCESS,
 		},
 		{
@@ -63,7 +69,9 @@ func TestSource(t *testing.T) {
 			spec: Spec{
 				Result: "signature_url",
 			},
-			want:       "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz.sig",
+			want: []result.SourceInformation{{
+				Value: "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz.sig",
+			}},
 			wantStatus: result.SUCCESS,
 		},
 		{
@@ -73,7 +81,9 @@ func TestSource(t *testing.T) {
 				ReleaseLine: "feature",
 				ReleaseType: "ea",
 			},
-			want:       "jdk-21.0.5+4-ea-beta",
+			want: []result.SourceInformation{{
+				Value: "jdk-21.0.5+4-ea-beta",
+			}},
 			wantStatus: result.SUCCESS,
 		},
 		{
@@ -87,7 +97,9 @@ func TestSource(t *testing.T) {
 			spec: Spec{
 				SpecificVersion: "17.0.2",
 			},
-			want:       "jdk-17.0.2+9",
+			want: []result.SourceInformation{{
+				Value: "jdk-17.0.2+9",
+			}},
 			wantStatus: result.SUCCESS,
 		},
 		{

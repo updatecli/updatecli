@@ -13,7 +13,7 @@ func TestSource(t *testing.T) {
 	testData := []struct {
 		name             string
 		spec             Spec
-		expectedResult   string
+		expectedResult   []result.SourceInformation
 		wantErr          bool
 		expectedErrorMsg string
 	}{
@@ -23,7 +23,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data_0.xml",
 				Path: "//name/firstname",
 			},
-			expectedResult: "John",
+			expectedResult: []result.SourceInformation{{
+				Value: "John",
+			}},
 		},
 		{
 			name: "scenario 1.1 - http",
@@ -31,7 +33,9 @@ func TestSource(t *testing.T) {
 				File: "https://raw.githubusercontent.com/updatecli/updatecli/main/pkg/plugins/resources/xml/testdata/data_0.xml",
 				Path: "//name/firstname",
 			},
-			expectedResult: "John",
+			expectedResult: []result.SourceInformation{{
+				Value: "John",
+			}},
 		},
 		{
 			name: "scenario 2",
@@ -39,7 +43,6 @@ func TestSource(t *testing.T) {
 				File: "testdata/data_1.xml",
 				Path: "doNotExist",
 			},
-			expectedResult:   "",
 			wantErr:          true,
 			expectedErrorMsg: "cannot find value for path \"doNotExist\" from file \"testdata/data_1.xml\"",
 		},
@@ -49,7 +52,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data_1.xml",
 				Path: "//breakfast_menu/food[0]/name",
 			},
-			expectedResult: "Belgian Waffles",
+			expectedResult: []result.SourceInformation{{
+				Value: "Belgian Waffles",
+			}},
 		},
 	}
 

@@ -57,7 +57,10 @@ func (ds *DockerDigest) Source(workingDir string, resultSource *result.Source) e
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = finalDigest
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: finalDigest,
+	}}
 	resultSource.Description = fmt.Sprintf("Docker Image Tag %s resolved to digest %s",
 		ref.String(), imageDigest)
 

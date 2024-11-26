@@ -16,7 +16,7 @@ func TestJenkins_Source(t *testing.T) {
 		workingDir            string
 		spec                  Spec
 		mockedMetadataHandler mavenmetadata.Handler
-		want                  string
+		want                  []result.SourceInformation
 		wantErr               bool
 	}{
 		{
@@ -28,7 +28,9 @@ func TestJenkins_Source(t *testing.T) {
 				LatestVersion: "2.331",
 				Versions:      []string{"2.319", "2.319.1", "2.319.2", "2.320", "2.331"},
 			},
-			want: "2.319.2",
+			want: []result.SourceInformation{{
+				Value: "2.319.2",
+			}},
 		},
 		{
 			name: "Normal case with latest weekly version",
@@ -39,7 +41,9 @@ func TestJenkins_Source(t *testing.T) {
 				LatestVersion: "2.331",
 				Versions:      []string{"2.319", "2.319.1", "2.319.2", "2.320", "2.331"},
 			},
-			want: "2.331",
+			want: []result.SourceInformation{{
+				Value: "2.331",
+			}},
 		},
 		{
 			name: "Error case with an error returned by maven meta",

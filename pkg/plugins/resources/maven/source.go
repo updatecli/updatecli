@@ -24,7 +24,10 @@ func (m *Maven) Source(workingDir string, resultSource *result.Source) error {
 
 		if latestVersion != "" {
 			resultSource.Result = result.SUCCESS
-			resultSource.Information = latestVersion
+			resultSource.Information = []result.SourceInformation{{
+				Key:   resultSource.ID,
+				Value: latestVersion,
+			}}
 			resultSource.Description = fmt.Sprintf(
 				"Latest version is %s on the Maven repository at %s",
 				latestVersion,

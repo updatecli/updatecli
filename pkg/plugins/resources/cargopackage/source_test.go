@@ -22,7 +22,7 @@ func TestSource(t *testing.T) {
 		name                 string
 		url                  string
 		spec                 Spec
-		expectedResult       string
+		expectedResult       []result.SourceInformation
 		expectedError        bool
 		mockedResponse       bool
 		mockedBody           string
@@ -40,8 +40,10 @@ func TestSource(t *testing.T) {
 					Pattern: "~0.7",
 				},
 			},
-			expectedResult: "0.7.3",
-			expectedError:  false,
+			expectedResult: []result.SourceInformation{{
+				Value: "0.7.3",
+			}},
+			expectedError: false,
 		},
 		{
 			name: "Passing case of retrieving crate-test version from the filesystem index",
@@ -55,8 +57,10 @@ func TestSource(t *testing.T) {
 					Pattern: "~0.1",
 				},
 			},
-			expectedResult: "0.1.0",
-			expectedError:  false,
+			expectedResult: []result.SourceInformation{{
+				Value: "0.1.0",
+			}},
+			expectedError: false,
 		},
 		{
 			name: "Passing case of retrieving nonexistent crate-test from the filesystem index",
@@ -88,7 +92,9 @@ func TestSource(t *testing.T) {
 					Pattern: "~0.1",
 				},
 			},
-			expectedResult:       "0.1.0",
+			expectedResult: []result.SourceInformation{{
+				Value: "0.1.0",
+			}},
 			expectedError:        false,
 			mockedResponse:       true,
 			mockedBody:           existingPackageData,

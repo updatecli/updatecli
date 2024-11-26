@@ -17,7 +17,7 @@ func TestFile_Source(t *testing.T) {
 		files          map[string]fileMetadata
 		mockedContents map[string]string
 		mockedError    error
-		wantedContents map[string]string
+		wantedContents map[string][]result.SourceInformation
 		wantedResult   bool
 		wantedErr      bool
 	}{
@@ -35,8 +35,8 @@ func TestFile_Source(t *testing.T) {
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": "Hello World",
 			},
-			wantedContents: map[string]string{
-				"/home/ucli/foo.txt": "Hello World",
+			wantedContents: map[string][]result.SourceInformation{
+				"/home/ucli/foo.txt": []result.SourceInformation{{Value: "Hello World"}},
 			},
 			wantedResult: true,
 		},
@@ -56,8 +56,8 @@ func TestFile_Source(t *testing.T) {
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": "Hello World",
 			},
-			wantedContents: map[string]string{
-				"/home/ucli/foo.txt": "Hello World",
+			wantedContents: map[string][]result.SourceInformation{
+				"/home/ucli/foo.txt": []result.SourceInformation{{Value: "Hello World"}},
 			},
 			wantedResult: true,
 		},
@@ -76,8 +76,8 @@ func TestFile_Source(t *testing.T) {
 			mockedContents: map[string]string{
 				"/home/ucli/foo.txt": "Title\r\nGood Bye\r\nThe End",
 			},
-			wantedContents: map[string]string{
-				"/home/ucli/foo.txt": "The End",
+			wantedContents: map[string][]result.SourceInformation{
+				"/home/ucli/foo.txt": []result.SourceInformation{{Value: "The End"}},
 			},
 		},
 		{
@@ -107,8 +107,8 @@ func TestFile_Source(t *testing.T) {
 					f8bf1fca0ef11a33955d225198d1211e15827d43488cc9174dcda14d1a7a1d19  terraform_0.14.5_windows_386.zip
 					5d25f9afc71fc49d5f3e8c7ccc3ccd83a840c56e7a015f55f321fc970a73050b  terraform_0.14.5_windows_amd64.zip`,
 			},
-			wantedContents: map[string]string{
-				"/home/ucli/foo.txt": "					5a3e0c7873faa048f59d563a2a98caf7f04045967cbb5ad6cf05f5991e20b8d1  terraform_0.14.5_freebsd_386.zip",
+			wantedContents: map[string][]result.SourceInformation{
+				"/home/ucli/foo.txt": []result.SourceInformation{{Value: "					5a3e0c7873faa048f59d563a2a98caf7f04045967cbb5ad6cf05f5991e20b8d1  terraform_0.14.5_freebsd_386.zip"}},
 			},
 			wantedResult: true,
 		},
@@ -139,11 +139,11 @@ func TestFile_Source(t *testing.T) {
 					f8bf1fca0ef11a33955d225198d1211e15827d43488cc9174dcda14d1a7a1d19  terraform_0.14.5_windows_386.zip
 					5d25f9afc71fc49d5f3e8c7ccc3ccd83a840c56e7a015f55f321fc970a73050b  terraform_0.14.5_windows_amd64.zip`,
 			},
-			wantedContents: map[string]string{
-				"/home/ucli/foo.txt": `					b262998c85a7cad1c24b90f3d309d592bd349d411167a2939eb482dc2b99702d  terraform_0.14.5_linux_386.zip
+			wantedContents: map[string][]result.SourceInformation{
+				"/home/ucli/foo.txt": []result.SourceInformation{{Value: `					b262998c85a7cad1c24b90f3d309d592bd349d411167a2939eb482dc2b99702d  terraform_0.14.5_linux_386.zip
 					2899f47860b7752e31872e4d57b1c03c99de154f12f0fc84965e231bc50f312f  terraform_0.14.5_linux_amd64.zip
 					a971a5f5da82ea896a2e91fd828c90ea9c28e3de575d03a7ce25a5840ed7ae2b  terraform_0.14.5_linux_arm.zip
-					d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14.5_linux_arm64.zip`,
+					d3cab7d777eec230b67eb9723f3b271cd43e29c688439e4c67e3398cdaf6406b  terraform_0.14.5_linux_arm64.zip`}},
 			},
 		},
 		{

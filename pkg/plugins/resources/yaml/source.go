@@ -127,7 +127,10 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 	if len(results) > 0 {
 		value := results[0]
 		resultSource.Result = result.SUCCESS
-		resultSource.Information = value
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: value,
+		}}
 		resultSource.Description = fmt.Sprintf("value %q found for key %q in the yaml file %q",
 			value,
 			y.spec.Key,

@@ -15,7 +15,7 @@ func TestSource(t *testing.T) {
 	testData := []struct {
 		name             string
 		spec             Spec
-		expectedResult   string
+		expectedResult   []result.SourceInformation
 		expectedErrorMsg error
 		wantErr          bool
 	}{
@@ -25,7 +25,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/.tool-versions",
 				Key:  "bats",
 			},
-			expectedResult: "1.0.0",
+			expectedResult: []result.SourceInformation{{
+				Value: "1.0.0",
+			}},
 		},
 		{
 			name: "Default successful workflow with empty result",
@@ -33,7 +35,6 @@ func TestSource(t *testing.T) {
 				File: "testdata/.tool-versions",
 				Key:  "empty",
 			},
-			expectedResult:   "",
 			wantErr:          true,
 			expectedErrorMsg: errors.New("could not find value for key \"empty\" from file \"testdata/.tool-versions\""),
 		},
@@ -44,7 +45,6 @@ func TestSource(t *testing.T) {
 				Key:   "doNotExist",
 				Value: "",
 			},
-			expectedResult:   "",
 			wantErr:          true,
 			expectedErrorMsg: errors.New("could not find value for key \"doNotExist\" from file \"testdata/.tool-versions\""),
 		},

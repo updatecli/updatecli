@@ -4,6 +4,14 @@ import (
 	"bytes"
 )
 
+// SourceInformation defines the information detected by the source execution such as a version
+type SourceInformation struct {
+	// Key is an identifier for the elem
+	Key string
+	// Value contains the value retrieved from a source
+	Value string
+}
+
 // Source holds source execution result
 type Source struct {
 	// Name holds the source name
@@ -17,7 +25,7 @@ type Source struct {
 	*/
 	Result string
 	// Information stores the information detected by the source execution such as a version
-	Information string
+	Information []SourceInformation
 	// Description stores the source execution description
 	Description string
 	// Scm stores scm information

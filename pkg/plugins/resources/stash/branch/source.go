@@ -36,7 +36,10 @@ func (g *Stash) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("no Bitbucket branches found matching pattern %q", g.versionFilter.Pattern)
 	}
 
-	resultSource.Information = value
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("Bitbucket branches %q found matching pattern %q", value, g.versionFilter.Pattern)
 

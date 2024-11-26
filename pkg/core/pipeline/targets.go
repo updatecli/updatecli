@@ -27,7 +27,7 @@ func (p *Pipeline) RunTarget(id string) (r string, changed bool, err error) {
 	// Ensure the result named contains the up to date target name after templating
 	target.Result.Name = target.Config.ResourceConfig.Name
 	target.Result.DryRun = target.DryRun
-	err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)
+	err = target.Run(p.Sources[target.Config.SourceID].Output.Value, &p.Options.Target)
 
 	if err != nil {
 		p.Report.Result = result.FAILURE

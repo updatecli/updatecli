@@ -13,7 +13,7 @@ func TestSource(t *testing.T) {
 	testData := []struct {
 		name             string
 		spec             Spec
-		expectedResult   string
+		expectedResult   []result.SourceInformation
 		expectedErrorMsg error
 		wantErr          bool
 	}{
@@ -23,7 +23,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.hcl",
 				Path: "resource.person.john.first_name",
 			},
-			expectedResult: "John",
+			expectedResult: []result.SourceInformation{{
+				Value: "John",
+			}},
 		},
 		{
 			name: "Success - Query empty value",
@@ -31,7 +33,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.hcl",
 				Path: "resource.person.john.middle_name",
 			},
-			expectedResult: "",
+			expectedResult: []result.SourceInformation{{
+				Value: "",
+			}},
 		},
 		{
 			name: "Success - Query integer",
@@ -39,7 +43,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.hcl",
 				Path: "resource.person.john.age",
 			},
-			expectedResult: "30",
+			expectedResult: []result.SourceInformation{{
+				Value: "30",
+			}},
 		},
 		{
 			name: "Success - Query nested",
@@ -47,7 +53,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.hcl",
 				Path: "resource.person.john.nested.attr1",
 			},
-			expectedResult: "val1",
+			expectedResult: []result.SourceInformation{{
+				Value: "val1",
+			}},
 		},
 		{
 			name: "Success - Query using Files",
@@ -55,7 +63,9 @@ func TestSource(t *testing.T) {
 				Files: []string{"testdata/data.hcl"},
 				Path:  "resource.person.john.first_name",
 			},
-			expectedResult: "John",
+			expectedResult: []result.SourceInformation{{
+				Value: "John",
+			}},
 		},
 		{
 			name: "Failure - File does not exists",

@@ -46,7 +46,10 @@ func (g *Gitlab) Source(workingDir string, resultSource *result.Source) error {
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = value
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 	resultSource.Description = fmt.Sprintf("GitLab branches %q found matching pattern %q of kind %q",
 		value,
 		g.versionFilter.Pattern,

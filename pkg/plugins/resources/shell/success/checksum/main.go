@@ -124,7 +124,10 @@ func (c *Checksum) SourceResult(resultSource *result.Source) error {
 		return fmt.Errorf("monitored checksum changed")
 	}
 
-	resultSource.Information = *c.output
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: *c.output,
+	}}
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = "monitored file checksum didn't changed"
 

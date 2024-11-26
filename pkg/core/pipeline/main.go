@@ -132,7 +132,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			Result: result.Source{
 				Result: result.SKIPPED,
 			},
-			Scm: scmPointer,
+			Output:     result.SourceInformation{},
+			ListOutput: []result.SourceInformation{},
+			Scm:        scmPointer,
 		}
 
 		r := p.Sources[id].Result

@@ -53,7 +53,10 @@ func (x *XML) Source(workingDir string, resultSource *result.Source) error {
 	queryResult := elem.Text()
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = queryResult
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: queryResult,
+	}}
 	resultSource.Description = fmt.Sprintf("value %q found at path %q in the xml file %q",
 		queryResult,
 		x.spec.Path,

@@ -34,7 +34,12 @@ func TestSource(t *testing.T) {
 				id, d.expectedError, err)
 		}
 
-		if strings.Compare(gotResult.Information, d.expectedSource) != 0 {
+		resultSource := ""
+		if len(gotResult.Information) == 1 {
+			resultSource = gotResult.Information[0].Value
+		}
+
+		if strings.Compare(resultSource, d.expectedSource) != 0 {
 			t.Errorf("[%d] Wrong AMI ID returned:\nExpected Result:\t\t%q\nGot:\t\t\t\t\t%q",
 				id,
 				d.expectedSource,

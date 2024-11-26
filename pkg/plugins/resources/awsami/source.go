@@ -29,7 +29,10 @@ func (a *AMI) Source(workingDir string, resultSource *result.Source) error {
 	if len(foundAMI) > 0 {
 
 		resultSource.Result = result.SUCCESS
-		resultSource.Information = foundAMI
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: foundAMI,
+		}}
 		resultSource.Description = fmt.Sprintf("AMI %q found\n", foundAMI)
 		return nil
 	}

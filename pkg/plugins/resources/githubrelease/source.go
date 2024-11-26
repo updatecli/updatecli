@@ -48,7 +48,10 @@ func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) 
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = value
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 	resultSource.Description = fmt.Sprintf("GitHub release version %q found matching pattern %q of kind %q",
 		value,
 		gr.versionFilter.Pattern,

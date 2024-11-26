@@ -14,36 +14,38 @@ func TestSourceResult(t *testing.T) {
 		name                       string
 		exitCode                   int
 		stdout                     string
-		expectedResultOutput       string
+		expectedResultOutput       []result.SourceInformation
 		expectedResultErrorMessage error
 		expectedError              bool
 		expectedNewError           bool
 		expectedNewErrorMessage    error
 	}{
 		{
-			name:                 "Test succeeded without command output",
-			exitCode:             0,
-			stdout:               "",
-			expectedResultOutput: "",
+			name:     "Test succeeded without command output",
+			exitCode: 0,
+			stdout:   "",
+			expectedResultOutput: []result.SourceInformation{{
+				Value: "",
+			}},
 		},
 		{
-			name:                 "Test succeeded with command output",
-			exitCode:             0,
-			stdout:               "1.2.3",
-			expectedResultOutput: "1.2.3",
+			name:     "Test succeeded with command output",
+			exitCode: 0,
+			stdout:   "1.2.3",
+			expectedResultOutput: []result.SourceInformation{{
+				Value: "1.2.3",
+			}},
 		},
 		{
-			name:                 "Test failed with no command output",
-			exitCode:             1,
-			stdout:               "",
-			expectedResultOutput: "",
-			expectedError:        false,
+			name:          "Test failed with no command output",
+			exitCode:      1,
+			stdout:        "",
+			expectedError: false,
 		},
 		{
-			name:                 "Test failed with command output",
-			exitCode:             2,
-			stdout:               "1.2.3",
-			expectedResultOutput: "",
+			name:     "Test failed with command output",
+			exitCode: 2,
+			stdout:   "1.2.3",
 		},
 	}
 

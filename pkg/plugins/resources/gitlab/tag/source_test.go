@@ -20,7 +20,7 @@ func TestSource(t *testing.T) {
 			Repository    string
 			VersionFilter version.Filter
 		}
-		wantResult string
+		wantResult []result.SourceInformation
 		wantErr    bool
 	}{
 		{
@@ -37,8 +37,7 @@ func TestSource(t *testing.T) {
 				Owner:      "olblak",
 				Repository: "updatecli-nonexistent",
 			},
-			wantResult: "",
-			wantErr:    true,
+			wantErr: true,
 		},
 		{
 			name: "repository should exist with tag 0.3.0 without specifying gitlab.com",
@@ -57,8 +56,11 @@ func TestSource(t *testing.T) {
 					Pattern: "0.3.0",
 				},
 			},
-			wantResult: "v0.3.0",
-			wantErr:    false,
+			wantResult: []result.SourceInformation{{
+				Key:   "",
+				Value: "v0.3.0",
+			}},
+			wantErr: false,
 		},
 		{
 			name: "repository should exist with tag 0.3.0",
@@ -78,8 +80,11 @@ func TestSource(t *testing.T) {
 					Pattern: "0.3.0",
 				},
 			},
-			wantResult: "v0.3.0",
-			wantErr:    false,
+			wantResult: []result.SourceInformation{{
+				Key:   "",
+				Value: "v0.3.0",
+			}},
+			wantErr: false,
 		},
 		{
 			name: "repository should exist with no tag 0.3.11",
@@ -99,8 +104,7 @@ func TestSource(t *testing.T) {
 					Pattern: "v0.3.11",
 				},
 			},
-			wantResult: "",
-			wantErr:    true,
+			wantErr: true,
 		},
 	}
 

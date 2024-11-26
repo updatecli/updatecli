@@ -21,7 +21,7 @@ func TestSource(t *testing.T) {
 		name                 string
 		url                  string
 		spec                 Spec
-		expectedResult       string
+		expectedResult       []result.SourceInformation
 		expectedError        bool
 		mockedResponse       bool
 		mockedBody           string
@@ -38,8 +38,10 @@ func TestSource(t *testing.T) {
 					Pattern: "~0.27",
 				},
 			},
-			expectedResult: "0.27.2",
-			expectedError:  false,
+			expectedResult: []result.SourceInformation{{
+				Value: "0.27.2",
+			}},
+			expectedError: false,
 		},
 		{
 			name: "Passing case of retrieving latest axios version using private registry",
@@ -57,7 +59,9 @@ func TestSource(t *testing.T) {
 			mockedHTTPStatusCode: 200,
 			mockedToken:          "mytoken",
 			mockedUrl:            "https://mycustomregistry.updatecli.io",
-			expectedResult:       "0.2.0",
+			expectedResult: []result.SourceInformation{{
+				Value: "0.2.0",
+			}},
 		},
 		{
 			name: "Failing case of retrieving latest axios version using private registry but bad token",
@@ -110,7 +114,9 @@ func TestSource(t *testing.T) {
 			mockedHTTPStatusCode: 200,
 			mockedToken:          "mytoken",
 			mockedUrl:            "https://mycustomregistry.updatecli.io",
-			expectedResult:       "0.2.0",
+			expectedResult: []result.SourceInformation{{
+				Value: "0.2.0",
+			}},
 		},
 	}
 	for _, tt := range tests {

@@ -13,7 +13,7 @@ func TestSource(t *testing.T) {
 	tests := []struct {
 		name           string
 		spec           Spec
-		expectedResult string
+		expectedResult []result.SourceInformation
 		expectedError  bool
 	}{
 		{
@@ -23,7 +23,10 @@ func TestSource(t *testing.T) {
 					Pattern: "1.13.3",
 				},
 			},
-			expectedResult: "1.13.3",
+			expectedResult: []result.SourceInformation{{
+				Key:   "",
+				Value: "1.13.3",
+			}},
 		},
 		{
 			spec: Spec{
@@ -32,7 +35,10 @@ func TestSource(t *testing.T) {
 					Pattern: "1.17.0",
 				},
 			},
-			expectedResult: "1.17.0",
+			expectedResult: []result.SourceInformation{{
+				Key:   "",
+				Value: "1.17.0",
+			}},
 		},
 	}
 	for _, tt := range tests {

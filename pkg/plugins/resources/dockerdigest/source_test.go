@@ -23,7 +23,9 @@ func TestSource(t *testing.T) {
 				Tag:   "v0.64.1",
 			},
 			expectedResult: result.Source{
-				Information: "v0.64.1@sha256:0c7a19c9607b349cb90af92cb0ec98a70074192eb1a3463c3883f10663024ce5",
+				Information: []result.SourceInformation{{
+					Value: "v0.64.1@sha256:0c7a19c9607b349cb90af92cb0ec98a70074192eb1a3463c3883f10663024ce5",
+				}},
 			},
 		},
 		{
@@ -34,7 +36,9 @@ func TestSource(t *testing.T) {
 				Architecture: "arm64",
 			},
 			expectedResult: result.Source{
-				Information: "v0.64.1@sha256:80c8393095062a96e74ac7e23aab35c8b639b890d94f2fe8fbcbbc983993e1de",
+				Information: []result.SourceInformation{{
+					Value: "v0.64.1@sha256:80c8393095062a96e74ac7e23aab35c8b639b890d94f2fe8fbcbbc983993e1de",
+				}},
 			},
 		},
 		{
@@ -45,7 +49,9 @@ func TestSource(t *testing.T) {
 				Architecture: "amd64",
 			},
 			expectedResult: result.Source{
-				Information: "v0.64.1@sha256:4eb444331ca649b24fa8905a98cc1bf922111b7b07292b86a30d3977e5e8f56d",
+				Information: []result.SourceInformation{{
+					Value: "v0.64.1@sha256:4eb444331ca649b24fa8905a98cc1bf922111b7b07292b86a30d3977e5e8f56d",
+				}},
 			},
 		},
 		{
@@ -66,7 +72,9 @@ func TestSource(t *testing.T) {
 				HideTag:      true,
 			},
 			expectedResult: result.Source{
-				Information: "@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
+				Information: []result.SourceInformation{{
+					Value: "@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
+				}},
 			},
 		},
 		{
@@ -77,7 +85,9 @@ func TestSource(t *testing.T) {
 				Architecture: "amd64",
 			},
 			expectedResult: result.Source{
-				Information: "v0.35.0@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
+				Information: []result.SourceInformation{{
+					Value: "v0.35.0@sha256:6e1833e5240ac52ecf7609623f18ec4536151e0f58b7243b92fd71ecdf3b94df",
+				}},
 			},
 		},
 	}

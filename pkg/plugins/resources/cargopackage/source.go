@@ -25,7 +25,10 @@ func (cp CargoPackage) Source(workingDir string, resultSource *result.Source) er
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = version
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: version,
+	}}
 	resultSource.Description = fmt.Sprintf("version %q found for cargo package name %q", version, cp.spec.Package)
 	return nil
 }

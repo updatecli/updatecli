@@ -88,7 +88,7 @@ func (p *Pipeline) RunActions() error {
 
 			if p.Sources[p.Targets[t].Config.SourceID].Changelog != "" {
 				actionTarget.Changelogs = append(actionTarget.Changelogs, reports.ActionTargetChangelog{
-					Title:       p.Sources[p.Targets[t].Config.SourceID].Output,
+					Title:       p.Sources[p.Targets[t].Config.SourceID].Output.Value,
 					Description: p.Sources[p.Targets[t].Config.SourceID].Changelog,
 				})
 			}

@@ -64,7 +64,10 @@ func (di *DockerImage) Source(workingDir string, resultSource *result.Source) er
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = tag
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: tag,
+	}}
 	resultSource.Description = fmt.Sprintf("Docker Image Tag %q found matching pattern %q", tag, di.versionFilter.Pattern)
 
 	return nil

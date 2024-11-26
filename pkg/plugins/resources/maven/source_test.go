@@ -16,7 +16,7 @@ func TestSource(t *testing.T) {
 		workingDir            string
 		spec                  Spec
 		mockedMetadataHandler mavenmetadata.Handler
-		want                  string
+		want                  []result.SourceInformation
 		wantErr               bool
 	}{
 		{
@@ -29,7 +29,9 @@ func TestSource(t *testing.T) {
 			mockedMetadataHandler: &mavenmetadata.MockMetadataHandler{
 				LatestVersion: "1.7.4.v20130429",
 			},
-			want: "1.7.4.v20130429",
+			want: []result.SourceInformation{{
+				Value: "1.7.4.v20130429",
+			}},
 		},
 		{
 			name: "Error case with an error returned by the handler",

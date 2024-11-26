@@ -14,7 +14,7 @@ func TestSource(t *testing.T) {
 	testData := []struct {
 		name             string
 		spec             Spec
-		expectedResult   string
+		expectedResult   []result.SourceInformation
 		expectedErrorMsg error
 		wantErr          bool
 	}{
@@ -24,7 +24,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.json",
 				Key:  ".firstName",
 			},
-			expectedResult: "Jack",
+			expectedResult: []result.SourceInformation{{
+				Value: "Jack",
+			}},
 		},
 		{
 			name: "Default successful workflow with empty result",
@@ -32,7 +34,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.json",
 				Key:  ".surname",
 			},
-			expectedResult: "",
+			expectedResult: []result.SourceInformation{{
+				Value: "",
+			}},
 		},
 		{
 			name: "Test key do not exist",
@@ -43,7 +47,6 @@ func TestSource(t *testing.T) {
 			},
 			wantErr:          true,
 			expectedErrorMsg: errors.New("✗ cannot find value for path \".doNotExist\" from file \"testdata/data.json\""),
-			expectedResult:   "",
 		},
 		{
 			name: "Test array exist",
@@ -51,7 +54,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.json",
 				Key:  ".children.[1]",
 			},
-			expectedResult: "Thomas",
+			expectedResult: []result.SourceInformation{{
+				Value: "Thomas",
+			}},
 		},
 	}
 

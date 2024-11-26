@@ -28,7 +28,10 @@ func (t *Temurin) Source(workingDir string, resultSource *result.Source) error {
 	case "version":
 		resultSource.Result = result.SUCCESS
 		resultSource.Description = fmt.Sprintf("[temurin] found version %q", t.foundVersion)
-		resultSource.Information = t.foundVersion
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: t.foundVersion,
+		}}
 		return nil
 
 	case "installer_url":
@@ -39,7 +42,10 @@ func (t *Temurin) Source(workingDir string, resultSource *result.Source) error {
 		}
 		resultSource.Result = result.SUCCESS
 		resultSource.Description = fmt.Sprintf("[temurin] found installer URL %q (version %q)", installerUrl, t.foundVersion)
-		resultSource.Information = installerUrl
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: installerUrl,
+		}}
 		return nil
 
 	case "checksum_url":
@@ -50,7 +56,10 @@ func (t *Temurin) Source(workingDir string, resultSource *result.Source) error {
 		}
 		resultSource.Result = result.SUCCESS
 		resultSource.Description = fmt.Sprintf("[temurin] found installer checksum URL %q (version %q)", installerChecksumUrl, t.foundVersion)
-		resultSource.Information = installerChecksumUrl
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: installerChecksumUrl,
+		}}
 		return nil
 
 	case "signature_url":
@@ -61,7 +70,10 @@ func (t *Temurin) Source(workingDir string, resultSource *result.Source) error {
 		}
 		resultSource.Result = result.SUCCESS
 		resultSource.Description = fmt.Sprintf("[temurin] found installer signature URL %q (version %q)", signatureUrl, t.foundVersion)
-		resultSource.Information = signatureUrl
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: signatureUrl,
+		}}
 		return nil
 
 	default:

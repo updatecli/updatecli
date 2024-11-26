@@ -42,17 +42,19 @@ func TestShell_Source(t *testing.T) {
 		command       string
 		shell         string
 		workingDir    string
-		wantSource    string
+		wantSource    []result.SourceInformation
 		wantCommand   string
 		wantErr       bool
 		commandResult commandResult
 	}{
 		{
-			name:        "Get a source from a successful command in working directory",
-			command:     "echo Hello",
-			shell:       bashShell,
-			workingDir:  "/home/ucli",
-			wantSource:  "Hello",
+			name:       "Get a source from a successful command in working directory",
+			command:    "echo Hello",
+			shell:      bashShell,
+			workingDir: "/home/ucli",
+			wantSource: []result.SourceInformation{{
+				Value: "Hello",
+			}},
 			wantCommand: bashShell + " " + wantedScriptFilename(t, "echo Hello"),
 			wantErr:     false,
 			commandResult: commandResult{
@@ -65,7 +67,6 @@ func TestShell_Source(t *testing.T) {
 			command:    "false",
 			shell:      bashShell,
 			workingDir: "/home/ucli",
-			wantSource: "",
 			wantErr:    true,
 			commandResult: commandResult{
 				ExitCode: 1,
@@ -76,7 +77,6 @@ func TestShell_Source(t *testing.T) {
 			command:    "",
 			shell:      bashShell,
 			workingDir: "/home/ucli",
-			wantSource: "",
 			wantErr:    true,
 			commandResult: commandResult{
 				ExitCode: 1,
