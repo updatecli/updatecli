@@ -12,5 +12,4 @@ type Options struct {
 	Pipeline       pipeline.Options
 	Manifests      []manifest.Manifest
 	DisplayFlavour string
-	GraphFlavour   string
 }

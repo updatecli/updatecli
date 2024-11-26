@@ -16,7 +16,6 @@ var (
 	manifestShowDisablePrepare    bool
 	manifestShowDisableTemplating bool
 	manifestShowGraph             bool
-	manifestShowGraphFlavour      string
 
 	manifestShowCmd = &cobra.Command{
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
@@ -46,11 +45,6 @@ var (
 					os.Exit(1)
 				}
 				e.Options.DisplayFlavour = "graph"
-				if manifestShowGraphFlavour != "dot" && manifestShowGraphFlavour != "mermaid" {
-					logrus.Warningf("The '--graph-flavour' flag should be `dot` or `mermaid`, defaulting to `dot`.")
-					manifestShowGraphFlavour = "dot"
-				}
-				e.Options.GraphFlavour = manifestShowGraphFlavour
 			}
 
 			// Showing templating diff may leak sensitive information such as credentials
@@ -74,7 +68,6 @@ func init() {
 	manifestShowCmd.Flags().BoolVar(&manifestShowDisableTemplating, "disable-templating", false, "Disable manifest templating")
 	manifestShowCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	manifestShowCmd.Flags().BoolVar(&manifestShowGraph, "graph", false, "Output in graph format")
-	manifestShowCmd.Flags().StringVar(&manifestShowGraphFlavour, "graph-flavour", "dot", "Flavour of graph format")
 
 	manifestCmd.AddCommand(manifestShowCmd)
 }

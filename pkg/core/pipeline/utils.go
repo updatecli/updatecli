@@ -111,7 +111,7 @@ func ExtractDepsFromTemplate(tmplStr string) ([]string, error) {
 	return results, nil
 }
 
-func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour string, graphOutput *strings.Builder, visited map[string]bool) error {
+func (p *Pipeline) traverseAndWriteDot(d *dag.DAG, node string, dotOutput *strings.Builder, visited map[string]bool) error {
 	if visited[node] {
 		return nil
 	}
@@ -130,13 +130,11 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 		}
 		nodeType := parts[0]
 		name := strings.Join(parts[1:], "#")
-		var shape, color, kind, openingBracket, closingBracket string
+		var shape, color, kind string
 		switch nodeType {
 		case sourceCategory:
 			shape = "ellipse"
 			color = "lightblue"
-			openingBracket = "(["
-			closingBracket = "])"
 			if source, ok := p.Sources[name]; ok {
 				if source.Config.Name != "" {
 					name = source.Config.Name
@@ -146,8 +144,6 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 		case conditionCategory:
 			shape = "diamond"
 			color = "orange"
-			openingBracket = "{"
-			closingBracket = "}"
 			if condition, ok := p.Conditions[name]; ok {
 				if condition.Config.Name != "" {
 					name = condition.Config.Name
@@ -157,8 +153,6 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 		case targetCategory:
 			shape = "box"
 			color = "lightyellow"
-			openingBracket = "("
-			closingBracket = ")"
 			if target, ok := p.Targets[name]; ok {
 				if target.Config.Name != "" {
 					name = target.Config.Name
@@ -166,51 +160,29 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 				kind = target.Config.Kind
 			}
 		}
-		if graphFlavour == "dot" {
-			graphOutput.WriteString(
-				fmt.Sprintf(
-					"    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n",
-					node,
-					strings.ReplaceAll(name, `"`, `\"`),
-					kind,
-					shape,
-					color,
-				),
-			)
-		} else if graphFlavour == "mermaid" {
-			graphOutput.WriteString(
-				fmt.Sprintf(
-					"    %s%s\"%s (%s)\"%s\n",
-					node,
-					openingBracket,
-					strings.ReplaceAll(name, `"`, `\"`),
-					kind,
-					closingBracket,
-				),
-			)
-		}
+
+		dotOutput.WriteString(
+			fmt.Sprintf(
+				"    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n",
+				node,
+				strings.ReplaceAll(name, `"`, `\"`),
+				kind,
+				shape,
+				color,
+			),
+		)
 	}
 	for successor := range successors {
 		if node != rootVertex {
-			if graphFlavour == "dot" {
-				graphOutput.WriteString(
-					fmt.Sprintf(
-						"    %q -> %q;\n",
-						node,
-						successor,
-					),
-				)
-			} else if graphFlavour == "mermaid" {
-				graphOutput.WriteString(
-					fmt.Sprintf(
-						"    %s --> %s\n",
-						node,
-						successor,
-					),
-				)
-			}
+			dotOutput.WriteString(
+				fmt.Sprintf(
+					"    %q -> %q;\n",
+					node,
+					successor,
+				),
+			)
 		}
-		err = p.traverseAndWriteGraph(d, successor, graphFlavour, graphOutput, visited)
+		err = p.traverseAndWriteDot(d, successor, dotOutput, visited)
 		if err != nil {
 			return err
 		}
@@ -218,27 +190,22 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 	return nil
 }
 
-func (p *Pipeline) Graph(flavour string) error {
+func (p *Pipeline) Graph() error {
 
 	resources, err := p.SortedResources()
 	if err != nil {
 		return err
 	}
 	resources.ReduceTransitively()
+	// Start writing the DOT graph
+	var dotOutput strings.Builder
+	dotOutput.WriteString("digraph G {\n")
 	visited := make(map[string]bool)
-	var graphOutput strings.Builder
-	if flavour == "dot" {
-		graphOutput.WriteString("digraph G {\n")
-	} else if flavour == "mermaid" {
-		graphOutput.WriteString("graph TD\n")
-	}
-	err = p.traverseAndWriteGraph(resources, rootVertex, flavour, &graphOutput, visited)
+	err = p.traverseAndWriteDot(resources, rootVertex, &dotOutput, visited)
 	if err != nil {
 		return err
 	}
-	if flavour == "dot" {
-		graphOutput.WriteString("}\n")
-	}
-	logrus.Infof("%s", graphOutput.String())
+	dotOutput.WriteString("}\n")
+	logrus.Infof("%s", dotOutput.String())
 	return nil
 }
