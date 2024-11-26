@@ -16,6 +16,7 @@ func TestSource(t *testing.T) {
 		spec             Spec
 		expectedResult   []result.SourceInformation
 		expectedErrorMsg error
+		isList           bool
 		wantErr          bool
 	}{
 		{
@@ -58,12 +59,40 @@ func TestSource(t *testing.T) {
 				Value: "Thomas",
 			}},
 		},
+		{
+			name: "Retrieve json source as list with query",
+			spec: Spec{
+				File:  "testdata/data.json",
+				Query: ".children.[*]",
+			},
+			isList: true,
+			expectedResult: []result.SourceInformation{{
+				Key:   "0",
+				Value: "Catherine",
+			}, {
+				Key:   "1",
+				Value: "Thomas",
+			}, {
+				Key:   "2",
+				Value: "Trevor",
+			}},
+		},
+		{
+			name: "Retrieve json source as list with key should error",
+			spec: Spec{
+				File: "testdata/data.json",
+				Key:  ".children.[*]",
+			},
+			isList:           true,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("✗ json source can only be configured as a list with the `query` param."),
+		},
 	}
 
 	for _, tt := range testData {
 
 		t.Run(tt.name, func(t *testing.T) {
-			j, err := New(tt.spec)
+			j, err := New(tt.spec, tt.isList)
 
 			require.NoError(t, err)
 

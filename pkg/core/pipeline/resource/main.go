@@ -66,6 +66,8 @@ type ResourceConfig struct {
 	//   The parameters "sourceid" and "conditionsids" affect the order of resource execution.
 	//   To avoid circular dependencies, the depended resource may need to remove any conditionids or set "disablesourceinput to true".
 	DependsOn []string `yaml:",omitempty"`
+	// IsList defines if the output should be stored as a list
+	IsList bool `yaml:",omitempty"`
 	// name specifies the resource name
 	Name string `yaml:",omitempty"`
 	// kind specifies the resource kind which defines accepted spec value
@@ -185,7 +187,7 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 	case "json":
 
-		return json.New(rs.Spec)
+		return json.New(rs.Spec, rs.IsList)
 
 	case "maven":
 

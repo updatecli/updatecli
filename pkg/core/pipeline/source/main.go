@@ -36,8 +36,6 @@ type Source struct {
 // Config struct defines a source configuration
 type Config struct {
 	resource.ResourceConfig `yaml:",inline"`
-	// List defines if the output should be stored as a list
-	List bool `yaml:",omitempty"`
 }
 
 var (
@@ -94,7 +92,7 @@ func (s *Source) Run() (err error) {
 
 	err = source.Source(workingDir, &s.Result)
 
-	if s.Config.List {
+	if s.Config.IsList {
 		s.ListOutput = s.Result.Information
 	} else {
 		if len(s.Result.Information) > 1 {
@@ -123,7 +121,7 @@ func (s *Source) Run() (err error) {
 	s.Result.Changelog = s.Changelog
 
 	if len(s.Config.ResourceConfig.Transformers) > 0 {
-		if s.Config.List {
+		if s.Config.IsList {
 			transformedOutputs := []result.SourceInformation{}
 			for _, output := range s.ListOutput {
 				value, err := s.Config.ResourceConfig.Transformers.Apply(output.Value)
@@ -149,7 +147,7 @@ func (s *Source) Run() (err error) {
 	}
 
 	if s.Result.Result == result.SUCCESS {
-		if s.Config.List {
+		if s.Config.IsList {
 			for _, output := range s.ListOutput {
 				if len(output.Value) == 0 {
 					logrus.Debugln("empty source detected")

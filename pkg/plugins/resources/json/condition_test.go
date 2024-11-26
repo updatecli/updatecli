@@ -81,7 +81,7 @@ func TestCondition(t *testing.T) {
 	for _, tt := range testData {
 
 		t.Run(tt.name, func(t *testing.T) {
-			j, err := New(tt.spec)
+			j, err := New(tt.spec, false)
 
 			require.NoError(t, err)
 

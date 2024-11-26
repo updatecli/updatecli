@@ -3,6 +3,7 @@ package json
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -18,14 +19,15 @@ func (j *Json) Source(workingDir string, resultSource *result.Source) error {
 		return errors.New("source only supports one file")
 	}
 
-	if (len(j.spec.Query) > 0 && j.spec.VersionFilter.IsZero()) ||
+	if (len(j.spec.Query) > 0 && j.spec.VersionFilter.IsZero() && !j.isList) ||
 		(len(j.spec.Query) == 0) && !j.spec.VersionFilter.IsZero() {
 		return ErrSpecVersionFilterRequireMultiple
 	}
 
 	content := j.contents[0]
 
-	sourceOutput := ""
+	sourceOutputs := []result.SourceInformation{}
+
 	if err := content.Read(workingDir); err != nil {
 		return fmt.Errorf("reading json file: %w", err)
 	}
@@ -40,13 +42,24 @@ func (j *Json) Source(workingDir string, resultSource *result.Source) error {
 			return fmt.Errorf("running multiple query: %w", err)
 		}
 
-		j.foundVersion, err = j.versionFilter.Search(queryResults)
-		if err != nil {
-			return fmt.Errorf("filtering information: %w", err)
+		if j.isList {
+			for i, queryResult := range queryResults {
+				sourceOutputs = append(sourceOutputs, result.SourceInformation{Key: strconv.Itoa(i), Value: queryResult})
+			}
+		} else {
+
+			j.foundVersion, err = j.versionFilter.Search(queryResults)
+			if err != nil {
+				return fmt.Errorf("filtering information: %w", err)
+			}
+			sourceOutputs = []result.SourceInformation{{Value: j.foundVersion.GetVersion()}}
 		}
-		sourceOutput = j.foundVersion.GetVersion()
 
 	case false:
+		if j.isList {
+			err := fmt.Errorf("%s json source can only be configured as a list with the `query` param.", result.FAILURE)
+			return err
+		}
 		query = j.spec.Key
 		queryResult, err := content.DaselNode.Query(query)
 		if err != nil {
@@ -64,16 +77,18 @@ func (j *Json) Source(workingDir string, resultSource *result.Source) error {
 			return err
 		}
 
-		sourceOutput = queryResult.String()
+		sourceOutputs = []result.SourceInformation{{Value: queryResult.String()}}
 	}
 
-	resultSource.Information = []result.SourceInformation{{
-		Key:   resultSource.ID,
-		Value: sourceOutput,
-	}}
+	resultSource.Information = sourceOutputs
 	resultSource.Result = result.SUCCESS
-	resultSource.Description = fmt.Sprintf("value %q, found in file %q, for key %q",
-		sourceOutput,
+	sourceOutputsValues := make([]string, len(sourceOutputs))
+	for i, output := range sourceOutputs {
+		sourceOutputsValues[i] = output.Value
+	}
+
+	resultSource.Description = fmt.Sprintf("values %q, found in file %q, for key %q",
+		strings.Join(sourceOutputsValues, " "),
 		content.FilePath,
 		query)
 
