@@ -7,8 +7,8 @@ func (e *Engine) Show() (err error) {
 
 		PrintTitle(pipeline.Config.Spec.Name)
 
-		if e.Options.DisplayFlavour == "graph" {
-			err = pipeline.Graph(e.Options.GraphFlavour)
+		if e.Options.DisplayFlavor == "graph" {
+			err = pipeline.Graph(e.Options.GraphFlavor)
 		} else {
 			err = pipeline.Config.Display()
 		}

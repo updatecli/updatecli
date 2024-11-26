@@ -111,7 +111,23 @@ func ExtractDepsFromTemplate(tmplStr string) ([]string, error) {
 	return results, nil
 }
 
-func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour string, graphOutput *strings.Builder, visited map[string]bool) error {
+// Define constants for valid GraphFlavor values
+const (
+	GraphFlavorDot     = "dot"
+	GraphFlavorMermaid = "mermaid"
+)
+
+// ValidateGraphFlavor checks if the GraphFlavor value is valid
+func ValidateGraphFlavor(flavor string) error {
+	switch flavor {
+	case GraphFlavorDot, GraphFlavorMermaid:
+		return nil
+	default:
+		return fmt.Errorf("invalid graph flavor %q: must be 'dot' or 'mermaid'", flavor)
+	}
+}
+
+func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor string, graphOutput *strings.Builder, visited map[string]bool) error {
 	if visited[node] {
 		return nil
 	}
@@ -166,7 +182,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 				kind = target.Config.Kind
 			}
 		}
-		if graphFlavour == "dot" {
+		if graphFlavor == GraphFlavorDot {
 			graphOutput.WriteString(
 				fmt.Sprintf(
 					"    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n",
@@ -177,7 +193,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 					color,
 				),
 			)
-		} else if graphFlavour == "mermaid" {
+		} else if graphFlavor == GraphFlavorMermaid {
 			graphOutput.WriteString(
 				fmt.Sprintf(
 					"    %s%s\"%s (%s)\"%s\n",
@@ -192,7 +208,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 	}
 	for successor := range successors {
 		if node != rootVertex {
-			if graphFlavour == "dot" {
+			if graphFlavor == GraphFlavorDot {
 				graphOutput.WriteString(
 					fmt.Sprintf(
 						"    %q -> %q;\n",
@@ -200,7 +216,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 						successor,
 					),
 				)
-			} else if graphFlavour == "mermaid" {
+			} else if graphFlavor == GraphFlavorMermaid {
 				graphOutput.WriteString(
 					fmt.Sprintf(
 						"    %s --> %s\n",
@@ -210,7 +226,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 				)
 			}
 		}
-		err = p.traverseAndWriteGraph(d, successor, graphFlavour, graphOutput, visited)
+		err = p.traverseAndWriteGraph(d, successor, graphFlavor, graphOutput, visited)
 		if err != nil {
 			return err
 		}
@@ -218,7 +234,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavour s
 	return nil
 }
 
-func (p *Pipeline) Graph(flavour string) error {
+func (p *Pipeline) Graph(flavor string) error {
 
 	resources, err := p.SortedResources()
 	if err != nil {
@@ -227,16 +243,16 @@ func (p *Pipeline) Graph(flavour string) error {
 	resources.ReduceTransitively()
 	visited := make(map[string]bool)
 	var graphOutput strings.Builder
-	if flavour == "dot" {
+	if flavor == GraphFlavorDot {
 		graphOutput.WriteString("digraph G {\n")
-	} else if flavour == "mermaid" {
+	} else if flavor == GraphFlavorMermaid {
 		graphOutput.WriteString("graph TD\n")
 	}
-	err = p.traverseAndWriteGraph(resources, rootVertex, flavour, &graphOutput, visited)
+	err = p.traverseAndWriteGraph(resources, rootVertex, flavor, &graphOutput, visited)
 	if err != nil {
 		return err
 	}
-	if flavour == "dot" {
+	if flavor == GraphFlavorDot {
 		graphOutput.WriteString("}\n")
 	}
 	logrus.Infof("%s", graphOutput.String())

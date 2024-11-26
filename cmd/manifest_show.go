@@ -9,6 +9,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 	manifestShowDisablePrepare    bool
 	manifestShowDisableTemplating bool
 	manifestShowGraph             bool
-	manifestShowGraphFlavour      string
+	manifestShowGraphFlavor       string
 
 	manifestShowCmd = &cobra.Command{
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
@@ -45,12 +46,13 @@ var (
 					logrus.Warningf("The '--graph' flag requires the flag experimental to work.")
 					os.Exit(1)
 				}
-				e.Options.DisplayFlavour = "graph"
-				if manifestShowGraphFlavour != "dot" && manifestShowGraphFlavour != "mermaid" {
-					logrus.Warningf("The '--graph-flavour' flag should be `dot` or `mermaid`, defaulting to `dot`.")
-					manifestShowGraphFlavour = "dot"
+				e.Options.DisplayFlavor = "graph"
+				err := pipeline.ValidateGraphFlavor(manifestShowGraphFlavor)
+				if err != nil {
+					logrus.Errorf("Invalid graph flavor: %s", err)
+					os.Exit(1)
 				}
-				e.Options.GraphFlavour = manifestShowGraphFlavour
+				e.Options.GraphFlavor = manifestShowGraphFlavor
 			}
 
 			// Showing templating diff may leak sensitive information such as credentials
@@ -74,7 +76,7 @@ func init() {
 	manifestShowCmd.Flags().BoolVar(&manifestShowDisableTemplating, "disable-templating", false, "Disable manifest templating")
 	manifestShowCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	manifestShowCmd.Flags().BoolVar(&manifestShowGraph, "graph", false, "Output in graph format")
-	manifestShowCmd.Flags().StringVar(&manifestShowGraphFlavour, "graph-flavour", "dot", "Flavour of graph format")
+	manifestShowCmd.Flags().StringVar(&manifestShowGraphFlavor, "graph-flavor", "dot", "Flavor of graph format")
 
 	manifestCmd.AddCommand(manifestShowCmd)
 }
