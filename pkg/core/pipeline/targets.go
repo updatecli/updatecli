@@ -27,7 +27,24 @@ func (p *Pipeline) RunTarget(id string) (r string, changed bool, err error) {
 	// Ensure the result named contains the up to date target name after templating
 	target.Result.Name = target.Config.ResourceConfig.Name
 	target.Result.DryRun = target.DryRun
-	err = target.Run(p.Sources[target.Config.SourceID].Output.Value, &p.Options.Target)
+	source := p.Sources[target.Config.SourceID]
+	sourceOutputs := []result.SourceInformation{source.Output}
+	if target.Config.IterateOnSource {
+		if !source.Config.IsList {
+			err = fmt.Errorf("tried to iterate on source %q which is not set up as a list", target.Config.SourceID)
+		} else {
+			sourceOutputs = p.Sources[target.Config.SourceID].ListOutput
+		}
+	}
+	if err == nil {
+		for _, output := range sourceOutputs {
+			err = target.Run(output.Value, &p.Options.Target)
+			if err != nil {
+				break
+			}
+
+		}
+	}
 
 	if err != nil {
 		p.Report.Result = result.FAILURE

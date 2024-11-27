@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -61,7 +62,7 @@ func IsTemplatedString(s string) bool {
 	return false
 }
 
-func getFieldValueByQuery(conf interface{}, query []string) (value string, err error) {
+func getFieldByQuery(conf interface{}, query []string) (value reflect.Value, err error) {
 	ValueIface := reflect.ValueOf(conf)
 
 	Field := reflect.Value{}
@@ -107,6 +108,19 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 				break
 			}
 		}
+	case reflect.Slice:
+		// Handle slice: Get the first element's "Value" field if it exists
+		index, err := strconv.Atoi(query[0])
+		if err != nil {
+			return value, fmt.Errorf("Could not use %q as slice index: %s", query[0], err)
+		}
+		if index >= ValueIface.Len() {
+			return value, fmt.Errorf("Could not use %q as slice index: not enough elem in slice", query[0])
+		}
+		Field = ValueIface.Index(index)
+		if Field.IsValid() {
+			break
+		}
 	}
 
 	// Means that despite the different case sensitive key, we couldn't find it
@@ -115,21 +129,28 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 			"Configuration `%s` does not have the field `%s`",
 			ValueIface.Type(),
 			query[0])
-		return "", ErrNoKeyDefined
+		return value, ErrNoKeyDefined
 	}
 
 	if len(query) > 1 {
-		value, err = getFieldValueByQuery(Field.Interface(), query[1:])
+		value, err = getFieldByQuery(Field.Interface(), query[1:])
 		if err != nil {
-			return "", err
+			return value, err
 		}
 
 	} else if len(query) == 1 {
-		return Field.String(), nil
+		return Field, nil
 	}
 
 	return value, nil
 
+}
+func getFieldValueByQuery(conf interface{}, query []string) (string, error) {
+	field, err := getFieldByQuery(conf, query)
+	if err != nil {
+		return "", err
+	}
+	return field.String(), nil
 }
 
 // readCueConfig loads a cue spec and convert it to YAML before converting it to an Updatecli config spec

@@ -146,16 +146,20 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 		}
 		nodeType := parts[0]
 		name := strings.Join(parts[1:], "#")
-		var shape, color, kind, openingBracket, closingBracket string
+		var shape, color, kind, openingBracket, closingBracket, category, multiple string
 		switch nodeType {
 		case sourceCategory:
 			shape = "ellipse"
 			color = "lightblue"
+			category = "S"
 			openingBracket = "(["
 			closingBracket = "])"
 			if source, ok := p.Sources[name]; ok {
 				if source.Config.Name != "" {
 					name = source.Config.Name
+				}
+				if source.Config.IsList {
+					multiple = "*"
 				}
 				kind = source.Config.Kind
 			}
@@ -164,6 +168,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 			color = "orange"
 			openingBracket = "{"
 			closingBracket = "}"
+			category = "C"
 			if condition, ok := p.Conditions[name]; ok {
 				if condition.Config.Name != "" {
 					name = condition.Config.Name
@@ -175,9 +180,13 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 			color = "lightyellow"
 			openingBracket = "("
 			closingBracket = ")"
+			category = "T"
 			if target, ok := p.Targets[name]; ok {
 				if target.Config.Name != "" {
 					name = target.Config.Name
+				}
+				if target.Config.IterateOnSource {
+					multiple = "*"
 				}
 				kind = target.Config.Kind
 			}
@@ -185,10 +194,12 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 		if graphFlavor == GraphFlavorDot {
 			graphOutput.WriteString(
 				fmt.Sprintf(
-					"    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n",
+					"    %q [label=\"%s: %s (%s)%s\", shape=%s, style=filled, color=%s];\n",
+					category,
 					node,
 					strings.ReplaceAll(name, `"`, `\"`),
 					kind,
+					multiple,
 					shape,
 					color,
 				),
@@ -196,11 +207,13 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 		} else if graphFlavor == GraphFlavorMermaid {
 			graphOutput.WriteString(
 				fmt.Sprintf(
-					"    %s%s\"%s (%s)\"%s\n",
+					"    %s%s\"%s: %s (%s)%s\"%s\n",
 					node,
 					openingBracket,
+					category,
 					strings.ReplaceAll(name, `"`, `:#quot;`),
 					kind,
+					multiple,
 					closingBracket,
 				),
 			)

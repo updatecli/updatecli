@@ -68,6 +68,8 @@ type ResourceConfig struct {
 	DependsOn []string `yaml:",omitempty"`
 	// IsList defines if the output should be stored as a list
 	IsList bool `yaml:",omitempty"`
+	// IterateOnSource defines if we should iterate on the input (a source with islist set to `true`)
+	IterateOnSource bool `yaml:",omitempty"`
 	// name specifies the resource name
 	Name string `yaml:",omitempty"`
 	// kind specifies the resource kind which defines accepted spec value
