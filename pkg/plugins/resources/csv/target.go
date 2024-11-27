@@ -9,14 +9,14 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (c *CSV) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *CSV) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {
 		rootDir = scm.GetDirectory()
 	}
 
-	newValue := source
+	newValue := source.Value
 	if c.spec.Value != "" {
 		newValue = c.spec.Value
 	}

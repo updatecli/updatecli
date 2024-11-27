@@ -11,14 +11,14 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (x *XML) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (x *XML) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
 	if strings.HasPrefix(x.spec.File, "https://") ||
 		strings.HasPrefix(x.spec.File, "http://") {
 		return fmt.Errorf("URL scheme is not supported for XML target: %q", x.spec.File)
 	}
 
-	value := source
+	value := source.Value
 	if x.spec.Value != "" {
 		value = x.spec.Value
 	}

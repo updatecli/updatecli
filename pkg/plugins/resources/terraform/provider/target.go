@@ -10,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *TerraformProvider) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (t *TerraformProvider) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if scm != nil {
 		t.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
@@ -29,7 +29,7 @@ func (t *TerraformProvider) Target(source string, scm scm.ScmHandler, dryRun boo
 
 	address := t.spec.Provider
 
-	valueToWrite := source
+	valueToWrite := source.Value
 	if t.spec.Value != "" {
 		valueToWrite = t.spec.Value
 		logrus.Debug("Using spec.Value instead of source input value.")

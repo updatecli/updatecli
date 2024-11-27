@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *ToolVersions) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (t *ToolVersions) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {
@@ -29,13 +29,13 @@ func (t *ToolVersions) Target(source string, scm scm.ScmHandler, dryRun bool, re
 		}
 
 		if len(t.spec.Value) == 0 {
-			t.spec.Value = source
+			t.spec.Value = source.Value
 		}
 		resultTarget.NewInformation = t.spec.Value
 
 		// Override value from source if not yet defined
 		if len(t.spec.Value) == 0 {
-			t.spec.Value = source
+			t.spec.Value = source.Value
 		}
 
 		queryResult, _ := t.contents[i].Get(t.spec.Key)

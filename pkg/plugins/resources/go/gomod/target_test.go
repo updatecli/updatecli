@@ -73,7 +73,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 			gotResult := result.Target{}
 
-			err = got.Target("", nil, true, &gotResult)
+			err = got.Target(result.SourceInformation{}, nil, true, &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return

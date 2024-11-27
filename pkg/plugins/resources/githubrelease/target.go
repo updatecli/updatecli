@@ -7,6 +7,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (ghr GitHubRelease) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (ghr GitHubRelease) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	return fmt.Errorf("target not supported for the plugin GitHub Release")
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // Target creates a tag if needed from a local git repository, without pushing the tag
-func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (gt *GitTag) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
 	if gt.spec.Path != "" && scm != nil {
@@ -46,7 +46,7 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 		return fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
 	}
 
-	tagName := source
+	tagName := source.Value
 	if gt.spec.VersionFilter.Pattern != "" {
 		tagName = gt.spec.VersionFilter.Pattern
 	}

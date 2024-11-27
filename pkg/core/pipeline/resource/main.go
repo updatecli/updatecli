@@ -257,7 +257,7 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 type Resource interface {
 	Source(workingDir string, sourceResult *result.Source) error
 	Condition(version string, scm scm.ScmHandler) (pass bool, message string, err error)
-	Target(source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
+	Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
 	Changelog() string
 }
 

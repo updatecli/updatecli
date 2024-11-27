@@ -9,7 +9,7 @@ import (
 )
 
 // Target creates and pushes a git tag based on the SCM configuration
-func (gb *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (gb *GitBranch) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
 	if gb.spec.Path != "" && scm != nil {
 		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
@@ -42,7 +42,7 @@ func (gb *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resu
 		return fmt.Errorf("source branch is required")
 	}
 
-	gb.branch = source
+	gb.branch = source.Value
 	if gb.spec.Branch != "" {
 		gb.branch = gb.spec.Branch
 	}

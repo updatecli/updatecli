@@ -38,7 +38,7 @@ func (p *Pipeline) RunTarget(id string) (r string, changed bool, err error) {
 	}
 	if err == nil {
 		for _, output := range sourceOutputs {
-			err = target.Run(output.Value, &p.Options.Target)
+			err = target.Run(output, &p.Options.Target)
 			if err != nil {
 				break
 			}

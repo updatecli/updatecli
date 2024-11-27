@@ -13,7 +13,7 @@ import (
 
 // Target updates helm chart, it receives the default source value and a "dry-run" flag
 // then return if it changed something or failed
-func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var out bytes.Buffer
 	err := c.ValidateTarget()
 	if err != nil {

@@ -15,7 +15,7 @@ import (
 
 // Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
-func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (f *File) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	workDir := ""
 	if scm != nil {
@@ -52,7 +52,7 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	originalContents := make(map[string]string)
 
 	// Unless there is a content specified, the inputContent source value is used to fill the file
-	inputContent := source
+	inputContent := source.Value
 	if len(f.spec.Content) > 0 {
 		inputContent = f.spec.Content
 	}

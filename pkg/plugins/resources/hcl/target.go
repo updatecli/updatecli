@@ -10,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (h *Hcl) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if scm != nil {
 		h.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
@@ -31,7 +31,7 @@ func (h *Hcl) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarge
 
 	query := h.spec.Path
 
-	valueToWrite := source
+	valueToWrite := source.Value
 	if h.spec.Value != "" {
 		valueToWrite = h.spec.Value
 		logrus.Debug("Using spec.Value instead of source input value.")

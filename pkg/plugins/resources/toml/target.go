@@ -9,7 +9,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (t *Toml) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {
@@ -30,7 +30,7 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		}
 
 		if len(t.spec.Value) == 0 {
-			t.spec.Value = source
+			t.spec.Value = source.Value
 		}
 		resultTarget.NewInformation = t.spec.Value
 
@@ -38,7 +38,7 @@ func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 		// Override value from source if not yet defined
 		if len(t.spec.Value) == 0 {
-			t.spec.Value = source
+			t.spec.Value = source.Value
 		}
 
 		var queryResults []string

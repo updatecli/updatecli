@@ -215,7 +215,7 @@ CMD ["--help:golang"]
 				parser:           newParser,
 				files:            tt.files,
 			}
-			gotErr := d.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
+			gotErr := d.Target(result.SourceInformation{Value: tt.inputSourceValue}, tt.scm, tt.dryRun, &gotResult)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return
