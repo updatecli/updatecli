@@ -12,10 +12,10 @@ var (
 	ErrRunTargets error = errors.New("something went wrong during target execution")
 )
 
-func (p *Pipeline) updateTarget(id, result, consoleOutput string) {
+func (p *Pipeline) updateTarget(id, result string) {
+
 	target := p.Targets[id]
 	target.Result.Result = result
-	target.Result.ConsoleOutput = consoleOutput
 	p.Targets[id] = target
 	p.Report.Targets[id] = &target.Result
 }
