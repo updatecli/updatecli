@@ -226,7 +226,6 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		deps[r.ID] = &p
 	}
 
-	consoleOutput := ""
 	shouldSkip := p.shouldSkipResource(&leaf, deps)
 	if shouldSkip {
 		logrus.Debugf("Skipping %s[%q] because of dependsOn conditions", leaf.Category, id)
@@ -260,7 +259,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			}
 			leaf.Result = r
 			leaf.Changed = changed
-			p.updateTarget(targetId, leaf.Result, consoleOutput)
+			p.updateTarget(targetId, leaf.Result)
 		}
 	}
 	if leaf.Changed {
