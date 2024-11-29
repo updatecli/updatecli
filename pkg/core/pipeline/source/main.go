@@ -51,7 +51,7 @@ func (s *Source) Run() (err error) {
 		so in this case we want to first save the console output
 		before setting back the logrus output to stdout.
 	*/
-	// By default logrus logs to stderr, so I guess we want to keep this behavior...
+	// By default logrus logs to stdout and we want to keep this behavior.
 	defer logrus.SetOutput(os.Stdout)
 	defer s.Result.SetConsoleOutput(&consoleOutput)
 
