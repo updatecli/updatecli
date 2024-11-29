@@ -76,7 +76,7 @@ func init() {
 	manifestShowCmd.Flags().BoolVar(&manifestShowDisableTemplating, "disable-templating", false, "Disable manifest templating")
 	manifestShowCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	manifestShowCmd.Flags().BoolVar(&manifestShowGraph, "graph", false, "Output in graph format")
-	manifestShowCmd.Flags().StringVar(&manifestShowGraphFlavor, "graph-flavor", "dot", "Flavor of graph format")
+	manifestShowCmd.Flags().StringVar(&manifestShowGraphFlavor, "graph-flavor", "dot", "Flavor of graph format, accepted values are 'dot' for graphviz or 'mermaid'")
 
 	manifestCmd.AddCommand(manifestShowCmd)
 }
