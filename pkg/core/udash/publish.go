@@ -24,9 +24,10 @@ func Publish(r *reports.Report) error {
 	// setDefaultParam sets the default value for a parameter
 	setDefaultParam := func(envParam *string, configParam, envParamName, configParamName string) {
 		if *envParam != "" && configParam != "" {
-			logrus.Debugf("%s provided via environment variable %q supersede %q from config file",
+			logrus.Debugf("%s provided via environment variable %q supersede value %q from %q in config file",
 				*envParam,
 				envParamName,
+				configParamName,
 				configParam)
 			return
 		} else if *envParam == "" && configParam != "" {
