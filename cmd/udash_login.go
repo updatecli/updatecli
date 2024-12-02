@@ -14,6 +14,7 @@ var (
 	udashOAuthIssuer      string
 	udashOAuthAudience    string
 	udashEndpointURL      string
+	udashEndpointAPIURL   string
 
 	udashLoginCmd = &cobra.Command{
 		Use:     "login url",
@@ -52,6 +53,7 @@ func init() {
 	udashLoginCmd.Flags().StringVar(&udashOAuthIssuer, "oauth-issuer", "", "oauth-issuer defines the Oauth authentication URL")
 	udashLoginCmd.Flags().StringVar(&udashOAuthAudience, "oauth-audience", "", "oauth-audience defines the Oauth audience URL")
 	udashLoginCmd.Flags().StringVar(&udashOAuthAccessToken, "oauth-access-token", "", "oauth-access-token defines the Oauth access token")
+	udashLoginCmd.Flags().StringVar(&udashEndpointAPIURL, "api-url", "", "api-url defines the udash API URL")
 
 	udashCmd.AddCommand(udashLoginCmd)
 }
