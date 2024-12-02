@@ -49,7 +49,7 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL, access
 		logrus.Infof("Token detected via flag --oauth-access-token, skipping the oauth PKCE flow")
 		err = updateConfigFile(authData{
 			Token: accessToken,
-			Api:   audience,
+			API:   audience,
 			URL:   frontURL,
 		})
 		if err != nil {
@@ -137,11 +137,12 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL, access
 
 		err = updateConfigFile(authData{
 			Token: accessToken,
-			Api:   audience,
+			API:   audience,
 			URL:   frontURL,
 		})
 		if err != nil {
 			if !os.IsNotExist(err) {
+
 				logrus.Errorln(err)
 				// close the HTTP server and return
 				cleanup(server)

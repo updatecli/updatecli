@@ -220,7 +220,7 @@ func run(command string) error {
 		logrus.Infof("Config file located at %q", configFilePath)
 
 	case "udash/login":
-		err := udash.Login(udashEndpointURL, udashOAuthClientID, udashOAuthIssuer, udashOAuthAudience, udashOAuthAccessToken)
+		err := udash.Login(udashEndpointURL, udashEndpointAPIURL, udashOAuthClientID, udashOAuthIssuer, udashOAuthAudience, udashOAuthAccessToken)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
