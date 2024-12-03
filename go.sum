@@ -233,8 +233,8 @@ github.com/docker/libtrust v0.0.0-20150114040149-fa567046d9b1 h1:ZClxb8laGDf5arX
 github.com/docker/libtrust v0.0.0-20150114040149-fa567046d9b1/go.mod h1:cyGadeNEkKy96OOhEzfZl+yxihPEzKnqJwvfuSUqbZE=
 github.com/dprotaso/go-yit v0.0.0-20191028211022-135eb7262960 h1:aRd8M7HJVZOqn/vhOzrGcQH0lNAMkqMn+pXUYkatmcA=
 github.com/dprotaso/go-yit v0.0.0-20191028211022-135eb7262960/go.mod h1:9HQzr9D/0PGwMEbC3d5AB7oi67+h4TsQqItC1GVYG58=
-github.com/drone/go-scm v1.39.0 h1:HVUZxEbQhrKwHgFrw4VzdEvrAL6GwSEWbM+mot6Uzvs=
-github.com/drone/go-scm v1.39.0/go.mod h1:DFIJJjhMj0TSXPz+0ni4nyZ9gtTtC40Vh/TGRugtyWw=
+github.com/drone/go-scm v1.39.1 h1:rIwnUhJ1YkwHtNEKp1i/jAwDonstTLZtE7LGCE2sQUU=
+github.com/drone/go-scm v1.39.1/go.mod h1:DFIJJjhMj0TSXPz+0ni4nyZ9gtTtC40Vh/TGRugtyWw=
 github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5 h1:m62nsMU279qRD9PQSWD1l66kmkXzuYcnVJqL4XLeV2M=
 github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5/go.mod h1:Ro8st/ElPeALwNFlcTpWmkr6IoMFfkjXAvTHpevnDsM=
 github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2/go.mod h1:gNh8nYJoAm43RfaxurUnxr+N1PwuFV3ZMl/efxlIlY8=
