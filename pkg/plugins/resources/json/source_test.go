@@ -14,8 +14,9 @@ func TestSource(t *testing.T) {
 	testData := []struct {
 		name             string
 		spec             Spec
-		expectedResult   string
+		expectedResult   []result.SourceInformation
 		expectedErrorMsg error
+		isList           bool
 		wantErr          bool
 	}{
 		{
@@ -24,7 +25,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.json",
 				Key:  ".firstName",
 			},
-			expectedResult: "Jack",
+			expectedResult: []result.SourceInformation{{
+				Value: "Jack",
+			}},
 		},
 		{
 			name: "Default successful workflow with empty result",
@@ -32,7 +35,9 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.json",
 				Key:  ".surname",
 			},
-			expectedResult: "",
+			expectedResult: []result.SourceInformation{{
+				Value: "",
+			}},
 		},
 		{
 			name: "Test key do not exist",
@@ -43,7 +48,6 @@ func TestSource(t *testing.T) {
 			},
 			wantErr:          true,
 			expectedErrorMsg: errors.New("✗ cannot find value for path \".doNotExist\" from file \"testdata/data.json\""),
-			expectedResult:   "",
 		},
 		{
 			name: "Test array exist",
@@ -51,14 +55,44 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.json",
 				Key:  ".children.[1]",
 			},
-			expectedResult: "Thomas",
+			expectedResult: []result.SourceInformation{{
+				Value: "Thomas",
+			}},
+		},
+		{
+			name: "Retrieve json source as list with query",
+			spec: Spec{
+				File:  "testdata/data.json",
+				Query: ".children.[*]",
+			},
+			isList: true,
+			expectedResult: []result.SourceInformation{{
+				Key:   "0",
+				Value: "Catherine",
+			}, {
+				Key:   "1",
+				Value: "Thomas",
+			}, {
+				Key:   "2",
+				Value: "Trevor",
+			}},
+		},
+		{
+			name: "Retrieve json source as list with key should error",
+			spec: Spec{
+				File: "testdata/data.json",
+				Key:  ".children.[*]",
+			},
+			isList:           true,
+			wantErr:          true,
+			expectedErrorMsg: errors.New("✗ json source can only be configured as a list with the `query` param."),
 		},
 	}
 
 	for _, tt := range testData {
 
 		t.Run(tt.name, func(t *testing.T) {
-			j, err := New(tt.spec)
+			j, err := New(tt.spec, tt.isList)
 
 			require.NoError(t, err)
 

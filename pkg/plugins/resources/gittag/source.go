@@ -58,10 +58,14 @@ func (gt *GitTag) Source(workingDir string, resultSource *result.Source) error {
 			hash = refs[i].Hash
 		}
 	}
-	resultSource.Information = name
+	value := name
 	if gt.spec.Key == "hash" {
-		resultSource.Information = hash
+		value = hash
 	}
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 
 	if len(resultSource.Information) == 0 {
 		return fmt.Errorf("no git tag found matching pattern %q of kind %q",

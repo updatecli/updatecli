@@ -39,7 +39,7 @@ func TestSource(t *testing.T) {
 		mockedHTTPBody        string
 		mockedHTTPRespHeaders http.Header
 		mockedHttpError       error
-		want                  string
+		want                  []result.SourceInformation
 		wantStatus            string
 		wantErr               error
 	}{
@@ -50,8 +50,10 @@ func TestSource(t *testing.T) {
 			},
 			mockedHTTPStatusCode: http.StatusOK,
 			mockedHTTPBody:       multiLineText,
-			want:                 multiLineText,
-			wantStatus:           result.SUCCESS,
+			want: []result.SourceInformation{{
+				Value: multiLineText,
+			}},
+			wantStatus: result.SUCCESS,
 		},
 		{
 			name: "Normal case with header as result",
@@ -66,7 +68,9 @@ func TestSource(t *testing.T) {
 			mockedHTTPRespHeaders: map[string][]string{
 				"Location": {monoLineText},
 			},
-			want:       monoLineText,
+			want: []result.SourceInformation{{
+				Value: monoLineText,
+			}},
 			wantStatus: result.SUCCESS,
 		},
 		{

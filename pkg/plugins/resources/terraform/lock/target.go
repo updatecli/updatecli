@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *TerraformLock) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (t *TerraformLock) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if scm != nil {
 		t.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}
@@ -30,7 +30,7 @@ func (t *TerraformLock) Target(source string, scm scm.ScmHandler, dryRun bool, r
 
 	address := t.spec.Provider
 
-	valueToWrite := source
+	valueToWrite := source.Value
 	if t.spec.Value != "" {
 		valueToWrite = t.spec.Value
 		logrus.Debug("Using spec.Value instead of source input value.")

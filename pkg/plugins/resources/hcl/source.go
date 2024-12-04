@@ -29,7 +29,10 @@ func (h *Hcl) Source(workingDir string, resultSource *result.Source) error {
 		return err
 	}
 
-	resultSource.Information = sourceOutput
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: sourceOutput,
+	}}
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("value %q, found in file %q, for path %q'",
 		sourceOutput,

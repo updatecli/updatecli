@@ -37,7 +37,10 @@ func (g *GoMod) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("no version found for module path %q", g.spec.Module)
 	}
 
-	resultSource.Information = g.foundVersion
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: g.foundVersion,
+	}}
 	resultSource.Result = result.SUCCESS
 
 	switch g.kind {

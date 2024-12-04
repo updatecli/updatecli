@@ -25,7 +25,10 @@ func (t *ToolVersions) Source(workingDir string, resultSource *result.Source) er
 		return err
 	}
 
-	resultSource.Information = value
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("value %q, found in file %q, for key %q'",
 		value,

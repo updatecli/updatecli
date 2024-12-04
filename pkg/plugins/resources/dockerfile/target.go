@@ -12,11 +12,11 @@ import (
 )
 
 // Target updates a targeted Dockerfile from source control management system
-func (d *Dockerfile) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (d *Dockerfile) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 	// At the moment, this plugin do not return the currently used value
 	// This could be a useful improvement for the source
 	resultTarget.Information = "unknown"
-	resultTarget.NewInformation = source
+	resultTarget.NewInformation = source.Value
 	resultTarget.Changed = false
 	resultTarget.Result = result.SUCCESS
 
@@ -35,7 +35,7 @@ func (d *Dockerfile) Target(source string, scm scm.ScmHandler, dryRun bool, resu
 
 		logrus.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
 
-		newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions([]byte(dockerfileContent), source, d.spec.Stage)
+		newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions([]byte(dockerfileContent), source.Value, d.spec.Stage)
 		if err != nil {
 			return err
 		}

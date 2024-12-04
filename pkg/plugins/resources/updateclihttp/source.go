@@ -27,7 +27,10 @@ func (h *Http) Source(workingDir string, resultSource *result.Source) error {
 	resultSource.Description = fmt.Sprintf("[http] response received from %q.", h.spec.Url)
 
 	if h.spec.ReturnResponseHeader != "" {
-		resultSource.Information = httpRes.Header.Get(h.spec.ReturnResponseHeader)
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: httpRes.Header.Get(h.spec.ReturnResponseHeader),
+		}}
 		logrus.Debugf("[http] source: header %q found with %d characters", h.spec.ReturnResponseHeader, len(resultSource.Information))
 	} else {
 		b, err := io.ReadAll(httpRes.Body)
@@ -38,7 +41,10 @@ func (h *Http) Source(workingDir string, resultSource *result.Source) error {
 
 		logrus.Debugf("[http] source: response body received (with %d characters)", len(bodyContent))
 
-		resultSource.Information = bodyContent
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: bodyContent,
+		}}
 	}
 
 	return nil

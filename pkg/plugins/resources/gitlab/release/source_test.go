@@ -20,7 +20,7 @@ func TestSource(t *testing.T) {
 			Repository    string
 			VersionFilter version.Filter
 		}
-		wantResult string
+		wantResult []result.SourceInformation
 		wantErr    bool
 	}{
 		{
@@ -37,8 +37,7 @@ func TestSource(t *testing.T) {
 				Owner:      "olblak",
 				Repository: "updatecli-nonexistent",
 			},
-			wantResult: "",
-			wantErr:    true,
+			wantErr: true,
 		},
 		{
 			name: "repository cicd-devroom/FOSDEM22 should exist but no release",
@@ -53,8 +52,7 @@ func TestSource(t *testing.T) {
 				Owner:      "cicd-devroom",
 				Repository: "FOSDEM22",
 			},
-			wantResult: "",
-			wantErr:    true,
+			wantErr: true,
 		},
 		{
 			name: "repository should exist with release 0.46.2",
@@ -74,8 +72,11 @@ func TestSource(t *testing.T) {
 					Pattern: "~0.46.0",
 				},
 			},
-			wantResult: "v0.46.2",
-			wantErr:    false,
+			wantResult: []result.SourceInformation{{
+				Key:   "",
+				Value: "v0.46.2",
+			}},
+			wantErr: false,
 		},
 	}
 

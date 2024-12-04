@@ -84,7 +84,7 @@ func TestShell_Target(t *testing.T) {
 
 			gotResult := result.Target{}
 
-			err = s.Target(tt.source, nil, tt.dryrun, &gotResult)
+			err = s.Target(result.SourceInformation{Value: tt.source}, nil, tt.dryrun, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -159,7 +159,8 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = s.Target(tt.source, &ms, tt.dryrun, &gotResult)
+			err = s.Target(result.SourceInformation{Value: tt.source}, &ms, tt.dryrun, &gotResult)
+			err = s.Target(result.SourceInformation{Value: tt.source}, nil, tt.dryrun, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)

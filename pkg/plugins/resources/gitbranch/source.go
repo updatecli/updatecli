@@ -42,7 +42,10 @@ func (gb *GitBranch) Source(workingDir string, resultSource *result.Source) erro
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = value
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 	resultSource.Description = fmt.Sprintf("git branch %q found matching pattern %q", value, gb.versionFilter.Pattern)
 
 	return nil

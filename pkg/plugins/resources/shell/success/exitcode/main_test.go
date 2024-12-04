@@ -15,7 +15,7 @@ func TestSourceResult(t *testing.T) {
 		exitCode                   int
 		spec                       Spec
 		stdout                     string
-		expectedResultOutput       string
+		expectedResultOutput       []result.SourceInformation
 		expectedResultErrorMessage string
 		expectedError              bool
 		expectedNewError           bool
@@ -28,21 +28,24 @@ func TestSourceResult(t *testing.T) {
 				Success: 0,
 				Failure: 1,
 			},
-			exitCode:             0,
-			stdout:               "",
-			expectedResultOutput: "",
+			exitCode: 0,
+			stdout:   "",
+			expectedResultOutput: []result.SourceInformation{{
+				Value: "",
+			}},
 		},
 		{
-			name:                 "Test succeeded without specifying spec",
-			exitCode:             0,
-			stdout:               "",
-			expectedResultOutput: "",
+			name:     "Test succeeded without specifying spec",
+			exitCode: 0,
+			stdout:   "",
+			expectedResultOutput: []result.SourceInformation{{
+				Value: "",
+			}},
 		},
 		{
-			name:                 "Test failed without specifying spec",
-			exitCode:             2,
-			stdout:               "",
-			expectedResultOutput: "",
+			name:     "Test failed without specifying spec",
+			exitCode: 2,
+			stdout:   "",
 		},
 		{
 			name: "Test succeeded without command output",
@@ -51,9 +54,11 @@ func TestSourceResult(t *testing.T) {
 				Success: 2,
 				Failure: 1,
 			},
-			exitCode:             2,
-			stdout:               "",
-			expectedResultOutput: "",
+			exitCode: 2,
+			stdout:   "",
+			expectedResultOutput: []result.SourceInformation{{
+				Value: "",
+			}},
 		},
 		{
 			name:     "Test succeeded with command output",
@@ -63,8 +68,10 @@ func TestSourceResult(t *testing.T) {
 				Success: 0,
 				Failure: 1,
 			},
-			stdout:               "1.2.3",
-			expectedResultOutput: "1.2.3",
+			stdout: "1.2.3",
+			expectedResultOutput: []result.SourceInformation{{
+				Value: "1.2.3",
+			}},
 		},
 		{
 			name:     "Test failed with no command output",
@@ -75,7 +82,6 @@ func TestSourceResult(t *testing.T) {
 				Failure: 1,
 			},
 			stdout:                     "",
-			expectedResultOutput:       "",
 			expectedResultErrorMessage: "shell command failed. Expected exit code 0 but got 1",
 			expectedError:              true,
 		},
@@ -88,7 +94,6 @@ func TestSourceResult(t *testing.T) {
 				Failure: 1,
 			},
 			stdout:                     "1.2.3",
-			expectedResultOutput:       "",
 			expectedResultErrorMessage: "shell command failed. Expected exit code 0 but got 2",
 			expectedError:              true,
 		},
@@ -101,7 +106,6 @@ func TestSourceResult(t *testing.T) {
 				Failure: 0,
 			},
 			stdout:                  "1.2.3",
-			expectedResultOutput:    "",
 			expectedError:           true,
 			expectedNewError:        true,
 			expectedNewErrorMessage: errors.New("wrong exit spec"),

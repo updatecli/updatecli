@@ -16,7 +16,7 @@ func TestSource(t *testing.T) {
 	testData := []struct {
 		name             string
 		spec             Spec
-		expectedResult   string
+		expectedResult   []result.SourceInformation
 		expectedErrorMsg error
 		wantErr          bool
 	}{
@@ -28,7 +28,9 @@ func TestSource(t *testing.T) {
 				Comma:   ',',
 				Comment: '#',
 			},
-			expectedResult: "John",
+			expectedResult: []result.SourceInformation{{
+				Value: "John",
+			}},
 		},
 		{
 			name: "Regex versionFilter successful workflow",
@@ -40,7 +42,9 @@ func TestSource(t *testing.T) {
 					Pattern: "^Jo",
 				},
 			},
-			expectedResult: "John",
+			expectedResult: []result.SourceInformation{{
+				Value: "John",
+			}},
 		},
 		{
 			name: "Default successful workflow",
@@ -50,7 +54,10 @@ func TestSource(t *testing.T) {
 				Comma:   ';',
 				Comment: '#',
 			},
-			expectedResult: "John",
+			expectedResult: []result.SourceInformation{{
+				Key:   "",
+				Value: "John",
+			}},
 		},
 		{
 			name: "Default successful workflow with empty result",
@@ -58,7 +65,7 @@ func TestSource(t *testing.T) {
 				File: "testdata/data.csv",
 				Key:  ".[0].surname",
 			},
-			expectedResult: "",
+			expectedResult: []result.SourceInformation{{Key: "", Value: ""}},
 		},
 		{
 			name: "Test key do not exist",
@@ -67,7 +74,6 @@ func TestSource(t *testing.T) {
 				Key:   ".doNotExist",
 				Value: "",
 			},
-			expectedResult:   "",
 			wantErr:          true,
 			expectedErrorMsg: errors.New("cannot find value for path \".doNotExist\" from file \"testdata/data.csv\""),
 		},

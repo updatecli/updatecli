@@ -40,7 +40,10 @@ func (c *Console) PostCommand(workingDir string) error {
 func (c *Console) SourceResult(resultSource *result.Source) error {
 	switch *c.exitCode {
 	case 0:
-		resultSource.Information = *c.output
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: *c.output,
+		}}
 		resultSource.Result = result.SUCCESS
 		resultSource.Description = "shell command executed successfully"
 

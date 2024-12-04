@@ -14,7 +14,7 @@ func TestSource(t *testing.T) {
 		name           string
 		spec           Spec
 		expectedError  bool
-		expectedResult string
+		expectedResult []result.SourceInformation
 	}{
 		{
 			name: "Success",
@@ -26,8 +26,10 @@ func TestSource(t *testing.T) {
 				},
 				Architectures: []string{"amd64"},
 			},
-			expectedResult: "v0.35.0",
-			expectedError:  false,
+			expectedResult: []result.SourceInformation{{
+				Value: "v0.35.0",
+			}},
+			expectedError: false,
 		},
 		{
 			name: "Failure no version found",
@@ -50,8 +52,10 @@ func TestSource(t *testing.T) {
 					Pattern: "v0.35.0",
 				},
 			},
-			expectedResult: "v0.35.0",
-			expectedError:  false,
+			expectedResult: []result.SourceInformation{{
+				Value: "v0.35.0",
+			}},
+			expectedError: false,
 		},
 		{
 			name: "Failure - missing architecture",

@@ -28,7 +28,7 @@ func TestGitTag_Source(t *testing.T) {
 		mockedNativeGitHandler gitgeneric.GitHandler
 		versionFilter          version.Filter
 		spec                   Spec
-		wantValue              string
+		wantValue              []result.SourceInformation
 		wantErr                bool
 	}{
 		{
@@ -54,9 +54,12 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			spec:      Spec{},
-			wantValue: "3.0.0",
-			wantErr:   false,
+			spec: Spec{},
+			wantValue: []result.SourceInformation{{
+				Key:   "",
+				Value: "3.0.0",
+			}},
+			wantErr: false,
 		},
 		{
 			name:                   "Error: O tags found, filter with latest",
@@ -66,9 +69,8 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			spec:      Spec{},
-			wantValue: "",
-			wantErr:   true,
+			spec:    Spec{},
+			wantErr: true,
 		},
 		{
 			name:       "Error: 3 tags found, filter with semver on 2.1.y",
@@ -93,9 +95,8 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "semver",
 				Pattern: "~2.1",
 			},
-			spec:      Spec{},
-			wantValue: "",
-			wantErr:   true,
+			spec:    Spec{},
+			wantErr: true,
 		},
 		{
 			name:       "3 tags found, filter with semver on 2.1.y",
@@ -120,9 +121,12 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "semver",
 				Pattern: "~2.1",
 			},
-			spec:      Spec{},
-			wantValue: "2.1.1",
-			wantErr:   false,
+			spec: Spec{},
+			wantValue: []result.SourceInformation{{
+				Key:   "",
+				Value: "2.1.1",
+			}},
+			wantErr: false,
 		},
 		{
 			name:       "Error: error while retrieving tags",
@@ -134,9 +138,8 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			spec:      Spec{},
-			wantValue: "",
-			wantErr:   true,
+			spec:    Spec{},
+			wantErr: true,
 		},
 		{
 			name:       "3 tags found, filter with semver on 2.1.y, return hash",
@@ -165,8 +168,11 @@ func TestGitTag_Source(t *testing.T) {
 				Key:  "hash",
 				Path: "github.com/updatecli/updatecli",
 			},
-			wantValue: "ghi789",
-			wantErr:   false,
+			wantValue: []result.SourceInformation{{
+				Key:   "",
+				Value: "ghi789",
+			}},
+			wantErr: false,
 		},
 		{
 			name:       "3 tags found, filter with semver on 2.1.y, return name",
@@ -195,8 +201,11 @@ func TestGitTag_Source(t *testing.T) {
 				Key:  "name",
 				Path: "github.com/updatecli/updatecli",
 			},
-			wantValue: "2.1.1",
-			wantErr:   false,
+			wantValue: []result.SourceInformation{{
+				Key:   "",
+				Value: "2.1.1",
+			}},
+			wantErr: false,
 		},
 		{
 			name:       "5 tags found, filter with regex on 'gopls/', return last tag's name",
@@ -233,8 +242,11 @@ func TestGitTag_Source(t *testing.T) {
 				Key:  "name",
 				Path: "github.com/updatecli/updatecli",
 			},
-			wantValue: "gopls/v3.0.0",
-			wantErr:   false,
+			wantValue: []result.SourceInformation{{
+				Key:   "",
+				Value: "gopls/v3.0.0",
+			}},
+			wantErr: false,
 		},
 		{
 			name:       "5 tags found, filter with regex on 'gopls/', return last tag's hash",
@@ -271,8 +283,11 @@ func TestGitTag_Source(t *testing.T) {
 				Key:  "hash",
 				Path: "github.com/updatecli/updatecli",
 			},
-			wantValue: "mno345",
-			wantErr:   false,
+			wantValue: []result.SourceInformation{{
+				Key:   "",
+				Value: "mno345",
+			}},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

@@ -13,9 +13,9 @@ import (
 )
 
 // Target ensure that a specific release exist on gitea, otherwise creates it
-func (g Gitea) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (g Gitea) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if len(g.spec.Tag) == 0 {
-		g.spec.Tag = source
+		g.spec.Tag = source.Value
 	}
 
 	resultTarget.NewInformation = g.spec.Tag

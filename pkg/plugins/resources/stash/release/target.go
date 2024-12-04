@@ -12,9 +12,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g Stash) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget result.Target) error {
+func (g Stash) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget result.Target) error {
 	if len(g.spec.Tag) == 0 {
-		g.spec.Tag = source
+		g.spec.Tag = source.Value
 	}
 
 	if len(g.spec.Title) == 0 {

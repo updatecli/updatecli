@@ -37,7 +37,10 @@ func (g *Stash) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("no Bitbucket release tag found matching pattern %q of kind %q", g.versionFilter.Pattern, g.versionFilter.Kind)
 	}
 
-	resultSource.Information = value
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 	resultSource.Description = fmt.Sprintf("Bitbucket release tag %q found matching pattern %q", value, g.versionFilter.Pattern)
 	resultSource.Result = result.SUCCESS
 

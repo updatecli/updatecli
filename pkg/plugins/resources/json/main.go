@@ -12,7 +12,9 @@ import (
 
 // Json stores configuration about the file and the key value which needs to be updated.
 type Json struct {
-	spec     Spec
+	spec Spec
+	// isList control if we should parse all item in the list or just one
+	isList   bool
 	contents []dasel.FileContent
 	// Holds both parsed version and original version (to allow retrieving metadata such as changelog)
 	foundVersion version.Version
@@ -20,7 +22,7 @@ type Json struct {
 	versionFilter version.Filter
 }
 
-func New(spec interface{}) (*Json, error) {
+func New(spec interface{}, isList bool) (*Json, error) {
 
 	newSpec := Spec{}
 
@@ -56,6 +58,7 @@ func New(spec interface{}) (*Json, error) {
 
 	j := Json{
 		spec:          newSpec,
+		isList:        isList,
 		versionFilter: newFilter,
 	}
 

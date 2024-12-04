@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (s *Shell) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (s *Shell) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	getDir := ""
 	if scm != nil {
 		getDir = scm.GetDirectory()
@@ -37,7 +37,7 @@ func (s *Shell) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 //   - Any other exit code means "failed command with no change"
 //
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
-func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *result.Target) error {
+func (s *Shell) target(source result.SourceInformation, workingDir string, dryRun bool, resultTarget *result.Target) error {
 
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
@@ -67,7 +67,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *res
 		return err
 	}
 
-	scriptFilename, err := newShellScript(s.appendSource(source))
+	scriptFilename, err := newShellScript(s.appendSource(source.Value))
 	if err != nil {
 		return fmt.Errorf("failed initializing source script - %s", err)
 	}
@@ -92,11 +92,11 @@ func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *res
 		return &ExecutionFailedError{}
 	}
 
-	resultTarget.Description = fmt.Sprintf("ran shell command %q", s.appendSource(source))
+	resultTarget.Description = fmt.Sprintf("ran shell command %q", s.appendSource(source.Value))
 
 	if !resultTarget.Changed {
-		resultTarget.NewInformation = source
-		resultTarget.Information = source
+		resultTarget.NewInformation = source.Value
+		resultTarget.Information = source.Value
 
 		resultTarget.Result = result.SUCCESS
 		logrus.Info("No change detected")

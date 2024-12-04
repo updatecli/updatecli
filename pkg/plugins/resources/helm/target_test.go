@@ -341,7 +341,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = j.Target(tt.sourceInput, nil, true, &gotResult)
+			err = j.Target(result.SourceInformation{Value: tt.sourceInput}, nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)

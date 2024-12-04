@@ -82,7 +82,7 @@ func TestTarget(t *testing.T) {
 
 			gotResult := result.Target{}
 
-			err = j.Target(tt.sourceInput, nil, true, &gotResult)
+			err = j.Target(result.SourceInformation{Value: tt.sourceInput}, nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

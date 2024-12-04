@@ -20,7 +20,10 @@ func (g *GoModule) Source(workingDir string, resultSource *result.Source) error 
 		return fmt.Errorf("no version found for GO module %q ", g.Spec.Module)
 	}
 
-	resultSource.Information = version
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: version,
+	}}
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("version %s found for the GO module %q", version, g.Spec.Module)
 

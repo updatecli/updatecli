@@ -17,7 +17,7 @@ func Test_Source(t *testing.T) {
 		files          map[string]file
 		mockedContents map[string]string
 		mockedError    error
-		wantedContents map[string]string
+		wantedContents map[string][]result.SourceInformation
 		isResultWanted bool
 		isErrorWanted  bool
 	}{
@@ -41,8 +41,8 @@ annotations:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": "olblak",
+			wantedContents: map[string][]result.SourceInformation{
+				"test.yaml": []result.SourceInformation{{Value: "olblak"}},
 			},
 			isResultWanted: true,
 		},
@@ -65,8 +65,8 @@ github:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": "olblak",
+			wantedContents: map[string][]result.SourceInformation{
+				"test.yaml": []result.SourceInformation{{Value: "olblak"}},
 			},
 			isResultWanted: true,
 		},
@@ -91,8 +91,8 @@ github:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": "olblak",
+			wantedContents: map[string][]result.SourceInformation{
+				"test.yaml": []result.SourceInformation{{Value: "olblak"}},
 			},
 			isResultWanted: true,
 		},
@@ -138,8 +138,8 @@ github:
   repository: charts
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": "olblak",
+			wantedContents: map[string][]result.SourceInformation{
+				"test.yaml": []result.SourceInformation{{Value: "olblak"}},
 			},
 			isResultWanted: true,
 		},
@@ -224,8 +224,8 @@ repos:
     repository: updatecli
 `,
 			},
-			wantedContents: map[string]string{
-				"test.yaml": "updatecli",
+			wantedContents: map[string][]result.SourceInformation{
+				"test.yaml": []result.SourceInformation{{Value: "updatecli"}},
 			},
 			isResultWanted: true,
 		},

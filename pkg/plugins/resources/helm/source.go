@@ -45,15 +45,19 @@ func (c *Chart) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("filtering version: %w", err)
 	}
 
-	resultSource.Information = c.foundVersion.GetVersion()
-	if resultSource.Information == "" {
+	version := c.foundVersion.GetVersion()
+	if version == "" {
 		return fmt.Errorf("no Helm Chart version found for %q", c.spec.Name)
 	}
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: version,
+	}}
 
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("Helm Chart %q version %q is found from repository %q",
 		c.spec.Name,
-		resultSource.Information,
+		version,
 		c.spec.URL)
 
 	return nil

@@ -3,6 +3,7 @@ package source
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -23,7 +24,9 @@ type Source struct {
 	// Result stores the source result after a source run.
 	Result result.Source
 	// Output contains the value retrieved from a source
-	Output string
+	Output result.SourceInformation
+	// ListOutput contains the value as a list retrieved from a source
+	ListOutput []result.SourceInformation
 	// Config defines a source specifications
 	Config Config
 	// Scm stores scm information
@@ -89,7 +92,17 @@ func (s *Source) Run() (err error) {
 
 	err = source.Source(workingDir, &s.Result)
 
-	s.Output = s.Result.Information
+	if s.Config.IsList {
+		s.ListOutput = s.Result.Information
+	} else {
+		if len(s.Result.Information) > 1 {
+			s.Result.Result = result.FAILURE
+			err = fmt.Errorf("Source is not configured as list but we received a list")
+		} else if len(s.Result.Information) == 1 {
+			s.Output = s.Result.Information[0]
+		}
+
+	}
 
 	if err != nil {
 		s.Result.Result = result.FAILURE
@@ -108,16 +121,42 @@ func (s *Source) Run() (err error) {
 	s.Result.Changelog = s.Changelog
 
 	if len(s.Config.ResourceConfig.Transformers) > 0 {
-		s.Output, err = s.Config.ResourceConfig.Transformers.Apply(s.Output)
-		if err != nil {
-			logrus.Errorf("%s %s", s.Result.Result, err)
-			s.Result.Result = result.FAILURE
-			return err
+		if s.Config.IsList {
+			transformedOutputs := []result.SourceInformation{}
+			for _, output := range s.ListOutput {
+				value, err := s.Config.ResourceConfig.Transformers.Apply(output.Value)
+				if err != nil {
+					logrus.Errorf("%s %s", s.Result.Result, err)
+					s.Result.Result = result.FAILURE
+					return err
+				}
+				transformedOutputs = append(transformedOutputs, result.SourceInformation{
+					Key:   output.Key,
+					Value: value,
+				})
+			}
+			s.ListOutput = transformedOutputs
+		} else {
+			s.Output.Value, err = s.Config.ResourceConfig.Transformers.Apply(s.Output.Value)
+			if err != nil {
+				logrus.Errorf("%s %s", s.Result.Result, err)
+				s.Result.Result = result.FAILURE
+				return err
+			}
 		}
 	}
 
-	if len(s.Output) == 0 && s.Result.Result == result.SUCCESS {
-		logrus.Debugln("empty source detected")
+	if s.Result.Result == result.SUCCESS {
+		if s.Config.IsList {
+			for _, output := range s.ListOutput {
+				if len(output.Value) == 0 {
+					logrus.Debugln("empty source detected")
+				}
+			}
+		} else if len(s.Output.Value) == 0 {
+			logrus.Debugln("empty source detected")
+
+		}
 	}
 
 	return err

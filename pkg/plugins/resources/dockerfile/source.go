@@ -55,7 +55,10 @@ func (df *Dockerfile) Source(workingDir string, resultSource *result.Source) err
 			stageInfo = fmt.Sprintf("stage %q", df.spec.Stage)
 		}
 		resultSource.Result = result.SUCCESS
-		resultSource.Information = value
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: value,
+		}}
 		resultSource.Description = fmt.Sprintf("value %q found for %s in the dockerfile file %q",
 			value,
 			stageInfo,

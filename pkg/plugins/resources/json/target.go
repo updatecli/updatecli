@@ -10,7 +10,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (j *Json) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {
@@ -18,7 +18,7 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	}
 
 	if len(j.spec.Value) == 0 {
-		j.spec.Value = source
+		j.spec.Value = source.Value
 	}
 
 	shouldMessage := ""

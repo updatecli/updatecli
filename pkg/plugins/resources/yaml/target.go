@@ -22,7 +22,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (y *Yaml) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
 	workDir := ""
@@ -47,7 +47,7 @@ func (y *Yaml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		return fmt.Errorf("loading yaml file(s): %w", err)
 	}
 
-	valueToWrite := source
+	valueToWrite := source.Value
 	if y.spec.Value != "" {
 		valueToWrite = y.spec.Value
 		logrus.Debug("Using spec.Value instead of source input value.")

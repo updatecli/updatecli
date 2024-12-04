@@ -20,7 +20,7 @@ func TestSource(t *testing.T) {
 			Repository    string
 			VersionFilter version.Filter
 		}
-		wantResult string
+		wantResult []result.SourceInformation
 		wantErr    bool
 	}{
 		{
@@ -37,8 +37,7 @@ func TestSource(t *testing.T) {
 				Owner:      "updatecli",
 				Repository: "updatecli-nonexistent",
 			},
-			wantResult: "",
-			wantErr:    true,
+			wantErr: true,
 		},
 		{
 			name: "repository should exist with release 0.0.3",
@@ -58,8 +57,11 @@ func TestSource(t *testing.T) {
 					Pattern: "~1",
 				},
 			},
-			wantResult: "v1.33.0",
-			wantErr:    false,
+			wantResult: []result.SourceInformation{{
+				Key:   "",
+				Value: "v1.33.0",
+			}},
+			wantErr: false,
 		},
 		{
 			name: "repository should exist with no release 1.0.0",
@@ -79,8 +81,7 @@ func TestSource(t *testing.T) {
 					Pattern: "~0",
 				},
 			},
-			wantResult: "",
-			wantErr:    true,
+			wantErr: true,
 		},
 	}
 

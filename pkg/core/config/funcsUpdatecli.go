@@ -77,7 +77,19 @@ func updatecliRuntimeFuncMap(data interface{}) template.FuncMap {
 
 			switch sourceResult {
 			case result.SUCCESS:
-				return getFieldValueByQuery(data, []string{"Sources", s, "Output"})
+				isList, err := getFieldByQuery(data, []string{"Sources", s, "Config", "IsList"})
+				if err != nil {
+					return "", err
+				}
+				query := []string{"Sources", s, "Output", "Value"}
+				if isList.Bool() {
+					query = []string{"Sources", s, "ListOutput", "0", "Value"}
+				}
+				output, err := getFieldValueByQuery(data, query)
+				if err != nil {
+					return "", err
+				}
+				return output, nil
 			case result.FAILURE:
 				return "", fmt.Errorf("parent source %q failed", s)
 			// If the result of the parent source execution is not SUCCESS or FAILURE, then it means it was either skipped or not already run.

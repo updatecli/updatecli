@@ -36,7 +36,10 @@ func (g *Gitea) Source(workingDir string, resultSource *result.Source) error {
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = value
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 	resultSource.Description = fmt.Sprintf("Gitea Release tag %q found matching pattern %q of kind %q", value, g.versionFilter.Pattern, g.versionFilter.Kind)
 
 	return nil

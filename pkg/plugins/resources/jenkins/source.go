@@ -36,7 +36,10 @@ func (j *Jenkins) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("unknown version %s found for the %s release", j.spec.Version, j.spec.Release)
 	}
 
-	resultSource.Information = j.foundVersion
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: j.foundVersion,
+	}}
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("version %q found for the Jenkins %s release", j.foundVersion, j.spec.Release)
 

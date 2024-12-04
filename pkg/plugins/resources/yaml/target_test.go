@@ -292,7 +292,7 @@ github:
 			assert.NoError(t, err)
 
 			gotResult := result.Target{}
-			gotErr := y.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResult)
+			gotErr := y.Target(result.SourceInformation{Value: tt.inputSourceValue}, nil, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
@@ -426,7 +426,7 @@ github:
 			assert.NoError(t, err)
 
 			gotResult := result.Target{}
-			gotErr := y.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
+			gotErr := y.Target(result.SourceInformation{Value: tt.inputSourceValue}, tt.scm, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return

@@ -33,7 +33,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 		workingDir      string
 		mockedGhHandler github.GithubHandler
 		versionFilter   version.Filter
-		wantValue       string
+		wantValue       []result.SourceInformation
 		wantErr         bool
 	}{
 		{
@@ -45,7 +45,10 @@ func TestGitHubRelease_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			wantValue: "3.0.0",
+			wantValue: []result.SourceInformation{{
+				Key:   "",
+				Value: "3.0.0",
+			}},
 		},
 		{
 			name: "0 releases found, 3 tags found, filter with latest",
@@ -56,7 +59,10 @@ func TestGitHubRelease_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			wantValue: "3.0.0",
+			wantValue: []result.SourceInformation{{
+				Key:   "",
+				Value: "3.0.0",
+			}},
 		},
 		{
 			name:            "Error: 0 releases found, O tags found, filter with latest",

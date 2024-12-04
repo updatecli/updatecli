@@ -9,9 +9,9 @@ import (
 )
 
 // Target is not supported for the Golang resource
-func (g *GoMod) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (g *GoMod) Target(source result.SourceInformation, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
-	version := source
+	version := source.Value
 	if g.spec.Version != "" {
 		version = g.spec.Version
 	}

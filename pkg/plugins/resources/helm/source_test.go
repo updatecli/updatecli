@@ -15,7 +15,7 @@ func TestSource(t *testing.T) {
 	tests := []struct {
 		name                 string
 		chart                Spec
-		expected             string
+		expected             []result.SourceInformation
 		expectedError        bool
 		expectedErrorMessage error
 	}{
@@ -25,7 +25,9 @@ func TestSource(t *testing.T) {
 				URL:  "https://stenic.github.io/helm-charts",
 				Name: "proxy",
 			},
-			expected: "1.0.3",
+			expected: []result.SourceInformation{{
+				Value: "1.0.3",
+			}},
 		},
 		{
 			name: "Chart not found",
@@ -43,7 +45,6 @@ func TestSource(t *testing.T) {
 				Name:    "jenkins",
 				Version: "999",
 			},
-			expected:             "",
 			expectedError:        true,
 			expectedErrorMessage: errors.New("something went wrong while contacting \"https://example.com/index.yaml\""),
 		},

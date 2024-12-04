@@ -99,7 +99,7 @@ func (t *Target) Check() (bool, error) {
 }
 
 // Run applies a specific target configuration
-func (t *Target) Run(source string, o *Options) (err error) {
+func (t *Target) Run(source result.SourceInformation, o *Options) (err error) {
 	var consoleOutput bytes.Buffer
 	// By default logrus logs to stderr, so I guess we want to keep this behavior...
 	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
@@ -118,7 +118,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	if len(t.Config.ResourceConfig.Transformers) > 0 {
-		source, err = t.Config.ResourceConfig.Transformers.Apply(source)
+		source.Value, err = t.Config.ResourceConfig.Transformers.Apply(source.Value) // TODO: switch to use source
 		if err != nil {
 			failTargetRun()
 			return err

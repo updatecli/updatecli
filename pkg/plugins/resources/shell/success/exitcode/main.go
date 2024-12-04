@@ -85,7 +85,10 @@ func (e *ExitCode) PostCommand(workingDir string) error {
 func (e *ExitCode) SourceResult(resultSource *result.Source) error {
 	switch *e.exitCode {
 	case e.spec.Success:
-		resultSource.Information = *e.output
+		resultSource.Information = []result.SourceInformation{{
+			Key:   resultSource.ID,
+			Value: *e.output,
+		}}
 		resultSource.Result = result.SUCCESS
 		resultSource.Description = "shell command successfully executed"
 

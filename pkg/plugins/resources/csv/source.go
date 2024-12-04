@@ -68,7 +68,10 @@ func (c *CSV) Source(workingDir string, resultSource *result.Source) error {
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = sourceOutput
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: sourceOutput,
+	}}
 	resultSource.Description = fmt.Sprintf("csv value %q, found in file %q, for path %q",
 		sourceOutput,
 		content.FilePath,

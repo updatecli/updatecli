@@ -32,7 +32,10 @@ func (g *Gitlab) Source(workingDir string, resultSource *result.Source) error {
 		}
 	}
 
-	resultSource.Information = g.foundVersion.GetVersion()
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: g.foundVersion.GetVersion(),
+	}}
 
 	if len(resultSource.Information) == 0 {
 		return fmt.Errorf("no GitLab tags found matching pattern %q of kind %q",

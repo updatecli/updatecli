@@ -1,0 +1,48 @@
+name: Loops
+pipelineid: e2e/loops
+
+sources:
+  create_dummy_json:
+    name: Create Fake Json
+    kind: shell
+    spec:
+      command: "echo '{\"o\": [\"0\", \"1\", \"2\"]}'"
+  dummy_json_filepath:
+    name: Create Random uuid
+    kind: shell
+    spec:
+      command: "uuidgen"
+    transformers:
+      - addprefix: "/tmp/update_cli_e2e_loops_"
+      - addsuffix: ".json"
+  read_dummy_json_file:
+    name: Read our fake json
+    kind: json
+    dependson:
+      - target#create_dummy_json_file
+    islist: true
+    spec:
+      file: '{{ source "dummy_json_filepath" }}'
+      query: ".o.[*]"
+targets:
+  create_dummy_json_file:
+    kind: file
+    sourceid: create_dummy_json
+    spec:
+      file: '{{ source "dummy_json_filepath" }}'
+      forcecreate: true
+  delete_dummy_json_file:
+    kind: shell
+    dependson:
+      - source#read_dummy_json_file
+    disablesourceinput: true
+    spec:
+      command: 'rm {{ source "dummy_json_filepath" }}'
+  echo_json_value:
+    kind: shell
+    dependson:
+      - target#delete_dummy_json_file # Only there to ensure we execute after
+    sourceid: read_dummy_json_file
+    iterateonsource: true
+    spec:
+      command: echo

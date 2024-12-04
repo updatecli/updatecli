@@ -14,7 +14,7 @@ func TestDockerfile_Source(t *testing.T) {
 	tests := []struct {
 		name           string
 		spec           Spec
-		expectedResult string
+		expectedResult []result.SourceInformation
 		mockFile       text.MockTextRetriever
 		wantErr        error
 		parserErr      bool
@@ -28,7 +28,9 @@ func TestDockerfile_Source(t *testing.T) {
 					"matcher": "org.opencontainers.image.version",
 				},
 			},
-			expectedResult: "1.0.0",
+			expectedResult: []result.SourceInformation{{
+				Value: "1.0.0",
+			}},
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": dockerfileFixture,
@@ -45,7 +47,9 @@ func TestDockerfile_Source(t *testing.T) {
 					"matcher": "golang",
 				},
 			},
-			expectedResult: "golang:1.15",
+			expectedResult: []result.SourceInformation{{
+				Value: "golang:1.15",
+			}},
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": dockerfileFixture,
@@ -61,7 +65,9 @@ func TestDockerfile_Source(t *testing.T) {
 					"matcher": "org.opencontainers.image.version",
 				},
 			},
-			expectedResult: "1.0.0",
+			expectedResult: []result.SourceInformation{{
+				Value: "1.0.0",
+			}},
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": dockerfileFixture,
@@ -94,7 +100,9 @@ func TestDockerfile_Source(t *testing.T) {
 					"matcher": "org.opencontainers.image.source",
 				},
 			},
-			expectedResult: "",
+			expectedResult: []result.SourceInformation{{
+				Value: "",
+			}},
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": dockerfileFixture,
@@ -158,7 +166,9 @@ func TestDockerfile_Source(t *testing.T) {
 					"matcher": "org.opencontainers.image.version",
 				},
 			},
-			expectedResult: "0.1.0",
+			expectedResult: []result.SourceInformation{{
+				Value: "0.1.0",
+			}},
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": `FROM golang:1.15 AS builder
@@ -179,7 +189,9 @@ LABEL org.opencontainers.image.version=1.0.0
 					"matcher": "org.opencontainers.image.version",
 				},
 			},
-			expectedResult: "",
+			expectedResult: []result.SourceInformation{{
+				Value: "",
+			}},
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": `FROM golang:1.15 AS builder

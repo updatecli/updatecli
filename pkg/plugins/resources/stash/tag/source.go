@@ -38,7 +38,10 @@ func (g *Stash) Source(workingDir string, resultSource *result.Source) error {
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Information = value
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: value,
+	}}
 	resultSource.Description = fmt.Sprintf("Bitbucket tag %q found matching pattern %q", value, g.versionFilter.Pattern)
 
 	return nil

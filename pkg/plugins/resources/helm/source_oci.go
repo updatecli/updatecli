@@ -38,7 +38,10 @@ func (c *Chart) OCISource(workingDir string, resultSource *result.Source) error 
 		return fmt.Errorf("no OCI Helm chart version found matching pattern %q", c.versionFilter.Pattern)
 	}
 
-	resultSource.Information = version
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: version,
+	}}
 	resultSource.Description = fmt.Sprintf("OCI version %q found matching pattern %q", version, c.versionFilter.Pattern)
 	resultSource.Result = result.SUCCESS
 

@@ -17,7 +17,10 @@ func (n Npm) Source(workingDir string, resultSource *result.Source) error {
 		return fmt.Errorf("unknown version %s found for package name %s ", version, n.spec.Name)
 	}
 
-	resultSource.Information = version
+	resultSource.Information = []result.SourceInformation{{
+		Key:   resultSource.ID,
+		Value: version,
+	}}
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("version %s found for package name %q", version, n.spec.Name)
 

@@ -338,7 +338,7 @@ func (c *Chart) metadataYamlPathUpdate(key string, value string, scm scm.ScmHand
 	}
 
 	metadataResultTarget := result.Target{}
-	if err := yamlResource.Target(value, scm, dryRun, &metadataResultTarget); err != nil {
+	if err := yamlResource.Target(result.SourceInformation{Value: value}, scm, dryRun, &metadataResultTarget); err != nil {
 		return err
 	}
 
