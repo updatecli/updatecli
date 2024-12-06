@@ -124,7 +124,7 @@ func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skip
 		}
 
 		for _, action := range report.Actions {
-			if !slices.Contains(actionLinks, action.Link) {
+			if !slices.Contains(actionLinks, action.Link) && action.Link != "" {
 				actionLinks = append(actionLinks, action.Link)
 			}
 		}
