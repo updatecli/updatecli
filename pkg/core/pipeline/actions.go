@@ -294,7 +294,7 @@ func (p *Pipeline) detectActionTitle(action *action.Action) {
 		return
 	}
 
-	// Title is deprecated and should be removed in the futur
+	// Title is deprecated and should be removed in the future
 	if p.Config.Spec.Title != "" {
 		action.Title = p.Config.Spec.Title
 		return
