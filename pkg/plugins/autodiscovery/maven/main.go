@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -42,6 +43,7 @@ type Spec struct {
 		and its type like regex, semver, or just latest.
 	*/
 	VersionFilter version.Filter `yaml:",omitempty"`
+	Mirror        string         `yaml:",omotempty"`
 }
 
 // Maven hold all information needed to generate helm manifest.
@@ -63,6 +65,10 @@ func New(spec interface{}, rootDir, scmID string) (Maven, error) {
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Maven{}, err
+	}
+
+	if s.Mirror != "" {
+		maven.MavenCentralRepository = s.Mirror
 	}
 
 	dir := rootDir
