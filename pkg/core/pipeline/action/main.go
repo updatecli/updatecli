@@ -35,8 +35,9 @@ var ErrWrongConfig = errors.New("wrong action configuration")
 
 // ActionHandler interface defines required functions to be an action
 type ActionHandler interface {
-	CreateAction(report reports.Action, resetDescription bool) error
-	CleanAction(report reports.Action) error
+	CreateAction(report *reports.Action, resetDescription bool) error
+	CleanAction(report *reports.Action) error
+	CheckActionExist(report *reports.Action) error
 }
 
 // Config define action provided via an updatecli configuration
@@ -134,7 +135,6 @@ func New(config *Config, sourceControlManager *scm.Scm) (Action, error) {
 
 // Update updates an action object based on its configuration
 func (a *Action) Update() error {
-	a.Title = a.Config.Title
 
 	err := a.generateActionHandler()
 	if err != nil {

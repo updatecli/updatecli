@@ -3,12 +3,18 @@ package pipeline
 import (
 	"crypto/sha256"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+)
+
+var (
+	// CheckedPipelines is used to avoid checking the same action multiple times accross different pipelines
+	CheckedPipelines []string
 )
 
 // RunActions runs all actions defined in the configuration.
@@ -19,15 +25,52 @@ func (p *Pipeline) RunActions() error {
 		return nil
 	}
 
+	// firstPipelineAction is used to display the pipeline name only once
+	firstPipelineAction := true
+
 	for id := range p.Actions {
 
 		action := p.Actions[id]
+
+		// action.Report.ID and action.Report.Title must be set
+		// after actionTarget is set
+		updateActionTitle := func() {
+			actionTitle := action.Title
+			// If an action spec doesn't have a title, then we use the one specified by the pipeline spec title
+			if actionTitle == "" && p.Config.Spec.Name != "" {
+				actionTitle = p.Config.Spec.Name
+			} else if actionTitle == "" && p.Config.Spec.Title != "" {
+				// The field "Title" is probably useless and need to be refactor in a later iteration
+				actionTitle = p.Config.Spec.Title
+			} else {
+				actionTitle = getActionTitle(action)
+			}
+
+			action.Title = actionTitle
+		}
+
+		showActionTitle := func() {
+			updateActionTitle()
+			if firstPipelineAction {
+				logrus.Infof("\n%s", p.Name)
+			}
+			logrus.Infof("  => %s\n\n", action.Title)
+			firstPipelineAction = false
+		}
 
 		relatedTargets, err := p.searchAssociatedTargetsID(id)
 		if err != nil {
 			logrus.Errorf(err.Error())
 			continue
 		}
+
+		if len(relatedTargets) == 0 {
+			logrus.Infof("No target found for action %q", id)
+			continue
+		}
+
+		// alreadyCheckedAction is used to avoid checking the same action multiple times
+		alreadyCheckedAction := p.Report.Targets[relatedTargets[0]].Scm.ID + p.ID
 
 		// Update pipeline before each condition run
 		if err = p.Update(); err != nil {
@@ -44,6 +87,11 @@ func (p *Pipeline) RunActions() error {
 
 		action = p.Actions[id]
 		action.Config = p.Config.Spec.Actions[id]
+
+		if p.Report.Actions == nil {
+			p.Report.Actions = make(map[string]*reports.Action)
+		}
+		p.Report.Actions[id] = &action.Report
 
 		if err := action.Update(); err != nil {
 			return err
@@ -64,8 +112,31 @@ func (p *Pipeline) RunActions() error {
 		// If no target require attention while processing action in a attention state,
 		// then we skip the action
 		if len(attentionTargetIDs) == 0 {
+			// If nothing changed within associated target, then we want to be sure that
+			// we don't have an open pull request or an open issue before skipping the action
+			// The goal is to identify pull request opened in previous Updatecli execution.
+			if len(relatedTargets) > 0 {
+				if !slices.Contains(CheckedPipelines, alreadyCheckedAction) {
+
+					showActionTitle()
+
+					err = action.Handler.CheckActionExist(&action.Report)
+					if err != nil {
+						logrus.Errorf("Action %q failed: %s", id, err.Error())
+					}
+
+					CheckedPipelines = append(CheckedPipelines, alreadyCheckedAction)
+					if action.Report.Link == "" {
+						logrus.Infof("No follow up action needed")
+					}
+
+					p.Report.Actions[id] = &action.Report
+				}
+			}
 			continue
 		}
+
+		showActionTitle()
 
 		// We try to identify if any of the related targets have a branch reset.
 		// It it's the case then we set the action to have a branch reset
@@ -96,22 +167,6 @@ func (p *Pipeline) RunActions() error {
 			action.Report.Targets = append(action.Report.Targets, actionTarget)
 		}
 
-		logrus.Infof("\n%s - %s", p.Name, id)
-		logrus.Infof("%s\n\n", strings.Repeat("-", len(p.Name)+len(id)+3))
-
-		// Must action.Report.ID and action.Report.Title must be set
-		// after actionTarget is set
-		actionTitle := action.Title
-		// If an action spec doesn't have a title, then we use the one specified by the pipeline spec title
-		if actionTitle == "" && p.Config.Spec.Name != "" {
-			actionTitle = p.Config.Spec.Name
-		} else if actionTitle == "" && p.Config.Spec.Title != "" {
-			// The field "Title" is probably useless and need to be refactor in a later iteration
-			actionTitle = p.Config.Spec.Title
-		} else {
-			actionTitle = getActionTitle(action)
-		}
-
 		pipelineName := p.Config.Spec.Name
 		if pipelineName == "" && p.Config.Spec.Title != "" {
 			pipelineName = p.Config.Spec.Name
@@ -120,7 +175,7 @@ func (p *Pipeline) RunActions() error {
 		}
 
 		action.Report.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(p.Name)))
-		action.Report.Title = actionTitle
+		action.Report.Title = action.Title
 		action.Report.PipelineTitle = pipelineName
 
 		if !action.Config.DisablePipelineURL {
@@ -129,25 +184,30 @@ func (p *Pipeline) RunActions() error {
 		if isBranchReset {
 			logrus.Warningf("Git branch reset detected, the action must reset previous action description")
 		}
+
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
 				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
 
 				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
-					actionTitle,
+					action.Title,
 					action.Report.String())
 				logrus.Debugf(strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
 			}
 
 			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n\n##Report:\n\n%s\n\n=====\n",
-				actionTitle,
+				action.Title,
 				action.Report.String())
 			logrus.Debugf(strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
+
+			action.Report.Description = actionOutput
+
+			p.Report.Actions[id] = &action.Report
 
 			return nil
 		}
 
-		err = action.Handler.CreateAction(action.Report, isBranchReset)
+		err = action.Handler.CreateAction(&action.Report, isBranchReset)
 		if err != nil {
 			return err
 		}
@@ -172,7 +232,7 @@ func (p *Pipeline) RunCleanActions() error {
 		if !p.Options.Target.DryRun {
 			if action.Handler != nil {
 				// At least we try to clean existing pullrequest
-				err := action.Handler.CleanAction(action.Report)
+				err := action.Handler.CleanAction(&action.Report)
 				if err != nil {
 					errs = append(errs, err.Error())
 				}
@@ -190,7 +250,6 @@ func (p *Pipeline) GetTargetsIDByResult(targetIDs []string) (
 	for _, targetID := range targetIDs {
 
 		switch p.Report.Targets[targetID].Result {
-
 		case result.FAILURE:
 			failedTargetsID = append(failedTargetsID, targetID)
 

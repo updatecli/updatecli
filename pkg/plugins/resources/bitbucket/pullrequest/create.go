@@ -12,7 +12,7 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Bitbucket server
-func (b *Bitbucket) CreateAction(report reports.Action, resetDescription bool) error {
+func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) error {
 	title := report.Title
 	if len(b.spec.Title) > 0 {
 		title = b.spec.Title
@@ -31,12 +31,17 @@ func (b *Bitbucket) CreateAction(report reports.Action, resetDescription bool) e
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.
-	exist, err := b.isPullRequestExist()
+	pullrequestTitle, pullrequestDescription, pullrequestLink, err := b.isPullRequestExist()
 	if err != nil {
 		return err
 	}
 
-	if exist {
+	if pullrequestLink != "" {
+		logrus.Debugf("Bitbucket pull request already exist, nothing to do")
+
+		report.Title = pullrequestTitle
+		report.Link = pullrequestLink
+		report.Description = pullrequestDescription
 		return nil
 	}
 
@@ -99,6 +104,10 @@ func (b *Bitbucket) CreateAction(report reports.Action, resetDescription bool) e
 		}
 		return err
 	}
+
+	report.Link = pr.Link
+	report.Description = pr.Body
+	report.Title = pr.Title
 
 	logrus.Infof("Bitbucket Cloud pull request successfully opened on %q", pr.Link)
 

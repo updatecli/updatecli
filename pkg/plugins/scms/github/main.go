@@ -456,7 +456,6 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string) (*Re
 	err := g.client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		logrus.Errorf("err - %s", err)
 		return nil, err
 	}
 
