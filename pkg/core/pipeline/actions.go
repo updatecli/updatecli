@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	// CheckedPipelines is used to avoid checking the same action multiple times accross different pipelines
+	// CheckedPipelines is used to avoid checking the same action multiple times across different pipelines
 	CheckedPipelines []string
 )
 
