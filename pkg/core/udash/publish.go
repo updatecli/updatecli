@@ -21,6 +21,8 @@ var (
 // Publish publish a pipeline report to the updatecli api
 func Publish(r *reports.Report) error {
 
+	logrus.Infof("Publishing report to Udash")
+
 	// setDefaultParam sets the default value for a parameter
 	setDefaultParam := func(envParam *string, configParam, envParamName, configParamName string) {
 		if *envParam != "" && configParam != "" {
@@ -68,7 +70,7 @@ func Publish(r *reports.Report) error {
 		return fmt.Errorf("parsing report URL: %w", err)
 	}
 
-	jsonBody, err := json.Marshal(r)
+	jsonBody, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshaling json: %w", err)
 	}
