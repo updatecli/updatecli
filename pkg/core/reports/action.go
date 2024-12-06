@@ -14,9 +14,9 @@ import (
 // Action is a struct used to store the result of an action. It is used to generate pullrequest body
 type Action struct {
 	// ID is the unique identifier of the action
-	ID string `xml:"id,attr,omitempty" json:"id,omitempty"`
+	ID string `xml:"id,attr" json:"id,omitempty"`
 	// Title is the title of the action
-	Title string `xml:"-,omitempty" json:"title,omitempty"`
+	Title string `xml:"-" json:"title,omitempty"`
 	// PipelineTitle is the title of the pipeline
 	PipelineTitle string `xml:"h3,omitempty" json:"pipelineTitle,omitempty"`
 	// Description is the description of the action
