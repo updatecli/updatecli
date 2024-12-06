@@ -20,8 +20,14 @@ var (
 // RunActions runs all actions defined in the configuration.
 func (p *Pipeline) RunActions() error {
 
+	if len(p.Actions) == 0 {
+		logrus.Debugf("No action found for pipeline %q", p.Name)
+		return nil
+	}
+
 	// Early return
-	if len(p.Targets) == 0 || len(p.Actions) == 0 {
+	if len(p.Targets) == 0 {
+		logrus.Debugf("No target found for pipeline %q, skipping depends on action", p.Name)
 		return nil
 	}
 
@@ -30,23 +36,22 @@ func (p *Pipeline) RunActions() error {
 
 	for id := range p.Actions {
 
+		// Update pipeline before each action run
+		if err := p.Update(); err != nil {
+			logrus.Errorf("Pipeline %q failed to update: %s", p.Name, err.Error())
+			continue
+		}
+
 		action := p.Actions[id]
 
 		// action.Report.ID and action.Report.Title must be set
 		// after actionTarget is set
 		updateActionTitle := func() {
-			actionTitle := action.Title
+			action.Title = p.Config.Spec.Actions[id].Title
 			// If an action spec doesn't have a title, then we use the one specified by the pipeline spec title
-			if actionTitle == "" && p.Config.Spec.Name != "" {
-				actionTitle = p.Config.Spec.Name
-			} else if actionTitle == "" && p.Config.Spec.Title != "" {
-				// The field "Title" is probably useless and need to be refactor in a later iteration
-				actionTitle = p.Config.Spec.Title
-			} else {
-				actionTitle = getActionTitle(action)
+			if action.Title == "" {
+				p.detectActionTitle(&action)
 			}
-
-			action.Title = actionTitle
 		}
 
 		showActionTitle := func() {
@@ -71,12 +76,6 @@ func (p *Pipeline) RunActions() error {
 
 		// alreadyCheckedAction is used to avoid checking the same action multiple times
 		alreadyCheckedAction := p.Report.Targets[relatedTargets[0]].Scm.ID + p.ID
-
-		// Update pipeline before each condition run
-		if err = p.Update(); err != nil {
-			logrus.Errorf(err.Error())
-			continue
-		}
 
 		if _, ok := p.SCMs[action.Config.ScmID]; !ok {
 			return fmt.Errorf("scm id %q couldn't be found", action.Config.ScmID)
@@ -284,19 +283,34 @@ func (p *Pipeline) searchAssociatedTargetsID(actionID string) ([]string, error) 
 	return results, nil
 }
 
-func getActionTitle(action action.Action) string {
-	switch action.Title != "" {
-	case true:
-		return action.Title
-	case false:
-		// Search first validate action title based on target title
-		// if none could be found then actionTitle keeps its default value
-		for i := range action.Report.Targets {
-			if action.Report.Targets[i].Title != "" {
-				return action.Report.Targets[i].Title
+// detectActionTitle set the action title based on the pipeline title or the target title
+func (p *Pipeline) detectActionTitle(action *action.Action) {
+	if action.Title != "" {
+		return
+	}
 
-			}
+	if p.Config.Spec.Name != "" {
+		action.Title = p.Config.Spec.Name
+		return
+	}
+
+	// Title is deprecated and should be removed in the futur
+	if p.Config.Spec.Title != "" {
+		action.Title = p.Config.Spec.Title
+		return
+	}
+
+	if len(action.Report.Targets) == 0 {
+		logrus.Debugf("We don't know how to name the action")
+		return
+	}
+
+	// Search first validate action title based on target title
+	// if none could be found then actionTitle keeps its default value
+	for i := range action.Report.Targets {
+		if action.Report.Targets[i].Title != "" {
+			action.Title = action.Report.Targets[i].Title
+			return
 		}
 	}
-	return "No action title could be found"
 }
