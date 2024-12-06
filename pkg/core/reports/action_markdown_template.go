@@ -27,7 +27,7 @@ var markdownReportTemplate string = `# {{ .PipelineTitle }}
 
 {{- end}}
 
-{{- if .PipelineUrl }}
+{{- if .PipelineURL }}
 
 [{{ .PipelineURL.Name }}]({{ .PipelineURL.URL }})
 {{- end}}`
