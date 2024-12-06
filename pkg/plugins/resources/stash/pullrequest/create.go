@@ -22,7 +22,7 @@ func (s *Stash) CreateAction(report reports.Action, resetDescription bool) error
 	// One Bitbucket pullrequest body can contain multiple action report
 	// It would be better to refactor CreateAction to be able to reuse existing pullrequest description.
 	// similar to what we did for github pullrequest.
-	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
+	body, err := utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
 	if err != nil {
 		logrus.Warningf("something wrong happened while generating stash pullrequest body: %s", err)
 	}
