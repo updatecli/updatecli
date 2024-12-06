@@ -789,7 +789,7 @@ Description
 				ID:            "1234",
 				Title:         "Action Title",
 				PipelineTitle: "Test Title",
-				PipelineUrl: &PipelineURL{
+				PipelineURL: &PipelineURL{
 					URL:  "https://www.updatecli.io/",
 					Name: "updatecli",
 				},

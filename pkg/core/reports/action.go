@@ -13,24 +13,35 @@ import (
 
 // Action is a struct used to store the result of an action. It is used to generate pullrequest body
 type Action struct {
-	ID            string         `xml:"id,attr"`
-	Title         string         `xml:"-"`
-	PipelineTitle string         `xml:"h3,omitempty"`
-	Description   string         `xml:"p,omitempty"`
-	Targets       []ActionTarget `xml:"details,omitempty"`
+	// ID is the unique identifier of the action
+	ID string `xml:"id,attr,omitempty" json:"id,omitempty"`
+	// Title is the title of the action
+	Title string `xml:"-,omitempty" json:"title,omitempty"`
+	// PipelineTitle is the title of the pipeline
+	PipelineTitle string `xml:"h3,omitempty" json:"pipelineTitle,omitempty"`
+	// Description is the description of the action
+	Description string `xml:"p,omitempty" json:"description,omitempty"`
+	// Targets is the list of targets IDs associated with the action
+	Targets []ActionTarget `xml:"details,omitempty" json:"targets,omitempty"`
 	// using a pointer to avoid empty tag
-	PipelineUrl *PipelineURL `xml:"a,omitempty"`
+	PipelineURL *PipelineURL `xml:"a,omitempty" json:"pipelineURL,omitempty"`
+	// Link is the URL of the action
+	Link string `xml:"link,omitempty" json:"actionUrl,omitempty"`
 }
 
 // ActionTargetChangelog is a struct used to store a target changelog
 type ActionTargetChangelog struct {
-	Title       string `xml:"summary,omitempty"`
-	Description string `xml:"pre,omitempty"`
+	// Title is the title of the changelog
+	Title string `xml:"summary,omitempty" json:"title,omitempty"`
+	// Description is the description of the changelog
+	Description string `xml:"pre,omitempty" json:"description,omitempty"`
 }
 
 // PipelineURL is a struct used to store a pipeline URL
 type PipelineURL struct {
-	URL  string `xml:"href,attr"`
+	// URL is the URL of the pipeline
+	URL string `xml:"href,attr"`
+	// Name is the name of the pipeline
 	Name string `xml:",chardata"`
 }
 
@@ -134,7 +145,7 @@ func (a *Action) UpdatePipelineURL() {
 		return
 	}
 
-	a.PipelineUrl = &PipelineURL{
+	a.PipelineURL = &PipelineURL{
 		Name: detectedCi.Name(),
 		URL:  detectedCi.URL(),
 	}

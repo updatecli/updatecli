@@ -80,21 +80,11 @@ type Report struct {
 	ID string
 	// PipelineID represents the Updatecli manifest pipelineID
 	PipelineID string
+	Actions    map[string]*Action
 	Sources    map[string]*result.Source
 	Conditions map[string]*result.Condition
 	Targets    map[string]*result.Target
 	ReportURL  string
-}
-
-// Init initializes a new report for a specific configuration
-func (r *Report) Init(name string, sourceNbr, conditionNbr, targetNbr int) {
-
-	r.Name = name
-	r.Result = result.FAILURE
-
-	r.Sources = make(map[string]*result.Source, sourceNbr)
-	r.Conditions = make(map[string]*result.Condition, conditionNbr)
-	r.Targets = make(map[string]*result.Target, targetNbr)
 }
 
 // String returns a report as a string
@@ -133,6 +123,15 @@ func (r *Report) UpdateID() error {
 	r.ID, err = getSha256HashFromStruct(*r)
 	if err != nil {
 		return err
+	}
+
+	for i, action := range r.Actions {
+		action.ID, err = getSha256HashFromStruct(action)
+		if err != nil {
+			return err
+		}
+
+		r.Actions[i] = action
 	}
 
 	for i, condition := range r.Conditions {
