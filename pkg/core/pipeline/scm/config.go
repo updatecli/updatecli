@@ -17,6 +17,16 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
+// Supported SCMs (used by different action packages)
+const (
+	GitIdentifier       = "git"
+	GitlabIdentifier    = "gitlab"
+	GithubIdentifier    = "github"
+	GiteaIdentifier     = "gitea"
+	StashIdentifier     = "stash"
+	BitbucketIdentifier = "bitbucket"
+)
+
 type ConfigSpec interface {
 	Merge(interface{}) error
 }
