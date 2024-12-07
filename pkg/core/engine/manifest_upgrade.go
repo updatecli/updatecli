@@ -56,7 +56,7 @@ func (e *Engine) ManifestUpgrade(saveToDisk bool) (err error) {
 		e.Reports = append(e.Reports, pipeline.Report)
 	}
 
-	totalSuccessUpgrade, totalChangedAppliedUpgrade, totalFailedUpgrade, totalSkippedUpgrade := e.Reports.Summary()
+	totalSuccessUpgrade, totalChangedAppliedUpgrade, totalFailedUpgrade, totalSkippedUpgrade, _ := e.Reports.Summary()
 
 	totalUpgrade := totalSuccessUpgrade + totalChangedAppliedUpgrade + totalFailedUpgrade + totalSkippedUpgrade
 

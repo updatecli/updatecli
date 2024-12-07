@@ -11,7 +11,7 @@ import (
 )
 
 // isMergeRequestExist queries a remote GitLab instance to know if a pullrequest already exists.
-func (g *Gitlab) isMergeRequestExist() (bool, error) {
+func (g *Gitlab) isMergeRequestExist() (title, description, link string, err error) {
 	ctx := context.Background()
 	// Timeout api query after 30sec
 	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
@@ -36,7 +36,7 @@ func (g *Gitlab) isMergeRequestExist() (bool, error) {
 
 		if err != nil {
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-			return false, err
+			return "", "", "", err
 		}
 
 		page = resp.Page.Next
@@ -51,11 +51,11 @@ func (g *Gitlab) isMergeRequestExist() (bool, error) {
 				!p.Closed &&
 				!p.Merged {
 
-				logrus.Infof("%s Nothing else to do, our pullrequest already exist on:\n\t%s",
+				logrus.Infof("%s GitLab merge request detected at:\n\t%s",
 					result.SUCCESS,
 					p.Link)
 
-				return true, nil
+				return p.Title, p.Body, p.Link, nil
 			}
 		}
 		if page == 0 {
@@ -63,7 +63,7 @@ func (g *Gitlab) isMergeRequestExist() (bool, error) {
 		}
 	}
 
-	return false, nil
+	return "", "", "", nil
 }
 
 // isRemoteBranchesExist queries a remote GitLab instance to know if both the pull-request source branch and the target branch exist.

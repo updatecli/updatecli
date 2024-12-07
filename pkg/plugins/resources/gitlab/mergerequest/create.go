@@ -14,7 +14,7 @@ import (
 )
 
 // CreateAction opens a Merge Request on the GitLab server
-func (g *Gitlab) CreateAction(report reports.Action, resetDescription bool) error {
+func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) error {
 
 	title := report.Title
 	if len(g.spec.Title) > 0 {
@@ -36,13 +36,19 @@ func (g *Gitlab) CreateAction(report reports.Action, resetDescription bool) erro
 	}
 
 	// Check if a merge-request is already opened then exit early if it does.
-	exist, err := g.isMergeRequestExist()
+	mergeRequestTitle, mergeRequestDescription, mergeRequestLink, err := g.isMergeRequestExist()
 	if err != nil {
 		return fmt.Errorf("check if a mergerequest already exist: %s", err.Error())
 	}
 
-	if exist {
+	// If a mergerequest already exist, we update the report with the existing mergerequest
+	// At the moment Updatecli doesn't support updating an existing mergerequest
+	if mergeRequestLink != "" {
 		logrus.Debugln("GitLab mergerequest already exist, nothing to do")
+
+		report.Title = mergeRequestTitle
+		report.Link = mergeRequestLink
+		report.Description = mergeRequestDescription
 		return nil
 	}
 
@@ -53,13 +59,13 @@ func (g *Gitlab) CreateAction(report reports.Action, resetDescription bool) erro
 	}
 
 	/*
-		Due to the following scenario, Updatecli always tries to open a mergerequest
-			* A mergerequest has been "manually" closed via UI
-			* A previous Updatecli run failed during a mergerequest creation for example due to network issues
+				Due to the following scenario, Updatecli always tries to open a mergerequest
+					* A mergerequest has been "manually" closed via UI
+					* A previous Updatecli run failed during a mergerequest creation for example due to network issues
 
-
-		Therefore we always try to open a mergerequest, we don't consider being an error if all conditions are not met
-		such as missing remote branches.
+		isPullRequestExist
+				Therefore we always try to open a mergerequest, we don't consider being an error if all conditions are not met
+				such as missing remote branches.
 	*/
 	if !ok {
 		return fmt.Errorf("remote branches %q and %q do not exist, we can't open a mergerequest", g.SourceBranch, g.TargetBranch)
@@ -100,6 +106,10 @@ func (g *Gitlab) CreateAction(report reports.Action, resetDescription bool) erro
 
 		return fmt.Errorf("create GitLab mergerequest: %v", err)
 	}
+
+	report.Link = pr.Link
+	report.Title = pr.Title
+	report.Description = pr.Body
 
 	if resp.Status > 400 {
 		logrus.Debugf("HTTP return code: %d\n\n", resp.Status)

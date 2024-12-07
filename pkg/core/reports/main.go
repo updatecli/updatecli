@@ -2,6 +2,7 @@ package reports
 
 import (
 	"bytes"
+	"slices"
 	"sort"
 	"text/template"
 
@@ -99,7 +100,7 @@ func (r *Reports) Sort() {
 }
 
 // Summary display a summary of
-func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skippedCounter int) {
+func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skippedCounter int, actionLinks []string) {
 
 	reports := *r
 
@@ -121,7 +122,13 @@ func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skip
 		default:
 			logrus.Infof("Unknown report result %q with named %q.", report.Result, report.Name)
 		}
+
+		for _, action := range report.Actions {
+			if !slices.Contains(actionLinks, action.Link) && action.Link != "" {
+				actionLinks = append(actionLinks, action.Link)
+			}
+		}
 	}
 
-	return successCounter, changedCounter, failedCounter, skippedCounter
+	return successCounter, changedCounter, failedCounter, skippedCounter, actionLinks
 }

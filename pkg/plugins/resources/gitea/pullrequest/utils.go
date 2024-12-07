@@ -11,7 +11,7 @@ import (
 )
 
 // isPullRequestExist queries a remote Gitea instance to know if a pullrequest already exists.
-func (g *Gitea) isPullRequestExist() (bool, error) {
+func (g *Gitea) isPullRequestExist() (title, description, link string, err error) {
 	ctx := context.Background()
 
 	page := 0
@@ -36,7 +36,7 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 
 		if err != nil {
 			logrus.Debugf("RC: %s\n", err)
-			return false, err
+			return "", "", "", err
 		}
 
 		if resp.Status > 400 {
@@ -49,11 +49,11 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 				!p.Closed &&
 				!p.Merged {
 
-				logrus.Infof("%s Nothing else to do, our pullrequest already exist on:\n\t%s",
+				logrus.Infof("%s GiTea pullrequest detected at:\n\t%s",
 					result.SUCCESS,
 					p.Link)
 
-				return true, nil
+				return p.Title, p.Body, p.Link, nil
 			}
 		}
 
@@ -63,7 +63,7 @@ func (g *Gitea) isPullRequestExist() (bool, error) {
 		page++
 	}
 
-	return false, nil
+	return "", "", "", nil
 }
 
 // isRemoteBranchesExist queries a remote Gitea instance to know if both the pull-request source branch and the target branch exist.

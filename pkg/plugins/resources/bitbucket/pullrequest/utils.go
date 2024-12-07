@@ -12,7 +12,7 @@ import (
 )
 
 // isPullRequestExist queries a remote Bitbucket Cloud instance to know if a Pull Request already exists.
-func (b *Bitbucket) isPullRequestExist() (bool, error) {
+func (b *Bitbucket) isPullRequestExist() (title, description, link string, err error) {
 	ctx := context.Background()
 	// Timeout api query after 30sec
 	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
@@ -35,7 +35,7 @@ func (b *Bitbucket) isPullRequestExist() (bool, error) {
 	)
 	if err != nil {
 		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-		return false, err
+		return "", "", "", err
 	}
 
 	if resp.Status > 400 {
@@ -48,14 +48,14 @@ func (b *Bitbucket) isPullRequestExist() (bool, error) {
 			!p.Closed &&
 			!p.Merged {
 
-			logrus.Infof("%s Nothing else to do, our pullrequest already exist on:\n\t%s",
+			logrus.Infof("%s Bitbucket pullrequest detected at:\n\t%s",
 				result.SUCCESS,
 				p.Link)
 
-			return true, nil
+			return p.Title, p.Body, p.Link, nil
 		}
 	}
-	return false, nil
+	return "", "", "", nil
 }
 
 // isRemoteBranchesExist queries a remote Bitbucket Cloud to know if both the pull request source branch and the target branch exist.
