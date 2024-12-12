@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"strings"
 
 	"github.com/beevik/etree"
 	"github.com/sirupsen/logrus"
@@ -164,4 +165,28 @@ func getDependencyManagementsFromPom(doc *etree.Document) []dependency {
 
 	}
 	return dependencies
+}
+
+// getRepositoryURL returns the URL of a repository while trying to identify potential maven proxy settings
+func getRepositoryURL(repo repository) string {
+	mirrorURL, mirrorUsername, mirrorPassword := getRepositoryMirrorURLFromSettingsXML(repo.ID, repo.URL)
+
+	if mirrorUsername != "" {
+		cred := strings.Join([]string{mirrorUsername, mirrorPassword}, ":")
+
+		if strings.HasPrefix(mirrorURL, "http://") {
+			mirrorURL = strings.Replace(mirrorURL, "http://", fmt.Sprintf("http://%s@", cred), 1)
+		} else if strings.HasPrefix(mirrorURL, "https://") {
+			mirrorURL = strings.Replace(mirrorURL, "https://", fmt.Sprintf("https://%s@", cred), 1)
+		}
+	}
+
+	if mirrorURL != "" {
+		return mirrorURL
+	} else if mavenMirrorURLFromEnv != "" {
+		return mavenMirrorURLFromEnv
+	}
+
+	return repo.URL
+
 }

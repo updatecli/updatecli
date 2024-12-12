@@ -83,7 +83,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		repos := []string{}
 		for _, repo := range repositories {
-			repos = append(repos, repo.URL)
+			repos = append(repos, getRepositoryURL(repo))
 		}
 
 		sourceVersionFilterKind := m.versionFilter.Kind
@@ -161,7 +161,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			SourceVersionFilterKind:    sourceVersionFilterKind,
 			SourceVersionFilterPattern: sourceVersionFilterPattern,
 			TargetID:                   artifactFullName,
-			TargetName:                 fmt.Sprintf("Bump parent pom version for %q", artifactFullName),
+			TargetName:                 fmt.Sprintf("deps(maven): update %q to {{ source %q }}", artifactFullName, artifactFullName),
 			TargetXMLPath:              "/project/parent/version",
 			File:                       relativePomFile,
 			ScmID:                      m.scmID,
