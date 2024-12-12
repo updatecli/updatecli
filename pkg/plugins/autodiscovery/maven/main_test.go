@@ -25,7 +25,8 @@ sources:
       artifactid: 'commons-lang3'
       groupid: 'org.apache.commons'
       repositories:
-        - 'http://example.com/maven'
+        - 'https://mirror.example.com/maven'
+        - 'https://repo.maven.apache.org/maven2'
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
@@ -68,8 +69,9 @@ sources:
       artifactid: 'commons-lang3'
       groupid: 'org.apache.commons'
       repositories:
-        - 'http://foo-repo.example.com/maven'
+        - 'https://foo:bar@mirror.example.com/maven'
         - 'http://bar-repo.example.com/maven'
+        - 'https://repo.maven.apache.org/maven2'
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
@@ -113,6 +115,7 @@ sources:
       groupid: 'com.jcraft'
       repositories:
         - 'https://repo.jenkins-ci.org/public/'
+        - 'https://mirror.example.com/maven2'
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
@@ -151,6 +154,7 @@ sources:
       groupid: 'io.jenkins.tools.bom'
       repositories:
         - 'https://repo.jenkins-ci.org/public/'
+        - 'https://mirror.example.com/maven2'
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
@@ -189,6 +193,7 @@ sources:
       groupid: 'org.jenkins-ci.plugins'
       repositories:
         - 'https://repo.jenkins-ci.org/public/'
+        - 'https://mirror.example.com/maven2'
       versionfilter:
         kind: 'latest'
         pattern: 'latest'

@@ -89,39 +89,48 @@ func readSettingsXML(path string) *Settings {
 	return &settings
 }
 
-// getServerCredentials returns the username and password of server, given an id
-func (s Settings) getServerCredentials(id string) (string, string) {
+// getMatchingServerCredentials returns the username and password of server, given an id
+func (s Settings) getMatchingServerCredentials(id string) (username string, password string, found bool) {
 	for _, server := range s.Servers {
 		if server.ID == id {
-			return interpolateMavenEnvVariable(server.Username), interpolateMavenEnvVariable(server.Password)
+
+			username = interpolateMavenEnvVariable(server.Username)
+			password = interpolateMavenEnvVariable(server.Password)
+			found = true
+
+			return username, password, found
 		}
 	}
-	return "", ""
+	return "", "", false
 }
 
-// isMatchingMirrorOf returns true if the given repository id matches the mirrorOf field of any mirror in the settings.xml
-func (s Settings) isMatchingMirrorOf(id, url string) string {
+// getMatchingMirrorOf returns true if the given repository id matches the mirrorOf field of any mirror in the settings.xml
+func (s Settings) getMatchingMirrorOf(id, url string) (mirrorURL string, mirrorID string, foundMirror bool) {
+
 	for _, mirror := range s.Mirrors {
 		matching := false
 		excluded := false
+
+		mirrorURL = mirror.URL
+		mirrorID = mirror.ID
 
 		for _, rule := range strings.Split(mirror.MirrorOf, ",") {
 
 			switch rule {
 			// matches all repo ids.
 			case "*":
-				return mirror.URL
+				return mirrorURL, mirrorID, true
 
 			// matches all repositories using HTTP except those using localhost.
 			case "external:http:*":
 				if strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "http://localhost") {
-					return mirror.URL
+					return mirrorURL, mirrorID, true
 				}
 
 			// matches all repositories except those using localhost or file based repositories.
 			case "external:*":
 				if !strings.Contains(url, "localhost") && !strings.HasPrefix(url, "file:") {
-					return mirror.URL
+					return mirrorURL, mirrorID, true
 				}
 
 			// multiple repositories may be specified using a comma as the delimiter
@@ -140,11 +149,11 @@ func (s Settings) isMatchingMirrorOf(id, url string) string {
 		}
 
 		if matching && !excluded {
-			return mirror.URL
+			return mirrorURL, mirrorID, true
 		}
 
 	}
-	return ""
+	return "", "", false
 }
 
 // interpolateMavenEnvVariable updates values from the settings.xml using env variables
@@ -153,25 +162,4 @@ func interpolateMavenEnvVariable(input string) string {
 		envVar := mavenEnvVariableRegex.FindStringSubmatch(s)[1]
 		return os.Getenv(envVar)
 	})
-}
-
-// getRepositoryMirrorURLFromSettingsXML returns the mirror URL, username and password for a given repository id if it exists in the settings.xml
-// if the repository is not found, it returns empty strings
-func getRepositoryMirrorURLFromSettingsXML(repoID, repoURL string) (url, username, password string) {
-
-	for _, path := range settingsXMLPath {
-		settings := readSettingsXML(path)
-		if settings == nil {
-			continue
-		}
-
-		foundURL := settings.isMatchingMirrorOf(repoID, repoURL)
-		if foundURL != "" {
-			logrus.Debugf("Found proxy URL %q for repository %q in config file %q", foundURL, repoID, path)
-			username, password = settings.getServerCredentials(repoID)
-			return foundURL, username, password
-		}
-
-	}
-	return "", "", ""
 }

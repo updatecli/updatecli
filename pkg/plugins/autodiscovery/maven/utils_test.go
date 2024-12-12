@@ -51,6 +51,10 @@ func TestGetRepositoriesFromPom(t *testing.T) {
 					URL: "https://repo.jenkins-ci.org/public/",
 					ID:  "repo.jenkins-ci.org",
 				},
+				{
+					URL: "https://repo.maven.apache.org/maven2",
+					ID:  "central",
+				},
 			},
 		},
 	}

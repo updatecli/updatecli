@@ -90,7 +90,7 @@ func (m Maven) discoverDependencyManagementsManifests() ([][]byte, error) {
 
 			repos := []string{}
 			for _, repo := range repositories {
-				repos = append(repos, getRepositoryURL(repo))
+				repos = append(repos, getRepositoryURL(filepath.Dir(pomFile), repo))
 			}
 
 			sourceVersionFilterKind := m.versionFilter.Kind

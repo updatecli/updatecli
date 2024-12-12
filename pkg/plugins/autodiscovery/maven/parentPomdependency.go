@@ -69,11 +69,6 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		// Test if current version contains a variable, and skip the depend if it's the case
 		isContainsVariable := containsVariableRegex.Match([]byte(parentPom.Version))
 
-		if err != nil {
-			logrus.Debugln(err)
-			continue
-		}
-
 		if isContainsVariable {
 			logrus.Printf("Skipping parent pom as it relies on the property %q", parentPom.Version)
 			continue
@@ -83,7 +78,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		repos := []string{}
 		for _, repo := range repositories {
-			repos = append(repos, getRepositoryURL(repo))
+			repos = append(repos, getRepositoryURL(filepath.Dir(pomFile), repo))
 		}
 
 		sourceVersionFilterKind := m.versionFilter.Kind

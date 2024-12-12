@@ -8,4 +8,11 @@
             <mirrorOf>foo,!bar</mirrorOf>
         </mirror>
     </mirrors>
+    <servers>
+        <server>
+            <id>foo-mirror</id>
+            <username>foo</username>
+            <password>bar</password>
+        </server>
+    </servers>
 </settings>
