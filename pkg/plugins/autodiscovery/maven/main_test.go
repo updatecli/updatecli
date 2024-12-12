@@ -14,6 +14,93 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 	}{
 		{
+			name:    "Scenario - with external http mirrorof",
+			rootDir: "testdata/externalhttp",
+			expectedPipelines: []string{`name: 'Bump Maven dependency org.apache.commons/commons-lang3'
+sources:
+  org.apache.commons/commons-lang3:
+    name: 'Get latest Maven Artifact version "org.apache.commons/commons-lang3"'
+    kind: 'maven'
+    spec:
+      artifactid: 'commons-lang3'
+      groupid: 'org.apache.commons'
+      repositories:
+        - 'http://example.com/maven'
+      versionfilter:
+        kind: 'latest'
+        pattern: 'latest'
+conditions:
+  artifactid:
+    name: 'Ensure dependency artifactId "commons-lang3" is specified'
+    kind: 'xml'
+    spec:
+      file: 'pom.xml'
+      path: '/project/dependencies/dependency[1]/artifactId'
+      value: 'commons-lang3'
+    disablesourceinput: true
+  groupid:
+    name: 'Ensure dependency groupId "org.apache.commons" is specified'
+    kind: 'xml'
+    spec:
+      file: 'pom.xml'
+      path: '/project/dependencies/dependency[1]/groupId'
+      value: 'org.apache.commons'
+    disablesourceinput: true
+targets:
+  org.apache.commons/commons-lang3:
+    name: 'deps(maven): update "org.apache.commons/commons-lang3" to {{ source "org.apache.commons/commons-lang3" }}'
+    kind: 'xml'
+    spec:
+      file: 'pom.xml'
+      path: '/project/dependencies/dependency[1]/version'
+    sourceid: 'org.apache.commons/commons-lang3'
+`},
+		},
+		{
+			name:    "Scenario - with excluded mirrorof",
+			rootDir: "testdata/exclude",
+			expectedPipelines: []string{`name: 'Bump Maven dependency org.apache.commons/commons-lang3'
+sources:
+  org.apache.commons/commons-lang3:
+    name: 'Get latest Maven Artifact version "org.apache.commons/commons-lang3"'
+    kind: 'maven'
+    spec:
+      artifactid: 'commons-lang3'
+      groupid: 'org.apache.commons'
+      repositories:
+        - 'http://foo-repo.example.com/maven'
+        - 'http://bar-repo.example.com/maven'
+      versionfilter:
+        kind: 'latest'
+        pattern: 'latest'
+conditions:
+  artifactid:
+    name: 'Ensure dependency artifactId "commons-lang3" is specified'
+    kind: 'xml'
+    spec:
+      file: 'pom.xml'
+      path: '/project/dependencies/dependency[1]/artifactId'
+      value: 'commons-lang3'
+    disablesourceinput: true
+  groupid:
+    name: 'Ensure dependency groupId "org.apache.commons" is specified'
+    kind: 'xml'
+    spec:
+      file: 'pom.xml'
+      path: '/project/dependencies/dependency[1]/groupId'
+      value: 'org.apache.commons'
+    disablesourceinput: true
+targets:
+  org.apache.commons/commons-lang3:
+    name: 'deps(maven): update "org.apache.commons/commons-lang3" to {{ source "org.apache.commons/commons-lang3" }}'
+    kind: 'xml'
+    spec:
+      file: 'pom.xml'
+      path: '/project/dependencies/dependency[1]/version'
+    sourceid: 'org.apache.commons/commons-lang3'
+`},
+		},
+		{
 			name:    "Scenario - Default",
 			rootDir: "testdata/default",
 			expectedPipelines: []string{`name: 'Bump Maven dependency com.jcraft/jsch'
