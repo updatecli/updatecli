@@ -80,7 +80,6 @@ func New(spec interface{}, rootDir, scmID string) (Maven, error) {
 
 	newFilter := s.VersionFilter
 	if s.VersionFilter.IsZero() {
-		// By default, NPM versioning uses semantic versioning
 		newFilter.Kind = "latest"
 		newFilter.Pattern = "latest"
 	}
