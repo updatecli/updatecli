@@ -203,11 +203,7 @@ func getRepositoryURL(pomDirname string, repo repository) string {
 		return url, foundCredentials
 	}
 
-	for _, path := range settingsXMLPath {
-
-		if path == "settings.xml" {
-			path = filepath.Join(pomDirname, path)
-		}
+	for _, path := range getSettingsXMLPath(pomDirname) {
 
 		settings := readSettingsXML(path)
 		if settings == nil {

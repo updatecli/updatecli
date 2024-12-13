@@ -3,6 +3,7 @@ package maven
 import (
 	"encoding/xml"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -10,13 +11,6 @@ import (
 )
 
 var (
-	// settingsXMLPath is the path to the settings.xml file
-	settingsXMLPath []string = []string{
-		"settings.xml",
-		os.Getenv("HOME") + "/.m2/settings.xml",
-		os.Getenv("MAVEN_HOME") + "/conf/settings.xml",
-		os.Getenv("M2_HOME") + "/conf/settings.xml",
-	}
 
 	// mavenMirrorURLFromEnv is the maven mirror URL from the environment variable MAVEN_MIRROR_URL
 	mavenMirrorURLFromEnv = os.Getenv("MAVEN_MIRROR_URL")
@@ -162,4 +156,31 @@ func interpolateMavenEnvVariable(input string) string {
 		envVar := mavenEnvVariableRegex.FindStringSubmatch(s)[1]
 		return os.Getenv(envVar)
 	})
+}
+
+// getSettingsXMLPath returns the path to the settings.xml file
+func getSettingsXMLPath(projectDirname string) []string {
+
+	result := []string{}
+
+	if _, err := os.Stat(filepath.Join(projectDirname, "settings.xml")); err == nil {
+		result = append(result, filepath.Join(projectDirname, "settings.xml"))
+	}
+
+	// Order matter here
+	// By using a join on the different path component, we ensure that the generated path is correct
+	// regardless of the OS
+	defaultSettingsXMLPath := []string{
+		filepath.Join(os.Getenv("HOME"), ".m2", "settings.xml"),
+		filepath.Join(os.Getenv("MAVEN_HOME"), "conf", "settings.xml"),
+		filepath.Join(os.Getenv("M2_HOME"), "conf", "settings.xml"),
+	}
+
+	for _, path := range defaultSettingsXMLPath {
+		if _, err := os.Stat(path); err == nil {
+			result = append(result, path)
+		}
+	}
+
+	return result
 }
