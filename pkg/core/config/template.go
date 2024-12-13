@@ -46,7 +46,6 @@ func (t *Template) New(content []byte) ([]byte, error) {
 	}
 
 	// Merge yaml configuration and sops secrets into one configuration
-	// Deepmerge is not supported so a secrets override unencrypted values
 	templateValues := mergeValueFile(t.Values, t.Secrets)
 
 	tmpl, err := template.New("cfg").
@@ -152,7 +151,7 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 	return err
 }
 
-// mergeValueFile merges one are multiple updatecli value files content into one
+// mergeValueFile merges one or multiple updatecli value files content into one
 func mergeValueFile(valuesFiles ...map[string]interface{}) (results map[string]interface{}) {
 
 	results = make(map[string]interface{})
