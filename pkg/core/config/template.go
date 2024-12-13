@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 
+	"dario.cat/mergo"
 	"github.com/Masterminds/sprig/v3"
 	"github.com/getsops/sops/v3/decrypt"
 	"github.com/sirupsen/logrus"
@@ -157,8 +158,9 @@ func mergeValueFile(valuesFiles ...map[string]interface{}) (results map[string]i
 	results = make(map[string]interface{})
 
 	for _, values := range valuesFiles {
-		for k, v := range values {
-			results[k] = v
+		if err := mergo.Merge(&results, values, mergo.WithOverride); err != nil {
+			err = fmt.Errorf("Error while merging values files: %v", err)
+			logrus.Errorln(err)
 		}
 	}
 
