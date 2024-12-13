@@ -98,13 +98,13 @@ func (m Maven) DiscoverManifests() ([][]byte, error) {
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Maven"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Maven")+1))
 
-	manifests, err := m.discoverDependenciesManifests()
+	manifests, err := m.discoverDependencyManifests("dependency")
 
 	if err != nil {
 		return nil, err
 	}
 
-	dependencyManagementManifests, err := m.discoverDependencyManagementsManifests()
+	dependencyManagementManifests, err := m.discoverDependencyManifests("dependencyManagement")
 
 	if err != nil {
 		return nil, err
