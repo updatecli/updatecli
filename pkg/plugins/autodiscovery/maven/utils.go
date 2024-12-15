@@ -219,6 +219,13 @@ func getMavenRepositoriesURL(pomFile string, doc *etree.Document) (mavenReposito
 	}
 
 	for _, repo := range repositories {
+		// If settings.xml is empty, we add the repository URL to the list
+		// as nothing can modify repository URL from the pom.xml
+		if len(settingsXMLMap) == 0 {
+			mavenRepositories = append(mavenRepositories, repo.URL)
+			continue
+		}
+
 		for path, settings := range settingsXMLMap {
 
 			mirrorURL, mirrorID, foundMirrorOf := settings.getMatchingMirrorOf(repo.ID, repo.URL)
@@ -248,7 +255,6 @@ func getMavenRepositoriesURL(pomFile string, doc *etree.Document) (mavenReposito
 
 			mavenRepositories = append(mavenRepositories, repo.URL)
 		}
-
 	}
 
 	if len(repositories) == 0 {

@@ -176,6 +176,13 @@ func TestGetMavenRepositoriesURL(t *testing.T) {
 				"http://bar-repo.example.com/maven",
 			},
 		},
+		{
+			name: "Test 3",
+			file: "testdata/jenkins-datadog-plugin/pom.xml",
+			expectedRepositories: []string{
+				"http://repo.jenkins-ci.org/public/",
+			},
+		},
 	}
 
 	for _, tt := range testdata {
