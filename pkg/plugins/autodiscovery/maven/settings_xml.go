@@ -84,18 +84,27 @@ func readSettingsXML(path string) *Settings {
 }
 
 // getMatchingServerCredentials returns the username and password of server, given an id
-func (s Settings) getMatchingServerCredentials(id string) (username string, password string, found bool) {
+func (s Settings) getMatchingServerCredentials(id string) (username string, password string) {
 	for _, server := range s.Servers {
 		if server.ID == id {
 
 			username = interpolateMavenEnvVariable(server.Username)
 			password = interpolateMavenEnvVariable(server.Password)
-			found = true
 
-			return username, password, found
+			return username, password
 		}
 	}
-	return "", "", false
+	return "", ""
+}
+
+func (s Settings) getCentralMatchingMirrorOf() (mirrorURL string, mirrorID string) {
+	for _, mirror := range s.Mirrors {
+		if mirror.MirrorOf == "central" {
+			return mirror.URL, mirror.ID
+		}
+	}
+
+	return "", ""
 }
 
 // getMatchingMirrorOf returns true if the given repository id matches the mirrorOf field of any mirror in the settings.xml
@@ -183,4 +192,25 @@ func getSettingsXMLPath(projectDirname string) []string {
 	}
 
 	return result
+}
+
+// getRepositoriesFromSettingsXML returns the repositories from the settings.xml
+func (s Settings) getRepositoriesFromSettingsXML() []repository {
+
+	repositories := []repository{}
+
+	for _, activeactiveProfile := range s.ActiveProfiles.ActiveProfile {
+		for _, profile := range s.Profiles {
+			if profile.ID == activeactiveProfile {
+				for _, repo := range profile.Repositories {
+					repositories = append(repositories, repository{
+						ID:  repo.ID,
+						URL: repo.URL,
+					})
+				}
+			}
+		}
+	}
+
+	return repositories
 }

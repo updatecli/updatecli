@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// discoverDependencyManifests discovers manifests for Maven dependencies
 func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 
 	var manifests [][]byte
@@ -49,11 +50,9 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			continue
 		}
 
-		// Retrieve repositories from pom.xml
-		repositories := getRepositoriesFromPom(doc)
+		mavenRepositories := getMavenRepositoriesURL(pomFile, doc)
 
 		// Retrieve dependencies
-
 		var dependencies []dependency
 		var dependencyKind string
 		var dependencyPathPrefix string
@@ -102,11 +101,6 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			}
 
 			artifactFullName := fmt.Sprintf("%s/%s", dependency.GroupID, dependency.ArtifactID)
-
-			repos := []string{}
-			for _, repo := range repositories {
-				repos = append(repos, getRepositoryURL(filepath.Dir(pomFile), repo))
-			}
 
 			sourceVersionFilterKind := m.versionFilter.Kind
 			sourceVersionFilterPattern := m.versionFilter.Pattern
@@ -179,7 +173,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 				SourceKind:                 "maven",
 				SourceGroupID:              dependency.GroupID,
 				SourceArtifactID:           dependency.ArtifactID,
-				SourceRepositories:         repos,
+				SourceRepositories:         mavenRepositories,
 				SourceVersionFilterKind:    sourceVersionFilterKind,
 				SourceVersionFilterPattern: sourceVersionFilterPattern,
 				TargetID:                   artifactFullName,

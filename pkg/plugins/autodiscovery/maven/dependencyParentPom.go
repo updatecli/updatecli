@@ -48,8 +48,8 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
-		// Retrieve repositories from pom.xml
-		repositories := getRepositoriesFromPom(doc)
+		mavenRepositories := getMavenRepositoriesURL(pomFile, doc)
+
 		parentPom := getParentFromPom(doc)
 
 		// No need to update Version if it's not specified
@@ -75,11 +75,6 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		}
 
 		artifactFullName := fmt.Sprintf("%s/%s", parentPom.GroupID, parentPom.ArtifactID)
-
-		repos := []string{}
-		for _, repo := range repositories {
-			repos = append(repos, getRepositoryURL(filepath.Dir(pomFile), repo))
-		}
 
 		sourceVersionFilterKind := m.versionFilter.Kind
 		sourceVersionFilterPattern := m.versionFilter.Pattern
@@ -152,7 +147,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			SourceKind:                 "maven",
 			SourceGroupID:              parentPom.GroupID,
 			SourceArtifactID:           parentPom.ArtifactID,
-			SourceRepositories:         repos,
+			SourceRepositories:         mavenRepositories,
 			SourceVersionFilterKind:    sourceVersionFilterKind,
 			SourceVersionFilterPattern: sourceVersionFilterPattern,
 			TargetID:                   artifactFullName,

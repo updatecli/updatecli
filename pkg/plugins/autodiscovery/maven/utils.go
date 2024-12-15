@@ -80,8 +80,6 @@ func getRepositoriesFromPom(doc *etree.Document) []repository {
 
 	repositoriesPath := "//project/repositories/*"
 
-	centralDefined := false
-
 	for _, repositoryElem := range doc.FindElements(repositoriesPath) {
 
 		if repositoryElem == nil {
@@ -99,19 +97,8 @@ func getRepositoriesFromPom(doc *etree.Document) []repository {
 			rep.ID = elem.Text()
 		}
 
-		if rep.ID == "central" {
-			centralDefined = true
-		}
-
 		repositories = append(repositories, rep)
 
-	}
-
-	if !centralDefined {
-		repositories = append(
-			repositories,
-			repository{ID: "central", URL: "https://repo.maven.apache.org/maven2"},
-		)
 	}
 
 	return repositories
@@ -180,14 +167,42 @@ func getDependencyManagementsFromPom(doc *etree.Document) []dependency {
 	return dependencies
 }
 
-// getRepositoryURL returns the URL of a repository while trying to identify potential maven proxy settings
-func getRepositoryURL(pomDirname string, repo repository) string {
+// getMavenRepositoriesURL returns the URL for all repository while trying to identify potential credentials and mirrors
+// It will look for repositories in the pom.xml and in the settings.xml
+func getMavenRepositoriesURL(pomFile string, doc *etree.Document) (mavenRepositories []string) {
+
+	repositories := getRepositoriesFromPom(doc)
+
+	settingsXMLMap := map[string]Settings{}
+
+	for _, path := range getSettingsXMLPath(filepath.Dir(pomFile)) {
+		settings := readSettingsXML(path)
+		if settings == nil {
+			logrus.Debugf("No settings.xml content found in %q", path)
+			continue
+		}
+
+		settingsXMLRepositories := settings.getRepositoriesFromSettingsXML()
+
+		if len(settingsXMLRepositories) > 0 {
+			logrus.Debugf("Found %d repositories in %q", len(settingsXMLRepositories), path)
+			for _, repo := range settingsXMLRepositories {
+				logrus.Debugf("\t* repository %q %q", repo.ID, repo.URL)
+			}
+
+			repositories = append(repositories, settingsXMLRepositories...)
+		}
+
+		settingsXMLMap[path] = *settings
+	}
 
 	setCredentials := func(settings Settings, url, id string) (string, bool) {
 
-		username, password, foundCredentials := settings.getMatchingServerCredentials(id)
+		username, password := settings.getMatchingServerCredentials(id)
+
 		cred := strings.Join([]string{username, password}, ":")
 
+		foundCredentials := username != ""
 		if foundCredentials {
 			if strings.HasPrefix(url, "http://") {
 				return strings.Replace(url, "http://", fmt.Sprintf("http://%s@", cred), 1), foundCredentials
@@ -203,37 +218,58 @@ func getRepositoryURL(pomDirname string, repo repository) string {
 		return url, foundCredentials
 	}
 
-	for _, path := range getSettingsXMLPath(pomDirname) {
+	for _, repo := range repositories {
+		for path, settings := range settingsXMLMap {
 
-		settings := readSettingsXML(path)
-		if settings == nil {
-			continue
+			mirrorURL, mirrorID, foundMirrorOf := settings.getMatchingMirrorOf(repo.ID, repo.URL)
+
+			if mirrorURL != "" && mirrorID == "" {
+				logrus.Warningf("Found proxy URL %q for repository %q in config file %q but no mirror ID", mirrorURL, repo.ID, path)
+			} else if mirrorURL == "" && mirrorID != "" {
+				logrus.Warningf("Found mirror ID %q for repository %q in config file %q but no proxy URL", mirrorID, repo.ID, path)
+			}
+
+			if foundMirrorOf {
+				logrus.Debugf("Found proxy URL %q for repository %q in config file %q", mirrorURL, mirrorID, path)
+				mirrorURL, _ = setCredentials(settings, mirrorURL, mirrorID)
+				mavenRepositories = append(mavenRepositories, mirrorURL)
+				continue
+			}
+
+			if repoURL, foundCredentials := setCredentials(settings, repo.URL, repo.ID); foundCredentials {
+				mavenRepositories = append(mavenRepositories, repoURL)
+				continue
+			}
+
+			if mavenMirrorURLFromEnv != "" {
+				mavenRepositories = append(mavenRepositories, mavenMirrorURLFromEnv)
+				continue
+			}
+
+			mavenRepositories = append(mavenRepositories, repo.URL)
 		}
 
-		mirrorURL, mirrorID, foundMirrorOf := settings.getMatchingMirrorOf(repo.ID, repo.URL)
+	}
 
-		if mirrorURL != "" && mirrorID == "" {
-			logrus.Warningf("Found proxy URL %q for repository %q in config file %q but no mirror ID", mirrorURL, repo.ID, path)
-		} else if mirrorURL == "" && mirrorID != "" {
-			logrus.Warningf("Found mirror ID %q for repository %q in config file %q but no proxy URL", mirrorID, repo.ID, path)
-		}
+	if len(repositories) == 0 {
+		mavenCentralURL := "https://repo.maven.apache.org/maven2"
+		for _, settings := range settingsXMLMap {
 
-		if foundMirrorOf {
-			logrus.Debugf("Found proxy URL %q for repository %q in config file %q", mirrorURL, mirrorID, path)
+			mirrorURL, mirrorID := settings.getCentralMatchingMirrorOf()
 
-			mirrorURL, _ = setCredentials(*settings, mirrorURL, mirrorID)
+			if mirrorURL != "" {
+				if repoURL, foundCredentials := setCredentials(settings, mirrorURL, mirrorID); foundCredentials {
+					mavenRepositories = append(mavenRepositories, repoURL)
+					continue
+				}
+			}
 
-			return mirrorURL
-		}
-
-		if repoURL, foundCredentials := setCredentials(*settings, repo.URL, repo.ID); foundCredentials {
-			return repoURL
+			if repoURL, foundCredentials := setCredentials(settings, mavenCentralURL, "central"); foundCredentials {
+				mavenRepositories = append(mavenRepositories, repoURL)
+				continue
+			}
 		}
 	}
 
-	if mavenMirrorURLFromEnv != "" {
-		return mavenMirrorURLFromEnv
-	}
-
-	return repo.URL
+	return mavenRepositories
 }

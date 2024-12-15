@@ -26,7 +26,6 @@ sources:
       groupid: 'org.apache.commons'
       repositories:
         - 'https://mirror.example.com/maven'
-        - 'https://repo.maven.apache.org/maven2'
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
@@ -71,7 +70,6 @@ sources:
       repositories:
         - 'https://foo:bar@mirror.example.com/maven'
         - 'http://bar-repo.example.com/maven'
-        - 'https://repo.maven.apache.org/maven2'
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
