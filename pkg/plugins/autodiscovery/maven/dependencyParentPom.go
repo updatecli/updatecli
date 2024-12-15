@@ -35,7 +35,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 	for _, pomFile := range foundPomFiles {
 
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
-		logrus.Debugf("parsing file %q", pomFile)
+		logrus.Debugf("parsing file %q", relativePomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
 			logrus.Debugln(err)
@@ -67,10 +67,10 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		}
 
 		// Test if current version contains a variable, and skip the depend if it's the case
-		isContainsVariable := containsVariableRegex.Match([]byte(parentPom.Version))
+		isContainVariable := containsVariableRegex.Match([]byte(parentPom.Version))
 
-		if isContainsVariable {
-			logrus.Printf("Skipping parent pom as it relies on the property %q", parentPom.Version)
+		if isContainVariable {
+			logrus.Printf("Skipping parent pom %q in %q as it relies on the property %q", parentPom.ArtifactID, relativePomFile, parentPom.Version)
 			continue
 		}
 

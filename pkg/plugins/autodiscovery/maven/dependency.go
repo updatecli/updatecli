@@ -35,14 +35,14 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 
 	for _, pomFile := range foundPomFiles {
 
-		logrus.Debugf("parsing file %q", pomFile)
-
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
 			logrus.Debugln(err)
 			continue
 		}
+
+		logrus.Debugf("parsing file %q", relativePomFile)
 
 		doc := etree.NewDocument()
 		if err := doc.ReadFromFile(pomFile); err != nil {
@@ -69,7 +69,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 		}
 
 		if len(dependencies) == 0 {
-			logrus.Debugf("no maven %s found in %q\n", dependencyKind, pomFile)
+			logrus.Debugf("no maven %s found in %q\n", dependencyKind, relativePomFile)
 			continue
 		}
 
@@ -83,15 +83,15 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 		for i, dependency := range dependencies {
 
 			// Test if current version contains a variable, and skip the depend if it's the case
-			isContainsVariable := containsVariableRegex.Match([]byte(dependency.Version))
+			isContainVariable := containsVariableRegex.Match([]byte(dependency.Version))
 
 			if err != nil {
 				logrus.Debugln(err)
 				continue
 			}
 
-			if isContainsVariable {
-				logrus.Printf("Skipping dependency as it relies on property %q", dependency.Version)
+			if isContainVariable {
+				logrus.Printf("Skipping dependency %q in %q as it relies on property %q", dependency.ArtifactID, relativePomFile, dependency.Version)
 				continue
 			}
 
