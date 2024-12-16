@@ -35,7 +35,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 	for _, pomFile := range foundPomFiles {
 
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
-		logrus.Debugf("parsing file %q", pomFile)
+		logrus.Debugf("parsing file %q", relativePomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
 			logrus.Debugln(err)
@@ -48,8 +48,8 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
-		// Retrieve repositories from pom.xml
-		repositories := getRepositoriesFromPom(doc)
+		mavenRepositories := getMavenRepositoriesURL(pomFile, doc)
+
 		parentPom := getParentFromPom(doc)
 
 		// No need to update Version if it's not specified
@@ -67,24 +67,14 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		}
 
 		// Test if current version contains a variable, and skip the depend if it's the case
-		isContainsVariable := containsVariableRegex.Match([]byte(parentPom.Version))
+		isContainVariable := containsVariableRegex.Match([]byte(parentPom.Version))
 
-		if err != nil {
-			logrus.Debugln(err)
-			continue
-		}
-
-		if isContainsVariable {
-			logrus.Printf("Skipping parent pom as it relies on the property %q", parentPom.Version)
+		if isContainVariable {
+			logrus.Printf("Skipping parent pom %q in %q as it relies on the property %q", parentPom.ArtifactID, relativePomFile, parentPom.Version)
 			continue
 		}
 
 		artifactFullName := fmt.Sprintf("%s/%s", parentPom.GroupID, parentPom.ArtifactID)
-
-		repos := []string{}
-		for _, repo := range repositories {
-			repos = append(repos, repo.URL)
-		}
 
 		sourceVersionFilterKind := m.versionFilter.Kind
 		sourceVersionFilterPattern := m.versionFilter.Pattern
@@ -157,11 +147,11 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			SourceKind:                 "maven",
 			SourceGroupID:              parentPom.GroupID,
 			SourceArtifactID:           parentPom.ArtifactID,
-			SourceRepositories:         repos,
+			SourceRepositories:         mavenRepositories,
 			SourceVersionFilterKind:    sourceVersionFilterKind,
 			SourceVersionFilterPattern: sourceVersionFilterPattern,
 			TargetID:                   artifactFullName,
-			TargetName:                 fmt.Sprintf("Bump parent pom version for %q", artifactFullName),
+			TargetName:                 fmt.Sprintf("deps(maven): update %q to {{ source %q }}", artifactFullName, artifactFullName),
 			TargetXMLPath:              "/project/parent/version",
 			File:                       relativePomFile,
 			ScmID:                      m.scmID,
