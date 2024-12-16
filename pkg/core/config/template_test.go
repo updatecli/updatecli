@@ -107,3 +107,62 @@ func TestTemplates(t *testing.T) {
 		require.Equal(t, err.Error(), fmt.Sprintf("open values.yml: %s", fs.ErrNotExist.Error()))
 	})
 }
+
+func TestMergeValueFile(t *testing.T) {
+
+	testdata := []struct {
+		name          string
+		data1         map[string]interface{}
+		data2         map[string]interface{}
+		expectedValue map[string]interface{}
+	}{
+		{
+			name: "merge values",
+			data1: map[string]interface{}{
+				"key1": "value1",
+			},
+			data2: map[string]interface{}{
+				"key2": "value2",
+			},
+			expectedValue: map[string]interface{}{
+				"key1": "value1",
+				"key2": "value2",
+			},
+		},
+		{
+			name: "no merge values",
+			data1: map[string]interface{}{
+				"key1": "value1",
+			},
+			expectedValue: map[string]interface{}{
+				"key1": "value1",
+			},
+		},
+		{
+			name: "overridden values",
+			data1: map[string]interface{}{
+				"key1": "value1",
+				"key2": "value3",
+			},
+			data2: map[string]interface{}{
+				"key2": "value2",
+			},
+			expectedValue: map[string]interface{}{
+				"key1": "value1",
+				"key2": "value2",
+			},
+		},
+		{
+			name:          "no values",
+			data1:         map[string]interface{}{},
+			data2:         map[string]interface{}{},
+			expectedValue: map[string]interface{}{},
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expectedValue, mergeValueFile(tt.data1, tt.data2))
+		})
+	}
+}
