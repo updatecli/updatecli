@@ -31,7 +31,7 @@ require (
 )
 
 require (
-	cuelang.org/go v0.11.0
+	cuelang.org/go v0.11.1
 	github.com/BurntSushi/toml v1.4.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/ProtonMail/go-crypto v1.1.3
