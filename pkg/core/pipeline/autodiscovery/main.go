@@ -58,7 +58,7 @@ var (
 		},
 	}
 	// AutodiscoverySpecs is a map of all Autodiscovery specification
-	AutodiscoverySpecsMapping = map[string]any{
+	AutodiscoverySpecsMapping = CrawlersConfig{
 		"argocd":        &argocd.Spec{},
 		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
@@ -78,7 +78,8 @@ var (
 		"prow":          &kubernetes.Spec{},
 		"rancher/fleet": &fleet.Spec{},
 		"terraform":     &terraform.Spec{},
-		"updatecli":     &updatecli.Spec{},
+		// "terragrunt":    &terragrunt.Spec{}, // TODO missing ??
+		"updatecli": &updatecli.Spec{},
 	}
 )
 
