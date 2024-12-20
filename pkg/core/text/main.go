@@ -15,6 +15,7 @@ import (
 	"github.com/hexops/gotextdiff/span"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 type TextRetriever interface {
@@ -40,22 +41,22 @@ func (t *Text) readFromURL(url string, line int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	logrus.Debugf("HTTP GET to %q got a response with code %d", url, resp.StatusCode)
+	logrus.Debugf("HTTP GET to %q got a response with code %d", redact.URL(url), resp.StatusCode)
 	if resp.StatusCode > 399 {
-		logrus.Debugf("HTTP return code %q for URL %q", resp.StatusCode, url)
-		return "", fmt.Errorf("URL %q not found or in error", url)
+		logrus.Debugf("HTTP return code %q for URL %q", resp.StatusCode, redact.URL(url))
+		return "", fmt.Errorf("URL %q not found or in error", redact.URL(url))
 	}
 
 	defer resp.Body.Close()
 
 	// Only retrieve the specified line in memory if specified
 	if line > 0 {
-		logrus.Debugf("Reading line %d of the content returned from url %q", line, url)
+		logrus.Debugf("Reading line %d of the content returned from url %q", line, redact.URL(url))
 		return getLine(bufio.NewReader(resp.Body), line), nil
 	}
 
 	// Otherwise retrieve the whole file content. Can be heavy.
-	logrus.Debugf("Reading content returned from the url %q", url)
+	logrus.Debugf("Reading content returned from the url %q", redact.URL(url))
 	bodyContent, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err

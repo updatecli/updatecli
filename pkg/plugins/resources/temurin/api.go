@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	httputils "github.com/updatecli/updatecli/pkg/plugins/utils/http"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 const availableReleasesEndpoint = "/info/available_releases"
@@ -27,16 +28,16 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", url, err)
+		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", redact.URL(url), err)
 	}
 
 	req.Header.Set("User-Agent", httputils.UserAgent)
 
-	logrus.Debugf("[temurin] Performing an http GET request to %q...", url)
+	logrus.Debugf("[temurin] Performing an http GET request to %q...", redact.URL(url))
 
 	res, err := webClient.Do(req)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", url, err)
+		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", redact.URL(url), err)
 	}
 	defer res.Body.Close()
 
@@ -52,7 +53,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	body, err = io.ReadAll(res.Body)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("something went wrong while decoding the answer of the request %q:\n%s\n", url, err)
+		return []byte{}, "", fmt.Errorf("something went wrong while decoding the answer of the request %q:\n%s\n", redact.URL(url), err)
 	}
 
 	return body, locationHeader, nil
