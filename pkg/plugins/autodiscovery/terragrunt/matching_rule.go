@@ -7,6 +7,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 const (
@@ -105,14 +106,14 @@ func (m MatchingRules) isMatchingRules(rootDir string, filePath string, module *
 					}
 					ruleModule, err := getModuleFromUrl(ruleModuleUrl, "", true)
 					if err != nil {
-						return false, fmt.Errorf("Invalid module source url %q: %v", ruleModuleUrl, err)
+						return false, fmt.Errorf("Invalid module source url %q: %v", redact.URL(ruleModuleUrl), err)
 					}
 					nameMatch := false
 					if ruleModule.source.sourceType == SourceTypeGit || ruleModule.source.sourceType == SourceTypeGithub {
 						nameMatch = strings.HasPrefix(module.source.evaluatedSource, ruleModule.source.evaluatedSource)
 					} else if ruleModule.source.sourceType == SourceTypeRegistry && module.registryModule != nil {
 						if ruleModule.registryModule == nil {
-							return false, fmt.Errorf("Invalid tfr module source url %q", ruleModuleUrl)
+							return false, fmt.Errorf("Invalid tfr module source url %q", redact.URL(ruleModuleUrl))
 						}
 						registryModule := *ruleModule.registryModule
 						nameMatch = registryModule.Package.Host == tfWildcard || registryModule.Package.Host == module.registryModule.Package.Host

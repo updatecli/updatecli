@@ -15,6 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 	terraformAutoDiscovery "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/gocty"
 )
@@ -146,7 +147,7 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 	}
 	sourceType := getSourceType(evaluatedSource)
 	if sourceType == "" {
-		return source, fmt.Errorf("Could not get source type from source url %v", evaluatedSource)
+		return source, fmt.Errorf("Could not get source type from source url %v", redact.URL(evaluatedSource))
 	}
 	source.sourceType = sourceType
 	if sourceType == SourceTypeRegistry || sourceType == SourceTypeGit || sourceType == SourceTypeGithub {
@@ -155,7 +156,7 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 		}
 		u, err := url.Parse(evaluatedSource)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", evaluatedSource, err)
+			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(evaluatedSource), err)
 			return source, err
 		}
 		params, err := url.ParseQuery(u.RawQuery)
@@ -182,7 +183,7 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 		}
 		version := strings.TrimPrefix(params.Get(param), "v")
 		if version == "" && !allowNoVersion {
-			return source, fmt.Errorf("Could not get version from source url %v", evaluatedSource)
+			return source, fmt.Errorf("Could not get version from source url %v", redact.URL(evaluatedSource))
 		}
 		source.version = version
 		return source, nil
@@ -202,7 +203,7 @@ func getModuleFromUrl(evaluatedSource string, rawSource string, allowNoVersion b
 	if source.sourceType == SourceTypeRegistry {
 		registryModule, err := terraformRegistryAddress.ParseModuleSource(source.baseUrl)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", source.baseUrl, err)
+			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(source.baseUrl), err)
 			return nil, err
 		}
 		module.registryModule = &registryModule

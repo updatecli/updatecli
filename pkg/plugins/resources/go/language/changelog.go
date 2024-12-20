@@ -5,6 +5,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // Changelog returns a link to the Golang version
@@ -23,5 +24,5 @@ func (l *Language) Changelog() string {
 		url = fmt.Sprintf("https://go.dev/doc/go%d.%d", v.Major(), v.Minor())
 	}
 
-	return fmt.Sprintf("Golang changelog for version %q is available on %q", l.Version.OriginalVersion, url)
+	return fmt.Sprintf("Golang changelog for version %q is available on %q", l.Version.OriginalVersion, redact.URL(url))
 }
