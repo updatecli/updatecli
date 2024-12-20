@@ -205,10 +205,37 @@ targets:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
 `},
 		},
+		{
+			name:    "cronjob",
+			rootDir: "testdata/cronjob",
+			digest:  false,
+			flavor:  kubernetes.FlavorKubernetes,
+			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
+sources:
+  updatecli:
+    name: 'get latest container image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+targets:
+  updatecli:
+    name: 'deps: bump container image "ghcr.io/updatecli/updatecli" to {{ source "updatecli" }}'
+    kind: 'yaml'
+    spec:
+      file: 'cronjob.yaml'
+      key: "$.spec.jobTemplate.spec.template.spec.containers[0].image"
+    sourceid: 'updatecli'
+    transformers:
+      - addprefix: 'ghcr.io/updatecli/updatecli:'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
-
 		t.Run(tt.name, func(t *testing.T) {
 			digest := tt.digest
 			pod, err := kubernetes.New(
@@ -235,5 +262,4 @@ targets:
 			}
 		})
 	}
-
 }
