@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -13,7 +12,6 @@ import (
 
 // searchKubernetesFiles will look, recursively, for every files with an extension .yaml or .yml from a root directory.
 func searchKubernetesFiles(rootDir string, files []string) ([]string, error) {
-
 	kubernetesFiles := []string{}
 
 	logrus.Debugf("Looking for Kubernetes file(s) in %q", rootDir)
@@ -39,14 +37,13 @@ func searchKubernetesFiles(rootDir string, files []string) ([]string, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
 	logrus.Debugf("%d Kubernetes file(s) found", len(kubernetesFiles))
 	for _, foundFile := range kubernetesFiles {
-		kubernetesFile := filepath.Base(filepath.Dir(foundFile))
+		kubernetesFile := filepath.Base(foundFile)
 		logrus.Debugf("    * %q", kubernetesFile)
 	}
 
@@ -60,24 +57,12 @@ func getManifestData[T any](filename, logPrefix string) (*T, error) {
 	manifestFile := filepath.Base(filepath.Dir(filename))
 	logrus.Debugf("%s file %q found in %q", logPrefix, manifestFile, filepath.Dir(filename))
 
-	if _, err := os.Stat(filename); err != nil {
-		return nil, err
-	}
-
-	v, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	defer v.Close()
-
-	content, err := io.ReadAll(v)
+	content, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
 	err = goyaml.Unmarshal(content, data)
-
 	if err != nil {
 		return nil, err
 	}

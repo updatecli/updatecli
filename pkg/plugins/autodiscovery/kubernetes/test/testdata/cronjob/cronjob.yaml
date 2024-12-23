@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: "updatecli"
+              image: "ghcr.io/updatecli/updatecli:v0.67.0"
+              imagePullPolicy: IfNotPresent
+              args:
+              - "99d"
+              command:
+              - "sleep"
+          restartPolicy: OnFailure
