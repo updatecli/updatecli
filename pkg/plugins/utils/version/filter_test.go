@@ -173,6 +173,17 @@ func TestSearch(t *testing.T) {
 			want:     Version{},
 			wantErr:  errors.New("versions list empty"),
 		},
+		{
+			name: "Passing case with gosort",
+			filter: Filter{
+				Kind: GOSORTVERSIONKIND,
+			},
+			versions: []string{"main-20241226-57-2242a78", "main-20240910-43-3705031", "main-20240916-49-bc46fdf"},
+			want: Version{
+				ParsedVersion:   "main-20241226-57-2242a78",
+				OriginalVersion: "main-20241226-57-2242a78",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
