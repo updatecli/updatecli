@@ -348,6 +348,11 @@ targets:
 			rootDir:           "testdata-4/chart",
 			expectedPipelines: []string{},
 		},
+		{
+			name:              "Scenario 5 - nil sourceSpec",
+			rootDir:           "testdata-5/chart",
+			expectedPipelines: []string{},
+		},
 	}
 
 	for _, tt := range testdata {
