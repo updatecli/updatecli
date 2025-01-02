@@ -92,6 +92,11 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				}
 			}
 
+			if tag == "" {
+				logrus.Debugf("No tag set for image %q using 'latest' as default", repository)
+				tag = "latest"
+			}
+
 			if repository == "" {
 				return
 			}
@@ -106,7 +111,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			})
 		}
 
-		if values.Image.Tag != "" && values.Image.Repository != "" {
+		if values.Image.Repository != "" {
 			appendImages(
 				values.Image.Registry,
 				values.Image.Repository,

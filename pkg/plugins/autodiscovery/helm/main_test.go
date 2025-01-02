@@ -348,6 +348,108 @@ targets:
 			rootDir:           "testdata-4/chart",
 			expectedPipelines: []string{},
 		},
+		{
+			name:    "Test latest tag when empty string",
+			rootDir: "testdata-6/chart",
+			digest:  true,
+			expectedPipelines: []string{`name: 'deps(helm): bump image "nginx" digest for chart "test-tag-01"'
+sources:
+  nginx-digest:
+    name: 'get latest image "nginx" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'nginx'
+      tag: 'latest'
+conditions:
+  nginx-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "nginx" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'test-tag-01/values.yaml'
+      key: '$.image.repository'
+      value: 'nginx'
+targets:
+  nginx:
+    name: 'deps(helm): bump image "nginx" digest'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'test-tag-01'
+      key: '$.image.tag'
+      skippackaging: false
+      versionincrement: ''
+    sourceid: 'nginx-digest'
+`},
+		},
+		{
+			name:    "Test latest tag",
+			rootDir: "testdata-6/chart",
+			digest:  true,
+			expectedPipelines: []string{`name: 'deps(helm): bump image "nginx" digest for chart "test-tag-01"'
+sources:
+  nginx-digest:
+    name: 'get latest image "nginx" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'nginx'
+      tag: 'latest'
+conditions:
+  nginx-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "nginx" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'test-tag-01/values.yaml'
+      key: '$.image.repository'
+      value: 'nginx'
+targets:
+  nginx:
+    name: 'deps(helm): bump image "nginx" digest'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'test-tag-01'
+      key: '$.image.tag'
+      skippackaging: false
+      versionincrement: ''
+    sourceid: 'nginx-digest'
+`},
+		},
+		{
+			name:    "Test latest tag when tag not defined",
+			rootDir: "testdata-6/chart",
+			digest:  true,
+			expectedPipelines: []string{`name: 'deps(helm): bump image "nginx" digest for chart "test-tag-01"'
+sources:
+  nginx-digest:
+    name: 'get latest image "nginx" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'nginx'
+      tag: 'latest'
+conditions:
+  nginx-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "nginx" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'test-tag-01/values.yaml'
+      key: '$.image.repository'
+      value: 'nginx'
+targets:
+  nginx:
+    name: 'deps(helm): bump image "nginx" digest'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'test-tag-01'
+      key: '$.image.tag'
+      skippackaging: false
+      versionincrement: ''
+    sourceid: 'nginx-digest'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -364,7 +466,6 @@ targets:
 			var pipelines []string
 			bytesPipelines, err := helm.DiscoverManifests()
 			require.NoError(t, err)
-
 			assert.Equal(t, len(tt.expectedPipelines), len(bytesPipelines))
 
 			stringPipelines := []string{}
