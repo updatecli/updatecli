@@ -1,0 +1,20 @@
+sources:
+  regextime:
+    name: Get latest ubuntu version using regex/time versionfilter
+    kind: dockerimage
+    spec:
+      image: ubuntu
+      versionfilter:
+        kind: 'regex/time'
+        regex: '^focal-(\d*)$'
+        pattern: "20060102"
+
+  time:
+    name: Get latest ubuntu version using time versionfilter
+    kind: dockerimage
+    spec:
+      image: ubuntu
+      versionfilter:
+        kind: 'time'
+        pattern: "06.01"
+
