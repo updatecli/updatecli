@@ -151,7 +151,7 @@ func TestSearch(t *testing.T) {
 			versions: []string{"updatecli-1.0.0", "updatecli-2.0.0", "updatecli-1.1.0"},
 			want: Version{
 				ParsedVersion:   "2.0.0",
-				OriginalVersion: "2.0.0",
+				OriginalVersion: "updatecli-2.0.0",
 			},
 		},
 		{
