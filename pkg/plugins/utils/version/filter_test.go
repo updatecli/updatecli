@@ -165,13 +165,38 @@ func TestSearch(t *testing.T) {
 			wantErr:  errors.New("versions list empty"),
 		},
 		{
-			name: "Passing case with regex/semver",
+			name: "Empty case with regex/semver",
 			filter: Filter{
 				Kind: REGEXSEMVERVERSIONKIND,
 			},
 			versions: []string{"updatecli-1.0.0", "updatecli-2.0.0", "updatecli-1.1.0"},
 			want:     Version{},
 			wantErr:  errors.New("versions list empty"),
+		},
+		{
+			name: "Passing case with regex/time",
+			filter: Filter{
+				Kind:    REGEXTIMEVERSIONKIND,
+				Regex:   `^updatecli-(\d*)$`,
+				Pattern: "20060201",
+			},
+			versions: []string{"updatecli-20232103", "updatecli-20232205", "updatecli-20200101"},
+			want: Version{
+				ParsedVersion:   "updatecli-20232205",
+				OriginalVersion: "updatecli-20232205",
+			},
+		},
+		{
+			name: "Passing case with time",
+			filter: Filter{
+				Kind:    TIMEVERSIONKIND,
+				Pattern: "20060201",
+			},
+			versions: []string{"20232103", "20232205", "20200101"},
+			want: Version{
+				ParsedVersion:   "20232205",
+				OriginalVersion: "20232205",
+			},
 		},
 	}
 	for _, tt := range tests {
