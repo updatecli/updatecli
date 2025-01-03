@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -19,6 +20,8 @@ const (
 	LATESTVERSIONKIND string = "latest"
 	// REGEXSEMVERVERSIONKIND use regex to extract versions and semantic version to find version
 	REGEXSEMVERVERSIONKIND string = "regex/semver"
+	// SORTVERSIONKIND uses the go sort package to find the latest version
+	GOSORTVERSIONKIND string = "gosort"
 )
 
 // SupportedKind holds a list of supported version kind
@@ -27,6 +30,7 @@ var SupportedKind []string = []string{
 	SEMVERVERSIONKIND,
 	LATESTVERSIONKIND,
 	REGEXSEMVERVERSIONKIND,
+	GOSORTVERSIONKIND,
 }
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
@@ -157,6 +161,11 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		}
 
 		return s.FoundVersion, nil
+	case GOSORTVERSIONKIND:
+		slices.Sort(versions)
+		foundVersion.ParsedVersion = versions[len(versions)-1]
+		foundVersion.OriginalVersion = foundVersion.ParsedVersion
+		return foundVersion, nil
 
 	default:
 		return foundVersion, &ErrUnsupportedVersionKindPattern{Pattern: f.Pattern, Kind: f.Kind}
