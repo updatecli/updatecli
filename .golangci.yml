@@ -33,38 +33,25 @@ linters-settings:
       - wrapperFunc
   gocyclo:
     min-complexity: 15
-  golint:
-    min-confidence: 0
   gomnd:
-    settings:
-      mnd:
-        # don't include the "operation" and "assign"
-        checks: [argument,case,condition,return]
+      # don't include the "operation" and "assign"
+    checks: [argument,case,condition,return]
   govet:
-    check-shadowing: true
-    fieldalignment:
     settings:
-      printf:
-        funcs:
-          - (github.com/jenkins-x/jx-logging/pkg/log/Logger()).Debugf
-          - (github.com/jenkins-x/jx-logging/pkg/log/Logger()).Infof
-          - (github.com/jenkins-x/jx-logging/pkg/log/Logger()).Warnf
-          - (github.com/jenkins-x/jx-logging/pkg/log/Logger()).Errorf
-          - (github.com/jenkins-x/jx-logging/pkg/log/Logger()).Fatalf
+      shadow:
+        # Whether to be strict about shadowing; can be noisy.
+        # Default: false
+        strict: true
+    enable-all: true
   lll:
     line-length: 140
-  maligned:
-    suggest-new: true
   misspell:
     locale: US
   nolintlint:
-    allow-leading-space: true   # don't require machine-readable nolint directives (i.e. with no leading space)
     allow-unused: false         # report any unused nolint directives
     require-explanation: false  # don't require an explanation for nolint directives
     require-specific: false     # don't require nolint directives to be specific about which linter is being skipped
 linters:
-  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
   enable:
     - asciicheck
@@ -75,24 +62,18 @@ linters:
     # - gocognit
     - goconst
     # - gocyclo
-    # - godot
     - gofmt
     - goimports
-    # - golint
     - goprintffuncname
     - gosec
     - gosimple
     - ineffassign
-    # - interfacer # deprecated since 1.38.0
     # - lll
-    # - maligned  # deprecated since 1.38.0
     - misspell
     - nakedret
     - nolintlint
-    # Disabled until fixed for go1.18 - https://github.com/golangci/golangci-lint/issues/2649
-    # - rowserrcheck
-    # Disabled until fixed for go1.18 - https://github.com/golangci/golangci-lint/issues/2649
-    #- structcheck
+    - rowserrcheck
+    # We should take some time to fix issues reported by this linter
     # - stylecheck
     - typecheck
     - unconvert
@@ -101,7 +82,8 @@ linters:
     # - whitespace
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
-  exclude-rules:
+  exclude-rules:  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
     - path: _test\.go
       linters:
         - gomnd
@@ -113,10 +95,10 @@ issues:
     - linters:
         - gocritic
       text: "unnecessaryDefer:"
-run:
-  timeout: 5m
-  skip-dirs:
+  exclude-dirs:
     - test/testdata_etc
     - internal/cache
     - internal/renameio
     - internal/robustio
+run:
+  timeout: 5m
