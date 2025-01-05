@@ -137,11 +137,13 @@ func (f *Filter) Search(versions []string) (Version, error) {
 
 		// Create a slice of versions using regex pattern
 		var parsedVersions []string
+		versionLookup := make(map[string]string)
 		for i := 0; i < len(versions); i++ {
 			v := versions[i]
 			found := re.FindStringSubmatch(v)
 			if len(found) > 1 {
 				parsedVersions = append(parsedVersions, found[1])
+				versionLookup[found[1]] = v
 			}
 
 		}
@@ -154,6 +156,10 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		err = s.Search(parsedVersions)
 		if err != nil {
 			return foundVersion, err
+		}
+
+		if originalVersion, ok := versionLookup[s.FoundVersion.OriginalVersion]; ok {
+			s.FoundVersion.OriginalVersion = originalVersion
 		}
 
 		return s.FoundVersion, nil
