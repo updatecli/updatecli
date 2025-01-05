@@ -13,6 +13,10 @@ go test
 
 ## Additional Information
 
+### Checklist
+
+- [ ] <!-- If applicable,--> I have updated the documentation via pull request in [website](https://github.com/updatecli/website) repository.
+
 ### Tradeoff
 
 <!-- Please describe, if any, the tradeoffs that you found acceptable in this pull request -->
