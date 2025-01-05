@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 
 	"github.com/shurcooL/githubv4"
@@ -89,7 +90,7 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 
 	return fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v",
 		query.Repository.Release.PublishedAt.String(),
-		query.Repository.Release.Url,
+		redact.URL(query.Repository.Release.Url),
 		query.Repository.Release.Description), nil
 }
 

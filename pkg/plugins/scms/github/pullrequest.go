@@ -40,7 +40,7 @@ type PullRequestApi struct {
 	State        string
 	Title        string
 	Url          string
-	Number       int
+	Number       int32
 }
 
 // ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
@@ -183,7 +183,7 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 }
 
 // CleanAction verifies if an existing action requires some cleanup such as closing a pullrequest with no changes.
-func (p *PullRequest) CleanAction(report reports.Action) error {
+func (p *PullRequest) CleanAction(report *reports.Action) error {
 
 	repository, err := p.gh.queryRepository("", "")
 	if err != nil {
@@ -207,14 +207,47 @@ func (p *PullRequest) CleanAction(report reports.Action) error {
 		logrus.Debugf("No changed file detected at pull request:\n\t%s", p.remotePullRequest.Url)
 		// Not returning an error if the comment failed to be added
 		// as the main purpose of this function is to close the pullrequest
-		return p.closePullRequest()
+		err = p.closePullRequest()
+		if err != nil {
+			return fmt.Errorf("Error closing pull request: %s", err.Error())
+		}
+
+		report.Link = ""
+		report.Description = "Pull request closed as no changed file detected"
+
+		return nil
 	}
 
 	return nil
 }
 
+func (p *PullRequest) CheckActionExist(report *reports.Action) error {
+
+	repository, err := p.gh.queryRepository("", "")
+	if err != nil {
+		return fmt.Errorf("Error querying repository: %s", err.Error())
+	}
+
+	p.repository = repository
+
+	err = p.getRemotePullRequest(false)
+	if err != nil {
+		return fmt.Errorf("Error getting remote pull request: %s", err.Error())
+	}
+
+	if p.remotePullRequest.ID == "" {
+		return nil
+	}
+
+	report.Link = p.remotePullRequest.Url
+	report.Title = p.remotePullRequest.Title
+	report.Description = p.remotePullRequest.Body
+
+	return nil
+}
+
 // CreateAction creates a new GitHub Pull Request or update an existing one.
-func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool) error {
+func (p *PullRequest) CreateAction(report *reports.Action, resetDescription bool) error {
 
 	// One GitHub pullrequest body can contain multiple action report
 	// It would be better to refactor CreateAction
@@ -250,6 +283,10 @@ func (p *PullRequest) CreateAction(report reports.Action, resetDescription bool)
 	if len(p.remotePullRequest.ID) == 0 {
 		return nil
 	}
+
+	report.Link = p.remotePullRequest.Url
+	report.Title = p.remotePullRequest.Title
+	report.Description = p.remotePullRequest.Body
 
 	// Once the remote Pull Request exists, we can than update it with additional information such as
 	// tags,assignee,etc.

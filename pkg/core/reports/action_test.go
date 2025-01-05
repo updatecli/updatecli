@@ -8,7 +8,6 @@ import (
 )
 
 func TestHTMLReportsString(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		report         Action
@@ -67,7 +66,6 @@ func TestHTMLReportsString(t *testing.T) {
 }
 
 func TestHTMLUnmarshal(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		report         string
@@ -140,7 +138,6 @@ func TestHTMLUnmarshal(t *testing.T) {
 }
 
 func TestSort(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		report         Action
@@ -259,7 +256,6 @@ func TestSort(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		report1        Action
@@ -345,7 +341,6 @@ func TestMerge(t *testing.T) {
 }
 
 func TestFromString(t *testing.T) {
-
 	tests := []struct {
 		name                string
 		oldReport           string
@@ -720,6 +715,143 @@ This is not a html formatted report
 		t.Run(tests[i].name, func(t *testing.T) {
 			gotFinalReport := MergeFromString(tests[i].oldReport, tests[i].newReport)
 			assert.Equal(t, tests[i].expectedFinalReport, gotFinalReport)
+		})
+	}
+}
+
+func TestToActionsMarkdownString(t *testing.T) {
+	tests := []struct {
+		name           string
+		report         Action
+		expectedOutput string
+	}{
+		{
+			name: "Default working situation",
+			report: Action{
+				ID:            "1234",
+				Title:         "Action Title",
+				PipelineTitle: "Test Title",
+				Targets: []ActionTarget{
+					{
+						ID:    "4567",
+						Title: "Target One",
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title:       "1.0.0",
+								Description: "",
+							},
+							{
+								Title:       "1.0.1",
+								Description: "",
+							},
+						},
+					},
+					{
+						ID:          "4567",
+						Title:       "Target Two",
+						Description: "Description",
+					},
+					{
+						ID:    "4567",
+						Title: "Target Three",
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title:       "1.0.0",
+								Description: "Description",
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: `# Test Title
+
+## Target One
+
+### 1.0.0
+
+### 1.0.1
+
+## Target Two
+
+Description
+
+## Target Three
+
+### 1.0.0
+
+` + "```" + `
+Description
+` + "```",
+		},
+		{
+			name: "with PipelineUrl",
+			report: Action{
+				ID:            "1234",
+				Title:         "Action Title",
+				PipelineTitle: "Test Title",
+				PipelineURL: &PipelineURL{
+					URL:  "https://www.updatecli.io/",
+					Name: "updatecli",
+				},
+				Targets: []ActionTarget{
+					{
+						ID:    "4567",
+						Title: "Target One",
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title:       "1.0.0",
+								Description: "",
+							},
+							{
+								Title:       "1.0.1",
+								Description: "",
+							},
+						},
+					},
+					{
+						ID:          "4567",
+						Title:       "Target Two",
+						Description: "Description",
+					},
+					{
+						ID:    "4567",
+						Title: "Target Three",
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title:       "1.0.0",
+								Description: "Description",
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: `# Test Title
+
+## Target One
+
+### 1.0.0
+
+### 1.0.1
+
+## Target Two
+
+Description
+
+## Target Three
+
+### 1.0.0
+
+` + "```" + `
+Description
+` + "```" + `
+
+[updatecli](https://www.updatecli.io/)`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expectedOutput, tt.report.ToActionsMarkdownString())
 		})
 	}
 }

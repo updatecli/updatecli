@@ -32,8 +32,9 @@ targets:
   succeed:
     name: "Target should be executed as depends on condition succeed"
     kind: shell
-    conditionids:
-     - succeed
+    disableconditions: true
+    dependson:
+      - condition#succeed
     spec:
       command: "echo 'this should run'"
 

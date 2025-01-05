@@ -13,7 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines settings used to interact with Bitbucket release
+// Spec defines settings used to interact with Bitbucket Server release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
 	// [S][C] Owner specifies repository owner
@@ -36,7 +36,7 @@ type Stash struct {
 	versionFilter version.Filter
 }
 
-// New returns a new valid Bitbucket object.
+// New returns a new valid Bitbucket Server object.
 func New(spec interface{}) (*Stash, error) {
 	var s Spec
 	var clientSpec client.Spec
@@ -54,7 +54,6 @@ func New(spec interface{}) (*Stash, error) {
 	}
 
 	err = clientSpec.Validate()
-
 	if err != nil {
 		return &Stash{}, err
 	}
@@ -66,13 +65,11 @@ func New(spec interface{}) (*Stash, error) {
 
 	s.Spec = clientSpec
 	err = s.Validate()
-
 	if err != nil {
 		return &Stash{}, err
 	}
 
 	c, err := client.New(clientSpec)
-
 	if err != nil {
 		return &Stash{}, err
 	}
@@ -90,12 +87,10 @@ func New(spec interface{}) (*Stash, error) {
 	}
 
 	return &g, nil
-
 }
 
-// Retrieve git tags from a remote bitbucket repository
+// Retrieve git tags from a remote Bitbucket Server repository
 func (g *Stash) SearchTags() (tags []string, err error) {
-
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -110,7 +105,6 @@ func (g *Stash) SearchTags() (tags []string, err error) {
 			Size: 30,
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +125,6 @@ func (s Spec) Validate() error {
 	missingParameters := []string{}
 
 	err := s.Spec.Validate()
-
 	if err != nil {
 		logrus.Errorln(err)
 		gotError = true

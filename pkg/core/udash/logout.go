@@ -11,7 +11,6 @@ func Logout(url string) error {
 
 	updatecliConfigPath, err := initConfigFile()
 	if err != nil {
-		logrus.Errorln(err)
 		return err
 	}
 
@@ -28,7 +27,7 @@ func Logout(url string) error {
 
 	keys := []string{}
 	for i := range data.Auths {
-		if data.Auths[i].URL == url || i == sanitizeTokenID(url) || data.Auths[i].Api == url {
+		if data.Auths[i].URL == url || i == sanitizeTokenID(url) || data.Auths[i].API == url {
 			logrus.Debugf("logout from %q\n", i)
 			delete(data.Auths, i)
 			continue

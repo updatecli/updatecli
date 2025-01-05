@@ -37,6 +37,7 @@ targets:
       file: '{{ .TargetFile }}'
       key: '{{ .TargetKey }}'
       name: '{{ .TargetChartName }}'
+      skippackaging: {{ .TargetChartSkipPackaging }}
       versionincrement: '{{ .TargetChartVersionIncrement }}'
     sourceid: '{{ .SourceID }}'
 `

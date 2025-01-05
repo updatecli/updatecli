@@ -40,7 +40,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 		if err != nil {
 			logrus.Errorln(err)
 		} else {
-			e.Pipelines = append(e.Pipelines, defaultPipeline)
+			e.Pipelines = append(e.Pipelines, &defaultPipeline)
 		}
 	}
 
@@ -223,8 +223,8 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			}
 
 			if err == nil {
-				e.Pipelines = append(e.Pipelines, newPipeline)
-				e.configurations = append(e.configurations, newConfig)
+				e.Pipelines = append(e.Pipelines, &newPipeline)
+				e.configurations = append(e.configurations, &newConfig)
 			} else {
 				e.Pipelines[id].Report.Result = result.FAILURE
 				// don't initially fail as init. of the pipeline still fails even with a successful validation

@@ -10,4 +10,4 @@ testcases:
         type: 'exec'
         assertions:
           - 'result.code ShouldEqual 0'
-          - 'result.systemerr ShouldContainSubstring "{{ .message.deprecated }}"'
+          - 'result.systemout ShouldContainSubstring "{{ .message.deprecated }}"'

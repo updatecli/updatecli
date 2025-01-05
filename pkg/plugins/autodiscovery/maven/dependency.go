@@ -13,7 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
+// discoverDependencyManifests discovers manifests for Maven dependencies
+func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 
 	var manifests [][]byte
 
@@ -34,8 +35,6 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 
 	for _, pomFile := range foundPomFiles {
 
-		logrus.Debugf("parsing file %q", pomFile)
-
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
@@ -43,21 +42,34 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 			continue
 		}
 
+		logrus.Debugf("parsing file %q", relativePomFile)
+
 		doc := etree.NewDocument()
 		if err := doc.ReadFromFile(pomFile); err != nil {
 			logrus.Debugln(err)
 			continue
 		}
 
-		// Retrieve repositories from pom.xml
-		repositories := getRepositoriesFromPom(doc)
+		mavenRepositories := getMavenRepositoriesURL(pomFile, doc)
 
 		// Retrieve dependencies
+		var dependencies []dependency
+		var dependencyKind string
+		var dependencyPathPrefix string
 
-		dependencies := getDependenciesFromPom(doc)
+		switch kind {
+		case "dependency":
+			dependencies = getDependenciesFromPom(doc)
+			dependencyKind = "dependencies"
+			dependencyPathPrefix = "/project"
+		case "dependencyManagement":
+			dependencies = getDependencyManagementsFromPom(doc)
+			dependencyKind = "dependencyManagements"
+			dependencyPathPrefix = "/project/dependencyManagement"
+		}
 
 		if len(dependencies) == 0 {
-			logrus.Debugf("no maven dependencies found in %q\n", pomFile)
+			logrus.Debugf("no maven %s found in %q\n", dependencyKind, relativePomFile)
 			continue
 		}
 
@@ -71,15 +83,15 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 		for i, dependency := range dependencies {
 
 			// Test if current version contains a variable, and skip the depend if it's the case
-			isContainsVariable := containsVariableRegex.Match([]byte(dependency.Version))
+			isContainVariable := containsVariableRegex.Match([]byte(dependency.Version))
 
 			if err != nil {
 				logrus.Debugln(err)
 				continue
 			}
 
-			if isContainsVariable {
-				logrus.Printf("Skipping dependency as it relies on property %q", dependency.Version)
+			if isContainVariable {
+				logrus.Printf("Skipping dependency %q in %q as it relies on property %q", dependency.ArtifactID, relativePomFile, dependency.Version)
 				continue
 			}
 
@@ -89,11 +101,6 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 			}
 
 			artifactFullName := fmt.Sprintf("%s/%s", dependency.GroupID, dependency.ArtifactID)
-
-			repos := []string{}
-			for _, repo := range repositories {
-				repos = append(repos, repo.URL)
-			}
 
 			sourceVersionFilterKind := m.versionFilter.Kind
 			sourceVersionFilterPattern := m.versionFilter.Pattern
@@ -151,27 +158,27 @@ func (m Maven) discoverDependenciesManifests() ([][]byte, error) {
 				File                       string
 				ScmID                      string
 			}{
-				ManifestName:               fmt.Sprintf("Bump Maven dependency %s", artifactFullName),
+				ManifestName:               fmt.Sprintf("Bump Maven %s %s", kind, artifactFullName),
 				ConditionID:                artifactFullName,
 				ConditionGroupID:           "groupid",
-				ConditionGroupIDName:       fmt.Sprintf("Ensure dependency groupId %q is specified", dependency.GroupID),
-				ConditionGroupIDPath:       fmt.Sprintf("/project/dependencies/dependency[%d]/groupId", i+1),
+				ConditionGroupIDName:       fmt.Sprintf("Ensure %s groupId %q is specified", kind, dependency.GroupID),
+				ConditionGroupIDPath:       fmt.Sprintf("%s/dependencies/dependency[%d]/groupId", dependencyPathPrefix, i+1),
 				ConditionGroupIDValue:      dependency.GroupID,
 				ConditionArtifactID:        "artifactid",
-				ConditionArtifactIDName:    fmt.Sprintf("Ensure dependency artifactId %q is specified", dependency.ArtifactID),
-				ConditionArtifactIDPath:    fmt.Sprintf("/project/dependencies/dependency[%d]/artifactId", i+1),
+				ConditionArtifactIDName:    fmt.Sprintf("Ensure %s artifactId %q is specified", kind, dependency.ArtifactID),
+				ConditionArtifactIDPath:    fmt.Sprintf("%s/dependencies/dependency[%d]/artifactId", dependencyPathPrefix, i+1),
 				ConditionArtifactIDValue:   dependency.ArtifactID,
 				SourceID:                   artifactFullName,
 				SourceName:                 fmt.Sprintf("Get latest Maven Artifact version %q", artifactFullName),
 				SourceKind:                 "maven",
 				SourceGroupID:              dependency.GroupID,
 				SourceArtifactID:           dependency.ArtifactID,
-				SourceRepositories:         repos,
+				SourceRepositories:         mavenRepositories,
 				SourceVersionFilterKind:    sourceVersionFilterKind,
 				SourceVersionFilterPattern: sourceVersionFilterPattern,
 				TargetID:                   artifactFullName,
-				TargetName:                 fmt.Sprintf("Bump dependency version for %q", artifactFullName),
-				TargetXMLPath:              fmt.Sprintf("/project/dependencies/dependency[%d]/version", i+1),
+				TargetName:                 fmt.Sprintf("deps(maven): update %q to {{ source %q }}", artifactFullName, artifactFullName),
+				TargetXMLPath:              fmt.Sprintf("%s/dependencies/dependency[%d]/version", dependencyPathPrefix, i+1),
 				File:                       relativePomFile,
 				ScmID:                      m.scmID,
 			}

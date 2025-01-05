@@ -6,7 +6,7 @@ Thanks for your interest in this project, feel free to ask any questions you may
 
 == Requirements
 
-To build the project, make sure that you link:golang[https://go.dev/] installed, link:https://www.gnu.org/software/make/[GNU Make] and link:https://goreleaser.com/install/[goreleaser installed], then execute the command `make build`, or use Docker with:
+To build the project, make sure that you have installed link:golang[https://go.dev/], link:https://www.gnu.org/software/make/[GNU Make] and link:https://goreleaser.com/install/[goreleaser], then execute the command `make build`, or use Docker with:
 
 ```
 docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windows -e GOARCH=386 golang:1.16 go build -v
@@ -152,7 +152,8 @@ Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Targ
 
 ===== 4. Claim your name
 
-Each stage which can be configured using a yaml/go template has to bind a resource kind and a package name, this is done in the "Unmarshal" function
+Each stage that can be configured using a yaml/go template has to bind a resource kind and a package name,
+this is done in the "Unmarshal" function
 
 ```
   import "github.com/updatecli/updatecli/pkg/plugins/packageName"
@@ -192,8 +193,54 @@ targets:
       - addPrefix: "olblak/polls@256:"
 ```
 
+=== TEST
 
-=== Documentation
+==== Unit Tests
+
+Unit tests are golang test which are executed by default, even with the `-short` flag set up (e.g. executed when `testing.Short() == "true"`).
+
+They usually uses mocks as they should:
+
+- Have no external dependencies such as database or external API
+- Avoid as much as possible network requests
+- Run in less than 2s (compilation excluded)
+
+[source,bash]
+----
+make test-short
+----
+
+==== Integration Tests
+
+Integration tests are golang test which are executed by default but not with the `-short` flag set up (e.g. not executed when `testing.Short() == "true"`).
+
+[source,bash]
+----
+make test
+----
+
+==== End to End (e2e) Tests
+
+* https://github.com/ovh/venom[OVH's Venom CLI] is required
+* A https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token[GitHub Personal Access Token (PAT)] is required with read access to public repositories
+* Define the following environment variables (otherwise the `make` command will fail with a message telling you which variable is missing):`
+** `$GITHUB_TOKEN` set to the GitHub PAT mentioned above
+** `$GITHUB_ACTOR` set to the GitHub username associated to the aforementioned GitHub PAT
+
+
+[source,bash]
+----
+export GITHUB_TOKEN=$(<command to get token from password manager>) # Treat this as a SENSITIVE value!
+export GITHUB_ACTOR=xxxxx
+
+venom version # expect v1.2.0
+
+make test-e2e
+----
+
+The execution log is written by Venom into `./e2e/venom.log`.
+
+=== DOCUMENTATION
 
 If you spot phrasing issues or just a lack of documentation, feel free to open link:https://github.com/updatecli/updatecli/issues[an issue] and/or link:https://github.com/updatecli/updatecli/pulls[a pull request].
 https://github.com/updatecli/website[website]

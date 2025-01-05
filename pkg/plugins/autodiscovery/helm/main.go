@@ -56,6 +56,8 @@ type Spec struct {
 		and its type like regex, semver, or just latest.
 	*/
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [target] Defines if a Chart should be packaged or not.
+	SkipPackaging bool `yaml:",omitempty"`
 	// [target] Defines if a Chart changes, triggers, or not, a Chart version update, accepted values is a comma separated list of "none,major,minor,patch"
 	VersionIncrement string `yaml:",omitempty"`
 }

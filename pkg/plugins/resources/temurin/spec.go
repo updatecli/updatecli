@@ -33,7 +33,8 @@ type Spec struct {
 	// * "checksum_url" (HTTP URL to the checksum file)
 	// * "signature_url" (HTTP URL to the signature file)
 	Result string `yaml:",omitempty"`
-	// Architecture specifies the CPU architecture to filter the Temurin release to retrieve.
+	// Architecture specifies the CPU architecture (as defined by the Temurin API - https://api.adoptium.net/q/swagger-ui/#/Types)
+	// to filter the Temurin release to retrieve.
 	//
 	// default: "x64"
 	//
@@ -61,7 +62,8 @@ type Spec struct {
 	// * "source
 	// * "sbom"
 	ImageType string `yaml:",omitempty"`
-	// OperatingSystem specifies the Operating System to filter the Temurin release to retrieve.
+	// OperatingSystem specifies the Operating System (as defined by the Temurin API - https://api.adoptium.net/q/swagger-ui/#/Types)
+	// to filter the Temurin release to retrieve.
 	//
 	// default: "linux"
 	//
@@ -78,7 +80,7 @@ type Spec struct {
 	//
 	// default: undefined
 	//
-	// Allowed values: string (can be a semantic version, a JDK version or a temurin release name)
+	// Allowed values: string (can be a semantic version, a JDK version or a Temurin release name)
 	SpecificVersion string `yaml:",omitempty"`
 	// Project specifies the project to filter the Temurin release to retrieve.
 	//
@@ -91,4 +93,17 @@ type Spec struct {
 	// * "jfr"
 	// * "shenandoah"
 	Project string `yaml:",omitempty"`
+	// Platforms is only valid within conditions. It specifies a collection of platforms as a filter for Temurin releases.
+	// Each platform must be a combination of an Operating System and a CPU architecture separated by the slash (`/`) character.
+	//
+	// default: empty list (e.g. no filtering per platform).
+	//
+	// Allowed values: Any combination of Operating System and Architecture as defined by the Temurin API (https://api.adoptium.net/q/swagger-ui/#/Types):
+	// * `linux/x64`
+	// * `linux/aarch64`
+	// * `linux/s390x`
+	// * `alpine-linux/x64`
+	// * `windows/x64`
+	// ...
+	Platforms []string `yaml:",omitempty"`
 }

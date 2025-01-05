@@ -12,33 +12,33 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Spec defines a specification for a "bitbucket" resource
+// Spec defines a specification for a Bitbucket Server resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// "url" specifies the default stash url in case of Bitbucket enterprise
+	// "url" specifies the default stash url in case of Bitbucket Server
 	URL string `yaml:",omitempty" jsonschema:"required"`
-	// "username" specifies the username used to authenticate with Bitbucket API
+	// "username" specifies the username used to authenticate with Bitbucket Server API
 	Username string `yaml:",omitempty"`
-	//  "token" specifies the credential used to authenticate with Stash API
+	//  "token" specifies the credential used to authenticate with Bitbucket Server API
 	//
 	//  remark:
 	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
 	//    but to use an environment variable or a SOPS file.
 	//
-	//    The value can be set to `{{ requiredEnv "GITEA_TOKEN"}}` to retrieve the token from the environment variable `GITHUB_TOKEN`
-	//	  or `{{ .gitea.token }}` to retrieve the token from a SOPS file.
+	//    The value can be set to `{{ requiredEnv "BITBUCKET_TOKEN"}}` to retrieve the token from the environment variable `BITBUCKET_TOKEN`
+	//	  or `{{ .bitbucket.token }}` to retrieve the token from a SOPS file.
 	//
 	//	  For more information, about a SOPS file, please refer to the following documentation:
 	//    https://github.com/getsops/sops
 	Token string `yaml:",omitempty"`
-	//  "password" specifies the credential used to authenticate with Stash API, it must be combined with "username"
+	//  "password" specifies the credential used to authenticate with Bitbucket Server API, it must be combined with "username"
 	//
 	//  remark:
 	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
 	//    but to use an environment variable or a SOPS file.
 	//
-	//    The value can be set to `{{ requiredEnv "GITEA_TOKEN"}}` to retrieve the token from the environment variable `GITHUB_TOKEN`
-	//	  or `{{ .gitea.token }}` to retrieve the token from a SOPS file.
+	//    The value can be set to `{{ requiredEnv "BITBUCKET_TOKEN"}}` to retrieve the token from the environment variable `BITBUCKET_TOKEN`
+	//	  or `{{ .bitbucket.token }}` to retrieve the token from a SOPS file.
 	//
 	//	  For more information, about a SOPS file, please refer to the following documentation:
 	//    https://github.com/getsops/sops
@@ -53,7 +53,6 @@ type Client *scm.Client
 
 func New(s Spec) (Client, error) {
 	client, err := stash.New(s.URL)
-
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,6 @@ func New(s Spec) (Client, error) {
 
 // Validate validates that a spec contains good content
 func (s Spec) Validate() error {
-
 	if len(s.URL) == 0 {
 		logrus.Errorf("missing %q parameter", "url")
 		return fmt.Errorf("wrong configuration")
@@ -95,7 +93,6 @@ func (s Spec) Validate() error {
 
 // Sanitize parse and update if needed a spec content
 func (s *Spec) Sanitize() error {
-
 	err := s.Validate()
 	if err != nil {
 		return err

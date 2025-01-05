@@ -1,0 +1,40 @@
+name: Should Source impact dependsonchange
+pipelineid: e2e/dependsonchangeor
+
+sources:
+  1:
+    name: Should be succeeding
+    kind: shell
+    spec:
+      command: "echo 1.2.3"
+conditions:
+  1:
+    disablesourceinput: true
+    name: Should be succeeding
+    kind: shell
+    spec:
+      command: "true"
+targets:
+  1:
+    disablesourceinput: true
+    name: Should be succeeding
+    kind: shell
+    spec:
+      command: "true"
+  2:
+    disablesourceinput: true
+    name: Should be succeeding
+    kind: shell
+    spec:
+      command: "true"
+
+  3:
+    name: Should be skipped
+    kind: shell
+    dependson:
+      - "1:or"
+      - "2:or"
+    dependsonchange: true
+    disableconditions: true
+    spec:
+      command: 'echo {{ source "1" }}'

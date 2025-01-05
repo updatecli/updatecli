@@ -11,5 +11,5 @@ testcases:
         type: 'exec'
         assertions:
           - 'result.code ShouldEqual 0'
-          - 'result.systemerr ShouldNotContainSubstring "{{ .message.warning }}"'
-          - 'result.systemerr ShouldNotContainSubstring "{{ .message.error }}"'
+          - 'result.systemout ShouldNotContainSubstring "{{ .message.warning }}"'
+          - 'result.systemout ShouldNotContainSubstring "{{ .message.error }}"'

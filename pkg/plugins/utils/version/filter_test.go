@@ -142,6 +142,37 @@ func TestSearch(t *testing.T) {
 			want:     Version{},
 			wantErr:  &ErrNoVersionFoundForPattern{Pattern: "^updatecli-4.(\\d*)$"},
 		},
+		{
+			name: "Passing case with regex/semver",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "^updatecli-(\\d*\\.\\d*\\.\\d*)$",
+			},
+			versions: []string{"updatecli-1.0.0", "updatecli-2.0.0", "updatecli-1.1.0"},
+			want: Version{
+				ParsedVersion:   "2.0.0",
+				OriginalVersion: "updatecli-2.0.0",
+			},
+		},
+		{
+			name: "Passing case with regex/semver",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "^updatecli-\\d*\\.\\d*\\.\\d*$",
+			},
+			versions: []string{"updatecli-1.0.0", "updatecli-2.0.0", "updatecli-1.1.0"},
+			want:     Version{},
+			wantErr:  errors.New("versions list empty"),
+		},
+		{
+			name: "Passing case with regex/semver",
+			filter: Filter{
+				Kind: REGEXSEMVERVERSIONKIND,
+			},
+			versions: []string{"updatecli-1.0.0", "updatecli-2.0.0", "updatecli-1.1.0"},
+			want:     Version{},
+			wantErr:  errors.New("versions list empty"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

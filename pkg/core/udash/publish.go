@@ -20,14 +20,44 @@ var (
 
 // Publish publish a pipeline report to the updatecli api
 func Publish(r *reports.Report) error {
+
+	logrus.Infof("Publishing report to Udash")
+
+	// setDefaultParam sets the default value for a parameter
+	setDefaultParam := func(envParam *string, configParam, envParamName, configParamName string) {
+		if *envParam != "" && configParam != "" {
+			logrus.Debugf("%s provided via environment variable %q supersede value %q from %q in config file",
+				*envParam,
+				envParamName,
+				configParamName,
+				configParam)
+			return
+		} else if *envParam == "" && configParam != "" {
+			*envParam = configParam
+		}
+	}
+
 	err := r.UpdateID()
 	if err != nil {
 		return fmt.Errorf("generating report IDs: %w", err)
 	}
 
-	reportURLString, reportApiURLString, bearerToken, err := Token("")
-	if err != nil {
-		return fmt.Errorf("retrieving service access token: %w", err)
+	reportURLString, reportApiURLString, bearerToken := getConfigFromEnv()
+	if reportApiURLString == "" {
+		logrus.Debugf("no Udash API URL detected via environment variables, looking for a configuration file")
+		localReportURLString, localReportApiURLString, localBearerToken, err := getConfigFromFile("")
+		if err != nil {
+			logrus.Debugf("retrieving service access token: %s", err)
+		}
+
+		setDefaultParam(&reportApiURLString, localReportApiURLString, DefaultEnvVariableAPIURL, "api")
+		setDefaultParam(&reportURLString, localReportURLString, DefaultEnvVariableURL, "url")
+		setDefaultParam(&bearerToken, localBearerToken, DefaultEnvVariableAccessToken, "token")
+	}
+
+	if reportApiURLString == "" {
+		logrus.Infof("no Udash endpoint detected, skipping report publication")
+		return nil
 	}
 
 	reportApiURL, err := url.Parse(reportApiURLString)
@@ -40,7 +70,7 @@ func Publish(r *reports.Report) error {
 		return fmt.Errorf("parsing report URL: %w", err)
 	}
 
-	jsonBody, err := json.Marshal(r)
+	jsonBody, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshaling json: %w", err)
 	}

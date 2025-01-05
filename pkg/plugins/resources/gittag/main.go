@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -15,11 +16,62 @@ type Spec struct {
 	// Path contains the git repository path
 	Path string `yaml:",omitempty"`
 	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	//
+	//  compatible:
+	//    * source
+	//    * condition
+	//    * target
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Message associated to the git tag
+	//  Message associated to the git tag
+	//
+	//  compatible:
+	//    * target
 	Message string `yaml:",omitempty"`
-	// Key of the tag object to retrieve, default is tag "name" filters are always against tag name, this only controls the output; Current options are 'name' and 'hash'.
+	//  "key" of the tag object to retrieve.
+	//
+	//  Accepted values: ['name','hash'].
+	//
+	//  Default: 'name'
+	//  Compatible:
+	//    * source
 	Key string `yaml:",omitempty"`
+	//	"url" specifies the git url to use for fetching Git Tags.
+	//
+	//	compatible:
+	//	  * source
+	//	  * condition
+	// 	  * target
+	//
+	//	example:
+	//	  * git@github.com:updatecli/updatecli.git
+	//	  * https://github.com/updatecli/updatecli.git
+	//
+	//	remarks:
+	//		when using the ssh protocol, the user must have the right to clone the repository
+	//		based on its local ssh configuration
+	URL string `yaml:",omitempty" jsonschema:"required"`
+	//	"username" specifies the username when using the HTTP protocol
+	//
+	//	compatible
+	//	  * source
+	//	  * condition
+	// 	  * target
+	Username string `yaml:",omitempty"`
+	//	"password" specifies the password when using the HTTP protocol
+	//
+	//	compatible:
+	//	  * source
+	// 	  * condition
+	// 	  * target
+	Password string `yaml:",omitempty"`
+	// "sourcebranch" defines the branch name used as a source to create the new Git branch.
+	//
+	// compatible:
+	//  * target
+	//
+	// remark:
+	//  * sourcebranch is required when the scmid is not defined.
+	SourceBranch string `yaml:",omitempty"`
 }
 
 // GitTag defines a resource of kind "gittag"
@@ -31,6 +83,8 @@ type GitTag struct {
 	versionFilter version.Filter
 	// nativeGitHandler holds a git client implementation to manipulate git SCMs
 	nativeGitHandler gitgeneric.GitHandler
+	// directory defines the local path where the git repository is cloned.
+	directory string
 }
 
 // New returns a reference to a newly initialized GitTag object from a Spec
@@ -60,9 +114,7 @@ func New(spec interface{}) (*GitTag, error) {
 // Validate tests that tag struct is correctly configured
 func (gt *GitTag) Validate() error {
 	validationErrors := []string{}
-	if gt.spec.Path == "" {
-		validationErrors = append(validationErrors, "Git working directory path is empty while it must be specified. Did you specify an `scmID` or a `spec.path`?")
-	}
+
 	if gt.spec.Key != "" && gt.spec.Key != "hash" && gt.spec.Key != "name" {
 		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
 	}
@@ -78,4 +130,18 @@ func (gt *GitTag) Validate() error {
 // Changelog returns the changelog for this resource, or an empty string if not supported
 func (gt *GitTag) Changelog() string {
 	return ""
+}
+
+// clone clones the git repository
+func (gt *GitTag) clone() (string, error) {
+	g, err := git.New(git.Spec{
+		URL:      gt.spec.URL,
+		Username: gt.spec.Username,
+		Password: gt.spec.Password,
+	}, "")
+
+	if err != nil {
+		return "", err
+	}
+	return g.Clone()
 }

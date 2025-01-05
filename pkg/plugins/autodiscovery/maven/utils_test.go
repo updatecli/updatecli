@@ -16,7 +16,7 @@ func TestGetParentFromPom(t *testing.T) {
 	}{
 		{
 			name: "Test 1",
-			file: "test/testdata/pom.xml",
+			file: "testdata/default/pom.xml",
 			expectedParent: parentPom{
 				GroupID:    "org.jenkins-ci.plugins",
 				ArtifactID: "plugin",
@@ -45,7 +45,7 @@ func TestGetRepositoriesFromPom(t *testing.T) {
 	}{
 		{
 			name: "Test 1",
-			file: "test/testdata/pom.xml",
+			file: "testdata/default/pom.xml",
 			expectedRepositories: []repository{
 				{
 					URL: "https://repo.jenkins-ci.org/public/",
@@ -75,7 +75,7 @@ func TestGetDependenciesFromPom(t *testing.T) {
 	}{
 		{
 			name: "Test 1",
-			file: "test/testdata/pom.xml",
+			file: "testdata/default/pom.xml",
 			expectedDependencies: []dependency{
 				{
 					GroupID:    "com.jcraft",
@@ -131,7 +131,7 @@ func TestGetDependencyManagementsFromPom(t *testing.T) {
 	}{
 		{
 			name: "Test 1",
-			file: "test/testdata/pom.xml",
+			file: "testdata/default/pom.xml",
 			expectedDependencies: []dependency{
 				{
 					GroupID:    "io.jenkins.tools.bom",
@@ -150,6 +150,49 @@ func TestGetDependencyManagementsFromPom(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gotDependencies := getDependencyManagementsFromPom(doc)
 			assert.Equal(t, tt.expectedDependencies, gotDependencies)
+		})
+	}
+}
+
+func TestGetMavenRepositoriesURL(t *testing.T) {
+	testdata := []struct {
+		name                 string
+		file                 string
+		expectedRepositories []string
+	}{
+		{
+			name: "Test 1",
+			file: "testdata/default/pom.xml",
+			expectedRepositories: []string{
+				"https://repo.jenkins-ci.org/public/",
+				"https://mirror.example.com/maven2",
+			},
+		},
+		{
+			name: "Test 2",
+			file: "testdata/exclude/pom.xml",
+			expectedRepositories: []string{
+				"https://foo:bar@mirror.example.com/maven",
+				"http://bar-repo.example.com/maven",
+			},
+		},
+		{
+			name: "Test 3",
+			file: "testdata/jenkins-datadog-plugin/pom.xml",
+			expectedRepositories: []string{
+				"http://repo.jenkins-ci.org/public/",
+			},
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := etree.NewDocument()
+			if err := doc.ReadFromFile(tt.file); err != nil {
+				require.NoError(t, err)
+			}
+			gotRepositories := getMavenRepositoriesURL(tt.file, doc)
+			assert.Equal(t, tt.expectedRepositories, gotRepositories)
 		})
 	}
 }

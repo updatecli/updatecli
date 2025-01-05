@@ -7,6 +7,8 @@ type Manifest struct {
 	Values []string
 	// Secrets is a list of Updatecli secret file
 	Secrets []string
+	// GraphOutput is a path to output the manifest graph to
+	GraphOutput string
 }
 
 func (m Manifest) IsZero() bool {

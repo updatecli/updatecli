@@ -9,12 +9,10 @@ func (e *Engine) Run() (err error) {
 
 	PrintTitle("Pipeline")
 
-	for _, pipeline := range e.Pipelines {
+	for i := range e.Pipelines {
+		pipeline := e.Pipelines[i]
 
 		err := pipeline.Run()
-
-		e.Reports = append(e.Reports, pipeline.Report)
-
 		if err != nil {
 			logrus.Printf("Pipeline %q failed\n", pipeline.Name)
 			logrus.Printf("Skipping due to:\n\t%s\n", err)
@@ -24,6 +22,11 @@ func (e *Engine) Run() (err error) {
 
 	if err = e.runActions(); err != nil {
 		logrus.Errorf("running actions:\n%s", err)
+	}
+
+	for i := range e.Pipelines {
+		pipeline := e.Pipelines[i]
+		e.Reports = append(e.Reports, pipeline.Report)
 	}
 
 	if err = e.publishToUdash(); err != nil {

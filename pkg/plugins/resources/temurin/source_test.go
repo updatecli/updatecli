@@ -95,21 +95,21 @@ func TestSource(t *testing.T) {
 			mockedHttpError: fmt.Errorf("Connection Error"),
 			spec:            Spec{},
 			wantStatus:      result.FAILURE,
-			wantErr:         "Connection Error",
+			wantErr:         "something went wrong while performing a request to \"https://api.adoptium.net/v3/info/available_releases\":\nConnection Error\n",
 		},
 		{
 			name:                 "Failure when HTTP/500 from the 'available_releases' endpoint",
 			mockedHTTPStatusCode: map[string]int{availableReleasesEndpoint: http.StatusInternalServerError},
 			spec:                 Spec{},
 			wantStatus:           result.FAILURE,
-			wantErr:              fmt.Sprintf("[temurin] Caught HTTP error %d from the API.\n", http.StatusInternalServerError),
+			wantErr:              fmt.Sprintf("Got an HTTP error %d from the API.\n", http.StatusInternalServerError),
 		},
 		{
 			name:                 "Failure when HTTP/500 from the 'release_names' endpoint",
 			mockedHTTPStatusCode: map[string]int{releaseNamesEndpoint: http.StatusInternalServerError},
 			spec:                 Spec{},
 			wantStatus:           result.FAILURE,
-			wantErr:              fmt.Sprintf("[temurin] Caught HTTP error %d from the API.\n", http.StatusInternalServerError),
+			wantErr:              fmt.Sprintf("Got an HTTP error %d from the API.\n", http.StatusInternalServerError),
 		},
 		{
 			name:                 "Failure when HTTP/500 from the '" + installersEndpoint + "' endpoint",
@@ -119,7 +119,7 @@ func TestSource(t *testing.T) {
 				Result: "installer_url",
 			},
 			wantStatus: result.FAILURE,
-			wantErr:    fmt.Sprintf("[temurin] Caught HTTP error %d from the API.\n", http.StatusInternalServerError),
+			wantErr:    fmt.Sprintf("Got an HTTP error %d from the API.\n", http.StatusInternalServerError),
 		},
 		{
 			name: "Failure when HTTP/500 from the '/version' endpoint",
@@ -129,7 +129,7 @@ func TestSource(t *testing.T) {
 				SpecificVersion: "17.0.2",
 			},
 			wantStatus: result.FAILURE,
-			wantErr:    fmt.Sprintf("[temurin] Caught HTTP error %d from the API.\n", http.StatusInternalServerError),
+			wantErr:    "the version \"17.0.2\" is not a valid Temurin version.\nAPI response was: \"Got an HTTP error 500 from the API.\\n\"",
 		},
 		{
 			name:                 "Failure when HTTP/500 from the 'checksum/version' endpoint",
@@ -139,7 +139,7 @@ func TestSource(t *testing.T) {
 				Result: "checksum_url",
 			},
 			wantStatus: result.FAILURE,
-			wantErr:    fmt.Sprintf("[temurin] Caught HTTP error %d from the API.\n", http.StatusInternalServerError),
+			wantErr:    fmt.Sprintf("Got an HTTP error %d from the API.\n", http.StatusInternalServerError),
 		},
 		{
 			name:                 "Failure when HTTP/500 from the 'signature/version' endpoint",
@@ -149,7 +149,7 @@ func TestSource(t *testing.T) {
 				Result: "signature_url",
 			},
 			wantStatus: result.FAILURE,
-			wantErr:    fmt.Sprintf("[temurin] Caught HTTP error %d from the API.\n", http.StatusInternalServerError),
+			wantErr:    fmt.Sprintf("Got an HTTP error %d from the API.\n", http.StatusInternalServerError),
 		},
 		{
 			name:           "Failure when 'release_names' provides empty results",

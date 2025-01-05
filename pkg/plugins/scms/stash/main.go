@@ -19,7 +19,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
-// Spec defines settings used to interact with Bitbucket release
+// Spec defines settings used to interact with Bitbucket Server release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
 	//  "commitMessage" is used to generate the final commit message.
@@ -41,7 +41,7 @@ type Spec struct {
 	//
 	//  default:
 	//    The default value is based on your local temporary directory like: (on Linux)
-	//    /tmp/updatecli/github/<owner>/<repository>
+	//    /tmp/updatecli/stash/<owner>/<repository>
 	Directory string `yaml:",omitempty"`
 	//  "email" defines the email used to commit changes.
 	//
@@ -130,7 +130,7 @@ type Stash struct {
 	force            bool
 }
 
-// New returns a new valid Bitbucket object.
+// New returns a new valid Bitbucket Server object.
 func New(spec interface{}, pipelineID string) (*Stash, error) {
 	var s Spec
 	var clientSpec client.Spec
@@ -148,7 +148,6 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 	}
 
 	err = clientSpec.Validate()
-
 	if err != nil {
 		return &Stash{}, err
 	}
@@ -161,7 +160,6 @@ func New(spec interface{}, pipelineID string) (*Stash, error) {
 	s.Spec = clientSpec
 
 	err = s.Validate()
-
 	if err != nil {
 		return &Stash{}, err
 	}
@@ -206,7 +204,6 @@ If you know what you are doing, please set the force option to true in your conf
 	}
 
 	c, err := client.New(clientSpec)
-
 	if err != nil {
 		return &Stash{}, err
 	}
@@ -224,12 +221,10 @@ If you know what you are doing, please set the force option to true in your conf
 	g.setDirectory()
 
 	return &g, nil
-
 }
 
-// Retrieve git tags from a remote bitbucket repository
+// Retrieve git tags from a remote Bitbucket Server repository
 func (s *Stash) SearchTags() (tags []string, err error) {
-
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -244,7 +239,6 @@ func (s *Stash) SearchTags() (tags []string, err error) {
 			Size: 30,
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 // isPullRequestExist queries a remote Bitbucket instance to know if a pullrequest already exists.
-func (s *Stash) isPullRequestExist() (bool, error) {
+func (s *Stash) isPullRequestExist() (title, description, link string, err error) {
 	ctx := context.Background()
 	// Timeout api query after 30sec
 	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
@@ -34,7 +34,7 @@ func (s *Stash) isPullRequestExist() (bool, error) {
 
 	if err != nil {
 		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-		return false, err
+		return "", "", "", err
 	}
 
 	if resp.Status > 400 {
@@ -51,10 +51,10 @@ func (s *Stash) isPullRequestExist() (bool, error) {
 				result.SUCCESS,
 				p.Link)
 
-			return true, nil
+			return p.Title, p.Body, p.Link, nil
 		}
 	}
-	return false, nil
+	return "", "", "", nil
 }
 
 // isRemoteBranchesExist queries a remote Bitbucket instance to know if both the pull-request source branch and the target branch exist.

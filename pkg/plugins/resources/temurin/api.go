@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	httputils "github.com/updatecli/updatecli/pkg/plugins/utils/http"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 const availableReleasesEndpoint = "/info/available_releases"
@@ -27,18 +28,16 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		logrus.Errorf("something went wrong while performing a request to %q :\n%q\n", url, err)
-		return []byte{}, "", err
+		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", redact.URL(url), err)
 	}
 
 	req.Header.Set("User-Agent", httputils.UserAgent)
 
-	logrus.Debugf("[temurin] Performing an http GET request to %q...", url)
+	logrus.Debugf("[temurin] Performing an http GET request to %q...", redact.URL(url))
 
 	res, err := webClient.Do(req)
 	if err != nil {
-		logrus.Errorf("something went wrong while performing a request to %q :\n%q\n", url, err)
-		return []byte{}, "", err
+		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", redact.URL(url), err)
 	}
 	defer res.Body.Close()
 
@@ -46,7 +45,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	if res.StatusCode >= 400 {
 		_, _ = httputil.DumpResponse(res, false)
-		return []byte{}, "", fmt.Errorf("[temurin] Caught HTTP error %d from the API.\n", res.StatusCode)
+		return []byte{}, "", fmt.Errorf("Got an HTTP error %d from the API.\n", res.StatusCode)
 	}
 
 	locationHeader = res.Header.Get("Location")
@@ -54,8 +53,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	body, err = io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Errorf("something went wrong while performing a request to %q :\n%q\n", url, err)
-		return []byte{}, "", err
+		return []byte{}, "", fmt.Errorf("something went wrong while decoding the answer of the request %q:\n%s\n", redact.URL(url), err)
 	}
 
 	return body, locationHeader, nil
@@ -142,27 +140,25 @@ func (t Temurin) apiParseVersion(version string) (result parsedVersion, err erro
 
 	body, err := t.apiGetBody(apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while parsing the version %q with the Temurin API available operating systems %q\n", version, err)
-		return result, err
+		return result, fmt.Errorf("the version %q is not a valid Temurin version.\nAPI response was: %q", version, err)
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		logrus.Errorf("something went wrong while decoding response from Temurin API %q\n", err)
 		return result, err
 	}
 
 	return result, nil
 }
 
-func (t Temurin) apiGetReleaseName() (result string, err error) {
+func (t Temurin) apiGetReleaseNames() (result []string, err error) {
 	var versionRange string
 
 	// If user specified a custom version, we have to normalize and validate it
 	if t.spec.SpecificVersion != "" {
 		parsedVersion, err := t.apiParseVersion(t.spec.SpecificVersion)
 		if err != nil {
-			return "", err
+			return []string{}, err
 		}
 
 		versionRange = fmt.Sprintf("(%d.%d.%d, %d.%d.%d]",
@@ -179,7 +175,7 @@ func (t Temurin) apiGetReleaseName() (result string, err error) {
 		if featureVersion == 0 {
 			featureVersion, err = t.apiGetLastFeatureRelease()
 			if err != nil {
-				return "", err
+				return []string{}, err
 			}
 		}
 
@@ -187,11 +183,13 @@ func (t Temurin) apiGetReleaseName() (result string, err error) {
 	}
 
 	apiEndpoint := fmt.Sprintf(
-		"%s?heap_size=normal&image_type=%s&page=0&page_size=10&project=%s&release_type=%s&semver=true&sort_method=DEFAULT&sort_order=DESC&vendor=eclipse&version=%s",
+		"%s?heap_size=normal&image_type=%s&page=0&page_size=10&project=%s&release_type=%s&architecture=%s&os=%s&semver=true&sort_method=DEFAULT&sort_order=DESC&vendor=eclipse&version=%s",
 		releaseNamesEndpoint,
 		t.spec.ImageType,
 		t.spec.Project,
 		t.spec.ReleaseType,
+		t.spec.Architecture,
+		t.spec.OperatingSystem,
 		// Mandatory URL encoding otherwise empty responses or HTTP errors
 		url.QueryEscape(versionRange),
 	)
@@ -211,13 +209,8 @@ func (t Temurin) apiGetReleaseName() (result string, err error) {
 		return result, fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details.")
 	}
 
-	if len(apiResult.Releases) == 0 {
-		logrus.Debug("[temurin] empty response for 'release_names'.")
-		return result, fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details.")
-	}
-
 	// Return only the most recent, e.g. the first one (sort is DESC in the URL)
-	return apiResult.Releases[0], nil
+	return apiResult.Releases, nil
 }
 
 func (t Temurin) apiGetInstallerUrl(releaseName string) (result string, err error) {

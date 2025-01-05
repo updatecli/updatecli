@@ -1,447 +1,956 @@
 package pipeline
 
 import (
-	"strings"
+	"sort"
 	"testing"
 
+	"github.com/heimdalr/dag"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/file"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 )
 
-type SortedKeysData struct {
-	Conf                     Pipeline
-	ExpectedSourcesResult    []string
-	ExpectedConditionsResult []string
-	ExpectedTargetsResult    []string
-	ExpectedSourcesErr       error
-	ExpectedConditionsErr    error
-	ExpectedTargetsErr       error
+type ResultLeaf struct {
+	Id      string
+	Parents []string
 }
 
-type SortedKeysDataSet []SortedKeysData
+func TestSortedResourcesKeys(t *testing.T) {
+	testdata := []struct {
+		Name           string
+		Conf           Pipeline
+		Sources        map[string]source.Config
+		Conditions     map[string]condition.Config
+		Targets        map[string]target.Config
+		ExpectedResult [][]ResultLeaf
+		ExpectedErr    error
+	}{{
+		Name: "Scenario 1",
+		Sources: map[string]source.Config{
+			"1": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"2",
+						"3",
+					},
+				},
+			},
+			"2": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"3",
+					},
+				},
+			},
+			"3": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+				},
+			},
+		},
+		Conditions: map[string]condition.Config{
+			"1": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"2",
+					},
+				},
+				DisableSourceInput: true,
+			},
+			"2": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"3",
+					},
+				},
+				DisableSourceInput: true,
+			},
+			"3": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+				},
+				DisableSourceInput: true,
+			},
+		},
+		Targets: map[string]target.Config{
+			"1": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"2",
+					},
+				},
+				DisableConditions:  true,
+				DisableSourceInput: true,
+			},
+			"2": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					DependsOn: []string{
+						"3",
+					},
+				},
+				DisableConditions:  true,
+				DisableSourceInput: true,
+			},
+			"3": {
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+				},
+				DisableConditions:  true,
+				DisableSourceInput: true,
+			},
+		},
+		ExpectedResult: [][]ResultLeaf{
+			{
+				{Id: "source#3", Parents: []string{"root"}},
+				{Id: "condition#3", Parents: []string{"root"}},
+				{Id: "target#3", Parents: []string{"root"}},
+			},
+			{
+				{Id: "source#2", Parents: []string{"root", "source#3"}},
+				{Id: "condition#2", Parents: []string{"root", "condition#3"}},
+				{Id: "target#2", Parents: []string{"root", "target#3"}},
+			},
+			{
+				{Id: "source#1", Parents: []string{"root", "source#2", "source#3"}},
+				{Id: "condition#1", Parents: []string{"root", "condition#2"}},
+				{Id: "target#1", Parents: []string{"root", "target#2"}},
+			},
+		},
+	},
+		{
+			Name: "Scenario 2",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"3",
+						},
+					},
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"4",
+						},
+					},
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
+						},
+					},
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"3",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"4",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"4": {
 
-var (
-	sortedKeysDataset = SortedKeysDataSet{
-		{
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-									"3",
-								},
-							},
-						},
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
 					},
-					"2": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
-						},
-					},
-					"3": {},
-				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
-						},
-					},
-					"3": {},
-				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
-						},
-					},
-					"3": {},
+					DisableSourceInput: true,
 				},
 			},
-			ExpectedSourcesResult: []string{
-				"3", "2", "1",
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"3",
+						},
+					},
+					DisableSourceInput: true,
+					DisableConditions:  true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"4",
+						},
+					},
+					DisableSourceInput: true,
+					DisableConditions:  true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
+						},
+					},
+					DisableSourceInput: true,
+					DisableConditions:  true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
 			},
-			ExpectedConditionsResult: []string{
-				"3", "2", "1",
-			},
-			ExpectedTargetsResult: []string{
-				"3", "2", "1",
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#4", Parents: []string{"root"}},
+					{Id: "condition#4", Parents: []string{"root"}},
+					{Id: "target#4", Parents: []string{"root"}},
+				},
+				{
+					{Id: "source#2", Parents: []string{"root", "source#4"}},
+					{Id: "condition#2", Parents: []string{"root", "condition#4"}},
+					{Id: "target#2", Parents: []string{"root", "target#4"}},
+				},
+				{
+					{Id: "source#3", Parents: []string{"root", "source#2"}},
+					{Id: "condition#3", Parents: []string{"root", "condition#2"}},
+					{Id: "target#3", Parents: []string{"root", "target#2"}},
+				},
+				{
+					{Id: "source#1", Parents: []string{"root", "source#3"}},
+					{Id: "condition#1", Parents: []string{"root", "condition#3"}},
+					{Id: "target#1", Parents: []string{"root", "target#3"}},
+				},
 			},
 		},
 		{
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
+			Name: "Scenario 3",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
-					"2": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"4",
-								},
-							},
-						},
-					},
-					"3": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"4": {},
-				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"4",
-								},
-							},
-						},
-					},
-					"3": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"4": {},
-				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"4",
-								},
-							},
-						},
-					},
-					"3": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"4": {},
 				},
 			},
-			ExpectedSourcesResult: []string{
-				"4", "2", "3", "1",
+			Conditions: map[string]condition.Config{
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"3",
+						},
+					},
+					DisableSourceInput: true,
+				},
 			},
-			ExpectedConditionsResult: []string{
-				"4", "2", "3", "1",
+			Targets: map[string]target.Config{
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"4",
+						},
+					},
+					DisableSourceInput: true,
+					DisableConditions:  true,
+				},
 			},
-			ExpectedTargetsResult: []string{
-				"4", "2", "3", "1",
+			ExpectedResult: [][]ResultLeaf{},
+			ExpectedErr:    ErrNotValidDependsOn,
+		},
+		{
+			Name: "Scenario 4",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#2",
+						},
+					},
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#3",
+							"condition#2",
+						},
+					},
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#4",
+						},
+					},
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#4",
+						},
+					},
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#2",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#4",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"source#4",
+							"source#3",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#4",
+						},
+					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#1",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"target#1",
+							"target#3",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"source#2",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "target#4", Parents: []string{"root"}},
+				},
+				{
+					{Id: "source#4", Parents: []string{"root", "target#4"}},
+					{Id: "source#3", Parents: []string{"root", "target#4"}},
+					{Id: "condition#4", Parents: []string{"root", "target#4"}},
+				},
+				{
+					{Id: "condition#3", Parents: []string{"root", "source#3", "source#4"}},
+					{Id: "condition#2", Parents: []string{"root", "condition#4"}},
+				},
+				{
+					{Id: "source#2", Parents: []string{"root", "condition#2", "condition#3"}},
+					{Id: "condition#1", Parents: []string{"root", "condition#2"}},
+				},
+				{
+					{Id: "target#3", Parents: []string{"root", "source#2"}},
+					{Id: "target#1", Parents: []string{"root", "condition#1"}},
+				},
+				{
+					{Id: "target#2", Parents: []string{"root", "target#3", "target#1"}},
+				},
+				{
+					{Id: "source#1", Parents: []string{"root", "target#2"}},
+				},
 			},
 		},
 		{
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
+			Name: "Scenario 5",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
 				},
-				Conditions: map[string]condition.Condition{
-					"2": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"3",
-								},
-							},
-						},
-					},
-				},
-				Targets: map[string]target.Target{
-					"3": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"4",
-								},
-							},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
 						},
 					},
 				},
 			},
-			ExpectedSourcesResult:    []string{},
-			ExpectedConditionsResult: []string{},
-			ExpectedTargetsResult:    []string{},
-			ExpectedSourcesErr:       ErrNotValidDependsOn,
-			ExpectedConditionsErr:    ErrNotValidDependsOn,
-			ExpectedTargetsErr:       ErrNotValidDependsOn,
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
+						},
+					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
+						},
+					},
+					DisableConditions:  true,
+					DisableSourceInput: true,
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{},
+			ExpectedErr:    ErrDependsOnLoopDetected,
 		},
 		{
-			Conf: Pipeline{
-				Sources: map[string]source.Source{
-					"1": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
+			Name: "Scenario 6: Target Without all condition",
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "condition#1", Parents: []string{"root"}},
+					{Id: "condition#2", Parents: []string{"root"}},
+					{Id: "condition#3", Parents: []string{"root"}},
+					{Id: "condition#4", Parents: []string{"root"}},
+				},
+				{
+					{Id: "target#1", Parents: []string{"root", "condition#1", "condition#2", "condition#3", "condition#4"}},
+				},
+			},
+		},
+		{
+			Name: "Scenario 7: Target With deprecated condition ids",
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
 						},
 					},
-					"2": {
-						Config: source.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"2",
+						},
+					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DeprecatedConditionIDs: []string{"1", "4"},
+					DisableSourceInput:     true,
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "condition#2", Parents: []string{"root"}},
+					{Id: "condition#3", Parents: []string{"root"}},
+				},
+				{
+					{Id: "condition#1", Parents: []string{"root", "condition#2"}},
+					{Id: "condition#4", Parents: []string{"root", "condition#2"}},
+				},
+				{
+					{Id: "target#1", Parents: []string{"root", "condition#1", "condition#4"}},
+				},
+			},
+		},
+		{
+			Name: "Scenario 8: Source Id creates an inferred deps",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"condition#1",
 						},
 					},
 				},
-				Conditions: map[string]condition.Condition{
-					"1": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: condition.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
-						},
-					},
-				},
-				Targets: map[string]target.Target{
-					"1": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"2",
-								},
-							},
-						},
-					},
-					"2": {
-						Config: target.Config{
-							ResourceConfig: resource.ResourceConfig{
-								DependsOn: []string{
-									"1",
-								},
-							},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
 						},
 					},
 				},
 			},
-			ExpectedSourcesResult:    []string{},
-			ExpectedConditionsResult: []string{},
-			ExpectedTargetsResult:    []string{},
-			ExpectedSourcesErr:       ErrDependsOnLoopDetected,
-			ExpectedConditionsErr:    ErrDependsOnLoopDetected,
-			ExpectedTargetsErr:       ErrDependsOnLoopDetected,
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					SourceID: "2",
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					SourceID:          "2",
+					DisableConditions: true,
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "condition#1", Parents: []string{"root"}},
+				},
+				{
+					{Id: "source#1", Parents: []string{"root", "condition#1"}},
+				},
+				{
+					{Id: "source#2", Parents: []string{"root", "source#1"}},
+				},
+				{
+					{Id: "condition#2", Parents: []string{"root", "source#2"}},
+					{Id: "target#1", Parents: []string{"root", "source#2"}},
+				},
+			},
+		},
+		{
+			Name: "Scenario 9: DependsOnChange",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+			},
+			Targets: map[string]target.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+					DisableSourceInput: true,
+				},
+				"5": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
+						},
+					},
+					DisableSourceInput: true,
+				},
+				"6": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"1",
+						},
+					},
+					DependsOnChange:    true,
+					DisableSourceInput: true,
+				},
+				"7": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						DependsOn: []string{
+							"5",
+						},
+					},
+					DependsOnChange:    true,
+					DisableSourceInput: true,
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#1", Parents: []string{"root"}},
+					{Id: "condition#1", Parents: []string{"root"}},
+				},
+				{
+					{Id: "target#1", Parents: []string{"root", "condition#1"}},
+				},
+				{
+					{Id: "target#5", Parents: []string{"root", "condition#1", "target#1"}},
+					{Id: "target#6", Parents: []string{"root", "condition#1", "target#1"}},
+				},
+				{
+					{Id: "target#7", Parents: []string{"root", "condition#1", "target#5"}},
+				},
+			},
+		},
+		{
+			Name: "Scenario 10: Runtime Dependency",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+				"3": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+				"4": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "file",
+						Spec: file.Spec{
+							Files: []string{
+								"{{ source \"1\" }}",
+								"{{ source \"2\" }}",
+								"{{ source \"3\" }}",
+								"{{ source \"4\" }}",
+							},
+						},
+					},
+					DisableSourceInput: true,
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#1", Parents: []string{"root"}},
+					{Id: "source#2", Parents: []string{"root"}},
+					{Id: "source#3", Parents: []string{"root"}},
+					{Id: "source#4", Parents: []string{"root"}},
+				},
+				{
+					{Id: "condition#1", Parents: []string{"root", "source#1", "source#2", "source#3", "source#4"}},
+				},
+			},
+		},
+		{
+			Name: "Scenario 11: SourceID and Explicit Dep",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+			},
+			Conditions: map[string]condition.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind:      "shell",
+						DependsOn: []string{"source#1"},
+					},
+					SourceID: "1",
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#1", Parents: []string{"root"}},
+				},
+				{
+					{Id: "condition#1", Parents: []string{"root", "source#1"}},
+				},
+			},
+		},
+		{
+			Name: "Scenario 12: Runtime Dependency in sources",
+			Sources: map[string]source.Config{
+				"1": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+					},
+				},
+				"2": {
+					ResourceConfig: resource.ResourceConfig{
+						Kind: "shell",
+						Spec: shell.Spec{
+							Command: "echo {{ source \"1\"}}",
+						},
+					},
+				},
+			},
+			ExpectedResult: [][]ResultLeaf{
+				{
+					{Id: "source#1", Parents: []string{"root"}},
+				},
+				{
+					{Id: "source#2", Parents: []string{"root", "source#1"}},
+				},
+			},
 		},
 	}
-)
 
-func TestSortedSourcesKeys(t *testing.T) {
-
-	for i := range sortedKeysDataset {
-		data := sortedKeysDataset[i]
-		// Test Source
-		gotSortedSourcesKeys, err := SortedSourcesKeys(&data.Conf.Sources)
-		if err != nil && data.ExpectedSourcesErr != nil {
-			if strings.Compare(err.Error(), data.ExpectedSourcesErr.Error()) != 0 {
-				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q",
-					data.ExpectedSourcesErr,
-					err.Error())
-
+	for i := range testdata {
+		data := &testdata[i]
+		t.Run(data.Name, func(t *testing.T) {
+			sources := map[string]source.Source{}
+			for k, v := range data.Sources {
+				err := v.Validate()
+				if err != nil {
+					logrus.Errorf("Failed to validate source config %s", err)
+				}
+				sources[k] = source.Source{
+					Config: v,
+				}
 			}
-
-		} else if err != nil && data.ExpectedSourcesErr == nil {
-			t.Errorf("Unexpected error:\nExpected:\t\tnil\nGot:\t\t\t%q",
-				err.Error())
-
-		} else if err == nil && data.ExpectedSourcesErr != nil {
-			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\tnil",
-				data.ExpectedSourcesErr)
-		}
-
-		for i := range gotSortedSourcesKeys {
-			if len(data.ExpectedSourcesResult) < len(gotSortedSourcesKeys) {
-				t.Errorf("Unexpected result length:\n\tExpected:\t%d\n\tGot:\t\t%d",
-					len(data.ExpectedSourcesResult),
-					len(gotSortedSourcesKeys))
-				break
-
+			conditions := map[string]condition.Condition{}
+			for k, v := range data.Conditions {
+				err := v.Validate()
+				if err != nil {
+					logrus.Errorf("Failed to validate source config %s", err)
+				}
+				conditions[k] = condition.Condition{
+					Config: v,
+				}
 			}
-			if strings.Compare(gotSortedSourcesKeys[i], data.ExpectedSourcesResult[i]) != 0 {
-				t.Errorf("Unexpected result:\n\tExpected:\t%q\n\tGot:\t\t%q",
-					data.ExpectedSourcesResult,
-					gotSortedSourcesKeys)
+			targets := map[string]target.Target{}
+			for k, v := range data.Targets {
+				err := v.Validate()
+				if err != nil {
+					logrus.Errorf("Failed to validate source config %s", err)
+				}
+				targets[k] = target.Target{
+					Config: v,
+				}
 			}
-		}
+			p := Pipeline{
+				Sources:    sources,
+				Conditions: conditions,
+				Targets:    targets,
+				Config: &config.Config{
+					Spec: config.Spec{
+						Sources:    data.Sources,
+						Conditions: data.Conditions,
+						Targets:    data.Targets,
+					},
+				},
+			}
+			// _ = p.Update()
+			gotSortedDag, err := p.SortedResources()
 
+			require.Equal(t, data.ExpectedErr, err)
+
+			if gotSortedDag == nil {
+				return
+			}
+			results, _ := gotSortedDag.GetOrderedDescendants(rootVertex)
+			compareDag(t, data.ExpectedResult, results, gotSortedDag)
+		})
 	}
-
 }
 
-func TestSortedConditionsKeys(t *testing.T) {
+// compareDag allows to test that the resulted orderedDescendant of a dag
+// match the expected result.
+// As the sibling order is not guarantee, we need to  handle that
+func compareDag(t *testing.T, expected [][]ResultLeaf, got []string, d *dag.DAG) {
+	//{ Keep track of the current index in 'got'
+	index := 0
+	// Iterate over each sublist in 'expected'
+	for _, sublist := range expected {
+		// If remaining 'got' is smaller than current 'expected' sublist, return false
+		require.GreaterOrEqual(t, len(got), index+len(sublist))
 
-	for i := range sortedKeysDataset {
-		data := sortedKeysDataset[i]
-		// Test Source
-		gotSortedConditionsKeys, err := SortedConditionsKeys(&data.Conf.Conditions)
+		// Extract Ids from sublist
+		sublistStr := []string{}
+		for _, i := range sublist {
+			sublistStr = append(sublistStr, i.Id)
+		}
+		// Extract the slice from 'got' to compare with current sublist
+		gotSublist := got[index : index+len(sublist)]
 
-		if err != nil && data.ExpectedConditionsErr != nil {
-			if strings.Compare(err.Error(), data.ExpectedConditionsErr.Error()) != 0 {
-				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q",
-					data.ExpectedConditionsErr,
-					err.Error())
+		// Sort both the current 'expected' sublist and the corresponding 'got' sublist
+		sort.Strings(sublistStr)
+		sort.Strings(gotSublist)
+
+		// require.Equal(t, sublistStr, gotSublist)
+		// Check if they have the required dependencies
+		for _, l := range sublist {
+			parents, _ := d.GetParents(l.Id)
+			parentIds := []string{}
+			for k := range parents {
+				parentIds = append(parentIds, k)
 			}
-
-		} else if err != nil && data.ExpectedConditionsErr == nil {
-			t.Errorf("Unexpected error:\nExpected:\t\tnil\nGot:\t\t\t%q",
-				err.Error())
-
-		} else if err == nil && data.ExpectedConditionsErr != nil {
-			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\tnil",
-				data.ExpectedConditionsErr)
+			expectedParents := []string{}
+			expectedParents = append(expectedParents, l.Parents...)
+			sort.Strings(expectedParents)
+			sort.Strings(parentIds)
+			require.Equal(t, expectedParents, parentIds)
 		}
 
-		for i := range gotSortedConditionsKeys {
-			if len(data.ExpectedConditionsResult) < len(gotSortedConditionsKeys) {
-				t.Errorf("Unexpected result length:\n\tExpected:\t%d\n\tGot:\t\t%d",
-					len(data.ExpectedConditionsResult),
-					len(gotSortedConditionsKeys))
-				break
-
-			}
-			if strings.Compare(gotSortedConditionsKeys[i], data.ExpectedConditionsResult[i]) != 0 {
-				t.Errorf("Unexpected result:\n\tExpected:\t%q\n\tGot:\t\t%q",
-					data.ExpectedConditionsResult,
-					gotSortedConditionsKeys)
-			}
-		}
-
+		// Move the index forward by the length of the current sublist
+		index += len(sublist)
 	}
 
-}
-
-func TestSortedTargetsKeys(t *testing.T) {
-
-	for i := range sortedKeysDataset {
-		data := sortedKeysDataset[i]
-		// Test Source
-		gotSortedTargetsKeys, err := SortedTargetsKeys(&data.Conf.Targets)
-
-		if err != nil && data.ExpectedTargetsErr != nil {
-			if strings.Compare(err.Error(), data.ExpectedTargetsErr.Error()) != 0 {
-				t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\t%q",
-					data.ExpectedTargetsErr,
-					err.Error())
-			}
-
-		} else if err != nil && data.ExpectedTargetsErr == nil {
-			t.Errorf("Unexpected error:\nExpected:\t\tnil\nGot:\t\t\t%q",
-				err.Error())
-
-		} else if err == nil && data.ExpectedTargetsErr != nil {
-			t.Errorf("Unexpected error:\nExpected:\t\t%q\nGot:\t\t\tnil",
-				data.ExpectedTargetsErr)
-		}
-
-		for i := range gotSortedTargetsKeys {
-			if len(data.ExpectedTargetsResult) < len(gotSortedTargetsKeys) {
-				t.Errorf("Unexpected result length:\n\tExpected:\t%d\n\tGot:\t\t%d",
-					len(data.ExpectedTargetsResult),
-					len(gotSortedTargetsKeys))
-				break
-
-			}
-			if strings.Compare(gotSortedTargetsKeys[i], data.ExpectedTargetsResult[i]) != 0 {
-				t.Errorf("Unexpected result:\n\tExpected:\t%q\n\tGot:\t\t%q",
-					data.ExpectedTargetsResult,
-					gotSortedTargetsKeys)
-			}
-		}
-
-	}
-
+	// If we've processed all 'expected' sublists and matched them correctly, return true
+	require.Equal(t, index, len(got))
 }

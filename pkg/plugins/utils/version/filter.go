@@ -17,16 +17,17 @@ const (
 	SEMVERVERSIONKIND string = "semver"
 	// LATESTVERSIONKIND specifies that we are looking for the latest version of an array
 	LATESTVERSIONKIND string = "latest"
+	// REGEXSEMVERVERSIONKIND use regex to extract versions and semantic version to find version
+	REGEXSEMVERVERSIONKIND string = "regex/semver"
 )
 
-var (
-	// SupportedKind holds a list of supported version kind
-	SupportedKind []string = []string{
-		REGEXVERSIONKIND,
-		SEMVERVERSIONKIND,
-		LATESTVERSIONKIND,
-	}
-)
+// SupportedKind holds a list of supported version kind
+var SupportedKind []string = []string{
+	REGEXVERSIONKIND,
+	SEMVERVERSIONKIND,
+	LATESTVERSIONKIND,
+	REGEXSEMVERVERSIONKIND,
+}
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
 type Filter struct {
@@ -36,6 +37,8 @@ type Filter struct {
 	Pattern string `yaml:",omitempty"`
 	// strict enforce strict versioning rule. Only used for semantic versioning at this time
 	Strict bool `yaml:",omitempty"`
+	// specifies the regex pattern, only used for regex/semver. Output of the first capture group will be used.
+	Regex string `yaml:",omitempty"`
 }
 
 // Init returns a new (copy) valid instantiated filter
@@ -75,7 +78,6 @@ func (f Filter) Validate() error {
 
 // Search returns a value matching pattern
 func (f *Filter) Search(versions []string) (Version, error) {
-
 	logrus.Infof("Searching for version matching pattern %q", f.Pattern)
 
 	foundVersion := Version{}
@@ -127,6 +129,41 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		}
 
 		return s.FoundVersion, nil
+	case REGEXSEMVERVERSIONKIND:
+		re, err := regexp.Compile(f.Regex)
+		if err != nil {
+			return foundVersion, err
+		}
+
+		// Create a slice of versions using regex pattern
+		var parsedVersions []string
+		versionLookup := make(map[string]string)
+		for i := 0; i < len(versions); i++ {
+			v := versions[i]
+			found := re.FindStringSubmatch(v)
+			if len(found) > 1 {
+				parsedVersions = append(parsedVersions, found[1])
+				versionLookup[found[1]] = v
+			}
+
+		}
+
+		s := Semver{
+			Constraint: f.Pattern,
+			Strict:     f.Strict,
+		}
+
+		err = s.Search(parsedVersions)
+		if err != nil {
+			return foundVersion, err
+		}
+
+		if originalVersion, ok := versionLookup[s.FoundVersion.OriginalVersion]; ok {
+			s.FoundVersion.OriginalVersion = originalVersion
+		}
+
+		return s.FoundVersion, nil
+
 	default:
 		return foundVersion, &ErrUnsupportedVersionKindPattern{Pattern: f.Pattern, Kind: f.Kind}
 	}

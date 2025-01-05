@@ -234,9 +234,9 @@ func TestTarget(t *testing.T) {
 				Key:              "$.dependencies[0].version",
 				VersionIncrement: AUTO,
 			},
-			sourceInput:               ">=1.1.0",
+			sourceInput:               `">=1.1.0"`,
 			expectedResult:            true,
-			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \">=1.1.0\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
+			expectedResultDescription: "change detected:\n\t* key \"$.dependencies[0].version\" should be updated from \"1.0.0\" to \"\\\">=1.1.0\\\"\", in file \"testdata/Chart.yaml\"\nchange detected:\n\t* key \"$.version\" should be updated from \"0.3.0\" to \"0.4.0\", in file \"testdata/Chart.yaml\"",
 		},
 		{
 			name: "Success - Auto chart major and patch update Version Increment to Chart.yaml",

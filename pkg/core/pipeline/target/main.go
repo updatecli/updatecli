@@ -62,16 +62,22 @@ type Config struct {
 	// default:
 	//   if only one source is defined, then sourceid is set to that sourceid.
 	SourceID string `yaml:",omitempty"`
+	// ! Deprecated - please use DependsOn with `condition#conditionid` keys
+	//
 	// conditionids specifies the list of conditions to be evaluated before running the target.
 	// if at least one condition is not met, the target will be skipped.
 	//
 	// default:
 	//   by default, all conditions are evaluated.
-	ConditionIDs []string `yaml:",omitempty"`
-	// disableconditions disables the mechanism to evaluate conditions before running the target.
+	DeprecatedConditionIDs []string `yaml:"conditionids,omitempty"`
+	// disableconditions disables the mechanism to evaluate all conditions before running the target.
 	//
 	// default:
 	//   false
+	//
+	// remark:
+	//  It's possible to only monitor specific conditions by setting disableconditions to true
+	//  and using DependsOn with `condition#conditionid` keys
 	DisableConditions bool `yaml:"disableconditions,omitempty"`
 }
 
@@ -96,14 +102,14 @@ func (t *Target) Check() (bool, error) {
 func (t *Target) Run(source string, o *Options) (err error) {
 	var consoleOutput bytes.Buffer
 	// By default logrus logs to stderr, so I guess we want to keep this behavior...
-	logrus.SetOutput(io.MultiWriter(os.Stderr, &consoleOutput))
+	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
 	/*
 		The last defer will be executed first,
 		so in this case we want to first save the console output
 		before setting back the logrus output to stdout.
 	*/
-	// By default logrus logs to stderr, so I guess we want to keep this behavior...
-	defer logrus.SetOutput(os.Stderr)
+	// By default logrus logs to stdout and we want to keep this behavior...
+	defer logrus.SetOutput(os.Stdout)
 	defer t.Result.SetConsoleOutput(&consoleOutput)
 
 	failTargetRun := func() {
@@ -303,6 +309,21 @@ func (c *Config) Validate() error {
 		default:
 			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"sourceID", "sourceid", "sourceID")
+		}
+	}
+
+	// Handle ConditionIDs deprecation
+	if len(c.DeprecatedConditionIDs) > 0 {
+		if len(c.ResourceConfig.DependsOn) > 0 {
+			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q", "conditionids", "dependson", "conditionids")
+		} else {
+			logrus.Warningf("%q is deprecated in favor of %q", "conditionids", "dependson")
+			for _, condition := range c.DeprecatedConditionIDs {
+				logrus.Warningf("%q is deprecated in favor of %q: %s", "conditionids", "dependson", condition)
+				c.ResourceConfig.DependsOn = append(c.ResourceConfig.DependsOn, fmt.Sprintf("condition#%s", condition))
+			}
+			c.DeprecatedConditionIDs = []string{}
+			c.DisableConditions = true
 		}
 	}
 

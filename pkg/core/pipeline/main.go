@@ -3,7 +3,9 @@ package pipeline
 import (
 	"fmt"
 	"strings"
+	"sync"
 
+	"github.com/heimdalr/dag"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
@@ -37,6 +39,7 @@ type Pipeline struct {
 	Options Options
 	// Config contains the pipeline configuration defined by the user
 	Config *config.Config
+	mu     sync.Mutex
 }
 
 // Init initialize an updatecli context based on its configuration
@@ -193,6 +196,78 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 }
 
+func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.FlowResult) (v interface{}, err error) {
+	p.mu.Lock()         // Acquire lock at the start
+	defer p.mu.Unlock() // Release lock when function exits
+	if id == rootVertex {
+		return nil, nil
+	}
+	err = p.Update()
+	if err != nil {
+		return nil, fmt.Errorf("update pipeline: %w", err)
+	}
+	v, err = d.GetVertex(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get leaf from dag: %w", err) // Should never happens
+	}
+	leaf, ok := v.(Node)
+	if !ok {
+		return nil, fmt.Errorf("failed to reconstruct leaf from interface: %s", id) // Should never happens
+	}
+	logrus.Infof("\n%s: %s\n", leaf.Category, id)
+	logrus.Infof("%s\n", strings.Repeat("-", len(id)))
+
+	deps := map[string]*Node{}
+	for _, r := range depsResults {
+		if r.ID == rootVertex {
+			continue
+		}
+		p, _ := r.Result.(Node)
+		deps[r.ID] = &p
+	}
+
+	shouldSkip := p.shouldSkipResource(&leaf, deps)
+	if shouldSkip {
+		logrus.Debugf("Skipping %s[%q] because of dependsOn conditions", leaf.Category, id)
+		leaf.Result = result.SKIPPED
+	}
+
+	if leaf.Result != result.SKIPPED {
+		// Run the resource
+		switch leaf.Category {
+		case sourceCategory:
+			sourceId := strings.Replace(id, "source#", "", -1)
+			r, e := p.RunSource(sourceId)
+			if e != nil {
+				err = e
+			}
+			leaf.Result = r
+			p.updateSource(sourceId, leaf.Result)
+		case conditionCategory:
+			conditionId := strings.Replace(id, "condition#", "", -1)
+			r, e := p.RunCondition(conditionId)
+			if e != nil {
+				err = e
+			}
+			leaf.Result = r
+			p.updateCondition(conditionId, leaf.Result)
+		case targetCategory:
+			targetId := strings.Replace(id, "target#", "", -1)
+			r, changed, e := p.RunTarget(targetId)
+			if e != nil {
+				err = e
+			}
+			leaf.Result = r
+			leaf.Changed = changed
+			p.updateTarget(targetId, leaf.Result)
+		}
+	}
+	if leaf.Changed {
+		p.Report.Result = result.ATTENTION
+	}
+	return leaf, err
+}
+
 // Run execute an single pipeline
 func (p *Pipeline) Run() error {
 
@@ -200,24 +275,64 @@ func (p *Pipeline) Run() error {
 	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
 	logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
 
-	if len(p.Sources) > 0 {
-		if err := p.RunSources(); err != nil {
-			p.Report.Result = result.FAILURE
-			return fmt.Errorf("sources stage:\t%q", err.Error())
-		}
+	p.Report.Result = result.SUCCESS
+
+	resources, err := p.SortedResources()
+	if err != nil {
+		p.Report.Result = result.FAILURE
+		return fmt.Errorf("could not create dag from spec:\t%q", err.Error())
+	}
+	leaves, err := resources.DescendantsFlow(rootVertex, nil, p.runFlowCallback)
+	if err != nil {
+		p.Report.Result = result.FAILURE
+		return fmt.Errorf("could not parse dag from spec:\t%q", err.Error())
 	}
 
-	if len(p.Conditions) > 0 {
-		if err := p.RunConditions(); err != nil {
-			p.Report.Result = result.FAILURE
-			return fmt.Errorf("conditions stage:\t%q", err.Error())
+	hasError := false
+	for _, leaf := range leaves {
+		if leaf.ID == rootVertex {
+			// ignore
+			continue
+		}
+		if leaf.Error != nil {
+			logrus.Infof("\n")
+			logrus.Errorf("something went wrong in %q : %s", leaf.ID, leaf.Error)
+			logrus.Infof("\n")
+			hasError = true
 		}
 	}
+	if hasError {
+		p.Report.Result = result.FAILURE
+		return ErrRunTargets
+	}
 
+	// set pipeline report result
 	if len(p.Targets) > 0 {
-		if err := p.RunTargets(); err != nil {
-			p.Report.Result = result.FAILURE
-			return fmt.Errorf("targets stage:\t%q", err.Error())
+		successCounter := 0
+		skippedCounter := 0
+		attentionCounter := 0
+
+		for id := range p.Targets {
+			switch p.Targets[id].Result.Result {
+			case result.FAILURE:
+				p.Report.Result = result.FAILURE
+				return nil
+			case result.SUCCESS:
+				successCounter++
+			case result.SKIPPED:
+				skippedCounter++
+			case result.ATTENTION:
+				attentionCounter++
+			}
+		}
+
+		if len(p.Targets) == skippedCounter {
+			p.Report.Result = result.SKIPPED
+			return nil
+		} else if len(p.Targets) == successCounter+skippedCounter {
+			p.Report.Result = result.SUCCESS
+		} else if attentionCounter > 0 {
+			p.Report.Result = result.ATTENTION
 		}
 	}
 
@@ -316,7 +431,6 @@ func (p *Pipeline) Update() error {
 	// Update scm pointer for each target
 	for id := range p.Config.Spec.Targets {
 		target := p.Targets[id]
-
 		if len(p.Config.Spec.Targets[id].SCMID) > 0 {
 			sc, ok := p.SCMs[p.Config.Spec.Targets[id].SCMID]
 			if !ok {

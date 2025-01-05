@@ -322,7 +322,6 @@ func New(option Option) (configs []Config, err error) {
 
 		// Ensure there is a local SCM defined as specified
 		if err = configs[id].EnsureLocalScm(); err != nil {
-			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
 			continue
 		}
 
@@ -331,7 +330,7 @@ func New(option Option) (configs []Config, err error) {
 		if len(configs[id].Spec.PullRequests) > 0 {
 			if len(configs[id].Spec.Actions) > 0 {
 				err := fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
-				logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
+				logrus.Errorf("Skipping manifest %q:\n\t%s", option.ManifestFile, err.Error())
 				continue
 			}
 
@@ -343,7 +342,6 @@ func New(option Option) (configs []Config, err error) {
 
 		err = configs[id].Validate()
 		if err != nil {
-			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
 			continue
 		}
 
@@ -353,7 +351,6 @@ func New(option Option) (configs []Config, err error) {
 
 		err = configs[id].Validate()
 		if err != nil {
-			logrus.Errorf("Skipping manifest in position %q from %q: %s", id, option.ManifestFile, err.Error())
 			continue
 		}
 	}
@@ -539,13 +536,13 @@ func (config *Config) validateTargets() error {
 			}
 		}
 
-		if t.DisableConditions && len(t.ConditionIDs) > 0 {
-			logrus.Errorf("target %q has 'disableconditions' set to true and 'conditionids' defined (%v), it's not possible to disable conditions and define conditions at the same time", id, t.ConditionIDs)
+		if t.DisableConditions && len(t.DeprecatedConditionIDs) > 0 {
+			logrus.Errorf("target %q has 'disableconditions' set to true and 'conditionids' defined (%v), it's not possible to disable conditions and define conditions at the same time", id, t.DeprecatedConditionIDs)
 			return ErrBadConfig
 		}
 
 		undefinedConditions := []string{}
-		for _, conditionID := range t.ConditionIDs {
+		for _, conditionID := range t.DeprecatedConditionIDs {
 			if _, ok := config.Spec.Conditions[conditionID]; !ok {
 				undefinedConditions = append(undefinedConditions, conditionID)
 			}

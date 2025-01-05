@@ -1,6 +1,7 @@
 [files]
 extend-exclude = [
   "go.mod",
+  "go.sum",
   "go.1.mod",
   "vale",
   "_typos.toml"

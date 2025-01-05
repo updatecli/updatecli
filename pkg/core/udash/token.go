@@ -12,33 +12,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Token return the token for a specific auth domain
-func Token(audience string) (URL string, ApiURL string, Token string, err error) {
-	/*
-		Exit early if the environment variable "UPDATECLI_TOKEN" contains a value.
-	*/
-
+// getConfigFromFile return the Udash configuration from the configuration file
+func getConfigFromFile(audience string) (URL string, ApiURL string, Token string, err error) {
 	if Audience != "" {
 		audience = Audience
-	}
-
-	if token := os.Getenv(DefaultEnvVariableAccessToken); token != "" {
-		logrus.Debugf("Token detect via env variable %q", DefaultEnvVariableAccessToken)
-
-		url := os.Getenv(DefaultEnvVariableURL)
-		api := os.Getenv(DefaultEnvVariableAPIURL)
-
-		if url == "" {
-			logrus.Warningf("environment variable %q detected but missing value for %q", DefaultEnvVariableAccessToken, DefaultEnvVariableURL)
-		}
-		if api == "" {
-			logrus.Warningf("environment variable %q detected but missing value for %q", DefaultEnvVariableAccessToken, DefaultEnvVariableAPIURL)
-		}
-
-		if token != "" && api != "" && url != "" {
-			return url, api, token, nil
-		}
-		logrus.Warningf("Due to previous warning message, ignoring environment variable")
 	}
 
 	data, err := readConfigFile()
@@ -50,17 +27,22 @@ func Token(audience string) (URL string, ApiURL string, Token string, err error)
 	case "":
 		authdata, ok := data.Auths[data.Default]
 		if ok {
-			return authdata.URL, authdata.Api, authdata.Token, nil
+			return authdata.URL, authdata.API, authdata.Token, nil
 		}
 		return "", "", "", fmt.Errorf("no default token found")
 	default:
 		authdata, ok := data.Auths[sanitizeTokenID(audience)]
 		if ok {
-			return authdata.URL, authdata.Api, authdata.Token, nil
+			return authdata.URL, authdata.API, authdata.Token, nil
 		}
 	}
 
 	return "", "", "", fmt.Errorf("token for domain %q not found", audience)
+}
+
+// getConfigFromEnv return the Udash configuration from environment variables
+func getConfigFromEnv() (URL string, ApiURL string, Token string) {
+	return os.Getenv(DefaultEnvVariableURL), os.Getenv(DefaultEnvVariableAPIURL), os.Getenv(DefaultEnvVariableAccessToken)
 }
 
 // getAccessToken trades the authorization code retrieved from the first OAuth2 log for an access token

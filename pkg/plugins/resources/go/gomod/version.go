@@ -81,7 +81,7 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 	case kindGolang:
 
 		oldVersion = modFile.Go.Version
-		newVersion, err := getNewVersion(oldVersion, version)
+		newVersion, err = getNewVersion(oldVersion, version)
 		if err != nil {
 			logrus.Errorln(err)
 			return "", "", false, fmt.Errorf("failed parsing go version %q", version)

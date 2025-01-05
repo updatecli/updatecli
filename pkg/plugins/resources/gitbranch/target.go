@@ -9,30 +9,51 @@ import (
 )
 
 // Target creates and pushes a git tag based on the SCM configuration
-func (gt *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (gb *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
-	if scm != nil {
-		if len(gt.spec.Path) > 0 {
-			logrus.Warningf("Path setting value %q overridden by the scm configuration (value %q)",
-				gt.spec.Path,
-				scm.GetDirectory())
+	if gb.spec.Path != "" && scm != nil {
+		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+			gb.spec.Path,
+			scm.GetDirectory())
+	}
+
+	if gb.spec.URL != "" && scm != nil {
+		logrus.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
+			gb.spec.URL,
+			scm.GetURL())
+	}
+
+	if gb.spec.URL != "" {
+		gb.directory, err = gb.clone()
+		if err != nil {
+			return err
 		}
-
-		gt.spec.Path = scm.GetDirectory()
+	} else if gb.spec.Path != "" {
+		gb.directory = gb.spec.Path
+	} else if scm != nil {
+		gb.directory = scm.GetDirectory()
 	}
 
-	gt.branch = source
-	if gt.spec.Branch != "" {
-		gt.branch = gt.spec.Branch
+	if gb.directory == "" {
+		return fmt.Errorf("Unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
 	}
 
-	resultTarget.NewInformation = gt.branch
+	if gb.spec.SourceBranch == "" && scm == nil {
+		return fmt.Errorf("source branch is required")
+	}
 
-	if gt.branch == "" {
+	gb.branch = source
+	if gb.spec.Branch != "" {
+		gb.branch = gb.spec.Branch
+	}
+
+	resultTarget.NewInformation = gb.branch
+
+	if gb.branch == "" {
 		return fmt.Errorf("empty branch specified")
 	}
 
-	err = gt.target(dryRun, resultTarget)
+	err = gb.target(dryRun, resultTarget)
 	if err != nil {
 		return err
 	}
@@ -44,24 +65,46 @@ func (gt *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resu
 	}
 
 	if !resultTarget.Changed {
-		resultTarget.Description = fmt.Sprintf("the git branch %q already exist on the specified remote.", gt.branch)
+		resultTarget.Description = fmt.Sprintf(
+			"the git branch %q already exist on the specified remote.",
+			gb.branch,
+		)
 		return nil
 	}
 
-	logrus.Printf("git branch %q has been created.", gt.branch)
+	logrus.Printf("git branch %q has been created.", gb.branch)
 
-	if scm == nil {
-		resultTarget.Description = fmt.Sprintf("The git branch %q created but missing scm configuration to push it", gt.branch)
-		return nil
+	switch scm {
+	case nil:
+		if err = gb.nativeGitHandler.Checkout(gb.spec.Username, gb.spec.Password, gb.spec.SourceBranch, gb.branch, gb.directory, false); err != nil {
+			logrus.Errorf("Git checkout branch error: %s", err)
+			return err
+		}
+
+		if err = gb.nativeGitHandler.PushBranch(gb.branch, gb.spec.Username, gb.spec.Password, gb.directory, false); err != nil {
+			logrus.Errorf("Git push branch error: %s", err)
+			return err
+		}
+	default:
+
+		sourceBranch, _, _ := scm.GetBranches()
+		// Not specifying a username/password won't be an issue as it's only used to pull changes when the git branch already
+		// ecists on the remote. In this case, we already know that it doesn't.
+		// That being said, we may have a racing issue if the branch is created between the time Updatecli executed and the time
+		// this code is executed so the current execution would fail but not then next one.
+		if err = gb.nativeGitHandler.Checkout("", "", sourceBranch, gb.branch, gb.directory, false); err != nil {
+			logrus.Errorf("Git checkout branch error: %s", err)
+			return err
+		}
+
+		if err = scm.PushBranch(gb.branch); err != nil {
+			logrus.Errorf("Git push tag error: %s", err)
+			return err
+		}
 	}
 
-	err = scm.PushBranch(gt.branch)
-	if err != nil {
-		logrus.Errorf("Git push tag error: %s", err)
-		return err
-	}
+	resultTarget.Description = fmt.Sprintf("git branch %q created and pushed", gb.branch)
 
-	resultTarget.Description = fmt.Sprintf("git branch %q created and pushed", gt.branch)
 	return nil
 }
 
@@ -71,15 +114,8 @@ func (gt *GitBranch) target(dryRun bool, resultTarget *result.Target) error {
 	// to know why the following line is needed at the moment
 	resultTarget.Files = []string{""}
 
-	// Fail if the git tag resource cannot be validated
-	err := gt.Validate()
-	if err != nil {
-		logrus.Errorln(err)
-		return err
-	}
-
 	// Check if the provided branch (from source input value) already exists
-	branches, err := gt.nativeGitHandler.Branches(gt.spec.Path)
+	branches, err := gt.nativeGitHandler.Branches(gt.directory)
 	if err != nil {
 		return err
 	}

@@ -92,19 +92,6 @@ func TestValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Missing Path",
-			spec: Spec{},
-			want: GitTag{
-				spec: Spec{},
-				versionFilter: version.Filter{
-					Kind:    "latest",
-					Pattern: "latest",
-				},
-				nativeGitHandler: gitgeneric.GoGit{},
-			},
-			wantErr: true,
-		},
-		{
 			name: "Bad Key",
 			spec: Spec{
 				Path: "github.com/updatecli/updatecli",

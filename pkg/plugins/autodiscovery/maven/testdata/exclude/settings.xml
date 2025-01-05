@@ -1,0 +1,18 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <mirrors>
+        <mirror>
+            <id>foo-mirror</id>
+            <url>https://mirror.example.com/maven</url>
+            <mirrorOf>foo,!bar</mirrorOf>
+        </mirror>
+    </mirrors>
+    <servers>
+        <server>
+            <id>foo-mirror</id>
+            <username>foo</username>
+            <password>bar</password>
+        </server>
+    </servers>
+</settings>
