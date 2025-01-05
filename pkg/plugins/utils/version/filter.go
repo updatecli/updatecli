@@ -40,10 +40,15 @@ type Filter struct {
 	// specifies the version kind such as semver, regex, or latest
 	Kind string `yaml:",omitempty"`
 	// specifies the version pattern according the version kind
+	// for semver, it is a semver constraint
+	// for regex, it is a regex pattern
+	// for time, it is a date format
 	Pattern string `yaml:",omitempty"`
-	// strict enforce strict versioning rule. Only used for semantic versioning at this time
+	// strict enforce strict versioning rule.
+	// Only used for semantic versioning at this time
 	Strict bool `yaml:",omitempty"`
-	// specifies the regex pattern, only used for regex/semver. Output of the first capture group will be used.
+	// specifies the regex pattern, used for regex/semver and regex/time.
+	// Output of the first capture group will be used.
 	Regex string `yaml:",omitempty"`
 }
 
@@ -54,15 +59,20 @@ func (f Filter) Init() (Filter, error) {
 		f.Kind = LATESTVERSIONKIND
 	}
 
-	// Set default pattern value based on kind
-	if f.Kind == LATESTVERSIONKIND && len(f.Pattern) == 0 {
-		f.Pattern = LATESTVERSIONKIND
-	} else if f.Kind == SEMVERVERSIONKIND && len(f.Pattern) == 0 {
-		f.Pattern = "*"
-	} else if f.Kind == REGEXVERSIONKIND && len(f.Pattern) == 0 {
-		f.Pattern = ".*"
-	} else if f.Kind == TIMEVERSIONKIND && len(f.Pattern) == 0 {
-		f.Pattern = "2006-01-02"
+	// Set default pattern value according to kind
+	if len(f.Pattern) == 0 {
+		switch f.Kind {
+		case TIMEVERSIONKIND, REGEXTIMEVERSIONKIND:
+			f.Pattern = "2006-01-02"
+		case REGEXVERSIONKIND:
+			f.Pattern = ".*"
+		case SEMVERVERSIONKIND:
+			f.Pattern = "*"
+		case LATESTVERSIONKIND:
+			f.Pattern = LATESTVERSIONKIND
+		default:
+			logrus.Warningf("No default pattern provided for kind %q", f.Kind)
+		}
 	}
 
 	return f, f.Validate()
