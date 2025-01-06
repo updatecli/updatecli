@@ -1,0 +1,54 @@
+name: "docs: bump updatecli version"
+
+# This pipeline is designed to work next to ghcr.io/updatecli/policies/golang/version
+# This pipeline will update the devcontainer.json file to use the latest golang version
+pipelineid: "golang_version"
+
+actions:
+    default:
+        kind: github/pullrequest
+        spec:
+            automerge: true
+            labels:
+                - chore
+                - skip-changelog
+        scmid: default
+scms:
+    default:
+        kind: github
+        spec:
+            branch: '{{ .scm.branch }}'
+            email: '{{ .scm.email }}'
+            owner: '{{ .scm.owner }}'
+            repository: '{{ .scm.repository }}'
+            token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+            user: '{{ .scm.user }}'
+            username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+
+sources:
+  golang:
+    name: Get latest golang version
+    kind: golang
+    transformers:
+      - findsubmatch:
+          pattern: '(\d+\.\d+)'
+
+conditions:
+  docker:
+    name: 'Ensure mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }}-bookworm is publish'
+    kind: dockerimage
+    disablesourceinput: true
+    spec:
+      image: mcr.microsoft.com/devcontainers/go
+      tag: '1-{{ source "golang" }}-bookworm'
+
+targets:
+  # Apparently devcontainer json file is not a valid json file
+  # so we can't use the json plugin
+  devcontainer: 
+    name: 'deps: update devcontainer to golang {{ source "golang" }}'
+    kind: file
+    spec:
+      file: '.devcontainer/devcontainer.json'
+      matchpattern: '"image": "mcr\.microsoft\.com/devcontainers/go:.*"'
+      replacepattern: '"image": "mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }}-bookworm"'
