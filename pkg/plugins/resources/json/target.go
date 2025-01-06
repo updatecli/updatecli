@@ -42,7 +42,7 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		}
 
 		if err := j.contents[i].Read(rootDir); err != nil {
-			return fmt.Errorf("file %q does not exist", j.contents[i].FilePath)
+			return fmt.Errorf("loading json file %q: %w", filename, err)
 		}
 
 		var queryResults []string
@@ -53,14 +53,14 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
 
 			if err != nil {
-				return err
+				return fmt.Errorf("querying json file %q: %w", filename, err)
 			}
 
 		case false:
 			queryResult, err := j.contents[i].Query(j.spec.Key)
 
 			if err != nil {
-				return err
+				return fmt.Errorf("querying json file %q: %w", filename, err)
 			}
 
 			queryResults = append(queryResults, queryResult)
@@ -115,20 +115,20 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			err = j.contents[i].PutMultiple(j.spec.Query, j.spec.Value)
 
 			if err != nil {
-				return err
+				return fmt.Errorf("updating json file %q: %w", filename, err)
 			}
 
 		case false:
 			err = j.contents[i].Put(j.spec.Key, j.spec.Value)
 
 			if err != nil {
-				return err
+				return fmt.Errorf("updating json file %q: %w", filename, err)
 			}
 		}
 
 		err = j.contents[i].Write()
 		if err != nil {
-			return err
+			return fmt.Errorf("writing json file %q: %w", filename, err)
 		}
 	}
 
@@ -159,7 +159,7 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		description := "unable to determine the result"
 		resultTarget.Result = result.FAILURE
 		resultTarget.Description = description
-		return fmt.Errorf(description)
+		return fmt.Errorf("%s", description)
 	}
 
 	return nil
