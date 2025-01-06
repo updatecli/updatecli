@@ -12,6 +12,8 @@ var (
 	ErrNoVersionsFound error = errors.New("versions list empty")
 	// ErrNoValidSemVerFound return a error when the versions list is empty
 	ErrNoValidSemVerFound error = errors.New("no valid semantic version found")
+	// ErrNoValidDateFound return a error when the versions list is empty
+	ErrNoValidDateFound error = errors.New("no valid date found")
 )
 
 // ErrNoVersionFoundForPattern returns when a given pattern does not find any version

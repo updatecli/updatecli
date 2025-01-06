@@ -19,6 +19,10 @@ const (
 	LATESTVERSIONKIND string = "latest"
 	// REGEXSEMVERVERSIONKIND use regex to extract versions and semantic version to find version
 	REGEXSEMVERVERSIONKIND string = "regex/semver"
+	// REGEXTIMEVERSIONKIND use regex to extract all date matching format to find version
+	REGEXTIMEVERSIONKIND string = "regex/time"
+	// TIMEVERSIONKIND represents versions use date format to identify the version
+	TIMEVERSIONKIND string = "time"
 )
 
 // SupportedKind holds a list of supported version kind
@@ -27,6 +31,8 @@ var SupportedKind []string = []string{
 	SEMVERVERSIONKIND,
 	LATESTVERSIONKIND,
 	REGEXSEMVERVERSIONKIND,
+	REGEXTIMEVERSIONKIND,
+	TIMEVERSIONKIND,
 }
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
@@ -34,10 +40,15 @@ type Filter struct {
 	// specifies the version kind such as semver, regex, or latest
 	Kind string `yaml:",omitempty"`
 	// specifies the version pattern according the version kind
+	// for semver, it is a semver constraint
+	// for regex, it is a regex pattern
+	// for time, it is a date format
 	Pattern string `yaml:",omitempty"`
-	// strict enforce strict versioning rule. Only used for semantic versioning at this time
+	// strict enforce strict versioning rule.
+	// Only used for semantic versioning at this time
 	Strict bool `yaml:",omitempty"`
-	// specifies the regex pattern, only used for regex/semver. Output of the first capture group will be used.
+	// specifies the regex pattern, used for regex/semver and regex/time.
+	// Output of the first capture group will be used.
 	Regex string `yaml:",omitempty"`
 }
 
@@ -48,13 +59,20 @@ func (f Filter) Init() (Filter, error) {
 		f.Kind = LATESTVERSIONKIND
 	}
 
-	// Set default pattern value based on kind
-	if f.Kind == LATESTVERSIONKIND && len(f.Pattern) == 0 {
-		f.Pattern = LATESTVERSIONKIND
-	} else if f.Kind == SEMVERVERSIONKIND && len(f.Pattern) == 0 {
-		f.Pattern = "*"
-	} else if f.Kind == REGEXVERSIONKIND && len(f.Pattern) == 0 {
-		f.Pattern = ".*"
+	// Set default pattern value according to kind
+	if len(f.Pattern) == 0 {
+		switch f.Kind {
+		case TIMEVERSIONKIND, REGEXTIMEVERSIONKIND:
+			f.Pattern = "2006-01-02"
+		case REGEXVERSIONKIND:
+			f.Pattern = ".*"
+		case SEMVERVERSIONKIND:
+			f.Pattern = "*"
+		case LATESTVERSIONKIND:
+			f.Pattern = LATESTVERSIONKIND
+		default:
+			logrus.Warningf("No default pattern provided for kind %q", f.Kind)
+		}
 	}
 
 	return f, f.Validate()
@@ -87,6 +105,23 @@ func (f *Filter) Search(versions []string) (Version, error) {
 	}
 
 	switch f.Kind {
+	case TIMEVERSIONKIND:
+		d := Time{
+			layout: f.Pattern,
+		}
+
+		mapVersions := make(map[string]string)
+		for _, v := range versions {
+			mapVersions[v] = v
+		}
+
+		err := d.Search(mapVersions)
+		if err != nil {
+			return foundVersion, err
+		}
+
+		return d.FoundVersion, nil
+
 	case LATESTVERSIONKIND:
 		if f.Pattern == LATESTVERSIONKIND {
 			foundVersion.ParsedVersion = versions[len(versions)-1]
@@ -164,6 +199,36 @@ func (f *Filter) Search(versions []string) (Version, error) {
 
 		return s.FoundVersion, nil
 
+	case REGEXTIMEVERSIONKIND:
+
+		re, err := regexp.Compile(f.Regex)
+		if err != nil {
+			return foundVersion, err
+		}
+
+		// Create a slice of versions using regex pattern
+		parsedVersions := make(map[string]string)
+		for i := 0; i < len(versions); i++ {
+			v := versions[i]
+
+			found := re.FindStringSubmatch(v)
+
+			if len(found) > 1 {
+				parsedVersions[found[1]] = v
+			}
+
+		}
+
+		d := Time{
+			layout: f.Pattern,
+		}
+
+		if err = d.Search(parsedVersions); err != nil {
+			return foundVersion, err
+		}
+
+		return d.FoundVersion, nil
+
 	default:
 		return foundVersion, &ErrUnsupportedVersionKindPattern{Pattern: f.Pattern, Kind: f.Kind}
 	}
@@ -184,6 +249,9 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 		return LATESTVERSIONKIND, nil
 
 	case REGEXVERSIONKIND:
+		return f.Pattern, nil
+
+	case TIMEVERSIONKIND:
 		return f.Pattern, nil
 
 	case SEMVERVERSIONKIND:
