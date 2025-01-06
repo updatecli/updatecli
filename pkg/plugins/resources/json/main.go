@@ -80,9 +80,5 @@ func New(spec interface{}) (*Json, error) {
 		}
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	return &j, err
 }

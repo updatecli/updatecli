@@ -21,7 +21,7 @@ func (f *FileContent) Read(rootDir string) error {
 		f.FilePath)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read file %q: %w", f.FilePath, err)
 	}
 
 	var data interface{}
@@ -30,14 +30,14 @@ func (f *FileContent) Read(rootDir string) error {
 	case "json":
 		err = json.Unmarshal([]byte(textContent), &data)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to unmarshal json content: %w", err)
 		}
 
 	case "toml":
 		err := toml.Unmarshal([]byte(textContent), &data)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to unmarshal toml content: %w", err)
 		}
 
 	default:
