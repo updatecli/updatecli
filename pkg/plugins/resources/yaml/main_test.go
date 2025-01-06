@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
 func Test_Validate(t *testing.T) {
@@ -76,8 +75,7 @@ func Test_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			yaml := Yaml{
-				spec:             tt.spec,
-				contentRetriever: &text.MockTextRetriever{},
+				spec: tt.spec,
 			}
 			gotErr := yaml.spec.Validate()
 			if tt.isErrorWanted {
