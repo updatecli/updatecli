@@ -24,7 +24,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/oauth2 v0.24.0
+	golang.org/x/oauth2 v0.25.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.16.4
 	sigs.k8s.io/yaml v1.4.0
@@ -57,7 +57,7 @@ require (
 	github.com/tomwright/dasel v1.27.3
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.7.8
-	github.com/zclconf/go-cty v1.15.1
+	github.com/zclconf/go-cty v1.16.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/text v0.21.0
 	golang.org/x/time v0.8.0
