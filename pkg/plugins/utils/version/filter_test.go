@@ -198,6 +198,28 @@ func TestSearch(t *testing.T) {
 				OriginalVersion: "20232205",
 			},
 		},
+		{
+			name: "Passing case with lex",
+			filter: Filter{
+				Kind: LEXVERSIONKIND,
+			},
+			versions: []string{"main-20241226-57-2242a78", "main-20240910-43-3705031", "main-20240916-49-bc46fdf"},
+			want: Version{
+				ParsedVersion:   "main-20241226-57-2242a78",
+				OriginalVersion: "main-20241226-57-2242a78",
+			},
+		},
+		{
+			name: "Passing case with lex",
+			filter: Filter{
+				Kind: LEXVERSIONKIND,
+			},
+			versions: []string{"v1.1", "v1.10", "v1.2"},
+			want: Version{
+				ParsedVersion:   "v1.2",
+				OriginalVersion: "v1.2",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

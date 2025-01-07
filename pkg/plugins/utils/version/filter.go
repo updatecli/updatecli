@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -23,6 +24,8 @@ const (
 	REGEXTIMEVERSIONKIND string = "regex/time"
 	// TIMEVERSIONKIND represents versions use date format to identify the version
 	TIMEVERSIONKIND string = "time"
+	// LEXSORTVERSIONKIND uses the go sort package to find the latest version
+	LEXVERSIONKIND string = "lex"
 )
 
 // SupportedKind holds a list of supported version kind
@@ -33,6 +36,7 @@ var SupportedKind []string = []string{
 	REGEXSEMVERVERSIONKIND,
 	REGEXTIMEVERSIONKIND,
 	TIMEVERSIONKIND,
+	LEXVERSIONKIND,
 }
 
 // Filter defines parameters to apply different kind of version matching based on a list of versions
@@ -200,7 +204,6 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		return s.FoundVersion, nil
 
 	case REGEXTIMEVERSIONKIND:
-
 		re, err := regexp.Compile(f.Regex)
 		if err != nil {
 			return foundVersion, err
@@ -228,6 +231,12 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		}
 
 		return d.FoundVersion, nil
+
+	case LEXVERSIONKIND:
+		slices.Sort(versions)
+		foundVersion.ParsedVersion = versions[len(versions)-1]
+		foundVersion.OriginalVersion = foundVersion.ParsedVersion
+		return foundVersion, nil
 
 	default:
 		return foundVersion, &ErrUnsupportedVersionKindPattern{Pattern: f.Pattern, Kind: f.Kind}
