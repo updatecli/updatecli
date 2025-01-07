@@ -34,12 +34,12 @@ func ReadFileFromRevision(repoPath, revision, filePath string) ([]byte, error) {
 
 	blob, err := resolve(obj, filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolve %q: %w", filePath, err)
 	}
 
 	r, err := blob.Reader()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open reader: %w", err)
 	}
 
 	defer func() {
@@ -48,7 +48,7 @@ func ReadFileFromRevision(repoPath, revision, filePath string) ([]byte, error) {
 
 	content, err := io.ReadAll(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read content: %w", err)
 	}
 
 	return content, nil
@@ -60,19 +60,19 @@ func resolve(obj object.Object, path string) (*object.Blob, error) {
 	case *object.Commit:
 		t, err := o.Tree()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("get tree: %w", err)
 		}
 		return resolve(t, path)
 	case *object.Tag:
 		target, err := o.Object()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("get object: %w", err)
 		}
 		return resolve(target, path)
 	case *object.Tree:
 		file, err := o.File(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("get file %q: %w", path, err)
 		}
 		return &file.Blob, nil
 	case *object.Blob:
