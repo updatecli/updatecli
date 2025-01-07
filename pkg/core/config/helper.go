@@ -62,6 +62,11 @@ func IsTemplatedString(s string) bool {
 }
 
 func getFieldValueByQuery(conf interface{}, query []string) (value string, err error) {
+
+	if query == nil {
+		query = make([]string, 0)
+	}
+
 	ValueIface := reflect.ValueOf(conf)
 
 	Field := reflect.Value{}

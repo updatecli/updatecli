@@ -9,7 +9,7 @@ sources:
     kind: '{{ .SourceKind }}'
     spec:
       name: '{{ .ChartName }}'
-      url: '{{ .ChartRepository }}'
+      url: '{{ .SourceChartRepository }}'
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
