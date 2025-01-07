@@ -54,6 +54,7 @@ sources:
     name: 'get latest image tag for "jenkinsci/jenkins"'
     kind: 'dockerimage'
     spec:
+      architecture: 'amd64'
       image: 'jenkinsci/jenkins'
       tagfilter: '^\d*(\.\d*){1}-alpine$'
       versionfilter:
@@ -111,6 +112,7 @@ sources:
     name: 'get latest image tag for "jenkinsci/jenkins"'
     kind: 'dockerimage'
     spec:
+      architecture: 'amd64'
       image: 'jenkinsci/jenkins'
       tagfilter: '^\d*(\.\d*){1}-alpine$'
       versionfilter:

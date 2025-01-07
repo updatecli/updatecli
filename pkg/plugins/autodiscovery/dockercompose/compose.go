@@ -150,7 +150,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			}
 
 			if arch != "" {
-				sourceSpec.Architecture = arch
+				architecture = arch
 			}
 
 			var tmpl *template.Template
