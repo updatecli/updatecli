@@ -150,10 +150,28 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				}, "/")
 			}
 
+			imageTag := image.tag
+
 			imageSourceSlug := strings.ReplaceAll(imageName, "/", "_")
 
+			// Test if the ignore rule based on path is respected
+			if len(h.spec.Ignore) > 0 {
+				if h.spec.Ignore.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", imageName, imageTag) {
+					logrus.Debugf("Ignoring container version update from file %q, as matching ignore rule(s)\n", relativeFoundValueFile)
+					continue
+				}
+			}
+
+			// Test if the only rule based on path is respected
+			if len(h.spec.Only) > 0 {
+				if !h.spec.Only.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", imageName, imageTag) {
+					logrus.Debugf("Ignoring container version update from %q, as not matching only rule(s)\n", relativeFoundValueFile)
+					continue
+				}
+			}
+
 			// Try to be smart by detecting the best versionfilter
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, image.tag, h.spec.Auths)
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, h.spec.Auths)
 
 			versionFilterKind := h.versionFilter.Kind
 			versionFilterPattern := h.versionFilter.Pattern
@@ -163,6 +181,8 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				versionFilterKind = sourceSpec.VersionFilter.Kind
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
 				tagFilter = sourceSpec.TagFilter
+				imageName = sourceSpec.Image
+				imageTag = sourceSpec.Tag
 			}
 
 			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
@@ -175,22 +195,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 					if sourceSpec != nil {
 						sourceSpec.VersionFilter.Pattern = "*"
 					}
-				}
-			}
-
-			// Test if the ignore rule based on path is respected
-			if len(h.spec.Ignore) > 0 && sourceSpec != nil {
-				if h.spec.Ignore.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", sourceSpec.Image, sourceSpec.Tag) {
-					logrus.Debugf("Ignoring container version update from file %q, as matching ignore rule(s)\n", relativeFoundValueFile)
-					continue
-				}
-			}
-
-			// Test if the only rule based on path is respected
-			if len(h.spec.Only) > 0 && sourceSpec != nil {
-				if !h.spec.Only.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", sourceSpec.Image, sourceSpec.Tag) {
-					logrus.Debugf("Ignoring container version update from %q, as not matching only rule(s)\n", relativeFoundValueFile)
-					continue
 				}
 			}
 
@@ -243,7 +247,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				ScmID                       string
 			}{
 				ImageName:                   imageName,
-				ImageTag:                    image.tag,
+				ImageTag:                    imageTag,
 				ChartName:                   chartName,
 				HasRegistry:                 image.registry != "",
 				ConditionRegistryID:         imageSourceSlug + "-registry",
