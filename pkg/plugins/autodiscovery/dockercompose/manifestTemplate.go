@@ -10,7 +10,7 @@ sources:
     spec:
 {{- if .ImageArchitecture }}
       architecture: '{{ .ImageArchitecture }}'
-{{ end }}
+{{- end }}
       image: '{{ .ImageName }}'
       tagfilter: '{{ .TagFilter }}'
       versionfilter:
@@ -38,7 +38,7 @@ sources:
     spec:
 {{- if .ImageArchitecture }}
       architecture: '{{ .ImageArchitecture }}'
-{{ end }}
+{{- end }}
       image: '{{ .ImageName }}'
       tagfilter: '{{ .TagFilter }}'
       versionfilter:
