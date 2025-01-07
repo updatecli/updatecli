@@ -352,8 +352,8 @@ targets:
 			name:              "Scenario 5 - nil sourceSpec",
 			rootDir:           "testdata-5/chart",
 			expectedPipelines: []string{},
-    },
-    {
+		},
+		{
 			name:    "Test latest tag when empty string",
 			rootDir: "testdata-6/chart",
 			digest:  true,
@@ -454,6 +454,7 @@ targets:
       versionincrement: ''
     sourceid: 'nginx-digest'
 `},
+		},
 	}
 
 	for _, tt := range testdata {
