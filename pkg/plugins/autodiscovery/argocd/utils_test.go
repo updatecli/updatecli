@@ -15,6 +15,7 @@ func TestSearchFiles(t *testing.T) {
 	}
 
 	expectedFiles := []string{
+		"testdata/oci-helm-source/manifest.yaml",
 		"testdata/sealed-secrets/manifest.yaml",
 		"testdata/sealed-secrets_sources/manifest.yaml",
 	}

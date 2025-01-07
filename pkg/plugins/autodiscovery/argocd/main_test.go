@@ -100,6 +100,47 @@ targets:
     sourceid: 'sealed-secrets'
 `},
 		},
+		{
+			name:    "ArgoCD manifests discovery with OCI source",
+			rootDir: "testdata/oci-helm-source",
+			expectedPipelines: []string{`name: 'deps(helm): bump Helm chart "nginx" in ArgoCD manifest "manifest.yaml"'
+sources:
+  nginx:
+    name: 'Get latest "nginx" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'nginx'
+      url: 'oci://registry-1.docker.io/bitnamicharts'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  nginx-name:
+    name: 'Ensure Helm chart name nginx is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.chart'
+      value: 'nginx'
+  nginx-repository:
+    name: 'Ensure Helm chart repository registry-1.docker.io/bitnamicharts is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.repoURL'
+      value: 'registry-1.docker.io/bitnamicharts'
+targets:
+  nginx:
+    name: 'deps(helm): bump Helm chart "nginx" in ArgoCD manifest "manifest.yaml"'
+    kind: 'yaml'
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.targetRevision'
+    sourceid: 'nginx'
+`},
+		},
 	}
 
 	for _, tt := range testdata {

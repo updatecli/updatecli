@@ -3,6 +3,7 @@ package argocd
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"path"
 	"path/filepath"
 	"text/template"
@@ -36,6 +37,20 @@ type ApplicationSourceSpec struct {
 // We prefer ignoring when chart and targetRevision are empty
 func (a ApplicationSourceSpec) IsZero() bool {
 	return a.RepoURL == "" || a.TargetRevision == "" || a.Chart == ""
+}
+
+func determineChartRepository(RepoURL string) (string, error) {
+	parsedURL, err := url.Parse(RepoURL)
+	if err != nil {
+		return "", err
+	}
+
+	if parsedURL.Scheme == "" {
+		// Combine "oci://" and the RepoURL
+		return fmt.Sprintf("oci://%s", RepoURL), nil
+	}
+
+	return RepoURL, nil
 }
 
 func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
@@ -143,6 +158,12 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		}
 	}
 
+	sourceChartRepository, err := determineChartRepository(data.RepoURL)
+	if err != nil {
+		logrus.Debugf("invalid URL: %s", err)
+		return nil, nil
+	}
+
 	tmpl, err := template.New("manifest").Parse(manifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
@@ -156,6 +177,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		ChartRepository            string
 		ManifestFile               string
 		ConditionID                string
+		SourceChartRepository      string
 		SourceID                   string
 		SourceName                 string
 		SourceKind                 string
@@ -171,6 +193,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		ChartRepository:            data.RepoURL,
 		ConditionID:                data.Chart,
 		ManifestFile:               file,
+		SourceChartRepository:      sourceChartRepository,
 		SourceID:                   data.Chart,
 		SourceName:                 fmt.Sprintf("Get latest %q Helm chart version", data.Chart),
 		SourceKind:                 "helmchart",
