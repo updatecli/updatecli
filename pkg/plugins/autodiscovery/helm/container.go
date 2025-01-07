@@ -172,12 +172,14 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				tagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
-					sourceSpec.VersionFilter.Pattern = "*"
+					if sourceSpec != nil {
+						sourceSpec.VersionFilter.Pattern = "*"
+					}
 				}
 			}
 
 			// Test if the ignore rule based on path is respected
-			if len(h.spec.Ignore) > 0 {
+			if len(h.spec.Ignore) > 0 && sourceSpec != nil {
 				if h.spec.Ignore.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", sourceSpec.Image, sourceSpec.Tag) {
 					logrus.Debugf("Ignoring container version update from file %q, as matching ignore rule(s)\n", relativeFoundValueFile)
 					continue
@@ -185,7 +187,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}
 
 			// Test if the only rule based on path is respected
-			if len(h.spec.Only) > 0 {
+			if len(h.spec.Only) > 0 && sourceSpec != nil {
 				if !h.spec.Only.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", sourceSpec.Image, sourceSpec.Tag) {
 					logrus.Debugf("Ignoring container version update from %q, as not matching only rule(s)\n", relativeFoundValueFile)
 					continue
