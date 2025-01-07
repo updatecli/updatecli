@@ -41,7 +41,7 @@ func (c Chart) Changelog() string {
 		return ""
 	}
 
-	e, err := index.Get(c.spec.Name, c.spec.Version)
+	e, err := index.Get(c.spec.Name, c.foundVersion.OriginalVersion)
 	if err != nil {
 		return ""
 	}
