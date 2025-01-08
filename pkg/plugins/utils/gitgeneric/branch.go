@@ -13,8 +13,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Tags return a list of git tags ordered by latest commit time
-func (g GoGit) Branches(workingDir string) (branches []string, err error) {
+type DatedBranch struct {
+	When time.Time
+	Name string
+	Hash string
+}
+
+// BranchRefs return a list of git granch ordered by latest commit time
+func (g GoGit) BranchRefs(workingDir string) (branches []DatedBranch, err error) {
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
 		logrus.Errorf("opening %q git directory: %s", workingDir, err)
@@ -26,12 +32,6 @@ func (g GoGit) Branches(workingDir string) (branches []string, err error) {
 	if err != nil {
 		return branches, fmt.Errorf("listing branches: %s", err)
 	}
-
-	type DatedBranch struct {
-		when time.Time
-		name string
-	}
-	listOfDatedBranches := []DatedBranch{}
 
 	err = branchrefs.ForEach(func(tagRef *plumbing.Reference) error {
 		revision := plumbing.Revision(tagRef.Name().String())
@@ -45,32 +45,49 @@ func (g GoGit) Branches(workingDir string) (branches []string, err error) {
 			return fmt.Errorf("getting commit object for %q: %s", tagRef.Name().Short(), err)
 		}
 
-		listOfDatedBranches = append(
-			listOfDatedBranches,
+		branches = append(
+			branches,
 			DatedBranch{
-				name: tagRef.Name().Short(),
-				when: commit.Committer.When,
+				Name: tagRef.Name().Short(),
+				When: commit.Committer.When,
+				Hash: commit.Hash.String(),
 			},
 		)
 
 		return nil
 	})
 	if err != nil {
-		return branches, fmt.Errorf("listing branches: %s", err)
+		return []DatedBranch{}, fmt.Errorf("listing branches: %s", err)
 	}
 
-	if len(listOfDatedBranches) == 0 {
-		return []string{}, fmt.Errorf(ErrNoBranchFound)
+	if len(branches) == 0 {
+		return []DatedBranch{}, fmt.Errorf(ErrNoBranchFound)
 	}
 
 	// Sort tags by time
-	sort.Slice(listOfDatedBranches, func(i, j int) bool {
-		return listOfDatedBranches[i].when.Before(listOfDatedBranches[j].when)
+	sort.Slice(branches, func(i, j int) bool {
+		return branches[i].When.Before(branches[j].When)
 	})
 
+	logrus.Debugf("got branche refs: %v", branches)
+
+	if len(branches) == 0 {
+		return branches, fmt.Errorf(ErrNoBranchFound)
+	}
+
+	return branches, err
+
+}
+
+// Branches return a list of git branches name ordered by latest commit time
+func (g GoGit) Branches(workingDir string) (branches []string, err error) {
+	branchRefs, err := g.BranchRefs(workingDir)
+	if err != nil {
+		return branches, err
+	}
 	// Extract the list of tags names (ordered by time)
-	for _, datedTag := range listOfDatedBranches {
-		branches = append(branches, datedTag.name)
+	for _, branchRef := range branchRefs {
+		branches = append(branches, branchRef.Name)
 	}
 
 	logrus.Debugf("got branches: %v", branches)
