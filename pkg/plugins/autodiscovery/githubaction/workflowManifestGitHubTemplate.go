@@ -15,6 +15,9 @@ sources:
       repository: '{{ .Repository }}'
       url: '{{ .URL }}'
       token: '{{ .Token }}'
+{{- if .Digest }}
+      key: 'hash'
+{{- end }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -27,6 +30,9 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
+{{- if .Digest }}
+      key: 'hash'
+{{- end }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -39,6 +45,9 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
+{{- if .Digest }}
+      key: 'hash'
+{{- end }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'

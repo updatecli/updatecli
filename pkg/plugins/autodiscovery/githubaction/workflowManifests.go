@@ -133,6 +133,7 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					StepID               int
 					ScmID                string
 					Token                string
+					Digest               bool
 				}{
 					ActionName:           actionName,
 					Reference:            reference,
@@ -146,6 +147,7 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					ScmID:                g.scmID,
 					StepID:               stepID,
 					Token:                token,
+					Digest:               g.digest,
 				}
 
 				manifest := bytes.Buffer{}

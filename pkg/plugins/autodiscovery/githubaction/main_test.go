@@ -13,6 +13,7 @@ func TestDiscoverManifests(t *testing.T) {
 		rootDir           string
 		expectedPipelines []string
 		credentials       map[string]gitProviderToken
+		digest            bool
 	}{
 		{
 			name:    "Scenario - GitHub Action with a single workflow file",
@@ -141,6 +142,136 @@ targets:
 `},
 		},
 		{
+			name:    "Scenario - GitHub Action with a single workflow file and digest",
+			rootDir: "testdata/updatecli",
+			credentials: map[string]gitProviderToken{
+				"github.com": {
+					Kind:  "github",
+					Token: "xxx",
+				},
+			},
+			digest: true,
+			expectedPipelines: []string{`name: 'deps: bump actions/checkout GitHub workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest GitHub Release for actions/checkout'
+    kind: 'githubrelease'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: 'xxx'
+      key: 'hash'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      key: 'hash'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      key: 'hash'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+conditions:
+  release:
+    name: 'Check if actions/checkout@v4 is a GitHub release'
+    kind: 'githubrelease'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: 'xxx'
+      tag: 'v4'
+
+  tag:
+    name: 'Check if actions/checkout@v4 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^v4$'
+
+  branch:
+    name: 'Check if actions/checkout@v4 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4'
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(github): bump Action release for actions/checkout from v4 to {{ source "release" }}'
+    kind: 'yaml'
+    sourceid: 'release'
+    transformers:
+      - addprefix: '"actions/checkout@'
+      - addsuffix: '"'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(github): bump Action tag for actions/checkout from v4 to {{ source "tag" }}'
+    kind: 'yaml'
+    sourceid: 'tag'
+    transformers:
+      - addprefix: '"actions/checkout@'
+      - addsuffix: '"'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
+    kind: yaml
+    sourceid: branch
+    transformers:
+      - addprefix: '"actions/checkout@'
+      - addsuffix: '"'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+`},
+		},
+		{
 			name:    "Scenario - Gitea Action with a single workflow file",
 			rootDir: "testdata/gitea",
 			credentials: map[string]gitProviderToken{
@@ -149,6 +280,7 @@ targets:
 					Token: "xxx",
 				},
 			},
+			digest: true,
 			expectedPipelines: []string{`name: 'deps: bump https://gitea.com/actions/checkout Gitea workflow'
 
 sources:
@@ -745,6 +877,7 @@ targets:
 			g, err := New(
 				Spec{
 					Credentials: tt.credentials,
+					Digest:      &tt.digest,
 				}, tt.rootDir, "")
 
 			require.NoError(t, err)
