@@ -1,6 +1,9 @@
 package gitbranch
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
@@ -63,6 +66,14 @@ type Spec struct {
 	// 	  * condition
 	// 	  * target
 	Password string `yaml:",omitempty"`
+	//  "key" of the tag object to retrieve.
+	//
+	//  Accepted values: ['name','hash'].
+	//
+	//  Default: 'name'
+	//  Compatible:
+	//    * source
+	Key string `yaml:",omitempty"`
 }
 
 // GitBranch defines a resource of kind "gitbranch"
@@ -88,6 +99,17 @@ func New(spec interface{}) (*GitBranch, error) {
 	err := mapstructure.Decode(spec, &newSpec)
 	if err != nil {
 		return nil, err
+	}
+
+	validationErrors := []string{}
+
+	if newSpec.Key != "" && newSpec.Key != "hash" && newSpec.Key != "name" {
+		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
+	}
+
+	// Return all the validation errors if found any
+	if len(validationErrors) > 0 {
+		return &GitBranch{}, fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	newFilter, err := newSpec.VersionFilter.Init()

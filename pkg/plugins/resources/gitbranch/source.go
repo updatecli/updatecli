@@ -25,13 +25,23 @@ func (gb *GitBranch) Source(workingDir string, resultSource *result.Source) erro
 		return fmt.Errorf("Unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
 	}
 
-	tags, err := gb.nativeGitHandler.Branches(gb.directory)
+	refs, err := gb.nativeGitHandler.BranchRefs(gb.directory)
 
 	if err != nil {
 		return fmt.Errorf("retrieving branches: %w", err)
 	}
 
-	gb.foundVersion, err = gb.versionFilter.Search(tags)
+	values := []string{}
+	for _, ref := range refs {
+		var value string
+		if gb.spec.Key == "hash" {
+			value = ref.Hash
+		} else {
+			value = ref.Name
+		}
+		values = append(values, value)
+	}
+	gb.foundVersion, err = gb.versionFilter.Search(values)
 	if err != nil {
 		return fmt.Errorf("filtering branches: %w", err)
 	}
