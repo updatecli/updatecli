@@ -50,6 +50,7 @@ targets:
       file: 'Chart.yaml'
       key: '$.dependencies[0].version'
       name: 'epinio'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'minio'
 `,
@@ -81,6 +82,7 @@ targets:
       file: 'Chart.yaml'
       key: '$.dependencies[1].version'
       name: 'epinio'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'kubed'
 `,
@@ -112,6 +114,7 @@ targets:
       file: 'Chart.yaml'
       key: '$.dependencies[2].version'
       name: 'epinio'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'epinio-ui'
 `,
@@ -143,6 +146,7 @@ targets:
       file: 'values.yaml'
       name: 'epinio'
       key: '$.image.tag'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'splatform_epinio-server'
 `,
@@ -174,6 +178,7 @@ targets:
       file: 'values.yaml'
       name: 'epinio'
       key: '$.images.ui.tag'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'epinioteam_epinio-ui-qa'
 `},
@@ -218,6 +223,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.image.tag'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'epinio_epinio-server-digest'
 `,
@@ -257,6 +263,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.images.ui.tag'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'epinio_epinio-ui-digest'
 `},
@@ -300,6 +307,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.image.tag'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'ghcr.io_epinio_epinio-server'
 `,
@@ -339,6 +347,7 @@ targets:
       file: 'values.yaml'
       name: 'sample'
       key: '$.images.ui.tag'
+      skippackaging: false
       versionincrement: ''
     sourceid: 'ghcr.io_epinio_epinio-ui'
 `},
