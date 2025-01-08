@@ -15,7 +15,8 @@ type GitHubClient interface {
 
 // GithubHandler must be implemented by any GitHub module
 type GithubHandler interface {
-	SearchReleases(releaseType ReleaseType) (releases []string, err error)
+	SearchReleasesByTagName(releaseType ReleaseType) (releases []string, err error)
+	SearchReleasesByTagHash(releaseType ReleaseType) (releases []string, err error)
 	SearchTags() (tags []string, err error)
 	Changelog(version.Version) (string, error)
 }

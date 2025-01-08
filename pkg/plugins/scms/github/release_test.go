@@ -13,6 +13,7 @@ func TestSearchReleases(t *testing.T) {
 		name         string
 		spec         Spec
 		releaseType  ReleaseType
+		searchKey    string
 		mockedQuery  *releasesQuery
 		mockedError  error
 		wantReleases []string
@@ -43,33 +44,45 @@ func TestSearchReleases(t *testing.T) {
 						Edges: []releaseEdge{
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
-								Node: releaseNode{
+								Node: ReleaseNode{
 									Name:    "v0.18.4 🌈",
 									TagName: "v0.18.4",
+									TagCommit: tagCommit{
+										Oid: "11111111",
+									},
 									IsDraft: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
-								Node: releaseNode{
-									Name:     "v0.18.3",
-									TagName:  "v0.18.3",
+								Node: ReleaseNode{
+									Name:    "v0.18.3",
+									TagName: "v0.18.3",
+									TagCommit: tagCommit{
+										Oid: "2222222",
+									},
 									IsLatest: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMS0xMS0xM1QxMjozNzoxMiswMTowMM4DK66W",
-								Node: releaseNode{
-									Name:         "v1.0.0",
-									TagName:      "v1.0.0",
+								Node: ReleaseNode{
+									Name:    "v1.0.0",
+									TagName: "v1.0.0",
+									TagCommit: tagCommit{
+										Oid: "33333333",
+									},
 									IsPrerelease: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMC0wMi0xOVQyMTozMDoxMyswMTowMM4BYOFb",
-								Node: releaseNode{
+								Node: ReleaseNode{
 									Name:    "v0.0.1",
 									TagName: "v0.0.1",
+									TagCommit: tagCommit{
+										Oid: "44444444",
+									},
 								},
 							},
 						},
@@ -77,6 +90,80 @@ func TestSearchReleases(t *testing.T) {
 				},
 			},
 			wantReleases: []string{"v0.0.1", "v0.18.3"},
+		},
+
+		{
+			name: "Case with a mix of releases (draft, prerelease, release) and default ReleaseType filter and hash",
+			spec: Spec{
+				Owner:      "updatecli",
+				Repository: "updatecli",
+				Token:      "superSecretTokenForJoe",
+				Username:   "joe",
+			},
+			searchKey: "hash",
+			mockedQuery: &releasesQuery{
+				RateLimit: RateLimit{
+					Cost:      1,
+					Remaining: 5000,
+				},
+				Repository: struct {
+					Releases repositoryRelease `graphql:"releases(last: 100, before: $before, orderBy: $orderBy)"`
+				}{
+					Releases: repositoryRelease{
+						TotalCount: 4,
+						PageInfo: PageInfo{
+							HasNextPage: false,
+							EndCursor:   "Y3Vyc29yOnYyOpK5MjAyMC0wMi0xOVQyMTozMDoxMyswMTowMM4BYOFb",
+						},
+						Edges: []releaseEdge{
+							{
+								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
+								Node: ReleaseNode{
+									Name:    "v0.18.4 🌈",
+									TagName: "v0.18.4",
+									TagCommit: tagCommit{
+										Oid: "11111111",
+									},
+									IsDraft: true,
+								},
+							},
+							{
+								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
+								Node: ReleaseNode{
+									Name:    "v0.18.3",
+									TagName: "v0.18.3",
+									TagCommit: tagCommit{
+										Oid: "2222222",
+									},
+									IsLatest: true,
+								},
+							},
+							{
+								Cursor: "Y3Vyc29yOnYyOpK5MjAyMS0xMS0xM1QxMjozNzoxMiswMTowMM4DK66W",
+								Node: ReleaseNode{
+									Name:    "v1.0.0",
+									TagName: "v1.0.0",
+									TagCommit: tagCommit{
+										Oid: "33333333",
+									},
+									IsPrerelease: true,
+								},
+							},
+							{
+								Cursor: "Y3Vyc29yOnYyOpK5MjAyMC0wMi0xOVQyMTozMDoxMyswMTowMM4BYOFb",
+								Node: ReleaseNode{
+									Name:    "v0.0.1",
+									TagName: "v0.0.1",
+									TagCommit: tagCommit{
+										Oid: "44444444",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantReleases: []string{"44444444", "2222222"},
 		},
 		{
 			name: "Case with a mix of releases (draft, prerelease, release) and a ReleaseType with draft, prerelease and releases",
@@ -108,33 +195,45 @@ func TestSearchReleases(t *testing.T) {
 						Edges: []releaseEdge{
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
-								Node: releaseNode{
+								Node: ReleaseNode{
 									Name:    "v0.18.4 🌈",
 									TagName: "v0.18.4",
+									TagCommit: tagCommit{
+										Oid: "11111111",
+									},
 									IsDraft: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
-								Node: releaseNode{
-									Name:     "v0.18.3",
-									TagName:  "v0.18.3",
+								Node: ReleaseNode{
+									Name:    "v0.18.3",
+									TagName: "v0.18.3",
+									TagCommit: tagCommit{
+										Oid: "2222222",
+									},
 									IsLatest: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMS0xMS0xM1QxMjozNzoxMiswMTowMM4DK66W",
-								Node: releaseNode{
-									Name:         "v1.0.0",
-									TagName:      "v1.0.0",
+								Node: ReleaseNode{
+									Name:    "v1.0.0",
+									TagName: "v1.0.0",
+									TagCommit: tagCommit{
+										Oid: "33333333",
+									},
 									IsPrerelease: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMC0wMi0xOVQyMTozMDoxMyswMTowMM4BYOFb",
-								Node: releaseNode{
+								Node: ReleaseNode{
 									Name:    "v0.0.1",
 									TagName: "v0.0.1",
+									TagCommit: tagCommit{
+										Oid: "44444444",
+									},
 								},
 							},
 						},
@@ -171,33 +270,45 @@ func TestSearchReleases(t *testing.T) {
 						Edges: []releaseEdge{
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
-								Node: releaseNode{
+								Node: ReleaseNode{
 									Name:    "v0.18.4 🌈",
 									TagName: "v0.18.4",
+									TagCommit: tagCommit{
+										Oid: "11111111",
+									},
 									IsDraft: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
-								Node: releaseNode{
-									Name:     "v0.18.3",
-									TagName:  "v0.18.3",
+								Node: ReleaseNode{
+									Name:    "v0.18.3",
+									TagName: "v0.18.3",
+									TagCommit: tagCommit{
+										Oid: "2222222",
+									},
 									IsLatest: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMS0xMS0xM1QxMjozNzoxMiswMTowMM4DK66W",
-								Node: releaseNode{
-									Name:         "v1.0.0",
-									TagName:      "v1.0.0",
+								Node: ReleaseNode{
+									Name:    "v1.0.0",
+									TagName: "v1.0.0",
+									TagCommit: tagCommit{
+										Oid: "33333333",
+									},
 									IsPrerelease: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMC0wMi0xOVQyMTozMDoxMyswMTowMM4BYOFb",
-								Node: releaseNode{
+								Node: ReleaseNode{
 									Name:    "v0.0.1",
 									TagName: "v0.0.1",
+									TagCommit: tagCommit{
+										Oid: "44444444",
+									},
 								},
 							},
 						},
@@ -231,36 +342,48 @@ func TestSearchReleases(t *testing.T) {
 						Edges: []releaseEdge{
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
-								Node: releaseNode{
-									Name:         "v0.18.4 🌈",
-									TagName:      "v0.18.4",
+								Node: ReleaseNode{
+									Name:    "v0.18.4 🌈",
+									TagName: "v0.18.4",
+									TagCommit: tagCommit{
+										Oid: "11111111",
+									},
 									IsDraft:      true,
 									IsPrerelease: false,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMi0wMS0xOFQxOTo0Nzo1MyswMTowMM4Da8vn",
-								Node: releaseNode{
-									Name:         "v0.18.3",
-									TagName:      "v0.18.3",
+								Node: ReleaseNode{
+									Name:    "v0.18.3",
+									TagName: "v0.18.3",
+									TagCommit: tagCommit{
+										Oid: "2222222",
+									},
 									IsDraft:      false,
 									IsPrerelease: false,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMS0xMS0xM1QxMjozNzoxMiswMTowMM4DK66W",
-								Node: releaseNode{
-									Name:         "v1.0.0",
-									TagName:      "v1.0.0",
+								Node: ReleaseNode{
+									Name:    "v1.0.0",
+									TagName: "v1.0.0",
+									TagCommit: tagCommit{
+										Oid: "33333333",
+									},
 									IsDraft:      false,
 									IsPrerelease: true,
 								},
 							},
 							{
 								Cursor: "Y3Vyc29yOnYyOpK5MjAyMC0wMi0xOVQyMTozMDoxMyswMTowMM4BYOFb",
-								Node: releaseNode{
-									Name:         "v0.0.1",
-									TagName:      "v0.0.1",
+								Node: ReleaseNode{
+									Name:    "v0.0.1",
+									TagName: "v0.0.1",
+									TagCommit: tagCommit{
+										Oid: "44444444",
+									},
 									IsDraft:      false,
 									IsPrerelease: false,
 								},
@@ -291,7 +414,14 @@ func TestSearchReleases(t *testing.T) {
 			}
 			tt.releaseType.Init()
 
-			got, err := sut.SearchReleases(tt.releaseType)
+			var got []string
+			var err error
+			if tt.searchKey == "hash" {
+				got, err = sut.SearchReleasesByTagHash(tt.releaseType)
+			} else {
+				got, err = sut.SearchReleasesByTagName(tt.releaseType)
+
+			}
 
 			if tt.wantErr {
 				assert.Error(t, err)

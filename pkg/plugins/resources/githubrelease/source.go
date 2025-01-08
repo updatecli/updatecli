@@ -10,7 +10,13 @@ import (
 // Source retrieves a specific version tag from GitHub Releases.
 func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) error {
 
-	versions, err := gr.ghHandler.SearchReleases(gr.typeFilter)
+	var versions []string
+	var err error
+	if gr.spec.Key == KeyHash {
+		versions, err = gr.ghHandler.SearchReleasesByTagHash(gr.typeFilter)
+	} else {
+		versions, err = gr.ghHandler.SearchReleasesByTagName(gr.typeFilter)
+	}
 	if err != nil {
 		return fmt.Errorf("searching GitHub release: %w", err)
 	}
