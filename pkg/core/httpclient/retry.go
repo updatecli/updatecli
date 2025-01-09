@@ -84,7 +84,9 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func NewRetryClient() HTTPClient {
 	transport := &retryTransport{
-		transport: &http.Transport{},
+		transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
 	}
 
 	client := http.DefaultClient
