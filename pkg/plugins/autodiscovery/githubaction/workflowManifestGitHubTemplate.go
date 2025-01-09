@@ -137,17 +137,17 @@ targets:
     kind: 'yaml'
     sourceid: 'release{{if .Digest}}_digest{{end}}'
     transformers:
-      - addprefix: '"{{ .ActionName }}@'
-      - addsuffix: '"'
-{{- if .Digest }}
-      - addsuffix: '  # pinned from {{ "{{" }} source "release" {{ "}}" }} by updatecli (do-not-remove-comment)'
-{{- end }}
+      - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      engine: 'yamlpath'
+{{- if .Digest }}
+      comment: 'pinned from {{ "{{" }} source "release" {{ "}}" }} by updatecli (do-not-remove-comment)'
+{{- end }}
 
   tag:
     dependson:
@@ -157,17 +157,17 @@ targets:
     kind: 'yaml'
     sourceid: 'tag{{if .Digest}}_digest{{end}}'
     transformers:
-      - addprefix: '"{{ .ActionName }}@'
-      - addsuffix: '"'
-{{- if .Digest }}
-      - addsuffix: '  # pinned from {{ "{{" }} source "tag" {{ "}}" }} by updatecli (do-not-remove-comment)'
-{{- end }}
+      - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      engine: 'yamlpath'
+{{- if .Digest }}
+      comment: 'pinned from {{ "{{" }} source "tag" {{ "}}" }} by updatecli (do-not-remove-comment)'
+{{- end }}
 
   branch:
     dependson:
@@ -177,16 +177,16 @@ targets:
     kind: yaml
     sourceid: branch{{if .Digest}}_digest{{end}}
     transformers:
-      - addprefix: '"{{ .ActionName }}@'
-      - addsuffix: '"'
-{{- if .Digest }}
-      - addsuffix: '  # pinned from {{ "{{" }} source "branch" {{ "}}" }} by updatecli (do-not-remove-comment)'
-{{- end }}
+      - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      engine: 'yamlpath'
+{{- if .Digest }}
+      comment: 'pinned from {{ "{{" }} source "branch" {{ "}}" }} by updatecli (do-not-remove-comment)'
+{{- end }}
 `
 )

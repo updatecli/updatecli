@@ -106,11 +106,11 @@ targets:
     kind: 'yaml'
     sourceid: 'release'
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 
   tag:
     dependson:
@@ -120,11 +120,11 @@ targets:
     kind: 'yaml'
     sourceid: 'tag'
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 
   branch:
     dependson:
@@ -134,11 +134,11 @@ targets:
     kind: yaml
     sourceid: branch
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 `},
 		},
 		{
@@ -274,12 +274,12 @@ targets:
     kind: 'yaml'
     sourceid: 'release_digest'
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
-      - addsuffix: '  # pinned from {{ source "release" }} by updatecli (do-not-remove-comment)'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
+      comment: 'pinned from {{ source "release" }} by updatecli (do-not-remove-comment)'
 
   tag:
     dependson:
@@ -289,12 +289,12 @@ targets:
     kind: 'yaml'
     sourceid: 'tag_digest'
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
-      - addsuffix: '  # pinned from {{ source "tag" }} by updatecli (do-not-remove-comment)'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
+      comment: 'pinned from {{ source "tag" }} by updatecli (do-not-remove-comment)'
 
   branch:
     dependson:
@@ -304,12 +304,12 @@ targets:
     kind: yaml
     sourceid: branch_digest
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
-      - addsuffix: '  # pinned from {{ source "branch" }} by updatecli (do-not-remove-comment)'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
+      comment: 'pinned from {{ source "branch" }} by updatecli (do-not-remove-comment)'
 `, `name: 'deps: bump actions/checkout GitHub workflow'
 
 sources:
@@ -433,12 +433,12 @@ targets:
     kind: 'yaml'
     sourceid: 'release_digest'
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
-      - addsuffix: '  # pinned from {{ source "release" }} by updatecli (do-not-remove-comment)'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
+      engine: 'yamlpath'
+      comment: 'pinned from {{ source "release" }} by updatecli (do-not-remove-comment)'
 
   tag:
     dependson:
@@ -448,12 +448,12 @@ targets:
     kind: 'yaml'
     sourceid: 'tag_digest'
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
-      - addsuffix: '  # pinned from {{ source "tag" }} by updatecli (do-not-remove-comment)'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
+      engine: 'yamlpath'
+      comment: 'pinned from {{ source "tag" }} by updatecli (do-not-remove-comment)'
 
   branch:
     dependson:
@@ -463,12 +463,12 @@ targets:
     kind: yaml
     sourceid: branch_digest
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
-      - addsuffix: '  # pinned from {{ source "branch" }} by updatecli (do-not-remove-comment)'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
+      engine: 'yamlpath'
+      comment: 'pinned from {{ source "branch" }} by updatecli (do-not-remove-comment)'
 `},
 		},
 		{
@@ -563,11 +563,11 @@ targets:
     kind: 'yaml'
     sourceid: 'release'
     transformers:
-      - addprefix: '"https://gitea.com/actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
       file: '.gitea/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 
   tag:
     dependson:
@@ -577,11 +577,11 @@ targets:
     kind: 'yaml'
     sourceid: 'tag'
     transformers:
-      - addprefix: '"https://gitea.com/actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
       file: '.gitea/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 
   branch:
     dependson:
@@ -591,11 +591,11 @@ targets:
     kind: yaml
     sourceid: branch
     transformers:
-      - addprefix: '"https://gitea.com/actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
       file: '.gitea/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 `},
 		},
 		{
@@ -689,11 +689,11 @@ targets:
     kind: 'yaml'
     sourceid: 'release'
     transformers:
-      - addprefix: '"tibdex/github-app-token@'
-      - addsuffix: '"'
+      - addprefix: 'tibdex/github-app-token@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 
   tag:
     dependson:
@@ -703,11 +703,11 @@ targets:
     kind: 'yaml'
     sourceid: 'tag'
     transformers:
-      - addprefix: '"tibdex/github-app-token@'
-      - addsuffix: '"'
+      - addprefix: 'tibdex/github-app-token@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 
   branch:
     dependson:
@@ -717,11 +717,11 @@ targets:
     kind: yaml
     sourceid: branch
     transformers:
-      - addprefix: '"tibdex/github-app-token@'
-      - addsuffix: '"'
+      - addprefix: 'tibdex/github-app-token@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      engine: 'yamlpath'
 `, `name: 'deps: bump tibdex/github-app-token GitHub workflow'
 
 sources:
@@ -804,11 +804,11 @@ targets:
     kind: 'yaml'
     sourceid: 'release'
     transformers:
-      - addprefix: '"tibdex/github-app-token@'
-      - addsuffix: '"'
+      - addprefix: 'tibdex/github-app-token@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
+      engine: 'yamlpath'
 
   tag:
     dependson:
@@ -818,11 +818,11 @@ targets:
     kind: 'yaml'
     sourceid: 'tag'
     transformers:
-      - addprefix: '"tibdex/github-app-token@'
-      - addsuffix: '"'
+      - addprefix: 'tibdex/github-app-token@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
+      engine: 'yamlpath'
 
   branch:
     dependson:
@@ -832,11 +832,11 @@ targets:
     kind: yaml
     sourceid: branch
     transformers:
-      - addprefix: '"tibdex/github-app-token@'
-      - addsuffix: '"'
+      - addprefix: 'tibdex/github-app-token@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
+      engine: 'yamlpath'
 `, `name: 'deps: bump actions/checkout GitHub workflow'
 
 sources:
@@ -919,11 +919,11 @@ targets:
     kind: 'yaml'
     sourceid: 'release'
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[2].uses'
+      engine: 'yamlpath'
 
   tag:
     dependson:
@@ -933,11 +933,11 @@ targets:
     kind: 'yaml'
     sourceid: 'tag'
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[2].uses'
+      engine: 'yamlpath'
 
   branch:
     dependson:
@@ -947,11 +947,11 @@ targets:
     kind: yaml
     sourceid: branch
     transformers:
-      - addprefix: '"actions/checkout@'
-      - addsuffix: '"'
+      - addprefix: 'actions/checkout@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[2].uses'
+      engine: 'yamlpath'
 `, `name: 'deps: bump updatecli/updatecli-action GitHub workflow'
 
 sources:
@@ -1034,11 +1034,11 @@ targets:
     kind: 'yaml'
     sourceid: 'release'
     transformers:
-      - addprefix: '"updatecli/updatecli-action@'
-      - addsuffix: '"'
+      - addprefix: 'updatecli/updatecli-action@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[3].uses'
+      engine: 'yamlpath'
 
   tag:
     dependson:
@@ -1048,11 +1048,11 @@ targets:
     kind: 'yaml'
     sourceid: 'tag'
     transformers:
-      - addprefix: '"updatecli/updatecli-action@'
-      - addsuffix: '"'
+      - addprefix: 'updatecli/updatecli-action@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[3].uses'
+      engine: 'yamlpath'
 
   branch:
     dependson:
@@ -1062,11 +1062,11 @@ targets:
     kind: yaml
     sourceid: branch
     transformers:
-      - addprefix: '"updatecli/updatecli-action@'
-      - addsuffix: '"'
+      - addprefix: 'updatecli/updatecli-action@'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[3].uses'
+      engine: 'yamlpath'
 `},
 		},
 	}

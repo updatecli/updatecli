@@ -84,14 +84,14 @@ targets:
     kind: 'yaml'
     sourceid: 'release'
     transformers:
-      - addprefix: '"{{ .ActionName }}@'
-      - addsuffix: '"'
+      - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      engine: 'yamlpath'
 
   tag:
     dependson:
@@ -101,14 +101,14 @@ targets:
     kind: 'yaml'
     sourceid: 'tag'
     transformers:
-      - addprefix: '"{{ .ActionName }}@'
-      - addsuffix: '"'
+      - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      engine: 'yamlpath'
 
   branch:
     dependson:
@@ -118,13 +118,13 @@ targets:
     kind: yaml
     sourceid: branch
     transformers:
-      - addprefix: '"{{ .ActionName }}@'
-      - addsuffix: '"'
+      - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
     spec:
       file: '{{ .File }}'
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      engine: 'yamlpath'
 `
 )
