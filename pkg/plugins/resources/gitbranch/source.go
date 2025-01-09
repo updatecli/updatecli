@@ -33,13 +33,7 @@ func (gb *GitBranch) Source(workingDir string, resultSource *result.Source) erro
 
 	values := []string{}
 	for _, ref := range refs {
-		var value string
-		if gb.spec.Key == "hash" {
-			value = ref.Hash
-		} else {
-			value = ref.Name
-		}
-		values = append(values, value)
+		values = append(values, ref.Name)
 	}
 	gb.foundVersion, err = gb.versionFilter.Search(values)
 	if err != nil {
@@ -49,6 +43,14 @@ func (gb *GitBranch) Source(workingDir string, resultSource *result.Source) erro
 
 	if len(value) == 0 {
 		return fmt.Errorf("no Git Branch found matching pattern %q", gb.versionFilter.Pattern)
+	}
+
+	if gb.spec.Key == "hash" {
+		for i := range refs {
+			if refs[i].Name == value {
+				value = refs[i].Hash
+			}
+		}
 	}
 
 	resultSource.Result = result.SUCCESS

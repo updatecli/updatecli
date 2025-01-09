@@ -180,8 +180,8 @@ sources:
       token: 'xxx'
       key: 'hash'
       versionfilter:
-        kind: 'semver'
-        pattern: '*'
+        kind: 'regex'
+        pattern: '{{ source "release" }}'
 
   tag:
     dependson:
@@ -205,8 +205,8 @@ sources:
       password: 'xxx'
       key: 'hash'
       versionfilter:
-        kind: 'semver'
-        pattern: '*'
+        kind: 'regex'
+        pattern: '{{ source "tag" }}'
 
   branch:
     dependson:
@@ -230,8 +230,8 @@ sources:
       password: 'xxx'
       key: 'hash'
       versionfilter:
-        kind: 'semver'
-        pattern: '*'
+        kind: 'regex'
+        pattern: '{{ source "branch" }}'
 
 conditions:
   release:
@@ -339,8 +339,8 @@ sources:
       token: 'xxx'
       key: 'hash'
       versionfilter:
-        kind: 'semver'
-        pattern: '*'
+        kind: 'regex'
+        pattern: '{{ source "release" }}'
 
   tag:
     dependson:
@@ -364,8 +364,8 @@ sources:
       password: 'xxx'
       key: 'hash'
       versionfilter:
-        kind: 'semver'
-        pattern: '*'
+        kind: 'regex'
+        pattern: '{{ source "tag" }}'
 
   branch:
     dependson:
@@ -389,8 +389,8 @@ sources:
       password: 'xxx'
       key: 'hash'
       versionfilter:
-        kind: 'semver'
-        pattern: '*'
+        kind: 'regex'
+        pattern: '{{ source "branch" }}'
 
 conditions:
   release:

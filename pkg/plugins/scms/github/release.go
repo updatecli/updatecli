@@ -57,12 +57,12 @@ type releasesQuery struct {
 type ReleaseNode struct {
 	Name         string
 	TagName      string
-	TagCommit    tagCommit
+	TagCommit    TagCommit
 	IsDraft      bool
 	IsLatest     bool
 	IsPrerelease bool
 }
-type tagCommit struct {
+type TagCommit struct {
 	Oid string
 }
 type releaseEdge struct {

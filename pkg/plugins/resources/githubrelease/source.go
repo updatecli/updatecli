@@ -10,17 +10,15 @@ import (
 // Source retrieves a specific version tag from GitHub Releases.
 func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) error {
 
-	var versions []string
-	var err error
-	if gr.spec.Key == KeyHash {
-		versions, err = gr.ghHandler.SearchReleasesByTagHash(gr.typeFilter)
-	} else {
-		versions, err = gr.ghHandler.SearchReleasesByTagName(gr.typeFilter)
-	}
+	releaseRefs, err := gr.ghHandler.SearchReleases(gr.typeFilter)
 	if err != nil {
-		return fmt.Errorf("searching GitHub release: %w", err)
+		return err
 	}
 
+	var versions []string
+	for _, release := range releaseRefs {
+		versions = append(versions, release.TagName)
+	}
 	if len(versions) == 0 {
 		switch gr.spec.TypeFilter.IsZero() {
 		case true:
@@ -44,6 +42,14 @@ func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) 
 	}
 
 	value := gr.foundVersion.GetVersion()
+
+	if gr.spec.Key == KeyHash {
+		for _, release := range releaseRefs {
+			if release.TagName == value {
+				value = release.TagCommit.Oid
+			}
+		}
+	}
 
 	if len(value) == 0 {
 		return fmt.Errorf("no GitHub Release version found matching pattern %q of kind %q",

@@ -47,7 +47,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.4 🌈",
 									TagName: "v0.18.4",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "11111111",
 									},
 									IsDraft: true,
@@ -58,7 +58,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.3",
 									TagName: "v0.18.3",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "2222222",
 									},
 									IsLatest: true,
@@ -69,7 +69,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v1.0.0",
 									TagName: "v1.0.0",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "33333333",
 									},
 									IsPrerelease: true,
@@ -80,7 +80,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.0.1",
 									TagName: "v0.0.1",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "44444444",
 									},
 								},
@@ -121,7 +121,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.4 🌈",
 									TagName: "v0.18.4",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "11111111",
 									},
 									IsDraft: true,
@@ -132,7 +132,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.3",
 									TagName: "v0.18.3",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "2222222",
 									},
 									IsLatest: true,
@@ -143,7 +143,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v1.0.0",
 									TagName: "v1.0.0",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "33333333",
 									},
 									IsPrerelease: true,
@@ -154,7 +154,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.0.1",
 									TagName: "v0.0.1",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "44444444",
 									},
 								},
@@ -198,7 +198,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.4 🌈",
 									TagName: "v0.18.4",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "11111111",
 									},
 									IsDraft: true,
@@ -209,7 +209,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.3",
 									TagName: "v0.18.3",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "2222222",
 									},
 									IsLatest: true,
@@ -220,7 +220,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v1.0.0",
 									TagName: "v1.0.0",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "33333333",
 									},
 									IsPrerelease: true,
@@ -231,7 +231,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.0.1",
 									TagName: "v0.0.1",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "44444444",
 									},
 								},
@@ -273,7 +273,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.4 🌈",
 									TagName: "v0.18.4",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "11111111",
 									},
 									IsDraft: true,
@@ -284,7 +284,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.3",
 									TagName: "v0.18.3",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "2222222",
 									},
 									IsLatest: true,
@@ -295,7 +295,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v1.0.0",
 									TagName: "v1.0.0",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "33333333",
 									},
 									IsPrerelease: true,
@@ -306,7 +306,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.0.1",
 									TagName: "v0.0.1",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "44444444",
 									},
 								},
@@ -345,7 +345,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.4 🌈",
 									TagName: "v0.18.4",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "11111111",
 									},
 									IsDraft:      true,
@@ -357,7 +357,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.18.3",
 									TagName: "v0.18.3",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "2222222",
 									},
 									IsDraft:      false,
@@ -369,7 +369,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v1.0.0",
 									TagName: "v1.0.0",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "33333333",
 									},
 									IsDraft:      false,
@@ -381,7 +381,7 @@ func TestSearchReleases(t *testing.T) {
 								Node: ReleaseNode{
 									Name:    "v0.0.1",
 									TagName: "v0.0.1",
-									TagCommit: tagCommit{
+									TagCommit: TagCommit{
 										Oid: "44444444",
 									},
 									IsDraft:      false,

@@ -33,8 +33,8 @@ sources:
       token: '{{ .Token }}'
       key: 'hash'
       versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        pattern: '{{ .VersionFilterPattern }}'
+        kind: 'regex'
+        pattern: '{{ "{{" }} source "release" {{ "}}" }}'
 
 {{- end }}
 
@@ -62,8 +62,8 @@ sources:
       password: '{{ .Token }}'
       key: 'hash'
       versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        pattern: '{{ .VersionFilterPattern }}'
+        kind: 'regex'
+        pattern: '{{ "{{" }} source "tag" {{ "}}" }}'
 
 {{- end }}
 
@@ -91,8 +91,8 @@ sources:
       password: '{{ .Token }}'
       key: 'hash'
       versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        pattern: '{{ .VersionFilterPattern }}'
+        kind: 'regex'
+        pattern: '{{ "{{" }} source "branch" {{ "}}" }}'
 
 {{- end }}
 

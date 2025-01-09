@@ -35,6 +35,14 @@ func TestLoadGitHubActionWorkflow(t *testing.T) {
 			expectedCommentDigest: "pinned from 8f4b7f84864484a7bf31766abe9204da3cbe65b3 by updatecli (do-not-remove-comment)",
 		},
 		{
+			name:                  "Reference specific commit with pinned digest",
+			stepName:              "Checkout",
+			stepUses:              "\"actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3\"  # pinned from 8f4b7f84864484a7bf31766abe9204da3cbe65b3 by updatecli (do-not-remove-comment)",
+			expectedStepName:      "Checkout",
+			expectedStepUses:      "actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3",
+			expectedCommentDigest: "pinned from 8f4b7f84864484a7bf31766abe9204da3cbe65b3 by updatecli (do-not-remove-comment)",
+		},
+		{
 			name:                  "Reference major version",
 			stepName:              "Checkout",
 			stepUses:              "actions/checkout@v4",
