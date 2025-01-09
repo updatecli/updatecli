@@ -21,6 +21,7 @@ func TestSearchWorkflowFiles(t *testing.T) {
 	}
 
 	expectedWorkflowFiles := []string{
+		"testdata/digest/.github/workflows/updatecli.yaml",
 		"testdata/duplicate_steps/.github/workflows/updatecli.yaml",
 		"testdata/gitea/.gitea/workflows/updatecli.yaml",
 		"testdata/updatecli/.github/workflows/updatecli.yaml",
@@ -105,6 +106,52 @@ func TestParseActionName(t *testing.T) {
 			assert.Equal(t, tt.expectedRepository, gotRepository)
 			assert.Equal(t, tt.expectedReference, gotReference)
 			assert.Equal(t, tt.expectedDirectory, gotDirectory)
+		})
+	}
+}
+
+func TestParseActionDigestComment(t *testing.T) {
+	tests := []struct {
+		name                    string
+		input                   string
+		expectedDigestReference string
+	}{
+		{
+			name:                    "complete digest commit comment",
+			input:                   "pinned from 8f4b7f84864484a7bf31766abe9204da3cbe65b3 by updatecli (do-not-remove-comment)",
+			expectedDigestReference: "8f4b7f84864484a7bf31766abe9204da3cbe65b3",
+		},
+		{
+			name:                    "complete digest tag comment",
+			input:                   "pinned from v4.3.2 by updatecli (do-not-remove-comment)",
+			expectedDigestReference: "v4.3.2",
+		},
+		{
+			name:                    "complete digest branch comment",
+			input:                   "pinned from main by updatecli (do-not-remove-comment)",
+			expectedDigestReference: "main",
+		},
+		{
+			name:                    "incomplete digest comment",
+			input:                   "main by updatecli (do-not-remove-comment)",
+			expectedDigestReference: "",
+		},
+		{
+			name:                    "incomplete digest comment end",
+			input:                   "pinned from main by updatecli",
+			expectedDigestReference: "",
+		},
+		{
+			name:                    "empty digest comment",
+			input:                   "",
+			expectedDigestReference: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDigestReference := parseActionDigestComment(tt.input)
+			assert.Equal(t, tt.expectedDigestReference, gotDigestReference)
 		})
 	}
 }

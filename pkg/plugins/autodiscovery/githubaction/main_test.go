@@ -143,7 +143,7 @@ targets:
 		},
 		{
 			name:    "Scenario - GitHub Action with a single workflow file and digest",
-			rootDir: "testdata/updatecli",
+			rootDir: "testdata/digest",
 			credentials: map[string]gitProviderToken{
 				"github.com": {
 					Kind:  "github",
@@ -155,6 +155,20 @@ targets:
 
 sources:
   release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest GitHub Release for actions/checkout'
+    kind: 'githubrelease'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  release_digest:
     dependson:
       - 'condition#release:and'
     name: 'Get latest GitHub Release for actions/checkout'
@@ -177,12 +191,36 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
       key: 'hash'
       versionfilter:
         kind: 'semver'
         pattern: '*'
 
   branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch_digest:
     dependson:
       - 'condition#branch:and'
     name: 'Get latest branch for actions/checkout'
@@ -232,12 +270,13 @@ targets:
     dependson:
       - 'condition#release:and'
     disableconditions: true
-    name: 'deps(github): bump Action release for actions/checkout from v4 to {{ source "release" }}'
+    name: 'deps(github): bump Action release for actions/checkout from v4 to {{ source "release_digest" }} (Pinned from {{ source "release" }})'
     kind: 'yaml'
-    sourceid: 'release'
+    sourceid: 'release_digest'
     transformers:
       - addprefix: '"actions/checkout@'
       - addsuffix: '"'
+      - addsuffix: '  # pinned from {{ source "release" }} by updatecli (do-not-remove-comment)'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
@@ -246,12 +285,13 @@ targets:
     dependson:
       - 'condition#tag:and'
     disableconditions: true
-    name: 'deps(github): bump Action tag for actions/checkout from v4 to {{ source "tag" }}'
+    name: 'deps(github): bump Action tag for actions/checkout from v4 to {{ source "tag_digest" }} (Pinned from {{ source "tag" }})'
     kind: 'yaml'
-    sourceid: 'tag'
+    sourceid: 'tag_digest'
     transformers:
       - addprefix: '"actions/checkout@'
       - addsuffix: '"'
+      - addsuffix: '  # pinned from {{ source "tag" }} by updatecli (do-not-remove-comment)'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
@@ -260,15 +300,175 @@ targets:
     dependson:
       - 'condition#branch:and'
     disableconditions: true
-    name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
+    name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
     kind: yaml
-    sourceid: branch
+    sourceid: branch_digest
     transformers:
       - addprefix: '"actions/checkout@'
       - addsuffix: '"'
+      - addsuffix: '  # pinned from {{ source "branch" }} by updatecli (do-not-remove-comment)'
     spec:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+`, `name: 'deps: bump actions/checkout GitHub workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest GitHub Release for actions/checkout'
+    kind: 'githubrelease'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  release_digest:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest GitHub Release for actions/checkout'
+    kind: 'githubrelease'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: 'xxx'
+      key: 'hash'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      key: 'hash'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch_digest:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      key: 'hash'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+conditions:
+  release:
+    name: 'Check if actions/checkout@v4.2.2 is a GitHub release'
+    kind: 'githubrelease'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: 'xxx'
+      tag: 'v4.2.2'
+
+  tag:
+    name: 'Check if actions/checkout@v4.2.2 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^v4.2.2$'
+
+  branch:
+    name: 'Check if actions/checkout@v4.2.2 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4.2.2'
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(github): bump Action release for actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "release_digest" }} (Pinned from {{ source "release" }})'
+    kind: 'yaml'
+    sourceid: 'release_digest'
+    transformers:
+      - addprefix: '"actions/checkout@'
+      - addsuffix: '"'
+      - addsuffix: '  # pinned from {{ source "release" }} by updatecli (do-not-remove-comment)'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(github): bump Action tag for actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "tag_digest" }} (Pinned from {{ source "tag" }})'
+    kind: 'yaml'
+    sourceid: 'tag_digest'
+    transformers:
+      - addprefix: '"actions/checkout@'
+      - addsuffix: '"'
+      - addsuffix: '  # pinned from {{ source "tag" }} by updatecli (do-not-remove-comment)'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(github): bump Action branch for actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
+    kind: yaml
+    sourceid: branch_digest
+    transformers:
+      - addprefix: '"actions/checkout@'
+      - addsuffix: '"'
+      - addsuffix: '  # pinned from {{ source "branch" }} by updatecli (do-not-remove-comment)'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
 `},
 		},
 		{
