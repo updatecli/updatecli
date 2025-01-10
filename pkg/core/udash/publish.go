@@ -10,6 +10,7 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
@@ -79,7 +80,7 @@ func Publish(r *reports.Report) error {
 
 	u := reportApiURL.JoinPath("pipeline", "reports")
 
-	client := &http.Client{}
+	client := httpclient.NewRetryClient()
 
 	req, err := http.NewRequest("POST", u.String(), bodyReader)
 	if err != nil {
