@@ -146,7 +146,7 @@ targets:
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
       engine: 'yamlpath'
 {{- if .Digest }}
-      comment: 'pinned from {{ "{{" }} source "release" {{ "}}" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ "{{" }} source "release" {{ "}}" }}'
 {{- end }}
 
   tag:
@@ -166,7 +166,7 @@ targets:
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
       engine: 'yamlpath'
 {{- if .Digest }}
-      comment: 'pinned from {{ "{{" }} source "tag" {{ "}}" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ "{{" }} source "tag" {{ "}}" }}'
 {{- end }}
 
   branch:
@@ -186,7 +186,7 @@ targets:
       key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
       engine: 'yamlpath'
 {{- if .Digest }}
-      comment: 'pinned from {{ "{{" }} source "branch" {{ "}}" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ "{{" }} source "branch" {{ "}}" }}'
 {{- end }}
 `
 )

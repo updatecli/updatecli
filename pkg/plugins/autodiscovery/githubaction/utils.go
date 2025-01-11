@@ -124,19 +124,12 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 // parseActionDigestComment will parse the action comment from the input string.
 // and then try to identify if we already tried to derive a digest
 func parseActionDigestComment(input string) (digestReference string) {
-	// Check if the input contains the "pinned from" prefix
-	const prefix = "pinned from "
-	const suffix = " by updatecli (do-not-remove-comment)"
-
-	if strings.HasPrefix(input, prefix) && strings.HasSuffix(input, " by updatecli (do-not-remove-comment)") {
-		// Extract the substring between the prefix and suffix
-		sanitized := strings.TrimPrefix(input, prefix)
-		sanitized = strings.TrimSuffix(sanitized, suffix)
-		return strings.TrimSpace(sanitized)
+	trimmed := strings.TrimSpace(input)
+	words := strings.Fields(trimmed)
+	if len(words) > 0 {
+		return words[0]
 	}
-
-	// Return empty if it doesn't match the expected format
-	return ""
+	return "" // Return an empty string if no words are found
 }
 
 func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err error) {

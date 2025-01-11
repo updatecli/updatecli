@@ -279,7 +279,7 @@ targets:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
       engine: 'yamlpath'
-      comment: 'pinned from {{ source "release" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ source "release" }}'
 
   tag:
     dependson:
@@ -294,7 +294,7 @@ targets:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
       engine: 'yamlpath'
-      comment: 'pinned from {{ source "tag" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ source "tag" }}'
 
   branch:
     dependson:
@@ -309,7 +309,7 @@ targets:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
       engine: 'yamlpath'
-      comment: 'pinned from {{ source "branch" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ source "branch" }}'
 `, `name: 'deps: bump actions/checkout GitHub workflow'
 
 sources:
@@ -438,7 +438,7 @@ targets:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
       engine: 'yamlpath'
-      comment: 'pinned from {{ source "release" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ source "release" }}'
 
   tag:
     dependson:
@@ -453,7 +453,7 @@ targets:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
       engine: 'yamlpath'
-      comment: 'pinned from {{ source "tag" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ source "tag" }}'
 
   branch:
     dependson:
@@ -468,7 +468,7 @@ targets:
       file: '.github/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[1].uses'
       engine: 'yamlpath'
-      comment: 'pinned from {{ source "branch" }} by updatecli (do-not-remove-comment)'
+      comment: '{{ source "branch" }}'
 `},
 		},
 		{

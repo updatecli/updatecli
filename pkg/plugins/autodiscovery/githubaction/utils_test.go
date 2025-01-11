@@ -118,28 +118,18 @@ func TestParseActionDigestComment(t *testing.T) {
 	}{
 		{
 			name:                    "complete digest commit comment",
-			input:                   "pinned from 8f4b7f84864484a7bf31766abe9204da3cbe65b3 by updatecli (do-not-remove-comment)",
+			input:                   "8f4b7f84864484a7bf31766abe9204da3cbe65b3",
 			expectedDigestReference: "8f4b7f84864484a7bf31766abe9204da3cbe65b3",
 		},
 		{
 			name:                    "complete digest tag comment",
-			input:                   "pinned from v4.3.2 by updatecli (do-not-remove-comment)",
+			input:                   "v4.3.2 by",
 			expectedDigestReference: "v4.3.2",
 		},
 		{
-			name:                    "complete digest branch comment",
-			input:                   "pinned from main by updatecli (do-not-remove-comment)",
-			expectedDigestReference: "main",
-		},
-		{
-			name:                    "incomplete digest comment",
-			input:                   "main by updatecli (do-not-remove-comment)",
-			expectedDigestReference: "",
-		},
-		{
-			name:                    "incomplete digest comment end",
-			input:                   "pinned from main by updatecli",
-			expectedDigestReference: "",
+			name:                    "irrelevant comment",
+			input:                   "This is a comment irrelevant",
+			expectedDigestReference: "This",
 		},
 		{
 			name:                    "empty digest comment",
