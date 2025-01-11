@@ -6,6 +6,7 @@ import (
 	"github.com/drone/go-scm/scm"
 	"github.com/drone/go-scm/scm/driver/gitea"
 	"github.com/drone/go-scm/scm/transport/oauth2"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 type Client *scm.Client
@@ -18,17 +19,16 @@ func New(s Spec) (Client, error) {
 		return nil, err
 	}
 
-	client.Client = &http.Client{}
+	client.Client = httpclient.NewRetryClient().(*http.Client)
 
 	if len(s.Token) >= 0 {
-		client.Client = &http.Client{
-			Transport: &oauth2.Transport{
-				Source: oauth2.StaticTokenSource(
-					&scm.Token{
-						Token: s.Token,
-					},
-				),
-			},
+		client.Client.Transport = &oauth2.Transport{
+			Source: oauth2.StaticTokenSource(
+				&scm.Token{
+					Token: s.Token,
+				},
+			),
+			Base: client.Client.Transport,
 		}
 	}
 

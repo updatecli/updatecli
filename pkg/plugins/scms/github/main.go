@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
@@ -151,6 +153,8 @@ type Spec struct {
 	//  default: true
 	WorkingBranch *bool `yaml:",omitempty"`
 	//  "commitUsingApi" defines if Updatecli should use GitHub GraphQL API to create the commit.
+	//  When set to `true`, a commit created from a GitHub action using the GITHUB_TOKEN will automatically be signed by GitHub.
+	//  More info on https://github.com/updatecli/updatecli/issues/1914
 	//
 	//  compatible:
 	//	  * scm
@@ -198,7 +202,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		for _, err := range errs {
 			strErrs = append(strErrs, err.Error())
 		}
-		return &Github{}, fmt.Errorf(strings.Join(strErrs, "\n"))
+		return &Github{}, fmt.Errorf("%s", strings.Join(strErrs, "\n"))
 	}
 
 	if s.Directory == "" {
@@ -217,7 +221,14 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: s.Token},
 	)
-	httpClient := oauth2.NewClient(context.Background(), src)
+
+	clientContext := context.WithValue(
+		context.Background(),
+		oauth2.HTTPClient,
+		httpclient.NewRetryClient().(*http.Client))
+
+	httpClient := oauth2.NewClient(clientContext, src)
+
 	nativeGitHandler := gitgeneric.GoGit{}
 
 	// By default, we create a working branch but if for some reason we don't want to create it

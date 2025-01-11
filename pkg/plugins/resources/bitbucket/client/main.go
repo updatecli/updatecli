@@ -6,6 +6,7 @@ import (
 	"github.com/drone/go-scm/scm"
 	"github.com/drone/go-scm/scm/driver/bitbucket"
 	"github.com/drone/go-scm/scm/transport"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 // Spec defines a specification for a Bitbucket Cloud resource
@@ -56,20 +57,20 @@ type Client *scm.Client
 func New(s Spec) (Client, error) {
 	client := bitbucket.NewDefault()
 
+	client.Client = httpclient.NewRetryClient().(*http.Client)
+
 	if (len(s.Username) > 0) && (len(s.Password) > 0) {
-		client.Client = &http.Client{
-			Transport: &transport.BasicAuth{
-				Username: s.Username,
-				Password: s.Password,
-			},
+		client.Client.Transport = &transport.BasicAuth{
+			Username: s.Username,
+			Password: s.Password,
+			Base:     client.Client.Transport,
 		}
 	}
 
 	if len(s.Token) > 0 {
-		client.Client = &http.Client{
-			Transport: &transport.BearerToken{
-				Token: s.Token,
-			},
+		client.Client.Transport = &transport.BearerToken{
+			Token: s.Token,
+			Base:  client.Client.Transport,
 		}
 	}
 
