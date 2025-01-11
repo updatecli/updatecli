@@ -243,7 +243,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		force = *s.Force
 	}
 
-	commitUsingApi := false
+	commitUsingApi := true
 	if s.CommitUsingAPI != nil {
 		commitUsingApi = *s.CommitUsingAPI
 	}
