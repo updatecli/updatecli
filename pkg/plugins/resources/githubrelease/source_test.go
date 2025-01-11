@@ -13,13 +13,13 @@ import (
 
 type mockGhHandler struct {
 	github.Github
-	releases   []string
+	releases   []github.ReleaseNode
 	releaseErr error
 	tags       []string
 	tagErr     error
 }
 
-func (m *mockGhHandler) SearchReleases(releaseType github.ReleaseType) (releases []string, err error) {
+func (m *mockGhHandler) SearchReleases(releaseType github.ReleaseType) (releases []github.ReleaseNode, err error) {
 	return m.releases, m.releaseErr
 }
 
@@ -31,6 +31,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 	tests := []struct {
 		name            string
 		workingDir      string
+		releaseKey      string
 		mockedGhHandler github.GithubHandler
 		versionFilter   version.Filter
 		wantValue       string
@@ -39,13 +40,29 @@ func TestGitHubRelease_Source(t *testing.T) {
 		{
 			name: "3 releases found, filter with latest",
 			mockedGhHandler: &mockGhHandler{
-				releases: []string{"1.0.0", "2.0.0", "3.0.0"},
+				releases: []github.ReleaseNode{{TagName: "1.0.0"}, {TagName: "2.0.0"}, {TagName: "3.0.0"}},
 			},
 			versionFilter: version.Filter{
 				Kind:    "latest",
 				Pattern: "latest",
 			},
 			wantValue: "3.0.0",
+		},
+		{
+			name: "3 releases found, filter with latest, get hash",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "1.0.0", TagCommit: github.TagCommit{Oid: "11111111"}},
+					{TagName: "2.0.0", TagCommit: github.TagCommit{Oid: "22222222"}},
+					{TagName: "3.0.0", TagCommit: github.TagCommit{Oid: "33333333"}},
+				},
+			},
+			releaseKey: "hash",
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			wantValue: "33333333",
 		},
 		{
 			name: "0 releases found, 3 tags found, filter with latest",
@@ -70,7 +87,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 		{
 			name: "Error: 3 releases found, filter with semver on 2.1.y",
 			mockedGhHandler: &mockGhHandler{
-				releases: []string{"1.0.0", "2.0.0", "3.0.0"},
+				releases: []github.ReleaseNode{{TagName: "1.0.0"}, {TagName: "2.0.0"}, {TagName: "3.0.0"}},
 			},
 			versionFilter: version.Filter{
 				Kind:    "semver",
@@ -109,6 +126,9 @@ func TestGitHubRelease_Source(t *testing.T) {
 			gr := &GitHubRelease{
 				ghHandler:     tt.mockedGhHandler,
 				versionFilter: tt.versionFilter,
+			}
+			if tt.releaseKey != "" {
+				gr.spec.Key = tt.releaseKey
 			}
 
 			gotResult := result.Source{}

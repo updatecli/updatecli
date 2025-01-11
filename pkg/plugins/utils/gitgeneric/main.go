@@ -47,6 +47,7 @@ type GitHandler interface {
 	TagHashes(workingDir string) (hashes []string, err error)
 	TagRefs(workingDir string) (refs []DatedTag, err error)
 	Branches(workingDir string) (branches []string, err error)
+	BranchRefs(workingDir string) (branches []DatedBranch, err error)
 }
 
 type GoGit struct {

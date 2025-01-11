@@ -29,6 +29,15 @@ sources:
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       typefilter:
         release: true
+  hash:
+    name: Default Get Latest github action Release Hash
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli-action
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      key: hash
 conditions:
   default:
     name: Default Get Latest GitHub action Release

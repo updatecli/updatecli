@@ -39,6 +39,13 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 		for jobID, job := range data.Jobs {
 			for stepID, step := range job.Steps {
 				URL, owner, repository, directory, reference := parseActionName(step.Uses)
+				pinReference := parseActionDigestComment(step.CommentDigest)
+				if g.digest {
+					if pinReference == "" {
+						// First time we pin a ref
+						pinReference = reference
+					}
+				}
 				switch reference {
 				case "":
 					continue
@@ -90,13 +97,18 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					continue
 				}
 
-				versionFilterKind, versionFilterPattern := detectVersionFilter(reference)
+				versionFilterRef := reference
+				if g.digest {
+					versionFilterRef = pinReference
+				}
+
+				versionFilterKind, versionFilterPattern := detectVersionFilter(versionFilterRef)
 				if !g.spec.VersionFilter.IsZero() {
 					versionFilterKind = g.versionFilter.Kind
-					versionFilterPattern, err = g.versionFilter.GreaterThanPattern(reference)
+					versionFilterPattern, err = g.versionFilter.GreaterThanPattern(versionFilterRef)
 					if err != nil {
 						logrus.Debugf("building version filter pattern: %s", err)
-						versionFilterPattern = reference
+						versionFilterPattern = versionFilterRef
 					}
 				}
 
@@ -122,6 +134,7 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 				params := struct {
 					ActionName           string
 					Reference            string
+					PinReference         string
 					File                 string
 					ImageName            string
 					JobID                string
@@ -133,9 +146,11 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					StepID               int
 					ScmID                string
 					Token                string
+					Digest               bool
 				}{
 					ActionName:           actionName,
 					Reference:            reference,
+					PinReference:         pinReference,
 					File:                 relateFoundFile,
 					JobID:                jobID,
 					URL:                  URL,
@@ -146,6 +161,7 @@ func (g GitHubAction) discoverWorkflowManifests() [][]byte {
 					ScmID:                g.scmID,
 					StepID:               stepID,
 					Token:                token,
+					Digest:               g.digest,
 				}
 
 				manifest := bytes.Buffer{}

@@ -96,6 +96,18 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			name: "Validation error (bad key)",
+			spec: Spec{
+				Repository: "updatecli",
+				Owner:      "updatecli",
+				Username:   "joe",
+				Token:      "superSecretTOkenOfJoe",
+				URL:        "github.com",
+				Key:        "commit",
+			},
+			wantErr: true,
+		},
+		{
 			name: "Validation Error (missing token)",
 			spec: Spec{
 				Repository: "updatecli",

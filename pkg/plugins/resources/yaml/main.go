@@ -126,6 +126,16 @@ type Spec struct {
 
 	*/
 	SearchPattern bool `yaml:",omitempty"`
+	/*
+				"comment" defines a comment to add after the value.
+
+				compatible:
+					* target
+
+		   remarks:
+		            * require engine set to yamlpath
+	*/
+	Comment string `yaml:",omitempty"`
 }
 
 // Yaml defines a resource of kind "yaml"

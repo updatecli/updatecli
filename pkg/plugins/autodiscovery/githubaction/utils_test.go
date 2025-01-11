@@ -21,6 +21,7 @@ func TestSearchWorkflowFiles(t *testing.T) {
 	}
 
 	expectedWorkflowFiles := []string{
+		"testdata/digest/.github/workflows/updatecli.yaml",
 		"testdata/duplicate_steps/.github/workflows/updatecli.yaml",
 		"testdata/gitea/.gitea/workflows/updatecli.yaml",
 		"testdata/updatecli/.github/workflows/updatecli.yaml",
@@ -105,6 +106,42 @@ func TestParseActionName(t *testing.T) {
 			assert.Equal(t, tt.expectedRepository, gotRepository)
 			assert.Equal(t, tt.expectedReference, gotReference)
 			assert.Equal(t, tt.expectedDirectory, gotDirectory)
+		})
+	}
+}
+
+func TestParseActionDigestComment(t *testing.T) {
+	tests := []struct {
+		name                    string
+		input                   string
+		expectedDigestReference string
+	}{
+		{
+			name:                    "complete digest commit comment",
+			input:                   "8f4b7f84864484a7bf31766abe9204da3cbe65b3",
+			expectedDigestReference: "8f4b7f84864484a7bf31766abe9204da3cbe65b3",
+		},
+		{
+			name:                    "complete digest tag comment",
+			input:                   "v4.3.2 by",
+			expectedDigestReference: "v4.3.2",
+		},
+		{
+			name:                    "irrelevant comment",
+			input:                   "This is a comment irrelevant",
+			expectedDigestReference: "This",
+		},
+		{
+			name:                    "empty digest comment",
+			input:                   "",
+			expectedDigestReference: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDigestReference := parseActionDigestComment(tt.input)
+			assert.Equal(t, tt.expectedDigestReference, gotDigestReference)
 		})
 	}
 }

@@ -19,7 +19,12 @@ func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler) (pass bool,
 		expectedValue = gr.spec.Tag
 	}
 
-	versions, err := gr.ghHandler.SearchReleases(gr.typeFilter)
+	var versions []string
+	if gr.spec.Key == KeyHash {
+		versions, err = gr.ghHandler.SearchReleasesByTagHash(gr.typeFilter)
+	} else {
+		versions, err = gr.ghHandler.SearchReleasesByTagName(gr.typeFilter)
+	}
 	if err != nil {
 		return false, "", fmt.Errorf("searching GitHub release: %w", err)
 	}

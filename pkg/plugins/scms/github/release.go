@@ -11,53 +11,63 @@ import (
 /*
 https://developer.github.com/v4/explorer/
 # Query
-query getLatestRelease($owner: String!, $repository: String!){
-	rateLimit {
-		cost
-		remaining
-		resetAt
-	}
-	repository(owner: $owner, name: $repository){
-		releases(last:100, before: $before, orderBy:$orderBy){
-			totalCount
-			pageInfo {
-				hasNextPage
-				endCursor
-			}
-			edges {
-				node {
-							name
-					tagName
-				isDraft
-				isPrerelease
-				}
-				cursor
-			}
-		}
-	}
-}
-# Variables
+query getLatestRelease($owner: String!, $repository: String!, $before: String, $orderBy: ReleaseOrder) {
+  rateLimit {
+    cost
+    remaining
+    resetAt
+  }
+  repository(owner: $owner, name: $repository) {
+    releases(last: 100, before: $before, orderBy: $orderBy) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        node {
+          name
+          tagName
+          tagCommit {
+            oid
+          }
+          isDraft
+          isPrerelease
+        }
+        cursor
+      }
+    }
+  }
+}# Variables
 {
-	"owner": "updatecli",
-	"repository": "updatecli"
-}
-*/
+  "owner": "updatecli",
+  "repository": "updatecli",
+  "before": null,
+  "orderBy": {
+    "field": "CREATED_AT",
+    "direction": "DESC"
+  }
+}*/
 type releasesQuery struct {
 	RateLimit  RateLimit
 	Repository struct {
 		Releases repositoryRelease `graphql:"releases(last: 100, before: $before, orderBy: $orderBy)"`
 	} `graphql:"repository(owner: $owner, name: $repository)"`
 }
-type releaseNode struct {
+type ReleaseNode struct {
 	Name         string
 	TagName      string
+	TagCommit    TagCommit
 	IsDraft      bool
 	IsLatest     bool
 	IsPrerelease bool
 }
+type TagCommit struct {
+	Oid string
+}
 type releaseEdge struct {
 	Cursor string
-	Node   releaseNode
+	Node   ReleaseNode
 }
 type repositoryRelease struct {
 	TotalCount int
@@ -65,10 +75,10 @@ type repositoryRelease struct {
 	Edges      []releaseEdge
 }
 
-// SearchReleases return every releases from the github api
+// SearchReleases return every releaseNode from the github api
 // ordered by reverse order of created time.
 // Draft and pre-releases are filtered out.
-func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err error) {
+func (g *Github) SearchReleases(releaseType ReleaseType) (releases []ReleaseNode, err error) {
 	var query releasesQuery
 
 	variables := map[string]interface{}{
@@ -97,7 +107,7 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err
 			// we only care about identifying the latest release
 			if releaseType.Latest {
 				if node.Node.IsLatest {
-					releases = append(releases, node.Node.TagName)
+					releases = append(releases, node.Node)
 					break
 				}
 				// Check if the next release is of type "latest"
@@ -106,15 +116,15 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err
 
 			if node.Node.IsDraft {
 				if releaseType.Draft {
-					releases = append(releases, node.Node.TagName)
+					releases = append(releases, node.Node)
 				}
 			} else if node.Node.IsPrerelease {
 				if releaseType.PreRelease {
-					releases = append(releases, node.Node.TagName)
+					releases = append(releases, node.Node)
 				}
 			} else {
 				if releaseType.Release {
-					releases = append(releases, node.Node.TagName)
+					releases = append(releases, node.Node)
 				}
 			}
 		}
@@ -128,5 +138,36 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []string, err
 
 	logrus.Debugf("%d releases found", len(releases))
 	return releases, nil
+}
 
+// SearchReleasesByTagName return every releases tag name from the github api
+// ordered by reverse order of created time.
+// Draft and pre-releases are filtered out.
+func (g *Github) SearchReleasesByTagName(releaseType ReleaseType) (releases []string, err error) {
+	releaseNodes, err := g.SearchReleases(releaseType)
+	if err != nil {
+		logrus.Errorf("\t%s", err)
+		return releases, err
+	}
+
+	for _, release := range releaseNodes {
+		releases = append(releases, release.TagName)
+	}
+	return releases, nil
+}
+
+// SearchReleasesByTagHash return every releases tag hash from the github api
+// ordered by reverse order of created time.
+// Draft and pre-releases are filtered out.
+func (g *Github) SearchReleasesByTagHash(releaseType ReleaseType) (releases []string, err error) {
+	releaseNodes, err := g.SearchReleases(releaseType)
+	if err != nil {
+		logrus.Errorf("\t%s", err)
+		return releases, err
+	}
+
+	for _, release := range releaseNodes {
+		releases = append(releases, release.TagCommit.Oid)
+	}
+	return releases, nil
 }

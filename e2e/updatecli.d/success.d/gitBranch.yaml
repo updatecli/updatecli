@@ -26,6 +26,12 @@ sources:
     kind: gitbranch
     spec:
       url: https://github.com/olblak/nocode.git
+  hash:
+    name: Get Latest committed branch
+    kind: gitbranch
+    scmid: default
+    spec:
+      key: hash
 
 conditions:
   default:

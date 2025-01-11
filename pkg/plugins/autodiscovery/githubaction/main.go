@@ -90,6 +90,8 @@ type Spec struct {
 	//             token: '{{ requiredEnv "GITHUB_TOKEN" }}'
 	// ```
 	Credentials map[string]gitProviderToken `yaml:",omitempty"`
+	// Digest provides parameters to specify if the generated manifest should use a digest instead of the branch or tag.
+	Digest *bool `yaml:",omitempty"`
 }
 
 // GitHubAction holds all information needed to generate GitHubAction manifest.
@@ -108,6 +110,8 @@ type GitHubAction struct {
 	versionFilter version.Filter
 	// workflowFiles is a list of HelmRelease files found
 	workflowFiles []string
+	// digest holds the value of the digest parameter
+	digest bool
 }
 
 type gitProviderToken struct {
@@ -163,6 +167,10 @@ func New(spec interface{}, rootDir, scmID string) (GitHubAction, error) {
 		newFilter.Kind = defaultVersionFilterKind
 		newFilter.Pattern = defaultVersionFilterPattern
 	}
+	digest := false
+	if s.Digest != nil {
+		digest = *s.Digest
+	}
 
 	return GitHubAction{
 		credentials:   s.Credentials,
@@ -171,6 +179,7 @@ func New(spec interface{}, rootDir, scmID string) (GitHubAction, error) {
 		rootDir:       dir,
 		scmID:         scmID,
 		versionFilter: newFilter,
+		digest:        digest,
 	}, nil
 
 }

@@ -121,6 +121,17 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 	}
 }
 
+// parseActionDigestComment will parse the action comment from the input string.
+// and then try to identify if we already tried to derive a digest
+func parseActionDigestComment(input string) (digestReference string) {
+	trimmed := strings.TrimSpace(input)
+	words := strings.Fields(trimmed)
+	if len(words) > 0 {
+		return words[0]
+	}
+	return "" // Return an empty string if no words are found
+}
+
 func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err error) {
 	if URL == "" {
 		URL = defaultGitProviderURL

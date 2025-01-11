@@ -277,6 +277,37 @@ github:
 			wantedResult: false,
 			wantedError:  true,
 		},
+		{
+			name: "Passing case with a comment that is added",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "github.owner",
+				Value:   "obiwankenobi",
+				Comment: "comment that should be added",
+				Engine:  "yamlpath",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+`,
+			},
+			// Note: the re-encoded file doesn't contain any separator anymore
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: obiwankenobi # comment that should be added
+`,
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

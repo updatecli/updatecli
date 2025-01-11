@@ -1,9 +1,17 @@
 package githubrelease
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+)
+
+const (
+	KeyName = "name"
+	KeyHash = "hash"
 )
 
 // Spec defines a specification for a "gittag" resource
@@ -25,6 +33,15 @@ type Spec struct {
 	TypeFilter github.ReleaseType `yaml:",omitempty"`
 	// [c] Tag allows to check for a specific release tag, default to source output
 	Tag string `yaml:",omitempty"`
+	//  "key" of the tag object to retrieve.
+	//
+	//  Accepted values: ['name','hash'].
+	//
+	//  Default: 'name'
+	//  Compatible:
+	//    * source
+	//    * condition
+	Key string `yaml:",omitempty"`
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
@@ -43,6 +60,15 @@ func New(spec interface{}) (*GitHubRelease, error) {
 	err := mapstructure.Decode(spec, &newSpec)
 	if err != nil {
 		return &GitHubRelease{}, err
+	}
+
+	validationErrors := []string{}
+	if newSpec.Key != "" && newSpec.Key != KeyHash && newSpec.Key != KeyName {
+		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
+	}
+	// Return all the validation errors if found any
+	if len(validationErrors) > 0 {
+		return &GitHubRelease{}, fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
 	newHandler, err := github.New(github.Spec{

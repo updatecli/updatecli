@@ -282,6 +282,9 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 			}
 
 			node.Value = valueToWrite
+			if y.spec.Comment != "" {
+				node.LineComment = y.spec.Comment
+			}
 		}
 
 		if notChangedNode == len(nodes) {
