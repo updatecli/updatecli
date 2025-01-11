@@ -10,6 +10,7 @@ import (
 	"github.com/drone/go-scm/scm/transport"
 	"github.com/drone/go-scm/scm/transport/oauth2"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 // Spec defines a specification for a Bitbucket Server resource
@@ -57,23 +58,23 @@ func New(s Spec) (Client, error) {
 		return nil, err
 	}
 
+	client.Client = httpclient.NewRetryClient().(*http.Client)
+
 	if len(s.Token) >= 0 {
 		if len(s.Username) >= 0 {
-			client.Client = &http.Client{
-				Transport: &transport.BasicAuth{
-					Username: s.Username,
-					Password: s.Token,
-				},
+			client.Client.Transport = &transport.BasicAuth{
+				Username: s.Username,
+				Password: s.Token,
+				Base:     client.Client.Transport,
 			}
 		} else {
-			client.Client = &http.Client{
-				Transport: &oauth2.Transport{
-					Source: oauth2.StaticTokenSource(
-						&scm.Token{
-							Token: s.Token,
-						},
-					),
-				},
+			client.Client.Transport = &oauth2.Transport{
+				Source: oauth2.StaticTokenSource(
+					&scm.Token{
+						Token: s.Token,
+					},
+				),
+				Base: client.Client.Transport,
 			}
 		}
 	}
