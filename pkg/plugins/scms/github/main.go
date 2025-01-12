@@ -244,13 +244,15 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	}
 
 	commitUsingApi := true
+
 	if s.CommitUsingAPI != nil {
-		if !s.GPG.IsZero() {
-			logrus.Warningf("GPG key is set, but commitUsingApi is set to true, commitusingapi key will be ignored")
-			logrus.Warningf("a gpg key can't be used to sign a commit created by the GitHub API")
-		} else {
-			commitUsingApi = *s.CommitUsingAPI
-		}
+		commitUsingApi = *s.CommitUsingAPI
+	}
+
+	if commitUsingApi && !s.GPG.IsZero() {
+		logrus.Warningf("GPG key is set, and commitUsingApi is set to true, commitusingapi key will be ignored")
+		logrus.Warningf("a gpg key can't be used to sign a commit created by the GitHub API")
+		logrus.Warningf("Please set commitusingapi to false to hide this message if you want to sign commits with a GPG key")
 	}
 
 	if force {
