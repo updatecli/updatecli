@@ -57,7 +57,7 @@ require (
 	github.com/tomwright/dasel v1.27.3
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.7.8
-	github.com/zclconf/go-cty v1.16.0
+	github.com/zclconf/go-cty v1.16.1
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/text v0.21.0
 	golang.org/x/time v0.8.0
