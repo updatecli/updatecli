@@ -109,7 +109,6 @@ func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, passw
 	if !isAuthEmpty(&auth) {
 		listOptions.Auth = &auth
 	}
-
 	remoteRefs, err := rem.List(&listOptions)
 	if err != nil {
 		return false, fmt.Errorf("listing remote %q - %s", DefaultRemoteReferenceName, err)
@@ -757,7 +756,27 @@ func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 	err = tagrefs.ForEach(func(tagRef *plumbing.Reference) error {
 		// cfr https://github.com/updatecli/updatecli/issues/1392
 		// using reference hash instead of reference name
+
 		revision := plumbing.Revision(tagRef.Hash().String())
+
+		hash := ""
+
+		obj, err := r.TagObject(tagRef.Hash())
+		switch err {
+		case nil:
+			// Annotated Tag detected
+			revision = plumbing.Revision(obj.Target.String())
+
+			hash = obj.Target.String()
+
+		case plumbing.ErrObjectNotFound:
+			// Not an annotated tag object
+			hash = tagRef.Hash().String()
+
+		default:
+			return fmt.Errorf("getting tag object for %q: %w", tagRef.Name().Short(), err)
+		}
+
 		tagCommitHash, err := r.ResolveRevision(revision)
 		if err != nil {
 			return fmt.Errorf("resolving revision %q: %w", revision, err)
@@ -772,7 +791,7 @@ func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 			listOfDatedTags,
 			DatedTag{
 				Name: tagRef.Name().Short(),
-				Hash: tagRef.Hash().String(),
+				Hash: hash,
 				When: commit.Committer.When,
 			},
 		)
