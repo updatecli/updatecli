@@ -63,13 +63,24 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error
 
 // parseActionName will parse the action name from the input string.
 // and then try to identify which part is the owner and which part is the repository.
-func parseActionName(input string) (URL, owner, repository, directory, reference string) {
+func parseActionName(input string) (URL, owner, repository, directory, reference, kind string) {
+
+	// https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/using-pre-written-building-blocks-in-your-workflow
+
+	kind = ACTIONKINDDEFAULT
+	if strings.HasPrefix(input, "docker://") {
+		return strings.TrimPrefix(input, "docker://"), "", "", "", "", ACTIONKINDDOCKER
+	}
+
+	if strings.HasPrefix(input, "./") {
+		return "", "", "", "", "", ACTIONKINDLOCAL
+	}
 
 	parseURL := strings.Split(input, "@")
 
 	switch len(parseURL) {
 	case 0:
-		return "", "", "", "", ""
+		return "", "", "", "", "", ""
 	case 1:
 		reference = ""
 	case 2:
@@ -80,7 +91,7 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 	u, err := url.Parse(input)
 	if err != nil {
 		logrus.Debugf("parsing URL: %s", err)
-		return "", "", "", "", ""
+		return "", "", "", "", "", ""
 	}
 
 	path := strings.TrimPrefix(u.Path, "/")
@@ -88,7 +99,7 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 
 	switch len(parseURL) {
 	case 0, 1:
-		return "", "", "", "", ""
+		return "", "", "", "", "", ""
 	default:
 
 		// for some reason, analyzing an URL without a scheme leads to
@@ -110,6 +121,12 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 			URL = u.Scheme + "://" + URL
 		}
 
+		// At this time we expect the URL to be a valid github action such as "actions/checkout"
+		if len(p) < 2 {
+			logrus.Debugf("unexpected action name %q, feel free to open an issue on the Updatecli project", input)
+			return "", "", "", "", "", ""
+		}
+
 		owner = p[0]
 		repository = p[1]
 
@@ -117,7 +134,7 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 			directory = strings.Join(p[2:], "/")
 		}
 
-		return URL, owner, repository, directory, reference
+		return URL, owner, repository, directory, reference, kind
 	}
 }
 

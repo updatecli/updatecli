@@ -22,8 +22,10 @@ jobs:
     steps:
       - name: "Checkout"
         uses: "actions/checkout@v4"
-    #  - name: "Setup updatecli"
-    #    uses: "updatecli/updatecli-action@v2"
+
+      - name: "Setup updatecli"
+        uses: "./"
+
     #  - name: Set up Go
     #    uses: actions/setup-go@v5
     #    with:
