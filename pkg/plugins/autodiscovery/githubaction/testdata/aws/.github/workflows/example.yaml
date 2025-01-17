@@ -1,0 +1,23 @@
+name: example
+on:
+  schedule:
+    - cron: "0 12 * * 5"
+
+jobs:
+  updatecli:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Package and push helm chart to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: my-ecr-repo
+        run: |
+          helm package $REPOSITORY
+          helm push $REPOSITORY-0.1.0.tgz oci://$REGISTRY

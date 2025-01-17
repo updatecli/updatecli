@@ -39,6 +39,7 @@ func TestParseActionName(t *testing.T) {
 		expectedRepository string
 		expectedReference  string
 		expectedDirectory  string
+		expectedActionKind string
 	}{
 		{
 			name:               "complete action name",
@@ -46,16 +47,19 @@ func TestParseActionName(t *testing.T) {
 			expectedOwner:      "owner",
 			expectedRepository: "repo",
 			expectedReference:  "v1",
+			expectedActionKind: ACTIONKINDDEFAULT,
 		},
 		{
 			name:               "complete action name without reference",
 			input:              "owner/repo",
 			expectedOwner:      "owner",
 			expectedRepository: "repo",
+			expectedActionKind: ACTIONKINDDEFAULT,
 		},
 		{
-			name:  "incomplete action name",
-			input: "owner@v1",
+			name:               "incomplete action name",
+			input:              "owner@v1",
+			expectedActionKind: "",
 		},
 		{
 			name:               "GitHub url action",
@@ -64,6 +68,7 @@ func TestParseActionName(t *testing.T) {
 			expectedOwner:      "actions",
 			expectedRepository: "checkout",
 			expectedReference:  "v4",
+			expectedActionKind: ACTIONKINDDEFAULT,
 		},
 		{
 			name:               "GitHub url action without scheme",
@@ -72,6 +77,7 @@ func TestParseActionName(t *testing.T) {
 			expectedOwner:      "actions",
 			expectedRepository: "checkout",
 			expectedReference:  "v4",
+			expectedActionKind: ACTIONKINDDEFAULT,
 		},
 		{
 			name:               "Gitea url action",
@@ -80,6 +86,7 @@ func TestParseActionName(t *testing.T) {
 			expectedOwner:      "owner",
 			expectedRepository: "repo",
 			expectedReference:  "branch",
+			expectedActionKind: ACTIONKINDDEFAULT,
 		},
 		{
 			name:               "GitHub action with subdirectory",
@@ -88,6 +95,7 @@ func TestParseActionName(t *testing.T) {
 			expectedRepository: "sbom-action",
 			expectedReference:  "v1",
 			expectedDirectory:  "download-syft",
+			expectedActionKind: ACTIONKINDDEFAULT,
 		},
 		{
 			name:               "GitHub action with subdirectory without reference",
@@ -95,17 +103,39 @@ func TestParseActionName(t *testing.T) {
 			expectedOwner:      "anchore",
 			expectedRepository: "sbom-action",
 			expectedDirectory:  "download-syft",
+			expectedActionKind: ACTIONKINDDEFAULT,
+		},
+		{
+			name:               "GitHub action using a local path",
+			input:              "./actions/checkout",
+			expectedOwner:      "",
+			expectedURL:        "",
+			expectedRepository: "",
+			expectedReference:  "",
+			expectedDirectory:  "",
+			expectedActionKind: ACTIONKINDLOCAL,
+		},
+		{
+			name:               "Docker action",
+			input:              "docker://alpine:latest",
+			expectedOwner:      "",
+			expectedURL:        "alpine:latest",
+			expectedRepository: "",
+			expectedReference:  "",
+			expectedDirectory:  "",
+			expectedActionKind: ACTIONKINDDOCKER,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotURL, gotOwner, gotRepository, gotDirectory, gotReference := parseActionName(tt.input)
+			gotURL, gotOwner, gotRepository, gotDirectory, gotReference, gotKind := parseActionName(tt.input)
 			assert.Equal(t, tt.expectedURL, gotURL)
 			assert.Equal(t, tt.expectedOwner, gotOwner)
 			assert.Equal(t, tt.expectedRepository, gotRepository)
 			assert.Equal(t, tt.expectedReference, gotReference)
 			assert.Equal(t, tt.expectedDirectory, gotDirectory)
+			assert.Equal(t, tt.expectedActionKind, gotKind)
 		})
 	}
 }
