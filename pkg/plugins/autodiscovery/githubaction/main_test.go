@@ -16,6 +16,54 @@ func TestDiscoverManifests(t *testing.T) {
 		digest            bool
 	}{
 		{
+			name:    "Scenario - GitHub Action using Docker image",
+			rootDir: "testdata/docker",
+			expectedPipelines: []string{`name: 'deps: bump Docker image "ghcr.io/updatecli/udash"'
+sources:
+  image:
+    name: 'get latest image tag for "ghcr.io/updatecli/udash"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/udash'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.1.0'
+targets:
+  workflow:
+    name: 'deps: bump Docker image "ghcr.io/updatecli/udash" to {{ source "image" }}'
+    kind: 'yaml'
+    spec:
+      file: '.github/workflows/docker-01.yaml'
+      key: '$.jobs.container-updatecli.container.image'
+    sourceid: 'image'
+    transformers:
+      - addprefix: 'ghcr.io/updatecli/udash:'
+`,
+				`name: 'deps: bump Docker image "ghcr.io/updatecli/updatecli"'
+sources:
+  image:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+targets:
+  workflow:
+    name: 'deps: bump Docker image "ghcr.io/updatecli/updatecli" to {{ source "image" }}'
+    kind: 'yaml'
+    spec:
+      file: '.github/workflows/docker-02.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+    sourceid: 'image'
+    transformers:
+      - addprefix: 'docker://ghcr.io/updatecli/updatecli:'
+`},
+		},
+		{
 			name:    "Scenario - GitHub Action with a single workflow file",
 			rootDir: "testdata/updatecli",
 			credentials: map[string]gitProviderToken{

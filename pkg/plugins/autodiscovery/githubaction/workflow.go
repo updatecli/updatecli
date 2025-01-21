@@ -8,15 +8,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsuses
-
 type Workflow struct {
 	Name string         `yaml:"name,omitempty"`
 	Jobs map[string]Job `yaml:"jobs,omitempty"`
 }
 
 type Job struct {
-	Steps []Step `yaml:"steps,omitempty"`
+	Steps     []Step    `yaml:"steps,omitempty"`
+	Container Container `yaml:"container,omitempty"`
+}
+
+type Container struct {
+	Image string `yaml:"image,omitempty"`
 }
 
 type Step struct {

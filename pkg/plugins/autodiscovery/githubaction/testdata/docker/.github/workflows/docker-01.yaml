@@ -1,0 +1,12 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+jobs:
+  container-updatecli:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/updatecli/udash:v0.1.0
+    steps:
+      - name: Show updatecli version
+        run: updatecli version

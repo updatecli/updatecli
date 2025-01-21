@@ -15,11 +15,11 @@ type MatchingRule struct {
 	//
 	// The key is the artifact name and the value is the artifact version
 	//
-	// An artifact can be a Helm Chart when used in the context of Helmrelease
-	// or an OCIRepository when used in the context of OCIRepository
+	// The artifact name must match the GitHub action name or the Docker image name.
+	// In case of a Docker image, it must have the prefix docker://
 	//
 	// If the value is empty, then the artifact name is enough to match
-	// If the value is a valid semver constraint, then the artifact version must match the constraint
+	// If the value is a valid Git branch, Git tag, release, a Docker image tag , then the artifact version must match the constraint
 	Actions map[string]string
 }
 

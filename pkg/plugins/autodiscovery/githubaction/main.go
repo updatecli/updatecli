@@ -7,6 +7,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -90,7 +91,13 @@ type Spec struct {
 	//             token: '{{ requiredEnv "GITHUB_TOKEN" }}'
 	// ```
 	Credentials map[string]gitProviderToken `yaml:",omitempty"`
+	// CredentialsDocker provides a map of registry credentials where the key is the registry URL without scheme
+	CredentialsDocker map[string]docker.InlineKeyChain `yaml:",omitempty"`
 	// Digest provides parameters to specify if the generated manifest should use a digest instead of the branch or tag.
+	//
+	// Remark:
+	// 	- The digest is only supported for GitHub Action and docker image tag update.
+	//    Feel free to open an issue for the Gitea and Forgejo integration.
 	Digest *bool `yaml:",omitempty"`
 }
 

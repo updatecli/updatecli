@@ -63,6 +63,10 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error
 
 // parseActionName will parse the action name from the input string.
 // and then try to identify which part is the owner and which part is the repository.
+// It will also try to identify if the action is a docker image or a local action
+// More information on:
+//   - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsuses
+//   - https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/using-pre-written-building-blocks-in-your-workflow#referencing-a-container-on-docker-hub
 func parseActionName(input string) (URL, owner, repository, directory, reference, kind string) {
 
 	// https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/using-pre-written-building-blocks-in-your-workflow
