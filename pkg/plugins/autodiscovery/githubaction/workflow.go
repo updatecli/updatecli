@@ -5,7 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	yaml "github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/parser"
+	"github.com/sirupsen/logrus"
 )
 
 type Workflow struct {
@@ -34,64 +36,42 @@ func loadGitHubActionWorkflow(filename string) (*Workflow, error) {
 		return nil, fmt.Errorf("error opening file %s: %w", filename, err)
 	}
 
-	var root yaml.Node
-	err = yaml.Unmarshal(data, &root)
+	var workflow Workflow
+	err = yaml.Unmarshal(data, &workflow)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling YAML file %s: %w", filename, err)
 	}
 
-	var workflow Workflow
-	parseWorkflowNode(&root, &workflow)
-	return &workflow, nil
-}
+	for i := range workflow.Jobs {
+		for j := range workflow.Jobs[i].Steps {
+			query := fmt.Sprintf("$.jobs.%s.steps[%d].uses", i, j)
+			path, err := yaml.PathString(query)
+			if err != nil {
+				logrus.Debugf("skipping %q, error creating yaml path: %v", query, err)
+				continue
+			}
 
-// parseWorkflowNode extracts the Workflow structure and captures comments.
-func parseWorkflowNode(root *yaml.Node, workflow *Workflow) {
-	workflow.Jobs = make(map[string]Job)
-	for _, jobNode := range root.Content {
-		if jobNode.Kind == yaml.MappingNode {
-			for i, keyNode := range jobNode.Content {
-				if keyNode.Value == "jobs" {
-					jobsNode := jobNode.Content[i+1]
-					for j := 0; j < len(jobsNode.Content); j += 2 {
-						jobKey := jobsNode.Content[j]
-						jobValue := jobsNode.Content[j+1]
-						jobName := jobKey.Value
-						if _, exists := workflow.Jobs[jobName]; !exists {
-							workflow.Jobs[jobName] = Job{}
-						}
+			d, err := parser.ParseBytes(data, parser.ParseComments)
+			if err != nil {
+				logrus.Debugf("skipping %q, error parsing yaml file: %v", query, err)
+				continue
+			}
 
-						for k, stepKey := range jobValue.Content {
-							if stepKey.Value == "steps" {
-								stepsNode := jobValue.Content[k+1]
-								for l := 0; l < len(stepsNode.Content); l++ {
-									stepNode := stepsNode.Content[l]
-									if stepNode.Kind == yaml.MappingNode {
-										var step Step
+			n, err := path.FilterFile(d)
+			if err != nil {
+				logrus.Debugf("skipping %q, error filtering node: %v", query, err)
+				continue
+			}
 
-										for m := 0; m < len(stepNode.Content); m += 2 {
-											stepField := stepNode.Content[m]
-											stepValue := stepNode.Content[m+1]
+			comment := n.GetComment()
+			if comment != nil {
+				comment := strings.TrimPrefix(comment.String(), "#")
+				comment = strings.TrimPrefix(comment, " ")
 
-											switch stepField.Value {
-											case "name":
-												step.Name = stepValue.Value
-											case "uses":
-												step.Uses = stepValue.Value
-												step.CommentDigest = strings.TrimSpace(strings.TrimPrefix(stepValue.LineComment, "#"))
-											}
-										}
-
-										job := workflow.Jobs[jobName]
-										job.Steps = append(job.Steps, step)
-										workflow.Jobs[jobName] = job
-									}
-								}
-							}
-						}
-					}
-				}
+				workflow.Jobs[i].Steps[j].CommentDigest = comment
 			}
 		}
 	}
+
+	return &workflow, nil
 }
