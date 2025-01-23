@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // Source return the latest version
@@ -28,7 +29,7 @@ func (m *Maven) Source(workingDir string, resultSource *result.Source) error {
 			resultSource.Description = fmt.Sprintf(
 				"Latest version is %s on the Maven repository at %s",
 				latestVersion,
-				metadataURL,
+				redact.URL(metadataURL),
 			)
 			return nil
 		}

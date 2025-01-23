@@ -4,8 +4,6 @@ import (
 	"net/url"
 	"path"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
 // isRepositoriesContainsMavenCentral return if the repositories list contains the maven central url
@@ -75,8 +73,6 @@ func joinURL(elems []string) (string, error) {
 	remainingElements := elems[1:]
 
 	args := path.Join(remainingElements...)
-
-	logrus.Printf(URL)
 
 	return URL + "/" + args, nil
 }
