@@ -110,7 +110,7 @@ func getLine(reader io.Reader, line int) string {
 // "https://", or file url "file://" or filepath (default)
 func (t *Text) ReadAll(location string) (string, error) {
 	if IsURL(location) {
-		logrus.Debugf("URL detected for location %q", location)
+		logrus.Debugf("URL detected for location %q", redact.URL(location))
 		content, err := t.readFromURL(location, 0)
 		if err != nil {
 			return "", err

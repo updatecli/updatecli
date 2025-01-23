@@ -8,6 +8,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"golang.org/x/text/encoding/ianaindex"
 )
@@ -69,7 +70,7 @@ func (d *DefaultHandler) GetLatestVersion() (string, error) {
 	switch d.versionFilter.Kind {
 	case "latest", "":
 		if data.Versioning.Latest == "" {
-			return "", fmt.Errorf("%s No latest version found at %s", result.FAILURE, d.metadataURL)
+			return "", fmt.Errorf("%s No latest version found at %s", result.FAILURE, redact.URL(d.metadataURL))
 		}
 		return data.Versioning.Latest, nil
 
