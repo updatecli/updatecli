@@ -117,6 +117,11 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		return nil, nil
 	}
 
+	targetPrefix := imageName + ":"
+	if strings.HasPrefix(spec.Image, "docker://") {
+		targetPrefix = "docker://" + imageName + ":"
+	}
+
 	params := struct {
 		ActionName           string
 		ImageName            string
@@ -138,7 +143,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		TargetName:           fmt.Sprintf(`deps: bump docker image %q in %q to {{ source %q }}`, imageName, spec.RelativeFoundFile, imageName),
 		TargetFile:           spec.RelativeFoundFile,
 		TargetKey:            spec.TargetKey,
-		TargetPrefix:         "docker://" + imageName + ":",
+		TargetPrefix:         targetPrefix,
 		TagFilter:            tagFilter,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
