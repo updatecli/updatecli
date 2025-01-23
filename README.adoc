@@ -194,13 +194,16 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 
 == Conferences
 
-* 2022
-** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video]
+* 2025
+** FOSDEM (BE) - Continuously Update Everything two years later link:https://fosdem.org/2025/schedule/event/fosdem-2025-6076-continuously-update-everything-two-years-later[Event]
+** Incontro DevOps (IT) - Automate or stagnate: surviving the era of continuous updates link:https://www.incontrodevops.it/talks_speakers/#giovanni-toraldo[Event]
+* 2024
+** DevOps Days 15 year anniversary celebration (BE) - Continuously Update Everything link:https://www.youtube.com/watch?v=PlEm-YinALk[Video]
 * 2023
 ** FOSDEM (BE) - Cloud Native Dependencies link:https://fosdem.org/2023/schedule/event/continuous_update_everything/[Video]
 ** CIVO Cloud (UK) - Onward a Continuously Updated Kubernetes Marketplace link:https://www.youtube.com/watch?v=B2wmA627E4w[Video]
-* 2024
-** DevOps Days 15 year anniversary celebration (BE) - Continuously Update Everything
+* 2022
+** CDcon (US) - Dependency Management: Where the Fork are We? link:https://youtu.be/157bsLD-0mM[Video]
 
 == Links
 
