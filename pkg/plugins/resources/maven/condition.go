@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // Condition tests if a specific version exist on the maven repository
@@ -34,7 +35,7 @@ func (m *Maven) Condition(source string, scm scm.ScmHandler) (pass bool, message
 		for _, version := range versions {
 			if version == m.spec.Version {
 				return true, fmt.Sprintf("Version %s is available on the Maven Repository (%s)",
-					m.spec.Version, metadataURL), nil
+					m.spec.Version, redact.URL(metadataURL)), nil
 			}
 		}
 	}
