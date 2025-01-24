@@ -46,7 +46,7 @@ require (
 	github.com/hashicorp/terraform-registry-address v0.2.4
 	github.com/invopop/jsonschema v0.13.0
 	github.com/joho/godotenv v1.5.1
-	github.com/minamijoyo/hcledit v0.2.11
+	github.com/minamijoyo/hcledit v0.2.15
 	github.com/minamijoyo/tfupdate v0.8.0
 	github.com/muesli/mango-cobra v1.2.0
 	github.com/muesli/roff v0.1.0
