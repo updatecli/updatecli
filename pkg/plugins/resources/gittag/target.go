@@ -92,6 +92,7 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 		tagName,
 	)
 
+	resultTarget.Description = fmt.Sprintf("git tag %q successfully created", source)
 	if gt.spec.Message != "" {
 		resultTarget.Description = gt.spec.Message
 	}

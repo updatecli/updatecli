@@ -1,0 +1,33 @@
+name: End to end testing for the GitPush resource
+
+scms:
+  updatecli-github:
+    kind: github
+    spec:
+      branch: main
+      owner: updatecli
+      repository: updatecli
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+  updatecli-git:
+    kind: git
+    spec:
+      branch: main
+      url: https://github.com/updatecli/updatecli.git
+
+targets:
+  default:
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: echo OK
+
+actions:
+  push-to-github-without-tags:
+    kind: git/push
+    scmid: updatecli-github
+    spec:
+      tags: false
+  push-to-git-with-tags:
+    kind: git/push
+    scmid: updatecli-git
