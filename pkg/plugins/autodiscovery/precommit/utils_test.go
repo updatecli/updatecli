@@ -16,9 +16,9 @@ func TestSearchPrecommitConfigFiles(t *testing.T) {
 	}{
 		{
 			name:    "Default working scenario",
-			rootDir: "test/testdata/simple",
+			rootDir: "testdata/simple",
 			expectedFoundFiles: []string{
-				"test/testdata/simple/.pre-commit-config.yaml",
+				"testdata/simple/.pre-commit-config.yaml",
 			},
 		},
 	}
