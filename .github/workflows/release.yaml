@@ -51,11 +51,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: tibdex/github-app-token@v2.1
+      - uses: actions/create-github-app-token@v1.11.3
         id: generate_homebrew_token
         with:
-          app_id: ${{ secrets.UPDATECLIBOT_APP_ID }}
-          private_key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
+          app-id: ${{ secrets.UPDATECLIBOT_APP_ID }}
+          private-key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
       - name: GoReleaser
         if: success()
         env:
