@@ -52,6 +52,8 @@ type Golang struct {
 	spec Spec
 	// rootDir defines the root directory from where looking for go.mod file
 	rootDir string
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// scmID holds the scmID used by the newly generated manifest
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
@@ -59,7 +61,7 @@ type Golang struct {
 }
 
 // New return a new valid object.
-func New(spec interface{}, rootDir, scmID string) (Golang, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Golang, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -93,6 +95,7 @@ func New(spec interface{}, rootDir, scmID string) (Golang, error) {
 		rootDir:       dir,
 		scmID:         scmID,
 		versionFilter: newFilter,
+		actionID:      actionID,
 	}, nil
 
 }

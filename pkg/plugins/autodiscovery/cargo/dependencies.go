@@ -86,6 +86,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 	}
 
 	params := struct {
+		ActionID                   string
 		ManifestName               string
 		CrateName                  string
 		DependencyName             string
@@ -114,6 +115,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		RegistryAuthToken          string
 		RegistryHeaderFormat       string
 	}{
+		ActionID:                   c.actionID,
 		ManifestName:               fmt.Sprintf("deps(cargo): bump %s %q for %q crate", dependencyType, dependency.Name, crateName),
 		CrateName:                  crateName,
 		DependencyName:             dependency.Name,

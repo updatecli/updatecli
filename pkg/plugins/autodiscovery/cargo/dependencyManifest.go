@@ -4,6 +4,11 @@ const (
 	// dependencyManifest is the Go template used to generate
 	// the manifests to update the cargo file
 	dependencyManifest string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: '{{ .TargetName }}'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: '{{ .SourceName }}'

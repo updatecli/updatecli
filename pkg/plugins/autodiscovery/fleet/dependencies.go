@@ -109,6 +109,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 		}
 
 		params := struct {
+			ActionID                   string
 			ManifestName               string
 			ImageName                  string
 			ChartName                  string
@@ -124,6 +125,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			File                       string
 			ScmID                      string
 		}{
+			ActionID:                   f.actionID,
 			ManifestName:               fmt.Sprintf("deps(rancher/fleet): bump %q Fleet bundle for %q Helm chart", chartName, data.Helm.Chart),
 			ChartName:                  data.Helm.Chart,
 			ChartRepository:            data.Helm.Repo,

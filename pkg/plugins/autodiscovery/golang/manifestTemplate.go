@@ -3,6 +3,11 @@ package golang
 var (
 	// goManifestTemplate is the Go template used to generate Golang manifest update
 	goManifestTemplate string = `name: 'deps(golang): bump Go version'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'Update Go version to {{ "{{" }} source "go" {{ "}}" }}'
+{{ end }}
 sources:
   go:
     name: 'Get latest Go version'
@@ -25,6 +30,11 @@ targets:
 
 	// goModuleManifestTemplate is the Go template used to generate Golang manifest update
 	goModuleManifestTemplate string = `name: 'deps(go): bump module {{ .Module }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps(go): bump module {{ .Module }} to {{ "{{" }} source "module" {{ "}}" }}'
+{{ end }}
 sources:
   module:
     name: 'Get latest golang module {{ .Module }} version'

@@ -41,7 +41,7 @@ var (
 			// The day we have a specific behavior for gitea/action
 			// then we will add it to the default autodiscovery.
 			"github/action": githubaction.Spec{},
-			"golang/gomod":  golang.Spec{},
+			"golang":        golang.Spec{},
 			"helm":          helm.Spec{},
 			"helmfile":      helmfile.Spec{},
 			"ko":            ko.Spec{},
@@ -65,7 +65,7 @@ var (
 		"flux":          &flux.Spec{},
 		"github/action": &githubaction.Spec{},
 		"gitea/action":  &githubaction.Spec{},
-		"golang/gomod":  &golang.Spec{},
+		"golang":        &golang.Spec{},
 		"helm":          &helm.Spec{},
 		"helmfile":      &helmfile.Spec{},
 		"ko":            &ko.Spec{},
@@ -116,7 +116,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			argocdCrawler, err := argocd.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -127,7 +128,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			cargoCrawler, err := cargo.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -139,7 +141,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := dockercompose.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -151,7 +154,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := dockerfile.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -183,11 +187,12 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 			g.crawlers = append(g.crawlers, crawler)
 
-		case "golang/gomod":
+		case "golang", "go", "golang/gomod":
 			crawler, err := golang.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -320,7 +325,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := fleet.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue

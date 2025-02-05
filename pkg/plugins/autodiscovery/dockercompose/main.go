@@ -66,6 +66,8 @@ type DockerCompose struct {
 	rootDir string
 	// filematch defines the filematch rule used to identify docker-compose that need to be handled
 	filematch []string
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// scmID holds the scmID used by the newly generated manifest
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
@@ -73,7 +75,7 @@ type DockerCompose struct {
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir, scmID string) (DockerCompose, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (DockerCompose, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -109,6 +111,7 @@ func New(spec interface{}, rootDir, scmID string) (DockerCompose, error) {
 	}
 
 	d := DockerCompose{
+		actionID:      actionID,
 		digest:        digest,
 		spec:          s,
 		rootDir:       dir,

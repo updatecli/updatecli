@@ -40,7 +40,7 @@ sources:
       - 'jenkins-lts'
 targets:
   jenkins-lts:
-    name: 'deps(dockercompose): bump "jenkinsci/jenkins" digest'
+    name: 'deps: update Docker image "jenkinsci/jenkins" to "{{ source "jenkins-lts" }}"'
     kind: 'yaml'
     spec:
       file: 'docker-compose.yaml'
@@ -70,7 +70,7 @@ sources:
       - 'jenkins-weekly'
 targets:
   jenkins-weekly:
-    name: 'deps(dockercompose): bump "jenkinsci/jenkins" digest'
+    name: 'deps: update Docker image "jenkinsci/jenkins" to "{{ source "jenkins-weekly" }}"'
     kind: 'yaml'
     spec:
       file: 'docker-compose.yaml'
@@ -98,7 +98,7 @@ sources:
         pattern: '>=2.150.1-alpine'
 targets:
   jenkins-lts:
-    name: 'deps(dockercompose): bump "jenkinsci/jenkins" tag'
+    name: 'deps: update Docker image "jenkinsci/jenkins" to "{{ source "jenkins-lts" }}"'
     kind: 'yaml'
     spec:
       file: 'docker-compose.yaml'
@@ -120,7 +120,7 @@ sources:
         pattern: '>=2.254-alpine'
 targets:
   jenkins-weekly:
-    name: 'deps(dockercompose): bump "jenkinsci/jenkins" tag'
+    name: 'deps: update Docker image "jenkinsci/jenkins" to "{{ source "jenkins-weekly" }}"'
     kind: 'yaml'
     spec:
       file: 'docker-compose.yaml'
@@ -139,7 +139,7 @@ targets:
 			composefile, err := New(
 				Spec{
 					Digest: &digest,
-				}, tt.rootDir, "")
+				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
 

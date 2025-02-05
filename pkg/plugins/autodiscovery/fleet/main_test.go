@@ -60,7 +60,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			fleet, err := New(
-				Spec{}, tt.rootDir, "")
+				Spec{}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
 

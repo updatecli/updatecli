@@ -170,6 +170,7 @@ func (d Dockerfile) generateManifest(
 	}
 
 	params := struct {
+		ActionID             string
 		ImageName            string
 		ImageTag             string
 		ScmID                string
@@ -182,6 +183,7 @@ func (d Dockerfile) generateManifest(
 		VersionFilterKind    string
 		VersionFilterPattern string
 	}{
+		ActionID:             d.actionID,
 		ImageName:            image,
 		ImageTag:             tag,
 		ScmID:                d.scmID,

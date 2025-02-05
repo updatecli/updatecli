@@ -50,6 +50,8 @@ type Fleet struct {
 	spec Spec
 	// rootDir defines the root directory from where looking for Fleet bundle
 	rootDir string
+	//actionID hold the actionID used by the newly generated manifest
+	actionID string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
@@ -57,7 +59,7 @@ type Fleet struct {
 }
 
 // New return a new valid Fleet object.
-func New(spec interface{}, rootDir, scmID string) (Fleet, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Fleet, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -92,6 +94,7 @@ func New(spec interface{}, rootDir, scmID string) (Fleet, error) {
 		rootDir:       dir,
 		scmID:         scmID,
 		versionFilter: newFilter,
+		actionID:      actionID,
 	}, nil
 
 }

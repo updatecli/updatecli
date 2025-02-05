@@ -171,6 +171,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 	}
 
 	params := struct {
+		ActionID                   string
 		ManifestName               string
 		ImageName                  string
 		ChartName                  string
@@ -188,6 +189,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		File                       string
 		ScmID                      string
 	}{
+		ActionID:                   f.actionID,
 		ManifestName:               fmt.Sprintf("deps(helm): bump Helm chart %q in ArgoCD manifest %q", data.Chart, file),
 		ChartName:                  data.Chart,
 		ChartRepository:            data.RepoURL,

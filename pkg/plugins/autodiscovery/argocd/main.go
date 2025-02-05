@@ -51,6 +51,8 @@ type ArgoCD struct {
 	spec Spec
 	// rootDir defines the root directory from where looking for ArgoCD manifest
 	rootDir string
+	// actionID hold the actionID used by the newly generated manifest
+	actionID string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
@@ -58,7 +60,7 @@ type ArgoCD struct {
 }
 
 // New return a new valid ArgoCD object.
-func New(spec interface{}, rootDir, scmID string) (ArgoCD, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (ArgoCD, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -90,6 +92,7 @@ func New(spec interface{}, rootDir, scmID string) (ArgoCD, error) {
 	}
 
 	return ArgoCD{
+		actionID:      actionID,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,
