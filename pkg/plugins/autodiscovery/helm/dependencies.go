@@ -121,6 +121,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 			dependencyNameSlug := strings.ReplaceAll(dependency.Name, "/", "_")
 
 			params := struct {
+				ActionID                    string
 				ManifestName                string
 				ImageName                   string
 				ChartName                   string
@@ -129,7 +130,6 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				ConditionID                 string
 				ConditionKey                string
 				FleetBundle                 string
-				SourceID                    string
 				SourceName                  string
 				SourceVersionFilterKind     string
 				SourceVersionFilterPattern  string
@@ -142,6 +142,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				File                        string
 				ScmID                       string
 			}{
+				ActionID:                    h.actionID,
 				ManifestName:                fmt.Sprintf("Bump dependency %q for Helm chart %q", dependency.Name, chartName),
 				ChartName:                   chartName,
 				DependencyName:              dependency.Name,
@@ -149,7 +150,6 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				ConditionID:                 dependencyNameSlug,
 				ConditionKey:                fmt.Sprintf("$.dependencies[%d].name", i),
 				FleetBundle:                 chartName,
-				SourceID:                    dependencyNameSlug,
 				SourceName:                  fmt.Sprintf("Get latest %q Helm chart version", dependency.Name),
 				SourceVersionFilterKind:     sourceVersionFilterKind,
 				SourceVersionFilterPattern:  sourceVersionFilterPattern,

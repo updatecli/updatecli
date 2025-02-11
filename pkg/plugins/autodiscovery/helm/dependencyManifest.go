@@ -4,8 +4,13 @@ const (
 	// dependencyManifest is the Go template used to generate
 	// the Helm chart manifests specific for Helm dependencies
 	dependencyManifest string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Helm chart dependency to {{ "{{" }} source "helmchart" {{ "}}" }}'
+{{ end }}
 sources:
-  {{ .SourceID }}:
+  helmchart:
     name: '{{ .SourceName }}'
     kind: 'helmchart'
     spec:
@@ -39,6 +44,6 @@ targets:
       name: '{{ .TargetChartName }}'
       skippackaging: {{ .TargetChartSkipPackaging }}
       versionincrement: '{{ .TargetChartVersionIncrement }}'
-    sourceid: '{{ .SourceID }}'
+    sourceid: 'helmchart'
 `
 )

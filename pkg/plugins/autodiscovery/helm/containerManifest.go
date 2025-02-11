@@ -2,8 +2,13 @@ package helm
 
 const (
 	manifestTemplateLatest string = `name: 'deps(helm): bump image "{{ .ImageName }}" tag for chart "{{ .ChartName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps(helm): update Docker image {{ .ImageName }} to {{ "{{" }} source "image" {{ "}}" }}'
+{{ end }}
 sources:
-  {{ .SourceID }}:
+  image:
     name: 'get latest image tag for "{{ .ImageName }}"'
     kind: 'dockerimage'
     spec:
@@ -50,11 +55,16 @@ targets:
       key: '{{ .TargetKey }}'
       skippackaging: {{ .TargetChartSkipPackaging }}
       versionincrement: '{{ .TargetChartVersionIncrement }}'
-    sourceid: '{{ .SourceID }}'
+    sourceid: 'image'
 `
 	manifestTemplateDigestAndLatest string = `name: 'deps(helm): bump image "{{ .ImageName }}" digest for chart "{{ .ChartName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps(helm): update Docker image {{ .ImageName }} to {{ "{{" }} source "image" {{ "}}" }}'
+{{ end }}
 sources:
-  {{ .SourceID }}:
+  image:
     name: 'get latest "{{ .ImageName }}" container tag'
     kind: 'dockerimage'
     spec:
@@ -63,14 +73,14 @@ sources:
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
-  {{ .SourceID }}-digest:
+  image-digest:
     name: 'get latest image "{{ .ImageName }}" digest'
     kind: 'dockerdigest'
     spec:
       image: '{{ .ImageName }}'
-      tag: '{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
+      tag: '{{ "{{" }} source "image" {{ "}}" }}'
     dependson:
-      - '{{ .SourceID }}'
+      - 'image'
 conditions:
 {{- if .HasRegistry }}
   {{ .ConditionRegistryID }}:
@@ -109,11 +119,16 @@ targets:
       key: '{{ .TargetKey }}'
       skippackaging: {{ .TargetChartSkipPackaging }}
       versionincrement: '{{ .TargetChartVersionIncrement }}'
-    sourceid: '{{ .SourceID }}-digest'
+    sourceid: 'image-digest'
 `
 	manifestTemplateDigest string = `name: 'deps(helm): bump image "{{ .ImageName }}" digest for chart "{{ .ChartName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps(helm): update Docker image {{ .ImageName }} digest'
+{{ end }}
 sources:
-  {{ .SourceID }}-digest:
+  image-digest:
     name: 'get latest image "{{ .ImageName }}" digest'
     kind: 'dockerdigest'
     spec:
@@ -157,6 +172,6 @@ targets:
       key: '{{ .TargetKey }}'
       skippackaging: {{ .TargetChartSkipPackaging }}
       versionincrement: '{{ .TargetChartVersionIncrement }}'
-    sourceid: '{{ .SourceID }}-digest'
+    sourceid: 'image-digest'
 `
 )

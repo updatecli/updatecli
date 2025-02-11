@@ -220,6 +220,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}
 
 			params := struct {
+				ActionID                    string
 				ImageName                   string
 				ImageTag                    string
 				ChartName                   string
@@ -232,7 +233,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				ConditionRepositoryKey      string
 				ConditionRepositoryName     string
 				ConditionRepositoryValue    string
-				SourceID                    string
 				SourceVersionFilterKind     string
 				SourceVersionFilterPattern  string
 				SourceImageName             string
@@ -246,6 +246,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				File                        string
 				ScmID                       string
 			}{
+				ActionID:                    h.actionID,
 				ImageName:                   imageName,
 				ImageTag:                    imageTag,
 				ChartName:                   chartName,
@@ -258,7 +259,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				ConditionRepositoryKey:      image.yamlRepositoryPath,
 				ConditionRepositoryName:     fmt.Sprintf("Ensure container repository %q is specified", image.repository),
 				ConditionRepositoryValue:    image.repository,
-				SourceID:                    imageSourceSlug,
 				SourceVersionFilterKind:     versionFilterKind,
 				SourceVersionFilterPattern:  versionFilterPattern,
 				SourceImageName:             imageName,

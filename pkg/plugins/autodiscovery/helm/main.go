@@ -70,6 +70,8 @@ type Helm struct {
 	spec Spec
 	// rootdir defines the root directory from where looking for Helm Chart
 	rootDir string
+	// actionID hold the actionID used by the newly generated manifest
+	actionID string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
@@ -77,7 +79,7 @@ type Helm struct {
 }
 
 // New return a new valid Helm object.
-func New(spec interface{}, rootDir, scmID string) (Helm, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Helm, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -112,6 +114,7 @@ func New(spec interface{}, rootDir, scmID string) (Helm, error) {
 	}
 
 	return Helm{
+		actionID:      actionID,
 		digest:        digest,
 		spec:          s,
 		rootDir:       dir,

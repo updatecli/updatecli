@@ -24,7 +24,7 @@ func TestDiscoverManifests(t *testing.T) {
 			rootDir: "testdata-1/chart",
 			expectedPipelines: []string{`name: 'Bump dependency "minio" for Helm chart "epinio"'
 sources:
-  minio:
+  helmchart:
     name: 'Get latest "minio" Helm chart version'
     kind: 'helmchart'
     spec:
@@ -52,11 +52,11 @@ targets:
       name: 'epinio'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'minio'
+    sourceid: 'helmchart'
 `,
 				`name: 'Bump dependency "kubed" for Helm chart "epinio"'
 sources:
-  kubed:
+  helmchart:
     name: 'Get latest "kubed" Helm chart version'
     kind: 'helmchart'
     spec:
@@ -84,11 +84,11 @@ targets:
       name: 'epinio'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'kubed'
+    sourceid: 'helmchart'
 `,
 				`name: 'Bump dependency "epinio-ui" for Helm chart "epinio"'
 sources:
-  epinio-ui:
+  helmchart:
     name: 'Get latest "epinio-ui" Helm chart version'
     kind: 'helmchart'
     spec:
@@ -116,11 +116,11 @@ targets:
       name: 'epinio'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'epinio-ui'
+    sourceid: 'helmchart'
 `,
 				`name: 'deps(helm): bump image "splatform/epinio-server" tag for chart "epinio"'
 sources:
-  splatform_epinio-server:
+  image:
     name: 'get latest image tag for "splatform/epinio-server"'
     kind: 'dockerimage'
     spec:
@@ -148,11 +148,11 @@ targets:
       key: '$.image.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'splatform_epinio-server'
+    sourceid: 'image'
 `,
 				`name: 'deps(helm): bump image "epinioteam/epinio-ui-qa" tag for chart "epinio"'
 sources:
-  epinioteam_epinio-ui-qa:
+  image:
     name: 'get latest image tag for "epinioteam/epinio-ui-qa"'
     kind: 'dockerimage'
     spec:
@@ -180,7 +180,7 @@ targets:
       key: '$.images.ui.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'epinioteam_epinio-ui-qa'
+    sourceid: 'image'
 `},
 		},
 		{
@@ -189,7 +189,7 @@ targets:
 			digest:  true,
 			expectedPipelines: []string{`name: 'deps(helm): bump image "epinio/epinio-server" digest for chart "sample"'
 sources:
-  epinio_epinio-server:
+  image:
     name: 'get latest "epinio/epinio-server" container tag'
     kind: 'dockerimage'
     spec:
@@ -198,14 +198,14 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=v1.8.0'
-  epinio_epinio-server-digest:
+  image-digest:
     name: 'get latest image "epinio/epinio-server" digest'
     kind: 'dockerdigest'
     spec:
       image: 'epinio/epinio-server'
-      tag: '{{ source "epinio_epinio-server" }}'
+      tag: '{{ source "image" }}'
     dependson:
-      - 'epinio_epinio-server'
+      - 'image'
 conditions:
   epinio_epinio-server-repository:
     disablesourceinput: true
@@ -225,11 +225,11 @@ targets:
       key: '$.image.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'epinio_epinio-server-digest'
+    sourceid: 'image-digest'
 `,
 				`name: 'deps(helm): bump image "epinio/epinio-ui" digest for chart "sample"'
 sources:
-  epinio_epinio-ui:
+  image:
     name: 'get latest "epinio/epinio-ui" container tag'
     kind: 'dockerimage'
     spec:
@@ -238,14 +238,14 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=v1.8.0'
-  epinio_epinio-ui-digest:
+  image-digest:
     name: 'get latest image "epinio/epinio-ui" digest'
     kind: 'dockerdigest'
     spec:
       image: 'epinio/epinio-ui'
-      tag: '{{ source "epinio_epinio-ui" }}'
+      tag: '{{ source "image" }}'
     dependson:
-      - 'epinio_epinio-ui'
+      - 'image'
 conditions:
   epinio_epinio-ui-repository:
     disablesourceinput: true
@@ -265,7 +265,7 @@ targets:
       key: '$.images.ui.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'epinio_epinio-ui-digest'
+    sourceid: 'image-digest'
 `},
 		},
 		{
@@ -273,7 +273,7 @@ targets:
 			rootDir: "testdata-3/chart",
 			expectedPipelines: []string{`name: 'deps(helm): bump image "ghcr.io/epinio/epinio-server" tag for chart "sample"'
 sources:
-  ghcr.io_epinio_epinio-server:
+  image:
     name: 'get latest image tag for "ghcr.io/epinio/epinio-server"'
     kind: 'dockerimage'
     spec:
@@ -309,11 +309,11 @@ targets:
       key: '$.image.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'ghcr.io_epinio_epinio-server'
+    sourceid: 'image'
 `,
 				`name: 'deps(helm): bump image "ghcr.io/epinio/epinio-ui" tag for chart "sample"'
 sources:
-  ghcr.io_epinio_epinio-ui:
+  image:
     name: 'get latest image tag for "ghcr.io/epinio/epinio-ui"'
     kind: 'dockerimage'
     spec:
@@ -349,7 +349,7 @@ targets:
       key: '$.images.ui.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'ghcr.io_epinio_epinio-ui'
+    sourceid: 'image'
 `},
 		},
 		{
@@ -368,7 +368,7 @@ targets:
 			digest:  true,
 			expectedPipelines: []string{`name: 'deps(helm): bump image "nginx" digest for chart "test-tag-01"'
 sources:
-  nginx-digest:
+  image-digest:
     name: 'get latest image "nginx" digest'
     kind: 'dockerdigest'
     spec:
@@ -393,7 +393,7 @@ targets:
       key: '$.image.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'nginx-digest'
+    sourceid: 'image-digest'
 `},
 		},
 		{
@@ -402,7 +402,7 @@ targets:
 			digest:  true,
 			expectedPipelines: []string{`name: 'deps(helm): bump image "nginx" digest for chart "test-tag-01"'
 sources:
-  nginx-digest:
+  image-digest:
     name: 'get latest image "nginx" digest'
     kind: 'dockerdigest'
     spec:
@@ -427,7 +427,7 @@ targets:
       key: '$.image.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'nginx-digest'
+    sourceid: 'image-digest'
 `},
 		},
 		{
@@ -436,7 +436,7 @@ targets:
 			digest:  true,
 			expectedPipelines: []string{`name: 'deps(helm): bump image "nginx" digest for chart "test-tag-01"'
 sources:
-  nginx-digest:
+  image-digest:
     name: 'get latest image "nginx" digest'
     kind: 'dockerdigest'
     spec:
@@ -461,7 +461,7 @@ targets:
       key: '$.image.tag'
       skippackaging: false
       versionincrement: ''
-    sourceid: 'nginx-digest'
+    sourceid: 'image-digest'
 `},
 		},
 	}
@@ -473,7 +473,7 @@ targets:
 			helm, err := New(
 				Spec{
 					Digest: &digest,
-				}, tt.rootDir, "")
+				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
 
