@@ -78,6 +78,8 @@ type Spec struct {
 
 // Ko holds all information needed to generate Ko manifests.
 type Ko struct {
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootDir defines the root directory from where looking for Kubernetes manifests
@@ -93,7 +95,7 @@ type Ko struct {
 }
 
 // New return a new valid Ko object.
-func New(spec interface{}, rootDir, scmID string) (Ko, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Ko, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -134,6 +136,7 @@ func New(spec interface{}, rootDir, scmID string) (Ko, error) {
 	}
 
 	return Ko{
+		actionID:      actionID,
 		digest:        digest,
 		spec:          s,
 		rootDir:       dir,
