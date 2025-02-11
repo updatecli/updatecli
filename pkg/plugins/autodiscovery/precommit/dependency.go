@@ -11,15 +11,15 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
-func (n Precommit) discoverDependencyManifests() ([][]byte, error) {
+func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
 
-	searchFromDir := n.rootDir
+	searchFromDir := p.rootDir
 	// If the spec.RootDir is an absolute path, then it as already been set
 	// correctly in the New function.
-	if n.spec.RootDir != "" && !path.IsAbs(n.spec.RootDir) {
-		searchFromDir = filepath.Join(n.rootDir, n.spec.RootDir)
+	if p.spec.RootDir != "" && !path.IsAbs(p.spec.RootDir) {
+		searchFromDir = filepath.Join(p.rootDir, p.spec.RootDir)
 	}
 
 	foundFiles, err := searchPrecommitConfigFiles(searchFromDir)
@@ -32,7 +32,7 @@ func (n Precommit) discoverDependencyManifests() ([][]byte, error) {
 
 		logrus.Debugf("parsing file %q", foundFile)
 
-		relativeFoundFile, err := filepath.Rel(n.rootDir, foundFile)
+		relativeFoundFile, err := filepath.Rel(p.rootDir, foundFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
 			logrus.Debugln(err)
@@ -52,21 +52,21 @@ func (n Precommit) discoverDependencyManifests() ([][]byte, error) {
 
 		for _, repo := range data.Repos {
 
-			if len(n.spec.Ignore) > 0 {
-				if n.spec.Ignore.isMatchingRules(n.rootDir, relativeFoundFile, repo.Repo, repo.Rev) {
+			if len(p.spec.Ignore) > 0 {
+				if p.spec.Ignore.isMatchingRules(p.rootDir, relativeFoundFile, repo.Repo, repo.Rev) {
 					logrus.Debugf("Ignoring Hook Repo %q from %q, as matching ignore rule(s)\n", repo.Repo, relativeFoundFile)
 					continue
 				}
 			}
 
-			if len(n.spec.Only) > 0 {
-				if !n.spec.Only.isMatchingRules(n.rootDir, relativeFoundFile, repo.Repo, repo.Rev) {
+			if len(p.spec.Only) > 0 {
+				if !p.spec.Only.isMatchingRules(p.rootDir, relativeFoundFile, repo.Repo, repo.Rev) {
 					logrus.Debugf("Ignoring NPM package %q from %q, as not matching only rule(s)\n", repo.Repo, relativeFoundFile)
 					continue
 				}
 			}
 
-			versionPattern, err := n.versionFilter.GreaterThanPattern(repo.Rev)
+			versionPattern, err := p.versionFilter.GreaterThanPattern(repo.Rev)
 			if err != nil {
 				logrus.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
 				continue
@@ -79,6 +79,7 @@ func (n Precommit) discoverDependencyManifests() ([][]byte, error) {
 			}
 
 			params := struct {
+				ActionID                   string
 				ManifestName               string
 				SourceScmId                string
 				SourceScmUrl               string
@@ -94,20 +95,21 @@ func (n Precommit) discoverDependencyManifests() ([][]byte, error) {
 				File                       string
 				ScmID                      string
 			}{
+				ActionID:                   p.actionID,
 				ManifestName:               fmt.Sprintf("Bump %q repo version", repo.Repo),
 				SourceScmId:                repo.Repo,
 				SourceScmUrl:               repo.Repo,
 				SourceName:                 fmt.Sprintf("Get %q repo version", repo.Repo),
 				SourceID:                   "gittag",
 				SourceKind:                 "gittag",
-				SourceVersionFilterKind:    n.versionFilter.Kind,
+				SourceVersionFilterKind:    p.versionFilter.Kind,
 				SourceVersionFilterPattern: versionPattern,
 				TargetID:                   ".pre-commit-config.yaml",
-				TargetName:                 fmt.Sprintf("Bump %q repo version to {{ source %q }}", repo.Repo, "gittag"),
+				TargetName:                 fmt.Sprintf("deps(precommit): bump %q repo version to {{ source %q }}", repo.Repo, "gittag"),
 				TargetKey:                  fmt.Sprintf("$.repos[?(@.repo == '%s')].rev", repo.Repo),
 				TargetEngine:               yaml.EngineYamlPath,
 				File:                       relativeFoundFile,
-				ScmID:                      n.scmID,
+				ScmID:                      p.scmID,
 			}
 
 			manifest := bytes.Buffer{}

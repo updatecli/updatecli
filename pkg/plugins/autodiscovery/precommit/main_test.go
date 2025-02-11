@@ -33,7 +33,7 @@ sources:
 
 targets:
   '.pre-commit-config.yaml':
-    name: 'Bump "https://github.com/psf/black" repo version to {{ source "gittag" }}'
+    name: 'deps(precommit): bump "https://github.com/psf/black" repo version to {{ source "gittag" }}'
     kind: yaml
     sourceid: 'gittag'
     spec:
@@ -66,7 +66,7 @@ sources:
 
 targets:
   '.pre-commit-config.yaml':
-    name: 'Bump "https://github.com/pre-commit/pre-commit-hooks" repo version to {{ source "gittag" }}'
+    name: 'deps(precommit): bump "https://github.com/pre-commit/pre-commit-hooks" repo version to {{ source "gittag" }}'
     kind: yaml
     sourceid: 'gittag'
     spec:
@@ -92,7 +92,7 @@ sources:
 
 targets:
   '.pre-commit-config.yaml':
-    name: 'Bump "https://github.com/asottile/add-trailing-comma" repo version to {{ source "gittag" }}'
+    name: 'deps(precommit): bump "https://github.com/asottile/add-trailing-comma" repo version to {{ source "gittag" }}'
     kind: yaml
     sourceid: 'gittag'
     spec:
@@ -147,7 +147,7 @@ targets:
 				Spec{
 					Only:   tt.onlyRules,
 					Ignore: tt.ignoreRules,
-				}, tt.rootDir, "")
+				}, tt.rootDir, "", "")
 			require.NoError(t, err)
 
 			bytesPipelines, err := a.DiscoverManifests()
