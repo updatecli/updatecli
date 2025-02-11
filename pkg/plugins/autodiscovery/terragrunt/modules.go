@@ -238,6 +238,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 	}
 
 	params := struct {
+		ActionID             string
 		TerragruntModulePath string
 		SourceType           string
 		SourceTypeKind       string
@@ -255,6 +256,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		VersionFilterKind    string
 		VersionFilterPattern string
 	}{
+		ActionID:             t.actionID,
 		TerragruntModulePath: filename,
 		Module:               module.ForDisplay(),
 		SourceType:           module.source.sourceType,

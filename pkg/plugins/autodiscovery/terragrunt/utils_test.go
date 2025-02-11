@@ -19,15 +19,15 @@ func TestSearchTerragruntFiles(t *testing.T) {
 	}{
 		{
 			name:    "Default working scenario",
-			rootDir: "test/testdata",
+			rootDir: "testdata",
 			expectedFoundFiles: []string{
-				"test/testdata/complex_localized.hcl",
-				"test/testdata/inlined.hcl",
-				"test/testdata/more_complex_localized.hcl",
-				"test/testdata/non_tfr.hcl",
-				"test/testdata/simple_localized.hcl",
-				"test/testdata/terraform_without_source.hcl",
-				"test/testdata/terragrunt.hcl",
+				"testdata/complex_localized.hcl",
+				"testdata/inlined.hcl",
+				"testdata/more_complex_localized.hcl",
+				"testdata/non_tfr.hcl",
+				"testdata/simple_localized.hcl",
+				"testdata/terraform_without_source.hcl",
+				"testdata/terragrunt.hcl",
 			},
 		},
 	}
@@ -50,7 +50,7 @@ func TestGetTerragruntModules(t *testing.T) {
 	}{
 		{
 			name: "Default working scenario",
-			file: "test/testdata/inlined.hcl",
+			file: "testdata/inlined.hcl",
 			expectedModule: &terragruntModule{
 				registryModule: &terraformRegistryAddress.Module{
 					Package: terraformRegistryAddress.ModulePackage{
@@ -71,7 +71,7 @@ func TestGetTerragruntModules(t *testing.T) {
 		},
 		{
 			name: "Simple localized scenario",
-			file: "test/testdata/simple_localized.hcl",
+			file: "testdata/simple_localized.hcl",
 			expectedModule: &terragruntModule{
 				registryModule: &terraformRegistryAddress.Module{
 					Package: terraformRegistryAddress.ModulePackage{
@@ -95,7 +95,7 @@ func TestGetTerragruntModules(t *testing.T) {
 		},
 		{
 			name: "Complex localized scenario",
-			file: "test/testdata/complex_localized.hcl",
+			file: "testdata/complex_localized.hcl",
 			expectedModule: &terragruntModule{
 				registryModule: &terraformRegistryAddress.Module{
 					Package: terraformRegistryAddress.ModulePackage{
@@ -120,7 +120,7 @@ func TestGetTerragruntModules(t *testing.T) {
 		},
 		{
 			name: "Super Complex localized scenario",
-			file: "test/testdata/more_complex_localized.hcl",
+			file: "testdata/more_complex_localized.hcl",
 			expectedModule: &terragruntModule{
 				registryModule: &terraformRegistryAddress.Module{
 					Package: terraformRegistryAddress.ModulePackage{
@@ -144,7 +144,7 @@ func TestGetTerragruntModules(t *testing.T) {
 		},
 		{
 			name: "Non tfr scenario",
-			file: "test/testdata/non_tfr.hcl",
+			file: "testdata/non_tfr.hcl",
 			expectedModule: &terragruntModule{
 				registryModule: nil,
 				source: terragruntModuleSource{
@@ -159,7 +159,7 @@ func TestGetTerragruntModules(t *testing.T) {
 		},
 		{
 			name:           "Terragrunt terraform block without source",
-			file:           "test/testdata/terraform_without_source.hcl",
+			file:           "testdata/terraform_without_source.hcl",
 			expectedModule: nil,
 		},
 	}
@@ -415,17 +415,17 @@ func TestHclExpr(t *testing.T) {
 	}{
 		{
 			name:   "No Expression",
-			file:   "test/testdata/inlined.hcl",
+			file:   "testdata/inlined.hcl",
 			result: "tfr://terraform-aws-modules/rdss/aws?version=5.8.1",
 		},
 		{
 			name:   "Simple localized scenario",
-			file:   "test/testdata/simple_localized.hcl",
+			file:   "testdata/simple_localized.hcl",
 			result: "tfr://terraform-aws-modules/aurora/aws?version=5.8.1",
 		},
 		{
 			name:   "Complex localized scenario",
-			file:   "test/testdata/complex_localized.hcl",
+			file:   "testdata/complex_localized.hcl",
 			result: "tfr://terraform-aws-modules/vpc/aws?version=5.8.1",
 		},
 	}

@@ -11,6 +11,8 @@ import (
 
 // Terragrunt struct holds all information needed to generate terragrunt manifest.
 type Terragrunt struct {
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// `spec` defines the settings provided via an updatecli manifest
 	spec Spec
 	// `rootdir` defines the root directory from where looking for terragrunt configuration
@@ -22,7 +24,7 @@ type Terragrunt struct {
 }
 
 // New return a new valid Terragrunt object.
-func New(spec interface{}, rootDir, scmID string) (Terragrunt, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Terragrunt, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -53,6 +55,7 @@ func New(spec interface{}, rootDir, scmID string) (Terragrunt, error) {
 	}
 
 	return Terragrunt{
+		actionID:      actionID,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,
