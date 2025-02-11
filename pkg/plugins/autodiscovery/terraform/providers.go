@@ -95,6 +95,7 @@ func (t Terraform) getTerraformManifest(filename, provider, versionFilterPattern
 	}
 
 	params := struct {
+		ActionID             string
 		TerraformLockFile    string
 		Platforms            []string
 		Provider             string
@@ -105,6 +106,7 @@ func (t Terraform) getTerraformManifest(filename, provider, versionFilterPattern
 		ScmID                string
 		TargetName           string
 	}{
+		ActionID:             t.actionID,
 		TerraformLockFile:    filename,
 		Platforms:            t.spec.Platforms,
 		Provider:             p.ForDisplay(),

@@ -15,9 +15,9 @@ func TestSearchTerraformLockFiles(t *testing.T) {
 	}{
 		{
 			name:    "Default working scenario",
-			rootDir: "test/testdata",
+			rootDir: "testdata",
 			expectedFoundFiles: []string{
-				"test/testdata/.terraform.lock.hcl",
+				"testdata/.terraform.lock.hcl",
 			},
 		},
 	}
@@ -40,7 +40,7 @@ func TestGetTerraformLockContent(t *testing.T) {
 	}{
 		{
 			name: "Default working scenario",
-			file: "test/testdata/.terraform.lock.hcl",
+			file: "testdata/.terraform.lock.hcl",
 			expectedProviders: map[string]string{
 				"registry.terraform.io/hashicorp/aws":       "5.9.0",
 				"registry.terraform.io/hashicorp/cloudinit": "2.3.2",

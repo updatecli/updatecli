@@ -2,6 +2,11 @@ package terraform
 
 // terraformProviderManifestTemplate is the Go template used to generate Terraform manifest update
 var terraformProviderManifestTemplate string = `name: 'Bump Terraform provider {{ .Provider }} version'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: '{{ .TargetName }}'
+{{ end }}
 sources:
   latestVersion:
     name: 'Get latest version of the {{ .Provider }} provider'
