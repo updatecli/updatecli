@@ -51,14 +51,14 @@ var (
 			"precommit":     precommit.Spec{},
 			"prow":          kubernetes.Spec{},
 			"rancher/fleet": fleet.Spec{},
-			"terraform":     &terraform.Spec{},
-			"terragrunt":    &terragrunt.Spec{},
+			"terraform":     terraform.Spec{},
+			"terragrunt":    terragrunt.Spec{},
 			"updatecli":     updatecli.Spec{},
 		},
 	}
 	// AutodiscoverySpecs is a map of all Autodiscovery specification
 	AutodiscoverySpecsMapping = map[string]interface{}{
-		"argocd":        argocd.Spec{},
+		"argocd":        &argocd.Spec{},
 		"cargo":         &cargo.Spec{},
 		"dockercompose": &dockercompose.Spec{},
 		"dockerfile":    &dockerfile.Spec{},
@@ -167,7 +167,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := flux.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -179,7 +180,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := githubaction.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -204,7 +206,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := helm.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -216,7 +219,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := helmfile.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -228,7 +232,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := ko.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -241,31 +246,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId,
+				g.spec.ActionId,
 				kubernetes.FlavorKubernetes)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "terraform":
-			crawler, err := terraform.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "terragrunt":
-			crawler, err := terragrunt.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -277,7 +259,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := maven.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -289,18 +272,47 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := npm.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
 
 			g.crawlers = append(g.crawlers, crawler)
+
+		case "terraform":
+			crawler, err := terraform.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId,
+				g.spec.ActionId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "terragrunt":
+			crawler, err := terragrunt.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId,
+				g.spec.ActionId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
 		case "prow":
 			crawler, err := kubernetes.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId,
+				g.spec.ActionId,
 				kubernetes.FlavorProw)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
@@ -313,7 +325,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := precommit.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
@@ -338,7 +351,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			crawler, err := updatecli.New(
 				g.spec.Crawlers[kind],
 				workDir,
-				g.spec.ScmId)
+				g.spec.ScmId,
+				g.spec.ActionId)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
