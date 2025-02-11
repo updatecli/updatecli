@@ -3,6 +3,11 @@ package kubernetes
 const (
 	// manifestTemplateLatest is the Go template used to generate Kubernetes manifests
 	manifestTemplateLatest string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: bump container image "{{ .ImageName }}" to {{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: 'get latest container image tag for "{{ .ImageName }}"'
@@ -28,6 +33,11 @@ targets:
       - addprefix: '{{ .TargetPrefix }}'
 `
 	manifestTemplateDigestAndLatest string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: bump container image digest for "{{ .ImageName }}:{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: 'get latest container image tag for "{{ .ImageName }}"'
@@ -48,7 +58,7 @@ sources:
       - '{{ .SourceID }}'
 targets:
   {{ .TargetID }}:
-    name: 'deps: bump container image digest for "{{ .ImageName }}:{{ .ImageTag}}"'
+    name: 'deps: bump container image digest for "{{ .ImageName }}:{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
@@ -61,6 +71,11 @@ targets:
       - addprefix: '{{ .TargetPrefix }}'
 `
 	manifestTemplateDigest string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: bump container image digest for "{{ .ImageName }}:{{ .ImageTag }}"'
+{{ end }
 sources:
   {{ .SourceID }}-digest:
     name: 'get latest container image digest for "{{ .ImageName }}:{{ .ImageTag }}"'
@@ -70,7 +85,7 @@ sources:
       tag: '{{ .ImageTag }}'
 targets:
   {{ .TargetID }}:
-    name: 'deps: bump container image digest for "{{ .ImageName }}:{{ .ImageTag}}"'
+    name: 'deps: bump container image digest for "{{ .ImageName }}:{{ .ImageTag }}"'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}

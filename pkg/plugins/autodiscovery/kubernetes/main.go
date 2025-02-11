@@ -83,6 +83,8 @@ type Spec struct {
 
 // Kubernetes holds all information needed to generate Kubernetes manifests.
 type Kubernetes struct {
+	// actionID holds the value of the actionID parameter
+	actionID string
 	// digest holds the value of the digest parameter
 	digest bool
 	// spec defines the settings provided via an updatecli manifest
@@ -100,7 +102,7 @@ type Kubernetes struct {
 }
 
 // New return a new valid Kubernetes object.
-func New(spec interface{}, rootDir, scmID, flavor string) (Kubernetes, error) {
+func New(spec interface{}, rootDir, scmID, actionID, flavor string) (Kubernetes, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -141,6 +143,7 @@ func New(spec interface{}, rootDir, scmID, flavor string) (Kubernetes, error) {
 	}
 
 	return Kubernetes{
+		actionID:      actionID,
 		digest:        digest,
 		spec:          s,
 		rootDir:       dir,

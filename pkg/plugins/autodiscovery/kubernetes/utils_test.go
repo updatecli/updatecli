@@ -15,21 +15,21 @@ func TestSearchFiles(t *testing.T) {
 	}{
 		{
 			name: "case: success",
-			path: "test/testdata/success",
+			path: "testdata/success",
 			expectedResults: []string{
-				"test/testdata/success/pod.yaml",
+				"testdata/success/pod.yaml",
 			},
 		},
 		{
 			name: "case: all",
-			path: "test/testdata",
+			path: "testdata",
 			expectedResults: []string{
-				"test/testdata/cronjob/cronjob.yaml",
-				"test/testdata/kustomize/deployment.yaml",
-				"test/testdata/latest/pod.yaml",
-				"test/testdata/prow/prow.yaml",
-				"test/testdata/success/pod.yaml",
-				"test/testdata/template/deployment.yaml",
+				"testdata/cronjob/cronjob.yaml",
+				"testdata/kustomize/deployment.yaml",
+				"testdata/latest/pod.yaml",
+				"testdata/prow/prow.yaml",
+				"testdata/success/pod.yaml",
+				"testdata/template/deployment.yaml",
 			},
 		},
 	}
@@ -59,19 +59,19 @@ func TestGetKubernetesManifestData(t *testing.T) {
 	}{
 		{
 			name:           "case: success",
-			filepath:       "test/testdata/success/pod.yaml",
+			filepath:       "testdata/success/pod.yaml",
 			expectedResult: []string{"ghcr.io/updatecli/updatecli:v0.67.0"},
 		},
 		{
 			name:             "case: template",
-			filepath:         "test/testdata/template/deployment.yaml",
+			filepath:         "testdata/template/deployment.yaml",
 			expectedResult:   []string{""},
 			expectedError:    true,
 			expectedErrorMsg: "yaml: line 19: could not find expected ':'",
 		},
 		{
 			name:           "case: wrong flavor",
-			filepath:       "test/testdata/prow/prow.yaml",
+			filepath:       "testdata/prow/prow.yaml",
 			expectedResult: []string{},
 		},
 	}
@@ -111,7 +111,7 @@ func TestGetProwManifestData(t *testing.T) {
 	}{
 		{
 			name:     "case: success",
-			filepath: "test/testdata/prow/prow.yaml",
+			filepath: "testdata/prow/prow.yaml",
 			expectedResult: []string{
 				"ghcr.io/updatecli/updatecli:v0.82.2",
 				"ghcr.io/updatecli/updatecli:v0.82.2",
@@ -120,7 +120,7 @@ func TestGetProwManifestData(t *testing.T) {
 		},
 		{
 			name:           "case: wrong flavor",
-			filepath:       "test/testdata/success/pod.yaml",
+			filepath:       "testdata/success/pod.yaml",
 			expectedResult: []string{},
 		},
 	}

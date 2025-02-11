@@ -1,11 +1,10 @@
-package fleet
+package kubernetes
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/kubernetes"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -24,7 +23,7 @@ func TestDiscoverManifests(t *testing.T) {
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata/success",
-			flavor:  kubernetes.FlavorKubernetes,
+			flavor:  FlavorKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
 sources:
   updatecli:
@@ -51,7 +50,7 @@ targets:
 		{
 			name:    "Scenario 2 - Kustomize",
 			rootDir: "testdata/kustomize",
-			flavor:  kubernetes.FlavorKubernetes,
+			flavor:  FlavorKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "nginx"'
 sources:
   nginx:
@@ -79,7 +78,7 @@ targets:
 			name:    "Scenario - latest and digest",
 			rootDir: "testdata/success",
 			digest:  true,
-			flavor:  kubernetes.FlavorKubernetes,
+			flavor:  FlavorKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
 sources:
   updatecli:
@@ -101,7 +100,7 @@ sources:
       - 'updatecli'
 targets:
   updatecli:
-    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:v0.67.0"'
+    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:{{ source "updatecli" }}"'
     kind: 'yaml'
     spec:
       file: 'pod.yaml'
@@ -115,7 +114,7 @@ targets:
 			name:    "Scenario - prow",
 			rootDir: "testdata/prow",
 			digest:  true,
-			flavor:  kubernetes.FlavorProw,
+			flavor:  FlavorProw,
 			expectedPipelines: []string{`name: 'deps: bump container image "ghcr.io/updatecli/updatecli" for repo "*" and presubmit test "pull-updatecli-diff"'
 sources:
   ghcr.io/updatecli/updatecli:
@@ -137,7 +136,7 @@ sources:
       - 'ghcr.io/updatecli/updatecli'
 targets:
   ghcr.io/updatecli/updatecli:
-    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:{{ source "ghcr.io/updatecli/updatecli" }}"'
     kind: 'yaml'
     spec:
       file: 'prow.yaml'
@@ -166,7 +165,7 @@ sources:
       - 'updatecli'
 targets:
   updatecli:
-    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:{{ source "updatecli" }}"'
     kind: 'yaml'
     spec:
       file: 'prow.yaml'
@@ -195,7 +194,7 @@ sources:
       - 'updatecli'
 targets:
   updatecli:
-    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:v0.82.2"'
+    name: 'deps: bump container image digest for "ghcr.io/updatecli/updatecli:{{ source "updatecli" }}"'
     kind: 'yaml'
     spec:
       file: 'prow.yaml'
@@ -209,7 +208,7 @@ targets:
 			name:    "cronjob",
 			rootDir: "testdata/cronjob",
 			digest:  false,
-			flavor:  kubernetes.FlavorKubernetes,
+			flavor:  FlavorKubernetes,
 			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
 sources:
   updatecli:
@@ -238,10 +237,10 @@ targets:
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
 			digest := tt.digest
-			pod, err := kubernetes.New(
-				kubernetes.Spec{
+			pod, err := New(
+				Spec{
 					Digest: &digest,
-				}, tt.rootDir, "", tt.flavor)
+				}, tt.rootDir, "", "", tt.flavor)
 
 			require.NoError(t, err)
 
