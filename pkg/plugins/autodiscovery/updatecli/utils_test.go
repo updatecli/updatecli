@@ -10,11 +10,11 @@ import (
 func TestSearchFiles(t *testing.T) {
 
 	gotFiles, err := searchUpdatecliComposeFiles(
-		"test/testdata/website", DefaultFiles[:])
+		"testdata/website", DefaultFiles[:])
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	expectedFile := "test/testdata/website/updatecli-compose.yaml"
+	expectedFile := "testdata/website/updatecli-compose.yaml"
 
 	if len(gotFiles) == 0 {
 		t.Errorf("Expecting file %q but got none", expectedFile)
@@ -29,7 +29,7 @@ func TestSearchFiles(t *testing.T) {
 func TestListUpdatecliPolicies(t *testing.T) {
 
 	gotMetadata, err := getComposeFileMetadata(
-		"test/testdata/website/updatecli-compose.yaml")
+		"testdata/website/updatecli-compose.yaml")
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}

@@ -118,6 +118,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 			}
 
 			params := struct {
+				ActionID                   string
 				ManifestName               string
 				PolicyName                 string
 				SourceVersionID            string
@@ -132,6 +133,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 				File                       string
 				ScmID                      string
 			}{
+				ActionID:                   u.actionID,
 				ManifestName:               fmt.Sprintf("deps(updatecli/policy): bump %q Updatecli policy version", policyName),
 				PolicyName:                 policyName,
 				SourceVersionID:            "version",
@@ -141,7 +143,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 				SourceDigestTag:            "{{ source \"version\" }}",
 				SourceVersionFilterKind:    sourceVersionFilterKind,
 				SourceVersionFilterPattern: sourceVersionFilterPattern,
-				TargetName:                 fmt.Sprintf("deps(updatecli/policy): bump %q Updatecli version policy", policyName),
+				TargetName:                 fmt.Sprintf("deps(updatecli): bump %q policy to {{ source %q}}", policyName, "version"),
 				TargetKey:                  fmt.Sprintf("$.policies[%d].policy", i),
 				File:                       foundUpdateComposeFile,
 				ScmID:                      u.scmID,
