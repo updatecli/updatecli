@@ -3,6 +3,11 @@ package flux
 const (
 	// helmreleaseManifestTemplate is the Go template used to generate Flux manifests
 	helmreleaseManifestTemplate string = `name: 'deps(flux): bump Helmrelease "{{ .ChartName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Helm chart to {{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
+{{ end }}
 sources:
   helmrelease:
     name: 'Get latest "{{ .ChartName }}" Helm chart version'

@@ -98,6 +98,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 		}
 
 		params := struct {
+			ActionID                   string
 			ChartName                  string
 			ChartRepository            string
 			File                       string
@@ -106,6 +107,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 			SourceVersionFilterPattern string
 			ScmID                      string
 		}{
+			ActionID:                   f.actionID,
 			ChartName:                  helmChartName,
 			ChartRepository:            helmRepositoryURL,
 			File:                       relateFoundFluxFile,

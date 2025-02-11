@@ -169,7 +169,7 @@ targets:
 			flux, err := New(
 				Spec{
 					Digest: &digest,
-				}, tt.rootDir, "")
+				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
 

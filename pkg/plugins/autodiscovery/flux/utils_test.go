@@ -9,7 +9,7 @@ import (
 
 func TestSearchFluxFiles(t *testing.T) {
 	f, err := New(
-		Spec{}, "testdata", "")
+		Spec{}, "testdata", "", "")
 
 	require.NoError(t, err)
 
