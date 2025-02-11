@@ -11,7 +11,7 @@ func TestSearchWorkflowFiles(t *testing.T) {
 	g, err := New(
 		Spec{
 			RootDir: "testdata",
-		}, "", "")
+		}, "", "", "")
 
 	require.NoError(t, err)
 

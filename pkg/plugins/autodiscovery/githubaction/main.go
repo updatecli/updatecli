@@ -111,6 +111,8 @@ type GitHubAction struct {
 	spec Spec
 	// rootDir defines the  oot directory from where looking for Flux
 	rootDir string
+	// actionID hold the actionID used by the newly generated manifest
+	actionID string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
@@ -140,7 +142,7 @@ type gitProviderToken struct {
 }
 
 // New return a new valid Flux object.
-func New(spec interface{}, rootDir, scmID string) (GitHubAction, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -180,6 +182,7 @@ func New(spec interface{}, rootDir, scmID string) (GitHubAction, error) {
 	}
 
 	return GitHubAction{
+		actionID:      actionID,
 		credentials:   s.Credentials,
 		spec:          s,
 		files:         files,

@@ -3,6 +3,12 @@ package githubaction
 const (
 	// manifestTemplate is the Go template used to generate Docker compose manifests
 	manifestTemplateDockerLatest string = `name: 'deps: bump Docker image "{{ .ImageName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image to {{ "{{" }} source "image" {{ "}}" }}'
+{{ end }}
+
 sources:
   image:
     name: 'get latest image tag for "{{ .ImageName }}"'
@@ -28,6 +34,12 @@ targets:
       - addprefix: '{{ .TargetPrefix }}'
 `
 	manifestTemplateDockerDigestAndLatest string = `name: 'deps: bump Docker image digest for "{{ .ImageName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image to {{ "{{" }} source "image" {{ "}}" }}'
+{{ end }}
+
 sources:
   image:
     name: 'get latest image tag for "{{ .ImageName }}"'
@@ -62,6 +74,12 @@ targets:
       - addprefix: '{{ .TargetPrefix }}'
 `
 	manifestTemplateDockerDigest string = `name: 'deps: bump Docker image digest "{{ .ImageName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image to {{ "{{" }} source "digest" {{ "}}" }}'
+{{ end }}
+
 sources:
   digest:
     name: 'get latest image "{{ .ImageName }}" digest'

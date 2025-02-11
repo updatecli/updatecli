@@ -19,6 +19,7 @@ func TestDiscoverManifests(t *testing.T) {
 			name:    "Scenario - GitHub Action using Docker image",
 			rootDir: "testdata/docker",
 			expectedPipelines: []string{`name: 'deps: bump Docker image "ghcr.io/updatecli/udash"'
+
 sources:
   image:
     name: 'get latest image tag for "ghcr.io/updatecli/udash"'
@@ -41,6 +42,7 @@ targets:
       - addprefix: 'ghcr.io/updatecli/udash:'
 `,
 				`name: 'deps: bump Docker image "ghcr.io/updatecli/updatecli"'
+
 sources:
   image:
     name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
@@ -1126,7 +1128,7 @@ targets:
 				Spec{
 					Credentials: tt.credentials,
 					Digest:      &tt.digest,
-				}, tt.rootDir, "")
+				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
 

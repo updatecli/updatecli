@@ -124,6 +124,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 
 	params := struct {
 		ActionName           string
+		ActionID             string
 		ImageName            string
 		ImageTag             string
 		ImageArchitecture    string
@@ -137,6 +138,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		ScmID                string
 	}{
 		ActionName:           spec.ActionName,
+		ActionID:             g.actionID,
 		ImageName:            imageName,
 		ImageTag:             imageTag,
 		ImageArchitecture:    architecture,
