@@ -24,7 +24,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/oauth2 v0.25.0
+	golang.org/x/oauth2 v0.26.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.17.0
 	sigs.k8s.io/yaml v1.4.0
@@ -39,7 +39,7 @@ require (
 	github.com/drone/go-scm v1.39.1
 	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/source-controller/api v1.4.1
-	github.com/goccy/go-yaml v1.15.17
+	github.com/goccy/go-yaml v1.15.20
 	github.com/google/go-containerregistry v0.20.3
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.23.0
