@@ -39,3 +39,8 @@ func GetCommitSignKey(armoredKeyRing string, keyPassphrase string) (*openpgp.Ent
 
 	return key, nil
 }
+
+// IsZero returns true if the GPGSpec is empty
+func (g GPGSpec) IsZero() bool {
+	return g.SigningKey == "" && g.Passphrase == ""
+}
