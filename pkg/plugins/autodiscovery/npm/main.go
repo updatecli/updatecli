@@ -46,6 +46,8 @@ type Spec struct {
 
 // Npm holds all information needed to generate npm manifest.
 type Npm struct {
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootDir defines the root directory from where looking for NPM
@@ -57,7 +59,7 @@ type Npm struct {
 }
 
 // New return a new valid object.
-func New(spec interface{}, rootDir, scmID string) (Npm, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -86,6 +88,7 @@ func New(spec interface{}, rootDir, scmID string) (Npm, error) {
 	}
 
 	return Npm{
+		actionID:      actionID,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,

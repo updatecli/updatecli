@@ -11,6 +11,8 @@ import (
 
 // Terraform struct holds all information needed to generate terraform manifest.
 type Terraform struct {
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootdir defines the root directory from where looking for .terraform.lock.hcl
@@ -22,7 +24,7 @@ type Terraform struct {
 }
 
 // New return a new valid Terraform object.
-func New(spec interface{}, rootDir, scmID string) (Terraform, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Terraform, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -58,6 +60,7 @@ func New(spec interface{}, rootDir, scmID string) (Terraform, error) {
 	}
 
 	return Terraform{
+		actionID:      actionID,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,

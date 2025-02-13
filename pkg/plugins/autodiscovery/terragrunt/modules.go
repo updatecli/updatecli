@@ -189,7 +189,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 	prefix := ""
 	if module.hclContext == nil || len(*module.hclContext) == 0 {
 		// The source is either inlined  we'll need to add a prefix to the version
-		prefix = strings.Replace(module.source.rawSource, module.source.version, "", 1)
+		prefix = strings.Replace(strings.Trim(module.source.rawSource, `"`), module.source.version, "", 1)
 	} else if module.hclContext != nil {
 		// This means the source contains parameter(s)
 		// source could be:
@@ -230,6 +230,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 			// if there is none, it's a no op
 			prefix = strings.TrimSuffix(strings.Trim(prefix, `"`), "v")
 		}
+
 		transformers = append(transformers, terragruntTransformer{
 			Kind:  "addprefix",
 			Value: prefix,
@@ -238,6 +239,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 	}
 
 	params := struct {
+		ActionID             string
 		TerragruntModulePath string
 		SourceType           string
 		SourceTypeKind       string
@@ -255,6 +257,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		VersionFilterKind    string
 		VersionFilterPattern string
 	}{
+		ActionID:             t.actionID,
 		TerragruntModulePath: filename,
 		Module:               module.ForDisplay(),
 		SourceType:           module.source.sourceType,

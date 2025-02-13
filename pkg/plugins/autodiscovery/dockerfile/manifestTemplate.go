@@ -4,6 +4,11 @@ var (
 	// manifestTemplateLatest is the Go template used to generate
 	// Updatecli manifests
 	manifestTemplateLatest string = `name: 'deps(dockerfile): bump "{{ .ImageName }}" tag'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: 'get latest image tag for "{{ .ImageName }}"'
@@ -16,7 +21,7 @@ sources:
         pattern: '{{ .VersionFilterPattern }}'
 targets:
   {{ .TargetID }}:
-    name: 'deps(dockerfile): bump image "{{ .ImageName }}" tag'
+    name: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
     kind: 'dockerfile'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
@@ -29,6 +34,11 @@ targets:
     sourceid: '{{ .SourceID }}'
 `
 	manifestTemplateDigestAndLatest string = `name: 'deps(dockerfile): bump "{{ .ImageName }}" digest'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: 'get latest image tag for "{{ .ImageName }}"'
@@ -49,7 +59,7 @@ sources:
       - '{{ .SourceID }}'
 targets:
   {{ .TargetID }}:
-    name: 'deps(dockerfile): bump image "{{ .ImageName }}" digest'
+    name: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
     kind: 'dockerfile'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
@@ -62,6 +72,11 @@ targets:
     sourceid: '{{ .SourceID }}-digest'
 `
 	manifestTemplateDigest string = `name: 'deps(dockerfile): bump image "{{ .ImageName }}" digest'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+{{ end }}
 sources:
   {{ .SourceID }}-digest:
     name: 'get latest image "{{ .ImageName }}" digest'
@@ -71,7 +86,7 @@ sources:
       tag: '{{ .ImageTag }}'
 targets:
   {{ .TargetID }}:
-    name: 'deps(dockerfile): bump image "{{ .ImageName }}" digest'
+    name: 'deps: bump Docker image "{{ .ImageName }}:{{ .ImageTag }}" digest'
     kind: 'dockerfile'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'

@@ -134,6 +134,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			}
 
 			params := struct {
+				ActionID                   string
 				ManifestName               string
 				ConditionID                string
 				ConditionGroupID           string
@@ -158,6 +159,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 				File                       string
 				ScmID                      string
 			}{
+				ActionID:                   m.actionID,
 				ManifestName:               fmt.Sprintf("Bump Maven %s %s", kind, artifactFullName),
 				ConditionID:                artifactFullName,
 				ConditionGroupID:           "groupid",

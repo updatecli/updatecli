@@ -15,9 +15,9 @@ func TestSearchFiles(t *testing.T) {
 	}{
 		{
 			name: "case: success",
-			path: "test/testdata/success",
+			path: "testdata/success",
 			expectedResults: []string{
-				"test/testdata/success/.ko.yaml",
+				"testdata/success/.ko.yaml",
 			},
 		},
 	}
@@ -47,7 +47,7 @@ func TestGetContainerManifestData(t *testing.T) {
 	}{
 		{
 			name:           "case: success",
-			filepath:       "test/testdata/success/.ko.yaml",
+			filepath:       "testdata/success/.ko.yaml",
 			expectedResult: []string{"golang:1.19.0"},
 		},
 	}

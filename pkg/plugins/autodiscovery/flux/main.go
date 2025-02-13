@@ -93,6 +93,8 @@ type Flux struct {
 	spec Spec
 	// rootDir defines the  oot directory from where looking for Flux
 	rootDir string
+	// actionID hold the actionID used by the newly generated manifest
+	actionID string
 	// scmID hold the scmID used by the newly generated manifest
 	scmID string
 	// ociRepository defines if the OCI repository should be updated
@@ -108,7 +110,7 @@ type Flux struct {
 }
 
 // New return a new valid Flux object.
-func New(spec interface{}, rootDir, scmID string) (Flux, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Flux, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -159,6 +161,7 @@ func New(spec interface{}, rootDir, scmID string) (Flux, error) {
 	}
 
 	return Flux{
+		actionID:      actionID,
 		digest:        digest,
 		spec:          s,
 		files:         files,

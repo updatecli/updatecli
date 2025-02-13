@@ -74,6 +74,8 @@ type Spec struct {
 
 // Updatecli hold all information needed to generate updatecli manifest.
 type Updatecli struct {
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootdir defines the root directory from where looking for Updatecli
@@ -87,7 +89,7 @@ type Updatecli struct {
 }
 
 // New return a new valid Updatecli object.
-func New(spec interface{}, rootDir, scmID string) (Updatecli, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Updatecli, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -122,6 +124,7 @@ func New(spec interface{}, rootDir, scmID string) (Updatecli, error) {
 	}
 
 	return Updatecli{
+		actionID:      actionID,
 		files:         files,
 		spec:          s,
 		rootDir:       dir,

@@ -2,43 +2,48 @@ package terragrunt
 
 // terragruntModuleManifestTemplate is the Go template used to generate Terragrunt manifest update
 var terragruntModuleManifestTemplate = `name: 'Bump Terragrunt module {{ .Module }} version'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: '{{ .TargetName }}'
+{{ end }}
 {{- if .ModuleSourceScm }}
 scms:
   {{ .ModuleSourceScm }}:
-    kind: "git"
+    kind: 'git'
     spec:
-      url: {{ .ModuleSourceScmUrl }}
+      url: '{{ .ModuleSourceScmUrl }}'
 {{- end }}
 sources:
   latestVersion:
     name: 'Get latest version of the {{ .Module }} module'
-    kind: {{ .SourceTypeKind }}
+    kind: '{{ .SourceTypeKind }}'
 {{- if .Transformers }}
     transformers:
 {{- end }}
 {{- range .Transformers }}
-      - {{.Kind}}: {{.Value}}
+      - {{.Kind}}: '{{.Value}}'
 {{- end }}
     spec:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
 {{- if eq .SourceType "registry" }}
-      type: module
+      type: 'module'
 {{- if .ModuleHost }}
-      hostname: {{ .ModuleHost }}
+      hostname: '{{ .ModuleHost }}'
 {{- end }}
-      namespace: {{ .ModuleNamespace }}
-      name: {{ .ModuleName }}
-      targetsystem: {{ .ModuleTargetSystem }}
+      namespace: '{{ .ModuleNamespace }}'
+      name: '{{ .ModuleName }}'
+      targetsystem: '{{ .ModuleTargetSystem }}'
 {{- else if eq .SourceType "git" }}
-    scmid: {{ .ModuleSourceScm }}
+    scmid: '{{ .ModuleSourceScm }}'
 {{- end }}
 targets:
   terragruntModuleFile:
     name: '{{ .TargetName }}'
-    kind: hcl
-    sourceid: latestVersion
+    kind: 'hcl'
+    sourceid: 'latestVersion'
     spec:
       file: '{{ .TerragruntModulePath }}'
       path: '{{ .TargetPath }}'

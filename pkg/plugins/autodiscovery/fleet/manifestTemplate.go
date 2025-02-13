@@ -3,6 +3,11 @@ package fleet
 const (
 	// manifestTemplate is the Go template used to generate Fleet manifests
 	manifestTemplate string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Helm chart "{{ .ChartName }}" to {{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: '{{ .SourceName }}'

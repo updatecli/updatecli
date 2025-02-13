@@ -16,11 +16,11 @@ func TestSearchPackageJsonFiles(t *testing.T) {
 	}{
 		{
 			name:    "Default working scenario",
-			rootDir: "test/testdata",
+			rootDir: "testdata",
 			expectedFoundFiles: []string{
-				"test/testdata/nolockfile/package.json",
-				"test/testdata/npmlockfile/package.json",
-				"test/testdata/yarnlockfile/package.json",
+				"testdata/nolockfile/package.json",
+				"testdata/npmlockfile/package.json",
+				"testdata/yarnlockfile/package.json",
 			},
 		},
 	}

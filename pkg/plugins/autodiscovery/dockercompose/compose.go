@@ -175,6 +175,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			}
 
 			params := struct {
+				ActionID             string
 				ImageName            string
 				ImageTag             string
 				ImageArchitecture    string
@@ -188,6 +189,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				VersionFilterPattern string
 				ScmID                string
 			}{
+				ActionID:             d.actionID,
 				ImageName:            imageName,
 				ImageTag:             imageTag,
 				ImageArchitecture:    architecture,

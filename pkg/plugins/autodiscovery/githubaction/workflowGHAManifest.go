@@ -115,6 +115,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	}
 
 	params := struct {
+		ActionID             string
 		ActionName           string
 		Reference            string
 		PinReference         string
@@ -131,6 +132,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		Token                string
 		Digest               bool
 	}{
+		ActionID:             g.actionID,
 		ActionName:           actionName,
 		Reference:            spec.Reference,
 		PinReference:         pinReference,

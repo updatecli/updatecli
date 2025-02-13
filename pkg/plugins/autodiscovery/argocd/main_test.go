@@ -51,7 +51,7 @@ conditions:
       value: 'https://bitnami-labs.github.io/sealed-secrets'
 targets:
   sealed-secrets:
-    name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
+    name: 'deps(helm): update Helm chart "sealed-secrets" to {{ source "sealed-secrets" }}'
     kind: 'yaml'
     spec:
       file: 'manifest.yaml'
@@ -92,7 +92,7 @@ conditions:
       value: 'https://bitnami-labs.github.io/sealed-secrets'
 targets:
   sealed-secrets:
-    name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
+    name: 'deps(helm): update Helm chart "sealed-secrets" to {{ source "sealed-secrets" }}'
     kind: 'yaml'
     spec:
       file: 'manifest.yaml'
@@ -133,7 +133,7 @@ conditions:
       value: 'registry-1.docker.io/bitnamicharts'
 targets:
   nginx:
-    name: 'deps(helm): bump Helm chart "nginx" in ArgoCD manifest "manifest.yaml"'
+    name: 'deps(helm): update Helm chart "nginx" to {{ source "nginx" }}'
     kind: 'yaml'
     spec:
       file: 'manifest.yaml'
@@ -147,7 +147,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			argocd, err := New(
-				Spec{}, tt.rootDir, "")
+				Spec{}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
 

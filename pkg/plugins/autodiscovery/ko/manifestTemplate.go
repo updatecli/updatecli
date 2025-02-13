@@ -3,6 +3,11 @@ package ko
 const (
 	// manifestTemplateLatest is the Go template used to generate Kubernetes manifests
 	manifestTemplateLatest string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: '{{ .TargetName }}'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: 'get latest container image tag for "{{ .ImageName }}"'
@@ -28,6 +33,11 @@ targets:
       - addprefix: '{{ .TargetPrefix }}'
 `
 	manifestTemplateDigestAndLatest string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: bump container image digest for "{{ .ImageName }}:{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: 'get latest container image tag for "{{ .ImageName }}"'
@@ -61,6 +71,11 @@ targets:
       - addprefix: '{{ .TargetPrefix }}'
 `
 	manifestTemplateDigest string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: bump container image digest for "{{ .ImageName }}:{{ .ImageTag}}"'
+{{ end }}
 sources:
   {{ .SourceID }}-digest:
     name: 'get latest container image digest for "{{ .ImageName }}:{{ .ImageTag }}"'

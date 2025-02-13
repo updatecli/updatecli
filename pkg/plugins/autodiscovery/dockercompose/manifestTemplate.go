@@ -3,6 +3,11 @@ package dockercompose
 const (
 	// manifestTemplate is the Go template used to generate Docker compose manifests
 	manifestTemplateLatest string = `name: 'deps(dockercompose): bump "{{ .ImageName }}" tag'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: 'get latest image tag for "{{ .ImageName }}"'
@@ -18,7 +23,7 @@ sources:
         pattern: '{{ .VersionFilterPattern }}'
 targets:
   {{ .TargetID }}:
-    name: 'deps(dockercompose): bump "{{ .ImageName }}" tag'
+    name: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
@@ -31,6 +36,11 @@ targets:
       - addprefix: '{{ .TargetPrefix }}'
 `
 	manifestTemplateDigestAndLatest string = `name: 'deps(dockercompose): bump "{{ .ImageName }}" digest'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: 'get latest image tag for "{{ .ImageName }}"'
@@ -54,7 +64,7 @@ sources:
       - '{{ .SourceID }}'
 targets:
   {{ .TargetID }}:
-    name: 'deps(dockercompose): bump "{{ .ImageName }}" digest'
+    name: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
@@ -67,6 +77,11 @@ targets:
       - addprefix: '{{ .TargetPrefix }}'
 `
 	manifestTemplateDigest string = `name: 'deps(dockercompose): bump image "{{ .ImageName }}" digest'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Docker image "{{ .ImageName }}:{{ .ImageTag }}" digest'
+{{ end }}
 sources:
   {{ .SourceID }}-digest:
     name: 'get latest image "{{ .ImageName }}" digest'
@@ -76,7 +91,7 @@ sources:
       tag: '{{ .ImageTag }}'
 targets:
   {{ .TargetID }}:
-    name: 'deps(dockercompose): bump image "{{ .ImageName }}" digest'
+    name: 'deps: bump Docker image "{{ .ImageName }}:{{ .ImageTag }}" digest'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'

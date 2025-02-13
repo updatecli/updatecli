@@ -49,6 +49,8 @@ type Spec struct {
 
 // Helmfile hold all information needed to generate helmfile manifest.
 type Helmfile struct {
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootdir defines the root directory from where looking for Helmfile
@@ -60,7 +62,7 @@ type Helmfile struct {
 }
 
 // New return a new valid Helmfile object.
-func New(spec interface{}, rootDir, scmID string) (Helmfile, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Helmfile, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -90,6 +92,7 @@ func New(spec interface{}, rootDir, scmID string) (Helmfile, error) {
 	}
 
 	return Helmfile{
+		actionID:      actionID,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,

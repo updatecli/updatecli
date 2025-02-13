@@ -118,7 +118,7 @@ targets:
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
 			resource, err := New(
-				Spec{}, tt.rootDir, "")
+				Spec{}, tt.rootDir, "", "")
 			require.NoError(t, err)
 
 			var pipelines []string

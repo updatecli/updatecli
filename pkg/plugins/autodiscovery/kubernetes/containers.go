@@ -135,6 +135,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 	sourceId := containerName
 
 	params := struct {
+		ActionID             string
 		ManifestName         string
 		ImageName            string
 		ImageTag             string
@@ -148,7 +149,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		TargetFile           string
 		ScmID                string
 	}{
-
+		ActionID:             k.actionID,
 		ManifestName:         fmt.Sprintf("deps: bump container image %q%s", containerName, manifestNameSuffix),
 		ImageName:            imageName,
 		ImageTag:             imageTag,

@@ -108,6 +108,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		}
 
 		params := struct {
+			ActionID                   string
 			ManifestName               string
 			ConditionID                string
 			ConditionGroupID           string
@@ -132,6 +133,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			File                       string
 			ScmID                      string
 		}{
+			ActionID:                   m.actionID,
 			ManifestName:               fmt.Sprintf("Bump Maven parent Pom %s/%s", parentPom.GroupID, parentPom.ArtifactID),
 			ConditionID:                artifactFullName,
 			ConditionGroupID:           "groupid",

@@ -3,6 +3,11 @@ package updatecli
 const (
 	// manifestTemplate is the Go template used to generate Fleet manifests
 	manifestTemplate string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: '{{ .TargetName }}'
+{{ end }}
 sources:
   version:
     name: '{{ .SourceVersionName }}'

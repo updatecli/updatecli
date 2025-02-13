@@ -3,6 +3,11 @@ package argocd
 const (
 	// manifestTemplate is the Go template used to generate ArgoCD application manifests
 	manifestTemplate string = `name: '{{ .ManifestName }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update Go version to {{ "{{" }} source "go" {{ "}}" }}'
+{{ end }}
 sources:
   {{ .SourceID }}:
     name: '{{ .SourceName }}'
@@ -38,7 +43,7 @@ conditions:
       value: '{{ .ChartRepository }}'
 targets:
   {{ .TargetID }}:
-    name: '{{ .ManifestName }}'
+    name: 'deps(helm): update Helm chart "{{ .ChartName }}" to {{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}

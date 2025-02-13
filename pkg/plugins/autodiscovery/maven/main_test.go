@@ -228,7 +228,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			maven, err := New(
-				Spec{}, tt.rootDir, "")
+				Spec{}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
 

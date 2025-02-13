@@ -40,7 +40,7 @@ sources:
       - 'updatecli/updatecli'
 targets:
   updatecli/updatecli:
-    name: 'deps(dockerfile): bump image "updatecli/updatecli" digest'
+    name: 'deps: update Docker image "updatecli/updatecli" to "{{ source "updatecli/updatecli" }}"'
     kind: 'dockerfile'
     spec:
       file: 'Dockerfile'
@@ -75,7 +75,7 @@ sources:
       - 'jenkins/jenkins'
 targets:
   jenkins/jenkins:
-    name: 'deps(dockerfile): bump image "jenkins/jenkins" digest'
+    name: 'deps: update Docker image "jenkins/jenkins" to "{{ source "jenkins/jenkins" }}"'
     kind: 'dockerfile'
     spec:
       file: 'Dockerfile'
@@ -102,7 +102,7 @@ sources:
         pattern: '>=v0.25.0'
 targets:
   updatecli/updatecli:
-    name: 'deps(dockerfile): bump image "updatecli/updatecli" tag'
+    name: 'deps: update Docker image "updatecli/updatecli" to "{{ source "updatecli/updatecli" }}"'
     kind: 'dockerfile'
     spec:
       file: 'Dockerfile'
@@ -137,7 +137,7 @@ sources:
       - 'updatecli/updatecli'
 targets:
   updatecli/updatecli:
-    name: 'deps(dockerfile): bump image "updatecli/updatecli" digest'
+    name: 'deps: update Docker image "updatecli/updatecli" to "{{ source "updatecli/updatecli" }}"'
     kind: 'dockerfile'
     spec:
       file: 'Dockerfile'
@@ -156,7 +156,7 @@ targets:
 			dockerfile, err := New(
 				Spec{
 					Digest: &digest,
-				}, tt.rootDir, "")
+				}, tt.rootDir, "", "")
 			require.NoError(t, err)
 
 			rawPipelines, err := dockerfile.DiscoverManifests()

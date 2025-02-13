@@ -46,6 +46,8 @@ type Spec struct {
 
 // Precommit holds all information needed to generate precommit manifest.
 type Precommit struct {
+	// actionID holds the actionID used by the newly generated manifest
+	actionID string
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootDir defines the root directory from where looking for precommit
@@ -57,7 +59,7 @@ type Precommit struct {
 }
 
 // New return a new valid object.
-func New(spec interface{}, rootDir, scmID string) (Precommit, error) {
+func New(spec interface{}, rootDir, scmID, actionID string) (Precommit, error) {
 	var s Spec
 
 	err := mapstructure.Decode(spec, &s)
@@ -86,6 +88,7 @@ func New(spec interface{}, rootDir, scmID string) (Precommit, error) {
 	}
 
 	return Precommit{
+		actionID:      actionID,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,
@@ -94,12 +97,12 @@ func New(spec interface{}, rootDir, scmID string) (Precommit, error) {
 
 }
 
-func (n Precommit) DiscoverManifests() ([][]byte, error) {
+func (p Precommit) DiscoverManifests() ([][]byte, error) {
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("PRECOMMIT"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("PRECOMMIT")+1))
 
-	manifests, err := n.discoverDependencyManifests()
+	manifests, err := p.discoverDependencyManifests()
 
 	if err != nil {
 		return nil, err

@@ -3,6 +3,11 @@ package githubaction
 const (
 	// workflowManifestGiteaTemplate is the Go template used to generate Gitea action workflow manifests
 	workflowManifestGiteaTemplate string = `name: 'deps: bump {{ .ActionName }} Gitea workflow'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update {{ .ActionName }} to {{ "{{" }} source "release" {{ "}}" }}'
+{{ end }}
 
 sources:
   release:
