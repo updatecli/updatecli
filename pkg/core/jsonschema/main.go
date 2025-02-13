@@ -3,9 +3,12 @@ package jsonschema
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -111,7 +114,7 @@ func (s *Schema) Save() error {
 func (s *Schema) String() string {
 	indentedJsonSchema, err := json.MarshalIndent(s.JsonSchema, "", "    ")
 	if err != nil {
-		logrus.Errorf(err.Error())
+		logrus.Errorf("marshal indent the jsonschema: %s", err.Error())
 	}
 
 	return string(indentedJsonSchema)
@@ -206,13 +209,17 @@ func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{
 	commentMap, err = GetPackageComments(commentDir)
 
 	if err != nil {
-		logrus.Errorf(err.Error())
+		logrus.Errorf("retrieve code comments: %s", err.Error())
 		return nil
 	}
 
 	resourceSchema := jschema.Schema{}
 
-	for id := range anyOf {
+	keys := slices.Collect(maps.Keys(anyOf))
+
+	sort.Strings(keys)
+
+	for _, id := range keys {
 		r := new(jschema.Reflector)
 
 		r.Anonymous = true
@@ -254,7 +261,7 @@ func AppendMapToJsonSchema(baseConfig interface{}, mapConfig map[string]interfac
 	commentMap, err = GetPackageComments(commentDir)
 
 	if err != nil {
-		logrus.Errorf(err.Error())
+		logrus.Errorf("retrieve code comments: %s", err.Error())
 		return nil
 	}
 
@@ -276,7 +283,11 @@ func AppendMapToJsonSchema(baseConfig interface{}, mapConfig map[string]interfac
 		resourceConfig.Properties = jschema.NewProperties()
 	}
 
-	for key := range mapConfig {
+	keys := slices.Collect(maps.Keys(mapConfig))
+
+	sort.Strings(keys)
+
+	for _, key := range keys {
 		if mapConfig[key] == nil {
 			resourceConfig.Properties.Set(key, &jschema.Schema{})
 			continue
