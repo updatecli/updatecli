@@ -12,12 +12,12 @@ import (
 
 func TestSource(t *testing.T) {
 	tests := []struct {
-		name                  string
-		workingDir            string
-		spec                  Spec
-		mockedMetadataHandler mavenmetadata.Handler
-		want                  string
-		wantErr               bool
+		name                   string
+		workingDir             string
+		spec                   Spec
+		mockedMetadataHandlers []mavenmetadata.Handler
+		want                   string
+		wantErr                bool
 	}{
 		{
 			name: "Normal case with org.eclipse.mylyn.wikitext.wikitext.core on repo.jenkins-ci.org/releases",
@@ -26,8 +26,10 @@ func TestSource(t *testing.T) {
 				GroupID:    "org.eclipse.mylyn.wikitext",
 				ArtifactID: "wikitext.core",
 			},
-			mockedMetadataHandler: &mavenmetadata.MockMetadataHandler{
-				LatestVersion: "1.7.4.v20130429",
+			mockedMetadataHandlers: []mavenmetadata.Handler{
+				&mavenmetadata.MockMetadataHandler{
+					LatestVersion: "1.7.4.v20130429",
+				},
 			},
 			want: "1.7.4.v20130429",
 		},
@@ -38,8 +40,10 @@ func TestSource(t *testing.T) {
 				GroupID:    "org.eclipse.mylyn.wikitext",
 				ArtifactID: "wikitext.core",
 			},
-			mockedMetadataHandler: &mavenmetadata.MockMetadataHandler{
-				Err: fmt.Errorf("TCP I/O general error"),
+			mockedMetadataHandlers: []mavenmetadata.Handler{
+				&mavenmetadata.MockMetadataHandler{
+					Err: fmt.Errorf("TCP I/O general error"),
+				},
 			},
 			wantErr: true,
 		},
@@ -50,8 +54,110 @@ func TestSource(t *testing.T) {
 				GroupID:    "org.eclipse.mylyn.wikitext",
 				ArtifactID: "wikitext.core",
 			},
-			mockedMetadataHandler: &mavenmetadata.MockMetadataHandler{
-				LatestVersion: "",
+			mockedMetadataHandlers: []mavenmetadata.Handler{
+				&mavenmetadata.MockMetadataHandler{
+					LatestVersion: "",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Returns version from first repo",
+			spec: Spec{
+				Repositories: []string{
+					"some.private.repo/releases",
+					"repo.jenkins-ci.org/releases",
+				},
+				GroupID:    "org.eclipse.mylyn.wikitext",
+				ArtifactID: "wikitext.core",
+			},
+			mockedMetadataHandlers: []mavenmetadata.Handler{
+				&mavenmetadata.MockMetadataHandler{
+					LatestVersion: "1.2.3",
+				},
+				&mavenmetadata.MockMetadataHandler{
+					Err: fmt.Errorf("Not found"),
+				},
+			},
+			want: "1.2.3",
+		},
+		{
+			name: "Returns version from second repo if the first one returns an error",
+			spec: Spec{
+				Repositories: []string{
+					"some.private.repo/releases",
+					"repo.jenkins-ci.org/releases",
+				},
+				GroupID:    "org.eclipse.mylyn.wikitext",
+				ArtifactID: "wikitext.core",
+			},
+			mockedMetadataHandlers: []mavenmetadata.Handler{
+				&mavenmetadata.MockMetadataHandler{
+					Err: fmt.Errorf("Not found"),
+				},
+				&mavenmetadata.MockMetadataHandler{
+					LatestVersion: "1.2.3",
+				},
+			},
+			want: "1.2.3",
+		},
+		{
+			name: "Returns version from second repo if the first one returns an empty version",
+			spec: Spec{
+				Repositories: []string{
+					"some.private.repo/releases",
+					"repo.jenkins-ci.org/releases",
+				},
+				GroupID:    "org.eclipse.mylyn.wikitext",
+				ArtifactID: "wikitext.core",
+			},
+			mockedMetadataHandlers: []mavenmetadata.Handler{
+				&mavenmetadata.MockMetadataHandler{
+					LatestVersion: "",
+				},
+				&mavenmetadata.MockMetadataHandler{
+					LatestVersion: "1.2.3",
+				},
+			},
+			want: "1.2.3",
+		},
+		{
+			name: "Fails if both repos return an error",
+			spec: Spec{
+				Repositories: []string{
+					"some.private.repo/releases",
+					"repo.jenkins-ci.org/releases",
+				},
+				GroupID:    "org.eclipse.mylyn.wikitext",
+				ArtifactID: "wikitext.core",
+			},
+			mockedMetadataHandlers: []mavenmetadata.Handler{
+				&mavenmetadata.MockMetadataHandler{
+					Err: fmt.Errorf("Not found"),
+				},
+				&mavenmetadata.MockMetadataHandler{
+					Err: fmt.Errorf("Not found"),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Fails if both repos return an empty version",
+			spec: Spec{
+				Repositories: []string{
+					"some.private.repo/releases",
+					"repo.jenkins-ci.org/releases",
+				},
+				GroupID:    "org.eclipse.mylyn.wikitext",
+				ArtifactID: "wikitext.core",
+			},
+			mockedMetadataHandlers: []mavenmetadata.Handler{
+				&mavenmetadata.MockMetadataHandler{
+					LatestVersion: "",
+				},
+				&mavenmetadata.MockMetadataHandler{
+					LatestVersion: "",
+				},
 			},
 			wantErr: true,
 		},
@@ -59,10 +165,8 @@ func TestSource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sut := Maven{
-				spec: tt.spec,
-				metadataHandlers: []mavenmetadata.Handler{
-					tt.mockedMetadataHandler,
-				},
+				spec:             tt.spec,
+				metadataHandlers: tt.mockedMetadataHandlers,
 			}
 
 			gotResult := result.Source{}
