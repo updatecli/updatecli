@@ -1,10 +1,11 @@
 package gomodule
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 )
 
 // Changelog returns the changelog for a specific golang module, or an empty string if it couldn't find one
@@ -12,6 +13,7 @@ func (g *GoModule) Changelog() string {
 	if strings.HasPrefix(g.Spec.Module, "github.com") {
 		return getChangelogFromGitHub(g.Spec.Module, g.Version.OriginalVersion)
 	}
+
 	return ""
 }
 
@@ -22,19 +24,23 @@ func getChangelogFromGitHub(module, version string) string {
 		return ""
 	}
 
-	g := github.Github{
-		Spec: github.Spec{
-			URL:        "https://api.github.com",
-			Owner:      parsedModule[1],
-			Repository: parsedModule[2],
-		},
+	changelog := githubChangelog.Changelog{
+		Owner:      parsedModule[1],
+		Repository: parsedModule[2],
 	}
 
-	result, err := g.ChangelogV3(version)
+	releases, err := changelog.Search(version, version)
+
 	if err != nil {
-		logrus.Debugln(err)
+		logrus.Debugf("ignored error, searching releases: %s", err)
 	}
 
-	return result
+	if len(releases) == 0 {
+		return ""
+	}
 
+	return fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v",
+		releases[0].PublishedAt,
+		releases[0].URL,
+		releases[0].Body)
 }

@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+
+	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 )
 
 func (t *TerraformRegistry) Changelog() string {
@@ -17,27 +18,30 @@ func (t *TerraformRegistry) Changelog() string {
 }
 
 func getChangelogFromGitHub(owner, repo, version string) string {
-	g := github.Github{
-		Spec: github.Spec{
-			URL:        "https://api.github.com",
-			Owner:      owner,
-			Repository: repo,
-		},
+
+	changelog := githubChangelog.Changelog{
+		Owner:      owner,
+		Repository: repo,
 	}
 
-	var result string
-	result, err := g.ChangelogV3(fmt.Sprintf("v%s", version))
+	releases, err := changelog.Search(version, version)
+
 	if err != nil {
-		logrus.Debugln(err)
+		logrus.Debugf("ignored error, searching changelogs: %s", err)
 	}
 
-	// Try without a v prefix
-	if result == "" {
-		result, err = g.ChangelogV3(version)
-		if err != nil {
-			logrus.Debugln(err)
+	if len(releases) == 0 {
+		if releases, err = changelog.Search(version, version); err != nil {
+			logrus.Debugf("ignored error, searching for changelogs: %s", err)
 		}
 	}
 
-	return result
+	if len(releases) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("\nRelease published on the %v at the url %v\n\n%v",
+		releases[0].PublishedAt,
+		releases[0].URL,
+		releases[0].Body)
 }
