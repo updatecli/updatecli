@@ -217,6 +217,10 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		s.URL = "https://" + s.URL
 	}
 
+	if s.Username == "" {
+		s.Username = "oauth2"
+	}
+
 	// Initialize github client
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: s.Token},
