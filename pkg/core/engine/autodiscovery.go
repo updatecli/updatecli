@@ -190,12 +190,14 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 						actionConfig.Title = defaultActionTitle
 					}
 				}
+
 				manifestAction := manifest.Actions[p.Config.Spec.AutoDiscovery.ScmId]
-				//if err := mergo.Merge(&dstAction, actionConfig); err != nil {
-				if err := mergo.Merge(actionConfig, &manifestAction); err != nil {
+
+				baseAction := *actionConfig
+				if err := mergo.Merge(&baseAction, manifestAction); err != nil {
 					fmt.Println("Error:", err)
 				}
-				manifest.Actions[p.Config.Spec.AutoDiscovery.ScmId] = *actionConfig
+				manifest.Actions[p.Config.Spec.AutoDiscovery.ScmId] = baseAction
 			}
 
 			if manifest.Version != "" {
