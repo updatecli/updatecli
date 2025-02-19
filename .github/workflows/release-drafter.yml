@@ -1,23 +1,19 @@
 name: Release Drafter
-
 on:
   workflow_dispatch:
   push:
     # branches to consider in the event; optional, defaults to all
     branches:
       - main
-
 permissions: {}
-
 jobs:
   update_release_draft:
     runs-on: ubuntu-20.04
     permissions:
       contents: write
       pull-requests: write
-
     steps:
-      - uses: release-drafter/release-drafter@v6
+      - uses: release-drafter/release-drafter@v6.1.0
         with:
           config-name: release-drafter.yaml
         env:
