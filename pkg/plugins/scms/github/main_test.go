@@ -190,6 +190,29 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			name:       "No Username provided",
+			pipelineID: "12345",
+			spec: Spec{
+				Branch:     "main",
+				Repository: "updatecli",
+				Owner:      "updatecli",
+				Token:      "superSecretTOkenOfJoe",
+				Directory:  "/home/updatecli",
+				URL:        "github.com",
+			},
+			want: Github{
+				Spec: Spec{
+					Branch:     "main",
+					Repository: "updatecli",
+					Owner:      "updatecli",
+					Username:   "oauth2",
+					Token:      "superSecretTOkenOfJoe",
+					URL:        "https://github.com",
+					Directory:  "/home/updatecli",
+				},
+			},
+		},
+		{
 			name:       "Validation Error (missing token)",
 			pipelineID: "12345",
 			spec: Spec{

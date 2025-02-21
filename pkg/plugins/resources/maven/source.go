@@ -20,7 +20,7 @@ func (m *Maven) Source(workingDir string, resultSource *result.Source) error {
 
 		latestVersion, err := metadataHandler.GetLatestVersion()
 		if err != nil {
-			return fmt.Errorf("getting latest version: %w", err)
+			logrus.Warnf("getting latest version: %v", err)
 		}
 
 		if latestVersion != "" {
