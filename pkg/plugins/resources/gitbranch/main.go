@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -127,8 +128,8 @@ func New(spec interface{}) (*GitBranch, error) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (gb *GitBranch) Changelog() string {
-	return ""
+func (gb *GitBranch) Changelog(from, to string) *result.Changelogs {
+	return nil
 }
 
 // clone clones the git repository

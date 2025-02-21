@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/mobyparser"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser"
@@ -98,6 +99,6 @@ func getParser(spec Spec) (types.DockerfileParser, error) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (df *Dockerfile) Changelog() string {
-	return ""
+func (df *Dockerfile) Changelog(from, to string) *result.Changelogs {
+	return nil
 }

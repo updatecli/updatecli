@@ -251,8 +251,8 @@ func (y *Yaml) Read() error {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (y *Yaml) Changelog() string {
-	return ""
+func (y *Yaml) Changelog(from, to string) *result.Changelogs {
+	return nil
 }
 
 // initFiles initializes the f.files map

@@ -7,6 +7,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Spec defines a specification for a "shell" resource
@@ -140,8 +141,8 @@ func formatShellBlock(content string) string {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (s *Shell) Changelog() string {
-	return ""
+func (s *Shell) Changelog(from, to string) *result.Changelogs {
+	return nil
 }
 
 // getWorkingDirPath returns the real workingDir path that should be used by the shell resource

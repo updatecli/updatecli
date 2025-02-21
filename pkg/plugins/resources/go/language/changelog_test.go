@@ -4,38 +4,54 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestChangelog(t *testing.T) {
 	tests := []struct {
 		name           string
-		version        Language
-		expectedResult string
+		from           string
+		to             string
+		expectedResult *result.Changelogs
 	}{
 		{
 			name: "Test new minor version",
-			version: Language{
-				Version: version.Version{
-					OriginalVersion: "1.20",
+			from: "1.20",
+			to:   "1.20",
+			expectedResult: &result.Changelogs{
+				{
+					Title: "1.20",
+					Body:  "Golang changelog for version \"1.20\" is available on \"https://go.dev/doc/go1.20\"",
+					URL:   "https://go.dev/doc/go1.20",
 				},
 			},
-			expectedResult: "Golang changelog for version \"1.20\" is available on \"https://go.dev/doc/go1.20\"",
 		},
 		{
 			name: "Test new patch version",
-			version: Language{
-				Version: version.Version{
-					OriginalVersion: "1.20.1",
+			from: "1.20.1",
+			to:   "1.20.1",
+			expectedResult: &result.Changelogs{
+				{
+					Title: "1.20.1",
+					Body:  "Golang changelog for version \"1.20.1\" is available on \"https://go.dev/doc/devel/release#go1.20.minor\"",
+					URL:   "https://go.dev/doc/devel/release#go1.20.minor",
 				},
 			},
-			expectedResult: "Golang changelog for version \"1.20.1\" is available on \"https://go.dev/doc/devel/release#go1.20.minor\"",
+		},
+		{
+			name:           "Test without intput",
+			expectedResult: nil,
 		},
 	}
 
+	language, err := New(Spec{})
+	require.NoError(t, err)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expectedResult, tt.version.Changelog())
+			gotResult := language.Changelog(tt.from, tt.to)
+			assert.Equal(t, tt.expectedResult, gotResult)
 		})
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"html/template"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 const (
@@ -34,16 +35,18 @@ URL:
 )
 
 // Changelog returns a rendered template with this chart version information
-func (c Chart) Changelog() string {
+func (c Chart) Changelog(from, to string) *result.Changelogs {
 	index, err := c.GetRepoIndexFromURL()
 
 	if err != nil {
-		return ""
+		logrus.Debugf("failed to get helm repository index: %s", err)
+		return nil
 	}
 
 	e, err := index.Get(c.spec.Name, c.foundVersion.OriginalVersion)
 	if err != nil {
-		return ""
+		logrus.Debugf("failed to get helm chart information: %s", err)
+		return nil
 	}
 
 	t := template.Must(template.New("changelog").Parse(CHANGELOGTEMPLATE))
@@ -70,13 +73,18 @@ func (c Chart) Changelog() string {
 		Sources:     e.Sources})
 
 	if err != nil {
-		return ""
+		logrus.Debugf("failed to render helm chart information: %s", err)
+		return nil
 	}
 
 	changelog := buffer.String()
 
-	logrus.Infof(changelog)
-
-	return changelog
+	return &result.Changelogs{
+		{
+			Title:       from,
+			Body:        changelog,
+			PublishedAt: e.Created.String(),
+		},
+	}
 
 }

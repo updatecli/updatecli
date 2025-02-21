@@ -1,35 +1,37 @@
 package gomod
 
 import (
+	"fmt"
+
+	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/go/language"
 	gomodule "github.com/updatecli/updatecli/pkg/plugins/resources/go/module"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Changelog returns a link to the Golang version
-func (g *GoMod) Changelog() string {
+func (g *GoMod) Changelog(from, to string) *result.Changelogs {
 
 	switch g.kind {
 	case kindGolang:
-		l := language.Language{
-			Version: version.Version{
-				OriginalVersion: g.foundVersion,
-				ParsedVersion:   g.foundVersion,
-			},
+		l, err := language.New(g.spec)
+		if err != nil {
+			logrus.Debugf("failed to init golang language: %s", err)
 		}
-		return l.Changelog()
+
+		return l.Changelog(from, to)
+
 	case kindModule:
-		gomodule := gomodule.GoModule{
-			Spec: gomodule.Spec{
-				Module: g.spec.Module,
-			},
-			Version: version.Version{
-				OriginalVersion: g.foundVersion,
-				ParsedVersion:   g.foundVersion,
-			},
+		m, err := gomodule.New(g.spec)
+		if err != nil {
+			logrus.Debugf("failed to init golang module: %s", err)
 		}
-		return gomodule.Changelog()
+
+		return m.Changelog(from, to)
+
+	default:
+		fmt.Printf("Golang changelog of kind %q is not supported\n", g.kind)
 	}
 
-	return ""
+	return nil
 }

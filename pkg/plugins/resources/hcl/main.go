@@ -143,7 +143,6 @@ func (h *Hcl) UpdateAbsoluteFilePath(workDir string) {
 		if workDir != "" {
 			f := h.files[filePath]
 			f.filePath = utils.JoinFilePathWithWorkingDirectoryPath(f.originalFilePath, workDir)
-			logrus.Debugf(workDir)
 			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", f.originalFilePath, f.filePath)
 			h.files[filePath] = f
 		}
@@ -151,6 +150,6 @@ func (h *Hcl) UpdateAbsoluteFilePath(workDir string) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (h *Hcl) Changelog() string {
-	return ""
+func (h *Hcl) Changelog(from, to string) *result.Changelogs {
+	return nil
 }

@@ -4,39 +4,59 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestChangelog(t *testing.T) {
 	tests := []struct {
-		name           string
-		version        GoMod
-		expectedResult string
+		name  string
+		gomod GoMod
+		from  string
+		to    string
+
+		expectedResult *result.Changelogs
 	}{
 		{
 			name: "Test getting changelog from github",
-			version: GoMod{
+			from: "v0.0.1",
+			to:   "v0.0.1",
+			gomod: GoMod{
 				spec: Spec{
 					Module: "github.com/updatecli/updatecli",
 				},
-				foundVersion: "v0.42.0",
-				kind:         kindModule,
+				kind: kindModule,
 			},
-			expectedResult: "Changelog retrieved from:\n\thttps://github.com/updatecli/updatecli/releases/tag/v0.42.0\n## Changes\r\n\r\n## 🚀 Features\r\n\r\n- [source][condition] Add Cargo Package support @loispostula (#1081)\r\n\r\n## 🐛 Bug Fixes\r\n\r\n- chore sourceID deprecated for sourceid @pilere (#1070)\r\n- Only set git http auth if both username && password are specified @olblak (#1079)\r\n\r\n## 🧰 Maintenance\r\n\r\n- chore(deps): Bump github.com/aws/aws-sdk-go from 1.44.156 to 1.44.179 @dependabot (#1085)\r\n- chore(deps): Bump github.com/containerd/containerd from 1.6.6 to 1.6.12 @dependabot (#1082)\r\n- chore(deps): Bump updatecli/updatecli-action from 2.16.2 to 2.17.0 @dependabot (#1080)\r\n- chore(deps): Bump golang.org/x/oauth2 from 0.3.0 to 0.4.0 @dependabot (#1072)\r\n- chore(deps): Bump golang.org/x/text from 0.5.0 to 0.6.0 @dependabot (#1074)\r\n- chore(deps): Bump github.com/go-git/go-git/v5 from 5.5.1 to 5.5.2 @dependabot (#1075)\r\n\r\n## Contributors\r\n\r\n@dependabot, @dependabot[bot], @loispostula, @olblak, @pilere, @updateclibot and @updateclibot[bot]\r\n",
+
+			expectedResult: &result.Changelogs{
+				{
+					Title:       "v0.0.1",
+					URL:         "https://github.com/updatecli/updatecli/releases/tag/v0.0.1",
+					Body:        "## Changes\r\n\r\n- Add github repository type to target stage @olblak (#4)\r\n\r\n## 🚀 Features\r\n\r\n- Add Docker Image @olblak (#3)\r\n\r\n## 🐛 Bug Fixes\r\n\r\n- Rename release-drafter config file @olblak (#5)\r\n\r\n## Contributors\r\n\r\n@olblak\r\n",
+					PublishedAt: "2020-02-19 20:34:42 +0000 UTC",
+				},
+			},
 		},
 
 		{
 			name: "Test new minor version",
-			version: GoMod{
-				kind:         kindGolang,
-				foundVersion: "1.20",
+			from: "1.20",
+			to:   "1.20",
+			gomod: GoMod{
+				kind: kindGolang,
 			},
-			expectedResult: "Golang changelog for version \"1.20\" is available on \"https://go.dev/doc/go1.20\"",
+			expectedResult: &result.Changelogs{
+				{
+					Title: "1.20",
+					Body:  "Golang changelog for version \"1.20\" is available on \"https://go.dev/doc/go1.20\"",
+					URL:   "https://go.dev/doc/go1.20",
+				},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expectedResult, tt.version.Changelog())
+			assert.Equal(t, tt.expectedResult, tt.gomod.Changelog(tt.from, tt.to))
 		})
 	}
 }

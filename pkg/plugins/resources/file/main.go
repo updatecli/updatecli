@@ -329,6 +329,6 @@ func (f *File) Read() error {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (f *File) Changelog() string {
-	return ""
+func (f *File) Changelog(from, to string) *result.Changelogs {
+	return nil
 }
