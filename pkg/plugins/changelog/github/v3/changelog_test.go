@@ -24,9 +24,13 @@ func TestSearch(t *testing.T) {
 			changelog: Changelog{
 				Owner:      "updatecli-test",
 				Repository: "updatecli",
+				VersionFilter: version.Filter{
+					Kind: "semver",
+				},
 			},
 			expectedResult: result.Changelogs{
 				{Title: "v0.99.3"},
+				{Title: "v0.99.2"},
 				{Title: "v0.99.1"},
 			},
 		},
@@ -35,6 +39,9 @@ func TestSearch(t *testing.T) {
 			changelog: Changelog{
 				Owner:      "updatecli-test",
 				Repository: "updatecli",
+				VersionFilter: version.Filter{
+					Kind: "semver",
+				},
 			},
 			from: "v0.99.3",
 			to:   "v0.99.3",
@@ -43,52 +50,50 @@ func TestSearch(t *testing.T) {
 			},
 		},
 		{
-			name: "get filtered changelogs",
+			name: "reverse changelog",
 			changelog: Changelog{
-				Owner:      "updatecli",
-				Repository: "udash",
-			},
-			from: "v0.5.0",
-			to:   "v0.4.0",
-			expectedResult: result.Changelogs{
-				{Title: "v0.5.0"},
-				{Title: "v0.4.1"},
-				{Title: "v0.4.0"},
-			},
-		},
-		{
-			name: "get filtered changelogs from cache",
-			changelog: Changelog{
-				Owner:      "updatecli",
-				Repository: "udash",
-			},
-			from: "v0.5.0",
-			to:   "v0.4.0",
-			expectedResult: result.Changelogs{
-				{Title: "v0.5.0"},
-				{Title: "v0.4.1"},
-				{Title: "v0.4.0"},
-			},
-		},
-		{
-			name: "get filtered semver changelogs",
-			changelog: Changelog{
-				Owner:      "helm",
-				Repository: "helm",
+				Owner:      "updatecli-test",
+				Repository: "updatecli",
 				VersionFilter: version.Filter{
 					Kind: "semver",
 				},
 			},
-			from: "v3.4.0",
-			to:   "v3.3.0",
+			from: "v0.99.3",
+			to:   "v0.99.2",
 			expectedResult: result.Changelogs{
-				{Title: "v3.4.0"},
-				{Title: "v3.4.0-rc.1"},
-				{Title: "v3.3.4"},
-				{Title: "v3.3.3"},
-				{Title: "v3.3.2"},
-				{Title: "v3.3.1"},
-				{Title: "v3.3.0"},
+				{Title: "v0.99.3"},
+			},
+		},
+		{
+			name: "filter changelog",
+			changelog: Changelog{
+				Owner:      "updatecli-test",
+				Repository: "updatecli",
+				VersionFilter: version.Filter{
+					Kind: "semver",
+				},
+			},
+			from: "v0.99.2",
+			to:   "v0.99.3",
+			expectedResult: result.Changelogs{
+				{Title: "v0.99.3"},
+				{Title: "v0.99.2"},
+			},
+		},
+		{
+			name: "get filter changelog from cache",
+			changelog: Changelog{
+				Owner:      "updatecli-test",
+				Repository: "updatecli",
+				VersionFilter: version.Filter{
+					Kind: "semver",
+				},
+			},
+			from: "v0.99.2",
+			to:   "v0.99.3",
+			expectedResult: result.Changelogs{
+				{Title: "v0.99.3"},
+				{Title: "v0.99.2"},
 			},
 		},
 	}
@@ -102,11 +107,6 @@ func TestSearch(t *testing.T) {
 
 			gotResults, err := tt.changelog.Search(tt.from, tt.to)
 			require.NoError(t, err)
-
-			for i := range gotResults {
-
-				t.Logf("%v", gotResults[i].Title)
-			}
 
 			require.Equal(t, len(tt.expectedResult), len(gotResults))
 

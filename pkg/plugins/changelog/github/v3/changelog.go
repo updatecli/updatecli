@@ -96,21 +96,22 @@ func filterReleases(allReleases []*github.RepositoryRelease, from, to string) []
 
 	for _, release := range allReleases {
 
-		if from != "" {
-			if release.GetTagName() == from {
-				foundFrom = true
-			}
-		}
-
-		if foundFrom {
-			filteredReleases = append(filteredReleases, release)
-		}
-
 		if to != "" {
 			if release.GetTagName() == to {
 				foundTo = true
+			}
+		}
+
+		if from != "" {
+			if release.GetTagName() == from {
+				filteredReleases = append(filteredReleases, release)
+				foundFrom = true
 				break
 			}
+		}
+
+		if foundTo {
+			filteredReleases = append(filteredReleases, release)
 		}
 	}
 
@@ -118,7 +119,7 @@ func filterReleases(allReleases []*github.RepositoryRelease, from, to string) []
 		return nil
 	}
 
-	if to != "" && !foundTo {
+	if from != "" && !foundFrom {
 		logrus.Warnf("Release %q not found so I only return the found release", to)
 		return filteredReleases[0:1]
 	}
