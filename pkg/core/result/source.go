@@ -24,8 +24,6 @@ type Source struct {
 	Scm SCM
 	// ID contains a uniq identifier for the source
 	ID string
-	//Changelog holds the changelog description
-	Changelog string
 	// ConsoleOutput stores the console output of the source execution
 	ConsoleOutput string
 }

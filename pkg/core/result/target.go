@@ -35,6 +35,8 @@ type Target struct {
 	ID string
 	// ConsoleOutput stores the console output of the target execution
 	ConsoleOutput string
+	//Changelogs holds the changelog description
+	Changelogs []Changelog
 }
 
 func (t *Target) String() string {
