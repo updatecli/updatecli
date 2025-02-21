@@ -46,9 +46,6 @@ func isSemverDetected(from, to string) bool {
 	}
 
 	_, err = semver.NewVersion(to)
-	if err == nil {
-		return true
-	}
 
-	return false
+	return err == nil
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-github/v69/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/changelog"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -17,7 +17,7 @@ func TestSearch(t *testing.T) {
 		changelog      Changelog
 		from           string
 		to             string
-		expectedResult []changelog.Changelog
+		expectedResult result.Changelogs
 	}{
 		{
 			name: "get all changelogs",
@@ -25,7 +25,7 @@ func TestSearch(t *testing.T) {
 				Owner:      "updatecli-test",
 				Repository: "updatecli",
 			},
-			expectedResult: []changelog.Changelog{
+			expectedResult: result.Changelogs{
 				{Title: "v0.99.3"},
 				{Title: "v0.99.1"},
 			},
@@ -38,7 +38,7 @@ func TestSearch(t *testing.T) {
 			},
 			from: "v0.99.3",
 			to:   "v0.99.3",
-			expectedResult: []changelog.Changelog{
+			expectedResult: result.Changelogs{
 				{Title: "v0.99.3"},
 			},
 		},
@@ -50,7 +50,7 @@ func TestSearch(t *testing.T) {
 			},
 			from: "v0.5.0",
 			to:   "v0.4.0",
-			expectedResult: []changelog.Changelog{
+			expectedResult: result.Changelogs{
 				{Title: "v0.5.0"},
 				{Title: "v0.4.1"},
 				{Title: "v0.4.0"},
@@ -64,7 +64,7 @@ func TestSearch(t *testing.T) {
 			},
 			from: "v0.5.0",
 			to:   "v0.4.0",
-			expectedResult: []changelog.Changelog{
+			expectedResult: result.Changelogs{
 				{Title: "v0.5.0"},
 				{Title: "v0.4.1"},
 				{Title: "v0.4.0"},
@@ -81,7 +81,7 @@ func TestSearch(t *testing.T) {
 			},
 			from: "v3.4.0",
 			to:   "v3.3.0",
-			expectedResult: []changelog.Changelog{
+			expectedResult: result.Changelogs{
 				{Title: "v3.4.0"},
 				{Title: "v3.4.0-rc.1"},
 				{Title: "v3.3.4"},

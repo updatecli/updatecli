@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-github/v69/github"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/changelog"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -19,7 +19,7 @@ type Changelog struct {
 }
 
 // Search returns a list of changelogs, retrieved from a GitHub api, between two versions
-func (c *Changelog) Search(from, to string) ([]changelog.Changelog, error) {
+func (c *Changelog) Search(from, to string) (result.Changelogs, error) {
 
 	var err error
 
@@ -126,13 +126,13 @@ func filterReleases(allReleases []*github.RepositoryRelease, from, to string) []
 	return filteredReleases
 }
 
-// convertToChangelog converts a list of github.RepositoryRelease to a list of changelog.Changelog
+// convertToChangelog converts a list of github.RepositoryRelease to a list of result.Changelog
 // so we can use it from Updatecli
-func convertToChangelog(releases []*github.RepositoryRelease) []changelog.Changelog {
-	var changelogs []changelog.Changelog
+func convertToChangelog(releases []*github.RepositoryRelease) []result.Changelog {
+	var changelogs result.Changelogs
 
 	for _, release := range releases {
-		changelog := changelog.Changelog{
+		changelog := result.Changelog{
 			Title:       release.GetTagName(),
 			Body:        release.GetBody(),
 			PublishedAt: release.GetPublishedAt().String(),
