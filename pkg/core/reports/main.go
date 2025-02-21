@@ -68,7 +68,7 @@ func (r *Reports) Show() error {
 		return err
 	}
 
-	logrus.Infof(reports)
+	logrus.Infof("%s", reports)
 
 	return nil
 }
