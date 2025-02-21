@@ -46,7 +46,7 @@ func (p *Pipeline) RunTarget(id string) (r string, changed bool, err error) {
 
 		if err == nil {
 
-			changelogs := c.Changelog(p.Sources[target.Config.SourceID].OriginalOutput, target.Result.Information)
+			changelogs := c.Changelog(target.Result.Information, p.Sources[target.Config.SourceID].OriginalOutput)
 
 			if changelogs != nil {
 				target.Result.Changelogs = *changelogs
