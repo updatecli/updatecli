@@ -254,7 +254,7 @@ type Resource interface {
 	Source(workingDir string, sourceResult *result.Source) error
 	Condition(version string, scm scm.ScmHandler) (pass bool, message string, err error)
 	Target(source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
-	Changelog() string
+	Changelog(from, to string) *result.Changelogs
 }
 
 // Need to do reflect of ResourceConfig

@@ -18,12 +18,12 @@ import (
 
 // Source defines how a value is retrieved from a specific source
 type Source struct {
-	// Changelog holds the changelog description
-	Changelog string
 	// Result stores the source result after a source run.
 	Result result.Source
 	// Output contains the value retrieved from a source
 	Output string
+	// OriginalOutput contains the raw value retrieved from a source before the transformation
+	OriginalOutput string
 	// Config defines a source specifications
 	Config Config
 	// Scm stores scm information
@@ -90,6 +90,7 @@ func (s *Source) Run() (err error) {
 	err = source.Source(workingDir, &s.Result)
 
 	s.Output = s.Result.Information
+	s.OriginalOutput = s.Result.Information
 
 	if err != nil {
 		s.Result.Result = result.FAILURE
@@ -98,14 +99,6 @@ func (s *Source) Run() (err error) {
 	}
 
 	logrus.Infof("%s %s", s.Result.Result, s.Result.Description)
-
-	// Once the source is executed, then it can retrieve its changelog
-	// Any error means an empty changelog
-	s.Changelog = source.Changelog()
-	if s.Changelog == "" {
-		logrus.Debugln("empty changelog found for the source")
-	}
-	s.Result.Changelog = s.Changelog
 
 	if len(s.Config.ResourceConfig.Transformers) > 0 {
 		s.Output, err = s.Config.ResourceConfig.Transformers.Apply(s.Output)
