@@ -217,10 +217,18 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	logrus.Infof("\n%s: %s\n", leaf.Category, id)
 	logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
+	depsSourceIDs := []string{}
 	deps := map[string]*Node{}
 	for _, r := range depsResults {
 		if r.ID == rootVertex {
 			continue
+		}
+		if r.ID != rootVertex {
+			p, _ := r.Result.(Node)
+			if p.Category == sourceCategory {
+				// source id order, is not guaranteed as the information is coming from a map
+				depsSourceIDs = append(depsSourceIDs, strings.TrimPrefix(r.ID, "source#"))
+			}
 		}
 		p, _ := r.Result.(Node)
 		deps[r.ID] = &p
@@ -253,7 +261,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			p.updateCondition(conditionId, leaf.Result)
 		case targetCategory:
 			targetId := strings.Replace(id, "target#", "", -1)
-			r, changed, e := p.RunTarget(targetId)
+			r, changed, e := p.RunTarget(targetId, depsSourceIDs)
 			if e != nil {
 				err = e
 			}

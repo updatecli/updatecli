@@ -23,7 +23,7 @@ func (p *Pipeline) updateTarget(id, result string) {
 }
 
 // RunTarget run a target by id
-func (p *Pipeline) RunTarget(id string) (r string, changed bool, err error) {
+func (p *Pipeline) RunTarget(id string, sourceIds []string) (r string, changed bool, err error) {
 	target := p.Targets[id]
 	target.Config = p.Config.Spec.Targets[id]
 	// Ensure the result named contains the up to date target name after templating
@@ -37,26 +37,38 @@ func (p *Pipeline) RunTarget(id string) (r string, changed bool, err error) {
 		err = fmt.Errorf("something went wrong in target %q : %q", id, err)
 	}
 
-	if target.Config.SourceID != "" {
+	changelogSourceID := target.Config.SourceID
+	if changelogSourceID == "" {
+		switch len(sourceIds) {
+		case 1:
+			changelogSourceID = sourceIds[0]
+		case 0:
+		// If we have more than one sourceID then we can't define in a reliable way which one to use
+		// as the order of the sourceIDs is not guaranteed.
+		default:
+			logrus.Debugf("Target depends on a too many sources that we can't determine which one to use for the changelog")
+		}
+	}
+
+	if changelogSourceID != "" {
 		// Once the source is executed, then it can retrieve its changelog
 		// Any error means an empty changelog
-		s := p.Sources[target.Config.SourceID]
+		if source, found := p.Sources[changelogSourceID]; found {
+			c, err := resource.New(source.Config.ResourceConfig)
 
-		c, err := resource.New(s.Config.ResourceConfig)
+			if err == nil {
 
-		if err == nil {
+				changelogs := c.Changelog(target.Result.Information, source.OriginalOutput)
 
-			changelogs := c.Changelog(target.Result.Information, p.Sources[target.Config.SourceID].OriginalOutput)
+				if changelogs != nil {
+					target.Result.Changelogs = *changelogs
 
-			if changelogs != nil {
-				target.Result.Changelogs = *changelogs
+					logrus.Infof("%s", changelogs.String())
 
-				logrus.Infof("%s", changelogs.String())
-
-			} else {
-				logrus.Debugln("no changelog detected")
+				} else {
+					logrus.Debugln("no changelog detected")
+				}
 			}
-
 		}
 	}
 
