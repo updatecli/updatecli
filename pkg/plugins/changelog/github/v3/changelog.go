@@ -120,7 +120,7 @@ func filterReleases(allReleases []*github.RepositoryRelease, from, to string) []
 	}
 
 	if from != "" && !foundFrom {
-		logrus.Warnf("Release %q not found so I only return the found release", to)
+		logrus.Debugf("GitHub release version %q not found so I only return the latest release", from)
 		return filteredReleases[0:1]
 	}
 
