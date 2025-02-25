@@ -223,15 +223,14 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		if r.ID == rootVertex {
 			continue
 		}
-		if r.ID != rootVertex {
-			p, _ := r.Result.(Node)
-			if p.Category == sourceCategory {
-				// source id order, is not guaranteed as the information is coming from a map
-				depsSourceIDs = append(depsSourceIDs, strings.TrimPrefix(r.ID, "source#"))
-			}
-		}
+
 		p, _ := r.Result.(Node)
 		deps[r.ID] = &p
+
+		if p.Category == sourceCategory {
+			// source id order, is not guaranteed as the information is coming from a map
+			depsSourceIDs = append(depsSourceIDs, strings.TrimPrefix(r.ID, "source#"))
+		}
 	}
 
 	shouldSkip := p.shouldSkipResource(&leaf, deps)
