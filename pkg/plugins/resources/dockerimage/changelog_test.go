@@ -14,7 +14,7 @@ func TestChangelog(t *testing.T) {
 		name              string
 		image             string
 		version           string
-		expectedChangelog result.Changelogs
+		expectedChangelog *result.Changelogs
 	}{
 		//{
 		//	// We can't test this scenario from pullrequest as we don't have access to Dockerhub credentials
@@ -28,7 +28,7 @@ func TestChangelog(t *testing.T) {
 		//	name:    "Get changelog from an Updatecli policy stored on Dockerhub with changelog labels",
 		//	image:   "olblak/updatecli-docusaurus",
 		//	version: "0.1.0",
-		//	expectedChangelog: result.Changelogs{
+		//	expectedChangelog: &result.Changelogs{
 		//		{
 		//			Title: "0.1.0",
 		//			Body:  "Init release",
@@ -45,7 +45,7 @@ func TestChangelog(t *testing.T) {
 		//	name:    "Get changelog from an Updatecli policy with the right label defined",
 		//	image:   "ghcr.io/olblak/policies/updatecli/autodiscovery",
 		//	version: "0.3.0",
-		//	expectedChangelog: result.Changelogs{
+		//	expectedChangelog: &result.Changelogs{
 		//		{
 		//			Title: "0.3.0",
 		//			Body:  "- Allow to set commit with GitHub GraphQL API using `scm.commitusingapi`",
