@@ -40,7 +40,7 @@ func TestChangelog(t *testing.T) {
 			},
 		},
 		{
-			name:           "Test without intput",
+			name:           "Test without input",
 			expectedResult: nil,
 		},
 	}
