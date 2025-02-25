@@ -9,10 +9,6 @@ import (
 // Changelog returns the link to the found npm package version's deprecated info
 func (n Npm) Changelog(from, to string) *result.Changelogs {
 
-	if from == "" && to == "" {
-		return nil
-	}
-
 	version, _, err := n.getVersions()
 	if err != nil {
 		return nil

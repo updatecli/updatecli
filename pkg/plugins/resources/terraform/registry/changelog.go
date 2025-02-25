@@ -10,9 +10,6 @@ import (
 )
 
 func (t *TerraformRegistry) Changelog(from, to string) *result.Changelogs {
-	if from == "" && to == "" {
-		return nil
-	}
 
 	if strings.HasPrefix(t.scm, "https://github.com") {
 		return getChangelogFromGitHub(t.scm, from, to)
