@@ -34,5 +34,5 @@ func (c *Changelogs) String() string {
 }
 
 func (c Changelog) String() string {
-	return fmt.Sprintf("%s\n%s\n%s\n%s\n", c.Title, c.PublishedAt, c.URL, c.Body)
+	return fmt.Sprintf("Title: %s\nPublished At: %s\nLink: %s\nDescription: %s\n", c.Title, c.PublishedAt, c.URL, c.Body)
 }
