@@ -43,14 +43,23 @@ type distTags struct {
 }
 
 type versions struct {
-	Name       string
-	Version    string
+	Name    string
+	Version string
+	// Deprecated can either be a boolean set to false
+	// or a string with a deprecating message
 	Deprecated interface{}
 }
 
 type Data struct {
-	Versions map[string]versions
-	DistTags distTags `json:"dist-tags,omitempty"`
+	orderedVersions []string
+	Versions        map[string]versions `json:"versions,omitempty"`
+	DistTags        distTags            `json:"dist-tags,omitempty"`
+	Repository      Repository
+}
+
+type Repository struct {
+	Type string `json:"type,omitempty"`
+	URL  string `json:"url,omitempty"`
 }
 
 // Npm defines a resource of kind "npm"
@@ -260,5 +269,70 @@ func (n *Npm) getPackageData(packageName string) (Data, error) {
 		return Data{}, err
 	}
 
+	orderedVersion, err := getOrderedVersions(data)
+	if err != nil {
+		return Data{}, fmt.Errorf("error getting ordered versions: %q", err)
+	}
+
+	if len(orderedVersion) > 0 {
+		d.orderedVersions = orderedVersion
+	}
+
 	return d, nil
+}
+
+func getOrderedVersions(data []byte) ([]string, error) {
+	var rawStruct struct {
+		Versions json.RawMessage `json:"versions"`
+	}
+
+	var orderedVersions []string
+
+	err := json.Unmarshal(data, &rawStruct)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling json: %q", err)
+	}
+
+	// Now, use a json.Decoder to extract ordered keys from "versions"
+	decoder := json.NewDecoder(strings.NewReader(string(rawStruct.Versions)))
+
+	// Read the opening '{' of the "versions" object
+	_, err = decoder.Token()
+	if err != nil {
+		return nil, fmt.Errorf("error decoding json: %q", err)
+	}
+
+	// Read version keys in order
+	for decoder.More() {
+		// Read key
+		t, err := decoder.Token()
+		if err != nil {
+			fmt.Println("Error reading version key:", err)
+			return nil, err
+		}
+
+		// If we encounter '}', the object has ended
+		if t == json.Delim('}') {
+			break
+		}
+
+		// Ensure it's a string (version key)
+		versionKey, ok := t.(string)
+		if !ok {
+			return nil, fmt.Errorf("error decoding json: expected string key but got: %T", t)
+		}
+
+		// Store the key in order
+		orderedVersions = append(orderedVersions, versionKey)
+
+		// Skip the value (we don't need it)
+		var value json.RawMessage
+		err = decoder.Decode(&value)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding json: %q", err)
+		}
+	}
+
+	return orderedVersions, nil
+
 }
