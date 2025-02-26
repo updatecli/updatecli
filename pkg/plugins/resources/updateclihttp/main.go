@@ -66,6 +66,12 @@ func New(spec interface{}) (*Http, error) {
 		return nil, err
 	}
 
+	if len(newSpec.Request.Headers) > 0 {
+		for k, v := range newSpec.Request.Headers {
+			httpReq.Header.Set(k, v)
+		}
+	}
+
 	newResource := &Http{
 		spec:       newSpec,
 		httpClient: httpClient,
