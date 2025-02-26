@@ -27,15 +27,15 @@ sources:
       url: https://github.com/updatecli/updatecli/releases/download/v0.65.1/updatecli_Linux_arm64.tar.gz
       returnresponseheader: Location
   # Returns the content of the 'maven-metadata.xml' file from the private URL (custom headers for the request)
-  getWithCustomRequest:
-    kind: http
-    spec:
-      url: https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml
-      request:
-        headers:
-          Authorization: 'Bearer Token'
-          Accept: 'application/xml'
-        verb: GET
+  #getWithCustomRequest:
+  #  kind: http
+  #  spec:
+  #    url: https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml
+  #    request:
+  #      headers:
+  #        Authorization: 'Bearer Token'
+  #        Accept: 'application/xml'
+  #      verb: GET
   ## Source fails with an error: the URL returns HTTP/404 (same for server-side errors such as HTTP/5xx)
   # failOnHttpError:
   #   kind: http
