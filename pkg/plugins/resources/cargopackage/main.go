@@ -18,6 +18,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -103,8 +104,8 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (cp *CargoPackage) Changelog() string {
-	return ""
+func (cp *CargoPackage) Changelog(from, to string) *result.Changelogs {
+	return nil
 }
 
 // GetVersions fetch all versions of the Cargo package

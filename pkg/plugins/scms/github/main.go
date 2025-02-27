@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"sync"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -171,7 +170,6 @@ type Github struct {
 	pipelineID       string
 	client           GitHubClient
 	nativeGitHandler gitgeneric.GitHandler
-	mu               sync.RWMutex
 	workingBranch    bool
 	commitUsingApi   bool
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Http defines a resource of type "http"
@@ -81,8 +82,14 @@ func New(spec interface{}) (*Http, error) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (h *Http) Changelog() string {
-	return h.spec.Url
+func (h *Http) Changelog(from, to string) *result.Changelogs {
+	return &result.Changelogs{
+		{
+			Title: "Changelog",
+			Body:  h.spec.Url,
+			URL:   h.spec.Url,
+		},
+	}
 }
 
 func (h *Http) performHttpRequest() (*http.Response, error) {

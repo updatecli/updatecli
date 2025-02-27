@@ -41,6 +41,7 @@ require (
 	github.com/fluxcd/source-controller/api v1.4.1
 	github.com/goccy/go-yaml v1.15.23
 	github.com/google/go-containerregistry v0.20.3
+	github.com/google/go-github/v69 v69.0.0
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/hashicorp/terraform-registry-address v0.2.4
@@ -139,6 +140,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20230614215431-f32df32a01cd // indirect

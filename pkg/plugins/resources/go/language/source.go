@@ -7,23 +7,23 @@ import (
 )
 
 // Source returns the latest go module version
-func (g *Language) Source(workingDir string, resultSource *result.Source) error {
-	_, err := g.versions()
+func (l *Language) Source(workingDir string, resultSource *result.Source) error {
+	_, err := l.versions()
 	if err != nil {
 		return fmt.Errorf("retrieving golang version: %w", err)
 	}
 
-	resultSource.Information = g.Version.GetVersion()
+	resultSource.Information = l.Version.GetVersion()
 
 	if resultSource.Information == "" {
 		return fmt.Errorf("no Golang version found matching pattern %q",
-			g.Spec.VersionFilter.Pattern,
+			l.Spec.VersionFilter.Pattern,
 		)
 	}
 
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("Golang version %s found",
-		g.Version.GetVersion(),
+		l.Version.GetVersion(),
 	)
 
 	return nil

@@ -169,7 +169,6 @@ func (t *TerraformLock) UpdateAbsoluteFilePath(workDir string) {
 		if workDir != "" {
 			f := t.files[filePath]
 			f.filePath = utils.JoinFilePathWithWorkingDirectoryPath(f.originalFilePath, workDir)
-			logrus.Debugf(workDir)
 			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", f.originalFilePath, f.filePath)
 			t.files[filePath] = f
 		}
@@ -177,8 +176,8 @@ func (t *TerraformLock) UpdateAbsoluteFilePath(workDir string) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (t *TerraformLock) Changelog() string {
-	return ""
+func (t *TerraformLock) Changelog(from, to string) *result.Changelogs {
+	return nil
 }
 
 func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {

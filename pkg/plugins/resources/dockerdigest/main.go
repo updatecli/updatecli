@@ -7,6 +7,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/mitchellh/mapstructure"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
@@ -109,8 +110,8 @@ func New(spec interface{}) (*DockerDigest, error) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (d *DockerDigest) Changelog() string {
-	return ""
+func (d *DockerDigest) Changelog(from, to string) *result.Changelogs {
+	return nil
 }
 
 // getOSArch returns the os, architecture and variant from a string

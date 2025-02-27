@@ -3,16 +3,10 @@ scms:
   default:
     kind: git 
     spec:
-      # Contains no repositories
-      #url: https://github.com/olblak/jira-ldap-syncer.git
-      #branch: master
-      
-      # Contains repositories
-      url: https://github.com/olblak/jenkins-datadog-plugin.git
-      branch: master
+      url: "https://github.com/updatecli-test/sortpom.git"
+      branch: "master"
     
 autodiscovery:
-  # scmid is applied to all crawlers
   scmid: default
   crawlers:
     maven:
@@ -24,7 +18,7 @@ autodiscovery:
       #  - path: <filepath relative to scm repository>
       only:
         - artifactids:
-            "plugin": ""
+            "junit-bom": ""
           groupid:
-            "org.jenkins-ci": ""
+            "org.junit": ""
 

@@ -10,11 +10,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/registry"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/changelog/markdown"
 )
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (di *DockerImage) Changelog() string {
+func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 
 	ref, err := di.createRef(di.foundVersion.GetVersion())
 	if err != nil {
@@ -26,28 +27,28 @@ func (di *DockerImage) Changelog() string {
 		false)
 	if err != nil {
 		logrus.Debugf("unable to get image %s: %v", di.spec.Image, err)
-		return ""
+		return nil
 	}
 
 	changelog := getChangelogAnnotation(manifestData)
 	if changelog == "" {
 		logrus.Debugf("no changelog annotation found in image %s", di.spec.Image)
-		return ""
+		return nil
 	}
 
 	changelogURL, err := url.Parse(changelog)
 	if err == nil && changelogURL.Scheme == "" {
-		return ""
+		return nil
 	}
 
 	if err != nil {
 		logrus.Debugf("unable to parse changelog URL: %v", err)
-		return ""
+		return nil
 	}
 
 	if !strings.HasSuffix(changelogURL.Path, ".md") {
 		logrus.Debugln("As of today changelog must be a markdown available on HTTP/HTTPS")
-		return ""
+		return nil
 	}
 
 	// Trying to be smart and redirect github url to raw content
@@ -62,7 +63,7 @@ func (di *DockerImage) Changelog() string {
 	resp, err := http.Get(changelogURL.String())
 	if err != nil {
 		logrus.Debugf("retrieving changelog from url: %v", err)
-		return ""
+		return nil
 	}
 
 	defer resp.Body.Close()
@@ -72,7 +73,7 @@ func (di *DockerImage) Changelog() string {
 	_, err = io.Copy(buf, resp.Body) //use package "io" and "os"
 	if err != nil {
 		logrus.Debugf("%v", err)
-		return ""
+		return nil
 	}
 
 	changelog = buf.String()
@@ -80,10 +81,23 @@ func (di *DockerImage) Changelog() string {
 	sections, err := markdown.ParseMarkdown([]byte(changelog))
 	if err != nil {
 		logrus.Debugf("unable to parse changelog: %v", err)
-		return ""
+		return nil
 	}
 
-	return sections.GetSectionAsMarkdown(di.foundVersion.GetVersion())
+	title := di.foundVersion.GetVersion()
+	body := sections.GetSectionAsMarkdown(di.foundVersion.GetVersion())
+
+	if body == "" {
+		logrus.Debugf("no changelog found for image %s", di.spec.Image)
+		return nil
+	}
+
+	return &result.Changelogs{
+		{
+			Title: title,
+			Body:  body,
+		},
+	}
 
 }
 

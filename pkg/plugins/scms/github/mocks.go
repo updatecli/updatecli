@@ -29,11 +29,6 @@ func (mock *MockGitHubClient) Query(ctx context.Context, q interface{}, variable
 		mt, _ := mock.mockedQuery.(*labelsQuery)
 		*qt = *mt
 		return mock.mockedErr
-	case *changelogQuery:
-		qt, _ := q.(*changelogQuery)
-		mt, _ := mock.mockedQuery.(*changelogQuery)
-		*qt = *mt
-		return mock.mockedErr
 	case *commitQuery:
 		qt, _ := q.(*commitQuery)
 		mt, _ := mock.mockedQuery.(*commitQuery)

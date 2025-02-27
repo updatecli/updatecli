@@ -1,43 +1,44 @@
 package registry
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+
+	"github.com/updatecli/updatecli/pkg/core/result"
+	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 )
 
-func (t *TerraformRegistry) Changelog() string {
+func (t *TerraformRegistry) Changelog(from, to string) *result.Changelogs {
+
 	if strings.HasPrefix(t.scm, "https://github.com") {
-		splitURL := strings.Split(t.scm, "/")
-		return getChangelogFromGitHub(splitURL[len(splitURL)-2], splitURL[len(splitURL)-1], t.Version.OriginalVersion)
+		return getChangelogFromGitHub(t.scm, from, to)
 	}
-	return ""
+	return nil
 }
 
-func getChangelogFromGitHub(owner, repo, version string) string {
-	g := github.Github{
-		Spec: github.Spec{
-			URL:        "https://api.github.com",
-			Owner:      owner,
-			Repository: repo,
-		},
+func getChangelogFromGitHub(registry, from, to string) *result.Changelogs {
+
+	splitURL := strings.Split(registry, "/")
+
+	if len(splitURL) < 3 {
+		return nil
 	}
 
-	var result string
-	result, err := g.ChangelogV3(fmt.Sprintf("v%s", version))
+	changelog := githubChangelog.Changelog{
+		Owner:      splitURL[len(splitURL)-2],
+		Repository: splitURL[len(splitURL)-1],
+	}
+
+	releases, err := changelog.Search(from, to)
 	if err != nil {
-		logrus.Debugln(err)
+		logrus.Debugf("ignored error, searching changelogs: %s", err)
 	}
 
-	// Try without a v prefix
-	if result == "" {
-		result, err = g.ChangelogV3(version)
-		if err != nil {
-			logrus.Debugln(err)
-		}
+	if len(releases) == 0 {
+		logrus.Debugf("No changelog found")
+		return nil
 	}
 
-	return result
+	return &releases
 }

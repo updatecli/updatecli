@@ -9,6 +9,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -124,8 +125,8 @@ func New(spec interface{}) (*Maven, error) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (m *Maven) Changelog() string {
-	return ""
+func (m *Maven) Changelog(from, to string) *result.Changelogs {
+	return nil
 }
 
 func (m Maven) Validate() error {

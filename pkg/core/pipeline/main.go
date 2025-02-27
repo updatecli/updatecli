@@ -217,13 +217,20 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	logrus.Infof("\n%s: %s\n", leaf.Category, id)
 	logrus.Infof("%s\n", strings.Repeat("-", len(id)))
 
+	depsSourceIDs := []string{}
 	deps := map[string]*Node{}
 	for _, r := range depsResults {
 		if r.ID == rootVertex {
 			continue
 		}
+
 		p, _ := r.Result.(Node)
 		deps[r.ID] = &p
+
+		if p.Category == sourceCategory {
+			// source id order, is not guaranteed as the information is coming from a map
+			depsSourceIDs = append(depsSourceIDs, strings.TrimPrefix(r.ID, "source#"))
+		}
 	}
 
 	shouldSkip := p.shouldSkipResource(&leaf, deps)
@@ -253,7 +260,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			p.updateCondition(conditionId, leaf.Result)
 		case targetCategory:
 			targetId := strings.Replace(id, "target#", "", -1)
-			r, changed, e := p.RunTarget(targetId)
+			r, changed, e := p.RunTarget(targetId, depsSourceIDs)
 			if e != nil {
 				err = e
 			}
@@ -348,7 +355,6 @@ func (p *Pipeline) String() string {
 	result = result + fmt.Sprintf("%q:\n", "Sources")
 	for key, value := range p.Sources {
 		result = result + fmt.Sprintf("\t%q:\n", key)
-		result = result + fmt.Sprintf("\t\t%q: %q\n", "Changelog", value.Changelog)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Output", value.Output)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
 	}
@@ -361,6 +367,7 @@ func (p *Pipeline) String() string {
 	for key, value := range p.Targets {
 		result = result + fmt.Sprintf("\t%q:\n", key)
 		result = result + fmt.Sprintf("\t\t%q: %q\n", "Result", value.Result.Result)
+		result = result + fmt.Sprintf("\t\t%q: %q\n", "Changelog", value.Result.Changelogs)
 	}
 
 	return result

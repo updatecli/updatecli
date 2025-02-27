@@ -8,6 +8,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 const temurinApiUrl string = "https://api.adoptium.net/v3"
@@ -124,6 +125,12 @@ func New(spec interface{}) (*Temurin, error) {
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
-func (t *Temurin) Changelog() string {
-	return fmt.Sprintf("https://adoptium.net/temurin/release-notes/?version=%s\n", t.foundVersion)
+func (t *Temurin) Changelog(from, to string) *result.Changelogs {
+	return &result.Changelogs{
+		{
+			Title: t.foundVersion,
+			Body:  fmt.Sprintf("https://adoptium.net/temurin/release-notes/?version=%s\n", t.foundVersion),
+			URL:   fmt.Sprintf("https://adoptium.net/temurin/release-notes/?version=%s", t.foundVersion),
+		},
+	}
 }

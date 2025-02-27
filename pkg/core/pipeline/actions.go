@@ -65,7 +65,7 @@ func (p *Pipeline) RunActions() error {
 
 		relatedTargets, err := p.searchAssociatedTargetsID(id)
 		if err != nil {
-			logrus.Errorf(err.Error())
+			logrus.Errorf("searching associated targets ID: %s", err.Error())
 			continue
 		}
 
@@ -156,11 +156,15 @@ func (p *Pipeline) RunActions() error {
 				Description: p.Targets[t].Result.Description,
 			}
 
-			if p.Sources[p.Targets[t].Config.SourceID].Changelog != "" {
-				actionTarget.Changelogs = append(actionTarget.Changelogs, reports.ActionTargetChangelog{
-					Title:       p.Sources[p.Targets[t].Config.SourceID].Output,
-					Description: p.Sources[p.Targets[t].Config.SourceID].Changelog,
-				})
+			if len(p.Targets[t].Result.Changelogs) > 0 {
+
+				for _, changelog := range p.Targets[t].Result.Changelogs {
+					actionTarget.Changelogs = append(actionTarget.Changelogs, reports.ActionTargetChangelog{
+						Title:       changelog.Title,
+						Description: changelog.Body,
+					})
+				}
+
 			}
 
 			action.Report.Targets = append(action.Report.Targets, actionTarget)
@@ -191,13 +195,13 @@ func (p *Pipeline) RunActions() error {
 				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
 					action.Title,
 					action.Report.String())
-				logrus.Debugf(strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
+				logrus.Debugf("%s", strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
 			}
 
 			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n\n##Report:\n\n%s\n\n=====\n",
 				action.Title,
 				action.Report.String())
-			logrus.Debugf(strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
+			logrus.Debugf("%s", strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
 
 			action.Report.Description = actionOutput
 
