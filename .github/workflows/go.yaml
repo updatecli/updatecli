@@ -65,7 +65,7 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
       # Codecov should only be updated if make test is executed
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v5.4.0
         if: ${{ github.event_name == 'schedule' }}
       # Manage and run your integration tests with efficiency
       # https://github.com/ovh/venom
