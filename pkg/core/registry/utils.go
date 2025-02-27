@@ -47,7 +47,7 @@ func getLatestTagSortedBySemver(refName string, disableTLS bool) (string, error)
 	for i := range tags {
 		s, err := semver.NewVersion(tags[i])
 		if err != nil {
-			logrus.Warningf("Ignoring tag %q - %q", tags[i], err)
+			logrus.Debugf("Ignoring tag %q - %q", tags[i], err)
 			continue
 		}
 
