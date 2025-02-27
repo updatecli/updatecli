@@ -41,7 +41,7 @@ require (
 	github.com/fluxcd/source-controller/api v1.4.1
 	github.com/goccy/go-yaml v1.15.23
 	github.com/google/go-containerregistry v0.20.3
-	github.com/google/go-github/v69 v69.0.0
+	github.com/google/go-github/v69 v69.2.0
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/hashicorp/terraform-registry-address v0.2.4
