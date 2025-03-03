@@ -1,13 +1,13 @@
 name: CI
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 jobs:
   updatecli:
     runs-on: ubuntu-latest
     steps:
       - name: My first step
-        uses: docker://ghcr.io/updatecli/updatecli:v0.67.0
+        uses: docker://ghcr.io/updatecli/updatecli:v0.94.1
 
       - name: My first step
         uses: docker://ghcr.io/updatecli/updatecli:latest
