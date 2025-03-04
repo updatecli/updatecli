@@ -248,7 +248,7 @@ func parseChangeAnnotation(changesAnnotation string) string {
 }
 
 func renderSimpleList(list []string) string {
-	var renderedList string
+	var renderedList = "\n"
 	for _, item := range list {
 		renderedList += fmt.Sprintf("* %s\n", item)
 	}
@@ -270,11 +270,10 @@ func renderChanges(changes []change) string {
 
 	// Render changes in alphabetical order by kind
 	for _, kind := range sortedKinds {
-		renderedChanges += fmt.Sprintf("## %s\n\n", capitalize(kind))
+		renderedChanges += fmt.Sprintf("\n## %s\n\n", capitalize(kind))
 		for _, ch := range changesByKind[kind] {
 			renderedChanges += fmt.Sprintf("* %s\n", ch.Description)
 		}
-		renderedChanges += "\n"
 	}
 	return renderedChanges
 }

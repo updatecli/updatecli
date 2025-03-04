@@ -29,7 +29,7 @@ func TestChangelog(t *testing.T) {
 			expected: &result.Changelogs{
 				{
 					Title:       "5.8.16",
-					Body:        "* Update `docker.io/kiwigrid/k8s-sidecar` to version `1.30.1`\n",
+					Body:        "\n* Update `docker.io/kiwigrid/k8s-sidecar` to version `1.30.1`\n",
 					PublishedAt: "2025-02-21 19:29:15.858414421 +0000 UTC",
 				},
 			},
@@ -46,7 +46,7 @@ func TestChangelog(t *testing.T) {
 			expected: &result.Changelogs{
 				{
 					Title:       "4.11.4",
-					Body:        "* CI: Fix chart testing. (#12259)\n* Update Ingress-Nginx version controller-v1.11.4\n",
+					Body:        "\n* CI: Fix chart testing. (#12259)\n* Update Ingress-Nginx version controller-v1.11.4\n",
 					PublishedAt: "2024-12-30 17:36:51.265913014 +0000 UTC",
 				},
 			},
@@ -64,7 +64,7 @@ func TestChangelog(t *testing.T) {
 				{
 					Title:       "3.3.5",
 					PublishedAt: "2025-02-06 11:06:30.639777967 +0000 UTC",
-					Body:        "## Added\n\n* added a new option .reportsController.sanityChecks to disable checks for policy reports crds\n\n## Fixed\n\n* fix validation error in validate.yaml\n* fixed global image registry config by introducing *.image.defaultRegistry.\n\n",
+					Body:        "\n## Added\n\n* added a new option .reportsController.sanityChecks to disable checks for policy reports crds\n\n## Fixed\n\n* fix validation error in validate.yaml\n* fixed global image registry config by introducing *.image.defaultRegistry.\n",
 				},
 			},
 		},
@@ -80,12 +80,12 @@ func TestChangelog(t *testing.T) {
 			expected: &result.Changelogs{
 				{
 					Title:       "5.8.16",
-					Body:        "* Update `docker.io/kiwigrid/k8s-sidecar` to version `1.30.1`\n",
+					Body:        "\n* Update `docker.io/kiwigrid/k8s-sidecar` to version `1.30.1`\n",
 					PublishedAt: "2025-02-21 19:29:15.858414421 +0000 UTC",
 				},
 				{
 					Title:       "5.8.15",
-					Body:        "* Update `kubernetes` to version `4313.va_9b_4fe2a_0e34`\n",
+					Body:        "\n* Update `kubernetes` to version `4313.va_9b_4fe2a_0e34`\n",
 					PublishedAt: "2025-02-20 08:48:55.363415299 +0000 UTC",
 				},
 			},
@@ -102,7 +102,7 @@ func TestChangelog(t *testing.T) {
 			expected: &result.Changelogs{
 				{
 					Title:       "kube-prometheus-stack-69.7.1",
-					Body:        "kube-prometheus-stack collects Kubernetes manifests, Grafana dashboards, and Prometheus rules combined with documentation and scripts to provide easy to operate end-to-end Kubernetes cluster monitoring with Prometheus using the Prometheus Operator.\n\n## What's Changed\n* [kube-prometheus-stack] Fix indentation for the nameValidationScheme field in Prometheus CR by @sviatlo in https://github.com/prometheus-community/helm-charts/pull/5400\n\n\n**Full Changelog**: https://github.com/prometheus-community/helm-charts/compare/prometheus-pingdom-exporter-3.0.2...kube-prometheus-stack-69.7.1",
+					Body:        "\nkube-prometheus-stack collects Kubernetes manifests, Grafana dashboards, and Prometheus rules combined with documentation and scripts to provide easy to operate end-to-end Kubernetes cluster monitoring with Prometheus using the Prometheus Operator.\n\n## What's Changed\n* [kube-prometheus-stack] Fix indentation for the nameValidationScheme field in Prometheus CR by @sviatlo in https://github.com/prometheus-community/helm-charts/pull/5400\n\n\n**Full Changelog**: https://github.com/prometheus-community/helm-charts/compare/prometheus-pingdom-exporter-3.0.2...kube-prometheus-stack-69.7.1",
 					PublishedAt: "2025-03-03 10:56:56 +0000 UTC",
 					URL:         "https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-69.7.1",
 				},
