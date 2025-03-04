@@ -52,6 +52,33 @@ func TestChangelog(t *testing.T) {
 			},
 		},
 		{
+			name: "Another valid chart with multiple changelog information in artifacthub.io/changes annotation",
+			spec: Spec{
+				URL:     "https://kubernetes.github.io/ingress-nginx",
+				Name:    "ingress-nginx",
+				Version: "4.11.3",
+			},
+			from: "4.11.3",
+			to:   "4.12.0",
+			expected: &result.Changelogs{
+				{
+					Title:       "4.12.0",
+					Body:        "\n* CI: Fix chart testing. (#12258)\n* Update Ingress-Nginx version controller-v1.12.0\n",
+					PublishedAt: "2024-12-30 17:42:14.794948649 +0000 UTC",
+				},
+				{
+					Title:       "4.12.0-beta.0",
+					Body:        "\n* Update Ingress-Nginx version controller-v1.12.0-beta.0\n",
+					PublishedAt: "2024-10-15 09:49:01.496212197 +0000 UTC",
+				},
+				{
+					Title:       "4.11.4",
+					Body:        "\n* CI: Fix chart testing. (#12259)\n* Update Ingress-Nginx version controller-v1.11.4\n",
+					PublishedAt: "2024-12-30 17:36:51.265913014 +0000 UTC",
+				},
+			},
+		},
+		{
 			name: "Valid chart with rich changelog string in annotation",
 			spec: Spec{
 				URL:     "https://kyverno.github.io/kyverno/",

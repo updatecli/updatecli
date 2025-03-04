@@ -188,7 +188,13 @@ func (c Chart) getLongVersion(version string) string {
 
 func (c Chart) getChangelogsFromArtifactHubAnnotations(index repo.IndexFile, from string, to string) result.Changelogs {
 	var changelogs result.Changelogs
+	// versionAdded map is used to prevent duplicate changelog entries being
+	// generated from index files that contain duplicate items with same version
+	versionAdded := make(map[string]bool)
 	for _, version := range index.Entries[c.spec.Name] {
+		if _, ok := versionAdded[version.Version]; ok {
+			continue
+		}
 		versionObj, err := semver.NewVersion(version.Version)
 		if err != nil {
 			continue
@@ -215,6 +221,7 @@ func (c Chart) getChangelogsFromArtifactHubAnnotations(index repo.IndexFile, fro
 					Body:        parseChangeAnnotation(changesAnnotation),
 					PublishedAt: version.Created.String(),
 				})
+				versionAdded[version.Version] = true
 			}
 		}
 	}
