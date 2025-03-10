@@ -215,6 +215,11 @@ func (t *Text) WriteToFile(content string, location string) error {
 		location = filepath.Join(wd, location)
 	}
 
+	// Ensure the directory exists
+	if err := os.MkdirAll(filepath.Dir(location), os.ModePerm); err != nil {
+		return err
+	}
+
 	file, err := os.Create(location)
 	if err != nil {
 		return err
