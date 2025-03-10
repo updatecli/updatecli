@@ -15,7 +15,7 @@ func getReleasesFromAPI(client *github.Client, owner, repository string) (allRel
 	ctx := context.Background()
 
 	opt := github.ListOptions{
-		PerPage: 10,
+		PerPage: 100,
 	}
 
 	for {
