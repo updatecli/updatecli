@@ -1,5 +1,4 @@
 name: Check Spelling
-
 # Comment management is handled through a secondary job, for details see:
 # https://github.com/check-spelling/check-spelling/wiki/Feature%3A-Restricted-Permissions
 #
@@ -55,7 +54,6 @@ name: Check Spelling
 #     # remove `security-events: write` and `use_sarif: 1`
 #     # remove `experimental_apply_changes_via_bot: 1`
 #     ... otherwise adjust the `with:` as you wish
-
 on:
   workflow_dispatch:
   # push:
@@ -70,9 +68,7 @@ on:
   #    - "opened"
   #   - "reopened"
   #    - "synchronize"
-
 permissions: {}
-
 jobs:
   spelling:
     name: Check Spelling
@@ -92,7 +88,7 @@ jobs:
     steps:
       - name: check-spelling
         id: spelling
-        uses: check-spelling/check-spelling@v0.0.22
+        uses: check-spelling/check-spelling@v0.0.24
         with:
           suppress_push_for_open_pull_request: 1
           checkout: true
@@ -104,16 +100,4 @@ jobs:
           extra_dictionary_limit: 10
           dictionary_source_prefixes: |
             {"cspell": "https://raw.githubusercontent.com/check-spelling/cspell-dicts/v20230509/dictionaries/"}
-          extra_dictionaries: cspell:software-terms/dict/softwareTerms.txt
-            cspell:golang/dict/go.txt
-            cspell:npm/dict/npm.txt
-            cspell:node/dict/node.txt
-            cspell:python/src/python/python-lib.txt
-            cspell:aws/aws.txt
-            cspell:html/dict/html.txt
-            cspell:k8s/dict/k8s.txt
-            cspell:python/src/common/extra.txt
-            cspell:filetypes/filetypes.txt
-            cspell:django/dict/django.txt
-            cspell:docker/src/docker-words.txt
-            cspell:fullstack/dict/fullstack.txt
+          extra_dictionaries: cspell:software-terms/dict/softwareTerms.txt cspell:golang/dict/go.txt cspell:npm/dict/npm.txt cspell:node/dict/node.txt cspell:python/src/python/python-lib.txt cspell:aws/aws.txt cspell:html/dict/html.txt cspell:k8s/dict/k8s.txt cspell:python/src/common/extra.txt cspell:filetypes/filetypes.txt cspell:django/dict/django.txt cspell:docker/src/docker-words.txt cspell:fullstack/dict/fullstack.txt
