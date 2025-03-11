@@ -22,7 +22,7 @@ jobs:
       - uses: tibdex/github-app-token@v2.1.0
         id: generate_second_token
       - name: "Checkout"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v4.2.2"
       - name: Install Updatecli in the runner
         uses: updatecli/updatecli-action@v2
       - name: Run Updatecli in Dry Run mode
