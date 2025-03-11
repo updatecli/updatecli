@@ -1,5 +1,4 @@
 name: "CodeQL"
-
 on:
   workflow_dispatch:
   push:
@@ -9,9 +8,7 @@ on:
     branches: [main]
   schedule:
     - cron: "0 5 * * 0"
-
 permissions: {}
-
 jobs:
   analyse:
     name: Analyse
@@ -20,20 +17,17 @@ jobs:
       contents: read
       pull-requests: read
       security-events: write
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           # We must fetch at least the immediate parents so that if this is
           # a pull request then we can checkout the head.
           fetch-depth: 2
-
       # If this run was triggered by a pull request event, then checkout
       # the head of the pull request instead of the merge commit.
       - run: git checkout HEAD^2
         if: ${{ github.event_name == 'pull_request' }}
-
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -44,7 +38,6 @@ jobs:
       # If this step fails, then you should remove it and run the build manually (see below)
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
-
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 https://git.io/JvXDl
 
@@ -55,6 +48,5 @@ jobs:
       #- run: |
       #   make bootstrap
       #   make release
-
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
