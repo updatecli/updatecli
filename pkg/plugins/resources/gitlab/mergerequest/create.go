@@ -10,29 +10,18 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
 // CreateAction opens a Merge Request on the GitLab server
 func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) error {
 
+	var body string
 	title := report.Title
+
 	if len(g.spec.Title) > 0 {
 		title = g.spec.Title
-	}
-
-	// One GitLab mergerequest body can contain multiple action report
-	// It would be better to refactor CreateAction
-	// to be able to reuse existing mergerequest description.
-	// similar to what we did for github pullrequest.
-	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
-	if err != nil {
-		logrus.Warningf("something went wrong while generating GitLab body: %s", err)
-		return fmt.Errorf("generate GitLab body: %s", err.Error())
-	}
-
-	if len(g.spec.Body) > 0 {
-		body = g.spec.Body
 	}
 
 	// Check if a merge-request is already opened then exit early if it does.
@@ -42,14 +31,42 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 	}
 
 	// If a mergerequest already exist, we update the report with the existing mergerequest
-	// At the moment Updatecli doesn't support updating an existing mergerequest
 	if mergeRequestLink != "" {
-		logrus.Debugln("GitLab mergerequest already exist, nothing to do")
+		logrus.Debugln("GitLab mergerequest already exist, updating it")
+
+		mergedDescription := reports.MergeFromString(mergeRequestDescription, report.ToActionsString())
+		body, err = utils.GeneratePullRequestBody("", mergedDescription)
+		if err != nil {
+			logrus.Warningf("something went wrong while generating GitLab body: %s", err)
+			return fmt.Errorf("generate GitLab body: %s", err.Error())
+		}
 
 		report.Title = mergeRequestTitle
 		report.Link = mergeRequestLink
-		report.Description = mergeRequestDescription
+		report.Description = body
+
+		update := gitlab.MRUpdateSpec{
+			MRWebLink:   mergeRequestLink,
+			Description: body,
+		}
+
+		err = g.scm.UpdateMergeRequest(update)
+		if err != nil {
+			logrus.Warningf("something went wrong updating gitlab merge requset: %s", err)
+			return fmt.Errorf("update GitLab merge request: %s", err.Error())
+		}
+
 		return nil
+	}
+
+	body, err = utils.GeneratePullRequestBody("", report.ToActionsString())
+	if err != nil {
+		logrus.Warningf("something went wrong while generating GitLab body: %s", err)
+		return fmt.Errorf("generate GitLab body: %s", err.Error())
+	}
+
+	if len(g.spec.Body) > 0 {
+		body = g.spec.Body
 	}
 
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
