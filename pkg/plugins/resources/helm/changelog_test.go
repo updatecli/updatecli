@@ -129,9 +129,34 @@ func TestChangelog(t *testing.T) {
 			expected: &result.Changelogs{
 				{
 					Title:       "kube-prometheus-stack-69.7.1",
-					Body:        "\nkube-prometheus-stack collects Kubernetes manifests, Grafana dashboards, and Prometheus rules combined with documentation and scripts to provide easy to operate end-to-end Kubernetes cluster monitoring with Prometheus using the Prometheus Operator.\n\n## What's Changed\n* [kube-prometheus-stack] Fix indentation for the nameValidationScheme field in Prometheus CR by @sviatlo in https://github.com/prometheus-community/helm-charts/pull/5400\n\n\n**Full Changelog**: https://github.com/prometheus-community/helm-charts/compare/prometheus-pingdom-exporter-3.0.2...kube-prometheus-stack-69.7.1",
+					Body:        "kube-prometheus-stack collects Kubernetes manifests, Grafana dashboards, and Prometheus rules combined with documentation and scripts to provide easy to operate end-to-end Kubernetes cluster monitoring with Prometheus using the Prometheus Operator.\n\n## What's Changed\n* [kube-prometheus-stack] Fix indentation for the nameValidationScheme field in Prometheus CR by @sviatlo in https://github.com/prometheus-community/helm-charts/pull/5400\n\n\n**Full Changelog**: https://github.com/prometheus-community/helm-charts/compare/prometheus-pingdom-exporter-3.0.2...kube-prometheus-stack-69.7.1",
 					PublishedAt: "2025-03-03 10:56:56 +0000 UTC",
 					URL:         "https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-69.7.1",
+				},
+			},
+			requiresGithubToken: true,
+		},
+		{
+			name: "Chart with changelog information in github releases and artifacthub.io/links annotation. Multiple releases",
+			spec: Spec{
+				URL:     "https://prometheus-community.github.io/helm-charts",
+				Name:    "prometheus-operator-crds",
+				Version: "17.0.2",
+			},
+			from: "17.0.2",
+			to:   "18.0.1",
+			expected: &result.Changelogs{
+				{
+					Title:       "prometheus-operator-crds-18.0.1",
+					Body:        "A Helm chart that collects custom resource definitions (CRDs) from the Prometheus Operator, allowing for seamless integration with GitOps tools \n\n## What's Changed\n* [prometheus-operator-crds] bump to v0.80.1 by @DrFaust92 in https://github.com/prometheus-community/helm-charts/pull/5355\n\n\n**Full Changelog**: https://github.com/prometheus-community/helm-charts/compare/kube-prometheus-stack-69.5.0...prometheus-operator-crds-18.0.1",
+					URL:         "https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-18.0.1",
+					PublishedAt: "2025-02-25 08:36:34 +0000 UTC",
+				},
+				{
+					Title:       "prometheus-operator-crds-18.0.0",
+					Body:        "A Helm chart that collects custom resource definitions (CRDs) from the Prometheus Operator, allowing for seamless integration with GitOps tools \n\n## What's Changed\n* [prometheus-operator-crds] bump prometheus-operator to 'v0.80.0' by @sebastiangaiser in https://github.com/prometheus-community/helm-charts/pull/5289\n\n\n**Full Changelog**: https://github.com/prometheus-community/helm-charts/compare/kube-prometheus-stack-69.1.0...prometheus-operator-crds-18.0.0",
+					PublishedAt: "2025-02-06 16:13:44 +0000 UTC",
+					URL:         "https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-18.0.0",
 				},
 			},
 			requiresGithubToken: true,
@@ -158,7 +183,7 @@ func TestChangelog(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.requiresGithubToken {
-				if os.Getenv("GITHUB_TOKEN") == "" || os.Getenv("UPDATECLI_GITHUB_TOKEN") == "" {
+				if os.Getenv("GITHUB_TOKEN") == "" && os.Getenv("UPDATECLI_GITHUB_TOKEN") == "" {
 					t.Skip("Skipping test because GITHUB_TOKEN is not set")
 				}
 			}

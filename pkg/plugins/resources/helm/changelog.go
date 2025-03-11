@@ -174,9 +174,9 @@ func (c Chart) getChangelogFromGitHub(chartSourceLink, from, to string) result.C
 		logrus.Debugf("failed to search github releases: %s", err)
 	}
 
-	// exclude fromVersion from releases
-	releases = slices.DeleteFunc(releases, func(c result.Changelog) bool {
-		return c.Title == fromLongVersion
+	// exclude fromVersion from releases and exclude releases of other charts
+	releases = slices.DeleteFunc(releases, func(ch result.Changelog) bool {
+		return !strings.HasPrefix(ch.Title, c.spec.Name) || ch.Title == fromLongVersion
 	})
 
 	return releases
