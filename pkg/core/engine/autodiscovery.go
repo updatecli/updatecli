@@ -197,7 +197,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 				if err := mergo.Merge(&baseAction, manifestAction); err != nil {
 					fmt.Println("Error:", err)
 				}
-				manifest.Actions[p.Config.Spec.AutoDiscovery.ScmId] = baseAction
+				manifest.Actions[p.Config.Spec.AutoDiscovery.ActionId] = baseAction
 			}
 
 			if manifest.Version != "" {
