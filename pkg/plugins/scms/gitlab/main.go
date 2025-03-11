@@ -367,7 +367,7 @@ func (g *Gitlab) do(ctx context.Context, method, path string, in, out interface{
 		}
 		err := json.NewDecoder(res.Body).Decode(&gErr)
 		if err != nil {
-			return fmt.Errorf("gitlab error unmarshaling error: %s", err)
+			return fmt.Errorf("gitlab error message decoding error: %s", err)
 		}
 		return fmt.Errorf("gitlab error: %s", gErr.Message)
 	}
