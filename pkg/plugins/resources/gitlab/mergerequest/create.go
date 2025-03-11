@@ -52,7 +52,7 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 
 		err = g.scm.UpdateMergeRequest(update)
 		if err != nil {
-			logrus.Warningf("something went wrong updating gitlab merge requset: %s", err)
+			logrus.Warningf("something went wrong updating gitlab merge request: %s", err)
 			return fmt.Errorf("update GitLab merge request: %s", err.Error())
 		}
 
