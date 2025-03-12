@@ -20,9 +20,8 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Valid chart with single changelog information in artifacthub.io/changes annotation",
 			spec: Spec{
-				URL:     "https://charts.jenkins.io",
-				Name:    "jenkins",
-				Version: "5.8.0",
+				URL:  "https://charts.jenkins.io",
+				Name: "jenkins",
 			},
 			from: "5.8.15",
 			to:   "5.8.16",
@@ -37,9 +36,8 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Another valid chart with single changelog information in artifacthub.io/changes annotation",
 			spec: Spec{
-				URL:     "https://kubernetes.github.io/ingress-nginx",
-				Name:    "ingress-nginx",
-				Version: "4.11.3",
+				URL:  "https://kubernetes.github.io/ingress-nginx",
+				Name: "ingress-nginx",
 			},
 			from: "4.11.3",
 			to:   "4.11.4",
@@ -54,9 +52,8 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Another valid chart with multiple changelog information in artifacthub.io/changes annotation",
 			spec: Spec{
-				URL:     "https://kubernetes.github.io/ingress-nginx",
-				Name:    "ingress-nginx",
-				Version: "4.11.3",
+				URL:  "https://kubernetes.github.io/ingress-nginx",
+				Name: "ingress-nginx",
 			},
 			from: "4.11.3",
 			to:   "4.12.0",
@@ -81,9 +78,8 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Valid chart with rich changelog string in annotation",
 			spec: Spec{
-				URL:     "https://kyverno.github.io/kyverno/",
-				Name:    "kyverno",
-				Version: "3.3.4",
+				URL:  "https://kyverno.github.io/kyverno/",
+				Name: "kyverno",
 			},
 			from: "3.3.4",
 			to:   "3.3.5",
@@ -98,9 +94,8 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Valid chart with multiple changelog information in artifacthub.io/changes annotation",
 			spec: Spec{
-				URL:     "https://charts.jenkins.io",
-				Name:    "jenkins",
-				Version: "5.8.0",
+				URL:  "https://charts.jenkins.io",
+				Name: "jenkins",
 			},
 			from: "5.8.14",
 			to:   "5.8.16",
@@ -120,9 +115,8 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Chart with changelog information in github releases and artifacthub.io/links annotation",
 			spec: Spec{
-				URL:     "https://prometheus-community.github.io/helm-charts",
-				Name:    "kube-prometheus-stack",
-				Version: "69.7.0",
+				URL:  "https://prometheus-community.github.io/helm-charts",
+				Name: "kube-prometheus-stack",
 			},
 			from: "69.7.0",
 			to:   "69.7.1",
@@ -139,9 +133,8 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Chart with changelog information in github releases and artifacthub.io/links annotation. Multiple releases",
 			spec: Spec{
-				URL:     "https://prometheus-community.github.io/helm-charts",
-				Name:    "prometheus-operator-crds",
-				Version: "17.0.2",
+				URL:  "https://prometheus-community.github.io/helm-charts",
+				Name: "prometheus-operator-crds",
 			},
 			from: "17.0.2",
 			to:   "18.0.1",
@@ -164,9 +157,8 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Chart without changes annotation",
 			spec: Spec{
-				URL:     "https://kubernetes.github.io/autoscaler",
-				Name:    "cluster-autoscaler",
-				Version: "9.46.1",
+				URL:  "https://kubernetes.github.io/autoscaler",
+				Name: "cluster-autoscaler",
 			},
 			from: "9.46.1",
 			to:   "9.46.2",
@@ -189,6 +181,9 @@ func TestChangelog(t *testing.T) {
 			}
 			chart, err := New(tt.spec)
 			assert.NoError(t, err)
+
+			// To speed up the process, we don't call the source to get the latest version
+			chart.foundVersion.OriginalVersion = tt.to
 
 			changelog := chart.Changelog(tt.from, tt.to)
 			if tt.expected == nil && changelog == nil {
