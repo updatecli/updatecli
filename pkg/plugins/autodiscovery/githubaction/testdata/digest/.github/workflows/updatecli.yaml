@@ -10,17 +10,14 @@ on:
     # * is a special character in YAML so you have to quote this string
     # Run at 12:00 on Friday.”
     - cron: "0 12 * * 5"
-
 permissions: {}
-
 jobs:
   updatecli:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v4.2.2"
       - name: "Checkout"
-        uses: "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"  # v4.2.2
+        uses: "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683" # v4.2.2
