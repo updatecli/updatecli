@@ -30,7 +30,7 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	if f.spec.Line > 0 && f.spec.ForceCreate {
 		validationError := fmt.Errorf("validation error in target of type 'file': 'spec.line' and 'spec.forcecreate' are mutually exclusive")
-		logrus.Errorf(validationError.Error())
+		logrus.Errorln(validationError.Error())
 		return validationError
 	}
 
@@ -39,7 +39,7 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	for filePath := range f.files {
 		if text.IsURL(f.files[filePath].path) {
 			validationError := fmt.Errorf("validation error in target of type 'file': spec.files item value (%q) is an URL which is not supported for a target", filePath)
-			logrus.Errorf(validationError.Error())
+			logrus.Errorln(validationError.Error())
 			return validationError
 		}
 	}

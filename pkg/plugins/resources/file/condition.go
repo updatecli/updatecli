@@ -111,7 +111,7 @@ func (f *File) condition(source string) (bool, error) {
 			logrus.Debugf("Using source input value: %q", source)
 			if len(f.spec.Content) > 0 {
 				validationError := fmt.Errorf("validation error in condition of type 'file': the attributes `sourceid` and `spec.content` are mutually exclusive")
-				logrus.Errorf(validationError.Error())
+				logrus.Errorln(validationError.Error())
 				return false, validationError
 			}
 
