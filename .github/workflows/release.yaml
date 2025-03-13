@@ -51,7 +51,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/create-github-app-token@v1.11.3
+      - uses: actions/create-github-app-token@v1.11.6
         id: generate_homebrew_token
         with:
           app-id: ${{ secrets.UPDATECLIBOT_APP_ID }}
