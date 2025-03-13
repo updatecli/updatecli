@@ -56,6 +56,10 @@ jobs:
         with:
           app-id: ${{ secrets.UPDATECLIBOT_APP_ID }}
           private-key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            updatecli
+            homebrew-updatecli
       - name: GoReleaser
         if: success()
         env:

@@ -66,49 +66,49 @@ func (c Chart) Changelog(from, to string) *result.Changelogs {
 
 	if len(changelogs) > 0 {
 		return &changelogs
-	} else {
-		logrus.Debugf("no changelog found in %s annotation for versions between %s and %s", artifactHubChangesAnnotation, from, to)
+	}
 
-		changelogs = c.getChangelogsFromGithubReleases(index, from, to)
-		if len(changelogs) > 0 {
-			return &changelogs
-		}
+	logrus.Debugf("no changelog found in %s annotation for versions between %s and %s", artifactHubChangesAnnotation, from, to)
 
-		t := template.Must(template.New("changelog").Parse(CHANGELOGTEMPLATE))
-		buffer := new(bytes.Buffer)
+	changelogs = c.getChangelogsFromGithubReleases(index, from, to)
+	if len(changelogs) > 0 {
+		return &changelogs
+	}
 
-		type params struct {
-			Name        string
-			Description string
-			Home        string
-			KubeVersion string
-			Created     string
-			URLs        []string `json:"url"`
-			Sources     []string
-		}
+	t := template.Must(template.New("changelog").Parse(CHANGELOGTEMPLATE))
+	buffer := new(bytes.Buffer)
 
-		err = t.Execute(buffer, params{
-			Name:        e.Name,
-			Description: e.Description,
-			Home:        e.Home,
-			KubeVersion: e.KubeVersion,
-			Created:     e.Created.String(),
-			URLs:        e.URLs,
-			Sources:     e.Sources})
+	type params struct {
+		Name        string
+		Description string
+		Home        string
+		KubeVersion string
+		Created     string
+		URLs        []string `json:"url"`
+		Sources     []string
+	}
 
-		if err != nil {
-			logrus.Debugf("failed to render helm chart information: %s", err)
-			return nil
-		}
+	err = t.Execute(buffer, params{
+		Name:        e.Name,
+		Description: e.Description,
+		Home:        e.Home,
+		KubeVersion: e.KubeVersion,
+		Created:     e.Created.String(),
+		URLs:        e.URLs,
+		Sources:     e.Sources})
 
-		changelog := buffer.String()
-		return &result.Changelogs{
-			{
-				Title:       from,
-				Body:        changelog,
-				PublishedAt: e.Created.String(),
-			},
-		}
+	if err != nil {
+		logrus.Debugf("failed to render helm chart information: %s", err)
+		return nil
+	}
+
+	changelog := buffer.String()
+	return &result.Changelogs{
+		{
+			Title:       from,
+			Body:        changelog,
+			PublishedAt: e.Created.String(),
+		},
 	}
 }
 
