@@ -140,7 +140,7 @@ func (m Maven) Validate() error {
 
 	if len(errs) > 0 {
 		for _, e := range errs {
-			logrus.Errorf(e.Error())
+			logrus.Errorln(e.Error())
 		}
 		return ErrWrongSpec
 	}
