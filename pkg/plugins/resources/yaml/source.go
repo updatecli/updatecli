@@ -33,7 +33,7 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 
 	if len(y.files) > 1 {
 		validationError := fmt.Errorf("validation error in sources of type 'yaml': the attributes `spec.files` can't contain more than one element for sources")
-		logrus.Errorf(validationError.Error())
+		logrus.Errorln(validationError.Error())
 		return validationError
 	}
 

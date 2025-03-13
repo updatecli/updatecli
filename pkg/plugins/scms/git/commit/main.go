@@ -94,7 +94,7 @@ func (c *Commit) Generate(raw string) (string, error) {
 	err := c.Validate()
 
 	if err != nil {
-		logrus.Errorf(err.Error())
+		logrus.Errorln(err.Error())
 		return "", err
 	}
 
@@ -103,7 +103,7 @@ func (c *Commit) Generate(raw string) (string, error) {
 	commit, err := c.ParseMessage(raw)
 
 	if err != nil {
-		logrus.Errorf(err.Error())
+		logrus.Errorln(err.Error())
 		return "", err
 	}
 
