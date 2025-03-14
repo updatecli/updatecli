@@ -27,4 +27,5 @@ autodiscovery:
         pattern: minor
       only:
         - goversion: "*"
+          path: "go.mod"
 
