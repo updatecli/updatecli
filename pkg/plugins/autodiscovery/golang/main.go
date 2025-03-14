@@ -13,6 +13,10 @@ import (
 type Spec struct {
 	// rootDir defines the root directory used to recursively search for golang go.mod
 	RootDir string `yaml:",omitempty"`
+	// OnlyGoVersion allows to specify if the autodiscovery should only handle Go version specified in go.mod
+	OnlyGoVersion *bool `yaml:",omitempty"`
+	// OnlyGoModule allows to specify if the autodiscovery should only handle Go module specified in go.mod
+	OnlyGoModule *bool `yaml:",omitempty"`
 	// ignore allows to specify "rule" to ignore autodiscovery a specific go.mod rule
 	Ignore MatchingRules `yaml:",omitempty"`
 	/*
@@ -48,6 +52,8 @@ type Spec struct {
 
 // Golang holds all information needed to generate golang manifest.
 type Golang struct {
+	onlyGoModule  bool
+	onlygoVersion bool
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootDir defines the root directory from where looking for go.mod file
@@ -77,6 +83,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Golang, error) {
 		newFilter.Pattern = "*"
 	}
 
+	goVersionOnly := false
+	if s.OnlyGoVersion != nil {
+		goVersionOnly = *s.OnlyGoVersion
+	}
+
+	goModuleOnly := false
+	if s.OnlyGoModule != nil {
+		goModuleOnly = *s.OnlyGoModule
+	}
+
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
@@ -90,13 +106,17 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Golang, error) {
 		return Golang{}, err
 	}
 
-	return Golang{
+	g := Golang{
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,
+		onlyGoModule:  goModuleOnly,
+		onlygoVersion: goVersionOnly,
 		versionFilter: newFilter,
 		actionID:      actionID,
-	}, nil
+	}
+
+	return g, nil
 
 }
 

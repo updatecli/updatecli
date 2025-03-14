@@ -73,7 +73,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 		for goModule, goModuleVersion := range goModules {
 			// Skip golang module manifest if there is only one rule on the go version
-			if g.spec.Only.isGoVersionOnly() {
+			if g.spec.Only.isGoVersionOnly() || g.onlygoVersion {
 				break
 			}
 			// Test if the ignore rule based on path is respected
@@ -115,7 +115,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			manifests = append(manifests, moduleManifest)
 		}
 
-		if g.spec.Only.isGoModuleOnly() {
+		if g.spec.Only.isGoModuleOnly() || g.onlyGoModule {
 			return manifests, nil
 		}
 
