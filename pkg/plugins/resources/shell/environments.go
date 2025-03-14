@@ -72,10 +72,10 @@ func (e Environments) Validate() error {
 }
 
 // Load updates all environment value based on Updatecli environment variables, at the condition that the value is not defined yet
-func (e *Environments) Load() error {
+func (e *Environments) Load(ignoreNotFound bool) error {
 	environments := *e
 	for id := range environments {
-		err := environments[id].Load()
+		err := environments[id].Load(ignoreNotFound)
 		if err != nil {
 			logrus.Errorln(err)
 		}
