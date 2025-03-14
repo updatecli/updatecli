@@ -27,7 +27,7 @@ autodiscovery:
   groupby: all
   crawlers:
     golang/gomod:
-      onlyGoModule: true
+      onlygomodule: true
       versionfilter:
         kind: semver
         pattern: minor

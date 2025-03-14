@@ -22,7 +22,7 @@ autodiscovery:
   actionid:  default
   crawlers:
     golang/gomod:
-      goversiononly: true
+      onlygoversion: true
       versionfilter:
         kind: semver
         pattern: minor
