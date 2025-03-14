@@ -133,6 +133,24 @@ type ActionSpec struct {
 	//   false
 	//
 	Parent bool `yaml:",omitempty"`
+
+	// Reviewers contains the list of assignee to add to the pull request
+	// compatible:
+	//   * action
+	//
+	// default: empty
+	//
+	// remark:
+	//   * if reviewer is a team, the format is "organization/team" and the token must have organization read permission.
+	Reviewers []string `yaml:",omitempty"`
+
+	// Assignees contains the list of assignee to add to the pull request
+	//
+	// default: empty
+	//
+	// remark:
+	//   * Please note that contrary to reviewers, assignees only accept GitHub usernames
+	Assignees []string `yaml:",omitempty"`
 }
 
 type PullRequest struct {
@@ -425,6 +443,31 @@ func (p *PullRequest) updatePullRequest() error {
 		PullRequestID: githubv4.ID(p.remotePullRequest.ID),
 		Title:         githubv4.NewString(githubv4.String(title)),
 		Body:          githubv4.NewString(githubv4.String(bodyPR)),
+	}
+
+	if len(p.spec.Reviewers) != 0 {
+		err = p.addPullrequestReviewers(p.remotePullRequest.ID)
+		if err != nil {
+			logrus.Debugln(err.Error())
+		}
+	}
+
+	if len(p.spec.Assignees) != 0 {
+		var assigneesID []githubv4.ID
+		for _, assignee := range p.spec.Assignees {
+			user, err := getUserInfo(p.gh.client, assignee)
+			if err != nil {
+				logrus.Debugf("Failed to get user id for %s: %v", assignee, err)
+				continue
+			}
+
+			logrus.Debugf("Assignee ID %q found for %q", user.ID, assignee)
+			assigneesID = append(assigneesID, githubv4.NewID(user.ID))
+		}
+
+		if len(assigneesID) > 0 {
+			input.AssigneeIDs = &assigneesID
+		}
 	}
 
 	if len(p.spec.Labels) != 0 {
