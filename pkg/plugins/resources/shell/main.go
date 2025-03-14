@@ -53,7 +53,7 @@ type Spec struct {
 	//   with an allow list of environment variables.
 	//
 	Environments *Environments `yaml:",omitempty"`
-	// ChangedIf defines how to interprete shell command execution.
+	// ChangedIf defines how to interpret shell command execution.
 	// What a success means, what an error means, and what a warning would mean in the context of Updatecli.
 	//
 	// Please note that in the context of Updatecli,
