@@ -7,6 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	defaultFakeValue = "xxx"
+)
+
 func TestShell_New(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -46,7 +50,7 @@ func TestShell_New(t *testing.T) {
 				Command: "echo World",
 				Environments: &Environments{
 					Environment{
-						Value: "xxx",
+						Value: &defaultFakeValue,
 					},
 				},
 			},
@@ -55,14 +59,14 @@ func TestShell_New(t *testing.T) {
 				executor: &nativeCommandExecutor{},
 				environments: Environments{
 					Environment{
-						Value: "xxx",
+						Value: &defaultFakeValue,
 					},
 				},
 				spec: Spec{
 					Command: "echo World",
 					Environments: &Environments{
 						Environment{
-							Value: "xxx",
+							Value: &defaultFakeValue,
 						},
 					},
 				},

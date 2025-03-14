@@ -24,9 +24,10 @@ func (s *Shell) Source(workingDir string, resultSource *result.Source) error {
 	// so we don't fallback to use the current process environment as explained
 	// on https://pkg.go.dev/os/exec#Cmd
 	// Provides the "DRY_RUN" environment variable to the shell command (true if "diff", false if "apply")
+	sourceStageValue := "source"
 	env := append(s.environments, Environment{
 		Name:  CurrentStageVariableName,
-		Value: "source",
+		Value: &sourceStageValue,
 	})
 
 	// PreCommand is executed to collect information before running the shell command

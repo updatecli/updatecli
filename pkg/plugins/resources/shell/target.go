@@ -52,15 +52,17 @@ func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *res
 	// It's only purpose is to have at least one environment variable
 	// so we don't fallback to use the current process environment as explained
 	// on https://pkg.go.dev/os/exec#Cmd
+	targetStageValue := "target"
 	env := append(s.environments, Environment{
 		Name:  CurrentStageVariableName,
-		Value: "target",
+		Value: &targetStageValue,
 	})
 
 	// Provides the "DRY_RUN" environment variable to the shell command (true if "diff", false if "apply")
+	dryRunValue := fmt.Sprintf("%v", dryRun)
 	env = append(env, Environment{
 		Name:  DryRunVariableName,
-		Value: fmt.Sprintf("%v", dryRun),
+		Value: &dryRunValue,
 	})
 
 	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))

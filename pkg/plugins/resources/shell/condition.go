@@ -26,9 +26,10 @@ func (s *Shell) Condition(source string, scm scm.ScmHandler) (pass bool, message
 	// It's only purpose is to have at least one environment variable
 	// so we don't fallback to use the current process environment as explained
 	// on https://pkg.go.dev/os/exec#Cmd
+	conditionStageValue := "condition"
 	env := append(s.environments, Environment{
 		Name:  CurrentStageVariableName,
-		Value: "condition",
+		Value: &conditionStageValue,
 	})
 
 	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))
