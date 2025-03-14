@@ -1,0 +1,33 @@
+name: "Bump Patch version for Golang module"
+scms:
+  default:
+    kind: github
+    spec:
+      owner: updatecli
+      repository: updatemonitor
+      token: {{ requiredEnv "GITHUB_TOKEN" }}
+      username: {{ requiredEnv "GITHUB_ACTOR" }}
+      branch: main
+
+actions:
+    default:
+        # The action title is used to define the pullrequest title
+        # Since we use the groupby: we need to be sure that the pullrequest title
+        # is the same for all the subpipeline.
+        title: Bump Patch version for Golang module
+        kind: github/pullrequest
+        scmid: default
+        spec:
+          labels:
+            - "dependencies"
+
+autodiscovery:
+  scmid: default
+  actionid:  default
+  groupby: all
+  crawlers:
+    golang/gomod:
+      onlyGoModule: true
+      versionfilter:
+        kind: semver
+        pattern: minor

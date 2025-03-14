@@ -1,0 +1,29 @@
+name: "Bump Golang Version"
+scms:
+  default:
+    kind: github
+    spec:
+      owner: updatecli-test
+      repository: updatecli
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      branch: e2e-tests-golang
+
+actions:
+    default:
+        kind: github/pullrequest
+        scmid: default
+        spec:
+          labels:
+            - "dependencies"
+
+autodiscovery:
+  scmid: default
+  actionid:  default
+  crawlers:
+    golang/gomod:
+      goversiononly: true
+      versionfilter:
+        kind: semver
+        pattern: minor
+
