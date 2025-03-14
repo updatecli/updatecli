@@ -16,7 +16,8 @@ func (s *Shell) Condition(source string, scm scm.ScmHandler) (pass bool, message
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
-	err = s.spec.Environments.Load()
+	ignoreEnvironmentsNotFound := s.spec.Environments == nil
+	err = s.environments.Load(ignoreEnvironmentsNotFound)
 	if err != nil {
 		return false, "", err
 	}
@@ -25,7 +26,7 @@ func (s *Shell) Condition(source string, scm scm.ScmHandler) (pass bool, message
 	// It's only purpose is to have at least one environment variable
 	// so we don't fallback to use the current process environment as explained
 	// on https://pkg.go.dev/os/exec#Cmd
-	env := append(s.spec.Environments, Environment{
+	env := append(s.environments, Environment{
 		Name:  CurrentStageVariableName,
 		Value: "condition",
 	})

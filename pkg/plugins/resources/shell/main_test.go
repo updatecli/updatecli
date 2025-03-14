@@ -17,16 +17,19 @@ func TestShell_New(t *testing.T) {
 		{
 			name: "Normal case",
 			spec: Spec{
-				Command: "echo Hello",
-				Shell:   "/bin/bash",
+				Command:      "echo Hello",
+				Shell:        "/bin/bash",
+				Environments: &Environments{},
 			},
 			wantErr: false,
 			wantShell: &Shell{
-				executor:    &nativeCommandExecutor{},
-				interpreter: "/bin/bash",
+				executor:     &nativeCommandExecutor{},
+				interpreter:  "/bin/bash",
+				environments: Environments{},
 				spec: Spec{
-					Command: "echo Hello",
-					Shell:   "/bin/bash",
+					Command:      "echo Hello",
+					Shell:        "/bin/bash",
+					Environments: &Environments{},
 				},
 			},
 		},
@@ -41,7 +44,7 @@ func TestShell_New(t *testing.T) {
 			name: "Missing env name despite env value specified",
 			spec: Spec{
 				Command: "echo World",
-				Environments: Environments{
+				Environments: &Environments{
 					Environment{
 						Value: "xxx",
 					},
@@ -50,9 +53,14 @@ func TestShell_New(t *testing.T) {
 			wantErr: true,
 			wantShell: &Shell{
 				executor: &nativeCommandExecutor{},
+				environments: Environments{
+					Environment{
+						Value: "xxx",
+					},
+				},
 				spec: Spec{
 					Command: "echo World",
-					Environments: Environments{
+					Environments: &Environments{
 						Environment{
 							Value: "xxx",
 						},
@@ -65,7 +73,7 @@ func TestShell_New(t *testing.T) {
 			name: "Inherit PATH environment variable",
 			spec: Spec{
 				Command: "echo Hello",
-				Environments: Environments{
+				Environments: &Environments{
 					Environment{
 						Name: "PATH",
 					},
@@ -75,9 +83,14 @@ func TestShell_New(t *testing.T) {
 			wantShell: &Shell{
 				executor:    &nativeCommandExecutor{},
 				interpreter: getDefaultShell(),
+				environments: Environments{
+					Environment{
+						Name: "PATH",
+					},
+				},
 				spec: Spec{
 					Command: "echo Hello",
-					Environments: Environments{
+					Environments: &Environments{
 						Environment{
 							Name: "PATH",
 						},
@@ -89,7 +102,7 @@ func TestShell_New(t *testing.T) {
 			name: "can't specify PATH environment variable multiple times",
 			spec: Spec{
 				Command: "echo Hello",
-				Environments: Environments{
+				Environments: &Environments{
 					Environment{
 						Name: "PATH",
 					},
@@ -101,9 +114,17 @@ func TestShell_New(t *testing.T) {
 			wantErr: true,
 			wantShell: &Shell{
 				executor: &nativeCommandExecutor{},
+				environments: Environments{
+					Environment{
+						Name: "PATH",
+					},
+					Environment{
+						Name: "PATH",
+					},
+				},
 				spec: Spec{
 					Command: "echo Hello",
-					Environments: Environments{
+					Environments: &Environments{
 						Environment{
 							Name: "PATH",
 						},
@@ -119,7 +140,7 @@ func TestShell_New(t *testing.T) {
 			name: "Not allowed to specify DRY_RUN environment variable",
 			spec: Spec{
 				Command: "echo Hello",
-				Environments: Environments{
+				Environments: &Environments{
 					Environment{
 						Name: "DRY_RUN",
 					},
@@ -128,10 +149,15 @@ func TestShell_New(t *testing.T) {
 			wantErr: true,
 			wantShell: &Shell{
 				executor: &nativeCommandExecutor{},
+				environments: Environments{
+					Environment{
+						Name: "DRY_RUN",
+					},
+				},
 				spec: Spec{
 					Command: "echo Hello",
 					Shell:   "/bin/sh",
-					Environments: Environments{
+					Environments: &Environments{
 						Environment{
 							Name: "PATH",
 						},

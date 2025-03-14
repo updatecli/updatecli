@@ -12,6 +12,30 @@ const (
 	CurrentStageVariableName = "UPDATECLI_PIPELINE_STAGE"
 )
 
+var (
+	// DefaultWinEnvVariables is a list of environment variables that are commonly used on Windows
+	DefaultWinEnvVariables Environments = Environments{
+		{Name: "PATH"},
+		{Name: "PSModulePath"},
+		{Name: "PSModuleAnalysisCachePath"},
+		{Name: "PATHEXT"},
+		{Name: "TEMP"},
+		{Name: "HOME"},
+		{Name: "USERPROFILE"},
+		{Name: "PROFILE"},
+	}
+
+	DefaultUnixEnvVariables Environments = Environments{
+		{Name: "PATH"},
+		{Name: "HOME"},
+		{Name: "USER"},
+		{Name: "LOGNAME"},
+		{Name: "SHELL"},
+		{Name: "LANG"},
+		{Name: "LC_ALL"},
+	}
+)
+
 // Environment is a struct containing information for an environment variable such as its name and its value
 type Environment struct {
 	// Name defines the environment variable name
@@ -25,7 +49,7 @@ func (e Environment) String() string {
 }
 
 // Load updates the environment value based on Updatecli environment variables, if the value is not defined yet
-func (e *Environment) Load() error {
+func (e *Environment) Load(ignoreNotFound bool) error {
 	err := e.Validate()
 	if err != nil {
 		return err
@@ -36,7 +60,7 @@ func (e *Environment) Load() error {
 	if len(e.Value) == 0 && len(e.Name) > 0 {
 		value, found := os.LookupEnv(e.Name)
 
-		if !found {
+		if !found && !ignoreNotFound {
 			return fmt.Errorf("environment variable %q not found, skipping", e.Name)
 		}
 		e.Value = value

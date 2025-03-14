@@ -13,7 +13,8 @@ func (s *Shell) Source(workingDir string, resultSource *result.Source) error {
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
-	err := s.spec.Environments.Load()
+	ignoreEnvironmentsNotFound := s.spec.Environments == nil
+	err := s.environments.Load(ignoreEnvironmentsNotFound)
 	if err != nil {
 		return &ExecutionFailedError{}
 	}
@@ -23,7 +24,7 @@ func (s *Shell) Source(workingDir string, resultSource *result.Source) error {
 	// so we don't fallback to use the current process environment as explained
 	// on https://pkg.go.dev/os/exec#Cmd
 	// Provides the "DRY_RUN" environment variable to the shell command (true if "diff", false if "apply")
-	env := append(s.spec.Environments, Environment{
+	env := append(s.environments, Environment{
 		Name:  CurrentStageVariableName,
 		Value: "source",
 	})
