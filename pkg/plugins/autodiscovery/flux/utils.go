@@ -1,7 +1,9 @@
 package flux
 
 import (
+	"bytes"
 	"io/fs"
+	"os"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -30,37 +32,49 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 					continue
 				}
 
-				// First try to see if our file contains a HelmRepository definition
-				// if it does, then we save it and move to the next file path
-				helmRepository, err := isHelmRepository(path)
+				data, err := os.ReadFile(path)
 				if err != nil {
-					logrus.Debugf("Failed loading file %s as HelmRepository: %s", path, err)
+					logrus.Debugf("Failed reading file %s: %s", path, err)
+					continue
 				}
 
-				if helmRepository != nil {
-					f.helmRepositories = append(f.helmRepositories, *helmRepository)
-				}
+				// Split YAML documents
+				docs := bytes.Split(data, []byte("---"))
+				
+				for _, doc := range docs {
+					if len(bytes.TrimSpace(doc)) == 0 {
+						continue
+					}
 
-				// Second, try to see if our file contains a OCIRepository definition
-				// if it does, then we save it and move to the next file path
-				ociRepository, err := loadOCIRepository(path)
-				if err != nil {
-					logrus.Debugf("Failed loading file %s as OCIRepository: %s", path, err)
-				}
+					// Process each document separately
+					helmRepository, err := loadHelmRepositoryFromBytes(doc)
+					if err != nil {
+						logrus.Debugf("Failed loading document from %s as HelmRepository: %s", path, err)
+					}
 
-				if ociRepository != nil {
-					f.ociRepositoryFiles = append(f.ociRepositoryFiles, path)
-				}
+					if helmRepository != nil {
+						f.helmRepositories = append(f.helmRepositories, *helmRepository)
+						continue
+					}
 
-				// Third, try to see if our file contains a HelmRelease definition
-				// if it does, then we save it and move to the next file path
-				helmRelease, err := loadHelmRelease(path)
-				if err != nil {
-					logrus.Debugf("Failed loading file %s as HelmRelease: %s", path, err)
-				}
+					ociRepository, err := loadOCIRepositoryFromBytes(doc)
+					if err != nil {
+						logrus.Debugf("Failed loading document from %s as OCIRepository: %s", path, err)
+					}
 
-				if helmRelease != nil {
-					f.helmReleaseFiles = append(f.helmReleaseFiles, path)
+					if ociRepository != nil {
+						f.ociRepositoryFiles = append(f.ociRepositoryFiles, path)
+						continue
+					}
+
+					helmRelease, err := loadHelmReleaseFromBytes(doc)
+					if err != nil {
+						logrus.Debugf("Failed loading document from %s as HelmRelease: %s", path, err)
+					}
+
+					if helmRelease != nil {
+						f.helmReleaseFiles = append(f.helmReleaseFiles, path)
+					}
 				}
 			}
 		}
