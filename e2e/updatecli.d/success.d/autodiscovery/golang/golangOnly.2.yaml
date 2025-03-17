@@ -26,4 +26,6 @@ autodiscovery:
       versionfilter:
         kind: semver
         pattern: minor
+      only:
+        - path: go.mod
 

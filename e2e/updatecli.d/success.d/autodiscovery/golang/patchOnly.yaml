@@ -34,19 +34,4 @@ autodiscovery:
       only:
         - modules:
             github.com/beevik/etree: ""
-      #ignore:
-      #  - modules:
-      #      # Ignoring the following modules as they do not publish release
-      #      github.com/ProtonMail/go-crypto:
-      #      # Ignoring the following modules as they do not publish release
-      #      github.com/shurcooL/githubv4:
-      #      # Ignore module using version matching constraint 1.x
-      #      helm.sh/helm/v3: "1.x"
-      #      # The remote version uses the version v0.0.0-20190318233801-ac98e3ecb4b0 which do not exists anymore
-      #      # the patch version will try to fetch the version matching 0.0.x and finds nothing
-      #      github.com/iancoleman/orderedmap:
-      #      # Same for https://pkg.go.dev/golang.org/x/time?tab=versions
-      #      golang.org/x/time:
-      #      github.com/nirasan/go-oauth-pkce-code-verifier:
-      #      github.com/skratchdot/open-golang:
 
