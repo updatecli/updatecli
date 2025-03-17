@@ -3,11 +3,11 @@ scms:
   default:
     kind: github
     spec:
-      owner: updatecli-test
-      repository: updatecli
+      owner: updatecli
+      repository: updatemonitor
       token: {{ requiredEnv "GITHUB_TOKEN" }}
       username: {{ requiredEnv "GITHUB_ACTOR" }}
-      branch: e2e-tests-golang
+      branch: main
 
 actions:
     default:
@@ -27,11 +27,7 @@ autodiscovery:
   groupby: all
   crawlers:
     golang/gomod:
-      rootdir: pkg/plugins/resources/go/gomod/testdata
+      onlygomodule: true
       versionfilter:
         kind: semver
-        pattern: patch
-      only:
-        - modules:
-            github.com/beevik/etree: ""
-
+        pattern: minor
