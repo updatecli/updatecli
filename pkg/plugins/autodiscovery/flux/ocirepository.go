@@ -33,16 +33,16 @@ func loadOCIRepository(filename string) (*fluxcdv1.OCIRepository, error) {
 }
 
 func loadOCIRepositoryFromBytes(data []byte) (*fluxcdv1.OCIRepository, error) {
-    ociRepository := fluxcdv1.OCIRepository{}
-    err := yaml.Unmarshal(data, &ociRepository)
-    if err != nil {
-        return nil, fmt.Errorf("unmarshalling OCIRepository: %s", err)
-    }
+	ociRepository := fluxcdv1.OCIRepository{}
+	err := yaml.Unmarshal(data, &ociRepository)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling OCIRepository: %s", err)
+	}
 
-    gvk := ociRepository.GroupVersionKind()
-    if gvk.GroupKind().String() == "OCIRepository.source.toolkit.fluxcd.io" {
-        return &ociRepository, nil
-    }
+	gvk := ociRepository.GroupVersionKind()
+	if gvk.GroupKind().String() == "OCIRepository.source.toolkit.fluxcd.io" {
+		return &ociRepository, nil
+	}
 
-    return nil, nil
+	return nil, nil
 }

@@ -11,16 +11,16 @@ import (
 // https://fluxcd.io/flux/components/source/helmrepositories/#writing-a-helmrepository-spec
 
 func loadHelmRepositoryFromBytes(data []byte) (*fluxcdv1.HelmRepository, error) {
-    helmRepository := fluxcdv1.HelmRepository{}
-    err := yaml.Unmarshal(data, &helmRepository)
-    if err != nil {
-        return nil, fmt.Errorf("unmarshalling HelmRepository: %s", err)
-    }
+	helmRepository := fluxcdv1.HelmRepository{}
+	err := yaml.Unmarshal(data, &helmRepository)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling HelmRepository: %s", err)
+	}
 
-    gvk := helmRepository.GroupVersionKind()
-    if gvk.GroupKind().String() == "HelmRepository.source.toolkit.fluxcd.io" {
-        return &helmRepository, nil
-    }
+	gvk := helmRepository.GroupVersionKind()
+	if gvk.GroupKind().String() == "HelmRepository.source.toolkit.fluxcd.io" {
+		return &helmRepository, nil
+	}
 
-    return nil, nil
+	return nil, nil
 }

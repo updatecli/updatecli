@@ -40,7 +40,7 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 
 				// Split YAML documents
 				docs := bytes.Split(data, []byte("---"))
-				
+
 				for _, doc := range docs {
 					if len(bytes.TrimSpace(doc)) == 0 {
 						continue

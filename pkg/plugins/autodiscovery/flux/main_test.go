@@ -145,7 +145,7 @@ targets:
       key: '$.spec.chart.spec.version'
     sourceid: 'helmrelease'
 `},
-    },
+		},
 		{
 			name:    "Scenario - ocirepository ",
 			digest:  false,
