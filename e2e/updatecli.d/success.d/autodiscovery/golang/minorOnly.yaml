@@ -27,16 +27,6 @@ autodiscovery:
         pattern: minor
       only:
         - modules:
-            github.com/Masterminds/semver/v3: ""
-            github.com/go-git/go-git/v5: ""
-            cuelang.org/go: ""
-      #ignore:
-      #  # Ignoring the following modules as they do not publish release
-      #  - modules:
-      #      github.com/ProtonMail/go-crypto:
-      #      github.com/shurcooL/githubv4:
-      #      github.com/nirasan/go-oauth-pkce-code-verifier:
-      #      github.com/skratchdot/open-golang:
-
-
-
+            dario.cat/mergo:
+            github.com/go-git/go-git/v5:
+            oras.land/oras-go/v2:
