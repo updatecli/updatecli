@@ -25,11 +25,9 @@ autodiscovery:
       versionfilter:
         kind: semver
         pattern: minor
-      ignore:
-        # Ignoring the following modules as they do not publish release
+      only:
         - modules:
-            github.com/ProtonMail/go-crypto:
-            github.com/shurcooL/githubv4:
-            github.com/nirasan/go-oauth-pkce-code-verifier:
-            github.com/skratchdot/open-golang:
+            dario.cat/mergo:
+            github.com/go-git/go-git/v5:
+            oras.land/oras-go/v2:
 
