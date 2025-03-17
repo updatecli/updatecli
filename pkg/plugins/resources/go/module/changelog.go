@@ -60,7 +60,7 @@ func getChangelogFromProxy(module, from, to string) *result.Changelogs {
 	query.Set("go-get", "1")
 	URL.RawQuery = query.Encode()
 
-	httpClient := http.DefaultClient
+	httpClient := &http.Client{}
 
 	res, err := httpClient.Get(URL.String())
 	if err != nil {
