@@ -22,10 +22,10 @@ autodiscovery:
   actionid:  default
   crawlers:
     golang/gomod:
+      onlygoversion: true
       versionfilter:
         kind: semver
         pattern: minor
       only:
-        - goversion: "*"
-          path: go.mod
+        - path: go.mod
 
