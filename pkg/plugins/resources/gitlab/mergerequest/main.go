@@ -56,6 +56,10 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 		if len(clientSpec.Username) == 0 && len(scm.Spec.Username) > 0 {
 			clientSpec.Username = scm.Spec.Username
 		}
+
+		if len(clientSpec.TokenType) == 0 && len(scm.Spec.TokenType) > 0 {
+			clientSpec.TokenType = scm.Spec.TokenType
+		}
 	}
 
 	c, err := client.New(clientSpec)

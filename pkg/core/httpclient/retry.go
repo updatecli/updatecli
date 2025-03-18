@@ -89,7 +89,7 @@ func NewRetryClient() HTTPClient {
 		},
 	}
 
-	client := http.DefaultClient
+	client := &http.Client{}
 	client.Transport = transport
 	return client
 }

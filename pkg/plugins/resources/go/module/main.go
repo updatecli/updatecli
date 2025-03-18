@@ -47,6 +47,6 @@ func New(spec interface{}) (*GoModule, error) {
 	return &GoModule{
 		Spec:          newSpec,
 		versionFilter: newFilter,
-		webClient:     http.DefaultClient,
+		webClient:     &http.Client{},
 	}, nil
 }
