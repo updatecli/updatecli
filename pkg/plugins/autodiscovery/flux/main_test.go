@@ -48,6 +48,39 @@ targets:
 `},
 		},
 		{
+			name:    "Scenario - helmrelease Simple with both release and repository in same file",
+			rootDir: "testdata/helmrelease/simple-combined",
+			expectedPipelines: []string{`name: 'deps(flux): bump Helmrelease "udash"'
+sources:
+  helmrelease:
+    name: 'Get latest "udash" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'udash'
+      url: 'https://updatecli.github.io/charts'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  helmrelease:
+    name: 'Ensure Helm Chart name "udash"'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'helmrelease-helmrepository.yaml'
+      key: '$.spec.chart.spec.chart'
+      value: 'udash'
+targets:
+  helmrelease:
+    name: 'deps(flux): bump Helmrelease "udash"'
+    kind: 'yaml'
+    spec:
+      file: 'helmrelease-helmrepository.yaml'
+      key: '$.spec.chart.spec.version'
+    sourceid: 'helmrelease'
+`},
+		},
+		{
 			name:    "Scenario - helmrelease OCI",
 			rootDir: "testdata/helmrelease/oci",
 			expectedPipelines: []string{`name: 'deps(flux): bump Helmrelease "upgrade-responder"'
@@ -76,6 +109,39 @@ targets:
     kind: 'yaml'
     spec:
       file: 'helmrelease.yaml'
+      key: '$.spec.chart.spec.version'
+    sourceid: 'helmrelease'
+`},
+		},
+		{
+			name:    "Scenario - helmrelease OCI",
+			rootDir: "testdata/helmrelease/oci-combined",
+			expectedPipelines: []string{`name: 'deps(flux): bump Helmrelease "upgrade-responder"'
+sources:
+  helmrelease:
+    name: 'Get latest "upgrade-responder" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'upgrade-responder'
+      url: 'oci://ghcr.io/olblak/charts/'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  helmrelease:
+    name: 'Ensure Helm Chart name "upgrade-responder"'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'helmrelease-helmrepository.yaml'
+      key: '$.spec.chart.spec.chart'
+      value: 'upgrade-responder'
+targets:
+  helmrelease:
+    name: 'deps(flux): bump Helmrelease "upgrade-responder"'
+    kind: 'yaml'
+    spec:
+      file: 'helmrelease-helmrepository.yaml'
       key: '$.spec.chart.spec.version'
     sourceid: 'helmrelease'
 `},

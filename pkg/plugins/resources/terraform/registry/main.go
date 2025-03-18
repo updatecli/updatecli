@@ -33,7 +33,7 @@ func New(spec interface{}) (*TerraformRegistry, error) {
 		newFilter.Pattern = "*"
 	}
 
-	webClient := http.DefaultClient
+	webClient := &http.Client{}
 
 	registryAddress, err := newRegistryAddress(webClient, newSpec)
 	if err != nil {

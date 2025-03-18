@@ -28,7 +28,7 @@ func NewThrottledTransport(limitPeriod time.Duration, requestCount int, transpor
 }
 
 func NewThrottledClient(limitPeriod time.Duration, requestCount int, transportWrap http.RoundTripper) HTTPClient {
-	client := http.DefaultClient
+	client := &http.Client{}
 	client.Transport = NewThrottledTransport(limitPeriod, requestCount, transportWrap)
 	return client
 }
