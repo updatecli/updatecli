@@ -31,3 +31,18 @@ func loadHelmRelease(filename string) (*helmv2.HelmRelease, error) {
 
 	return nil, nil
 }
+
+func loadHelmReleaseFromBytes(data []byte) (*helmv2.HelmRelease, error) {
+	helmRelease := helmv2.HelmRelease{}
+	err := yaml.Unmarshal(data, &helmRelease)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling HelmRelease: %s", err)
+	}
+
+	gvk := helmRelease.GroupVersionKind()
+	if gvk.GroupKind().String() == "HelmRelease.helm.toolkit.fluxcd.io" {
+		return &helmRelease, nil
+	}
+
+	return nil, nil
+}

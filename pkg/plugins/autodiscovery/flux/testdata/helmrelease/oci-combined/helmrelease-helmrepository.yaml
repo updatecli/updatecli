@@ -1,0 +1,43 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: upgrade-responder
+  namespace: default
+spec:
+  interval: 10m
+  timeout: 5m
+  chart:
+    spec:
+      chart: upgrade-responder
+      version: "0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: upgrade-responder
+      interval: 5m
+  releaseName: upgrade-responder
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  test:
+    enable: true
+  driftDetection:
+    mode: enabled
+    ignore:
+      - paths: ["/spec/replicas"]
+        target:
+          kind: Deployment
+  values:
+    replicaCount: 2
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: upgrade-responder
+  namespace: default
+spec:
+  interval: 5m
+  url: oci://ghcr.io/olblak/charts/
+  type: oci
