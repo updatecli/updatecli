@@ -2,7 +2,6 @@ package flux
 
 import (
 	"fmt"
-	"os"
 
 	fluxcdv1 "github.com/fluxcd/source-controller/api/v1beta2"
 
@@ -11,16 +10,11 @@ import (
 
 // https://fluxcd.io/flux/components/source/helmrepositories/#writing-a-helmrepository-spec
 
-func isHelmRepository(filename string) (*fluxcdv1.HelmRepository, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("opening file %s: %s", filename, err)
-	}
-
+func loadHelmRepositoryFromBytes(data []byte) (*fluxcdv1.HelmRepository, error) {
 	helmRepository := fluxcdv1.HelmRepository{}
-	err = yaml.Unmarshal(data, &helmRepository)
+	err := yaml.Unmarshal(data, &helmRepository)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshalling HelmRepository file %s: %s", filename, err)
+		return nil, fmt.Errorf("unmarshalling HelmRepository: %s", err)
 	}
 
 	gvk := helmRepository.GroupVersionKind()
