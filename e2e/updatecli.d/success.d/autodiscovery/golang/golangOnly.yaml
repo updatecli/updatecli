@@ -28,4 +28,3 @@ autodiscovery:
       only:
         - goversion: "*"
           path: go.mod
-
