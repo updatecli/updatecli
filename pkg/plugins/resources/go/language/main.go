@@ -38,6 +38,6 @@ func New(spec interface{}) (*Language, error) {
 	return &Language{
 		Spec:          newSpec,
 		versionFilter: newFilter,
-		webClient:     http.DefaultClient,
+		webClient:     &http.Client{},
 	}, nil
 }
