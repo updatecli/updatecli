@@ -16,125 +16,116 @@ import (
 It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
-	/*
-		"engine" defines the engine to use to manipulate the yaml file.
-
-		There is no one good Golang library to manipulate yaml files.
-		And each one of them have has its pros and cons so we decided to allow this customization based on user's needs.
-
-		remark:
-			* Accepted value is one of "yamlpath", "go-yaml","default" or nothing
-			* go-yaml, "default" and "" are equivalent
-	*/
+	//"engine" defines the engine to use to manipulate the yaml file.
+	//
+	//There is no one good Golang library to manipulate yaml files.
+	//And each one of them have has its pros and cons so we decided to allow this customization based on user's needs.
+	//
+	//remark:
+	//  * Accepted value is one of "yamlpath", "go-yaml","default" or nothing
+	//  * go-yaml, "default" and "" are equivalent
 	Engine string `yaml:",omitempty"`
-	/*
-		"file" defines the yaml file path to interact with.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		remark:
-			* "file" and "files" are mutually exclusive
-			* scheme "https://", "http://", and "file://" are supported in path for source and condition
-	*/
+	//"file" defines the yaml file path to interact with.
+	//
+	//compatible:
+	//  * source
+	//  * condition
+	//  * target
+	//
+	//remark:
+	//  * "file" and "files" are mutually exclusive
+	//  * scheme "https://", "http://", and "file://" are supported in path for source and condition
+	//
 	File string `yaml:",omitempty"`
-	/*
-		"files" defines the list of yaml files path to interact with.
-
-		compatible:
-			* condition
-			* target
-
-		remark:
-			* file and files are mutually exclusive
-			* protocols "https://", "http://", and "file://" are supported in file path for source and condition
-	*/
+	//"files" defines the list of yaml files path to interact with.
+	//
+	//compatible:
+	//  * condition
+	//  * target
+	//
+	//remark:
+	//  * file and files are mutually exclusive
+	//  * protocols "https://", "http://", and "file://" are supported in file path for source and condition
+	//
 	Files []string `yaml:",omitempty"`
-	/*
-		"key" defines the yaml keypath.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		remark:
-			* key is a simpler version of yamlpath accepts keys.
-
-		example using default engine:
-			* key: $.name
-			* key: $.agent.name
-			* key: $.agents[0].name
-			* key: $.agents[*].name
-			* key: $.'agents.name'
-			* key: $.repos[?(@.repository == 'website')].owner" (require engine set to yamlpath)
-
-		remark:
-			field path with key/value is not supported at the moment.
-			some help would be useful on https://github.com/goccy/go-yaml/issues/290
-
-	*/
+	//"key" defines the yaml keypath.
+	//
+	//compatible:
+	//  * source
+	//  * condition
+	//  * target
+	//
+	//remark:
+	//  * key is a simpler version of yamlpath accepts keys.
+	//
+	//example using default engine:
+	//  * key: $.name
+	//  * key: $.agent.name
+	//  * key: $.agents[0].name
+	//  * key: $.agents[*].name
+	//  * key: $.'agents.name'
+	//  * key: $.repos[?(@.repository == 'website')].owner" (require engine set to yamlpath)
+	//
+	//remark:
+	//  field path with key/value is not supported at the moment.
+	//  some help would be useful on https://github.com/goccy/go-yaml/issues/290
+	//
 	Key string `yaml:",omitempty"`
-	/*
-		"value" is the value associated with a yaml key.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		default:
-			When used from a condition or a target, the default value is set to linked source output.
-	*/
+	//value is the value associated with a yaml key.
+	//
+	//compatible:
+	//  * source
+	//  * condition
+	//  * target
+	//
+	//default:
+	//	When used from a condition or a target, the default value is set to the associated source output.
+	//
 	Value string `yaml:",omitempty"`
-	/*
-		"keyonly" allows to only check if a key exist and do not return an error otherwise
-
-		compatible:
-			* condition
-
-		default:
-			false
-	*/
+	//keyonly allows to check only if a key exist and do not return an error otherwise
+	//
+	//compatible:
+	//	* condition
+	//
+	//default:
+	//	false
+	//
 	KeyOnly bool `yaml:",omitempty"`
-	/*
-	   `searchpattern` defines if the MatchPattern should be applied on the file(s) path
-
-	   If set to true, it modifies the behavior of the `file` and `files` attributes to search for files matching the pattern instead of searching for files with the exact name.
-	   When looking for file path pattern, it requires pattern to match all of name, not just a substring.
-
-	   The pattern syntax is:
-
-	   ```
-	       pattern:
-	           { term }
-	       term:
-	           '*'         matches any sequence of non-Separator characters
-	           '?'         matches any single non-Separator character
-	           '[' [ '^' ] { character-range } ']'
-	                       character class (must be non-empty)
-	           c           matches character c (c != '*', '?', '\\', '[')
-	           '\\' c      matches character c
-
-	       character-range:
-	           c           matches character c (c != '\\', '-', ']')
-	           '\\' c      matches character c
-	           lo '-' hi   matches character c for lo <= c <= hi
-	   ```
-
-	*/
+	//searchpattern defines if the MatchPattern should be applied on the file(s) path
+	//
+	//If set to true, it modifies the behavior of the `file` and `files` attributes to search for files matching the pattern instead of searching for files with the exact name.
+	//When looking for file path pattern, it requires pattern to match all of name, not just a substring.
+	//
+	//The pattern syntax is:
+	//
+	//```
+	//    pattern:
+	//        { term }
+	//    term:
+	//        '*'         matches any sequence of non-Separator characters
+	//        '?'         matches any single non-Separator character
+	//        '[' [ '^' ] { character-range } ']'
+	//                    character class (must be non-empty)
+	//        c           matches character c (c != '*', '?', '\\', '[')
+	//        '\\' c      matches character c
+	//
+	//    character-range:
+	//        c           matches character c (c != '\\', '-', ']')
+	//        '\\' c      matches character c
+	//        lo '-' hi   matches character c for lo <= c <= hi
+	//```
+	//
 	SearchPattern bool `yaml:",omitempty"`
-	/*
-				"comment" defines a comment to add after the value.
-
-				compatible:
-					* target
-
-		   remarks:
-		            * require engine set to yamlpath
-	*/
+	//comment defines a comment to add after the value.
+	//
+	//default: empty
+	//
+	//compatible:
+	//  * target
+	//
+	//remarks:
+	//  * Please note that the comment is added if the value is modified by Updatecli
+	//
 	Comment string `yaml:",omitempty"`
 }
 
