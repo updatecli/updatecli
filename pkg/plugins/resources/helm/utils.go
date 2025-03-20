@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -117,6 +118,11 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
 		return repo.IndexFile{}, err
+	}
+
+	if c.spec.Username != "" && c.spec.Password != "" {
+		userPass := []byte(fmt.Sprintf("%s:%s", c.spec.Username, c.spec.Password))
+		req.Header.Add("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString(userPass)))
 	}
 
 	res, err := http.DefaultClient.Do(req)
