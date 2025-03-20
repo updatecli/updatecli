@@ -14,6 +14,7 @@ import (
 	bitbucket "github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/pullrequest"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
 	gitlab "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/mergerequest"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/gitpush"
 	stash "github.com/updatecli/updatecli/pkg/plugins/resources/stash/pullrequest"
 	bitbucketscm "github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
@@ -22,16 +23,10 @@ import (
 	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
-const (
-	gitlabIdentifier    = "gitlab"
-	githubIdentifier    = "github"
-	giteaIdentifier     = "gitea"
-	stashIdentifier     = "stash"
-	bitbucketIdentifier = "bitbucket"
+var (
+	// ErrWrongConfig is returned when an action has missing mandatory attributes.
+	ErrWrongConfig = errors.New("wrong action configuration")
 )
-
-// ErrWrongConfig is returned when an action has missing mandatory attributes.
-var ErrWrongConfig = errors.New("wrong action configuration")
 
 // ActionHandler interface defines required functions to be an action
 type ActionHandler interface {
@@ -85,12 +80,12 @@ func (c *Config) Validate() (err error) {
 	}
 
 	/** Deprecated items **/
-	if c.Kind == githubIdentifier {
-		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", githubIdentifier, githubIdentifier)
+	if c.Kind == scm.GithubIdentifier {
+		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", scm.GithubIdentifier, scm.GithubIdentifier)
 		c.Kind = "github/pullrequest"
 	}
-	if c.Kind == giteaIdentifier {
-		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", giteaIdentifier, giteaIdentifier)
+	if c.Kind == scm.GiteaIdentifier {
+		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", scm.GiteaIdentifier, scm.GiteaIdentifier)
 		c.Kind = "gitea/pullrequest"
 	}
 	if c.DeprecatedScmID != "" {
@@ -147,10 +142,10 @@ func (a *Action) Update() error {
 func (a *Action) generateActionHandler() error {
 	// Don't forget to update the JSONSchema() method when adding/updating/removing a case
 	switch a.Config.Kind {
-	case "bitbucket/pullrequest", bitbucketIdentifier:
+	case "bitbucket/pullrequest", scm.BitbucketIdentifier:
 		actionSpec := bitbucket.Spec{}
 
-		if a.Scm.Config.Kind != bitbucketIdentifier {
+		if a.Scm.Config.Kind != scm.BitbucketIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
@@ -174,10 +169,10 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "gitea/pullrequest", giteaIdentifier:
+	case "gitea/pullrequest", scm.GiteaIdentifier:
 		actionSpec := gitea.Spec{}
 
-		if a.Scm.Config.Kind != giteaIdentifier {
+		if a.Scm.Config.Kind != scm.GiteaIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
@@ -191,7 +186,7 @@ func (a *Action) generateActionHandler() error {
 		ge, ok := a.Scm.Handler.(*giteascm.Gitea)
 
 		if !ok {
-			return fmt.Errorf("scm is not of kind 'gitea'")
+			return fmt.Errorf("scm is not of kind %q", scm.GiteaIdentifier)
 		}
 
 		g, err := gitea.New(actionSpec, ge)
@@ -201,10 +196,10 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "gitlab/mergerequest", gitlabIdentifier:
+	case "gitlab/mergerequest", scm.GitlabIdentifier:
 		actionSpec := gitlab.Spec{}
 
-		if a.Scm.Config.Kind != gitlabIdentifier {
+		if a.Scm.Config.Kind != scm.GitlabIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
@@ -218,7 +213,7 @@ func (a *Action) generateActionHandler() error {
 		ge, ok := a.Scm.Handler.(*gitlabscm.Gitlab)
 
 		if !ok {
-			return fmt.Errorf("scm is not of kind 'gitlab'")
+			return fmt.Errorf("scm is not of kind %q", scm.GitlabIdentifier)
 		}
 
 		g, err := gitlab.New(actionSpec, ge)
@@ -228,10 +223,10 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "github/pullrequest", githubIdentifier:
+	case "github/pullrequest", scm.GithubIdentifier:
 		actionSpec := github.ActionSpec{}
 
-		if a.Scm.Config.Kind != githubIdentifier {
+		if a.Scm.Config.Kind != scm.GithubIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
@@ -245,7 +240,7 @@ func (a *Action) generateActionHandler() error {
 		gh, ok := a.Scm.Handler.(*github.Github)
 
 		if !ok {
-			return fmt.Errorf("scm is not of kind 'github'")
+			return fmt.Errorf("scm is not of kind %q", scm.GithubIdentifier)
 		}
 
 		g, err := github.NewAction(actionSpec, gh)
@@ -255,10 +250,10 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "stash/pullrequest", stashIdentifier:
+	case "stash/pullrequest", scm.StashIdentifier:
 		actionSpec := stash.Spec{}
 
-		if a.Scm.Config.Kind != stashIdentifier {
+		if a.Scm.Config.Kind != scm.StashIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
@@ -272,10 +267,19 @@ func (a *Action) generateActionHandler() error {
 		ge, ok := a.Scm.Handler.(*stashscm.Stash)
 
 		if !ok {
-			return fmt.Errorf("scm is not of kind 'stash'")
+			return fmt.Errorf("scm is not of kind %q", scm.StashIdentifier)
 		}
 
 		g, err := stash.New(actionSpec, ge)
+		if err != nil {
+			return err
+		}
+
+		a.Handler = &g
+
+	case "git/push", scm.GitIdentifier:
+		g, err := gitpush.NewAction(*a.Scm)
+
 		if err != nil {
 			return err
 		}
