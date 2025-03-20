@@ -18,7 +18,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	goyaml "github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
+	"github.com/goccy/go-yaml/token"
 )
 
 // Target updates a scm repository based on the modified yaml file.
@@ -136,6 +138,31 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 		return 0, ignoredFiles, fmt.Errorf("crafting yamlpath query: %w", err)
 	}
 
+	nodeToWrite, err := goyaml.ValueToNode(valueToWrite)
+
+	if y.spec.Comment != "" {
+		commentGroup := &ast.CommentGroupNode{
+			Comments: []*ast.CommentNode{
+				{
+					Token: &token.Token{
+						Type: token.CommentType,
+						// Add a space before the comment
+						Value: " " + y.spec.Comment,
+					},
+				},
+			},
+		}
+
+		err = nodeToWrite.SetComment(commentGroup)
+		if err != nil {
+			logrus.Errorf("error setting comment: %s", err)
+		}
+	}
+
+	if err != nil {
+		return 0, ignoredFiles, fmt.Errorf("parsing value to write: %w", err)
+	}
+
 	for filePath := range y.files {
 		originFilePath := y.files[filePath].originalFilePath
 
@@ -174,7 +201,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 			continue
 		}
 
-		if err := urlPath.ReplaceWithReader(yamlFile, strings.NewReader(valueToWrite)); err != nil {
+		if err := urlPath.ReplaceWithNode(yamlFile, nodeToWrite); err != nil {
 			return 0, ignoredFiles, fmt.Errorf("replacing yaml key: %w", err)
 		}
 
