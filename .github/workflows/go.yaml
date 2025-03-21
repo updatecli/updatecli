@@ -39,7 +39,7 @@ jobs:
           version: v1.64.8
           install-mode: "binary"
       - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@90a3faa9d0182683851fbfa97ca1a2cb983bfca3 # v6.2.1
         with:
           install-only: true
       - name: Show GoReleaser version
