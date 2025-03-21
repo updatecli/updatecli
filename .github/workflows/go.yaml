@@ -31,7 +31,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
         with:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
