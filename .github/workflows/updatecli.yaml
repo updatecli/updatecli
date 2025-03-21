@@ -30,7 +30,7 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/create-github-app-token@v1.11.3
+      - uses: actions/create-github-app-token@af35edadc00be37caa72ed9f3e6d5f7801bfdf09 # v1.11.7
         id: generate_token
         if: github.ref == 'refs/heads/main'
         with:
