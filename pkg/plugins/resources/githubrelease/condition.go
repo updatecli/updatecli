@@ -22,6 +22,8 @@ func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler) (pass bool,
 	var versions []string
 	if gr.spec.Key == KeyHash {
 		versions, err = gr.ghHandler.SearchReleasesByTagHash(gr.typeFilter)
+	} else if gr.spec.Key == KeyTitle {
+		versions, err = gr.ghHandler.SearchReleasesByTitle(gr.typeFilter)
 	} else {
 		versions, err = gr.ghHandler.SearchReleasesByTagName(gr.typeFilter)
 	}

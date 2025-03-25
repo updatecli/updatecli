@@ -7,7 +7,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Source retrieves a specific version tag from GitHub Releases.
+// Source retrieves a specific version tag name, tag hash, or release title from GitHub Releases.
 func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) error {
 
 	releaseRefs, err := gr.ghHandler.SearchReleases(gr.typeFilter)
@@ -48,6 +48,12 @@ func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) 
 			if release.TagName == value {
 				value = release.TagCommit.Oid
 			}
+		}
+	}
+
+	if gr.spec.Key == KeyTitle {
+		for _, release := range releaseRefs {
+			value = release.Name
 		}
 	}
 

@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	KeyName = "name"
-	KeyHash = "hash"
+	KeyName  = "name"
+	KeyHash  = "hash"
+	KeyTitle = "title"
 )
 
 // Spec defines a specification for a "gittag" resource
@@ -35,7 +36,7 @@ type Spec struct {
 	Tag string `yaml:",omitempty"`
 	//  "key" of the tag object to retrieve.
 	//
-	//  Accepted values: ['name','hash'].
+	//  Accepted values: ['name','hash','title'].
 	//
 	//  Default: 'name'
 	//  Compatible:
@@ -63,8 +64,8 @@ func New(spec interface{}) (*GitHubRelease, error) {
 	}
 
 	validationErrors := []string{}
-	if newSpec.Key != "" && newSpec.Key != KeyHash && newSpec.Key != KeyName {
-		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
+	if newSpec.Key != "" && newSpec.Key != KeyHash && newSpec.Key != KeyName && newSpec.Key != KeyTitle {
+		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', 'title', or empty.")
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
