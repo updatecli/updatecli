@@ -34,7 +34,11 @@ type Spec struct {
 	TypeFilter github.ReleaseType `yaml:",omitempty"`
 	// [c] Tag allows to check for a specific release tag, default to source output
 	Tag string `yaml:",omitempty"`
-	//  "key" of the tag object to retrieve.
+	// "key" defines the GitHub release information we are looking for.
+	// It accepts one of the following inputs:
+	//    * "name": returns the "latest" tag name
+	//    * "hash": returns the commit associated with the latest tag name
+	//    * "title": returns the latest release title
 	//
 	//  Accepted values: ['name','hash','title'].
 	//
