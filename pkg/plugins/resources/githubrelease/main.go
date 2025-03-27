@@ -39,7 +39,7 @@ type Spec struct {
 	//  * condition
 	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// token defines the GitHub personnal access token used to authenticate with.
+	// token defines the GitHub personal access token used to authenticate with.
 	//
 	// more information on https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
 	//
