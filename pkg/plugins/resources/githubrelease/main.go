@@ -93,7 +93,11 @@ type Spec struct {
 	// default: source input
 	//
 	Tag string `yaml:",omitempty"`
-	// key of the tag object to retrieve.
+	// "key" defines the GitHub release information we are looking for.
+	// It accepts one of the following inputs:
+	//    * "name": returns the "latest" tag name
+	//    * "hash": returns the commit associated with the latest tag name
+	//    * "title": returns the latest release title
 	//
 	// accepted values:
 	//  * taghash
