@@ -123,17 +123,21 @@ func TestGitHubRelease_Source(t *testing.T) {
 			// A version filter is required for all test cases
 			require.NotNil(t, tt.versionFilter)
 
-			gr := &GitHubRelease{
-				ghHandler:     tt.mockedGhHandler,
-				versionFilter: tt.versionFilter,
-			}
-			if tt.releaseKey != "" {
-				gr.spec.Key = tt.releaseKey
-			}
+			gr, err := New(Spec{
+				Owner:         "owner",
+				Repository:    "repository",
+				Token:         "ghp_example",
+				Key:           tt.releaseKey,
+				VersionFilter: tt.versionFilter,
+			})
+
+			require.NoError(t, err)
+
+			gr.ghHandler = tt.mockedGhHandler
 
 			gotResult := result.Source{}
 
-			err := gr.Source(tt.workingDir, &gotResult)
+			err = gr.Source(tt.workingDir, &gotResult)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
