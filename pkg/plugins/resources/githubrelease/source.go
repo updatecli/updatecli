@@ -43,7 +43,7 @@ func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) 
 
 	value := gr.foundVersion.GetVersion()
 
-	if gr.spec.Key == KeyHash {
+	if gr.spec.Key == KeyTagHash {
 		for _, release := range releaseRefs {
 			if release.TagName == value {
 				value = release.TagCommit.Oid
