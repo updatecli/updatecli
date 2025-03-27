@@ -5,43 +5,108 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 const (
-	KeyName  = "name"
-	KeyHash  = "hash"
-	KeyTitle = "title"
+	DeprecatedKeyTagHash = "hash"
+	DeprecatedKeyTagName = "name"
+	KeyTagName           = "tagname"
+	KeyTagHash           = "taghash"
+	KeyTitle             = "title"
 )
 
 // Spec defines a specification for a "gittag" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// [s][c] Owner specifies repository owner
+	// owner defines repository owner to interact with.
+	//
+	// required: true
+	//
+	// compatible:
+	//  * source
+	//  * condition
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [s][c] Repository specifies the name of a repository for a specific owner
+	// repository defines the repository name to interact with.
+	//
+	// required: true
+	//
+	// compatible:
+	//  * source
+	//  * condition
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [s][c] Token specifies the credential used to authenticate with
+	// token defines the GitHub personnal access token used to authenticate with.
+	//
+	// more information on https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+	//
+	// required: true
+	//
+	// compatible:
+	//  * source
+	//  * condition
+	//
 	Token string `yaml:",omitempty" jsonschema:"required"`
-	// [s][c] URL specifies the default github url in case of GitHub enterprise
+	// URL defines the default github url in case of GitHub enterprise.
+	//
+	// default: https://github.com
+	//
+	// compatible:
+	//  * source
+	//  * condition
 	URL string `yaml:",omitempty"`
-	// [s][c] Username specifies the username used to authenticate with GitHub API
+	// username defines the username used to authenticate with GitHub API.
+	//
+	// compatible:
+	//  * source
+	//  * condition
 	Username string `yaml:",omitempty"`
-	// [s] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// versionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	//
+	// default: latest
+	//
+	// compatible:
+	//  * source
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [s][c] TypeFilter specifies the GitHub Release type to retrieve before applying the versionfilter rule
+	// typeFilter specifies the GitHub Release type to retrieve before applying the versionfilter rule
+	//
+	// default:
+	//  * draft: false
+	//  * prerelease: false
+	//  * release: true
+	//  * latest: false
+	//
+	// compatible:
+	//  * source
+	// 	* condition
+	//
 	TypeFilter github.ReleaseType `yaml:",omitempty"`
-	// [c] Tag allows to check for a specific release tag, default to source output
+	// tag allows to check for a specific release tag, release tag hash, or release title depending on a the parameter key.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default: source input
+	//
 	Tag string `yaml:",omitempty"`
-	//  "key" of the tag object to retrieve.
+	// key of the tag object to retrieve.
 	//
-	//  Accepted values: ['name','hash','title'].
+	// accepted values:
+	//  * taghash
+	//  * tagname
+	//  * title
+	//  * hash (deprecated)
+	//  * name (deprecated)
 	//
-	//  Default: 'name'
-	//  Compatible:
-	//    * source
-	//    * condition
+	// default: 'tagname'
+	//
+	// compatible:
+	//   * source
+	//   * condition
 	Key string `yaml:",omitempty"`
 }
 
@@ -56,6 +121,8 @@ type GitHubRelease struct {
 
 // New returns a new valid GitHubRelease object.
 func New(spec interface{}) (*GitHubRelease, error) {
+	validationErrors := []string{}
+
 	newSpec := Spec{}
 
 	err := mapstructure.Decode(spec, &newSpec)
@@ -63,10 +130,29 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		return &GitHubRelease{}, err
 	}
 
-	validationErrors := []string{}
-	if newSpec.Key != "" && newSpec.Key != KeyHash && newSpec.Key != KeyName && newSpec.Key != KeyTitle {
-		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', 'title', or empty.")
+	switch newSpec.Key {
+	case "":
+		newSpec.Key = KeyTagName
+		logrus.Debugf("configuration \"key\" not set, defaulting to %q", KeyTagName)
+	case KeyTagHash, KeyTagName, KeyTitle:
+		// Nothing to do
+	case DeprecatedKeyTagName:
+		logrus.Warningf("configuration \"key\" set to %q is deprecated and should be replaced by %q", DeprecatedKeyTagName, KeyTagName)
+		newSpec.Key = KeyTagName
+	case DeprecatedKeyTagHash:
+		logrus.Warningf("configuration \"key\" set to %q is deprecated and should be replaced by %q", DeprecatedKeyTagHash, KeyTagHash)
+		newSpec.Key = KeyTagHash
+	default:
+		validationErrors = append(
+			validationErrors,
+			fmt.Sprintf(
+				"Value %q detected for key \"key\", accepted values for Key are 'name', %q, %q, %q, or empty.",
+				newSpec.Key, KeyTagName, KeyTagHash, KeyTitle,
+			),
+		)
+
 	}
+
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
 		return &GitHubRelease{}, fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
@@ -93,8 +179,8 @@ func New(spec interface{}) (*GitHubRelease, error) {
 
 	return &GitHubRelease{
 		ghHandler:     newHandler,
-		versionFilter: newFilter,
-		typeFilter:    newReleaseType,
 		spec:          newSpec,
+		typeFilter:    newReleaseType,
+		versionFilter: newFilter,
 	}, nil
 }
