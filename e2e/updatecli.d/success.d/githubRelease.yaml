@@ -37,7 +37,7 @@ sources:
       repository: updatecli-action
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-      key: hash
+      key: taghash
 conditions:
   default:
     name: Default Get Latest GitHub action Release

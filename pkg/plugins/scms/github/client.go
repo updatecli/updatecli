@@ -18,6 +18,7 @@ type GithubHandler interface {
 	SearchReleases(releaseType ReleaseType) (releases []ReleaseNode, err error)
 	SearchReleasesByTagName(releaseType ReleaseType) (releases []string, err error)
 	SearchReleasesByTagHash(releaseType ReleaseType) (releases []string, err error)
+	SearchReleasesByTitle(releaseType ReleaseType) (releases []string, err error)
 	SearchTags() (tags []string, err error)
 	Changelog(version.Version) (string, error)
 }

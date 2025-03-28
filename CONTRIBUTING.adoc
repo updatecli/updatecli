@@ -9,7 +9,10 @@ Thanks for your interest in this project, feel free to ask any questions you may
 To build the project, make sure that you have installed link:golang[https://go.dev/], link:https://www.gnu.org/software/make/[GNU Make] and link:https://goreleaser.com/install/[goreleaser], then execute the command `make build`, or use Docker with:
 
 ```
-docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli -e GOOS=windows -e GOARCH=386 golang:1.16 go build -v
+docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli \
+  -e GOOS=windows -e GOARCH=386 golang:1.24 go build -v \
+  -buildvcs=false \
+  -o updatecli.exe
 ```
 
 == Contribute

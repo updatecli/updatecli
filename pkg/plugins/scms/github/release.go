@@ -171,3 +171,19 @@ func (g *Github) SearchReleasesByTagHash(releaseType ReleaseType) (releases []st
 	}
 	return releases, nil
 }
+
+// SearchReleasesByTitle return every releases title from the github api
+// ordered by reverse order of created time.
+// Draft and pre-releases are filtered out.
+func (g *Github) SearchReleasesByTitle(releaseType ReleaseType) (releases []string, err error) {
+	releaseNodes, err := g.SearchReleases(releaseType)
+	if err != nil {
+		logrus.Errorf("\t%s", err)
+		return releases, err
+	}
+
+	for _, release := range releaseNodes {
+		releases = append(releases, release.Name)
+	}
+	return releases, nil
+}
