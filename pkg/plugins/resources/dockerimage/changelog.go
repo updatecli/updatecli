@@ -126,8 +126,6 @@ func redirectToGitHubRawContent(u *url.URL) {
 		u.RawQuery = query.Encode()
 	}
 
-	u.Query().Set("raw", "true")
-
 	if beforePath != u.Path {
 		logrus.Debugf("Redirecting %s to %s", beforePath, u.Path)
 	}

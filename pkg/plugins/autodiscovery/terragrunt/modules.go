@@ -39,12 +39,17 @@ type terragruntModule struct {
 }
 
 func (t *terragruntModule) ForDisplay() string {
-	if t.source.sourceType == SourceTypeRegistry {
+	switch t.source.sourceType {
+	case SourceTypeRegistry:
 		return t.registryModule.ForDisplay()
-	} else if t.source.sourceType == SourceTypeGit || t.source.sourceType == SourceTypeGithub {
+
+	case SourceTypeGit, SourceTypeGithub:
 		// Need to make sure we drop the version from it and the leading protocol info
 		return t.source.baseUrl
+	default:
+		logrus.Errorf("Unsupported source type %q", t.source.sourceType)
 	}
+
 	return t.source.rawSource
 }
 
@@ -168,14 +173,14 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 	var transformers []terragruntTransformer
 	targetPath := "terraform.source"
 
-	if module.source.sourceType == SourceTypeRegistry {
+	switch module.source.sourceType {
+	case SourceTypeRegistry:
 		sourceTypeKind = "terraform/registry"
 		ModuleHost = module.registryModule.Package.Host.String()
 		ModuleNameSpace = module.registryModule.Package.Namespace
 		ModuleName = module.registryModule.Package.Name
 		ModuleNameTargetSystem = module.registryModule.Package.TargetSystem
-
-	} else if module.source.sourceType == SourceTypeGit {
+	case SourceTypeGit:
 		sourceTypeKind = "gittag"
 		ModuleSourceScm = "module"
 		ModuleSourceScmUrl = strings.Replace(
@@ -183,9 +188,10 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 			"git::",
 			"",
 			1)
-	} else {
-		return nil, fmt.Errorf("Unsupported source type: %q", module.source.sourceType)
+	default:
+		return nil, fmt.Errorf("unsupported source type: %q", module.source.sourceType)
 	}
+
 	prefix := ""
 	if module.hclContext == nil || len(*module.hclContext) == 0 {
 		// The source is either inlined  we'll need to add a prefix to the version
@@ -203,7 +209,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 			key := strings.TrimPrefix(module.source.rawSource, "local.")
 			value, ok := (*module.hclContext)[key]
 			if !ok {
-				return nil, fmt.Errorf("Could not infer which local to update base on rawSource %q", module.source.rawSource)
+				return nil, fmt.Errorf("could not infer which local to update base on rawSource %q", module.source.rawSource)
 			}
 			// Tf defines at locals but access at local
 			targetPath = strings.Replace(module.source.rawSource, "local", "locals", 1)
@@ -221,7 +227,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		}
 
 	} else {
-		return nil, fmt.Errorf("Non inline source but no locals found %q", module.source.rawSource)
+		return nil, fmt.Errorf("non inline source but no locals found %q", module.source.rawSource)
 
 	}
 	if prefix != "" {

@@ -189,14 +189,14 @@ func New(spec interface{}) (*Chart, error) {
 		versionFilter: newFilter,
 	}
 
-	err = newSpec.InlineKeyChain.Validate()
+	err = newSpec.Validate()
 	if err != nil {
 		return nil, err
 	}
 
 	keychains := []authn.Keychain{}
 
-	if !newSpec.InlineKeyChain.Empty() {
+	if !newSpec.Empty() {
 		keychains = append(keychains, newSpec.InlineKeyChain)
 	}
 

@@ -42,13 +42,13 @@ func (d Dockerfile) generateManifest(
 			}
 			switch arg_type {
 			case "image":
-				image = strings.Replace(image, "${"+fromArg.Name+"}", arg.Value, -1)
+				image = strings.ReplaceAll(image, "${"+fromArg.Name+"}", arg.Value)
 			case "tag":
-				tag = strings.Replace(tag, "${"+fromArg.Name+"}", arg.Value, -1)
+				tag = strings.ReplaceAll(tag, "${"+fromArg.Name+"}", arg.Value)
 			case "digest":
-				digest = strings.Replace(digest, "${"+fromArg.Name+"}", arg.Value, -1)
+				digest = strings.ReplaceAll(digest, "${"+fromArg.Name+"}", arg.Value)
 			case "platform":
-				platform = strings.Replace(platform, "${"+fromArg.Name+"}", arg.Value, -1)
+				platform = strings.ReplaceAll(platform, "${"+fromArg.Name+"}", arg.Value)
 			}
 			targetMatcher = fromArg.Name
 			targetInstruction = arg.Keyword

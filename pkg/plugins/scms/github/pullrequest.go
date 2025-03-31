@@ -27,7 +27,7 @@ import (
 var (
 	ErrAutomergeNotAllowOnRepository = errors.New("automerge is not allowed on repository")
 	ErrBadMergeMethod                = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
-	ErrPullRequestIsInCleanStatus    = errors.New("Pull request Pull request is in clean status")
+	ErrPullRequestIsInCleanStatus    = errors.New("pull request Pull request is in clean status")
 )
 
 // PullRequest contains multiple fields mapped to GitHub V4 api
@@ -227,7 +227,7 @@ func (p *PullRequest) CleanAction(report *reports.Action) error {
 		// as the main purpose of this function is to close the pullrequest
 		err = p.closePullRequest()
 		if err != nil {
-			return fmt.Errorf("Error closing pull request: %s", err.Error())
+			return fmt.Errorf("closing pull request: %w", err)
 		}
 
 		report.Link = ""
@@ -243,14 +243,14 @@ func (p *PullRequest) CheckActionExist(report *reports.Action) error {
 
 	repository, err := p.gh.queryRepository("", "")
 	if err != nil {
-		return fmt.Errorf("Error querying repository: %s", err.Error())
+		return fmt.Errorf("querying repository: %w", err)
 	}
 
 	p.repository = repository
 
 	err = p.getRemotePullRequest(false)
 	if err != nil {
-		return fmt.Errorf("Error getting remote pull request: %s", err.Error())
+		return fmt.Errorf("error getting remote pull request: %w", err)
 	}
 
 	if p.remotePullRequest.ID == "" {
@@ -574,7 +574,7 @@ func (p *PullRequest) OpenPullRequest() error {
 		logrus.Debugf("GitHub pull request not needed")
 		return nil
 	default:
-		return fmt.Errorf("Unknown status %q", p.repository.Status)
+		return fmt.Errorf("unknown status %q", p.repository.Status)
 	}
 
 	input := githubv4.CreatePullRequestInput{

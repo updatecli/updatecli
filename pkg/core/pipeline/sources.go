@@ -10,7 +10,7 @@ func (p *Pipeline) updateSource(id, result string) {
 func (p *Pipeline) RunSource(id string) (r string, err error) {
 	source := p.Sources[id]
 	source.Config = p.Config.Spec.Sources[id]
-	source.Result.Name = source.Config.ResourceConfig.Name
+	source.Result.Name = source.Config.Name
 
 	err = source.Run()
 

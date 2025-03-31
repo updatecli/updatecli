@@ -27,7 +27,7 @@ func (p *Pipeline) RunTarget(id string, sourceIds []string) (r string, changed b
 	target := p.Targets[id]
 	target.Config = p.Config.Spec.Targets[id]
 	// Ensure the result named contains the up to date target name after templating
-	target.Result.Name = target.Config.ResourceConfig.Name
+	target.Result.Name = target.Config.Name
 	target.Result.DryRun = target.DryRun
 
 	err = target.Run(p.Sources[target.Config.SourceID].Output, &p.Options.Target)

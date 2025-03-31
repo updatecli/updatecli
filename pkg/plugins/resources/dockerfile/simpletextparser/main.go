@@ -58,7 +58,7 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 	changedLines := make(types.ChangedLines)
 
 	if found, _ := s.hasMatch(dockerfileContent, stage); !found {
-		return dockerfileContent, changedLines, fmt.Errorf("%s No line found matching the keyword %q and the matcher %q.", result.FAILURE, s.Keyword, s.Matcher)
+		return dockerfileContent, changedLines, fmt.Errorf("%s No line found matching the keyword %q and the matcher %q", result.FAILURE, s.Keyword, s.Matcher)
 	}
 
 	var newDockerfile bytes.Buffer
@@ -189,7 +189,7 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 
 	keyword, ok := input["keyword"]
 	if !ok {
-		return SimpleTextDockerfileParser{}, fmt.Errorf("Cannot parse instruction: No key 'keyword' found in the instruction %v.", input)
+		return SimpleTextDockerfileParser{}, fmt.Errorf("cannot parse instruction: No key 'keyword' found in the instruction %v", input)
 	}
 	newParser.Keyword = keyword
 	err = newParser.setKeywordLogic()
@@ -200,7 +200,7 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 
 	matcher, ok := input["matcher"]
 	if !ok {
-		return SimpleTextDockerfileParser{}, fmt.Errorf("Cannot parse instruction: No key 'matcher' found in the instruction %v.", input)
+		return SimpleTextDockerfileParser{}, fmt.Errorf("cannot parse instruction: No key 'matcher' found in the instruction %v", input)
 	}
 	newParser.Matcher = matcher
 	delete(input, "matcher")
@@ -236,11 +236,11 @@ var supportedKeywordsInitializers = map[string]keywords.Logic{
 func (s *SimpleTextDockerfileParser) setKeywordLogic() error {
 	keywordLogic, found := supportedKeywordsInitializers[strings.ToLower(s.Keyword)]
 	if !found {
-		return fmt.Errorf("%s Unknown keyword %q provided for Dockerfile's instruction.", result.FAILURE, s.Keyword)
+		return fmt.Errorf("%s Unknown keyword %q provided for Dockerfile's instruction", result.FAILURE, s.Keyword)
 	}
 
 	if keywordLogic == nil {
-		return fmt.Errorf("%s Provided keyword %q not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation.", result.FAILURE, s.Keyword)
+		return fmt.Errorf("%s Provided keyword %q not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation", result.FAILURE, s.Keyword)
 	}
 
 	s.KeywordLogic = keywordLogic

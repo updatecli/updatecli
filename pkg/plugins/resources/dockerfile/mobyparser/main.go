@@ -187,8 +187,7 @@ func (m MobyParser) replace(node *parser.Node) (bool, string, error) {
 	i := 0
 	for _, n := range node.Children {
 
-		if strings.ToUpper(n.Value) == strings.ToUpper(instruction) && i == instructionPosition {
-
+		if strings.EqualFold(n.Value, instruction) && i == instructionPosition {
 			if n.Next != nil {
 				j := 0
 				for nod := n.Next; nod != nil && j <= elementPosition; nod = nod.Next {
@@ -202,7 +201,7 @@ func (m MobyParser) replace(node *parser.Node) (bool, string, error) {
 				}
 
 			}
-		} else if strings.ToUpper(n.Value) == strings.ToUpper(instruction) {
+		} else if strings.EqualFold(n.Value, instruction) {
 			i++
 		}
 

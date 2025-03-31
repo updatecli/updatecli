@@ -22,7 +22,7 @@ func (gb *GitBranch) Source(workingDir string, resultSource *result.Source) erro
 	}
 
 	if gb.directory == "" {
-		return fmt.Errorf("Unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
+		return fmt.Errorf("unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
 	}
 
 	refs, err := gb.nativeGitHandler.BranchRefs(gb.directory)

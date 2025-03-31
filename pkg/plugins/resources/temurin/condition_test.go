@@ -87,13 +87,13 @@ func TestCondition(t *testing.T) {
 			name:            "Failure when HTTP request error",
 			mockedHttpError: fmt.Errorf("Connection Error"),
 			spec:            Spec{},
-			wantErr:         "something went wrong while performing a request to \"https://api.adoptium.net/v3/info/available_releases\":\nConnection Error\n",
+			wantErr:         "something went wrong while performing a request to \"https://api.adoptium.net/v3/info/available_releases\":\nConnection Error",
 		},
 		{
 			name:                 "Failure when HTTP/500 from the 'available_releases' endpoint",
 			mockedHTTPStatusCode: map[string]int{availableReleasesEndpoint: http.StatusInternalServerError},
 			spec:                 Spec{},
-			wantErr:              fmt.Sprintf("Got an HTTP error %d from the API.\n", http.StatusInternalServerError),
+			wantErr:              fmt.Sprintf("got an HTTP error %d from the API", http.StatusInternalServerError),
 		},
 	}
 
