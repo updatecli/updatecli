@@ -1,6 +1,6 @@
 name: "deps(golang): Bump Major version for Golang module"
 pipelineid: "golang/gomod/major"
-groupby: all
+groupby: individual
 
 spec:
   versionfilter:
