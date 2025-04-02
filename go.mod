@@ -1,6 +1,7 @@
 module github.com/updatecli/updatecli
 
 go 1.24.1
+
 require (
 	dario.cat/mergo v1.0.1
 	github.com/Masterminds/semver/v3 v3.3.1
