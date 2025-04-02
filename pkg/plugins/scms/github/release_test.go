@@ -489,13 +489,14 @@ func TestSearchReleases(t *testing.T) {
 
 			var got []string
 			var err error
-			if tt.searchKey == "hash" {
-				got, err = sut.SearchReleasesByTagHash(tt.releaseType)
-			} else if tt.searchKey == "title" {
-				got, err = sut.SearchReleasesByTitle(tt.releaseType)
-			} else {
-				got, err = sut.SearchReleasesByTagName(tt.releaseType)
 
+			switch tt.searchKey {
+			case "hash":
+				got, err = sut.SearchReleasesByTagHash(tt.releaseType)
+			case "title":
+				got, err = sut.SearchReleasesByTitle(tt.releaseType)
+			default:
+				got, err = sut.SearchReleasesByTagName(tt.releaseType)
 			}
 
 			if tt.wantErr {

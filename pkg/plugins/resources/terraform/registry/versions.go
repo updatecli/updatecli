@@ -79,12 +79,13 @@ func (t *TerraformRegistry) versions() (versions []string, err error) {
 	}
 
 	var versionListing versionListing
-	if t.registryAddress.registryType == TypeProvider {
+	switch t.registryAddress.registryType {
+	case TypeProvider:
 		versionListing = &providerVersionListing{}
-	} else if t.registryAddress.registryType == TypeModule {
+	case TypeModule:
 		versionListing = &moduleVersionListing{}
-	} else {
-		// Unreachable
+	default:
+		logrus.Errorf("unknown registry type %q", t.registryAddress.registryType)
 		return []string{}, err
 	}
 

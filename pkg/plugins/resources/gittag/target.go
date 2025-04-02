@@ -15,13 +15,13 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 	var err error
 
 	if gt.spec.Path != "" && scm != nil {
-		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+		logrus.Warningf("path setting value %q is overriding the scm configuration (value %q)",
 			gt.spec.Path,
 			scm.GetDirectory())
 	}
 
 	if gt.spec.URL != "" && scm != nil {
-		logrus.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
+		logrus.Warningf("url setting value %q is overriding the scm configuration (value %q)",
 			gt.spec.URL,
 			scm.GetURL())
 	}
@@ -43,7 +43,8 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 	}
 
 	if gt.directory == "" {
-		return fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+		logrus.Errorf("unknown Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+		return fmt.Errorf("unkownn Git working directory")
 	}
 
 	tagName := source

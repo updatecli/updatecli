@@ -133,10 +133,10 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				URL:  chartURL,
 			}
 			if OCIUsername != "" && isOCI {
-				helmSourcespec.InlineKeyChain.Username = OCIUsername
+				helmSourcespec.Username = OCIUsername
 			}
 			if OCIPassword != "" && isOCI {
-				helmSourcespec.InlineKeyChain.Password = OCIPassword
+				helmSourcespec.Password = OCIPassword
 			}
 
 			sourceVersionFilterKind := "semver"

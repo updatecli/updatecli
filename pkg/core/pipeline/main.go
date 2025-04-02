@@ -243,7 +243,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		// Run the resource
 		switch leaf.Category {
 		case sourceCategory:
-			sourceId := strings.Replace(id, "source#", "", -1)
+			sourceId := strings.ReplaceAll(id, "source#", "")
 			r, e := p.RunSource(sourceId)
 			if e != nil {
 				err = e
@@ -251,7 +251,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			leaf.Result = r
 			p.updateSource(sourceId, leaf.Result)
 		case conditionCategory:
-			conditionId := strings.Replace(id, "condition#", "", -1)
+			conditionId := strings.ReplaceAll(id, "condition#", "")
 			r, e := p.RunCondition(conditionId)
 			if e != nil {
 				err = e
@@ -259,7 +259,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			leaf.Result = r
 			p.updateCondition(conditionId, leaf.Result)
 		case targetCategory:
-			targetId := strings.Replace(id, "target#", "", -1)
+			targetId := strings.ReplaceAll(id, "target#", "")
 			r, changed, e := p.RunTarget(targetId, depsSourceIDs)
 			if e != nil {
 				err = e

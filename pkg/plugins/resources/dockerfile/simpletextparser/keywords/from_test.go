@@ -17,32 +17,32 @@ func TestFrom_GetTokens(t *testing.T) {
 		{
 			name:         "Empty line",
 			originalLine: "",
-			wantErr:      fmt.Errorf("Got an empty or malformed line"),
+			wantErr:      fmt.Errorf("got an empty or malformed line"),
 		},
 		{
 			name:         "Non FROM line",
 			originalLine: "ARG TERRAFORM_VERSION",
-			wantErr:      fmt.Errorf("Not a FROM line: \"ARG\""),
+			wantErr:      fmt.Errorf("not a FROM line: \"ARG\""),
 		},
 		{
 			name:         "Malformed FROM line",
 			originalLine: "FROM",
-			wantErr:      fmt.Errorf("Got an empty or malformed line"),
+			wantErr:      fmt.Errorf("got an empty or malformed line"),
 		},
 		{
 			name:         "No image in platformed line",
 			originalLine: "FROM --platform=linux/amd64",
-			wantErr:      fmt.Errorf("No image in line"),
+			wantErr:      fmt.Errorf("no image in line"),
 		},
 		{
 			name:         "Malformed alias",
 			originalLine: "FROM alpine AS",
-			wantErr:      fmt.Errorf("Malformed FROM line, AS keyword but no value for it"),
+			wantErr:      fmt.Errorf("malformed FROM line, AS keyword but no value for it"),
 		},
 		{
 			name:         "Malformed comment",
 			originalLine: "FROM alpine malformed comment",
-			wantErr:      fmt.Errorf("Remaining token in line that should be a comment but doesn't start with \"#\""),
+			wantErr:      fmt.Errorf("remaining token in line that should be a comment but doesn't start with \"#\""),
 		},
 		{
 			name:         "Correct comment",

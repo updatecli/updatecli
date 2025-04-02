@@ -172,8 +172,7 @@ func New(spec interface{}) (*Shell, error) {
 		interpreter = newSpec.Shell
 	}
 
-	environments := Environments{}
-
+	var environments Environments
 	if newSpec.Environments != nil {
 		environments = *newSpec.Environments
 	} else {

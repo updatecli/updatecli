@@ -100,8 +100,8 @@ func (s *Source) Run() (err error) {
 
 	logrus.Infof("%s %s", s.Result.Result, s.Result.Description)
 
-	if len(s.Config.ResourceConfig.Transformers) > 0 {
-		s.Output, err = s.Config.ResourceConfig.Transformers.Apply(s.Output)
+	if len(s.Config.Transformers) > 0 {
+		s.Output, err = s.Config.Transformers.Apply(s.Output)
 		if err != nil {
 			logrus.Errorf("%s %s", s.Result.Result, err)
 			s.Result.Result = result.FAILURE
@@ -133,12 +133,12 @@ func (c *Config) Validate() error {
 	missingParameters := []string{}
 
 	// Handle scmID deprecation
-	if len(c.ResourceConfig.DeprecatedSCMID) > 0 {
-		switch len(c.ResourceConfig.SCMID) {
+	if len(c.DeprecatedSCMID) > 0 {
+		switch len(c.SCMID) {
 		case 0:
 			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
-			c.ResourceConfig.SCMID = c.ResourceConfig.DeprecatedSCMID
-			c.ResourceConfig.DeprecatedSCMID = ""
+			c.SCMID = c.DeprecatedSCMID
+			c.DeprecatedSCMID = ""
 		default:
 			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"scmID", "scmid", "scmID")
@@ -146,30 +146,30 @@ func (c *Config) Validate() error {
 	}
 
 	// Validate that kind is set
-	if len(c.ResourceConfig.Kind) == 0 {
+	if len(c.Kind) == 0 {
 		missingParameters = append(missingParameters, "kind")
 	}
 
 	// Handle depends_on deprecation
-	if len(c.ResourceConfig.DeprecatedDependsOn) > 0 {
-		switch len(c.ResourceConfig.DependsOn) == 0 {
+	if len(c.DeprecatedDependsOn) > 0 {
+		switch len(c.DependsOn) == 0 {
 		case true:
 			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
-			c.ResourceConfig.DependsOn = c.ResourceConfig.DeprecatedDependsOn
-			c.ResourceConfig.DeprecatedDependsOn = []string{}
+			c.DependsOn = c.DeprecatedDependsOn
+			c.DeprecatedDependsOn = []string{}
 		case false:
 			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
-			c.ResourceConfig.DeprecatedDependsOn = []string{}
+			c.DeprecatedDependsOn = []string{}
 		}
 	}
 
 	// Ensure kind is lowercase
-	if c.ResourceConfig.Kind != strings.ToLower(c.ResourceConfig.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.ResourceConfig.Kind)
-		c.ResourceConfig.Kind = strings.ToLower(c.ResourceConfig.Kind)
+	if c.Kind != strings.ToLower(c.Kind) {
+		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		c.Kind = strings.ToLower(c.Kind)
 	}
 
-	err := c.ResourceConfig.Transformers.Validate()
+	err := c.Transformers.Validate()
 	if err != nil {
 		logrus.Errorln(err)
 		gotError = true
