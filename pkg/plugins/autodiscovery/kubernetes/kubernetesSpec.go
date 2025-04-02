@@ -8,9 +8,9 @@ type kubernetesFlavorManifestSpec struct {
 }
 
 type podTemplateSpec struct {
-	InitContainers []containerSpec `yaml:"initContainers,omitempty"`
-	Containers []containerSpec     `yaml:"containers,omitempty"`
-	Template   podControllerSpec   `yaml:"template,omitempty"`
+	InitContainers []containerSpec   `yaml:"initContainers,omitempty"`
+	Containers     []containerSpec   `yaml:"containers,omitempty"`
+	Template       podControllerSpec `yaml:"template,omitempty"`
 	// cronJob
 	JobTemplateSpec jobTemplateSpec `yaml:"jobTemplate,omitempty"`
 }
@@ -28,5 +28,5 @@ type podControllerSpec struct {
 
 type templateSpec struct {
 	InitContainers []containerSpec `yaml:"initContainers,omitempty"`
-	Containers []containerSpec     `yaml:"containers,omitempty"`
+	Containers     []containerSpec `yaml:"containers,omitempty"`
 }
