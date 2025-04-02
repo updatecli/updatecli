@@ -28,5 +28,5 @@ func New() (ci CIEngine, err error) {
 		return GitHubActions{}, nil
 	}
 
-	return nil, fmt.Errorf("Unknown CI Engine.")
+	return nil, fmt.Errorf("unknown CI Engine")
 }

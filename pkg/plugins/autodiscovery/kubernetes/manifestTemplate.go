@@ -75,7 +75,7 @@ targets:
 actions:
   {{ .ActionID }}:
     title: 'deps: bump container image digest for "{{ .ImageName }}:{{ .ImageTag }}"'
-{{ end }
+{{ end }}
 sources:
   {{ .SourceID }}-digest:
     name: 'get latest container image digest for "{{ .ImageName }}:{{ .ImageTag }}"'

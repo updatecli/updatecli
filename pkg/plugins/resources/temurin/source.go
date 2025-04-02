@@ -18,7 +18,7 @@ func (t *Temurin) Source(workingDir string, resultSource *result.Source) error {
 	if len(releaseNames) == 0 {
 		logrus.Debug("[temurin] empty response for 'release_names'.")
 		resultSource.Result = result.FAILURE
-		return fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details.")
+		return fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details")
 	}
 
 	// Only get the most recent, e.g. the first one (DESC order)
@@ -65,7 +65,7 @@ func (t *Temurin) Source(workingDir string, resultSource *result.Source) error {
 		return nil
 
 	default:
-		return fmt.Errorf("[temurin] Unknown value %q for 'result' field.", t.spec.Result)
+		return fmt.Errorf("[temurin] Unknown value %q for 'result' field", t.spec.Result)
 
 	}
 }

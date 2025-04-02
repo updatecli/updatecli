@@ -243,6 +243,14 @@ func (p *Pipeline) RunCleanActions() error {
 		}
 	}
 
+	if len(errs) > 0 {
+		logrus.Errorf("Failed to clean up action(s): %s", strings.Join(errs, ", "))
+		for i := range errs {
+			logrus.Errorf("  - %s", errs[i])
+		}
+		return fmt.Errorf("failed to clean up action(s):\n\t%s", strings.Join(errs, "\n\t* "))
+	}
+
 	return nil
 }
 

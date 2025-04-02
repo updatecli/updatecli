@@ -41,17 +41,17 @@ func (f *File) Condition(source string, scm scm.ScmHandler) (pass bool, message 
 		return false, fmt.Sprintf("condition on file %q did not pass", files), nil
 	}
 
-	return false, "", fmt.Errorf("Unexpected error happened on file. Please report to an issue.")
+	return false, "", fmt.Errorf("unexpected error happened on file. Please report to an issue")
 }
 
 func (f *File) condition(source string) (bool, error) {
 	var validationErrors []string
 
 	if len(f.spec.ReplacePattern) > 0 {
-		validationErrors = append(validationErrors, "Validation error in condition of type 'file': the attribute `spec.replacepattern` is only supported for targets.")
+		validationErrors = append(validationErrors, "Validation error in condition of type 'file': the attribute `spec.replacepattern` is only supported for targets")
 	}
 	if f.spec.ForceCreate {
-		validationErrors = append(validationErrors, "Validation error in condition of type 'file': the attribute `spec.forcecreate` is only supported for targets.")
+		validationErrors = append(validationErrors, "Validation error in condition of type 'file': the attribute `spec.forcecreate` is only supported for targets")
 	}
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {

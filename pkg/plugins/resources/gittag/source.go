@@ -28,7 +28,7 @@ func (gt *GitTag) Source(workingDir string, resultSource *result.Source) error {
 	}
 
 	if gt.directory == "" {
-		return fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+		return fmt.Errorf("unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
 	}
 
 	refs, err := gt.nativeGitHandler.TagRefs(gt.directory)

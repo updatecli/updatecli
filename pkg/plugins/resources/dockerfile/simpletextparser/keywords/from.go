@@ -102,11 +102,11 @@ func (f From) getTokens(originalLine string) (FromToken, error) {
 	lineLength := len(parsedLine)
 	if len(parsedLine) < 2 {
 		// Empty or malformed line
-		return tokens, fmt.Errorf("Got an empty or malformed line")
+		return tokens, fmt.Errorf("got an empty or malformed line")
 	}
 	tokens.Keyword = parsedLine[0]
 	if strings.ToLower(tokens.Keyword) != "from" {
-		return tokens, fmt.Errorf("Not a FROM line: %q", tokens.Keyword)
+		return tokens, fmt.Errorf("not a FROM line: %q", tokens.Keyword)
 	}
 	currentTokenIndex := 1
 
@@ -123,12 +123,12 @@ func (f From) getTokens(originalLine string) (FromToken, error) {
 
 	// The next token is always the image, a from line without image is not valid
 	if currentTokenIndex >= lineLength {
-		return tokens, fmt.Errorf("No image in line")
+		return tokens, fmt.Errorf("no image in line")
 	}
 
 	imageName, imageTag, imageDigest, err := dockerimage.ParseOCIReferenceInfo(parsedLine[currentTokenIndex])
 	if err != nil {
-		return tokens, fmt.Errorf("Could not parse image %q: %s", parsedLine[currentTokenIndex], err)
+		return tokens, fmt.Errorf("could not parse image %q: %s", parsedLine[currentTokenIndex], err)
 	}
 	tokens.Image = imageName
 	tokens.Tag = imageTag
@@ -167,7 +167,7 @@ func (f From) getTokens(originalLine string) (FromToken, error) {
 		currentTokenIndex += 1
 		if currentTokenIndex >= lineLength {
 			// Invalid alias, missing alias
-			return tokens, fmt.Errorf("Malformed FROM line, AS keyword but no value for it")
+			return tokens, fmt.Errorf("malformed FROM line, AS keyword but no value for it")
 		}
 		tokens.Alias = parsedLine[currentTokenIndex]
 		currentTokenIndex += 1
@@ -178,7 +178,7 @@ func (f From) getTokens(originalLine string) (FromToken, error) {
 	}
 	// Whatever remains should be a comment and start with #
 	if !strings.HasPrefix(parsedLine[currentTokenIndex], "#") {
-		return tokens, fmt.Errorf("Remaining token in line that should be a comment but doesn't start with \"#\"")
+		return tokens, fmt.Errorf("remaining token in line that should be a comment but doesn't start with \"#\"")
 	}
 	tokens.Comment = strings.Join(parsedLine[currentTokenIndex:], " ")
 

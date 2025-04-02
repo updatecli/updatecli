@@ -34,7 +34,7 @@ func getReleasesFromAPI(client *github.Client, owner, repository string) (allRel
 			// In addition to these rate limits, GitHub imposes a secondary rate limit on all API clients.
 			// This rate limit prevents clients from making too many concurrent requests.
 			if _, ok := err.(*github.AbuseRateLimitError); ok {
-				return nil, fmt.Errorf("Secondary rate limit reached")
+				return nil, fmt.Errorf("secondary rate limit reached")
 			}
 			return nil, fmt.Errorf("listing GitHub releases: %w", err)
 		}

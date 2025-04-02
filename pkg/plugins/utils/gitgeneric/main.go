@@ -706,7 +706,7 @@ func (g GoGit) TagHashes(workingDir string) (hashes []string, err error) {
 	logrus.Debugf("got tags: %v", hashes)
 
 	if len(hashes) == 0 {
-		return hashes, fmt.Errorf(ErrNoGitTagFound)
+		return hashes, fmt.Errorf("%s", ErrNoGitTagFound)
 	}
 
 	return hashes, nil
@@ -728,7 +728,7 @@ func (g GoGit) Tags(workingDir string) (names []string, err error) {
 	logrus.Debugf("got tags: %v", names)
 
 	if len(names) == 0 {
-		return names, fmt.Errorf(ErrNoGitTagFound)
+		return names, fmt.Errorf("%s", ErrNoGitTagFound)
 	}
 
 	return names, nil
@@ -803,7 +803,7 @@ func (g GoGit) TagRefs(workingDir string) (tags []DatedTag, err error) {
 	}
 
 	if len(listOfDatedTags) == 0 {
-		return []DatedTag{}, fmt.Errorf(ErrNoGitTagFound)
+		return []DatedTag{}, fmt.Errorf("%s", ErrNoGitTagFound)
 	}
 
 	// Sort tags by time

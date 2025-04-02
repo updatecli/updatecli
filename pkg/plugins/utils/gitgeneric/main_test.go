@@ -134,14 +134,9 @@ func TestTagsIntegration(t *testing.T) {
 	}
 
 	expectedTag := "v0.0.1"
-	found := false
 
 	// Test that the first tag from array is also the oldest one
-	if tags[0] == expectedTag {
-		found = true
-	}
-
-	if !found {
+	if tags[0] != expectedTag {
 		t.Errorf("Expected tag %q to be found in %q", expectedTag, tags)
 	}
 	os.Remove(workingDir)
@@ -169,14 +164,9 @@ func TestTagRefsIntegration(t *testing.T) {
 		Name: "v0.0.1",
 		Hash: "d0812d972468d97a3b7e70699f977854cfb83892",
 	}
-	found := false
 
 	// Test that the first tag from array is also the oldest one
-	if refs[0] == expectedRef {
-		found = true
-	}
-
-	if !found {
+	if refs[0] != expectedRef {
 		t.Errorf("Expected ref %v to be %v", expectedRef, refs[0])
 	}
 	os.Remove(workingDir)
@@ -200,14 +190,8 @@ func TestHashesIntegration(t *testing.T) {
 	}
 
 	expectedHash := "d0812d972468d97a3b7e70699f977854cfb83892"
-	found := false
 
-	// Test that the first tag from array is also the oldest one
-	if hashes[0] == expectedHash {
-		found = true
-	}
-
-	if !found {
+	if hashes[0] != expectedHash {
 		t.Errorf("Expected tag %q to be found in %q", expectedHash, hashes)
 	}
 	os.Remove(workingDir)

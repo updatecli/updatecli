@@ -36,10 +36,10 @@ func New(spec interface{}) (*Temurin, error) {
 
 	if len(newSpec.Platforms) > 0 {
 		if newSpec.Architecture != "" {
-			return nil, fmt.Errorf("[temurin] `spec.platform` and `spec.architecture` are mutually exclusive.")
+			return nil, fmt.Errorf("[temurin] `spec.platform` and `spec.architecture` are mutually exclusive")
 		}
 		if newSpec.OperatingSystem != "" {
-			return nil, fmt.Errorf("[temurin] `spec.platform` and `spec.operatingsystem` are mutually exclusive.")
+			return nil, fmt.Errorf("[temurin] `spec.platform` and `spec.operatingsystem` are mutually exclusive")
 		}
 	}
 
@@ -63,7 +63,7 @@ func New(spec interface{}) (*Temurin, error) {
 		newSpec.ReleaseType = "ga"
 	}
 	if newSpec.SpecificVersion != "" && newSpec.FeatureVersion != 0 {
-		return nil, fmt.Errorf("[temurin] resource with both 'specificversion' and 'featureversion' specified which are mutually exclusive.")
+		return nil, fmt.Errorf("[temurin] resource with both 'specificversion' and 'featureversion' specified which are mutually exclusive")
 	}
 
 	httpClient := httpclient.NewRetryClient().(*http.Client)
@@ -99,22 +99,22 @@ func New(spec interface{}) (*Temurin, error) {
 	}
 
 	if newSpec.ReleaseType != "ea" && newSpec.ReleaseType != "ga" {
-		return nil, fmt.Errorf("[temurin] Specified release type %q is invalid: Temurin only accepts 'ga' (stable builds) or 'ea' (nightly builds).", newResource.spec.ReleaseType)
+		return nil, fmt.Errorf("[temurin] Specified release type %q is invalid: Temurin only accepts 'ga' (stable builds) or 'ea' (nightly builds)", newResource.spec.ReleaseType)
 	}
 
 	for _, platform := range newSpec.Platforms {
 		splitPlatform := strings.Split(platform, "/")
 		if len(splitPlatform) > 2 {
-			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: too much items specified.", platform)
+			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: too much items specified", platform)
 		}
 		if len(splitPlatform) < 2 {
-			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: it misses a CPU architecture.", platform)
+			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: it misses a CPU architecture", platform)
 		}
 		if !slices.Contains(operatingSystems, splitPlatform[0]) {
-			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: %q is not a valid Operating System (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list).", platform, splitPlatform[0])
+			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: %q is not a valid Operating System (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list)", platform, splitPlatform[0])
 		}
 		if !slices.Contains(architectures, splitPlatform[1]) {
-			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: %q is not a valid Architecture (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list).", platform, splitPlatform[1])
+			return nil, fmt.Errorf("[temurin] Specified platform %q is not a valid Temurin platform: %q is not a valid Architecture (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list)", platform, splitPlatform[1])
 		}
 
 	}

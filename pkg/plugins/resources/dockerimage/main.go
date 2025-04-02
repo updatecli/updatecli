@@ -55,14 +55,14 @@ func New(spec interface{}) (*DockerImage, error) {
 		versionFilter: newFilter,
 	}
 
-	err = newSpec.InlineKeyChain.Validate()
+	err = newSpec.Validate()
 	if err != nil {
 		return nil, err
 	}
 
 	keychains := []authn.Keychain{}
 
-	if !newSpec.InlineKeyChain.Empty() {
+	if !newSpec.Empty() {
 		keychains = append(keychains, newSpec.InlineKeyChain)
 	}
 
@@ -87,8 +87,9 @@ func (di *DockerImage) createRef(source string) (name.Reference, error) {
 
 // checkImage checks if a container reference exists on the "remote" registry with a given set of options
 func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error) {
-	var remoteOptions []remote.Option = di.options
 	var queriedPlatform string
+
+	remoteOptions := di.options
 
 	if arch != "" {
 		os := "linux"

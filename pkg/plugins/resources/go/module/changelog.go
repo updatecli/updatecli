@@ -124,9 +124,10 @@ func getGitRepositoryURL(htmlContent string) string {
 		if n.Type == html.ElementNode && n.Data == "meta" {
 			var name, content string
 			for _, attr := range n.Attr {
-				if attr.Key == "name" {
+				switch attr.Key {
+				case "name":
 					name = attr.Val
-				} else if attr.Key == "content" {
+				case "content":
 					content = attr.Val
 				}
 			}
