@@ -61,8 +61,7 @@ func (df *Dockerfile) Source(workingDir string, resultSource *result.Source) err
 			stageInfo,
 			file,
 		)
-		return nil
-
 	}
-	return fmt.Errorf("Source is not supported for the plugin 'dockerfile'")
+
+	return nil
 }

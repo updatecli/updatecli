@@ -45,7 +45,7 @@ func (s *Spec) Validate() error {
 		errs = append(errs, ErrSpecFileAndFilesDefined)
 	}
 
-	if len(s.Key) == 0 && len(s.Key) == 0 {
+	if len(s.Key) == 0 {
 		errs = append(errs, ErrSpecKeyUndefined)
 	}
 

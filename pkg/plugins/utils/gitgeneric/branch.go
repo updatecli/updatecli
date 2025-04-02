@@ -61,7 +61,7 @@ func (g GoGit) BranchRefs(workingDir string) (branches []DatedBranch, err error)
 	}
 
 	if len(branches) == 0 {
-		return []DatedBranch{}, fmt.Errorf(ErrNoBranchFound)
+		return []DatedBranch{}, fmt.Errorf("%s", ErrNoBranchFound)
 	}
 
 	// Sort tags by time
@@ -72,7 +72,7 @@ func (g GoGit) BranchRefs(workingDir string) (branches []DatedBranch, err error)
 	logrus.Debugf("got branch refs: %v", branches)
 
 	if len(branches) == 0 {
-		return branches, fmt.Errorf(ErrNoBranchFound)
+		return branches, fmt.Errorf("%s", ErrNoBranchFound)
 	}
 
 	return branches, err
@@ -93,7 +93,7 @@ func (g GoGit) Branches(workingDir string) (branches []string, err error) {
 	logrus.Debugf("got branches: %v", branches)
 
 	if len(branches) == 0 {
-		return branches, fmt.Errorf(ErrNoBranchFound)
+		return branches, fmt.Errorf("%s", ErrNoBranchFound)
 	}
 
 	return branches, err
@@ -117,7 +117,7 @@ func (g GoGit) NewBranch(branch, workingDir string) (bool, error) {
 	}
 
 	if !head.Name().IsBranch() {
-		return false, fmt.Errorf("Branch %q is not a branch", head.Name())
+		return false, fmt.Errorf("branch %q is not a branch", head.Name())
 	}
 
 	// Create a new plumbing.HashReference object with the name of the branch

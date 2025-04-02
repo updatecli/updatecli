@@ -35,7 +35,8 @@ func (gb *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resu
 	}
 
 	if gb.directory == "" {
-		return fmt.Errorf("Unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
+		logrus.Errorf("unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
+		return fmt.Errorf("unknown Git working directory")
 	}
 
 	if gb.spec.SourceBranch == "" && scm == nil {

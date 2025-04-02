@@ -54,7 +54,7 @@ func joinURL(elems []string) (string, error) {
 	}
 
 	URL = elems[0]
-	if !(strings.HasPrefix(elems[0], "https://") || strings.HasPrefix(elems[0], "http://")) {
+	if !strings.HasPrefix(elems[0], "https://") && !strings.HasPrefix(elems[0], "http://") {
 		URL = "https://" + elems[0]
 	}
 	URL = strings.TrimSuffix(URL, "/")

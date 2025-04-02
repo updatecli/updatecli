@@ -28,7 +28,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", redact.URL(url), err)
+		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s", redact.URL(url), err)
 	}
 
 	req.Header.Set("User-Agent", httputils.UserAgent)
@@ -37,7 +37,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	res, err := webClient.Do(req)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s\n", redact.URL(url), err)
+		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s", redact.URL(url), err)
 	}
 	defer res.Body.Close()
 
@@ -45,7 +45,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	if res.StatusCode >= 400 {
 		_, _ = httputil.DumpResponse(res, false)
-		return []byte{}, "", fmt.Errorf("Got an HTTP error %d from the API.\n", res.StatusCode)
+		return []byte{}, "", fmt.Errorf("got an HTTP error %d from the API", res.StatusCode)
 	}
 
 	locationHeader = res.Header.Get("Location")
@@ -53,7 +53,7 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 
 	body, err = io.ReadAll(res.Body)
 	if err != nil {
-		return []byte{}, "", fmt.Errorf("something went wrong while decoding the answer of the request %q:\n%s\n", redact.URL(url), err)
+		return []byte{}, "", fmt.Errorf("something went wrong while decoding the answer of the request %q:\n%s", redact.URL(url), err)
 	}
 
 	return body, locationHeader, nil
@@ -86,13 +86,13 @@ func (t Temurin) apiGetLastFeatureRelease() (result int, err error) {
 func (t Temurin) apiGetInfoReleases() (result *apiInfoReleases, err error) {
 	body, err := t.apiGetBody(availableReleasesEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API releases information %q\n", err)
+		logrus.Errorf("something went wrong while getting Temurin API releases information %q", err)
 		return result, err
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		logrus.Errorf("something went wrong while decoding response from Temurin API releases information%q\n", err)
+		logrus.Errorf("something went wrong while decoding response from Temurin API releases information%q", err)
 		return result, err
 	}
 
@@ -102,13 +102,13 @@ func (t Temurin) apiGetInfoReleases() (result *apiInfoReleases, err error) {
 func (t Temurin) apiGetArchitectures() (result []string, err error) {
 	body, err := t.apiGetBody(architecturesEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API available architectures %q\n", err)
+		logrus.Errorf("something went wrong while getting Temurin API available architectures %q", err)
 		return result, err
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		logrus.Errorf("something went wrong while decoding response from Temurin API available architectures %q\n", err)
+		logrus.Errorf("something went wrong while decoding response from Temurin API available architectures %q", err)
 		return result, err
 	}
 
@@ -118,13 +118,13 @@ func (t Temurin) apiGetArchitectures() (result []string, err error) {
 func (t Temurin) apiGetOperatingSystems() (result []string, err error) {
 	body, err := t.apiGetBody(osEndpoints)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API available operating systems %q\n", err)
+		logrus.Errorf("something went wrong while getting Temurin API available operating systems %q.", err)
 		return result, err
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		logrus.Errorf("something went wrong while decoding response from Temurin API operating systems %q\n", err)
+		logrus.Errorf("something went wrong while decoding response from Temurin API operating systems %q.", err)
 		return result, err
 	}
 
@@ -198,7 +198,7 @@ func (t Temurin) apiGetReleaseNames() (result []string, err error) {
 
 	body, err := t.apiGetBody(apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API latest release information %q\n", err)
+		logrus.Errorf("something went wrong while getting Temurin API latest release information %q.", err)
 		return result, err
 	}
 
@@ -206,7 +206,7 @@ func (t Temurin) apiGetReleaseNames() (result []string, err error) {
 	err = json.Unmarshal(body, &apiResult)
 	if err != nil {
 		logrus.Debugf("[temurin] Failed decoding the response: %q\n", err)
-		return result, fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details.")
+		return result, fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details")
 	}
 
 	// Return only the most recent, e.g. the first one (sort is DESC in the URL)
@@ -227,7 +227,7 @@ func (t Temurin) apiGetInstallerUrl(releaseName string) (result string, err erro
 	logrus.Debugf("[temurin] using API endpoint %q", apiEndpoint)
 	locationHeader, err := t.apiGetRedirectLocation(apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API latest release information %q\n", err)
+		logrus.Errorf("something went wrong while getting Temurin API latest release information %q.", err)
 		return result, err
 	}
 
@@ -249,7 +249,7 @@ func (t Temurin) apiGetChecksumUrl(releaseName string) (result string, err error
 
 	installerChecksumUrl, err := t.apiGetRedirectLocation(apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API latest release information %q\n", err)
+		logrus.Errorf("something went wrong while getting Temurin API latest release information %q.", err)
 		return result, err
 	}
 
@@ -271,7 +271,7 @@ func (t Temurin) apiGetSignatureUrl(releaseName string) (result string, err erro
 
 	signatureUrl, err := t.apiGetRedirectLocation(apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API latest release information %q\n", err)
+		logrus.Errorf("something went wrong while getting Temurin API latest release information %q", err)
 		return result, err
 	}
 

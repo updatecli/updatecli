@@ -83,7 +83,7 @@ func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 	}
 	node, ok := rawNode.(Node)
 	if !ok {
-		return fmt.Errorf("Could not reconstruct node")
+		return fmt.Errorf("could not reconstruct node")
 	}
 
 	for _, dep := range node.DependsOn {

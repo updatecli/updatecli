@@ -67,42 +67,53 @@ func newRegistryAddress(webClient httpclient.HTTPClient, spec Spec) (registryAdd
 }
 
 func (r registryAddress) String() string {
-	if r.registryType == TypeProvider {
+	switch r.registryType {
+	case TypeProvider:
 		return r.provider.String()
-	} else if r.registryType == TypeModule {
+	case TypeModule:
 		return r.module.String()
+	default:
+		logrus.Debugf("unknown registry type %q", r.registryType)
 	}
 
 	return ""
 }
 
 func (r registryAddress) ForDisplay() string {
-	if r.registryType == TypeProvider {
+
+	switch r.registryType {
+	case TypeProvider:
 		return r.provider.ForDisplay()
-	} else if r.registryType == TypeModule {
+	case TypeModule:
 		return r.module.ForDisplay()
+	default:
+		logrus.Debugf("unknown registry type %q", r.registryType)
 	}
 
 	return ""
 }
 
 func (r registryAddress) Hostname() string {
-	if r.registryType == TypeProvider {
+	switch r.registryType {
+	case TypeProvider:
 		return r.provider.Hostname.String()
-	} else if r.registryType == TypeModule {
+	case TypeModule:
 		return r.module.Package.Host.String()
 	}
 
+	logrus.Debugf("unknown registry type %q", r.registryType)
 	return ""
 }
 
 func (r registryAddress) Path() string {
-	if r.registryType == TypeProvider {
+	switch r.registryType {
+	case TypeProvider:
 		return fmt.Sprintf("%s%s/%s/versions", r.wellKnown.ProviderPath, r.provider.Namespace, r.provider.Type)
-	} else if r.registryType == TypeModule {
+	case TypeModule:
 		return fmt.Sprintf("%s%s/versions", r.wellKnown.ModulesPath, r.module.Package.ForRegistryProtocol())
 	}
 
+	logrus.Debugf("unknown registry type %q", r.registryType)
 	return ""
 }
 

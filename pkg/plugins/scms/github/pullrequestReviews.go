@@ -67,7 +67,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string) error {
 	}
 
 	if len(userIDs) == 0 && len(teamIDs) == 0 {
-		return fmt.Errorf("No valid reviewers found among %v", p.spec.Reviewers)
+		return fmt.Errorf("no valid reviewers found among %v", p.spec.Reviewers)
 	}
 
 	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)

@@ -48,7 +48,7 @@ func ParseMarkdown(data []byte) (Sections, error) {
 			sections = append(
 				sections,
 				Section{
-					title:    string(node.Text(data)),
+					title:    string(node.Lines().Value(data)),
 					astNodes: nil,
 				},
 			)

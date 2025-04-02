@@ -78,7 +78,7 @@ func TestDockerfile_Source(t *testing.T) {
 				},
 			},
 			parserErr: true,
-			wantErr:   fmt.Errorf("✗ Unknown keyword \"quack\" provided for Dockerfile's instruction."),
+			wantErr:   fmt.Errorf("✗ Unknown keyword \"quack\" provided for Dockerfile's instruction"),
 			mockFile: text.MockTextRetriever{
 				Contents: map[string]string{
 					"SOURCE.Dockerfile": dockerfileFixture,

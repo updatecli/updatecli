@@ -46,7 +46,7 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 	}
 
 	if gt.directory == "" {
-		return false, "", fmt.Errorf("Unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+		return false, "", fmt.Errorf("unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
 	}
 
 	tags, err := gt.nativeGitHandler.Tags(gt.directory)
@@ -69,5 +69,4 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 	}
 
 	return true, fmt.Sprintf("git tag matching %q found\n", gt.versionFilter.Pattern), nil
-
 }

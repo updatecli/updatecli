@@ -33,14 +33,14 @@ func New(spec interface{}) (*Http, error) {
 	}
 
 	if newSpec.Url == "" {
-		return nil, fmt.Errorf("spec.url is not set but required.")
+		return nil, fmt.Errorf("spec.url is not set but required")
 	}
 
 	if newSpec.ResponseAsserts.StatusCode != 0 || len(newSpec.ResponseAsserts.Headers) > 0 {
 		// This resource is a condition as the asserts are specified
 		if newSpec.ReturnResponseHeader != "" {
 			// Cannot be both source and condition
-			return nil, fmt.Errorf("Cannot define both spec.responseasserts (source only) and spec.responseasserts (condition only).")
+			return nil, fmt.Errorf("cannot define both spec.responseasserts (source only) and spec.responseasserts (condition only)")
 		}
 	}
 

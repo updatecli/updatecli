@@ -314,7 +314,7 @@ func getMRID(mrWebLink string) string {
 }
 
 func encode(s string) string {
-	return strings.Replace(s, "/", "%2F", -1)
+	return strings.ReplaceAll(s, "/", "%2F")
 }
 
 // do wraps the Client.Do function by creating the Request and
