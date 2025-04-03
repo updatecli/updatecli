@@ -41,7 +41,7 @@ func (gb *GitBranch) Condition(source string, scm scm.ScmHandler) (pass bool, me
 	}
 
 	if gb.directory == "" {
-		return false, "", fmt.Errorf("Unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
+		return false, "", fmt.Errorf("unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
 	}
 
 	branches, err := gb.nativeGitHandler.Branches(gb.directory)

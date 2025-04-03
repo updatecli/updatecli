@@ -81,7 +81,7 @@ func TestInstruction_setKeywordLogic(t *testing.T) {
 				Keyword: "ONBUILD",
 			},
 			wantLogic:        nil,
-			wantErrorMessage: fmt.Sprintf("%s Provided keyword \"ONBUILD\" not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation.", result.FAILURE),
+			wantErrorMessage: fmt.Sprintf("%s Provided keyword \"ONBUILD\" not supported (yet). Feel free to open an issue explaining your use-case to help adding the implementation", result.FAILURE),
 		},
 		{
 			name: "Unknown instruction",
@@ -89,7 +89,7 @@ func TestInstruction_setKeywordLogic(t *testing.T) {
 				Keyword: "QUACK",
 			},
 			wantLogic:        nil,
-			wantErrorMessage: fmt.Sprintf("%s Unknown keyword \"QUACK\" provided for Dockerfile's instruction.", result.FAILURE),
+			wantErrorMessage: fmt.Sprintf("%s Unknown keyword \"QUACK\" provided for Dockerfile's instruction", result.FAILURE),
 		},
 	}
 	for _, tt := range tests {
@@ -167,12 +167,12 @@ func TestSimpleTextDockerfileParser_FindInstruction(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			parserUnderTest, err := NewSimpleTextDockerfileParser(tt.givenInstruction)
 			if err != nil {
-				t.Errorf("Error while calling NewSimpleTextDockerfileParser with argument %v.", tt.givenInstruction)
+				t.Errorf("error while calling NewSimpleTextDockerfileParser with argument %v", tt.givenInstruction)
 			}
 
 			originalDockerfile, err := os.ReadFile("./test_fixtures/" + tt.fixtureDockerfile)
 			if err != nil {
-				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
+				t.Errorf("error while reading file %q: %v", tt.fixtureDockerfile, err)
 			}
 
 			got := parserUnderTest.FindInstruction(originalDockerfile, tt.givenStage)
@@ -267,7 +267,7 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 				"matcher": "HELM_VERSION",
 			},
 			expectedChanges:      types.ChangedLines{},
-			expectedErrorMessage: fmt.Sprintf("%s No line found matching the keyword \"ARG\" and the matcher \"HELM_VERSION\".", result.FAILURE),
+			expectedErrorMessage: fmt.Sprintf("%s No line found matching the keyword \"ARG\" and the matcher \"HELM_VERSION\"", result.FAILURE),
 		},
 		{
 			name:              "Instruction kept the same",

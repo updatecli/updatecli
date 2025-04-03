@@ -147,7 +147,7 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 	}
 	sourceType := getSourceType(evaluatedSource)
 	if sourceType == "" {
-		return source, fmt.Errorf("Could not get source type from source url %v", redact.URL(evaluatedSource))
+		return source, fmt.Errorf("could not get source type from source url %v", redact.URL(evaluatedSource))
 	}
 	source.sourceType = sourceType
 	if sourceType == SourceTypeRegistry || sourceType == SourceTypeGit || sourceType == SourceTypeGithub {
@@ -165,10 +165,12 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 			return source, err
 		}
 		var param string
-		if sourceType == SourceTypeRegistry {
+
+		switch sourceType {
+		case SourceTypeRegistry:
 			param = "version"
 			source.baseUrl = fmt.Sprintf("%s%s", u.Host, u.Path)
-		} else if sourceType == SourceTypeGit {
+		case SourceTypeGit:
 			// Git
 			param = "ref"
 			parts := strings.Split(fmt.Sprintf("%s:%s", u.Scheme, u.Opaque), "://")
@@ -176,14 +178,15 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 				source.protocol = parts[0]
 				source.baseUrl = parts[1]
 			}
-		} else {
+		default:
 			// Github
 			param = "ref"
 			source.baseUrl = u.Path
 		}
+
 		version := strings.TrimPrefix(params.Get(param), "v")
 		if version == "" && !allowNoVersion {
-			return source, fmt.Errorf("Could not get version from source url %v", redact.URL(evaluatedSource))
+			return source, fmt.Errorf("could not get version from source url %v", redact.URL(evaluatedSource))
 		}
 		source.version = version
 		return source, nil
@@ -200,16 +203,21 @@ func getModuleFromUrl(evaluatedSource string, rawSource string, allowNoVersion b
 	module = &terragruntModule{
 		source: source,
 	}
-	if source.sourceType == SourceTypeRegistry {
+
+	switch source.sourceType {
+	case SourceTypeRegistry:
 		registryModule, err := terraformRegistryAddress.ParseModuleSource(source.baseUrl)
 		if err != nil {
 			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(source.baseUrl), err)
 			return nil, err
 		}
 		module.registryModule = &registryModule
-	} else if source.sourceType == SourceTypeGit {
-
+	case SourceTypeGit:
+		//
+	default:
+		logrus.Errorf("Unsupported source type %q", source.sourceType)
 	}
+
 	return module, nil
 }
 

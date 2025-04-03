@@ -112,8 +112,6 @@ func TestParseMessage(t *testing.T) {
 			if strings.Compare(err.Error(), data.ExpectedError.Error()) != 0 {
 				t.Errorf("Wrong sign %d err:\n\tExpected:\t\t%v\n\tGot:\t\t%v\n", id, data.ExpectedError, err)
 			}
-		} else if err != nil {
-			t.Errorf("Unexpected error %q for sign #%d", err, id)
 		}
 	}
 }

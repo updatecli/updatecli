@@ -227,7 +227,7 @@ func Test_Validate(t *testing.T) {
 			sut := DockerImage{
 				spec: tt.spec,
 			}
-			gotErr := sut.spec.InlineKeyChain.Validate()
+			gotErr := sut.spec.Validate()
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

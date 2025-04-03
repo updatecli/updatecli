@@ -57,7 +57,7 @@ func (s SimpleKeyword) GetValue(originalLine, matcher string) (string, error) {
 			return tokens.Value, nil
 		}
 	}
-	return "", fmt.Errorf("Value not found in line")
+	return "", fmt.Errorf("value not found in line")
 }
 
 func (s SimpleKeyword) getTokens(originalLine string) (SimpleTokens, error) {
@@ -66,10 +66,10 @@ func (s SimpleKeyword) getTokens(originalLine string) (SimpleTokens, error) {
 	lineLength := len(parsedLine)
 	if lineLength < 2 {
 		// Empty or malformed line
-		return tokens, fmt.Errorf("Got an empty or malformed line")
+		return tokens, fmt.Errorf("got an empty or malformed line")
 	}
-	if strings.ToLower(parsedLine[0]) != strings.ToLower(s.Keyword) {
-		return tokens, fmt.Errorf("Expected %q keyword: %q", s.Keyword, parsedLine[0])
+	if !strings.EqualFold(parsedLine[0], s.Keyword) {
+		return tokens, fmt.Errorf("expected %q keyword: %q", s.Keyword, parsedLine[0])
 	}
 	// Save token case
 	tokens.Keyword = parsedLine[0]
@@ -92,7 +92,7 @@ func (s SimpleKeyword) getTokens(originalLine string) (SimpleTokens, error) {
 	if lineLength > commentIndex {
 		// We may have a comment
 		if !strings.HasPrefix(parsedLine[2], "#") {
-			return tokens, fmt.Errorf("Remaining token in line that should be a comment but doesn't start with \"#\"")
+			return tokens, fmt.Errorf("remaining token in line that should be a comment but doesn't start with \"#\"")
 		}
 		tokens.Comment = strings.Join(parsedLine[commentIndex:], " ")
 	}

@@ -1,101 +1,108 @@
----
-linters-settings:
-  depguard:
-    rules:
-      main:
-        deny:
-          - pkg: "github.com/alecthomas/assert"
-            desc: not allowed
-          - pkg: "github.com/magiconair/properties/assert"
-            desc: not allowed
-  dupl:
-    threshold: 100
-  exhaustive:
-    default-signifies-exhaustive: false
-  funlen:
-    lines: 200
-    statements: 150
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport   # https://github.com/go-critic/go-critic/issues/845
-      - ifElseChain
-      - octalLiteral
-      - whyNoLint
-      - wrapperFunc
-  gocyclo:
-    min-complexity: 15
-  govet:
-    settings:
-      shadow:
-        # Whether to be strict about shadowing; can be noisy.
-        # Default: false
-        strict: true
-    enable-all: true
-  lll:
-    line-length: 140
-  misspell:
-    locale: US
-  nolintlint:
-    allow-unused: false         # report any unused nolint directives
-    require-explanation: false  # don't require an explanation for nolint directives
-    require-specific: false     # don't require nolint directives to be specific about which linter is being skipped
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - depguard
     - dogsled
     - errcheck
     - funlen
-    # - gocognit
     - goconst
-    # - gocyclo
-    - gofmt
-    - goimports
     - goprintffuncname
     - gosec
-    - gosimple
     - ineffassign
-    # - lll
     - misspell
     - nakedret
     - nolintlint
     - rowserrcheck
-    # We should take some time to fix issues reported by this linter
-    # - stylecheck
-    - typecheck
+    - staticcheck
     - unconvert
     - unparam
     - unused
-    # - whitespace
-issues:
-  # Excluding configuration per-path, per-linter, per-text and per-source
-  exclude-rules:  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-    - path: _test\.go
-      linters:
-        - gomnd
-        - funlen
-    - path: _expansion_test\.go
-      linters:
-        - testpackage
-    # https://github.com/go-critic/go-critic/issues/926
-    - linters:
-        - gocritic
-      text: "unnecessaryDefer:"
-  exclude-dirs:
-    - test/testdata_etc
-    - internal/cache
-    - internal/renameio
-    - internal/robustio
-run:
-  timeout: 5m
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: github.com/alecthomas/assert
+              desc: not allowed
+            - pkg: github.com/magiconair/properties/assert
+              desc: not allowed
+    dupl:
+      threshold: 100
+    exhaustive:
+      default-signifies-exhaustive: false
+    funlen:
+      lines: 200
+      statements: 150
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      disabled-checks:
+        - dupImport
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+        - wrapperFunc
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gocyclo:
+      min-complexity: 15
+    govet:
+      enable-all: true
+      settings:
+        shadow:
+          strict: true
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: false
+      require-specific: false
+      allow-unused: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - funlen
+          - mnd
+        path: _test\.go
+      - linters:
+          - testpackage
+        path: _expansion_test\.go
+      - linters:
+          - gocritic
+        text: 'unnecessaryDefer:'
+    paths:
+      - test/testdata_etc
+      - internal/cache
+      - internal/renameio
+      - internal/robustio
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - test/testdata_etc
+      - internal/cache
+      - internal/renameio
+      - internal/robustio
+      - third_party$
+      - builtin$
+      - examples$

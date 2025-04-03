@@ -229,14 +229,10 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 		if !dryRun {
 			newFile, err := os.Create(y.files[filePath].filePath)
-
-			// https://staticcheck.io/docs/checks/#SA5001
-			//lint:ignore SA5001 We want to defer the file closing before exiting the function
-			defer newFile.Close()
-
 			if err != nil {
 				return 0, ignoredFiles, fmt.Errorf("creating file %q: %w", originFilePath, err)
 			}
+			defer newFile.Close()
 
 			err = y.contentRetriever.WriteToFile(
 				y.files[filePath].content,
@@ -353,14 +349,10 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 
 		if !dryRun {
 			newFile, err := os.Create(y.files[filePath].filePath)
-
-			// https://staticcheck.io/docs/checks/#SA5001
-			//lint:ignore SA5001 We want to defer the file closing before exiting the function
-			defer newFile.Close()
-
 			if err != nil {
 				return 0, ignoredFiles, fmt.Errorf("creating file %q: %w", originFilePath, err)
 			}
+			defer newFile.Close()
 
 			err = y.contentRetriever.WriteToFile(
 				y.files[filePath].content,

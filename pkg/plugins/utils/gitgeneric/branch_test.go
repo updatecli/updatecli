@@ -25,14 +25,9 @@ func TestBranchIntegration(t *testing.T) {
 
 	// Branch v1 is the oldest branch, and there is no plan to remove it
 	expectedBranch := "v1"
-	found := false
 
 	// Test that the first tag from array is also the oldest one
-	if branches[0] == expectedBranch {
-		found = true
-	}
-
-	if !found {
+	if branches[0] != expectedBranch {
 		t.Errorf("Expected tag %q to be found in %q", expectedBranch, branches)
 	}
 	os.Remove(workingDir)

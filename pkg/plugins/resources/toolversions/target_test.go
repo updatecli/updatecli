@@ -69,7 +69,7 @@ func TestTarget(t *testing.T) {
 			expectedResult:   false,
 			sourceInput:      "M",
 			wantErr:          true,
-			expectedErrorMsg: errors.New("key \"doNotExist\" does not exist. Use createMissingKey if you want to create the key."),
+			expectedErrorMsg: errors.New("key \"doNotExist\" does not exist. Use createMissingKey if you want to create the key"),
 		},
 	}
 

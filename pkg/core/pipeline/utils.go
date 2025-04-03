@@ -90,7 +90,7 @@ func ExtractDepsFromTemplate(tmplStr string) ([]string, error) {
 	results := []string{}
 
 	// Walk through the parsed template' s tree nodes
-	for _, node := range tmpl.Tree.Root.Nodes {
+	for _, node := range tmpl.Root.Nodes {
 		if actionNode, ok := node.(*parse.ActionNode); ok {
 			for _, command := range actionNode.Pipe.Cmds {
 				if len(command.Args) > 1 {
@@ -182,48 +182,53 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 				kind = target.Config.Kind
 			}
 		}
-		if graphFlavor == GraphFlavorDot {
-			graphOutput.WriteString(
-				fmt.Sprintf(
-					"    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n",
-					node,
-					strings.ReplaceAll(name, `"`, `\"`),
-					kind,
-					shape,
-					color,
-				),
+
+		switch graphFlavor {
+		case GraphFlavorDot:
+
+			fmt.Fprintf(
+				graphOutput,
+				"    %q [label=\"%s (%s)\", shape=%s, style=filled, color=%s];\n",
+				node,
+				strings.ReplaceAll(name, `"`, `\"`),
+				kind,
+				shape,
+				color,
 			)
-		} else if graphFlavor == GraphFlavorMermaid {
-			graphOutput.WriteString(
-				fmt.Sprintf(
-					"    %s%s\"%s (%s)\"%s\n",
-					node,
-					openingBracket,
-					strings.ReplaceAll(name, `"`, `:#quot;`),
-					kind,
-					closingBracket,
-				),
+
+		case GraphFlavorMermaid:
+			fmt.Fprintf(
+				graphOutput,
+				"    %s%s\"%s (%s)\"%s\n",
+				node,
+				openingBracket,
+				strings.ReplaceAll(name, `"`, `:#quot;`),
+				kind,
+				closingBracket,
 			)
+		default:
+			logrus.Warningf("Unsupported graph flavor: %s", graphFlavor)
 		}
 	}
 	for successor := range successors {
 		if node != rootVertex {
-			if graphFlavor == GraphFlavorDot {
-				graphOutput.WriteString(
-					fmt.Sprintf(
-						"    %q -> %q;\n",
-						node,
-						successor,
-					),
+			switch graphFlavor {
+			case GraphFlavorDot:
+				fmt.Fprintf(
+					graphOutput,
+					"    %q -> %q;\n",
+					node,
+					successor,
 				)
-			} else if graphFlavor == GraphFlavorMermaid {
-				graphOutput.WriteString(
-					fmt.Sprintf(
-						"    %s --> %s\n",
-						node,
-						successor,
-					),
+			case GraphFlavorMermaid:
+				fmt.Fprintf(
+					graphOutput,
+					"    %s --> %s\n",
+					node,
+					successor,
 				)
+			default:
+				logrus.Warningf("Unsupported graph flavor: %s", graphFlavor)
 			}
 		}
 		err = p.traverseAndWriteGraph(d, successor, graphFlavor, graphOutput, visited)
@@ -243,11 +248,16 @@ func (p *Pipeline) Graph(flavor string) error {
 	resources.ReduceTransitively()
 	visited := make(map[string]bool)
 	var graphOutput strings.Builder
-	if flavor == GraphFlavorDot {
+
+	switch flavor {
+	case GraphFlavorDot:
 		graphOutput.WriteString("digraph G {\n")
-	} else if flavor == GraphFlavorMermaid {
+	case GraphFlavorMermaid:
 		graphOutput.WriteString("graph TD\n")
+	default:
+		logrus.Debugf("Unsupported graph flavor: %s", flavor)
 	}
+
 	err = p.traverseAndWriteGraph(resources, rootVertex, flavor, &graphOutput, visited)
 	if err != nil {
 		return err

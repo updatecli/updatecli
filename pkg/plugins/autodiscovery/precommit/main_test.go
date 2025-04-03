@@ -159,10 +159,7 @@ targets:
 				stringPipelines = append(stringPipelines, string(bytesPipelines[i]))
 			}
 
-			pipelines := []string{}
-
 			for i := range stringPipelines {
-				pipelines = append(pipelines, stringPipelines[i])
 				assert.Equal(t, tt.expectedPipelines[i], stringPipelines[i])
 			}
 		})

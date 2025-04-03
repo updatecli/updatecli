@@ -158,7 +158,7 @@ func mergeValueFile(valuesFiles ...map[string]interface{}) (results map[string]i
 
 	for _, values := range valuesFiles {
 		if err := mergo.Merge(&results, values, mergo.WithOverride); err != nil {
-			err = fmt.Errorf("Error while merging values files: %v", err)
+			err = fmt.Errorf("merging values files: %w", err)
 			logrus.Errorln(err)
 		}
 	}

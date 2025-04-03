@@ -68,7 +68,7 @@ func Marshal(data *parser.Result, document *string) (err error) {
 			arguments = DefaultForm(node)
 
 		default:
-			return fmt.Errorf("Instruction %s not supported", instruction)
+			return fmt.Errorf("instruction %s not supported", instruction)
 		}
 
 		if len(arguments) > 0 {

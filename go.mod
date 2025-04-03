@@ -43,11 +43,11 @@ require (
 	github.com/google/go-containerregistry v0.20.3
 	github.com/google/go-github/v69 v69.2.0
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/hcl/v2 v2.23.0
+	github.com/hashicorp/hcl/v2 v2.23.1-0.20250211201033-5c140ce1cb20
 	github.com/hashicorp/terraform-registry-address v0.2.4
 	github.com/invopop/jsonschema v0.13.0
 	github.com/joho/godotenv v1.5.1
-	github.com/minamijoyo/hcledit v0.2.11
+	github.com/minamijoyo/hcledit v0.2.17
 	github.com/minamijoyo/tfupdate v0.8.0
 	github.com/muesli/mango-cobra v1.2.0
 	github.com/muesli/roff v0.1.0
@@ -139,7 +139,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
