@@ -27,12 +27,24 @@ func (k Kubernetes) discoverKubernetesManifest(file, relativeFile string) [][]by
 			key: "$.spec.containers[%d].image",
 		},
 		{
+			cs:  data.Spec.InitContainers,
+			key: "$.spec.initContainers[%d].image",
+		},
+		{
 			cs:  data.Spec.Template.Spec.Containers,
 			key: "$.spec.template.spec.containers[%d].image",
 		},
 		{
+			cs:  data.Spec.Template.Spec.InitContainers,
+			key: "$.spec.template.spec.initContainers[%d].image",
+		},
+		{
 			cs:  data.Spec.JobTemplateSpec.Spec.Template.Spec.Containers,
 			key: "$.spec.jobTemplate.spec.template.spec.containers[%d].image",
+		},
+		{
+			cs:  data.Spec.JobTemplateSpec.Spec.Template.Spec.InitContainers,
+			key: "$.spec.jobTemplate.spec.template.spec.initContainers[%d].image",
 		},
 	}
 	for _, v := range list {

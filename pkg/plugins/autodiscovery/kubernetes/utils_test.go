@@ -25,6 +25,7 @@ func TestSearchFiles(t *testing.T) {
 			path: "testdata",
 			expectedResults: []string{
 				"testdata/cronjob/cronjob.yaml",
+				"testdata/initContainers/initContainers.yaml",
 				"testdata/kustomize/deployment.yaml",
 				"testdata/latest/pod.yaml",
 				"testdata/prow/prow.yaml",
