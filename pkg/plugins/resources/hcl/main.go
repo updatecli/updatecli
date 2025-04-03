@@ -68,7 +68,7 @@ func New(spec interface{}) (*Hcl, error) {
 func (h *Hcl) Query(resourceFile file) (string, error) {
 	query := h.spec.Path
 
-	sink := editor.NewAttributeGetSink(query)
+	sink := editor.NewAttributeGetSink(query, true)
 
 	inStream := strings.NewReader(resourceFile.content)
 	outStream := new(bytes.Buffer)

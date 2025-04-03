@@ -470,8 +470,8 @@ github.com/hashicorp/golang-lru/v2 v2.0.5 h1:wW7h1TG88eUIJ2i69gaE3uNVtEPIagzhGvH
 github.com/hashicorp/golang-lru/v2 v2.0.5/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM=
 github.com/hashicorp/hcl v1.0.1-vault-5 h1:kI3hhbbyzr4dldA8UdTb7ZlVVlI2DACdCfz31RPDgJM=
 github.com/hashicorp/hcl v1.0.1-vault-5/go.mod h1:XYhtn6ijBSAj6n4YqAaf7RBPS4I06AItNorpy+MoQNM=
-github.com/hashicorp/hcl/v2 v2.23.0 h1:Fphj1/gCylPxHutVSEOf2fBOh1VE4AuLV7+kbJf3qos=
-github.com/hashicorp/hcl/v2 v2.23.0/go.mod h1:62ZYHrXgPoX8xBnzl8QzbWq4dyDsDtfCRgIq1rbJEvA=
+github.com/hashicorp/hcl/v2 v2.23.1-0.20250211201033-5c140ce1cb20 h1:wPU89nH3VGqF53Ab59jgdCBNLdDwECqZFPXWkAF4cNI=
+github.com/hashicorp/hcl/v2 v2.23.1-0.20250211201033-5c140ce1cb20/go.mod h1:k+HgkLpoWu9OS81sy4j1XKDXaWm/rLysG33v5ibdDnc=
 github.com/hashicorp/terraform-config-inspect v0.0.0-20230614215431-f32df32a01cd h1:1uPcotqoL4TjcGKlgIe7OFSRplf7BMVtUjekwmCrvuM=
 github.com/hashicorp/terraform-config-inspect v0.0.0-20230614215431-f32df32a01cd/go.mod h1:l8HcFPm9cQh6Q0KSWoYPiePqMvRFenybP1CH2MjKdlg=
 github.com/hashicorp/terraform-registry-address v0.2.4 h1:JXu/zHB2Ymg/TGVCRu10XqNa4Sh2bWcqCNyKWjnCPJA=
@@ -557,8 +557,8 @@ github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxU
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/miekg/dns v1.1.57 h1:Jzi7ApEIzwEPLHWRcafCN9LZSBbqQpxjt/wpgvg7wcM=
 github.com/miekg/dns v1.1.57/go.mod h1:uqRjCRUuEAA6qsOiJvDd+CFo/vW+y5WR6SNmHE55hZk=
-github.com/minamijoyo/hcledit v0.2.11 h1:FyVR6xGL0DpBLX31OmkKoS9crndv4mkTo7V9k03ibtE=
-github.com/minamijoyo/hcledit v0.2.11/go.mod h1:KzCO5VMH3DDjnQQr0z0PRaLpR86PRFEJVR3/rfjuRf4=
+github.com/minamijoyo/hcledit v0.2.17 h1:5FFiUu8BtJeldqb8OhZ4fKoGZuH3oiW30AM0dHuUIPQ=
+github.com/minamijoyo/hcledit v0.2.17/go.mod h1:WBqBBcmQc//q7d35i/vtO9FWeZ1mMLr2IdkePh820L4=
 github.com/minamijoyo/tfupdate v0.8.0 h1:BnclxrE4rY0KzJ/PRrcCYeDEk6n5mE5SyRV5LVqLvKA=
 github.com/minamijoyo/tfupdate v0.8.0/go.mod h1:6Sbx+YwrgKCLA4SB9nHn+7GseeiAj4LBcqcqGSTkKZw=
 github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=
