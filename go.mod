@@ -37,7 +37,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.1.5
 	github.com/beevik/etree v1.5.0
 	github.com/drone/go-scm v1.39.2
-	github.com/fluxcd/helm-controller/api v0.37.4
+	github.com/fluxcd/helm-controller/api v1.2.0
 	github.com/fluxcd/source-controller/api v1.5.0
 	github.com/goccy/go-yaml v1.16.0
 	github.com/google/go-containerregistry v0.20.3
