@@ -1,0 +1,15 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  selector:
+    matchLabels:
+      app: init-stuff
+  template:
+    metadata:
+      labels:
+        app: init-stuff
+    spec:
+      initContainers:
+      - name: updatecli
+        image: "ghcr.io/updatecli/updatecli:v0.67.0"
