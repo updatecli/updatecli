@@ -21,4 +21,5 @@ We are adding public references of Updatecli but feel free to add your organizat
 * [HM Courts & Tribunals Service ](https://www.gov.uk/government/organisations/hm-courts-and-tribunals-service)
 * [Bloomberg](https://www.bloomberg.com)
 * [Mbrella](https://www.mbrella.eu)
+* [Criteo](https://www.criteo.com)
 * [Add your company here](https://github.com/updatecli/updatecli/blob/main/ADOPTERS.md)
