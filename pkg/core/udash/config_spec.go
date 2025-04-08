@@ -2,8 +2,12 @@ package udash
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 // spec defines the structure of the config file
@@ -76,12 +80,13 @@ func writeConfigFile(configFileName string, data *spec) error {
 func updateConfigFile(data authData) error {
 
 	updatecliConfigPath, err := initConfigFile()
-	if err != nil && !os.IsNotExist(err) {
+
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("init Updatecli configuration file: %w", err)
 	}
 
 	d, err := readConfigFile()
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("read Updatecli configuration file: %w", err)
 	}
 
@@ -101,6 +106,8 @@ func updateConfigFile(data authData) error {
 	if err != nil {
 		return fmt.Errorf("write Updatecli configuration file: %w", err)
 	}
+
+	logrus.Debugf("Updatecli configuration file %s updated", updatecliConfigPath)
 
 	return nil
 }

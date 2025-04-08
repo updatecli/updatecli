@@ -5,8 +5,10 @@ package udash
 */
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
@@ -141,7 +143,7 @@ func authorizeUser(frontURL, clientID, authDomain, audience, redirectURL, access
 			URL:   frontURL,
 		})
 		if err != nil {
-			if !os.IsNotExist(err) {
+			if !errors.Is(err, fs.ErrNotExist) {
 
 				logrus.Errorln(err)
 				// close the HTTP server and return

@@ -35,7 +35,8 @@ func Login(udashEndpoint, udashAPIEndpoint, clientID, issuer, audience, accessTo
 	setParam(&udashEndpoint, envVariableURL, "URL", DefaultEnvVariableURL)
 
 	if isAuthFlagParamEmpty {
-		logrus.Debugf("Udash api detected via environment variable %q, ignoring config file", DefaultEnvVariableAPIURL)
+		logrus.Debugf("No authentication parameters provided, skipping authorization")
+
 		err := updateConfigFile(authData{
 			URL:   udashEndpoint,
 			API:   udashAPIEndpoint,

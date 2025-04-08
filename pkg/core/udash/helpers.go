@@ -1,6 +1,8 @@
 package udash
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,7 +40,7 @@ func initConfigFile() (string, error) {
 
 	updatecliConfigDir := filepath.Join(userConfigDir, "updatecli")
 
-	if _, err := os.Stat(updatecliConfigDir); os.IsNotExist(err) {
+	if _, err := os.Stat(updatecliConfigDir); errors.Is(err, fs.ErrNotExist) {
 		err := os.MkdirAll(updatecliConfigDir, 0755)
 		if err != nil {
 			return "", err
