@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 
 	"github.com/sirupsen/logrus"
 )
@@ -39,9 +40,15 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		return manifest, nil
 	}
 
+	dependencyManifest := dependencyManifestWithCargoUpgrade
+	if !isCargoUpgradeInstalled(c.cargoUpgradeCheckerExecutor) {
+		dependencyManifest = dependencyManifestWithoutCargoUpgrade
+		logrus.Debug("Falling back to toml engine for upgrade as `cargo upgrade` is not available")
+	}
+
 	tmpl, err := template.New("manifest").Parse(dependencyManifest)
 	if err != nil {
-		logrus.Debugln(err)
+		logrus.Errorln(err)
 		return manifest, err
 	}
 	var existingSourceKey string
@@ -69,14 +76,20 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		}
 	}
 
-	sourceVersionFilterKind := "semver"
-	sourceVersionFilterPattern := dependency.Version
+	filter := c.spec.VersionFilter
+	if c.spec.VersionFilter.IsZero() {
+		filter.Kind = version.SEMVERVERSIONKIND
+		filter.Pattern = "*"
+	}
 
-	if isStrictSemver(dependency.Version) {
-		sourceVersionFilterPattern = ">=" + dependency.Version
+	sourceVersionFilterKind := filter.Kind
+	sourceVersionFilterPattern := filter.Pattern
 
-		if !c.spec.VersionFilter.IsZero() {
-			sourceVersionFilterKind = c.versionFilter.Kind
+	if filter.Kind == version.SEMVERVERSIONKIND && filter.Pattern != "*" {
+		sourceVersionFilterPattern = dependency.Version
+
+		if isStrictSemver(dependency.Version) {
+
 			sourceVersionFilterPattern, err = c.versionFilter.GreaterThanPattern(dependency.Version)
 			if err != nil {
 				logrus.Debugf("building version filter pattern: %s", err)
@@ -100,7 +113,6 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		ConditionID                string
 		ConditionQuery             string
 		File                       string
-		TargetIDEnable             bool
 		TargetID                   string
 		TargetName                 string
 		TargetFile                 string
@@ -129,7 +141,6 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		ConditionID:                dependency.Name,
 		ConditionQuery:             ConditionQuery,
 		File:                       relativeFile,
-		TargetIDEnable:             isStrictSemver(dependency.Version),
 		TargetID:                   dependency.Name,
 		TargetName:                 fmt.Sprintf("deps(cargo): bump crate dependency %q to {{ source %q }}", dependency.Name, dependency.Name),
 		TargetFile:                 filepath.Base(foundFile),
@@ -146,7 +157,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 	}
 
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		logrus.Errorln(err)
 		return manifest, err
 	}
 	return manifest, nil

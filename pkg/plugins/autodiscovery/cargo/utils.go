@@ -3,6 +3,7 @@ package cargo
 import (
 	"fmt"
 	"io/fs"
+	"os/exec"
 	"path/filepath"
 
 	sv "github.com/Masterminds/semver/v3"
@@ -10,6 +11,22 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
+
+type cargoUpgradeCheckerExecutor interface {
+	Run() error
+}
+
+type RealCargoUpgradeCheckerExecutor struct{}
+
+func (c RealCargoUpgradeCheckerExecutor) Run() error {
+	return exec.Command("cargo", "upgrade", "--version").Run()
+}
+
+// isCargoUpdateInstalled check if the cargo-update binary is available
+func isCargoUpgradeInstalled(c cargoUpgradeCheckerExecutor) bool {
+	err := c.Run()
+	return err == nil
+}
 
 // findCargoFiles search, recursively, for every files named Cargo.toml from a root directory.
 func findCargoFiles(rootDir string, validFiles []string) ([]string, error) {
