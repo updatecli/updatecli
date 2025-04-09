@@ -69,14 +69,21 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		}
 	}
 
-	sourceVersionFilterKind := "semver"
-	sourceVersionFilterPattern := dependency.Version
+	filter := c.spec.VersionFilter
+	if c.spec.VersionFilter.IsZero() {
+		filter.Kind = "semver"
+		filter.Pattern = "*"
+	}
 
-	if isStrictSemver(dependency.Version) {
-		sourceVersionFilterPattern = ">=" + dependency.Version
+	sourceVersionFilterKind := filter.Kind
+	sourceVersionFilterPattern := filter.Pattern
 
-		if !c.spec.VersionFilter.IsZero() {
-			sourceVersionFilterKind = c.versionFilter.Kind
+	if filter.Kind == "semver" && filter.Pattern != "*" {
+		sourceVersionFilterPattern = dependency.Version
+
+		if isStrictSemver(dependency.Version) {
+			sourceVersionFilterPattern = ">=" + dependency.Version
+
 			sourceVersionFilterPattern, err = c.versionFilter.GreaterThanPattern(dependency.Version)
 			if err != nil {
 				logrus.Debugf("building version filter pattern: %s", err)
@@ -146,7 +153,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 	}
 
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		logrus.Errorln(err)
 		return manifest, err
 	}
 	return manifest, nil
