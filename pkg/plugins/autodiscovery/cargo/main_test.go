@@ -30,7 +30,7 @@ sources:
       package: 'anyhow'
       versionfilter:
         kind: 'semver'
-        pattern: '>=1.0.1'
+        pattern: '*'
   anyhow-current-version:
     name: 'Get current "anyhow" crate version'
     kind: 'toml'
@@ -39,20 +39,30 @@ sources:
       Key: 'dependencies.anyhow'
 conditions:
   anyhow:
-    name: 'Ensure Cargo chart named "anyhow" is specified'
-    kind: 'toml'
+    name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
+    kind: 'shell'
+    sourceid: 'anyhow'
     spec:
-      file: 'Cargo.toml'
-      query: 'dependencies.(?:-=anyhow)'
-    sourceid: 'anyhow-current-version'
+      command: 'test {{ source "anyhow-current-version" }} != '
 targets:
   anyhow:
     name: 'deps(cargo): bump crate dependency "anyhow" to {{ source "anyhow" }}'
-    kind: 'toml'
+    kind: 'shell'
     spec:
-      file: 'Cargo.toml'
-      key: 'dependencies.anyhow'
-    sourceid: 'anyhow'
+      command: |
+        ARGS=""
+        if [ "$DRY_RUN" = "true" ]; then
+          ARGS="--dry-run"
+        fi
+        cargo upgrade $ARGS --manifest-path Cargo.toml --package anyhow@{{ source "anyhow" }}
+        cargo update $ARGS --manifest-path Cargo.toml anyhow@{{ source "anyhow-current-version" }} --precise {{ source "anyhow" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "Cargo.toml"
+            - "Cargo.lock"
+    disablesourceinput: true
 `, `name: 'deps(cargo): bump dependencies "rand" for "test-crate" crate'
 sources:
   rand:
@@ -62,7 +72,7 @@ sources:
       package: 'rand'
       versionfilter:
         kind: 'semver'
-        pattern: '>=0.8.0'
+        pattern: '*'
   rand-current-version:
     name: 'Get current "rand" crate version'
     kind: 'toml'
@@ -71,20 +81,30 @@ sources:
       Key: 'dependencies.rand.version'
 conditions:
   rand:
-    name: 'Ensure Cargo chart named "rand" is specified'
-    kind: 'toml'
+    name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
+    kind: 'shell'
+    sourceid: 'rand'
     spec:
-      file: 'Cargo.toml'
-      query: 'dependencies.(?:-=rand).version'
-    sourceid: 'rand-current-version'
+      command: 'test {{ source "rand-current-version" }} != '
 targets:
   rand:
     name: 'deps(cargo): bump crate dependency "rand" to {{ source "rand" }}'
-    kind: 'toml'
+    kind: 'shell'
     spec:
-      file: 'Cargo.toml'
-      key: 'dependencies.rand.version'
-    sourceid: 'rand'
+      command: |
+        ARGS=""
+        if [ "$DRY_RUN" = "true" ]; then
+          ARGS="--dry-run"
+        fi
+        cargo upgrade $ARGS --manifest-path Cargo.toml --package rand@{{ source "rand" }}
+        cargo update $ARGS --manifest-path Cargo.toml rand@{{ source "rand-current-version" }} --precise {{ source "rand" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "Cargo.toml"
+            - "Cargo.lock"
+    disablesourceinput: true
 `, `name: 'deps(cargo): bump dev-dependencies "futures" for "test-crate" crate'
 sources:
   futures:
@@ -94,7 +114,7 @@ sources:
       package: 'futures'
       versionfilter:
         kind: 'semver'
-        pattern: '>=0.3.21'
+        pattern: '*'
   futures-current-version:
     name: 'Get current "futures" crate version'
     kind: 'toml'
@@ -103,20 +123,30 @@ sources:
       Key: 'dev-dependencies.futures.version'
 conditions:
   futures:
-    name: 'Ensure Cargo chart named "futures" is specified'
-    kind: 'toml'
+    name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
+    kind: 'shell'
+    sourceid: 'futures'
     spec:
-      file: 'Cargo.toml'
-      query: 'dev-dependencies.(?:-=futures).version'
-    sourceid: 'futures-current-version'
+      command: 'test {{ source "futures-current-version" }} != '
 targets:
   futures:
     name: 'deps(cargo): bump crate dependency "futures" to {{ source "futures" }}'
-    kind: 'toml'
+    kind: 'shell'
     spec:
-      file: 'Cargo.toml'
-      key: 'dev-dependencies.futures.version'
-    sourceid: 'futures'
+      command: |
+        ARGS=""
+        if [ "$DRY_RUN" = "true" ]; then
+          ARGS="--dry-run"
+        fi
+        cargo upgrade $ARGS --manifest-path Cargo.toml --package futures@{{ source "futures" }}
+        cargo update $ARGS --manifest-path Cargo.toml futures@{{ source "futures-current-version" }} --precise {{ source "futures" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "Cargo.toml"
+            - "Cargo.lock"
+    disablesourceinput: true
 `},
 		},
 	}
