@@ -34,7 +34,7 @@ require (
 	cuelang.org/go v0.12.1
 	github.com/BurntSushi/toml v1.5.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
-	github.com/ProtonMail/go-crypto v1.1.5
+	github.com/ProtonMail/go-crypto v1.1.6
 	github.com/beevik/etree v1.5.0
 	github.com/drone/go-scm v1.40.0
 	github.com/fluxcd/helm-controller/api v0.37.4
@@ -202,7 +202,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
-	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
