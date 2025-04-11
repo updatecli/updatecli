@@ -40,50 +40,35 @@ sources:
       Key: '{{ .ExistingSourceKey }}'
 conditions:
   {{ .ConditionID }}:
-    name: 'Ensure Cargo chart named "{{ .DependencyName }}" is specified'
-    kind: 'toml'
+    name: 'Test if version of "{{ .DependencyName }}" {{"{{"}} source "{{ .ExistingSourceID }}" {{"}}"}} differs from {{"{{"}} source "{{ .SourceID }}" {{"}}"}}'
+    kind: 'shell'
+    sourceid: '{{ .SourceID }}'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{- end }}
     spec:
-      file: '{{ .File }}'
-      query: '{{ .ConditionQuery }}'
-    sourceid: '{{ .ExistingSourceID }}'
+      command: 'test {{"{{"}} source "{{ .ExistingSourceID }}" {{"}}"}} != '
 targets:
-{{- if .TargetIDEnable }}
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
-    kind: 'toml'
+    kind: 'shell'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{- end }}
     spec:
-      file: '{{ .TargetFile }}'
-      key: '{{ .TargetKey }}'
-    sourceid: '{{ .SourceID }}'
-{{- end }}
-{{- if .TargetCargoCleanupEnabled }}
-  Cargo.lock:
-    name: Update Cargo lockfile Cargo.lock
-{{- if .TargetIDEnable }}
-    dependson:
-      - {{ .TargetID }}
-{{- end }}
-    disablesourceinput: true
-    kind: shell
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{- end }}
-    spec:
-      command: cargo generate-lockfile
-      environments:
-        - name: PATH
+      command: |
+        ARGS=""
+        if [ "$DRY_RUN" = "true" ]; then
+          ARGS="--dry-run"
+        fi
+        cargo upgrade $ARGS --manifest-path {{ .File }} --package {{ .DependencyName }}@{{"{{"}} source "{{ .SourceID }}" {{"}}"}}
+        cargo update $ARGS --manifest-path {{ .File }} {{ .DependencyName }}@{{"{{"}} source "{{ .ExistingSourceID }}" {{"}}"}} --precise {{"{{"}} source "{{ .SourceID }}" {{"}}"}}
       changedif:
         kind: file/checksum
         spec:
           files:
+            - "{{ .File }}"
             - "Cargo.lock"
-      workdir: '{{ .TargetWorkdir }}'
-{{- end }}
+    disablesourceinput: true
 `
 )
