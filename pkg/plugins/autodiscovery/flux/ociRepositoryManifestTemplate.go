@@ -3,6 +3,11 @@ package flux
 const (
 	// ociRepositoryManifestTemplateLatest is the Go template used to generate Flux manifests for ocirepository resources without digest
 	ociRepositoryManifestTemplateLatest string = `name: 'deps(flux): bump ociRepository "{{ .OCIName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update OCI repository to {{ "{{" }} source "oci" {{ "}}" }}'
+{{- end }}
 sources:
   oci:
     name: 'Get latest "{{ .OCIName }}" OCI artifact tag'
@@ -19,7 +24,7 @@ targets:
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{- end }}
     spec:
       file: '{{ .File }}'
       key: '$.spec.ref.tag'
@@ -27,6 +32,11 @@ targets:
 `
 	// ociRepositoryManifestTemplateDigestAndLatest is the Go template used to generate Flux manifests for ocirepository resources with digest and latest
 	ociRepositoryManifestTemplateDigestAndLatest string = `name: 'deps(flux): bump ociRepository "{{ .OCIName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update OCI repository digest for {{ .OCIName }}:{{ "{{" }} source "oci" {{ "}}" }}'
+{{- end }}
 sources:
   oci:
     name: 'Get latest "{{ .OCIName }}" OCI artifact tag'
@@ -51,7 +61,7 @@ targets:
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{- end }}
     spec:
       file: '{{ .File }}'
       key: '$.spec.ref.tag'
@@ -59,6 +69,11 @@ targets:
 `
 	// ociRepositoryManifestTemplateDigest is the Go template used to generate Flux manifests for ocirepository resources with digest without updating the tag.
 	ociRepositoryManifestTemplateDigest string = `name: 'deps(flux): bump ociRepository "{{ .OCIName }}"'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps: update OCI repository digest for {{ .OCIName }}:{{ .OCIVersion }}'
+{{- end }}
 sources:
   oci-digest:
     name: 'Get latest "{{ .OCIName }}" OCI artifact digest'
@@ -72,7 +87,7 @@ targets:
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{- end }}
     spec:
       file: '{{ .File }}'
       key: '$.spec.ref.tag'
