@@ -12,6 +12,8 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		digest            bool
+		scmID             string
+		actionID          string
 		expectedPipelines []string
 	}{
 		{
@@ -41,6 +43,46 @@ targets:
   helmrelease:
     name: 'deps(flux): bump Helmrelease "udash"'
     kind: 'yaml'
+    spec:
+      file: 'helmrelease.yaml'
+      key: '$.spec.chart.spec.version'
+    sourceid: 'helmrelease'
+`},
+		},
+		{
+			name:     "Scenario - helmrelease Simple with scmid and actionid",
+			rootDir:  "testdata/helmrelease/simple",
+			scmID:    "defaultscmid",
+			actionID: "defaultactionid",
+			expectedPipelines: []string{`name: 'deps(flux): bump Helmrelease "udash"'
+actions:
+  defaultactionid:
+    title: 'deps: update Helm chart to {{ source "helmrelease" }}'
+sources:
+  helmrelease:
+    name: 'Get latest "udash" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'udash'
+      url: 'https://updatecli.github.io/charts'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  helmrelease:
+    name: 'Ensure Helm Chart name "udash"'
+    kind: 'yaml'
+    disablesourceinput: true
+    scmid: defaultscmid
+    spec:
+      file: 'helmrelease.yaml'
+      key: '$.spec.chart.spec.chart'
+      value: 'udash'
+targets:
+  helmrelease:
+    name: 'deps(flux): bump Helmrelease "udash"'
+    kind: 'yaml'
+    scmid: defaultscmid
     spec:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.version'
@@ -205,10 +247,15 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario - ocirepository latest with digest",
-			digest:  true,
-			rootDir: "testdata/ociRepository-latest",
+			name:     "Scenario - ocirepository latest with digest",
+			digest:   true,
+			rootDir:  "testdata/ociRepository-latest",
+			scmID:    "defaultscmid",
+			actionID: "defaultactionid",
 			expectedPipelines: []string{`name: 'deps(flux): bump ociRepository "ghcr.io/updatecli/updatecli"'
+actions:
+  defaultactionid:
+    title: 'deps: update OCI repository digest for ghcr.io/updatecli/updatecli:latest'
 sources:
   oci-digest:
     name: 'Get latest "ghcr.io/updatecli/updatecli" OCI artifact digest'
@@ -220,6 +267,7 @@ targets:
   oci:
     name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli"'
     kind: 'yaml'
+    scmid: defaultscmid
     spec:
       file: 'example.yaml'
       key: '$.spec.ref.tag'
@@ -235,7 +283,7 @@ targets:
 			flux, err := New(
 				Spec{
 					Digest: &digest,
-				}, tt.rootDir, "", "")
+				}, tt.rootDir, tt.scmID, tt.actionID)
 
 			require.NoError(t, err)
 
