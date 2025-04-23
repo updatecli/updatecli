@@ -42,6 +42,10 @@ type Transformer struct {
 	// SemvVerInc specifies a  comma separated list semantic versioning component that needs to be upgraded.
 	SemVerInc           string `yaml:",omitempty"`
 	DeprecatedSemVerInc string `yaml:"semverInc,omitempty" jsonschema:"-"`
+	// Quote add quote around the value
+	Quote bool `yaml:",omitempty"`
+	// Unquote remove quotes around the value
+	Unquote bool `yaml:",omitempty"`
 }
 
 // Transformers defines a list of transformer applied in order
@@ -108,6 +112,14 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 		if err != nil {
 			return "", err
 		}
+	}
+
+	if t.Quote {
+		output = fmt.Sprintf("%q", output)
+	}
+
+	if t.Unquote {
+		output = strings.Trim(output, "\"")
 	}
 
 	return output, nil
