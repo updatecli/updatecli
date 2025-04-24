@@ -7,8 +7,9 @@ import (
 
 var (
 	//Directory defines where updatecli will save temporary files like git clone.
-	Directory    = path.Join(os.TempDir(), "updatecli")
-	BinDirectory = path.Join(Directory, "bin")
+	Directory       = path.Join(os.TempDir(), "updatecli")
+	BinDirectory    = path.Join(Directory, "bin")
+	ReportDirectory = path.Join(Directory, "report")
 )
 
 // Clean removes the Updatecli temporary root directory.
@@ -43,4 +44,15 @@ func InitBin() (string, error) {
 		}
 	}
 	return BinDirectory, nil
+}
+
+// InitReport creates a report directory used by updatecli to store reports
+func InitReport() (string, error) {
+	if _, err := os.Stat(ReportDirectory); os.IsNotExist(err) {
+		err := os.MkdirAll(ReportDirectory, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+	return ReportDirectory, nil
 }
