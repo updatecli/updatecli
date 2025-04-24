@@ -100,6 +100,7 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 		}
 
 		params := struct {
+			ActionID             string
 			OCIName              string
 			OCIVersion           string
 			File                 string
@@ -109,6 +110,7 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 			ScmID                string
 			TagFilter            string
 		}{
+			ActionID:             f.actionID,
 			OCIName:              ociName,
 			OCIVersion:           ociVersion,
 			File:                 relateFoundFluxFile,
