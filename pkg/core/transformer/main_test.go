@@ -386,6 +386,26 @@ var (
 			expectedOutput: "",
 			expectedErr:    fmt.Errorf("validation error: transformer input is empty"),
 		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					Quote: true,
+				},
+			},
+			expectedOutput: "\"1.17.0\"",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "\"1.17.0\"",
+			rules: Transformers{
+				Transformer{
+					Unquote: true,
+				},
+			},
+			expectedOutput: "1.17.0",
+			expectedErr:    nil,
+		},
 	}
 )
 
