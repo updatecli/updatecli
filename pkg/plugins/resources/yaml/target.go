@@ -191,7 +191,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 		oldVersion := node.String()
 		resultTarget.Information = oldVersion
 
-		if oldVersion == valueToWrite {
+		if oldVersion == valueToWrite || oldVersion == nodeToWrite.String() {
 			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
 				resultTarget.Description,
 				y.spec.Key,

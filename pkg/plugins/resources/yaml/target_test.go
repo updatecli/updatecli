@@ -357,6 +357,62 @@ github:
 			},
 			wantedResult: true,
 		},
+		{
+			name: "Passing case with a string that looks like a number",
+			spec: Spec{
+				File:  "melange.yaml",
+				Key:   "package.version",
+				Value: "0.8",
+			},
+			files: map[string]file{
+				"melange.yaml": {
+					filePath:         "melange.yaml",
+					originalFilePath: "melange.yaml",
+				},
+			},
+			inputSourceValue: "0.8",
+			mockedContents: map[string]string{
+				"melange.yaml": `---
+package:
+  version: "0.8"
+`,
+			},
+			wantedContents: map[string]string{
+				"melange.yaml": `---
+package:
+  version: "0.8"
+`,
+			},
+			wantedResult: false,
+		},
+		{
+			name: "Passing case with a string that starts with a @",
+			spec: Spec{
+				File:  "apko.yaml",
+				Key:   "contents.repositories",
+				Value: "@local foo/0.1.2/packages",
+			},
+			files: map[string]file{
+				"apko.yaml": {
+					filePath:         "apko.yaml",
+					originalFilePath: "apko.yaml",
+				},
+			},
+			inputSourceValue: "@local foo/0.1.2/packages",
+			mockedContents: map[string]string{
+				"apko.yaml": `---
+contents:
+  repositories: "@local foo/0.1.2/packages"
+`,
+			},
+			wantedContents: map[string]string{
+				"apko.yaml": `---
+contents:
+  repositories: "@local foo/0.1.2/packages"
+`,
+			},
+			wantedResult: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
