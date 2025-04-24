@@ -6,8 +6,8 @@ const (
 {{- if .ActionID }}
 actions:
   {{ .ActionID }}:
-    title: 'deps: update Helm chart to {{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
-{{ end }}
+    title: 'deps: update Helm chart to {{ "{{" }} source "helmrelease" {{ "}}" }}'
+{{- end }}
 sources:
   helmrelease:
     name: 'Get latest "{{ .ChartName }}" Helm chart version'
@@ -25,7 +25,7 @@ conditions:
     disablesourceinput: true
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{- end }}
     spec:
       file: '{{ .File }}'
       key: '$.spec.chart.spec.chart'
@@ -36,7 +36,7 @@ targets:
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{- end }}
     spec:
       file: '{{ .File }}'
       key: '$.spec.chart.spec.version'
