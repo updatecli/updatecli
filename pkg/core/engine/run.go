@@ -33,6 +33,10 @@ func (e *Engine) Run() (err error) {
 		logrus.Errorf("publishing to Udash:\n%s", err)
 	}
 
+	if err = e.exportReportToYAML(false); err != nil {
+		logrus.Errorf("exporting report:\n%s", err)
+	}
+
 	if err = e.showReports(); err != nil {
 		return err
 	}
