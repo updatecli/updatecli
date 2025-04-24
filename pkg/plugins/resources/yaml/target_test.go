@@ -377,7 +377,6 @@ package:
   version: "0.8"
 `,
 			},
-			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
 				"melange.yaml": `---
 package:
@@ -406,7 +405,6 @@ contents:
   repositories: "@local foo/0.1.2/packages"
 `,
 			},
-			// Note: the re-encoded file doesn't contain any separator anymore
 			wantedContents: map[string]string{
 				"apko.yaml": `---
 contents:
