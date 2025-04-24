@@ -61,3 +61,12 @@ func (g *GoMod) Read(filename string) error {
 	g.currentContent = textContent
 	return nil
 }
+
+// CleanConfig returns a new configuration for this resource without any sensitive information or context specific information.
+func (g *GoMod) CleanConfig() interface{} {
+	return Spec{
+		Module:  g.spec.Module,
+		File:    g.spec.File,
+		Version: g.spec.Version,
+	}
+}

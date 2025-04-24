@@ -251,10 +251,18 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 // Resource allow to manipulate a resource that can be a source, a condition or a target
 type Resource interface {
+	// Source returns the resource value
 	Source(workingDir string, sourceResult *result.Source) error
+	// Condition checks if the resource is in the expected state
 	Condition(version string, scm scm.ScmHandler) (pass bool, message string, err error)
+	// Target updates the resource with the given value
 	Target(source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
+	// Changelog returns the changelog for this resource, or an empty string if not supported
 	Changelog(from, to string) *result.Changelogs
+	// CleanConfig returns a new resource configuration
+	// with only the necessary configuration fields without any sensitive information
+	// or context specific data.
+	CleanConfig() interface{}
 }
 
 // Need to do reflect of ResourceConfig
@@ -299,4 +307,18 @@ func GetResourceMapping() map[string]interface{} {
 		"xml":                &xml.Spec{},
 		"yaml":               &yaml.Spec{},
 	}
+}
+
+// GetCleanConfig returns a clean version of the resource configuration
+// without any sensitive information or context specific data.
+func GetCleanConfig(rs ResourceConfig) (any, error) {
+	r, err := New(rs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource %s: %w", rs.Kind, err)
+	}
+
+	newResourceConfig := rs
+	rs.Spec = r.CleanConfig()
+
+	return newResourceConfig, nil
 }

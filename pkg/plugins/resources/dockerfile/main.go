@@ -102,3 +102,15 @@ func getParser(spec Spec) (types.DockerfileParser, error) {
 func (df *Dockerfile) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
+
+// CleanConfig returns a cleaned version of the configuration
+// to identify the resource without any sensitive information or context specific data.
+func (df *Dockerfile) CleanConfig() interface{} {
+	return Spec{
+		File:        df.spec.File,
+		Files:       df.spec.Files,
+		Instruction: df.spec.Instruction,
+		Value:       df.spec.Value,
+		Stage:       df.spec.Stage,
+	}
+}

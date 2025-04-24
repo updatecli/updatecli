@@ -177,3 +177,18 @@ func (s Spec) Validate() error {
 
 	return nil
 }
+
+// CleanConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information or context specific data.
+func (s *Stash) CleanConfig() interface{} {
+	return Spec{
+		Owner:         s.spec.Owner,
+		Repository:    s.spec.Repository,
+		VersionFilter: s.spec.VersionFilter,
+		Title:         s.spec.Title,
+		Tag:           s.spec.Tag,
+		Draft:         s.spec.Draft,
+		Prerelease:    s.spec.Prerelease,
+		Description:   s.spec.Description,
+	}
+}

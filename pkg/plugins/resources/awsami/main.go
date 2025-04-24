@@ -100,3 +100,14 @@ func New(spec interface{}) (*AMI, error) {
 func (a *AMI) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
+
+// CleanConfig returns a new configuration with only the necessary configuration fields
+// to identify the resource without any sensitive information or context specific data.
+func (a *AMI) CleanConfig() interface{} {
+
+	return Spec{
+		Region:   a.Spec.Region,
+		Endpoint: a.Spec.Endpoint,
+		Filters:  a.Spec.Filters,
+	}
+}

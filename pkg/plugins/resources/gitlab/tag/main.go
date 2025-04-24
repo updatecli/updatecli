@@ -149,3 +149,18 @@ func (s Spec) Validate() error {
 
 	return nil
 }
+
+// CleanConfig returns a new configuration with only the necessary fields
+// to identify the resource without any sensitive information
+// and context specific data.
+func (g *Gitlab) CleanConfig() interface{} {
+	return Spec{
+		Owner:      g.spec.Owner,
+		Repository: g.spec.Repository,
+		Spec: client.Spec{
+			URL: g.spec.URL,
+		},
+		VersionFilter: g.spec.VersionFilter,
+		Tag:           g.spec.Tag,
+	}
+}

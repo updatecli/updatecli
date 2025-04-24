@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -49,4 +50,14 @@ func New(spec interface{}) (*GoModule, error) {
 		versionFilter: newFilter,
 		webClient:     &http.Client{},
 	}, nil
+}
+
+// CleanConfig returns a new configuration without any sensitive information or context specific information.
+func (g *GoModule) CleanConfig() interface{} {
+	return Spec{
+		Proxy:         redact.URL(g.Spec.Proxy),
+		Module:        g.Spec.Module,
+		Version:       g.Spec.Version,
+		VersionFilter: g.Spec.VersionFilter,
+	}
 }

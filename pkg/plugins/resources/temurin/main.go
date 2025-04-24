@@ -134,3 +134,19 @@ func (t *Temurin) Changelog(from, to string) *result.Changelogs {
 		},
 	}
 }
+
+// CleanConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information or context specific data.
+func (t *Temurin) CleanConfig() interface{} {
+	return Spec{
+		Project:         t.spec.Project,
+		ReleaseType:     t.spec.ReleaseType,
+		ImageType:       t.spec.ImageType,
+		FeatureVersion:  t.spec.FeatureVersion,
+		ReleaseLine:     t.spec.ReleaseLine,
+		Architecture:    t.spec.Architecture,
+		OperatingSystem: t.spec.OperatingSystem,
+		Platforms:       t.spec.Platforms,
+		Result:          t.spec.Result,
+	}
+}

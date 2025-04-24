@@ -137,3 +137,14 @@ func getOSArch(input string) (os, architecture, variant string) {
 	}
 	return os, architecture, variant
 }
+
+// CleanConfig returns a cleaned version of the configuration
+// to identify the resource without any sensitive information or context specific data.
+func (d *DockerDigest) CleanConfig() interface{} {
+	return Spec{
+		Image:        d.spec.Image,
+		Tag:          d.spec.Tag,
+		Digest:       d.spec.Digest,
+		Architecture: d.spec.Architecture,
+	}
+}

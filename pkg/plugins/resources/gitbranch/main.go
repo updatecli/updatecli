@@ -8,6 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -144,4 +145,18 @@ func (gb *GitBranch) clone() (string, error) {
 		return "", err
 	}
 	return g.Clone()
+}
+
+// CleanConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information
+func (gb *GitBranch) CleanConfig() interface{} {
+	return Spec{
+		Path:          gb.spec.Path,
+		Branch:        gb.spec.Branch,
+		VersionFilter: gb.spec.VersionFilter,
+		SourceBranch:  gb.spec.SourceBranch,
+		// Ensure that the URL doesn't contain any sensitive information
+		URL: redact.URL(gb.spec.URL),
+		Key: gb.spec.Key,
+	}
 }

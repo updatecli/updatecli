@@ -153,3 +153,14 @@ func (h *Hcl) UpdateAbsoluteFilePath(workDir string) {
 func (h *Hcl) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
+
+// CleanConfig return a new configuration without any sensitive information
+// or context specific data.
+func (h *Hcl) CleanConfig() interface{} {
+	return Spec{
+		File:  h.spec.File,
+		Files: h.spec.Files,
+		Path:  h.spec.Path,
+		Value: h.spec.Value,
+	}
+}

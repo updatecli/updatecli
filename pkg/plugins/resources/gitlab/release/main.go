@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -169,4 +170,19 @@ func (s Spec) Validate() error {
 	}
 
 	return nil
+}
+
+// CleanConfig returns a new configuration with only the necessary fields
+// to identify the resource without any sensitive information
+// and context specific data.
+func (g *Gitlab) CleanConfig() interface{} {
+	return Spec{
+		Owner: g.spec.Owner,
+		Spec: client.Spec{
+			URL: redact.URL(g.spec.URL),
+		},
+		Repository:    g.spec.Repository,
+		VersionFilter: g.spec.VersionFilter,
+		Tag:           g.spec.Tag,
+	}
 }

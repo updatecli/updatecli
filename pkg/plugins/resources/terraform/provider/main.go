@@ -176,3 +176,14 @@ func (t *TerraformProvider) UpdateAbsoluteFilePath(workDir string) {
 func (t *TerraformProvider) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
+
+// CleanConfig returns a new resource configuration with only the necessary configuration fields without any sensitive information
+// or context specific data.
+func (t *TerraformProvider) CleanConfig() interface{} {
+	return Spec{
+		Provider: t.spec.Provider,
+		File:     t.spec.File,
+		Files:    t.spec.Files,
+		Value:    t.spec.Value,
+	}
+}

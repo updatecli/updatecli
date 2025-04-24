@@ -145,3 +145,16 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 
 	return true, nil
 }
+
+// CleanConfig returns a new configuration with only the necessary configuration fields
+// to identify the resource without any sensitive information or context specific data.
+func (di *DockerImage) CleanConfig() interface{} {
+	return Spec{
+		Image:         di.spec.Image,
+		Architectures: di.spec.Architectures,
+		Architecture:  di.spec.Architecture,
+		Tag:           di.spec.Tag,
+		TagFilter:     di.spec.TagFilter,
+		VersionFilter: di.spec.VersionFilter,
+	}
+}
