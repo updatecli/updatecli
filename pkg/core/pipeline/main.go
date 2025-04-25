@@ -235,6 +235,8 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	}
 
 	updateSourceResult := func(id string) {
+		var err error
+
 		source := p.Sources[id]
 
 		source.Result.Name = source.Config.Name
@@ -249,6 +251,8 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	}
 
 	updateConditionResult := func(id string) {
+		var err error
+
 		condition := p.Conditions[id]
 
 		condition.Result.SourceID = condition.Config.SourceID
@@ -267,6 +271,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	}
 
 	updateTargetResult := func(id string) {
+		var err error
 		target := p.Targets[id]
 
 		target.Result.SourceID = target.Config.SourceID
