@@ -42,6 +42,9 @@ type Spec struct {
 		and its type like regex, semver, or just latest.
 	*/
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// Digest provides parameters to specify if the generated manifest should use a digest instead of the branch or tag.
+	// This is equivalent to using the [`--freeze`](https://pre-commit.com/#pre-commit-autoupdate) option of precommit
+	Digest *bool `yaml:",omitempty"`
 }
 
 // Precommit holds all information needed to generate precommit manifest.
@@ -56,6 +59,8 @@ type Precommit struct {
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
+	// digest holds the value of the digest parameter
+	digest bool
 }
 
 // New return a new valid object.
@@ -87,12 +92,18 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Precommit, error) {
 		newFilter.Pattern = "*"
 	}
 
+	digest := false
+	if s.Digest != nil {
+		digest = *s.Digest
+	}
+
 	return Precommit{
 		actionID:      actionID,
 		spec:          s,
 		rootDir:       dir,
 		scmID:         scmID,
 		versionFilter: newFilter,
+		digest:        digest,
 	}, nil
 
 }
