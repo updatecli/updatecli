@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -80,6 +81,135 @@ func TestRunSources(t *testing.T) {
 				"failed":  result.FAILURE,
 			},
 			expectedPipelineResult: result.FAILURE,
+		},
+		{
+			conf: config.Config{
+				Spec: config.Spec{
+					Name: "Test a case with a skipped source",
+					Sources: map[string]source.Config{
+						"success": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "success",
+								Spec: shell.Spec{
+									Command: "true",
+								},
+								DependsOn: []string{"condition#skip"},
+							},
+						},
+					},
+					Conditions: map[string]condition.Config{
+						"skip": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "skip",
+								Spec: shell.Spec{
+									Command: "false",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: false,
+			expectedSourcesResult: map[string]string{
+				"success": result.SKIPPED,
+			},
+			// As expected, the source is skipped because the condition is not met
+			// so the pipeline result is considered as success
+			expectedPipelineResult: result.SUCCESS,
+		},
+		{
+			conf: config.Config{
+				Spec: config.Spec{
+					Name: "Test a case with a skipped source and warning second source",
+					Sources: map[string]source.Config{
+						"success": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "success",
+								Spec: shell.Spec{
+									Command: "true",
+								},
+								DependsOn: []string{"condition#skip"},
+							},
+						},
+						"failed": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "failure",
+								Spec: shell.Spec{
+									Command: "false",
+								},
+							},
+						},
+					},
+					Conditions: map[string]condition.Config{
+						"skip": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "skip",
+								Spec: shell.Spec{
+									Command: "false",
+								},
+							},
+							DisableSourceInput: true,
+						},
+					},
+				},
+			},
+			expectedError: true,
+			expectedSourcesResult: map[string]string{
+				"success": result.SKIPPED,
+				"failed":  result.FAILURE,
+			},
+			expectedPipelineResult: result.FAILURE,
+		},
+		{
+			conf: config.Config{
+				Spec: config.Spec{
+					Name: "Test a case with a skipped source and a succes second source",
+					Sources: map[string]source.Config{
+						"success": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "success",
+								Spec: shell.Spec{
+									Command: "true",
+								},
+								DependsOn: []string{"condition#skip"},
+							},
+						},
+						"successbis": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "successbis",
+								Spec: shell.Spec{
+									Command: "true",
+								},
+							},
+						},
+					},
+					Conditions: map[string]condition.Config{
+						"skip": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "skip",
+								Spec: shell.Spec{
+									Command: "false",
+								},
+							},
+							DisableSourceInput: true,
+						},
+					},
+				},
+			},
+			expectedError: true,
+			expectedSourcesResult: map[string]string{
+				"success":    result.SKIPPED,
+				"successbis": result.SUCCESS,
+			},
+			expectedPipelineResult: result.SUCCESS,
 		},
 	}
 
