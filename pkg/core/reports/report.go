@@ -135,6 +135,10 @@ func (r *Report) UpdateID() error {
 
 	reportHash := []string{}
 
+	if r.Name != "" {
+		reportHash = append(reportHash, r.Name)
+	}
+
 	// We need to sort the actions by their ID to make sure that the hash is always the same
 	for _, i := range slices.Sorted(maps.Keys(r.Actions)) {
 		action := r.Actions[i]
