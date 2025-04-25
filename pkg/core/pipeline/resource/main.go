@@ -259,10 +259,10 @@ type Resource interface {
 	Target(source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
 	// Changelog returns the changelog for this resource, or an empty string if not supported
 	Changelog(from, to string) *result.Changelogs
-	// CleanConfig returns a new resource configuration
+	// ReportConfig returns a new resource configuration
 	// with only the necessary configuration fields without any sensitive information
 	// or context specific data.
-	CleanConfig() interface{}
+	ReportConfig() interface{}
 }
 
 // Need to do reflect of ResourceConfig
@@ -309,16 +309,16 @@ func GetResourceMapping() map[string]interface{} {
 	}
 }
 
-// GetCleanConfig returns a clean version of the resource configuration
+// GetReportConfig returns a clean version of the resource configuration
 // without any sensitive information or context specific data.
-func GetCleanConfig(rs ResourceConfig) (any, error) {
+func GetReportConfig(rs ResourceConfig) (any, error) {
 	r, err := New(rs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource %s: %w", rs.Kind, err)
 	}
 
 	newResourceConfig := rs
-	rs.Spec = r.CleanConfig()
+	rs.Spec = r.ReportConfig()
 
 	return newResourceConfig, nil
 }

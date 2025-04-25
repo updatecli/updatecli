@@ -52,8 +52,8 @@ func New(spec interface{}) (*GoModule, error) {
 	}, nil
 }
 
-// CleanConfig returns a new configuration without any sensitive information or context specific information.
-func (g *GoModule) CleanConfig() interface{} {
+// ReportConfig returns a new configuration without any sensitive information or context specific information.
+func (g *GoModule) ReportConfig() interface{} {
 	return Spec{
 		Proxy:         redact.URL(g.Spec.Proxy),
 		Module:        g.Spec.Module,

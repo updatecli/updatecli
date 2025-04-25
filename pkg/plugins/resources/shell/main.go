@@ -290,9 +290,9 @@ func (s *Shell) getWorkingDirPath(currentWorkDir string) string {
 	return filepath.Join(currentWorkDir, s.spec.WorkDir)
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (s *Shell) CleanConfig() interface{} {
+func (s *Shell) ReportConfig() interface{} {
 	return Spec{
 		Command:   s.spec.Command,
 		ChangedIf: s.spec.ChangedIf,

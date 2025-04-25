@@ -118,10 +118,10 @@ func ReleaseType(version string) (string, error) {
 	return WRONG, fmt.Errorf("version %v contains %v component(s) which doesn't correspond to any valid release type", version, len(components))
 }
 
-// CleanConfig returns a new configuration with only the necessary fields
+// ReportConfig returns a new configuration with only the necessary fields
 // to identify the resource without any sensitive information
 // and context specific data.
-func (j *Jenkins) CleanConfig() interface{} {
+func (j *Jenkins) ReportConfig() interface{} {
 	return Spec{
 		Release: j.spec.Release,
 		Version: j.spec.Version,

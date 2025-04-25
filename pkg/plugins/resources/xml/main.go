@@ -69,9 +69,9 @@ func (x *XML) Validate() (err error) {
 	return nil
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (x *XML) CleanConfig() interface{} {
+func (x *XML) ReportConfig() interface{} {
 	return Spec{
 		File:  x.spec.File,
 		Path:  x.spec.Path,

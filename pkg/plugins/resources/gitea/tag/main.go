@@ -167,9 +167,9 @@ func (s Spec) Validate() error {
 	return nil
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information
-func (g *Gitea) CleanConfig() interface{} {
+func (g *Gitea) ReportConfig() interface{} {
 	return Spec{
 		Owner:      g.spec.Owner,
 		Repository: g.spec.Repository,

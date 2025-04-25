@@ -154,9 +154,9 @@ func (h *Hcl) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
 
-// CleanConfig return a new configuration without any sensitive information
+// ReportConfig return a new configuration without any sensitive information
 // or context specific data.
-func (h *Hcl) CleanConfig() interface{} {
+func (h *Hcl) ReportConfig() interface{} {
 	return Spec{
 		File:  h.spec.File,
 		Files: h.spec.Files,

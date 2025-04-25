@@ -195,9 +195,9 @@ func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
 	return pv.AllHashes(), nil
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (t *TerraformLock) CleanConfig() interface{} {
+func (t *TerraformLock) ReportConfig() interface{} {
 	return Spec{
 		File:            t.spec.File,
 		Files:           t.spec.Files,

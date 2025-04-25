@@ -322,9 +322,9 @@ func (y *Yaml) UpdateAbsoluteFilePath(workDir string) {
 	}
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (y *Yaml) CleanConfig() interface{} {
+func (y *Yaml) ReportConfig() interface{} {
 	return Spec{
 		File:          y.spec.File,
 		Files:         y.spec.Files,

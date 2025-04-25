@@ -333,9 +333,9 @@ func (f *File) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
 
-// CleanConfig returns a new configuration with only the necessary configuration fields
+// ReportConfig returns a new configuration with only the necessary configuration fields
 // without any sensitive information or context specific data.
-func (f *File) CleanConfig() interface{} {
+func (f *File) ReportConfig() interface{} {
 	return Spec{
 		File:           f.spec.File,
 		Files:          f.spec.Files,

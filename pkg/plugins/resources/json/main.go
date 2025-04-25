@@ -83,9 +83,9 @@ func New(spec interface{}) (*Json, error) {
 	return &j, err
 }
 
-// CleanConfig returns a new configuration without any sensitive information
+// ReportConfig returns a new configuration without any sensitive information
 // or context specific information
-func (j *Json) CleanConfig() interface{} {
+func (j *Json) ReportConfig() interface{} {
 	return Spec{
 		File:          j.spec.File,
 		Files:         j.spec.Files,

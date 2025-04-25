@@ -153,10 +153,10 @@ func (s Spec) Validate() error {
 	return nil
 }
 
-// CleanConfiguration returns a new configuration with only the necessary fields
+// ReportConfiguration returns a new configuration with only the necessary fields
 // to identify the resource without any sensitive information
 // and context specific data.
-func (g *Gitlab) CleanConfig() interface{} {
+func (g *Gitlab) ReportConfig() interface{} {
 	return Spec{
 		Owner:         g.spec.Owner,
 		Repository:    g.spec.Repository,

@@ -103,9 +103,9 @@ func (df *Dockerfile) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
 
-// CleanConfig returns a cleaned version of the configuration
+// ReportConfig returns a cleaned version of the configuration
 // to identify the resource without any sensitive information or context specific data.
-func (df *Dockerfile) CleanConfig() interface{} {
+func (df *Dockerfile) ReportConfig() interface{} {
 	return Spec{
 		File:        df.spec.File,
 		Files:       df.spec.Files,

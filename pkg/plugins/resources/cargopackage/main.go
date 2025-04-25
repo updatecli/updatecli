@@ -233,9 +233,9 @@ func (cp *CargoPackage) getPackageData() (PackageData, error) {
 	return cp.getPackageDataFromApi(cp.spec.Package, cp.registry.URL)
 }
 
-// CleanConfig returns a new configuration with only the necessary configuration fields
+// ReportConfig returns a new configuration with only the necessary configuration fields
 // to identify the resource without any sensitive information or context specific data.
-func (cp *CargoPackage) CleanConfig() interface{} {
+func (cp *CargoPackage) ReportConfig() interface{} {
 	return Spec{
 		IndexUrl: cp.spec.IndexUrl,
 		Registry: cp.spec.Registry,

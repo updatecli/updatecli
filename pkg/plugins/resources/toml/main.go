@@ -89,9 +89,9 @@ func New(spec interface{}) (*Toml, error) {
 	return &j, err
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (s *Toml) CleanConfig() interface{} {
+func (s *Toml) ReportConfig() interface{} {
 	return Spec{
 		File:             s.spec.File,
 		Files:            s.spec.Files,

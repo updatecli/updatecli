@@ -338,9 +338,9 @@ func getOrderedVersions(data []byte) ([]string, error) {
 
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (n *Npm) CleanConfig() interface{} {
+func (n *Npm) ReportConfig() interface{} {
 	return Spec{
 		Name:          n.spec.Name,
 		Version:       n.spec.Version,

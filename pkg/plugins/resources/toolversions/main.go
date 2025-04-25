@@ -63,9 +63,9 @@ func New(spec interface{}) (*ToolVersions, error) {
 	return &j, err
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (s *ToolVersions) CleanConfig() interface{} {
+func (s *ToolVersions) ReportConfig() interface{} {
 	return Spec{
 		File:             s.spec.File,
 		Files:            s.spec.Files,

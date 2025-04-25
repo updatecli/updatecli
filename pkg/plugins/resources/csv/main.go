@@ -113,9 +113,9 @@ func New(spec interface{}) (*CSV, error) {
 	return &c, err
 }
 
-// CleanConfig returns a cleaned version of the configuration
+// ReportConfig returns a cleaned version of the configuration
 // to identify the resource without any sensitive information or context specific data.
-func (c *CSV) CleanConfig() interface{} {
+func (c *CSV) ReportConfig() interface{} {
 	return Spec{
 		File:  c.spec.File,
 		Files: c.spec.Files,

@@ -177,9 +177,9 @@ func (t *TerraformProvider) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
 
-// CleanConfig returns a new resource configuration with only the necessary configuration fields without any sensitive information
+// ReportConfig returns a new resource configuration with only the necessary configuration fields without any sensitive information
 // or context specific data.
-func (t *TerraformProvider) CleanConfig() interface{} {
+func (t *TerraformProvider) ReportConfig() interface{} {
 	return Spec{
 		Provider: t.spec.Provider,
 		File:     t.spec.File,

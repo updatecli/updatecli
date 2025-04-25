@@ -42,8 +42,8 @@ func New(spec interface{}) (*Language, error) {
 	}, nil
 }
 
-// CleanConfig returns a new configuration without any sensitive information or context specific information.
-func (l *Language) CleanConfig() interface{} {
+// ReportConfig returns a new configuration without any sensitive information or context specific information.
+func (l *Language) ReportConfig() interface{} {
 	return Spec{
 		Version:       l.Spec.Version,
 		VersionFilter: l.Spec.VersionFilter,

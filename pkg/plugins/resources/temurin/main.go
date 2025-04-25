@@ -135,9 +135,9 @@ func (t *Temurin) Changelog(from, to string) *result.Changelogs {
 	}
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (t *Temurin) CleanConfig() interface{} {
+func (t *Temurin) ReportConfig() interface{} {
 	return Spec{
 		Project:         t.spec.Project,
 		ReleaseType:     t.spec.ReleaseType,

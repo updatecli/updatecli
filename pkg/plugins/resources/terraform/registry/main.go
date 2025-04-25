@@ -49,9 +49,9 @@ func New(spec interface{}) (*TerraformRegistry, error) {
 	}, nil
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information or context specific data.
-func (t *TerraformRegistry) CleanConfig() interface{} {
+func (t *TerraformRegistry) ReportConfig() interface{} {
 	return Spec{
 		Type:          t.Spec.Type,
 		Hostname:      redact.URL(t.Spec.Hostname),

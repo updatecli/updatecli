@@ -208,9 +208,9 @@ func New(spec interface{}) (*Chart, error) {
 	return newResource, nil
 }
 
-// CleanConfig returns a new configuration without any sensitive information
+// ReportConfig returns a new configuration without any sensitive information
 // or context specific information
-func (c *Chart) CleanConfig() interface{} {
+func (c *Chart) ReportConfig() interface{} {
 	return Spec{
 		File:             c.spec.File,
 		Key:              c.spec.Key,

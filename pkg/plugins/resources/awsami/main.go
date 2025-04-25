@@ -101,9 +101,9 @@ func (a *AMI) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
 
-// CleanConfig returns a new configuration with only the necessary configuration fields
+// ReportConfig returns a new configuration with only the necessary configuration fields
 // to identify the resource without any sensitive information or context specific data.
-func (a *AMI) CleanConfig() interface{} {
+func (a *AMI) ReportConfig() interface{} {
 
 	return Spec{
 		Region:   a.Spec.Region,

@@ -148,10 +148,10 @@ func (gt *GitTag) clone() (string, error) {
 	return g.Clone()
 }
 
-// CleanConfig returns a new configuration object with only the necessary fields
+// ReportConfig returns a new configuration object with only the necessary fields
 // to identify the resource without any sensitive information
 // and context specific data.
-func (gt *GitTag) CleanConfig() interface{} {
+func (gt *GitTag) ReportConfig() interface{} {
 	return Spec{
 		Path:          gt.spec.Path,
 		VersionFilter: gt.spec.VersionFilter,
