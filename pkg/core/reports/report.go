@@ -222,7 +222,7 @@ func (r *Report) UpdateID() error {
 		r.Targets[i] = target
 	}
 
-	r.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%s", strings.Join(reportHash, "0")))))
+	r.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(reportHash, "0"))))
 
 	// If the report doesn't have any configuration then we need to generate a hash based on the report itself
 	// This is not ideal because it means that the report ID will be different each time Updatecli is executed
