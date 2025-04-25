@@ -168,7 +168,7 @@ func TestRunSources(t *testing.T) {
 		{
 			conf: config.Config{
 				Spec: config.Spec{
-					Name: "Test a case with a skipped source and a succes second source",
+					Name: "Test a case with a skipped source and a success second source",
 					Sources: map[string]source.Config{
 						"success": {
 							ResourceConfig: resource.ResourceConfig{
