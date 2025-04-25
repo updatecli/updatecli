@@ -26,6 +26,10 @@ func (e *Engine) Run() (err error) {
 
 	for i := range e.Pipelines {
 		pipeline := e.Pipelines[i]
+		err = pipeline.Report.UpdateID()
+		if err != nil {
+			logrus.Errorf("updating report ID:\n%s", err)
+		}
 		e.Reports = append(e.Reports, pipeline.Report)
 	}
 
