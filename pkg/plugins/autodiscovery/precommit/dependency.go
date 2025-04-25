@@ -78,6 +78,10 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 				continue
 			}
 
+			targetSource := "gittag"
+			if p.digest {
+				targetSource = fmt.Sprintf("%s_digest", targetSource)
+			}
 			params := struct {
 				ActionID                   string
 				ManifestName               string
@@ -94,6 +98,7 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 				TargetKey                  string
 				File                       string
 				ScmID                      string
+				Digest                     bool
 			}{
 				ActionID:                   p.actionID,
 				ManifestName:               fmt.Sprintf("Bump %q repo version", repo.Repo),
@@ -105,11 +110,12 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 				SourceVersionFilterKind:    p.versionFilter.Kind,
 				SourceVersionFilterPattern: versionPattern,
 				TargetID:                   ".pre-commit-config.yaml",
-				TargetName:                 fmt.Sprintf("deps(precommit): bump %q repo version to {{ source %q }}", repo.Repo, "gittag"),
+				TargetName:                 fmt.Sprintf("deps(precommit): bump %q repo version to {{ source %q }}", repo.Repo, targetSource),
 				TargetKey:                  fmt.Sprintf("$.repos[?(@.repo == '%s')].rev", repo.Repo),
 				TargetEngine:               yaml.EngineYamlPath,
 				File:                       relativeFoundFile,
 				ScmID:                      p.scmID,
+				Digest:                     p.digest,
 			}
 
 			manifest := bytes.Buffer{}

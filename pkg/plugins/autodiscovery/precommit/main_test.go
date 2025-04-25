@@ -15,6 +15,7 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 		ignoreRules       MatchingRules
 		onlyRules         MatchingRules
+		digest            bool
 	}{
 		{
 			name:    "Scenario 1",
@@ -138,6 +139,42 @@ targets:
 				},
 			},
 		},
+		{
+			name:    "Scenario 4 -- Digest",
+			rootDir: "testdata/simple",
+			digest:  true,
+			expectedPipelines: []string{`name: 'Bump "https://github.com/psf/black" repo version'
+
+sources:
+  'gittag':
+    name: 'Get "https://github.com/psf/black" repo version'
+    kind: 'gittag'
+    spec:
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=20.10.0'
+      url: 'https://github.com/psf/black'
+  'gittag_digest':
+    name: 'Get "https://github.com/psf/black" repo version'
+    kind: 'gittag'
+    spec:
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=20.10.0'
+      url: 'https://github.com/psf/black'
+      key: 'hash'
+
+targets:
+  '.pre-commit-config.yaml':
+    name: 'deps(precommit): bump "https://github.com/psf/black" repo version to {{ source "gittag_digest" }}'
+    kind: yaml
+    sourceid: 'gittag_digest'
+    spec:
+      file: '.pre-commit-config.yaml'
+      key: "$.repos[?(@.repo == 'https://github.com/psf/black')].rev"
+      engine: 'yamlpath'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -147,6 +184,7 @@ targets:
 				Spec{
 					Only:   tt.onlyRules,
 					Ignore: tt.ignoreRules,
+					Digest: &tt.digest,
 				}, tt.rootDir, "", "")
 			require.NoError(t, err)
 

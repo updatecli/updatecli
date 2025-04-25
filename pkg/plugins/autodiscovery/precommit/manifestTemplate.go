@@ -18,6 +18,17 @@ sources:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
       url: '{{ .SourceScmUrl }}'
+{{- if .Digest }}
+  '{{ .SourceID }}_digest':
+    name: '{{ .SourceName }}'
+    kind: '{{ .SourceKind }}'
+    spec:
+      versionfilter:
+        kind: '{{ .SourceVersionFilterKind }}'
+        pattern: '{{ .SourceVersionFilterPattern }}'
+      url: '{{ .SourceScmUrl }}'
+      key: 'hash'
+{{- end }}
 
 targets:
   '{{ .TargetID }}':
@@ -26,7 +37,7 @@ targets:
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
-    sourceid: '{{ .SourceID }}'
+    sourceid: '{{ .SourceID }}{{if .Digest}}_digest{{end}}'
     spec:
       file: '{{ .File }}'
       key: "{{ .TargetKey }}"
