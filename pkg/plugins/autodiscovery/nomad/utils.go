@@ -14,7 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// searchNomadFiles will look, recursively, for every files named Chart.yaml from a root directory.
+// searchNomadFiles will look, recursively, for every files named *.hcl or *.nomad from a root directory.
 func searchNomadFiles(rootDir string, filePatterns []string) ([]string, error) {
 
 	//results := []nomadDockerSpec{}

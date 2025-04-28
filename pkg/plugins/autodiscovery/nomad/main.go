@@ -16,7 +16,7 @@ import (
 type Spec struct {
 	// digest provides parameters to specify if the generated manifest should use a digest on top of the tag.
 	Digest *bool `yaml:",omitempty"`
-	// rootDir defines the root directory used to recursively search for Helm Chart
+	// rootDir defines the root directory used to recursively search for Nomad files
 	// If rootDir is not provided, the current working directory will be used.
 	// If rootDir is provided as an absolute path, scmID will be ignored.
 	// If rootDir is not provided but a scmid is, then rootDir will be set to the git repository root directory.
