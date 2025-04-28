@@ -1,7 +1,10 @@
 package pullrequest
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -30,21 +33,6 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 		body = b.spec.Body
 	}
 
-	// Check if a pull-request is already opened then exit early if it does.
-	pullrequestTitle, pullrequestDescription, pullrequestLink, err := b.isPullRequestExist()
-	if err != nil {
-		return err
-	}
-
-	if pullrequestLink != "" {
-		logrus.Debugf("Bitbucket pull request already exist, nothing to do")
-
-		report.Title = pullrequestTitle
-		report.Link = pullrequestLink
-		report.Description = pullrequestDescription
-		return nil
-	}
-
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
 	ok, err := b.isRemoteBranchesExist()
 	if err != nil {
@@ -60,17 +48,9 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 		Therefore we always try to open a pull request, we don't consider being an error if all conditions are not met
 		such as missing remote branches.
 	*/
-
 	if !ok {
 		logrus.Debugln("skipping pull request creation")
 		return nil
-	}
-
-	opts := scm.PullRequestInput{
-		Title:  title,
-		Body:   body,
-		Source: b.SourceBranch,
-		Target: b.TargetBranch,
 	}
 
 	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
@@ -79,7 +59,43 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 		b.SourceBranch,
 		b.TargetBranch)
 
-	// Timeout api query after 30sec
+	pullRequestExists, pullRequestNumber, _, _, _, err := b.isPullRequestExist()
+	if err != nil {
+		return err
+	}
+
+	var responseTitle, responseBody, responseLink string
+	if pullRequestExists {
+		responseTitle, responseBody, responseLink, err = b.updatePullRequest(pullRequestNumber, title, body)
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Bitbucket Cloud pull request successfully updated on %q", responseLink)
+	} else {
+		responseTitle, responseBody, responseLink, err = b.createPullRequest(title, body)
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Bitbucket Cloud pull request successfully opened on %q", responseLink)
+	}
+
+	report.Link = responseLink
+	report.Description = responseBody
+	report.Title = responseTitle
+
+	return nil
+}
+
+func (b *Bitbucket) createPullRequest(title, body string) (responseTitle string, responseBody string, link string, err error) {
+	opts := scm.PullRequestInput{
+		Title:  title,
+		Body:   body,
+		Source: b.SourceBranch,
+		Target: b.TargetBranch,
+	}
+
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -93,23 +109,92 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 		&opts,
 	)
 
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-	}
+	b.logErrorResponse(resp)
 
 	if err != nil {
 		if err.Error() == scm.ErrNotFound.Error() {
 			logrus.Infof("Bitbucket Cloud pull request not created, skipping")
-			return nil
+			return "", "", "", nil
 		}
-		return err
+		return "", "", "", err
 	}
 
-	report.Link = pr.Link
-	report.Description = pr.Body
-	report.Title = pr.Title
+	return pr.Title, pr.Body, pr.Link, nil
+}
 
-	logrus.Infof("Bitbucket Cloud pull request successfully opened on %q", pr.Link)
+func (b *Bitbucket) updatePullRequest(pullRequestNumber int, title, body string) (responseTitle string, responseBody string, link string, err error) {
+	type requestInput struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		Source      struct {
+			Branch struct {
+				Name string `json:"name"`
+			} `json:"branch"`
+		} `json:"source"`
+		Destination struct {
+			Branch struct {
+				Name string `json:"name"`
+			} `json:"branch"`
+		} `json:"destination"`
+	}
 
-	return nil
+	in := new(requestInput)
+	in.Title = title
+	in.Description = body
+	in.Source.Branch.Name = b.SourceBranch
+	in.Destination.Branch.Name = b.TargetBranch
+
+	buf := new(bytes.Buffer)
+	err = json.NewEncoder(buf).Encode(in)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	resp, err := b.client.Do(ctx, &scm.Request{
+		Method: "PUT",
+		Path:   fmt.Sprintf("2.0/repositories/%s/%s/pullrequests/%d", b.Owner, b.Repository, pullRequestNumber),
+		Header: map[string][]string{
+			"Content-Type": {"application/json"},
+		},
+		Body: buf,
+	})
+
+	b.logErrorResponse(resp)
+
+	if err != nil {
+		return "", "", "", err
+	}
+
+	type requestOutput struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		Links       struct {
+			HTML struct {
+				Href string `json:"href"`
+			} `json:"html"`
+		} `json:"links"`
+	}
+
+	defer resp.Body.Close()
+
+	pr := new(requestOutput)
+
+	err = json.NewDecoder(resp.Body).Decode(pr)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return pr.Title, pr.Description, pr.Links.HTML.Href, nil
+}
+
+func (b *Bitbucket) logErrorResponse(resp *scm.Response) {
+	if resp != nil {
+		if resp.Status > 400 {
+			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		}
+	}
 }

@@ -123,7 +123,7 @@ type Bitbucket struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
 	// client handle the api authentication
-	client           client.Client
+	client           *scm.Client
 	pipelineID       string
 	nativeGitHandler gitgeneric.GitHandler
 	workingBranch    bool
