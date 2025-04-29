@@ -38,7 +38,9 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	case "":
 		return nil, nil
 	case "main", "master":
-		return nil, nil
+		if !g.digest {
+			return nil, nil
+		}
 	}
 
 	actionName := ""
@@ -75,7 +77,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		}
 	}
 
-	if slices.Contains([]string{"latest", "master", "main"}, spec.Reference) {
+	if !g.digest && slices.Contains([]string{"latest", "master", "main"}, spec.Reference) {
 		logrus.Debugf("Ignoring GitHub Action %q as it uses the reference %q \n",
 			actionName,
 			spec.Reference,
