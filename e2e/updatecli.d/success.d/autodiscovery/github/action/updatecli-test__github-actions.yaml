@@ -7,7 +7,7 @@ scms:
       repository: github-actions
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-      branch: e2e-tests-golang
+      branch: main
 
 actions:
     default:
