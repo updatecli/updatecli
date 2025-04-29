@@ -22,8 +22,9 @@ sources:
       token: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
+{{- if ne .VersionFilterKind "latest" }}
         pattern: '{{ .VersionFilterPattern }}'
-
+{{- end }}
 {{- if .Digest }}
 
   release_digest:
@@ -53,7 +54,9 @@ sources:
       password: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
+{{- if ne .VersionFilterKind "latest" }}
         pattern: '{{ .VersionFilterPattern }}'
+{{- end }}
 
 {{- if .Digest }}
 
@@ -82,7 +85,9 @@ sources:
       password: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
+{{- if ne .VersionFilterKind "latest" }}
         pattern: '{{ .VersionFilterPattern }}'
+{{- end }}
 
 {{- if .Digest }}
 
