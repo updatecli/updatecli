@@ -26,6 +26,10 @@ jobs:
       - name: "Setup updatecli"
         uses: "./"
 
+        # Should be ignored
+      - name: "Checkout"
+        uses: "actions/checkout@main"
+
     #  - name: Set up Go
     #    uses: actions/setup-go@v5
     #    with:
