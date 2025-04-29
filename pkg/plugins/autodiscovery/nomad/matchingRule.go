@@ -9,7 +9,7 @@ import (
 
 // MatchingRule allows to specifies rules to identify manifest
 type MatchingRule struct {
-	// Path specifies a Helm chart path pattern, the pattern requires to match all of name, not just a substring.
+	// Path specifies a Nomad path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
 	// Jobs specifies a list of Nomad job
 	Jobs []string

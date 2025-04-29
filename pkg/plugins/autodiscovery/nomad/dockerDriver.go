@@ -81,10 +81,10 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 			}
 
 			/*
-				For the time being, it's not possible to retrieve a list of tag for a specific digest
-				without a significant amount f api call. More information on following issue
+				For the time being, it's not possible to retrieve a list of tags for a specific digest
+				without a significant number of API calls. More information on the following issue
 				https://github.com/google/go-containerregistry/issues/1297
-				until a better solution, we don't handle docker image digest
+				until a better solution, we don't handle docker image digests.
 			*/
 			if imageDigest != "" && imageTag == "" {
 				logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", nomadDockerSpec.Value)
