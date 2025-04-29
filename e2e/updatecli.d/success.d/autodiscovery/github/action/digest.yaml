@@ -1,4 +1,4 @@
-name: "deps: bump GitHub Action"
+name: "deps: bump GitHub Action digest"
 scms:
   default:
     kind: github
@@ -22,9 +22,5 @@ autodiscovery:
   actionid: default
   crawlers:
     github/action:
-      #versionfilter:
-      #  kind: semver
-      #  pattern: minor
-      #only:
-      #  - actions:
-      #      "updatecli/updatecli-action": ""
+      digest: true
+      rootdir: pkg/plugins/autodiscovery/githubaction/testdata/digest/.github/
