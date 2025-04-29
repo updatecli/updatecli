@@ -244,7 +244,6 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 
 		if err != nil {
 			logrus.Errorf("error while cleaning config: %v", err)
-			logrus.Errorf("Config: %+v", p.Config.Spec.Sources[id].ResourceConfig)
 		}
 
 		p.Report.Sources[id] = &source.Result
@@ -264,7 +263,6 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		condition.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Conditions[id].ResourceConfig)
 		if err != nil {
 			logrus.Errorf("error while cleaning config: %v", err)
-			logrus.Errorf("Config: %+v", p.Config.Spec.Conditions[id].ResourceConfig)
 		}
 
 		p.Report.Conditions[id] = &condition.Result
@@ -284,7 +282,6 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		target.Result.DryRun = target.DryRun
 		if err != nil {
 			logrus.Errorf("error while cleaning config: %v", err)
-			logrus.Errorf("Config: %+v", p.Config.Spec.Targets[id].ResourceConfig)
 		}
 
 		p.Report.Targets[id] = &target.Result
