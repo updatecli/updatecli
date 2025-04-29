@@ -3,7 +3,7 @@ scms:
   default:
     kind: github
     spec:
-      owner: updatecli-test
+      owner: updatecli
       repository: updatecli
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
