@@ -21,6 +21,8 @@ func TestSearchFiles(t *testing.T) {
 			rootDir:      "testdata",
 			filePatterns: DefaultFilePattern,
 			expectedFiles: []string{
+				"testdata/containerd/redis.nomad",
+				"testdata/podman/cache.nomad",
 				"testdata/simple/nomad.hcl",
 				"testdata/variable/grafana.nomad",
 			},

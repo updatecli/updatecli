@@ -87,6 +87,88 @@ targets:
     sourceid: 'default-digest'
 `},
 		},
+		{
+			name:     "Scenario 3 - handle podman",
+			rootDir:  "testdata/podman",
+			actionID: "default",
+			scmID:    "default",
+			digest:   true,
+			expectedPipelines: []string{`name: 'deps(nomad): update Docker image digest "docker.io/library/redis"'
+actions:
+  default:
+    title: 'deps(nomad): update Docker image "docker.io/library/redis" to "{{ source "default" }}"'
+sources:
+  default:
+    name: 'get latest image tag for "docker.io/library/redis"'
+    kind: 'dockerimage'
+    spec:
+      image: 'docker.io/library/redis'
+      tagfilter: '^\d*$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=7'
+  default-digest:
+    name: 'get latest image "docker.io/library/redis" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'docker.io/library/redis'
+      tag: '{{ source "default" }}'
+    dependson:
+      - 'default'
+targets:
+  default:
+    name: 'deps(nomad): update Docker image "docker.io/library/redis" to "{{ source "default" }}"'
+    kind: 'hcl'
+    scmid: 'default'
+    spec:
+      file: 'cache.nomad'
+      path: 'job.redis.group.cache.task.redis.config.image'
+    sourceid: 'default-digest'
+    transformers:
+      - addprefix: 'docker.io/library/redis:'
+`},
+		},
+		{
+			name:     "Scenario 4 - handle containerd",
+			rootDir:  "testdata/containerd",
+			actionID: "default",
+			scmID:    "default",
+			digest:   true,
+			expectedPipelines: []string{`name: 'deps(nomad): update Docker image digest "docker.io/library/redis"'
+actions:
+  default:
+    title: 'deps(nomad): update Docker image "docker.io/library/redis" to "{{ source "default" }}"'
+sources:
+  default:
+    name: 'get latest image tag for "docker.io/library/redis"'
+    kind: 'dockerimage'
+    spec:
+      image: 'docker.io/library/redis'
+      tagfilter: '^\d*$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=7'
+  default-digest:
+    name: 'get latest image "docker.io/library/redis" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'docker.io/library/redis'
+      tag: '{{ source "default" }}'
+    dependson:
+      - 'default'
+targets:
+  default:
+    name: 'deps(nomad): update Docker image "docker.io/library/redis" to "{{ source "default" }}"'
+    kind: 'hcl'
+    scmid: 'default'
+    spec:
+      file: 'redis.nomad'
+      path: 'job.redis.group.redis-group.task.redis-task.config.image'
+    sourceid: 'default-digest'
+    transformers:
+      - addprefix: 'docker.io/library/redis:'
+`},
+		},
 	}
 
 	for _, tt := range testdata {

@@ -110,9 +110,9 @@ func getNomadDockerSpecFromFile(filename string) ([]nomadDockerSpec, error) {
 								continue
 							}
 
-							driverValue := string(driverAttribute.Expr().BuildTokens(nil).Bytes())
+							driverValue := strings.Trim(string(driverAttribute.Expr().BuildTokens(nil).Bytes()), " \"")
 
-							if strings.Contains(driverValue, "docker") {
+							if driverValue == "docker" || driverValue == "podman" || driverValue == "containerd-driver" {
 								for _, configBlock := range taskBlock.Body().Blocks() {
 									if configBlock.Type() == "config" {
 										imageAttribute := configBlock.Body().GetAttribute("image")
