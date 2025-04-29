@@ -195,12 +195,18 @@ func (s *Spec) Sanitize() error {
 // to identify the resource without any sensitive information
 // and context specific data.
 func (m *Maven) ReportConfig() interface{} {
+
+	repositories := make([]string, len(m.spec.Repositories))
+	for i := range m.spec.Repositories {
+		repositories[i] = redact.URL(m.spec.Repositories[i])
+	}
+
 	return Spec{
 		GroupID:      m.spec.GroupID,
 		ArtifactID:   m.spec.ArtifactID,
 		Version:      m.spec.Version,
-		Repository:   m.spec.Repository,
-		Repositories: m.spec.Repositories,
+		Repository:   redact.URL(m.spec.Repository),
+		Repositories: repositories,
 		URL:          redact.URL(m.spec.URL),
 	}
 }
