@@ -318,7 +318,7 @@ func GetReportConfig(rs ResourceConfig) (any, error) {
 	}
 
 	newResourceConfig := rs
-	rs.Spec = r.ReportConfig()
+	newResourceConfig.Spec = r.ReportConfig()
 
 	return newResourceConfig, nil
 }
