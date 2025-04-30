@@ -3,6 +3,7 @@ package cargo
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -12,20 +13,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
 
-type cargoUpgradeCheckerExecutor interface {
-	Run() error
+func isCargoUpgradeAvailable() bool {
+	return exec.Command("cargo", "upgrade", "--version").Run() == nil
 }
 
-type RealCargoUpgradeCheckerExecutor struct{}
-
-func (c RealCargoUpgradeCheckerExecutor) Run() error {
-	return exec.Command("cargo", "upgrade", "--version").Run()
-}
-
-// isCargoUpdateInstalled check if the cargo-update binary is available
-func isCargoUpgradeInstalled(c cargoUpgradeCheckerExecutor) bool {
-	err := c.Run()
-	return err == nil
+func isCargoAvailable() bool {
+	return exec.Command("cargo", "--version").Run() == nil
 }
 
 // findCargoFiles search, recursively, for every files named Cargo.toml from a root directory.
@@ -45,6 +38,7 @@ func findCargoFiles(rootDir string, validFiles []string) ([]string, error) {
 		for _, f := range validFiles {
 			if di.Name() == f {
 				cargoFiles = append(cargoFiles, path)
+				return fs.SkipDir
 			}
 		}
 		return nil
@@ -76,14 +70,12 @@ func getDependencies(fc *dasel.FileContent, dependencyType string) ([]crateDepen
 		if err != nil {
 			// Cargo dependency has not been defined using a version
 			// It could have been defined using a git repository
-			_, err := fc.DaselNode.Query(fmt.Sprintf(".%s.%s.git", dependencyType, pkg))
-			if err == nil {
-				// TODO: Handle git dependencies
+			if _, err := fc.DaselNode.Query(fmt.Sprintf(".%s.%s.git", dependencyType, pkg)); err == nil {
+				// TODO: handle Git dependencies
 				continue
 			}
 			// It could have been defined using a path to a local directory
-			_, err = fc.DaselNode.Query(fmt.Sprintf(".%s.%s.path", dependencyType, pkg))
-			if err == nil {
+			if _, err = fc.DaselNode.Query(fmt.Sprintf(".%s.%s.path", dependencyType, pkg)); err == nil {
 				// TODO: Handle Path dependencies
 				continue
 			}
@@ -111,9 +103,17 @@ func getDependencies(fc *dasel.FileContent, dependencyType string) ([]crateDepen
 	return dependencies, nil
 }
 
-func getCrateMetadata(manifestPath string) (*crateMetadata, error) {
+func getCrateMetadata(rootDir string) (crateMetadata, error) {
+	manifestPath := fmt.Sprintf("%s/Cargo.toml", rootDir)
+	lockPath := fmt.Sprintf("%s/Cargo.lock", rootDir)
+	if _, err := os.Stat(lockPath); err != nil {
+		lockPath = ""
+	}
 
-	var crate crateMetadata
+	crate := crateMetadata{
+		CargoFile:     manifestPath,
+		CargoLockFile: lockPath,
+	}
 
 	tomlFile := dasel.FileContent{
 		DataType:         "toml",
@@ -124,18 +124,40 @@ func getCrateMetadata(manifestPath string) (*crateMetadata, error) {
 	err := tomlFile.Read("")
 
 	if err != nil {
-		return &crateMetadata{}, err
+		return crate, err
 	}
 
+	workspaceMembers := []crateMetadata{}
+	if members, err := tomlFile.MultipleQuery("workspace.members.[*]"); err == nil {
+		for _, member := range members {
+			memberPath := fmt.Sprintf("%s/%s", rootDir, member)
+			if matches, err := filepath.Glob(memberPath); err == nil {
+				for _, match := range matches {
+					if workspaceMember, err := getCrateMetadata(match); err == nil {
+						workspaceMember.CargoLockFile = lockPath
+						workspaceMembers = append(workspaceMembers, workspaceMember)
+					}
+				}
+			}
+		}
+		if len(workspaceMembers) > 0 {
+			crate.Workspace = true
+		}
+	}
 	name, err := tomlFile.Query("package.name")
 
-	if err != nil {
-		return &crateMetadata{}, err
+	if err != nil && !crate.Workspace {
+		// No package, and no workspace members
+		return crate, err
+	} else {
+		crate.Name = name
 	}
 
-	crate.Name = name
+	crate.WorkspaceMembers = workspaceMembers
 	crate.Dependencies, _ = getDependencies(&tomlFile, "dependencies")
 	crate.DevDependencies, _ = getDependencies(&tomlFile, "dev-dependencies")
+	crate.WorkspaceDependencies, _ = getDependencies(&tomlFile, "workspace.dependencies")
+	crate.WorkspaceDevDependencies, _ = getDependencies(&tomlFile, "workspace.dev-dependencies")
 
 	logrus.Debugf("Crate: %q\n", name)
 	logrus.Debugf("Dependencies")
@@ -151,7 +173,7 @@ func getCrateMetadata(manifestPath string) (*crateMetadata, error) {
 		logrus.Debugf("Version: %q\n", value.Version)
 	}
 
-	return &crate, nil
+	return crate, nil
 }
 
 func isStrictSemver(version string) bool {

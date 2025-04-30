@@ -27,24 +27,24 @@ type crateDependency struct {
 }
 
 type crateMetadata struct {
-	Name            string
-	Dependencies    []crateDependency
-	DevDependencies []crateDependency
+	Name                     string
+	CargoFile                string
+	CargoLockFile            string
+	Workspace                bool
+	WorkspaceMembers         []crateMetadata
+	WorkspaceDependencies    []crateDependency
+	WorkspaceDevDependencies []crateDependency
+	Dependencies             []crateDependency
+	DevDependencies          []crateDependency
 }
 
-func (c Cargo) generateManifest(crateName string, dependency crateDependency, relativeFile string, foundFile string, dependencyType string, targetCargoCleanupEnabled bool) (bytes.Buffer, error) {
+func (c Cargo) generateManifest(
+	crate *crateMetadata,
+	dependency *crateDependency,
+	dependencyType string,
+	dependencyTypeLabel string,
+) (bytes.Buffer, error) {
 	manifest := bytes.Buffer{}
-
-	// No need to continue if both Cargo.lock and Cargo.toml do not need to be updated
-	if !targetCargoCleanupEnabled && !isStrictSemver(dependency.Version) {
-		return manifest, nil
-	}
-
-	dependencyManifest := dependencyManifestWithCargoUpgrade
-	if !isCargoUpgradeInstalled(c.cargoUpgradeCheckerExecutor) {
-		dependencyManifest = dependencyManifestWithoutCargoUpgrade
-		logrus.Debug("Falling back to toml engine for upgrade as `cargo upgrade` is not available")
-	}
 
 	tmpl, err := template.New("manifest").Parse(dependencyManifest)
 	if err != nil {
@@ -98,10 +98,31 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		}
 	}
 
+	cargoFile, err := filepath.Rel(c.rootDir, crate.CargoFile)
+	if err != nil {
+		return manifest, err
+	}
+	cargoLockFile := crate.CargoLockFile
+	if cargoLockFile != "" {
+		relCargoLockFile, err := filepath.Rel(c.rootDir, cargoLockFile)
+		if err != nil {
+			return manifest, err
+		}
+		cargoLockFile = relCargoLockFile
+	}
+
+	manifestName := fmt.Sprintf("deps(cargo): bump %s %q for %q crate", dependencyTypeLabel, dependency.Name, crate.Name)
+	targetName := fmt.Sprintf("deps(cargo): bump crate %s %q to {{ source %q }}", dependencyTypeLabel, dependency.Name, dependency.Name)
+	cargoLockTargetName := fmt.Sprintf("deps(cargo): update %s following bump crate %s %q to {{ source %q }}", cargoLockFile, dependencyTypeLabel, dependency.Name, dependency.Name)
+	if crate.Workspace {
+		manifestName = fmt.Sprintf("deps(cargo): bump %s %q", dependencyTypeLabel, dependency.Name)
+		targetName = fmt.Sprintf("deps(cargo): bump %s %q to {{ source %q }}", dependencyTypeLabel, dependency.Name, dependency.Name)
+		cargoLockTargetName = fmt.Sprintf("deps(cargo): update %s following bump %s %q to {{ source %q }}", cargoLockFile, dependencyTypeLabel, dependency.Name, dependency.Name)
+	}
+
 	params := struct {
 		ActionID                   string
 		ManifestName               string
-		CrateName                  string
 		DependencyName             string
 		SourceID                   string
 		SourceName                 string
@@ -112,13 +133,13 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		ExistingSourceKey          string
 		ConditionID                string
 		ConditionQuery             string
-		File                       string
+		CargoUpgradeAvailable      bool
+		CargoFile                  string
+		CargoLockFile              string
+		CargoLockTargetName        string
 		TargetID                   string
 		TargetName                 string
-		TargetFile                 string
 		TargetKey                  string
-		TargetCargoCleanupEnabled  bool
-		TargetWorkdir              string
 		ScmID                      string
 		WithRegistry               bool
 		RegistrySCMID              string
@@ -128,8 +149,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		RegistryHeaderFormat       string
 	}{
 		ActionID:                   c.actionID,
-		ManifestName:               fmt.Sprintf("deps(cargo): bump %s %q for %q crate", dependencyType, dependency.Name, crateName),
-		CrateName:                  crateName,
+		ManifestName:               manifestName,
 		DependencyName:             dependency.Name,
 		SourceID:                   dependency.Name,
 		SourceName:                 fmt.Sprintf("Get latest %q crate version", dependency.Name),
@@ -140,13 +160,13 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 		ExistingSourceName:         fmt.Sprintf("Get current %q crate version", dependency.Name),
 		ConditionID:                dependency.Name,
 		ConditionQuery:             ConditionQuery,
-		File:                       relativeFile,
+		CargoUpgradeAvailable:      c.cargoUpgradeAvailable,
+		CargoFile:                  cargoFile,
+		CargoLockFile:              cargoLockFile,
 		TargetID:                   dependency.Name,
-		TargetName:                 fmt.Sprintf("deps(cargo): bump crate dependency %q to {{ source %q }}", dependency.Name, dependency.Name),
-		TargetFile:                 filepath.Base(foundFile),
+		TargetName:                 targetName,
+		CargoLockTargetName:        cargoLockTargetName,
 		TargetKey:                  TargetKey,
-		TargetCargoCleanupEnabled:  targetCargoCleanupEnabled,
-		TargetWorkdir:              filepath.Dir(foundFile),
 		ScmID:                      c.scmID,
 		WithRegistry:               dependency.Registry != "",
 		RegistrySCMID:              Registry.SCMID,
@@ -164,6 +184,7 @@ func (c Cargo) generateManifest(crateName string, dependency crateDependency, re
 }
 
 func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
+
 	var manifests [][]byte
 
 	searchFromDir := c.rootDir
@@ -185,96 +206,94 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 	for _, foundCargoFile := range foundCargoFiles {
 		logrus.Debugf("parsing file %q", foundCargoFile)
 
-		relativeFoundCargoFile, err := filepath.Rel(c.rootDir, foundCargoFile)
+		// Retrieve Cargo dependencies for each crate
+		crate, err := getCrateMetadata(filepath.Dir(foundCargoFile))
+		if err != nil {
+			logrus.Debugln(err)
+			continue
+		}
+		c.processCrateMetadata(&manifests, crate)
+		for _, member := range crate.WorkspaceMembers {
+			c.processCrateMetadata(&manifests, member)
+		}
+	}
+
+	return manifests, nil
+}
+
+func (c Cargo) processCrateMetadata(
+	manifests *[][]byte,
+	crate crateMetadata,
+) {
+
+	if crate.Name == "" && len(crate.WorkspaceMembers) == 0 {
+		return
+	}
+
+	if len(crate.Dependencies) == 0 && len(crate.DevDependencies) == 0 && len(crate.WorkspaceDependencies) == 0 && len(crate.WorkspaceDevDependencies) == 0 {
+		return
+	}
+	if crate.CargoLockFile != "" && !c.cargoAvailable && !c.cargoUpgradeAvailable {
+		logrus.Warning("skipping, Cargo lock file detected but Updatecli couldn't detect nor the `cargo` command neither the `cargo upgrade` to update it in case of a Cargo.lock update")
+		return
+	}
+
+	cr := crate
+
+	dependencies := cr.Dependencies
+	sort.Slice(dependencies, func(i, j int) bool {
+		return dependencies[i].Name < dependencies[j].Name
+	})
+	devDependencies := cr.DevDependencies
+	sort.Slice(devDependencies, func(i, j int) bool {
+		return devDependencies[i].Name < devDependencies[j].Name
+	})
+	workspaceDependencies := cr.WorkspaceDependencies
+	sort.Slice(dependencies, func(i, j int) bool {
+		return dependencies[i].Name < dependencies[j].Name
+	})
+	workspaceDevDependencies := cr.WorkspaceDevDependencies
+	sort.Slice(devDependencies, func(i, j int) bool {
+		return devDependencies[i].Name < devDependencies[j].Name
+	})
+
+	c.processDependencies(manifests, cr.Name, &crate, dependencies, "dependencies", "dependency")
+	c.processDependencies(manifests, cr.Name, &crate, devDependencies, "dev-dependencies", "dev dependency")
+	c.processDependencies(manifests, cr.Name, &crate, workspaceDependencies, "workspace.dependencies", "workspace dependency")
+	c.processDependencies(manifests, cr.Name, &crate, workspaceDevDependencies, "workspace.dev-dependencies", "workspace dev dependency")
+}
+
+func (c Cargo) processDependencies(
+	manifests *[][]byte,
+	name string,
+	crate *crateMetadata,
+	dependencies []crateDependency,
+	depType string,
+	depTypeLabel string,
+) {
+	for _, dependency := range dependencies {
+		relativeFoundCargoFile, err := filepath.Rel(c.rootDir, crate.CargoFile)
+
 		if err != nil {
 			// Jump to the next Cargo if current failed
 			logrus.Debugln(err)
 			continue
 		}
 
-		cargoTargetCleanManifestEnabled := false
-		if cargo.IsLockFileDetected(filepath.Join(filepath.Dir(foundCargoFile), "Cargo.lock")) {
-			switch cargo.IsCargoInstalled() {
-			case true:
-				cargoTargetCleanManifestEnabled = true
-			case false:
-				logrus.Warning("skipping, Cargo lock file detected but Updatecli couldn't detect the cargo command to update it in case of a Cargo.lock update")
-				continue
-			}
+		if len(c.spec.Ignore) > 0 && c.spec.Ignore.isMatchingRules(c.rootDir, relativeFoundCargoFile, dependency.Registry, dependency.Name, dependency.Version) {
+			logrus.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.Registry, dependency.Name, crate.CargoFile)
+			continue
+		}
+		if len(c.spec.Only) > 0 && !c.spec.Only.isMatchingRules(c.rootDir, relativeFoundCargoFile, dependency.Registry, dependency.Name, dependency.Version) {
+			logrus.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.Registry, dependency.Name, crate.CargoFile)
+			continue
 		}
 
-		// Retrieve Cargo dependencies for each crate
-		crate, err := getCrateMetadata(foundCargoFile)
+		manifest, err := c.generateManifest(crate, &dependency, depType, depTypeLabel)
 		if err != nil {
 			logrus.Debugln(err)
 			continue
 		}
-
-		if crate == nil {
-			continue
-		}
-
-		if len(crate.Dependencies) == 0 && len(crate.DevDependencies) == 0 {
-			continue
-		}
-
-		cr := *crate
-		dependencies := cr.Dependencies
-		sort.Slice(dependencies, func(i, j int) bool {
-			return dependencies[i].Name < dependencies[j].Name
-		})
-		devDependencies := cr.DevDependencies
-		sort.Slice(devDependencies, func(i, j int) bool {
-			return devDependencies[i].Name < devDependencies[j].Name
-		})
-
-		for _, dependency := range dependencies {
-
-			if len(c.spec.Ignore) > 0 {
-				if c.spec.Ignore.isMatchingRules(c.rootDir, relativeFoundCargoFile, dependency.Registry, dependency.Name, dependency.Version) {
-					logrus.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.Registry, dependency.Name, relativeFoundCargoFile)
-					continue
-				}
-			}
-
-			if len(c.spec.Only) > 0 {
-				if !c.spec.Only.isMatchingRules(c.rootDir, relativeFoundCargoFile, dependency.Registry, dependency.Name, dependency.Version) {
-					logrus.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.Registry, dependency.Name, relativeFoundCargoFile)
-					continue
-				}
-			}
-
-			manifest, err := c.generateManifest(cr.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dependencies", cargoTargetCleanManifestEnabled)
-			if err != nil {
-				logrus.Debugln(err)
-				continue
-			}
-			manifests = append(manifests, manifest.Bytes())
-		}
-		for _, dependency := range devDependencies {
-			if len(c.spec.Ignore) > 0 {
-				if c.spec.Ignore.isMatchingRules(c.rootDir, relativeFoundCargoFile, dependency.Registry, dependency.Name, dependency.Version) {
-					logrus.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.Registry, dependency.Name, relativeFoundCargoFile)
-					continue
-				}
-			}
-
-			if len(c.spec.Only) > 0 {
-				if !c.spec.Only.isMatchingRules(c.rootDir, relativeFoundCargoFile, dependency.Registry, dependency.Name, dependency.Version) {
-					logrus.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.Registry, dependency.Name, relativeFoundCargoFile)
-					continue
-				}
-			}
-
-			manifest, err := c.generateManifest(cr.Name, dependency, relativeFoundCargoFile, foundCargoFile, "dev-dependencies", cargoTargetCleanManifestEnabled)
-			if err != nil {
-				logrus.Debugln(err)
-				continue
-			}
-			manifests = append(manifests, manifest.Bytes())
-		}
+		*manifests = append(*manifests, manifest.Bytes())
 	}
-
-	logrus.Debugf("found manifests: %s", manifests)
-	return manifests, nil
 }

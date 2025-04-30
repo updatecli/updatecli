@@ -59,8 +59,10 @@ type Cargo struct {
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
-	// CargoUpgradeCheckerExecutor holds the interface to check if `cargo upgrade` is available
-	cargoUpgradeCheckerExecutor cargoUpgradeCheckerExecutor
+	// cargoAvailable tells if `cargo` is available
+	cargoAvailable bool
+	// cargoUpgradeAvailable tells if `cargo upgrade` (from cargo-edits) is available
+	cargoUpgradeAvailable bool
 }
 
 // New return a new valid Cargo object.
@@ -95,12 +97,13 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Cargo, error) {
 	}
 
 	return Cargo{
-		actionID:                    actionID,
-		spec:                        s,
-		rootDir:                     dir,
-		scmID:                       scmID,
-		versionFilter:               newFilter,
-		cargoUpgradeCheckerExecutor: RealCargoUpgradeCheckerExecutor{},
+		actionID:              actionID,
+		spec:                  s,
+		rootDir:               dir,
+		scmID:                 scmID,
+		versionFilter:         newFilter,
+		cargoAvailable:        isCargoAvailable(),
+		cargoUpgradeAvailable: isCargoAvailable(),
 	}, nil
 
 }
