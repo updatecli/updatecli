@@ -228,7 +228,7 @@ sources:
       repository: 'checkout'
       url: 'https://github.com'
       token: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "release" }}'
@@ -387,7 +387,7 @@ sources:
       repository: 'checkout'
       url: 'https://github.com'
       token: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "release" }}'
@@ -545,7 +545,7 @@ sources:
       repository: 'checkout'
       url: 'https://github.com'
       token: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "release" }}'

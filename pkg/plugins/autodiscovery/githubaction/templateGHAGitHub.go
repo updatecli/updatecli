@@ -37,7 +37,7 @@ sources:
       repository: '{{ .Repository }}'
       url: '{{ .URL }}'
       token: '{{ .Token }}'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ "{{" }} source "release" {{ "}}" }}'
