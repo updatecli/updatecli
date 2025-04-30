@@ -228,7 +228,7 @@ sources:
       repository: 'checkout'
       url: 'https://github.com'
       token: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "release" }}'
@@ -253,7 +253,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "tag" }}'
@@ -278,7 +278,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "branch" }}'
@@ -387,7 +387,7 @@ sources:
       repository: 'checkout'
       url: 'https://github.com'
       token: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "release" }}'
@@ -412,7 +412,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "tag" }}'
@@ -437,7 +437,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "branch" }}'
@@ -545,7 +545,7 @@ sources:
       repository: 'checkout'
       url: 'https://github.com'
       token: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "release" }}'
@@ -569,7 +569,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "tag" }}'
@@ -593,7 +593,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "branch" }}'
