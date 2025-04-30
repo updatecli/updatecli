@@ -3,15 +3,11 @@ package autodiscovery
 import (
 	"fmt"
 
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/argocd"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terragrunt"
-
-	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
-
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/argocd"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/fleet"
@@ -23,8 +19,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/ko"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/kubernetes"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/nomad"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/npm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/precommit"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terragrunt"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
 )
 
 var (
@@ -47,6 +47,7 @@ var (
 			"ko":            ko.Spec{},
 			"kubernetes":    kubernetes.Spec{},
 			"maven":         maven.Spec{},
+			"nomad":         nomad.Spec{},
 			"npm":           npm.Spec{},
 			"precommit":     precommit.Spec{},
 			"prow":          kubernetes.Spec{},
@@ -71,6 +72,7 @@ var (
 		"ko":            &ko.Spec{},
 		"kubernetes":    &kubernetes.Spec{},
 		"maven":         &maven.Spec{},
+		"nomad":         &nomad.Spec{},
 		"npm":           &npm.Spec{},
 		"precommit":     &precommit.Spec{},
 		"prow":          &kubernetes.Spec{},
@@ -270,6 +272,19 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 		case "npm":
 			crawler, err := npm.New(
+				g.spec.Crawlers[kind],
+				workDir,
+				g.spec.ScmId,
+				g.spec.ActionId)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				continue
+			}
+
+			g.crawlers = append(g.crawlers, crawler)
+
+		case "nomad":
+			crawler, err := nomad.New(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId,

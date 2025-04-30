@@ -1,0 +1,27 @@
+name: "Nomad autodiscovery using GitHub"
+scms:
+  default:
+    kind: github
+    spec:
+      owner: updatecli-test
+      repository: nomad-demo
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      branch: master
+
+actions:
+  default:
+    scmid: default
+    kind: github/pullrequest
+    spec:
+      labels:
+        - "dependencies"
+
+autodiscovery:
+  scmid: default
+  actionid: default
+  crawlers:
+    nomad:
+      only:
+        - path: 'nomad_jobs/monitoring-grafana.nomad'
+
