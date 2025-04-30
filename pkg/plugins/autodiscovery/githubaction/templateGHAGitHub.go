@@ -68,7 +68,7 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
-      key: 'taghash'
+      key: 'hash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ "{{" }} source "tag" {{ "}}" }}'
@@ -99,7 +99,7 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
-      key: 'taghash'
+      key: 'hash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ "{{" }} source "branch" {{ "}}" }}'
