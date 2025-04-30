@@ -37,7 +37,7 @@ sources:
       repository: '{{ .Repository }}'
       url: '{{ .URL }}'
       token: '{{ .Token }}'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ "{{" }} source "release" {{ "}}" }}'
@@ -68,7 +68,7 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ "{{" }} source "tag" {{ "}}" }}'
@@ -99,7 +99,7 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
-      key: 'hash'
+      key: 'taghash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ "{{" }} source "branch" {{ "}}" }}'
