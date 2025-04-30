@@ -103,7 +103,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Cargo, error) {
 		scmID:                 scmID,
 		versionFilter:         newFilter,
 		cargoAvailable:        isCargoAvailable(),
-		cargoUpgradeAvailable: isCargoAvailable(),
+		cargoUpgradeAvailable: isCargoUpgradeAvailable(),
 	}, nil
 
 }

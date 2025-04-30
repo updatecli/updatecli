@@ -257,15 +257,14 @@ func (c Cargo) processCrateMetadata(
 		return devDependencies[i].Name < devDependencies[j].Name
 	})
 
-	c.processDependencies(manifests, cr.Name, &crate, dependencies, "dependencies", "dependency")
-	c.processDependencies(manifests, cr.Name, &crate, devDependencies, "dev-dependencies", "dev dependency")
-	c.processDependencies(manifests, cr.Name, &crate, workspaceDependencies, "workspace.dependencies", "workspace dependency")
-	c.processDependencies(manifests, cr.Name, &crate, workspaceDevDependencies, "workspace.dev-dependencies", "workspace dev dependency")
+	c.processDependencies(manifests, &crate, dependencies, "dependencies", "dependency")
+	c.processDependencies(manifests, &crate, devDependencies, "dev-dependencies", "dev dependency")
+	c.processDependencies(manifests, &crate, workspaceDependencies, "workspace.dependencies", "workspace dependency")
+	c.processDependencies(manifests, &crate, workspaceDevDependencies, "workspace.dev-dependencies", "workspace dev dependency")
 }
 
 func (c Cargo) processDependencies(
 	manifests *[][]byte,
-	name string,
 	crate *crateMetadata,
 	dependencies []crateDependency,
 	depType string,
