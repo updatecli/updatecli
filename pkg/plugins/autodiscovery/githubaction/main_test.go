@@ -253,7 +253,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'taghash'
+      key: 'hash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "tag" }}'
@@ -278,7 +278,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'taghash'
+      key: 'hash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "branch" }}'
@@ -412,7 +412,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'taghash'
+      key: 'hash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "tag" }}'
@@ -437,7 +437,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'taghash'
+      key: 'hash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "branch" }}'
@@ -569,7 +569,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'taghash'
+      key: 'hash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "tag" }}'
@@ -593,7 +593,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
-      key: 'taghash'
+      key: 'hash'
       versionfilter:
         kind: 'regex'
         pattern: '{{ source "branch" }}'
