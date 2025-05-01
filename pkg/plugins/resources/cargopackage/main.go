@@ -232,3 +232,14 @@ func (cp *CargoPackage) getPackageData() (PackageData, error) {
 	}
 	return cp.getPackageDataFromApi(cp.spec.Package, cp.registry.URL)
 }
+
+// ReportConfig returns a new configuration with only the necessary configuration fields
+// to identify the resource without any sensitive information or context specific data.
+func (cp *CargoPackage) ReportConfig() interface{} {
+	return Spec{
+		IndexUrl: cp.spec.IndexUrl,
+		Registry: cp.spec.Registry,
+		Package:  cp.spec.Package,
+		Version:  cp.spec.Version,
+	}
+}

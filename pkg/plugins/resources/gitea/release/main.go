@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -185,4 +186,18 @@ func (s Spec) Validate() error {
 	}
 
 	return nil
+}
+
+// ReportConfig returns a new configuration with only the necessary configuration fields
+// to identify the resource without any sensitive information
+func (g *Gitea) ReportConfig() interface{} {
+	return Spec{
+		Owner:      g.spec.Owner,
+		Repository: g.spec.Repository,
+		Tag:        g.spec.Tag,
+		Spec: client.Spec{
+			URL: redact.URL(g.spec.URL),
+		},
+		VersionFilter: g.spec.VersionFilter,
+	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // Http defines a resource of type "http"
@@ -102,4 +103,13 @@ func (h *Http) performHttpRequest() (*http.Response, error) {
 	logrus.Debugf("[http] Response received: %v", httpRes)
 
 	return httpRes, nil
+}
+
+// ReportConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information or context specific data.
+func (h *Http) ReportConfig() interface{} {
+	return Spec{
+		Url:                  redact.URL(h.spec.Url),
+		ReturnResponseHeader: h.spec.ReturnResponseHeader,
+	}
 }

@@ -38,11 +38,6 @@ func Publish(r *reports.Report) error {
 		}
 	}
 
-	err := r.UpdateID()
-	if err != nil {
-		return fmt.Errorf("generating report IDs: %w", err)
-	}
-
 	reportURLString, reportApiURLString, bearerToken := getConfigFromEnv()
 	if reportApiURLString == "" {
 		logrus.Debugf("no Udash API URL detected via environment variables, looking for a configuration file")

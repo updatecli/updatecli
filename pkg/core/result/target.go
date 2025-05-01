@@ -37,6 +37,10 @@ type Target struct {
 	ConsoleOutput string
 	//Changelogs holds the changelog description
 	Changelogs []Changelog
+	// Config stores the source configuration
+	Config any
+	// SourceID stores the source ID used by the target
+	SourceID string
 }
 
 func (t *Target) String() string {

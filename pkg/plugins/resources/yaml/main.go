@@ -321,3 +321,17 @@ func (y *Yaml) UpdateAbsoluteFilePath(workDir string) {
 		}
 	}
 }
+
+// ReportConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information or context specific data.
+func (y *Yaml) ReportConfig() interface{} {
+	return Spec{
+		File:          y.spec.File,
+		Files:         y.spec.Files,
+		Key:           y.spec.Key,
+		Value:         y.spec.Value,
+		Engine:        y.spec.Engine,
+		KeyOnly:       y.spec.KeyOnly,
+		SearchPattern: y.spec.SearchPattern,
+	}
+}

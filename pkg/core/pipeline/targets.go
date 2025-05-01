@@ -15,11 +15,9 @@ var (
 )
 
 func (p *Pipeline) updateTarget(id, result string) {
-
 	target := p.Targets[id]
 	target.Result.Result = result
 	p.Targets[id] = target
-	p.Report.Targets[id] = &target.Result
 }
 
 // RunTarget run a target by id
@@ -73,7 +71,6 @@ func (p *Pipeline) RunTarget(id string, sourceIds []string) (r string, changed b
 	}
 
 	p.Targets[id] = target
-	p.Report.Targets[id] = &target.Result
 
 	return target.Result.Result, target.Result.Changed, err
 }

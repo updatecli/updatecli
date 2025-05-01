@@ -24,6 +24,10 @@ type Condition struct {
 	ID string
 	// ConsoleOutput stores the console output of the condition execution
 	ConsoleOutput string
+	// Config stores the source configuration
+	Config any
+	// SourceID stores the source ID used by the condition
+	SourceID string
 }
 
 // SetConsoleOutput sets the console output of the condition execution

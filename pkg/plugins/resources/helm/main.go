@@ -5,6 +5,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -205,4 +206,21 @@ func New(spec interface{}) (*Chart, error) {
 	newResource.options = append(newResource.options, remote.WithAuthFromKeychain(authn.NewMultiKeychain(keychains...)))
 
 	return newResource, nil
+}
+
+// ReportConfig returns a new configuration without any sensitive information
+// or context specific information
+func (c *Chart) ReportConfig() interface{} {
+	return Spec{
+		File:             c.spec.File,
+		Key:              c.spec.Key,
+		Name:             c.spec.Name,
+		SkipPackaging:    c.spec.SkipPackaging,
+		URL:              redact.URL(c.spec.URL),
+		Value:            c.spec.Value,
+		Version:          c.spec.Version,
+		VersionIncrement: c.spec.VersionIncrement,
+		AppVersion:       c.spec.AppVersion,
+		VersionFilter:    c.spec.VersionFilter,
+	}
 }

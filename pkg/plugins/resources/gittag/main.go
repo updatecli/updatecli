@@ -8,6 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -145,4 +146,17 @@ func (gt *GitTag) clone() (string, error) {
 		return "", err
 	}
 	return g.Clone()
+}
+
+// ReportConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information
+// and context specific data.
+func (gt *GitTag) ReportConfig() interface{} {
+	return Spec{
+		Path:          gt.spec.Path,
+		VersionFilter: gt.spec.VersionFilter,
+		Key:           gt.spec.Key,
+		URL:           redact.URL(gt.spec.URL),
+		SourceBranch:  gt.spec.SourceBranch,
+	}
 }

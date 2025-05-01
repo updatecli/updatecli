@@ -7,6 +7,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -187,4 +188,19 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		typeFilter:    newReleaseType,
 		versionFilter: newFilter,
 	}, nil
+}
+
+// ReportConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information
+// and context specific data.
+func (g *GitHubRelease) ReportConfig() interface{} {
+	return Spec{
+		Owner:         g.spec.Owner,
+		Repository:    g.spec.Repository,
+		VersionFilter: g.spec.VersionFilter,
+		TypeFilter:    g.spec.TypeFilter,
+		URL:           redact.URL(g.spec.URL),
+		Tag:           g.spec.Tag,
+		Key:           g.spec.Key,
+	}
 }

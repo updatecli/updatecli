@@ -62,3 +62,15 @@ func New(spec interface{}) (*ToolVersions, error) {
 
 	return &j, err
 }
+
+// ReportConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information or context specific data.
+func (s *ToolVersions) ReportConfig() interface{} {
+	return Spec{
+		File:             s.spec.File,
+		Files:            s.spec.Files,
+		Key:              s.spec.Key,
+		Value:            s.spec.Value,
+		CreateMissingKey: s.spec.CreateMissingKey,
+	}
+}

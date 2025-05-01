@@ -17,6 +17,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -335,4 +336,16 @@ func getOrderedVersions(data []byte) ([]string, error) {
 
 	return orderedVersions, nil
 
+}
+
+// ReportConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information or context specific data.
+func (n *Npm) ReportConfig() interface{} {
+	return Spec{
+		Name:          n.spec.Name,
+		Version:       n.spec.Version,
+		URL:           redact.URL(n.spec.URL),
+		VersionFilter: n.spec.VersionFilter,
+		NpmrcPath:     n.spec.NpmrcPath,
+	}
 }
