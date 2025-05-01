@@ -694,7 +694,7 @@ sources:
     dependson:
       - 'condition#release:and'
     name: 'Get latest Gitea Release for https://gitea.com/actions/checkout'
-    kind: 'gitearelease'
+    kind: 'gitea/release'
     spec:
       owner: 'actions'
       repository: 'checkout'
@@ -731,7 +731,7 @@ sources:
 conditions:
   release:
     name: 'Check if https://gitea.com/actions/checkout@v4 is a Gitea release'
-    kind: 'gitearelease'
+    kind: 'gitea/release'
     disablesourceinput: true
     spec:
       owner: 'actions'
