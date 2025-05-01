@@ -14,7 +14,7 @@ sources:
     dependson:
       - 'condition#release:and'
     name: 'Get latest Gitea Release for {{ .ActionName }}'
-    kind: 'gitearelease'
+    kind: 'gitea/release'
     spec:
       owner: '{{ .Owner }}'
       repository: '{{ .Repository }}'
@@ -51,7 +51,7 @@ sources:
 conditions:
   release:
     name: 'Check if {{ .ActionName }}@{{ .Reference }} is a Gitea release'
-    kind: 'gitearelease'
+    kind: 'gitea/release'
     disablesourceinput: true
     spec:
       owner: '{{ .Owner }}'

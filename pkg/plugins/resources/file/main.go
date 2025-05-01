@@ -332,3 +332,17 @@ func (f *File) Read() error {
 func (f *File) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
+
+// ReportConfig returns a new configuration with only the necessary configuration fields
+// without any sensitive information or context specific data.
+func (f *File) ReportConfig() interface{} {
+	return Spec{
+		File:           f.spec.File,
+		Files:          f.spec.Files,
+		Line:           f.spec.Line,
+		Content:        f.spec.Content,
+		MatchPattern:   f.spec.MatchPattern,
+		ReplacePattern: f.spec.ReplacePattern,
+		SearchPattern:  f.spec.SearchPattern,
+	}
+}

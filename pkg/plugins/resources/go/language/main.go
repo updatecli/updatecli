@@ -41,3 +41,11 @@ func New(spec interface{}) (*Language, error) {
 		webClient:     &http.Client{},
 	}, nil
 }
+
+// ReportConfig returns a new configuration without any sensitive information or context specific information.
+func (l *Language) ReportConfig() interface{} {
+	return Spec{
+		Version:       l.Spec.Version,
+		VersionFilter: l.Spec.VersionFilter,
+	}
+}

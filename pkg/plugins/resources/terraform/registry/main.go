@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -46,4 +47,19 @@ func New(spec interface{}) (*TerraformRegistry, error) {
 		webClient:       webClient,
 		registryAddress: registryAddress,
 	}, nil
+}
+
+// ReportConfig returns a new configuration object with only the necessary fields
+// to identify the resource without any sensitive information or context specific data.
+func (t *TerraformRegistry) ReportConfig() interface{} {
+	return Spec{
+		Type:          t.Spec.Type,
+		Hostname:      redact.URL(t.Spec.Hostname),
+		Namespace:     t.Spec.Namespace,
+		Name:          t.Spec.Name,
+		TargetSystem:  t.Spec.TargetSystem,
+		RawString:     t.Spec.RawString,
+		Version:       t.Spec.Version,
+		VersionFilter: t.Spec.VersionFilter,
+	}
 }

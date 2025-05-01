@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -150,4 +151,19 @@ func (s Spec) Validate() error {
 	}
 
 	return nil
+}
+
+// ReportConfiguration returns a new configuration with only the necessary fields
+// to identify the resource without any sensitive information
+// and context specific data.
+func (g *Gitlab) ReportConfig() interface{} {
+	return Spec{
+		Owner:         g.spec.Owner,
+		Repository:    g.spec.Repository,
+		VersionFilter: g.spec.VersionFilter,
+		Branch:        g.spec.Branch,
+		Spec: client.Spec{
+			URL: redact.URL(g.spec.URL),
+		},
+	}
 }

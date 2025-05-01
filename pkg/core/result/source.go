@@ -26,6 +26,8 @@ type Source struct {
 	ID string
 	// ConsoleOutput stores the console output of the source execution
 	ConsoleOutput string
+	// Config stores the source configuration
+	Config any
 }
 
 // SetConsoleOutput sets the console output of the source execution

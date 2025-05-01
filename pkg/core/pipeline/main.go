@@ -10,6 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
@@ -233,10 +234,76 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		}
 	}
 
+	updateSourceResult := func(id string) {
+		var err error
+
+		source := p.Sources[id]
+
+		source.Result.Name = source.Config.Name
+		source.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Sources[id].ResourceConfig)
+
+		if err != nil {
+			logrus.Errorf("error while cleaning config: %v", err)
+		}
+
+		p.Report.Sources[id] = &source.Result
+	}
+
+	updateConditionResult := func(id string) {
+		var err error
+
+		condition := p.Conditions[id]
+
+		condition.Result.SourceID = condition.Config.SourceID
+		if condition.Config.SourceID == "" && len(depsSourceIDs) > 0 {
+			condition.Result.SourceID = depsSourceIDs[0]
+		}
+
+		condition.Result.Name = p.Config.Spec.Conditions[id].Name
+		condition.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Conditions[id].ResourceConfig)
+		if err != nil {
+			logrus.Errorf("error while cleaning config: %v", err)
+		}
+
+		p.Report.Conditions[id] = &condition.Result
+	}
+
+	updateTargetResult := func(id string) {
+		var err error
+		target := p.Targets[id]
+
+		target.Result.SourceID = target.Config.SourceID
+		if target.Config.SourceID == "" && len(depsSourceIDs) > 0 {
+			target.Result.SourceID = depsSourceIDs[0]
+		}
+
+		target.Result.Name = p.Config.Spec.Targets[id].Name
+		target.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Targets[id].ResourceConfig)
+		target.Result.DryRun = target.DryRun
+		if err != nil {
+			logrus.Errorf("error while cleaning config: %v", err)
+		}
+
+		p.Report.Targets[id] = &target.Result
+	}
+
 	shouldSkip := p.shouldSkipResource(&leaf, deps)
 	if shouldSkip {
 		logrus.Debugf("Skipping %s[%q] because of dependsOn conditions", leaf.Category, id)
 		leaf.Result = result.SKIPPED
+
+		switch leaf.Category {
+		case sourceCategory:
+			sourceId := strings.ReplaceAll(id, "source#", "")
+			updateSourceResult(sourceId)
+
+		case conditionCategory:
+			conditionId := strings.ReplaceAll(id, "condition#", "")
+			updateConditionResult(conditionId)
+		case targetCategory:
+			targetId := strings.ReplaceAll(id, "target#", "")
+			updateTargetResult(targetId)
+		}
 	}
 
 	if leaf.Result != result.SKIPPED {
@@ -248,6 +315,9 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			if e != nil {
 				err = e
 			}
+
+			updateSourceResult(sourceId)
+
 			leaf.Result = r
 			p.updateSource(sourceId, leaf.Result)
 		case conditionCategory:
@@ -256,6 +326,9 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			if e != nil {
 				err = e
 			}
+
+			updateConditionResult(conditionId)
+
 			leaf.Result = r
 			p.updateCondition(conditionId, leaf.Result)
 		case targetCategory:
@@ -264,6 +337,9 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			if e != nil {
 				err = e
 			}
+
+			updateTargetResult(targetId)
+
 			leaf.Result = r
 			leaf.Changed = changed
 			p.updateTarget(targetId, leaf.Result)

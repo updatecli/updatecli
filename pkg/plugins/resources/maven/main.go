@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -188,4 +189,24 @@ func (s *Spec) Sanitize() error {
 	}
 
 	return nil
+}
+
+// ReportConfig returns a new configuration with only the necessary configuration fields
+// to identify the resource without any sensitive information
+// and context specific data.
+func (m *Maven) ReportConfig() interface{} {
+
+	repositories := make([]string, len(m.spec.Repositories))
+	for i := range m.spec.Repositories {
+		repositories[i] = redact.URL(m.spec.Repositories[i])
+	}
+
+	return Spec{
+		GroupID:      m.spec.GroupID,
+		ArtifactID:   m.spec.ArtifactID,
+		Version:      m.spec.Version,
+		Repository:   redact.URL(m.spec.Repository),
+		Repositories: repositories,
+		URL:          redact.URL(m.spec.URL),
+	}
 }
