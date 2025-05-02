@@ -43,9 +43,6 @@ conditions:
     name: 'Test if version of "{{ .DependencyName }}" {{"{{"}} source "{{ .ExistingSourceID }}" {{"}}"}} differs from {{"{{"}} source "{{ .SourceID }}" {{"}}"}}'
     kind: 'shell'
     sourceid: '{{ .SourceID }}'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{- end }}
     spec:
       command: 'test {{"{{"}} source "{{ .ExistingSourceID }}" {{"}}"}} != '
 targets:
@@ -84,6 +81,9 @@ targets:
 {{- if .CargoLockFile }}
   lockfile:
     name: '{{ .CargoLockTargetName }}'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{- end }}
     kind: 'shell'
     dependson:
       - target#{{ .TargetID }}

@@ -16,6 +16,8 @@ func TestDiscoverManifests(t *testing.T) {
 	testdata := []struct {
 		name                  string
 		rootDir               string
+		expectedScmID         string
+		expectedActionID      string
 		cargoAvailable        bool
 		cargoUpgradeAvailable bool
 		expectedPipelines     []string
@@ -1133,9 +1135,15 @@ targets:
 		}, {
 			name:                  "Scenario 12 -- workspace -- Cargo and Cargo Upgrade available, workspace, lockfile",
 			rootDir:               "testdata/workspace_lock",
+			expectedScmID:         "git",
+			expectedActionID:      "github",
 			cargoAvailable:        true,
 			cargoUpgradeAvailable: true,
 			expectedPipelines: []string{`name: 'deps(cargo): bump workspace dependency "anyhow"'
+actions:
+  github:
+    title: 'deps(cargo): bump workspace dependency "anyhow" to {{ source "anyhow" }}'
+
 sources:
   anyhow:
     name: 'Get latest "anyhow" crate version'
@@ -1148,6 +1156,7 @@ sources:
   anyhow-current-version:
     name: 'Get current "anyhow" crate version'
     kind: 'toml'
+    scmid: 'git'
     spec:
       file: 'Cargo.toml'
       Key: 'workspace.dependencies.anyhow'
@@ -1161,6 +1170,7 @@ conditions:
 targets:
   anyhow:
     name: 'deps(cargo): bump workspace dependency "anyhow" to {{ source "anyhow" }}'
+    scmid: 'git'
     kind: 'shell'
     spec:
       command: |
@@ -1178,6 +1188,10 @@ targets:
             - "Cargo.lock"
     disablesourceinput: true
 `, `name: 'deps(cargo): bump dependency "rand" for "simple_crate" crate'
+actions:
+  github:
+    title: 'deps(cargo): bump crate dependency "rand" to {{ source "rand" }}'
+
 sources:
   rand:
     name: 'Get latest "rand" crate version'
@@ -1190,6 +1204,7 @@ sources:
   rand-current-version:
     name: 'Get current "rand" crate version'
     kind: 'toml'
+    scmid: 'git'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
       Key: 'dependencies.rand.version'
@@ -1203,6 +1218,7 @@ conditions:
 targets:
   rand:
     name: 'deps(cargo): bump crate dependency "rand" to {{ source "rand" }}'
+    scmid: 'git'
     kind: 'shell'
     spec:
       command: |
@@ -1220,6 +1236,10 @@ targets:
             - "Cargo.lock"
     disablesourceinput: true
 `, `name: 'deps(cargo): bump dev dependency "futures" for "simple_crate" crate'
+actions:
+  github:
+    title: 'deps(cargo): bump crate dev dependency "futures" to {{ source "futures" }}'
+
 sources:
   futures:
     name: 'Get latest "futures" crate version'
@@ -1232,6 +1252,7 @@ sources:
   futures-current-version:
     name: 'Get current "futures" crate version'
     kind: 'toml'
+    scmid: 'git'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
       Key: 'dev-dependencies.futures.version'
@@ -1245,6 +1266,7 @@ conditions:
 targets:
   futures:
     name: 'deps(cargo): bump crate dev dependency "futures" to {{ source "futures" }}'
+    scmid: 'git'
     kind: 'shell'
     spec:
       command: |
@@ -1269,7 +1291,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			c, err := New(
-				Spec{}, tt.rootDir, "", "")
+				Spec{}, tt.rootDir, tt.expectedScmID, tt.expectedActionID)
 
 			c.cargoAvailable = tt.cargoAvailable
 			c.cargoUpgradeAvailable = tt.cargoUpgradeAvailable
