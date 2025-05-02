@@ -249,12 +249,12 @@ func (c Cargo) processCrateMetadata(
 		return devDependencies[i].Name < devDependencies[j].Name
 	})
 	workspaceDependencies := cr.WorkspaceDependencies
-	sort.Slice(dependencies, func(i, j int) bool {
-		return dependencies[i].Name < dependencies[j].Name
+	sort.Slice(workspaceDependencies, func(i, j int) bool {
+		return workspaceDependencies[i].Name < workspaceDependencies[j].Name
 	})
 	workspaceDevDependencies := cr.WorkspaceDevDependencies
-	sort.Slice(devDependencies, func(i, j int) bool {
-		return devDependencies[i].Name < devDependencies[j].Name
+	sort.Slice(workspaceDevDependencies, func(i, j int) bool {
+		return workspaceDevDependencies[i].Name < workspaceDevDependencies[j].Name
 	})
 
 	c.processDependencies(manifests, &crate, dependencies, "dependencies", "dependency")
