@@ -1,12 +1,12 @@
 [package]
-edition = "2021"
+edition = "2024"
 name = "test-crate"
 version = "0.1.0"
 
 [dependencies]
 anyhow = "1.0.1"
 rand = { version = "0.8.0" }
-policy-evaluator = { git = "https://github.com/kubewarden/policy-evaluator", tag = "v0.6.1" }
+itoa = { git = "https://github.com/dtolnay/itoa", rev = "1.0.15" }
 [dev-dependencies]
 futures = { version = "0.3.21" }
 

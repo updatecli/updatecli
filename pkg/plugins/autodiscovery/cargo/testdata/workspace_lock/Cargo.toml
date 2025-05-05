@@ -1,0 +1,10 @@
+[workspace]
+resolver = "2"
+
+members = [
+  "crates/*",
+]
+
+[workspace.dependencies]
+anyhow = "1"
+itoa = { git = "https://github.com/dtolnay/itoa", rev = "1.0.15" }

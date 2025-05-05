@@ -96,6 +96,29 @@ func TestSource(t *testing.T) {
 			mockedToken:          "mytoken",
 			mockedHeaderFormat:   "Bearer %s",
 			mockedHTTPStatusCode: existingPackageStatus,
+		}, {
+			name: "Passing case of retrieving latest crate-test version from a mocked private registry",
+			spec: Spec{
+				Registry: cargo.Registry{
+					URL: "https://crates.io/api/v1/crates",
+					Auth: cargo.InlineKeyChain{
+						Token:        "mytoken",
+						HeaderFormat: "Bearer %s",
+					},
+				},
+				Package: "crate-test",
+				VersionFilter: version.Filter{
+					Kind: "latest",
+				},
+			},
+			expectedResult:       "0.2.0",
+			expectedError:        false,
+			mockedResponse:       true,
+			mockedBody:           existingPackageData,
+			mockedUrl:            "https://crates.io/api/v1/crates",
+			mockedToken:          "mytoken",
+			mockedHeaderFormat:   "Bearer %s",
+			mockedHTTPStatusCode: existingPackageStatus,
 		},
 		{
 			name: "Failing case of retrieving nonexistent package from a mocked private registry",
