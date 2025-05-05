@@ -36,54 +36,71 @@ sources:
     scmid: '{{ .ScmID }}'
 {{- end }}
     spec:
-      file: '{{ .File }}'
+      file: '{{ .CargoFile }}'
       Key: '{{ .ExistingSourceKey }}'
 conditions:
   {{ .ConditionID }}:
-    name: 'Ensure Cargo chart named "{{ .DependencyName }}" is specified'
-    kind: 'toml'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{- end }}
+    name: 'Test if version of "{{ .DependencyName }}" {{"{{"}} source "{{ .ExistingSourceID }}" {{"}}"}} differs from {{"{{"}} source "{{ .SourceID }}" {{"}}"}}'
+    kind: 'shell'
+    sourceid: '{{ .SourceID }}'
     spec:
-      file: '{{ .File }}'
-      query: '{{ .ConditionQuery }}'
-    sourceid: '{{ .ExistingSourceID }}'
+      command: 'test {{"{{"}} source "{{ .ExistingSourceID }}" {{"}}"}} != '
 targets:
-{{- if .TargetIDEnable }}
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
-    kind: 'toml'
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{- end }}
+{{- if .CargoUpgradeAvailable }}
+    kind: 'shell'
     spec:
-      file: '{{ .TargetFile }}'
-      key: '{{ .TargetKey }}'
-    sourceid: '{{ .SourceID }}'
+      command: |
+        ARGS=""
+        if [ "$DRY_RUN" = "true" ]; then
+          ARGS="--dry-run"
+        fi
+        cargo upgrade $ARGS --manifest-path {{ .CargoFile }} --package {{ .DependencyName }}@{{"{{"}} source "{{ .SourceID }}" {{"}}"}}
+{{- if .CargoLockFile }}
+        cargo update $ARGS --manifest-path {{ .CargoFile }} {{ .DependencyName }}@{{"{{"}} source "{{ .SourceID }}" {{"}}"}} --precise {{"{{"}} source "{{ .SourceID }}" {{"}}"}}
 {{- end }}
-{{- if .TargetCargoCleanupEnabled }}
-  Cargo.lock:
-    name: Update Cargo lockfile Cargo.lock
-{{- if .TargetIDEnable }}
-    dependson:
-      - {{ .TargetID }}
-{{- end }}
-    disablesourceinput: true
-    kind: shell
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{- end }}
-    spec:
-      command: cargo generate-lockfile
-      environments:
-        - name: PATH
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "Cargo.lock"
-      workdir: '{{ .TargetWorkdir }}'
+            - "{{ .CargoFile }}"
+{{- if .CargoLockFile}}
+            - "{{ .CargoLockFile }}"
+{{- end }}
+    disablesourceinput: true
+{{- else }}
+    kind: 'toml'
+    spec:
+      file: '{{ .CargoFile }}'
+      key: '{{ .TargetKey }}'
+    sourceid: '{{ .SourceID }}'
+{{- if .CargoLockFile }}
+  lockfile:
+    name: '{{ .CargoLockTargetName }}'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{- end }}
+    kind: 'shell'
+    dependson:
+      - target#{{ .TargetID }}
+    spec:
+      command: |
+        ARGS=""
+        if [ "$DRY_RUN" = "true" ]; then
+          ARGS="--dry-run"
+        fi
+        cargo update $ARGS --manifest-path {{ .CargoFile }} {{ .DependencyName }}@{{"{{"}} source "{{ .SourceID }}" {{"}}"}} --precise {{"{{"}} source "{{ .SourceID }}" {{"}}"}}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "{{ .CargoLockFile }}"
+    disablesourceinput: true
+{{- end }}
 {{- end }}
 `
 )
