@@ -76,7 +76,7 @@ func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, Dep
 
 func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 	myId := fmt.Sprintf("%s#%s", Category, ID)
-	// Update vertices dependencies based on depends_on
+	// Update vertex dependencies based on depends_on
 	rawNode, err := dag.GetVertex(myId)
 	if err != nil {
 		return nil
