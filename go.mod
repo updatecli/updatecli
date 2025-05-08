@@ -1,9 +1,9 @@
 module github.com/updatecli/updatecli
 
-go 1.24.2
+go 1.24.3
 
 require (
-	dario.cat/mergo v1.0.1
+	dario.cat/mergo v1.0.2
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/aws/aws-sdk-go v1.55.7
@@ -24,7 +24,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/oauth2 v0.29.0
+	golang.org/x/oauth2 v0.30.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.17.3
 	sigs.k8s.io/yaml v1.4.0
@@ -60,10 +60,10 @@ require (
 	github.com/yuin/goldmark v1.7.11
 	github.com/zclconf/go-cty v1.16.2
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	golang.org/x/text v0.24.0
+	golang.org/x/text v0.25.0
 	golang.org/x/time v0.8.0
 	gopkg.in/ini.v1 v1.67.0
-	oras.land/oras-go/v2 v2.5.0
+	oras.land/oras-go/v2 v2.6.0
 )
 
 require (
@@ -307,12 +307,12 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.37.0 // indirect
+	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/mod v0.24.0
-	golang.org/x/net v0.39.0
-	golang.org/x/sync v0.13.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/term v0.31.0 // indirect
+	golang.org/x/net v0.40.0
+	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	google.golang.org/api v0.215.0 // indirect
 	google.golang.org/grpc v1.68.0 // indirect
