@@ -63,7 +63,7 @@ require (
 	golang.org/x/text v0.25.0
 	golang.org/x/time v0.8.0
 	gopkg.in/ini.v1 v1.67.0
-	oras.land/oras-go/v2 v2.5.0
+	oras.land/oras-go/v2 v2.6.0
 )
 
 require (
