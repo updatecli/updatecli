@@ -88,11 +88,17 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		return fmt.Errorf("remote branches %q and %q do not exist, we can't open a mergerequest", g.SourceBranch, g.TargetBranch)
 	}
 
+	labelOptions := gitlabapi.LabelOptions(g.spec.Labels)
 	opts := gitlabapi.CreateMergeRequestOptions{
-		Title:        &title,
-		Description:  &body,
-		SourceBranch: &g.SourceBranch,
-		TargetBranch: &g.TargetBranch,
+		Title:              &title,
+		Description:        &body,
+		SourceBranch:       &g.SourceBranch,
+		TargetBranch:       &g.TargetBranch,
+		AssigneeIDs:        &g.spec.Assignees,
+		ReviewerIDs:        &g.spec.Reviewers,
+		Squash:             &g.spec.Squash,
+		RemoveSourceBranch: &g.spec.RemoveSourceBranch,
+		Labels:             &labelOptions,
 	}
 
 	logrus.Debugf("Title:\t%q\nBody:\t%v\nSource branch:\t%q\nTarget branch:\t%q\n",

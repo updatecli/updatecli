@@ -91,16 +91,43 @@ type Spec struct {
 		default: empty
 
 		remark:
-		    TODO: update Please note that contrary to reviewers, assignees only accept GitLab usernames
+		    assignees only accept GitLab User IDs
 	*/
-	Assignees string `yaml:",omitempty"`
+	Assignees []int `yaml:",omitempty"`
 	/*
 		"reviewers" contains the list of reviewers to add to the merge request
 
 		default: empty
 
 		remark:
-			TODO: write one
+			assignees only accept GitLab User IDs
 	*/
-	Reviewers string `yaml:",omitempty"`
+	Reviewers []int `yaml:",omitempty"`
+
+	/*
+		"squash" defines if all commits should be squashed into a single commit on merge
+
+		default: false
+
+		remark:
+			project settings might override this value
+	*/
+	Squash bool `yaml:",omitempty"`
+
+	/*
+		"removesourcebranch" is a flag indicating if a merge request should remove the source branch when merging
+
+		default: false
+	*/
+	RemoveSourceBranch bool `yaml:",omitempty"`
+
+	/*
+		"labels" defines labels for the merge request.
+
+		default: empty
+
+		remark:
+			if a label does not already exist, this creates a new project label and assigns it to the merge request
+	*/
+	Labels []string `yaml:",omitempty"`
 }
