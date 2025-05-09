@@ -192,7 +192,7 @@ func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
 			return result, err
 		}
 	}
-	// Now that the dag is complete, we can add the `depends_on` vertice
+	// Now that the dag is complete, we can add the `depends_on` vertex
 	for id := range p.Sources {
 		err = handleResourceDependencies(d, id, sourceCategory)
 		if err != nil {

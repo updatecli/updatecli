@@ -59,6 +59,10 @@ type Cargo struct {
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
+	// cargoAvailable tells if `cargo` is available
+	cargoAvailable bool
+	// cargoUpgradeAvailable tells if `cargo upgrade` (from cargo-edits) is available
+	cargoUpgradeAvailable bool
 }
 
 // New return a new valid Cargo object.
@@ -88,16 +92,18 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Cargo, error) {
 	if s.VersionFilter.IsZero() {
 		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")
 		// By default, golang versioning uses semantic versioning
-		newFilter.Kind = "semver"
+		newFilter.Kind = version.SEMVERVERSIONKIND
 		newFilter.Pattern = "*"
 	}
 
 	return Cargo{
-		actionID:      actionID,
-		spec:          s,
-		rootDir:       dir,
-		scmID:         scmID,
-		versionFilter: newFilter,
+		actionID:              actionID,
+		spec:                  s,
+		rootDir:               dir,
+		scmID:                 scmID,
+		versionFilter:         newFilter,
+		cargoAvailable:        isCargoAvailable(),
+		cargoUpgradeAvailable: isCargoUpgradeAvailable(),
 	}, nil
 
 }
