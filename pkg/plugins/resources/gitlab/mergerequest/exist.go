@@ -8,17 +8,17 @@ import (
 // CheckActionExist verifies if an existing GitLab merge request is already opened.
 func (g *Gitlab) CheckActionExist(report *reports.Action) error {
 
-	pullrequestTitle, pullrequestDescription, pullrequestLink, err := g.isMergeRequestExist()
+	mr, err := g.findExistingMR()
 	if err != nil {
 		return err
 	}
 
-	if pullrequestLink != "" {
-		logrus.Debugf("GiTea pull request detected")
+	if mr != nil {
+		logrus.Debugf("GitLab merge request detected")
 
-		report.Title = pullrequestTitle
-		report.Link = pullrequestLink
-		report.Description = pullrequestDescription
+		report.Title = mr.Title
+		report.Link = mr.WebURL
+		report.Description = mr.Description
 		return nil
 	}
 

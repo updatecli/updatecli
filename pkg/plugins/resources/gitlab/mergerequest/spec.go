@@ -84,4 +84,58 @@ type Spec struct {
 			"body" is useful to provide additional information when reviewing mergerequest, such as changelog url.
 	*/
 	Body string `yaml:",omitempty"`
+
+	/*
+		"assignees" contains the list of assignee to add to the merge request
+
+		default: empty
+
+		remark:
+		    assignees only accept GitLab User IDs.
+			To find the user ID:
+				1. Go to the users’ profile page.
+				2. On the profile page, in the upper-right corner, select Actions (or ⋮).
+				3. Select Copy user ID.
+	*/
+	Assignees []int `yaml:",omitempty"`
+	/*
+		"reviewers" contains the list of reviewers to add to the merge request
+
+		default: empty
+
+		remark:
+			assignees only accept GitLab User IDs.
+			To find the user ID:
+				1. Go to the users’ profile page.
+				2. On the profile page, in the upper-right corner, select Actions (or ⋮).
+				3. Select Copy user ID.
+	*/
+	Reviewers []int `yaml:",omitempty"`
+
+	/*
+		"squash" defines if all commits should be squashed into a single commit on merge
+
+		default: false
+
+		remark:
+			project settings might override this value
+	*/
+	Squash bool `yaml:",omitempty"`
+
+	/*
+		"removesourcebranch" is a flag indicating if a merge request should remove the source branch when merging
+
+		default: false
+	*/
+	RemoveSourceBranch bool `yaml:",omitempty"`
+
+	/*
+		"labels" defines labels for the merge request.
+
+		default: empty
+
+		remark:
+			if a label does not already exist, this creates a new project label and assigns it to the merge request
+	*/
+	Labels []string `yaml:",omitempty"`
 }
