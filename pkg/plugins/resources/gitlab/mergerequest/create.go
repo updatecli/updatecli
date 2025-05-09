@@ -3,19 +3,22 @@ package mergerequest
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 
-	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 	gitlabapi "gitlab.com/gitlab-org/api/client-go"
 )
 
+const gitlabRequestTimeout = 30 * time.Second
+
 // CreateAction opens a Merge Request on the GitLab server
 func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), gitlabRequestTimeout)
+	defer cancel()
 
 	var body string
 	title := report.Title
@@ -25,34 +28,40 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 	}
 
 	// Check if a merge-request is already opened then exit early if it does.
-	mergeRequestTitle, mergeRequestDescription, mergeRequestLink, err := g.isMergeRequestExist()
+	existingMR, err := g.findExistingMR()
 	if err != nil {
 		return fmt.Errorf("check if a mergerequest already exist: %s", err.Error())
 	}
 
 	// If a mergerequest already exist, we update the report with the existing mergerequest
-	if mergeRequestLink != "" {
+	if existingMR != nil {
 		logrus.Debugln("GitLab mergerequest already exist, updating it")
 
-		mergedDescription := reports.MergeFromString(mergeRequestDescription, report.ToActionsString())
+		mergedDescription := reports.MergeFromString(existingMR.Description, report.ToActionsString())
 		body, err = utils.GeneratePullRequestBody("", mergedDescription)
 		if err != nil {
 			logrus.Warningf("something went wrong while generating GitLab body: %s", err)
 			return fmt.Errorf("generate GitLab body: %s", err.Error())
 		}
 
-		report.Title = mergeRequestTitle
-		report.Link = mergeRequestLink
+		report.Title = existingMR.Title
+		report.Link = existingMR.WebURL
 		report.Description = body
 
-		update := gitlab.MRUpdateSpec{
-			MRWebLink:   mergeRequestLink,
-			Description: body,
+		opts := &gitlabapi.UpdateMergeRequestOptions{
+			Description: &body,
 		}
 
-		err = g.scm.UpdateMergeRequest(update)
+		_, _, err := g.api.MergeRequests.UpdateMergeRequest(
+			g.getPID(),
+			existingMR.IID,
+			opts,
+			gitlabapi.WithContext(ctx),
+		)
+
 		if err != nil {
-			logrus.Warningf("something went wrong updating gitlab merge request: %s", err)
+			logrus.Warningf("something went wrong updating gitlab merge request %s/%d: %s",
+				g.getPID(), existingMR.IID, err.Error())
 			return fmt.Errorf("update GitLab merge request: %s", err.Error())
 		}
 
@@ -107,15 +116,8 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		g.SourceBranch,
 		g.TargetBranch)
 
-	// Timeout api query after 30sec
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
 	mr, resp, err := g.api.MergeRequests.CreateMergeRequest(
-		strings.Join([]string{
-			g.Owner,
-			g.Repository}, "/"),
+		g.getPID(),
 		&opts,
 		gitlabapi.WithContext(ctx),
 	)
@@ -131,7 +133,7 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 	report.Description = mr.Description
 
 	if resp.StatusCode > 400 {
-		logrus.Debugf("HTTP return code: %d\n\n", resp.Status)
+		logrus.Debugf("HTTP return code: %d\n\n", resp.StatusCode)
 	}
 
 	logrus.Infof("GitLab mergerequest successfully opened on %q", mr.WebURL)

@@ -37,7 +37,7 @@ func getGitlabClient(spec client.Spec) (*gitlabapi.Client, error) {
 	switch tokenType {
 	case "bearer":
 		return gitlabapi.NewOAuthClient(spec.Token, opt)
-	case "private":
+	case "private", "":
 		return gitlabapi.NewClient(spec.Token, opt)
 	default:
 		return nil, fmt.Errorf("error: unknown tokenType '%s'", tokenType)
@@ -105,14 +105,8 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 
 }
 
-type CreateMRInput struct {
-	PID    string
-	Title  string
-	Body   string
-	Source string
-	Target string
-}
-
-func (g *Gitlab) UpdateMR() error {
-	return nil
+func (g *Gitlab) getPID() string {
+	return strings.Join([]string{
+		g.Owner,
+		g.Repository}, "/")
 }

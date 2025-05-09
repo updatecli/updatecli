@@ -91,7 +91,11 @@ type Spec struct {
 		default: empty
 
 		remark:
-		    assignees only accept GitLab User IDs
+		    assignees only accept GitLab User IDs.
+			To find the user ID:
+				1. Go to the users’ profile page.
+				2. On the profile page, in the upper-right corner, select Actions (or ⋮).
+				3. Select Copy user ID.
 	*/
 	Assignees []int `yaml:",omitempty"`
 	/*
@@ -100,7 +104,11 @@ type Spec struct {
 		default: empty
 
 		remark:
-			assignees only accept GitLab User IDs
+			assignees only accept GitLab User IDs.
+			To find the user ID:
+				1. Go to the users’ profile page.
+				2. On the profile page, in the upper-right corner, select Actions (or ⋮).
+				3. Select Copy user ID.
 	*/
 	Reviewers []int `yaml:",omitempty"`
 
