@@ -84,4 +84,23 @@ type Spec struct {
 			"body" is useful to provide additional information when reviewing mergerequest, such as changelog url.
 	*/
 	Body string `yaml:",omitempty"`
+
+	/*
+		"assignees" contains the list of assignee to add to the merge request
+
+		default: empty
+
+		remark:
+		    TODO: update Please note that contrary to reviewers, assignees only accept GitLab usernames
+	*/
+	Assignees string `yaml:",omitempty"`
+	/*
+		"reviewers" contains the list of reviewers to add to the merge request
+
+		default: empty
+
+		remark:
+			TODO: write one
+	*/
+	Reviewers string `yaml:",omitempty"`
 }

@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
+	gitlabapi "gitlab.com/gitlab-org/api/client-go"
 )
 
 // CreateAction opens a Merge Request on the GitLab server
@@ -88,11 +88,11 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		return fmt.Errorf("remote branches %q and %q do not exist, we can't open a mergerequest", g.SourceBranch, g.TargetBranch)
 	}
 
-	opts := scm.PullRequestInput{
-		Title:  title,
-		Body:   body,
-		Source: g.SourceBranch,
-		Target: g.TargetBranch,
+	opts := gitlabapi.CreateMergeRequestOptions{
+		Title:        &title,
+		Description:  &body,
+		SourceBranch: &g.SourceBranch,
+		TargetBranch: &g.TargetBranch,
 	}
 
 	logrus.Debugf("Title:\t%q\nBody:\t%v\nSource branch:\t%q\nTarget branch:\t%q\n",
@@ -106,33 +106,29 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	pr, resp, err := g.client.PullRequests.Create(
-		ctx,
+	mr, resp, err := g.api.MergeRequests.CreateMergeRequest(
 		strings.Join([]string{
 			g.Owner,
 			g.Repository}, "/"),
 		&opts,
+		gitlabapi.WithContext(ctx),
 	)
 
 	if err != nil {
-		if err.Error() == scm.ErrNotFound.Error() {
-			logrus.Infof("GitLab pullrequest not created, skipping")
-			return nil
-		}
-		logrus.Debugf("HTTP Response:\n\tReturn code: %d\n\n", resp.Status)
+		logrus.Debugf("HTTP Response:\n\tReturn code: %d\n\n", resp.StatusCode)
 
 		return fmt.Errorf("create GitLab mergerequest: %v", err)
 	}
 
-	report.Link = pr.Link
-	report.Title = pr.Title
-	report.Description = pr.Body
+	report.Link = mr.WebURL
+	report.Title = mr.Title
+	report.Description = mr.Description
 
-	if resp.Status > 400 {
+	if resp.StatusCode > 400 {
 		logrus.Debugf("HTTP return code: %d\n\n", resp.Status)
 	}
 
-	logrus.Infof("GitLab mergerequest successfully opened on %q", pr.Link)
+	logrus.Infof("GitLab mergerequest successfully opened on %q", mr.WebURL)
 
 	return nil
 }
