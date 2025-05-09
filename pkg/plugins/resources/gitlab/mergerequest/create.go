@@ -134,6 +134,7 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 
 	if resp.StatusCode > 400 {
 		logrus.Debugf("HTTP return code: %d\n\n", resp.StatusCode)
+		return fmt.Errorf("mr creation request failed with %d status code", resp.StatusCode)
 	}
 
 	logrus.Infof("GitLab mergerequest successfully opened on %q", mr.WebURL)

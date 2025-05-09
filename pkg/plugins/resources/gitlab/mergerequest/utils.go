@@ -39,7 +39,7 @@ func (g *Gitlab) findExistingMR() (mr *gitlabapi.BasicMergeRequest, err error) {
 		if err != nil || resp.StatusCode > 400 {
 			body, _ := io.ReadAll(resp.Body)
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.StatusCode, string(body))
-			return nil, err
+			return nil, fmt.Errorf("list mrs failed with status code %d: %w", resp.StatusCode, err)
 		}
 
 		page = resp.NextPage
