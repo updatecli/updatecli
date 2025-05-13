@@ -33,7 +33,12 @@ type Gitlab struct {
 
 func getGitlabClient(spec client.Spec) (*gitlabapi.Client, error) {
 	tokenType := strings.ToLower(spec.TokenType)
-	opt := gitlabapi.WithBaseURL(spec.URL)
+
+	var opt gitlabapi.ClientOptionFunc
+	if len(spec.URL) > 0 {
+		opt = gitlabapi.WithBaseURL(spec.URL)
+	}
+
 	switch tokenType {
 	case "bearer":
 		return gitlabapi.NewOAuthClient(spec.Token, opt)
