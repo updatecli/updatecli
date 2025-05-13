@@ -2,60 +2,55 @@ package mergerequest
 
 import (
 	"context"
-	"strings"
-	"time"
+	"fmt"
 
-	"github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	gitlabapi "gitlab.com/gitlab-org/api/client-go"
 )
 
-// isMergeRequestExist queries a remote GitLab instance to know if a pullrequest already exists.
-func (g *Gitlab) isMergeRequestExist() (title, description, link string, err error) {
+// findExistingMR queries a remote GitLab instance to know if a pullrequest already exists.
+func (g *Gitlab) findExistingMR() (mr *gitlabapi.BasicMergeRequest, err error) {
 	ctx := context.Background()
 	// Timeout api query after 30sec
-	ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancelList := context.WithTimeout(ctx, gitlabRequestTimeout)
 	defer cancelList()
 
+	const perPage = 30
 	page := 0
 	for {
-		optsSearch := scm.PullRequestListOptions{
-			Page:   page,
-			Size:   30,
-			Open:   true,
-			Closed: false,
+		optsList := gitlabapi.ListProjectMergeRequestsOptions{
+			SourceBranch: &g.SourceBranch,
+			TargetBranch: &g.TargetBranch,
+			State:        gitlabapi.Ptr("opened"),
+			ListOptions: gitlabapi.ListOptions{
+				Page:    page,
+				PerPage: perPage,
+			},
 		}
 
-		pullrequests, resp, err := g.client.PullRequests.List(
-			ctx,
-			strings.Join([]string{
-				g.Owner,
-				g.Repository}, "/"),
-			optsSearch,
+		mergeRequests, resp, err := g.api.MergeRequests.ListProjectMergeRequests(
+			g.getPID(),
+			&optsList,
+			gitlabapi.WithContext(ctx),
 		)
 
 		if err != nil {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-			return "", "", "", err
+			return nil, fmt.Errorf("list mrs failed with error %w", err)
 		}
 
-		page = resp.Page.Next
+		page = resp.NextPage
 
-		if resp.Status > 400 {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-		}
-
-		for _, p := range pullrequests {
-			if p.Source == g.SourceBranch &&
-				p.Target == g.TargetBranch &&
-				!p.Closed &&
-				!p.Merged {
+		for _, mr := range mergeRequests {
+			if mr.SourceBranch == g.SourceBranch &&
+				mr.TargetBranch == g.TargetBranch &&
+				mr.State == "opened" {
 
 				logrus.Infof("%s GitLab merge request detected at:\n\t%s",
 					result.SUCCESS,
-					p.Link)
+					mr.WebURL)
 
-				return p.Title, p.Body, p.Link, nil
+				return mr, nil
 			}
 		}
 		if page == 0 {
@@ -63,7 +58,7 @@ func (g *Gitlab) isMergeRequestExist() (title, description, link string, err err
 		}
 	}
 
-	return "", "", "", nil
+	return nil, nil
 }
 
 // isRemoteBranchesExist queries a remote GitLab instance to know if both the pull-request source branch and the target branch exist.
@@ -102,26 +97,23 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 	foundRemoteSourceBranch := false
 	foundRemoteTargetBranch := false
 	page := 0
+	const perPage = 30
 	for {
-		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, gitlabRequestTimeout)
 		defer cancel()
-		remoteBranches, resp, err := g.client.Git.ListBranches(
-			ctx,
-			strings.Join([]string{owner, repository}, "/"),
-			scm.ListOptions{
-				URL:  g.spec.URL,
-				Page: page,
-				Size: 30,
+		remoteBranches, resp, err := g.api.Branches.ListBranches(
+			g.getPID(),
+			&gitlabapi.ListBranchesOptions{
+				ListOptions: gitlabapi.ListOptions{
+					Page:    page,
+					PerPage: perPage,
+				},
 			},
+			gitlabapi.WithContext(ctx),
 		)
 
 		if err != nil {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
-			return false, err
-		}
-
-		if resp.Status > 400 {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+			return false, fmt.Errorf("list branches failed with status code: %w", err)
 		}
 
 		for _, remoteBranch := range remoteBranches {
@@ -136,7 +128,7 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 				return true, nil
 			}
 		}
-		if page >= resp.Page.Last {
+		if page >= resp.TotalPages {
 			break
 		}
 		page++
