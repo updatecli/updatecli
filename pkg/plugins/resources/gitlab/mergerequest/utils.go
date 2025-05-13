@@ -36,7 +36,7 @@ func (g *Gitlab) findExistingMR() (mr *gitlabapi.BasicMergeRequest, err error) {
 			gitlabapi.WithContext(ctx),
 		)
 
-		if err != nil || resp.StatusCode > 400 {
+		if err != nil {
 			body, _ := io.ReadAll(resp.Body)
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.StatusCode, string(body))
 			return nil, fmt.Errorf("list mrs failed with status code %d: %w", resp.StatusCode, err)
@@ -115,7 +115,7 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 			gitlabapi.WithContext(ctx),
 		)
 
-		if err != nil || resp.StatusCode > 400 {
+		if err != nil {
 			body, _ := io.ReadAll(resp.Body)
 			logrus.Debugf("RC: %d\nBody:\n%s", resp.StatusCode, string(body))
 			return false, fmt.Errorf("list branches failed with status code %d: %w", resp.StatusCode, err)
