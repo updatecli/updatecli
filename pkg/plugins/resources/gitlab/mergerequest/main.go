@@ -1,10 +1,14 @@
 package mergerequest
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
+	gitlabapi "gitlab.com/gitlab-org/api/client-go"
 )
 
 // Gitlab contains information to interact with GitLab api
@@ -15,6 +19,8 @@ type Gitlab struct {
 	client client.Client
 	// scm allows to interact with a scm object
 	scm *gitlabscm.Gitlab
+	// api allows to interact with Gitlab via API
+	api *gitlabapi.Client
 	// SourceBranch specifies the pullrequest source branch.
 	SourceBranch string `yaml:",inline,omitempty"`
 	// TargetBranch specifies the pullrequest target branch
@@ -23,6 +29,24 @@ type Gitlab struct {
 	Owner string `yaml:",omitempty" jsonschema:"required"`
 	// Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
+}
+
+func getGitlabClient(spec client.Spec) (*gitlabapi.Client, error) {
+	tokenType := strings.ToLower(spec.TokenType)
+
+	var opt gitlabapi.ClientOptionFunc
+	if len(spec.URL) > 0 {
+		opt = gitlabapi.WithBaseURL(spec.URL)
+	}
+
+	switch tokenType {
+	case "bearer":
+		return gitlabapi.NewOAuthClient(spec.Token, opt)
+	case "private", "":
+		return gitlabapi.NewClient(spec.Token, opt)
+	default:
+		return nil, fmt.Errorf("error: unknown tokenType '%s'", tokenType)
+	}
 }
 
 // New returns a new valid GitLab object.
@@ -68,14 +92,26 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 		return Gitlab{}, err
 	}
 
+	api, err := getGitlabClient(clientSpec)
+	if err != nil {
+		return Gitlab{}, err
+	}
+
 	g := Gitlab{
 		spec:   s,
 		client: c,
 		scm:    scm,
+		api:    api,
 	}
 
 	g.inheritFromScm()
 
 	return g, nil
 
+}
+
+func (g *Gitlab) getPID() string {
+	return strings.Join([]string{
+		g.Owner,
+		g.Repository}, "/")
 }
