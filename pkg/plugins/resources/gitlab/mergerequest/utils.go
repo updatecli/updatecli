@@ -3,7 +3,6 @@ package mergerequest
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -37,9 +36,7 @@ func (g *Gitlab) findExistingMR() (mr *gitlabapi.BasicMergeRequest, err error) {
 		)
 
 		if err != nil {
-			body, _ := io.ReadAll(resp.Body)
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.StatusCode, string(body))
-			return nil, fmt.Errorf("list mrs failed with status code %d: %w", resp.StatusCode, err)
+			return nil, fmt.Errorf("list mrs failed with error %w", err)
 		}
 
 		page = resp.NextPage
@@ -116,9 +113,7 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 		)
 
 		if err != nil {
-			body, _ := io.ReadAll(resp.Body)
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.StatusCode, string(body))
-			return false, fmt.Errorf("list branches failed with status code %d: %w", resp.StatusCode, err)
+			return false, fmt.Errorf("list branches failed with status code: %w", err)
 		}
 
 		for _, remoteBranch := range remoteBranches {
