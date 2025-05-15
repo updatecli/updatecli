@@ -52,7 +52,7 @@ You can download/copy the three files 'checksums.txt.pem', 'checksums.txt.sig', 
 Once you have the three files locally, you can execute the following command
 
 ```
-cosign verify-blob --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' --cert https://github.com/updatecli/updatecli/releases/download/v0.99.0/checksums.txt.pem --signature https://github.com/updatecli/updatecli/releases/download/v0.99.0/checksums.txt.sig checksums.txt
+cosign verify-blob --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' --cert https://github.com/updatecli/updatecli/releases/download/v0.100.0/checksums.txt.pem --signature https://github.com/updatecli/updatecli/releases/download/v0.100.0/checksums.txt.sig checksums.txt
 ```
 
 A successful output looks like
@@ -76,7 +76,7 @@ sha256sum --ignore-missing -c checksums.txt
 **Verify Container signature**
 
 ```
-cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.99.0
+cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.100.0
 ```
 
 == Documentation
