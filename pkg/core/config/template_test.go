@@ -88,7 +88,7 @@ func TestTemplates(t *testing.T) {
 				},
 			}
 			expected := dedent.Dedent(testTemplate.ExpectedManifest)
-			rendered, err := template.New([]byte(dedent.Dedent(testTemplate.ManifestTemplate)))
+			rendered, err := template.NewStringTemplate([]byte(dedent.Dedent(testTemplate.ManifestTemplate)))
 			if testTemplate.ExpectError {
 				require.Error(t, err)
 				return
@@ -103,7 +103,7 @@ func TestTemplates(t *testing.T) {
 			ValuesFiles: []string{"values.yml"},
 			fs:          fstest.MapFS{},
 		}
-		_, err := template.New([]byte(""))
+		_, err := template.NewStringTemplate([]byte(""))
 		require.Equal(t, err.Error(), fmt.Sprintf("open values.yml: %s", fs.ErrNotExist.Error()))
 	})
 }

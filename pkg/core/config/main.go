@@ -28,6 +28,10 @@ import (
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
+	cueformat "cuelang.org/go/cue/format"
 )
 
 const (
@@ -235,6 +239,8 @@ func New(option Option) (configs []Config, err error) {
 
 	specs := []Spec{}
 
+	isCue := false
+
 	switch extension := filepath.Ext(basename); extension {
 	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
 		//
@@ -242,16 +248,14 @@ func New(option Option) (configs []Config, err error) {
 		if !cmdoptions.Experimental {
 			return configs, fmt.Errorf("cuelang support is experimental, please use '--experimental' flag to enable it")
 		}
-		rawManifestContent, err = readCueConfig(rawManifestContent)
-		if err != nil {
-			return configs, err
-		}
+		isCue = true
 
 	default:
 		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, option.ManifestFile)
 		return configs, ErrConfigFileTypeNotSupported
 	}
 
+	var cueManifest cue.Value
 	if !option.DisableTemplating {
 		// Try to template manifest no matter the extension
 		// templated manifest must respect its extension before and after templating
@@ -269,13 +273,33 @@ func New(option Option) (configs []Config, err error) {
 			fs:           fs,
 		}
 
-		templatedManifestContent, err = t.New(rawManifestContent)
+		if isCue {
+			cueManifest, err = t.NewCueTemplate(rawManifestContent)
+		} else {
+			templatedManifestContent, err = t.NewStringTemplate(rawManifestContent)
+		}
 		if err != nil {
 			logrus.Errorf("Error while templating %q:\n---\n%s\n---\n\t%s\n", option.ManifestFile, string(rawManifestContent), err.Error())
 			return configs, err
 		}
 
 		if GolangTemplatingDiff {
+			if isCue {
+				// Reformat all the CUE sources so that they can be diffed.
+				rawManifestContent, err = cueformat.Source(rawManifestContent, cueformat.Simplify())
+				if err != nil {
+					logrus.Errorf("Error formatting %q for diff: %s", option.ManifestFile, err.Error())
+					return configs, err
+				}
+
+				node := cueManifest.Syntax(cue.Final(), cue.ErrorsAsValues(true))
+				templatedManifestContent, err = cueformat.Node(node, cueformat.Simplify())
+				if err != nil {
+					logrus.Errorf("Error formatting %q (templated) for diff: %s", option.ManifestFile, err.Error())
+					return configs, err
+				}
+			}
+
 			diff := text.Diff("raw manifest", "templated manifest", string(rawManifestContent), string(templatedManifestContent))
 			switch diff {
 			case "":
@@ -284,11 +308,23 @@ func New(option Option) (configs []Config, err error) {
 				logrus.Debugf("Golang templating change detected:\n%s\n\n---\n", diff)
 			}
 		}
+	} else if isCue {
+		ctx := cuecontext.New()
+		cueManifest = ctx.CompileBytes(rawManifestContent)
 	}
 
-	err = unmarshalConfigSpec(templatedManifestContent, &specs)
-	if err != nil {
-		return configs, err
+	if isCue {
+		var spec Spec
+		err = cueManifest.Decode(&spec)
+		if err != nil {
+			return configs, err
+		}
+		specs = append(specs, spec)
+	} else {
+		err := unmarshalConfigSpec(templatedManifestContent, &specs)
+		if err != nil {
+			return configs, err
+		}
 	}
 
 	configs = make([]Config, len(specs))
