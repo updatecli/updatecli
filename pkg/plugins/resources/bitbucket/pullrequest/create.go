@@ -11,6 +11,7 @@ import (
 	"github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
@@ -59,26 +60,26 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 		b.SourceBranch,
 		b.TargetBranch)
 
-	pullRequestExists, pullRequestNumber, _, _, _, err := b.isPullRequestExist()
+	pullRequestExists, pullRequestDetails, err := b.isPullRequestExist()
 	if err != nil {
 		return err
 	}
 
 	var responseTitle, responseBody, responseLink string
 	if pullRequestExists {
-		responseTitle, responseBody, responseLink, err = b.updatePullRequest(pullRequestNumber, title, body)
+		responseTitle, responseBody, responseLink, err = b.updatePullRequest(pullRequestDetails.Number, title, body)
 		if err != nil {
 			return err
 		}
 
-		logrus.Infof("Bitbucket Cloud pull request successfully updated on %q", responseLink)
+		logrus.Infof("%s Bitbucket Cloud pull request successfully updated %q", result.SUCCESS, responseLink)
 	} else {
 		responseTitle, responseBody, responseLink, err = b.createPullRequest(title, body)
 		if err != nil {
 			return err
 		}
 
-		logrus.Infof("Bitbucket Cloud pull request successfully opened on %q", responseLink)
+		logrus.Infof("%s Bitbucket Cloud pull request successfully opened %q", result.SUCCESS, responseLink)
 	}
 
 	report.Link = responseLink
