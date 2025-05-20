@@ -27,7 +27,7 @@ type Spec struct {
 	// - If not defined, the last stage will be considered
 	// For Condition and Targets:
 	// - If not defined, all stages will be considered
-	Stage string `yaml:"value,omitempty"`
+	Stage string `yaml:"stage,omitempty"`
 }
 
 // Dockerfile defines a resource of kind "dockerfile"
