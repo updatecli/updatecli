@@ -48,4 +48,4 @@ jobs:
         # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
         #    and modify them (or add more) to build your code if your project
         #    uses a compiled language
-        uses: github/codeql-action/analyze@60168efe1c415ce0f5521ea06d5c2062adbeed1b # v3.28.17
+        uses: github/codeql-action/analyze@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18
