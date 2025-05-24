@@ -52,9 +52,7 @@ type Spec struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 }
 
-type Client *scm.Client
-
-func New(s Spec) (Client, error) {
+func New(s Spec) (*scm.Client, error) {
 	client := bitbucket.NewDefault()
 
 	client.Client = httpclient.NewRetryClient().(*http.Client)

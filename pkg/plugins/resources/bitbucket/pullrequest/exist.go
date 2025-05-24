@@ -7,18 +7,17 @@ import (
 
 // CheckActionExist verifies if an existing BitBucket pullrequest is already opened
 func (b *Bitbucket) CheckActionExist(report *reports.Action) error {
-
-	pullrequestTitle, pullrequestDescription, pullrequestLink, err := b.isPullRequestExist()
+	pullRequestExists, pullRequestDetails, err := b.isPullRequestExist()
 	if err != nil {
 		return err
 	}
 
-	if pullrequestLink != "" {
+	if pullRequestExists {
 		logrus.Debugf("Bitbucket pull request detected")
 
-		report.Title = pullrequestTitle
-		report.Link = pullrequestLink
-		report.Description = pullrequestDescription
+		report.Title = pullRequestDetails.Title
+		report.Description = pullRequestDetails.Description
+		report.Link = pullRequestDetails.Link
 		return nil
 	}
 
