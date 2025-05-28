@@ -101,38 +101,36 @@ func TestHTMLUnmarshal(t *testing.T) {
 					},
 				},
 			},
-			report: `<actions>
-	<action id="1234">
-	    <h3>Test Title</h3>
-	    <p></p>
-	    <details id="4567">
-	        <summary>Target One</summary>
-	        <p></p>
-	        <details>
-	            <summary>1.0.0</summary>
-	            <p></p>
-	        </details>
-	        <details>
-	            <summary>1.0.1</summary>
-	            <p></p>
-	        </details>
-	    </details>
-	    <details id="4567">
-	        <summary>Target Two</summary>
-	        <p></p>
-	    </details>
-	</action>
-</actions>`,
+			report: `<Actions>
+    <action id="1234">
+        <h3>Test Title</h3>
+        <details id="4567">
+            <summary>Target One</summary>
+            <details>
+                <summary>1.0.0</summary>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+            </details>
+        </details>
+        <details id="4567">
+            <summary>Target Two</summary>
+        </details>
+    </action>
+</Actions>`,
 		},
 	}
 
-	for i := range tests {
-		t.Run(tests[i].name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			var gotOutput Actions
-			err := unmarshal([]byte(tests[i].report), &gotOutput)
+			err := unmarshal([]byte(tt.report), &gotOutput)
 			require.NoError(t, err)
 
-			assert.Equal(t, tests[i].expectedOutput, gotOutput)
+			assert.Equal(t, tt.expectedOutput, gotOutput)
+
+			// test round trip
+			assert.Equal(t, tt.report, gotOutput.Actions[0].ToActionsString())
 		})
 	}
 }
@@ -247,15 +245,15 @@ func TestSort(t *testing.T) {
 		},
 	}
 
-	for i := range tests {
-		t.Run(tests[i].name, func(t *testing.T) {
-			tests[i].report.sort()
-			assert.Equal(t, tests[i].expectedOutput, tests[i].report)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.report.sort()
+			assert.Equal(t, tt.expectedOutput, tt.report)
 		})
 	}
 }
 
-func TestMerge(t *testing.T) {
+func TestActionMerge(t *testing.T) {
 	tests := []struct {
 		name           string
 		report1        Action
