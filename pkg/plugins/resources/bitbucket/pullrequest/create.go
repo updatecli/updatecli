@@ -22,18 +22,6 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 		title = b.spec.Title
 	}
 
-	// One Bitbucket pull request body can contain multiple action report
-	// It would be better to refactor CreateAction to be able to reuse existing pull request description.
-	// similar to what we did for github pull request.
-	body, err := utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
-	if err != nil {
-		logrus.Warningf("something went wrong while generating Bitbucket Pull Request body: %s", err)
-	}
-
-	if len(b.spec.Body) > 0 {
-		body = b.spec.Body
-	}
-
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
 	ok, err := b.isRemoteBranchesExist()
 	if err != nil {
@@ -54,12 +42,6 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 		return nil
 	}
 
-	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
-		title,
-		body,
-		b.SourceBranch,
-		b.TargetBranch)
-
 	pullRequestExists, pullRequestDetails, err := b.isPullRequestExist()
 	if err != nil {
 		return err
@@ -67,6 +49,23 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 
 	var responseTitle, responseBody, responseLink string
 	if pullRequestExists {
+
+		mergedDescription, err := reports.MergeFromMarkdown(pullRequestDetails.Description, report.ToActionsMarkdownString())
+		if err != nil {
+			return err
+		}
+
+		body, err := utils.GeneratePullRequestBodyMarkdown("", mergedDescription)
+		if err != nil {
+			return err
+		}
+
+		logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\nTarget:\t%q\n",
+			title,
+			body,
+			b.SourceBranch,
+			b.TargetBranch)
+
 		responseTitle, responseBody, responseLink, err = b.updatePullRequest(pullRequestDetails.Number, title, body)
 		if err != nil {
 			return err
@@ -74,6 +73,22 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 
 		logrus.Infof("%s Bitbucket Cloud pull request successfully updated %q", result.SUCCESS, responseLink)
 	} else {
+
+		body, err := utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
+		if err != nil {
+			logrus.Warningf("something went wrong while generating Bitbucket Pull Request body: %s", err)
+		}
+
+		if len(b.spec.Body) > 0 {
+			body = b.spec.Body
+		}
+
+		logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\nTarget:\t%q\n",
+			title,
+			body,
+			b.SourceBranch,
+			b.TargetBranch)
+
 		responseTitle, responseBody, responseLink, err = b.createPullRequest(title, body)
 		if err != nil {
 			return err

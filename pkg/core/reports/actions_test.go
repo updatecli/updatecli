@@ -1629,3 +1629,233 @@ This is not a html formatted report
 		})
 	}
 }
+
+func TestMergeFromMarkdown(t *testing.T) {
+	tests := []struct {
+		name                string
+		oldReport           string
+		newReport           string
+		expectedFinalReport string
+	}{
+		{
+			name: "Default none situation",
+			oldReport: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+			newReport: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+			expectedFinalReport: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+		},
+		{
+			name: "Test target merge",
+			oldReport: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1`,
+			newReport: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+			expectedFinalReport: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+		},
+		{
+			name: "Test that old report includes unexpected text",
+			oldReport: `This is not a markdown expected format
+
+# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+			newReport: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+			expectedFinalReport: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+		},
+		{
+			name: "Test Pipeline merge",
+			oldReport: `# Old Pipeline
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1`,
+			newReport: `# New Pipeline
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+			expectedFinalReport: `# New Pipeline
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`",
+		},
+		{
+			name: "No merge needed",
+			newReport: `# New Pipeline
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1`,
+			oldReport: "",
+			expectedFinalReport: `# New Pipeline
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+### 1.0.0
+
+### 1.0.1`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFinalReport, err := MergeFromMarkdown(tt.oldReport, tt.newReport)
+			assert.Nil(t, err)
+			assert.Equal(t, tt.expectedFinalReport, gotFinalReport)
+		})
+	}
+}
