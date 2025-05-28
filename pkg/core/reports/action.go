@@ -56,9 +56,10 @@ func (a *Action) String() string {
 	return string(output[:])
 }
 
-func (a *Action) Merge(sourceAction *Action) {
+func (a *Action) Merge(sourceAction *Action, useDetailsFromSourceAction bool) {
 	var c, d []ActionTarget
 
+	useDetailsFromSourceActionTarget := useDetailsFromSourceAction
 	switch len(a.Targets) > len(sourceAction.Targets) {
 	case true:
 		c = a.Targets
@@ -66,6 +67,7 @@ func (a *Action) Merge(sourceAction *Action) {
 	case false:
 		d = a.Targets
 		c = sourceAction.Targets
+		useDetailsFromSourceActionTarget = !useDetailsFromSourceAction
 	}
 
 	for i := range d {
@@ -73,13 +75,18 @@ func (a *Action) Merge(sourceAction *Action) {
 		for j := range c {
 			if d[i].ID == c[j].ID {
 				targetFound = true
-				c[j].Merge(&d[i])
+				c[j].Merge(&d[i], useDetailsFromSourceActionTarget)
 				break
 			}
 		}
 		if !targetFound {
 			c = append(c, d[i])
 		}
+	}
+
+	if useDetailsFromSourceAction {
+		a.PipelineTitle = sourceAction.PipelineTitle
+		a.Description = sourceAction.Description
 	}
 
 	a.Targets = c
