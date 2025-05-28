@@ -13,12 +13,13 @@ type Actions struct {
 }
 
 func (a *Actions) Merge(sourceActions *Actions) {
-
 	var c, d Actions
+	useDetailsFromSourceAction := true
 	switch len(a.Actions) > len(sourceActions.Actions) {
 	case true:
 		c = *a
 		d = *sourceActions
+		useDetailsFromSourceAction = false
 	case false:
 		d = *a
 		c = *sourceActions
@@ -30,7 +31,7 @@ func (a *Actions) Merge(sourceActions *Actions) {
 		for j := range c.Actions {
 			if d.Actions[i].ID == c.Actions[j].ID {
 				pipelineFound = true
-				c.Actions[j].Merge(&d.Actions[i])
+				c.Actions[j].Merge(&d.Actions[i], useDetailsFromSourceAction)
 				break out
 			}
 		}
