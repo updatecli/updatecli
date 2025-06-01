@@ -2,9 +2,8 @@ package engine
 
 import (
 	"fmt"
-	"path/filepath"
-
 	"net/url"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/compose"
@@ -14,11 +13,9 @@ import (
 )
 
 func GenerateSchema(baseSchemaID, schemaDir string) error {
-
 	PrintTitle("Json Schema")
 
 	err := jsonschema.CloneCommentDirectory()
-
 	if err != nil {
 		return err
 	}
@@ -31,7 +28,6 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 	}()
 
 	generateSchema := func(baseSchemaID, schemaDir, subSchemaDir string, spec interface{}) error {
-
 		if subSchemaDir != "" {
 			schemaDir = filepath.Join(schemaDir, subSchemaDir)
 
@@ -58,7 +54,7 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 			return fmt.Errorf("unable to save schema - %s", err)
 		}
 
-		return s.GenerateSchema(spec)
+		return nil
 	}
 
 	if err = generateSchema(baseSchemaID, schemaDir, "", config.Spec{}); err != nil {
