@@ -57,10 +57,6 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 		return nil
 	}
 
-	if err = generateSchema(baseSchemaID, schemaDir, "", config.Spec{}); err != nil {
-		return fmt.Errorf("unable to generate schema - %s", err)
-	}
-
 	if err = generateSchema(baseSchemaID, schemaDir, "policy/manifest", config.Spec{}); err != nil {
 		return fmt.Errorf("unable to generate schema - %s", err)
 	}
