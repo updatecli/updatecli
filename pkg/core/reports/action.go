@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"sort"
+	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -110,8 +111,17 @@ func (a *Action) sort() {
 	}
 }
 
+// updateTargetDescriptions updates descriptions from being console friendly to markdown friendly
+func (a *Action) updateTargetDescriptions() {
+	for id, target := range a.Targets {
+		a.Targets[id].Description = strings.ReplaceAll(target.Description, "\n\t*", "\n\n*")
+	}
+}
+
 // ToActionsString show an action report formatted as a string
 func (a Action) ToActionsString() string {
+	a.updateTargetDescriptions()
+
 	output, err := xml.MarshalIndent(
 		Actions{
 			Actions: []Action{
@@ -127,6 +137,8 @@ func (a Action) ToActionsString() string {
 
 // ToActionsMarkdownString show an action report formatted as a string using markdown
 func (a Action) ToActionsMarkdownString() string {
+	a.updateTargetDescriptions()
+
 	tmpl, err := template.New("actions").Parse(markdownReportTemplate)
 	if err != nil {
 		logrus.Errorf("error: %v\n", err)
