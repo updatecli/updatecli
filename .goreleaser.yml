@@ -90,10 +90,13 @@ checksum:
   name_template: 'checksums.txt'
 
 dockers:
+  #
+  # Build the main images
+  #
   - image_templates:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
-    dockerfile: Dockerfile
+    dockerfile: docker/Dockerfile
     use: buildx
     build_flag_templates:
       - "--pull"
@@ -111,7 +114,86 @@ dockers:
   - image_templates:
       - 'updatecli/updatecli:{{ .Tag }}-arm64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
-    dockerfile: Dockerfile
+    dockerfile: docker/Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--no-cache"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
+    goos: linux
+    goarch: arm64
+    extra_files:
+      - Makefile
+  #
+  # Build the slim images
+  #
+  - image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-slim-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64'
+    dockerfile: docker/Dockerfile.slim
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--no-cache"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
+    goos: linux
+    goarch: amd64
+    extra_files:
+      - Makefile
+  - image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-slim-arm64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64'
+    dockerfile: docker/Dockerfile.slim
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--no-cache"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
+    goos: linux
+    goarch: arm64
+    extra_files:
+      - Makefile
+
+  #
+  # Build the full images
+  #
+  - image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-full-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-amd64'
+    dockerfile: docker/Dockerfile.full
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--no-cache"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
+    goos: linux
+    goarch: amd64
+    extra_files:
+      - Makefile
+  - image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-full-arm64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-arm64'
+    dockerfile: docker/Dockerfile.full
     use: buildx
     build_flag_templates:
       - "--pull"
@@ -137,6 +219,9 @@ docker_signs:
       - '${artifact}@${digest}'
 
 docker_manifests:
+  #
+  # Build the main images
+  #
   - name_template: 'updatecli/updatecli:{{ .Tag }}'
     image_templates:
       - 'updatecli/updatecli:{{ .Tag }}-amd64'
@@ -153,6 +238,44 @@ docker_manifests:
     image_templates:
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+  #
+  # Build the slim images
+  #
+  - name_template: 'updatecli/updatecli:{{ .Tag }}-slim'
+    image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-slim-amd64'
+      - 'updatecli/updatecli:{{ .Tag }}-slim-arm64'
+  - name_template: 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim'
+    image_templates:
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64'
+  - name_template: 'updatecli/updatecli:latest-slim'
+    image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-slim-amd64'
+      - 'updatecli/updatecli:{{ .Tag }}-slim-arm64'
+  - name_template: 'ghcr.io/updatecli/updatecli:latest-slim'
+    image_templates:
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64'
+  #
+  # Build the full images
+  #
+  - name_template: 'updatecli/updatecli:{{ .Tag }}-full'
+    image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-full-amd64'
+      - 'updatecli/updatecli:{{ .Tag }}-full-arm64'
+  - name_template: 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full'
+    image_templates:
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-arm64'
+  - name_template: 'updatecli/updatecli:latest-full'
+    image_templates:
+      - 'updatecli/updatecli:{{ .Tag }}-full-amd64'
+      - 'updatecli/updatecli:{{ .Tag }}-full-arm64'
+  - name_template: 'ghcr.io/updatecli/updatecli:latest-full'
+    image_templates:
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-amd64'
+      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-arm64'
 
 env:
   - GO111MODULE=on
