@@ -403,6 +403,85 @@ Description
 ` + "```",
 		},
 		{
+			name: "Multiline",
+			report: Action{
+				ID:            "1234",
+				Title:         "Action Title",
+				PipelineTitle: "Test Title",
+				Targets: []ActionTarget{
+					{
+						ID:          "4567",
+						Title:       "Target One",
+						Description: "Something happened\n\t* to this file",
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title:       "1.0.0",
+								Description: "# v1.0.0\n\nfeat: something cool",
+							},
+							{
+								Title:       "1.0.1",
+								Description: "# v1.0.1\n\nfix: something fixed",
+							},
+						},
+					},
+					{
+						ID:          "4568",
+						Title:       "Target Two",
+						Description: "Something happened\n\t* to other this file",
+					},
+					{
+						ID:    "4569",
+						Title: "Target Three",
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title:       "1.0.0",
+								Description: "# v1.0.0\n\nfeat: something cool",
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: `# Test Title
+
+## Target One
+
+Something happened
+
+* to this file
+
+### 1.0.0
+
+` + "```" + `
+# v1.0.0
+
+feat: something cool
+` + "```" + `
+
+### 1.0.1
+
+` + "```" + `
+# v1.0.1
+
+fix: something fixed
+` + "```" + `
+
+## Target Two
+
+Something happened
+
+* to other this file
+
+## Target Three
+
+### 1.0.0
+
+` + "```" + `
+# v1.0.0
+
+feat: something cool
+` + "```",
+		},
+		{
 			name: "with PipelineUrl",
 			report: Action{
 				ID:            "1234",
