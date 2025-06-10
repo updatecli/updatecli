@@ -38,7 +38,7 @@ require (
 	github.com/beevik/etree v1.5.1
 	github.com/drone/go-scm v1.40.1
 	github.com/fluxcd/helm-controller/api v1.3.0
-	github.com/fluxcd/source-controller/api v1.5.0
+	github.com/fluxcd/source-controller/api v1.6.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/go-containerregistry v0.20.5
 	github.com/google/go-github/v69 v69.2.0
@@ -129,7 +129,7 @@ require (
 	github.com/envoyproxy/go-control-plane v0.13.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fluxcd/pkg/apis/acl v0.6.0 // indirect
+	github.com/fluxcd/pkg/apis/acl v0.7.0 // indirect
 	github.com/fluxcd/pkg/apis/kustomize v1.10.0 // indirect
 	github.com/fluxcd/pkg/apis/meta v1.12.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.8.0 // indirect
@@ -299,9 +299,9 @@ require (
 	gitlab.com/gitlab-org/api/client-go v0.129.0
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/mod v0.25.0
+	golang.org/x/mod v0.24.0
 	golang.org/x/net v0.40.0
-	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
