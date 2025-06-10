@@ -114,12 +114,16 @@ func (a *Action) sort() {
 // updateTargetDescriptions updates descriptions from being console friendly to markdown friendly
 func (a *Action) updateTargetDescriptions() {
 	for id, target := range a.Targets {
-		a.Targets[id].Description = strings.ReplaceAll(target.Description, "\n\t*", "\n\n*")
+		d := target.Description
+		d = strings.Replace(d, "\n\t*", "\n\n*", 1)
+		d = strings.ReplaceAll(d, "\n\t*", "\n*")
+		a.Targets[id].Description = d
 	}
 }
 
 // ToActionsString show an action report formatted as a string
 func (a Action) ToActionsString() string {
+	a.sort()
 	a.updateTargetDescriptions()
 
 	output, err := xml.MarshalIndent(

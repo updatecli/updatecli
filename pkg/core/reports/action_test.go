@@ -366,12 +366,12 @@ func TestToActionsMarkdownString(t *testing.T) {
 						},
 					},
 					{
-						ID:          "4567",
+						ID:          "4568",
 						Title:       "Target Two",
 						Description: "Description",
 					},
 					{
-						ID:    "4567",
+						ID:    "4569",
 						Title: "Target Three",
 						Changelogs: []ActionTargetChangelog{
 							{
@@ -384,7 +384,11 @@ func TestToActionsMarkdownString(t *testing.T) {
 			},
 			expectedOutput: `# Test Title
 
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
 ## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
 
 ### 1.0.0
 
@@ -392,9 +396,13 @@ func TestToActionsMarkdownString(t *testing.T) {
 
 ## Target Two
 
+Target ID: ` + "`" + `4568` + "`" + `
+
 Description
 
 ## Target Three
+
+Target ID: ` + "`" + `4569` + "`" + `
 
 ### 1.0.0
 
@@ -427,7 +435,7 @@ Description
 					{
 						ID:          "4568",
 						Title:       "Target Two",
-						Description: "Something happened\n\t* to other this file",
+						Description: "Something happened\n\t* to this other file\n\t* and this other file",
 					},
 					{
 						ID:    "4569",
@@ -443,7 +451,11 @@ Description
 			},
 			expectedOutput: `# Test Title
 
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
 ## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
 
 Something happened
 
@@ -467,11 +479,16 @@ fix: something fixed
 
 ## Target Two
 
+Target ID: ` + "`" + `4568` + "`" + `
+
 Something happened
 
-* to other this file
+* to this other file
+* and this other file
 
 ## Target Three
+
+Target ID: ` + "`" + `4569` + "`" + `
 
 ### 1.0.0
 
@@ -507,12 +524,12 @@ feat: something cool
 						},
 					},
 					{
-						ID:          "4567",
+						ID:          "4568",
 						Title:       "Target Two",
 						Description: "Description",
 					},
 					{
-						ID:    "4567",
+						ID:    "4569",
 						Title: "Target Three",
 						Changelogs: []ActionTargetChangelog{
 							{
@@ -525,7 +542,11 @@ feat: something cool
 			},
 			expectedOutput: `# Test Title
 
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
 ## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
 
 ### 1.0.0
 
@@ -533,9 +554,13 @@ feat: something cool
 
 ## Target Two
 
+Target ID: ` + "`" + `4568` + "`" + `
+
 Description
 
 ## Target Three
+
+Target ID: ` + "`" + `4569` + "`" + `
 
 ### 1.0.0
 
@@ -543,13 +568,22 @@ Description
 Description
 ` + "```" + `
 
-[updatecli](https://www.updatecli.io/)`,
+Pipeline URL: [updatecli](https://www.updatecli.io/)`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expectedOutput, tt.report.ToActionsMarkdownString())
+			markdown := tt.report.ToActionsMarkdownString()
+			assert.Equal(t, tt.expectedOutput, markdown)
+
+			// roundtrip to ensure no information loss
+			var newReport Actions
+			err := markdownToActions(markdown, &newReport)
+			assert.Nil(t, err)
+			newReport.Actions[0].Title = "Action Title"
+
+			assert.Equal(t, &Actions{Actions: []Action{tt.report}}, &newReport)
 		})
 	}
 }
