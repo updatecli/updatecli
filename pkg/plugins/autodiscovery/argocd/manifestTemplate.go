@@ -6,8 +6,8 @@ const (
 {{- if .ActionID }}
 actions:
   {{ .ActionID }}:
-    title: 'deps: update Go version to {{ "{{" }} source "go" {{ "}}" }}'
-{{ end }}
+    title: 'deps(argocd): update Helm chart {{ .ChartName }} to {{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
+{{- end }}
 sources:
   {{ .SourceID }}:
     name: '{{ .SourceName }}'
@@ -25,7 +25,7 @@ conditions:
     disablesourceinput: true
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{- end }}
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}.chart'
@@ -36,7 +36,7 @@ conditions:
     disablesourceinput: true
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{- end }}
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}.repoURL'
@@ -47,7 +47,7 @@ targets:
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
-{{ end }}
+{{- end }}
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}.targetRevision'
