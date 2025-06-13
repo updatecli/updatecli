@@ -48,6 +48,7 @@ targets:
   devcontainer: 
     name: 'deps: update devcontainer to golang {{ source "golang" }}'
     kind: file
+    scmid: default
     spec:
       file: '.devcontainer/devcontainer.json'
       matchpattern: '"image": "mcr\.microsoft\.com/devcontainers/go:.*"'

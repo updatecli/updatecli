@@ -8,8 +8,7 @@ type ActionTarget struct {
 	Changelogs  []ActionTargetChangelog `xml:"details,omitempty"`
 }
 
-func (a *ActionTarget) Merge(sourceActionTarget *ActionTarget) {
-
+func (a *ActionTarget) Merge(sourceActionTarget *ActionTarget, useDetailsFromSourceActionTarget bool) {
 	var c, d []ActionTargetChangelog
 
 	switch len(a.Changelogs) > len(sourceActionTarget.Changelogs) {
@@ -32,6 +31,11 @@ func (a *ActionTarget) Merge(sourceActionTarget *ActionTarget) {
 		if !changelogFound {
 			c = append(c, d[i])
 		}
+	}
+
+	if useDetailsFromSourceActionTarget {
+		a.Title = sourceActionTarget.Title
+		a.Description = sourceActionTarget.Description
 	}
 
 	a.Changelogs = c

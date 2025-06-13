@@ -15,6 +15,10 @@ import (
 	"github.com/getsops/sops/v3/decrypt"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+
+	"cuelang.org/go/cue"
+	cueast "cuelang.org/go/cue/ast"
+	"cuelang.org/go/cue/cuecontext"
 )
 
 // Template contains template information used to generate updatecli configuration struct
@@ -33,20 +37,12 @@ type Template struct {
 	fs fs.FS
 }
 
-// Init parses a golang template then return an updatecli configuration as a struct
-func (t *Template) New(content []byte) ([]byte, error) {
-	err := t.readValuesFiles(t.ValuesFiles, false)
+// NewStringTemplate parses a golang template then return an updatecli configuration as a struct
+func (t *Template) NewStringTemplate(content []byte) ([]byte, error) {
+	templateValues, err := t.readAllValues()
 	if err != nil {
 		return []byte{}, err
 	}
-
-	err = t.readValuesFiles(t.SecretsFiles, true)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	// Merge yaml configuration and sops secrets into one configuration
-	templateValues := mergeValueFile(t.Values, t.Secrets)
 
 	tmpl, err := template.New("cfg").
 		Funcs(sprig.FuncMap()).
@@ -65,6 +61,40 @@ func (t *Template) New(content []byte) ([]byte, error) {
 	}
 
 	return b.Bytes(), nil
+}
+
+// NewCueTemplate parses a Cue template then return an updatecli configuration as a struct
+func (t *Template) NewCueTemplate(content []byte) (cue.Value, error) {
+	ctx := cuecontext.New()
+
+	templateValues, err := t.readAllValues()
+	if err != nil {
+		return cue.Value{}, err
+	}
+
+	scope := ctx.BuildExpr(cueast.NewStruct())
+	valuesPath := cue.MakePath(cue.Def("#values"))
+	scope = scope.FillPath(valuesPath, ctx.Encode(templateValues))
+
+	result := ctx.CompileBytes(content, cue.Scope(scope))
+	return result, nil
+
+}
+
+// readAllValues reads and merges all the values and secrets files into one map
+func (t *Template) readAllValues() (map[string]any, error) {
+	err := t.readValuesFiles(t.ValuesFiles, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = t.readValuesFiles(t.SecretsFiles, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Merge yaml configuration and sops secrets into one configuration
+	return mergeValueFile(t.Values, t.Secrets), nil
 }
 
 // readValuesFiles reads one or multiple updatecli values files and merge them into one

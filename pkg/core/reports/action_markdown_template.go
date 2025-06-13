@@ -3,9 +3,13 @@ package reports
 // markdownReportTemplate is the Go template used to generate markdown report
 var markdownReportTemplate string = `# {{ .PipelineTitle }}
 
+Pipeline ID: ` + "`" + `{{ .ID }}` + "`" + `
+
 {{- range .Targets}}
 
 ## {{ .Title }}
+
+Target ID: ` + "`" + `{{ .ID }}` + "`" + `
 
 {{- if .Description }}
 
@@ -29,5 +33,5 @@ var markdownReportTemplate string = `# {{ .PipelineTitle }}
 
 {{- if .PipelineURL }}
 
-[{{ .PipelineURL.Name }}]({{ .PipelineURL.URL }})
+Pipeline URL: [{{ .PipelineURL.Name }}]({{ .PipelineURL.URL }})
 {{- end}}`

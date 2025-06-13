@@ -11,6 +11,8 @@ func TestDiscoverManifests(t *testing.T) {
 	testdata := []struct {
 		name              string
 		rootDir           string
+		actionID          string
+		scmID             string
 		expectedPipelines []string
 	}{
 		{
@@ -101,6 +103,55 @@ targets:
 `},
 		},
 		{
+			name:     "ArgoCD manifests discovery with several sources and both action and scm IDs",
+			rootDir:  "testdata/sealed-secrets_sources",
+			actionID: "argoRepo",
+			scmID:    "scm123",
+			expectedPipelines: []string{`name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
+actions:
+  argoRepo:
+    title: 'deps(argocd): update Helm chart sealed-secrets to {{ source "sealed-secrets" }}'
+sources:
+  sealed-secrets:
+    name: 'Get latest "sealed-secrets" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'sealed-secrets'
+      url: 'https://bitnami-labs.github.io/sealed-secrets'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  sealed-secrets-name:
+    name: 'Ensure Helm chart name sealed-secrets is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    scmid: scm123
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.sources[0].chart'
+      value: 'sealed-secrets'
+  sealed-secrets-repository:
+    name: 'Ensure Helm chart repository https://bitnami-labs.github.io/sealed-secrets is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    scmid: scm123
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.sources[0].repoURL'
+      value: 'https://bitnami-labs.github.io/sealed-secrets'
+targets:
+  sealed-secrets:
+    name: 'deps(helm): update Helm chart "sealed-secrets" to {{ source "sealed-secrets" }}'
+    kind: 'yaml'
+    scmid: scm123
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.sources[0].targetRevision'
+    sourceid: 'sealed-secrets'
+`},
+		},
+		{
 			name:    "ArgoCD manifests discovery with OCI source",
 			rootDir: "testdata/oci-helm-source",
 			expectedPipelines: []string{`name: 'deps(helm): bump Helm chart "nginx" in ArgoCD manifest "manifest.yaml"'
@@ -147,7 +198,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			argocd, err := New(
-				Spec{}, tt.rootDir, "", "")
+				Spec{}, tt.rootDir, tt.scmID, tt.actionID)
 
 			require.NoError(t, err)
 

@@ -101,38 +101,36 @@ func TestHTMLUnmarshal(t *testing.T) {
 					},
 				},
 			},
-			report: `<actions>
-	<action id="1234">
-	    <h3>Test Title</h3>
-	    <p></p>
-	    <details id="4567">
-	        <summary>Target One</summary>
-	        <p></p>
-	        <details>
-	            <summary>1.0.0</summary>
-	            <p></p>
-	        </details>
-	        <details>
-	            <summary>1.0.1</summary>
-	            <p></p>
-	        </details>
-	    </details>
-	    <details id="4567">
-	        <summary>Target Two</summary>
-	        <p></p>
-	    </details>
-	</action>
-</actions>`,
+			report: `<Actions>
+    <action id="1234">
+        <h3>Test Title</h3>
+        <details id="4567">
+            <summary>Target One</summary>
+            <details>
+                <summary>1.0.0</summary>
+            </details>
+            <details>
+                <summary>1.0.1</summary>
+            </details>
+        </details>
+        <details id="4567">
+            <summary>Target Two</summary>
+        </details>
+    </action>
+</Actions>`,
 		},
 	}
 
-	for i := range tests {
-		t.Run(tests[i].name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			var gotOutput Actions
-			err := unmarshal([]byte(tests[i].report), &gotOutput)
+			err := unmarshal([]byte(tt.report), &gotOutput)
 			require.NoError(t, err)
 
-			assert.Equal(t, tests[i].expectedOutput, gotOutput)
+			assert.Equal(t, tt.expectedOutput, gotOutput)
+
+			// test round trip
+			assert.Equal(t, tt.report, gotOutput.Actions[0].ToActionsString())
 		})
 	}
 }
@@ -247,15 +245,15 @@ func TestSort(t *testing.T) {
 		},
 	}
 
-	for i := range tests {
-		t.Run(tests[i].name, func(t *testing.T) {
-			tests[i].report.sort()
-			assert.Equal(t, tests[i].expectedOutput, tests[i].report)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.report.sort()
+			assert.Equal(t, tt.expectedOutput, tt.report)
 		})
 	}
 }
 
-func TestMerge(t *testing.T) {
+func TestActionMerge(t *testing.T) {
 	tests := []struct {
 		name           string
 		report1        Action
@@ -331,390 +329,11 @@ func TestMerge(t *testing.T) {
 		},
 	}
 
-	for i := range tests {
-		t.Run(tests[i].name, func(t *testing.T) {
-			tests[i].report1.Merge(&tests[i].report2)
-			tests[i].report1.sort()
-			assert.Equal(t, tests[i].expectedOutput, tests[i].report1)
-		})
-	}
-}
-
-func TestFromString(t *testing.T) {
-	tests := []struct {
-		name                string
-		oldReport           string
-		newReport           string
-		expectedFinalReport string
-	}{
-		{
-			name: "Default none situation",
-			oldReport: `<Actions>
-    <action id="1234">
-        <h3>Test Title</h3>
-        <p></p>
-        <details id="4567">
-            <summary>Target One</summary>
-            <p></p>
-            <details>
-                <summary>1.0.0</summary>
-                <p></p>
-            </details>
-            <details>
-                <summary>1.0.1</summary>
-                <p></p>
-            </details>
-        </details>
-        <details id="4568">
-            <summary>Target Two</summary>
-            <p></p>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-            <p></p>
-        </details>
-    </action>
-</Actions>`,
-			newReport: `<Actions>
-	<action id="1234">
-		<h3>Test Title</h3>
-		<p></p>
-		<details id="4567">
-		    <summary>Target One</summary>
-		    <p></p>
-		    <details>
-		        <summary>1.0.0</summary>
-		        <p></p>
-		    </details>
-		    <details>
-		        <summary>1.0.1</summary>
-		        <p></p>
-		    </details>
-		</details>
-		<details id="4568">
-		    <summary>Target Two</summary>
-		    <p></p>
-		</details>
-		<details id="4569">
-		    <summary>Target Three</summary>
-		    <p></p>
-		</details>
-	</action>
-</Actions>`,
-			expectedFinalReport: `<Actions>
-    <action id="1234">
-        <h3>Test Title</h3>
-        <details id="4567">
-            <summary>Target One</summary>
-            <details>
-                <summary>1.0.0</summary>
-            </details>
-            <details>
-                <summary>1.0.1</summary>
-            </details>
-        </details>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</Actions>`,
-		},
-		{
-			name: "Test target merge",
-			oldReport: `<Actions>
-    <action id="1234">
-    	<h3>Test Title</h3>
-    	<details id="4567">
-    	    <summary>Target One</summary>
-    	    <details>
-    	        <summary>1.0.0</summary>
-    	    </details>
-    	    <details>
-    	        <summary>1.0.1</summary>
-    	    </details>
-    	</details>
-    </action>
-</Actions>`,
-			newReport: `<actions>
-    <action id="1234">
-        <h3>Test Title</h3>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</actions>`,
-			expectedFinalReport: `<Actions>
-    <action id="1234">
-        <h3>Test Title</h3>
-        <details id="4567">
-            <summary>Target One</summary>
-            <details>
-                <summary>1.0.0</summary>
-            </details>
-            <details>
-                <summary>1.0.1</summary>
-            </details>
-        </details>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</Actions>`,
-		},
-		{
-			name: "Test that old report is not fully html formatted",
-			oldReport: `
-This is not a html formatted report
-<Action id="1234">
-    <h3>Test Title</h3>
-    <details id="4568">
-        <summary>Target Two</summary>
-    </details>
-    <details id="4569">
-        <summary>Target Three</summary>
-    </details>
-</Action>`,
-			newReport: `<Actions>
-    <action id="1234">
-        <h3>Test Title</h3>
-        <details id="4568">
-		    <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</Actions>`,
-			expectedFinalReport: `<Actions>
-    <action id="1234">
-        <h3>Test Title</h3>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</Actions>`,
-		},
-		{
-			name: "Test Pipeline merge",
-			oldReport: `<actions>
-    <action id="1234">
-        <h3>Old Pipeline</h3>
-        <details id="4567">
-            <summary>Target One</summary>
-            <details>
-                <summary>1.0.0</summary>
-            </details>
-            <details>
-                <summary>1.0.1</summary>
-            </details>
-        </details>
-    </action>
-</actions>`,
-			newReport: `<actions>
-    <action id="1235">
-        <h3>New Pipeline</h3>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</actions>`,
-			expectedFinalReport: `<Actions>
-    <action id="1234">
-        <h3>Old Pipeline</h3>
-        <details id="4567">
-            <summary>Target One</summary>
-            <details>
-                <summary>1.0.0</summary>
-            </details>
-            <details>
-                <summary>1.0.1</summary>
-            </details>
-        </details>
-    </action>
-    <action id="1235">
-        <h3>New Pipeline</h3>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</Actions>`,
-		},
-		{
-			name: "Test Pipeline merge scenario 2",
-			newReport: `<actions>
-    <action id="1235">
-    	<h3>Old Pipeline</h3>
-    	<details id="4567">
-    	    <summary>Target One</summary>
-    	    <details>
-    	        <summary>1.0.0</summary>
-    	    </details>
-    	    <details>
-    	        <summary>1.0.1</summary>
-    	    </details>
-    	</details>
-    </action>
-</actions>`,
-			oldReport: `<actions>
-    <action id="1234">
-        <h3>New Pipeline</h3>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</actions>`,
-			expectedFinalReport: `<Actions>
-    <action id="1234">
-        <h3>New Pipeline</h3>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-    <action id="1235">
-        <h3>Old Pipeline</h3>
-        <details id="4567">
-            <summary>Target One</summary>
-            <details>
-                <summary>1.0.0</summary>
-            </details>
-            <details>
-                <summary>1.0.1</summary>
-            </details>
-        </details>
-    </action>
-</Actions>`,
-		},
-		{
-			name: "Test Pipeline merge scenario 3",
-			newReport: `<Actions>
-	<action id="1235">
-		<h3>New Pipeline</h3>
-		<details id="4567">
-		    <summary>Target One</summary>
-		    <details>
-		        <summary>1.0.0</summary>
-		    </details>
-		    <details>
-		        <summary>1.0.1</summary>
-		    </details>
-		</details>
-	</action>
-</Actions>`,
-			oldReport: `<actions>
-	<action id="1234">
-	    <h3>Old Pipeline 1</h3>
-	    <details id="4568">
-	        <summary>Target Two</summary>
-	    </details>
-	    <details id="4569">
-	        <summary>Target Three</summary>
-	    </details>
-	</action>
-	<action id="1236">
-	    <h3>Old Pipeline 2</h3>
-	    <details id="4568">
-	        <summary>Target Two</summary>
-	    </details>
-	    <details id="4569">
-	        <summary>Target Three</summary>
-	    </details>
-	</action>
-</actions>`,
-			expectedFinalReport: `<Actions>
-    <action id="1234">
-        <h3>Old Pipeline 1</h3>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-    <action id="1235">
-        <h3>New Pipeline</h3>
-        <details id="4567">
-            <summary>Target One</summary>
-            <details>
-                <summary>1.0.0</summary>
-            </details>
-            <details>
-                <summary>1.0.1</summary>
-            </details>
-        </details>
-    </action>
-    <action id="1236">
-        <h3>Old Pipeline 2</h3>
-        <details id="4568">
-            <summary>Target Two</summary>
-        </details>
-        <details id="4569">
-            <summary>Target Three</summary>
-        </details>
-    </action>
-</Actions>`,
-		},
-		{
-			name: "No merge needed",
-			newReport: `<Actions>
-	<action id="1235">
-		<h3>New Pipeline</h3>
-		<details id="4567">
-		    <summary>Target One</summary>
-		    <details>
-		        <summary>1.0.0</summary>
-		    </details>
-		    <details>
-		        <summary>1.0.1</summary>
-		    </details>
-		</details>
-	</action>
-</Actions>`,
-			oldReport: "",
-			expectedFinalReport: `<Actions>
-	<action id="1235">
-		<h3>New Pipeline</h3>
-		<details id="4567">
-		    <summary>Target One</summary>
-		    <details>
-		        <summary>1.0.0</summary>
-		    </details>
-		    <details>
-		        <summary>1.0.1</summary>
-		    </details>
-		</details>
-	</action>
-</Actions>`,
-		},
-	}
-
-	for i := range tests {
-		t.Run(tests[i].name, func(t *testing.T) {
-			gotFinalReport := MergeFromString(tests[i].oldReport, tests[i].newReport)
-			assert.Equal(t, tests[i].expectedFinalReport, gotFinalReport)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.report1.Merge(&tt.report2, true)
+			tt.report1.sort()
+			assert.Equal(t, tt.expectedOutput, tt.report1)
 		})
 	}
 }
@@ -747,12 +366,12 @@ func TestToActionsMarkdownString(t *testing.T) {
 						},
 					},
 					{
-						ID:          "4567",
+						ID:          "4568",
 						Title:       "Target Two",
 						Description: "Description",
 					},
 					{
-						ID:    "4567",
+						ID:    "4569",
 						Title: "Target Three",
 						Changelogs: []ActionTargetChangelog{
 							{
@@ -765,7 +384,11 @@ func TestToActionsMarkdownString(t *testing.T) {
 			},
 			expectedOutput: `# Test Title
 
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
 ## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
 
 ### 1.0.0
 
@@ -773,14 +396,106 @@ func TestToActionsMarkdownString(t *testing.T) {
 
 ## Target Two
 
+Target ID: ` + "`" + `4568` + "`" + `
+
 Description
 
 ## Target Three
+
+Target ID: ` + "`" + `4569` + "`" + `
 
 ### 1.0.0
 
 ` + "```" + `
 Description
+` + "```",
+		},
+		{
+			name: "Multiline",
+			report: Action{
+				ID:            "1234",
+				Title:         "Action Title",
+				PipelineTitle: "Test Title",
+				Targets: []ActionTarget{
+					{
+						ID:          "4567",
+						Title:       "Target One",
+						Description: "Something happened\n\t* to this file",
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title:       "1.0.0",
+								Description: "# v1.0.0\n\nfeat: something cool",
+							},
+							{
+								Title:       "1.0.1",
+								Description: "# v1.0.1\n\nfix: something fixed",
+							},
+						},
+					},
+					{
+						ID:          "4568",
+						Title:       "Target Two",
+						Description: "Something happened\n\t* to this other file\n\t* and this other file",
+					},
+					{
+						ID:    "4569",
+						Title: "Target Three",
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title:       "1.0.0",
+								Description: "# v1.0.0\n\nfeat: something cool",
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: `# Test Title
+
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
+## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
+
+Something happened
+
+* to this file
+
+### 1.0.0
+
+` + "```" + `
+# v1.0.0
+
+feat: something cool
+` + "```" + `
+
+### 1.0.1
+
+` + "```" + `
+# v1.0.1
+
+fix: something fixed
+` + "```" + `
+
+## Target Two
+
+Target ID: ` + "`" + `4568` + "`" + `
+
+Something happened
+
+* to this other file
+* and this other file
+
+## Target Three
+
+Target ID: ` + "`" + `4569` + "`" + `
+
+### 1.0.0
+
+` + "```" + `
+# v1.0.0
+
+feat: something cool
 ` + "```",
 		},
 		{
@@ -809,12 +524,12 @@ Description
 						},
 					},
 					{
-						ID:          "4567",
+						ID:          "4568",
 						Title:       "Target Two",
 						Description: "Description",
 					},
 					{
-						ID:    "4567",
+						ID:    "4569",
 						Title: "Target Three",
 						Changelogs: []ActionTargetChangelog{
 							{
@@ -827,7 +542,11 @@ Description
 			},
 			expectedOutput: `# Test Title
 
+Pipeline ID: ` + "`" + `1234` + "`" + `
+
 ## Target One
+
+Target ID: ` + "`" + `4567` + "`" + `
 
 ### 1.0.0
 
@@ -835,9 +554,13 @@ Description
 
 ## Target Two
 
+Target ID: ` + "`" + `4568` + "`" + `
+
 Description
 
 ## Target Three
+
+Target ID: ` + "`" + `4569` + "`" + `
 
 ### 1.0.0
 
@@ -845,13 +568,22 @@ Description
 Description
 ` + "```" + `
 
-[updatecli](https://www.updatecli.io/)`,
+Pipeline URL: [updatecli](https://www.updatecli.io/)`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expectedOutput, tt.report.ToActionsMarkdownString())
+			markdown := tt.report.ToActionsMarkdownString()
+			assert.Equal(t, tt.expectedOutput, markdown)
+
+			// roundtrip to ensure no information loss
+			var newReport Actions
+			err := markdownToActions(markdown, &newReport)
+			assert.Nil(t, err)
+			newReport.Actions[0].Title = "Action Title"
+
+			assert.Equal(t, &Actions{Actions: []Action{tt.report}}, &newReport)
 		})
 	}
 }

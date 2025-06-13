@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"sort"
+	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
@@ -56,9 +57,10 @@ func (a *Action) String() string {
 	return string(output[:])
 }
 
-func (a *Action) Merge(sourceAction *Action) {
+func (a *Action) Merge(sourceAction *Action, useDetailsFromSourceAction bool) {
 	var c, d []ActionTarget
 
+	useDetailsFromSourceActionTarget := useDetailsFromSourceAction
 	switch len(a.Targets) > len(sourceAction.Targets) {
 	case true:
 		c = a.Targets
@@ -66,6 +68,7 @@ func (a *Action) Merge(sourceAction *Action) {
 	case false:
 		d = a.Targets
 		c = sourceAction.Targets
+		useDetailsFromSourceActionTarget = !useDetailsFromSourceAction
 	}
 
 	for i := range d {
@@ -73,13 +76,18 @@ func (a *Action) Merge(sourceAction *Action) {
 		for j := range c {
 			if d[i].ID == c[j].ID {
 				targetFound = true
-				c[j].Merge(&d[i])
+				c[j].Merge(&d[i], useDetailsFromSourceActionTarget)
 				break
 			}
 		}
 		if !targetFound {
 			c = append(c, d[i])
 		}
+	}
+
+	if useDetailsFromSourceAction {
+		a.PipelineTitle = sourceAction.PipelineTitle
+		a.Description = sourceAction.Description
 	}
 
 	a.Targets = c
@@ -103,8 +111,21 @@ func (a *Action) sort() {
 	}
 }
 
+// updateTargetDescriptions updates descriptions from being console friendly to markdown friendly
+func (a *Action) updateTargetDescriptions() {
+	for id, target := range a.Targets {
+		d := target.Description
+		d = strings.Replace(d, "\n\t*", "\n\n*", 1)
+		d = strings.ReplaceAll(d, "\n\t*", "\n*")
+		a.Targets[id].Description = d
+	}
+}
+
 // ToActionsString show an action report formatted as a string
 func (a Action) ToActionsString() string {
+	a.sort()
+	a.updateTargetDescriptions()
+
 	output, err := xml.MarshalIndent(
 		Actions{
 			Actions: []Action{
@@ -120,6 +141,8 @@ func (a Action) ToActionsString() string {
 
 // ToActionsMarkdownString show an action report formatted as a string using markdown
 func (a Action) ToActionsMarkdownString() string {
+	a.updateTargetDescriptions()
+
 	tmpl, err := template.New("actions").Parse(markdownReportTemplate)
 	if err != nil {
 		logrus.Errorf("error: %v\n", err)
