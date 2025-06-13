@@ -47,39 +47,41 @@ import (
 )
 
 type ResourceConfig struct {
-	// "dependson" allows to specify the order of execution of resources
-	// It accepts a list of rules like "(resourceType#)resourceId(:booleanOperator)"
+	//"dependson" allows to specify the order of execution of resources.
+	//It accepts a list of rules like "(resourceType#)resourceId(:booleanOperator)".
 	//
-	// The resourceType is optional and can be one of "condition", "source" or "target"
-	// By default the resourceType is the current resource type
+	//The resourceType is optional and can be one of "condition", "source" or "target"
+	//By default the resourceType is the current resource type
 	//
-	// The resourceId is the name of the resource to depend on
+	//The resourceId is the name of the resource to depend on
 	//
-	// The booleanOperator is optional and can be "AND" or "OR"
+	//The booleanOperator is optional and can be "AND" or "OR"
 	//
-	// examples:
-	// dependson:
-	//   - condition#myCondition:and
-	//   - source#mySource
+	//examples:
+	//    dependson:
+	//      * condition#myCondition:and
+	//      * source#mySource
 	//
-	// remarks:
-	//   The parameters "sourceid" and "conditionsids" affect the order of resource execution.
-	//   To avoid circular dependencies, the depended resource may need to remove any conditionids or set "disablesourceinput to true".
+	//remarks:
+	//  * The parameters "sourceid" and "conditionsids" affect the order of resource execution.
+	//  * To avoid circular dependencies, the depended resource may need to remove any conditionids or set "disablesourceinput to true".
 	DependsOn []string `yaml:",omitempty"`
-	// name specifies the resource name
+	//name specifies the resource name
 	Name string `yaml:",omitempty"`
-	// kind specifies the resource kind which defines accepted spec value
+	//kind specifies the resource kind which defines accepted spec value
 	Kind string `yaml:",omitempty" jsonschema:"required"`
-	// transformers defines how the default input value need to be transformed
+	//transformers defines how the default input value need to be transformed
 	Transformers transformer.Transformers `yaml:",omitempty"`
-	// spec specifies parameters for a specific resource kind
+	//spec specifies parameters for a specific resource kind
 	Spec interface{} `yaml:",omitempty"`
-	// scmid specifies the scm configuration key associated to the current resource
+	//scmid specifies the scm configuration key associated to the current resource
 	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
-	// !deprecated, please use scmid
-	DeprecatedSCMID string `yaml:"scmID,omitempty" jsonschema:"-"` // SCMID references a uniq scm configuration
-	// !deprecated, please use dependson
-	DeprecatedDependsOn []string `yaml:"depends_on,omitempty" jsonschema:"-"` // depends_on specifies which resources must be executed before the current one
+	//!deprecated, please use scmid
+	//DeprecatedSCMID is kept for backward compatibility
+	DeprecatedSCMID string `yaml:"scmID,omitempty" jsonschema:"-"`
+	//!deprecated, please use dependson
+	//DeprecatedDependsOn is kept for backward compatibility
+	DeprecatedDependsOn []string `yaml:"depends_on,omitempty" jsonschema:"-"`
 }
 
 // New returns a newly initialized Resource or an error
