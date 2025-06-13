@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -27,15 +28,20 @@ func (e *Engine) LoadConfigurations() error {
 			// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
 			// if there is no manifests in the directory updatecli.d then Updatecli returns no manifest files.
 
-			// defaultManifestFilename defines the default updatecli configuration filename
-			defaultManifestFilename := "updatecli.yaml"
+			// defaultManifestFilenames defines the default updatecli configuration filenames
+			defaultManifestFilenames := []string{"updatecli.yaml"}
+			if cmdoptions.Experimental {
+				defaultManifestFilenames = append(defaultManifestFilenames, "updatecli.cue")
+			}
 			// defaultManifestDirname defines the default updatecli manifest directory
 			defaultManifestDirname := "updatecli.d"
 
 			// If no manifest file is specified, we try to detect one
-			if _, err := os.Stat(defaultManifestFilename); err == nil {
-				logrus.Debugf("Default Updatecli manifest detected %q", defaultManifestFilename)
-				e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, defaultManifestFilename)
+			for _, filename := range defaultManifestFilenames {
+				if _, err := os.Stat(filename); err == nil {
+					logrus.Debugf("Default Updatecli manifest detected %q", filename)
+					e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, filename)
+				}
 			}
 
 			if fs, err := os.Stat(defaultManifestDirname); err == nil {

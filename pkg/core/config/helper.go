@@ -13,9 +13,6 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
-
-	"cuelang.org/go/cue/cuecontext"
-	cueyaml "cuelang.org/go/encoding/yaml"
 )
 
 // FileChecksum returns sha256 checksum based on a file content.
@@ -135,27 +132,6 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 
 	return value, nil
 
-}
-
-// readCueConfig loads a cue spec and convert it to YAML before converting it to an Updatecli config spec
-// An important limitation in today's Updatecli implementation is that
-// Updatecli loads all configuration in memory and then apply each files individually as independent pipeline.
-// So cuelang feature won't be able to load module or package using the directory structure.
-func readCueConfig(in []byte) ([]byte, error) {
-
-	ctx := cuecontext.New()
-
-	compiledVal := ctx.CompileBytes(in)
-	if compiledVal.Err() != nil {
-		return nil, fmt.Errorf("compile cue spec: %w", compiledVal.Err())
-	}
-
-	val, err := cueyaml.Encode(compiledVal)
-	if err != nil {
-		return nil, fmt.Errorf("encode cue spec to yaml: %w", err)
-	}
-
-	return val, nil
 }
 
 // unmarshalConfigSpec unmarshal an Updatecli config spec
