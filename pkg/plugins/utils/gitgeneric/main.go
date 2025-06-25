@@ -952,8 +952,6 @@ func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, single
 	b := bytes.Buffer{}
 
 	pullOptions := git.PullOptions{
-		RemoteName:  DefaultRemoteReferenceName,
-		ReferenceName: plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, branch),
 		Force:        forceReset,
 		Progress:     &b,
 		SingleBranch: singleBranch,
