@@ -31,9 +31,9 @@ import (
 // GetDefaultCrawlerSpecs return config that defines the default builder that we want to run
 var GetDefaultCrawlerSpecs = sync.OnceValue(func() Config {
 	ret := Config{
-		Crawlers: make(CrawlersConfig, len(discoveryMap)),
+		Crawlers: make(CrawlersConfig, len(crawlerMap)),
 	}
-	for k, v := range discoveryMap {
+	for k, v := range crawlerMap {
 		if v.ignoreDefault {
 			continue
 		}
@@ -44,8 +44,8 @@ var GetDefaultCrawlerSpecs = sync.OnceValue(func() Config {
 
 // GetAutodiscoverySpecs return a map of all Autodiscovery specification
 var GetAutodiscoverySpecsMapping = sync.OnceValue(func() CrawlersConfig {
-	ret := make(CrawlersConfig, len(discoveryMap))
-	for k, v := range discoveryMap {
+	ret := make(CrawlersConfig, len(crawlerMap))
+	for k, v := range crawlerMap {
 		ret[k] = v.spec
 	}
 	return ret
@@ -60,12 +60,48 @@ type AutoDiscovery struct {
 	crawlers []Crawler
 }
 
-// discoveryMap is a map of all the crawlers new functions
-var discoveryMap = map[string]struct {
-	newFunc func(spec any, rootDir string, scmID string, actionID string) (Crawler, error)
+// ensure alias not conflict with existing key
+func init() {
+	aliases := make(map[string]string)
+	for k, v := range crawlerMap {
+		for _, alias := range v.alias {
+			if _, ok := crawlerMap[alias]; ok {
+				panic(fmt.Sprintf("alias(%q) for %q conflicts with existing crawler", alias, k))
+			}
+
+			if old, ok := aliases[alias]; ok {
+				panic(fmt.Sprintf("alias(%q) for %q already exists on %q ", alias, k, old))
+			}
+			aliases[alias] = k
+		}
+	}
+}
+
+// return crawlerFuncMap map with alias
+var crawlerFuncMap = sync.OnceValue(func() map[string]crawlerFunc {
+	ret := make(map[string]crawlerFunc, len(crawlerMap))
+	for k, v := range crawlerMap {
+		ret[k] = v.newFunc
+		// add alias
+		for _, alias := range v.alias {
+			ret[alias] = v.newFunc
+		}
+	}
+	return ret
+})
+
+type crawlerFunc = func(spec any, rootDir string, scmID string, actionID string) (Crawler, error)
+
+// crawlerMap is a map of all the crawlers and spec
+var crawlerMap = map[string]struct {
+	newFunc crawlerFunc
 	spec    any
 	// ignore in GetDefaultCrawlerSpecs
 	ignoreDefault bool
+	// alias is a list than can be used to refer to the crawler
+	// like `go` `golang` `golang/gomod`
+	// alias name should not be used as key
+	alias []string
 }{
 	"argocd": {
 		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
@@ -119,7 +155,8 @@ var discoveryMap = map[string]struct {
 		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
 			return golang.New(spec, rootDir, scmID, actionID)
 		},
-		spec: golang.Spec{},
+		spec:  golang.Spec{},
+		alias: []string{"go", "golang/gomod"},
 	},
 	"helm": {
 		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
@@ -157,7 +194,7 @@ var discoveryMap = map[string]struct {
 		},
 		spec: nomad.Spec{},
 	},
-	
+
 	"npm": {
 		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
 			return npm.New(spec, rootDir, scmID, actionID)
@@ -204,7 +241,7 @@ var discoveryMap = map[string]struct {
 
 // New returns an initiated autodiscovery object
 //
-//nolint:funlen // This function is responsible to create all the crawlers
+// This function is responsible to create all the crawlers
 func New(spec Config, workDir string) (*AutoDiscovery, error) {
 	var errs []error
 	var s Config
@@ -223,8 +260,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
 		}
-		if f, ok := discoveryMap[kind]; ok {
-			crawler, err := f.newFunc(
+		if f, ok := crawlerFuncMap()[kind]; ok {
+			crawler, err := f(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId,
