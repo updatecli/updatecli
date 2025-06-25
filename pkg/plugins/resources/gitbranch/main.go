@@ -122,7 +122,7 @@ func New(spec interface{}) (*GitBranch, error) {
 	newResource := &GitBranch{
 		spec:             newSpec,
 		versionFilter:    newFilter,
-		nativeGitHandler: gitgeneric.GoGit{},
+		nativeGitHandler: &gitgeneric.GoGit{},
 	}
 
 	return newResource, nil

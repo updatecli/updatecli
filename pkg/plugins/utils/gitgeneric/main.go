@@ -48,9 +48,12 @@ type GitHandler interface {
 	TagRefs(workingDir string) (refs []DatedTag, err error)
 	Branches(workingDir string) (branches []string, err error)
 	BranchRefs(workingDir string) (branches []DatedBranch, err error)
+	IsForceReset() bool
 }
 
 type GoGit struct {
+	// ForceReset is set to true if the branch has been reset to the latest commit of the based branch.
+	ForceReset bool
 }
 
 /*
@@ -265,7 +268,7 @@ func (g GoGit) Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool) error {
+func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool) error {
 
 	logrus.Debugf("checkout git branch %q, based on %q",
 		newBranch,
@@ -369,6 +372,7 @@ func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositor
 				plumbing.NewBranchReferenceName(basedBranch),
 				gitRepositoryPath,
 			)
+			g.ForceReset = resetBranch
 			if err != nil {
 				return err
 			}
@@ -384,6 +388,12 @@ func (g GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositor
 	}
 
 	return nil
+}
+
+func (g *GoGit) IsForceReset() bool {
+	// If ForceReset is set to true, it means that the branch has been reset
+	// to the latest commit of the based branch.
+	return g.ForceReset
 }
 
 // Commit run `git commit`.
@@ -942,6 +952,8 @@ func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, single
 	b := bytes.Buffer{}
 
 	pullOptions := git.PullOptions{
+		RemoteName:  DefaultRemoteReferenceName,
+		ReferenceName: plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, branch),
 		Force:        forceReset,
 		Progress:     &b,
 		SingleBranch: singleBranch,
