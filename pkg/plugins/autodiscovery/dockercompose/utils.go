@@ -9,7 +9,7 @@ import (
 	"sort"
 
 	"github.com/sirupsen/logrus"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchDockerComposeFiles will look, recursively, for every files named Chart.yaml from a root directory.

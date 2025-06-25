@@ -10,7 +10,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/compose"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchUpdatecliComposeFiles search, recursively, for every Updatecli compose files starting from a root directory.

@@ -16,8 +16,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/version"
+	"go.yaml.in/yaml/v3"
 	"golang.org/x/exp/maps"
-	"gopkg.in/yaml.v3"
 )
 
 // LoadAutoDiscovery tries to guess available pipelines based on specific directory

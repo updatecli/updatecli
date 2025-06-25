@@ -10,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 // Condition checks if a key exists in a yaml file

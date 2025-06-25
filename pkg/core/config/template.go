@@ -14,7 +14,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"github.com/getsops/sops/v3/decrypt"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"cuelang.org/go/cue"
 	cueast "cuelang.org/go/cue/ast"
