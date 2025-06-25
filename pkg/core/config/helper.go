@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"go.yaml.in/yaml/v3"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"gopkg.in/yaml.v3"
 )
 
 // FileChecksum returns sha256 checksum based on a file content.

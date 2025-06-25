@@ -3,7 +3,7 @@ package precommit
 import (
 	"os"
 
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // precommitRepo represent a precommit repo
