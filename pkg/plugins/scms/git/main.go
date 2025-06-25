@@ -182,7 +182,7 @@ If you know what you are doing, please set the workingBranch option to false in 
 
 	return &Git{
 		spec:             s,
-		nativeGitHandler: nativeGitHandler,
+		nativeGitHandler: &nativeGitHandler,
 		workingBranch:    workingBranch,
 		pipelineID:       pipelineID,
 	}, nil
