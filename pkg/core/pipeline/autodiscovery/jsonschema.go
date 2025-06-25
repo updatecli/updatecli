@@ -11,5 +11,5 @@ func (CrawlersConfig) JSONSchema() *jschema.Schema {
 
 	return jsonschema.AppendMapToJsonSchema(
 		CrawlersConfigAlias{},
-		AutodiscoverySpecsMapping)
+		GetAutodiscoverySpecsMapping())
 }
