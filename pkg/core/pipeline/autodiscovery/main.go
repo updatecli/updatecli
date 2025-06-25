@@ -2,6 +2,7 @@ package autodiscovery
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -27,61 +28,28 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
 )
 
-var (
-	// DefaultGenericsSpecs defines the default builder that we want to run
-	DefaultCrawlerSpecs = Config{
-		Crawlers: CrawlersConfig{
-			"argocd":        argocd.Spec{},
-			"cargo":         cargo.Spec{},
-			"dockercompose": dockercompose.Spec{},
-			"dockerfile":    dockerfile.Spec{},
-			"flux":          flux.Spec{},
-			// gitea/action share the same behavior as github/action
-			// so we use the last one.
-			// The day we have a specific behavior for gitea/action
-			// then we will add it to the default autodiscovery.
-			"github/action": githubaction.Spec{},
-			"golang":        golang.Spec{},
-			"helm":          helm.Spec{},
-			"helmfile":      helmfile.Spec{},
-			"ko":            ko.Spec{},
-			"kubernetes":    kubernetes.Spec{},
-			"maven":         maven.Spec{},
-			"nomad":         nomad.Spec{},
-			"npm":           npm.Spec{},
-			"precommit":     precommit.Spec{},
-			"prow":          kubernetes.Spec{},
-			"rancher/fleet": fleet.Spec{},
-			"terraform":     terraform.Spec{},
-			"terragrunt":    terragrunt.Spec{},
-			"updatecli":     updatecli.Spec{},
-		},
+// GetDefaultCrawlerSpecs return config that defines the default builder that we want to run
+var GetDefaultCrawlerSpecs = sync.OnceValue(func() Config {
+	ret := Config{
+		Crawlers: make(CrawlersConfig, len(discoveryMap)),
 	}
-	// AutodiscoverySpecs is a map of all Autodiscovery specification
-	AutodiscoverySpecsMapping = CrawlersConfig{
-		"argocd":        &argocd.Spec{},
-		"cargo":         &cargo.Spec{},
-		"dockercompose": &dockercompose.Spec{},
-		"dockerfile":    &dockerfile.Spec{},
-		"flux":          &flux.Spec{},
-		"github/action": &githubaction.Spec{},
-		"gitea/action":  &githubaction.Spec{},
-		"golang":        &golang.Spec{},
-		"helm":          &helm.Spec{},
-		"helmfile":      &helmfile.Spec{},
-		"ko":            &ko.Spec{},
-		"kubernetes":    &kubernetes.Spec{},
-		"maven":         &maven.Spec{},
-		"nomad":         &nomad.Spec{},
-		"npm":           &npm.Spec{},
-		"precommit":     &precommit.Spec{},
-		"prow":          &kubernetes.Spec{},
-		"rancher/fleet": &fleet.Spec{},
-		"terraform":     &terraform.Spec{},
-		// "terragrunt":    &terragrunt.Spec{}, // TODO missing ??
-		"updatecli": &updatecli.Spec{},
+	for k, v := range discoveryMap {
+		if v.ignoreDefault {
+			continue
+		}
+		ret.Crawlers[k] = v.spec
 	}
-)
+	return ret
+})
+
+// GetAutodiscoverySpecs return a map of all Autodiscovery specification
+var GetAutodiscoverySpecsMapping = sync.OnceValue(func() CrawlersConfig {
+	ret := make(CrawlersConfig, len(discoveryMap))
+	for k, v := range discoveryMap {
+		ret[k] = v.spec
+	}
+	return ret
+})
 
 type Crawler interface {
 	DiscoverManifests() ([][]byte, error)
@@ -92,71 +60,147 @@ type AutoDiscovery struct {
 	crawlers []Crawler
 }
 
-// todo fix all missing actionID
-var discoveryNewFuncMap = map[string]discoveryFunc{
-	"argocd": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return argocd.New(spec, rootDir, scmID, actionID)
+// discoveryMap is a map of all the crawlers new functions
+var discoveryMap = map[string]struct {
+	newFunc func(spec any, rootDir string, scmID string, actionID string) (Crawler, error)
+	spec    any
+	// ignore in GetDefaultCrawlerSpecs
+	ignoreDefault bool
+}{
+	"argocd": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return argocd.New(spec, rootDir, scmID, actionID)
+		},
+		spec: argocd.Spec{},
 	},
-	"cargo": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return cargo.New(spec, rootDir, scmID, actionID)
+	"cargo": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return cargo.New(spec, rootDir, scmID, actionID)
+		},
+		spec: cargo.Spec{},
 	},
-	"dockercompose": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return dockercompose.New(spec, rootDir, scmID, actionID)
+	"dockercompose": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return dockercompose.New(spec, rootDir, scmID, actionID)
+		},
+		spec: dockercompose.Spec{},
 	},
-	"dockerfile": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return dockerfile.New(spec, rootDir, scmID, actionID)
+	"dockerfile": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return dockerfile.New(spec, rootDir, scmID, actionID)
+		},
+		spec: dockerfile.Spec{},
 	},
-	"flux": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return flux.New(spec, rootDir, scmID, actionID)
+	"flux": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return flux.New(spec, rootDir, scmID, actionID)
+		},
+		spec: flux.Spec{},
 	},
-	"github/action": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return githubaction.New(spec, rootDir, scmID, actionID)
+
+	"github/action": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return githubaction.New(spec, rootDir, scmID, actionID)
+		},
+		spec: githubaction.Spec{},
 	},
-	"gitea/action": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return githubaction.New(spec, rootDir, scmID, actionID)
+	"gitea/action": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return githubaction.New(spec, rootDir, scmID, actionID)
+		},
+		spec: githubaction.Spec{},
+		// gitea/action share the same behavior as github/action
+		// so we use the last one.
+		// The day we have a specific behavior for gitea/action
+		// then we will add it to the default autodiscovery.
+		ignoreDefault: true,
 	},
-	"golang/gomod": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return golang.New(spec, rootDir, scmID, actionID)
+	"golang": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return golang.New(spec, rootDir, scmID, actionID)
+		},
+		spec: golang.Spec{},
 	},
-	"helm": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return helm.New(spec, rootDir, scmID, actionID)
+	"helm": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return helm.New(spec, rootDir, scmID, actionID)
+		},
+		spec: helm.Spec{},
 	},
-	"helmfile": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return helmfile.New(spec, rootDir, scmID, actionID)
+	"helmfile": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return helmfile.New(spec, rootDir, scmID, actionID)
+		},
+		spec: helmfile.Spec{},
 	},
-	"ko": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return ko.New(spec, rootDir, scmID, actionID)
+	"ko": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return ko.New(spec, rootDir, scmID, actionID)
+		},
+		spec: ko.Spec{},
 	},
-	"kubernetes": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return kubernetes.New(spec, rootDir, scmID, actionID, kubernetes.FlavorKubernetes)
+	"kubernetes": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return kubernetes.New(spec, rootDir, scmID, actionID, kubernetes.FlavorKubernetes)
+		},
+		spec: kubernetes.Spec{},
 	},
-	"maven": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return maven.New(spec, rootDir, scmID, actionID)
+	"maven": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return maven.New(spec, rootDir, scmID, actionID)
+		},
+		spec: maven.Spec{},
 	},
-	"npm": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return npm.New(spec, rootDir, scmID, actionID)
+	"nomad": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return nomad.New(spec, rootDir, scmID, actionID)
+		},
+		spec: nomad.Spec{},
 	},
-	"precommit": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return precommit.New(spec, rootDir, scmID, actionID)
+	
+	"npm": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return npm.New(spec, rootDir, scmID, actionID)
+		},
+		spec: npm.Spec{},
 	},
-	"prow": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return kubernetes.New(spec, rootDir, scmID, actionID, kubernetes.FlavorProw)
+	"precommit": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return precommit.New(spec, rootDir, scmID, actionID)
+		},
+		spec: precommit.Spec{},
 	},
-	"rancher/fleet": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return fleet.New(spec, rootDir, scmID, actionID)
+	"prow": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return kubernetes.New(spec, rootDir, scmID, actionID, kubernetes.FlavorProw)
+		},
+		spec: kubernetes.Spec{},
 	},
-	"terraform": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return terraform.New(spec, rootDir, scmID, actionID)
+	"rancher/fleet": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return fleet.New(spec, rootDir, scmID, actionID)
+		},
+		spec: fleet.Spec{},
 	},
-	"terragrunt": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return terragrunt.New(spec, rootDir, scmID, actionID)
+	"terraform": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return terraform.New(spec, rootDir, scmID, actionID)
+		},
+		spec: terraform.Spec{},
 	},
-	"updatecli": func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
-		return updatecli.New(spec, rootDir, scmID, actionID)
+	"terragrunt": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return terragrunt.New(spec, rootDir, scmID, actionID)
+		},
+		spec: terragrunt.Spec{},
+	},
+	"updatecli": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return updatecli.New(spec, rootDir, scmID, actionID)
+		},
+		spec: updatecli.Spec{},
 	},
 }
-
-type discoveryFunc func(spec any, rootDir string, scmID string, actionID string) (Crawler, error)
 
 // New returns an initiated autodiscovery object
 //
@@ -179,8 +223,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
 		}
-		if f, ok := discoveryNewFuncMap[kind]; ok {
-			crawler, err := f(
+		if f, ok := discoveryMap[kind]; ok {
+			crawler, err := f.newFunc(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId,

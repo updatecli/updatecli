@@ -26,4 +26,4 @@ type Config struct {
 }
 
 // CrawlersConfig is a custom type used to generated the jsonschema.
-type CrawlersConfig map[string]interface{}
+type CrawlersConfig map[string]any
