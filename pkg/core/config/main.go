@@ -208,7 +208,7 @@ type Option struct {
 // Reset reset configuration
 func (config *Config) Reset() {
 	*config = Config{
-		gitHandler: gitgeneric.GoGit{},
+		gitHandler: &gitgeneric.GoGit{},
 	}
 }
 

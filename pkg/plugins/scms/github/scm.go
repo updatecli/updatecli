@@ -140,7 +140,16 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 		return err
 	}
 
-	repositoryName := fmt.Sprintf("%s/%s", g.Spec.Owner, g.Spec.Repository)
+	if g.nativeGitHandler.IsForceReset() {
+		// Ensure that locally reset branch is pushed to remote branch
+		// before continuing with commit creation as that will otherwise
+		// be lost.
+		logrus.Debugf("local branch %q was reset, pushing to remote to ensure correct state", workingBranch)
+		if _, err = g.Push(); err != nil {
+			return fmt.Errorf("failed to push branch %q before creating commit: %w", workingBranch, err)
+		}
+	}
+
 	repoRef, err := g.GetLatestCommitHash(workingBranch)
 	if err != nil {
 		return err
@@ -154,14 +163,13 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 		}
 
 		headOid = sourceBranchRepoRef.HeadOid
-
 		logrus.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
-
 		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
 			return err
 		}
 	}
 
+	repositoryName := fmt.Sprintf("%s/%s", g.Spec.Owner, g.Spec.Repository)
 	input := githubv4.CreateCommitOnBranchInput{
 		Branch: githubv4.CommittableBranch{
 			RepositoryNameWithOwner: githubv4.NewString(githubv4.String(repositoryName)),
