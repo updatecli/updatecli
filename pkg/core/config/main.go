@@ -241,7 +241,7 @@ func New(option Option) (configs []Config, err error) {
 	for _, partialFile := range option.PartialFiles {
 		partialContent, err := readFile(partialFile)
 		if err != nil {
-			return nil, fmt.Errorf("Loading Updatecli partial manifest %q: %v", partialFile, err)
+			return nil, fmt.Errorf("loading Updatecli partial manifest %q: %v", partialFile, err)
 		}
 
 		if filepath.Dir(partialFile) != filepath.Dir(option.ManifestFile) {
