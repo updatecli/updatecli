@@ -1,4 +1,4 @@
-name: "Bump Jenkins stable version"
+name: "Bump Jenkins weekly version"
 pipelineid: "e2e/jenkins"
 
 conditions:
