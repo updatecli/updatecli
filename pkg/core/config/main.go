@@ -193,6 +193,10 @@ type Spec struct {
 type Option struct {
 	// ManifestFile contains the updatecli manifest full file path
 	ManifestFile string
+	// PartialFiles contains the list of updatecli partial full file path
+	// A partialfile contains a default manifest snippet available to all
+	// manifest within the same directory
+	PartialFiles []string
 	// ValuesFiles contains the list of updatecli values full file path
 	ValuesFiles []string
 	// SecretsFiles contains the list of updatecli sops secrets full file path
@@ -220,22 +224,43 @@ func New(option Option) (configs []Config, err error) {
 		return configs, err
 	}
 
-	logrus.Infof("Loading Pipeline %q", option.ManifestFile)
+	readFile := func(path string) ([]byte, error) {
+		// Load updatecli manifest no matter the file extension
+		f, err := os.Open(path)
 
-	// Load updatecli manifest no matter the file extension
-	c, err := os.Open(option.ManifestFile)
+		if err != nil {
+			return nil, err
+		}
 
-	if err != nil {
-		return configs, err
+		return io.ReadAll(f)
 	}
-
-	defer c.Close()
 
 	var templatedManifestContent []byte
-	rawManifestContent, err := io.ReadAll(c)
+	var rawManifestContent []byte
+
+	for _, partialFile := range option.PartialFiles {
+		partialContent, err := readFile(partialFile)
+		if err != nil {
+			return nil, fmt.Errorf("Loading Updatecli partial manifest %q: %v", partialFile, err)
+		}
+
+		if filepath.Dir(partialFile) != filepath.Dir(option.ManifestFile) {
+			logrus.Debugf("Ignoring partial from a different directory: %q", partialFile)
+			continue
+		}
+
+		logrus.Debugf("Partial content detected from: %q", partialFile)
+		rawManifestContent = append(rawManifestContent, partialContent...)
+	}
+
+	logrus.Infof("Loading Pipeline %q", option.ManifestFile)
+	// Load updatecli manifest no matter the file extension
+	rawManifestFileContent, err := readFile(option.ManifestFile)
 	if err != nil {
 		return configs, err
 	}
+
+	rawManifestContent = append(rawManifestContent, rawManifestFileContent...)
 
 	specs := []Spec{}
 

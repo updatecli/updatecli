@@ -54,7 +54,10 @@ func (e *Engine) PushToRegistry(manifests, valuesFiles, secretsFiles, policyRefe
 
 	joinWithFileStore(manifests)
 
-	manifests = sanitizeUpdatecliManifestFilePath(manifests)
+	manifestFiles, partialFiles := sanitizeUpdatecliManifestFilePath(manifests)
+
+	manifests = append(manifests, manifestFiles...)
+	manifests = append(manifests, partialFiles...)
 
 	relativeFromFileStore(manifests)
 
