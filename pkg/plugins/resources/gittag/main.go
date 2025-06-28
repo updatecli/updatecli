@@ -107,7 +107,7 @@ func New(spec interface{}) (*GitTag, error) {
 	newResource := &GitTag{
 		spec:             newSpec,
 		versionFilter:    newFilter,
-		nativeGitHandler: gitgeneric.GoGit{},
+		nativeGitHandler: &gitgeneric.GoGit{},
 	}
 
 	return newResource, nil
