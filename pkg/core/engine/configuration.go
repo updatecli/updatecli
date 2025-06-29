@@ -57,10 +57,13 @@ func (e *Engine) LoadConfigurations() error {
 			}
 		}
 
-		for _, manifestFile := range sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests) {
+		manifestFiles, manifestPartials := sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests)
+
+		for _, manifestFile := range manifestFiles {
 
 			loadedConfigurations, err := config.New(
 				config.Option{
+					PartialFiles:      manifestPartials,
 					ManifestFile:      manifestFile,
 					SecretsFiles:      e.Options.Manifests[i].Secrets,
 					ValuesFiles:       e.Options.Manifests[i].Values,

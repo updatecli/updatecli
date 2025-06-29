@@ -10,10 +10,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-/*
-sanitizeUpdatecliManifestFilePath receives a list of files (directory or file) and returns a list of files that could be accepted by Updatecli.
-*/
-func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePaths []string) {
+// sanitizeUpdatecliManifestFilePath receives a list of files (directory or file)
+// and returns both a list of files that could be accepted by Updatecli.
+// a list of files that can be used as helpers.
+func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePaths, sanitizedPartialPaths []string) {
 	for _, r := range rawFilePaths {
 		err := filepath.Walk(r, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -21,7 +21,13 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 				return fmt.Errorf("unable to walk %q: %s", path, err)
 			}
 			if info.Mode().IsRegular() {
-				sanitizedFilePaths = append(sanitizedFilePaths, path)
+				baseFile := filepath.Base(path)
+
+				if strings.HasPrefix(baseFile, "_") {
+					sanitizedPartialPaths = append(sanitizedPartialPaths, path)
+				} else {
+					sanitizedFilePaths = append(sanitizedFilePaths, path)
+				}
 			}
 			return nil
 		})
@@ -31,18 +37,20 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 		}
 	}
 
-	// Remove duplicates manifest files
-	result := []string{}
-	exist := map[string]bool{}
+	trimDuplicate := func(input []string) []string {
+		result := []string{}
+		exist := map[string]bool{}
 
-	for v := range sanitizedFilePaths {
-		if !exist[sanitizedFilePaths[v]] {
-			exist[sanitizedFilePaths[v]] = true
-			result = append(result, sanitizedFilePaths[v])
+		for v := range input {
+			if !exist[input[v]] {
+				exist[input[v]] = true
+				result = append(result, input[v])
+			}
 		}
+		return result
 	}
 
-	return result
+	return trimDuplicate(sanitizedFilePaths), trimDuplicate(sanitizedPartialPaths)
 }
 
 // PrintTitle print a title
