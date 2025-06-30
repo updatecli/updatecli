@@ -244,6 +244,8 @@ func New(option Option) (configs []Config, err error) {
 			return nil, fmt.Errorf("loading Updatecli partial manifest %q: %v", partialFile, err)
 		}
 
+		// Ignore partial files that are not in the same directory as the main manifest file
+		// This is to avoid loading partial files from other directories to reduce the complexity of the manifest.
 		if filepath.Dir(partialFile) != filepath.Dir(option.ManifestFile) {
 			logrus.Debugf("Ignoring partial from a different directory: %q", partialFile)
 			continue
