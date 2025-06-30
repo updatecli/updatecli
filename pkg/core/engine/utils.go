@@ -14,23 +14,55 @@ import (
 // and returns both a list of files that could be accepted by Updatecli.
 // a list of files that can be used as helpers.
 func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePaths, sanitizedPartialPaths []string) {
-	for _, r := range rawFilePaths {
-		err := filepath.Walk(r, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
-				return fmt.Errorf("unable to walk %q: %s", path, err)
-			}
-			if info.Mode().IsRegular() {
-				baseFile := filepath.Base(path)
+	for _, rawFilePath := range rawFilePaths {
+		rawFileInfo, err := os.Stat(rawFilePath)
 
+		// If the manifest if a directory, then we walk trough it to find all manifest files
+		// and partial files.
+		if rawFileInfo.IsDir() {
+			err = filepath.Walk(rawFilePath, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
+					return fmt.Errorf("unable to walk %q: %s", path, err)
+				}
+				if info.Mode().IsRegular() {
+					baseFile := filepath.Base(path)
+
+					if strings.HasPrefix(baseFile, "_") {
+						sanitizedPartialPaths = append(sanitizedPartialPaths, path)
+					} else {
+						sanitizedFilePaths = append(sanitizedFilePaths, path)
+					}
+				}
+				return nil
+			})
+		}
+
+		// If the manifest is a file, then we check any additional partial files
+		// in the same directory that start with an underscore.
+		if rawFileInfo.Mode().IsRegular() {
+			manifestDirname := filepath.Dir(rawFilePath)
+			dirEntries, err := os.ReadDir(manifestDirname) // Ensure the directory exists
+			if err != nil {
+				logrus.Errorf("unable to read directory %q: %s", manifestDirname, err)
+				return nil, nil
+			}
+
+			for _, entry := range dirEntries {
+				if entry.IsDir() {
+					continue // Skip directories
+				}
+
+				baseFile := entry.Name()
 				if strings.HasPrefix(baseFile, "_") {
-					sanitizedPartialPaths = append(sanitizedPartialPaths, path)
-				} else {
-					sanitizedFilePaths = append(sanitizedFilePaths, path)
+					// If the file starts with an underscore, we consider it a partial file
+					partialFilePath := filepath.Join(manifestDirname, baseFile)
+					sanitizedPartialPaths = append(sanitizedPartialPaths, partialFilePath)
 				}
 			}
-			return nil
-		})
+
+			sanitizedFilePaths = append(sanitizedFilePaths, rawFilePath)
+		}
 
 		if err != nil {
 			logrus.Errorf("err - %s", err)
