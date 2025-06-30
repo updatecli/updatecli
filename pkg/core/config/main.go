@@ -193,9 +193,8 @@ type Spec struct {
 type Option struct {
 	// ManifestFile contains the updatecli manifest full file path
 	ManifestFile string
-	// PartialFiles contains the list of updatecli partial full file path
-	// A partialfile contains a default manifest snippet available to all
-	// manifest within the same directory
+	// PartialFiles contains the list of full file paths for updatecli partial manifests.
+	// A partial file is a default manifest snippet available to all manifests within the same directory.
 	PartialFiles []string
 	// ValuesFiles contains the list of updatecli values full file path
 	ValuesFiles []string
