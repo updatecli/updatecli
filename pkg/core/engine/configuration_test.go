@@ -31,6 +31,18 @@ func TestLoadConfigurations(t *testing.T) {
 			expectedPipelines: 1,
 		},
 		{
+			name: "Success - Partial with one manifest",
+			wd:   "testdata/partialOneManifest",
+			engine: Engine{
+				Options: Options{
+					Manifests: []manifest.Manifest{
+						{},
+					},
+				},
+			},
+			expectedPipelines: 1,
+		},
+		{
 			name: "Success - Default manifest directory",
 			wd:   "testdata/defaultManifestDirname_single",
 			engine: Engine{
@@ -67,7 +79,9 @@ func TestLoadConfigurations(t *testing.T) {
 			expectedPipelines: 1,
 			expectedReports:   1,
 			wantErr:           true,
-			expectedError:     `"updatecli.d/failure.yaml" - scm ID "updatecli" from source ID "adopters" doesn't exist`,
+			expectedError: `failed loading pipeline(s)
+	* updatecli.d/failure.yaml:
+		scm ID "updatecli" from source ID "adopters" doesn't exist`,
 		},
 	}
 	for _, tt := range tests {
