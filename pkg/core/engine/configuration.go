@@ -69,7 +69,7 @@ func (e *Engine) LoadConfigurations() error {
 					err = fmt.Errorf("%s:\n* Partial files:\n\t* %s\n* Error:\n\t%s",
 						manifestFile,
 						strings.Join(manifestPartials, "\n\t* "),
-						strings.Replace(err.Error(), "\n", "\n\t", -1),
+						strings.ReplaceAll(err.Error(), "\n", "\n\t"),
 					)
 				}
 			}
