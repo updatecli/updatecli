@@ -16,6 +16,10 @@ import (
 func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePaths, sanitizedPartialPaths []string) {
 	for _, rawFilePath := range rawFilePaths {
 		rawFileInfo, err := os.Stat(rawFilePath)
+		if err != nil {
+			logrus.Error(fmt.Sprintf("Loading Updatecli manifest %q: %s", rawFilePath, err))
+			continue
+		}
 
 		// If the manifest if a directory, then we walk trough it to find all manifest files
 		// and partial files.
