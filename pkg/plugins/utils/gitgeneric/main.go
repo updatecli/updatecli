@@ -685,7 +685,7 @@ func (g GoGit) SanitizeBranchName(branch string) string {
 	}
 
 	replacedByUnderscore := []string{
-		"/", "\\", "{", "}", "[", "]",
+		"\\", "{", "}", "[", "]",
 	}
 
 	for _, character := range removedCharacter {
