@@ -57,10 +57,26 @@ func (e *Engine) LoadConfigurations() error {
 			}
 		}
 
-		for _, manifestFile := range sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests) {
+		manifestFiles, manifestPartials := sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests)
+		for _, manifestFile := range manifestFiles {
+			var err error
+
+			formatErr := func() {
+				switch len(manifestPartials) {
+				case 0:
+					err = fmt.Errorf("%s:\n%s", manifestFile, err)
+				default:
+					err = fmt.Errorf("%s:\n* Partial files:\n\t* %s\n* Error:\n\t%s",
+						manifestFile,
+						strings.Join(manifestPartials, "\n\t* "),
+						strings.ReplaceAll(err.Error(), "\n", "\n\t"),
+					)
+				}
+			}
 
 			loadedConfigurations, err := config.New(
 				config.Option{
+					PartialFiles:      manifestPartials,
 					ManifestFile:      manifestFile,
 					SecretsFiles:      e.Options.Manifests[i].Secrets,
 					ValuesFiles:       e.Options.Manifests[i].Values,
@@ -75,7 +91,9 @@ func (e *Engine) LoadConfigurations() error {
 			case nil:
 				// nothing to do
 			default:
-				err = fmt.Errorf("%q - %s", manifestFile, err)
+
+				formatErr()
+
 				errs = append(errs, err)
 				e.Reports = append(e.Reports,
 					reports.Report{
@@ -98,8 +116,9 @@ func (e *Engine) LoadConfigurations() error {
 					e.Pipelines = append(e.Pipelines, &newPipeline)
 					e.configurations = append(e.configurations, &loadedConfiguration)
 				} else {
-					// don't initially fail as init. of the pipeline still fails even with a successful validation
-					err := fmt.Errorf("%q - %s", manifestFile, err)
+
+					formatErr()
+
 					errs = append(errs, err)
 					e.Reports = append(e.Reports,
 						reports.Report{
@@ -121,7 +140,7 @@ func (e *Engine) LoadConfigurations() error {
 		e := errors.New("failed loading pipeline(s)")
 
 		for _, err := range errs {
-			e = fmt.Errorf("%s\n\t* %s", e.Error(), strings.ReplaceAll(err.Error(), "\n", "\n\t\t* "))
+			e = fmt.Errorf("%s\n\t* %s", e.Error(), strings.ReplaceAll(err.Error(), "\n", "\n\t\t"))
 			if errors.Is(err, ErrNoManifestDetected) {
 				return err
 			}

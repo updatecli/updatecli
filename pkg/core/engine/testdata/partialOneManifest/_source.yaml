@@ -1,0 +1,4 @@
+sources:
+  jenkins:
+    name: Get Jenkins version
+    kind: jenkins

@@ -274,7 +274,7 @@ If you know what you are doing, please set the force option to true in your conf
 		force:            force,
 		Spec:             s,
 		pipelineID:       pipelineID,
-		nativeGitHandler: nativeGitHandler,
+		nativeGitHandler: &nativeGitHandler,
 		workingBranch:    workingBranch,
 		commitUsingApi:   commitUsingApi,
 	}

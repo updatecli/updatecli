@@ -33,7 +33,7 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 			&config.Config{
 				Spec: config.Spec{
 					Name:          "Local AutoDiscovery",
-					AutoDiscovery: autodiscovery.DefaultCrawlerSpecs,
+					AutoDiscovery: autodiscovery.GetDefaultCrawlerSpecs(),
 				},
 			},
 			pipeline.Options{},
@@ -99,7 +99,6 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 
 		c, err := autodiscovery.New(
 			p.Config.Spec.AutoDiscovery, workDir)
-
 		if err != nil {
 			e.Pipelines[id].Report.Result = result.FAILURE
 			logrus.Errorln(err)
@@ -108,7 +107,6 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 
 		errs := []error{}
 		bytesManifests, err := c.Run()
-
 		if err != nil {
 			e.Pipelines[id].Report.Result = result.FAILURE
 			logrus.Errorln(err)
@@ -254,5 +252,4 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 	}
 
 	return nil
-
 }

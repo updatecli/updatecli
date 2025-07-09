@@ -2,6 +2,7 @@ package autodiscovery
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -27,60 +28,28 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
 )
 
-var (
-	// DefaultGenericsSpecs defines the default builder that we want to run
-	DefaultCrawlerSpecs = Config{
-		Crawlers: CrawlersConfig{
-			"argocd":        argocd.Spec{},
-			"cargo":         cargo.Spec{},
-			"dockercompose": dockercompose.Spec{},
-			"dockerfile":    dockerfile.Spec{},
-			"flux":          flux.Spec{},
-			// gitea/action share the same behavior as github/action
-			// so we use the last one.
-			// The day we have a specific behavior for gitea/action
-			// then we will add it to the default autodiscovery.
-			"github/action": githubaction.Spec{},
-			"golang":        golang.Spec{},
-			"helm":          helm.Spec{},
-			"helmfile":      helmfile.Spec{},
-			"ko":            ko.Spec{},
-			"kubernetes":    kubernetes.Spec{},
-			"maven":         maven.Spec{},
-			"nomad":         nomad.Spec{},
-			"npm":           npm.Spec{},
-			"precommit":     precommit.Spec{},
-			"prow":          kubernetes.Spec{},
-			"rancher/fleet": fleet.Spec{},
-			"terraform":     terraform.Spec{},
-			"terragrunt":    terragrunt.Spec{},
-			"updatecli":     updatecli.Spec{},
-		},
+// GetDefaultCrawlerSpecs return config that defines the default builder that we want to run
+var GetDefaultCrawlerSpecs = sync.OnceValue(func() Config {
+	ret := Config{
+		Crawlers: make(CrawlersConfig, len(crawlerMap)),
 	}
-	// AutodiscoverySpecs is a map of all Autodiscovery specification
-	AutodiscoverySpecsMapping = map[string]interface{}{
-		"argocd":        &argocd.Spec{},
-		"cargo":         &cargo.Spec{},
-		"dockercompose": &dockercompose.Spec{},
-		"dockerfile":    &dockerfile.Spec{},
-		"flux":          &flux.Spec{},
-		"github/action": &githubaction.Spec{},
-		"gitea/action":  &githubaction.Spec{},
-		"golang":        &golang.Spec{},
-		"helm":          &helm.Spec{},
-		"helmfile":      &helmfile.Spec{},
-		"ko":            &ko.Spec{},
-		"kubernetes":    &kubernetes.Spec{},
-		"maven":         &maven.Spec{},
-		"nomad":         &nomad.Spec{},
-		"npm":           &npm.Spec{},
-		"precommit":     &precommit.Spec{},
-		"prow":          &kubernetes.Spec{},
-		"rancher/fleet": &fleet.Spec{},
-		"terraform":     &terraform.Spec{},
-		"updatecli":     &updatecli.Spec{},
+	for k, v := range crawlerMap {
+		if v.ignoreDefault {
+			continue
+		}
+		ret.Crawlers[k] = v.spec
 	}
-)
+	return ret
+})
+
+// GetAutodiscoverySpecs return a map of all Autodiscovery specification
+var GetAutodiscoverySpecsMapping = sync.OnceValue(func() CrawlersConfig {
+	ret := make(CrawlersConfig, len(crawlerMap))
+	for k, v := range crawlerMap {
+		ret[k] = v.spec
+	}
+	return ret
+})
 
 type Crawler interface {
 	DiscoverManifests() ([][]byte, error)
@@ -91,9 +60,188 @@ type AutoDiscovery struct {
 	crawlers []Crawler
 }
 
+// ensure alias not conflict with existing key
+func init() {
+	aliases := make(map[string]string)
+	for k, v := range crawlerMap {
+		for _, alias := range v.alias {
+			if _, ok := crawlerMap[alias]; ok {
+				panic(fmt.Sprintf("alias(%q) for %q conflicts with existing crawler", alias, k))
+			}
+
+			if old, ok := aliases[alias]; ok {
+				panic(fmt.Sprintf("alias(%q) for %q already exists on %q ", alias, k, old))
+			}
+			aliases[alias] = k
+		}
+	}
+}
+
+// return crawlerFuncMap map with alias
+var crawlerFuncMap = sync.OnceValue(func() map[string]crawlerFunc {
+	ret := make(map[string]crawlerFunc, len(crawlerMap))
+	for k, v := range crawlerMap {
+		ret[k] = v.newFunc
+		// add alias
+		for _, alias := range v.alias {
+			ret[alias] = v.newFunc
+		}
+	}
+	return ret
+})
+
+type crawlerFunc = func(spec any, rootDir string, scmID string, actionID string) (Crawler, error)
+
+// crawlerMap is a map of all the crawlers and spec
+var crawlerMap = map[string]struct {
+	newFunc crawlerFunc
+	spec    any
+	// ignore in GetDefaultCrawlerSpecs
+	ignoreDefault bool
+	// alias is a list than can be used to refer to the crawler
+	// like `go` `golang` `golang/gomod`
+	// alias name should not be used as key
+	alias []string
+}{
+	"argocd": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return argocd.New(spec, rootDir, scmID, actionID)
+		},
+		spec: argocd.Spec{},
+	},
+	"cargo": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return cargo.New(spec, rootDir, scmID, actionID)
+		},
+		spec: cargo.Spec{},
+	},
+	"dockercompose": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return dockercompose.New(spec, rootDir, scmID, actionID)
+		},
+		spec: dockercompose.Spec{},
+	},
+	"dockerfile": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return dockerfile.New(spec, rootDir, scmID, actionID)
+		},
+		spec: dockerfile.Spec{},
+	},
+	"flux": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return flux.New(spec, rootDir, scmID, actionID)
+		},
+		spec: flux.Spec{},
+	},
+
+	"github/action": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return githubaction.New(spec, rootDir, scmID, actionID)
+		},
+		spec: githubaction.Spec{},
+	},
+	"gitea/action": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return githubaction.New(spec, rootDir, scmID, actionID)
+		},
+		spec: githubaction.Spec{},
+		// gitea/action share the same behavior as github/action
+		// so we use the last one.
+		// The day we have a specific behavior for gitea/action
+		// then we will add it to the default autodiscovery.
+		ignoreDefault: true,
+	},
+	"golang": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return golang.New(spec, rootDir, scmID, actionID)
+		},
+		spec:  golang.Spec{},
+		alias: []string{"go", "golang/gomod"},
+	},
+	"helm": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return helm.New(spec, rootDir, scmID, actionID)
+		},
+		spec: helm.Spec{},
+	},
+	"helmfile": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return helmfile.New(spec, rootDir, scmID, actionID)
+		},
+		spec: helmfile.Spec{},
+	},
+	"ko": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return ko.New(spec, rootDir, scmID, actionID)
+		},
+		spec: ko.Spec{},
+	},
+	"kubernetes": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return kubernetes.New(spec, rootDir, scmID, actionID, kubernetes.FlavorKubernetes)
+		},
+		spec: kubernetes.Spec{},
+	},
+	"maven": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return maven.New(spec, rootDir, scmID, actionID)
+		},
+		spec: maven.Spec{},
+	},
+	"nomad": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return nomad.New(spec, rootDir, scmID, actionID)
+		},
+		spec: nomad.Spec{},
+	},
+
+	"npm": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return npm.New(spec, rootDir, scmID, actionID)
+		},
+		spec: npm.Spec{},
+	},
+	"precommit": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return precommit.New(spec, rootDir, scmID, actionID)
+		},
+		spec: precommit.Spec{},
+	},
+	"prow": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return kubernetes.New(spec, rootDir, scmID, actionID, kubernetes.FlavorProw)
+		},
+		spec: kubernetes.Spec{},
+	},
+	"rancher/fleet": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return fleet.New(spec, rootDir, scmID, actionID)
+		},
+		spec: fleet.Spec{},
+	},
+	"terraform": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return terraform.New(spec, rootDir, scmID, actionID)
+		},
+		spec: terraform.Spec{},
+	},
+	"terragrunt": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return terragrunt.New(spec, rootDir, scmID, actionID)
+		},
+		spec: terragrunt.Spec{},
+	},
+	"updatecli": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID string) (Crawler, error) {
+			return updatecli.New(spec, rootDir, scmID, actionID)
+		},
+		spec: updatecli.Spec{},
+	},
+}
+
 // New returns an initiated autodiscovery object
 //
-//nolint:funlen // This function is responsible to create all the crawlers
+// This function is responsible to create all the crawlers
 func New(spec Config, workDir string) (*AutoDiscovery, error) {
 	var errs []error
 	var s Config
@@ -112,10 +260,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
 		}
-
-		switch kind {
-		case "argocd":
-			argocdCrawler, err := argocd.New(
+		if f, ok := crawlerFuncMap()[kind]; ok {
+			crawler, err := f(
 				g.spec.Crawlers[kind],
 				workDir,
 				g.spec.ScmId,
@@ -124,258 +270,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
-
-			g.crawlers = append(g.crawlers, argocdCrawler)
-		case "cargo":
-			cargoCrawler, err := cargo.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, cargoCrawler)
-
-		case "dockercompose":
-			crawler, err := dockercompose.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
 			g.crawlers = append(g.crawlers, crawler)
-
-		case "dockerfile":
-			crawler, err := dockerfile.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "flux":
-			crawler, err := flux.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "github/action", "gitea/action":
-			crawler, err := githubaction.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "golang", "go", "golang/gomod":
-			crawler, err := golang.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "helm":
-			crawler, err := helm.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "helmfile":
-			crawler, err := helmfile.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "ko":
-			crawler, err := ko.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "kubernetes":
-			crawler, err := kubernetes.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId,
-				kubernetes.FlavorKubernetes)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "maven":
-			crawler, err := maven.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "npm":
-			crawler, err := npm.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "nomad":
-			crawler, err := nomad.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "terraform":
-			crawler, err := terraform.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "terragrunt":
-			crawler, err := terragrunt.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "prow":
-			crawler, err := kubernetes.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId,
-				kubernetes.FlavorProw)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "precommit":
-			crawler, err := precommit.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "rancher/fleet":
-			crawler, err := fleet.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		case "updatecli":
-			crawler, err := updatecli.New(
-				g.spec.Crawlers[kind],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
-				continue
-			}
-
-			g.crawlers = append(g.crawlers, crawler)
-
-		default:
+		} else {
 			logrus.Infof("Crawler of type %q is not supported", kind)
 		}
 	}

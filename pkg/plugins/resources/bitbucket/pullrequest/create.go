@@ -55,9 +55,14 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 			return err
 		}
 
-		body, err := utils.GeneratePullRequestBodyMarkdown("", mergedDescription)
-		if err != nil {
-			return err
+		var body string
+		if len(b.spec.Body) > 0 {
+			body = b.spec.Body
+		} else {
+			body, err = utils.GeneratePullRequestBodyMarkdown("", mergedDescription)
+			if err != nil {
+				return err
+			}
 		}
 
 		logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\nTarget:\t%q\n",
@@ -74,13 +79,14 @@ func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) 
 		logrus.Infof("%s Bitbucket Cloud pull request successfully updated %q", result.SUCCESS, responseLink)
 	} else {
 
-		body, err := utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
-		if err != nil {
-			logrus.Warningf("something went wrong while generating Bitbucket Pull Request body: %s", err)
-		}
-
+		var body string
 		if len(b.spec.Body) > 0 {
 			body = b.spec.Body
+		} else {
+			body, err = utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
+			if err != nil {
+				logrus.Warningf("something went wrong while generating Bitbucket Pull Request body: %s", err)
+			}
 		}
 
 		logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\nTarget:\t%q\n",

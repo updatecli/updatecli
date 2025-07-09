@@ -1,0 +1,8 @@
+sources:
+  getLatestJenkinsStable:
+    kind: jenkins
+  getLatestJenkinsWeekly:
+    kind: jenkins
+    spec:
+      release: stable
+
