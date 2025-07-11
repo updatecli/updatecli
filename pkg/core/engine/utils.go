@@ -15,6 +15,12 @@ import (
 // a list of files that can be used as helpers.
 func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePaths, sanitizedPartialPaths []string) {
 	for _, rawFilePath := range rawFilePaths {
+		// Only sanitize Updatecli manifest which are not partial manifests.
+		rawBaseFilePath := filepath.Base(rawFilePath)
+		if strings.HasPrefix(rawBaseFilePath, "_") {
+			continue
+		}
+
 		rawFileInfo, err := os.Stat(rawFilePath)
 		if err != nil {
 			logrus.Error(fmt.Sprintf("Loading Updatecli manifest %q: %s", rawFilePath, err))
