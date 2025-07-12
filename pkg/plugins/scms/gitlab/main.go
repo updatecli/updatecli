@@ -106,6 +106,31 @@ type Spec struct {
 	//    The working branch created by Updatecli looks like "updatecli_<pipelineID>".
 	// 	  The working branch can be disabled using the "workingBranch" parameter set to false.
 	Branch string `yaml:",omitempty"`
+	// WorkingBranchPrefix defines the prefix used to create a working branch.
+	//
+	// compatible:
+	//   * scm
+	//
+	// default:
+	//   updatecli
+	//
+	// remark:
+	//   A working branch is composed of three components:
+	//   1. WorkingBranchPrefix
+	//   2. Target Branch
+	//   3. PipelineID
+	//
+	//   If WorkingBranchPrefix is set to '', then
+	//   the working branch will look like "<branch>_<pipelineID>".
+	WorkingBranchPrefix *string `yaml:",omitempty"`
+	// WorkingBranchSeparator defines the separator used to create a working branch.
+	//
+	// compatible:
+	//   * scm
+	//
+	// default:
+	//   "_"
+	WorkingBranchSeparator *string `yaml:",omitempty"`
 	//  "submodules" defines if Updatecli should checkout submodules.
 	//
 	//  compatible:
@@ -133,8 +158,10 @@ type Gitlab struct {
 	// pipelineID is used to create a unique working branch
 	pipelineID string
 	// nativeGitHandler is used to interact with the local git repository
-	nativeGitHandler gitgeneric.GitHandler
-	workingBranch    bool
+	nativeGitHandler       gitgeneric.GitHandler
+	workingBranch          bool
+	workingBranchPrefix    string
+	workingBranchSeparator string
 }
 
 // New returns a new valid GitLab object.
@@ -176,6 +203,16 @@ func New(spec interface{}, pipelineID string) (*Gitlab, error) {
 		workingBranch = *s.WorkingBranch
 	}
 
+	workingBranchPrefix := "updatecli"
+	if s.WorkingBranchPrefix != nil {
+		workingBranchPrefix = *s.WorkingBranchPrefix
+	}
+
+	workingBranchSeparator := "_"
+	if s.WorkingBranchSeparator != nil {
+		workingBranchSeparator = *s.WorkingBranchSeparator
+	}
+
 	force := true
 	if s.Force != nil {
 		force = *s.Force
@@ -209,12 +246,14 @@ If you know what you are doing, please set the force option to true in your conf
 
 	nativeGitHandler := gitgeneric.GoGit{}
 	g := Gitlab{
-		force:            force,
-		Spec:             s,
-		client:           c,
-		pipelineID:       pipelineID,
-		nativeGitHandler: &nativeGitHandler,
-		workingBranch:    workingBranch,
+		force:                  force,
+		Spec:                   s,
+		client:                 c,
+		pipelineID:             pipelineID,
+		nativeGitHandler:       &nativeGitHandler,
+		workingBranch:          workingBranch,
+		workingBranchPrefix:    workingBranchPrefix,
+		workingBranchSeparator: workingBranchSeparator,
 	}
 
 	g.setDirectory()

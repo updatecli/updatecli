@@ -3,6 +3,7 @@ package stash
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -13,7 +14,8 @@ func (s *Stash) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	targetBranch = s.Spec.Branch
 
 	if len(s.pipelineID) > 0 && s.workingBranch {
-		workingBranch = s.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, s.pipelineID))
+		workingBranch = s.nativeGitHandler.SanitizeBranchName(
+			strings.Join([]string{s.workingBranchPrefix, targetBranch, s.pipelineID}, s.workingBranchSeparator))
 	}
 
 	return sourceBranch, workingBranch, targetBranch

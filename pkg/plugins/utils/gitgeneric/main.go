@@ -685,7 +685,7 @@ func (g GoGit) SanitizeBranchName(branch string) string {
 	}
 
 	replacedByUnderscore := []string{
-		"/", "\\", "{", "}", "[", "]",
+		"\\", "{", "}", "[", "]",
 	}
 
 	for _, character := range removedCharacter {
@@ -695,9 +695,12 @@ func (g GoGit) SanitizeBranchName(branch string) string {
 		branch = strings.ReplaceAll(branch, character, "_")
 	}
 
+	branch = strings.TrimPrefix(branch, "/")
+
 	if len(branch) > 255 {
 		return branch[0:255]
 	}
+
 	return branch
 }
 

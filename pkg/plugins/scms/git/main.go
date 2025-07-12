@@ -59,6 +59,31 @@ type Spec struct {
 	// 		For more information, please refer to the following issue:
 	// 		https://github.com/updatecli/updatecli/issues/1139
 	Branch string `yaml:",omitempty"`
+	// WorkingBranchPrefix defines the prefix used to create a working branch.
+	//
+	// compatible:
+	//   * scm
+	//
+	// default:
+	//   updatecli
+	//
+	// remark:
+	//   A working branch is composed of three components:
+	//   1. WorkingBranchPrefix
+	//   2. Target Branch
+	//   3. PipelineID
+	//
+	//   If WorkingBranchPrefix is set to '', then
+	//   the working branch will look like "<branch>_<pipelineID>".
+	WorkingBranchPrefix *string `yaml:",omitempty"`
+	// WorkingBranchSeparator defines the separator used to create a working branch.
+	//
+	// compatible:
+	//   * scm
+	//
+	// default:
+	//   "_"
+	WorkingBranchSeparator *string `yaml:",omitempty"`
 	//	"user" specifies the user associated with new git commit messages created by Updatecli
 	//
 	//	compatible:
@@ -136,8 +161,10 @@ type Git struct {
 	// nativeGitHandler is the native git handler
 	nativeGitHandler gitgeneric.GitHandler
 	// workingBranch is used to create a temporary branch to work on.
-	workingBranch bool
-	pipelineID    string
+	workingBranch          bool
+	workingBranchPrefix    string
+	workingBranchSeparator string
+	pipelineID             string
 }
 
 // New returns a new git object
@@ -152,6 +179,16 @@ func New(s Spec, pipelineID string) (*Git, error) {
 
 	if len(s.Branch) == 0 {
 		s.Branch = "main"
+	}
+
+	workingBranchPrefix := "updatecli"
+	if s.WorkingBranchPrefix != nil {
+		workingBranchPrefix = *s.WorkingBranchPrefix
+	}
+
+	workingBranchSeparator := "_"
+	if s.WorkingBranchSeparator != nil {
+		workingBranchSeparator = *s.WorkingBranchSeparator
 	}
 
 	var workingBranch bool
@@ -181,10 +218,12 @@ If you know what you are doing, please set the workingBranch option to false in 
 	nativeGitHandler := gitgeneric.GoGit{}
 
 	return &Git{
-		spec:             s,
-		nativeGitHandler: &nativeGitHandler,
-		workingBranch:    workingBranch,
-		pipelineID:       pipelineID,
+		spec:                   s,
+		nativeGitHandler:       &nativeGitHandler,
+		workingBranch:          workingBranch,
+		workingBranchPrefix:    workingBranchPrefix,
+		workingBranchSeparator: workingBranchSeparator,
+		pipelineID:             pipelineID,
 	}, nil
 }
 

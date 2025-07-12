@@ -3,6 +3,7 @@ package bitbucket
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
@@ -14,7 +15,8 @@ func (b *Bitbucket) GetBranches() (sourceBranch, workingBranch, targetBranch str
 	targetBranch = b.Spec.Branch
 
 	if len(b.pipelineID) > 0 && b.workingBranch {
-		workingBranch = b.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, b.pipelineID))
+		workingBranch = b.nativeGitHandler.SanitizeBranchName(
+			strings.Join([]string{b.workingBranchPrefix, targetBranch, b.pipelineID}, b.workingBranchSeparator))
 	}
 
 	return sourceBranch, workingBranch, targetBranch
