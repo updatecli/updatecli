@@ -43,6 +43,31 @@ type Spec struct {
 	//    The working branch created by Updatecli looks like "updatecli_<pipelineID>".
 	//    The working branch can be disabled using the "workingBranch" parameter set to false.
 	Branch string `yaml:",omitempty"`
+	// WorkingBranchPrefix defines the prefix used to create a working branch.
+	//
+	// compatible:
+	//   * scm
+	//
+	// default:
+	//   updatecli
+	//
+	// remark:
+	//   A working branch is composed of three components:
+	//   1. WorkingBranchPrefix
+	//   2. Target Branch
+	//   3. PipelineID
+	//
+	//   If WorkingBranchPrefix is set to '', then
+	//   the working branch will look like "<branch>_<pipelineID>".
+	WorkingBranchPrefix *string `yaml:",omitempty"`
+	// WorkingBranchSeparator defines the separator used to create a working branch.
+	//
+	// compatible:
+	//   * scm
+	//
+	// default:
+	//   "_"
+	WorkingBranchSeparator *string `yaml:",omitempty"`
 	//  "directory" defines the local path where the git repository is cloned.
 	//
 	//  compatible:
@@ -166,12 +191,14 @@ type Spec struct {
 type Github struct {
 	force bool
 	// Spec contains inputs coming from updatecli configuration
-	Spec             Spec
-	pipelineID       string
-	client           GitHubClient
-	nativeGitHandler gitgeneric.GitHandler
-	workingBranch    bool
-	commitUsingApi   bool
+	Spec                   Spec
+	pipelineID             string
+	client                 GitHubClient
+	nativeGitHandler       gitgeneric.GitHandler
+	workingBranch          bool
+	workingBranchPrefix    string
+	workingBranchSeparator string
+	commitUsingApi         bool
 }
 
 // Repository contains GitHub repository data
@@ -240,6 +267,16 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		workingBranch = *s.WorkingBranch
 	}
 
+	workingBranchPrefix := "updatecli"
+	if s.WorkingBranchPrefix != nil {
+		workingBranchPrefix = *s.WorkingBranchPrefix
+	}
+
+	workingBranchSeparator := "_"
+	if s.WorkingBranchSeparator != nil {
+		workingBranchSeparator = *s.WorkingBranchSeparator
+	}
+
 	force := true
 	if s.Force != nil {
 		force = *s.Force
@@ -271,12 +308,14 @@ If you know what you are doing, please set the force option to true in your conf
 	}
 
 	g := Github{
-		force:            force,
-		Spec:             s,
-		pipelineID:       pipelineID,
-		nativeGitHandler: &nativeGitHandler,
-		workingBranch:    workingBranch,
-		commitUsingApi:   commitUsingApi,
+		force:                  force,
+		Spec:                   s,
+		pipelineID:             pipelineID,
+		nativeGitHandler:       &nativeGitHandler,
+		workingBranch:          workingBranch,
+		workingBranchPrefix:    workingBranchPrefix,
+		workingBranchSeparator: workingBranchSeparator,
+		commitUsingApi:         commitUsingApi,
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {
