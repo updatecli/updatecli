@@ -3,6 +3,7 @@ package gitea
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -14,7 +15,8 @@ func (g *Gitea) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	targetBranch = g.Spec.Branch
 
 	if len(g.pipelineID) > 0 && g.workingBranch {
-		workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, g.pipelineID))
+		workingBranch = g.nativeGitHandler.SanitizeBranchName(
+			strings.Join([]string{g.workingBranchPrefix, targetBranch, g.pipelineID}, g.workingBranchSeparator))
 	}
 
 	return sourceBranch, workingBranch, targetBranch

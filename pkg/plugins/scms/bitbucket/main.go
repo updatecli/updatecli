@@ -101,6 +101,31 @@ type Spec struct {
 	//    The working branch created by Updatecli looks like "updatecli_<pipelineID>".
 	//    The working branch can be disabled using the "workingBranch" parameter set to false.
 	Branch string `yaml:",omitempty"`
+	// WorkingBranchPrefix defines the prefix used to create a working branch.
+	//
+	// compatible:
+	//   * scm
+	//
+	// default:
+	//   updatecli
+	//
+	// remark:
+	//   A working branch is composed of three components:
+	//   1. WorkingBranchPrefix
+	//   2. Target Branch
+	//   3. PipelineID
+	//
+	//   If WorkingBranchPrefix is set to '', then
+	//   the working branch will look like "<branch>_<pipelineID>".
+	WorkingBranchPrefix *string `yaml:",omitempty"`
+	// WorkingBranchSeparator defines the separator used to create a working branch.
+	//
+	// compatible:
+	//   * scm
+	//
+	// default:
+	//   "_"
+	WorkingBranchSeparator *string `yaml:",omitempty"`
 	//  "submodules" defines if Updatecli should checkout submodules.
 	//
 	//  compatible:
@@ -123,11 +148,13 @@ type Bitbucket struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec Spec
 	// client handle the api authentication
-	client           *scm.Client
-	pipelineID       string
-	nativeGitHandler gitgeneric.GitHandler
-	workingBranch    bool
-	force            bool
+	client                 *scm.Client
+	pipelineID             string
+	nativeGitHandler       gitgeneric.GitHandler
+	workingBranch          bool
+	workingBranchPrefix    string
+	workingBranchSeparator string
+	force                  bool
 }
 
 // New returns a new valid Bitbucket Cloud object.
@@ -161,6 +188,16 @@ func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
 	if len(s.Branch) == 0 {
 		logrus.Warningf("no git branch specified, fallback to %q", "main")
 		s.Branch = "main"
+	}
+
+	workingBranchhPrefix := "updatecli"
+	if s.WorkingBranchPrefix != nil {
+		workingBranchhPrefix = *s.WorkingBranchPrefix
+	}
+
+	workingBranchSeparator := "_"
+	if s.WorkingBranchSeparator != nil {
+		workingBranchSeparator = *s.WorkingBranchSeparator
 	}
 
 	workingBranch := true
@@ -200,12 +237,14 @@ If you know what you are doing, please set the force option to true in your conf
 
 	nativeGitHandler := gitgeneric.GoGit{}
 	g := Bitbucket{
-		Spec:             s,
-		client:           c,
-		pipelineID:       pipelineID,
-		nativeGitHandler: &nativeGitHandler,
-		workingBranch:    workingBranch,
-		force:            force,
+		Spec:                   s,
+		client:                 c,
+		pipelineID:             pipelineID,
+		nativeGitHandler:       &nativeGitHandler,
+		workingBranch:          workingBranch,
+		workingBranchPrefix:    workingBranchhPrefix,
+		workingBranchSeparator: workingBranchSeparator,
+		force:                  force,
 	}
 
 	g.setDirectory()

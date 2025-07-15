@@ -1,8 +1,8 @@
 package git
 
 import (
-	"fmt"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -13,7 +13,8 @@ func (g *Git) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	targetBranch = g.spec.Branch
 
 	if g.workingBranch && len(g.pipelineID) > 0 {
-		workingBranch = g.nativeGitHandler.SanitizeBranchName(fmt.Sprintf("updatecli_%s_%s", targetBranch, g.pipelineID))
+		workingBranch = g.nativeGitHandler.SanitizeBranchName(
+			strings.Join([]string{g.workingBranchPrefix, targetBranch, g.pipelineID}, g.workingBranchSeparator))
 	}
 
 	return sourceBranch, workingBranch, targetBranch
