@@ -236,7 +236,7 @@ make test
 export GITHUB_TOKEN=$(<command to get token from password manager>) # Treat this as a SENSITIVE value!
 export GITHUB_ACTOR=xxxxx
 
-venom version # expect v1.2.0
+venom version # expect v0.28.0
 
 make test-e2e
 ----
