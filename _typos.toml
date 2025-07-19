@@ -13,7 +13,8 @@ extend-ignore-re = [
     "lIYEY.*",
     "mDMEYi.*",
     "WRONLY",
-    "nce"
+    "nce",
+    "Gti"
 ]
 
 [default.extend-words]
