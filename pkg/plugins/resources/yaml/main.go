@@ -71,6 +71,26 @@ type Spec struct {
 	//  some help would be useful on https://github.com/goccy/go-yaml/issues/290
 	//
 	Key string `yaml:",omitempty"`
+	//"keys" defines multiple yaml keypaths to update with the same value.
+	//
+	//compatible:
+	//  * target
+	//
+	//remark:
+	//  * keys is mutually exclusive with key.
+	//  * keys accepts the same syntax as key for each element.
+	//  * all keys will be updated with the same value.
+	//  * only available for target operations, not for source or condition.
+	//
+	//example using default engine:
+	//  * keys: 
+	//    - $.image.tag
+	//    - $.sidecar.tag
+	//  * keys: 
+	//    - $.agents[0].version
+	//    - $.agents[1].version
+	//
+	Keys []string `yaml:",omitempty"`
 	//value is the value associated with a yaml key.
 	//
 	//compatible:
@@ -157,7 +177,14 @@ func New(spec interface{}) (*Yaml, error) {
 		contentRetriever: &text.Text{},
 	}
 
-	newResource.spec.Key = sanitizeYamlPathKey(newResource.spec.Key)
+	if newResource.spec.Key != "" {
+		newResource.spec.Key = sanitizeYamlPathKey(newResource.spec.Key)
+	}
+	
+	// Sanitize all keys in the Keys slice
+	for i, key := range newResource.spec.Keys {
+		newResource.spec.Keys[i] = sanitizeYamlPathKey(key)
+	}
 
 	err = newResource.spec.Validate()
 	if err != nil {
@@ -194,6 +221,14 @@ func hasDuplicates(values []string) bool {
 	return len(values) != len(uniqueValues)
 }
 
+// getKeys returns all keys to be processed, handling both single key and multiple keys
+func (s *Spec) getKeys() []string {
+	if s.Key != "" {
+		return []string{s.Key}
+	}
+	return s.Keys
+}
+
 // Validate validates the object and returns an error (with all the failed validation messages) if it is not valid
 func (s *Spec) Validate() error {
 	var validationErrors []string
@@ -202,14 +237,20 @@ func (s *Spec) Validate() error {
 	if len(s.Files) == 0 && s.File == "" {
 		validationErrors = append(validationErrors, "Invalid spec for yaml resource: both 'file' and 'files' are empty.")
 	}
-	if s.Key == "" {
-		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' is empty.")
+	if s.Key == "" && len(s.Keys) == 0 {
+		validationErrors = append(validationErrors, "Invalid spec for yaml resource: both 'key' and 'keys' are empty.")
+	}
+	if s.Key != "" && len(s.Keys) > 0 {
+		validationErrors = append(validationErrors, "Invalid spec for yaml resource: 'key' and 'keys' are mutually exclusive.")
 	}
 	if len(s.Files) > 0 && s.File != "" {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attributes `spec.file` and `spec.files` are mutually exclusive")
 	}
 	if len(s.Files) > 1 && hasDuplicates(s.Files) {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attributes `spec.files` contains duplicated values")
+	}
+	if len(s.Keys) > 1 && hasDuplicates(s.Keys) {
+		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attribute `spec.keys` contains duplicated values")
 	}
 
 	// Return all the validation errors if found any

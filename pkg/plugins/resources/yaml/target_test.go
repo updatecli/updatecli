@@ -413,6 +413,143 @@ contents:
 			},
 			wantedResult: false,
 		},
+		{
+			name: "Passing case with multiple keys updating different paths",
+			spec: Spec{
+				File: "test.yaml",
+				Keys: []string{
+					"$.image.tag",
+					"$.sidecar.tag",
+				},
+				Value: "v1.2.3",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "v1.0.0",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+image:
+  tag: v1.0.0
+sidecar:
+  tag: v1.1.0
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+image:
+  tag: v1.2.3
+sidecar:
+  tag: v1.2.3
+`,
+			},
+			wantedResult: true,
+		},
+		{
+			name: "Passing case with multiple keys, some already up to date",
+			spec: Spec{
+				File: "test.yaml",
+				Keys: []string{
+					"$.app.version",
+					"$.app.tag",
+					"$.database.version",
+				},
+				Value: "v2.0.0",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "v1.0.0",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+app:
+  version: v1.5.0
+  tag: v2.0.0
+database:
+  version: v1.8.0
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+app:
+  version: v2.0.0
+  tag: v2.0.0
+database:
+  version: v2.0.0
+`,
+			},
+			wantedResult: true,
+		},
+		{
+			name: "Passing case with multiple keys using yamlpath engine",
+			spec: Spec{
+				File: "test.yaml",
+				Keys: []string{
+					"$.services[0].image",
+					"$.services[1].image",
+				},
+				Value: "nginx:1.21",
+				Engine: "yamlpath",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "nginx:1.20",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+services:
+  - name: web
+    image: nginx:1.20
+  - name: api
+    image: nginx:1.19
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+services:
+  - name: web
+    image: nginx:1.21
+  - name: api
+    image: nginx:1.21
+`,
+			},
+			wantedResult: true,
+		},
+		{
+			name: "Error case with multiple keys, one key not found",
+			spec: Spec{
+				File: "test.yaml",
+				Keys: []string{
+					"$.existing.key",
+					"$.nonexistent.key",
+				},
+				Value: "newvalue",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "oldvalue",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+existing:
+  key: oldvalue
+`,
+			},
+			wantedResult: false,
+			wantedError:  true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

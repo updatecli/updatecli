@@ -71,6 +71,43 @@ func Test_Validate(t *testing.T) {
 			},
 			isErrorWanted: true,
 		},
+		{
+			name: "Normal case with 'Keys'",
+			spec: Spec{
+				File: "/tmp/test.yaml",
+				Keys: []string{"foo.bar", "baz.qux"},
+			},
+			isErrorWanted: false,
+		},
+		{
+			name: "Validation error when both 'Key' and 'Keys' are specified",
+			spec: Spec{
+				File: "/tmp/test.yaml",
+				Key:  "foo.bar",
+				Keys: []string{"baz.qux"},
+			},
+			isErrorWanted: true,
+		},
+		{
+			name: "Validation error when both 'Key' and 'Keys' are empty",
+			spec: Spec{
+				File: "/tmp/test.yaml",
+				Key:  "",
+				Keys: []string{},
+			},
+			isErrorWanted: true,
+		},
+		{
+			name: "Validation error when 'Keys' contains duplicates",
+			spec: Spec{
+				File: "/tmp/test.yaml",
+				Keys: []string{
+					"foo.bar",
+					"foo.bar",
+				},
+			},
+			isErrorWanted: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
