@@ -494,7 +494,7 @@ database:
 					"$.services[0].image",
 					"$.services[1].image",
 				},
-				Value: "nginx:1.21",
+				Value:  "nginx:1.21",
 				Engine: "yamlpath",
 			},
 			files: map[string]file{

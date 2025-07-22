@@ -83,10 +83,10 @@ type Spec struct {
 	//  * only available for target operations, not for source or condition.
 	//
 	//example using default engine:
-	//  * keys: 
+	//  * keys:
 	//    - $.image.tag
 	//    - $.sidecar.tag
-	//  * keys: 
+	//  * keys:
 	//    - $.agents[0].version
 	//    - $.agents[1].version
 	//
@@ -180,7 +180,7 @@ func New(spec interface{}) (*Yaml, error) {
 	if newResource.spec.Key != "" {
 		newResource.spec.Key = sanitizeYamlPathKey(newResource.spec.Key)
 	}
-	
+
 	// Sanitize all keys in the Keys slice
 	for i, key := range newResource.spec.Keys {
 		newResource.spec.Keys[i] = sanitizeYamlPathKey(key)
