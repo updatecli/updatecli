@@ -21,8 +21,6 @@ scms:
       token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       user: "{{ .scm.user }}"
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-      workingbranchprefix: "deps"
-      workingbranchseparator: '/'
     disabled: false
 sources:
   latestVersion:
@@ -35,7 +33,6 @@ sources:
       username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       versionfilter:
         kind: semver
-        pattern: "<1"
 targets:
   goWorkflow:
     name: 'ci: update Venom version to {{ source "latestVersion" }}'
