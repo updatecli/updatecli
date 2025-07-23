@@ -190,6 +190,7 @@ github:
 			name: "File does not exist",
 			spec: Spec{
 				File: "not_existing.yaml",
+				Key:  "$.github.owner",
 			},
 			files: map[string]file{
 				"not_existing.yaml": {
