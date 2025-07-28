@@ -370,6 +370,7 @@ func (y *Yaml) ReportConfig() interface{} {
 		File:          y.spec.File,
 		Files:         y.spec.Files,
 		Key:           y.spec.Key,
+		Keys:          y.spec.Keys,
 		Value:         y.spec.Value,
 		Engine:        y.spec.Engine,
 		KeyOnly:       y.spec.KeyOnly,
