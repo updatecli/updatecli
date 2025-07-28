@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -212,7 +213,11 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 			}
 
 			resultTarget.Changed = true
-			resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+
+			if !slices.Contains(resultTarget.Files, y.files[filePath].filePath) {
+				resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+			}
+
 			resultTarget.Result = result.ATTENTION
 
 			shouldMsg := " "
@@ -334,7 +339,11 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 				}
 
 				resultTarget.Changed = true
-				resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+
+				if !slices.Contains(resultTarget.Files, y.files[filePath].filePath) {
+					resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+				}
+
 				resultTarget.Result = result.ATTENTION
 
 				shouldMsg := " "
