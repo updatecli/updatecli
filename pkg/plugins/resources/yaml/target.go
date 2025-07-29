@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"slices"
 	"sort"
 	"strings"
 
@@ -161,6 +160,8 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 	keys := y.spec.getKeys()
 
+	resultTargetFilesMap := map[string]bool{}
+
 	for filePath := range y.files {
 		originFilePath := y.files[filePath].originalFilePath
 		fileNotChanged := 0
@@ -214,8 +215,10 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 			resultTarget.Changed = true
 
-			if !slices.Contains(resultTarget.Files, y.files[filePath].filePath) {
-				resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+			filepath := y.files[filePath].filePath
+			if _, ok := resultTargetFilesMap[filepath]; !ok {
+				resultTarget.Files = append(resultTarget.Files, filepath)
+				resultTargetFilesMap[filePath] = true
 			}
 
 			resultTarget.Result = result.ATTENTION
@@ -275,9 +278,12 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 	var buf bytes.Buffer
 	e := yaml.NewEncoder(&buf)
 	defer e.Close()
+
 	e.SetIndent(2)
 
 	keys := y.spec.getKeys()
+
+	resultTargetFilesMap := map[string]bool{}
 
 	for filePath := range y.files {
 		buf = bytes.Buffer{}
@@ -338,10 +344,10 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 					node.LineComment = y.spec.Comment
 				}
 
-				resultTarget.Changed = true
-
-				if !slices.Contains(resultTarget.Files, y.files[filePath].filePath) {
-					resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
+				filepath := y.files[filePath].filePath
+				if _, ok := resultTargetFilesMap[filepath]; !ok {
+					resultTarget.Files = append(resultTarget.Files, filepath)
+					resultTargetFilesMap[filePath] = true
 				}
 
 				resultTarget.Result = result.ATTENTION
