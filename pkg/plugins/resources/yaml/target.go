@@ -215,9 +215,8 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 			resultTarget.Changed = true
 
-			filepath := y.files[filePath].filePath
-			if _, ok := resultTargetFilesMap[filepath]; !ok {
-				resultTarget.Files = append(resultTarget.Files, filepath)
+			if _, ok := resultTargetFilesMap[filePath]; !ok {
+				resultTarget.Files = append(resultTarget.Files, filePath)
 				resultTargetFilesMap[filePath] = true
 			}
 
@@ -344,9 +343,8 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 					node.LineComment = y.spec.Comment
 				}
 
-				filepath := y.files[filePath].filePath
-				if _, ok := resultTargetFilesMap[filepath]; !ok {
-					resultTarget.Files = append(resultTarget.Files, filepath)
+				if _, ok := resultTargetFilesMap[filePath]; !ok {
+					resultTarget.Files = append(resultTarget.Files, filePath)
 					resultTargetFilesMap[filePath] = true
 				}
 
