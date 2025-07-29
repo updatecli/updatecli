@@ -213,13 +213,12 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				return 0, ignoredFiles, fmt.Errorf("replacing yaml key %q: %w", key, err)
 			}
 
-			resultTarget.Changed = true
-
 			if _, ok := resultTargetFilesMap[filePath]; !ok {
 				resultTarget.Files = append(resultTarget.Files, filePath)
 				resultTargetFilesMap[filePath] = true
 			}
 
+			resultTarget.Changed = true
 			resultTarget.Result = result.ATTENTION
 
 			shouldMsg := " "
@@ -348,6 +347,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 					resultTargetFilesMap[filePath] = true
 				}
 
+				resultTarget.Changed = true
 				resultTarget.Result = result.ATTENTION
 
 				shouldMsg := " "
