@@ -49,4 +49,3 @@ conditions:
     spec:
       platforms:
         - linux/x64
-        - linux/aarch64

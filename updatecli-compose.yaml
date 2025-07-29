@@ -5,35 +5,35 @@ policies:
     values:
       - updatecli/values.d/scm.yaml
   - name: Update Updatecli policies
-    policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.5.0@sha256:947817644fb89e27f7b7121b822328c2d47364c7a3a08241e4d2ac1a5897020c
+    policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.6.0@sha256:6aa291ba7e99e10fb004a0b581b9f367fb41185799f8d8c2fba4be624606502b
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/updatecli-compose.yaml
   - name: Golang Version
-    policy: ghcr.io/updatecli/policies/golang/version:0.4.0@sha256:9b3c09a73ffbecc690f07a4a44244f51dcc1dfb0e5a292207f2543b79f08fcaa
+    policy: ghcr.io/updatecli/policies/golang/version:0.5.0@sha256:194801e061673615299c1a3b5c0f50733f9a53cc0751498fd26b3e399a111edf
     values:
       - updatecli/values.d/scm.yaml
   - name: Major Golang Module update
-    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.10.0@sha256:3b1a2b03b3cd8e33305ca165a8be2ca126a06be4cbdf388bf98e48a568855cdc
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.11.0@sha256:e5a3326520748b474b52410a18503ad98d703602e7a613bca3f9c56c53b8fa2c
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/golang_major.yaml
   - name: Minor Golang Module update
-    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.10.0@sha256:3b1a2b03b3cd8e33305ca165a8be2ca126a06be4cbdf388bf98e48a568855cdc
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.11.0@sha256:e5a3326520748b474b52410a18503ad98d703602e7a613bca3f9c56c53b8fa2c
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/golang_minor.yaml
   - name: Patch Golang Module update
-    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.10.0@sha256:3b1a2b03b3cd8e33305ca165a8be2ca126a06be4cbdf388bf98e48a568855cdc
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.11.0@sha256:e5a3326520748b474b52410a18503ad98d703602e7a613bca3f9c56c53b8fa2c
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/golang_patch.yaml
   - name: Update golangci-lint
-    policy: ghcr.io/updatecli/policies/golangci-lint/githubaction:0.5.0@sha256:0e1addae151528a2c337a306eb323332dd36a91f36b0e93891858eed7466456b
+    policy: ghcr.io/updatecli/policies/golangci-lint/githubaction:0.6.0@sha256:d831e5834f5a3980279c47893a56bc92321cc1d43f0f591f660ee948ab586a33
     values:
       - updatecli/values.d/scm.yaml
   - name: Update githubactions
-    policy: ghcr.io/updatecli/policies/autodiscovery/githubaction:0.1.0@sha256:ddac4fc192800a65e9a92669600db3eb66fe442610073d34202513b265ba7b29
+    policy: ghcr.io/updatecli/policies/autodiscovery/githubaction:0.2.0@sha256:cee41929fd625aa1a92c596ed2c621953e1586e5057732c9beff728ee2a99e25
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/githubaction.yaml
