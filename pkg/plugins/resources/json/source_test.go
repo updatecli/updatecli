@@ -23,6 +23,15 @@ func TestSource(t *testing.T) {
 		wantErr          bool
 	}{
 		{
+			name: "Get last array item successful workflow",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".phoneNumbers.all().filter(equal(type,office)).number",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			expectedResult: "646 555-4567",
+		},
+		{
 			name: "Default successful workflow",
 			spec: Spec{
 				File: "testdata/data.json",
