@@ -133,11 +133,6 @@ func (y Yaml) validateTargetFilePath() error {
 
 func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
 
-	urlPath, err := goyaml.PathString(y.spec.Key)
-	if err != nil {
-		return 0, ignoredFiles, fmt.Errorf("crafting yamlpath query: %w", err)
-	}
-
 	nodeToWrite, err := goyaml.ValueToNode(valueToWrite)
 
 	if y.spec.Comment != "" {
@@ -163,69 +158,99 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 		return 0, ignoredFiles, fmt.Errorf("parsing value to write: %w", err)
 	}
 
+	keys := y.spec.getKeys()
+
+	resultTargetFilesMap := map[string]bool{}
+
 	for filePath := range y.files {
 		originFilePath := y.files[filePath].originalFilePath
+		fileNotChanged := 0
+		fileKeysProcessed := 0
 
 		yamlFile, err := parser.ParseBytes([]byte(y.files[filePath].content), parser.ParseComments)
 		if err != nil {
 			return 0, ignoredFiles, fmt.Errorf("parsing yaml file: %w", err)
 		}
 
-		node, err := urlPath.FilterFile(yamlFile)
-		if err != nil {
-			if errors.Is(err, goyaml.ErrNotFoundNode) {
-				if y.spec.SearchPattern {
-					ignoredFiles++
-					// If search pattern is true then we don't want to return an error
-					// as we are probably trying to identify a file matching the key
-					logrus.Debugf("ignoring file %q: %s", originFilePath, err)
-					continue
-				}
-				return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q",
-					y.spec.Key,
-					originFilePath)
+		// Process each key for this file
+		for _, key := range keys {
+			urlPath, err := goyaml.PathString(key)
+			if err != nil {
+				return 0, ignoredFiles, fmt.Errorf("crafting yamlpath query for key %q: %w", key, err)
 			}
-			return 0, ignoredFiles, fmt.Errorf("searching in yaml file: %w", err)
-		}
 
-		oldVersion := node.String()
-		resultTarget.Information = oldVersion
+			node, err := urlPath.FilterFile(yamlFile)
+			if err != nil {
+				if errors.Is(err, goyaml.ErrNotFoundNode) {
+					if y.spec.SearchPattern {
+						// If search pattern is true then we don't want to return an error
+						// as we are probably trying to identify a file matching the key
+						logrus.Debugf("ignoring key %q in file %q: %s", key, originFilePath, err)
+						continue
+					}
+					return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q",
+						key,
+						originFilePath)
+				}
+				return 0, ignoredFiles, fmt.Errorf("searching for key %q in yaml file: %w", key, err)
+			}
 
-		if oldVersion == valueToWrite || oldVersion == nodeToWrite.String() {
-			resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
+			fileKeysProcessed++
+			oldVersion := node.String()
+			resultTarget.Information = oldVersion
+
+			if oldVersion == valueToWrite || oldVersion == nodeToWrite.String() {
+				resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
+					resultTarget.Description,
+					key,
+					valueToWrite,
+					originFilePath)
+				fileNotChanged++
+				continue
+			}
+
+			if err := urlPath.ReplaceWithNode(yamlFile, nodeToWrite); err != nil {
+				return 0, ignoredFiles, fmt.Errorf("replacing yaml key %q: %w", key, err)
+			}
+
+			if _, ok := resultTargetFilesMap[filePath]; !ok {
+				resultTarget.Files = append(resultTarget.Files, filePath)
+				resultTargetFilesMap[filePath] = true
+			}
+
+			resultTarget.Changed = true
+			resultTarget.Result = result.ATTENTION
+
+			shouldMsg := " "
+			if dryRun {
+				// Use to craft message depending if we run Updatecli in dryrun mode or not
+				shouldMsg = " should be "
+			}
+
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
 				resultTarget.Description,
-				y.spec.Key,
+				key,
+				shouldMsg,
+				oldVersion,
 				valueToWrite,
 				originFilePath)
-			notChanged++
+		}
+
+		// If no keys were processed for this file (all were ignored), count as ignored
+		if fileKeysProcessed == 0 {
+			ignoredFiles++
 			continue
 		}
 
-		if err := urlPath.ReplaceWithNode(yamlFile, nodeToWrite); err != nil {
-			return 0, ignoredFiles, fmt.Errorf("replacing yaml key: %w", err)
+		// If all processed keys in this file were unchanged, count as not changed
+		if fileNotChanged == fileKeysProcessed {
+			notChanged++
 		}
 
+		// Update file content
 		f := y.files[filePath]
 		f.content = yamlFile.String()
 		y.files[filePath] = f
-
-		resultTarget.Changed = true
-		resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
-		resultTarget.Result = result.ATTENTION
-
-		shouldMsg := " "
-		if dryRun {
-			// Use to craft message depending if we run Updatecli in dryrun mode or not
-			shouldMsg = " should be "
-		}
-
-		resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
-			resultTarget.Description,
-			y.spec.Key,
-			shouldMsg,
-			oldVersion,
-			valueToWrite,
-			originFilePath)
 
 		if !dryRun {
 			newFile, err := os.Create(y.files[filePath].filePath)
@@ -248,19 +273,21 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 }
 
 func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
-	urlPath, err := yamlpath.NewPath(y.spec.Key)
-	if err != nil {
-		return 0, 0, fmt.Errorf("crafting yamlpath query: %w", err)
-	}
-
 	var buf bytes.Buffer
 	e := yaml.NewEncoder(&buf)
 	defer e.Close()
+
 	e.SetIndent(2)
+
+	keys := y.spec.getKeys()
+
+	resultTargetFilesMap := map[string]bool{}
 
 	for filePath := range y.files {
 		buf = bytes.Buffer{}
 		originFilePath := y.files[filePath].originalFilePath
+		fileNotChanged := 0
+		fileKeysProcessed := 0
 
 		var n yaml.Node
 
@@ -269,83 +296,104 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 			return 0, ignoredFiles, fmt.Errorf("parsing yaml file: %w", err)
 		}
 
-		nodes, err := urlPath.Find(&n)
-		if err != nil {
-			return 0, ignoredFiles, fmt.Errorf("searching in yaml file: %w", err)
-		}
-
-		if len(nodes) == 0 {
-			if y.spec.SearchPattern {
-				ignoredFiles++
-				// If search pattern is true then we don't want to return an error
-				// as we are probably trying to identify a file matching the key
-				logrus.Debugf("ignoring file %q as we couldn't find key %q", originFilePath, y.spec.Key)
-				continue
+		// Process each key for this file
+		for _, key := range keys {
+			urlPath, err := yamlpath.NewPath(key)
+			if err != nil {
+				return 0, 0, fmt.Errorf("crafting yamlpath query for key %q: %w", key, err)
 			}
-			return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q",
-				y.spec.Key,
-				originFilePath)
-		}
 
-		var oldVersion string
-		var notChangedNode int
-		for _, node := range nodes {
-			oldVersion = node.Value
-			resultTarget.Information = oldVersion
+			nodes, err := urlPath.Find(&n)
+			if err != nil {
+				return 0, ignoredFiles, fmt.Errorf("searching for key %q in yaml file: %w", key, err)
+			}
 
-			if oldVersion == valueToWrite {
-				resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
+			if len(nodes) == 0 {
+				if y.spec.SearchPattern {
+					// If search pattern is true then we don't want to return an error
+					// as we are probably trying to identify a file matching the key
+					logrus.Debugf("ignoring key %q in file %q as we couldn't find it", key, originFilePath)
+					continue
+				}
+				return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q",
+					key,
+					originFilePath)
+			}
+
+			fileKeysProcessed++
+			var oldVersion string
+			var notChangedNode int
+			for _, node := range nodes {
+				oldVersion = node.Value
+				resultTarget.Information = oldVersion
+
+				if oldVersion == valueToWrite {
+					resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q, ",
+						resultTarget.Description,
+						key,
+						valueToWrite,
+						originFilePath)
+					notChangedNode++
+					continue
+				}
+
+				node.Value = valueToWrite
+				if y.spec.Comment != "" {
+					node.LineComment = y.spec.Comment
+				}
+
+				if _, ok := resultTargetFilesMap[filePath]; !ok {
+					resultTarget.Files = append(resultTarget.Files, filePath)
+					resultTargetFilesMap[filePath] = true
+				}
+
+				resultTarget.Changed = true
+				resultTarget.Result = result.ATTENTION
+
+				shouldMsg := " "
+				if dryRun {
+					// Use to craft message depending if we run Updatecli in dryrun mode or not
+					shouldMsg = " should be "
+				}
+
+				resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
 					resultTarget.Description,
-					y.spec.Key,
+					key,
+					shouldMsg,
+					oldVersion,
 					valueToWrite,
 					originFilePath)
-				notChanged++
-				notChangedNode++
-				continue
 			}
 
-			node.Value = valueToWrite
-			if y.spec.Comment != "" {
-				node.LineComment = y.spec.Comment
+			if notChangedNode == len(nodes) {
+				fileNotChanged++
 			}
 		}
 
-		if notChangedNode == len(nodes) {
-			logrus.Debugf("no change detected for %s", originFilePath)
+		// If no keys were processed for this file (all were ignored), count as ignored
+		if fileKeysProcessed == 0 {
+			ignoredFiles++
 			continue
 		}
 
+		// If all processed keys in this file were unchanged, count as not changed
+		if fileNotChanged == fileKeysProcessed {
+			notChanged++
+		}
+
+		// Update file content
 		f := y.files[filePath]
 		err = e.Encode(&n)
 		if err != nil {
 			return 0, ignoredFiles, fmt.Errorf("unable to marshal the yaml file: %w", err)
 		}
 
-		//
 		f.content = buf.String()
 		if strings.HasPrefix(y.files[filePath].content, "---\n") &&
 			!strings.HasPrefix(f.content, "---\n") {
 			f.content = "---\n" + f.content
 		}
 		y.files[filePath] = f
-
-		resultTarget.Changed = true
-		resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
-		resultTarget.Result = result.ATTENTION
-
-		shouldMsg := " "
-		if dryRun {
-			// Use to craft message depending if we run Updatecli in dryrun mode or not
-			shouldMsg = " should be "
-		}
-
-		resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
-			resultTarget.Description,
-			y.spec.Key,
-			shouldMsg,
-			oldVersion,
-			valueToWrite,
-			originFilePath)
 
 		if !dryRun {
 			newFile, err := os.Create(y.files[filePath].filePath)
