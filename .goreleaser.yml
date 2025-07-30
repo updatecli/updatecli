@@ -169,46 +169,6 @@ dockers:
     extra_files:
       - Makefile
 
-  #
-  # Build the full images
-  #
-  - image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-full-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-amd64'
-    dockerfile: docker/Dockerfile.full
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--no-cache"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/amd64"
-    goos: linux
-    goarch: amd64
-    extra_files:
-      - Makefile
-  - image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-full-arm64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-arm64'
-    dockerfile: docker/Dockerfile.full
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--no-cache"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/arm64"
-    goos: linux
-    goarch: arm64
-    extra_files:
-      - Makefile
-
 docker_signs:
   - cmd: cosign
     artifacts: manifests
@@ -257,25 +217,6 @@ docker_manifests:
     image_templates:
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64'
       - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64'
-  #
-  # Build the full images
-  #
-  - name_template: 'updatecli/updatecli:{{ .Tag }}-full'
-    image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-full-amd64'
-      - 'updatecli/updatecli:{{ .Tag }}-full-arm64'
-  - name_template: 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full'
-    image_templates:
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-arm64'
-  - name_template: 'updatecli/updatecli:latest-full'
-    image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-full-amd64'
-      - 'updatecli/updatecli:{{ .Tag }}-full-arm64'
-  - name_template: 'ghcr.io/updatecli/updatecli:latest-full'
-    image_templates:
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-full-arm64'
 
 env:
   - GO111MODULE=on
