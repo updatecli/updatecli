@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+
+	daselV2 "github.com/tomwright/dasel/v2"
 )
 
 // MultipleQuery returns multiple query from a Dasel Node
@@ -81,4 +83,32 @@ func (f *FileContent) Query(query string) (string, error) {
 
 	return queryResult.String(), nil
 
+}
+
+func (f *FileContent) QueryV2(query string) ([]string, error) {
+	if f.DaselV2Node == nil {
+		return nil, ErrDaselFailedParsingByteFormat
+	}
+
+	queryResult, err := daselV2.Select(f.DaselV2Node, query)
+	if err != nil {
+		return nil, fmt.Errorf("querying dasel v2 node: %w", err)
+	}
+
+	results := queryResult.Interfaces()
+
+	if len(results) == 0 {
+		err = fmt.Errorf("could not find value for query %q from file %q",
+			query,
+			f.FilePath)
+		return nil, err
+	}
+
+	stringResults := make([]string, len(results))
+
+	for k, v := range results {
+		stringResults[k] = fmt.Sprint(v)
+	}
+
+	return stringResults, nil
 }

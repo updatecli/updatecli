@@ -28,4 +28,6 @@ type FileContent struct {
 	ContentRetriever text.TextRetriever
 	// DaselNode contains the dasel representation of the file
 	DaselNode *dasel.Node
+	// DaselV2Node contains the dasel v2 representation of the file
+	DaselV2Node any
 }
