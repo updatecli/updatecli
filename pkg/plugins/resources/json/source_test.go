@@ -9,6 +9,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+func strPtr(s string) *string {
+	return &s
+}
+
 func TestSource(t *testing.T) {
 
 	testData := []struct {
@@ -27,10 +31,37 @@ func TestSource(t *testing.T) {
 			expectedResult: "Jack",
 		},
 		{
+			name: "Default successful workflow",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".firstName",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			expectedResult: "Jack",
+		},
+		{
+			name: "Get last array item successful workflow",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".phoneNumbers.last().type",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			expectedResult: "office",
+		},
+		{
 			name: "Default successful workflow with empty result",
 			spec: Spec{
 				File: "testdata/data.json",
 				Key:  ".surname",
+			},
+			expectedResult: "",
+		},
+		{
+			name: "Default successful workflow with empty result",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".surname",
+				Engine: strPtr(ENGINEDASEL_V2),
 			},
 			expectedResult: "",
 		},
@@ -46,10 +77,31 @@ func TestSource(t *testing.T) {
 			expectedResult:   "",
 		},
 		{
+			name: "Test key do not exist with Dasel v2",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".doNotExist",
+				Value:  "",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			wantErr:          true,
+			expectedErrorMsg: errors.New("✗ cannot find value for path \".doNotExist\" from file \"testdata/data.json\""),
+			expectedResult:   "",
+		},
+		{
 			name: "Test array exist",
 			spec: Spec{
 				File: "testdata/data.json",
 				Key:  ".children.[1]",
+			},
+			expectedResult: "Thomas",
+		},
+		{
+			name: "Test array exist with Dasel v2",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".children.[1]",
+				Engine: strPtr(ENGINEDASEL_V2),
 			},
 			expectedResult: "Thomas",
 		},

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
@@ -30,20 +31,33 @@ func (j *Json) Condition(source string, scm scm.ScmHandler) (pass bool, message 
 		var queryResults []string
 		var err error
 
-		switch len(j.spec.Query) > 0 {
-		case true:
-			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
+		switch j.engine {
+		case ENGINEDASEL_V1:
+			logrus.Debugf("Using engine %q", ENGINEDASEL_V1)
+			switch len(j.spec.Query) > 0 {
+			case true:
+				queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
+				if err != nil {
+					return false, "", err
+				}
+
+			case false:
+				queryResult, err := j.contents[i].Query(j.spec.Key)
+				if err != nil {
+					return false, "", err
+				}
+
+				queryResults = []string{queryResult}
+			}
+		case ENGINEDASEL_V2:
+			logrus.Debugf("Using engine %q", ENGINEDASEL_V2)
+			queryResults, err = j.contents[i].QueryV2(j.spec.Key)
 			if err != nil {
-				return false, "", err
+				return false, "", fmt.Errorf("querying file %q: %w", j.contents[i].FilePath, err)
 			}
 
-		case false:
-			queryResult, err := j.contents[i].Query(j.spec.Key)
-			if err != nil {
-				return false, "", err
-			}
-
-			queryResults = []string{queryResult}
+		default:
+			return false, "", fmt.Errorf("engine %q is not supported", j.engine)
 		}
 
 		for _, queryResult := range queryResults {

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -48,23 +49,37 @@ func (j *Json) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		var queryResults []string
 		var err error
 
-		switch len(j.spec.Query) > 0 {
-		case true:
-			queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
+		switch j.engine {
+		case ENGINEDASEL_V1:
+			logrus.Debugf("Using engine %q", j.engine)
+			switch len(j.spec.Query) > 0 {
+			case true:
+				queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
 
-			if err != nil {
-				return fmt.Errorf("querying json file %q: %w", filename, err)
+				if err != nil {
+					return fmt.Errorf("querying json file %q: %w", filename, err)
+				}
+
+			case false:
+				queryResult, err := j.contents[i].Query(j.spec.Key)
+
+				if err != nil {
+					return fmt.Errorf("querying json file %q: %w", filename, err)
+				}
+
+				queryResults = append(queryResults, queryResult)
+
 			}
 
-		case false:
-			queryResult, err := j.contents[i].Query(j.spec.Key)
-
+		case ENGINEDASEL_V2:
+			logrus.Debugf("Using engine %q", ENGINEDASEL_V2)
+			queryResults, err = j.contents[i].QueryV2(j.spec.Key)
 			if err != nil {
-				return fmt.Errorf("querying json file %q: %w", filename, err)
+				return fmt.Errorf("querying file %q: %w", j.contents[i].FilePath, err)
 			}
 
-			queryResults = append(queryResults, queryResult)
-
+		default:
+			return fmt.Errorf("engine %q is not supported", j.engine)
 		}
 
 		resultChanged := false
