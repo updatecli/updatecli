@@ -28,6 +28,16 @@ func TestTarget(t *testing.T) {
 			expectedResult: false,
 		},
 		{
+			name: "Default successful workflow using Dasel v2",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".firstName",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			sourceInput:    "Jack",
+			expectedResult: false,
+		},
+		{
 			name: "Default successful workflow",
 			spec: Spec{
 				File: "testdata/data.json",
@@ -44,6 +54,26 @@ func TestTarget(t *testing.T) {
 			},
 			sourceInput:    "Tom",
 			expectedResult: true,
+		},
+		{
+			name: "Update first array item successful workflow",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".phoneNumbers.first().type",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			sourceInput:    "apartment",
+			expectedResult: true,
+		},
+		{
+			name: "Unchanged first array item successful workflow",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".phoneNumbers.first().type",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			sourceInput:    "home",
+			expectedResult: false,
 		},
 	}
 

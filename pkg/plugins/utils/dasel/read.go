@@ -24,7 +24,7 @@ func (f *FileContent) Read(rootDir string) error {
 		return fmt.Errorf("failed to read file %q: %w", f.FilePath, err)
 	}
 
-	var data interface{}
+	var data any
 	switch f.DataType {
 
 	case "json":
@@ -45,12 +45,13 @@ func (f *FileContent) Read(rootDir string) error {
 	}
 
 	daselNode := dasel.New(data)
+	f.DaselNode = daselNode
 
-	if daselNode != nil {
-		f.DaselNode = daselNode
-		return nil
+	f.DaselV2Node = data
+
+	if f.DaselNode == nil || f.DaselV2Node == nil {
+		return ErrDaselFailedParsingByteFormat
 	}
 
-	return ErrDaselFailedParsingByteFormat
-
+	return nil
 }

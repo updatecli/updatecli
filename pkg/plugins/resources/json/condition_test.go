@@ -27,6 +27,16 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Default scenario with Dasel v2",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".firstName",
+				Value:  "Jack",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			expectedResult: true,
+		},
+		{
 			name: "Multiple key scenario",
 			spec: Spec{
 				File:  "testdata/data.json",
@@ -35,16 +45,26 @@ func TestCondition(t *testing.T) {
 			},
 			expectedResult: true,
 		},
-		// Doesn't seem to be working on Dasel side.
-		//{
-		//	name: "none multiple key scenario",
-		//	spec: Spec{
-		//		File:  "testdata/data.json",
-		//		Key:   "phoneNumbers.[*].type",
-		//		Value: "another home",
-		//	},
-		//	expectedResult: true,
-		//},
+		{
+			name: "Multiple key scenario",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "phoneNumbers.[0].type",
+				Value:  "home",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Get last array item successful workflow",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".phoneNumbers.all().filter(equal(type,office)).number",
+				Engine: strPtr(ENGINEDASEL_V2),
+				Value:  "646 555-4567",
+			},
+			expectedResult: true,
+		},
 		{
 			name: "Default successful workflow with empty result",
 			spec: Spec{
