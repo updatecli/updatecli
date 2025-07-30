@@ -726,8 +726,8 @@ github.com/tklauser/numcpus v0.6.1 h1:ng9scYS7az0Bk4OZLvrNXNSAO2Pxr1XXRAPyjhIx+F
 github.com/tklauser/numcpus v0.6.1/go.mod h1:1XfjsgE2zo8GVw7POkMbHENHzVg3GzmoZ9fESEdAacY=
 github.com/tomwright/dasel v1.27.3 h1:vnoaZsG8hbubcdh2IioRVjOt2DTg+txLtDGKQn1cdA8=
 github.com/tomwright/dasel v1.27.3/go.mod h1:/rESPoTvQxRkrtEH8lhSU8CB2UWPh/bM0kDrKVGf1kQ=
-github.com/tomwright/dasel/v2 v2.8.0 h1:q1WyjeXOuXNxNqlu5MYh8zWFYFTAtt1kITMjIaRYGrY=
-github.com/tomwright/dasel/v2 v2.8.0/go.mod h1:6bNDNAnmGEtGpuIvksuQwiNcAgQ87pmzndynsqTNglc=
+github.com/tomwright/dasel/v2 v2.8.1 h1:mo5SlL0V2d3a0uPsD9Rrndn0cHWpbNDheB4+Fm++z8k=
+github.com/tomwright/dasel/v2 v2.8.1/go.mod h1:6bNDNAnmGEtGpuIvksuQwiNcAgQ87pmzndynsqTNglc=
 github.com/urfave/cli v1.22.16 h1:MH0k6uJxdwdeWQTwhSO42Pwr4YLrNLwBtg1MRgTqPdQ=
 github.com/urfave/cli v1.22.16/go.mod h1:EeJR6BKodywf4zciqrdw6hpCPk68JO9z5LazXZMn5Po=
 github.com/vbatts/tar-split v0.12.1 h1:CqKoORW7BUWBe7UL/iqTVvkTBOF8UvOMKOIZykxnnbo=
