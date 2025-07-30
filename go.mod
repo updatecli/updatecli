@@ -56,7 +56,7 @@ require (
 	github.com/spf13/afero v1.14.0
 	github.com/testcontainers/testcontainers-go v0.38.0
 	github.com/tomwright/dasel v1.27.3
-	github.com/tomwright/dasel/v2 v2.8.0
+	github.com/tomwright/dasel/v2 v2.8.1
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.7.13
 	github.com/zclconf/go-cty v1.16.3
