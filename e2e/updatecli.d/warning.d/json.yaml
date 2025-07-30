@@ -7,14 +7,12 @@ sources:
     spec:
       file: pkg/plugins/resources/json/testdata/data.json
       key: firstName
-      engine: dasel/v2
   http:
     name: Get value from json
     kind: json
     spec:
       file: https://www.updatecli.io/schema/latest/config.json
       key: $id
-      engine: dasel/v2
 
 conditions:
   local:
@@ -26,7 +24,6 @@ conditions:
         - pkg/plugins/resources/json/testdata/data.json
         - pkg/plugins/resources/json/testdata/data.2.json
       key: firstName
-      engine: dasel/v2
   http:
     name: Test value from json
     kind: json
@@ -35,7 +32,6 @@ conditions:
       file: https://www.updatecli.io/schema/latest/config.json
       key: $schema
       value: http://json-schema.org/draft-04/schema
-      engine: dasel/v2
 
 targets:
   local:
@@ -46,7 +42,6 @@ targets:
       file: pkg/plugins/resources/json/testdata/data.json
       key: firstName
       value: John
-      engine: dasel/v2
 
   local2:
     name: Test value from json
@@ -58,4 +53,3 @@ targets:
         - pkg/plugins/resources/json/testdata/data.2.json
       key: firstName
       value: John
-      engine: dasel/v2
