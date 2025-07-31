@@ -25,7 +25,7 @@ func Marshal(data *parser.Result, document *string) (err error) {
 		case "FROM":
 			arguments = DefaultForm(node)
 		case "LABEL":
-			arguments = KeyValueForm(node, tab)
+			arguments = EnvForm(node, tab)
 		case "MAINTAINER":
 			arguments = DefaultForm(node)
 		case "EXPOSE":
@@ -45,7 +45,7 @@ func Marshal(data *parser.Result, document *string) (err error) {
 		case "COPY":
 			arguments = DefaultForm(node)
 		case "ENV":
-			arguments = KeyValueForm(node, tab)
+			arguments = EnvForm(node, tab)
 		case "RUN":
 			arguments = ShellForm(node)
 			//arguments = ExecForm(node)
@@ -155,6 +155,49 @@ func KeyValueForm(node *parser.Node, tab string) (arguments string) {
 	}
 
 	return arguments + "\n"
+}
+
+// EnvForm format instruction arguments and add '=' between a key and a value,
+// like `LABEL key=value`
+func EnvForm(node *parser.Node, tab string) (arguments string) {
+
+	tmp := []string{}
+
+	for n := node.Next; n != nil; n = n.Next {
+		tmp = append(tmp, n.Value)
+	}
+	separator := ""
+	endline := ""
+	for i := range tmp {
+
+		if i%3 == 0 {
+			arguments = fmt.Sprintf("%s%s", arguments, tmp[i])
+
+			endline = fmt.Sprintf("\\\n%s", tab)
+			if i+2 >= len(tmp)-1 {
+				endline = "\n"
+			}
+
+			separator = " "
+			if tmp[i+2] != "" {
+				separator = tmp[i+2]
+			}
+
+			raw := tmp[i+1]
+
+			arguments = fmt.Sprintf("%s%s%s%s",
+				arguments,
+				separator,
+				raw,
+				endline)
+		}
+	}
+
+	if len(node.Flags) > 0 {
+		arguments = fmt.Sprintf("%s %s", strings.Join(node.Flags, " "), arguments)
+	}
+
+	return arguments
 }
 
 // ShellForm format a line instruction containing shell commands,
