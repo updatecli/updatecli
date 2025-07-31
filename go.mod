@@ -36,7 +36,7 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/ProtonMail/go-crypto v1.1.6
 	github.com/beevik/etree v1.5.1
-	github.com/drone/go-scm v1.40.2
+	github.com/drone/go-scm v1.40.3
 	github.com/fluxcd/helm-controller/api v1.3.0
 	github.com/fluxcd/source-controller/api v1.6.2
 	github.com/goccy/go-yaml v1.18.0
