@@ -36,7 +36,7 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/ProtonMail/go-crypto v1.1.6
 	github.com/beevik/etree v1.5.1
-	github.com/drone/go-scm v1.40.2
+	github.com/drone/go-scm v1.40.3
 	github.com/fluxcd/helm-controller/api v1.3.0
 	github.com/fluxcd/source-controller/api v1.6.2
 	github.com/goccy/go-yaml v1.18.0
@@ -56,7 +56,7 @@ require (
 	github.com/spf13/afero v1.14.0
 	github.com/testcontainers/testcontainers-go v0.38.0
 	github.com/tomwright/dasel v1.27.3
-	github.com/tomwright/dasel/v2 v2.8.0
+	github.com/tomwright/dasel/v2 v2.8.1
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.7.13
 	github.com/zclconf/go-cty v1.16.3
