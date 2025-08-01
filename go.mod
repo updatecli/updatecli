@@ -303,7 +303,7 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	gitlab.com/gitlab-org/api/client-go v0.129.0
+	gitlab.com/gitlab-org/api/client-go v0.137.0
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/mod v0.26.0
 	golang.org/x/net v0.42.0
