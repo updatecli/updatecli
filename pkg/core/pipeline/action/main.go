@@ -148,17 +148,10 @@ func (a *Action) generateActionHandler() error {
 	// Don't forget to update the JSONSchema() method when adding/updating/removing a case
 	switch a.Config.Kind {
 	case "bitbucket/pullrequest", bitbucketIdentifier:
-		actionSpec := bitbucket.Spec{}
-
 		if a.Scm.Config.Kind != bitbucketIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
-		}
-
-		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
-		if err != nil {
-			return err
 		}
 
 		ge, ok := a.Scm.Handler.(*bitbucketscm.Bitbucket)
@@ -167,7 +160,7 @@ func (a *Action) generateActionHandler() error {
 			return fmt.Errorf("scm is not of kind 'bitbucket'")
 		}
 
-		g, err := bitbucket.New(actionSpec, ge)
+		g, err := bitbucket.New(a.Config.Spec, ge)
 		if err != nil {
 			return err
 		}
@@ -175,17 +168,10 @@ func (a *Action) generateActionHandler() error {
 		a.Handler = &g
 
 	case "gitea/pullrequest", giteaIdentifier:
-		actionSpec := gitea.Spec{}
-
 		if a.Scm.Config.Kind != giteaIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
-		}
-
-		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
-		if err != nil {
-			return err
 		}
 
 		ge, ok := a.Scm.Handler.(*giteascm.Gitea)
@@ -194,7 +180,7 @@ func (a *Action) generateActionHandler() error {
 			return fmt.Errorf("scm is not of kind 'gitea'")
 		}
 
-		g, err := gitea.New(actionSpec, ge)
+		g, err := gitea.New(a.Config.Spec, ge)
 		if err != nil {
 			return err
 		}
@@ -249,17 +235,10 @@ func (a *Action) generateActionHandler() error {
 		a.Handler = &g
 
 	case "stash/pullrequest", stashIdentifier:
-		actionSpec := stash.Spec{}
-
 		if a.Scm.Config.Kind != stashIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
-		}
-
-		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
-		if err != nil {
-			return err
 		}
 
 		ge, ok := a.Scm.Handler.(*stashscm.Stash)
@@ -268,7 +247,7 @@ func (a *Action) generateActionHandler() error {
 			return fmt.Errorf("scm is not of kind 'stash'")
 		}
 
-		g, err := stash.New(actionSpec, ge)
+		g, err := stash.New(a.Config.Spec, ge)
 		if err != nil {
 			return err
 		}
