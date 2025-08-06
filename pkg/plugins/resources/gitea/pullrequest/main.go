@@ -2,6 +2,8 @@ package pullrequest
 
 import (
 	"github.com/go-viper/mapstructure/v2"
+	"fmt"
+
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
@@ -26,7 +28,7 @@ type Gitea struct {
 }
 
 // New returns a new valid Gitea object.
-func New(spec interface{}, scm *giteascm.Gitea) (Gitea, error) {
+func New(spec any, scm *giteascm.Gitea) (Gitea, error) {
 
 	var clientSpec client.Spec
 	var s Spec
@@ -35,12 +37,12 @@ func New(spec interface{}, scm *giteascm.Gitea) (Gitea, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return Gitea{}, err
+		return Gitea{}, fmt.Errorf("error decoding client spec: %w", err)
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return Gitea{}, nil
+		return Gitea{}, fmt.Errorf("error decoding spec: %w", err)
 	}
 
 	if scm != nil {
