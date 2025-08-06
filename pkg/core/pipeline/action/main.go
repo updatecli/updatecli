@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	jschema "github.com/invopop/jsonschema"
 	"github.com/go-viper/mapstructure/v2"
+	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
