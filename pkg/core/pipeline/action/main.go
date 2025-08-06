@@ -202,17 +202,10 @@ func (a *Action) generateActionHandler() error {
 		a.Handler = &g
 
 	case "gitlab/mergerequest", gitlabIdentifier:
-		actionSpec := gitlab.Spec{}
-
 		if a.Scm.Config.Kind != gitlabIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
 				a.Config.Kind)
-		}
-
-		err := mapstructure.Decode(a.Config.Spec, &actionSpec)
-		if err != nil {
-			return err
 		}
 
 		ge, ok := a.Scm.Handler.(*gitlabscm.Gitlab)
@@ -221,7 +214,7 @@ func (a *Action) generateActionHandler() error {
 			return fmt.Errorf("scm is not of kind 'gitlab'")
 		}
 
-		g, err := gitlab.New(actionSpec, ge)
+		g, err := gitlab.New(a.Config.Spec, ge)
 		if err != nil {
 			return err
 		}

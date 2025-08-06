@@ -62,10 +62,12 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 		return Gitlab{}, err
 	}
 
-	err = mapstructure.Decode(s.Spec, &clientSpec)
+	err = mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
 		return Gitlab{}, err
 	}
+
+	s.Spec = clientSpec
 
 	if scm != nil {
 
