@@ -15,7 +15,7 @@ require (
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/lithammer/dedent v1.1.0
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/mitchellh/mapstructure v1.5.0
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/buildkit v0.23.2
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/pkg/errors v0.9.1 // indirect
@@ -39,6 +39,7 @@ require (
 	github.com/drone/go-scm v1.40.3
 	github.com/fluxcd/helm-controller/api v1.3.0
 	github.com/fluxcd/source-controller/api v1.6.2
+	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/go-containerregistry v0.20.5
 	github.com/google/go-github/v69 v69.2.0

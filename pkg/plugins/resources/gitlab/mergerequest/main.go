@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"

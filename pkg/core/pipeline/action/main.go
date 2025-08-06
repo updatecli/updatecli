@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
