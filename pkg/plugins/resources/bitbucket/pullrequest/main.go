@@ -1,6 +1,8 @@
 package pullrequest
 
 import (
+	"fmt"
+
 	"github.com/drone/go-scm/scm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
@@ -44,7 +46,7 @@ type Bitbucket struct {
 }
 
 // New returns a new valid Bitbucket Server object.
-func New(spec interface{}, scm *bitbucket.Bitbucket) (Bitbucket, error) {
+func New(spec any, scm *bitbucket.Bitbucket) (Bitbucket, error) {
 	var clientSpec client.Spec
 	var s Spec
 
@@ -52,12 +54,12 @@ func New(spec interface{}, scm *bitbucket.Bitbucket) (Bitbucket, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return Bitbucket{}, err
+		return Bitbucket{}, fmt.Errorf("error decoding Bitbucket client spec: %w", err)
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return Bitbucket{}, nil
+		return Bitbucket{}, fmt.Errorf("error decoding Bitbucket pullrequest spec: %w", err)
 	}
 
 	if scm != nil {

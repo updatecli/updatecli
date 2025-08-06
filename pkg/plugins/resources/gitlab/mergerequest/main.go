@@ -57,15 +57,17 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 
 	// mapstructure.Decode cannot handle embedded fields
 	// hence we decode it in two steps
-	err := mapstructure.Decode(spec, &clientSpec)
+	err := mapstructure.Decode(spec, &s)
 	if err != nil {
-		return Gitlab{}, err
+		return Gitlab{}, fmt.Errorf("error decoding spec: %w", err)
 	}
 
-	err = mapstructure.Decode(spec, &s)
+	err = mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return Gitlab{}, nil
+		return Gitlab{}, fmt.Errorf("error decoding client spec: %w", err)
 	}
+
+	s.Spec = clientSpec
 
 	if scm != nil {
 
