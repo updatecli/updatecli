@@ -59,12 +59,12 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
-		return Gitlab{}, err
+		return Gitlab{}, fmt.Errorf("error decoding spec: %w", err)
 	}
 
 	err = mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return Gitlab{}, err
+		return Gitlab{}, fmt.Errorf("error decoding client spec: %w", err)
 	}
 
 	s.Spec = clientSpec
