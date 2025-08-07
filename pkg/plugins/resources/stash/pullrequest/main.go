@@ -1,8 +1,9 @@
 package pullrequest
 
 import (
-	"github.com/go-viper/mapstructure/v2"
 	"fmt"
+
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/stash/client"
 	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
