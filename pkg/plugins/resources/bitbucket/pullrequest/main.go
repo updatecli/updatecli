@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/drone/go-scm/scm"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 )
