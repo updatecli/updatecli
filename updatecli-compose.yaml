@@ -29,7 +29,7 @@ policies:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/golang_patch.yaml
   - name: Update golangci-lint
-    policy: ghcr.io/updatecli/policies/golangci-lint/githubaction:0.6.0@sha256:d831e5834f5a3980279c47893a56bc92321cc1d43f0f591f660ee948ab586a33
+    policy: ghcr.io/updatecli/policies/golangci-lint/githubaction:0.6.1@sha256:a6f5d1c9e809f7a1eb86d61d2f88be1d11bf1bb4a1dd094dc285425e7f737f3f
     values:
       - updatecli/values.d/scm.yaml
   - name: Update githubactions
