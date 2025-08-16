@@ -17,7 +17,7 @@ jobs:
       contents: read
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683" # v4.2.2
+        uses: "actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8" # v5.0.0
       - name: "Setup updatecli"
         uses: "updatecli/updatecli-action@f269507012a1bba941d910fae38ae83ae3895486" # v2
       - name: Set up Go
