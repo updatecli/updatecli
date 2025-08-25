@@ -9,6 +9,6 @@ jobs:
       contents: read
     steps:
       - name: Checkout Actions Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Check spelling of file.txt
-        uses: crate-ci/typos@52bd719c2c91f9d676e2aa359fc8e0db8925e6d8 # master
+        uses: crate-ci/typos@9c80e6305930cd242bdbd44fcf89588cf781865e # master
