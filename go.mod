@@ -6,7 +6,7 @@ require (
 	dario.cat/mergo v1.0.2
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/aws/aws-sdk-go v1.55.7
+	github.com/aws/aws-sdk-go v1.55.8
 	github.com/containerd/containerd v1.7.27 // indirect
 	github.com/fatih/color v1.18.0
 	github.com/getsops/sops/v3 v3.10.2
