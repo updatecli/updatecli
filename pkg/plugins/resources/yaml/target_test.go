@@ -684,6 +684,59 @@ github:
 			},
 			wantedResult: true,
 		},
+		{
+			name: "Passing case with 'Files' using file protocol, both input source and specified value (specified value should be used)",
+			spec: Spec{
+				Files: []string{
+					"file://test.yaml",
+					"file://bar.yaml",
+				},
+				Key:   "github.owner",
+				Value: "obiwankenobi",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"bar.yaml": {
+					filePath:         "bar.yaml",
+					originalFilePath: "bar.yaml",
+				},
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				"bar.yaml": `---
+github:
+  owner: asterix
+  repository: charts
+`,
+			},
+			// returned files are sorted
+			wantedFiles: []string{
+				"bar.yaml",
+				"test.yaml",
+			},
+			// Note: the updated files don't contain separator anymore
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: obiwankenobi
+  repository: charts
+`,
+				"bar.yaml": `---
+github:
+  owner: obiwankenobi
+  repository: charts
+`,
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
