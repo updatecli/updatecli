@@ -239,14 +239,8 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 	return nil
 }
 
-func (p *Pipeline) Graph(flavor string) error {
+func (p *Pipeline) Graph(flavor string) (string, error) {
 
-	resources, err := p.SortedResources()
-	if err != nil {
-		return err
-	}
-	resources.ReduceTransitively()
-	visited := make(map[string]bool)
 	var graphOutput strings.Builder
 
 	switch flavor {
@@ -255,16 +249,22 @@ func (p *Pipeline) Graph(flavor string) error {
 	case GraphFlavorMermaid:
 		graphOutput.WriteString("graph TD\n")
 	default:
-		logrus.Debugf("Unsupported graph flavor: %s", flavor)
+		return "", fmt.Errorf("unsupported graph flavor: %s", flavor)
 	}
+
+	resources, err := p.SortedResources()
+	if err != nil {
+		return "", err
+	}
+	resources.ReduceTransitively()
+	visited := make(map[string]bool)
 
 	err = p.traverseAndWriteGraph(resources, rootVertex, flavor, &graphOutput, visited)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if flavor == GraphFlavorDot {
 		graphOutput.WriteString("}\n")
 	}
-	logrus.Infof("%s", graphOutput.String())
-	return nil
+	return graphOutput.String(), nil
 }

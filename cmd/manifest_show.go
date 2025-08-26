@@ -41,11 +41,6 @@ var (
 			e.Options.Config.DisableTemplating = manifestShowDisableTemplating
 
 			if manifestShowGraph {
-				// TODO: To be removed once not experimental anymore
-				if !experimental {
-					logrus.Warningf("The '--graph' flag requires the flag experimental to work.")
-					os.Exit(1)
-				}
 				e.Options.DisplayFlavor = "graph"
 				err := pipeline.ValidateGraphFlavor(manifestShowGraphFlavor)
 				if err != nil {

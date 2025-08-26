@@ -78,6 +78,7 @@ Report available on {{ .reportURL -}}{{"\n"}}
 type Report struct {
 	Name   string
 	Err    string
+	Graph  string
 	Result string
 	// ID defines the report ID
 	ID string
