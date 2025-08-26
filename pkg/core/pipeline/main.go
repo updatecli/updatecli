@@ -193,6 +193,16 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		p.Report.Targets[id].DryRun = r.DryRun
 	}
+
+	// Graph must be generated after all resources have been initialized !
+	graph, err := p.Graph(GraphFlavorMermaid)
+	switch err {
+	case nil:
+		p.Report.Graph = graph
+	default:
+		logrus.Errorf("generating pipeline graph:\n%s", err)
+	}
+
 	return nil
 
 }
