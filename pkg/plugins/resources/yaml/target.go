@@ -214,7 +214,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 			}
 
 			if _, ok := resultTargetFilesMap[filePath]; !ok {
-				resultTarget.Files = append(resultTarget.Files, filePath)
+				resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
 				resultTargetFilesMap[filePath] = true
 			}
 
@@ -343,7 +343,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 				}
 
 				if _, ok := resultTargetFilesMap[filePath]; !ok {
-					resultTarget.Files = append(resultTarget.Files, filePath)
+					resultTarget.Files = append(resultTarget.Files, y.files[filePath].filePath)
 					resultTargetFilesMap[filePath] = true
 				}
 
