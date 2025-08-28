@@ -296,6 +296,6 @@ func capitalize(s string) string {
 	first := []rune(s)[0]
 	tail := []rune(s)[1:]
 
-	return string(capitalizer.String(string(first))) + string(tail)
+	return capitalizer.String(string(first)) + string(tail)
 
 }
