@@ -12,6 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/repo"
 )
@@ -286,5 +288,14 @@ func renderChanges(changes []change) string {
 }
 
 func capitalize(s string) string {
-	return strings.ToUpper(s[:1]) + s[1:]
+	if len(s) == 0 {
+		return ""
+	}
+
+	capitalizer := cases.Title(language.English)
+	first := []rune(s)[0]
+	tail := []rune(s)[1:]
+
+	return string(capitalizer.String(string(first))) + string(tail)
+
 }
