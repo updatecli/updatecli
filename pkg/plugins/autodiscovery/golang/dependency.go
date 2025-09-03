@@ -263,8 +263,6 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		GoModTidyEnabled     bool
 		ScmID                string
 		WorkDir              string
-		Replace              bool
-		ReplaceVersion       string
 	}{
 		ActionID:             actionID,
 		GoModFile:            filename,
