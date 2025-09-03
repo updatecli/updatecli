@@ -15,6 +15,11 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 	}{
 		{
+			name:              "Golang Replace module",
+			rootDir:           "testdata/replace",
+			expectedPipelines: []string{``},
+		},
+		{
 			name:    "Golang Version",
 			rootDir: "testdata/noModule",
 			expectedPipelines: []string{`name: 'deps(go): bump module gopkg.in/yaml.v3'

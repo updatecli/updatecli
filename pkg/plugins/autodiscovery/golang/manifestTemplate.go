@@ -80,4 +80,59 @@ targets:
 {{ end }}
 {{- end }}
 `
+
+	// goReplaceModuleManifestTemplate is the Go template used to generate Golang manifest update
+	goReplaceModuleManifestTemplate string = `name: 'deps(go): bump replaced module {{ .NewPathModule }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps(go): bump replaced module {{ .NewPathModule }} to {{ "{{" }} source "module" {{ "}}" }}'
+{{ end }}
+sources:
+  module:
+    name: 'Get latest golang module {{ .NewPathModule }} version'
+    kind: 'golang/module'
+    spec:
+      module: '{{ .NewPathModule }}'
+      versionfilter:
+        kind: '{{ .VersionFilterKind }}'
+        pattern: '{{ .VersionFilterPattern }}'
+targets:
+  module:
+    name: 'deps(go): bump module {{ .NewPathModule }} to {{ "{{" }} source "module" {{ "}}" }}'
+    kind: 'golang/gomod'
+    sourceid: 'module'
+    spec:
+      file: '{{ .GoModFile }}'
+      module: '{{ .OldPathModule }}'
+      replace: true
+      replaceVersion: '{{ .OldVersionModule }}'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+{{- if .GoModTidyEnabled }}
+  tidy:
+    name: 'clean: go mod tidy'
+    disablesourceinput: true
+    dependsonchange: true
+    dependson:
+      - 'module'
+    kind: 'shell'
+    spec:
+      command: 'go mod tidy'
+      environments:
+        - name: HOME
+        - name: PATH
+      workdir: {{ .WorkDir }}
+      changedif:
+        kind: 'file/checksum'
+        spec:
+          files:
+           - 'go.mod'
+           - 'go.sum'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+{{- end }}
+`
 )
