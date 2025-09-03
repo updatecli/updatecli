@@ -57,6 +57,42 @@ func TestSource(t *testing.T) {
 			},
 			expectedResult: "v3.2.3",
 		},
+		{
+			name: "Test retrieving module from replace",
+			spec: Spec{
+				File:    "testdata/replace.go.mod",
+				Module:  "github.com/gin-gonic/gin",
+				Replace: true,
+			},
+			expectedResult: "v1.7.0",
+		},
+		{
+			name: "Test version downgrade",
+			spec: Spec{
+				File:    "testdata/replace.2.go.mod",
+				Module:  "github.com/crewjam/saml",
+				Replace: true,
+			},
+			expectedResult: "v0.5.0",
+		},
+		{
+			name: "Test module replacement",
+			spec: Spec{
+				File:    "testdata/replace.2.go.mod",
+				Module:  "github.com/rancher/saml",
+				Replace: true,
+			},
+			expectedResult: "v0.2.0",
+		},
+		{
+			name: "Test dev module",
+			spec: Spec{
+				File:    "testdata/replace.2.go.mod",
+				Module:  "github.com/stretchr/testify",
+				Replace: true,
+			},
+			expectedError: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

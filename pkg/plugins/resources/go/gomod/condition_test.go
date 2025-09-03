@@ -54,6 +54,36 @@ func TestCondition(t *testing.T) {
 			},
 			expectedResult: true,
 		},
+		{
+			name: "Test retrieving module from replace",
+			spec: Spec{
+				File:    "testdata/replace.go.mod",
+				Module:  "github.com/gin-gonic/gin",
+				Replace: true,
+				Version: "v1.7.0",
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Test version downgrade",
+			spec: Spec{
+				File:    "testdata/replace.2.go.mod",
+				Module:  "github.com/crewjam/saml",
+				Replace: true,
+				Version: "v0.5.0",
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Test module replacement",
+			spec: Spec{
+				File:    "testdata/replace.2.go.mod",
+				Module:  "github.com/rancher/saml",
+				Replace: true,
+				Version: "v0.2.0",
+			},
+			expectedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
