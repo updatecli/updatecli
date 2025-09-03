@@ -66,7 +66,7 @@ type Spec struct {
 	//  For the following Go replace instruction:
 	//    moduleA v1.2.3 => moduleB v1.0.0
 	//  - The 'module' field should be set to 'moduleA' (the module being replaced, left-hand side).
-	//  - The value of ReplaceVersion would be 'v1.0.0', corresponding to the version of moduleB
-	//    (the module used as replacement, right-hand side).
+	//  - The value of ReplaceVersion should be 'v1.2.3', corresponding to the version of moduleA
+	//    (the module being replaced, left-hand side).
 	ReplaceVersion string `yaml:",omitempty"`
 }
