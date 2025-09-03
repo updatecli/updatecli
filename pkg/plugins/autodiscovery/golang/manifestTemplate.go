@@ -106,7 +106,9 @@ targets:
       file: '{{ .GoModFile }}'
       module: '{{ .OldPathModule }}'
       replace: true
+{{- if .OldVersionModule }}
       replaceVersion: '{{ .OldVersionModule }}'
+{{ end }}
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
