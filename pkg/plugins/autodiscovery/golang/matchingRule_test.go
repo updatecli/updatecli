@@ -98,6 +98,28 @@ func TestIsMatchingRule(t *testing.T) {
 			rules: MatchingRules{
 				MatchingRule{
 					Modules: map[string]string{
+						"github.com/updatecli/*": "",
+					},
+				},
+			},
+			moduleName:     "github.com/updatecli/updatecli",
+			expectedResult: true,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					Modules: map[string]string{
+						"github.com/*": "",
+					},
+				},
+			},
+			moduleName:     "github.com/updatecli/updatecli",
+			expectedResult: true,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					Modules: map[string]string{
 						"github.com/updatecli/updatecli": ">=0",
 					},
 				},

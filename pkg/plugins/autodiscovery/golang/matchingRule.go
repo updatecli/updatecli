@@ -2,6 +2,7 @@ package golang
 
 import (
 	"path/filepath"
+	"regexp"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
@@ -71,7 +72,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 					match := false
 				outModule:
 					for ruleModuleName, ruleModuleVersion := range rule.Modules {
-						if moduleName == ruleModuleName {
+
+						moduleMatch, err := regexp.MatchString(ruleModuleName, moduleName)
+						if err != nil {
+							logrus.Debugf("%q - %s", ruleModuleName, err)
+							break outModule
+						}
+
+						if moduleMatch {
 							if ruleModuleVersion == "" {
 								match = true
 								break outModule
