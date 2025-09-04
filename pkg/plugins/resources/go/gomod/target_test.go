@@ -66,6 +66,46 @@ func TestTarget(t *testing.T) {
 			},
 			expectedChanged: false,
 		},
+		{
+			name: "Test updating module from replace",
+			spec: Spec{
+				File:    "testdata/replace.go.mod",
+				Module:  "github.com/gin-gonic/gin",
+				Version: "v1.9.1",
+				Replace: true,
+			},
+			expectedChanged: true,
+		},
+		{
+			name: "Test retrieving module from replace",
+			spec: Spec{
+				File:    "testdata/replace.go.mod",
+				Module:  "github.com/gin-gonic/gin",
+				Replace: true,
+				Version: "v1.6.0",
+			},
+			expectedChanged: true,
+		},
+		{
+			name: "Test version downgrade",
+			spec: Spec{
+				File:    "testdata/replace.2.go.mod",
+				Module:  "github.com/crewjam/saml",
+				Replace: true,
+				Version: "v0.4.0",
+			},
+			expectedChanged: true,
+		},
+		{
+			name: "Test module replacement",
+			spec: Spec{
+				File:    "testdata/replace.2.go.mod",
+				Module:  "github.com/rancher/saml",
+				Replace: true,
+				Version: "v0.1.0",
+			},
+			expectedChanged: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

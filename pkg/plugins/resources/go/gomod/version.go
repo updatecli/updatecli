@@ -46,14 +46,26 @@ func (g *GoMod) version(filename string) (string, error) {
 		return modfile.Go.Version, nil
 
 	case kindModule:
-		for _, r := range modfile.Require {
-			if r.Indirect != g.spec.Indirect {
-				continue
+		if g.spec.Replace {
+			for _, r := range modfile.Replace {
+				if g.spec.ReplaceVersion != "" && r.Old.Version != g.spec.ReplaceVersion {
+					continue
+				}
+				if r.Old.Path == g.spec.Module {
+					return r.New.Version, nil
+				}
 			}
-			if r.Mod.Path == g.spec.Module {
-				return r.Mod.Version, nil
+		} else {
+			for _, r := range modfile.Require {
+				if r.Indirect != g.spec.Indirect {
+					continue
+				}
+				if r.Mod.Path == g.spec.Module {
+					return r.Mod.Version, nil
+				}
 			}
 		}
+
 		logrus.Errorf("GO module %q not found in %q", g.spec.Module, filename)
 		return "", ErrModuleNotFound
 	}
@@ -99,33 +111,60 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 
 	case kindModule:
 		moduleFound := false
-	out:
-		for _, r := range modFile.Require {
-			if r.Indirect != g.spec.Indirect {
-				continue
-			}
-			if r.Mod.Path == g.spec.Module {
-				moduleFound = true
-				oldVersion = r.Mod.Version
-				newVersion = version
-				if newVersion != oldVersion {
+		if g.spec.Replace {
+		outReplace:
+			for _, r := range modFile.Replace {
+				if r.Old.Path == g.spec.Module {
 
-					err = modFile.AddRequire(r.Mod.Path, version)
-					if err != nil {
-						logrus.Errorln(err)
-						return "", "", false, fmt.Errorf("failed updating go module %q to %q\n%w", g.spec.Module, version, err)
+					if g.spec.ReplaceVersion != "" && r.Old.Version != g.spec.ReplaceVersion {
+						continue
 					}
 
-					changed = true
-					break out
+					moduleFound = true
+					oldVersion = r.New.Version
+					newVersion = version
+
+					if newVersion != oldVersion {
+						err = modFile.AddReplace(r.Old.Path, r.Old.Version, r.New.Path, version)
+						if err != nil {
+							logrus.Errorln(err)
+							return "", "", false, fmt.Errorf("failed updating go module replacer %q to %q\n%w", g.spec.Module, version, err)
+						}
+						changed = true
+						break outReplace
+					}
+				}
+			}
+		} else {
+		outRequire:
+			for _, r := range modFile.Require {
+				if r.Indirect != g.spec.Indirect {
+					continue
+				}
+				if r.Mod.Path == g.spec.Module {
+					moduleFound = true
+					oldVersion = r.Mod.Version
+					newVersion = version
+					if newVersion != oldVersion {
+
+						err = modFile.AddRequire(r.Mod.Path, version)
+						if err != nil {
+							logrus.Errorln(err)
+							return "", "", false, fmt.Errorf("failed updating go module %q to %q\n%w", g.spec.Module, version, err)
+						}
+
+						changed = true
+						break outRequire
+					}
 				}
 			}
 		}
+
 		if !moduleFound {
 			err := fmt.Errorf("module %q not found in file %q", g.spec.Module, filename)
 			return "", "", false, err
-
 		}
+
 	default:
 		logrus.Errorf("kind %q is not supported", g.kind)
 		return "", "", false, fmt.Errorf("something unexpected happened, kind %q not supported", g.kind)

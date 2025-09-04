@@ -45,4 +45,28 @@ type Spec struct {
 	//   * condition
 	//
 	Version string `yaml:",omitempty"`
+	// Replace specifies if we manipulate a replaced dependency
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	Replace bool `yaml:",omitempty"`
+	// ReplaceVersion specifies the specific Go module version to replace
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default: unset, which will match any version of the module being replaced.
+	//
+	// Example:
+	//  For the following Go replace instruction:
+	//    moduleA v1.2.3 => moduleB v1.0.0
+	//  - The 'module' field should be set to 'moduleA' (the module being replaced, left-hand side).
+	//  - The value of ReplaceVersion should be 'v1.2.3', corresponding to the version of moduleA
+	//    (the module being replaced, left-hand side).
+	ReplaceVersion string `yaml:",omitempty"`
 }

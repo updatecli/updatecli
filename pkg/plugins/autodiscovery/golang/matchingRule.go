@@ -15,16 +15,27 @@ type MatchingRule struct {
 	Modules map[string]string
 	// GoVersions specifies a list of version pattern.
 	GoVersion string
+	// Replace indicates if the module is a replace directive.
+	Replace *bool
 }
 
 type MatchingRules []MatchingRule
 
 // isMatchingRules checks for each matchingRule if parameters are matching rules and then return true or false.
-func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName, moduleVersion string) bool {
+func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName, moduleVersion string, isReplaced bool) bool {
 	var ruleResults []bool
 
 	if len(m) > 0 {
 		for _, rule := range m {
+
+			if rule.Replace != nil {
+				match := false
+				if *rule.Replace == isReplaced {
+					match = true
+				}
+				ruleResults = append(ruleResults, match)
+			}
+
 			/*
 			 Check if rule.Path is matching. Path accepts wildcard path
 			*/
