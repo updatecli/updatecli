@@ -80,7 +80,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				}
 				// Test if the ignore rule based on path is respected
 				if len(g.spec.Ignore) > 0 {
-					if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion) {
+					if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion, false) {
 						logrus.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", goModule, relativeFoundFile)
 						continue
 					}
@@ -88,7 +88,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 				// Test if the only rule based on path is respected
 				if len(g.spec.Only) > 0 {
-					if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion) {
+					if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion, false) {
 						logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", goModule, relativeFoundFile)
 						continue
 					}
@@ -128,7 +128,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				}
 				// Test if the ignore rule based on path is respected
 				if len(g.spec.Ignore) > 0 {
-					if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, replace.NewPath, replace.NewVersion) {
+					if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, replace.NewPath, replace.NewVersion, true) {
 						logrus.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", replace.NewPath, relativeFoundFile)
 						continue
 					}
@@ -136,7 +136,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 				// Test if the only rule based on path is respected
 				if len(g.spec.Only) > 0 {
-					if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, replace.NewPath, replace.NewVersion) {
+					if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, replace.NewPath, replace.NewVersion, true) {
 						logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", replace.NewPath, relativeFoundFile)
 						continue
 					}
@@ -178,7 +178,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 		// Test if the ignore rule based on path is respected
 		if len(g.spec.Ignore) > 0 {
-			if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, "", "") {
+			if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, "", "", false) {
 				logrus.Debugf("Ignoring golang version update from file %q, as matching ignore rule(s)\n", relativeFoundFile)
 				continue
 			}
@@ -186,7 +186,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 		// Test if the only rule based on path is respected
 		if len(g.spec.Only) > 0 {
-			if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, "", "") {
+			if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, "", "", false) {
 				logrus.Debugf("Ignoring golang version update from %q, as not matching only rule(s)\n", relativeFoundFile)
 				continue
 			}

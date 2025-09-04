@@ -151,7 +151,9 @@ func TestIsMatchingRule(t *testing.T) {
 				d.filePath,
 				d.goVersion,
 				d.moduleName,
-				d.moduleVersion)
+				d.moduleVersion,
+				false,
+			)
 
 			assert.Equal(t, d.expectedResult, gotResult)
 		})
