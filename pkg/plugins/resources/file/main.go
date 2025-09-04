@@ -83,6 +83,14 @@ type Spec struct {
 	       * condition
 	       * target
 
+	   remarks:
+	       * For targets: Capture groups (parentheses) in the pattern automatically extract
+	         the current value for changelog generation
+	       * Without capture groups, changelogs show generic "unknown" version changes
+	       * With capture groups, changelogs show actual version changes (e.g., "1.24.5" → "1.25.1")
+	       * Example: `"version":\s*"([\d\.]+)"` captures version numbers for changelogs
+	       * Supports full Go regexp syntax
+
 	*/
 	MatchPattern string `yaml:",omitempty"`
 	/*

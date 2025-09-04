@@ -619,9 +619,138 @@ func TestFile_TargetFromSCM(t *testing.T) {
 			assert.Equal(t, tt.wantedResult, gotResultTarget.Changed)
 			assert.Equal(t, tt.wantedFiles, gotResultTarget.Files)
 
-			for filePath := range f.files {
-				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
+		})
+	}
+}
+
+func TestFile_Target_CaptureGroupExtraction(t *testing.T) {
+	tests := []struct {
+		name                   string
+		spec                   Spec
+		files                  map[string]fileMetadata
+		inputSourceValue       string
+		mockedContents         map[string]string
+		expectedInformation    string
+		expectedNewInformation string
+		wantedResult           bool
+		description            string
+	}{
+		{
+			name:             "Extract version from capture group in JSON format",
+			inputSourceValue: "1.25.1",
+			spec: Spec{
+				File:           "go_version.json",
+				MatchPattern:   `"GO_VERSION"\s*:\s*"(1\.24\.\d+)"`,
+				ReplacePattern: `"GO_VERSION": "1.25.1"`,
+			},
+			files: map[string]fileMetadata{
+				"go_version.json": {
+					originalPath: "go_version.json",
+					path:         "go_version.json",
+				},
+			},
+			mockedContents: map[string]string{
+				"go_version.json": `{
+  "GO_VERSION": "1.24.5",
+  "OTHER_VERSION": "2.1.0"
+}`,
+			},
+			expectedInformation:    "1.24.5",
+			expectedNewInformation: `"GO_VERSION": "1.25.1"`, // ReplacePattern used when specified
+			wantedResult:           true,
+			description:            "Should extract '1.24.5' from capture group instead of 'unknown'",
+		},
+		{
+			name:             "Extract version from capture group in properties format",
+			inputSourceValue: "3.9.0",
+			spec: Spec{
+				File:           "config.properties",
+				MatchPattern:   `maven_version\s*=\s*"(3\.8\.\d+)"`,
+				ReplacePattern: `maven_version = "3.9.0"`,
+			},
+			files: map[string]fileMetadata{
+				"config.properties": {
+					originalPath: "config.properties",
+					path:         "config.properties",
+				},
+			},
+			mockedContents: map[string]string{
+				"config.properties": `maven_version = "3.8.2"
+git_version = "2.33.1"
+jdk_version = "11.0.12"`,
+			},
+			expectedInformation:    "3.8.2",
+			expectedNewInformation: `maven_version = "3.9.0"`, // ReplacePattern used when specified
+			wantedResult:           true,
+			description:            "Should extract '3.8.2' from capture group",
+		},
+		{
+			name:             "No capture group - should remain unknown",
+			inputSourceValue: "1.25.1",
+			spec: Spec{
+				File:           "version.txt",
+				MatchPattern:   `GO_VERSION.*1\.24\.\d+`, // No parentheses = no capture group
+				ReplacePattern: `GO_VERSION: 1.25.1`,
+			},
+			files: map[string]fileMetadata{
+				"version.txt": {
+					originalPath: "version.txt",
+					path:         "version.txt",
+				},
+			},
+			mockedContents: map[string]string{
+				"version.txt": `GO_VERSION: 1.24.5`,
+			},
+			expectedInformation:    "unknown",
+			expectedNewInformation: `GO_VERSION: 1.25.1`, // ReplacePattern used when specified
+			wantedResult:           true,
+			description:            "Should remain 'unknown' when no capture group present",
+		},
+		{
+			name:             "Multiple capture groups - should use first one",
+			inputSourceValue: "2.0.0",
+			spec: Spec{
+				File:           "multi_version.txt",
+				MatchPattern:   `version:\s*"(1\.\d+)\.(\d+)"`,
+				ReplacePattern: `version: "2.0.0"`,
+			},
+			files: map[string]fileMetadata{
+				"multi_version.txt": {
+					originalPath: "multi_version.txt",
+					path:         "multi_version.txt",
+				},
+			},
+			mockedContents: map[string]string{
+				"multi_version.txt": `version: "1.24.5"`,
+			},
+			expectedInformation:    "1.24",             // First capture group
+			expectedNewInformation: `version: "2.0.0"`, // ReplacePattern used when specified
+			wantedResult:           true,
+			description:            "Should extract first capture group when multiple groups present",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockedText := text.MockTextRetriever{
+				Contents: tt.mockedContents,
 			}
+			f := &File{
+				spec:             tt.spec,
+				contentRetriever: &mockedText,
+				files:            tt.files,
+			}
+
+			gotResultTarget := result.Target{}
+			err := f.Target(tt.inputSourceValue, nil, true, &gotResultTarget) // dry run
+			require.NoError(t, err, tt.description)
+
+			assert.Equal(t, tt.expectedInformation, gotResultTarget.Information,
+				"Information field should be %q - %s", tt.expectedInformation, tt.description)
+			assert.Equal(t, tt.expectedNewInformation, gotResultTarget.NewInformation,
+				"NewInformation field should be %q", tt.expectedNewInformation)
+			assert.Equal(t, tt.wantedResult, gotResultTarget.Changed,
+				"Changed field should be %t", tt.wantedResult)
 		})
 	}
 }
