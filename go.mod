@@ -302,7 +302,7 @@ require (
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	gitlab.com/gitlab-org/api/client-go v0.129.0
+	gitlab.com/gitlab-org/api/client-go v0.142.6
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/mod v0.27.0
 	golang.org/x/net v0.43.0
