@@ -9,14 +9,46 @@ import (
 )
 
 // MatchingRule allows to specifies rules to identify manifest
+// to update based on file path, module name, module version, go version and replace directive.
 type MatchingRule struct {
-	// Path specifies a go.mod path pattern, the pattern requires to match all of name, not just a substring.
+	// Path specifies a go.mod path pattern
+	// The pattern syntax is:
+	// pattern:
+	//     { term }
+	// term:
+	//     '*'         matches any sequence of non-Separator characters
+	//     '?'         matches any single non-Separator character
+	//     '[' [ '^' ] { character-range } ']'
+	//                 character class (must be non-empty)
+	//     c           matches character c (c != '*', '?', '\\', '[')
+	//     '\\' c      matches character c
+	// example:
+	//   * 'go.mod' matches 'go.mod' in the currrent directory
+	//   * '*/go.mod' matches 'go.mod' in any first level subdirectory
 	Path string
 	// Modules specifies a list of module pattern.
+	// The module accepts regular expression for module name and semantic versioning constraint for module version.
+	// If module version is empty then any version is matching.
+	// Example:
+	//   * 'github.com/updatecli/updatecli': '' matches any version of the module github.com/updatecli/updatecli
+	//   * 'github.com/updatecli/updatecli': '1.0.0' matches only version 1.0.0 of the module github.com/updatecli/updatecli
+	//   * 'github.com/updatecli/updatecli': '>=1.0.0' matches any version greater than or equal to 1.0.0 of the module github.com/updatecli/updatecli
+	//   * 'github.com/.*': '>=1.0.0' matches any version greater than or equal to 1.0.0 of any module hosted under github.com
+	//   * 'github\.com\/updatecli\/updatecli': '>=1.0.0' matches any version greater than or equal to 1.
 	Modules map[string]string
 	// GoVersions specifies a list of version pattern.
+	// The version constraint must be a valid semantic version constraint.
+	// If GoVersion is empty then any version is matching.
+	// Example:
+	//   * '1.19.*' matches any 1.19.x version
+	//  * '>=1.20.0' matches any version greater than or equal to 1.20.0
+	//   * '<1.20.0' matches any version strictly less than 1.20.0
+	//   * '*' matches any version
 	GoVersion string
 	// Replace indicates if the module is a replace directive.
+	// If Replace is nil then any module is matching.
+	// If Replace is true then only module with a replace directive is matching.
+	// If Replace is false then only module without a replace directive is matching.
 	Replace *bool
 }
 
