@@ -23,7 +23,7 @@ type MatchingRule struct {
 	//     c           matches character c (c != '*', '?', '\\', '[')
 	//     '\\' c      matches character c
 	// example:
-	//   * 'go.mod' matches 'go.mod' in the currrent directory
+	//   * 'go.mod' matches 'go.mod' in the current directory
 	//   * '*/go.mod' matches 'go.mod' in any first level subdirectory
 	Path string
 	// Modules specifies a list of module pattern.
