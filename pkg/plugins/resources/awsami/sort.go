@@ -3,13 +3,13 @@ package awsami
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
 )
 
 // Sort by CreationDate Asc
 // ByAge implements sort.Interface based on the Age field.
-type ByCreationDateAsc []*ec2.Image
+type ByCreationDateAsc []types.Image
 
 func (images ByCreationDateAsc) Len() int {
 	return len(images)
@@ -40,7 +40,7 @@ func (images ByCreationDateAsc) Swap(i, j int) {
 
 // Sort by CreationDate Descendant
 // ByAge implements sort.Interface based on the Age field.
-type ByCreationDateDesc []*ec2.Image
+type ByCreationDateDesc []types.Image
 
 func (images ByCreationDateDesc) Len() int {
 	return len(images)
