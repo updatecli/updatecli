@@ -45,6 +45,9 @@ type Environment struct {
 }
 
 func (e Environment) String() string {
+	if e.Value == nil {
+		return e.Name + "="
+	}
 	return fmt.Sprintf("%s=%s", e.Name, *e.Value)
 }
 
