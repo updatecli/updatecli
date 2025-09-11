@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 func (g *Gitea) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -80,6 +81,19 @@ func (g *Gitea) Commit(message string) error {
 	if err != nil {
 		return err
 	}
+
+	if g.Spec.CommitMessage.IsSquash() {
+		sourceBranch, workingBranch, _ := g.GetBranches()
+		if err = g.nativeGitHandler.SquashCommit(g.GetDirectory(), sourceBranch, workingBranch, gitgeneric.SquashCommitOptions{
+			IncludeCommitTitles: true,
+			Message:             commitMessage,
+			SigninKey:           g.Spec.GPG.SigningKey,
+			SigninPassphrase:    g.Spec.GPG.Passphrase,
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

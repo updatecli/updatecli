@@ -28,62 +28,87 @@ More information on what is conventional commits
 -> https://www.conventionalcommits.org/en/v1.0.0/#summary
 */
 type Commit struct {
-	/*
-		"type" defines the type of commit message such as "chore", "fix", "feat", etc. as
-		defined by the conventional commit specification. More information on
-		-> https://www.conventionalcommits.org/en/
-
-		default:
-			* chore
-	*/
+	//
+	//  type defines the type of commit message such as "chore", "fix", "feat", etc. as
+	//  defined by the conventional commit specification. More information on
+	//  -> https://www.conventionalcommits.org/en/
+	//
+	//  default:
+	//    * chore
+	//
 	Type string `yaml:",omitempty"`
-	/*
-		"scope" defines the scope of the commit message as defined by the
-		conventional commit specification. More information on
-		-> https://www.conventionalcommits.org/en/
-
-		default:
-			none
-	*/
+	//
+	//  scope defines the scope of the commit message as defined by the
+	//  conventional commit specification. More information on
+	//  -> https://www.conventionalcommits.org/en/
+	//
+	//  default:
+	//    none
+	//
 	Scope string `yaml:",omitempty"`
-	/*
-		footers defines the footer of the commit message as defined by the
-		conventional commit specification. More information on
-		-> https://www.conventionalcommits.org/en/
-
-		default:
-			none
-	*/
+	//
+	//  footers defines the footer of the commit message as defined by the
+	//  conventional commit specification. More information on
+	//  -> https://www.conventionalcommits.org/en/
+	//
+	//  default:
+	//    none
+	//
 	Footers string `yaml:",omitempty"`
-	/*
-		"title" defines the title of the commit message as defined by the
-		conventional commit specification. More information on
-		-> https://www.conventionalcommits.org/en/
-
-		default:
-			default is set to the target name or the target short description
-			if the name is not defined.
-	*/
+	//
+	//  title" defines the title of the commit message as defined by the
+	//  conventional commit specification. More information on
+	//  -> https://www.conventionalcommits.org/en/
+	//
+	//  default:
+	//    default is set to the target name or the target short description
+	//    if the name is not defined.
+	//
 	Title string `yaml:",omitempty"`
-	/*
-		"body" defines the commit body of the commit message as defined by the
-		conventional commit specification. More information on
-		-> https://www.conventionalcommits.org/en/
-
-		default:
-			none
-	*/
+	//
+	//  body defines the commit body of the commit message as defined by the
+	//  conventional commit specification. More information on
+	//  -> https://www.conventionalcommits.org/en/
+	//
+	//  default:
+	//    none
+	//
 	Body string `yaml:",omitempty"`
-	/*
-		"hideCredit" defines if updatecli credits should be displayed inside commit message body
-
-		please consider sponsoring the Updatecli project if you want to disable credits.
-		-> https://github.com/updatecli/updatecli
-
-		default:
-			false
-	*/
+	//
+	//  hideCredit defines if updatecli credits should be displayed inside commit message body
+	//
+	//  please consider sponsoring the Updatecli project if you want to disable credits.
+	//  -> https://github.com/updatecli/updatecli
+	//
+	//  default:
+	//  	false
+	//
 	HideCredit bool `yaml:",omitempty"`
+	//  squash defines if the commit should be squashed
+	//
+	//  default:
+	//  	false
+	//
+	//  important:
+	//   if squash is set to to true, then it's highly recommended to set the commit title and body
+	//   to a meaningful value as all other commit information will be lost during the squash operation.
+	//
+	//   if title and body are not set, then the commit title/message will be generated based on the most recent commit
+	//   message of the squashed commits.
+	//
+	Squash *bool `yaml:",omitempty"`
+	// SquashFormat defines how the commit message should be formatted when squashing commits
+	//
+	// default: "do not include original commit information"
+	//
+	// possible values:
+	//   * "compact": one line per commit squashed with commit title, signed indicator and hash
+	//   * "detailed": one line per commit squashed with commit hash, title, author, and signed indicator
+	//   * "list": list of commits with commit hash, title and signed indicator
+	//   * "": do not include original commit information
+	//
+	//  important: Unless you know what you are doing, it is recommended to use the default value.
+	SquashFormat string `yaml:",omitempty"`
 }
 
 /*
@@ -192,4 +217,12 @@ func (c *Commit) Validate() error {
 	}
 
 	return nil
+}
+
+// IsSquash returns true if the commit should be squashed
+func (c *Commit) IsSquash() bool {
+	if c.Squash == nil {
+		return false
+	}
+	return *c.Squash
 }

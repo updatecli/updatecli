@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 func (g *Git) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -94,16 +95,27 @@ func (g *Git) Commit(message string) error {
 		return err
 	}
 
-	err = g.nativeGitHandler.Commit(
+	if err = g.nativeGitHandler.Commit(
 		g.spec.User,
 		g.spec.Email,
 		commitMessage,
 		g.GetDirectory(),
 		g.spec.GPG.SigningKey,
 		g.spec.GPG.Passphrase,
-	)
-	if err != nil {
+	); err != nil {
 		return err
+	}
+
+	if g.spec.CommitMessage.IsSquash() {
+		sourceBranch, workingBranch, _ := g.GetBranches()
+		if err = g.nativeGitHandler.SquashCommit(g.GetDirectory(), sourceBranch, workingBranch, gitgeneric.SquashCommitOptions{
+			IncludeCommitTitles: true,
+			Message:             commitMessage,
+			SigninKey:           g.spec.GPG.SigningKey,
+			SigninPassphrase:    g.spec.GPG.Passphrase,
+		}); err != nil {
+			return err
+		}
 	}
 
 	return nil
