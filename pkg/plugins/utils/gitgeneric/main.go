@@ -43,6 +43,7 @@ type GitHandler interface {
 	PushBranch(branch string, username string, password string, workingDir string, force bool) error
 	RemoteURLs(workingDir string) (map[string]string, error)
 	SanitizeBranchName(branch string) string
+	SquashCommit(repoDir, baseBranch, featureBranch string, options SquashCommitOptions) error
 	Tags(workingDir string) (tags []string, err error)
 	TagHashes(workingDir string) (hashes []string, err error)
 	TagRefs(workingDir string) (refs []DatedTag, err error)
@@ -449,7 +450,6 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 	logrus.Debugf("git commit object:\n%s\n", obj)
 
 	return nil
-
 }
 
 // Clone run `git clone`.
