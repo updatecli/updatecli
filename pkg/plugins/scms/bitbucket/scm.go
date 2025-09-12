@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 func (b *Bitbucket) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -93,6 +94,19 @@ func (b *Bitbucket) Commit(message string) error {
 	if err != nil {
 		return err
 	}
+
+	if b.Spec.CommitMessage.IsSquash() {
+		sourceBranch, workingBranch, _ := b.GetBranches()
+		if err = b.nativeGitHandler.SquashCommit(b.GetDirectory(), sourceBranch, workingBranch, gitgeneric.SquashCommitOptions{
+			IncludeCommitTitles: true,
+			Message:             commitMessage,
+			SigninKey:           b.Spec.GPG.SigningKey,
+			SigninPassphrase:    b.Spec.GPG.Passphrase,
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
