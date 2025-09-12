@@ -1,9 +1,11 @@
 package awsami
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 type Data struct {
@@ -15,12 +17,12 @@ type Data struct {
 	expectedError     error
 }
 
+// MockEC2Client implements EC2ClientAPI for testing
 type mockDescribeImagesOutput struct {
-	ec2iface.EC2API
 	Resp ec2.DescribeImagesOutput
 }
 
-func (m mockDescribeImagesOutput) DescribeImages(in *ec2.DescribeImagesInput) (*ec2.DescribeImagesOutput, error) {
+func (m mockDescribeImagesOutput) DescribeImages(ctx context.Context, params *ec2.DescribeImagesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeImagesOutput, error) {
 	// Only need to return mocked response output
 	return &m.Resp, nil
 }
@@ -36,7 +38,7 @@ var (
 				},
 			},
 			mockedResponse: ec2.DescribeImagesOutput{
-				Images: []*ec2.Image{},
+				Images: []types.Image{},
 			},
 			expectedGetAMI:    "",
 			expectedSource:    "",
@@ -56,26 +58,27 @@ var (
 				},
 			},
 			mockedResponse: ec2.DescribeImagesOutput{
-				Images: []*ec2.Image{
+				Images: []types.Image{ // Changed from []*ec2.Image
 					{
 						Name:         aws.String("openSUSE-Tumbleweed-v20200626-HVM-x86_64-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0fe97336dfbbcbb07.4"),
 						CreationDate: aws.String("2020-06-26"),
 						ImageId:      aws.String("ami-0626a14b9b39e862f"),
 						Description:  aws.String("openSUSE Tumbleweed (HVM, 64-bit) cabelo@opensuse.org"),
+						Architecture: types.ArchitectureValuesX8664, // Added architecture enum
 					},
 					{
 						Name:         aws.String("openSUSE-Tumbleweed-v20200604-HVM-x86_64-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0ce36c26c006545c9.4"),
 						CreationDate: aws.String("2020-06-04"),
 						ImageId:      aws.String("ami-08c7016cda7d370a5"),
 						Description:  aws.String("openSUSE Tumbleweed (HVM, 64-bit) cabelo@opensuse.org"),
-						Platform:     aws.String("OpenSuse"),
+						Architecture: types.ArchitectureValuesX8664,
 					},
 					{
 						Name:         aws.String("openSUSE-Tumbleweed-v20200627-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0941971a046aba5d4.4"),
 						CreationDate: aws.String("2020-06-27"),
 						ImageId:      aws.String("ami-0a9972d9b4dbdabc7"),
 						Description:  aws.String("openSUSE Tumbleweed (HVM, 64-bit) cabelo@opensuse.org"),
-						Platform:     aws.String("OpenSuse"),
+						Architecture: types.ArchitectureValuesX8664,
 					},
 				},
 			},
@@ -96,13 +99,13 @@ var (
 				},
 			},
 			mockedResponse: ec2.DescribeImagesOutput{
-				Images: []*ec2.Image{
+				Images: []types.Image{ // Changed from []*ec2.Image
 					{
 						Name:         aws.String("openSUSE-Tumbleweed-v20200627-48127030-1a96-4fef-b318-56ab8588c3c2-ami-0941971a046aba5d4.4"),
 						CreationDate: aws.String("2020-06-27"),
 						ImageId:      aws.String("ami-0a9972d9b4dbdabc7"),
 						Description:  aws.String("openSUSE Tumbleweed (HVM, 64-bit) cabelo@opensuse.org"),
-						Platform:     aws.String("OpenSuse"),
+						Architecture: types.ArchitectureValuesX8664,
 					},
 				},
 			},
@@ -122,7 +125,7 @@ var (
 				},
 			},
 			mockedResponse: ec2.DescribeImagesOutput{
-				Images: []*ec2.Image{},
+				Images: []types.Image{},
 			},
 			expectedGetAMI:    "",
 			expectedSource:    "",
