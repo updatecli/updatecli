@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 func (s *Stash) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -76,6 +77,19 @@ func (s *Stash) Commit(message string) error {
 	if err != nil {
 		return err
 	}
+
+	if s.Spec.CommitMessage.IsSquash() {
+		sourceBranch, workingBranch, _ := s.GetBranches()
+		if err = s.nativeGitHandler.SquashCommit(s.GetDirectory(), sourceBranch, workingBranch, gitgeneric.SquashCommitOptions{
+			IncludeCommitTitles: true,
+			Message:             commitMessage,
+			SigninKey:           s.Spec.GPG.SigningKey,
+			SigninPassphrase:    s.Spec.GPG.Passphrase,
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
