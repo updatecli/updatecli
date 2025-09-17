@@ -10,6 +10,7 @@ import (
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -84,34 +85,47 @@ func (g *Github) Commit(message string) error {
 
 		_, workingBranch, _ := g.GetBranches()
 
-		err = g.CreateCommit(workingDir, commitMessage)
-		if err != nil {
+		if err = g.CreateCommit(workingDir, commitMessage); err != nil {
 			return err
 		}
 
-		err = g.nativeGitHandler.Pull(
+		if err = g.nativeGitHandler.Pull(
 			g.Spec.Username,
 			g.Spec.Token,
 			workingDir,
 			workingBranch,
 			true,
 			true,
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
 
+		if g.Spec.CommitMessage.IsSquash() {
+			logrus.Warningf("Squash commit is not supported when using GitHub API to create the commit. Ignoring the squash option.")
+		}
+
 	} else {
-		err = g.nativeGitHandler.Commit(
+		if err = g.nativeGitHandler.Commit(
 			g.Spec.User,
 			g.Spec.Email,
 			commitMessage,
 			workingDir,
 			g.Spec.GPG.SigningKey,
 			g.Spec.GPG.Passphrase,
-		)
-		if err != nil {
+		); err != nil {
 			return err
+		}
+
+		if g.Spec.CommitMessage.IsSquash() {
+			sourceBranch, workingBranch, _ := g.GetBranches()
+			if err = g.nativeGitHandler.SquashCommit(workingDir, sourceBranch, workingBranch, gitgeneric.SquashCommitOptions{
+				IncludeCommitTitles: true,
+				Message:             commitMessage,
+				SigninKey:           g.Spec.GPG.SigningKey,
+				SigninPassphrase:    g.Spec.GPG.Passphrase,
+			}); err != nil {
+				return err
+			}
 		}
 	}
 
