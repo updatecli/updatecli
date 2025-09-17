@@ -97,18 +97,6 @@ type Commit struct {
 	//   message of the squashed commits.
 	//
 	Squash *bool `yaml:",omitempty"`
-	// SquashFormat defines how the commit message should be formatted when squashing commits
-	//
-	// default: "do not include original commit information"
-	//
-	// possible values:
-	//   * "compact": one line per commit squashed with commit title, signed indicator and hash
-	//   * "detailed": one line per commit squashed with commit hash, title, author, and signed indicator
-	//   * "list": list of commits with commit hash, title and signed indicator
-	//   * "": do not include original commit information
-	//
-	//  important: Unless you know what you are doing, it is recommended to use the default value.
-	SquashFormat string `yaml:",omitempty"`
 }
 
 /*
