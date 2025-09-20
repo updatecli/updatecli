@@ -2,6 +2,7 @@ package pullrequest
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 
@@ -15,7 +16,7 @@ type Gitea struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
 	// client handle the api authentication
-	client client.Client
+	client client.SDKClient
 	// scm allows to interact with a scm object
 	scm *giteascm.Gitea
 	// SourceBranch specifies the pullrequest source branch.
@@ -26,6 +27,8 @@ type Gitea struct {
 	Owner string `yaml:",omitempty" jsonschema:"required"`
 	// Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
+	// FullRepoName specifies the "owner/repository" format of a repository
+	FullRepoName string `yaml:",omitempty"`
 }
 
 // New returns a new valid Gitea object.
@@ -67,7 +70,7 @@ func New(spec any, scm *giteascm.Gitea) (Gitea, error) {
 		return Gitea{}, err
 	}
 
-	c, err := client.New(clientSpec)
+	c, err := client.NewSDKClient(clientSpec)
 	if err != nil {
 		return Gitea{}, err
 	}
@@ -79,6 +82,9 @@ func New(spec any, scm *giteascm.Gitea) (Gitea, error) {
 	}
 
 	g.inheritFromScm()
+
+	// Set FullRepoName if not set yet
+	g.FullRepoName = strings.Join([]string{g.Owner, g.Repository}, "/")
 
 	return g, nil
 }

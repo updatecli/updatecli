@@ -2,10 +2,9 @@ package pullrequest
 
 import (
 	"context"
-	"strings"
 	"time"
 
-	"github.com/drone/go-scm/scm"
+	giteasdk "code.gitea.io/sdk/gitea"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -18,19 +17,20 @@ func (g *Gitea) isPullRequestExist() (title, description, link string, err error
 	for {
 		// Timeout api query after 30sec
 		ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
+		g.client.SetContext(ctx)
 		defer cancelList()
 
-		optsSearch := scm.PullRequestListOptions{
-			Page:   page,
-			Size:   30,
-			Open:   true,
-			Closed: false,
+		optsSearch := giteasdk.ListPullRequestsOptions{
+			State: "open",
+			ListOptions: giteasdk.ListOptions{
+				Page:     page,
+				PageSize: 30,
+			},
 		}
-		pullrequests, resp, err := g.client.PullRequests.List(
-			ctx,
-			strings.Join([]string{
-				g.Owner,
-				g.Repository}, "/"),
+
+		pullrequests, resp, err := g.client.ListRepoPullRequests(
+			g.Owner,
+			g.FullRepoName,
 			optsSearch,
 		)
 
@@ -39,25 +39,26 @@ func (g *Gitea) isPullRequestExist() (title, description, link string, err error
 			return "", "", "", err
 		}
 
-		if resp.Status > 400 {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		if resp.StatusCode > 400 {
+			logrus.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
 		}
 
 		for _, p := range pullrequests {
-			if p.Source == g.SourceBranch &&
-				p.Target == g.TargetBranch &&
-				!p.Closed &&
-				!p.Merged {
+			if p.Head.Name == g.SourceBranch &&
+				p.Base.Name == g.TargetBranch &&
+				// If no closed and merged date is set, the pullrequest is still open
+				p.Closed == nil &&
+				p.Merged == nil {
 
 				logrus.Infof("%s GiTea pullrequest detected at:\n\t%s",
 					result.SUCCESS,
-					p.Link)
+					p.URL)
 
-				return p.Title, p.Body, p.Link, nil
+				return p.Title, p.Body, p.URL, nil
 			}
 		}
 
-		if page >= resp.Page.Last {
+		if page >= resp.LastPage {
 			break
 		}
 		page++
@@ -101,23 +102,24 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	remoteBranches, resp, err := g.client.Git.ListBranches(
-		ctx,
-		strings.Join([]string{owner, repository}, "/"),
-		scm.ListOptions{
-			URL:  g.spec.URL,
-			Page: 1,
-			Size: 30,
+	remoteBranches, resp, err := g.client.ListRepoBranches(
+		owner,
+		repository,
+		giteasdk.ListRepoBranchesOptions{
+			ListOptions: giteasdk.ListOptions{
+				Page:     1,
+				PageSize: 30,
+			},
 		},
 	)
 
 	if err != nil {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		logrus.Debugf("Error: %s", err)
 		return false, err
 	}
 
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+	if resp.StatusCode > 400 {
+		logrus.Debugf("RC: %d", resp.StatusCode)
 	}
 
 	foundRemoteSourceBranch := false
