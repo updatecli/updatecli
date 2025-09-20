@@ -2,6 +2,7 @@ package client
 
 import (
 	"net/http"
+	"time"
 
 	giteasdk "code.gitea.io/sdk/gitea"
 	"github.com/drone/go-scm/scm"
@@ -43,7 +44,12 @@ func New(s Spec) (Client, error) {
 // NewSDKClient creates a new Gitea client based on the official gitea sdk instead of drone's go-scm
 func NewSDKClient(s Spec) (SDKClient, error) {
 
-	client, err := giteasdk.NewClient(s.URL, giteasdk.SetToken(s.Token))
+	// Set a timeout on the underlying HTTP client used by the Gitea SDK
+	httpClient := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	client, err := giteasdk.NewClient(s.URL, giteasdk.SetToken(s.Token), giteasdk.SetHTTPClient(httpClient))
 
 	if err != nil {
 		// giteasdk.NewClient may perform a network call (for instance to fetch server version)

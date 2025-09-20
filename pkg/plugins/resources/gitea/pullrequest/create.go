@@ -81,15 +81,20 @@ func (g *Gitea) CreateAction(report *reports.Action, resetDescription bool) erro
 	defer cancel()
 
 	sdkOpts := giteasdk.CreatePullRequestOption{
-		Title: title,
-		Body:  body,
-		Base:  g.TargetBranch, // Base = Target branch
-		Head:  g.SourceBranch, // Head = Source branch
+		Title:     title,
+		Body:      body,
+		Base:      g.TargetBranch,   // Base = Target branch
+		Head:      g.SourceBranch,   // Head = Source branch
+		Assignees: g.spec.Assignees, // Take list of assignees from spec
+	}
+
+	if len(g.spec.Assignees) > 0 {
+		logrus.Debugf("Setting assignees for pull request: %v", g.spec.Assignees)
 	}
 
 	pr, resp, err := g.client.CreatePullRequest(g.Owner, g.Repository, sdkOpts)
 
-	if resp.StatusCode > 400 {
+	if resp != nil && resp.StatusCode > 400 {
 		logrus.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
 	}
 

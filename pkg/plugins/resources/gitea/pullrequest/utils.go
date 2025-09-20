@@ -1,9 +1,6 @@
 package pullrequest
 
 import (
-	"context"
-	"time"
-
 	giteasdk "code.gitea.io/sdk/gitea"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -11,15 +8,8 @@ import (
 
 // isPullRequestExist queries a remote Gitea instance to know if a pullrequest already exists.
 func (g *Gitea) isPullRequestExist() (title, description, link string, err error) {
-	ctx := context.Background()
-
 	page := 0
 	for {
-		// Timeout api query after 30sec
-		ctx, cancelList := context.WithTimeout(ctx, 30*time.Second)
-		g.client.SetContext(ctx)
-		defer cancelList()
-
 		optsSearch := giteasdk.ListPullRequestsOptions{
 			State: "open",
 			ListOptions: giteasdk.ListOptions{
@@ -30,16 +20,16 @@ func (g *Gitea) isPullRequestExist() (title, description, link string, err error
 
 		pullrequests, resp, err := g.client.ListRepoPullRequests(
 			g.Owner,
-			g.FullRepoName,
+			g.Repository,
 			optsSearch,
 		)
 
 		if err != nil {
-			logrus.Debugf("RC: %s\n", err)
+			logrus.Debugf("gitea/isPullRequestExist RC: %s\n", err)
 			return "", "", "", err
 		}
 
-		if resp.StatusCode > 400 {
+		if resp != nil && resp.StatusCode > 400 {
 			logrus.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
 		}
 
@@ -97,11 +87,6 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 		repository = g.spec.Repository
 	}
 
-	// Timeout api query after 30sec
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
 	remoteBranches, resp, err := g.client.ListRepoBranches(
 		owner,
 		repository,
@@ -118,8 +103,8 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 		return false, err
 	}
 
-	if resp.StatusCode > 400 {
-		logrus.Debugf("RC: %d", resp.StatusCode)
+	if resp != nil && resp.StatusCode > 400 {
+		logrus.Debugf("gitea/ListRepoBranches RC: %d", resp.StatusCode)
 	}
 
 	foundRemoteSourceBranch := false
