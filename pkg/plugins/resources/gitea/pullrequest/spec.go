@@ -84,4 +84,16 @@ type Spec struct {
 			"body" is useful to provide additional information when reviewing pullrequest, such as changelog url.
 	*/
 	Body string `yaml:",inline,omitempty"`
+
+	/*
+		"assignees" defines a list of assignees for the pull request.
+
+		default:
+			No assignees are set on the pull request.
+
+		remark:
+			You can use this to assign specific users to review the pull request.
+			Make sure the users you specify have access to the repository.
+	*/
+	Assignees []string `yaml:",omitempty"`
 }
