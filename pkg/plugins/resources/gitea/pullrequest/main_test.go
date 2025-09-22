@@ -44,6 +44,29 @@ func TestNew(t *testing.T) {
 			expectedGiteaTargetBranch: "main",
 		},
 		{
+			name: "Test basic scenario with assignees",
+			spec: Spec{
+				Owner:        "updatecli",
+				Repository:   "updatecli",
+				SourceBranch: "workingBranch",
+				TargetBranch: "main",
+				Assignees:    []string{"user1", "user2"},
+			},
+			scm: &giteascm.Gitea{
+				Spec: giteascm.Spec{
+					Spec: giteaclient.Spec{
+						URL:      "gitea.updatecli.io",
+						Token:    "xxx",
+						Username: "tes",
+					},
+				},
+			},
+			expectedGiteaOwner:        "updatecli",
+			expectedGiteaRepository:   "updatecli",
+			expectedGiteaSourceBranch: "workingBranch",
+			expectedGiteaTargetBranch: "main",
+		},
+		{
 			name: "Test parameter inheritance 1",
 			spec: Spec{
 				Owner:        "updatecli",
