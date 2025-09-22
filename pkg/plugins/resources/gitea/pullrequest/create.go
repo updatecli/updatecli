@@ -1,9 +1,6 @@
 package pullrequest
 
 import (
-	"context"
-	"time"
-
 	giteasdk "code.gitea.io/sdk/gitea"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -74,11 +71,6 @@ func (g *Gitea) CreateAction(report *reports.Action, resetDescription bool) erro
 		body,
 		g.SourceBranch,
 		g.TargetBranch)
-
-	// Timeout api query after 30sec
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
 
 	sdkOpts := giteasdk.CreatePullRequestOption{
 		Title:     title,

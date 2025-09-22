@@ -44,7 +44,7 @@ func New(s Spec) (Client, error) {
 // NewSDKClient creates a new Gitea client based on the official gitea sdk instead of drone's go-scm
 func NewSDKClient(s Spec) (SDKClient, error) {
 
-	// Set a timeout on the underlying HTTP client used by the Gitea SDK
+	// Set a global timeout on the underlying HTTP client used by the Gitea SDK
 	httpClient := &http.Client{
 		Timeout: 30 * time.Second,
 	}
