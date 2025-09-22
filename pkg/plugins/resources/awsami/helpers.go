@@ -20,7 +20,7 @@ func (a *AMI) getLatestAmiID() (string, error) {
 		Filters: a.ec2Filters,
 	}
 
-	result, err := a.apiClient.DescribeImages(context.TODO(), &input)
+	result, err := a.apiClient.DescribeImages(context.Background(), &input)
 
 	if err != nil {
 		var ae smithy.APIError

@@ -64,7 +64,7 @@ func New(spec interface{}) (*AMI, error) {
 		newFilters = append(newFilters, filter)
 	}
 
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	var configOptions []func(*config.LoadOptions) error
 
