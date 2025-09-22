@@ -27,7 +27,7 @@ func TestCondition(t *testing.T) {
 		case true:
 			require.NoError(t, gotErr)
 		case false:
-			require.ErrorIs(t, gotErr, d.expectedError)
+			require.ErrorIs(t, d.expectedError, gotErr)
 		}
 
 		assert.Equal(t, d.expectedCondition, got)
