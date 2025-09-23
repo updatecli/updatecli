@@ -1,14 +1,15 @@
 package awsami
 
 import (
+	"context"
 	"errors"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -23,13 +24,16 @@ var (
 	ErrWrongServiceConnection error = errors.New("can't connect to aws api")
 )
 
-// https://docs.aws.amazon.com/sdk-for-go/api/service/ec2/#EC2.DescribeImages
+// EC2ClientAPI defines the interface for EC2 operations we need
+type EC2ClientAPI interface {
+	DescribeImages(ctx context.Context, params *ec2.DescribeImagesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeImagesOutput, error)
+}
 
 // AMI contains information to manipulate AWS AMI information
 type AMI struct {
 	Spec       Spec
-	ec2Filters []*ec2.Filter
-	apiClient  ec2iface.EC2API
+	ec2Filters []types.Filter
+	apiClient  EC2ClientAPI
 }
 
 // New returns a reference to a newly initialized AMI object from an AMISpec
@@ -50,44 +54,46 @@ func New(spec interface{}) (*AMI, error) {
 		return nil, ErrSpecNotValid
 	}
 
-	var newFilters []*ec2.Filter
+	var newFilters []types.Filter
 	for i := 0; i < len(newSpec.Filters); i++ {
-		filter := ec2.Filter{
+		values := strings.Split(newSpec.Filters[i].Values, ",")
+		filter := types.Filter{
 			Name:   aws.String(newSpec.Filters[i].Name),
-			Values: aws.StringSlice(strings.Split(newSpec.Filters[i].Values, ","))}
-
-		newFilters = append(newFilters, &filter)
+			Values: values,
+		}
+		newFilters = append(newFilters, filter)
 	}
 
-	newSession, err := session.NewSession()
+	ctx := context.Background()
+
+	var configOptions []func(*config.LoadOptions) error
+
+	if newSpec.Region != "" {
+		configOptions = append(configOptions, config.WithRegion(newSpec.Region))
+	}
+
+	if newSpec.AccessKey != "" && newSpec.SecretKey != "" {
+		staticCredentials := credentials.NewStaticCredentialsProvider(
+			newSpec.AccessKey,
+			newSpec.SecretKey,
+			"",
+		)
+		configOptions = append(configOptions, config.WithCredentialsProvider(staticCredentials))
+	}
+
+	configOptions = append(configOptions, config.WithRetryMaxAttempts(3))
+
+	cfg, err := config.LoadDefaultConfig(ctx, configOptions...)
 	if err != nil {
-		return nil, err
-	}
-
-	newClient := ec2.New(newSession, &aws.Config{
-		CredentialsChainVerboseErrors: func(verbose bool) *bool {
-			return &verbose
-		}(true),
-		Region:   aws.String(newSpec.Region),
-		Endpoint: aws.String(newSpec.Endpoint),
-		Credentials: credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{},
-				&credentials.StaticProvider{
-					Value: credentials.Value{
-						AccessKeyID:     newSpec.AccessKey,
-						SecretAccessKey: newSpec.SecretKey,
-					},
-				},
-			}),
-
-		MaxRetries: func(val int) *int { return &val }(3),
-	})
-
-	if newClient == nil {
+		logrus.Errorf("Failed to load AWS config: %v", err)
 		return nil, ErrWrongServiceConnection
 	}
+
+	if newSpec.Endpoint != "" {
+		cfg.BaseEndpoint = aws.String(newSpec.Endpoint)
+	}
+
+	newClient := ec2.NewFromConfig(cfg)
 
 	return &AMI{
 		Spec:       newSpec,
@@ -104,7 +110,6 @@ func (a *AMI) Changelog(from, to string) *result.Changelogs {
 // ReportConfig returns a new configuration with only the necessary configuration fields
 // to identify the resource without any sensitive information or context specific data.
 func (a *AMI) ReportConfig() interface{} {
-
 	return Spec{
 		Region:   a.Spec.Region,
 		Endpoint: a.Spec.Endpoint,
