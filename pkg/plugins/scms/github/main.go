@@ -9,11 +9,14 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
 	"github.com/shurcooL/githubv4"
+
+	"github.com/jferrl/go-githubauth"
 
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
@@ -103,7 +106,7 @@ type Spec struct {
 	//
 	//	compatible:
 	//		* scm
-	Token string `yaml:",omitempty" jsonschema:"required"`
+	Token string `yaml:",omitempty"`
 	//  "url" specifies the default github url in case of GitHub enterprise
 	//
 	//  compatible:
@@ -185,6 +188,11 @@ type Spec struct {
 	//
 	//  default: false
 	CommitUsingAPI *bool `yaml:",omitempty"`
+	// "app" specifies the GitHub App credentials used to authenticate with GitHub API.
+	// It is not compatible with the "token" and "username" fields.
+	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
+	// For more information, please refer to the following documentation:
+	App *GitHubAppSpec `yaml:",omitempty"`
 }
 
 // GitHub contains settings to interact with GitHub
@@ -246,17 +254,43 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		s.Username = "oauth2"
 	}
 
-	// Initialize github client
-	src := oauth2.StaticTokenSource(
+	tokenSource := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: s.Token},
 	)
+
+	if s.Token != "" {
+		logrus.Debugf(`Using personal access token authentication method for repository "%s/%s"`, s.Owner, s.Repository)
+
+	} else if s.App != nil {
+		logrus.Debugf(`Using GitHub App authentication method for repository "%s/%s"`, s.Owner, s.Repository)
+		privateKey, err := s.App.getPrivateKey()
+		if err != nil {
+			return nil, fmt.Errorf("retrieving GitHub App private key: %w", err)
+		}
+		clientID := s.App.ClientID
+		installationID := s.App.InstallationID
+
+		appTokenSource, err := githubauth.NewApplicationTokenSource(
+			clientID,
+			[]byte(privateKey),
+			githubauth.WithApplicationTokenExpiration(60*time.Minute),
+		)
+		if err != nil {
+			fmt.Println("Error creating token source:", err)
+			return nil, err
+		}
+
+		tokenSource = githubauth.NewInstallationTokenSource(installationID, appTokenSource)
+	}
+
+	// Initialize github client
 
 	clientContext := context.WithValue(
 		context.Background(),
 		oauth2.HTTPClient,
 		httpclient.NewRetryClient().(*http.Client))
 
-	httpClient := oauth2.NewClient(clientContext, src)
+	httpClient := oauth2.NewClient(clientContext, tokenSource)
 
 	nativeGitHandler := gitgeneric.GoGit{}
 
@@ -339,8 +373,20 @@ If you know what you are doing, please set the force option to true in your conf
 func (s *Spec) Validate() (errs []error) {
 	required := []string{}
 
-	if len(s.Token) == 0 {
-		required = append(required, "token")
+	if s.App == nil && len(s.Token) == 0 {
+		required = append(required, "token or app")
+	} else if s.App != nil && len(s.Token) > 0 {
+		errs = append(errs, fmt.Errorf("you cannot use both token and app authentication methods"))
+	} else if s.App != nil {
+		if s.App.ClientID == "" {
+			required = append(required, "app.clientID")
+		}
+		if s.App.PrivateKey == "" && s.App.PrivateKeyPath == "" {
+			required = append(required, "app.privateKey or app.privateKeyPath")
+		}
+		if s.App.InstallationID == 0 {
+			required = append(required, "app.installationID")
+		}
 	}
 
 	if len(s.Owner) == 0 {
@@ -405,6 +451,15 @@ func (gs *Spec) Merge(child interface{}) error {
 	}
 	if childGHSpec.Submodules != nil {
 		gs.Submodules = childGHSpec.Submodules
+	}
+
+	if childGHSpec.App != nil {
+		gs.App = &GitHubAppSpec{
+			ClientID:       childGHSpec.App.ClientID,
+			PrivateKey:     childGHSpec.App.PrivateKey,
+			PrivateKeyPath: childGHSpec.App.PrivateKeyPath,
+			InstallationID: childGHSpec.App.InstallationID,
+		}
 	}
 
 	return nil

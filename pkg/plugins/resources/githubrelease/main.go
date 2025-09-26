@@ -113,6 +113,11 @@ type Spec struct {
 	//   * source
 	//   * condition
 	Key string `yaml:",omitempty"`
+	// "app" specifies the GitHub App credentials used to authenticate with GitHub API.
+	// It is not compatible with the "token" and "username" fields.
+	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
+	// For more information, please refer to the following documentation:
+	App *github.GitHubAppSpec `yaml:",omitempty"`
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
@@ -169,6 +174,7 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		Token:      newSpec.Token,
 		URL:        newSpec.URL,
 		Username:   newSpec.Username,
+		App:        newSpec.App,
 	}, "")
 	if err != nil {
 		return &GitHubRelease{}, err
