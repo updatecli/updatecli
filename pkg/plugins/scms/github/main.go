@@ -270,10 +270,15 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		clientID := s.App.ClientID
 		installationID := s.App.InstallationID
 
+		expirationTime := s.App.ExpirationTime
+		if expirationTime == 0 {
+			expirationTime = 6000
+		}
+
 		appTokenSource, err := githubauth.NewApplicationTokenSource(
 			clientID,
 			[]byte(privateKey),
-			githubauth.WithApplicationTokenExpiration(60*time.Minute),
+			githubauth.WithApplicationTokenExpiration(time.Duration(expirationTime)*time.Second),
 		)
 		if err != nil {
 			fmt.Println("Error creating token source:", err)
@@ -386,6 +391,10 @@ func (s *Spec) Validate() (errs []error) {
 		}
 		if s.App.InstallationID == 0 {
 			required = append(required, "app.installationID")
+		}
+
+		if s.App.ExpirationTime < 600 {
+			logrus.Warningf("app.expirationTime is set to %d seconds. The minimum recommended value is 600 seconds. Setting it to a lower value may lead to authentication issues.", s.App.ExpirationTime)
 		}
 	}
 
