@@ -24,6 +24,13 @@ type GitHubAppSpec struct {
 	// It is the same ID that you can find in the GitHub endpoint:
 	// https://github.com/settings/installation/<ID>
 	InstallationID int64 `yaml:",omitempty"`
+	// Expiration represents the token expiration time in seconds
+	// The token is used during the entire execution of updatecli
+	// and should be valid for the entire duration of the run
+	//
+	// Default: is 6000 seconds (100 minutes)
+	//
+	ExpirationTime int64 `yaml:",omitempty"`
 }
 
 func (g GitHubAppSpec) getPrivateKey() (string, error) {
