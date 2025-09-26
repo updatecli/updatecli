@@ -281,8 +281,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 			githubauth.WithApplicationTokenExpiration(time.Duration(expirationTime)*time.Second),
 		)
 		if err != nil {
-			fmt.Println("Error creating token source:", err)
-			return nil, err
+			return nil, fmt.Errorf("creating GitHub App token source: %w", err)
 		}
 
 		tokenSource = githubauth.NewInstallationTokenSource(installationID, appTokenSource)
@@ -468,6 +467,7 @@ func (gs *Spec) Merge(child interface{}) error {
 			PrivateKey:     childGHSpec.App.PrivateKey,
 			PrivateKeyPath: childGHSpec.App.PrivateKeyPath,
 			InstallationID: childGHSpec.App.InstallationID,
+			ExpirationTime: childGHSpec.App.ExpirationTime,
 		}
 	}
 
