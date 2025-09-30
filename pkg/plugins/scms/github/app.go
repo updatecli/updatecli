@@ -99,10 +99,6 @@ func (g *GitHubAppSpec) Validate() error {
 
 	var errs []error
 
-	if g.ExpirationTime == "" {
-		g.ExpirationTime = "6000"
-	}
-
 	if g.ClientID == "" {
 		errs = append(errs, errors.New("github app client id is not set"))
 	}
