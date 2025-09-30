@@ -58,8 +58,8 @@ func (g *Github) Clone() (string, error) {
 	g.setDirectory()
 
 	err := g.nativeGitHandler.Clone(
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		g.token,
 		g.GetURL(),
 		g.GetDirectory(),
 		g.Spec.Submodules,
@@ -99,8 +99,8 @@ func (g *Github) Commit(message string) error {
 		}
 
 		if err = g.nativeGitHandler.Pull(
-			g.Spec.Username,
-			g.Spec.Token,
+			g.username,
+			g.token,
 			workingDir,
 			workingBranch,
 			true,
@@ -324,8 +324,8 @@ func (g *Github) Checkout() error {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
 	return g.nativeGitHandler.Checkout(
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		g.token,
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
@@ -350,8 +350,8 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 	return g.nativeGitHandler.IsLocalBranchPublished(
 		sourceBranch,
 		workingBranch,
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		g.token,
 		g.GetDirectory())
 }
 
@@ -365,8 +365,8 @@ func (g *Github) Push() (bool, error) {
 	}
 
 	return g.nativeGitHandler.Push(
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		g.token,
 		g.GetDirectory(),
 		g.force,
 	)
@@ -377,8 +377,8 @@ func (g *Github) PushTag(tag string) error {
 
 	err := g.nativeGitHandler.PushTag(
 		tag,
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		g.token,
 		g.GetDirectory(),
 		g.force,
 	)
@@ -394,8 +394,8 @@ func (g *Github) PushBranch(branch string) error {
 
 	err := g.nativeGitHandler.PushBranch(
 		branch,
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		g.token,
 		g.GetDirectory(),
 		g.force)
 	if err != nil {

@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -207,6 +206,8 @@ type Github struct {
 	workingBranchPrefix    string
 	workingBranchSeparator string
 	commitUsingApi         bool
+	token                  string
+	username               string
 }
 
 // Repository contains GitHub repository data
@@ -250,41 +251,56 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		s.URL = "https://" + s.URL
 	}
 
-	if s.Username == "" {
-		s.Username = "oauth2"
-	}
+	token := s.Token
+	username := s.Username
 
 	tokenSource := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: s.Token},
+		&oauth2.Token{AccessToken: token},
 	)
 
 	if s.Token != "" {
 		logrus.Debugf(`Using personal access token authentication method for repository "%s/%s"`, s.Owner, s.Repository)
 
+		if username == "" {
+			username = "oauth2"
+		}
+
 	} else if s.App != nil {
+
 		logrus.Debugf(`Using GitHub App authentication method for repository "%s/%s"`, s.Owner, s.Repository)
 		privateKey, err := s.App.getPrivateKey()
 		if err != nil {
 			return nil, fmt.Errorf("retrieving GitHub App private key: %w", err)
 		}
 		clientID := s.App.ClientID
-		installationID := s.App.InstallationID
+		installationID, err := s.App.getInstallationID()
+		if err != nil {
+			return nil, fmt.Errorf("invalid GitHub App installation ID: %w", err)
+		}
 
-		expirationTime := s.App.ExpirationTime
-		if expirationTime == 0 {
-			expirationTime = 6000
+		expirationTimeDuration, err := s.App.getExpirationTimeDuration()
+		if err != nil {
+			return nil, fmt.Errorf("invalid GitHub App expiration time: %w", err)
 		}
 
 		appTokenSource, err := githubauth.NewApplicationTokenSource(
 			clientID,
 			[]byte(privateKey),
-			githubauth.WithApplicationTokenExpiration(time.Duration(expirationTime)*time.Second),
+			githubauth.WithApplicationTokenExpiration(expirationTimeDuration),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("creating GitHub App token source: %w", err)
 		}
 
 		tokenSource = githubauth.NewInstallationTokenSource(installationID, appTokenSource)
+
+		t, err := tokenSource.Token()
+		if err != nil {
+			return nil, fmt.Errorf("retrieving GitHub App installation token: %w", err)
+		}
+
+		token = t.AccessToken
+		username = "x-access-token"
 	}
 
 	// Initialize github client
@@ -354,6 +370,8 @@ If you know what you are doing, please set the force option to true in your conf
 		workingBranchPrefix:    workingBranchPrefix,
 		workingBranchSeparator: workingBranchSeparator,
 		commitUsingApi:         commitUsingApi,
+		token:                  token,
+		username:               username,
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {
@@ -382,18 +400,8 @@ func (s *Spec) Validate() (errs []error) {
 	} else if s.App != nil && len(s.Token) > 0 {
 		errs = append(errs, fmt.Errorf("you cannot use both token and app authentication methods"))
 	} else if s.App != nil {
-		if s.App.ClientID == "" {
-			required = append(required, "app.clientID")
-		}
-		if s.App.PrivateKey == "" && s.App.PrivateKeyPath == "" {
-			required = append(required, "app.privateKey or app.privateKeyPath")
-		}
-		if s.App.InstallationID == 0 {
-			required = append(required, "app.installationID")
-		}
-
-		if s.App.ExpirationTime < 600 {
-			logrus.Warningf("app.expirationTime is set to %d seconds. The minimum recommended value is 600 seconds. Setting it to a lower value may lead to authentication issues.", s.App.ExpirationTime)
+		if err := s.App.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("app configuration is invalid: %w", err))
 		}
 	}
 

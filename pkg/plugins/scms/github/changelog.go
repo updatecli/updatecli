@@ -17,7 +17,7 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 		URL:        g.GetURL(),
 		Owner:      g.Spec.Owner,
 		Repository: g.Spec.Repository,
-		Token:      g.Spec.Token,
+		Token:      g.token,
 	}
 
 	releases, err := changelog.Search(versionName, versionName)
