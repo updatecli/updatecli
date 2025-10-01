@@ -205,7 +205,6 @@ func TestNew(t *testing.T) {
 					Branch:     "main",
 					Repository: "updatecli",
 					Owner:      "updatecli",
-					Username:   "oauth2",
 					Token:      "superSecretTOkenOfJoe",
 					URL:        "https://github.com",
 					Directory:  "/home/updatecli",
