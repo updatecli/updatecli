@@ -13,11 +13,16 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 	// GitHub Release needs the original version, because the "found" version can be modified (semantic version without the prefix, transformed version, etc.)
 	versionName := version.OriginalVersion
 
+	accessToken, err := getAccessToken(g.token)
+	if err != nil {
+		return "", fmt.Errorf("failed to get access token: %w", err)
+	}
+
 	changelog := githubChangelog.Changelog{
 		URL:        g.GetURL(),
 		Owner:      g.Spec.Owner,
 		Repository: g.Spec.Repository,
-		Token:      g.token,
+		Token:      accessToken,
 	}
 
 	releases, err := changelog.Search(versionName, versionName)

@@ -15,8 +15,6 @@ import (
 
 	"github.com/shurcooL/githubv4"
 
-	"github.com/jferrl/go-githubauth"
-
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
@@ -206,7 +204,7 @@ type Github struct {
 	workingBranchPrefix    string
 	workingBranchSeparator string
 	commitUsingApi         bool
-	token                  string
+	token                  oauth2.TokenSource
 	username               string
 }
 
@@ -229,6 +227,8 @@ type RepositoryRef struct {
 
 // New returns a new valid GitHub object.
 func New(s Spec, pipelineID string) (*Github, error) {
+	var err error
+
 	errs := s.Validate()
 
 	if len(errs) > 0 {
@@ -251,59 +251,58 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		s.URL = "https://" + s.URL
 	}
 
-	token := s.Token
-	username := s.Username
+	token := os.Getenv("UPDATECLI_GITHUB_TOKEN")
+	username := os.Getenv("UPDATECLI_GITHUB_USERNAME")
 
 	tokenSource := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
 
-	if s.Token != "" {
-		logrus.Debugf(`Using personal access token authentication method for repository "%s/%s"`, s.Owner, s.Repository)
+	GitHubAppSpecFromEnv := NewGitHubAppSpecFromEnv()
 
-		if username == "" {
+	// If the token is not set in the environment variable, we use the one from the spec
+	if token == "" {
+		if GitHubAppSpecFromEnv != nil {
+			// If we detect that the environment variables are set for GitHub App authentication, we use them
+			// instead of the token authentication method.
+			logrus.Debugf(`Using GitHub App authentication method defined in environment variables"`)
+			tokenSource, err = GitHubAppSpecFromEnv.Getoauth2TokenSource()
+			if err != nil {
+				return nil, fmt.Errorf("retrieving GitHub App token: %w", err)
+			}
+
+			username = "x-access-token"
+		} else if s.Token != "" {
+			logrus.Debugf(`Using personal access token authentication method from configuration`)
+
+			tokenSource = oauth2.StaticTokenSource(
+				&oauth2.Token{AccessToken: s.Token},
+			)
 			username = "oauth2"
+
+		} else if s.App != nil {
+			// If we detect that the GitHub App configuration is set in the configuration, we use it
+			// instead of the token authentication method.
+
+			logrus.Debugf(`Using GitHub App authentication method from configuration`)
+			tokenSource, err = s.App.Getoauth2TokenSource()
+			if err != nil {
+				return nil, fmt.Errorf("retrieving GitHub App token: %w", err)
+			}
+
+			username = "x-access-token"
+		} else {
+			logrus.Debugf(`GitHub token is not set, please refer to the documentation for more information:
+->  https://www.updatecli.io/docs/plugins/scm/github/#authentication
+`)
+			return nil, errors.New("github token is not set")
 		}
 
-	} else if s.App != nil {
-
-		logrus.Debugf(`Using GitHub App authentication method for repository "%s/%s"`, s.Owner, s.Repository)
-		privateKey, err := s.App.getPrivateKey()
-		if err != nil {
-			return nil, fmt.Errorf("retrieving GitHub App private key: %w", err)
-		}
-		clientID := s.App.ClientID
-		installationID, err := s.App.getInstallationID()
-		if err != nil {
-			return nil, fmt.Errorf("invalid GitHub App installation ID: %w", err)
-		}
-
-		expirationTimeDuration, err := s.App.getExpirationTimeDuration()
-		if err != nil {
-			return nil, fmt.Errorf("invalid GitHub App expiration time: %w", err)
-		}
-
-		appTokenSource, err := githubauth.NewApplicationTokenSource(
-			clientID,
-			[]byte(privateKey),
-			githubauth.WithApplicationTokenExpiration(expirationTimeDuration),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("creating GitHub App token source: %w", err)
-		}
-
-		tokenSource = githubauth.NewInstallationTokenSource(installationID, appTokenSource)
-
-		t, err := tokenSource.Token()
-		if err != nil {
-			return nil, fmt.Errorf("retrieving GitHub App installation token: %w", err)
-		}
-
-		token = t.AccessToken
-		username = "x-access-token"
+	} else {
+		logrus.Debugf(`Using personal access token authentication method defined in environment variable "UPDATECLI_GITHUB_TOKEN"`)
 	}
 
-	// Initialize github client
+	tokenSource = oauth2.ReuseTokenSource(nil, tokenSource)
 
 	clientContext := context.WithValue(
 		context.Background(),
@@ -370,7 +369,7 @@ If you know what you are doing, please set the force option to true in your conf
 		workingBranchPrefix:    workingBranchPrefix,
 		workingBranchSeparator: workingBranchSeparator,
 		commitUsingApi:         commitUsingApi,
-		token:                  token,
+		token:                  tokenSource,
 		username:               username,
 	}
 
@@ -395,9 +394,7 @@ If you know what you are doing, please set the force option to true in your conf
 func (s *Spec) Validate() (errs []error) {
 	required := []string{}
 
-	if s.App == nil && len(s.Token) == 0 {
-		required = append(required, "token or app")
-	} else if s.App != nil && len(s.Token) > 0 {
+	if s.App != nil && len(s.Token) > 0 {
 		errs = append(errs, fmt.Errorf("you cannot use both token and app authentication methods"))
 	} else if s.App != nil {
 		if err := s.App.Validate(); err != nil {

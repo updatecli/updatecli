@@ -7,13 +7,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/jferrl/go-githubauth"
+	"golang.org/x/oauth2"
 )
 
 const (
 	// DefaultExpirationTime defines the default expiration time for a GitHub App token
-	// We set it to 10800 seconds (3 hours) to be sure the token is valid for the entire duration of the updatecli run
-	DefaultExpirationTime int64 = 10800
+	// We set it to 3600 seconds (1 hour) to be sure the token is valid for the entire duration of the updatecli run
+	DefaultExpirationTime int64 = 3600
 	// MinimumExpirationTime defines the minimum expiration time for a GitHub App token
 	// We set it to 600 seconds (10 minutes) to be sure the token is valid for the entire duration of the updatecli run
 	MinimumExpirationTime int64 = 600
@@ -43,8 +44,30 @@ type GitHubAppSpec struct {
 	// and should be valid for the entire duration of the run
 	// The minimum value is 600 seconds (10 minutes)
 	//
-	// Default: 10800 (3 hours)
+	// Default: 3600 (1 hour)
 	ExpirationTime string `yaml:",omitempty"`
+}
+
+// NewGitHubAppSpecFromEnv creates a new GitHubAppSpec from environment variables
+// It returns nil if the required environment variables are not set or if the configuration is invalid
+// Required environment variables:
+// - UPDATECLI_GITHUB_APP_CLIENT_ID
+// - UPDATECLI_GITHUB_APP_PRIVATE_KEY or UPDATECLI_GITHUB_APP_PRIVATE_KEY_PATH
+// - UPDATECLI_GITHUB_APP_INSTALLATION_ID
+func NewGitHubAppSpecFromEnv() *GitHubAppSpec {
+	spec := &GitHubAppSpec{
+		ClientID:       os.Getenv("UPDATECLI_GITHUB_APP_CLIENT_ID"),
+		PrivateKey:     os.Getenv("UPDATECLI_GITHUB_APP_PRIVATE_KEY"),
+		PrivateKeyPath: os.Getenv("UPDATECLI_GITHUB_APP_PRIVATE_KEY_PATH"),
+		InstallationID: os.Getenv("UPDATECLI_GITHUB_APP_INSTALLATION_ID"),
+		ExpirationTime: os.Getenv("UPDATECLI_GITHUB_APP_EXPIRATION_TIME"),
+	}
+
+	if err := spec.Validate(); err != nil {
+		return nil
+	}
+
+	return spec
 }
 
 // getPrivateKey returns the GitHub App private key as a string
@@ -72,6 +95,11 @@ func (g GitHubAppSpec) getInstallationID() (int64, error) {
 // getExpirationTime returns the GitHub App token expiration time as an int64
 // or 6000 if not set
 func (g GitHubAppSpec) getExpirationTime() (int64, error) {
+
+	if g.ExpirationTime == "" {
+		return DefaultExpirationTime, nil
+	}
+
 	expirationTime, err := strconv.ParseInt(g.ExpirationTime, 10, 64)
 	if err != nil {
 		return 0, err
@@ -94,7 +122,6 @@ func (g GitHubAppSpec) getExpirationTimeDuration() (time.Duration, error) {
 }
 
 // Validate validates the GitHub App configuration
-
 func (g *GitHubAppSpec) Validate() error {
 
 	var errs []error
@@ -125,13 +152,46 @@ func (g *GitHubAppSpec) Validate() error {
 	}
 
 	if len(errs) > 0 {
-		logrus.Errorf("Github App configuration is invalid:")
+		errMsg := "Github App configuration is invalid:"
 		for i := range errs {
-			logrus.Errorf(" - %s", errs[i].Error())
+			errMsg = fmt.Sprintf("%s\n - %s", errMsg, errs[i].Error())
 		}
-		return errors.New("github app configuration is invalid")
+		return errors.New(errMsg)
 	}
 
 	return nil
+
+}
+
+// Getoauth2TokenSource returns an oauth2.TokenSource to authenticate with GitHub using a GitHub App
+func (g *GitHubAppSpec) Getoauth2TokenSource() (oauth2.TokenSource, error) {
+
+	privateKey, err := g.getPrivateKey()
+	if err != nil {
+		return nil, fmt.Errorf("retrieving GitHub App private key: %w", err)
+	}
+	clientID := g.ClientID
+	installationID, err := g.getInstallationID()
+	if err != nil {
+		return nil, fmt.Errorf("invalid GitHub App installation ID: %w", err)
+	}
+
+	expirationTimeDuration, err := g.getExpirationTimeDuration()
+	if err != nil {
+		return nil, fmt.Errorf("invalid GitHub App expiration time: %w", err)
+	}
+
+	appTokenSource, err := githubauth.NewApplicationTokenSource(
+		clientID,
+		[]byte(privateKey),
+		githubauth.WithApplicationTokenExpiration(expirationTimeDuration),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("creating GitHub App token source: %w", err)
+	}
+
+	tokenSource := githubauth.NewInstallationTokenSource(installationID, appTokenSource)
+
+	return tokenSource, nil
 
 }
