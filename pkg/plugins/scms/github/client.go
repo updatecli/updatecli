@@ -15,10 +15,19 @@ type GitHubClient interface {
 
 // GithubHandler must be implemented by any GitHub module
 type GithubHandler interface {
-	SearchReleases(releaseType ReleaseType) (releases []ReleaseNode, err error)
+	SearchReleases(releaseType ReleaseType, retry int) (releases []ReleaseNode, err error)
 	SearchReleasesByTagName(releaseType ReleaseType) (releases []string, err error)
 	SearchReleasesByTagHash(releaseType ReleaseType) (releases []string, err error)
 	SearchReleasesByTitle(releaseType ReleaseType) (releases []string, err error)
-	SearchTags() (tags []string, err error)
+	SearchTags(retry int) (tags []string, err error)
 	Changelog(version.Version) (string, error)
 }
+
+const (
+	ErrAPIRateLimitExceeded             = "API rate limit exceeded"
+	ErrAPIRateLimitExceededFinalAttempt = "API rate limit exceeded. Final attempt failed."
+)
+
+var (
+	MaxRetry = 3
+)

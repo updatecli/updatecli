@@ -189,6 +189,7 @@ type mutationEnablePullRequestAutoMerge struct {
 	EnablePullRequestAutoMerge struct {
 		PullRequest PullRequestApi
 	} `graphql:"enablePullRequestAutoMerge(input: $input)"`
+	RateLimit RateLimit
 }
 
 func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
@@ -211,7 +212,7 @@ func (p *PullRequest) CleanAction(report *reports.Action) error {
 	p.repository = repository
 
 	// Check if there is already a pullRequest for current pipeline
-	err = p.getRemotePullRequest(false)
+	err = p.getRemotePullRequest(false, 0)
 	if err != nil {
 		return err
 	}
@@ -225,7 +226,7 @@ func (p *PullRequest) CleanAction(report *reports.Action) error {
 		logrus.Debugf("No changed file detected at pull request:\n\t%s", p.remotePullRequest.Url)
 		// Not returning an error if the comment failed to be added
 		// as the main purpose of this function is to close the pullrequest
-		err = p.closePullRequest()
+		err = p.closePullRequest(0)
 		if err != nil {
 			return fmt.Errorf("closing pull request: %w", err)
 		}
@@ -248,7 +249,7 @@ func (p *PullRequest) CheckActionExist(report *reports.Action) error {
 
 	p.repository = repository
 
-	err = p.getRemotePullRequest(false)
+	err = p.getRemotePullRequest(false, 0)
 	if err != nil {
 		return fmt.Errorf("error getting remote pull request: %w", err)
 	}
@@ -286,14 +287,14 @@ func (p *PullRequest) CreateAction(report *reports.Action, resetDescription bool
 	p.repository = repository
 
 	// Check if there is already a pullRequest for current pipeline
-	err = p.getRemotePullRequest(resetDescription)
+	err = p.getRemotePullRequest(resetDescription, 0)
 	if err != nil {
 		return err
 	}
 
 	// If we didn't find a Pull Request ID then it means we need to create a new pullrequest.
 	if len(p.remotePullRequest.ID) == 0 {
-		if err := p.OpenPullRequest(); err != nil {
+		if err := p.OpenPullRequest(0); err != nil {
 			return err
 		}
 	}
@@ -308,12 +309,12 @@ func (p *PullRequest) CreateAction(report *reports.Action, resetDescription bool
 
 	// Once the remote Pull Request exists, we can than update it with additional information such as
 	// tags,assignee,etc.
-	if err := p.updatePullRequest(); err != nil {
+	if err := p.updatePullRequest(0); err != nil {
 		return err
 	}
 
 	if p.spec.AutoMerge {
-		if err := p.EnablePullRequestAutoMerge(); err != nil {
+		if err := p.EnablePullRequestAutoMerge(0); err != nil {
 			switch err.Error() {
 			case ErrAutomergeNotAllowOnRepository.Error():
 				logrus.Errorln("Automerge can't be enabled. Make sure to all it on the repository.")
@@ -330,7 +331,7 @@ func (p *PullRequest) CreateAction(report *reports.Action, resetDescription bool
 }
 
 // closePullRequest closes an existing Pull Request using GitHub graphql api.
-func (p *PullRequest) closePullRequest() error {
+func (p *PullRequest) closePullRequest(retry int) error {
 
 	// https://docs.github.com/en/graphql/reference/input-objects#closepullrequestinput
 	/*
@@ -354,6 +355,7 @@ func (p *PullRequest) closePullRequest() error {
 		UpdatePullRequest struct {
 			PullRequest PullRequestApi
 		} `graphql:"closePullRequest(input: $input)"`
+		RateLimit RateLimit
 	}
 
 	input := githubv4.ClosePullRequestInput{
@@ -363,12 +365,22 @@ func (p *PullRequest) closePullRequest() error {
 	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
 		logrus.Debugf("Closing pull request: %s", err.Error())
-		return err
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(mutation.RateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				return p.closePullRequest(retry + 1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("closing pull request: %w", err)
 	}
+
+	logrus.Debugln(mutation.RateLimit)
 
 	msg := "Pull request closed as no changed file detected"
 	logrus.Infof("%s at:\n\n\t%s\n\n", msg, mutation.UpdatePullRequest.PullRequest.Url)
-	err = p.addComment(msg)
+	err = p.addComment(msg, 0)
 	if err != nil {
 		logrus.Errorf("Commenting pull-request: %s", err.Error())
 	}
@@ -377,7 +389,7 @@ func (p *PullRequest) closePullRequest() error {
 }
 
 // updatePullRequest updates an existing Pull Request.
-func (p *PullRequest) updatePullRequest() error {
+func (p *PullRequest) updatePullRequest(retry int) error {
 
 	/*
 		  mutation($input: UpdatePullRequestInput!){
@@ -401,6 +413,7 @@ func (p *PullRequest) updatePullRequest() error {
 		UpdatePullRequest struct {
 			PullRequest PullRequestApi
 		} `graphql:"updatePullRequest(input: $input)"`
+		RateLimit RateLimit
 	}
 
 	logrus.Debugf("Updating GitHub Pull Request")
@@ -413,7 +426,7 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	labelsID := []githubv4.ID{}
-	repositoryLabels, err := p.gh.getRepositoryLabels()
+	repositoryLabels, err := p.gh.getRepositoryLabels(0)
 	if err != nil {
 		logrus.Debugf("Error fetching repository labels: %s", err.Error())
 		return err
@@ -428,7 +441,7 @@ func (p *PullRequest) updatePullRequest() error {
 		}
 	}
 
-	remotePRLabels, err := p.GetPullRequestLabelsInformation()
+	remotePRLabels, err := p.GetPullRequestLabelsInformation(0)
 	if err != nil {
 		logrus.Debugf("Error fetching labels information: %s", err.Error())
 		return err
@@ -446,7 +459,7 @@ func (p *PullRequest) updatePullRequest() error {
 	}
 
 	if len(p.spec.Reviewers) != 0 {
-		err = p.addPullrequestReviewers(p.remotePullRequest.ID)
+		err = p.addPullrequestReviewers(p.remotePullRequest.ID, 0)
 		if err != nil {
 			logrus.Debugln(err.Error())
 		}
@@ -455,7 +468,7 @@ func (p *PullRequest) updatePullRequest() error {
 	if len(p.spec.Assignees) != 0 {
 		var assigneesID []githubv4.ID
 		for _, assignee := range p.spec.Assignees {
-			user, err := getUserInfo(p.gh.client, assignee)
+			user, err := getUserInfo(p.gh.client, assignee, 0)
 			if err != nil {
 				logrus.Debugf("Failed to get user id for %s: %v", assignee, err)
 				continue
@@ -476,9 +489,19 @@ func (p *PullRequest) updatePullRequest() error {
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(mutation.RateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				return p.updatePullRequest(retry + 1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
 		logrus.Debugf("Error updating pull-request: %s", err.Error())
-		return err
+		return fmt.Errorf("updating pull request: %w", err)
 	}
+
+	logrus.Debugln(mutation.RateLimit)
 
 	logrus.Infof("\nPull Request available at:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
 
@@ -486,10 +509,10 @@ func (p *PullRequest) updatePullRequest() error {
 }
 
 // EnablePullRequestAutoMerge updates an existing pullrequest with the flag automerge
-func (p *PullRequest) EnablePullRequestAutoMerge() error {
+func (p *PullRequest) EnablePullRequestAutoMerge(retry int) error {
 
 	// Test that automerge feature is enabled on repository but only if we plan to use it
-	autoMergeAllowed, err := p.isAutoMergedEnabledOnRepository()
+	autoMergeAllowed, err := p.isAutoMergedEnabledOnRepository(0)
 	if err != nil {
 		return err
 	}
@@ -521,14 +544,24 @@ func (p *PullRequest) EnablePullRequestAutoMerge() error {
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 
 	if err != nil {
-		return err
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(mutation.RateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				return p.EnablePullRequestAutoMerge(retry + 1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("enabling pull request automerge: %w", err)
 	}
+
+	logrus.Debugln(mutation.RateLimit)
 
 	return nil
 }
 
 // OpenPullRequest creates a new GitHub Pull Request.
-func (p *PullRequest) OpenPullRequest() error {
+func (p *PullRequest) OpenPullRequest(retry int) error {
 
 	/*
 	   mutation($input: CreatePullRequestInput!){
@@ -598,13 +631,24 @@ func (p *PullRequest) OpenPullRequest() error {
 		CreatePullRequest struct {
 			PullRequest PullRequestApi
 		} `graphql:"createPullRequest(input: $input)"`
+		RateLimit RateLimit
 	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
 		logrus.Infof("\nError creating pull request:\n\n\t%s\n\n", err.Error())
-		return err
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(mutation.RateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				return p.OpenPullRequest(retry + 1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("creating pull request: %w", err)
 	}
+
+	logrus.Debugln(mutation.RateLimit)
 
 	p.remotePullRequest = mutation.CreatePullRequest.PullRequest
 
@@ -613,12 +657,13 @@ func (p *PullRequest) OpenPullRequest() error {
 }
 
 // isAutoMergedEnabledOnRepository checks if a remote repository allows automerging Pull Requests.
-func (p *PullRequest) isAutoMergedEnabledOnRepository() (bool, error) {
+func (p *PullRequest) isAutoMergedEnabledOnRepository(retry int) (bool, error) {
 
 	var query struct {
 		Repository struct {
 			AutoMergeAllowed bool
 		} `graphql:"repository(owner: $owner, name: $name)"`
+		RateLimit RateLimit
 	}
 
 	variables := map[string]interface{}{
@@ -629,14 +674,24 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository() (bool, error) {
 	err := p.gh.client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		return false, err
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(query.RateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				return p.isAutoMergedEnabledOnRepository(retry + 1)
+			}
+			return false, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return false, fmt.Errorf("querying GitHub API: %w", err)
 	}
+	logrus.Debugln(query.RateLimit)
+
 	return query.Repository.AutoMergeAllowed, nil
 
 }
 
 // getRemotePullRequest checks if a Pull Request already exists on GitHub and is in the state 'open' or 'closed'.
-func (p *PullRequest) getRemotePullRequest(resetBody bool) error {
+func (p *PullRequest) getRemotePullRequest(resetBody bool, retry int) error {
 	/*
 		https://developer.github.com/v4/explorer/
 		# Query
@@ -691,8 +746,15 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool) error {
 
 	err := p.gh.client.Query(context.Background(), &query, variables)
 	if err != nil {
-		logrus.Debugf("Error getting existing pull-request: %s", err.Error())
-		return err
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(query.Repository)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				return p.getRemotePullRequest(resetBody, retry+1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("getting existing pull request: %w", err)
 	}
 
 	// If no pull-request found, then we can exit
@@ -717,7 +779,7 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool) error {
 }
 
 // getPullRequestLabelsInformation queries GitHub Api to retrieve every labels assigned to a pullRequest
-func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, error) {
+func (p *PullRequest) GetPullRequestLabelsInformation(retry int) ([]repositoryLabelApi, error) {
 
 	/*
 		query getPullRequests(
@@ -784,13 +846,22 @@ func (p *PullRequest) GetPullRequestLabelsInformation() ([]repositoryLabelApi, e
 	var pullRequestLabels []repositoryLabelApi
 	for {
 		err := p.gh.client.Query(context.Background(), &query, variables)
-
 		if err != nil {
-			logrus.Errorf("\t%s", err)
-			return nil, err
+			if strings.Contains(err.Error(), "API rate limit exceeded") {
+				logrus.Debugln(query.RateLimit)
+				if retry < MaxRetry {
+					query.RateLimit.Pause()
+
+					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					return p.GetPullRequestLabelsInformation(retry + 1)
+				}
+				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			}
+
+			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}
 
-		query.RateLimit.Show()
+		logrus.Debugln(query.RateLimit)
 
 		// Retrieve remote label information such as label ID, label name, labe description
 		for _, node := range query.Repository.PullRequest.Labels.Edges {

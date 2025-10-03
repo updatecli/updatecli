@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
@@ -55,7 +56,7 @@ type refEdge struct {
 }
 
 // SearchTags return every tags from the github api return in reverse order of commit tags.
-func (g *Github) SearchTags() (tags []string, err error) {
+func (g *Github) SearchTags(retry int) (tags []string, err error) {
 	var query tagsQuery
 
 	variables := map[string]interface{}{
@@ -74,13 +75,21 @@ func (g *Github) SearchTags() (tags []string, err error) {
 	for {
 		err = g.client.Query(context.Background(), &query, variables)
 		if err != nil {
-			logrus.Error(err)
-			return nil, err
+			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+				logrus.Debugln(query.RateLimit)
+				if retry < MaxRetry {
+					query.RateLimit.Pause()
+					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					return g.SearchTags(retry + 1)
+				}
+				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			}
+			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}
 
-		expectedFound = query.Repository.Refs.TotalCount
+		logrus.Debugln(query.RateLimit)
 
-		query.RateLimit.Show()
+		expectedFound = query.Repository.Refs.TotalCount
 
 		for i := len(query.Repository.Refs.Edges) - 1; i >= 0; i-- {
 			tagCounter++

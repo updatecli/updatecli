@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (p *PullRequest) addPullrequestReviewers(prID string) error {
+func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 
 	if len(p.spec.Reviewers) == 0 {
 		return nil
@@ -21,6 +21,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string) error {
 				ID string
 			}
 		} `graphql:"requestReviews(input: $input)"`
+		RateLimit RateLimit
 	}
 
 	input := githubv4.RequestReviewsInput{
@@ -36,7 +37,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string) error {
 
 		switch len(a) {
 		case 2:
-			teamID, err := getTeamID(p.gh.client, a[0], a[1])
+			teamID, err := getTeamID(p.gh.client, a[0], a[1], 0)
 			logrus.Debugf("Team ID: %q found for %q", teamID, reviewer)
 			if err != nil {
 				logrus.Warningf("Failed to get team id for %s/%s: %v", a[0], a[1], err)
@@ -44,7 +45,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string) error {
 				teamIDs = append(teamIDs, githubv4.NewID(teamID))
 			}
 		case 1:
-			user, err := getUserInfo(p.gh.client, a[0])
+			user, err := getUserInfo(p.gh.client, a[0], 0)
 			logrus.Debugf("User ID: %q found for %q", user.ID, reviewer)
 			if err != nil {
 				logrus.Warningf("Failed to get user id for %s/%s: %v", a[0], a[1], err)
@@ -72,8 +73,17 @@ func (p *PullRequest) addPullrequestReviewers(prID string) error {
 
 	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
-		logrus.Debugf("Adding pullrequest reviewers: %s", err.Error())
-		return err
+		if strings.Contains(err.Error(), "API rate limit exceeded") {
+			logrus.Debugln(mutation.RequestReviews)
+			if retry < MaxRetry {
+				mutation.RateLimit.Pause()
+
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				return p.addPullrequestReviewers(prID, retry+1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("adding pullrequest reviewers: %w", err)
 	}
 
 	return nil

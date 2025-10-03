@@ -1,6 +1,7 @@
 package github
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -13,9 +14,23 @@ type RateLimit struct {
 	ResetAt   string
 }
 
-// Show display GitHub Api limit usage
-// If the remaining credit is 0, it waits until the reset time before returning
-func (a *RateLimit) Show() {
+// String returns a string representation of the RateLimit struct
+func (a RateLimit) String() string {
+	if a.isEmpty() {
+		return "GitHub RateLimit is empty"
+	}
+
+	return fmt.Sprintf("GitHub API credit used %d, remaining %d (reset at %s)",
+		a.Cost, a.Remaining, a.ResetAt)
+}
+
+// Pause pauses the execution if the rate limit is reached until the reset time
+func (a RateLimit) Pause() {
+
+	if a.isEmpty() {
+		logrus.Debug("GitHub RateLimit is empty, skipping Pause()")
+		return
+	}
 
 	if a.Remaining == 0 {
 		resetAtTime, err := time.Parse(time.RFC3339, a.ResetAt)
@@ -36,4 +51,9 @@ func (a *RateLimit) Show() {
 
 	logrus.Debugf("GitHub API credit used %d, remaining %d (reset at %s)",
 		a.Cost, a.Remaining, a.ResetAt)
+}
+
+// isEmpty returns true if the RateLimit struct is empty
+func (a RateLimit) isEmpty() bool {
+	return a.Cost == 0 && a.Remaining == 0 && a.ResetAt == ""
 }

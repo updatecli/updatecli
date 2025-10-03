@@ -2,6 +2,8 @@ package github
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
@@ -78,7 +80,7 @@ type repositoryRelease struct {
 // SearchReleases return every releaseNode from the github api
 // ordered by reverse order of created time.
 // Draft and pre-releases are filtered out.
-func (g *Github) SearchReleases(releaseType ReleaseType) (releases []ReleaseNode, err error) {
+func (g *Github) SearchReleases(releaseType ReleaseType, retry int) (releases []ReleaseNode, err error) {
 	var query releasesQuery
 
 	variables := map[string]interface{}{
@@ -94,11 +96,19 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []ReleaseNode
 	for {
 		err := g.client.Query(context.Background(), &query, variables)
 		if err != nil {
-			logrus.Errorf("\t%s", err)
-			return releases, err
+			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+				logrus.Debugln(query.RateLimit)
+				if retry < MaxRetry {
+					query.RateLimit.Pause()
+					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					return g.SearchReleases(releaseType, retry+1)
+				}
+				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			}
+			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}
 
-		query.RateLimit.Show()
+		logrus.Debugln(query.RateLimit)
 
 		for i := len(query.Repository.Releases.Edges) - 1; i >= 0; i-- {
 			node := query.Repository.Releases.Edges[i]
@@ -144,7 +154,7 @@ func (g *Github) SearchReleases(releaseType ReleaseType) (releases []ReleaseNode
 // ordered by reverse order of created time.
 // Draft and pre-releases are filtered out.
 func (g *Github) SearchReleasesByTagName(releaseType ReleaseType) (releases []string, err error) {
-	releaseNodes, err := g.SearchReleases(releaseType)
+	releaseNodes, err := g.SearchReleases(releaseType, 0)
 	if err != nil {
 		logrus.Errorf("\t%s", err)
 		return releases, err
@@ -160,7 +170,7 @@ func (g *Github) SearchReleasesByTagName(releaseType ReleaseType) (releases []st
 // ordered by reverse order of created time.
 // Draft and pre-releases are filtered out.
 func (g *Github) SearchReleasesByTagHash(releaseType ReleaseType) (releases []string, err error) {
-	releaseNodes, err := g.SearchReleases(releaseType)
+	releaseNodes, err := g.SearchReleases(releaseType, 0)
 	if err != nil {
 		logrus.Errorf("\t%s", err)
 		return releases, err
@@ -176,7 +186,7 @@ func (g *Github) SearchReleasesByTagHash(releaseType ReleaseType) (releases []st
 // ordered by reverse order of created time.
 // Draft and pre-releases are filtered out.
 func (g *Github) SearchReleasesByTitle(releaseType ReleaseType) (releases []string, err error) {
-	releaseNodes, err := g.SearchReleases(releaseType)
+	releaseNodes, err := g.SearchReleases(releaseType, 0)
 	if err != nil {
 		logrus.Errorf("\t%s", err)
 		return releases, err

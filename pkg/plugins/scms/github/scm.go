@@ -85,7 +85,7 @@ func (g *Github) Commit(message string) error {
 
 		_, workingBranch, _ := g.GetBranches()
 
-		if err = g.CreateCommit(workingDir, commitMessage); err != nil {
+		if err = g.CreateCommit(workingDir, commitMessage, 0); err != nil {
 			return err
 		}
 
@@ -139,9 +139,10 @@ type commitQuery struct {
 			OID string
 		}
 	} `graphql:"createCommitOnBranch(input:$input)"`
+	RateLimit RateLimit
 }
 
-func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
+func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int) error {
 	var m commitQuery
 
 	sourceBranch, workingBranch, _ := g.GetBranches()
@@ -201,8 +202,20 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 	}
 
 	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
-		return err
+		if strings.Contains(err.Error(), "API rate limit exceeded") {
+			logrus.Debugln(m.RateLimit)
+			if retry < MaxRetry {
+				m.RateLimit.Pause()
+
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				return g.CreateCommit(workingDir, commitMessage, retry+1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)
 	}
+
+	logrus.Debugln(m.RateLimit)
 
 	logrus.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
 	return nil
