@@ -265,7 +265,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		if GitHubAppSpecFromEnv != nil {
 			// If we detect that the environment variables are set for GitHub App authentication, we use them
 			// instead of the token authentication method.
-			logrus.Debugf(`Using GitHub App authentication method defined in environment variables"`)
+			logrus.Debugf(`Using GitHub App authentication method defined from environment variables`)
 			tokenSource, err = GitHubAppSpecFromEnv.Getoauth2TokenSource()
 			if err != nil {
 				return nil, fmt.Errorf("retrieving GitHub App token: %w", err)
@@ -293,11 +293,10 @@ func New(s Spec, pipelineID string) (*Github, error) {
 			username = "x-access-token"
 		} else {
 			logrus.Debugf(`GitHub token is not set, please refer to the documentation for more information:
-->  https://www.updatecli.io/docs/plugins/scm/github/#authentication
+->  https://www.updatecli.io/docs/plugins/scm/github/
 `)
 			return nil, errors.New("github token is not set")
 		}
-
 	} else {
 		logrus.Debugf(`Using personal access token authentication method defined in environment variable "UPDATECLI_GITHUB_TOKEN"`)
 	}
@@ -512,7 +511,6 @@ func (gs *Spec) MergeFromEnv(envPrefix string) {
 }
 
 func (g *Github) setDirectory() {
-
 	if _, err := os.Stat(g.Spec.Directory); os.IsNotExist(err) {
 
 		err := os.MkdirAll(g.Spec.Directory, 0755)
@@ -523,7 +521,6 @@ func (g *Github) setDirectory() {
 }
 
 func (g *Github) queryRepository(sourceBranch string, workingBranch string, retry int) (*Repository, error) {
-
 	rateLimit, err := queryRateLimit(g.client, context.Background())
 	logrus.Debugln(rateLimit)
 	if err != nil {
@@ -591,7 +588,6 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 	}
 
 	err = g.client.Query(context.Background(), &query, variables)
-
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < MaxRetry {
@@ -634,7 +630,6 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 // Returns Git object ID of the latest commit on the branch and the default branch
 // of the repository.
 func (g *Github) queryHeadOid(workingBranch string, retry int) (*RepositoryRef, error) {
-
 	rateLimit, err := queryRateLimit(g.client, context.Background())
 	logrus.Debugln(rateLimit)
 	if err != nil {

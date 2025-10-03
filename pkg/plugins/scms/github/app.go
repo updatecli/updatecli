@@ -93,9 +93,8 @@ func (g GitHubAppSpec) getInstallationID() (int64, error) {
 }
 
 // getExpirationTime returns the GitHub App token expiration time as an int64
-// or 6000 if not set
+// or 3600 if not set
 func (g GitHubAppSpec) getExpirationTime() (int64, error) {
-
 	if g.ExpirationTime == "" {
 		return DefaultExpirationTime, nil
 	}
@@ -123,7 +122,6 @@ func (g GitHubAppSpec) getExpirationTimeDuration() (time.Duration, error) {
 
 // Validate validates the GitHub App configuration
 func (g *GitHubAppSpec) Validate() error {
-
 	var errs []error
 
 	if g.ClientID == "" {
@@ -160,12 +158,10 @@ func (g *GitHubAppSpec) Validate() error {
 	}
 
 	return nil
-
 }
 
 // Getoauth2TokenSource returns an oauth2.TokenSource to authenticate with GitHub using a GitHub App
 func (g *GitHubAppSpec) Getoauth2TokenSource() (oauth2.TokenSource, error) {
-
 	privateKey, err := g.getPrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("retrieving GitHub App private key: %w", err)
@@ -193,5 +189,4 @@ func (g *GitHubAppSpec) Getoauth2TokenSource() (oauth2.TokenSource, error) {
 	tokenSource := githubauth.NewInstallationTokenSource(installationID, appTokenSource)
 
 	return tokenSource, nil
-
 }
