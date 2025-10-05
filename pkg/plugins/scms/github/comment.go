@@ -16,6 +16,22 @@ func (p *PullRequest) addComment(body string, retry int) error {
 		return nil
 	}
 
+	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(rateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				rateLimit.Pause()
+				return p.addComment(body, retry+1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
+	}
+
+	logrus.Debugln(rateLimit)
+
 	// cfr https://docs.github.com/en/graphql/reference/objects#issuecomment
 	var mutation struct {
 		AddComment struct {
@@ -33,7 +49,6 @@ func (p *PullRequest) addComment(body string, retry int) error {
 				}
 			}
 		} `graphql:"addComment(input: $input)"`
-		RateLimit RateLimit
 	}
 
 	logrus.Debugf("Commenting GitHub pull request %s", p.remotePullRequest.Url)
@@ -43,22 +58,10 @@ func (p *PullRequest) addComment(body string, retry int) error {
 		Body:      githubv4.String(body),
 	}
 
-	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			logrus.Debugln(mutation.RateLimit)
-			if retry < MaxRetry {
-				mutation.RateLimit.Pause()
-
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				return p.addComment(body, retry+1)
-			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
-		}
 		return fmt.Errorf("adding comment to pull request %q: %w", p.remotePullRequest.Url, err)
 	}
-
-	logrus.Debugln(mutation.RateLimit)
 
 	return nil
 }

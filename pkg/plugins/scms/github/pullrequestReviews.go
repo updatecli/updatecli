@@ -9,7 +9,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// addPullrequestReviewers adds reviewers to a pull request
 func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
+
+	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	if err != nil {
+		if strings.Contains(err.Error(), "API rate limit exceeded") {
+			logrus.Debugln(rateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				rateLimit.Pause()
+				return p.addPullrequestReviewers(prID, retry+1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
+	}
+	logrus.Debugln(rateLimit)
 
 	if len(p.spec.Reviewers) == 0 {
 		return nil
@@ -21,7 +37,6 @@ func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 				ID string
 			}
 		} `graphql:"requestReviews(input: $input)"`
-		RateLimit RateLimit
 	}
 
 	input := githubv4.RequestReviewsInput{
@@ -71,18 +86,8 @@ func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 		return fmt.Errorf("no valid reviewers found among %v", p.spec.Reviewers)
 	}
 
-	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
-		if strings.Contains(err.Error(), "API rate limit exceeded") {
-			logrus.Debugln(mutation.RequestReviews)
-			if retry < MaxRetry {
-				mutation.RateLimit.Pause()
-
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				return p.addPullrequestReviewers(prID, retry+1)
-			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
-		}
 		return fmt.Errorf("adding pullrequest reviewers: %w", err)
 	}
 

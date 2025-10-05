@@ -78,8 +78,8 @@ func (g *Github) SearchTags(retry int) (tags []string, err error) {
 			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 				logrus.Debugln(query.RateLimit)
 				if retry < MaxRetry {
-					query.RateLimit.Pause()
 					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					query.RateLimit.Pause()
 					return g.SearchTags(retry + 1)
 				}
 				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)

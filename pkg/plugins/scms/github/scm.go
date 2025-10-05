@@ -13,6 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
+// GetBranches returns source, working and target branch
 func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	sourceBranch = g.Spec.Branch
 	workingBranch = g.Spec.Branch
@@ -132,6 +133,7 @@ func (g *Github) Commit(message string) error {
 	return nil
 }
 
+// ComitQuery defines a github v4 API mutation to create a commit on a branch
 type commitQuery struct {
 	CreateCommitOnBranch struct {
 		Commit struct {
@@ -142,6 +144,7 @@ type commitQuery struct {
 	RateLimit RateLimit
 }
 
+// CreateCommit creates a commit on a branch using GitHub API
 func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int) error {
 	var m commitQuery
 
@@ -205,9 +208,8 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 		if strings.Contains(err.Error(), "API rate limit exceeded") {
 			logrus.Debugln(m.RateLimit)
 			if retry < MaxRetry {
-				m.RateLimit.Pause()
-
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				m.RateLimit.Pause()
 				return g.CreateCommit(workingDir, commitMessage, retry+1)
 			}
 			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
@@ -216,11 +218,11 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 	}
 
 	logrus.Debugln(m.RateLimit)
-
 	logrus.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
 	return nil
 }
 
+// processChangedFiles reads the content of the files and prepare them to be
 func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddition, error) {
 	additions := make([]githubv4.FileAddition, 0, len(files))
 	for _, f := range files {
@@ -237,6 +239,7 @@ func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddi
 	return additions, nil
 }
 
+// GetLatestCommitHash returns the latest commit hash of the specified branch
 func (g *Github) GetLatestCommitHash(workingBranch string) (*RepositoryRef, error) {
 	repoRef, err := g.queryHeadOid(workingBranch)
 	if err != nil {
@@ -331,6 +334,7 @@ func (g *Github) PushBranch(branch string) error {
 	return nil
 }
 
+// GetChangedFiles returns a list of changed files in the working directory
 func (g *Github) GetChangedFiles(workingDir string) ([]string, error) {
 	return g.nativeGitHandler.GetChangedFiles(workingDir)
 }

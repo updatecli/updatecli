@@ -9,13 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// query {
-//   user(login: "USERNAME") {
-//     id
-//     name
-//   }
-// }
-
 // userQuery defines a github v4 API query to retrieve a user information
 type userQuery struct {
 	RateLimit RateLimit
@@ -28,6 +21,7 @@ type userInfo struct {
 	Name string
 }
 
+// getUserInfo return a user information from GitHub API
 func getUserInfo(client GitHubClient, login string, retry int) (*userInfo, error) {
 
 	variables := map[string]interface{}{
@@ -42,9 +36,8 @@ func getUserInfo(client GitHubClient, login string, retry int) (*userInfo, error
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(query.RateLimit)
 			if retry < MaxRetry {
-				query.RateLimit.Pause()
-
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				query.RateLimit.Pause()
 				return getUserInfo(client, login, retry+1)
 			}
 			return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)

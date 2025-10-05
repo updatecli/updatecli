@@ -35,16 +35,12 @@ func getTeamID(client GitHubClient, org string, team string, retry int) (string,
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < 3 {
 			logrus.Debugln(query.RateLimit)
 			if retry < MaxRetry {
-				query.RateLimit.Pause()
-
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				query.RateLimit.Pause()
 				return getTeamID(client, org, team, retry+1)
 			}
-
 			return "", fmt.Errorf("GitHub API rate limit exceeded. Please try again later")
-
 		}
-
 		return "", err
 	}
 

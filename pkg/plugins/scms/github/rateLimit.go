@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -56,4 +57,19 @@ func (a RateLimit) Pause() {
 // isEmpty returns true if the RateLimit struct is empty
 func (a RateLimit) isEmpty() bool {
 	return a.Cost == 0 && a.Remaining == 0 && a.ResetAt == ""
+}
+
+// queryRateLimit queries the GitHub API rate limit information
+func queryRateLimit(client GitHubClient, ctx context.Context) (*RateLimit, error) {
+
+	query := struct {
+		RateLimit RateLimit
+	}{}
+
+	err := client.Query(ctx, &query, nil)
+	if err != nil {
+		return nil, fmt.Errorf("querying GitHub API: %w", err)
+	}
+
+	return &query.RateLimit, nil
 }

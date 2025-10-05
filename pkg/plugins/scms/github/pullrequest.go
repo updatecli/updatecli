@@ -25,9 +25,12 @@ import (
 )
 
 var (
+	// ErrAutomergeNotAllowOnRepository is returned when automerge is not allowed on the repository
 	ErrAutomergeNotAllowOnRepository = errors.New("automerge is not allowed on repository")
-	ErrBadMergeMethod                = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
-	ErrPullRequestIsInCleanStatus    = errors.New("pull request Pull request is in clean status")
+	// ErrBadMergeMethod is returned when the merge method is not valid
+	ErrBadMergeMethod = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
+	// ErrPullRequestIsInCleanStatus is returned when the pull request is in clean status
+	ErrPullRequestIsInCleanStatus = errors.New("pull request Pull request is in clean status")
 )
 
 // PullRequest contains multiple fields mapped to GitHub V4 api
@@ -153,6 +156,7 @@ type ActionSpec struct {
 	Assignees []string `yaml:",omitempty"`
 }
 
+// PullRequest contains multiple fields mapped to GitHub V4 api
 type PullRequest struct {
 	gh                *Github
 	Report            string
@@ -189,7 +193,6 @@ type mutationEnablePullRequestAutoMerge struct {
 	EnablePullRequestAutoMerge struct {
 		PullRequest PullRequestApi
 	} `graphql:"enablePullRequestAutoMerge(input: $input)"`
-	RateLimit RateLimit
 }
 
 func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
@@ -240,6 +243,7 @@ func (p *PullRequest) CleanAction(report *reports.Action) error {
 	return nil
 }
 
+// CheckActionExist checks if a pullrequest already exists and update the report object accordingly
 func (p *PullRequest) CheckActionExist(report *reports.Action) error {
 
 	repository, err := p.gh.queryRepository("", "")
@@ -333,6 +337,22 @@ func (p *PullRequest) CreateAction(report *reports.Action, resetDescription bool
 // closePullRequest closes an existing Pull Request using GitHub graphql api.
 func (p *PullRequest) closePullRequest(retry int) error {
 
+	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(rateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				rateLimit.Pause()
+				return p.closePullRequest(retry + 1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
+	}
+
+	logrus.Debugln(rateLimit)
+
 	// https://docs.github.com/en/graphql/reference/input-objects#closepullrequestinput
 	/*
 		  mutation($input: closePullRequestInput!){
@@ -355,28 +375,17 @@ func (p *PullRequest) closePullRequest(retry int) error {
 		UpdatePullRequest struct {
 			PullRequest PullRequestApi
 		} `graphql:"closePullRequest(input: $input)"`
-		RateLimit RateLimit
 	}
 
 	input := githubv4.ClosePullRequestInput{
 		PullRequestID: githubv4.ID(p.remotePullRequest.ID),
 	}
 
-	err := p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
 		logrus.Debugf("Closing pull request: %s", err.Error())
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			logrus.Debugln(mutation.RateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				return p.closePullRequest(retry + 1)
-			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
-		}
 		return fmt.Errorf("closing pull request: %w", err)
 	}
-
-	logrus.Debugln(mutation.RateLimit)
 
 	msg := "Pull request closed as no changed file detected"
 	logrus.Infof("%s at:\n\n\t%s\n\n", msg, mutation.UpdatePullRequest.PullRequest.Url)
@@ -390,6 +399,22 @@ func (p *PullRequest) closePullRequest(retry int) error {
 
 // updatePullRequest updates an existing Pull Request.
 func (p *PullRequest) updatePullRequest(retry int) error {
+
+	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(rateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				rateLimit.Pause()
+				return p.updatePullRequest(retry + 1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
+	}
+
+	logrus.Debugln(rateLimit)
 
 	/*
 		  mutation($input: UpdatePullRequestInput!){
@@ -413,7 +438,6 @@ func (p *PullRequest) updatePullRequest(retry int) error {
 		UpdatePullRequest struct {
 			PullRequest PullRequestApi
 		} `graphql:"updatePullRequest(input: $input)"`
-		RateLimit RateLimit
 	}
 
 	logrus.Debugf("Updating GitHub Pull Request")
@@ -489,19 +513,9 @@ func (p *PullRequest) updatePullRequest(retry int) error {
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			logrus.Debugln(mutation.RateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				return p.updatePullRequest(retry + 1)
-			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
-		}
 		logrus.Debugf("Error updating pull-request: %s", err.Error())
 		return fmt.Errorf("updating pull request: %w", err)
 	}
-
-	logrus.Debugln(mutation.RateLimit)
 
 	logrus.Infof("\nPull Request available at:\n\n\t%s\n\n", mutation.UpdatePullRequest.PullRequest.Url)
 
@@ -510,6 +524,20 @@ func (p *PullRequest) updatePullRequest(retry int) error {
 
 // EnablePullRequestAutoMerge updates an existing pullrequest with the flag automerge
 func (p *PullRequest) EnablePullRequestAutoMerge(retry int) error {
+
+	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(rateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				rateLimit.Pause()
+				return p.EnablePullRequestAutoMerge(retry + 1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+	}
+	logrus.Debugln(rateLimit)
 
 	// Test that automerge feature is enabled on repository but only if we plan to use it
 	autoMergeAllowed, err := p.isAutoMergedEnabledOnRepository(0)
@@ -544,24 +572,28 @@ func (p *PullRequest) EnablePullRequestAutoMerge(retry int) error {
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			logrus.Debugln(mutation.RateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				return p.EnablePullRequestAutoMerge(retry + 1)
-			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
-		}
 		return fmt.Errorf("enabling pull request automerge: %w", err)
 	}
-
-	logrus.Debugln(mutation.RateLimit)
 
 	return nil
 }
 
 // OpenPullRequest creates a new GitHub Pull Request.
 func (p *PullRequest) OpenPullRequest(retry int) error {
+
+	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			logrus.Debugln(rateLimit)
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				rateLimit.Pause()
+				return p.OpenPullRequest(retry + 1)
+			}
+			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		}
+	}
+	logrus.Debugln(rateLimit)
 
 	/*
 	   mutation($input: CreatePullRequestInput!){
@@ -631,24 +663,12 @@ func (p *PullRequest) OpenPullRequest(retry int) error {
 		CreatePullRequest struct {
 			PullRequest PullRequestApi
 		} `graphql:"createPullRequest(input: $input)"`
-		RateLimit RateLimit
 	}
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
-		logrus.Infof("\nError creating pull request:\n\n\t%s\n\n", err.Error())
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			logrus.Debugln(mutation.RateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				return p.OpenPullRequest(retry + 1)
-			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
-		}
 		return fmt.Errorf("creating pull request: %w", err)
 	}
-
-	logrus.Debugln(mutation.RateLimit)
 
 	p.remotePullRequest = mutation.CreatePullRequest.PullRequest
 
@@ -677,6 +697,7 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository(retry int) (bool, error) {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(query.RateLimit)
 			if retry < MaxRetry {
+				query.RateLimit.Pause()
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
 				return p.isAutoMergedEnabledOnRepository(retry + 1)
 			}
@@ -725,6 +746,7 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool, retry int) error {
 				Nodes []PullRequestApi
 			} `graphql:"pullRequests(baseRefName: $baseRefName, headRefName: $headRefName, last: 1, states: [OPEN])"`
 		} `graphql:"repository(owner: $owner, name: $name)"`
+		RateLimit RateLimit
 	}
 
 	owner := githubv4.String(p.repository.Owner)
@@ -750,6 +772,7 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool, retry int) error {
 			logrus.Debugln(query.Repository)
 			if retry < MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				query.RateLimit.Pause()
 				return p.getRemotePullRequest(resetBody, retry+1)
 			}
 			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
@@ -850,9 +873,8 @@ func (p *PullRequest) GetPullRequestLabelsInformation(retry int) ([]repositoryLa
 			if strings.Contains(err.Error(), "API rate limit exceeded") {
 				logrus.Debugln(query.RateLimit)
 				if retry < MaxRetry {
-					query.RateLimit.Pause()
-
 					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					query.RateLimit.Pause()
 					return p.GetPullRequestLabelsInformation(retry + 1)
 				}
 				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)

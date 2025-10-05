@@ -50,6 +50,7 @@ query getLatestRelease($owner: String!, $repository: String!, $before: String, $
     "direction": "DESC"
   }
 }*/
+// releasesQuery defines a github v4 API query to retrieve a list of releases sorted by reverse order of created time.
 type releasesQuery struct {
 	RateLimit  RateLimit
 	Repository struct {
@@ -99,8 +100,8 @@ func (g *Github) SearchReleases(releaseType ReleaseType, retry int) (releases []
 			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 				logrus.Debugln(query.RateLimit)
 				if retry < MaxRetry {
-					query.RateLimit.Pause()
 					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					query.RateLimit.Pause()
 					return g.SearchReleases(releaseType, retry+1)
 				}
 				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
