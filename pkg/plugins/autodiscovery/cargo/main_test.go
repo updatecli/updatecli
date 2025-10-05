@@ -89,6 +89,37 @@ targets:
       file: 'Cargo.toml'
       key: 'dependencies.rand.version'
     sourceid: 'rand'
+`, `name: 'deps(cargo): bump build dependency "built" for "test-crate" crate'
+sources:
+  built:
+    name: 'Get latest "built" crate version'
+    kind: 'cargopackage'
+    spec:
+      package: 'built'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+  built-current-version:
+    name: 'Get current "built" crate version'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      Key: 'build-dependencies.built'
+conditions:
+  built:
+    name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
+    kind: 'shell'
+    sourceid: 'built'
+    spec:
+      command: 'test {{ source "built-current-version" }} != '
+targets:
+  built:
+    name: 'deps(cargo): bump crate build dependency "built" to {{ source "built" }}'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      key: 'build-dependencies.built'
+    sourceid: 'built'
 `, `name: 'deps(cargo): bump dev dependency "futures" for "test-crate" crate'
 sources:
   futures:
@@ -189,6 +220,37 @@ targets:
       file: 'Cargo.toml'
       key: 'dependencies.rand.version'
     sourceid: 'rand'
+`, `name: 'deps(cargo): bump build dependency "built" for "test-crate" crate'
+sources:
+  built:
+    name: 'Get latest "built" crate version'
+    kind: 'cargopackage'
+    spec:
+      package: 'built'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+  built-current-version:
+    name: 'Get current "built" crate version'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      Key: 'build-dependencies.built'
+conditions:
+  built:
+    name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
+    kind: 'shell'
+    sourceid: 'built'
+    spec:
+      command: 'test {{ source "built-current-version" }} != '
+targets:
+  built:
+    name: 'deps(cargo): bump crate build dependency "built" to {{ source "built" }}'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      key: 'build-dependencies.built'
+    sourceid: 'built'
 `, `name: 'deps(cargo): bump dev dependency "futures" for "test-crate" crate'
 sources:
   futures:
@@ -301,6 +363,46 @@ targets:
           ARGS="--dry-run"
         fi
         cargo upgrade $ARGS --manifest-path Cargo.toml --package rand@{{ source "rand" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "Cargo.toml"
+    disablesourceinput: true
+`, `name: 'deps(cargo): bump build dependency "built" for "test-crate" crate'
+sources:
+  built:
+    name: 'Get latest "built" crate version'
+    kind: 'cargopackage'
+    spec:
+      package: 'built'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+  built-current-version:
+    name: 'Get current "built" crate version'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      Key: 'build-dependencies.built'
+conditions:
+  built:
+    name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
+    kind: 'shell'
+    sourceid: 'built'
+    spec:
+      command: 'test {{ source "built-current-version" }} != '
+targets:
+  built:
+    name: 'deps(cargo): bump crate build dependency "built" to {{ source "built" }}'
+    kind: 'shell'
+    spec:
+      command: |
+        ARGS=""
+        if [ "$DRY_RUN" = "true" ]; then
+          ARGS="--dry-run"
+        fi
+        cargo upgrade $ARGS --manifest-path Cargo.toml --package built@{{ source "built" }}
       changedif:
         kind: file/checksum
         spec:
@@ -679,6 +781,37 @@ targets:
       file: 'Cargo.toml'
       key: 'workspace.dependencies.anyhow'
     sourceid: 'anyhow'
+`, `name: 'deps(cargo): bump workspace build dependency "built"'
+sources:
+  built:
+    name: 'Get latest "built" crate version'
+    kind: 'cargopackage'
+    spec:
+      package: 'built'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+  built-current-version:
+    name: 'Get current "built" crate version'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      Key: 'workspace.build-dependencies.built'
+conditions:
+  built:
+    name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
+    kind: 'shell'
+    sourceid: 'built'
+    spec:
+      command: 'test {{ source "built-current-version" }} != '
+targets:
+  built:
+    name: 'deps(cargo): bump workspace build dependency "built" to {{ source "built" }}'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      key: 'workspace.build-dependencies.built'
+    sourceid: 'built'
 `,
 				`name: 'deps(cargo): bump dependency "rand" for "simple_crate" crate'
 sources:
@@ -780,6 +913,37 @@ targets:
       file: 'Cargo.toml'
       key: 'workspace.dependencies.anyhow'
     sourceid: 'anyhow'
+`, `name: 'deps(cargo): bump workspace build dependency "built"'
+sources:
+  built:
+    name: 'Get latest "built" crate version'
+    kind: 'cargopackage'
+    spec:
+      package: 'built'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+  built-current-version:
+    name: 'Get current "built" crate version'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      Key: 'workspace.build-dependencies.built'
+conditions:
+  built:
+    name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
+    kind: 'shell'
+    sourceid: 'built'
+    spec:
+      command: 'test {{ source "built-current-version" }} != '
+targets:
+  built:
+    name: 'deps(cargo): bump workspace build dependency "built" to {{ source "built" }}'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      key: 'workspace.build-dependencies.built'
+    sourceid: 'built'
 `,
 				`name: 'deps(cargo): bump dependency "rand" for "simple_crate" crate'
 sources:
@@ -883,6 +1047,46 @@ targets:
           ARGS="--dry-run"
         fi
         cargo upgrade $ARGS --manifest-path Cargo.toml --package anyhow@{{ source "anyhow" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "Cargo.toml"
+    disablesourceinput: true
+`, `name: 'deps(cargo): bump workspace build dependency "built"'
+sources:
+  built:
+    name: 'Get latest "built" crate version'
+    kind: 'cargopackage'
+    spec:
+      package: 'built'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+  built-current-version:
+    name: 'Get current "built" crate version'
+    kind: 'toml'
+    spec:
+      file: 'Cargo.toml'
+      Key: 'workspace.build-dependencies.built'
+conditions:
+  built:
+    name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
+    kind: 'shell'
+    sourceid: 'built'
+    spec:
+      command: 'test {{ source "built-current-version" }} != '
+targets:
+  built:
+    name: 'deps(cargo): bump workspace build dependency "built" to {{ source "built" }}'
+    kind: 'shell'
+    spec:
+      command: |
+        ARGS=""
+        if [ "$DRY_RUN" = "true" ]; then
+          ARGS="--dry-run"
+        fi
+        cargo upgrade $ARGS --manifest-path Cargo.toml --package built@{{ source "built" }}
       changedif:
         kind: file/checksum
         spec:
