@@ -27,15 +27,17 @@ type crateDependency struct {
 }
 
 type crateMetadata struct {
-	Name                     string
-	CargoFile                string
-	CargoLockFile            string
-	Workspace                bool
-	WorkspaceMembers         []crateMetadata
-	WorkspaceDependencies    []crateDependency
-	WorkspaceDevDependencies []crateDependency
-	Dependencies             []crateDependency
-	DevDependencies          []crateDependency
+	Name                       string
+	CargoFile                  string
+	CargoLockFile              string
+	Workspace                  bool
+	WorkspaceMembers           []crateMetadata
+	WorkspaceDependencies      []crateDependency
+	WorkspaceBuildDependencies []crateDependency
+	WorkspaceDevDependencies   []crateDependency
+	Dependencies               []crateDependency
+	BuildDependencies          []crateDependency
+	DevDependencies            []crateDependency
 }
 
 func (c Cargo) generateManifest(
@@ -244,6 +246,10 @@ func (c Cargo) processCrateMetadata(
 	sort.Slice(dependencies, func(i, j int) bool {
 		return dependencies[i].Name < dependencies[j].Name
 	})
+	buildDependencies := cr.BuildDependencies
+	sort.Slice(buildDependencies, func(i, j int) bool {
+		return buildDependencies[i].Name < buildDependencies[j].Name
+	})
 	devDependencies := cr.DevDependencies
 	sort.Slice(devDependencies, func(i, j int) bool {
 		return devDependencies[i].Name < devDependencies[j].Name
@@ -252,14 +258,20 @@ func (c Cargo) processCrateMetadata(
 	sort.Slice(workspaceDependencies, func(i, j int) bool {
 		return workspaceDependencies[i].Name < workspaceDependencies[j].Name
 	})
+	workspaceBuildDependencies := cr.WorkspaceBuildDependencies
+	sort.Slice(workspaceBuildDependencies, func(i, j int) bool {
+		return workspaceBuildDependencies[i].Name < workspaceBuildDependencies[j].Name
+	})
 	workspaceDevDependencies := cr.WorkspaceDevDependencies
 	sort.Slice(workspaceDevDependencies, func(i, j int) bool {
 		return workspaceDevDependencies[i].Name < workspaceDevDependencies[j].Name
 	})
 
 	c.processDependencies(manifests, &crate, dependencies, "dependencies", "dependency")
+	c.processDependencies(manifests, &crate, buildDependencies, "build-dependencies", "build dependency")
 	c.processDependencies(manifests, &crate, devDependencies, "dev-dependencies", "dev dependency")
 	c.processDependencies(manifests, &crate, workspaceDependencies, "workspace.dependencies", "workspace dependency")
+	c.processDependencies(manifests, &crate, workspaceBuildDependencies, "workspace.build-dependencies", "workspace build dependency")
 	c.processDependencies(manifests, &crate, workspaceDevDependencies, "workspace.dev-dependencies", "workspace dev dependency")
 }
 

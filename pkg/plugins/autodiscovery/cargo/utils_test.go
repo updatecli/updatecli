@@ -52,6 +52,9 @@ func TestGetCrateMetadata(t *testing.T) {
 					{Name: "anyhow", Version: "1.0.1", Inlined: true},
 					{Name: "rand", Version: "0.8.0"},
 				},
+				BuildDependencies: []crateDependency{
+					{Name: "built", Version: "0.8.0", Inlined: true},
+				},
 				DevDependencies: []crateDependency{
 					{Name: "futures", Version: "0.3.21"},
 				},
@@ -81,6 +84,9 @@ func TestGetCrateMetadata(t *testing.T) {
 				Workspace: true,
 				WorkspaceDependencies: []crateDependency{
 					{Name: "anyhow", Version: "1", Inlined: true},
+				},
+				WorkspaceBuildDependencies: []crateDependency{
+					{Name: "built", Version: "0.8.0", Inlined: true},
 				},
 				WorkspaceMembers: []crateMetadata{
 					{Name: "simple_crate",
