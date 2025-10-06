@@ -98,10 +98,17 @@ func (g *Github) SearchReleases(releaseType ReleaseType, retry int) (releases []
 		err := g.client.Query(context.Background(), &query, variables)
 		if err != nil {
 			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-				logrus.Debugln(query.RateLimit)
+
+				rateLimit, err := queryRateLimit(g.client, context.Background())
+				if err != nil {
+					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+				}
+
+				logrus.Debugln(rateLimit)
+
 				if retry < MaxRetry {
 					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-					query.RateLimit.Pause()
+					rateLimit.Pause()
 					return g.SearchReleases(releaseType, retry+1)
 				}
 				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)

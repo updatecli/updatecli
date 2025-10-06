@@ -60,6 +60,11 @@ func (p *PullRequest) addComment(body string, retry int) error {
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			if retry < MaxRetry {
+				return p.addComment(body, retry+1)
+			}
+		}
 		return fmt.Errorf("adding comment to pull request %q: %w", p.remotePullRequest.Url, err)
 	}
 

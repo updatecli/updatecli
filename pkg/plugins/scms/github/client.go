@@ -24,7 +24,7 @@ type GithubHandler interface {
 }
 
 const (
-	ErrAPIRateLimitExceeded             = "API rate limit exceeded"
+	ErrAPIRateLimitExceeded             = "API rate limit already exceeded"
 	ErrAPIRateLimitExceededFinalAttempt = "API rate limit exceeded. Final attempt failed."
 )
 

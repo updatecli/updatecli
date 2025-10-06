@@ -83,10 +83,15 @@ func (g *Github) getRepositoryLabels(retry int) ([]repositoryLabelApi, error) {
 
 		if err != nil {
 			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-				logrus.Debugln(query.RateLimit)
-				query.RateLimit.Pause()
+				rateLimit, err := queryRateLimit(g.client, context.Background())
+				if err != nil {
+					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+				}
+
+				logrus.Debugln(rateLimit)
 				if retry < MaxRetry {
 					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					rateLimit.Pause()
 					return g.getRepositoryLabels(retry + 1)
 				}
 				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)

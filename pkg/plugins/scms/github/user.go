@@ -34,10 +34,17 @@ func getUserInfo(client GitHubClient, login string, retry int) (*userInfo, error
 
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			logrus.Debugln(query.RateLimit)
+			// If the query failed because we reached the rate limit,
+			// then we need to re-requery the rate limit to get the latest information
+			rateLimit, err := queryRateLimit(client, context.Background())
+			if err != nil {
+				logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+			}
+
+			logrus.Debugln(rateLimit)
 			if retry < MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				query.RateLimit.Pause()
+				rateLimit.Pause()
 				return getUserInfo(client, login, retry+1)
 			}
 			return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
