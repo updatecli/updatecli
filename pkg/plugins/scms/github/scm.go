@@ -86,7 +86,13 @@ func (g *Github) Commit(message string) error {
 
 		_, workingBranch, _ := g.GetBranches()
 
-		if err = g.CreateCommit(workingDir, commitMessage, 0); err != nil {
+		latestLocalCommitHash, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
+		if err != nil {
+			return err
+		}
+
+		APIcreatedCommitHash, err := g.CreateCommit(workingDir, commitMessage, 0)
+		if err != nil {
 			return err
 		}
 
@@ -99,6 +105,44 @@ func (g *Github) Commit(message string) error {
 			true,
 		); err != nil {
 			return err
+		}
+
+		// Probably due to some caching, the commit is not immediately available after creation
+		// We retry to pull the commit a few times until we find it or we reach the max retry
+		maxRetry := 5
+		for counter := 0; counter < maxRetry; counter++ {
+
+			// Ideally we should check that the latest local commit hash
+			// is an ancestor of the newly created commit hash
+			// but this operation is expensive so we just check that
+			// the latest local commit hash is different from the newly created one.
+			// This should be enough in most of the cases considering the working branch
+			// is created and maintained by Updatecli.
+			if latestLocalCommitHash != APIcreatedCommitHash {
+				break
+			}
+
+			logrus.Debugf("Latest local commit %q should have been %q", latestLocalCommitHash, APIcreatedCommitHash)
+			logrus.Debugf("Waiting for GitHub to make the commit %q available", APIcreatedCommitHash)
+
+			logrus.Debugf("Commit not found yet, retrying to pull it")
+
+			if err = g.nativeGitHandler.Pull(
+				g.Spec.Username,
+				g.Spec.Token,
+				workingDir,
+				workingBranch,
+				true,
+				true,
+			); err != nil {
+				return err
+			}
+
+			logrus.Debugf("Latest commit after creating a new one: %q", APIcreatedCommitHash)
+
+			if counter == maxRetry-1 {
+				logrus.Debugf("Giving up trying to pull the newly created commit")
+			}
 		}
 
 		if g.Spec.CommitMessage.IsSquash() {
@@ -141,23 +185,22 @@ type commitQuery struct {
 			OID string
 		}
 	} `graphql:"createCommitOnBranch(input:$input)"`
-	RateLimit RateLimit
 }
 
 // CreateCommit creates a commit on a branch using GitHub API
-func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int) error {
+func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int) (createdCommitHash string, err error) {
 	var m commitQuery
 
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
 	files, err := g.nativeGitHandler.GetChangedFiles(workingDir)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	additions, err := processChangedFiles(workingDir, files)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if g.nativeGitHandler.IsForceReset() {
@@ -166,26 +209,26 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 		// be lost.
 		logrus.Debugf("local branch %q was reset, pushing to remote to ensure correct state", workingBranch)
 		if _, err = g.Push(); err != nil {
-			return fmt.Errorf("failed to push branch %q before creating commit: %w", workingBranch, err)
+			return "", fmt.Errorf("failed to push branch %q before creating commit: %w", workingBranch, err)
 		}
 	}
 
 	repoRef, err := g.GetLatestCommitHash(workingBranch)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	headOid := repoRef.HeadOid
 	if headOid == "" {
 		sourceBranchRepoRef, err := g.GetLatestCommitHash(sourceBranch)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		headOid = sourceBranchRepoRef.HeadOid
 		logrus.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
 		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -204,28 +247,26 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 		},
 	}
 
-	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
-		if strings.Contains(err.Error(), "API rate limit exceeded") {
-			// If the query failed because we reached the rate limit,
-			// then we need to re-requery the rate limit to get the latest information
-			rateLimit, err := queryRateLimit(g.client, context.Background())
-			if err != nil {
-				logrus.Errorf("Error querying GitHub API rate limit: %s", err)
-			}
-			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				rateLimit.Pause()
-				return g.CreateCommit(workingDir, commitMessage, retry+1)
-			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+	rateLimit, err := queryRateLimit(g.client, context.Background())
+	if err != nil && strings.Contains(err.Error(), "API rate limit exceeded") {
+		logrus.Debugln(rateLimit)
+		if retry < MaxRetry {
+			logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			rateLimit.Pause()
+			return g.CreateCommit(workingDir, commitMessage, retry+1)
 		}
-		return fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)
+		return "", fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
 	}
 
-	logrus.Debugln(m.RateLimit)
+	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
+		return "", fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)
+	}
+
+	logrus.Debugln(rateLimit)
+
 	logrus.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
-	return nil
+
+	return m.CreateCommitOnBranch.Commit.OID, nil
 }
 
 // processChangedFiles reads the content of the files and prepare them to be
