@@ -133,7 +133,7 @@ func (g *Github) Commit(message string) error {
 	return nil
 }
 
-// ComitQuery defines a github v4 API mutation to create a commit on a branch
+// CommitQuery defines a github v4 API mutation to create a commit on a branch
 type commitQuery struct {
 	CreateCommitOnBranch struct {
 		Commit struct {
