@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/shurcooL/githubv4"
@@ -50,7 +49,7 @@ func getUserInfo(client GitHubClient, login string, retry int) (*userInfo, error
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
-		return nil, fmt.Errorf("querying GitHub API: %w", err)
+		return nil, err
 	}
 
 	logrus.Debugln(query.RateLimit)
