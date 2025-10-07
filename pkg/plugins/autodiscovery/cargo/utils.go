@@ -155,8 +155,10 @@ func getCrateMetadata(rootDir string) (crateMetadata, error) {
 
 	crate.WorkspaceMembers = workspaceMembers
 	crate.Dependencies, _ = getDependencies(&tomlFile, "dependencies")
+	crate.BuildDependencies, _ = getDependencies(&tomlFile, "build-dependencies")
 	crate.DevDependencies, _ = getDependencies(&tomlFile, "dev-dependencies")
 	crate.WorkspaceDependencies, _ = getDependencies(&tomlFile, "workspace.dependencies")
+	crate.WorkspaceBuildDependencies, _ = getDependencies(&tomlFile, "workspace.build-dependencies")
 	crate.WorkspaceDevDependencies, _ = getDependencies(&tomlFile, "workspace.dev-dependencies")
 
 	logrus.Debugf("Crate: %q\n", name)
