@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 
 	"github.com/shurcooL/githubv4"
@@ -32,7 +32,7 @@ func getTeamID(client GitHubClient, org string, team string, retry int) (string,
 	err := client.Query(context.Background(), &query, variables)
 
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < 3 {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < MaxRetry {
 			// If the query failed because we reached the rate limit,
 			// then we need to re-requery the rate limit to get the latest information
 			rateLimit, err := queryRateLimit(client, context.Background())
@@ -45,7 +45,7 @@ func getTeamID(client GitHubClient, org string, team string, retry int) (string,
 				rateLimit.Pause()
 				return getTeamID(client, org, team, retry+1)
 			}
-			return "", fmt.Errorf("GitHub API rate limit exceeded. Please try again later")
+			return "", errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return "", err
 	}
