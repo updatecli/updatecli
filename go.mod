@@ -42,7 +42,7 @@ require (
 	github.com/beevik/etree v1.6.0
 	github.com/drone/go-scm v1.40.6
 	github.com/fluxcd/helm-controller/api v1.4.0
-	github.com/fluxcd/source-controller/api v1.7.0
+	github.com/fluxcd/source-controller/api v1.7.1
 	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/go-containerregistry v0.20.5
