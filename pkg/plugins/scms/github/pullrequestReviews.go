@@ -15,7 +15,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 
 	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
 	if err != nil {
-		if strings.Contains(err.Error(), "API rate limit exceeded") {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
 			if retry < MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)

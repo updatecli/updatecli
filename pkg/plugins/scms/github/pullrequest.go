@@ -894,7 +894,7 @@ func (p *PullRequest) GetPullRequestLabelsInformation(retry int) ([]repositoryLa
 	for {
 		err := p.gh.client.Query(context.Background(), &query, variables)
 		if err != nil {
-			if strings.Contains(err.Error(), "API rate limit exceeded") {
+			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 				// If the query failed because we reached the rate limit,
 				// then we need to re-requery the rate limit to get the latest information
 				rateLimit, err := queryRateLimit(p.gh.client, context.Background())
