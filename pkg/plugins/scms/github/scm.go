@@ -84,6 +84,7 @@ func (g *Github) Commit(message string) error {
 
 	if g.commitUsingApi {
 
+		logrus.Debugf("Creating commit using GitHub API")
 		_, workingBranch, _ := g.GetBranches()
 
 		latestLocalCommitHash, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
@@ -150,6 +151,8 @@ func (g *Github) Commit(message string) error {
 		}
 
 	} else {
+		logrus.Debugf("Creating commit using native git")
+
 		if err = g.nativeGitHandler.Commit(
 			g.Spec.User,
 			g.Spec.Email,
@@ -227,7 +230,7 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 
 		headOid = sourceBranchRepoRef.HeadOid
 		logrus.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
-		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
+		if err := g.createBranch(workingBranch, repoRef.ID, headOid, 0); err != nil {
 			return "", err
 		}
 	}
@@ -248,8 +251,8 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 	}
 
 	rateLimit, err := queryRateLimit(g.client, context.Background())
-	if err != nil && strings.Contains(err.Error(), "API rate limit exceeded") {
-		logrus.Debugln(rateLimit)
+	logrus.Debugln(rateLimit)
+	if err != nil && strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 		if retry < MaxRetry {
 			logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
 			rateLimit.Pause()
@@ -261,8 +264,6 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
 		return "", fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)
 	}
-
-	logrus.Debugln(rateLimit)
 
 	logrus.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
 
@@ -288,7 +289,7 @@ func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddi
 
 // GetLatestCommitHash returns the latest commit hash of the specified branch
 func (g *Github) GetLatestCommitHash(workingBranch string) (*RepositoryRef, error) {
-	repoRef, err := g.queryHeadOid(workingBranch)
+	repoRef, err := g.queryHeadOid(workingBranch, 0)
 	if err != nil {
 		return nil, err
 	}

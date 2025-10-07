@@ -207,7 +207,7 @@ func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
 // CleanAction verifies if an existing action requires some cleanup such as closing a pullrequest with no changes.
 func (p *PullRequest) CleanAction(report *reports.Action) error {
 
-	repository, err := p.gh.queryRepository("", "")
+	repository, err := p.gh.queryRepository("", "", 0)
 	if err != nil {
 		return err
 	}
@@ -246,7 +246,7 @@ func (p *PullRequest) CleanAction(report *reports.Action) error {
 // CheckActionExist checks if a pullrequest already exists and update the report object accordingly
 func (p *PullRequest) CheckActionExist(report *reports.Action) error {
 
-	repository, err := p.gh.queryRepository("", "")
+	repository, err := p.gh.queryRepository("", "", 0)
 	if err != nil {
 		return fmt.Errorf("querying repository: %w", err)
 	}
@@ -283,7 +283,7 @@ func (p *PullRequest) CreateAction(report *reports.Action, resetDescription bool
 
 	sourceBranch, workingBranch, _ := p.gh.GetBranches()
 
-	repository, err := p.gh.queryRepository(sourceBranch, workingBranch)
+	repository, err := p.gh.queryRepository(sourceBranch, workingBranch, 0)
 	if err != nil {
 		return err
 	}
