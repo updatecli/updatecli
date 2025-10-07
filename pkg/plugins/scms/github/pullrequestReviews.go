@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -21,7 +22,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 				rateLimit.Pause()
 				return p.addPullrequestReviewers(prID, retry+1)
 			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
 	}

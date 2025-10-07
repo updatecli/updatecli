@@ -346,7 +346,7 @@ func (p *PullRequest) closePullRequest(retry int) error {
 				rateLimit.Pause()
 				return p.closePullRequest(retry + 1)
 			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
 	}
@@ -414,7 +414,7 @@ func (p *PullRequest) updatePullRequest(retry int) error {
 				rateLimit.Pause()
 				return p.updatePullRequest(retry + 1)
 			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
 	}
@@ -541,7 +541,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge(retry int) error {
 				rateLimit.Pause()
 				return p.EnablePullRequestAutoMerge(retry + 1)
 			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 	}
 	logrus.Debugln(rateLimit)
@@ -600,7 +600,7 @@ func (p *PullRequest) OpenPullRequest(retry int) error {
 				rateLimit.Pause()
 				return p.OpenPullRequest(retry + 1)
 			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 	}
 	logrus.Debugln(rateLimit)
@@ -718,7 +718,7 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository(retry int) (bool, error) {
 				rateLimit.Pause()
 				return p.isAutoMergedEnabledOnRepository(retry + 1)
 			}
-			return false, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return false, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return false, fmt.Errorf("querying GitHub API: %w", err)
 	}
@@ -799,7 +799,7 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool, retry int) error {
 				rateLimit.Pause()
 				return p.getRemotePullRequest(resetBody, retry+1)
 			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return fmt.Errorf("getting existing pull request: %w", err)
 	}
@@ -907,7 +907,7 @@ func (p *PullRequest) GetPullRequestLabelsInformation(retry int) ([]repositoryLa
 					rateLimit.Pause()
 					return p.GetPullRequestLabelsInformation(retry + 1)
 				}
-				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 			}
 
 			return nil, fmt.Errorf("querying GitHub API: %w", err)

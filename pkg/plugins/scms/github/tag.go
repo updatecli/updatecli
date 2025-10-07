@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -90,7 +91,7 @@ func (g *Github) SearchTags(retry int) (tags []string, err error) {
 					rateLimit.Pause()
 					return g.SearchTags(retry + 1)
 				}
-				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 			}
 			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}

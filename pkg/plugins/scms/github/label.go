@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -94,7 +95,7 @@ func (g *Github) getRepositoryLabels(retry int) ([]repositoryLabelApi, error) {
 					rateLimit.Pause()
 					return g.getRepositoryLabels(retry + 1)
 				}
-				return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 			}
 			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}

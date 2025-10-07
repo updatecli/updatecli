@@ -464,7 +464,7 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 				rateLimit.Pause()
 				return g.queryRepository(sourceBranch, workingBranch, retry+1)
 			}
-			return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return nil, fmt.Errorf("unable to query GitHub API rate limit: %w", err)
 	}
@@ -527,10 +527,10 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				rateLimit.Pause()
+				query.RateLimit.Pause()
 				return g.queryRepository(sourceBranch, workingBranch, retry+1)
 			}
-			return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return nil, err
 	}
@@ -575,7 +575,7 @@ func (g *Github) queryHeadOid(workingBranch string, retry int) (*RepositoryRef, 
 				rateLimit.Pause()
 				return g.queryHeadOid(workingBranch, retry+1)
 			}
-			return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return nil, fmt.Errorf("unable to query GitHub API rate limit: %w", err)
 	}
@@ -616,10 +616,10 @@ func (g *Github) queryHeadOid(workingBranch string, retry int) (*RepositoryRef, 
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-				rateLimit.Pause()
+				query.RateLimit.Pause()
 				return g.queryHeadOid(workingBranch, retry+1)
 			}
-			return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return nil, fmt.Errorf("unable to query GitHub API: %w", err)
 	}
@@ -658,7 +658,7 @@ func (g *Github) createBranch(branchName string, repositoryId string, headOid st
 				rateLimit.Pause()
 				return g.createBranch(branchName, repositoryId, headOid, retry+1)
 			}
-			return fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
 	}

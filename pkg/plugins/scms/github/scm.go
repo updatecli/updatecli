@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -258,7 +259,7 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 			rateLimit.Pause()
 			return g.CreateCommit(workingDir, commitMessage, retry+1)
 		}
-		return "", fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+		return "", errors.New(ErrAPIRateLimitExceededFinalAttempt)
 	}
 
 	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {

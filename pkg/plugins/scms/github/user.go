@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -47,7 +48,7 @@ func getUserInfo(client GitHubClient, login string, retry int) (*userInfo, error
 				rateLimit.Pause()
 				return getUserInfo(client, login, retry+1)
 			}
-			return nil, fmt.Errorf("%s", ErrAPIRateLimitExceededFinalAttempt)
+			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
 		return nil, fmt.Errorf("querying GitHub API: %w", err)
 	}
