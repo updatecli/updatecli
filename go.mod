@@ -41,7 +41,7 @@ require (
 	github.com/aws/smithy-go v1.23.0
 	github.com/beevik/etree v1.6.0
 	github.com/drone/go-scm v1.40.6
-	github.com/fluxcd/helm-controller/api v1.4.0
+	github.com/fluxcd/helm-controller/api v1.4.2
 	github.com/fluxcd/source-controller/api v1.7.2
 	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/goccy/go-yaml v1.18.0
@@ -136,7 +136,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.9.0 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v1.12.0 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v1.13.0 // indirect
 	github.com/fluxcd/pkg/apis/meta v1.22.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/getsops/gopgagent v0.0.0-20241224165529-7044f28e491e // indirect
