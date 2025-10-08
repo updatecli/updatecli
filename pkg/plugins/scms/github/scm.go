@@ -88,12 +88,12 @@ func (g *Github) Commit(message string) error {
 		logrus.Debugf("Creating commit using GitHub API")
 		_, workingBranch, _ := g.GetBranches()
 
-		latestLocalCommitHash, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
+		commitHashPrePull, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
 		if err != nil {
 			return err
 		}
 
-		APIcreatedCommitHash, err := g.CreateCommit(workingDir, commitMessage, 0)
+		commitHasPostApiQuery, err := g.CreateCommit(workingDir, commitMessage, 0)
 		if err != nil {
 			return err
 		}
@@ -109,9 +109,14 @@ func (g *Github) Commit(message string) error {
 			return err
 		}
 
+		commitHashPostPull, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
+		if err != nil {
+			return err
+		}
+
 		// Probably due to some caching, the commit is not immediately available after creation
 		// We retry to pull the commit a few times until we find it or we reach the max retry
-		maxRetry := 5
+		maxRetry := 3
 		for counter := 0; counter < maxRetry; counter++ {
 
 			// Ideally we should check that the latest local commit hash
@@ -120,12 +125,12 @@ func (g *Github) Commit(message string) error {
 			// the latest local commit hash is different from the newly created one.
 			// This should be enough in most of the cases considering the working branch
 			// is created and maintained by Updatecli.
-			if latestLocalCommitHash != APIcreatedCommitHash {
+			if commitHashPostPull == commitHasPostApiQuery {
 				break
 			}
 
-			logrus.Debugf("Latest local commit %q should have been %q", latestLocalCommitHash, APIcreatedCommitHash)
-			logrus.Debugf("Waiting for GitHub to make the commit %q available", APIcreatedCommitHash)
+			logrus.Debugf("Latest local commit %q should have been %q", commitHashPrePull, commitHasPostApiQuery)
+			logrus.Debugf("Waiting for GitHub to make the commit %q available", commitHasPostApiQuery)
 
 			logrus.Debugf("Commit not found yet, retrying to pull it")
 
@@ -140,7 +145,12 @@ func (g *Github) Commit(message string) error {
 				return err
 			}
 
-			logrus.Debugf("Latest commit after creating a new one: %q", APIcreatedCommitHash)
+			commitHashPostPull, err = g.nativeGitHandler.GetLatestCommitHash(workingDir)
+			if err != nil {
+				return err
+			}
+
+			logrus.Debugf("Latest commit after creating a new one: %q", commitHasPostApiQuery)
 
 			if counter == maxRetry-1 {
 				logrus.Debugf("Giving up trying to pull the newly created commit")
@@ -219,20 +229,20 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 
 	repoRef, err := g.GetLatestCommitHash(workingBranch)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("retrieving latest commit hash for branch %q: %w", workingBranch, err)
 	}
 
 	headOid := repoRef.HeadOid
 	if headOid == "" {
 		sourceBranchRepoRef, err := g.GetLatestCommitHash(sourceBranch)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("retrieving latest commit hash for source branch %q: %w", sourceBranch, err)
 		}
 
 		headOid = sourceBranchRepoRef.HeadOid
 		logrus.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
 		if err := g.createBranch(workingBranch, repoRef.ID, headOid, 0); err != nil {
-			return "", err
+			return "", fmt.Errorf("creating branch %q from commit %q: %w", workingBranch, headOid, err)
 		}
 	}
 
@@ -263,6 +273,14 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 	}
 
 	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
+		// In some occasions, GitHub API may respond with
+		// "Expected branch to point to <commit hash> but was <commit hash>"
+		// even if we provide the correct commit hash.
+		// In that case, we retry a few times before giving up.
+		// This is probably due to some caching on GitHub side.
+		if retry < MaxRetry && strings.Contains(err.Error(), "Expected branch to point to") {
+			return g.CreateCommit(workingDir, commitMessage, retry+1)
+		}
 		return "", fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)
 	}
 
