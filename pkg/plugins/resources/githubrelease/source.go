@@ -10,7 +10,7 @@ import (
 // Source retrieves a specific version tag name, tag hash, or release title from GitHub Releases.
 func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) error {
 
-	releaseRefs, err := gr.ghHandler.SearchReleases(gr.typeFilter)
+	releaseRefs, err := gr.ghHandler.SearchReleases(gr.typeFilter, 0)
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func (gr *GitHubRelease) Source(workingDir string, resultSource *result.Source) 
 		case true:
 			logrus.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)
 
-			versions, err = gr.ghHandler.SearchTags()
+			versions, err = gr.ghHandler.SearchTags(0)
 			if err != nil {
 				return fmt.Errorf("searching git tag: %w", err)
 			}

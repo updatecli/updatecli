@@ -49,7 +49,7 @@ func TestCommit(t *testing.T) {
 				mockedErr:   tt.mockedError,
 			}
 
-			err = sut.CreateCommit(tt.spec.Directory, tt.commitMsg)
+			_, err = sut.CreateCommit(tt.spec.Directory, tt.commitMsg, 0)
 
 			if tt.wantErr {
 				assert.Error(t, err)

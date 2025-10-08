@@ -7,11 +7,13 @@ import (
 	"github.com/shurcooL/githubv4"
 )
 
+// MockGitHubClient is a mock implementation of the GitHubClient interface
 type MockGitHubClient struct {
 	mockedQuery interface{}
 	mockedErr   error
 }
 
+// Query is a mock implementation of the Query method of the GitHubClient interface
 func (mock *MockGitHubClient) Query(ctx context.Context, q interface{}, variables map[string]interface{}) error {
 	switch q.(type) {
 	case *tagsQuery:
@@ -39,6 +41,7 @@ func (mock *MockGitHubClient) Query(ctx context.Context, q interface{}, variable
 	}
 }
 
+// Mutate is a mock implementation of the Mutate method of the GitHubClient interface
 func (mock *MockGitHubClient) Mutate(ctx context.Context, m interface{}, input githubv4.Input, variables map[string]interface{}) error {
 	return nil
 }

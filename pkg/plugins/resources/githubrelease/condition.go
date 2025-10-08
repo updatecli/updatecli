@@ -38,7 +38,7 @@ func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler) (pass bool,
 		case true:
 			logrus.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)
 
-			versions, err = gr.ghHandler.SearchTags()
+			versions, err = gr.ghHandler.SearchTags(0)
 			if err != nil {
 				return false, "", fmt.Errorf("looking for GitHub release tag: %w", err)
 			}

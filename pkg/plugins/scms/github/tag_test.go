@@ -88,7 +88,7 @@ func TestGetTags(t *testing.T) {
 					mockedErr:   tt.mockedError,
 				},
 			}
-			got, err := sut.SearchTags()
+			got, err := sut.SearchTags(0)
 
 			if tt.wantErr {
 				assert.Error(t, err)
