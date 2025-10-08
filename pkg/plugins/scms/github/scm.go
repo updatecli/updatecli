@@ -263,13 +263,17 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 
 	rateLimit, err := queryRateLimit(g.client, context.Background())
 	logrus.Debugln(rateLimit)
-	if err != nil && strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-		if retry < MaxRetry {
-			logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
-			rateLimit.Pause()
-			return g.CreateCommit(workingDir, commitMessage, retry+1)
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				rateLimit.Pause()
+				return g.CreateCommit(workingDir, commitMessage, retry+1)
+			}
+			return "", errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
-		return "", errors.New(ErrAPIRateLimitExceededFinalAttempt)
+		return "", fmt.Errorf("querying GitHub API rate limit: %w", err)
+
 	}
 
 	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
