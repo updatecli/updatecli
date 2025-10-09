@@ -66,7 +66,7 @@ require (
 	github.com/yuin/goldmark v1.7.13
 	github.com/zclconf/go-cty v1.17.0
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
-	golang.org/x/text v0.29.0
+	golang.org/x/text v0.30.0
 	golang.org/x/time v0.12.0
 	gopkg.in/ini.v1 v1.67.0
 	oras.land/oras-go/v2 v2.6.0
@@ -307,12 +307,12 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	gitlab.com/gitlab-org/api/client-go v0.129.0
-	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/mod v0.28.0
-	golang.org/x/net v0.45.0
+	golang.org/x/net v0.46.0
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/term v0.35.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/tools v0.37.0 // indirect
 	google.golang.org/api v0.228.0 // indirect
 	google.golang.org/grpc v1.74.2 // indirect
