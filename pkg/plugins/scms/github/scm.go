@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
+// GetBranches returns source, working and target branch
 func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	sourceBranch = g.Spec.Branch
 	workingBranch = g.Spec.Branch
@@ -83,9 +85,16 @@ func (g *Github) Commit(message string) error {
 
 	if g.commitUsingApi {
 
+		logrus.Debugf("Creating commit using GitHub API")
 		_, workingBranch, _ := g.GetBranches()
 
-		if err = g.CreateCommit(workingDir, commitMessage); err != nil {
+		commitHashPrePull, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
+		if err != nil {
+			return err
+		}
+
+		commitHasPostApiQuery, err := g.CreateCommit(workingDir, commitMessage, 0)
+		if err != nil {
 			return err
 		}
 
@@ -100,11 +109,61 @@ func (g *Github) Commit(message string) error {
 			return err
 		}
 
+		commitHashPostPull, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
+		if err != nil {
+			return err
+		}
+
+		// Probably due to some caching, the commit is not immediately available after creation
+		// We retry to pull the commit a few times until we find it or we reach the max retry
+		maxRetry := 3
+		for counter := 0; counter < maxRetry; counter++ {
+
+			// Ideally we should check that the latest local commit hash
+			// is an ancestor of the newly created commit hash
+			// but this operation is expensive so we just check that
+			// the latest local commit hash is different from the newly created one.
+			// This should be enough in most of the cases considering the working branch
+			// is created and maintained by Updatecli.
+			if commitHashPostPull == commitHasPostApiQuery {
+				break
+			}
+
+			logrus.Debugf("Latest local commit %q should have been %q", commitHashPrePull, commitHasPostApiQuery)
+			logrus.Debugf("Waiting for GitHub to make the commit %q available", commitHasPostApiQuery)
+
+			logrus.Debugf("Commit not found yet, retrying to pull it")
+
+			if err = g.nativeGitHandler.Pull(
+				g.Spec.Username,
+				g.Spec.Token,
+				workingDir,
+				workingBranch,
+				true,
+				true,
+			); err != nil {
+				return err
+			}
+
+			commitHashPostPull, err = g.nativeGitHandler.GetLatestCommitHash(workingDir)
+			if err != nil {
+				return err
+			}
+
+			logrus.Debugf("Latest commit after creating a new one: %q", commitHasPostApiQuery)
+
+			if counter == maxRetry-1 {
+				logrus.Debugf("Giving up trying to pull the newly created commit")
+			}
+		}
+
 		if g.Spec.CommitMessage.IsSquash() {
 			logrus.Warningf("Squash commit is not supported when using GitHub API to create the commit. Ignoring the squash option.")
 		}
 
 	} else {
+		logrus.Debugf("Creating commit using native git")
+
 		if err = g.nativeGitHandler.Commit(
 			g.Spec.User,
 			g.Spec.Email,
@@ -132,6 +191,7 @@ func (g *Github) Commit(message string) error {
 	return nil
 }
 
+// CommitQuery defines a github v4 API mutation to create a commit on a branch
 type commitQuery struct {
 	CreateCommitOnBranch struct {
 		Commit struct {
@@ -141,19 +201,20 @@ type commitQuery struct {
 	} `graphql:"createCommitOnBranch(input:$input)"`
 }
 
-func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
+// CreateCommit creates a commit on a branch using GitHub API
+func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int) (createdCommitHash string, err error) {
 	var m commitQuery
 
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
 	files, err := g.nativeGitHandler.GetChangedFiles(workingDir)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	additions, err := processChangedFiles(workingDir, files)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if g.nativeGitHandler.IsForceReset() {
@@ -162,26 +223,26 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 		// be lost.
 		logrus.Debugf("local branch %q was reset, pushing to remote to ensure correct state", workingBranch)
 		if _, err = g.Push(); err != nil {
-			return fmt.Errorf("failed to push branch %q before creating commit: %w", workingBranch, err)
+			return "", fmt.Errorf("failed to push branch %q before creating commit: %w", workingBranch, err)
 		}
 	}
 
 	repoRef, err := g.GetLatestCommitHash(workingBranch)
 	if err != nil {
-		return err
+		return "", fmt.Errorf("retrieving latest commit hash for branch %q: %w", workingBranch, err)
 	}
 
 	headOid := repoRef.HeadOid
 	if headOid == "" {
 		sourceBranchRepoRef, err := g.GetLatestCommitHash(sourceBranch)
 		if err != nil {
-			return err
+			return "", fmt.Errorf("retrieving latest commit hash for source branch %q: %w", sourceBranch, err)
 		}
 
 		headOid = sourceBranchRepoRef.HeadOid
 		logrus.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
-		if err := g.createBranch(workingBranch, repoRef.ID, headOid); err != nil {
-			return err
+		if err := g.createBranch(workingBranch, repoRef.ID, headOid, 0); err != nil {
+			return "", fmt.Errorf("creating branch %q from commit %q: %w", workingBranch, headOid, err)
 		}
 	}
 
@@ -200,14 +261,39 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string) error {
 		},
 	}
 
+	rateLimit, err := queryRateLimit(g.client, context.Background())
+	logrus.Debugln(rateLimit)
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			if retry < MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				rateLimit.Pause()
+				return g.CreateCommit(workingDir, commitMessage, retry+1)
+			}
+			return "", errors.New(ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return "", fmt.Errorf("querying GitHub API rate limit: %w", err)
+
+	}
+
 	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
-		return err
+		// In some occasions, GitHub API may respond with
+		// "Expected branch to point to <commit hash> but was <commit hash>"
+		// even if we provide the correct commit hash.
+		// In that case, we retry a few times before giving up.
+		// This is probably due to some caching on GitHub side.
+		if retry < MaxRetry && strings.Contains(err.Error(), "Expected branch to point to") {
+			return g.CreateCommit(workingDir, commitMessage, retry+1)
+		}
+		return "", fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)
 	}
 
 	logrus.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
-	return nil
+
+	return m.CreateCommitOnBranch.Commit.OID, nil
 }
 
+// processChangedFiles reads the content of the files and prepare them to be
 func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddition, error) {
 	additions := make([]githubv4.FileAddition, 0, len(files))
 	for _, f := range files {
@@ -224,8 +310,9 @@ func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddi
 	return additions, nil
 }
 
+// GetLatestCommitHash returns the latest commit hash of the specified branch
 func (g *Github) GetLatestCommitHash(workingBranch string) (*RepositoryRef, error) {
-	repoRef, err := g.queryHeadOid(workingBranch)
+	repoRef, err := g.queryHeadOid(workingBranch, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -318,6 +405,7 @@ func (g *Github) PushBranch(branch string) error {
 	return nil
 }
 
+// GetChangedFiles returns a list of changed files in the working directory
 func (g *Github) GetChangedFiles(workingDir string) ([]string, error) {
 	return g.nativeGitHandler.GetChangedFiles(workingDir)
 }

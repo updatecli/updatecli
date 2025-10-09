@@ -45,7 +45,7 @@ func TestGetUserInfo(t *testing.T) {
 		require.NoError(t, err)
 
 		// Call the GetUser function with a specific username
-		gotUserInfo, err := getUserInfo(g.client, tt.user)
+		gotUserInfo, err := getUserInfo(g.client, tt.user, 0)
 
 		if tt.expectedError {
 			assert.Equal(t, tt.expectedErrorMessage, err.Error())

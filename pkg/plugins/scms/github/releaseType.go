@@ -12,6 +12,7 @@ type ReleaseType struct {
 	Latest bool
 }
 
+// Init initializes the ReleaseType struct
 func (r *ReleaseType) Init() {
 	// If all release type are disable then fallback to stable one only
 	if !r.Draft && !r.PreRelease && !r.Release {
