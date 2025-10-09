@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/drone/go-scm/scm"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/stash/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"

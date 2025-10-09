@@ -2,10 +2,10 @@ package mobyparser
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
@@ -23,6 +23,8 @@ var (
 	expectedRawDockerfile = `FROM ubuntu:20.04
 
 LABEL version="0.1"
+
+LABEL changelog "xxx"
 
 LABEL maintainer="John Smith "
 
@@ -88,7 +90,7 @@ RUN echo true && \
 			dockerfile:         "ENV key value\n",
 			expectedResult:     true,
 			expectedError:      false,
-			expectedDockerfile: "ENV key=value\n",
+			expectedDockerfile: "ENV key value\n",
 		},
 		{
 			dockerfile:         "ADD hom* /mydir/\n",
@@ -139,16 +141,16 @@ RUN echo true && \
 			expectedDockerfile: "HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost/ || exit 1\n",
 		},
 		{
-			dockerfile:         "ARG user1=someuser\n",
-			expectedResult:     true,
-			expectedError:      false,
-			expectedDockerfile: "ARG user1=someuser\n",
-		},
-		{
 			dockerfile:         "ARG user1\n",
 			expectedResult:     true,
 			expectedError:      false,
 			expectedDockerfile: "ARG user1\n",
+		},
+		{
+			dockerfile:         "ARG user1=someuser\n",
+			expectedResult:     true,
+			expectedError:      false,
+			expectedDockerfile: "ARG user1=someuser\n",
 		},
 		{
 			dockerfile:         "STOPSIGNAL 9\n",
@@ -278,14 +280,7 @@ func TestMarshal(t *testing.T) {
 				logrus.Errorf("err - %s", err)
 			}
 
-			if (gotDockerfile != data.expectedDockerfile) == data.expectedResult {
-				//t.Errorf("Raw new Dockerfile\nGot:\n%q\n%s\nExpected:\n%q\n%s\n",
-				t.Errorf("Raw new Dockerfile\nGot:\n%v\n%s\nExpected:\n%v\n%s\n",
-					gotDockerfile,
-					strings.Repeat("=", 10),
-					data.expectedDockerfile,
-					strings.Repeat("=", 10))
-			}
+			assert.Equal(t, data.expectedDockerfile, gotDockerfile)
 		}
 	}
 }

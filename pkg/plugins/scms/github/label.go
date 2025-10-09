@@ -2,6 +2,9 @@ package github
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
@@ -65,7 +68,7 @@ type repositoryLabelApi struct {
 }
 
 // getRepositoryLabels queries GitHub Api to retrieve every labels configured for a repository
-func (g *Github) getRepositoryLabels() ([]repositoryLabelApi, error) {
+func (g *Github) getRepositoryLabels(retry int) ([]repositoryLabelApi, error) {
 	var repositoryLabels []repositoryLabelApi
 
 	variables := map[string]interface{}{
@@ -80,11 +83,24 @@ func (g *Github) getRepositoryLabels() ([]repositoryLabelApi, error) {
 		err := g.client.Query(context.Background(), &query, variables)
 
 		if err != nil {
-			logrus.Errorf("\t%s", err)
-			return nil, err
+			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+				rateLimit, err := queryRateLimit(g.client, context.Background())
+				if err != nil {
+					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+				}
+
+				logrus.Debugln(rateLimit)
+				if retry < MaxRetry {
+					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					rateLimit.Pause()
+					return g.getRepositoryLabels(retry + 1)
+				}
+				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
+			}
+			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}
 
-		query.RateLimit.Show()
+		logrus.Debugln(query.RateLimit)
 
 		// Retrieve remote label information such as label ID, label name, labe description
 		for _, node := range query.Repository.Labels.Edges {

@@ -98,6 +98,28 @@ func TestIsMatchingRule(t *testing.T) {
 			rules: MatchingRules{
 				MatchingRule{
 					Modules: map[string]string{
+						"github.com/updatecli/*": "",
+					},
+				},
+			},
+			moduleName:     "github.com/updatecli/updatecli",
+			expectedResult: true,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					Modules: map[string]string{
+						"github.com/*": "",
+					},
+				},
+			},
+			moduleName:     "github.com/updatecli/updatecli",
+			expectedResult: true,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					Modules: map[string]string{
 						"github.com/updatecli/updatecli": ">=0",
 					},
 				},
@@ -151,7 +173,9 @@ func TestIsMatchingRule(t *testing.T) {
 				d.filePath,
 				d.goVersion,
 				d.moduleName,
-				d.moduleVersion)
+				d.moduleVersion,
+				false,
+			)
 
 			assert.Equal(t, d.expectedResult, gotResult)
 		})

@@ -8,3 +8,7 @@ members = [
 [workspace.dependencies]
 anyhow = "1"
 itoa = { git = "https://github.com/dtolnay/itoa", rev = "1.0.15" }
+
+[workspace.build-dependencies]
+built = "0.8.0"
+

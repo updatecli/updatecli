@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
 // GetBranches returns the source, working and target branches.
@@ -90,6 +91,19 @@ func (g *Gitlab) Commit(message string) error {
 	if err != nil {
 		return err
 	}
+
+	if g.Spec.CommitMessage.IsSquash() {
+		sourceBranch, workingBranch, _ := g.GetBranches()
+		if err = g.nativeGitHandler.SquashCommit(g.GetDirectory(), sourceBranch, workingBranch, gitgeneric.SquashCommitOptions{
+			IncludeCommitTitles: true,
+			Message:             commitMessage,
+			SigninKey:           g.Spec.GPG.SigningKey,
+			SigninPassphrase:    g.Spec.GPG.Passphrase,
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

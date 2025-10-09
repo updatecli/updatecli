@@ -58,16 +58,6 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	}
 
 	resultTarget.NewInformation = inputContent
-	/*
-		At the moment, we don't have an easy to identify that precise information
-		that would be updated without considering the new file content.
-
-		It's doable but out of the current scope of the effort.
-
-		With a valid usecase we can improve the situation.
-
-		Especially considering that we may have multiple files to update
-	*/
 	resultTarget.Information = "unknown"
 
 	// If we're using a regexp for the target
@@ -77,10 +67,22 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			inputContent = f.spec.ReplacePattern
 		}
 
+		// Update NewInformation to reflect what will actually be written
+		resultTarget.NewInformation = inputContent
+
 		reg, err := regexp.Compile(f.spec.MatchPattern)
 		if err != nil {
 			logrus.Errorf("Validation error in target of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
 			return err
+		}
+
+		// Extract current version from first capture group if available
+		for filePath, file := range f.files {
+			if matches := reg.FindStringSubmatch(file.content); len(matches) > 1 {
+				resultTarget.Information = matches[1]
+				logrus.Debugf("Extracted current version %q from capture group in file %q", matches[1], filePath)
+				break // Use first match found
+			}
 		}
 
 		for filePath, file := range f.files {

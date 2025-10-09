@@ -1,11 +1,7 @@
 package pullrequest
 
 import (
-	"context"
-	"strings"
-	"time"
-
-	"github.com/drone/go-scm/scm"
+	giteasdk "code.gitea.io/sdk/gitea"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
@@ -70,49 +66,40 @@ func (g *Gitea) CreateAction(report *reports.Action, resetDescription bool) erro
 		return nil
 	}
 
-	opts := scm.PullRequestInput{
-		Title:  title,
-		Body:   body,
-		Source: g.SourceBranch,
-		Target: g.TargetBranch,
-	}
-
 	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
 		title,
 		body,
 		g.SourceBranch,
 		g.TargetBranch)
 
-	// Timeout api query after 30sec
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
+	sdkOpts := giteasdk.CreatePullRequestOption{
+		Title:     title,
+		Body:      body,
+		Base:      g.TargetBranch,   // Base = Target branch
+		Head:      g.SourceBranch,   // Head = Source branch
+		Assignees: g.spec.Assignees, // Take list of assignees from spec
+	}
 
-	pr, resp, err := g.client.PullRequests.Create(
-		ctx,
-		strings.Join([]string{
-			g.Owner,
-			g.Repository}, "/"),
-		&opts,
-	)
+	if len(g.spec.Assignees) > 0 {
+		logrus.Debugf("Setting assignees for pull request: %v", g.spec.Assignees)
+	}
 
-	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+	pr, resp, err := g.client.CreatePullRequest(g.Owner, g.Repository, sdkOpts)
+
+	if resp != nil && resp.StatusCode > 400 {
+		logrus.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	if err != nil {
-		if err.Error() == scm.ErrNotFound.Error() {
-			logrus.Infof("Gitea pullrequest not created, skipping")
-			return nil
-		}
-		return err
+		logrus.Infof("Gitea pullrequest not created, skipping")
+		return nil
 	}
 
 	report.Title = pr.Title
 	report.Description = pr.Body
-	report.Link = pr.Link
+	report.Link = pr.URL
 
-	logrus.Infof("Gitea pullrequest successfully opened on %q", pr.Link)
+	logrus.Infof("Gitea pullrequest successfully opened on %q", pr.URL)
 
 	return nil
 }

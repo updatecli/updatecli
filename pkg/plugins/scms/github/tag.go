@@ -2,7 +2,9 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
@@ -55,7 +57,7 @@ type refEdge struct {
 }
 
 // SearchTags return every tags from the github api return in reverse order of commit tags.
-func (g *Github) SearchTags() (tags []string, err error) {
+func (g *Github) SearchTags(retry int) (tags []string, err error) {
 	var query tagsQuery
 
 	variables := map[string]interface{}{
@@ -74,13 +76,29 @@ func (g *Github) SearchTags() (tags []string, err error) {
 	for {
 		err = g.client.Query(context.Background(), &query, variables)
 		if err != nil {
-			logrus.Error(err)
-			return nil, err
+			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+				// If the query failed because we reached the rate limit,
+				// then we need to re-requery the rate limit to get the latest information
+				rateLimit, err := queryRateLimit(g.client, context.Background())
+				if err != nil {
+					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+				}
+
+				logrus.Debugln(rateLimit)
+
+				if retry < MaxRetry {
+					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+					rateLimit.Pause()
+					return g.SearchTags(retry + 1)
+				}
+				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
+			}
+			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}
 
-		expectedFound = query.Repository.Refs.TotalCount
+		logrus.Debugln(query.RateLimit)
 
-		query.RateLimit.Show()
+		expectedFound = query.Repository.Refs.TotalCount
 
 		for i := len(query.Repository.Refs.Edges) - 1; i >= 0; i-- {
 			tagCounter++

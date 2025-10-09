@@ -31,6 +31,7 @@ var (
 	rawDockerfile string = `FROM ubuntu:20.04
 #Simple labels
 LABEL version="0.1"
+LABEL changelog "xxx"
 LABEL maintainer="John Smith "
 LABEL release-date="2020-04-05"
 LABEL promoted="true"

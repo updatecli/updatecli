@@ -1,12 +1,15 @@
 package awsami
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/smithy-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,17 +20,13 @@ func (a *AMI) getLatestAmiID() (string, error) {
 		Filters: a.ec2Filters,
 	}
 
-	result, err := a.apiClient.DescribeImages(&input)
+	result, err := a.apiClient.DescribeImages(context.Background(), &input)
 
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			default:
-				logrus.Errorln(aerr.Error())
-			}
+		var ae smithy.APIError
+		if errors.As(err, &ae) {
+			logrus.Errorf("AWS API Error - Code: %s, Message: %s", ae.ErrorCode(), ae.ErrorMessage())
 		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
 			logrus.Errorln(err.Error())
 		}
 		return "", err
@@ -55,7 +54,7 @@ func (a *AMI) getLatestAmiID() (string, error) {
 }
 
 // showShortDescription returns a short AMI description as a String.
-func showShortDescription(AMI *ec2.Image) string {
+func showShortDescription(AMI types.Image) string {
 	output := ""
 	if AMI.Name != nil {
 		output = fmt.Sprintf("* name: %s\n", *AMI.Name)
@@ -66,11 +65,11 @@ func showShortDescription(AMI *ec2.Image) string {
 	if AMI.Description != nil {
 		output = output + fmt.Sprintf("* description: %s\n", *AMI.Description)
 	}
-	if AMI.Architecture != nil {
-		output = output + fmt.Sprintf("* architecture: %s\n", *AMI.Architecture)
+	if len(AMI.Architecture) > 0 {
+		output = output + fmt.Sprintf("* architecture: %s\n", string(AMI.Architecture))
 	}
-	if AMI.Platform != nil {
-		output = output + fmt.Sprintf("* Platform: %s\n", *AMI.Platform)
+	if len(AMI.Platform) > 0 {
+		output = output + fmt.Sprintf("* Platform: %s\n", string(AMI.Platform))
 	}
 	return output
 }

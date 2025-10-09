@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/mod/modfile"
@@ -14,6 +15,13 @@ import (
 const (
 	GoModFile string = "go.mod"
 )
+
+type Replace struct {
+	OldPath    string
+	OldVersion string
+	NewPath    string
+	NewVersion string
+}
 
 // searchGoModFiles looks, recursively, for every files named go.mod from a root directory.
 func searchGoModFiles(rootDir string) ([]string, error) {
@@ -49,27 +57,42 @@ func isGolangInstalled() bool {
 	return err == nil
 }
 
-func getGoModContent(filename string) (goVersion string, goModules map[string]string, err error) {
+func getGoModContent(filename string) (goVersion string, goModules map[string]string, replaceGoModules []Replace, err error) {
 
 	data, err := os.ReadFile(filename)
 
 	if err != nil {
-		return goVersion, goModules, err
+		return "", nil, nil, err
 	}
 
 	modfile, err := modfile.Parse(filename, data, nil)
 	if err != nil {
-		return goVersion, goModules, err
+		return "", nil, nil, err
 	}
 
 	goVersion = modfile.Go.Version
 
-	goModules = make(map[string]string)
 	for _, r := range modfile.Require {
 		if !r.Indirect {
+			if goModules == nil {
+				goModules = make(map[string]string)
+			}
 			goModules[r.Mod.Path] = r.Mod.Version
 		}
 	}
 
-	return goVersion, goModules, nil
+	for _, r := range modfile.Replace {
+		// Ignore replace directives with local path
+		if strings.HasPrefix(r.New.Path, ".") || strings.HasPrefix(r.New.Path, "/") {
+			continue
+		}
+		replaceGoModules = append(replaceGoModules, Replace{
+			OldPath:    r.Old.Path,
+			OldVersion: r.Old.Version,
+			NewPath:    r.New.Path,
+			NewVersion: r.New.Version,
+		})
+	}
+
+	return goVersion, goModules, replaceGoModules, nil
 }

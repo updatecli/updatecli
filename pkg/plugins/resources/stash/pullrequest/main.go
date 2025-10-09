@@ -1,7 +1,9 @@
 package pullrequest
 
 import (
-	"github.com/mitchellh/mapstructure"
+	"fmt"
+
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/stash/client"
 	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
@@ -51,12 +53,12 @@ func New(spec interface{}, scm *stashscm.Stash) (Stash, error) {
 	// hence we decode it in two steps
 	err := mapstructure.Decode(spec, &clientSpec)
 	if err != nil {
-		return Stash{}, err
+		return Stash{}, fmt.Errorf("error decoding client spec: %w", err)
 	}
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return Stash{}, nil
+		return Stash{}, fmt.Errorf("error decoding spec: %w", err)
 	}
 
 	if scm != nil {
