@@ -189,6 +189,7 @@ type Spec struct {
 	// It is not compatible with the "token" and "username" fields.
 	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
 	// For more information, please refer to the following documentation:
+	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
 	App *GitHubAppSpec `yaml:",omitempty"`
 }
 
@@ -251,54 +252,33 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		s.URL = "https://" + s.URL
 	}
 
-	token := os.Getenv("UPDATECLI_GITHUB_TOKEN")
-	username := os.Getenv("UPDATECLI_GITHUB_USERNAME")
+	// We first try to get a token source from the environment variable
+	username, tokenSource, err := GetTokenSourceFromEnv()
+	if err != nil {
+		logrus.Debugf("no GitHub token found in environment variables: %s", err)
+	}
 
-	tokenSource := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-
-	GitHubAppSpecFromEnv := NewGitHubAppSpecFromEnv()
-
-	// If the token is not set in the environment variable, we use the one from the spec
-	if token == "" {
-		if GitHubAppSpecFromEnv != nil {
-			// If we detect that the environment variables are set for GitHub App authentication, we use them
-			// instead of the token authentication method.
-			logrus.Debugf(`Using GitHub App authentication method defined from environment variables`)
-			tokenSource, err = GitHubAppSpecFromEnv.Getoauth2TokenSource()
-			if err != nil {
-				return nil, fmt.Errorf("retrieving GitHub App token: %w", err)
-			}
-
-			username = "x-access-token"
-		} else if s.Token != "" {
-			logrus.Debugf(`Using personal access token authentication method from configuration`)
-
-			tokenSource = oauth2.StaticTokenSource(
-				&oauth2.Token{AccessToken: s.Token},
-			)
-			username = "oauth2"
-
-		} else if s.App != nil {
-			// If we detect that the GitHub App configuration is set in the configuration, we use it
-			// instead of the token authentication method.
-
-			logrus.Debugf(`Using GitHub App authentication method from configuration`)
-			tokenSource, err = s.App.Getoauth2TokenSource()
-			if err != nil {
-				return nil, fmt.Errorf("retrieving GitHub App token: %w", err)
-			}
-
-			username = "x-access-token"
-		} else {
-			logrus.Debugf(`GitHub token is not set, please refer to the documentation for more information:
-->  https://www.updatecli.io/docs/plugins/scm/github/
-`)
-			return nil, errors.New("github token is not set")
+	// If no token source could be found in the environment variable
+	// we try to get it from the configuration
+	if tokenSource == nil {
+		username, tokenSource, err = GetTokenSourceFromConfig(s)
+		if err != nil {
+			return nil, fmt.Errorf("retrieving token source from configuration: %w", err)
 		}
-	} else {
-		logrus.Debugf(`Using personal access token authentication method defined in environment variable "UPDATECLI_GITHUB_TOKEN"`)
+	}
+
+	if tokenSource == nil {
+		username, tokenSource = GetFallbackTokenSourceFromEnv()
+	}
+
+	// If the tokenSource is still nil at this point
+	// it means that no valid token source could be found.
+	// We log a debug message and return an error.
+	if tokenSource == nil {
+		logrus.Debugf(`GitHub token is not set, please refer to the documentation for more information:
+	->  https://www.updatecli.io/docs/plugins/scm/github/
+`)
+		return nil, errors.New("github token is not set")
 	}
 
 	tokenSource = oauth2.ReuseTokenSource(nil, tokenSource)
