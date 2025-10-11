@@ -57,9 +57,14 @@ func (g *Github) Clean() error {
 func (g *Github) Clone() (string, error) {
 	g.setDirectory()
 
-	err := g.nativeGitHandler.Clone(
-		g.Spec.Username,
-		g.Spec.Token,
+	accessToken, err := GetAccessToken(g.token)
+	if err != nil {
+		return "", fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	err = g.nativeGitHandler.Clone(
+		g.username,
+		accessToken,
 		g.GetURL(),
 		g.GetDirectory(),
 		g.Spec.Submodules,
@@ -98,9 +103,14 @@ func (g *Github) Commit(message string) error {
 			return err
 		}
 
+		accessToken, err := GetAccessToken(g.token)
+		if err != nil {
+			return fmt.Errorf("failed to get access token: %w", err)
+		}
+
 		if err = g.nativeGitHandler.Pull(
-			g.Spec.Username,
-			g.Spec.Token,
+			g.username,
+			accessToken,
 			workingDir,
 			workingBranch,
 			true,
@@ -323,9 +333,14 @@ func (g *Github) GetLatestCommitHash(workingBranch string) (*RepositoryRef, erro
 func (g *Github) Checkout() error {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
+	accessToken, err := GetAccessToken(g.token)
+	if err != nil {
+		return fmt.Errorf("failed to get access token: %w", err)
+	}
+
 	return g.nativeGitHandler.Checkout(
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		accessToken,
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
@@ -347,11 +362,16 @@ func (g *Github) Add(files []string) error {
 func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
+	accessToken, err := GetAccessToken(g.token)
+	if err != nil {
+		return false, fmt.Errorf("failed to get access token: %w", err)
+	}
+
 	return g.nativeGitHandler.IsLocalBranchPublished(
 		sourceBranch,
 		workingBranch,
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		accessToken,
 		g.GetDirectory())
 }
 
@@ -364,9 +384,14 @@ func (g *Github) Push() (bool, error) {
 		logrus.Debugf("commit done using GitHub API, normally nothing need to be push but we may have left over.")
 	}
 
+	accessToken, err := GetAccessToken(g.token)
+	if err != nil {
+		return false, fmt.Errorf("failed to get access token: %w", err)
+	}
+
 	return g.nativeGitHandler.Push(
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		accessToken,
 		g.GetDirectory(),
 		g.force,
 	)
@@ -375,10 +400,15 @@ func (g *Github) Push() (bool, error) {
 // PushTag push tags
 func (g *Github) PushTag(tag string) error {
 
-	err := g.nativeGitHandler.PushTag(
+	accessToken, err := GetAccessToken(g.token)
+	if err != nil {
+		return fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	err = g.nativeGitHandler.PushTag(
 		tag,
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		accessToken,
 		g.GetDirectory(),
 		g.force,
 	)
@@ -392,10 +422,15 @@ func (g *Github) PushTag(tag string) error {
 // PushBranch push tags
 func (g *Github) PushBranch(branch string) error {
 
-	err := g.nativeGitHandler.PushBranch(
+	accessToken, err := GetAccessToken(g.token)
+	if err != nil {
+		return fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	err = g.nativeGitHandler.PushBranch(
 		branch,
-		g.Spec.Username,
-		g.Spec.Token,
+		g.username,
+		accessToken,
 		g.GetDirectory(),
 		g.force)
 	if err != nil {

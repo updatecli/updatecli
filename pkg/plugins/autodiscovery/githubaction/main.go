@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -139,6 +140,12 @@ type gitProviderToken struct {
 	//  1. "UPDATECLI_GITHUB_TOKEN"
 	//  1. "GITEA_TOKEN"
 	Token string `yaml:",omitempty"`
+	// App defines the GitHub App credentials used to authenticate with GitHub API.
+	// It is not compatible with the "token" field.
+	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
+	// For more information, please refer to the following documentation:
+	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
+	App *github.GitHubAppSpec `yaml:",omitempty"`
 }
 
 // New return a new valid Flux object.

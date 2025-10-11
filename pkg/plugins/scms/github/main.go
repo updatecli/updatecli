@@ -103,7 +103,7 @@ type Spec struct {
 	//
 	//	compatible:
 	//		* scm
-	Token string `yaml:",omitempty" jsonschema:"required"`
+	Token string `yaml:",omitempty"`
 	//  "url" specifies the default github url in case of GitHub enterprise
 	//
 	//  compatible:
@@ -185,6 +185,12 @@ type Spec struct {
 	//
 	//  default: false
 	CommitUsingAPI *bool `yaml:",omitempty"`
+	// "app" specifies the GitHub App credentials used to authenticate with GitHub API.
+	// It is not compatible with the "token" and "username" fields.
+	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
+	// For more information, please refer to the following documentation:
+	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
+	App *GitHubAppSpec `yaml:",omitempty"`
 }
 
 // GitHub contains settings to interact with GitHub
@@ -199,6 +205,8 @@ type Github struct {
 	workingBranchPrefix    string
 	workingBranchSeparator string
 	commitUsingApi         bool
+	token                  oauth2.TokenSource
+	username               string
 }
 
 // Repository contains GitHub repository data
@@ -220,6 +228,8 @@ type RepositoryRef struct {
 
 // New returns a new valid GitHub object.
 func New(s Spec, pipelineID string) (*Github, error) {
+	var err error
+
 	errs := s.Validate()
 
 	if len(errs) > 0 {
@@ -242,21 +252,43 @@ func New(s Spec, pipelineID string) (*Github, error) {
 		s.URL = "https://" + s.URL
 	}
 
-	if s.Username == "" {
-		s.Username = "oauth2"
+	// We first try to get a token source from the environment variable
+	username, tokenSource, err := GetTokenSourceFromEnv()
+	if err != nil {
+		logrus.Debugf("no GitHub token found in environment variables: %s", err)
 	}
 
-	// Initialize github client
-	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: s.Token},
-	)
+	// If no token source could be found in the environment variable
+	// we try to get it from the configuration
+	if tokenSource == nil {
+		username, tokenSource, err = GetTokenSourceFromConfig(s)
+		if err != nil {
+			return nil, fmt.Errorf("retrieving token source from configuration: %w", err)
+		}
+	}
+
+	if tokenSource == nil {
+		username, tokenSource = GetFallbackTokenSourceFromEnv()
+	}
+
+	// If the tokenSource is still nil at this point
+	// it means that no valid token source could be found.
+	// We log a debug message and return an error.
+	if tokenSource == nil {
+		logrus.Debugf(`GitHub token is not set, please refer to the documentation for more information:
+	->  https://www.updatecli.io/docs/plugins/scm/github/
+`)
+		return nil, errors.New("github token is not set")
+	}
+
+	tokenSource = oauth2.ReuseTokenSource(nil, tokenSource)
 
 	clientContext := context.WithValue(
 		context.Background(),
 		oauth2.HTTPClient,
 		httpclient.NewRetryClient().(*http.Client))
 
-	httpClient := oauth2.NewClient(clientContext, src)
+	httpClient := oauth2.NewClient(clientContext, tokenSource)
 
 	nativeGitHandler := gitgeneric.GoGit{}
 
@@ -316,6 +348,8 @@ If you know what you are doing, please set the force option to true in your conf
 		workingBranchPrefix:    workingBranchPrefix,
 		workingBranchSeparator: workingBranchSeparator,
 		commitUsingApi:         commitUsingApi,
+		token:                  tokenSource,
+		username:               username,
 	}
 
 	if strings.HasSuffix(s.URL, "github.com") {
@@ -339,8 +373,12 @@ If you know what you are doing, please set the force option to true in your conf
 func (s *Spec) Validate() (errs []error) {
 	required := []string{}
 
-	if len(s.Token) == 0 {
-		required = append(required, "token")
+	if s.App != nil && len(s.Token) > 0 {
+		errs = append(errs, fmt.Errorf("you cannot use both token and app authentication methods"))
+	} else if s.App != nil {
+		if err := s.App.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("app configuration is invalid: %w", err))
+		}
 	}
 
 	if len(s.Owner) == 0 {
@@ -407,6 +445,16 @@ func (gs *Spec) Merge(child interface{}) error {
 		gs.Submodules = childGHSpec.Submodules
 	}
 
+	if childGHSpec.App != nil {
+		gs.App = &GitHubAppSpec{
+			ClientID:       childGHSpec.App.ClientID,
+			PrivateKey:     childGHSpec.App.PrivateKey,
+			PrivateKeyPath: childGHSpec.App.PrivateKeyPath,
+			InstallationID: childGHSpec.App.InstallationID,
+			ExpirationTime: childGHSpec.App.ExpirationTime,
+		}
+	}
+
 	return nil
 }
 
@@ -443,7 +491,6 @@ func (gs *Spec) MergeFromEnv(envPrefix string) {
 }
 
 func (g *Github) setDirectory() {
-
 	if _, err := os.Stat(g.Spec.Directory); os.IsNotExist(err) {
 
 		err := os.MkdirAll(g.Spec.Directory, 0755)
@@ -454,7 +501,6 @@ func (g *Github) setDirectory() {
 }
 
 func (g *Github) queryRepository(sourceBranch string, workingBranch string, retry int) (*Repository, error) {
-
 	rateLimit, err := queryRateLimit(g.client, context.Background())
 	logrus.Debugln(rateLimit)
 	if err != nil {
@@ -522,7 +568,6 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 	}
 
 	err = g.client.Query(context.Background(), &query, variables)
-
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < MaxRetry {
@@ -565,7 +610,6 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 // Returns Git object ID of the latest commit on the branch and the default branch
 // of the repository.
 func (g *Github) queryHeadOid(workingBranch string, retry int) (*RepositoryRef, error) {
-
 	rateLimit, err := queryRateLimit(g.client, context.Background())
 	logrus.Debugln(rateLimit)
 	if err != nil {

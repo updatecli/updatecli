@@ -2,7 +2,6 @@ package changelog
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/google/go-github/v69/github"
 	"github.com/sirupsen/logrus"
@@ -25,15 +24,10 @@ func (c *Changelog) Search(from, to string) (result.Changelogs, error) {
 
 	client := github.NewClient(nil)
 
+	// No need to retrieve token from environment variable as
+	// normally this should be already done from a different place
+	// in the code and provided to this struct.
 	token := c.Token
-
-	if token == "" {
-		if os.Getenv("GITHUB_TOKEN") != "" {
-			token = os.Getenv("GITHUB_TOKEN")
-		} else if os.Getenv("UPDATECLI_GITHUB_TOKEN") != "" {
-			token = os.Getenv("UPDATECLI_GITHUB_TOKEN")
-		}
-	}
 
 	if token != "" {
 		client = client.WithAuthToken(token)
