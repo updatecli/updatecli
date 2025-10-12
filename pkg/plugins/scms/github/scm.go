@@ -10,6 +10,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
@@ -276,8 +277,8 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 	logrus.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return g.CreateCommit(workingDir, commitMessage, retry+1)
 			}
@@ -293,7 +294,7 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 		// even if we provide the correct commit hash.
 		// In that case, we retry a few times before giving up.
 		// This is probably due to some caching on GitHub side.
-		if retry < MaxRetry && strings.Contains(err.Error(), "Expected branch to point to") {
+		if retry < client.MaxRetry && strings.Contains(err.Error(), "Expected branch to point to") {
 			return g.CreateCommit(workingDir, commitMessage, retry+1)
 		}
 		return "", fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)

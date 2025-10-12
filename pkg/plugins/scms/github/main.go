@@ -20,6 +20,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
@@ -201,7 +202,7 @@ type Github struct {
 	// Spec contains inputs coming from updatecli configuration
 	Spec                   Spec
 	pipelineID             string
-	client                 GitHubClient
+	client                 client.Client
 	nativeGitHandler       gitgeneric.GitHandler
 	workingBranch          bool
 	workingBranchPrefix    string
@@ -507,8 +508,8 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 	logrus.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return g.queryRepository(sourceBranch, workingBranch, retry+1)
 			}
@@ -572,8 +573,8 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 	err = g.client.Query(context.Background(), &query, variables)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				query.RateLimit.Pause()
 				return g.queryRepository(sourceBranch, workingBranch, retry+1)
 			}
@@ -616,8 +617,8 @@ func (g *Github) queryHeadOid(workingBranch string, retry int) (*RepositoryRef, 
 	logrus.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return g.queryHeadOid(workingBranch, retry+1)
 			}
@@ -660,8 +661,8 @@ func (g *Github) queryHeadOid(workingBranch string, retry int) (*RepositoryRef, 
 	err = g.client.Query(context.Background(), &query, variables)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				query.RateLimit.Pause()
 				return g.queryHeadOid(workingBranch, retry+1)
 			}
@@ -699,8 +700,8 @@ func (g *Github) createBranch(branchName string, repositoryId string, headOid st
 	logrus.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return g.createBranch(branchName, repositoryId, headOid, retry+1)
 			}

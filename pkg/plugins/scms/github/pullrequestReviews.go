@@ -8,6 +8,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
 // addPullrequestReviewers adds reviewers to a pull request
@@ -17,8 +18,8 @@ func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.addPullrequestReviewers(prID, retry+1)
 			}
