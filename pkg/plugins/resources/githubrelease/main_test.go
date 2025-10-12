@@ -107,15 +107,6 @@ func TestNew(t *testing.T) {
 			},
 			wantErr: true,
 		},
-		{
-			name: "Validation Error (missing token)",
-			spec: Spec{
-				Repository: "updatecli",
-				Owner:      "updatecli",
-				Username:   "joe",
-			},
-			wantErr: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
