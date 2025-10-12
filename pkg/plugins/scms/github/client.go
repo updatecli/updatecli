@@ -23,11 +23,6 @@ type GithubHandler interface {
 	Changelog(version.Version) (string, error)
 }
 
-const (
-	ErrAPIRateLimitExceeded             = "API rate limit already exceeded"
-	ErrAPIRateLimitExceededFinalAttempt = "API rate limit exceeded, final attempt failed"
-)
-
 var (
 	MaxRetry = 3
 )

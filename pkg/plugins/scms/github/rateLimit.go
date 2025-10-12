@@ -8,6 +8,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// ErrAPIRateLimitExceeded is returned when the API rate limit is exceeded
+	ErrAPIRateLimitExceeded = "API rate limit already exceeded"
+	// ErrAPIRateLimitExceededFinalAttempt is returned when the API rate limit is exceeded and no more retry is possible
+	ErrAPIRateLimitExceededFinalAttempt = "API rate limit exceeded, final attempt failed"
+)
+
 // RateLimit is a struct that contains GitHub Api limit information
 type RateLimit struct {
 	Cost      int
