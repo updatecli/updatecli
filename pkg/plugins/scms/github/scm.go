@@ -10,6 +10,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
@@ -57,7 +58,7 @@ func (g *Github) Clean() error {
 func (g *Github) Clone() (string, error) {
 	g.setDirectory()
 
-	accessToken, err := GetAccessToken(g.token)
+	accessToken, err := token.GetAccessToken(g.token)
 	if err != nil {
 		return "", fmt.Errorf("failed to get access token: %w", err)
 	}
@@ -103,7 +104,7 @@ func (g *Github) Commit(message string) error {
 			return err
 		}
 
-		accessToken, err := GetAccessToken(g.token)
+		accessToken, err := token.GetAccessToken(g.token)
 		if err != nil {
 			return fmt.Errorf("failed to get access token: %w", err)
 		}
@@ -333,7 +334,7 @@ func (g *Github) GetLatestCommitHash(workingBranch string) (*RepositoryRef, erro
 func (g *Github) Checkout() error {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
-	accessToken, err := GetAccessToken(g.token)
+	accessToken, err := token.GetAccessToken(g.token)
 	if err != nil {
 		return fmt.Errorf("failed to get access token: %w", err)
 	}
@@ -362,7 +363,7 @@ func (g *Github) Add(files []string) error {
 func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
-	accessToken, err := GetAccessToken(g.token)
+	accessToken, err := token.GetAccessToken(g.token)
 	if err != nil {
 		return false, fmt.Errorf("failed to get access token: %w", err)
 	}
@@ -384,7 +385,7 @@ func (g *Github) Push() (bool, error) {
 		logrus.Debugf("commit done using GitHub API, normally nothing need to be push but we may have left over.")
 	}
 
-	accessToken, err := GetAccessToken(g.token)
+	accessToken, err := token.GetAccessToken(g.token)
 	if err != nil {
 		return false, fmt.Errorf("failed to get access token: %w", err)
 	}
@@ -400,7 +401,7 @@ func (g *Github) Push() (bool, error) {
 // PushTag push tags
 func (g *Github) PushTag(tag string) error {
 
-	accessToken, err := GetAccessToken(g.token)
+	accessToken, err := token.GetAccessToken(g.token)
 	if err != nil {
 		return fmt.Errorf("failed to get access token: %w", err)
 	}
@@ -422,7 +423,7 @@ func (g *Github) PushTag(tag string) error {
 // PushBranch push tags
 func (g *Github) PushBranch(branch string) error {
 
-	accessToken, err := GetAccessToken(g.token)
+	accessToken, err := token.GetAccessToken(g.token)
 	if err != nil {
 		return fmt.Errorf("failed to get access token: %w", err)
 	}

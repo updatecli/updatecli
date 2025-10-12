@@ -9,8 +9,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
+
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
 // searchWorkflowFiles will look, recursively, for every files containing a GitHub action workflow from a root directory.
@@ -154,7 +155,7 @@ func parseActionDigestComment(input string) (digestReference string) {
 	return "" // Return an empty string if no words are found
 }
 
-func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err error) {
+func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, err error) {
 	if URL == "" {
 		URL = defaultGitProviderURL
 	}
@@ -168,7 +169,7 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err 
 	defaultGitHubToken := func(hostname string) string {
 
 		// 1. Get the token source from the environment
-		_, sourceToken, err := github.GetTokenSourceFromEnv()
+		_, sourceToken, err := token.GetTokenSourceFromEnv()
 		if err != nil {
 			logrus.Debugf("no GitHub token found in environment variables: %s", err)
 		}
@@ -191,7 +192,7 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err 
 
 		// 4. Fallback to the GITHUB_TOKEN environment variable if no other token source could be found
 		if sourceToken == nil {
-			_, sourceToken = github.GetFallbackTokenSourceFromEnv()
+			_, sourceToken = token.GetFallbackTokenSourceFromEnv()
 			if sourceToken != nil {
 				logrus.Debugf("using GitHub token from environment variable GITHUB_TOKEN")
 			}
@@ -203,7 +204,7 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err 
 			return ""
 		}
 
-		accessToken, err := github.GetAccessToken(sourceToken)
+		accessToken, err := token.GetAccessToken(sourceToken)
 		if err != nil {
 			logrus.Debugf("failed to get access token from token source: %s", err)
 			return ""
@@ -232,16 +233,16 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err 
 			kind = cred.Kind
 			switch kind {
 			case kindGitHub:
-				token = defaultGitHubToken(hostname)
+				authToken = defaultGitHubToken(hostname)
 			case kindGitea, kindForgejo:
-				token = cred.Token
-				if token == "" {
-					token = defaultGiteaToken()
+				authToken = cred.Token
+				if authToken == "" {
+					authToken = defaultGiteaToken()
 				}
 			default:
 				logrus.Debugf("unknown kind %q for git provider %q specified in parameter, fallback to github", kind, hostname)
 			}
-			return kind, token, nil
+			return kind, authToken, nil
 		}
 	}
 
@@ -252,25 +253,25 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err 
 	switch u.Hostname() {
 	case "gitea.com", "codeberg.org", "code.forgejo.org":
 		kind = kindGitea
-		token = defaultGiteaToken()
+		authToken = defaultGiteaToken()
 
 		ga.credentials[u.Hostname()] = gitProviderToken{
 			Kind:  kind,
-			Token: token,
+			Token: authToken,
 		}
 
 	case "github.com":
 		kind = kindGitHub
-		token = defaultGitHubToken("github.com")
+		authToken = defaultGitHubToken("github.com")
 		ga.credentials[u.Hostname()] = gitProviderToken{
 			Kind:  kind,
-			Token: token,
+			Token: authToken,
 		}
 	default:
 		logrus.Debugf("unknown git provider %q, fallback to github", u.Hostname())
 		kind = kindGitHub
-		token = defaultGitHubToken("github.com")
+		authToken = defaultGitHubToken("github.com")
 	}
 
-	return kind, token, nil
+	return kind, authToken, nil
 }

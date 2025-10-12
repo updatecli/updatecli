@@ -1,4 +1,4 @@
-package github
+package token
 
 import (
 	"fmt"
@@ -20,6 +20,10 @@ func GetAccessToken(tokenSource oauth2.TokenSource) (string, error) {
 	token, err := tokenSource.Token()
 	if err != nil {
 		return "", fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	if token == nil || token.AccessToken == "" {
+		return "", fmt.Errorf("no access token found")
 	}
 
 	return token.AccessToken, nil
@@ -80,26 +84,27 @@ func GetFallbackTokenSourceFromEnv() (string, oauth2.TokenSource) {
 // It supports both personal access tokens and GitHub App tokens
 // The precedence is as follows:
 //  1. Token provided in the Spec configuration
-//  2. GitHub App configuration in the Spec
-//  3. No token found, return an error
-func GetTokenSourceFromConfig(s Spec) (string, oauth2.TokenSource, error) {
+//
+// 2. GitHub App configuration in the Spec
+// 3. No token found, return an error
+func GetTokenSourceFromConfig(username, token string, app *app.Spec) (string, oauth2.TokenSource, error) {
 
-	if s.Token != "" {
+	if token != "" {
 		logrus.Debugf("using GitHub token from configuration")
 
-		return s.Username, oauth2.StaticTokenSource(
+		return username, oauth2.StaticTokenSource(
 			&oauth2.Token{
-				AccessToken: s.Token,
+				AccessToken: token,
 			}), nil
 	}
 
-	if s.App != nil {
+	if app != nil {
 		logrus.Debugf("using GitHub App authentication from configuration")
-		tokenSource, err := s.App.Getoauth2TokenSource()
+		tokenSource, err := app.Getoauth2TokenSource()
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get oauth2 token source from GitHub App spec: %w", err)
 		}
-		return "oauth2", tokenSource, nil
+		return githubAccessTokenKey, tokenSource, nil
 	}
 
 	return "", nil, nil

@@ -20,6 +20,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
@@ -254,7 +255,7 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	}
 
 	// We first try to get a token source from the environment variable
-	username, tokenSource, err := GetTokenSourceFromEnv()
+	username, tokenSource, err := token.GetTokenSourceFromEnv()
 	if err != nil {
 		logrus.Debugf("no GitHub token found in environment variables: %s", err)
 	}
@@ -262,14 +263,14 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	// If no token source could be found in the environment variable
 	// we try to get it from the configuration
 	if tokenSource == nil {
-		username, tokenSource, err = GetTokenSourceFromConfig(s)
+		username, tokenSource, err = token.GetTokenSourceFromConfig(s.Username, s.Token, s.App)
 		if err != nil {
 			return nil, fmt.Errorf("retrieving token source from configuration: %w", err)
 		}
 	}
 
 	if tokenSource == nil {
-		username, tokenSource = GetFallbackTokenSourceFromEnv()
+		username, tokenSource = token.GetFallbackTokenSourceFromEnv()
 	}
 
 	// If the tokenSource is still nil at this point
