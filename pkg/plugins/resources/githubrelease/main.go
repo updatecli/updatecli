@@ -7,6 +7,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -117,7 +118,7 @@ type Spec struct {
 	// It is not compatible with the "token" and "username" fields.
 	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
 	// For more information, please refer to the following documentation:
-	App *github.GitHubAppSpec `yaml:",omitempty"`
+	App *app.Spec `yaml:",omitempty"`
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"

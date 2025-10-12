@@ -19,6 +19,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
@@ -190,7 +191,7 @@ type Spec struct {
 	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
 	// For more information, please refer to the following documentation:
 	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
-	App *GitHubAppSpec `yaml:",omitempty"`
+	App *app.Spec `yaml:",omitempty"`
 }
 
 // GitHub contains settings to interact with GitHub
@@ -446,7 +447,7 @@ func (gs *Spec) Merge(child interface{}) error {
 	}
 
 	if childGHSpec.App != nil {
-		gs.App = &GitHubAppSpec{
+		gs.App = &app.Spec{
 			ClientID:       childGHSpec.App.ClientID,
 			PrivateKey:     childGHSpec.App.PrivateKey,
 			PrivateKeyPath: childGHSpec.App.PrivateKeyPath,

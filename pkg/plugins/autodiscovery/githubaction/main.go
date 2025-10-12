@@ -7,9 +7,10 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 )
 
 var (
@@ -145,7 +146,7 @@ type gitProviderToken struct {
 	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
 	// For more information, please refer to the following documentation:
 	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
-	App *github.GitHubAppSpec `yaml:",omitempty"`
+	App *app.Spec `yaml:",omitempty"`
 }
 
 // New return a new valid Flux object.

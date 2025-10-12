@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 	"golang.org/x/oauth2"
 )
 
@@ -46,7 +47,7 @@ func GetTokenSourceFromEnv() (string, oauth2.TokenSource, error) {
 			}), nil
 	}
 
-	GitHubAppSpecFromEnv := NewGitHubAppSpecFromEnv()
+	GitHubAppSpecFromEnv := app.NewSpecFromEnv()
 	if GitHubAppSpecFromEnv != nil {
 		logrus.Debugf("using GitHub App authentication from environment variables")
 		tokenSource, err := GitHubAppSpecFromEnv.Getoauth2TokenSource()
