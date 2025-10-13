@@ -146,9 +146,14 @@ func (g *Github) Commit(message string) error {
 
 			logrus.Debugf("Commit not found yet, retrying to pull it")
 
+			accessToken, err := token.GetAccessToken(g.token)
+			if err != nil {
+				return fmt.Errorf("failed to get access token: %w", err)
+			}
+
 			if err = g.nativeGitHandler.Pull(
-				g.Spec.Username,
-				g.Spec.Token,
+				g.username,
+				accessToken,
 				workingDir,
 				workingBranch,
 				true,
