@@ -86,7 +86,7 @@ func GetFallbackTokenSourceFromEnv() (string, oauth2.TokenSource) {
 //  1. Token provided in the Spec configuration
 //
 // 2. GitHub App configuration in the Spec
-// 3. No token found, return an error
+// 3. No token found, return an empty value
 func GetTokenSourceFromConfig(username, token string, app *app.Spec) (string, oauth2.TokenSource, error) {
 
 	if token != "" {
