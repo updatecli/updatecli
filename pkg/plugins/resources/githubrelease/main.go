@@ -7,6 +7,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -113,6 +114,11 @@ type Spec struct {
 	//   * source
 	//   * condition
 	Key string `yaml:",omitempty"`
+	// "app" specifies the GitHub App credentials used to authenticate with GitHub API.
+	// It is not compatible with the "token" and "username" fields.
+	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
+	// For more information, please refer to the following documentation:
+	App *app.Spec `yaml:",omitempty"`
 }
 
 // GitHubRelease defines a resource of kind "githubrelease"
@@ -169,6 +175,7 @@ func New(spec interface{}) (*GitHubRelease, error) {
 		Token:      newSpec.Token,
 		URL:        newSpec.URL,
 		Username:   newSpec.Username,
+		App:        newSpec.App,
 	}, "")
 	if err != nil {
 		return &GitHubRelease{}, err

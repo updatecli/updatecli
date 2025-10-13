@@ -6,6 +6,14 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
+)
+
+const (
+	// ErrAPIRateLimitExceeded is returned when the API rate limit is exceeded
+	ErrAPIRateLimitExceeded = "API rate limit already exceeded"
+	// ErrAPIRateLimitExceededFinalAttempt is returned when the API rate limit is exceeded and no more retry is possible
+	ErrAPIRateLimitExceededFinalAttempt = "API rate limit exceeded, final attempt failed"
 )
 
 // RateLimit is a struct that contains GitHub Api limit information
@@ -60,7 +68,7 @@ func (a RateLimit) isEmpty() bool {
 }
 
 // queryRateLimit queries the GitHub API rate limit information
-func queryRateLimit(client GitHubClient, ctx context.Context) (*RateLimit, error) {
+func queryRateLimit(client client.Client, ctx context.Context) (*RateLimit, error) {
 
 	query := struct {
 		RateLimit RateLimit

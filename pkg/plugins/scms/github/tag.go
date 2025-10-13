@@ -8,6 +8,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
 // tagsQuery defines a github v4 API query to retrieve a list of tags sorted in reverse order of commit tags.
@@ -86,8 +87,8 @@ func (g *Github) SearchTags(retry int) (tags []string, err error) {
 
 				logrus.Debugln(rateLimit)
 
-				if retry < MaxRetry {
-					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				if retry < client.MaxRetry {
+					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 					rateLimit.Pause()
 					return g.SearchTags(retry + 1)
 				}

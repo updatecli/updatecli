@@ -21,6 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
@@ -341,8 +342,8 @@ func (p *PullRequest) closePullRequest(retry int) error {
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.closePullRequest(retry + 1)
 			}
@@ -383,7 +384,7 @@ func (p *PullRequest) closePullRequest(retry int) error {
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < MaxRetry {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
 			return p.closePullRequest(retry + 1)
 		}
 		return fmt.Errorf("closing pull request: %w", err)
@@ -393,7 +394,7 @@ func (p *PullRequest) closePullRequest(retry int) error {
 	logrus.Infof("%s at:\n\n\t%s\n\n", msg, mutation.UpdatePullRequest.PullRequest.Url)
 	err = p.addComment(msg, 0)
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < MaxRetry {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
 			return p.closePullRequest(retry + 1)
 		}
 		logrus.Errorf("Commenting pull-request: %s", err.Error())
@@ -409,8 +410,8 @@ func (p *PullRequest) updatePullRequest(retry int) error {
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.updatePullRequest(retry + 1)
 			}
@@ -518,7 +519,7 @@ func (p *PullRequest) updatePullRequest(retry int) error {
 
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < MaxRetry {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
 			return p.updatePullRequest(retry + 1)
 		}
 		return fmt.Errorf("updating pull request: %w", err)
@@ -536,8 +537,8 @@ func (p *PullRequest) EnablePullRequestAutoMerge(retry int) error {
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.EnablePullRequestAutoMerge(retry + 1)
 			}
@@ -579,7 +580,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge(retry int) error {
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < MaxRetry {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
 			return p.EnablePullRequestAutoMerge(retry + 1)
 		}
 		return fmt.Errorf("enabling pull request automerge: %w", err)
@@ -595,8 +596,8 @@ func (p *PullRequest) OpenPullRequest(retry int) error {
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.OpenPullRequest(retry + 1)
 			}
@@ -713,8 +714,8 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository(retry int) (bool, error) {
 			}
 
 			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.isAutoMergedEnabledOnRepository(retry + 1)
 			}
@@ -794,8 +795,8 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool, retry int) error {
 			}
 
 			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.getRemotePullRequest(resetBody, retry+1)
 			}
@@ -902,8 +903,8 @@ func (p *PullRequest) GetPullRequestLabelsInformation(retry int) ([]repositoryLa
 					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
 				}
 				logrus.Debugln(rateLimit)
-				if retry < MaxRetry {
-					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				if retry < client.MaxRetry {
+					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 					rateLimit.Pause()
 					return p.GetPullRequestLabelsInformation(retry + 1)
 				}

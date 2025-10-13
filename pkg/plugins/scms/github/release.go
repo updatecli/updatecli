@@ -8,6 +8,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
 // releasesQuery defines a github v4 API query to retrieve a list of releases sorted by reverse order of created time.
@@ -107,8 +108,8 @@ func (g *Github) SearchReleases(releaseType ReleaseType, retry int) (releases []
 
 				logrus.Debugln(rateLimit)
 
-				if retry < MaxRetry {
-					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+				if retry < client.MaxRetry {
+					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 					rateLimit.Pause()
 					return g.SearchReleases(releaseType, retry+1)
 				}

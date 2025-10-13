@@ -2,12 +2,13 @@ package changelog
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/google/go-github/v69/github"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 )
 
 type Changelog struct {
@@ -25,18 +26,39 @@ func (c *Changelog) Search(from, to string) (result.Changelogs, error) {
 
 	client := github.NewClient(nil)
 
-	token := c.Token
+	// No need to retrieve authToken from environment variable as
+	// normally this should be already done from a different place
+	// in the code and provided to this struct.
+	authToken := c.Token
 
-	if token == "" {
-		if os.Getenv("GITHUB_TOKEN") != "" {
-			token = os.Getenv("GITHUB_TOKEN")
-		} else if os.Getenv("UPDATECLI_GITHUB_TOKEN") != "" {
-			token = os.Getenv("UPDATECLI_GITHUB_TOKEN")
+	if authToken == "" {
+		// We first try to get a token source from the environment variable
+		_, tokenSource, err := token.GetTokenSourceFromEnv()
+		if err != nil {
+			logrus.Debugf("no GitHub token found in environment variables: %s", err)
+		}
+
+		if tokenSource == nil {
+			// We fallback to the GITHUB_TOKEN environment variable if no other token source could be found
+			_, tokenSource = token.GetFallbackTokenSourceFromEnv()
+			if tokenSource != nil {
+				logrus.Debugf("using GitHub token from environment variable")
+			}
+		}
+
+		if tokenSource != nil {
+			authToken, err = token.GetAccessToken(tokenSource)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get access token from token source: %w", err)
+			}
+			logrus.Debugf("using GitHub token from environment variable")
+		} else {
+			logrus.Debugln("no GitHub token defined, please provide a GitHub token via the setting `token` or one of the environment variable UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN.")
 		}
 	}
 
-	if token != "" {
-		client = client.WithAuthToken(token)
+	if authToken != "" {
+		client = client.WithAuthToken(authToken)
 	}
 
 	if c.URL != "" {

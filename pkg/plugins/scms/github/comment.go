@@ -8,6 +8,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
 // addComment is mutation to add a comment to a GitHub pullrequest
@@ -21,8 +22,8 @@ func (p *PullRequest) addComment(body string, retry int) error {
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
-			if retry < MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, MaxRetry)
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.addComment(body, retry+1)
 			}
@@ -62,7 +63,7 @@ func (p *PullRequest) addComment(body string, retry int) error {
 	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			if retry < MaxRetry {
+			if retry < client.MaxRetry {
 				return p.addComment(body, retry+1)
 			}
 		}

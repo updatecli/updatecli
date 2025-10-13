@@ -205,7 +205,6 @@ func TestNew(t *testing.T) {
 					Branch:     "main",
 					Repository: "updatecli",
 					Owner:      "updatecli",
-					Username:   "oauth2",
 					Token:      "superSecretTOkenOfJoe",
 					URL:        "https://github.com",
 					Directory:  "/home/updatecli",
@@ -213,7 +212,7 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name:       "Validation Error (missing token)",
+			name:       "No Error for missing token",
 			pipelineID: "12345",
 			spec: Spec{
 				Branch:     "main",
@@ -222,7 +221,17 @@ func TestNew(t *testing.T) {
 				Directory:  "/tmp/updatecli",
 				Username:   "joe",
 			},
-			wantErr: true,
+			want: Github{
+				Spec: Spec{
+					Branch:     "main",
+					Repository: "updatecli",
+					Owner:      "updatecli",
+					Directory:  "/tmp/updatecli",
+					Username:   "joe",
+					URL:        "https://github.com",
+				},
+			},
+			wantErr: false,
 		},
 	}
 	for i := range tests {

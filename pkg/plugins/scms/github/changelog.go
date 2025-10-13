@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -13,11 +14,16 @@ func (g *Github) Changelog(version version.Version) (string, error) {
 	// GitHub Release needs the original version, because the "found" version can be modified (semantic version without the prefix, transformed version, etc.)
 	versionName := version.OriginalVersion
 
+	accessToken, err := token.GetAccessToken(g.token)
+	if err != nil {
+		return "", fmt.Errorf("failed to get access token: %w", err)
+	}
+
 	changelog := githubChangelog.Changelog{
 		URL:        g.GetURL(),
 		Owner:      g.Spec.Owner,
 		Repository: g.Spec.Repository,
-		Token:      g.Spec.Token,
+		Token:      accessToken,
 	}
 
 	releases, err := changelog.Search(versionName, versionName)

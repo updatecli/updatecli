@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -153,7 +155,7 @@ func parseActionDigestComment(input string) (digestReference string) {
 	return "" // Return an empty string if no words are found
 }
 
-func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err error) {
+func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, err error) {
 	if URL == "" {
 		URL = defaultGitProviderURL
 	}
@@ -164,16 +166,51 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err 
 		return "", "", fmt.Errorf("parsing URL: %s", err)
 	}
 
-	defaultGitHubToken := func() string {
-		if os.Getenv("UPDATECLI_GITHUB_TOKEN") != "" {
-			logrus.Debugf("environment  variable UPDATECLI_GITHUB_TOKEN detected, using it values as GitHub token")
-			return os.Getenv("UPDATECLI_GITHUB_TOKEN")
-		} else if os.Getenv("GITHUB_TOKEN") != "" {
-			logrus.Debugf("environment  variable GITHUB_TOKEN detected, using it values as GitHub token")
-			return os.Getenv("GITHUB_TOKEN")
+	defaultGitHubToken := func(hostname string) string {
+
+		// 1. Get the token source from the environment
+		_, sourceToken, err := token.GetTokenSourceFromEnv()
+		if err != nil {
+			logrus.Debugf("no GitHub token found in environment variables: %s", err)
 		}
-		logrus.Debugln("no GitHub token defined, please provide a GitHub token via the setting `token` or one of the environment variable UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN.")
-		return ""
+
+		// 2. Get the token from the configuration
+		if sourceToken == nil && ga.spec.Credentials[hostname].Token != "" {
+			logrus.Debugf("using GitHub token from configuration")
+			return ga.spec.Credentials[hostname].Token
+		}
+
+		// 3. Get the token from the GitHub App configuration
+		if sourceToken == nil && ga.spec.Credentials[hostname].App != nil {
+			sourceToken, err = ga.spec.Credentials[hostname].App.Getoauth2TokenSource()
+			if err != nil {
+				logrus.Debugf("failed to get oauth2 token source from GitHub App spec: %s", err)
+			} else {
+				logrus.Debugf("using GitHub App authentication from configuration")
+			}
+		}
+
+		// 4. Fallback to the GITHUB_TOKEN environment variable if no other token source could be found
+		if sourceToken == nil {
+			_, sourceToken = token.GetFallbackTokenSourceFromEnv()
+			if sourceToken != nil {
+				logrus.Debugf("using GitHub token from environment variable GITHUB_TOKEN")
+			}
+		}
+
+		// 5. If we still don't have a token source, log a message and return an empty string
+		if sourceToken == nil {
+			logrus.Debugln("no GitHub token defined, please provide a GitHub token via the setting `token` or one of the environment variable UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN.")
+			return ""
+		}
+
+		accessToken, err := token.GetAccessToken(sourceToken)
+		if err != nil {
+			logrus.Debugf("failed to get access token from token source: %s", err)
+			return ""
+		}
+
+		return accessToken
 	}
 
 	defaultGiteaToken := func() string {
@@ -191,18 +228,18 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err 
 	for hostname, cred := range ga.credentials {
 		if u.Hostname() == hostname {
 			kind = cred.Kind
-			token = cred.Token
-			if token == "" {
-				switch kind {
-				case kindGitHub:
-					token = defaultGitHubToken()
-				case kindGitea, kindForgejo:
-					token = defaultGiteaToken()
-				default:
-					logrus.Debugf("unknown kind %q for git provider %q specified in parameter, fallback to github", kind, hostname)
+			switch kind {
+			case kindGitHub:
+				authToken = defaultGitHubToken(hostname)
+			case kindGitea, kindForgejo:
+				authToken = cred.Token
+				if authToken == "" {
+					authToken = defaultGiteaToken()
 				}
+			default:
+				logrus.Debugf("unknown kind %q for git provider %q specified in parameter, fallback to github", kind, hostname)
 			}
-			return kind, token, nil
+			return kind, authToken, nil
 		}
 	}
 
@@ -213,25 +250,25 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, token string, err 
 	switch u.Hostname() {
 	case "gitea.com", "codeberg.org", "code.forgejo.org":
 		kind = kindGitea
-		token = defaultGiteaToken()
+		authToken = defaultGiteaToken()
 
 		ga.credentials[u.Hostname()] = gitProviderToken{
 			Kind:  kind,
-			Token: token,
+			Token: authToken,
 		}
 
 	case "github.com":
 		kind = kindGitHub
-		token = defaultGitHubToken()
+		authToken = defaultGitHubToken("github.com")
 		ga.credentials[u.Hostname()] = gitProviderToken{
 			Kind:  kind,
-			Token: token,
+			Token: authToken,
 		}
 	default:
 		logrus.Debugf("unknown git provider %q, fallback to github", u.Hostname())
 		kind = kindGitHub
-		token = defaultGitHubToken()
+		authToken = defaultGitHubToken("github.com")
 	}
 
-	return kind, token, nil
+	return kind, authToken, nil
 }
