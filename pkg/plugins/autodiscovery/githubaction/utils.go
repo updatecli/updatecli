@@ -220,9 +220,6 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, 
 		} else if os.Getenv("GITEA_TOKEN") != "" {
 			logrus.Debugf("environment  variable GITEA_TOKEN detected, using it values as Gitea token")
 			return os.Getenv("GITEA_TOKEN")
-		} else if os.Getenv("GITHUB_TOKEN") != "" {
-			logrus.Debugf("environment  variable GITHUB_TOKEN detected, using it values as Gitea token")
-			return os.Getenv("GITHUB_TOKEN")
 		}
 		logrus.Debugln("no Gitea token defined, please provide a Gitea token via the setting `token` or one of the environment variable UPDATECLI_GITEA_TOKEN or GITEA_TOKEN.")
 		return ""
