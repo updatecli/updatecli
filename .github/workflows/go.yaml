@@ -19,6 +19,14 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: free disk space
+        run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt clean
+          df -h
+          docker rmi $(docker image ls -aq)
+
       # https://github.com/actions/setup-go
       - name: Set up Go
         uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
