@@ -45,7 +45,7 @@ type Spec struct {
 	// IgnoreVersionConstraints indicates whether to respect version constraints defined in package.json or not.
 	// When set to true, Updatecli will ignore version constraints and update to the latest version available
 	// in the registry according to the specified version filter.
-	// Default is true.
+	// Default is false.
 	//
 	// Remark:
 	//  * If set to false, Updatecli will try to convert version constrains to valid semantic version
@@ -80,7 +80,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 	}
 
 	// By default we want to suggest the latest version available in the registry
-	ignoreVersionConstraint := true
+	ignoreVersionConstraint := false
 	if s.IgnoreVersionConstraints != nil {
 		ignoreVersionConstraint = *s.IgnoreVersionConstraints
 	}
