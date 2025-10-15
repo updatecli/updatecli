@@ -88,7 +88,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 					packageVersion)
 
 				if *rule.HasVersionConstraint == isVersionConstraint {
-					ruleResults = append(ruleResults, true)
+					ruleResults = append(ruleResults, isVersionConstraint)
 				}
 
 			}
