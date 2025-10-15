@@ -20,6 +20,11 @@ const (
 	latestVersionIdentifier string = "latest"
 )
 
+var (
+	// semverRegex matches valid semantic versioning such as 1.0.0, 1.0, 1
+	semverRegex = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
+)
+
 // searchPackageJsonFiles looks, recursively, for every files named package.json from a root directory.
 func searchPackageJsonFiles(rootDir string) ([]string, error) {
 
@@ -241,7 +246,6 @@ func convertSemverVersionConstraintToVersion(versionConstraint string) (string, 
 		return "", fmt.Errorf("parsing version constraint %q: %s", versionConstraint, err)
 	}
 
-	semverRegex := regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
 	match := semverRegex.FindString(versionConstraint)
 	if match == "" {
 		return "", fmt.Errorf("no valid version found in constraint: %s", versionConstraint)
