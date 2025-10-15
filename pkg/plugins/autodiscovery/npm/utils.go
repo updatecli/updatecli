@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	PackageJsonFile string = "package.json"
+	PackageJsonFile         string = "package.json"
+	latestVersionIdentifier string = "latest"
 )
 
 // searchPackageJsonFiles looks, recursively, for every files named package.json from a root directory.
@@ -87,7 +88,7 @@ func isVersionConstraintSupported(packageName, packageVersion string) bool {
 		}
 	}
 
-	if packageVersion == "" || packageVersion == "latest" || packageVersion == "*" {
+	if packageVersion == "" || packageVersion == latestVersionIdentifier || packageVersion == "*" {
 		logrus.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
 		logrus.Debugln("You probably want to adopt a better versioning strategy")
 		return true
@@ -109,7 +110,7 @@ func isVersionConstraintSupported(packageName, packageVersion string) bool {
 func isVersionConstraintSpecified(packageName, packageVersion string) bool {
 	// version set to an empty string is equivalent to *
 
-	if packageVersion == "" || packageVersion == "latest" || packageVersion == "*" {
+	if packageVersion == "" || packageVersion == latestVersionIdentifier || packageVersion == "*" {
 		logrus.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
 		logrus.Debugln("You probably want to adopt a better versioning strategy")
 		return true
@@ -232,7 +233,7 @@ func getTargetCommand(cmd, dependencyName string) string {
 func convertSemverVersionConstraintToVersion(versionConstraint string) (string, error) {
 	// If the version constraint is already a strict version, return it as is
 
-	if versionConstraint == "latest" {
+	if versionConstraint == latestVersionIdentifier {
 		return "", nil
 	}
 
