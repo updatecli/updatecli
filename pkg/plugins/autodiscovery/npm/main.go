@@ -42,7 +42,7 @@ type Spec struct {
 		and its type like regex, semver, or just latest.
 	*/
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// ignoreVersionConstraint indicates whether to respect version constraints defined in package.json or not.
+	// IgnoreVersionConstraints indicates whether to respect version constraints defined in package.json or not.
 	// When set to true, Updatecli will ignore version constraints and update to the latest version available
 	// in the registry according to the specified version filter.
 	// Default is false.
@@ -51,7 +51,7 @@ type Spec struct {
 	//  * If set to false, Updatecli will try to convert version constrains to valid semantic version
 	//    so we can use versionFilter to retrieve the last Major/Minor/Patch version but in case of complex version constraints, such as ">=1.0.0 <2.0.0",
 	//    Updatecli will convert it to the first version it detects such as 1.0.0 in our example
-	ignoreVersionConstraint *bool `yaml:",omitempty"`
+	IgnoreVersionConstraints *bool `yaml:",omitempty"`
 }
 
 // Npm holds all information needed to generate npm manifest.
@@ -81,8 +81,8 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 
 	// By default we want to suggest the latest version available in the registry
 	ignoreVersionConstraint := true
-	if s.ignoreVersionConstraint != nil {
-		ignoreVersionConstraint = *s.ignoreVersionConstraint
+	if s.IgnoreVersionConstraints != nil {
+		ignoreVersionConstraint = *s.IgnoreVersionConstraints
 	}
 
 	dir := rootDir

@@ -25,7 +25,7 @@ func TestDiscoverManifests(t *testing.T) {
 			name:    "Npm lockfile without respect version constraint with minor version update",
 			rootDir: "testdata/npmlockfile",
 			spec: Spec{
-				ignoreVersionConstraint: boolPtr(true),
+				IgnoreVersionConstraints: boolPtr(true),
 				VersionFilter: version.Filter{
 					Kind:    "semver",
 					Pattern: "minoronly",
@@ -66,7 +66,7 @@ targets:
 			name:    "Npm lockfile without respect version constraint",
 			rootDir: "testdata/npmlockfile",
 			spec: Spec{
-				ignoreVersionConstraint: boolPtr(true),
+				IgnoreVersionConstraints: boolPtr(true),
 			},
 			expectedPipelines: []string{`name: 'Bump "axios" package version'
 sources:
@@ -103,7 +103,7 @@ targets:
 			name:    "Npm lockfile with respect version constraint",
 			rootDir: "testdata/npmlockfile",
 			spec: Spec{
-				ignoreVersionConstraint: boolPtr(false),
+				IgnoreVersionConstraints: boolPtr(false),
 			},
 			expectedPipelines: []string{`name: 'Bump "axios" package version'
 sources:
