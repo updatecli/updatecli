@@ -20,7 +20,7 @@ func TestIsMatchingRule(t *testing.T) {
 		{
 			rules: MatchingRules{
 				MatchingRule{
-					VersionConstraint: true,
+					HasVersionConstraint: true,
 				},
 			},
 			filePath:       "package.json",
@@ -31,7 +31,7 @@ func TestIsMatchingRule(t *testing.T) {
 		{
 			rules: MatchingRules{
 				MatchingRule{
-					VersionConstraint: true,
+					HasVersionConstraint: true,
 				},
 			},
 			filePath:       "package.json",
