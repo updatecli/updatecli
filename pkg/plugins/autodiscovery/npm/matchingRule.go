@@ -13,7 +13,7 @@ type MatchingRule struct {
 	Path string
 	// Packages specifies the list of NPM packages to check
 	Packages map[string]string
-	// HasVersionConstraint indicates either the matching rule should match any version constraint or not.
+	// HasVersionConstraint indicates whether the matching rule should match any version constraint or not.
 	HasVersionConstraint *bool
 }
 
@@ -88,7 +88,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 					packageVersion)
 
 				if *rule.HasVersionConstraint == isVersionConstraint {
-					ruleResults = append(ruleResults, isVersionConstraint)
+					ruleResults = append(ruleResults, true)
 				}
 
 			}
