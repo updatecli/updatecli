@@ -98,20 +98,30 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					dependencyName,
 					dependencyVersion)
 
-				// If a version constraint is specified such as "~4.0.0" then package.json shouldn't be updated
-				// And if no lock file exist then we can skip this dependency
-				if yarnTargetCleanManifestEnabled &&
-					npmTargetCleanupManifestEnabled &&
-					isVersionConstraint {
-					continue
-				}
-
 				sourceVersionFilterKind := "semver"
 				sourceVersionFilterPattern := dependencyVersion
 
+				if isVersionConstraint && n.ignoreVersionConstraint {
+					sourceVersionFilterPattern = "*"
+
+					if !n.spec.VersionFilter.IsZero() && dependencyVersion != "latest" {
+						guessedVersion, err := convertSemverVersionConstraintToVersion(dependencyVersion)
+						if err != nil {
+							logrus.Debugf("converting version constraint to version: %s", err)
+							guessedVersion = ""
+						}
+						sourceVersionFilterKind = n.versionFilter.Kind
+						sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(guessedVersion)
+						if err != nil {
+							logrus.Debugf("building version filter pattern: %s", err)
+							sourceVersionFilterPattern = "*"
+						}
+					}
+				}
+
 				/*
 					Pattern order
-						1. Reuse version constraint defined from cargo.toml
+						1. Reuse version constraint defined from package.json
 						2. If no version constraint defined then convert the version to ">=x.y.z"
 						3. If no version constraint defined but versionfilter defined in the manifest
 						   then we use that version filter kind and pattern

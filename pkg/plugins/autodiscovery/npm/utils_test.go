@@ -103,3 +103,44 @@ func TestIsVersionConstraintSupported(t *testing.T) {
 		})
 	}
 }
+
+func TestConvertVersionConstraintToVersion(t *testing.T) {
+	dataset := []struct {
+		version          string
+		expectedResult   string
+		expectedError    bool
+		expectedErrorMsg string
+	}{
+		{expectedResult: "1.0.0", version: "1.0.0"},
+		{expectedResult: "1.0.0", version: ">=1.0.0"},
+		{expectedResult: "1.0.0", version: "1.0.0-alpha"},
+		{expectedResult: "1.0.0", version: "1.0.0+alpha"},
+		{expectedResult: "", version: "1.0.0_alpha", expectedError: true, expectedErrorMsg: "parsing version constraint \"1.0.0_alpha\": improper constraint: 1.0.0_alpha"},
+		{expectedResult: "1.0.0", version: "1.0"},
+		{expectedResult: "1.0.0", version: "1"},
+		{expectedResult: "1.0.0", version: "~1.0"},
+		{expectedResult: "1.0.0", version: "1.x"},
+		{expectedResult: "1.0.0", version: ">1.0.0"},
+		{expectedResult: "1.0.0", version: ">=1.0.0"},
+		{expectedResult: "1.0.0", version: "<1.0.0"},
+		{expectedResult: "1.0.0", version: "<=1.0.0"},
+		{expectedResult: "", version: "file://../dyl", expectedError: true, expectedErrorMsg: "parsing version constraint \"file://../dyl\": improper constraint: file://../dyl"},
+		{expectedResult: "1.0.0", version: "<1.0.0 || >= 2.3.1 < 2.4.5 || >=2.5.2 < 3.0.0"},
+		{expectedResult: "", version: "latest"},
+	}
+
+	for _, d := range dataset {
+		t.Run(d.version, func(t *testing.T) {
+			gotResult, err := convertSemverVersionConstraintToVersion(d.version)
+			if d.expectedError {
+				require.Error(t, err)
+				if d.expectedErrorMsg != "" {
+					assert.Equal(t, d.expectedErrorMsg, err.Error())
+				}
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, d.expectedResult, gotResult)
+		})
+	}
+}

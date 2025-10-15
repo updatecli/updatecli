@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -221,4 +222,34 @@ func getTargetCommand(cmd, dependencyName string) string {
 		return fmt.Sprintf("yarn add --mode update-lockfile %s@{{ source %q }}", dependencyName, "npm")
 	}
 	return "false"
+}
+
+// convertSemverVersionConstraintToVersion tries to extract a valid semantic version from a version constraint
+// If it fails to extract a valid semantic version, it returns an error
+// If the version constraint is "latest", it returns an empty string and no error
+// If the version constraint is a strict semantic version, it returns it as is
+// If the version constraint is a valid semantic version constraint, it extracts the first valid semantic version from it
+func convertSemverVersionConstraintToVersion(versionConstraint string) (string, error) {
+	// If the version constraint is already a strict version, return it as is
+
+	if versionConstraint == "latest" {
+		return "", nil
+	}
+
+	if _, err := semver.NewConstraint(versionConstraint); err != nil {
+		return "", fmt.Errorf("parsing version constraint %q: %s", versionConstraint, err)
+	}
+
+	semverRegex := regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
+	match := semverRegex.FindString(versionConstraint)
+	if match == "" {
+		return "", fmt.Errorf("no valid version found in constraint: %s", versionConstraint)
+	}
+
+	version, err := semver.NewVersion(match)
+	if err != nil {
+		return "", fmt.Errorf("parsing version from constraint %q: %s", versionConstraint, err)
+	}
+
+	return version.String(), nil
 }

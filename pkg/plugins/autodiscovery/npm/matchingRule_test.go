@@ -20,6 +20,28 @@ func TestIsMatchingRule(t *testing.T) {
 		{
 			rules: MatchingRules{
 				MatchingRule{
+					VersionConstraint: true,
+				},
+			},
+			filePath:       "package.json",
+			packageName:    "@babel/core",
+			packageVersion: "0.1.0",
+			expectedResult: false,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
+					VersionConstraint: true,
+				},
+			},
+			filePath:       "package.json",
+			packageName:    "@babel/core",
+			packageVersion: "0.1.x",
+			expectedResult: true,
+		},
+		{
+			rules: MatchingRules{
+				MatchingRule{
 					Path: "package.json",
 				},
 			},
