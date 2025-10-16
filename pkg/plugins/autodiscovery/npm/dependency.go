@@ -123,7 +123,8 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					// User want to respect the version constraint defined in package.json
 					// but also want to apply a version filter on top of it.
 					// This is not supported at this time as we don't have a clear use case.
-					logrus.Warningf("NPM package %q from %q: Ignoring version filter as version constraint %q is defined and ignoreVersionConstraint is set to false", dependencyName, relativeFoundFile, dependencyVersion)
+					logrus.Warningf("NPM package %q from %q: Ignoring version filter as version constraint %q is defined and ignoreVersionConstraints is set to false", dependencyName, relativeFoundFile, dependencyVersion)
+					logrus.Warningf("NPM package %q from %q: If you want to apply a version filter, please set ignoreVersionConstraints to true", dependencyName, relativeFoundFile)
 				}
 
 				/*
