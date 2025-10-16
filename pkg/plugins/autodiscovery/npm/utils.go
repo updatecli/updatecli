@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -15,7 +16,13 @@ import (
 )
 
 const (
-	PackageJsonFile string = "package.json"
+	PackageJsonFile         string = "package.json"
+	latestVersionIdentifier string = "latest"
+)
+
+var (
+	// semverRegex matches valid semantic versioning such as 1.0.0, 1.0, 1
+	semverRegex = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
 )
 
 // searchPackageJsonFiles looks, recursively, for every files named package.json from a root directory.
@@ -86,7 +93,7 @@ func isVersionConstraintSupported(packageName, packageVersion string) bool {
 		}
 	}
 
-	if packageVersion == "" || packageVersion == "latest" || packageVersion == "*" {
+	if packageVersion == "" || packageVersion == latestVersionIdentifier || packageVersion == "*" {
 		logrus.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
 		logrus.Debugln("You probably want to adopt a better versioning strategy")
 		return true
@@ -108,7 +115,7 @@ func isVersionConstraintSupported(packageName, packageVersion string) bool {
 func isVersionConstraintSpecified(packageName, packageVersion string) bool {
 	// version set to an empty string is equivalent to *
 
-	if packageVersion == "" || packageVersion == "latest" || packageVersion == "*" {
+	if packageVersion == "" || packageVersion == latestVersionIdentifier || packageVersion == "*" {
 		logrus.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
 		logrus.Debugln("You probably want to adopt a better versioning strategy")
 		return true
@@ -221,4 +228,33 @@ func getTargetCommand(cmd, dependencyName string) string {
 		return fmt.Sprintf("yarn add --mode update-lockfile %s@{{ source %q }}", dependencyName, "npm")
 	}
 	return "false"
+}
+
+// convertSemverVersionConstraintToVersion tries to extract a valid semantic version from a version constraint
+// If it fails to extract a valid semantic version, it returns an error
+// If the version constraint is "latest", it returns an empty string and no error
+// If the version constraint is a strict semantic version, it returns it as is
+// If the version constraint is a valid semantic version constraint, it extracts the first valid semantic version from it
+func convertSemverVersionConstraintToVersion(versionConstraint string) (string, error) {
+	// If the version constraint is already a strict version, return it as is
+
+	if versionConstraint == latestVersionIdentifier {
+		return "", nil
+	}
+
+	if _, err := semver.NewConstraint(versionConstraint); err != nil {
+		return "", fmt.Errorf("parsing version constraint %q: %s", versionConstraint, err)
+	}
+
+	match := semverRegex.FindString(versionConstraint)
+	if match == "" {
+		return "", fmt.Errorf("no valid version found in constraint: %s", versionConstraint)
+	}
+
+	version, err := semver.NewVersion(match)
+	if err != nil {
+		return "", fmt.Errorf("parsing version from constraint %q: %s", versionConstraint, err)
+	}
+
+	return version.String(), nil
 }
