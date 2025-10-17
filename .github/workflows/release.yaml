@@ -84,7 +84,7 @@ jobs:
         env:
           AUR_KEY: ${{ secrets.AUR_KEY }}
           COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           make release
