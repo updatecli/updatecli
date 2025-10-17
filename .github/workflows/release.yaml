@@ -77,7 +77,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ steps.generate_token.outputs.token }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: GoReleaser
         if: success()
