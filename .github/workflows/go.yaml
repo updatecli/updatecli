@@ -76,6 +76,11 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         if: ${{ github.event_name == 'schedule' }}
+        with:
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
+
       # Manage and run your integration tests with efficiency
       # https://github.com/ovh/venom
       - name: Install Venom
