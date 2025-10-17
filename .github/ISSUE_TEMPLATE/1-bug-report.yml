@@ -38,7 +38,7 @@ body:
     description: |
       examples:
         - **OS**: Ubuntu 20.04
-        - **updatecli**: v0.108.0
+        - **updatecli**: v0.109.0
     value: |
         - OS:
         - updatecli:
