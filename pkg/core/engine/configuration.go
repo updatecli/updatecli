@@ -1,8 +1,10 @@
 package engine
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
 
@@ -10,8 +12,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/githubsearch"
 )
 
 // ReadConfigurations read every strategies configuration.
@@ -103,6 +108,62 @@ func (e *Engine) LoadConfigurations() error {
 				)
 				continue
 			}
+
+			// Load special scm configuration such as githubsearch that can generate multiple scm configurations
+			// the generated scm configured must be ready before Updatecli start doing any operation such as
+			// clone git repositories, using the autoddiscovery to detect potienial updates.
+			// for id, loadedConfiguration := range loadedConfigurations {
+			for i := 0; i < len(loadedConfigurations); i++ {
+
+				loadedConfiguration := loadedConfigurations[i]
+
+				for scmID, scmConfig := range loadedConfigurations[i].Spec.SCMs {
+					switch scmConfig.Kind {
+					case githubsearch.Kind:
+
+						logrus.Debugf("Processing githubsearch scm %q for potential multiple repository discovery", scmID)
+
+						ctx := context.Background()
+						autodiscoveryScms, err := githubsearch.New(scmConfig.Spec)
+						if err != nil {
+							return fmt.Errorf("unable to instantiate githubsearch scm %q: %w", scmID, err)
+						}
+						discoveredSCms, err := autodiscoveryScms.ScmsGenerator(ctx)
+						if err != nil {
+							return fmt.Errorf("unable to generate scm specs for githubsearch scm %q: %w", scmID, err)
+						}
+
+						if len(discoveredSCms) == 0 {
+							// We need to trigger an error if the github search didn't discovered SCMs
+							// Otherwise Updatecli will not know how to handle this kind of scm later.
+							return fmt.Errorf("no scm discovered for githubsearch scm %q", scmID)
+						}
+
+						scmConfig.Kind = github.Kind
+						scmConfig.Spec = discoveredSCms[0]
+
+						loadedConfigurations[i].Spec.SCMs[scmID] = scmConfig
+
+						for _, spec := range discoveredSCms[1:] {
+							newPipeline := loadedConfiguration
+
+							newPipeline.Spec.SCMs = make(map[string]scm.Config, len(loadedConfiguration.Spec.SCMs))
+							maps.Copy(newPipeline.Spec.SCMs, loadedConfiguration.Spec.SCMs)
+
+							newSCM := newPipeline.Spec.SCMs[scmID]
+							newSCM.Kind = github.Kind
+							newSCM.Spec = spec
+
+							newPipeline.Spec.SCMs[scmID] = newSCM
+
+							loadedConfigurations = append(loadedConfigurations, newPipeline)
+							logrus.Debugf("githubsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
+						}
+					}
+				}
+			}
+
+			logrus.Errorf("Loaded %d pipeline configuration(s) from %q", len(loadedConfigurations), manifestFile)
 
 			for id := range loadedConfigurations {
 				newPipeline := pipeline.Pipeline{}
