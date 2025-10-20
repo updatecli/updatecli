@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -15,15 +13,17 @@ import (
 
 	"github.com/shurcooL/githubv4"
 
-	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+)
+
+const (
+	Kind = "github"
 )
 
 // Spec represents the configuration input
@@ -211,6 +211,7 @@ type Github struct {
 	commitUsingApi         bool
 	token                  oauth2.TokenSource
 	username               string
+	URL                    string
 }
 
 // Repository contains GitHub repository data
@@ -247,52 +248,6 @@ func New(s Spec, pipelineID string) (*Github, error) {
 	if s.Directory == "" {
 		s.Directory = path.Join(tmp.Directory, "github", s.Owner, s.Repository)
 	}
-
-	if s.URL == "" {
-		s.URL = "github.com"
-	}
-
-	if !strings.HasPrefix(s.URL, "https://") && !strings.HasPrefix(s.URL, "http://") {
-		s.URL = "https://" + s.URL
-	}
-
-	// We first try to get a token source from the environment variable
-	username, tokenSource, err := token.GetTokenSourceFromEnv()
-	if err != nil {
-		logrus.Debugf("no GitHub token found in environment variables: %s", err)
-	}
-
-	// If no token source could be found in the environment variable
-	// we try to get it from the configuration
-	if tokenSource == nil {
-		username, tokenSource, err = token.GetTokenSourceFromConfig(s.Username, s.Token, s.App)
-		if err != nil {
-			return nil, fmt.Errorf("retrieving token source from configuration: %w", err)
-		}
-	}
-
-	if tokenSource == nil {
-		username, tokenSource = token.GetFallbackTokenSourceFromEnv()
-	}
-
-	// If the tokenSource is still nil at this point
-	// it means that no valid token source could be found.
-	// We log a debug message and return an error.
-	if tokenSource == nil {
-		logrus.Debugf(`GitHub token is not set, please refer to the documentation for more information:
-	->  https://www.updatecli.io/docs/plugins/scm/github/
-`)
-		return nil, errors.New("github token is not set")
-	}
-
-	tokenSource = oauth2.ReuseTokenSource(nil, tokenSource)
-
-	clientContext := context.WithValue(
-		context.Background(),
-		oauth2.HTTPClient,
-		httpclient.NewRetryClient().(*http.Client))
-
-	httpClient := oauth2.NewClient(clientContext, tokenSource)
 
 	nativeGitHandler := gitgeneric.GoGit{}
 
@@ -352,20 +307,17 @@ If you know what you are doing, please set the force option to true in your conf
 		workingBranchPrefix:    workingBranchPrefix,
 		workingBranchSeparator: workingBranchSeparator,
 		commitUsingApi:         commitUsingApi,
-		token:                  tokenSource,
-		username:               username,
 	}
 
-	if strings.HasSuffix(s.URL, "github.com") {
-		g.client = githubv4.NewClient(httpClient)
-	} else {
-		// For GH enterprise the GraphQL API path is /api/graphql
-		// Cf https://docs.github.com/en/enterprise-cloud@latest/graphql/guides/managing-enterprise-accounts#3-setting-up-insomnia-to-use-the-github-graphql-api-with-enterprise-accounts
-		graphqlURL, err := url.JoinPath(s.URL, "/api/graphql")
-		if err != nil {
-			return nil, err
-		}
-		g.client = githubv4.NewEnterpriseClient(graphqlURL, httpClient)
+	clientConfig, err := client.New(g.Spec.Username, g.Spec.Token, g.Spec.App, g.Spec.URL)
+
+	g.client = clientConfig.Client
+	g.username = clientConfig.Username
+	g.token = clientConfig.TokenSource
+	g.URL = clientConfig.URL
+
+	if err != nil {
+		return &Github{}, fmt.Errorf("creating GitHub client: %w", err)
 	}
 
 	g.setDirectory()
