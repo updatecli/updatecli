@@ -163,7 +163,7 @@ func (e *Engine) LoadConfigurations() error {
 				}
 			}
 
-			logrus.Errorf("Loaded %d pipeline configuration(s) from %q", len(loadedConfigurations), manifestFile)
+			logrus.Debugf("Loaded %d pipeline configuration(s) from %q", len(loadedConfigurations), manifestFile)
 
 			for id := range loadedConfigurations {
 				newPipeline := pipeline.Pipeline{}
