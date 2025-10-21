@@ -64,7 +64,7 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 				}
 
 				baseFile := entry.Name()
-				if strings.HasPrefix(baseFile, "_") {
+				if strings.HasPrefix(baseFile, "_") && (strings.HasSuffix(baseFile, ".yaml") || strings.HasSuffix(baseFile, ".yml")) {
 					// If the file starts with an underscore, we consider it a partial file
 					partialFilePath := filepath.Join(manifestDirname, baseFile)
 					sanitizedPartialPaths = append(sanitizedPartialPaths, partialFilePath)
