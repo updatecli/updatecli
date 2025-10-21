@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 						Owner:      "updatecli",
 						Username:   "joe",
 						Token:      "superSecretTOkenOfJoe",
-						URL:        "https://github.com",
+						URL:        "github.com",
 					},
 				},
 				versionFilter: version.Filter{
@@ -60,7 +60,7 @@ func TestNew(t *testing.T) {
 						Directory:  path.Join(tmp.Directory, "updatecli", "updatecli"),
 						Username:   "joe",
 						Token:      "superSecretTOkenOfJoe",
-						URL:        "https://github.com",
+						URL:        "github.com",
 					},
 				},
 				versionFilter: version.Filter{
@@ -86,7 +86,6 @@ func TestNew(t *testing.T) {
 						Directory:  "/home/updatecli",
 						Username:   "joe",
 						Token:      "superSecretTOkenOfJoe",
-						URL:        "https://github.com",
 					},
 				},
 				versionFilter: version.Filter{
@@ -102,7 +101,6 @@ func TestNew(t *testing.T) {
 				Owner:      "updatecli",
 				Username:   "joe",
 				Token:      "superSecretTOkenOfJoe",
-				URL:        "github.com",
 				Key:        "commit",
 			},
 			wantErr: true,
