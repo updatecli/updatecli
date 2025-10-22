@@ -63,6 +63,52 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error
 	return nil
 }
 
+// searchCompositeActionsFiles will look, recursively, for every files containing a GitHub composite action file from a root directory.
+func (g *GitHubAction) searchCompositeActionFiles(rootDir string, actions []string) error {
+
+	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			logrus.Debugf("something went wrong while walking in %q: %v\n", path, err)
+			return err
+		}
+
+		for _, foundAction := range actions {
+			if !info.IsDir() {
+				// Check if file is action.yaml or action.yml
+				if info.Name() != "action.yaml" && info.Name() != "action.yml" {
+					continue
+				}
+
+				// Get parent directory name
+				parentDir := filepath.Dir(path)
+				actionName := filepath.Base(parentDir)
+
+				match, err := filepath.Match(foundAction, actionName)
+				if err != nil {
+					continue
+				}
+
+				// if file doesn't match the pattern, skip it
+				if !match {
+					continue
+				}
+
+				g.compositeActionFiles = append(g.compositeActionFiles, path)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	logrus.Debugf("%d Composite Action(s) found", len(g.compositeActionFiles))
+
+	return nil
+}
+
 // parseActionName will parse the action name from the input string.
 // and then try to identify which part is the owner and which part is the repository.
 // It will also try to identify if the action is a docker image or a local action

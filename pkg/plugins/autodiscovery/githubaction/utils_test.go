@@ -32,6 +32,27 @@ func TestSearchWorkflowFiles(t *testing.T) {
 	assert.Equal(t, expectedWorkflowFiles, g.workflowFiles)
 }
 
+func TestSearchCompositeActionsFiles(t *testing.T) {
+	g, err := New(
+		Spec{
+			RootDir: "testdata",
+		}, "", "", "")
+
+	require.NoError(t, err)
+
+	err = g.searchCompositeActionFiles("testdata", defaultCompositeActionNames[:])
+	if err != nil {
+		t.Error(err)
+	}
+
+	expectedCompositeActionFiles := []string{
+		"testdata/composite_actions/.github/actions/checkout/action.yml",
+		"testdata/composite_actions/.github/actions/setup/action.yaml",
+	}
+
+	assert.Equal(t, expectedCompositeActionFiles, g.compositeActionFiles)
+}
+
 func TestParseActionName(t *testing.T) {
 	tests := []struct {
 		name               string
