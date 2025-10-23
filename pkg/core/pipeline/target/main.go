@@ -24,7 +24,7 @@ var (
 // Target defines which file needs to be updated based on source output
 type Target struct {
 	// Result store the condition result after a target run.
-	Result result.Target
+	Result *result.Target
 	// Config defines target input parameters
 	Config Config
 	// Commit defines if a target was executed in Commit mode
@@ -125,10 +125,6 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 	}
 
-	if o.DryRun {
-		logrus.Infof("\n**Dry Run enabled**\n\n")
-	}
-
 	target, err := resource.New(t.Config.ResourceConfig)
 	if err != nil {
 		failTargetRun()
@@ -137,7 +133,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
-		err = target.Target(source, nil, o.DryRun, &t.Result)
+		err = target.Target(source, nil, o.DryRun, t.Result)
 		if err != nil {
 			failTargetRun()
 			return err
@@ -157,15 +153,12 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	s := *t.Scm
 
-	t.Result.Scm.URL = s.GetURL()
-	t.Result.Scm.Branch.Source, t.Result.Scm.Branch.Working, t.Result.Scm.Branch.Target = s.GetBranches()
-
 	if err = s.Checkout(); err != nil {
 		failTargetRun()
 		return err
 	}
 
-	err = target.Target(source, s, o.DryRun, &t.Result)
+	err = target.Target(source, s, o.DryRun, t.Result)
 	if err != nil {
 		failTargetRun()
 		return err

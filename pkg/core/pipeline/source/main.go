@@ -19,7 +19,7 @@ import (
 // Source defines how a value is retrieved from a specific source
 type Source struct {
 	// Result stores the source result after a source run.
-	Result result.Source
+	Result *result.Source
 	// Output contains the value retrieved from a source
 	Output string
 	// OriginalOutput contains the raw value retrieved from a source before the transformation
@@ -75,9 +75,6 @@ func (s *Source) Run() (err error) {
 	case false:
 		SCM := *s.Scm
 
-		s.Result.Scm.URL = SCM.GetURL()
-		s.Result.Scm.Branch.Source, s.Result.Scm.Branch.Working, s.Result.Scm.Branch.Target = SCM.GetBranches()
-
 		err = SCM.Checkout()
 		if err != nil {
 			s.Result.Result = result.FAILURE
@@ -87,7 +84,7 @@ func (s *Source) Run() (err error) {
 		workingDir = SCM.GetDirectory()
 	}
 
-	err = source.Source(workingDir, &s.Result)
+	err = source.Source(workingDir, s.Result)
 
 	s.Output = s.Result.Information
 	s.OriginalOutput = s.Result.Information
