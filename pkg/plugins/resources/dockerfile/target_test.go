@@ -100,6 +100,8 @@ FROM golang:1.16
 WORKDIR /go/src/app
 FROM ubuntu:20.04 AS golang
 RUN apt-get update
+FROM python AS python-runtime
+FROM python-runtime AS final
 FROM ubuntu:20.04
 RUN apt-get update
 LABEL golang="${GOLANG_VERSION}"
@@ -186,6 +188,51 @@ FROM golang
 WORKDIR /go/src/app
 FROM ubuntu:20.04 AS golang
 RUN apt-get update
+FROM python AS python-runtime
+FROM python-runtime AS final
+FROM ubuntu:20.04
+RUN apt-get update
+LABEL golang="${GOLANG_VERSION}"
+VOLUME /tmp / golang
+USER golang
+WORKDIR /home/updatecli
+COPY --from=golang --chown=updatecli:golang /go/src/app/dist/updatecli /usr/bin/golang
+ENTRYPOINT [ "/usr/bin/golang" ]
+CMD ["--help:golang"]
+`,
+				},
+			},
+		},
+		{
+			name:             "FROM with stage name matching base image",
+			inputSourceValue: "3.25",
+			spec: Spec{
+				Instruction: map[string]interface{}{
+					"keyword": "FROM",
+					"matcher": "python",
+				},
+			},
+			files: []string{"FROM.Dockerfile"},
+			mockFile: text.MockTextRetriever{
+				Contents: map[string]string{
+					"FROM.Dockerfile": dockerfileFixture,
+				},
+			},
+			wantChanged: true,
+			wantMockState: text.MockTextRetriever{
+				// dryRun is true: no change
+				Contents: map[string]string{
+					"FROM.Dockerfile": `FROM golang:1.15 AS builder
+ARG golang=3.0.0
+LABEL org.opencontainers.image.version=1.0.0
+COPY ./golang .
+RUN go get -d -v ./... && echo golang
+FROM golang
+WORKDIR /go/src/app
+FROM ubuntu:20.04 AS golang
+RUN apt-get update
+FROM python:3.25 AS python-runtime
+FROM python-runtime AS final
 FROM ubuntu:20.04
 RUN apt-get update
 LABEL golang="${GOLANG_VERSION}"

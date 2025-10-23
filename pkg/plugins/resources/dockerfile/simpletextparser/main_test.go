@@ -441,20 +441,25 @@ func TestSimpleTextDockerfileParser_GetInstructionTokens(t *testing.T) {
 		want              []keywords.Tokens
 	}{
 		{
-			name:              "FROM.Dockerfile From",
+			name:              "FROM.Dockerfile From empty matcher",
 			fixtureDockerfile: "FROM.Dockerfile",
 			givenInstruction: map[string]string{
 				"keyword": "FROM",
 				"matcher": "",
+			},
+		},
+		{
+			name:              "FROM.Dockerfile From",
+			fixtureDockerfile: "FROM.Dockerfile",
+			givenInstruction: map[string]string{
+				"keyword": "FROM",
+				"matcher": "golang",
 			},
 			want: []keywords.Tokens{
 				keywords.FromToken{Keyword: "FROM", Image: "golang", Tag: "1.15", Alias: "builder", AliasKw: "AS"},
 				keywords.FromToken{Keyword: "FROM", Image: "golang", Tag: "1.15", Alias: "tester", AliasKw: "as"},
 				keywords.FromToken{Keyword: "FROM", Image: "golang", Tag: "latest", Alias: "reporter", AliasKw: "AS"},
 				keywords.FromToken{Keyword: "FROM", Image: "golang", Tag: "latest"},
-				keywords.FromToken{Keyword: "FROM", Image: "ubuntu", Tag: "latest", Alias: "base", AliasKw: "AS"},
-				keywords.FromToken{Keyword: "FROM", Image: "ubuntu", Tag: "latest", Alias: "golang", AliasKw: "AS"},
-				keywords.FromToken{Keyword: "FROM", Image: "ubuntu", Tag: "20.04"},
 			},
 		},
 		{

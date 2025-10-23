@@ -147,6 +147,41 @@ targets:
     sourceid: 'updatecli/updatecli-digest'
 `},
 		},
+		{
+			name:    "Scenario 5: Should not update stage name as image",
+			rootDir: "testdata/similar-stage-and-image",
+			digest:  true,
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "python" digest'
+sources:
+  python:
+    name: 'get latest image tag for "python"'
+    kind: 'dockerimage'
+    spec:
+      image: 'python'
+      tagfilter: '^\d*(\.\d*){1}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=3.13'
+  python-digest:
+    name: 'get latest image "python" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'python'
+      tag: '{{ source "python" }}'
+    dependson:
+      - 'python'
+targets:
+  python:
+    name: 'deps: update Docker image "python" to "{{ source "python" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'python'
+    sourceid: 'python-digest'
+`},
+		},
 	}
 
 	for _, tt := range testdata {

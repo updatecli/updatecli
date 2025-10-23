@@ -20,6 +20,9 @@ FROM golang
 
 RUN echo "${GOLANG}"
 
+FROM python AS python-runtime
+FROM python-runtime AS final
+
 FROM ubuntu AS base
 
 RUN apt-get update
