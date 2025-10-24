@@ -20,6 +20,7 @@ type githubActionManifestSpec struct {
 	RelativeFoundFile string
 	CommentDigest     string
 	JobID             string
+	Composite         bool
 	StepID            int
 }
 
@@ -116,6 +117,13 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		return nil, fmt.Errorf("unsupported git provider kind %q, skipping", kind)
 	}
 
+	var targetKey string
+	if spec.Composite {
+		targetKey = fmt.Sprintf(`$.runs.steps[%d].uses`, spec.StepID)
+	} else {
+		targetKey = fmt.Sprintf(`$.jobs.%s.steps[%d].uses`, spec.JobID, spec.StepID)
+	}
+
 	params := struct {
 		ActionID             string
 		ActionName           string
@@ -123,13 +131,12 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		PinReference         string
 		File                 string
 		ImageName            string
-		JobID                string
 		URL                  string
 		Owner                string
 		Repository           string
 		VersionFilterKind    string
 		VersionFilterPattern string
-		StepID               int
+		TargetKey            string
 		ScmID                string
 		Token                string
 		Digest               bool
@@ -139,14 +146,13 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		Reference:            spec.Reference,
 		PinReference:         pinReference,
 		File:                 spec.RelativeFoundFile,
-		JobID:                spec.JobID,
 		URL:                  spec.URL,
 		Owner:                spec.Owner,
 		Repository:           spec.Repository,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
 		ScmID:                g.scmID,
-		StepID:               spec.StepID,
+		TargetKey:            targetKey,
 		Token:                token,
 		Digest:               g.digest,
 	}
