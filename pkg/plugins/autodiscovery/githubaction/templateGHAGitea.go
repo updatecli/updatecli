@@ -95,7 +95,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      key: '{{ .TargetKey }}'
       engine: 'yamlpath'
 
   tag:
@@ -112,7 +112,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      key: '{{ .TargetKey }}'
       engine: 'yamlpath'
 
   branch:
@@ -129,7 +129,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      key: '{{ .TargetKey }}'
       engine: 'yamlpath'
 `
 )
