@@ -593,7 +593,7 @@ func (config *Config) validateTargets() error {
 
 		if len(t.SourceID) > 0 {
 			if _, ok := config.Spec.Sources[t.SourceID]; !ok {
-				logrus.Errorf("the specified sourceid %q for condition[id] does not exist", t.SourceID)
+				logrus.Errorf("the specified sourceid %q for target %q does not exist", t.SourceID, id)
 				return ErrBadConfig
 			}
 		}
@@ -652,7 +652,7 @@ func (config *Config) validateConditions() error {
 
 		if len(c.SourceID) > 0 {
 			if _, ok := config.Spec.Sources[c.SourceID]; !ok {
-				logrus.Errorf("the specified sourceid %q for condition[id] does not exist", c.SourceID)
+				logrus.Errorf("the specified sourceid %q for condition %q does not exist", c.SourceID, id)
 				return ErrBadConfig
 			}
 		}
