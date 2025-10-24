@@ -15,7 +15,7 @@ import (
 )
 
 // searchWorkflowFiles will look, recursively, for every files containing a GitHub action workflow from a root directory.
-func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error {
+func (g *GitHubAction) searchWorkflowFiles(rootDir string) error {
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -23,7 +23,7 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error
 			return err
 		}
 
-		for _, foundFile := range files {
+		for _, foundFile := range g.files {
 			if !info.IsDir() {
 				match, err := filepath.Match(foundFile, info.Name())
 				if err != nil {
@@ -64,7 +64,7 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error
 }
 
 // searchCompositeActionsFiles will look, recursively, for every files containing a GitHub composite action file from a root directory.
-func (g *GitHubAction) searchCompositeActionFiles(rootDir string, actions []string) error {
+func (g *GitHubAction) searchCompositeActionFiles(rootDir string) error {
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -72,7 +72,7 @@ func (g *GitHubAction) searchCompositeActionFiles(rootDir string, actions []stri
 			return err
 		}
 
-		for _, foundAction := range actions {
+		for _, foundAction := range g.actions {
 			if !info.IsDir() {
 				// Check if file is action.yaml or action.yml
 				if info.Name() != "action.yaml" && info.Name() != "action.yml" {

@@ -15,7 +15,7 @@ func TestSearchWorkflowFiles(t *testing.T) {
 
 	require.NoError(t, err)
 
-	err = g.searchWorkflowFiles("testdata", defaultWorkflowFiles[:])
+	err = g.searchWorkflowFiles("testdata")
 	if err != nil {
 		t.Error(err)
 	}
@@ -40,7 +40,7 @@ func TestSearchCompositeActionsFiles(t *testing.T) {
 
 	require.NoError(t, err)
 
-	err = g.searchCompositeActionFiles("testdata", defaultCompositeActionNames[:])
+	err = g.searchCompositeActionFiles("testdata")
 	if err != nil {
 		t.Error(err)
 	}

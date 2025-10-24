@@ -232,12 +232,12 @@ func (g GitHubAction) DiscoverManifests() ([][]byte, error) {
 		searchFromDir = filepath.Join(g.rootDir, g.spec.RootDir)
 	}
 
-	err := g.searchWorkflowFiles(searchFromDir, g.files)
+	err := g.searchWorkflowFiles(searchFromDir)
 	if err != nil {
 		return nil, err
 	}
 
-	err = g.searchCompositeActionFiles(searchFromDir, g.actions)
+	err = g.searchCompositeActionFiles(searchFromDir)
 	if err != nil {
 		return nil, err
 	}
