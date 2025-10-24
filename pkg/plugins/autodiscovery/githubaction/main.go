@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	// defaultWorkflowFiles specifies accepted GitHub Action workflow file name
+	// defaultWorkflowFiles specifies accepted Action workflow file name
 	defaultWorkflowFiles        []string = []string{"*.yaml", "*.yml"}
+	defaultCompositeActionNames []string = []string{"*"}
 	defaultVersionFilterPattern string   = "*"
 	defaultVersionFilterKind    string   = "semver"
 	kindGitea                   string   = "gitea"
@@ -24,9 +25,9 @@ var (
 	defaultGitProviderURL       string   = "https://github.com"
 )
 
-// Spec defines the parameters which can be provided to the Github Action crawler.
+// Spec defines the parameters which can be provided to the Action crawler.
 type Spec struct {
-	// files allows to specify the accepted GitHub Action workflow file name
+	// files allows to specify the accepted Action workflow file name
 	//
 	// default:
 	//   - ".github/workflows/*.yaml",
@@ -36,6 +37,12 @@ type Spec struct {
 	//   - ".forgejo/workflows/*.yaml",
 	//   - ".forgejo/workflows/*.yml",
 	Files []string `yaml:",omitempty"`
+	// actions allows to specify the accepted Composite Action names
+	//
+	// default:
+	//   - "*",
+	Actions []string `yaml:",omitempty"`
+
 	// ignore allows to specify rule to ignore autodiscovery a specific GitHub action based on a rule
 	//
 	// default: empty
@@ -107,8 +114,10 @@ type Spec struct {
 type GitHubAction struct {
 	// credentials defines the credentials to use to authenticate to the git provider
 	credentials map[string]gitProviderToken
-	// files defines the accepted GitHub Action workflow file name
+	// files defines the accepted Action workflow file name
 	files []string
+	// actions defines the accepted Composite Action name
+	actions []string
 	// spec defines the settings provided via an updatecli manifest
 	spec Spec
 	// rootDir defines the  oot directory from where looking for Flux
@@ -119,8 +128,10 @@ type GitHubAction struct {
 	scmID string
 	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
-	// workflowFiles is a list of HelmRelease files found
+	// workflowFiles is a list of workflow files found
 	workflowFiles []string
+	// compositeActionFiles is a list of Composite action files found
+	compositeActionFiles []string
 	// digest holds the value of the digest parameter
 	digest bool
 }
@@ -169,13 +180,21 @@ func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
-		return GitHubAction{}, err
+		logrus.Warningln("no working directory defined")
+		dir, err = filepath.Abs(".")
+		if err != nil {
+			return GitHubAction{}, err
+		}
 	}
 
 	files := defaultWorkflowFiles
 	if len(s.Files) > 0 {
 		files = s.Files
+	}
+
+	actions := defaultCompositeActionNames
+	if len(s.Actions) > 0 {
+		actions = s.Actions
 	}
 
 	newFilter := s.VersionFilter
@@ -194,12 +213,12 @@ func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error
 		credentials:   s.Credentials,
 		spec:          s,
 		files:         files,
+		actions:       actions,
 		rootDir:       dir,
 		scmID:         scmID,
 		versionFilter: newFilter,
 		digest:        digest,
 	}, nil
-
 }
 
 func (g GitHubAction) DiscoverManifests() ([][]byte, error) {
@@ -213,12 +232,17 @@ func (g GitHubAction) DiscoverManifests() ([][]byte, error) {
 		searchFromDir = filepath.Join(g.rootDir, g.spec.RootDir)
 	}
 
-	err := g.searchWorkflowFiles(searchFromDir, g.files)
+	err := g.searchWorkflowFiles(searchFromDir)
 	if err != nil {
 		return nil, err
 	}
 
-	manifests := g.discoverWorkflowManifests()
+	err = g.searchCompositeActionFiles(searchFromDir)
+	if err != nil {
+		return nil, err
+	}
+
+	manifests := g.discoverManifests()
 
 	return manifests, err
 }

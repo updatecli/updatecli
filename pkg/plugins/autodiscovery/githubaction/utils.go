@@ -15,7 +15,7 @@ import (
 )
 
 // searchWorkflowFiles will look, recursively, for every files containing a GitHub action workflow from a root directory.
-func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error {
+func (g *GitHubAction) searchWorkflowFiles(rootDir string) error {
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -23,7 +23,7 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error
 			return err
 		}
 
-		for _, foundFile := range files {
+		for _, foundFile := range g.files {
 			if !info.IsDir() {
 				match, err := filepath.Match(foundFile, info.Name())
 				if err != nil {
@@ -59,6 +59,52 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string, files []string) error
 	}
 
 	logrus.Debugf("%d GitHub workflow(s) found", len(g.workflowFiles))
+
+	return nil
+}
+
+// searchCompositeActionsFiles will look, recursively, for every files containing a GitHub composite action file from a root directory.
+func (g *GitHubAction) searchCompositeActionFiles(rootDir string) error {
+
+	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			logrus.Debugf("something went wrong while walking in %q: %v\n", path, err)
+			return err
+		}
+
+		for _, foundAction := range g.actions {
+			if !info.IsDir() {
+				// Check if file is action.yaml or action.yml
+				if info.Name() != "action.yaml" && info.Name() != "action.yml" {
+					continue
+				}
+
+				// Get parent directory name
+				parentDir := filepath.Dir(path)
+				actionName := filepath.Base(parentDir)
+
+				match, err := filepath.Match(foundAction, actionName)
+				if err != nil {
+					continue
+				}
+
+				// if file doesn't match the pattern, skip it
+				if !match {
+					continue
+				}
+
+				g.compositeActionFiles = append(g.compositeActionFiles, path)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	logrus.Debugf("%d Composite Action(s) found", len(g.compositeActionFiles))
 
 	return nil
 }
