@@ -101,7 +101,7 @@ func TestGetDockerfileData(t *testing.T) {
 					Platform: "linux/ppc64",
 					Image:    "alpine",
 					Tag:      "${alpine_version}",
-					Alias:    "alpine",
+					Alias:    "base_alpine",
 					AliasKw:  "AS",
 					Args: map[string]*keywords.FromTokenArgs{
 						"tag": {
