@@ -13,6 +13,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/githubsearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
@@ -154,12 +155,13 @@ func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
-		"bitbucket": &bitbucket.Spec{},
-		"git":       &git.Spec{},
-		"gitea":     &gitea.Spec{},
-		"github":    &github.Spec{},
-		"gitlab":    &gitlab.Spec{},
-		"stash":     &stash.Spec{},
+		"bitbucket":    &bitbucket.Spec{},
+		"git":          &git.Spec{},
+		"gitea":        &gitea.Spec{},
+		"github":       &github.Spec{},
+		"gitlab":       &gitlab.Spec{},
+		"stash":        &stash.Spec{},
+		"githubsearch": &githubsearch.Spec{},
 	}
 
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
