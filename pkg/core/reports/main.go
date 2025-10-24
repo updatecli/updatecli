@@ -70,8 +70,6 @@ type Reports []Report
 func (r *Reports) Show() error {
 	t := template.Must(template.New("reports").Parse(reportsTpl))
 
-	// $target.SCM.URL && // $target.SCM.Branch
-
 	reports := ""
 
 	buffer := new(bytes.Buffer)
