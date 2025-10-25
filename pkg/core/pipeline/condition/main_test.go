@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/file"
 )
 
@@ -86,6 +87,9 @@ func TestRun(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			// Normally the result is initialized by the pipeline, we do it here for testing purpose
+			tt.condition.Result = &result.Condition{}
 
 			gotErr := tt.condition.Run("")
 			require.NoError(t, gotErr)
