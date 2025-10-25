@@ -281,11 +281,11 @@ func TestFrom_ReplaceLine(t *testing.T) {
 			want:         "FROM alpine:3.14",
 		},
 		{
-			name:         "Match beginning value",
+			name:         "Exact Match",
 			source:       "3.14",
 			originalLine: "FROM alpine-test",
 			matcher:      "alpine",
-			want:         "FROM alpine-test:3.14",
+			want:         "FROM alpine-test",
 		},
 		{
 			name:         "Match but no change",
@@ -476,10 +476,10 @@ func TestFrom_IsLineMatching(t *testing.T) {
 			want:         true,
 		},
 		{
-			name:         "Match beginning value",
+			name:         "Exact match value",
 			originalLine: "FROM alpine-test",
 			matcher:      "alpine",
-			want:         true,
+			want:         false,
 		},
 		{
 			name:         "No Match at all",
@@ -590,12 +590,14 @@ func TestFrom_GetValue(t *testing.T) {
 		{
 			name:         "Match",
 			originalLine: "FROM alpine:3.12 AS builder",
+			matcher:      "alpine",
 			want:         "alpine:3.12",
 			wantErr:      false,
 		},
 		{
 			name:         "Lowercase Match",
 			originalLine: "from alpine:3.12 as builder",
+			matcher:      "alpine",
 			want:         "alpine:3.12",
 			wantErr:      false,
 		},

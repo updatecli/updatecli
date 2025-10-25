@@ -114,16 +114,6 @@ func searchInstructions(dockerfileContent []byte) ([]keywords.FromToken, map[str
 		}
 		args[arg.Name] = arg
 	}
-	rawFromInstructions := fromParser.GetInstructionTokens(dockerfileContent)
-
-	fromInstructions := []keywords.FromToken{}
-	// Feed arg values inside of from instructions
-	for _, instruction := range rawFromInstructions {
-		from, ok := instruction.(keywords.FromToken)
-		if !ok {
-			continue
-		}
-		fromInstructions = append(fromInstructions, from)
-	}
+	fromInstructions := fromParser.GetImages(dockerfileContent)
 	return fromInstructions, args, nil
 }

@@ -125,6 +125,31 @@ func (s SimpleTextDockerfileParser) GetInstructionTokens(dockerfileContent []byt
 	return instructions
 }
 
+// GetImages will return all images in a dockerfile
+func (s SimpleTextDockerfileParser) GetImages(dockerfileContent []byte) []keywords.FromToken {
+	var images []keywords.FromToken
+	stages := map[string]bool{}
+	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
+	fromScanner := keywords.From{}
+	for scanner.Scan() {
+		originalLine := scanner.Text()
+		tokens, err := fromScanner.GetTokens(originalLine)
+		if err != nil {
+			continue
+		}
+		fromTokens := tokens.(keywords.FromToken)
+		if _, ok := stages[fromTokens.Image]; ok {
+			// We are reusing a stage
+			continue
+		}
+		if fromTokens.Alias != "" {
+			stages[fromTokens.Alias] = true
+		}
+		images = append(images, fromTokens)
+	}
+	return images
+}
+
 func (s SimpleTextDockerfileParser) GetInstruction(dockerfileContent []byte, stage string) string {
 	type stageValue struct {
 		StageName string

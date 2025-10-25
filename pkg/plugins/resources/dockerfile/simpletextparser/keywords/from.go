@@ -237,7 +237,7 @@ func (f From) IsLineMatching(originalLine, matcher string) bool {
 	if err != nil {
 		return false
 	}
-	return strings.HasPrefix(tokens.Image, matcher)
+	return tokens.Image == matcher
 }
 
 func (f From) GetStageName(originalLine string) (string, error) {
