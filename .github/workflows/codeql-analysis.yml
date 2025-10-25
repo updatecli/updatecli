@@ -30,7 +30,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@2d92b76c45b91eb80fc44c74ce3fce0ee94e8f9d # v3.30.0
+        uses: github/codeql-action/init@4e94bd11f71e507f7f87df81788dff88d1dacbfb # v4.31.0
         # Override language selection by uncommenting this and choosing your languages
         with:
           languages: go
