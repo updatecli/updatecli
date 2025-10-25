@@ -32,7 +32,7 @@ func (p *Pipeline) RunTarget(id string, sourceIds []string) (r string, changed b
 	if err != nil {
 		p.Report.Result = result.FAILURE
 		target.Result.Result = result.FAILURE
-		err = fmt.Errorf("something went wrong in target %q : %q", id, err)
+		err = fmt.Errorf("%s", err)
 	}
 
 	changelogSourceID := target.Config.SourceID
@@ -61,7 +61,7 @@ func (p *Pipeline) RunTarget(id string, sourceIds []string) (r string, changed b
 				if changelogs != nil {
 					target.Result.Changelogs = *changelogs
 
-					logrus.Infof("%s", changelogs.String())
+					logrus.Debugf("%s", changelogs.String())
 
 				} else {
 					logrus.Debugln("no changelog detected")

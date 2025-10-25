@@ -130,14 +130,21 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		// Init Sources[id]
 		p.Sources[id] = source.Source{
 			Config: config.Spec.Sources[id],
-			Result: result.Source{
+			Result: &result.Source{
 				Result: result.SKIPPED,
 			},
 			Scm: scmPointer,
 		}
 
 		r := p.Sources[id].Result
-		p.Report.Sources[id] = &r
+
+		if scmPointer != nil {
+			scm := *scmPointer
+			r.Scm.URL = scm.GetURL()
+			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
+		}
+
+		p.Report.Sources[id] = r
 	}
 
 	// Init conditions report
@@ -156,14 +163,21 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		p.Conditions[id] = condition.Condition{
 			Config: config.Spec.Conditions[id],
-			Result: result.Condition{
+			Result: &result.Condition{
 				Result: result.SKIPPED,
 			},
 			Scm: scmPointer,
 		}
 
 		r := p.Conditions[id].Result
-		p.Report.Conditions[id] = &r
+
+		if scmPointer != nil {
+			scm := *scmPointer
+			r.Scm.URL = scm.GetURL()
+			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
+		}
+
+		p.Report.Conditions[id] = r
 
 	}
 
@@ -182,14 +196,21 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		p.Targets[id] = target.Target{
 			Config: config.Spec.Targets[id],
-			Result: result.Target{
+			Result: &result.Target{
 				Result: result.SKIPPED,
 			},
 			Scm: scmPointer,
 		}
 
 		r := p.Targets[id].Result
-		p.Report.Targets[id] = &r
+
+		if scmPointer != nil {
+			scm := *scmPointer
+			r.Scm.URL = scm.GetURL()
+			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
+		}
+
+		p.Report.Targets[id] = r
 
 		p.Report.Targets[id].DryRun = r.DryRun
 	}
@@ -225,8 +246,30 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	if !ok {
 		return nil, fmt.Errorf("failed to reconstruct leaf from interface: %s", id) // Should never happens
 	}
-	logrus.Infof("\n%s: %s\n", leaf.Category, id)
-	logrus.Infof("%s\n", strings.Repeat("-", len(id)))
+
+	resourceTitle := strings.TrimPrefix(id, leaf.Category+"#")
+	logrus.Infof("\n%s: %s\n", leaf.Category, resourceTitle)
+	logrus.Infof("%s\n\n", strings.Repeat("-", len(resourceTitle)+len(leaf.Category)+2))
+
+	// Display headers
+	switch leaf.Category {
+	case sourceCategory:
+		sourceId := strings.ReplaceAll(id, "source#", "")
+		if scm, ok := p.SCMs[p.Sources[sourceId].Config.SCMID]; ok {
+			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+		}
+
+	case conditionCategory:
+		conditionId := strings.ReplaceAll(id, "condition#", "")
+		if scm, ok := p.SCMs[p.Conditions[conditionId].Config.SCMID]; ok {
+			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+		}
+	case targetCategory:
+		targetId := strings.ReplaceAll(id, "target#", "")
+		if scm, ok := p.SCMs[p.Targets[targetId].Config.SCMID]; ok {
+			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+		}
+	}
 
 	depsSourceIDs := []string{}
 	deps := map[string]*Node{}
@@ -256,7 +299,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			logrus.Errorf("error while cleaning config: %v", err)
 		}
 
-		p.Report.Sources[id] = &source.Result
+		p.Report.Sources[id] = source.Result
 	}
 
 	updateConditionResult := func(id string) {
@@ -275,7 +318,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			logrus.Errorf("error while cleaning config: %v", err)
 		}
 
-		p.Report.Conditions[id] = &condition.Result
+		p.Report.Conditions[id] = condition.Result
 	}
 
 	updateTargetResult := func(id string) {
@@ -294,12 +337,12 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			logrus.Errorf("error while cleaning config: %v", err)
 		}
 
-		p.Report.Targets[id] = &target.Result
+		p.Report.Targets[id] = target.Result
 	}
 
 	shouldSkip := p.shouldSkipResource(&leaf, deps)
 	if shouldSkip {
-		logrus.Debugf("Skipping %s[%q] because of dependsOn conditions", leaf.Category, id)
+		logrus.Infof("%s Skipping %q because of dependsOn conditions", result.SKIPPED, id)
 		leaf.Result = result.SKIPPED
 
 		switch leaf.Category {
@@ -316,6 +359,10 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		}
 	}
 
+	displayError := func() {
+		logrus.Infof("%s Something went wrong\n", result.FAILURE)
+	}
+
 	if leaf.Result != result.SKIPPED {
 		// Run the resource
 		switch leaf.Category {
@@ -323,6 +370,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			sourceId := strings.ReplaceAll(id, "source#", "")
 			r, e := p.RunSource(sourceId)
 			if e != nil {
+				displayError()
 				err = e
 			}
 
@@ -334,6 +382,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			conditionId := strings.ReplaceAll(id, "condition#", "")
 			r, e := p.RunCondition(conditionId)
 			if e != nil {
+				displayError()
 				err = e
 			}
 
@@ -345,6 +394,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			targetId := strings.ReplaceAll(id, "target#", "")
 			r, changed, e := p.RunTarget(targetId, depsSourceIDs)
 			if e != nil {
+				displayError()
 				err = e
 			}
 
@@ -364,9 +414,14 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 // Run execute an single pipeline
 func (p *Pipeline) Run() error {
 
-	logrus.Infof("\n\n%s\n", strings.Repeat("#", len(p.Name)+4))
+	logrus.Infof("\n%s\n", strings.Repeat("#", len(p.Name)+4))
 	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
-	logrus.Infof("%s\n", strings.Repeat("#", len(p.Name)+4))
+	logrus.Infof("%s\n\n", strings.Repeat("#", len(p.Name)+4))
+
+	logrus.Infof("Pipeline ID\t: %s", p.ID)
+	if p.Options.Target.DryRun {
+		logrus.Infof("Dry Run\t\t: enabled\n")
+	}
 
 	p.Report.Result = result.SUCCESS
 

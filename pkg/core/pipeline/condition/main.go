@@ -24,7 +24,7 @@ var (
 // in order to update targets based on the source output
 type Condition struct {
 	// Result stores the condition result after a condition run.
-	Result result.Condition
+	Result *result.Condition
 	// Config defines condition input parameters
 	Config Config
 	// Scm stores scm information
@@ -80,9 +80,6 @@ func (c *Condition) Run(source string) (err error) {
 		if err != nil {
 			return err
 		}
-
-		c.Result.Scm.URL = s.GetURL()
-		c.Result.Scm.Branch.Source, c.Result.Scm.Branch.Working, c.Result.Scm.Branch.Target = s.GetBranches()
 
 		err = s.Checkout()
 		if err != nil {

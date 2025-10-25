@@ -37,6 +37,7 @@ type ScmHandler interface {
 	IsRemoteBranchUpToDate() (bool, error)
 	GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	GetURL() string
+	Summary() string
 }
 
 func New(config *Config, pipelineID string) (Scm, error) {

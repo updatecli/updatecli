@@ -14,7 +14,7 @@ func (e *Engine) runActions() error {
 	errs := []string{}
 
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Actions"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Actions")+1))
+	logrus.Infof("%s\n", strings.Repeat("=", len("Actions")+1))
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]

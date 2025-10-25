@@ -15,11 +15,10 @@ const reportsTpl string = `
 =============================
 
 SUMMARY:
-
-
 {{ range . }}
 {{ if .Err }}
 {{- .Result }} {{ .Name -}}:{{"\n"}}
+{{- .PipelineID }}{{"\n"}}
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}:{{"\n"}}
@@ -27,6 +26,11 @@ SUMMARY:
 {{- "\t"}}Source:
 {{ range $ID,$source := .Sources }}
 {{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }}{{"\n"}}
+
+{{- if $source.Scm.URL -}}
+{{- "\t" }}{{"\t"}}      * Repository: {{ $source.Scm.URL }} (branch: {{ $source.Scm.Branch.Target }}){{"\n"}}
+{{- end -}}
+
 {{- end -}}
 {{- end -}}
 
@@ -34,12 +38,22 @@ SUMMARY:
 {{- "\t" }}Condition:
 {{ range $ID, $condition := .Conditions }}
 {{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name }}{{"\n"}}
+
+{{- if $condition.Scm.URL -}}
+{{- "\t" }}{{"\t"}}      * Repository: {{ $condition.Scm.URL }} (branch: {{ $condition.Scm.Branch.Target }}){{"\n"}}
+{{- end -}}
+
 {{- end -}}
 {{- end -}}
 {{- if .Targets -}}
 {{- "\t" -}}Target:
 {{ range $ID, $target := .Targets }}
 {{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name }}{{"\n"}}
+
+{{- if $target.Scm.URL -}}
+{{- "\t" }}{{"\t"}}      * Repository: {{ $target.Scm.URL }} (branch: {{ $target.Scm.Branch.Target }}){{"\n"}}
+{{- end -}}
+
 {{- end }}
 {{ end }}
 {{- if .ReportURL }}
