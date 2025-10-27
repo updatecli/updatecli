@@ -37,8 +37,7 @@ func (g *GoMod) version(filename string) (string, error) {
 
 	modfile, err := modfile.Parse(filename, []byte(data), nil)
 	if err != nil {
-		logrus.Errorln(err)
-		return "", fmt.Errorf("failed reading %q", filename)
+		return "", fmt.Errorf("failed reading %q: %w", filename, err)
 	}
 
 	switch g.kind {
@@ -66,7 +65,6 @@ func (g *GoMod) version(filename string) (string, error) {
 			}
 		}
 
-		logrus.Errorf("GO module %q not found in %q", g.spec.Module, filename)
 		return "", ErrModuleNotFound
 	}
 
@@ -79,14 +77,12 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 	oldContent, err := os.ReadFile(filename)
 
 	if err != nil {
-		logrus.Errorln(err)
-		return "", "", false, fmt.Errorf("failed reading %q", filename)
+		return "", "", false, fmt.Errorf("failed reading %q: %w", filename, err)
 	}
 
 	modFile, err := modfile.Parse(filename, oldContent, nil)
 	if err != nil {
-		logrus.Errorln(err)
-		return "", "", false, fmt.Errorf("failed reading %q", filename)
+		return "", "", false, fmt.Errorf("failed reading %q: %w", filename, err)
 	}
 
 	switch g.kind {
@@ -95,15 +91,13 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 		oldVersion = modFile.Go.Version
 		newVersion, err = getNewVersion(oldVersion, version)
 		if err != nil {
-			logrus.Errorln(err)
-			return "", "", false, fmt.Errorf("failed parsing go version %q", version)
+			return "", "", false, fmt.Errorf("failed parsing go version %q: %w", version, err)
 		}
 
 		if oldVersion != newVersion {
 			err = modFile.AddGoStmt(newVersion)
 			if err != nil {
-				logrus.Errorln(err)
-				return "", "", false, fmt.Errorf("failed updating go version %q\n%w", version, err)
+				return "", "", false, fmt.Errorf("failed updating go version %q: %w", version, err)
 			}
 
 			changed = true
@@ -127,7 +121,6 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 					if newVersion != oldVersion {
 						err = modFile.AddReplace(r.Old.Path, r.Old.Version, r.New.Path, version)
 						if err != nil {
-							logrus.Errorln(err)
 							return "", "", false, fmt.Errorf("failed updating go module replacer %q to %q\n%w", g.spec.Module, version, err)
 						}
 						changed = true
@@ -149,7 +142,6 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 
 						err = modFile.AddRequire(r.Mod.Path, version)
 						if err != nil {
-							logrus.Errorln(err)
 							return "", "", false, fmt.Errorf("failed updating go module %q to %q\n%w", g.spec.Module, version, err)
 						}
 
@@ -166,7 +158,6 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 		}
 
 	default:
-		logrus.Errorf("kind %q is not supported", g.kind)
 		return "", "", false, fmt.Errorf("something unexpected happened, kind %q not supported", g.kind)
 	}
 
@@ -187,15 +178,13 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 
 	f, err := os.Create(filename)
 	if err != nil {
-		logrus.Errorln(err)
-		return oldVersion, newVersion, changed, fmt.Errorf("failed opening file %q", filename)
+		return oldVersion, newVersion, changed, fmt.Errorf("failed opening file %q: %w", filename, err)
 	}
 	defer f.Close()
 
 	_, err = f.Write(newContent)
 	if err != nil {
-		logrus.Errorln(err)
-		return oldVersion, newVersion, changed, fmt.Errorf("failed writing data to %q", filename)
+		return oldVersion, newVersion, changed, fmt.Errorf("failed writing data to %q: %w", filename, err)
 	}
 
 	logrus.Debugf("%q updated\n", filename)
@@ -209,7 +198,7 @@ func getNewVersion(oldVersion, newVersion string) (string, error) {
 
 	s, err := semver.NewVersion(newVersion)
 	if err != nil {
-		return "", fmt.Errorf("failed parsing go version %q", oldVersion)
+		return "", fmt.Errorf("failed parsing go version %q: %w", oldVersion, err)
 	}
 
 	if majorMinorRegex.MatchString(oldVersion) {

@@ -57,11 +57,22 @@ func (p *Pipeline) RunActions() error {
 		showActionTitle := func() {
 			updateActionTitle()
 			if firstPipelineAction {
-				logrus.Infof("\n%s", p.Name)
+				logrus.Infof("\n---")
+				logrus.Infof("Pipeline Name\t: %s", p.Name)
+				logrus.Infof("Pipeline ID\t: %s", p.ID)
+				logrus.Infof("Dry run\t\t: %t", p.Options.Target.DryRun)
 			}
-			logrus.Infof("  => %s\n\n", action.Title)
+
+			if action.Scm != nil {
+				logrus.Infof("Repository\t: %s", action.Scm.Handler.Summary())
+			}
+
+			logrus.Infof("Action\t\t: %s\n", action.Title)
+			logrus.Infof("---\n\n")
 			firstPipelineAction = false
 		}
+
+		showActionTitle()
 
 		relatedTargets, err := p.searchAssociatedTargetsID(id)
 		if err != nil {
@@ -100,12 +111,16 @@ func (p *Pipeline) RunActions() error {
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
-			logrus.Errorf("%d target(s) (%s) failed for action %q", len(failedTargetIDs), strings.Join(failedTargetIDs, ","), id)
+			logrus.Warningf("%d/%d target(s) (%s) failed for action %q", len(failedTargetIDs), len(relatedTargets), strings.Join(failedTargetIDs, ","), id)
+			for _, tID := range failedTargetIDs {
+				logrus.Infof("  - %s: %s — %s", p.Targets[tID].Config.Name, p.Report.Targets[tID].Result, p.Report.Targets[tID].Description)
+			}
+			logrus.Infof("\n")
 		}
 
 		// Ignoring skipped targets
 		if len(skippedTargetIDs) > 0 {
-			logrus.Debugf("%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), strings.Join(skippedTargetIDs, ","), id)
+			logrus.Debugf("%d/%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), len(relatedTargets), strings.Join(skippedTargetIDs, ","), id)
 		}
 
 		// If no target require attention while processing action in a attention state,
@@ -117,11 +132,9 @@ func (p *Pipeline) RunActions() error {
 			if len(relatedTargets) > 0 {
 				if !slices.Contains(CheckedPipelines, alreadyCheckedAction) {
 
-					showActionTitle()
-
 					err = action.Handler.CheckActionExist(&action.Report)
 					if err != nil {
-						logrus.Errorf("Action %q failed: %s", id, err.Error())
+						logrus.Warningf("Action %q failed: %s", id, err.Error())
 					}
 
 					CheckedPipelines = append(CheckedPipelines, alreadyCheckedAction)
@@ -134,8 +147,6 @@ func (p *Pipeline) RunActions() error {
 			}
 			continue
 		}
-
-		showActionTitle()
 
 		// We try to identify if any of the related targets have a branch reset.
 		// It it's the case then we set the action to have a branch reset
@@ -190,7 +201,7 @@ func (p *Pipeline) RunActions() error {
 
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
-				logrus.Infof("[Dry Run] An action of kind %q is expected.", action.Config.Kind)
+				logrus.Infof("An action of kind %q is expected.", action.Config.Kind)
 
 				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
 					action.Title,

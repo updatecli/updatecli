@@ -32,7 +32,7 @@ func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string
 
 // GetURL returns a "GitHub " git URL
 func (g *Github) GetURL() string {
-	URL, err := url.JoinPath(g.Spec.URL, g.Spec.Owner, g.Spec.Repository+".git")
+	URL, err := url.JoinPath(g.URL, g.Spec.Owner, g.Spec.Repository+".git")
 	if err != nil {
 		logrus.Errorln(err)
 		return ""

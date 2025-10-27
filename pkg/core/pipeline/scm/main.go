@@ -37,6 +37,7 @@ type ScmHandler interface {
 	IsRemoteBranchUpToDate() (bool, error)
 	GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	GetURL() string
+	Summary() string
 }
 
 func New(config *Config, pipelineID string) (Scm, error) {
@@ -122,6 +123,8 @@ func (s *Scm) GenerateSCM() error {
 		}
 
 		s.Handler = g
+	case "githubsearch":
+		// githubsearch scm kind is handled during engine preparation step
 	default:
 		return fmt.Errorf("scm of kind %q is not supported", s.Config.Kind)
 	}

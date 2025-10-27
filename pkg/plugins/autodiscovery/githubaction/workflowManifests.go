@@ -20,12 +20,90 @@ const (
 	ACTIONKINDDOCKER = "docker"
 )
 
-// discoverWorkflowManifests discovers all information that could be updated within GitHub action workflow manifests
+// discoverManifests discovers all information that could be updated within GitHub action workflow manifests and composite actions
 // then returns a list of Updatecli manifests
-func (g GitHubAction) discoverWorkflowManifests() [][]byte {
+func (g GitHubAction) discoverManifests() [][]byte {
 
 	var manifests [][]byte
 
+	for _, foundAction := range g.compositeActionFiles {
+		logrus.Debugf("parsing Composite Action file %q", foundAction)
+
+		relateFoundFile, err := filepath.Rel(g.rootDir, foundAction)
+		if err != nil {
+			logrus.Debugln(err)
+			continue
+		}
+
+		action, err := loadCompositeAction(foundAction)
+		if err != nil {
+			logrus.Debugln(err)
+			continue
+		}
+
+		if action == nil {
+			continue
+		}
+
+		for stepID, step := range action.Job.Steps {
+
+			if step.Uses == "" {
+				// No action to parse
+				continue
+			}
+
+			URL, owner, repository, directory, reference, actionKind := parseActionName(step.Uses)
+
+			switch actionKind {
+			case "":
+				logrus.Debugf("GitHub action %q not supported, skipping", step.Uses)
+			case ACTIONKINDLOCAL:
+				logrus.Debugf("Relative path action %q found, skipping", step.Uses)
+				continue
+			case ACTIONKINDDOCKER:
+				s := dockerGHAManifestSpec{
+					ActionName:        step.Uses,
+					RelativeFoundFile: relateFoundFile,
+					Image:             step.Uses,
+					TargetKey:         fmt.Sprintf(`$.runs.steps[%d].uses`, stepID),
+				}
+
+				manifest, err := g.getDockerManifest(&s)
+				if err != nil {
+					logrus.Errorf("getting GitHub Action manifest: %s", err)
+					continue
+				}
+
+				if manifest != nil {
+					manifests = append(manifests, manifest)
+				}
+
+			case ACTIONKINDDEFAULT:
+				u := githubActionManifestSpec{
+					URL:               URL,
+					Owner:             owner,
+					Repository:        repository,
+					Directory:         directory,
+					Reference:         reference,
+					RelativeFoundFile: relateFoundFile,
+					CommentDigest:     step.CommentDigest,
+					Composite:         true,
+					StepID:            stepID,
+				}
+
+				manifest, err := g.getGitHubActionManifest(&u)
+				if err != nil {
+					logrus.Errorf("getting GitHub Action manifest: %s", err)
+					continue
+				}
+
+				if manifest != nil {
+					manifests = append(manifests, manifest)
+				}
+			}
+		}
+
+	}
 	for _, foundFile := range g.workflowFiles {
 		logrus.Debugf("parsing GitHub Action workflow file %q", foundFile)
 

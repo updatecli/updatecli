@@ -20,6 +20,10 @@ type Job struct {
 	Container Container `yaml:"container,omitempty"`
 }
 
+type CompositeAction struct {
+	Job Job `yaml:"runs,omitempty"`
+}
+
 type Container struct {
 	Image string `yaml:"image,omitempty"`
 }
@@ -45,33 +49,56 @@ func loadGitHubActionWorkflow(filename string) (*Workflow, error) {
 	for i := range workflow.Jobs {
 		for j := range workflow.Jobs[i].Steps {
 			query := fmt.Sprintf("$.jobs.%s.steps[%d].uses", i, j)
-			path, err := yaml.PathString(query)
-			if err != nil {
-				logrus.Debugf("skipping %q, error creating yaml path: %v", query, err)
-				continue
-			}
-
-			d, err := parser.ParseBytes(data, parser.ParseComments)
-			if err != nil {
-				logrus.Debugf("skipping %q, error parsing yaml file: %v", query, err)
-				continue
-			}
-
-			n, err := path.FilterFile(d)
-			if err != nil {
-				logrus.Debugf("skipping %q, error filtering node: %v", query, err)
-				continue
-			}
-
-			comment := n.GetComment()
-			if comment != nil {
-				comment := strings.TrimPrefix(comment.String(), "#")
-				comment = strings.TrimPrefix(comment, " ")
-
-				workflow.Jobs[i].Steps[j].CommentDigest = comment
-			}
+			parseStepComment(&workflow.Jobs[i].Steps[j], query, data)
 		}
 	}
 
 	return &workflow, nil
+}
+
+func loadCompositeAction(filename string) (*CompositeAction, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file %s: %w", filename, err)
+	}
+	var action CompositeAction
+	err = yaml.Unmarshal(data, &action)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling YAML file %s: %w", filename, err)
+	}
+
+	for i := range action.Job.Steps {
+		query := fmt.Sprintf("$.runs.steps[%d].uses", i)
+		parseStepComment(&action.Job.Steps[i], query, data)
+	}
+
+	return &action, nil
+}
+
+func parseStepComment(step *Step, query string, data []byte) {
+	path, err := yaml.PathString(query)
+	if err != nil {
+		logrus.Debugf("skipping %q, error creating yaml path: %v", query, err)
+		return
+	}
+
+	d, err := parser.ParseBytes(data, parser.ParseComments)
+	if err != nil {
+		logrus.Debugf("skipping %q, error parsing yaml file: %v", query, err)
+		return
+	}
+
+	n, err := path.FilterFile(d)
+	if err != nil {
+		logrus.Debugf("skipping %q, error filtering node: %v", query, err)
+		return
+	}
+
+	comment := n.GetComment()
+	if comment != nil {
+		comment := strings.TrimPrefix(comment.String(), "#")
+		comment = strings.TrimPrefix(comment, " ")
+
+		step.CommentDigest = comment
+	}
 }

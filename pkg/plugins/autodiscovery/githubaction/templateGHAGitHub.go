@@ -153,7 +153,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      key: '{{ .TargetKey }}'
       engine: 'yamlpath'
 {{- if .Digest }}
       comment: '{{ "{{" }} source "release" {{ "}}" }}'
@@ -173,7 +173,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      key: '{{ .TargetKey }}'
       engine: 'yamlpath'
 {{- if .Digest }}
       comment: '{{ "{{" }} source "tag" {{ "}}" }}'
@@ -193,7 +193,7 @@ targets:
 {{ end }}
     spec:
       file: '{{ .File }}'
-      key: '$.jobs.{{ .JobID }}.steps[{{ .StepID }}].uses'
+      key: '{{ .TargetKey }}'
       engine: 'yamlpath'
 {{- if .Digest }}
       comment: '{{ "{{" }} source "branch" {{ "}}" }}'
