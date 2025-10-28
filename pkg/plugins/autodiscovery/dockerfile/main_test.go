@@ -182,6 +182,75 @@ targets:
     sourceid: 'python-digest'
 `},
 		},
+		{
+			name:    "Scenario 6: Alpine",
+			rootDir: "testdata/alpine",
+			digest:  false,
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "alpine" tag'
+sources:
+  alpine:
+    name: 'get latest image tag for "alpine"'
+    kind: 'dockerimage'
+    spec:
+      image: 'alpine'
+      tagfilter: '^\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=3.16.3'
+targets:
+  alpine:
+    name: 'deps: update Docker image "alpine" to "{{ source "alpine" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'alpine_version'
+    sourceid: 'alpine'
+`, `name: 'deps(dockerfile): bump "debian" tag'
+sources:
+  debian:
+    name: 'get latest image tag for "debian"'
+    kind: 'dockerimage'
+    spec:
+      image: 'debian'
+      tagfilter: '^\d*$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=8'
+targets:
+  debian:
+    name: 'deps: update Docker image "debian" to "{{ source "debian" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'debian_version'
+    sourceid: 'debian'
+`, `name: 'deps(dockerfile): bump "opensuse" tag'
+sources:
+  opensuse:
+    name: 'get latest image tag for "opensuse"'
+    kind: 'dockerimage'
+    spec:
+      image: 'opensuse'
+      tagfilter: '^\d*(\.\d*){1}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=15.4'
+targets:
+  opensuse:
+    name: 'deps: update Docker image "opensuse" to "{{ source "opensuse" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'opensuse'
+    sourceid: 'opensuse'
+`},
+		},
 	}
 
 	for _, tt := range testdata {

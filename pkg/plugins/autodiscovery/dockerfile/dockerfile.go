@@ -247,19 +247,7 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 			continue
 		}
 
-		// Let's build a list of stage name to ignore
-		ignoreStage := []string{}
-		for _, instruction := range instructions {
-			if instruction.Alias != "" {
-				ignoreStage = append(ignoreStage, instruction.Alias)
-			}
-		}
 		globalIgnore := MatchingRules{scratchIgnore}
-		if len(ignoreStage) > 0 {
-			globalIgnore = append(globalIgnore, MatchingRule{
-				Images: ignoreStage,
-			})
-		}
 
 		for _, instruction := range instructions {
 			manifest, err := d.generateManifest(globalIgnore, relativeFoundDockerfile, basename, dirname, instruction, args)

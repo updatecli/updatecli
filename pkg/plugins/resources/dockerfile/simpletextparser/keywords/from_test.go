@@ -220,6 +220,22 @@ func TestFrom_GetTokens(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "Partial Match in Alias",
+			originalLine: "FROM --platform=linux/ppc64 alpine:${alpine_version} AS base_alpine",
+			want: FromToken{
+				Keyword:  "FROM",
+				Platform: "linux/ppc64",
+				Image:    "alpine",
+				Tag:      "${alpine_version}",
+				Alias:    "base_alpine", AliasKw: "AS",
+				Args: map[string]*FromTokenArgs{
+					"tag": {
+						Name: "alpine_version",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

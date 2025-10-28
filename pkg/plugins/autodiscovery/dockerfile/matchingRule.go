@@ -2,7 +2,6 @@ package dockerfile
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -65,7 +64,7 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, image, arch string) boo
 				match := false
 			images:
 				for _, i := range rule.Images {
-					if strings.HasPrefix(image, i) {
+					if image == i {
 						logrus.Debugf("image %q matching rule %q", image, i)
 						match = true
 						break images
