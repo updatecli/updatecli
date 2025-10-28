@@ -1,11 +1,15 @@
 package engine
 
 import (
+	"fmt"
+	"slices"
+	"strings"
 	"sync"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // InitSCM search and clone only once SCM configurations found.
@@ -69,6 +73,115 @@ func Clone(
 		}(scmhandler)
 		<-channel
 
+	}
+
+	return nil
+}
+
+// finalizeSCMUpdates push all commits for all pipelines SCMs.
+func (e *Engine) finalizeSCMUpdates() error {
+
+	errs := []string{}
+
+	changedSCM := map[string][]string{}
+
+	allScm := map[string]map[string]*scm.ScmHandler{}
+	logrus.Infof("\n\n%s\n", strings.ToTitle("SCMs"))
+	logrus.Infof("%s\n\n", strings.Repeat("=", len("SCMs")+1))
+
+	countScms := 0
+	countPushedScms := 0
+
+	for id := range e.Pipelines {
+		pipeline := e.Pipelines[id]
+		if len(pipeline.Targets) > 0 {
+			for _, target := range pipeline.Targets {
+
+				// Sanity check, skip if no SCM is configured
+				if target.Scm == nil {
+					continue
+				}
+
+				s := *target.Scm
+				url := s.GetURL()
+				_, branch, _ := s.GetBranches()
+
+				if _, ok := allScm[url]; !ok {
+					allScm[url] = map[string]*scm.ScmHandler{}
+					if _, okok := allScm[url][branch]; !okok {
+						allScm[url][branch] = &s
+						countScms++
+					}
+				}
+
+				if target.Push {
+					if _, ok := changedSCM[url]; ok {
+						if slices.Contains(changedSCM[url], branch) {
+							logrus.Debugf("Changes for target %q already pushed to %q on branch %q, skipping...\n", target.Config.Name, url, branch)
+							continue
+						}
+					}
+
+					err := target.PushCommits()
+					if err != nil {
+						errs = append(errs, fmt.Sprintf("pushing commits for target %q: %s", target.Config.Name, err.Error()))
+						target.Result.Result = result.FAILURE
+						logrus.Errorf("pushing commits for target %q:\t%q", target.Config.Name, err.Error())
+						continue
+					}
+					logrus.Debugf("Pushed to URL: %q on branch: %q", url, branch)
+
+					if _, ok := changedSCM[url]; !ok {
+						changedSCM[url] = []string{}
+						if !slices.Contains(changedSCM[url], branch) {
+							changedSCM[url] = append(changedSCM[url], branch)
+							countPushedScms++
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if countPushedScms == 0 {
+		logrus.Info("No SCM repositories required pushing")
+	} else {
+		logrus.Infof("Pushed changes to %d of %d SCM repositories", countPushedScms, countScms)
+	}
+
+	for url := range allScm {
+		for branch := range allScm[url] {
+
+			scmHandlerPtr := allScm[url][branch]
+			scmHandler := *scmHandlerPtr
+
+			isRemoteBranchUpToDate, err := scmHandler.IsRemoteBranchUpToDate()
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("checking remote branch status for %q on branch %q: %s", url, branch, err.Error()))
+				continue
+			}
+
+			if isRemoteBranchUpToDate {
+				logrus.Debugf("No changes to push to %q on branch %q\n", url, branch)
+				continue
+			}
+
+			logrus.Infof("\n\u26A0 According to the git history, some commits must be pushed to %q\n", scmHandler.Summary())
+
+			isPushed, err := scmHandler.Push()
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("pushing commits to %q on branch %q: %s", url, branch, err.Error()))
+			}
+			logrus.Debugf("Pushed changes to %q on branch %q: %t\n", url, branch, isPushed)
+
+			logrus.Debugf("SCM URL: %q on branch: %q\n", url, branch)
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf(
+			"errors occurred while running actions:\n\t* %s",
+			strings.Join(errs, "\n\t* "))
 	}
 
 	return nil

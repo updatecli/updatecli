@@ -20,6 +20,10 @@ func (e *Engine) Run() (err error) {
 		}
 	}
 
+	if err = e.finalizeSCMUpdates(); err != nil {
+		logrus.Errorf("pushing commits:\n%s", err)
+	}
+
 	if err = e.runActions(); err != nil {
 		logrus.Errorf("running actions:\n%s", err)
 	}

@@ -27,12 +27,8 @@ type Target struct {
 	Result *result.Target
 	// Config defines target input parameters
 	Config Config
-	// Commit defines if a target was executed in Commit mode
-	Commit bool
 	// Push defines if a target was executed in Push mode
 	Push bool
-	// Clean defines if a target was executed in Clean mode
-	Clean bool
 	// DryRun defines if a target was executed in DryRun mode
 	DryRun bool
 	// Scm stores scm information
@@ -167,37 +163,14 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	// Could be improve to show attention description in yellow, success in green, failure in red
 	logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
 
-	isRemoteBranchUpToDate, err := s.IsRemoteBranchUpToDate()
-	if err != nil {
-		failTargetRun()
-		return err
-	}
-
-	// targetCommit is used to avoid committing changes when the target has no changes.
-	targetCommit := true
 	if !t.Result.Changed {
-		if isRemoteBranchUpToDate {
-			return nil
-		}
-
-		logrus.Infof("\n\u26A0 While nothing change in the current pipeline run, according to the git history, some commits must be pushed\n")
-		t.Result.Description = fmt.Sprintf("%s\n\n%s", t.Result.Description, "While nothing change in the current pipeline run, according to the git history, some commits must pushed")
-
-		// Even though the target has no changes, it has something to commit.
-		// We consider this result as "success" and not "attention" as the target has no changes.
-		// If later we decide to consider the result as "attention" then we also need to consider that the action
-		// will be trigger in priority. cfr https://github.com/updatecli/updatecli/issues/2039
-		// So we need to create a new resource stage to handle this case.
-		t.Result.Result = result.SUCCESS
-		t.Result.Changed = true
-		// Even though the target has left over changes, it has nothing to commit.
-		targetCommit = false
+		return nil
 	}
 
 	if !o.DryRun {
 		// o.Commit represents Global updatecli commit option
 		// targetCommit represents the local target commit option
-		if o.Commit && targetCommit {
+		if o.Commit {
 			if t.Result.Description == "" {
 				failTargetRun()
 				return fmt.Errorf("target has no change message")
@@ -228,15 +201,31 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 
 		if o.Push {
-			t.Result.Scm.BranchReset, err = s.Push()
-			if err != nil {
-				failTargetRun()
-				return err
-			}
+			t.Push = true
 		}
 	}
 
 	return nil
+}
+
+func (t *Target) PushCommits() (err error) {
+
+	s := *t.Scm
+
+	if s == nil {
+		return fmt.Errorf("scm is not configured for target %q", t.Config.Name)
+	}
+
+	t.Result.Scm.BranchReset, err = s.Push()
+	if err != nil {
+		t.Result.Result = result.FAILURE
+		t.Result.Description = "something went wrong during pipeline execution"
+
+		return err
+	}
+
+	return nil
+
 }
 
 // JSONSchema implements the json schema interface to generate the "target" jsonschema.
