@@ -147,7 +147,6 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/google/go-github/v74 v74.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
