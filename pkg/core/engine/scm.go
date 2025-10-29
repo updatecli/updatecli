@@ -108,10 +108,11 @@ func (e *Engine) finalizeSCMUpdates() error {
 
 				if _, ok := allScm[url]; !ok {
 					allScm[url] = map[string]*scm.ScmHandler{}
-					if _, okok := allScm[url][branch]; !okok {
-						allScm[url][branch] = &s
-						countScms++
-					}
+				}
+
+				if _, ok := allScm[url][branch]; !ok {
+					allScm[url][branch] = &s
+					countScms++
 				}
 
 				if target.Push {
@@ -133,11 +134,11 @@ func (e *Engine) finalizeSCMUpdates() error {
 
 					if _, ok := changedSCM[url]; !ok {
 						changedSCM[url] = []string{}
-						if !slices.Contains(changedSCM[url], branch) {
-							changedSCM[url] = append(changedSCM[url], branch)
-							countPushedScms++
-						}
+						continue
 					}
+
+					changedSCM[url] = append(changedSCM[url], branch)
+					countPushedScms++
 				}
 			}
 		}
@@ -153,6 +154,12 @@ func (e *Engine) finalizeSCMUpdates() error {
 		for branch := range allScm[url] {
 
 			scmHandlerPtr := allScm[url][branch]
+
+			// Sanity check
+			if scmHandlerPtr == nil {
+				continue
+			}
+
 			scmHandler := *scmHandlerPtr
 
 			isRemoteBranchUpToDate, err := scmHandler.IsRemoteBranchUpToDate()
@@ -180,7 +187,7 @@ func (e *Engine) finalizeSCMUpdates() error {
 
 	if len(errs) > 0 {
 		return fmt.Errorf(
-			"errors occurred while running actions:\n\t* %s",
+			"errors occurred while pushing SCM commits:\n\t* %s",
 			strings.Join(errs, "\n\t* "))
 	}
 

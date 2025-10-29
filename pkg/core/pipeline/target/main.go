@@ -210,22 +210,21 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 func (t *Target) PushCommits() (err error) {
 
-	s := *t.Scm
-
-	if s == nil {
+	if t.Scm == nil {
 		return fmt.Errorf("scm is not configured for target %q", t.Config.Name)
 	}
+
+	s := *t.Scm
 
 	t.Result.Scm.BranchReset, err = s.Push()
 	if err != nil {
 		t.Result.Result = result.FAILURE
-		t.Result.Description = "something went wrong during pipeline execution"
+		t.Result.Description = "failed to push commits"
 
-		return err
+		return fmt.Errorf("pushing commits for target %q: %s", t.Config.Name, err.Error())
 	}
 
 	return nil
-
 }
 
 // JSONSchema implements the json schema interface to generate the "target" jsonschema.
