@@ -144,7 +144,7 @@ func (d Dockerfile) generateManifest(
 		tagFilter = ""
 		if err != nil {
 			logrus.Debugf("building version filter pattern: %s", err)
-			sourceSpec.VersionFilter.Pattern = "*"
+			versionFilterPattern = "*"
 		}
 	}
 
