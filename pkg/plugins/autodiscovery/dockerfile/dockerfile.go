@@ -3,6 +3,7 @@ package dockerfile
 import (
 	"bytes"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -35,7 +36,15 @@ func (d Dockerfile) generateManifest(
 	var err error
 	targetMatcher, targetInstruction := instruction.Image, instruction.Keyword
 	image, tag, digest, platform := instruction.Image, instruction.Tag, instruction.Digest, instruction.Platform
-	for arg_type, fromArg := range instruction.Args {
+
+	argTypes := make([]string, 0, len(instruction.Args))
+	for argType := range instruction.Args {
+		argTypes = append(argTypes, argType)
+	}
+	sort.Strings(argTypes)
+
+	for _, arg_type := range argTypes {
+		fromArg := instruction.Args[arg_type]
 		if arg, ok := args[fromArg.Name]; ok {
 			if arg.Value == "" {
 				continue

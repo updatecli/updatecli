@@ -251,6 +251,54 @@ targets:
     sourceid: 'opensuse'
 `},
 		},
+		{
+			name:    "Scenario 7: Multi-variable instructions should be ignored",
+			rootDir: "testdata/multi-variable",
+			digest:  false,
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "node" tag'
+sources:
+  node:
+    name: 'get latest image tag for "node"'
+    kind: 'dockerimage'
+    spec:
+      image: 'node'
+      tagfilter: '^\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=18.0.0'
+targets:
+  node:
+    name: 'deps: update Docker image "node" to "{{ source "node" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'node_version'
+    sourceid: 'node'
+`, `name: 'deps(dockerfile): bump "node" tag'
+sources:
+  node:
+    name: 'get latest image tag for "node"'
+    kind: 'dockerimage'
+    spec:
+      image: 'node'
+      tagfilter: '^\d*$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=20'
+targets:
+  node:
+    name: 'deps: update Docker image "node" to "{{ source "node" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'my_version'
+    sourceid: 'node'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
