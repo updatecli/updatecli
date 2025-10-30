@@ -197,8 +197,7 @@ func (e *Engine) pruneSCMBranches() error {
 
 	allScm := e.getUniqueTargetSCMTargets()
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Cleaning working branch SCMs"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Cleaning working branch SCMs")+1))
+	logrus.Debugf("Cleaning working branches")
 
 	for url := range allScm {
 		for branch := range allScm[url] {
@@ -215,16 +214,18 @@ func (e *Engine) pruneSCMBranches() error {
 			_, workingBranch, targetBranch := scmHandler.GetBranches()
 
 			if workingBranch == targetBranch {
-				logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(url))
+				logrus.Debugf("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(url))
 				continue
 			}
 
-			_, err := scmHandler.CleanWorkingBranch()
+			isCleaned, err := scmHandler.CleanWorkingBranch()
 			if err != nil {
 				errs = append(errs, fmt.Sprintf("cleaning working branch on %q for branch %q: %s", redact.URL(url), branch, err.Error()))
 			}
 
-			logrus.Infof("Cleaning working branch %q on %q\n", branch, redact.URL(url))
+			if isCleaned {
+				logrus.Debugf("cleaning working branch %q for %q\n", branch, redact.URL(url))
+			}
 		}
 	}
 

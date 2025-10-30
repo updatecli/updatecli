@@ -24,9 +24,7 @@ type DatedBranch struct {
 func (g GoGit) BranchRefs(workingDir string) (branches []DatedBranch, err error) {
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
-		logrus.Errorf("opening %q git directory: %s", workingDir, err)
 		return branches, fmt.Errorf("opening %q git directory: %s", workingDir, err)
-
 	}
 
 	branchrefs, err := r.Branches()
@@ -90,8 +88,6 @@ func (g GoGit) Branches(workingDir string) (branches []string, err error) {
 	for _, branchRef := range branchRefs {
 		branches = append(branches, branchRef.Name)
 	}
-
-	logrus.Debugf("got branches: %v", branches)
 
 	if len(branches) == 0 {
 		return branches, fmt.Errorf("%s", ErrNoBranchFound)
@@ -294,7 +290,6 @@ func (g *GoGit) DeleteBranch(branch, gitRepositoryPath, username, password strin
 	}
 	for _, ref := range refs {
 		if ref.Name() == plumbing.NewBranchReferenceName(branch) {
-			logrus.Infof("Deleting remote branch %q", branch)
 			pushOptions := &git.PushOptions{
 				RemoteName: "origin",
 				Progress:   os.Stdout,
