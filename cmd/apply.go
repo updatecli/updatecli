@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	applyCommit bool
-	applyClean  bool
-	applyPush   bool
+	applyCommit           bool
+	applyClean            bool
+	applyPush             bool
+	applyCleanGitBranches bool
 
 	applyCmd = &cobra.Command{
 		/*
@@ -43,6 +44,7 @@ var (
 			e.Options.Pipeline.Target.Push = applyPush
 			e.Options.Pipeline.Target.Clean = applyClean
 			e.Options.Pipeline.Target.DryRun = false
+			e.Options.Pipeline.Target.CleanGitBranches = applyCleanGitBranches
 
 			err = run("apply")
 			if err != nil {
@@ -63,4 +65,5 @@ func init() {
 	applyCmd.Flags().BoolVarP(&applyPush, "push", "", true, "Update remote refs '--push=false'")
 	applyCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	applyCmd.Flags().BoolVar(&applyClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
+	applyCmd.Flags().BoolVar(&applyCleanGitBranches, "clean-git-branches", false, "Remove updatecli working git branches like '--clean-git-branches=true'")
 }

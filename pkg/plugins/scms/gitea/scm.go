@@ -10,7 +10,6 @@ import (
 )
 
 func (g *Gitea) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
-
 	sourceBranch = g.Spec.Branch
 	workingBranch = g.Spec.Branch
 	targetBranch = g.Spec.Branch
@@ -21,6 +20,31 @@ func (g *Gitea) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	}
 
 	return sourceBranch, workingBranch, targetBranch
+}
+
+// CleanWorkingBranch checks if the working branch is diverged from the target branch
+// and remove it if not.
+func (g *Gitea) CleanWorkingBranch() (bool, error) {
+	_, workingBranch, targetBranch := g.GetBranches()
+
+	if workingBranch == targetBranch {
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, g.GetURL())
+		return false, nil
+	}
+
+	isSimilarBranch, err := g.nativeGitHandler.IsSimilarBranch(workingBranch, targetBranch, g.GetDirectory())
+	if err != nil {
+		return false, fmt.Errorf("failed to compare working branch %q with target branch %q: %w", workingBranch, targetBranch, err)
+	}
+
+	if isSimilarBranch {
+		if err = g.nativeGitHandler.DeleteBranch(workingBranch, g.GetDirectory(), g.Spec.Username, g.Spec.Token); err != nil {
+			return false, fmt.Errorf("failed to delete working branch %q from %q: %w", workingBranch, g.GetDirectory(), err)
+		}
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // GetURL returns a "Gitea" git URL
@@ -49,7 +73,6 @@ func (g *Gitea) Clean() error {
 
 // Clone run `git clone`.
 func (g *Gitea) Clone() (string, error) {
-
 	g.setDirectory()
 
 	err := g.nativeGitHandler.Clone(
@@ -59,7 +82,6 @@ func (g *Gitea) Clone() (string, error) {
 		g.GetDirectory(),
 		g.Spec.Submodules,
 	)
-
 	if err != nil {
 		logrus.Errorf("failed cloning Gitea repository %q", g.GetURL())
 		return "", err
@@ -70,7 +92,6 @@ func (g *Gitea) Clone() (string, error) {
 
 // Commit run `git commit`.
 func (g *Gitea) Commit(message string) error {
-
 	// Generate the conventional commit message
 	commitMessage, err := g.Spec.CommitMessage.Generate(message)
 	if err != nil {
@@ -116,7 +137,6 @@ func (g *Gitea) Checkout() error {
 
 // Add run `git add`.
 func (g *Gitea) Add(files []string) error {
-
 	err := g.nativeGitHandler.Add(files, g.Spec.Directory)
 	if err != nil {
 		return err
@@ -139,7 +159,6 @@ func (g *Gitea) IsRemoteBranchUpToDate() (bool, error) {
 
 // Push run `git push` to the corresponding Gitea remote branch if not already created.
 func (g *Gitea) Push() (bool, error) {
-
 	return g.nativeGitHandler.Push(
 		g.Spec.Username,
 		g.Spec.Token,
@@ -150,7 +169,6 @@ func (g *Gitea) Push() (bool, error) {
 
 // PushTag push tags
 func (g *Gitea) PushTag(tag string) error {
-
 	err := g.nativeGitHandler.PushTag(
 		tag,
 		g.Spec.Username,
@@ -166,7 +184,6 @@ func (g *Gitea) PushTag(tag string) error {
 
 // PushBranch push branch
 func (g *Gitea) PushBranch(branch string) error {
-
 	err := g.nativeGitHandler.PushTag(
 		branch,
 		g.Spec.Username,

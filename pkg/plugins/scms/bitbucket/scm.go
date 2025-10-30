@@ -23,6 +23,31 @@ func (b *Bitbucket) GetBranches() (sourceBranch, workingBranch, targetBranch str
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// CleanWorkingBranch checks if the working branch is diverged from the target branch
+// and remove it if not.
+func (b *Bitbucket) CleanWorkingBranch() (bool, error) {
+	_, workingBranch, targetBranch := b.GetBranches()
+
+	if workingBranch == targetBranch {
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, b.GetURL())
+		return false, nil
+	}
+
+	isSimilarBranch, err := b.nativeGitHandler.IsSimilarBranch(workingBranch, targetBranch, b.GetDirectory())
+	if err != nil {
+		return false, fmt.Errorf("failed to compare working branch %q with target branch %q: %w", workingBranch, targetBranch, err)
+	}
+
+	if isSimilarBranch {
+		if err = b.nativeGitHandler.DeleteBranch(workingBranch, b.GetDirectory(), b.GetUsername(), b.GetPassword()); err != nil {
+			return false, fmt.Errorf("failed to delete working branch %q from %q: %w", workingBranch, b.GetDirectory(), err)
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // GetURL returns a "Stash" git URL
 func (b *Bitbucket) GetURL() string {
 	URL := fmt.Sprintf("%v/%v/%v",

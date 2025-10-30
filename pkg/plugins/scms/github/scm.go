@@ -30,6 +30,35 @@ func (g *Github) GetBranches() (sourceBranch, workingBranch, targetBranch string
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// CleanWorkingBranch checks if the working branch is diverged from the target branch
+// and remove it if not.
+func (g *Github) CleanWorkingBranch() (bool, error) {
+	_, workingBranch, targetBranch := g.GetBranches()
+
+	if workingBranch == targetBranch {
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, g.GetURL())
+		return false, nil
+	}
+
+	isSimilarBranch, err := g.nativeGitHandler.IsSimilarBranch(workingBranch, targetBranch, g.GetDirectory())
+	if err != nil {
+		return false, fmt.Errorf("failed to compare working branch %q with target branch %q: %w", workingBranch, targetBranch, err)
+	}
+
+	if isSimilarBranch {
+		accessToken, err := token.GetAccessToken(g.token)
+		if err != nil {
+			return false, fmt.Errorf("failed to get access token: %w", err)
+		}
+		if err = g.nativeGitHandler.DeleteBranch(workingBranch, g.GetDirectory(), g.username, accessToken); err != nil {
+			return false, fmt.Errorf("failed to delete working branch %q from %q: %w", workingBranch, g.GetDirectory(), err)
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // GetURL returns a "GitHub " git URL
 func (g *Github) GetURL() string {
 	URL, err := url.JoinPath(g.URL, g.Spec.Owner, g.Spec.Repository+".git")
@@ -81,7 +110,6 @@ func (g *Github) Clone() (string, error) {
 
 // Commit run `git commit`.
 func (g *Github) Commit(message string) error {
-
 	workingDir := g.GetDirectory()
 
 	// Generate the conventional commit message
@@ -384,7 +412,6 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 
 // Push run `git push` on the GitHub remote branch if not already created.
 func (g *Github) Push() (bool, error) {
-
 	// If the commit is done using the GitHub API, we don't need to push
 	// the commit as it is done in the same operation.
 	if g.commitUsingApi {
@@ -406,7 +433,6 @@ func (g *Github) Push() (bool, error) {
 
 // PushTag push tags
 func (g *Github) PushTag(tag string) error {
-
 	accessToken, err := token.GetAccessToken(g.token)
 	if err != nil {
 		return fmt.Errorf("failed to get access token: %w", err)
@@ -428,7 +454,6 @@ func (g *Github) PushTag(tag string) error {
 
 // PushBranch push tags
 func (g *Github) PushBranch(branch string) error {
-
 	accessToken, err := token.GetAccessToken(g.token)
 	if err != nil {
 		return fmt.Errorf("failed to get access token: %w", err)

@@ -22,6 +22,31 @@ func (s *Stash) GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// CleanWorkingBranch checks if the working branch is diverged from the target branch
+// and remove it if not.
+func (s *Stash) CleanWorkingBranch() (bool, error) {
+	_, workingBranch, targetBranch := s.GetBranches()
+
+	if workingBranch == targetBranch {
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, s.GetURL())
+		return false, nil
+	}
+
+	isSimilarBranch, err := s.nativeGitHandler.IsSimilarBranch(workingBranch, targetBranch, s.GetDirectory())
+	if err != nil {
+		return false, fmt.Errorf("failed to compare working branch %q with target branch %q: %w", workingBranch, targetBranch, err)
+	}
+
+	if isSimilarBranch {
+		if err = s.nativeGitHandler.DeleteBranch(workingBranch, s.GetDirectory(), s.Spec.Username, s.Spec.Token); err != nil {
+			return false, fmt.Errorf("failed to delete working branch %q from %q: %w", workingBranch, s.GetDirectory(), err)
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // GetURL returns a "Stash" git URL
 func (s *Stash) GetURL() string {
 	URL := fmt.Sprintf("%v/scm/%v/%v.git",

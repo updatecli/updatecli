@@ -24,6 +24,31 @@ func (g *Gitlab) GetBranches() (sourceBranch, workingBranch, targetBranch string
 	return sourceBranch, workingBranch, targetBranch
 }
 
+// CleanWorkingBranch checks if the working branch is diverged from the target branch
+// and remove it if not.
+func (g *Gitlab) CleanWorkingBranch() (bool, error) {
+	_, workingBranch, targetBranch := g.GetBranches()
+
+	if workingBranch == targetBranch {
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, g.GetURL())
+		return false, nil
+	}
+
+	isSimilarBranch, err := g.nativeGitHandler.IsSimilarBranch(workingBranch, targetBranch, g.GetDirectory())
+	if err != nil {
+		return false, fmt.Errorf("failed to compare working branch %q with target branch %q: %w", workingBranch, targetBranch, err)
+	}
+
+	if isSimilarBranch {
+		if err = g.nativeGitHandler.DeleteBranch(workingBranch, g.GetDirectory(), g.Spec.Username, g.Spec.Token); err != nil {
+			return false, fmt.Errorf("failed to delete working branch %q from %q: %w", workingBranch, g.GetDirectory(), err)
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // GetURL returns a "GitLab" git URL
 func (g *Gitlab) GetURL() string {
 	url := client.EnsureValidURL(g.Spec.URL)
@@ -52,7 +77,6 @@ func (g *Gitlab) Clean() error {
 
 // Clone run `git clone`.
 func (g *Gitlab) Clone() (string, error) {
-
 	g.setDirectory()
 
 	err := g.nativeGitHandler.Clone(
@@ -62,7 +86,6 @@ func (g *Gitlab) Clone() (string, error) {
 		g.GetDirectory(),
 		g.Spec.Submodules,
 	)
-
 	if err != nil {
 		logrus.Errorf("failed cloning GitLab repository %q", g.GetURL())
 		return "", err
@@ -73,7 +96,6 @@ func (g *Gitlab) Clone() (string, error) {
 
 // Commit run `git commit`.
 func (g *Gitlab) Commit(message string) error {
-
 	// Generate the conventional commit message
 	commitMessage, err := g.Spec.CommitMessage.Generate(message)
 	if err != nil {
@@ -127,7 +149,6 @@ func (g *Gitlab) Checkout() error {
 
 // Add run `git add`.
 func (g *Gitlab) Add(files []string) error {
-
 	err := g.nativeGitHandler.Add(files, g.Spec.Directory)
 	if err != nil {
 		return err
@@ -150,7 +171,6 @@ func (g *Gitlab) IsRemoteBranchUpToDate() (bool, error) {
 
 // Push run `git push` to the corresponding GitLab remote branch if not already created.
 func (g *Gitlab) Push() (bool, error) {
-
 	return g.nativeGitHandler.Push(
 		g.Spec.Username,
 		g.Spec.Token,
@@ -161,7 +181,6 @@ func (g *Gitlab) Push() (bool, error) {
 
 // PushTag push tags
 func (g *Gitlab) PushTag(tag string) error {
-
 	err := g.nativeGitHandler.PushTag(
 		tag,
 		g.Spec.Username,
@@ -178,7 +197,6 @@ func (g *Gitlab) PushTag(tag string) error {
 
 // PushBranch push branch
 func (g *Gitlab) PushBranch(branch string) error {
-
 	err := g.nativeGitHandler.PushTag(
 		branch,
 		g.Spec.Username,

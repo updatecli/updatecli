@@ -27,8 +27,8 @@ type Target struct {
 	Result *result.Target
 	// Config defines target input parameters
 	Config Config
-	// Push defines if a target was executed in Push mode
-	Push bool
+	// ToPush defines if a target was executed in ToPush mode
+	ToPush bool
 	// DryRun defines if a target was executed in DryRun mode
 	DryRun bool
 	// Scm stores scm information
@@ -201,7 +201,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		}
 
 		if o.Push {
-			t.Push = true
+			t.ToPush = true
 		}
 	}
 
