@@ -441,20 +441,25 @@ func TestSimpleTextDockerfileParser_GetInstructionTokens(t *testing.T) {
 		want              []keywords.Tokens
 	}{
 		{
-			name:              "FROM.Dockerfile From",
+			name:              "FROM.Dockerfile From empty matcher",
 			fixtureDockerfile: "FROM.Dockerfile",
 			givenInstruction: map[string]string{
 				"keyword": "FROM",
 				"matcher": "",
+			},
+		},
+		{
+			name:              "FROM.Dockerfile From",
+			fixtureDockerfile: "FROM.Dockerfile",
+			givenInstruction: map[string]string{
+				"keyword": "FROM",
+				"matcher": "golang",
 			},
 			want: []keywords.Tokens{
 				keywords.FromToken{Keyword: "FROM", Image: "golang", Tag: "1.15", Alias: "builder", AliasKw: "AS"},
 				keywords.FromToken{Keyword: "FROM", Image: "golang", Tag: "1.15", Alias: "tester", AliasKw: "as"},
 				keywords.FromToken{Keyword: "FROM", Image: "golang", Tag: "latest", Alias: "reporter", AliasKw: "AS"},
 				keywords.FromToken{Keyword: "FROM", Image: "golang", Tag: "latest"},
-				keywords.FromToken{Keyword: "FROM", Image: "ubuntu", Tag: "latest", Alias: "base", AliasKw: "AS"},
-				keywords.FromToken{Keyword: "FROM", Image: "ubuntu", Tag: "latest", Alias: "golang", AliasKw: "AS"},
-				keywords.FromToken{Keyword: "FROM", Image: "ubuntu", Tag: "20.04"},
 			},
 		},
 		{
@@ -498,6 +503,48 @@ func TestSimpleTextDockerfileParser_GetInstructionTokens(t *testing.T) {
 				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
 			}
 			got := parserUnderTest.GetInstructionTokens(originalDockerfile)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestSimpleTextDockerfileParser_GetImages(t *testing.T) {
+	tests := []struct {
+		name              string
+		fixtureDockerfile string
+		givenInstruction  map[string]string
+		want              []keywords.FromToken
+	}{
+		{
+			name:              "FROM.Dockerfile",
+			fixtureDockerfile: "FROM.Dockerfile",
+			want: []keywords.FromToken{
+				{Keyword: "FROM", Image: "golang", Tag: "1.15", Alias: "builder", AliasKw: "AS"},
+				{Keyword: "FROM", Image: "golang", Tag: "1.15", Alias: "tester", AliasKw: "as"},
+				{Keyword: "FROM", Image: "golang", Tag: "latest", Alias: "reporter", AliasKw: "AS"},
+				{Keyword: "FROM", Image: "golang", Tag: "latest"},
+				{Keyword: "FROM", Image: "python", Tag: "latest", Alias: "python-runtime", AliasKw: "AS"},
+				{Keyword: "FROM", Image: "ubuntu", Tag: "latest", Alias: "base", AliasKw: "AS"},
+				{Keyword: "FROM", Image: "ubuntu", Tag: "latest", Alias: "golang", AliasKw: "AS"},
+				{Keyword: "FROM", Image: "ubuntu", Tag: "20.04"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parserUnderTest, err := NewSimpleTextDockerfileParser(map[string]string{
+				"keyword": "FROM",
+				"matcher": "",
+			})
+			if err != nil {
+				t.Errorf("Error while calling NewSimpleTextDockerfileParser with argument.")
+			}
+			originalDockerfile, err := os.ReadFile("./test_fixtures/" + tt.fixtureDockerfile)
+			if err != nil {
+				t.Errorf("Error while reading file %q: %v", tt.fixtureDockerfile, err)
+			}
+			got := parserUnderTest.GetImages(originalDockerfile)
 
 			assert.Equal(t, tt.want, got)
 		})

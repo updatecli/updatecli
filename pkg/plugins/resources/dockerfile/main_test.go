@@ -132,6 +132,8 @@ FROM golang
 WORKDIR /go/src/app
 FROM ubuntu:20.04 AS golang
 RUN apt-get update
+FROM python AS python-runtime
+FROM python-runtime AS final
 FROM ubuntu:20.04
 RUN apt-get update
 LABEL golang="${GOLANG_VERSION}"

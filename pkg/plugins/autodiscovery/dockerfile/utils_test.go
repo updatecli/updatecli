@@ -20,7 +20,9 @@ func TestSearchFiles(t *testing.T) {
 				"testdata/Dockerfile",
 				"testdata/alpine/Dockerfile",
 				"testdata/jenkins/Dockerfile",
+				"testdata/multi-variable/Dockerfile",
 				"testdata/scratch-and-base/Dockerfile",
+				"testdata/similar-stage-and-image/Dockerfile",
 				"testdata/updatecli-action/Dockerfile",
 			},
 		},
@@ -100,7 +102,7 @@ func TestGetDockerfileData(t *testing.T) {
 					Platform: "linux/ppc64",
 					Image:    "alpine",
 					Tag:      "${alpine_version}",
-					Alias:    "alpine",
+					Alias:    "base_alpine",
 					AliasKw:  "AS",
 					Args: map[string]*keywords.FromTokenArgs{
 						"tag": {

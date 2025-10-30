@@ -3,6 +3,7 @@ package dockerfile
 import (
 	"bytes"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -35,7 +36,15 @@ func (d Dockerfile) generateManifest(
 	var err error
 	targetMatcher, targetInstruction := instruction.Image, instruction.Keyword
 	image, tag, digest, platform := instruction.Image, instruction.Tag, instruction.Digest, instruction.Platform
-	for arg_type, fromArg := range instruction.Args {
+
+	argTypes := make([]string, 0, len(instruction.Args))
+	for argType := range instruction.Args {
+		argTypes = append(argTypes, argType)
+	}
+	sort.Strings(argTypes)
+
+	for _, arg_type := range argTypes {
+		fromArg := instruction.Args[arg_type]
 		if arg, ok := args[fromArg.Name]; ok {
 			if arg.Value == "" {
 				continue
@@ -144,7 +153,7 @@ func (d Dockerfile) generateManifest(
 		tagFilter = ""
 		if err != nil {
 			logrus.Debugf("building version filter pattern: %s", err)
-			sourceSpec.VersionFilter.Pattern = "*"
+			versionFilterPattern = "*"
 		}
 	}
 
@@ -247,19 +256,7 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 			continue
 		}
 
-		// Let's build a list of stage name to ignore
-		ignoreStage := []string{}
-		for _, instruction := range instructions {
-			if instruction.Alias != "" {
-				ignoreStage = append(ignoreStage, instruction.Alias)
-			}
-		}
 		globalIgnore := MatchingRules{scratchIgnore}
-		if len(ignoreStage) > 0 {
-			globalIgnore = append(globalIgnore, MatchingRule{
-				Images: ignoreStage,
-			})
-		}
 
 		for _, instruction := range instructions {
 			manifest, err := d.generateManifest(globalIgnore, relativeFoundDockerfile, basename, dirname, instruction, args)
