@@ -25,6 +25,7 @@ var ErrWrongConfig = errors.New("wrong scm configuration")
 // ScmHandler is an interface offering common functions for a source control manager like git or github
 type ScmHandler interface {
 	Add(files []string) error
+	CleanWorkingBranch() (bool, error)
 	Clone() (string, error)
 	Checkout() error
 	GetDirectory() (directory string)

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -19,6 +20,31 @@ func (g *Git) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
 	}
 
 	return sourceBranch, workingBranch, targetBranch
+}
+
+// CleanWorkingBranch checks if the working branch is diverged from the target branch
+// and remove it if not.
+func (g *Git) CleanWorkingBranch() (bool, error) {
+	_, workingBranch, targetBranch := g.GetBranches()
+
+	if workingBranch == targetBranch {
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, g.GetURL())
+		return false, nil
+	}
+
+	isSimilarBranch, err := g.nativeGitHandler.IsSimilarBranch(workingBranch, targetBranch, g.GetDirectory())
+	if err != nil {
+		return false, fmt.Errorf("failed to compare working branch %q with target branch %q: %w", workingBranch, targetBranch, err)
+	}
+
+	if isSimilarBranch {
+		if err = g.nativeGitHandler.DeleteBranch(workingBranch, g.GetDirectory(), g.spec.Username, g.spec.Password); err != nil {
+			return false, fmt.Errorf("failed to delete working branch %q from %q: %w", workingBranch, g.GetDirectory(), err)
+		}
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // GetURL returns a git URL
@@ -46,7 +72,6 @@ func (g *Git) Checkout() error {
 		workingBranch,
 		g.GetDirectory(),
 		g.spec.Force)
-
 	if err != nil {
 		return err
 	}
@@ -69,7 +94,6 @@ func (g *Git) Clean() error {
 
 // Clone run `git clone`.
 func (g *Git) Clone() (string, error) {
-
 	err := g.nativeGitHandler.Clone(
 		g.spec.Username,
 		g.spec.Password,
@@ -77,7 +101,6 @@ func (g *Git) Clone() (string, error) {
 		g.GetDirectory(),
 		g.spec.Submodules,
 	)
-
 	if err != nil {
 		logrus.Errorf("failed cloning git repository %q - %s", g.GetURL(), err)
 		return "", err
@@ -88,7 +111,6 @@ func (g *Git) Clone() (string, error) {
 
 // Commit run `git commit`.
 func (g *Git) Commit(message string) error {
-
 	// Generate the conventional commit message
 	commitMessage, err := g.spec.CommitMessage.Generate(message)
 	if err != nil {
@@ -132,7 +154,6 @@ func (g *Git) Push() (bool, error) {
 
 // PushBranch push tags
 func (g *Git) PushBranch(branch string) error {
-
 	err := g.nativeGitHandler.PushBranch(
 		branch,
 		g.spec.Username,
@@ -160,7 +181,6 @@ func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
 
 // PushTag push tags
 func (g *Git) PushTag(tag string) error {
-
 	err := g.nativeGitHandler.PushTag(
 		tag,
 		g.spec.Username,

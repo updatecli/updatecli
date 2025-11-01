@@ -13,19 +13,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// DatedBranch represents a git branch with its latest commit date
 type DatedBranch struct {
 	When time.Time
 	Name string
 	Hash string
 }
 
-// BranchRefs return a list of git granch ordered by latest commit time
+// BranchRefs return a list of git branches ordered by latest commit time
 func (g GoGit) BranchRefs(workingDir string) (branches []DatedBranch, err error) {
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
-		logrus.Errorf("opening %q git directory: %s", workingDir, err)
 		return branches, fmt.Errorf("opening %q git directory: %s", workingDir, err)
-
 	}
 
 	branchrefs, err := r.Branches()
@@ -89,8 +88,6 @@ func (g GoGit) Branches(workingDir string) (branches []string, err error) {
 	for _, branchRef := range branchRefs {
 		branches = append(branches, branchRef.Name)
 	}
-
-	logrus.Debugf("got branches: %v", branches)
 
 	if len(branches) == 0 {
 		return branches, fmt.Errorf("%s", ErrNoBranchFound)
@@ -253,4 +250,64 @@ func resetNewBranchToBaseBranch(newBranch, basedBranch plumbing.ReferenceName, g
 		return false, fmt.Errorf("resetting branch %q to %q - %s", newBranch, basedBranch, err)
 	}
 	return true, nil
+}
+
+// DeleteBranch deletes a git branch
+func (g *GoGit) DeleteBranch(branch, gitRepositoryPath, username, password string) error {
+
+	repository, err := git.PlainOpen(gitRepositoryPath)
+	if err != nil {
+		return fmt.Errorf("opening %q git directory: %s", gitRepositoryPath, err)
+	}
+
+	// Delete the local reference
+	err = repository.Storer.RemoveReference(plumbing.NewBranchReferenceName(branch))
+	if err != nil {
+		return fmt.Errorf("deleting branch %q - %s", branch, err)
+	}
+
+	// Now check if branch exists on remote
+
+	remote, err := repository.Remote("origin")
+	if err != nil {
+		return fmt.Errorf("getting origin remote: %s", err)
+	}
+
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything except an empty string
+		Password: password,
+	}
+
+	listOptions := &git.ListOptions{}
+
+	if username != "" && password != "" {
+		listOptions.Auth = &auth
+	}
+
+	refs, err := remote.List(listOptions)
+	if err != nil {
+		return fmt.Errorf("listing remote references: %s", err)
+	}
+	for _, ref := range refs {
+		if ref.Name() == plumbing.NewBranchReferenceName(branch) {
+			pushOptions := &git.PushOptions{
+				RemoteName: "origin",
+				Progress:   os.Stdout,
+				RefSpecs: []config.RefSpec{
+					config.RefSpec(":refs/heads/" + branch),
+				},
+			}
+
+			if username != "" && password != "" {
+				pushOptions.Auth = &auth
+			}
+
+			if err = repository.Push(pushOptions); err != nil {
+				return fmt.Errorf("push to remote origin: %s", err)
+			}
+			break
+		}
+	}
+
+	return nil
 }

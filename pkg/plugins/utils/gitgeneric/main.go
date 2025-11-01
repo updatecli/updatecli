@@ -31,6 +31,7 @@ type GitHandler interface {
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error
 	Clone(username, password, URL, workingDir string, withSubmodules *bool) error
 	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
+	DeleteBranch(branch, gitRepositoryPath, username, password string) error
 	GetChangedFiles(workingDir string) ([]string, error)
 	GetLatestCommitHash(workingDir string) (string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)

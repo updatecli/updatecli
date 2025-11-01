@@ -238,6 +238,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	if err != nil {
 		return nil, fmt.Errorf("update pipeline: %w", err)
 	}
+
 	v, err = d.GetVertex(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get leaf from dag: %w", err) // Should never happens
@@ -514,6 +515,7 @@ func (p *Pipeline) String() string {
 	return result
 }
 
+// Update updates the pipeline based on the latest configuration
 func (p *Pipeline) Update() error {
 	err := p.Config.Update(p)
 	if err != nil {
@@ -537,6 +539,9 @@ func (p *Pipeline) Update() error {
 	for id := range p.Config.Spec.Actions {
 		action := p.Actions[id]
 
+		action.Title = p.Config.Spec.Actions[id].Title
+		action.Config = p.Config.Spec.Actions[id]
+
 		if len(p.Config.Spec.Actions[id].ScmID) > 0 {
 			sc, ok := p.SCMs[p.Config.Spec.Actions[id].ScmID]
 			if !ok {
@@ -550,6 +555,8 @@ func (p *Pipeline) Update() error {
 	// Update scm pointer for each condition
 	for id := range p.Config.Spec.Conditions {
 		condition := p.Conditions[id]
+
+		condition.Config = p.Config.Spec.Conditions[id]
 
 		if len(p.Config.Spec.Conditions[id].SCMID) > 0 {
 			sc, ok := p.SCMs[p.Config.Spec.Conditions[id].SCMID]
@@ -566,6 +573,8 @@ func (p *Pipeline) Update() error {
 	for id := range p.Config.Spec.Sources {
 		source := p.Sources[id]
 
+		source.Config = p.Config.Spec.Sources[id]
+
 		if len(p.Config.Spec.Sources[id].SCMID) > 0 {
 			sc, ok := p.SCMs[p.Config.Spec.Sources[id].SCMID]
 			if !ok {
@@ -573,12 +582,16 @@ func (p *Pipeline) Update() error {
 			}
 			source.Scm = &sc.Handler
 		}
+
 		p.Sources[id] = source
 	}
 
 	// Update scm pointer for each target
 	for id := range p.Config.Spec.Targets {
 		target := p.Targets[id]
+
+		target.Config = p.Config.Spec.Targets[id]
+
 		if len(p.Config.Spec.Targets[id].SCMID) > 0 {
 			sc, ok := p.SCMs[p.Config.Spec.Targets[id].SCMID]
 			if !ok {
@@ -586,6 +599,7 @@ func (p *Pipeline) Update() error {
 			}
 			target.Scm = &sc.Handler
 		}
+
 		p.Targets[id] = target
 	}
 

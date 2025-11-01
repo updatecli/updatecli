@@ -32,6 +32,8 @@ var (
 	ErrBadMergeMethod = errors.New("wrong merge method defined, accepting one of 'squash', 'merge', 'rebase', or ''")
 	// ErrPullRequestIsInCleanStatus is returned when the pull request is in clean status
 	ErrPullRequestIsInCleanStatus = errors.New("pull request Pull request is in clean status")
+	// AnnouncedExistingPullRequest keeps track of already announced existing pull requests to avoid multiple logs
+	AnnouncedExistingPullRequest map[string]bool
 )
 
 // PullRequest contains multiple fields mapped to GitHub V4 api
@@ -821,7 +823,13 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool, retry int) error {
 		logrus.Debugf("Resetting pull-request body with new report")
 	}
 
-	logrus.Infof("Existing GitHub pull request found: %s", p.remotePullRequest.Url)
+	if AnnouncedExistingPullRequest == nil {
+		AnnouncedExistingPullRequest = make(map[string]bool)
+	}
+	if _, ok := AnnouncedExistingPullRequest[p.remotePullRequest.ID]; !ok {
+		logrus.Infof("Existing GitHub pull request found: %s", p.remotePullRequest.Url)
+		AnnouncedExistingPullRequest[p.remotePullRequest.ID] = true
+	}
 
 	return nil
 }
