@@ -252,7 +252,7 @@ func resetNewBranchToBaseBranch(newBranch, basedBranch plumbing.ReferenceName, g
 	return true, nil
 }
 
-// DeleteBranch delete a git branch
+// DeleteBranch deletes a git branch
 func (g *GoGit) DeleteBranch(branch, gitRepositoryPath, username, password string) error {
 
 	repository, err := git.PlainOpen(gitRepositoryPath)
@@ -266,7 +266,7 @@ func (g *GoGit) DeleteBranch(branch, gitRepositoryPath, username, password strin
 		return fmt.Errorf("deleting branch %q - %s", branch, err)
 	}
 
-	// Now check if branch exist on remote
+	// Now check if branch exists on remote
 
 	remote, err := repository.Remote("origin")
 	if err != nil {
@@ -305,6 +305,7 @@ func (g *GoGit) DeleteBranch(branch, gitRepositoryPath, username, password strin
 			if err = repository.Push(pushOptions); err != nil {
 				return fmt.Errorf("push to remote origin: %s", err)
 			}
+			break
 		}
 	}
 
