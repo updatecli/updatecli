@@ -145,7 +145,7 @@ func (e *Engine) pushSCMCommits() error {
 	}
 
 	if countPushedScms == 0 {
-		logrus.Info("No SCM repositories to push")
+		logrus.Info("No SCM repositories have changes to push")
 	} else {
 		logrus.Infof("Pushed changes to %d of %d SCM repositories", countPushedScms, countScms)
 	}
