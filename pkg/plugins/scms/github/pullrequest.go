@@ -823,11 +823,11 @@ func (p *PullRequest) getRemotePullRequest(resetBody bool, retry int) error {
 		logrus.Debugf("Resetting pull-request body with new report")
 	}
 
+	if AnnouncedExistingPullRequest == nil {
+		AnnouncedExistingPullRequest = make(map[string]bool)
+	}
 	if _, ok := AnnouncedExistingPullRequest[p.remotePullRequest.ID]; !ok {
 		logrus.Infof("Existing GitHub pull request found: %s", p.remotePullRequest.Url)
-		if AnnouncedExistingPullRequest == nil {
-			AnnouncedExistingPullRequest = make(map[string]bool)
-		}
 		AnnouncedExistingPullRequest[p.remotePullRequest.ID] = true
 	}
 
