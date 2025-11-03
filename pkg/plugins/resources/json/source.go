@@ -19,8 +19,9 @@ func (j *Json) Source(workingDir string, resultSource *result.Source) error {
 		return errors.New("source only supports one file")
 	}
 
-	if (len(j.spec.Query) > 0 && j.spec.VersionFilter.IsZero()) ||
-		(len(j.spec.Query) == 0) && !j.spec.VersionFilter.IsZero() {
+	if j.engine != ENGINEDASEL_V2 &&
+		((len(j.spec.Query) > 0 && j.spec.VersionFilter.IsZero()) ||
+			(len(j.spec.Query) == 0 && !j.spec.VersionFilter.IsZero())) {
 		return ErrSpecVersionFilterRequireMultiple
 	}
 

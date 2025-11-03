@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func strPtr(s string) *string {
@@ -113,6 +114,18 @@ func TestSource(t *testing.T) {
 				Engine: strPtr(ENGINEDASEL_V2),
 			},
 			expectedResult: "Thomas",
+		},
+		{
+			name: "Version filter with Dasel v2",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    ".children.all()",
+				Engine: strPtr(ENGINEDASEL_V2),
+				VersionFilter: version.Filter{
+					Kind: "latest",
+				},
+			},
+			expectedResult: "Trevor",
 		},
 	}
 
