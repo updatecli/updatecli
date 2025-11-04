@@ -166,6 +166,10 @@ func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, passw
 // true if it's the case
 func (g GoGit) IsSimilarBranch(a, b, workingDir string) (bool, error) {
 
+	if a == b {
+		return true, nil
+	}
+
 	gitRepository, err := git.PlainOpen(workingDir)
 	if err != nil {
 		return false, fmt.Errorf("opening %q git directory: %s", workingDir, err)
