@@ -36,7 +36,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.3.0
 	github.com/aws/aws-sdk-go-v2 v1.39.5
 	github.com/aws/aws-sdk-go-v2/config v1.31.16
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.20
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.21
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.256.0
 	github.com/aws/smithy-go v1.23.2
 	github.com/beevik/etree v1.6.0
