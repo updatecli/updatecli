@@ -51,7 +51,7 @@ type Spec struct {
 	//  * source
 	//  * condition
 	//
-	Token string `yaml:",omitempty" jsonschema:"required"`
+	Token string `yaml:",omitempty"`
 	// URL defines the default github url in case of GitHub enterprise.
 	//
 	// default: https://github.com
