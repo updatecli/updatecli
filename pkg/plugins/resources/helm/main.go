@@ -45,8 +45,6 @@ type Spec struct {
 		key defines the yamlpath query used for retrieving value from a YAML document
 
 		compatible:
-			* source
-			* condition
 			* target
 
 		example:
