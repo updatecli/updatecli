@@ -95,7 +95,6 @@ func (p *Pipeline) RunActions() error {
 		inheritedSCM := p.SCMs[action.Config.ScmID]
 		action.Scm = &inheritedSCM
 
-		action = p.Actions[id]
 		action.Config = p.Config.Spec.Actions[id]
 
 		if p.Report.Actions == nil {
