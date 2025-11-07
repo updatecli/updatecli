@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	composeApplyCommit bool
-	composeApplyClean  bool
-	composeApplyPush   bool
+	composeApplyCommit           bool
+	composeApplyClean            bool
+	composeApplyPush             bool
+	composeApplyCleanGitBranches bool
 
 	composeApplyCmd = &cobra.Command{
 		Use:   "apply",
@@ -36,6 +37,7 @@ var (
 			e.Options.Pipeline.Target.Push = composeApplyPush
 			e.Options.Pipeline.Target.Clean = composeApplyClean
 			e.Options.Pipeline.Target.DryRun = false
+			e.Options.Pipeline.Target.CleanGitBranches = composeApplyCleanGitBranches
 
 			err = run("compose/apply")
 			if err != nil {
@@ -47,12 +49,14 @@ var (
 )
 
 func init() {
+	composeApplyCmd.Flags().StringVar(&udashOAuthAudience, "reportAPI", "", "Set the report API URL where to publish pipeline reports")
 	composeApplyCmd.Flags().StringVarP(&composeCmdFile, "file", "f", composeDefaultCmdFile, "Define the update-compose file")
 
 	composeApplyCmd.Flags().BoolVarP(&composeApplyCommit, "commit", "", true, "Record changes to the repository, '--commit=false'")
 	composeApplyCmd.Flags().BoolVarP(&composeApplyPush, "push", "", true, "Update remote refs '--push=false'")
 	composeApplyCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	composeApplyCmd.Flags().BoolVar(&composeApplyClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
+	composeApplyCmd.Flags().BoolVar(&composeApplyCleanGitBranches, "clean-git-branches", false, "Remove git branches created by updatecli like '--clean-git-branches=true'")
 
 	composeCmd.AddCommand(composeApplyCmd)
 }
