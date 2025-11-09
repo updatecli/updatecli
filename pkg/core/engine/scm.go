@@ -97,23 +97,25 @@ func (e *Engine) pushSCMCommits() error {
 			continue
 		}
 
-		for _, target := range pipeline.Targets {
+		for id := range pipeline.Targets {
+			target := pipeline.Targets[id]
 
 			// Sanity check, skip if no SCM is configured
 			if target.Scm == nil {
 				continue
 			}
 
-			s := *target.Scm
-			url := s.GetURL()
-			_, branch, _ := s.GetBranches()
+			scmHandler := *target.Scm
+
+			url := scmHandler.GetURL()
+			_, branch, _ := scmHandler.GetBranches()
 
 			if _, ok := allScm[url]; !ok {
 				allScm[url] = map[string]*scm.ScmHandler{}
 			}
 
 			if _, ok := allScm[url][branch]; !ok {
-				allScm[url][branch] = &s
+				allScm[url][branch] = &scmHandler
 				countScms++
 			}
 
@@ -125,11 +127,17 @@ func (e *Engine) pushSCMCommits() error {
 					}
 				}
 
-				err := target.PushCommits()
+				err := scmHandler.Checkout()
+				if err != nil {
+					errs = append(errs, fmt.Sprintf("checking out git repository: %v", err))
+					target.Result.Result = result.FAILURE
+					continue
+				}
+
+				err = target.PushCommits()
 				if err != nil {
 					errs = append(errs, fmt.Sprintf("pushing commits for target %q: %s", target.Config.Name, err.Error()))
 					target.Result.Result = result.FAILURE
-					logrus.Errorf("pushing commits for target %q:\t%q", target.Config.Name, err.Error())
 					continue
 				}
 				logrus.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
@@ -139,6 +147,7 @@ func (e *Engine) pushSCMCommits() error {
 				}
 
 				changedSCM[url] = append(changedSCM[url], branch)
+
 				countPushedScms++
 			}
 		}
@@ -171,14 +180,19 @@ func (e *Engine) pushSCMCommits() error {
 				continue
 			}
 
-			logrus.Infof("\n\u26A0 According to the git history, some commits must be pushed to %q\n", scmHandler.Summary())
+			logrus.Infof("\n\u26A0 According to the git history, some commits must be pushed to %q %q\n", redact.URL(url), branch)
+
+			err = scmHandler.Checkout()
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("checking out git repository: %v", err))
+				continue
+			}
 
 			isPushed, err := scmHandler.Push()
 			if err != nil {
 				errs = append(errs, fmt.Sprintf("pushing commits to %q on branch %q: %s", redact.URL(url), branch, err.Error()))
 			}
 			logrus.Debugf("Pushed changes to %q on branch %q: %t\n", url, branch, isPushed)
-
 		}
 	}
 
@@ -205,7 +219,7 @@ func (e *Engine) pruneSCMBranches() error {
 
 			// Sanity check
 			if scmHandlerPtr == nil {
-				logrus.Errorf("Something went wrong retrieving SCM handler for %q on branch %q, skipping...", redact.URL(url), branch)
+				errs = append(errs, fmt.Sprintf("retrieving SCM handler for %q on branch %q", redact.URL(url), branch))
 				continue
 			}
 
@@ -246,7 +260,8 @@ func (e *Engine) getUniqueTargetSCMTargets() (result map[string]map[string]*scm.
 			continue
 		}
 
-		for _, target := range pipeline.Targets {
+		for id := range pipeline.Targets {
+			target := pipeline.Targets[id]
 
 			// Sanity check, skip if no SCM is configured
 			if target.Scm == nil {
