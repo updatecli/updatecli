@@ -38,7 +38,7 @@ jobs:
           private-key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
       - name: "Run updatecli"
         if: github.ref == 'refs/heads/main'
-        run: "updatecli compose apply"
+        run: "updatecli compose apply --clean-git-branches=true"
         env:
           GITHUB_ACTOR: ${{ secrets.UPDATECLI_BOT_GITHUB_ACTOR }}
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
