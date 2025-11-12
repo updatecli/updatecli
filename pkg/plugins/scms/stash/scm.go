@@ -149,7 +149,7 @@ func (s *Stash) Add(files []string) error {
 func (s *Stash) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := s.GetBranches()
 
-	return s.nativeGitHandler.IsLocalBranchPublished(
+	return s.nativeGitHandler.IsLocalBranchSyncedWithRemote(
 		sourceBranch,
 		workingBranch,
 		s.Spec.Username,

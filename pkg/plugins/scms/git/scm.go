@@ -171,7 +171,7 @@ func (g *Git) PushBranch(branch string) error {
 func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
-	return g.nativeGitHandler.IsLocalBranchPublished(
+	return g.nativeGitHandler.IsLocalBranchSyncedWithRemote(
 		sourceBranch,
 		workingBranch,
 		g.spec.Username,

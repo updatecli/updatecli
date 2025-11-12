@@ -161,7 +161,7 @@ func (g *Gitlab) Add(files []string) error {
 func (g *Gitlab) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
-	return g.nativeGitHandler.IsLocalBranchPublished(
+	return g.nativeGitHandler.IsLocalBranchSyncedWithRemote(
 		sourceBranch,
 		workingBranch,
 		g.Spec.Username,
