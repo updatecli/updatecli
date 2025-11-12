@@ -166,7 +166,7 @@ func (b *Bitbucket) Add(files []string) error {
 func (b *Bitbucket) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := b.GetBranches()
 
-	return b.nativeGitHandler.IsLocalBranchPublished(
+	return b.nativeGitHandler.IsLocalBranchSyncedWithRemote(
 		sourceBranch,
 		workingBranch,
 		b.GetUsername(),

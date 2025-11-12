@@ -402,7 +402,7 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 		return false, fmt.Errorf("failed to get access token: %w", err)
 	}
 
-	return g.nativeGitHandler.IsLocalBranchPublished(
+	return g.nativeGitHandler.IsLocalBranchSyncedWithRemote(
 		sourceBranch,
 		workingBranch,
 		g.username,
