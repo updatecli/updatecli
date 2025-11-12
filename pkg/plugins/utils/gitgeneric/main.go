@@ -80,6 +80,8 @@ If local working branch == local base branch != remote working branch
 If local working branch == local base branch == remote working branch
 => This means that everything is up to date
 
+If the remote working branch doesn't exist then it means that local changes are not published.
+
 returns true if both the remote and local reference are similar.
 */
 func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, password, workingDir string) (bool, error) {
@@ -106,6 +108,12 @@ func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, passw
 	//
 	rem, err := gitRepository.Remote(DefaultRemoteReferenceName)
 	if err != nil {
+
+		// If the remote doesn't exist, then nothing has been published yet
+		if err == git.ErrRemoteNotFound {
+			return false, nil
+		}
+
 		return false, fmt.Errorf("remote %q - %s", DefaultRemoteReferenceName, err)
 	}
 
@@ -124,6 +132,10 @@ func (g GoGit) IsLocalBranchPublished(baseBranch, workingBranch, username, passw
 
 	workingBranchRef, err = gitRepository.Reference(plumbing.NewBranchReferenceName(workingBranchReferenceName), true)
 	if err != nil {
+		// if the workingBranchRef doesn't exist remotely, then nothing has been published yet
+		if err == plumbing.ErrReferenceNotFound {
+			return false, nil
+		}
 		return false, fmt.Errorf("reference %q - %s", workingBranchReferenceName, err)
 	}
 
