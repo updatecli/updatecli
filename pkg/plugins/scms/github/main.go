@@ -298,6 +298,14 @@ If you know what you are doing, please set the force option to true in your conf
 		}
 	}
 
+	if s.Email == "" {
+		s.Email = gitgeneric.DefaultGitCommitEmailAddress
+	}
+
+	if s.User == "" {
+		s.User = gitgeneric.DefaultGitCommitUserName
+	}
+
 	g := Github{
 		force:                  force,
 		Spec:                   s,
