@@ -40,7 +40,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.256.0
 	github.com/aws/smithy-go v1.23.2
 	github.com/beevik/etree v1.6.0
-	github.com/drone/go-scm v1.40.6
+	github.com/drone/go-scm v1.40.7
 	github.com/fluxcd/helm-controller/api v1.4.3
 	github.com/fluxcd/source-controller/api v1.7.3
 	github.com/go-viper/mapstructure/v2 v2.4.0
