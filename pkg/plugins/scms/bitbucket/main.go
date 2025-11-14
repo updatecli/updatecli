@@ -185,6 +185,14 @@ func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
 		s.Directory = path.Join(tmp.Directory, "bitbucket", s.Owner, s.Repository)
 	}
 
+	if s.Email == "" {
+		s.Email = gitgeneric.DefaultGitCommitEmailAddress
+	}
+
+	if s.User == "" {
+		s.User = gitgeneric.DefaultGitCommitUserName
+	}
+
 	if len(s.Branch) == 0 {
 		logrus.Warningf("no git branch specified, fallback to %q", "main")
 		s.Branch = "main"

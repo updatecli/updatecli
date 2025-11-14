@@ -19,6 +19,10 @@ import (
 )
 
 const (
+	// DefaultGitCommitEmailAddress is the default git commit email address
+	DefaultGitCommitEmailAddress = "updatecli-bot@updatecli.io"
+	// DefaultGitCommitUserName is the default git commit user name
+	DefaultGitCommitUserName   = "updatecli-bot"
 	DefaultRemoteReferenceName = "origin"
 	// ErrNoBranchFound is the error message when no branch is found
 	ErrNoBranchFound = "no branch found"

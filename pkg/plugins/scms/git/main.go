@@ -217,6 +217,14 @@ If you know what you are doing, please set the workingBranch option to false in 
 
 	nativeGitHandler := gitgeneric.GoGit{}
 
+	if s.Email == "" {
+		s.Email = gitgeneric.DefaultGitCommitEmailAddress
+	}
+
+	if s.User == "" {
+		s.User = gitgeneric.DefaultGitCommitUserName
+	}
+
 	return &Git{
 		spec:                   s,
 		nativeGitHandler:       &nativeGitHandler,

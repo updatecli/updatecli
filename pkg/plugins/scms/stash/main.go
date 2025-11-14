@@ -245,6 +245,14 @@ If you know what you are doing, please set the force option to true in your conf
 		return &Stash{}, err
 	}
 
+	if s.Email == "" {
+		s.Email = gitgeneric.DefaultGitCommitEmailAddress
+	}
+
+	if s.User == "" {
+		s.User = gitgeneric.DefaultGitCommitUserName
+	}
+
 	nativeGitHandler := gitgeneric.GoGit{}
 	g := Stash{
 		Spec:                   s,
