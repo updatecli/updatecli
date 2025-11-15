@@ -7,8 +7,8 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Run every hour
-    - cron: "0 * * * *"
+    # Run at 12:00 every Saterday
+    - cron: '0 12 * * 6'
 permissions: {}
 jobs:
   updatecli:
