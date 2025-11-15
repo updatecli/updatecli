@@ -16,6 +16,25 @@ import (
 It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
+	// DocumentIndex defines the index of the document to interact with in a multi-document yaml file.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   empty
+	//
+	//  remark:
+	//   * when not set, all documents are considered
+	//   * Only compatible with the "go-yaml" engine
+	//
+	// example:
+	//   * documentindex: 0
+	//   * documentindex: 1
+	//
+	DocumentIndex *int `yaml:",omitempty"`
 	//"engine" defines the engine to use to manipulate the yaml file.
 	//
 	//There is no one good Golang library to manipulate yaml files.
@@ -251,6 +270,15 @@ func (s *Spec) Validate() error {
 	}
 	if len(s.Keys) > 1 && hasDuplicates(s.Keys) {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attribute `spec.keys` contains duplicated values")
+	}
+
+	if s.DocumentIndex != nil {
+		switch s.Engine {
+		case EngineDefault, EngineGoYaml, "":
+			//
+		default:
+			validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attribute `spec.documentindex` is only compatible with the `go-yaml` engine")
+		}
 	}
 
 	// Return all the validation errors if found any

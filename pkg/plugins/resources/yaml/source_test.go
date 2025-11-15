@@ -22,6 +22,34 @@ func Test_Source(t *testing.T) {
 		isErrorWanted  bool
 	}{
 		{
+			name: "Passing Case with multiple document",
+			spec: Spec{
+				File:          "data.yaml",
+				Key:           "$.name",
+				Engine:        "go-yaml",
+				DocumentIndex: ptrInt(1),
+			},
+			files: map[string]file{
+				"data.yaml": {
+					originalFilePath: "data.yaml",
+					filePath:         "data.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"data.yaml": `---
+name: John
+age: 30
+---
+name: Doe
+age: 25
+`,
+			},
+			wantedContents: map[string]string{
+				"data.yaml": "Doe",
+			},
+			isResultWanted: true,
+		},
+		{
 			name: "Passing Case with 'File' and complex key",
 			spec: Spec{
 				File:   "test.yaml",

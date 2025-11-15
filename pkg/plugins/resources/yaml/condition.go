@@ -67,22 +67,50 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler) (pass bool, message 
 				continue
 			}
 
-			node, err := urlPath.FilterFile(file)
-			if err != nil {
+			switch y.spec.DocumentIndex {
+			case nil:
+				node, err := urlPath.FilterFile(file)
+				if err != nil {
+					if errors.Is(err, goyaml.ErrNotFoundNode) {
+						errorMessages = append(errorMessages,
+							fmt.Errorf("%q - %w", originalFilePath, ErrKeyNotFound))
+						continue
+					}
 
-				if errors.Is(err, goyaml.ErrNotFoundNode) {
-					errorMessages = append(errorMessages,
-						fmt.Errorf("%q - %w", originalFilePath, ErrKeyNotFound))
+					errorMessages = append(errorMessages, fmt.Errorf(
+						"%q - searching in yaml file: %w", originalFilePath, err))
 					continue
 				}
 
-				errorMessages = append(errorMessages, fmt.Errorf(
-					"%q - searching in yaml file: %w", originalFilePath, err))
-				continue
-			}
+				if node != nil {
+					results = append(results, node.String())
+				}
 
-			if node != nil {
-				results = append(results, node.String())
+			default:
+				for index, doc := range file.Docs {
+
+					if index != *y.spec.DocumentIndex {
+						continue
+					}
+
+					node, err := urlPath.FilterNode(doc.Body)
+					if err != nil {
+						if errors.Is(err, goyaml.ErrNotFoundNode) {
+							errorMessages = append(errorMessages,
+								fmt.Errorf("%q - %w", originalFilePath, ErrKeyNotFound))
+							continue
+						}
+
+						errorMessages = append(errorMessages, fmt.Errorf(
+							"%q - searching in yaml file: %w", originalFilePath, err))
+						continue
+					}
+
+					if node != nil {
+						results = append(results, node.String())
+						break
+					}
+				}
 			}
 
 		case EngineYamlPath:
