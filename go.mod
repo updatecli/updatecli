@@ -67,7 +67,7 @@ require (
 	github.com/yuin/goldmark v1.7.13
 	github.com/zclconf/go-cty v1.17.0
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
-	golang.org/x/text v0.30.0
+	golang.org/x/text v0.31.0
 	golang.org/x/time v0.13.0
 	gopkg.in/ini.v1 v1.67.0
 	oras.land/oras-go/v2 v2.6.0
