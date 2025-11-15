@@ -88,12 +88,34 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 			return fmt.Errorf("parsing yaml file: %w", err)
 		}
 
-		node, err := urlPath.FilterFile(file)
-		if err != nil && !errors.Is(err, goyaml.ErrNotFoundNode) {
-			return fmt.Errorf("searching in yaml file: %w", err)
-		}
-		if node != nil {
-			results = append(results, node.String())
+		switch y.spec.DocumentIndex {
+		case nil:
+			node, err := urlPath.FilterFile(file)
+			if err != nil && !errors.Is(err, goyaml.ErrNotFoundNode) {
+				return fmt.Errorf("searching in yaml file: %w", err)
+			}
+
+			if node != nil {
+				results = append(results, node.String())
+			}
+
+		default:
+			for index, doc := range file.Docs {
+
+				if index != *y.spec.DocumentIndex {
+					continue
+				}
+
+				node, err := urlPath.FilterNode(doc.Body)
+				if err != nil {
+					return fmt.Errorf("searching in yaml document index %d: %w", *y.spec.DocumentIndex, err)
+				}
+
+				if node != nil {
+					results = append(results, node.String())
+					break
+				}
+			}
 		}
 
 	case EngineYamlPath:
