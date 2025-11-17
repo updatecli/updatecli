@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
@@ -777,7 +778,10 @@ func (config *Config) Update(data interface{}) (err error) {
 		return err
 	}
 
-	tmpl, err := template.New("cfg").Funcs(updatecliRuntimeFuncMap(data)).Parse(string(content))
+	tmpl, err := template.New("cfg").
+		Funcs(sprig.FuncMap()).
+		Funcs(updatecliRuntimeFuncMap(data)).
+		Parse(string(content))
 	if err != nil {
 		return err
 	}
