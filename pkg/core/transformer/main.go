@@ -1,6 +1,7 @@
 package transformer
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -9,12 +10,23 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
+	daselV2 "github.com/tomwright/dasel/v2"
 )
 
 var (
 	// ErrEmptyInput is returned when we try to modify an empty value
 	ErrEmptyInput = errors.New("validation error: transformer input is empty")
 )
+
+type JsonMatch struct {
+	Key string `yaml:",omitempty" jsonschema:"required"`
+	// If we don't find a match then return the "returninput" or "returnempty"
+	NoMatchAction string `yaml:",omitempty"`
+	// If we find multiple matches, join them by this
+	JoinMultipleMatches string `yaml:",omitempty"`
+	// If we find multiple matches, select the "first" or the "last"
+	MultipleMatchAction string `yaml:",omitempty"`
+}
 
 // Transformer holds a transformer rule
 type Transformer struct {
@@ -39,6 +51,7 @@ type Transformer struct {
 	// Find searches for a specific value if it exists then return the value using regular expression
 	FindSubMatch           FindSubMatch `yaml:",omitempty"`
 	DeprecatedFindSubMatch interface{}  `yaml:"findSubMatch,omitempty" jsonschema:"-"`
+	JsonMatch              JsonMatch    `yaml:",omitempty"`
 	// SemvVerInc specifies a  comma separated list semantic versioning component that needs to be upgraded.
 	SemVerInc           string `yaml:",omitempty"`
 	DeprecatedSemVerInc string `yaml:"semverInc,omitempty" jsonschema:"-"`
@@ -115,6 +128,50 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 
 	if t.Unquote {
 		output = strings.Trim(output, "\"")
+	}
+
+	if t.JsonMatch != (JsonMatch{}) {
+		var data any
+		err = json.Unmarshal([]byte(output), &data)
+		if err != nil {
+			return "", err
+		}
+		queryResult, err := daselV2.Select(data, t.JsonMatch.Key)
+		if err != nil {
+			return "", err
+		}
+
+		results := queryResult.Interfaces()
+		if len(results) == 0 {
+			if t.JsonMatch.NoMatchAction == "returninput" {
+				return output, nil
+			} else if t.JsonMatch.NoMatchAction == "returnempty" {
+				return "", nil
+			} else {
+				err = fmt.Errorf("could not find value for query %q", t.JsonMatch.Key)
+				return "", err
+			}
+		}
+		if len(results) > 1 {
+			if t.JsonMatch.JoinMultipleMatches != "" {
+				stringResults := make([]string, len(results))
+				for k, v := range results {
+					stringResults[k] = fmt.Sprint(v)
+				}
+				return strings.Join(stringResults, t.JsonMatch.JoinMultipleMatches), nil
+			} else if t.JsonMatch.MultipleMatchAction == "first" {
+				return fmt.Sprint(results[0]), nil
+			} else if t.JsonMatch.MultipleMatchAction == "last" {
+				return fmt.Sprint(results[len(results)-1]), nil
+			} else {
+				err = fmt.Errorf("multiple results found for query %q", t.JsonMatch.Key)
+				return "", err
+			}
+		}
+		output = fmt.Sprint(results[0])
+		for _, v := range results {
+			output = fmt.Sprint(v)
+		}
 	}
 
 	return output, nil
