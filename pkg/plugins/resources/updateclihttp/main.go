@@ -2,7 +2,9 @@ package updateclihttp
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -62,11 +64,18 @@ func New(spec interface{}) (*Http, error) {
 	if newSpec.Request.Verb != "" {
 		httpVerb = newSpec.Request.Verb
 	}
-	httpReq, err := http.NewRequest(httpVerb, newSpec.Url, nil)
+	var body io.Reader = nil
+	if httpVerb == http.MethodPost || httpVerb == http.MethodPut || httpVerb == http.MethodPatch {
+		if newSpec.Request.Body != "" {
+			body = strings.NewReader(newSpec.Request.Body)
+		} else {
+			return nil, fmt.Errorf("requires spec.body when using POST, PUT or PATCH method")
+		}
+	}
+	httpReq, err := http.NewRequest(httpVerb, newSpec.Url, body)
 	if err != nil {
 		return nil, err
 	}
-
 	if len(newSpec.Request.Headers) > 0 {
 		for k, v := range newSpec.Request.Headers {
 			httpReq.Header.Set(k, v)
