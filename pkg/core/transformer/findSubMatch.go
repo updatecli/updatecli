@@ -46,7 +46,7 @@ func (f *FindSubMatch) Apply(input string) (string, error) {
 		pattern := findSubMatch.CapturePattern
 		for i, v := range found {
 			replace := fmt.Sprintf("\\%d", i)
-			pattern = strings.Replace(pattern, replace, v, -1)
+			pattern = strings.ReplaceAll(pattern, replace, v)
 		}
 
 		return pattern, nil
