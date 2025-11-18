@@ -179,55 +179,62 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				return 0, ignoredFiles, fmt.Errorf("crafting yamlpath query for key %q: %w", key, err)
 			}
 
-			var node ast.Node
-			switch y.spec.DocumentIndex {
-			case nil:
-				node, err = urlPath.FilterFile(yamlFile)
+			oldVersion := ""
+			keyNotFound := []string{}
+			errMsg := []string{}
+			contentChanged := false
+
+			for index, doc := range yamlFile.Docs {
+				var node ast.Node
+
+				if y.spec.DocumentIndex != nil {
+					if index != *y.spec.DocumentIndex {
+						continue
+					}
+				}
+
+				node, err = urlPath.FilterNode(doc.Body)
 				if err != nil {
 					if errors.Is(err, goyaml.ErrNotFoundNode) {
 						if y.spec.SearchPattern {
 							// If search pattern is true then we don't want to return an error
 							// as we are probably trying to identify a file matching the key
-							logrus.Debugf("ignoring key %q in file %q: %s", key, originFilePath, err)
+							logrus.Debugf("ignoring key %q from file %q in document %q: %s", key, originFilePath, index, err)
 							continue
 						}
-						return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q",
-							key,
-							originFilePath)
+						keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %q from file %q in document %q", key, originFilePath, index))
 					}
-					return 0, ignoredFiles, fmt.Errorf("searching for key %q in yaml file: %w", key, err)
+
+					errMsg = append(errMsg, fmt.Sprintf("searching for key %q in document index %d: %s", key, index, err.Error()))
+					continue
 				}
 
-			default:
-				for index, doc := range yamlFile.Docs {
+				if node == nil {
+					keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %q from file %q", key, originFilePath))
+					continue
+				}
 
-					if index != *y.spec.DocumentIndex {
-						continue
-					}
-
-					node, err = urlPath.FilterNode(doc.Body)
-					if err != nil {
-						if errors.Is(err, goyaml.ErrNotFoundNode) {
-							if y.spec.SearchPattern {
-								// If search pattern is true then we don't want to return an error
-								// as we are probably trying to identify a file matching the key
-								logrus.Debugf("ignoring key %q in file %q: %s", key, originFilePath, err)
-								continue
-							}
-							return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q",
-								key,
-								originFilePath)
-						}
-						return 0, ignoredFiles, fmt.Errorf("searching for key %q in yaml file: %w", key, err)
-					}
+				oldVersion = node.String()
+				if node.String() != nodeToWrite.String() && node.String() != valueToWrite {
+					contentChanged = true
 				}
 			}
 
+			if len(errMsg) > 0 {
+				return 0, ignoredFiles, fmt.Errorf("errors occurred:\n%s", strings.Join(errMsg, "\n"))
+			}
+
+			if len(keyNotFound) > 0 {
+				for _, msg := range keyNotFound {
+					logrus.Errorln(msg)
+				}
+				return 0, ignoredFiles, fmt.Errorf("key not found from file %q", originFilePath)
+			}
+
 			fileKeysProcessed++
-			oldVersion := node.String()
 			resultTarget.Information = oldVersion
 
-			if oldVersion == valueToWrite || oldVersion == nodeToWrite.String() {
+			if !contentChanged {
 				resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
 					resultTarget.Description,
 					key,
@@ -237,31 +244,21 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				continue
 			}
 
-			switch y.spec.DocumentIndex {
-			case nil:
-				if err := urlPath.ReplaceWithNode(yamlFile, nodeToWrite); err != nil {
-					return 0, ignoredFiles, fmt.Errorf("replacing yaml key %q: %w", key, err)
-				}
-
-			default:
-
-				tmpYamlFile := ast.File{
-					Name: yamlFile.Name,
-				}
-
-				for index, doc := range yamlFile.Docs {
-					if index == *y.spec.DocumentIndex {
-						tmpYamlFile.Docs = append(tmpYamlFile.Docs, doc)
+			for index, doc := range yamlFile.Docs {
+				if y.spec.DocumentIndex != nil {
+					if index != *y.spec.DocumentIndex {
 						continue
 					}
 				}
 
-				if err := urlPath.ReplaceWithNode(&tmpYamlFile, nodeToWrite); err != nil {
+				tmpYAMLFile := ast.File{
+					Name: yamlFile.Name,
+				}
+				tmpYAMLFile.Docs = append(tmpYAMLFile.Docs, doc)
+				if err := urlPath.ReplaceWithNode(&tmpYAMLFile, nodeToWrite); err != nil {
 					return 0, ignoredFiles, fmt.Errorf("replacing yaml key %q: %w", key, err)
 				}
-
-				yamlFile.Docs[*y.spec.DocumentIndex].Body = tmpYamlFile.Docs[0].Body
-
+				yamlFile.Docs[index].Body = tmpYAMLFile.Docs[0].Body
 			}
 
 			if _, ok := resultTargetFilesMap[filePath]; !ok {
