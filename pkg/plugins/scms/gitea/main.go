@@ -57,7 +57,7 @@ type Spec struct {
 	//    * scm
 	//
 	//  default:
-	//    false
+	//    true
 	//
 	//  remark:
 	//    When force is set to true, Updatecli also recreates the working branches that
