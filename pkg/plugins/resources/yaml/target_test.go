@@ -25,6 +25,89 @@ func Test_Target(t *testing.T) {
 		dryRun           bool
 	}{
 		{
+			name: "Passing case with multiple documents and no document index in a file, both input source and specified value (specified value should be used)",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+				},
+				Key:     "github.owner",
+				Value:   "obiwankenobi",
+				Comment: "comment that should be added",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+---
+github:
+  owner: asterix
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: obiwankenobi # comment that should be added
+  repository: charts
+---
+github:
+  owner: obiwankenobi # comment that should be added
+  repository: charts
+`,
+			},
+			wantedResult: true,
+		},
+		{
+			name: "Passing case with multiple documents in a file, both input source and specified value (specified value should be used)",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+				},
+				Key:           "github.owner",
+				Value:         "obiwankenobi",
+				Comment:       "comment that should be added",
+				DocumentIndex: ptrInt(1),
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+---
+github:
+  owner: asterix
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+---
+github:
+  owner: obiwankenobi # comment that should be added
+  repository: charts
+`,
+			},
+			wantedResult: true,
+		},
+		{
 			name: "Passing case with 'Files' (one already up to date), both input source and specified value (specified value should be used) and updated comment",
 			spec: Spec{
 				Files: []string{
