@@ -56,7 +56,7 @@ type Commit struct {
 	//
 	Footers string `yaml:",omitempty"`
 	//
-	//  title" defines the title of the commit message as defined by the
+	//  title defines the title of the commit message as defined by the
 	//  conventional commit specification. More information on
 	//  -> https://www.conventionalcommits.org/en/
 	//
@@ -90,7 +90,7 @@ type Commit struct {
 	//  	false
 	//
 	//  important:
-	//   if squash is set to to true, then it's highly recommended to set the commit title and body
+	//   if squash is set to true, then it's highly recommended to set the commit title and body
 	//   to a meaningful value as all other commit information will be lost during the squash operation.
 	//
 	//   if title and body are not set, then the commit title/message will be generated based on the most recent commit
