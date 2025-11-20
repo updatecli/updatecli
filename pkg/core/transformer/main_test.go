@@ -377,6 +377,48 @@ var (
 			expectedErr:    nil,
 		},
 		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					FindSubMatch: FindSubMatch{
+						Pattern:        `(\d*).(\d*).(\d*)`,
+						CapturePattern: "major: \\1 minor: \\2 patch: \\3",
+						CaptureIndex:   3,
+					},
+				},
+			},
+			expectedOutput: "major: 1 minor: 17 patch: 0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					FindSubMatch: FindSubMatch{
+						Pattern:        `(\d*).(\d*).(\d*)`,
+						CapturePattern: "\\0 major: \\1",
+						CaptureIndex:   3,
+					},
+				},
+			},
+			expectedOutput: "1.17.0 major: 1",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "1.17.0",
+			rules: Transformers{
+				Transformer{
+					FindSubMatch: FindSubMatch{
+						Pattern:        `(\d*).(\d*).(\d*)`,
+						CapturePattern: "major: \\1 unknown: \\4",
+						CaptureIndex:   3,
+					},
+				},
+			},
+			expectedOutput: "major: 1 unknown: \\4",
+			expectedErr:    nil,
+		},
+		Data{
 			input: "", // explicit empty value
 			rules: Transformers{
 				Transformer{
@@ -412,14 +454,18 @@ var (
 func TestApply(t *testing.T) {
 	for i, d := range dataSet {
 		got, err := d.rules.Apply(d.input)
-		if err != nil &&
-			strings.Compare(
-				d.expectedErr.Error(),
+		if err != nil {
+			if d.expectedErr == nil {
+				t.Errorf("Error [%d]:\n\tNot Expected\n\tGot:\t\t%q\n",
+					i,
+					err)
+			} else if strings.Compare(d.expectedErr.Error(),
 				err.Error()) != 0 {
-			t.Errorf("Error [%d]:\n\tExpected:\t%q\n\tGot:\t\t%q\n",
-				i,
-				d.expectedErr,
-				err)
+				t.Errorf("Error [%d]:\n\tExpected:\t%q\n\tGot:\t\t%q\n",
+					i,
+					d.expectedErr,
+					err)
+			}
 		}
 
 		if got != d.expectedOutput {
