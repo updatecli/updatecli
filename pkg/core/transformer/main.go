@@ -92,23 +92,18 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 			return "", err
 		}
 
-		found := re.FindString(output)
-
-		output = found
+		output = re.FindString(output)
 	}
 
 	if t.FindSubMatch != (FindSubMatch{}) {
-
 		output, err = t.FindSubMatch.Apply(output)
 		if err != nil {
 			return "", err
 		}
-
 	}
 
 	if len(t.SemVerInc) > 0 {
 		output, err = applySemVerInc(output, t.SemVerInc)
-
 		if err != nil {
 			return "", err
 		}
@@ -151,7 +146,6 @@ func (t *Transformers) Apply(input string) (string, error) {
 func applySemVerInc(input, semVerInc string) (string, error) {
 
 	if len(semVerInc) == 0 {
-
 		return "", fmt.Errorf("no incremental semantic versioning rule, accept comma separated list of major,minor,patch")
 	}
 
