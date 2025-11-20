@@ -20,12 +20,12 @@ var (
 
 type JsonMatch struct {
 	Key string `yaml:",omitempty" jsonschema:"required"`
-	// If we don't find a match then return the "returninput" or "returnempty"
-	NoMatchAction string `yaml:",omitempty"`
+	// If we don't find a match then return the following string or the input value
+	NoMatchResult string `yaml:",omitempty"`
 	// If we find multiple matches, join them by this
 	JoinMultipleMatches string `yaml:",omitempty"`
 	// If we find multiple matches, select the "first" or the "last"
-	MultipleMatchAction string `yaml:",omitempty"`
+	MultipleMatchSelector string `yaml:",omitempty"`
 }
 
 // Transformer holds a transformer rule
@@ -52,7 +52,7 @@ type Transformer struct {
 	FindSubMatch           FindSubMatch `yaml:",omitempty"`
 	DeprecatedFindSubMatch interface{}  `yaml:"findSubMatch,omitempty" jsonschema:"-"`
 	JsonMatch              JsonMatch    `yaml:",omitempty"`
-	// SemvVerInc specifies a  comma separated list semantic versioning component that needs to be upgraded.
+	// SemvVerInc specifies a comma separated list semantic versioning component that needs to be upgraded.
 	SemVerInc           string `yaml:",omitempty"`
 	DeprecatedSemVerInc string `yaml:"semverInc,omitempty" jsonschema:"-"`
 	// Quote add quote around the value
@@ -132,37 +132,62 @@ func (t *Transformer) Apply(input string) (output string, err error) {
 
 	if t.JsonMatch != (JsonMatch{}) {
 		var data any
+		var results []any
+
 		err = json.Unmarshal([]byte(output), &data)
 		if err != nil {
 			return "", err
 		}
+
 		queryResult, err := daselV2.Select(data, t.JsonMatch.Key)
 		if err != nil {
-			return "", err
+			// if we had an error, and it's NOT a prop not found then we should fail
+			if !strings.Contains(err.Error(), "could not access map index: property not found") {
+				return "", err
+			}
+			// If the query result is not found, then we return an empty array
+			results = []any{}
+		} else {
+			results = queryResult.Interfaces()
 		}
 
-		results := queryResult.Interfaces()
 		if len(results) == 0 {
-			if t.JsonMatch.NoMatchAction == "returninput" {
+			if t.JsonMatch.NoMatchResult == "<input>" {
 				return output, nil
-			} else if t.JsonMatch.NoMatchAction == "returnempty" {
+			} else if t.JsonMatch.NoMatchResult == "<blank>" {
 				return "", nil
+			} else if len(t.JsonMatch.NoMatchResult) > 0 {
+				return t.JsonMatch.NoMatchResult, nil
 			} else {
 				err = fmt.Errorf("could not find value for query %q", t.JsonMatch.Key)
 				return "", err
 			}
 		}
 		if len(results) > 1 {
-			if t.JsonMatch.JoinMultipleMatches != "" {
+			if len(t.JsonMatch.JoinMultipleMatches) > 0 {
 				stringResults := make([]string, len(results))
 				for k, v := range results {
 					stringResults[k] = fmt.Sprint(v)
 				}
 				return strings.Join(stringResults, t.JsonMatch.JoinMultipleMatches), nil
-			} else if t.JsonMatch.MultipleMatchAction == "first" {
+			} else if t.JsonMatch.MultipleMatchSelector == "first" {
 				return fmt.Sprint(results[0]), nil
-			} else if t.JsonMatch.MultipleMatchAction == "last" {
+			} else if t.JsonMatch.MultipleMatchSelector == "last" {
 				return fmt.Sprint(results[len(results)-1]), nil
+			} else if len(t.JsonMatch.MultipleMatchSelector) > 0 {
+				var index int
+				_, err := fmt.Sscanf(t.JsonMatch.MultipleMatchSelector, "[%d]", &index)
+				if err != nil {
+					return "", err
+				}
+				if index < -(len(results)) || index >= len(results) {
+					err = fmt.Errorf("selector out of range for query %q (%d vs %d)", t.JsonMatch.Key, index, len(results))
+					return "", err
+				}
+				if index < 0 {
+					index = len(results) + index
+				}
+				return fmt.Sprint(results[index]), nil
 			} else {
 				err = fmt.Errorf("multiple results found for query %q", t.JsonMatch.Key)
 				return "", err

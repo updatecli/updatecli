@@ -503,7 +503,20 @@ var (
 				Transformer{
 					JsonMatch: JsonMatch{
 						Key:                 "ver.all()",
-						MultipleMatchAction: "first",
+						JoinMultipleMatches: "",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("multiple results found for query \"ver.all()\""),
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "first",
 					},
 				},
 			},
@@ -515,13 +528,91 @@ var (
 			rules: Transformers{
 				Transformer{
 					JsonMatch: JsonMatch{
-						Key:                 "ver.all()",
-						MultipleMatchAction: "last",
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "last",
 					},
 				},
 			},
 			expectedOutput: "1.17.1",
 			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[0]",
+					},
+				},
+			},
+			expectedOutput: "1.17.0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[1]",
+					},
+				},
+			},
+			expectedOutput: "1.17.1",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[2]",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("selector out of range for query \"ver.all()\" (2 vs 2)"),
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[-1]",
+					},
+				},
+			},
+			expectedOutput: "1.17.1",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[-2]",
+					},
+				},
+			},
+			expectedOutput: "1.17.0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[-3]",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("selector out of range for query \"ver.all()\" (-3 vs 2)"),
 		},
 		Data{
 			input: "{ \"key\": \"test\", \"ver\": \"1.17.0\" }",
@@ -545,7 +636,46 @@ var (
 				},
 			},
 			expectedOutput: "",
-			expectedErr:    fmt.Errorf("could not access map index: property not found: ver"),
+			expectedErr:    fmt.Errorf("could not find value for query \".ver\""),
+		},
+		Data{
+			input: "{}",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:           ".ver",
+						NoMatchResult: "<input>",
+					},
+				},
+			},
+			expectedOutput: "{}",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{}",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:           ".ver",
+						NoMatchResult: "<blank>",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{}",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:           ".ver",
+						NoMatchResult: "no-match",
+					},
+				},
+			},
+			expectedOutput: "no-match",
+			expectedErr:    nil,
 		},
 		Data{
 			input: "",
@@ -569,7 +699,7 @@ var (
 				},
 			},
 			expectedOutput: "",
-			expectedErr:    fmt.Errorf("could not access map index: property not found: ver"),
+			expectedErr:    fmt.Errorf("could not find value for query \".ver\""),
 		},
 		Data{
 			input: "bad json",
