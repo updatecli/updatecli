@@ -1,6 +1,8 @@
 package updateclihttp
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -42,11 +44,49 @@ func TestSource(t *testing.T) {
 		want                  string
 		wantStatus            string
 		wantErr               error
+		specErr               error
 	}{
 		{
 			name: "Normal case with default index",
 			spec: Spec{
 				Url: "https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml",
+			},
+			mockedHTTPStatusCode: http.StatusOK,
+			mockedHTTPBody:       multiLineText,
+			want:                 multiLineText,
+			wantStatus:           result.SUCCESS,
+		},
+		{
+			name: "Normal case with verb",
+			spec: Spec{
+				Url: "https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml",
+				Request: Request{
+					Verb: "HEAD",
+				},
+			},
+			mockedHTTPStatusCode: http.StatusOK,
+			mockedHTTPBody:       multiLineText,
+			want:                 multiLineText,
+			wantStatus:           result.SUCCESS,
+		},
+		{
+			name: "POST case with no body",
+			spec: Spec{
+				Url: "https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml",
+				Request: Request{
+					Verb: "POST",
+				},
+			},
+			specErr: fmt.Errorf("requires spec.body when using POST, PUT or PATCH method"),
+		},
+		{
+			name: "POST case with body",
+			spec: Spec{
+				Url: "https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml",
+				Request: Request{
+					Verb: "POST",
+					Body: "input",
+				},
 			},
 			mockedHTTPStatusCode: http.StatusOK,
 			mockedHTTPBody:       multiLineText,
@@ -82,10 +122,38 @@ func TestSource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sut, sutErr := New(tt.spec)
-			require.NoError(t, sutErr)
+			if tt.specErr != nil {
+				require.Error(t, sutErr)
+				assert.Equal(t, tt.specErr, sutErr)
+				return
+			} else {
+				require.NoError(t, sutErr)
+			}
 
 			sut.httpClient = &httpclient.MockClient{
 				DoFunc: func(req *http.Request) (*http.Response, error) {
+					// check method
+					if tt.spec.Request.Verb != "" &&
+						tt.spec.Request.Verb != req.Method {
+						return nil, fmt.Errorf("unexpected verb, expected %s, got %s", tt.spec.Request.Verb, req.Method)
+					}
+					// TODO: check headers
+					// check body
+					if tt.spec.Request.Body != "" {
+						if req.Body == nil {
+							return nil, fmt.Errorf("missing request body")
+						}
+						buf := new(bytes.Buffer)
+						_, err := buf.ReadFrom(req.Body)
+						if err != nil {
+							return nil, err
+						}
+						s := buf.String()
+						if tt.spec.Request.Body != s {
+							return nil, fmt.Errorf("unexpected body, expected %s, got %s", tt.spec.Request.Body, s)
+						}
+					}
+
 					body := tt.mockedHTTPBody
 					statusCode := tt.mockedHTTPStatusCode
 					return &http.Response{
