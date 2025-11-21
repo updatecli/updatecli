@@ -29,7 +29,7 @@ type Request struct {
 	*/
 	Verb string `yaml:",omitempty"`
 	/*
-		[S][C] Specifies a custom HTTP request body. Defaults to "" (empty string).
+		[S][C] Specifies a custom HTTP request body. Required with POST, PUT, PATCH.
 	*/
 	Body string `yaml:",omitempty"`
 	/*
