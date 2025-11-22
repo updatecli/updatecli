@@ -41,7 +41,7 @@ require (
 	github.com/aws/smithy-go v1.23.2
 	github.com/beevik/etree v1.6.0
 	github.com/drone/go-scm v1.40.7
-	github.com/fluxcd/helm-controller/api v1.4.3
+	github.com/fluxcd/helm-controller/api v1.4.4
 	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/goccy/go-yaml v1.18.0
@@ -137,7 +137,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.9.0 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v1.13.0 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v1.14.0 // indirect
 	github.com/fluxcd/pkg/apis/meta v1.23.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/getsops/gopgagent v0.0.0-20241224165529-7044f28e491e // indirect
@@ -321,13 +321,13 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.34.1 // indirect
-	k8s.io/apiextensions-apiserver v0.34.1 // indirect
+	k8s.io/api v0.34.2 // indirect
+	k8s.io/apiextensions-apiserver v0.34.2 // indirect
 	k8s.io/apimachinery v0.34.2 // indirect
-	k8s.io/apiserver v0.34.1 // indirect
+	k8s.io/apiserver v0.34.2 // indirect
 	k8s.io/cli-runtime v0.34.0 // indirect
-	k8s.io/client-go v0.34.1 // indirect
-	k8s.io/component-base v0.34.1 // indirect
+	k8s.io/client-go v0.34.2 // indirect
+	k8s.io/component-base v0.34.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/kubectl v0.34.0 // indirect
