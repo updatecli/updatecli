@@ -107,6 +107,16 @@ func TestGetReferenceInfo(t *testing.T) {
 			expectedOCIName: "golang",
 			expectedOCITag:  "latest",
 		},
+		{
+			reference:       "golang",
+			expectedOCIName: "golang",
+			expectedOCITag:  "latest",
+		},
+		{
+			reference:       "registry.service.consul:5000/container/redis:8.4.0",
+			expectedOCIName: "registry.service.consul:5000/container/redis",
+			expectedOCITag:  "8.4.0",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.reference, func(t *testing.T) {

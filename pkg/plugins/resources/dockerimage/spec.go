@@ -254,6 +254,9 @@ func ParseOCIReferenceInfo(reference string) (ociName, ociTag, ociDigest string,
 		ociTag = imageArray[1]
 	case 1:
 		ociName = imageArray[0]
+	default:
+		ociTag = imageArray[len(imageArray)-1]
+		ociName = strings.Join(imageArray[0:len(imageArray)-1], ":")
 	}
 
 	if ociDigest == "" && ociTag == "" {
