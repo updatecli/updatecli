@@ -448,6 +448,271 @@ var (
 			expectedOutput: "1.17.0",
 			expectedErr:    nil,
 		},
+		Data{
+			input: "{ \"ver\": \"1.17.0\" }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key: ".ver",
+					},
+				},
+			},
+			expectedOutput: "1.17.0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key: ".ver",
+					},
+				},
+			},
+			expectedOutput: "[1.17.0 1.17.1]",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key: "ver.all()",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("multiple results found for query \"ver.all()\""),
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                 "ver.all()",
+						JoinMultipleMatches: ",",
+					},
+				},
+			},
+			expectedOutput: "1.17.0,1.17.1",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                 "ver.all()",
+						JoinMultipleMatches: "",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("multiple results found for query \"ver.all()\""),
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "first",
+					},
+				},
+			},
+			expectedOutput: "1.17.0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "last",
+					},
+				},
+			},
+			expectedOutput: "1.17.1",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[0]",
+					},
+				},
+			},
+			expectedOutput: "1.17.0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[1]",
+					},
+				},
+			},
+			expectedOutput: "1.17.1",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[2]",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("selector out of range for query \"ver.all()\" (2 vs 2)"),
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[-1]",
+					},
+				},
+			},
+			expectedOutput: "1.17.1",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[-2]",
+					},
+				},
+			},
+			expectedOutput: "1.17.0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{ \"ver\": [ \"1.17.0\", \"1.17.1\" ] }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:                   "ver.all()",
+						MultipleMatchSelector: "[-3]",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("selector out of range for query \"ver.all()\" (-3 vs 2)"),
+		},
+		Data{
+			input: "{ \"key\": \"test\", \"ver\": \"1.17.0\" }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key: ".ver",
+					},
+				},
+			},
+			expectedOutput: "1.17.0",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{}",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key: ".ver",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("could not find value for query \".ver\""),
+		},
+		Data{
+			input: "{}",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:           ".ver",
+						NoMatchResult: "<input>",
+					},
+				},
+			},
+			expectedOutput: "{}",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{}",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:           ".ver",
+						NoMatchResult: "<blank>",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "{}",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key:           ".ver",
+						NoMatchResult: "no-match",
+					},
+				},
+			},
+			expectedOutput: "no-match",
+			expectedErr:    nil,
+		},
+		Data{
+			input: "",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key: ".ver",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("validation error: transformer input is empty"),
+		},
+		Data{
+			input: "{ \"key\": \"test\" }",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key: ".ver",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("could not find value for query \".ver\""),
+		},
+		Data{
+			input: "bad json",
+			rules: Transformers{
+				Transformer{
+					JsonMatch: JsonMatch{
+						Key: ".ver",
+					},
+				},
+			},
+			expectedOutput: "",
+			expectedErr:    fmt.Errorf("invalid character 'b' looking for beginning of value"),
+		},
 	}
 )
 
