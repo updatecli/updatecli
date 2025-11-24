@@ -3,6 +3,7 @@ package mergerequest
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -19,6 +20,16 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 
 	ctx, cancel := context.WithTimeout(context.Background(), gitlabRequestTimeout)
 	defer cancel()
+
+	labelOptions := gitlabapi.LabelOptions(g.spec.Labels)
+
+	acceptMergeRequestOptions := gitlabapi.AcceptMergeRequestOptions{
+		MergeWhenPipelineSucceeds: g.spec.MergeWhenPipelineSucceeds,
+		MergeCommitMessage:        g.spec.MergeCommitMessage,
+		SquashCommitMessage:       g.spec.SquashCommitMessage,
+		Squash:                    g.spec.Squash,
+		ShouldRemoveSourceBranch:  g.spec.RemoveSourceBranch,
+	}
 
 	var body string
 	title := report.Title
@@ -49,7 +60,14 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		report.Description = body
 
 		opts := &gitlabapi.UpdateMergeRequestOptions{
-			Description: &body,
+			Description:        &body,
+			Title:              &title,
+			AssigneeIDs:        &g.spec.Assignees,
+			ReviewerIDs:        &g.spec.Reviewers,
+			Squash:             g.spec.Squash,
+			RemoveSourceBranch: g.spec.RemoveSourceBranch,
+			Labels:             &labelOptions,
+			AllowCollaboration: g.spec.AllowCollaboration,
 		}
 
 		_, _, err := g.api.MergeRequests.UpdateMergeRequest(
@@ -63,6 +81,37 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 			logrus.Warningf("something went wrong updating gitlab merge request %s/%d: %s",
 				g.getPID(), existingMR.IID, err.Error())
 			return fmt.Errorf("update GitLab merge request: %s", err.Error())
+		}
+
+		// Set auto-merge to created Merge Request
+		// c.f. https://docs.gitlab.com/user/project/merge_requests/auto_merge/
+		if _, _, err = g.api.MergeRequests.AcceptMergeRequest(
+			g.getPID(),
+			existingMR.IID,
+			&acceptMergeRequestOptions,
+
+			// client-go provides retries on rate limit (429) and server (>= 500) errors by default.
+			//
+			// But Method Not Allowed (405) and Unprocessable Content (422) errors will be returned
+			// when AcceptMergeRequest is called immediately after CreateMergeRequest.
+			//
+			// c.f. https://docs.gitlab.com/api/merge_requests/#merge-a-merge-request
+			//
+			// Therefore, add a retryable status code only for AcceptMergeRequest calls
+			gitlabapi.WithRequestRetry(func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+				if ctx.Err() != nil {
+					return false, ctx.Err()
+				}
+				if err != nil {
+					return false, err
+				}
+				if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusUnprocessableEntity {
+					return true, nil
+				}
+				return false, nil
+			}),
+		); err != nil {
+			return fmt.Errorf("set auto-merge on GitLab mergerequest: %v", err)
 		}
 
 		return nil
@@ -97,7 +146,6 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		return fmt.Errorf("remote branches %q and %q do not exist, we can't open a mergerequest", g.SourceBranch, g.TargetBranch)
 	}
 
-	labelOptions := gitlabapi.LabelOptions(g.spec.Labels)
 	opts := gitlabapi.CreateMergeRequestOptions{
 		Title:              &title,
 		Description:        &body,
@@ -105,9 +153,10 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		TargetBranch:       &g.TargetBranch,
 		AssigneeIDs:        &g.spec.Assignees,
 		ReviewerIDs:        &g.spec.Reviewers,
-		Squash:             &g.spec.Squash,
-		RemoveSourceBranch: &g.spec.RemoveSourceBranch,
+		Squash:             g.spec.Squash,
+		RemoveSourceBranch: g.spec.RemoveSourceBranch,
 		Labels:             &labelOptions,
+		AllowCollaboration: g.spec.AllowCollaboration,
 	}
 
 	logrus.Debugf("Title:\t%q\nBody:\t%v\nSource branch:\t%q\nTarget branch:\t%q\n",
@@ -131,6 +180,37 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 	report.Link = mr.WebURL
 	report.Title = mr.Title
 	report.Description = mr.Description
+
+	// Set auto-merge to created Merge Request
+	// c.f. https://docs.gitlab.com/user/project/merge_requests/auto_merge/
+	if _, _, err = g.api.MergeRequests.AcceptMergeRequest(
+		g.getPID(),
+		mr.IID,
+		&acceptMergeRequestOptions,
+
+		// client-go provides retries on rate limit (429) and server (>= 500) errors by default.
+		//
+		// But Method Not Allowed (405) and Unprocessable Content (422) errors will be returned
+		// when AcceptMergeRequest is called immediately after CreateMergeRequest.
+		//
+		// c.f. https://docs.gitlab.com/api/merge_requests/#merge-a-merge-request
+		//
+		// Therefore, add a retryable status code only for AcceptMergeRequest calls
+		gitlabapi.WithRequestRetry(func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+			if ctx.Err() != nil {
+				return false, ctx.Err()
+			}
+			if err != nil {
+				return false, err
+			}
+			if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusUnprocessableEntity {
+				return true, nil
+			}
+			return false, nil
+		}),
+	); err != nil {
+		return fmt.Errorf("set auto-merge on GitLab mergerequest: %v", err)
+	}
 
 	logrus.Infof("GitLab mergerequest successfully opened on %q", mr.WebURL)
 

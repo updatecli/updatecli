@@ -100,12 +100,11 @@ type Spec struct {
 	//
 	// remark:
 	// 		project settings might override this value
-	Squash bool `yaml:",omitempty"`
+	Squash *bool `yaml:",omitempty"`
 	// "removesourcebranch" is a flag indicating if a merge request should remove the source branch when merging
 	//
 	// default: false
-	RemoveSourceBranch bool `yaml:",omitempty"`
-	//
+	RemoveSourceBranch *bool `yaml:",omitempty"`
 	// 	"labels" defines labels for the merge request.
 	//
 	// 	default: empty
@@ -113,4 +112,36 @@ type Spec struct {
 	// 	remark:
 	// 		if a label does not already exist, this creates a new project label and assigns it to the merge request
 	Labels []string `yaml:",omitempty"`
+	// mergewhenpipelinesucceeds indicates whether to merge the merge request when the pipeline succeeds
+	//
+	// default: false
+	//
+	// remark:
+	//
+	// 	This requires that the merge request has approvals set up in the project settings
+	MergeWhenPipelineSucceeds *bool `yaml:",omitempty"`
+	// mergecommitmessage defines the commit message used when the merge request is merged
+	//
+	// default: empty
+	//
+	// remark:
+	//   if empty, GitLab will use the default message
+	//   format defined in the project settings
+	MergeCommitMessage *string `yaml:",omitempty"`
+	// squashcommitmessage defines the commit message used when the merge request is squashed and merged
+	//
+	// default: empty
+	//
+	// remark:
+	//   if empty, GitLab will use the default message
+	//   format defined in the project settings
+	SquashCommitMessage *string `yaml:",omitempty"`
+	// allowcollaboration indicates whether to allow commits from members who can merge to the target branch
+	//
+	// default: false
+	//
+	// remark:
+	//   when set to true, members with write access to the repository can push commits to the source branch
+	//   of the merge request
+	AllowCollaboration *bool `yaml:",omitempty"`
 }
