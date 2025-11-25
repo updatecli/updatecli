@@ -22,10 +22,4 @@ type Spec struct {
 	//	  For more information, about a SOPS file, please refer to the following documentation:
 	//    https://github.com/getsops/sops
 	Token string `yaml:",omitempty"`
-
-	// "tokentype" defines type of provided token. Valid values are "private" and "bearer"
-	//
-	//  default:
-	// 		"private"
-	TokenType string `yaml:",omitempty"`
 }

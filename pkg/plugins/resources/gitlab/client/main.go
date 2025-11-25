@@ -34,19 +34,6 @@ func New(s Spec) (Client, error) {
 		return client, nil
 	}
 
-	// provide a custom http.Client with a transport
-	// that injects the private GitLab token through
-	// the either PRIVATE_TOKEN or AUTHORIZATION header variable.
-	if strings.ToLower(s.TokenType) == "bearer" {
-
-		client.Client.Transport = &transport.BearerToken{
-			Base:  client.Client.Transport,
-			Token: s.Token,
-		}
-
-		return client, nil
-	}
-
 	client.Client.Transport = &transport.PrivateToken{
 		Token: s.Token,
 		Base:  client.Client.Transport,

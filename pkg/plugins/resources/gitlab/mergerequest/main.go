@@ -32,21 +32,13 @@ type Gitlab struct {
 }
 
 func getGitlabClient(spec client.Spec) (*gitlabapi.Client, error) {
-	tokenType := strings.ToLower(spec.TokenType)
 
 	var opt gitlabapi.ClientOptionFunc
 	if len(spec.URL) > 0 {
 		opt = gitlabapi.WithBaseURL(spec.URL)
 	}
 
-	switch tokenType {
-	case "bearer":
-		return gitlabapi.NewOAuthClient(spec.Token, opt)
-	case "private", "":
-		return gitlabapi.NewClient(spec.Token, opt)
-	default:
-		return nil, fmt.Errorf("error: unknown tokenType '%s'", tokenType)
-	}
+	return gitlabapi.NewClient(spec.Token, opt)
 }
 
 // New returns a new valid GitLab object.
@@ -81,10 +73,6 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 
 		if len(clientSpec.Username) == 0 && len(scm.Spec.Username) > 0 {
 			clientSpec.Username = scm.Spec.Username
-		}
-
-		if len(clientSpec.TokenType) == 0 && len(scm.Spec.TokenType) > 0 {
-			clientSpec.TokenType = scm.Spec.TokenType
 		}
 	}
 
