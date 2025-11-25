@@ -77,23 +77,23 @@ type Spec struct {
 	// default: empty
 	//
 	// remark:
-	//		assignees only accept GitLab User IDs.
-	// 		To find the user ID:
-	// 			1. Go to the users’ profile page.
-	// 			2. On the profile page, in the upper-right corner, select Actions (or ⋮).
-	// 			3. Select Copy user ID.
-	Assignees []int `yaml:",omitempty"`
+	//   assignees only accept GitLab User IDs.
+	//   To find the user ID:
+	//    1. Go to the users’ profile page.
+	//    2. On the profile page, in the upper-right corner, select Actions (or ⋮).
+	//    3. Select Copy user ID.
+	Assignees []int64 `yaml:",omitempty"`
 	// "reviewers" contains the list of reviewers to add to the merge request
 	//
 	// default: empty
 	//
 	// remark:
-	// 		assignees only accept GitLab User IDs.
-	// 		To find the user ID:
-	// 			1. Go to the users’ profile page.
-	// 			2. On the profile page, in the upper-right corner, select Actions (or ⋮).
-	// 			3. Select Copy user ID.
-	Reviewers []int `yaml:",omitempty"`
+	//   assignees only accept GitLab User IDs.
+	//   To find the user ID:
+	//    1. Go to the users’ profile page.
+	//    2. On the profile page, in the upper-right corner, select Actions (or ⋮).
+	//    3. Select Copy user ID.
+	Reviewers []int64 `yaml:",omitempty"`
 	// "squash" defines if all commits should be squashed into a single commit on merge
 	//
 	// default: false

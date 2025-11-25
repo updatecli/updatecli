@@ -17,7 +17,8 @@ func (g *Gitlab) findExistingMR() (mr *gitlabapi.BasicMergeRequest, err error) {
 	defer cancelList()
 
 	const perPage = 30
-	page := 0
+	var page int64
+
 	for {
 		optsList := gitlabapi.ListProjectMergeRequestsOptions{
 			SourceBranch: &g.SourceBranch,
@@ -96,7 +97,7 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 
 	foundRemoteSourceBranch := false
 	foundRemoteTargetBranch := false
-	page := 0
+	var page int64
 	const perPage = 30
 	for {
 		ctx, cancel := context.WithTimeout(ctx, gitlabRequestTimeout)
