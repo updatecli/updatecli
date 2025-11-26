@@ -27,8 +27,9 @@ type Spec struct {
 	//   empty
 	//
 	//  remark:
-	//   * when not set, all documents are considered
-	//   * Only compatible with the "go-yaml" engine
+	//   * when not set in the context of a source, the value will be retrieve from the first documents matching query.
+	//   * when not set in the context of a condition or a target, all documents will be evaluated by the query.
+	//   * When not set in the context of a target, all documents will be updated by the query.
 	//
 	// example:
 	//   * documentindex: 0
@@ -270,15 +271,6 @@ func (s *Spec) Validate() error {
 	}
 	if len(s.Keys) > 1 && hasDuplicates(s.Keys) {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attribute `spec.keys` contains duplicated values")
-	}
-
-	if s.DocumentIndex != nil {
-		switch s.Engine {
-		case EngineDefault, EngineGoYaml, "":
-			//
-		default:
-			validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attribute `spec.documentindex` is only compatible with the `go-yaml` engine")
-		}
 	}
 
 	// Return all the validation errors if found any

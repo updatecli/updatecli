@@ -3,6 +3,7 @@ package yaml
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	goyaml "github.com/goccy/go-yaml"
@@ -67,50 +68,27 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler) (pass bool, message 
 				continue
 			}
 
-			switch y.spec.DocumentIndex {
-			case nil:
-				node, err := urlPath.FilterFile(file)
-				if err != nil {
-					if errors.Is(err, goyaml.ErrNotFoundNode) {
-						errorMessages = append(errorMessages,
-							fmt.Errorf("%q - %w", originalFilePath, ErrKeyNotFound))
+			for index, doc := range file.Docs {
+				if y.spec.DocumentIndex != nil {
+					if index != *y.spec.DocumentIndex {
 						continue
 					}
+				}
 
+				node, err := urlPath.FilterNode(doc.Body)
+				if err != nil {
 					errorMessages = append(errorMessages, fmt.Errorf(
 						"%q - searching in yaml file: %w", originalFilePath, err))
 					continue
 				}
 
-				if node != nil {
-					results = append(results, node.String())
+				if node == nil {
+					errorMessages = append(errorMessages,
+						fmt.Errorf("%q - %w", originalFilePath, ErrKeyNotFound))
+					continue
 				}
 
-			default:
-				for index, doc := range file.Docs {
-
-					if index != *y.spec.DocumentIndex {
-						continue
-					}
-
-					node, err := urlPath.FilterNode(doc.Body)
-					if err != nil {
-						if errors.Is(err, goyaml.ErrNotFoundNode) {
-							errorMessages = append(errorMessages,
-								fmt.Errorf("%q - %w", originalFilePath, ErrKeyNotFound))
-							continue
-						}
-
-						errorMessages = append(errorMessages, fmt.Errorf(
-							"%q - searching in yaml file: %w", originalFilePath, err))
-						continue
-					}
-
-					if node != nil {
-						results = append(results, node.String())
-						break
-					}
-				}
+				results = append(results, node.String())
 			}
 
 		case EngineYamlPath:
@@ -120,29 +98,45 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler) (pass bool, message 
 					"%q - crafting yamlpath query: %w", originalFilePath, err))
 			}
 
-			var n yaml.Node
-			err = yaml.Unmarshal([]byte(fileContent), &n)
-			if err != nil {
-				errorMessages = append(errorMessages, fmt.Errorf(
-					"%q - parsing yaml file: %w", originalFilePath, err))
-				continue
+			// Decode the file into one or more YAML document nodes
+			var docs []*yaml.Node
+			dec := yaml.NewDecoder(strings.NewReader(y.files[i].content))
+			for {
+				var doc yaml.Node
+				if derr := dec.Decode(&doc); derr != nil {
+					if derr == io.EOF {
+						break
+					}
+					errorMessages = append(errorMessages, fmt.Errorf(
+						"%q - parsing yaml file: %w", originalFilePath, err))
+					continue
+				}
+				docs = append(docs, &doc)
 			}
 
-			founds, err := urlPath.Find(&n)
-			if err != nil {
+			for index, doc := range docs {
+				if y.spec.DocumentIndex != nil {
+					if index != *y.spec.DocumentIndex {
+						continue
+					}
+				}
 
-				if err.Error() == "node not found" {
-					errorMessages = append(errorMessages, ErrKeyNotFound)
+				founds, err := urlPath.Find(doc)
+				if err != nil {
+
+					if err.Error() == "node not found" {
+						errorMessages = append(errorMessages, ErrKeyNotFound)
+						continue
+					}
+
+					errorMessages = append(errorMessages, fmt.Errorf(
+						"%q - searching in yaml file: %w", originalFilePath, err))
 					continue
 				}
 
-				errorMessages = append(errorMessages, fmt.Errorf(
-					"%q - searching in yaml file: %w", originalFilePath, err))
-				continue
-			}
-
-			for i := range founds {
-				results = append(results, founds[i].Value)
+				for i := range founds {
+					results = append(results, founds[i].Value)
+				}
 			}
 
 		default:

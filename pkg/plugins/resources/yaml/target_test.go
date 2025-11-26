@@ -25,6 +25,49 @@ func Test_Target(t *testing.T) {
 		dryRun           bool
 	}{
 		{
+			name: "Yamlpath passing case with multiple documents in a file, both input source and specified value (specified value should be used)",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+				},
+				Key:           "github.owner",
+				Value:         "obiwankenobi",
+				Comment:       "comment that should be added",
+				Engine:        "yamlpath",
+				DocumentIndex: ptrInt(1),
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "olblak",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+---
+github:
+  owner: asterix
+  repository: charts
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+---
+github:
+  owner: obiwankenobi # comment that should be added
+  repository: charts
+`,
+			},
+			wantedResult: true,
+		},
+		{
 			name: "Passing case with multiple documents and no document index in a file, both input source and specified value (specified value should be used)",
 			spec: Spec{
 				Files: []string{
