@@ -38,30 +38,28 @@ func Publish(r *reports.Report) error {
 		}
 	}
 
-	reportURLString, reportApiURLString, bearerToken := getConfigFromEnv()
-	if reportApiURLString == "" {
-		logrus.Debugf("no Udash API URL detected via environment variables, looking for a configuration file")
-		localReportURLString, localReportApiURLString, localBearerToken, err := getConfigFromFile("")
-		if err != nil {
-			logrus.Debugf("retrieving service access token: %s", err)
-		}
+	envUdashURLString, envUdashApiURLString, envUdashToken := getConfigFromEnv()
 
-		setDefaultParam(&reportApiURLString, localReportApiURLString, DefaultEnvVariableAPIURL, "api")
-		setDefaultParam(&reportURLString, localReportURLString, DefaultEnvVariableURL, "url")
-		setDefaultParam(&bearerToken, localBearerToken, DefaultEnvVariableAccessToken, "token")
+	configUdashURLString, configUdashApiURLString, configUdashToken, err := getConfigFromFile("")
+	if err != nil {
+		logrus.Debugf("retrieving service access token: %s", err)
 	}
 
-	if reportApiURLString == "" {
+	setDefaultParam(&envUdashApiURLString, configUdashApiURLString, DefaultEnvVariableAPIURL, "api")
+	setDefaultParam(&envUdashURLString, configUdashURLString, DefaultEnvVariableURL, "url")
+	setDefaultParam(&envUdashToken, configUdashToken, DefaultEnvVariableAccessToken, "token")
+
+	if envUdashApiURLString == "" {
 		logrus.Infof("no Udash endpoint detected, skipping report publication")
 		return nil
 	}
 
-	reportApiURL, err := url.Parse(reportApiURLString)
+	reportApiURL, err := url.Parse(envUdashApiURLString)
 	if err != nil {
 		return fmt.Errorf("parsing report API URL: %w", err)
 	}
 
-	reportURL, err := url.Parse(reportURLString)
+	reportURL, err := url.Parse(envUdashURLString)
 	if err != nil {
 		return fmt.Errorf("parsing report URL: %w", err)
 	}
@@ -82,8 +80,8 @@ func Publish(r *reports.Report) error {
 		return err
 	}
 
-	if bearerToken != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
+	if envUdashToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", envUdashToken))
 	}
 
 	res, err := client.Do(req)
