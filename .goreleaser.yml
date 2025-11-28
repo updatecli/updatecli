@@ -17,14 +17,14 @@ archives:
       - manpages/*
 
 aurs:
-  - homepage:  https://www.updatecli.io
-    description: A declarative dependency management command line tool.
+  - homepage: https://www.updatecli.io
+    description: "A declarative update policy engine."
     maintainers:
-      - 'Olivier Vernin <olivier at vernin dot me>'
-      - 'Jonathan Neidel <aur at jneidel dot com>'
-    license: 'Apache'
-    private_key: '{{ .Env.AUR_KEY }}'
-    git_url: 'ssh://aur@aur.archlinux.org/updatecli-bin.git'
+      - "Olivier Vernin <olivier at vernin dot me>"
+      - "Jonathan Neidel <aur at jneidel dot com>"
+    license: "Apache"
+    private_key: "{{ .Env.AUR_KEY }}"
+    git_url: "ssh://aur@aur.archlinux.org/updatecli-bin.git"
     package: |-
       # bin
       install -Dm755 "./updatecli" "${pkgdir}/usr/bin/updatecli"
@@ -53,8 +53,8 @@ brews:
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: "https://updatecli.io/"
-    description: 'Updatecli is a declarative dependency management command line tool.'
-    license: 'Apache-2.0'
+    description: "A declarative update policy engine."
+    license: "Apache-2.0"
     test: |
       system "#{bin}/updatecli version"
     install: |-
@@ -87,15 +87,15 @@ changelog:
   disable: true
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 dockers:
   #
   # Build the main images
   #
   - image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
+      - "updatecli/updatecli:{{ .Tag }}-amd64"
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64"
     dockerfile: docker/Dockerfile
     use: buildx
     build_flag_templates:
@@ -112,8 +112,8 @@ dockers:
     extra_files:
       - Makefile
   - image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-arm64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+      - "updatecli/updatecli:{{ .Tag }}-arm64"
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64"
     dockerfile: docker/Dockerfile
     use: buildx
     build_flag_templates:
@@ -133,8 +133,8 @@ dockers:
   # Build the slim images
   #
   - image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-slim-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64'
+      - "updatecli/updatecli:{{ .Tag }}-slim-amd64"
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64"
     dockerfile: docker/Dockerfile.slim
     use: buildx
     build_flag_templates:
@@ -151,8 +151,8 @@ dockers:
     extra_files:
       - Makefile
   - image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-slim-arm64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64'
+      - "updatecli/updatecli:{{ .Tag }}-slim-arm64"
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64"
     dockerfile: docker/Dockerfile.slim
     use: buildx
     build_flag_templates:
@@ -174,60 +174,60 @@ docker_signs:
     artifacts: manifests
     output: true
     args:
-      - 'sign'
-      - '--yes'
-      - '${artifact}@${digest}'
+      - "sign"
+      - "--yes"
+      - "${artifact}@${digest}"
 
 docker_manifests:
   #
   # Build the main images
   #
-  - name_template: 'updatecli/updatecli:{{ .Tag }}'
+  - name_template: "updatecli/updatecli:{{ .Tag }}"
     image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'updatecli/updatecli:{{ .Tag }}-arm64'
-  - name_template: 'ghcr.io/updatecli/updatecli:{{ .Tag }}'
+      - "updatecli/updatecli:{{ .Tag }}-amd64"
+      - "updatecli/updatecli:{{ .Tag }}-arm64"
+  - name_template: "ghcr.io/updatecli/updatecli:{{ .Tag }}"
     image_templates:
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
-  - name_template: 'updatecli/updatecli:latest'
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64"
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64"
+  - name_template: "updatecli/updatecli:latest"
     image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'updatecli/updatecli:{{ .Tag }}-arm64'
-  - name_template: 'ghcr.io/updatecli/updatecli:latest'
+      - "updatecli/updatecli:{{ .Tag }}-amd64"
+      - "updatecli/updatecli:{{ .Tag }}-arm64"
+  - name_template: "ghcr.io/updatecli/updatecli:latest"
     image_templates:
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64'
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64"
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64"
   #
   # Build the slim images
   #
-  - name_template: 'updatecli/updatecli:{{ .Tag }}-slim'
+  - name_template: "updatecli/updatecli:{{ .Tag }}-slim"
     image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-slim-amd64'
-      - 'updatecli/updatecli:{{ .Tag }}-slim-arm64'
-  - name_template: 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim'
+      - "updatecli/updatecli:{{ .Tag }}-slim-amd64"
+      - "updatecli/updatecli:{{ .Tag }}-slim-arm64"
+  - name_template: "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim"
     image_templates:
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64'
-  - name_template: 'updatecli/updatecli:latest-slim'
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64"
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64"
+  - name_template: "updatecli/updatecli:latest-slim"
     image_templates:
-      - 'updatecli/updatecli:{{ .Tag }}-slim-amd64'
-      - 'updatecli/updatecli:{{ .Tag }}-slim-arm64'
-  - name_template: 'ghcr.io/updatecli/updatecli:latest-slim'
+      - "updatecli/updatecli:{{ .Tag }}-slim-amd64"
+      - "updatecli/updatecli:{{ .Tag }}-slim-arm64"
+  - name_template: "ghcr.io/updatecli/updatecli:latest-slim"
     image_templates:
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64'
-      - 'ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64'
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64"
+      - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64"
 
 env:
   - GO111MODULE=on
   - CGO_ENABLED=0
 
 nfpms:
-  - file_name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    homepage: 'https://www.updatecli.io'
-    description: 'Updatecli is a declarative dependency management command line tool.'
-    maintainer: 'Olivier Vernin <olivier@vernin.me>'
-    license: 'Apache-2.0'
+  - file_name_template: "{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    homepage: "https://www.updatecli.io"
+    description: "A declarative update policy engine."
+    maintainer: "Olivier Vernin <olivier@vernin.me>"
+    license: "Apache-2.0"
     vendor: Updatecli
     section: utils
     formats:
@@ -246,7 +246,7 @@ nfpms:
         file_info:
           mode: 0644
       - src: ./completions/updatecli.zsh
-        dst:  /usr/share/zsh/vendor-completions/_updatecli
+        dst: /usr/share/zsh/vendor-completions/_updatecli
         file_info:
           mode: 0644
       - src: ./manpages/updatecli.1.gz
@@ -266,13 +266,11 @@ sboms:
 
 signs:
   - cmd: cosign
-    certificate: '${artifact}.pem'
     signature: "${artifact}.sig"
     output: true
     artifacts: checksum
     args:
       - sign-blob
-      - '--yes'
-      - '--output-certificate=${certificate}'
-      - '--output-signature=${signature}'
-      - '${artifact}'
+      - "--bundle=${signature}"
+      - "--yes"
+      - "${artifact}"
