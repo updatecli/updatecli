@@ -16,6 +16,26 @@ import (
 It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
+	// DocumentIndex defines the index of the document to interact with in a multi-document yaml file.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   empty
+	//
+	//  remark:
+	//   * when not set in the context of a source, the value will be retrieve from the first documents matching query.
+	//   * when not set in the context of a condition or a target, all documents will be evaluated by the query.
+	//   * When not set in the context of a target, all documents will be updated by the query.
+	//
+	// example:
+	//   * documentindex: 0
+	//   * documentindex: 1
+	//
+	DocumentIndex *int `yaml:",omitempty"`
 	//"engine" defines the engine to use to manipulate the yaml file.
 	//
 	//There is no one good Golang library to manipulate yaml files.
