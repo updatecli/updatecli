@@ -19,7 +19,7 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3" # v6.0.0
       - name: "Setup updatecli"
-        uses: "updatecli/updatecli-action@5ca36367fadc6ad94d590984fd9c696e783ec635" # v2.96.0
+        uses: "updatecli/updatecli-action@9a21b6911fe58865c8346d4fde3470010f49bf31" # v2.97.0
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
@@ -30,7 +30,7 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
+      - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
         id: generate_token
         if: github.ref == 'refs/heads/main'
         with:
