@@ -1,6 +1,3 @@
-// Plugin implement the Updatecli plugin system.
-// It leverages WASM to run plugins in a secure sandboxed environment.
-// It relies on https://github.com/extism/go-sdk
 package plugin
 
 import (
@@ -55,10 +52,6 @@ func New(spec interface{}, rootDir, scmID, actionID, path string) (Plugin, error
 
 	logrus.Debugf("Configuring plugin allowed hosts: %v\n", s.AllowHosts)
 	manifest.AllowedHosts = append(manifest.AllowedHosts, s.AllowHosts...)
-
-	if s.AllowedPaths == nil {
-		manifest.AllowedPaths = map[string]string{}
-	}
 
 	if s.AllowedPaths == nil {
 		s.AllowedPaths = &[]string{
@@ -117,6 +110,8 @@ func (p Plugin) DiscoverManifests() ([][]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating plugin: %w", err)
 	}
+
+	defer plugin.Close(ctx)
 
 	inputData := struct {
 		ScmID    string         `json:"scmid"`
