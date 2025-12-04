@@ -48,11 +48,11 @@ Updatecli is a Go binary available for Linux, MacOS and Windows from the link:ht
 **Verify File Checksum Signature**
 
 Instead of signing all release assets, Updatecli signs the checksums file containing the different release assets checksum.
-You can download/copy the three files 'checksums.txt.pem', 'checksums.txt.sig', 'checksums.txt' from the latest https://github.com/updatecli/updatecli/releases/latest[release].
+You can download/copy the three files 'checksums.txt.sig' and 'checksums.txt' from the latest https://github.com/updatecli/updatecli/releases/latest[release].
 Once you have the three files locally, you can execute the following command
 
 ```
-cosign verify-blob --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' --cert https://github.com/updatecli/updatecli/releases/download/v0.110.3/checksums.txt.pem --signature https://github.com/updatecli/updatecli/releases/download/v0.110.3/checksums.txt.sig checksums.txt
+cosign verify-blob --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' --bundle checksums.txt.sig checksums.txt
 ```
 
 A successful output looks like
