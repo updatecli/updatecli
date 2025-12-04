@@ -2,6 +2,8 @@ module github.com/updatecli/updatecli
 
 go 1.25.4
 
+retract v0.999.0 // Published accidentilly.
+
 require (
 	dario.cat/mergo v1.0.2
 	github.com/Masterminds/semver/v3 v3.4.0
