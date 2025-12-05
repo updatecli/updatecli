@@ -105,6 +105,12 @@ func (p Plugin) DiscoverManifests() ([][]byte, error) {
 			[]extism.ValueType{extism.ValueTypePTR},
 			[]extism.ValueType{extism.ValueTypePTR},
 		),
+		extism.NewHostFunctionWithStack(
+			"versionfilter_greater_than_pattern",
+			versionfilter_greater_than_pattern,
+			[]extism.ValueType{extism.ValueTypePTR},
+			[]extism.ValueType{extism.ValueTypePTR},
+		),
 	})
 
 	if err != nil {
