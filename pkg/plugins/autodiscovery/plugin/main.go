@@ -80,7 +80,7 @@ func (p Plugin) DiscoverManifests() ([][]byte, error) {
 
 	ctx := context.Background()
 
-	var timeout uint64 = 300 // seconds
+	var timeout uint64 = 60000 // seconds
 
 	if p.spec.Timeout != nil {
 		timeout = *p.spec.Timeout
