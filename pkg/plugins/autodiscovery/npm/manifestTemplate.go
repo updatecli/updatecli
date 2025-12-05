@@ -75,5 +75,30 @@ targets:
        - name: PATH
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
+{{- if .TargetPnpmCleanupEnabled }}
+  pnpm-lock.yaml:
+    name: '{{ .TargetName }}'
+{{- if .TargetPackageJsonEnabled }}
+    dependson:
+      - {{ .TargetID }}
+{{ end }}
+    disablesourceinput: true
+    kind: shell
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+    spec:
+      command: |-
+        {{ .TargetPnpmCommand }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "pnpm-lock.yaml"
+            - "package.json"
+      environments:
+       - name: PATH
+      workdir: '{{ .TargetWorkdir }}'
+{{ end }}
 `
 )
