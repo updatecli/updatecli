@@ -20,6 +20,7 @@ func TestSearchPackageJsonFiles(t *testing.T) {
 			expectedFoundFiles: []string{
 				"testdata/nolockfile/package.json",
 				"testdata/npmlockfile/package.json",
+				"testdata/pnpmlockfile/package.json",
 				"testdata/yarnlockfile/package.json",
 			},
 		},

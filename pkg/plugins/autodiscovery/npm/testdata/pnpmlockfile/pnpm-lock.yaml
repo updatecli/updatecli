@@ -1,0 +1,22 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@mdi/font':
+        specifier: 5.9.55
+        version: 5.9.55
+
+packages:
+
+  '@mdi/font@5.9.55':
+    resolution: {integrity: sha512-jswRF6q3eq8NWpWiqct6q+6Fg/I7nUhrxYJfiEM8JJpap0wVJLQdbKtyS65GdlK7S7Ytnx3TTi/bmw+tBhkGmg==}
+
+snapshots:
+
+  '@mdi/font@5.9.55': {}

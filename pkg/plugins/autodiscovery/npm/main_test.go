@@ -161,6 +161,40 @@ targets:
 `,
 			},
 		},
+		{
+			name:    "Scenario 2 -- pnpm",
+			rootDir: "testdata/pnpmlockfile",
+			expectedPipelines: []string{`name: 'Bump "@mdi/font" package version'
+sources:
+  npm:
+    name: 'Get "@mdi/font" package version'
+    kind: 'npm'
+    spec:
+      name: '@mdi/font'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=5.9.55'
+targets:
+  pnpm-lock.yaml:
+    name: 'Bump "@mdi/font" package version to {{ source "npm" }}'
+    disablesourceinput: true
+    kind: shell
+    spec:
+      command: |-
+        pnpm add --lockfile-only @mdi/font@{{ source "npm" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "pnpm-lock.yaml"
+            - "package.json"
+      environments:
+       - name: PATH
+      workdir: '.'
+
+`,
+			},
+		},
 	}
 
 	for _, tt := range testdata {

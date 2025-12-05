@@ -51,6 +51,18 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
+		// It doesn't make sense to update the package.json if Updatecli do not have access to the pnpm to update the lock file pnpm-lock.yaml.
+		pnpmTargetCleanManifestEnabled := false
+		if isLockFileDetected(filepath.Join(filepath.Dir(foundFile), "pnpm-lock.yaml")) {
+			switch isPnpmInstalled() {
+			case true:
+				pnpmTargetCleanManifestEnabled = true
+			case false:
+				logrus.Warning("skipping, Pnpm lockk file detected but Updatecli couldn't detect the pnpm command to update it in case of a package.json update")
+				continue
+			}
+		}
+
 		// It doesn't make sense to update the package.json if Updatecli do not have access to the npm command to update package-lock.json
 		npmTargetCleanupManifestEnabled := false
 		if isLockFileDetected(filepath.Join(filepath.Dir(foundFile), "package-lock.json")) {
@@ -167,10 +179,12 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetKey                  string
 					TargetPackageJsonEnabled   bool
 					TargetYarnCleanupEnabled   bool
+					TargetPnpmCleanupEnabled   bool
 					TargetNPMCleanupEnabled    bool
 					TargetWorkdir              string
 					TargetNPMCommand           string
 					TargetYarnCommand          string
+					TargetPnpmCommand          string
 					File                       string
 					ScmID                      string
 				}{
@@ -186,12 +200,14 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					// NPM package allows dot in package name which has a different meaning in Dasel query
 					// Therefor we must escape it for Dasel query to work
 					TargetKey:                fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
-					TargetPackageJsonEnabled: !yarnTargetCleanManifestEnabled && !npmTargetCleanupManifestEnabled,
+					TargetPackageJsonEnabled: !yarnTargetCleanManifestEnabled && !npmTargetCleanupManifestEnabled && !pnpmTargetCleanManifestEnabled,
 					TargetYarnCleanupEnabled: yarnTargetCleanManifestEnabled,
+					TargetPnpmCleanupEnabled: pnpmTargetCleanManifestEnabled,
 					TargetNPMCleanupEnabled:  npmTargetCleanupManifestEnabled,
 					TargetWorkdir:            filepath.Dir(relativeFoundFile),
 					TargetNPMCommand:         getTargetCommand("npm", dependencyName),
 					TargetYarnCommand:        getTargetCommand("yarn", dependencyName),
+					TargetPnpmCommand:        getTargetCommand("pnpm", dependencyName),
 					File:                     relativeFoundFile,
 					ScmID:                    n.scmID,
 				}
