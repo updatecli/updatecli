@@ -14,7 +14,7 @@ policies:
     values:
       - updatecli/values.d/scm.yaml
   - name: Major Golang Module update
-    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.11.1@sha256:0a66e83d6d5c7a122bb2c7e28eb27a34e16aa16450979a8bc323d52a7a453739
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.12.0@sha256:afc70173a6bd01ca96c755378254dfb4b05775a05c2ffb8f82fed0ee2f450ba9
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/golang_major.yaml
