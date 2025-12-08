@@ -144,4 +144,12 @@ type Spec struct {
 	//   when set to true, members with write access to the repository can push commits to the source branch
 	//   of the merge request
 	AllowCollaboration *bool `yaml:",omitempty"`
+	// automerge allows to enable/disable the automerge feature on new merge request
+	//
+	// default: false
+	//
+	// remark:
+	//   when set to true, the merge request will be automatically merged when all conditions are met
+	//   (pipeline succeeds, approvals are given, etc.)
+	AutoMerge bool `yaml:",omitempty"`
 }

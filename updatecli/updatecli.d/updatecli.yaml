@@ -63,23 +63,3 @@ targets:
             replacepattern: 'ghcr.io/updatecli/updatecli:{{ source "latestVersion" }}'
         scmid: default
         sourceid: latestVersion
-
-    cosign-checksums-txt-sig:
-        name: 'docs: update checksums.txt.sig url with Updatecli version to {{ source "latestVersion" }}'
-        kind: file
-        spec:
-            file: README.adoc
-            matchpattern: '(.*)https://github.com/updatecli/updatecli/releases/download/(.*)/checksums.txt.sig(.*)'
-            replacepattern: '${1}https://github.com/updatecli/updatecli/releases/download/{{ source "latestVersion" }}/checksums.txt.sig${3}'
-        scmid: default
-        sourceid: latestVersion
-
-    cosign-checksums-txt-pem:
-        name: 'docs: update checksums.txt.pem url with Updatecli version to {{ source "latestVersion" }}'
-        kind: file
-        spec:
-            file: README.adoc
-            matchpattern: '(.*)https://github.com/updatecli/updatecli/releases/download/(.*)/checksums.txt.pem(.*)'
-            replacepattern: '${1}https://github.com/updatecli/updatecli/releases/download/{{ source "latestVersion" }}/checksums.txt.pem${3}'
-        scmid: default
-        sourceid: latestVersion
