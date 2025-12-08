@@ -11,6 +11,56 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type lockFileSupport struct {
+	yarn bool
+	pnpm bool
+	npm  bool
+}
+
+// detectLockFileSupport checks which package managers are available for lock file updates.
+// Returns the support config and whether to skip this package.json entirely.
+func detectLockFileSupport(dir string) (lockFileSupport, bool) {
+	// Returns config and whether to skip this package.json
+	support := lockFileSupport{
+		yarn: false,
+		pnpm: false,
+		npm:  false,
+	}
+
+	if isLockFileDetected(filepath.Join(dir, "yarn.lock")) {
+		switch isYarnInstalled() {
+		case true:
+			support.yarn = true
+		case false:
+			logrus.Warning("skipping, Yarn lock file detected but Updatecli couldn't detect the yarn command to update it in case of a package.json update")
+			return support, true
+		}
+	}
+
+	// It doesn't make sense to update the package.json if Updatecli do not have access to the pnpm to update the lock file pnpm-lock.yaml.
+	if isLockFileDetected(filepath.Join(dir, "pnpm-lock.yaml")) {
+		switch isPnpmInstalled() {
+		case true:
+			support.pnpm = true
+		case false:
+			logrus.Warning("skipping, Pnpm lockk file detected but Updatecli couldn't detect the pnpm command to update it in case of a package.json update")
+			return support, true
+		}
+	}
+
+	// It doesn't make sense to update the package.json if Updatecli do not have access to the npm command to update package-lock.json
+	if isLockFileDetected(filepath.Join(dir, "package-lock.json")) {
+		switch isNpmInstalled() {
+		case true:
+			support.npm = true
+		case false:
+			logrus.Warning("skipping, NPM lock file detected but Updatecli couldn't detect the npm command to update it in case of a package.json update")
+			return support, true
+		}
+	}
+	return support, false
+}
+
 func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
@@ -39,40 +89,9 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
-		// It doesn't make sense to update the package.json if Updatecli do not have access to the yarn to update the lock file yarn.lock
-		yarnTargetCleanManifestEnabled := false
-		if isLockFileDetected(filepath.Join(filepath.Dir(foundFile), "yarn.lock")) {
-			switch isYarnInstalled() {
-			case true:
-				yarnTargetCleanManifestEnabled = true
-			case false:
-				logrus.Warning("skipping, Yarn lock file detected but Updatecli couldn't detect the yarn command to update it in case of a package.json update")
-				continue
-			}
-		}
-
-		// It doesn't make sense to update the package.json if Updatecli do not have access to the pnpm to update the lock file pnpm-lock.yaml.
-		pnpmTargetCleanManifestEnabled := false
-		if isLockFileDetected(filepath.Join(filepath.Dir(foundFile), "pnpm-lock.yaml")) {
-			switch isPnpmInstalled() {
-			case true:
-				pnpmTargetCleanManifestEnabled = true
-			case false:
-				logrus.Warning("skipping, Pnpm lockk file detected but Updatecli couldn't detect the pnpm command to update it in case of a package.json update")
-				continue
-			}
-		}
-
-		// It doesn't make sense to update the package.json if Updatecli do not have access to the npm command to update package-lock.json
-		npmTargetCleanupManifestEnabled := false
-		if isLockFileDetected(filepath.Join(filepath.Dir(foundFile), "package-lock.json")) {
-			switch isNpmInstalled() {
-			case true:
-				npmTargetCleanupManifestEnabled = true
-			case false:
-				logrus.Warning("skipping, NPM lock file detected but Updatecli couldn't detect the npm command to update it in case of a package.json update")
-				continue
-			}
+		lockSupport, skip := detectLockFileSupport(filepath.Dir(foundFile))
+		if skip {
+			continue
 		}
 
 		data, err := loadPackageJsonData(foundFile)
@@ -166,28 +185,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					continue
 				}
 
-				params := struct {
-					ManifestName               string
-					SourceID                   string
-					SourceName                 string
-					SourceKind                 string
-					SourceNPMName              string
-					SourceVersionFilterKind    string
-					SourceVersionFilterPattern string
-					TargetID                   string
-					TargetName                 string
-					TargetKey                  string
-					TargetPackageJsonEnabled   bool
-					TargetYarnCleanupEnabled   bool
-					TargetPnpmCleanupEnabled   bool
-					TargetNPMCleanupEnabled    bool
-					TargetWorkdir              string
-					TargetNPMCommand           string
-					TargetYarnCommand          string
-					TargetPnpmCommand          string
-					File                       string
-					ScmID                      string
-				}{
+				params := manifestTemplateParams{
 					ManifestName:               fmt.Sprintf("Bump %q package version", dependencyName),
 					SourceID:                   "npm",
 					SourceName:                 fmt.Sprintf("Get %q package version", dependencyName),
@@ -200,10 +198,10 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					// NPM package allows dot in package name which has a different meaning in Dasel query
 					// Therefor we must escape it for Dasel query to work
 					TargetKey:                fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
-					TargetPackageJsonEnabled: !yarnTargetCleanManifestEnabled && !npmTargetCleanupManifestEnabled && !pnpmTargetCleanManifestEnabled,
-					TargetYarnCleanupEnabled: yarnTargetCleanManifestEnabled,
-					TargetPnpmCleanupEnabled: pnpmTargetCleanManifestEnabled,
-					TargetNPMCleanupEnabled:  npmTargetCleanupManifestEnabled,
+					TargetPackageJsonEnabled: !lockSupport.yarn && !lockSupport.pnpm && !lockSupport.npm,
+					TargetYarnCleanupEnabled: lockSupport.yarn,
+					TargetPnpmCleanupEnabled: lockSupport.pnpm,
+					TargetNPMCleanupEnabled:  lockSupport.npm,
 					TargetWorkdir:            filepath.Dir(relativeFoundFile),
 					TargetNPMCommand:         getTargetCommand("npm", dependencyName),
 					TargetYarnCommand:        getTargetCommand("yarn", dependencyName),
