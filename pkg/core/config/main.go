@@ -214,7 +214,6 @@ func (config *Config) Reset() {
 
 // New reads an updatecli configuration file
 func New(option Option, pipelineIDFilters []string) (configs []Config, err error) {
-
 	_, basename := filepath.Split(option.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
@@ -227,7 +226,6 @@ func New(option Option, pipelineIDFilters []string) (configs []Config, err error
 	readFile := func(path string) ([]byte, error) {
 		// Load updatecli manifest no matter the file extension
 		f, err := os.Open(path)
-
 		if err != nil {
 			return nil, err
 		}
@@ -414,7 +412,6 @@ func New(option Option, pipelineIDFilters []string) (configs []Config, err error
 			continue
 		}
 
-		//configs[id].Reset()
 		if len(pipelineIDFilters) > 0 && !slices.Contains(pipelineIDFilters, config.Spec.PipelineID) {
 			logrus.Infof("Manifest ID %q not referenced in the pipeline filter, skipping.", config.Spec.PipelineID)
 			continue
@@ -423,12 +420,10 @@ func New(option Option, pipelineIDFilters []string) (configs []Config, err error
 	}
 
 	return configs, err
-
 }
 
 // IsManifestDifferentThanOnDisk checks if an Updatecli manifest in memory is the same than the one on disk
 func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
-
 	buf := bytes.NewBufferString("")
 
 	encoder := yaml.NewEncoder(buf)
@@ -443,7 +438,6 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 	encoder.SetIndent(YAMLSetIdent)
 
 	err := encoder.Encode(c.Spec)
-
 	if err != nil {
 		return false, err
 	}
@@ -466,12 +460,10 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 	logrus.Infof("%s Updatecli manifest change required\n%s", result.ATTENTION, diff)
 
 	return true, nil
-
 }
 
 // SaveOnDisk saves an updatecli manifest to disk
 func (c *Config) SaveOnDisk() error {
-
 	file, err := os.OpenFile(c.filename, os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
@@ -497,7 +489,6 @@ func (c *Config) SaveOnDisk() error {
 	// we marshaled the inmemory yaml to compare with the one from disk
 	encoder.SetIndent(YAMLSetIdent)
 	err = encoder.Encode(c.Spec)
-
 	if err != nil {
 		return err
 	}
@@ -573,7 +564,6 @@ func (config *Config) validateSources() error {
 		config.Spec.Sources[id] = s
 	}
 	return nil
-
 }
 
 func (config *Config) validateSCMs() error {
@@ -587,7 +577,6 @@ func (config *Config) validateSCMs() error {
 }
 
 func (config *Config) validateTargets() error {
-
 	for id, t := range config.Spec.Targets {
 
 		err := t.Validate()
@@ -687,7 +676,6 @@ func (config *Config) validateConditions() error {
 
 // Validate run various validation test on the configuration and update fields if necessary
 func (config *Config) Validate() error {
-
 	var errs []error
 	err := config.ValidateManifestCompatibility()
 	if err != nil {
@@ -760,7 +748,6 @@ func (config *Config) ValidateManifestCompatibility() error {
 	isCompatibleUpdatecliVersion, err := version.IsGreaterThan(
 		version.Version,
 		config.Spec.Version)
-
 	if err != nil {
 		return fmt.Errorf("pipeline %q - %q", config.Spec.Name, err)
 	}
@@ -776,7 +763,6 @@ func (config *Config) ValidateManifestCompatibility() error {
 // Update updates its own configuration file
 // It's used when the configuration expected a value defined a runtime
 func (config *Config) Update(data interface{}) (err error) {
-
 	content, err := yaml.Marshal(config.Spec)
 	if err != nil {
 		return err
