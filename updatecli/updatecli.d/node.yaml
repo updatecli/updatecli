@@ -1,0 +1,73 @@
+name: "chore(node): upgrade node version"
+#{{- if .scm.enabled }}
+actions:
+  default:
+    kind: "github/pullrequest"
+    title: "chore(dockerfile): upgrade node version"
+    spec:
+      automerge: true
+      labels:
+        - chore
+        - dependencies
+    scmid: default
+
+scms:
+  default:
+    kind: github
+    spec:
+      branch: "{{ .scm.branch }}"
+      email: "{{ .scm.email }}"
+      owner: "{{ .scm.owner }}"
+      repository: "{{ .scm.repository }}"
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      user: "{{ .scm.user }}"
+      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+#{{- end }}
+
+sources:
+  node_version:
+    kind: githubrelease
+    spec:
+      owner: "nodejs"
+      repository: "node"
+      versionfilter:
+        kind: semver
+    transformers:
+      - trimprefix: v
+
+  pnpm:
+    name: get latest pnpm version
+    kind: githubrelease
+    spec:
+      owner: pnpm
+      repository: pnpm
+      versionfilter:
+        kind: semver
+    transformers:
+      - trimprefix: v
+
+targets:
+  pnpm_gha_updatecli:
+    name: 'deps: update pnpm version to {{ source "pnpm" }}"'
+    kind: yaml
+    #{{- if .scm.enabled }}
+    scmid: default
+    #{{- end }}
+    sourceid: pnpm
+    spec:
+      file: ".github/workflows/*.yaml"
+      searchpattern: true
+      key: '$.jobs.*.steps[?(@.uses =~ /^pnpm\/action-setup/)].with.version'
+      engine: "yamlpath"
+  node_gha_updatecli:
+    name: 'deps: update node version to {{ source "node_version" }}"'
+    kind: yaml
+    #{{- if .scm.enabled }}
+    scmid: default
+    #{{- end }}
+    sourceid: node_version
+    spec:
+      file: ".github/workflows/*.yaml"
+      searchpattern: true
+      key: '$.jobs.*.steps[?(@.uses =~ /^actions\/setup-node/)].with.node-version'
+      engine: "yamlpath"
