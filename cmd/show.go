@@ -18,7 +18,6 @@ var (
 		Use:   "show NAME[:TAG|@DIGEST]",
 		Short: "**Deprecated in favor of updatecli manifest show** Print the configuration that will be executed",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			policyReferences = args
 			err := getPolicyFilesFromRegistry()
 			if err != nil {
@@ -54,5 +53,5 @@ func init() {
 	showCmd.Flags().BoolVar(&showClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	showCmd.Flags().BoolVar(&showDisablePrepare, "disable-prepare", false, "--disable-prepare skip the Updatecli 'prepare' stage'--disable-prepare=true'")
 	showCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
-	showCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs, accepted a commma separated list")
+	showCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs, accepted a comma separated list")
 }

@@ -50,7 +50,7 @@ func init() {
 	composeShowCmd.Flags().BoolVar(&composeCmdDisablePrepare, "disable-prepare", false, "--disable-prepare skip the Updatecli 'prepare' stage")
 	composeShowCmd.Flags().BoolVar(&composeCmdDisableTemplating, "disable-templating", false, "Disable manifest templating")
 	composeShowCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
-	composeShowCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs, accepted a commma separated list")
+	composeShowCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs, accepted a comma separated list")
 
 	composeCmd.AddCommand(composeShowCmd)
 }
