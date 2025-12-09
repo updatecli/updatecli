@@ -75,5 +75,53 @@ targets:
        - name: PATH
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
+{{- if .TargetPnpmCleanupEnabled }}
+  pnpm-lock.yaml:
+    name: '{{ .TargetName }}'
+{{- if .TargetPackageJsonEnabled }}
+    dependson:
+      - {{ .TargetID }}
+{{ end }}
+    disablesourceinput: true
+    kind: shell
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+    spec:
+      command: |-
+        {{ .TargetPnpmCommand }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "pnpm-lock.yaml"
+            - "package.json"
+      environments:
+       - name: PATH
+      workdir: '{{ .TargetWorkdir }}'
+{{ end }}
 `
 )
+
+type manifestTemplateParams struct {
+	ManifestName               string
+	SourceID                   string
+	SourceName                 string
+	SourceKind                 string
+	SourceNPMName              string
+	SourceVersionFilterKind    string
+	SourceVersionFilterPattern string
+	TargetID                   string
+	TargetName                 string
+	TargetKey                  string
+	TargetPackageJsonEnabled   bool
+	TargetYarnCleanupEnabled   bool
+	TargetPnpmCleanupEnabled   bool
+	TargetNPMCleanupEnabled    bool
+	TargetWorkdir              string
+	TargetNPMCommand           string
+	TargetYarnCommand          string
+	TargetPnpmCommand          string
+	File                       string
+	ScmID                      string
+}
