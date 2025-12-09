@@ -938,7 +938,7 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, data := range dataset {
-		got, err := New(data.option)
+		got, err := New(data.option, []string{})
 
 		switch data.expectedError {
 		case nil:

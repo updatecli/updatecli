@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -212,7 +213,7 @@ func (config *Config) Reset() {
 }
 
 // New reads an updatecli configuration file
-func New(option Option) (configs []Config, err error) {
+func New(option Option, pipelineIDFilters []string) (configs []Config, err error) {
 
 	_, basename := filepath.Split(option.ManifestFile)
 
@@ -220,7 +221,7 @@ func New(option Option) (configs []Config, err error) {
 	// templates values as in some situation those values changes for each run
 	fileChecksum, err := FileChecksum(option.ManifestFile)
 	if err != nil {
-		return configs, err
+		return nil, err
 	}
 
 	readFile := func(path string) ([]byte, error) {
@@ -258,7 +259,7 @@ func New(option Option) (configs []Config, err error) {
 	// Load updatecli manifest no matter the file extension
 	rawManifestFileContent, err := readFile(option.ManifestFile)
 	if err != nil {
-		return configs, err
+		return nil, err
 	}
 
 	rawManifestContent = append(rawManifestContent, rawManifestFileContent...)
@@ -272,7 +273,7 @@ func New(option Option) (configs []Config, err error) {
 		//
 	case ".cue":
 		if !cmdoptions.Experimental {
-			return configs, fmt.Errorf("cuelang support is experimental, please use '--experimental' flag to enable it")
+			return nil, fmt.Errorf("cuelang support is experimental, please use '--experimental' flag to enable it")
 		}
 		isCue = true
 
@@ -288,7 +289,7 @@ func New(option Option) (configs []Config, err error) {
 
 		cwd, err := os.Getwd()
 		if err != nil {
-			return configs, err
+			return nil, err
 		}
 		fs := os.DirFS(cwd)
 
@@ -306,7 +307,7 @@ func New(option Option) (configs []Config, err error) {
 		}
 		if err != nil {
 			logrus.Errorf("Error while templating %q:\n---\n%s\n---\n\t%s\n", option.ManifestFile, string(rawManifestContent), err.Error())
-			return configs, err
+			return nil, err
 		}
 
 		if GolangTemplatingDiff {
@@ -315,14 +316,14 @@ func New(option Option) (configs []Config, err error) {
 				rawManifestContent, err = cueformat.Source(rawManifestContent, cueformat.Simplify())
 				if err != nil {
 					logrus.Errorf("Error formatting %q for diff: %s", option.ManifestFile, err.Error())
-					return configs, err
+					return nil, err
 				}
 
 				node := cueManifest.Syntax(cue.Final(), cue.ErrorsAsValues(true))
 				templatedManifestContent, err = cueformat.Node(node, cueformat.Simplify())
 				if err != nil {
 					logrus.Errorf("Error formatting %q (templated) for diff: %s", option.ManifestFile, err.Error())
-					return configs, err
+					return nil, err
 				}
 			}
 
@@ -353,44 +354,45 @@ func New(option Option) (configs []Config, err error) {
 		}
 	}
 
-	configs = make([]Config, len(specs))
 	for id := range specs {
 
-		configs[id].Reset()
-		configs[id].filename = option.ManifestFile
-		configs[id].Spec = specs[id]
+		config := Config{}
+
+		config.filename = option.ManifestFile
+		config.Spec = specs[id]
 		// config.PipelineID is required for config.Validate()
-		if len(configs[id].Spec.PipelineID) == 0 {
+		if len(config.Spec.PipelineID) == 0 {
 			logrus.Debugln("pipelineid undefined, we'll try to generate one")
 
 			// If pipeline name is defined then we use it to generate a pipeline id
 			// there is less change for the pipeline name to change.
-			switch configs[id].Spec.Name {
+			switch config.Spec.Name {
 			case "":
 				logrus.Debugln("pipeline name undefined, we'll use the manifest file checksum")
-				configs[id].Spec.PipelineID = fileChecksum
+				config.Spec.PipelineID = fileChecksum
 			default:
 				logrus.Debugln("using pipeline name to generate the pipelineid")
 				hash := sha256.New()
-				hash.Write([]byte(configs[id].Spec.Name))
-				configs[id].Spec.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
+				hash.Write([]byte(config.Spec.Name))
+				config.Spec.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
 			}
 		}
 
 		// By default Set config.Version to the current updatecli version
-		if len(configs[id].Spec.Version) == 0 {
-			configs[id].Spec.Version = version.Version
+		if len(config.Spec.Version) == 0 {
+			config.Spec.Version = version.Version
 		}
 
 		// Ensure there is a local SCM defined as specified
-		if err = configs[id].EnsureLocalScm(); err != nil {
+		if err = config.EnsureLocalScm(); err != nil {
+			logrus.Errorf("No local scm configured %s", err)
 			continue
 		}
 
 		/** Check for deprecated directives **/
 		// pullrequests deprecated over actions
-		if len(configs[id].Spec.PullRequests) > 0 {
-			if len(configs[id].Spec.Actions) > 0 {
+		if len(config.Spec.PullRequests) > 0 {
+			if len(config.Spec.Actions) > 0 {
 				err := fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
 				logrus.Errorf("Skipping manifest %q:\n\t%s", option.ManifestFile, err.Error())
 				continue
@@ -398,23 +400,26 @@ func New(option Option) (configs []Config, err error) {
 
 			logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
 
-			configs[id].Spec.Actions = configs[id].Spec.PullRequests
-			configs[id].Spec.PullRequests = nil
+			config.Spec.Actions = config.Spec.PullRequests
+			config.Spec.PullRequests = nil
 		}
 
-		err = configs[id].Validate()
+		if len(config.Spec.Name) == 0 {
+			config.Spec.Name = strings.ToTitle(basename)
+		}
+
+		err = config.Validate()
 		if err != nil {
+			logrus.Errorf("manifest configuration failed: %s", err)
 			continue
 		}
 
-		if len(configs[id].Spec.Name) == 0 {
-			configs[id].Spec.Name = strings.ToTitle(basename)
-		}
-
-		err = configs[id].Validate()
-		if err != nil {
+		//configs[id].Reset()
+		if len(pipelineIDFilters) > 0 && !slices.Contains(pipelineIDFilters, config.Spec.PipelineID) {
+			logrus.Infof("Manifest ID %q not referenced in the pipeline filter, skipping.", config.Spec.PipelineID)
 			continue
 		}
+		configs = append(configs, config)
 	}
 
 	return configs, err
