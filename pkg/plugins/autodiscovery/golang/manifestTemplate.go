@@ -16,6 +16,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+{{- if or (eq .VersionFilterKind "regex") (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+{{- end }}
 targets:
   go:
     name: 'deps(golang): bump Go version to {{ "{{" }} source "go" {{ "}}" }}'
@@ -44,6 +47,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+{{- if or (eq .VersionFilterKind "regex") (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+{{- end }}
 targets:
   module:
     name: 'deps(go): bump module {{ .Module }} to {{ "{{" }} source "module" {{ "}}" }}'
@@ -97,6 +103,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+{{- if or (eq .VersionFilterKind "regex") (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+{{- end }}
 targets:
   module:
     name: 'deps(go): bump module {{ .NewPathModule }} to {{ "{{" }} source "module" {{ "}}" }}'
