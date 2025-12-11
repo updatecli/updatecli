@@ -14,6 +14,7 @@ var (
 	applyClean            bool
 	applyPush             bool
 	applyCleanGitBranches bool
+	applyExistingOnly     bool
 
 	applyCmd = &cobra.Command{
 		/*
@@ -60,7 +61,7 @@ func init() {
 	applyCmd.Flags().StringVar(&udashOAuthAudience, "reportAPI", "", "Set the report API URL where to publish pipeline reports")
 	applyCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	applyCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
-
+	applyCmd.Flags().BoolVar(&applyExistingOnly, "existing-only", false, "Apply changes only to existing files, skip creating new files like '--existing-only=true'")
 	applyCmd.Flags().BoolVarP(&applyCommit, "commit", "", true, "Record changes to the repository, '--commit=false'")
 	applyCmd.Flags().BoolVarP(&applyPush, "push", "", true, "Update remote refs '--push=false'")
 	applyCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")

@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-git/go-git/v5"
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
@@ -168,7 +169,17 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	if !o.DryRun {
-		// o.Commit represents Global updatecli commit option
+
+		if o.ExistingOnly {
+			_, err := s.IsRemoteBranchUpToDate()
+			if err != nil && errors.Is(err, git.ErrRemoteNotFound) {
+				logrus.Infof("New pipeline detected, skipping publish")
+				t.Result.Result = result.SKIPPED
+				t.Result.Description = "pipeline is running in existing-only mode, skipping publish step"
+				return nil
+			}
+		}
+
 		// targetCommit represents the local target commit option
 		if o.Commit {
 			if t.Result.Description == "" {
