@@ -138,11 +138,13 @@ func (d Dockerfile) generateManifest(
 
 	versionFilterKind := d.versionFilter.Kind
 	versionFilterPattern := d.versionFilter.Pattern
+	versionFilterRegex := d.versionFilter.Regex
 	tagFilter := "*"
 
 	if sourceSpec != nil {
 		versionFilterKind = sourceSpec.VersionFilter.Kind
 		versionFilterPattern = sourceSpec.VersionFilter.Pattern
+		versionFilterRegex = sourceSpec.VersionFilter.Regex
 		tagFilter = sourceSpec.TagFilter
 	}
 
@@ -150,6 +152,7 @@ func (d Dockerfile) generateManifest(
 	if !d.spec.VersionFilter.IsZero() {
 		versionFilterKind = d.versionFilter.Kind
 		versionFilterPattern, err = d.versionFilter.GreaterThanPattern(tag)
+		versionFilterRegex = d.versionFilter.Regex
 		tagFilter = ""
 		if err != nil {
 			logrus.Debugf("building version filter pattern: %s", err)
@@ -191,6 +194,7 @@ func (d Dockerfile) generateManifest(
 		TagFilter            string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 	}{
 		ActionID:             d.actionID,
 		ImageName:            image,
@@ -204,6 +208,7 @@ func (d Dockerfile) generateManifest(
 		TagFilter:            tagFilter,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   versionFilterRegex,
 	}
 
 	manifest := bytes.Buffer{}
