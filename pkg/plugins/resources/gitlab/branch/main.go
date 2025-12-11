@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/drone/go-scm/scm"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 // Spec defines settings used to interact with GitLab release
@@ -36,6 +36,9 @@ type Gitlab struct {
 	HeadBranch    string
 	foundVersion  version.Version
 	versionFilter version.Filter
+	Owner         string `yaml:",omitempty" jsonschema:"required"`
+	// Repository specifies the name of a repository for a specific owner
+	Repository string `yaml:",omitempty" jsonschema:"required"`
 }
 
 // New returns a new valid GitLab object.
@@ -91,27 +94,25 @@ func (g *Gitlab) SearchBranches() (tags []string, err error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
-
 	results := []string{}
 	page := 0
 	for {
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
-		branches, resp, err := g.client.Git.ListBranches(
-			ctx,
-			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-			scm.ListOptions{
-				URL:  g.client.BaseURL.Host,
-				Page: page,
-				Size: 30,
-			},
+
+		opt := &gitlab.ListBranchesOptions{ListOptions: gitlab.ListOptions{Page: int64(page), PerPage: 30}}
+
+		branches, resp, err := g.client.Branches.ListBranches(
+			g.getPID(),
+			opt,
+			gitlab.WithContext(ctx),
 		)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if resp.Status > 400 {
+		if resp.StatusCode > 400 {
 			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 		}
 
@@ -119,7 +120,7 @@ func (g *Gitlab) SearchBranches() (tags []string, err error) {
 			results = append(results, branch.Name)
 		}
 		// if the next page is 0 then it means we visited all pages
-		if page >= resp.Page.Last {
+		if int64(page) >= resp.NextPage {
 			break
 		}
 		page++
@@ -166,4 +167,10 @@ func (g *Gitlab) ReportConfig() interface{} {
 			URL: redact.URL(g.spec.URL),
 		},
 	}
+}
+
+func (g *Gitlab) getPID() string {
+	return strings.Join([]string{
+		g.Owner,
+		g.Repository}, "/")
 }

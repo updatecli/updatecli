@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/drone/go-scm/scm"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 // Spec defines settings used to interact with GitLab release
@@ -34,6 +34,8 @@ type Gitlab struct {
 	client        client.Client
 	foundVersion  version.Version
 	versionFilter version.Filter
+	Owner         string `yaml:",omitempty" jsonschema:"required"`
+	Repository    string `yaml:",omitempty" jsonschema:"required"`
 }
 
 // New returns a new valid GitLab object.
@@ -94,21 +96,20 @@ func (g *Gitlab) SearchTags() (tags []string, err error) {
 
 	// Query gitlab api until we visit all pages
 	for {
-		references, resp, err := g.client.Git.ListTags(
-			ctx,
-			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-			scm.ListOptions{
-				URL:  g.client.BaseURL.Host,
-				Page: page,
-				Size: 100,
-			},
+
+		opt := &gitlab.ListTagsOptions{ListOptions: gitlab.ListOptions{Page: int64(page), PerPage: 100}}
+
+		references, resp, err := g.client.Tags.ListTags(
+			g.getPID(),
+			opt,
+			gitlab.WithContext(ctx),
 		)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if resp.Status > 400 {
+		if resp.StatusCode > 400 {
 			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 		}
 
@@ -116,7 +117,7 @@ func (g *Gitlab) SearchTags() (tags []string, err error) {
 			tags = append(tags, ref.Name)
 		}
 
-		if page >= resp.Page.Last {
+		if int64(page) >= resp.NextPage {
 			break
 		}
 		page++
@@ -163,4 +164,10 @@ func (g *Gitlab) ReportConfig() interface{} {
 		VersionFilter: g.spec.VersionFilter,
 		Tag:           g.spec.Tag,
 	}
+}
+
+func (g *Gitlab) getPID() string {
+	return strings.Join([]string{
+		g.Owner,
+		g.Repository}, "/")
 }

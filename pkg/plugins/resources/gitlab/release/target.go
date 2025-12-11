@@ -3,13 +3,12 @@ package release
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
-	goscm "github.com/drone/go-scm/scm"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 // Target ensure that a specific release exist on GitLab, otherwise creates it
@@ -36,15 +35,12 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	ctx, cancelListQuery := context.WithTimeout(ctx, 30*time.Second)
 	defer cancelListQuery()
 
-	releases, resp, err := g.client.Releases.List(
-		ctx,
-		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-		goscm.ReleaseListOptions{
-			Page:   1,
-			Size:   30,
-			Open:   true,
-			Closed: true,
-		},
+	listOpt := &gitlab.ListReleasesOptions{ListOptions: gitlab.ListOptions{Page: 1, PerPage: 30}}
+
+	releases, resp, err := g.client.Releases.ListReleases(
+		g.getPID(),
+		listOpt,
+		gitlab.WithContext(ctx),
 	)
 
 	if err != nil {
@@ -53,7 +49,7 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	}
 
 	for _, r := range releases {
-		if r.Tag == g.spec.Tag {
+		if r.TagName == g.spec.Tag {
 			resultTarget.Result = result.SUCCESS
 			resultTarget.Information = g.spec.Tag
 			resultTarget.Description = fmt.Sprintf("GitLab release tag %q already exist", g.spec.Tag)
@@ -80,29 +76,28 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	release, resp, err := g.client.Releases.Create(
-		ctx,
-		strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-		&goscm.ReleaseInput{
-			Title:       g.spec.Title,
-			Description: g.spec.Description + "\n" + updatecliCredits,
-			Tag:         g.spec.Tag,
-			Commitish:   g.spec.Commitish,
-			Draft:       g.spec.Draft,
-			Prerelease:  g.spec.Prerelease,
-		},
+	createOpt := &gitlab.CreateReleaseOptions{
+		Name:        &g.spec.Title,
+		Description: &g.spec.Description,
+		TagName:     &g.spec.Tag,
+	}
+
+	release, resp, err := g.client.Releases.CreateRelease(
+		g.getPID(),
+		createOpt,
+		gitlab.WithContext(ctx),
 	)
 
 	if err != nil {
 		return err
 	}
 
-	if resp.Status >= 400 {
+	if resp.StatusCode >= 400 {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 		return fmt.Errorf("error from GitLab api: %v", resp.Status)
 	}
 
-	resultTarget.Description = fmt.Sprintf("GitLab Release %q successfully opened on %q", release.Title, release.Link)
+	resultTarget.Description = fmt.Sprintf("GitLab Release %q successfully opened on %q", release.Name, release.Links.EditURL)
 
 	return nil
 }
