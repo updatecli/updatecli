@@ -17,6 +17,9 @@ sources:
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
+{{- if or (eq .SourceVersionFilterKind "regex") (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
+        regex: '{{ .SourceVersionFilterRegex }}'
+{{- end }}
       url: '{{ .SourceScmUrl }}'
 {{- if .Digest }}
   '{{ .SourceID }}_digest':
@@ -26,6 +29,9 @@ sources:
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
+{{- if or (eq .SourceVersionFilterKind "regex") (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
+        regex: '{{ .SourceVersionFilterRegex }}'
+{{- end }}
       url: '{{ .SourceScmUrl }}'
       key: 'hash'
 {{- end }}

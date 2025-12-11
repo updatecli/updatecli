@@ -206,6 +206,12 @@ func isYarnInstalled() bool {
 	return err == nil
 }
 
+func isPnpmInstalled() bool {
+	cmd := exec.Command("pnpm", "--version")
+	err := cmd.Run()
+	return err == nil
+}
+
 func isLockFileDetected(lockfile string) bool {
 	_, err := os.Stat(lockfile)
 	return err == nil
@@ -224,9 +230,13 @@ func getTargetCommand(cmd, dependencyName string) string {
 		if isNpmSupportYarnUpdate() {
 			return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, "npm")
 		}
-		logrus.Warningf("In the current state, yarn package update do not support dry-run mode")
+		logrus.Infof("In the current state, yarn package update do not support dry-run mode")
 		return fmt.Sprintf("yarn add --mode update-lockfile %s@{{ source %q }}", dependencyName, "npm")
+	case "pnpm":
+		logrus.Infof("In the current state, pnpm package update does not support dry-run mode")
+		return fmt.Sprintf("pnpm add --lockfile-only %s@{{ source %q }}", dependencyName, "npm")
 	}
+
 	return "false"
 }
 
