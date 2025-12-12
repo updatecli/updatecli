@@ -67,4 +67,5 @@ func init() {
 	applyCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	applyCmd.Flags().BoolVar(&applyClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	applyCmd.Flags().BoolVar(&applyCleanGitBranches, "clean-git-branches", false, "Remove updatecli working git branches like '--clean-git-branches=true'")
+	applyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs")
 }
