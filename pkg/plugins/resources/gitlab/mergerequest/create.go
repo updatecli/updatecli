@@ -10,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/reports"
 
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
-	gitlabapi "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 const gitlabRequestTimeout = 30 * time.Second
@@ -21,10 +21,11 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 	ctx, cancel := context.WithTimeout(context.Background(), gitlabRequestTimeout)
 	defer cancel()
 
-	labelOptions := gitlabapi.LabelOptions(g.spec.Labels)
+	labelOptions := gitlab.LabelOptions(g.spec.Labels)
 
-	acceptMergeRequestOptions := gitlabapi.AcceptMergeRequestOptions{
-		MergeWhenPipelineSucceeds: g.spec.MergeWhenPipelineSucceeds,
+	acceptMergeRequestOptions := &gitlab.AcceptMergeRequestOptions{
+		AutoMerge:                 &g.spec.AutoMerge,
+		MergeWhenPipelineSucceeds: &g.spec.AutoMerge, // Deprecated, kept for backward compatible clients
 		MergeCommitMessage:        g.spec.MergeCommitMessage,
 		SquashCommitMessage:       g.spec.SquashCommitMessage,
 		Squash:                    g.spec.Squash,
@@ -59,7 +60,7 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		report.Link = existingMR.WebURL
 		report.Description = body
 
-		opts := &gitlabapi.UpdateMergeRequestOptions{
+		opts := &gitlab.UpdateMergeRequestOptions{
 			Description:        &body,
 			Title:              &title,
 			AssigneeIDs:        &g.spec.Assignees,
@@ -70,11 +71,11 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 			AllowCollaboration: g.spec.AllowCollaboration,
 		}
 
-		_, _, err := g.api.MergeRequests.UpdateMergeRequest(
+		_, _, err := g.client.MergeRequests.UpdateMergeRequest(
 			g.getPID(),
 			existingMR.IID,
 			opts,
-			gitlabapi.WithContext(ctx),
+			gitlab.WithContext(ctx),
 		)
 
 		if err != nil {
@@ -86,20 +87,11 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		// Set auto-merge to created Merge Request if enabled
 		// c.f. https://docs.gitlab.com/user/project/merge_requests/auto_merge/
 		if g.spec.AutoMerge {
-			if _, _, err = g.api.MergeRequests.AcceptMergeRequest(
+			if _, _, err = g.client.MergeRequests.AcceptMergeRequest(
 				g.getPID(),
 				existingMR.IID,
-				&acceptMergeRequestOptions,
-
-				// client-go provides retries on rate limit (429) and server (>= 500) errors by default.
-				//
-				// But Method Not Allowed (405) and Unprocessable Content (422) errors will be returned
-				// when AcceptMergeRequest is called immediately after CreateMergeRequest.
-				//
-				// c.f. https://docs.gitlab.com/api/merge_requests/#merge-a-merge-request
-				//
-				// Therefore, add a retryable status code only for AcceptMergeRequest calls
-				gitlabapi.WithRequestRetry(func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+				acceptMergeRequestOptions,
+				gitlab.WithRequestRetry(func(ctx context.Context, resp *http.Response, err error) (bool, error) {
 					if ctx.Err() != nil {
 						return false, ctx.Err()
 					}
@@ -148,7 +140,7 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		return fmt.Errorf("remote branches %q and %q do not exist, we can't open a mergerequest", g.SourceBranch, g.TargetBranch)
 	}
 
-	opts := gitlabapi.CreateMergeRequestOptions{
+	opts := &gitlab.CreateMergeRequestOptions{
 		Title:              &title,
 		Description:        &body,
 		SourceBranch:       &g.SourceBranch,
@@ -167,10 +159,10 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 		g.SourceBranch,
 		g.TargetBranch)
 
-	mr, resp, err := g.api.MergeRequests.CreateMergeRequest(
+	mr, resp, err := g.client.MergeRequests.CreateMergeRequest(
 		g.getPID(),
-		&opts,
-		gitlabapi.WithContext(ctx),
+		opts,
+		gitlab.WithContext(ctx),
 	)
 
 	if err != nil {
@@ -186,10 +178,10 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 	// Set auto-merge to created Merge Request if enabled
 	// c.f. https://docs.gitlab.com/user/project/merge_requests/auto_merge/
 	if g.spec.AutoMerge {
-		if _, _, err = g.api.MergeRequests.AcceptMergeRequest(
+		if _, _, err = g.client.MergeRequests.AcceptMergeRequest(
 			g.getPID(),
 			mr.IID,
-			&acceptMergeRequestOptions,
+			acceptMergeRequestOptions,
 
 			// client-go provides retries on rate limit (429) and server (>= 500) errors by default.
 			//
@@ -199,7 +191,7 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 			// c.f. https://docs.gitlab.com/api/merge_requests/#merge-a-merge-request
 			//
 			// Therefore, add a retryable status code only for AcceptMergeRequest calls
-			gitlabapi.WithRequestRetry(func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+			gitlab.WithRequestRetry(func(ctx context.Context, resp *http.Response, err error) (bool, error) {
 				if ctx.Err() != nil {
 					return false, ctx.Err()
 				}
