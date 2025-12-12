@@ -72,6 +72,7 @@ func init() {
 	manifestShowCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	manifestShowCmd.Flags().BoolVar(&manifestShowGraph, "graph", false, "Output in graph format")
 	manifestShowCmd.Flags().StringVar(&manifestShowGraphFlavor, "graph-flavor", "dot", "Flavor of graph format, accepted values are 'dot' for graphviz or 'mermaid'")
+	manifestShowCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs, accepted a comma separated list")
 
 	manifestCmd.AddCommand(manifestShowCmd)
 }

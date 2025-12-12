@@ -86,7 +86,9 @@ func (e *Engine) LoadConfigurations() error {
 					SecretsFiles:      e.Options.Manifests[i].Secrets,
 					ValuesFiles:       e.Options.Manifests[i].Values,
 					DisableTemplating: e.Options.Config.DisableTemplating,
-				})
+				},
+				e.Options.PipelineIDs,
+			)
 
 			switch err {
 			case config.ErrConfigFileTypeNotSupported:
@@ -102,10 +104,16 @@ func (e *Engine) LoadConfigurations() error {
 				errs = append(errs, err)
 				e.Reports = append(e.Reports,
 					reports.Report{
+						Name:   fmt.Sprintf("Loading manifest %q", manifestFile),
 						Result: result.FAILURE,
 						Err:    err.Error(),
 					},
 				)
+				continue
+			}
+
+			if loadedConfigurations == nil {
+				logrus.Debugf("No valid manifest detected for %q", manifestFile)
 				continue
 			}
 

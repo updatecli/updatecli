@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
@@ -19,6 +20,7 @@ import (
 )
 
 var (
+	pipelineIds      []string
 	manifestFiles    []string
 	valuesFiles      []string
 	secretsFiles     []string
@@ -89,6 +91,10 @@ func init() {
 }
 
 func run(command string) error {
+
+	for _, id := range pipelineIds {
+		e.Options.PipelineIDs = append(e.Options.PipelineIDs, strings.Split(id, ",")...)
+	}
 
 	switch command {
 	case "apply", "compose/apply":
