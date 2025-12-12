@@ -76,9 +76,11 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
+	desc := g.spec.Description + "\n" + updatecliCredits
+
 	createOpt := &gitlab.CreateReleaseOptions{
 		Name:        &g.spec.Title,
-		Description: &g.spec.Description,
+		Description: &desc,
 		TagName:     &g.spec.Tag,
 	}
 

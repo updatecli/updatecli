@@ -324,10 +324,6 @@ func (s *Spec) Validate() error {
 	return nil
 }
 
-func encode(s string) string {
-	return strings.ReplaceAll(s, "/", "%2F")
-}
-
 func (g *Gitlab) GetPID() string {
 	return strings.Join([]string{
 		g.Owner,
