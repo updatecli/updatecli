@@ -172,11 +172,14 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 		if o.ExistingOnly {
 			_, err := s.IsRemoteBranchUpToDate()
-			if err != nil && errors.Is(err, git.ErrRemoteNotFound) {
-				logrus.Infof("New pipeline detected, skipping publish")
-				t.Result.Result = result.SKIPPED
-				t.Result.Description = "pipeline is running in existing-only mode, skipping publish step"
-				return nil
+			if err != nil {
+				if errors.Is(err, git.ErrRemoteNotFound) {
+					logrus.Infof("New pipeline detected, skipping publish")
+					t.Result.Result = result.SKIPPED
+					t.Result.Description = "pipeline is running in existing-only mode, skipping publish step"
+					return nil
+				}
+				return err
 			}
 		}
 

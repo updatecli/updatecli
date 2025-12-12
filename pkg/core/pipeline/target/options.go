@@ -8,7 +8,7 @@ type Options struct {
 	Push bool
 	// Clean indicates whether to perform cleaning operations. For example removing temporary files.
 	Clean bool
-	// DrynRun indicates whether to perform a dry-run (no changes applied).
+	// DryRun indicates whether to perform a dry-run (no changes applied).
 	DryRun bool
 	// CleanGitBranches indicates whether to delete git branches if no changes are detected.
 	CleanGitBranches bool
