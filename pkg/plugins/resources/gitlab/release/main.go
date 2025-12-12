@@ -52,9 +52,6 @@ type Gitlab struct {
 	foundVersion version.Version
 	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
-	Owner         string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
-	Repository string `yaml:",omitempty" jsonschema:"required"`
 }
 
 // New returns a new valid GitLab object.
@@ -188,6 +185,6 @@ func (g *Gitlab) ReportConfig() interface{} {
 
 func (g *Gitlab) getPID() string {
 	return strings.Join([]string{
-		g.Owner,
-		g.Repository}, "/")
+		g.spec.Owner,
+		g.spec.Repository}, "/")
 }

@@ -34,8 +34,6 @@ type Gitlab struct {
 	client        client.Client
 	foundVersion  version.Version
 	versionFilter version.Filter
-	Owner         string `yaml:",omitempty" jsonschema:"required"`
-	Repository    string `yaml:",omitempty" jsonschema:"required"`
 }
 
 // New returns a new valid GitLab object.
@@ -168,6 +166,6 @@ func (g *Gitlab) ReportConfig() interface{} {
 
 func (g *Gitlab) getPID() string {
 	return strings.Join([]string{
-		g.Owner,
-		g.Repository}, "/")
+		g.spec.Owner,
+		g.spec.Repository}, "/")
 }
