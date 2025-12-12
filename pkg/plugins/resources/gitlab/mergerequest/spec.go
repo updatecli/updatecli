@@ -112,14 +112,6 @@ type Spec struct {
 	// 	remark:
 	// 		if a label does not already exist, this creates a new project label and assigns it to the merge request
 	Labels []string `yaml:",omitempty"`
-	// mergewhenpipelinesucceeds indicates whether to merge the merge request when the pipeline succeeds
-	//
-	// default: false
-	//
-	// remark:
-	//
-	// 	This requires that the merge request has approvals set up in the project settings
-	MergeWhenPipelineSucceeds *bool `yaml:",omitempty"`
 	// mergecommitmessage defines the commit message used when the merge request is merged
 	//
 	// default: empty
