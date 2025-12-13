@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/drone/go-scm/scm"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 // Spec defines settings used to interact with GitLab release
@@ -111,34 +111,30 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 	results := []string{}
 	page := 0
 	for {
+		opt := &gitlab.ListReleasesOptions{ListOptions: gitlab.ListOptions{Page: int64(page), PerPage: 30}}
 
-		releases, resp, err := g.client.Releases.List(
-			ctx,
-			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-			scm.ReleaseListOptions{
-				Page:   page,
-				Size:   30,
-				Open:   true,
-				Closed: true,
-			},
+		releases, resp, err := g.client.Releases.ListReleases(
+			g.getPID(),
+			opt,
+			gitlab.WithContext(ctx),
 		)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if resp.Status > 400 {
+		if resp.StatusCode > 400 {
 			logrus.Debugf("GitLab Api Response:\n%+v", resp)
 		}
 
 		for i := len(releases) - 1; i >= 0; i-- {
-			if !releases[i].Draft {
-				results = append(results, releases[i].Tag)
+			if !releases[i].UpcomingRelease {
+				results = append(results, releases[i].TagName)
 			}
 		}
 
 		// Means that we parsed all pages
-		if page >= resp.Page.Last {
+		if int64(page) >= resp.NextPage {
 			break
 		}
 		page++
@@ -185,4 +181,10 @@ func (g *Gitlab) ReportConfig() interface{} {
 		VersionFilter: g.spec.VersionFilter,
 		Tag:           g.spec.Tag,
 	}
+}
+
+func (g *Gitlab) getPID() string {
+	return strings.Join([]string{
+		g.spec.Owner,
+		g.spec.Repository}, "/")
 }
