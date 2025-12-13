@@ -1,24 +1,20 @@
 package gitlab
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"os"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/drone/go-scm/scm"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
@@ -162,6 +158,8 @@ type Gitlab struct {
 	workingBranch          bool
 	workingBranchPrefix    string
 	workingBranchSeparator string
+	Owner                  string `yaml:",omitempty" jsonschema:"required"`
+	Repository             string `yaml:",omitempty" jsonschema:"required"`
 }
 
 // New returns a new valid GitLab object.
@@ -278,21 +276,19 @@ func (g *Gitlab) SearchTags() (tags []string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	references, resp, err := g.client.Git.ListTags(
-		ctx,
-		strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/"),
-		scm.ListOptions{
-			URL:  g.Spec.URL,
-			Page: 1,
-			Size: 30,
-		},
+	opt := &gitlab.ListTagsOptions{ListOptions: gitlab.ListOptions{Page: 1, PerPage: 30}}
+
+	references, resp, err := g.client.Tags.ListTags(
+		g.GetPID(),
+		opt,
+		gitlab.WithContext(ctx),
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.Status > 400 {
+	if resp.StatusCode > 400 {
 		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 	}
 
@@ -328,101 +324,8 @@ func (s *Spec) Validate() error {
 	return nil
 }
 
-func (g *Gitlab) UpdateMergeRequest(update MRUpdateSpec) error {
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	// Prepare the request body
-	requestBody := map[string]interface{}{
-		"description": update.Description,
-	}
-
-	response := map[string]interface{}{}
-
-	mrID := getMRID(update.MRWebLink)
-	path := fmt.Sprintf("api/v4/projects/%s/merge_requests/%s", encode(strings.Join([]string{g.Spec.Owner, g.Spec.Repository}, "/")), mrID)
-
-	err := g.do(ctx, http.MethodPut, path, requestBody, &response)
-	if err != nil {
-		return err
-	}
-
-	logrus.Debugf("Merge request updated successfully: %s", update.MRWebLink)
-	return nil
-}
-
-func getMRID(mrWebLink string) string {
-	parts := strings.Split(mrWebLink, "/merge_requests/")
-	if len(parts) != 2 {
-		return ""
-	}
-	return parts[1]
-}
-
-func encode(s string) string {
-	return strings.ReplaceAll(s, "/", "%2F")
-}
-
-// do wraps the Client.Do function by creating the Request and
-// unmarshalling the response.
-func (g *Gitlab) do(ctx context.Context, method, path string, in, out interface{}) error {
-
-	buf := new(bytes.Buffer)
-	err := json.NewEncoder(buf).Encode(in)
-	if err != nil {
-		return err
-	}
-	uri, err := g.client.BaseURL.Parse(path)
-	if err != nil {
-		return err
-	}
-
-	// creates a new http request with context.
-	req, err := http.NewRequest(method, uri.String(), buf)
-	if err != nil {
-		return err
-	}
-
-	req.Header = map[string][]string{
-		"Content-Type": {"application/json"},
-	}
-
-	// hack to prevent the client from un-escaping the
-	// encoded github path parameters when parsing the url.
-	if strings.Contains(path, "%2F") {
-		req.URL.Opaque = strings.Split(req.URL.RawPath, "?")[0]
-	}
-
-	req = req.WithContext(ctx)
-
-	res, err := g.client.Client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	// dumps the response for debugging purposes.
-	if g.client.DumpResponse != nil {
-		if raw, errDump := g.client.DumpResponse(res, true); errDump == nil {
-			_, _ = os.Stdout.Write(raw)
-		}
-	}
-
-	if res.StatusCode > 300 {
-		var gErr struct {
-			Message string `json:"message"`
-		}
-		err := json.NewDecoder(res.Body).Decode(&gErr)
-		if err != nil {
-			return fmt.Errorf("gitlab error message decoding error: %s", err)
-		}
-		return fmt.Errorf("gitlab error: %s", gErr.Message)
-	}
-
-	return json.NewDecoder(res.Body).Decode(out)
-}
-
-type MRUpdateSpec struct {
-	MRWebLink   string
-	Description string
+func (g *Gitlab) GetPID() string {
+	return strings.Join([]string{
+		g.Owner,
+		g.Repository}, "/")
 }

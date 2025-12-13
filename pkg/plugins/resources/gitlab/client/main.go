@@ -1,13 +1,10 @@
 package client
 
 import (
-	"net/http"
+	"fmt"
 	"strings"
 
-	"github.com/drone/go-scm/scm"
-	"github.com/drone/go-scm/scm/driver/gitlab"
-	"github.com/drone/go-scm/scm/transport"
-	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 const (
@@ -16,31 +13,20 @@ const (
 	GITLABDOMAIN string = "gitlab.com"
 )
 
-type Client *scm.Client
+type Client *gitlab.Client
 
 func New(s Spec) (Client, error) {
+	var client *gitlab.Client
+	var err error
 
 	url := EnsureValidURL(s.URL)
 
-	client, err := gitlab.New(url)
-
+	client, err = gitlab.NewClient(s.Token, gitlab.WithBaseURL(url))
 	if err != nil {
-		return nil, err
-	}
-
-	client.Client = httpclient.NewRetryClient().(*http.Client)
-
-	if len(s.Token) == 0 {
-		return client, nil
-	}
-
-	client.Client.Transport = &transport.PrivateToken{
-		Token: s.Token,
-		Base:  client.Client.Transport,
+		return nil, fmt.Errorf("failed to create GitLab client: %w", err)
 	}
 
 	return client, nil
-
 }
 
 func EnsureValidURL(u string) string {

@@ -30,7 +30,7 @@ func (g *Gitlab) findExistingMR() (mr *gitlabapi.BasicMergeRequest, err error) {
 			},
 		}
 
-		mergeRequests, resp, err := g.api.MergeRequests.ListProjectMergeRequests(
+		mergeRequests, resp, err := g.client.MergeRequests.ListProjectMergeRequests(
 			g.getPID(),
 			&optsList,
 			gitlabapi.WithContext(ctx),
@@ -102,7 +102,7 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 	for {
 		ctx, cancel := context.WithTimeout(ctx, gitlabRequestTimeout)
 		defer cancel()
-		remoteBranches, resp, err := g.api.Branches.ListBranches(
+		remoteBranches, resp, err := g.client.Branches.ListBranches(
 			g.getPID(),
 			&gitlabapi.ListBranchesOptions{
 				ListOptions: gitlabapi.ListOptions{

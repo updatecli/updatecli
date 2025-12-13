@@ -8,19 +8,16 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
-	gitlabapi "gitlab.com/gitlab-org/api/client-go"
 )
 
 // Gitlab contains information to interact with GitLab api
 type Gitlab struct {
 	// spec contains inputs coming from updatecli configuration
 	spec Spec
-	// client handle the api authentication
+	// client handle the api operations
 	client client.Client
 	// scm allows to interact with a scm object
 	scm *gitlabscm.Gitlab
-	// api allows to interact with Gitlab via API
-	api *gitlabapi.Client
 	// SourceBranch specifies the pullrequest source branch.
 	SourceBranch string `yaml:",inline,omitempty"`
 	// TargetBranch specifies the pullrequest target branch
@@ -29,16 +26,6 @@ type Gitlab struct {
 	Owner string `yaml:",omitempty" jsonschema:"required"`
 	// Repository specifies the name of a repository for a specific owner
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-}
-
-func getGitlabClient(spec client.Spec) (*gitlabapi.Client, error) {
-
-	var opt gitlabapi.ClientOptionFunc
-	if len(spec.URL) > 0 {
-		opt = gitlabapi.WithBaseURL(spec.URL)
-	}
-
-	return gitlabapi.NewClient(spec.Token, opt)
 }
 
 // New returns a new valid GitLab object.
@@ -82,16 +69,10 @@ func New(spec interface{}, scm *gitlabscm.Gitlab) (Gitlab, error) {
 		return Gitlab{}, err
 	}
 
-	api, err := getGitlabClient(clientSpec)
-	if err != nil {
-		return Gitlab{}, err
-	}
-
 	g := Gitlab{
 		spec:   s,
 		client: c,
 		scm:    scm,
-		api:    api,
 	}
 
 	g.inheritFromScm()
