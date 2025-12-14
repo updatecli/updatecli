@@ -263,6 +263,12 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 	case TIMEVERSIONKIND:
 		return f.Pattern, nil
 
+	case REGEXSEMVERVERSIONKIND:
+		return f.Pattern, nil
+
+	case REGEXTIMEVERSIONKIND:
+		return f.Pattern, nil
+
 	case SEMVERVERSIONKIND:
 
 		switch f.Pattern {
