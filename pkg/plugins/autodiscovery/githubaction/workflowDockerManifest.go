@@ -75,12 +75,14 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 
 	versionFilterKind := g.versionFilter.Kind
 	versionFilterPattern := g.versionFilter.Pattern
+	versionFilterRegex := g.versionFilter.Regex
 	tagFilter := "*"
 	architecture := ""
 
 	if sourceSpec != nil {
 		versionFilterKind = sourceSpec.VersionFilter.Kind
 		versionFilterPattern = sourceSpec.VersionFilter.Pattern
+		versionFilterRegex = sourceSpec.VersionFilter.Regex
 		tagFilter = sourceSpec.TagFilter
 		architecture = sourceSpec.Architecture
 	}
@@ -89,6 +91,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 	if !g.spec.VersionFilter.IsZero() {
 		versionFilterKind = g.versionFilter.Kind
 		versionFilterPattern, err = g.versionFilter.GreaterThanPattern(imageTag)
+		versionFilterRegex = g.versionFilter.Regex
 		tagFilter = ""
 		if err != nil {
 			logrus.Debugf("building version filter pattern: %s", err)
@@ -135,6 +138,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		TagFilter            string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 		ScmID                string
 	}{
 		ActionName:           spec.ActionName,
@@ -149,6 +153,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		TagFilter:            tagFilter,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   versionFilterRegex,
 		ScmID:                g.scmID,
 	}
 

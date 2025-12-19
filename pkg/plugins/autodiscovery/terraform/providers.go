@@ -103,6 +103,7 @@ func (t Terraform) getTerraformManifest(filename, provider, versionFilterPattern
 		ProviderName         string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 		ScmID                string
 		TargetName           string
 	}{
@@ -114,6 +115,7 @@ func (t Terraform) getTerraformManifest(filename, provider, versionFilterPattern
 		ProviderName:         p.Type,
 		VersionFilterKind:    t.versionFilter.Kind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   t.versionFilter.Regex,
 		ScmID:                t.scmID,
 		TargetName:           fmt.Sprintf("Bump %s to {{ source \"latestVersion\" }}", p.ForDisplay()),
 	}

@@ -105,6 +105,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					goModule,
 					g.versionFilter.Kind,
 					goModuleVersionPattern,
+					g.versionFilter.Regex,
 					g.scmID,
 					g.actionID,
 					relativeWorkDir,
@@ -155,6 +156,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					replace.NewPath,
 					g.versionFilter.Kind,
 					goModuleVersionPattern,
+					g.versionFilter.Regex,
 					g.scmID,
 					g.actionID,
 					relativeWorkDir,
@@ -201,6 +203,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				relativeFoundFile,
 				g.versionFilter.Kind,
 				goVersionPattern,
+				g.versionFilter.Regex,
 				g.scmID,
 				g.actionID)
 			if err != nil {
@@ -217,7 +220,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 	return manifests, nil
 }
 
-func getGolangVersionManifest(filename, versionFilterKind, versionFilterPattern, scmID, actionID string) ([]byte, error) {
+func getGolangVersionManifest(filename, versionFilterKind, versionFilterRegex, versionFilterPattern, scmID, actionID string) ([]byte, error) {
 	tmpl, err := template.New("manifest").Parse(goManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
@@ -229,12 +232,14 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterPattern,
 		GoModFile            string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 		ScmID                string
 	}{
 		ActionID:             actionID,
 		GoModFile:            filename,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   versionFilterRegex,
 		ScmID:                scmID,
 	}
 
@@ -246,7 +251,7 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterPattern,
 	return manifest.Bytes(), nil
 }
 
-func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterPattern, scmID, actionID, workdir string, goModTidy bool) ([]byte, error) {
+func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterPattern, versionFilterRegex, scmID, actionID, workdir string, goModTidy bool) ([]byte, error) {
 
 	tmpl, err := template.New("manifest").Parse(goModuleManifestTemplate)
 	if err != nil {
@@ -260,6 +265,7 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		Module               string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 		GoModTidyEnabled     bool
 		ScmID                string
 		WorkDir              string
@@ -269,6 +275,7 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		Module:               module,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   versionFilterRegex,
 		GoModTidyEnabled:     goModTidy,
 		ScmID:                scmID,
 		WorkDir:              workdir,
@@ -288,6 +295,7 @@ func getGolangReplaceModuleManifest(filename,
 	newPathModule,
 	versionFilterKind,
 	versionFilterPattern,
+	versionFilterRegex,
 	scmID,
 	actionID,
 	workdir string,
@@ -308,6 +316,7 @@ func getGolangReplaceModuleManifest(filename,
 		NewPathModule        string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 		GoModTidyEnabled     bool
 		ScmID                string
 		WorkDir              string
@@ -319,6 +328,7 @@ func getGolangReplaceModuleManifest(filename,
 		NewPathModule:        newPathModule,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   versionFilterRegex,
 		GoModTidyEnabled:     goModTidy,
 		ScmID:                scmID,
 		WorkDir:              workdir,

@@ -92,10 +92,12 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 
 		sourceVersionFilterKind := "semver"
 		sourceVersionFilterPattern := "*"
+		sourceVersionFilterRegex := "*"
 
 		if !f.spec.VersionFilter.IsZero() {
 			sourceVersionFilterKind = f.versionFilter.Kind
 			sourceVersionFilterPattern, err = f.versionFilter.GreaterThanPattern(data.Helm.Version)
+			sourceVersionFilterRegex = f.versionFilter.Regex
 			if err != nil {
 				logrus.Debugf("building version filter pattern: %s", err)
 				sourceVersionFilterPattern = "*"
@@ -121,6 +123,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			SourceKind                 string
 			SourceVersionFilterKind    string
 			SourceVersionFilterPattern string
+			SourceVersionFilterRegex   string
 			TargetID                   string
 			File                       string
 			ScmID                      string
@@ -136,6 +139,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			SourceKind:                 "helmchart",
 			SourceVersionFilterKind:    sourceVersionFilterKind,
 			SourceVersionFilterPattern: sourceVersionFilterPattern,
+			SourceVersionFilterRegex:   sourceVersionFilterRegex,
 			TargetID:                   data.Helm.Chart,
 			File:                       relativeFoundChartFile,
 			ScmID:                      f.scmID,

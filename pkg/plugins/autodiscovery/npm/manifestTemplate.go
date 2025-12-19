@@ -114,6 +114,7 @@ type manifestTemplateParams struct {
 	SourceNPMName              string
 	SourceVersionFilterKind    string
 	SourceVersionFilterPattern string
+	SourceVersionFilterRegex   string
 	TargetID                   string
 	TargetName                 string
 	TargetKey                  string

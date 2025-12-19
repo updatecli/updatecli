@@ -141,10 +141,12 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 
 			sourceVersionFilterKind := "semver"
 			sourceVersionFilterPattern := "*"
+			sourceVersionFilterRegex := "*"
 
 			if !h.spec.VersionFilter.IsZero() {
 				sourceVersionFilterKind = h.versionFilter.Kind
 				sourceVersionFilterPattern, err = h.versionFilter.GreaterThanPattern(release.Version)
+				sourceVersionFilterRegex = h.versionFilter.Regex
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
@@ -185,6 +187,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				SourceKind                 string
 				SourceVersionFilterKind    string
 				SourceVersionFilterPattern string
+				SourceVersionFilterRegex   string
 				TargetID                   string
 				TargetName                 string
 				TargetKey                  string
@@ -204,6 +207,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				SourceKind:                 "helmchart",
 				SourceVersionFilterKind:    sourceVersionFilterKind,
 				SourceVersionFilterPattern: sourceVersionFilterPattern,
+				SourceVersionFilterRegex:   sourceVersionFilterRegex,
 				TargetID:                   release.Name,
 				TargetName:                 fmt.Sprintf("deps(helmfile): update %q Helm Chart version to {{ source %q}}", release.Name, release.Name),
 				TargetKey:                  fmt.Sprintf("$.releases[%d].version", i),
