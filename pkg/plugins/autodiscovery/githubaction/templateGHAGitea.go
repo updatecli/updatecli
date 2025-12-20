@@ -23,6 +23,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+        {{- end }}
 
   tag:
     dependson:
@@ -35,6 +38,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+        {{- end }}
 
   branch:
     dependson:
@@ -47,6 +53,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+        {{- end }}
 
 conditions:
   release:

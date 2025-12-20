@@ -22,9 +22,12 @@ sources:
       token: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
-{{- if ne .VersionFilterKind "latest" }}
+        {{- if ne .VersionFilterKind "latest" }}
         pattern: '{{ .VersionFilterPattern }}'
-{{- end }}
+        {{- end }}
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+        {{- end }}
 {{- if .Digest }}
 
   release_digest:
@@ -54,9 +57,12 @@ sources:
       password: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
-{{- if ne .VersionFilterKind "latest" }}
+        {{- if ne .VersionFilterKind "latest" }}
         pattern: '{{ .VersionFilterPattern }}'
-{{- end }}
+        {{- end }}
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+        {{- end }}
 
 {{- if .Digest }}
 
@@ -85,9 +91,12 @@ sources:
       password: '{{ .Token }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
-{{- if ne .VersionFilterKind "latest" }}
+        {{- if ne .VersionFilterKind "latest" }}
         pattern: '{{ .VersionFilterPattern }}'
-{{- end }}
+        {{- end }}
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+        {{- end }}
 
 {{- if .Digest }}
 
