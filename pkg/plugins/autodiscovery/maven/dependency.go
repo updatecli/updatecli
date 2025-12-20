@@ -108,6 +108,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			if !m.spec.VersionFilter.IsZero() {
 				sourceVersionFilterKind = m.versionFilter.Kind
 				sourceVersionFilterPattern, err = m.versionFilter.GreaterThanPattern(dependency.Version)
+				sourceVersionFilterRegex = m.versionFilter.Regex
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
