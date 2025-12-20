@@ -202,8 +202,8 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			golangVersionManifest, err = getGolangVersionManifest(
 				relativeFoundFile,
 				g.versionFilter.Kind,
-				goVersionPattern,
 				g.versionFilter.Regex,
+				goVersionPattern,
 				g.scmID,
 				g.actionID)
 			if err != nil {
