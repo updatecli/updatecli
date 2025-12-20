@@ -131,11 +131,19 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			tagFilter := "*"
 			architecture := ""
 
+			registryUsername := ""
+			registryPassword := ""
+			registryToken := ""
+
 			if sourceSpec != nil {
 				versionFilterKind = sourceSpec.VersionFilter.Kind
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
 				tagFilter = sourceSpec.TagFilter
 				architecture = sourceSpec.Architecture
+
+				registryUsername = sourceSpec.Username
+				registryPassword = sourceSpec.Password
+				registryToken = sourceSpec.Token
 			}
 
 			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
@@ -180,6 +188,9 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				ImageTag             string
 				ImageArchitecture    string
 				SourceID             string
+				RegistryUsername     string
+				RegistryPassword     string
+				RegistryToken        string
 				TargetID             string
 				TargetFile           string
 				TargetKey            string
@@ -193,6 +204,9 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				ImageName:            imageName,
 				ImageTag:             imageTag,
 				ImageArchitecture:    architecture,
+				RegistryUsername:     registryUsername,
+				RegistryPassword:     registryPassword,
+				RegistryToken:        registryToken,
 				SourceID:             svc.Name,
 				TargetID:             svc.Name,
 				TargetFile:           relativeFoundDockerComposeFile,

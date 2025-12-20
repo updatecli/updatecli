@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -13,6 +14,7 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		digest            bool
+		Auths             map[string]docker.InlineKeyChain
 		expectedPipelines []string
 	}{
 		{
@@ -85,6 +87,11 @@ targets:
 			name:    "Scenario 2 - no digest",
 			rootDir: "testdata",
 			digest:  false,
+			Auths: map[string]docker.InlineKeyChain{
+				"index.docker.io": {
+					Token: "mysecretToken",
+				},
+			},
 			expectedPipelines: []string{`name: 'deps(dockercompose): bump "jenkinsci/jenkins" tag'
 sources:
   jenkins-lts:
@@ -96,6 +103,7 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=2.150.1-alpine'
+      token: 'mysecretToken'
 targets:
   jenkins-lts:
     name: 'deps: update Docker image "jenkinsci/jenkins" to "{{ source "jenkins-lts" }}"'
@@ -118,6 +126,7 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=2.254-alpine'
+      token: 'mysecretToken'
 targets:
   jenkins-weekly:
     name: 'deps: update Docker image "jenkinsci/jenkins" to "{{ source "jenkins-weekly" }}"'
@@ -139,6 +148,7 @@ targets:
 			composefile, err := New(
 				Spec{
 					Digest: &digest,
+					Auths:  tt.Auths,
 				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
