@@ -26,6 +26,18 @@ type Spec struct {
 	// only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
 	Only MatchingRules `yaml:",omitempty"`
 	// auths provides a map of registry credentials where the key is the registry URL without scheme
+	//
+	// example:
+	//
+	// ---
+	// auths:
+	//   "ghcr.io":
+	//     token: "xxx"
+	//   "index.docker.io":
+	//     username: "admin"
+	//     password: "password"
+	// ---
+
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 	// FileMatch allows to override default docker-compose.yaml file matching. Default ["docker-compose.yaml","docker-compose.yml","docker-compose.*.yaml","docker-compose.*.yml"]
 	FileMatch []string `yaml:",omitempty"`
