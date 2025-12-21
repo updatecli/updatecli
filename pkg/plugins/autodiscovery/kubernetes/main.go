@@ -17,36 +17,48 @@ var (
 
 // Spec defines the parameters which can be provided to the Kubernetes builder.
 type Spec struct {
-	// Auths provides a map of registry credentials where the key is the registry URL without scheme
+	// auths provides a map of registry credentials where the key is the registry URL without scheme
+	// if empty, updatecli relies on OCI credentials such as the one used by Docker.
+	//
+	// example:
+	//
+	// ---
+	// auths:
+	//   "ghcr.io":
+	//     token: "xxx"
+	//   "index.docker.io":
+	//     username: "admin"
+	//     password: "password"
+	// ---
+	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	/*
-		digest provides parameters to specify if the generated manifest should use a digest on top of the tag.
-	*/
+	//	digest provides parameters to specify if the generated manifest should use a digest on top of the tag.
+	//
 	Digest *bool `yaml:",omitempty"`
-	/* Files allows to specify a list of Files to analyze.
-
-	    The pattern syntax is:
-	       pattern:
-	         { term }
-	       term:
-	         '*'         matches any sequence of non-Separator characters
-	         '?'         matches any single non-Separator character
-	         '[' [ '^' ] { character-range } ']' character class (must be non-empty)
-	         c           matches character c (c != '*', '?', '\\', '[')
-	         '\\' c      matches character c
-
-		    character-range:
-		    	c           matches character c (c != '\\', '-', ']')
-	         '\\' c      matches character c
-	         lo '-' hi   matches character c for lo <= c <= hi
-
-	        Match requires pattern to match all of name, not just a substring.
-	        The only possible returned error is ErrBadPattern, when pattern
-	        is malformed.
-
-	        On Windows, escaping is disabled. Instead, '\\' is treated as
-	        path separator.
-	*/
+	// Files allows to specify a list of Files to analyze.
+	//
+	// The pattern syntax is:
+	//   pattern:
+	//    { term }
+	//    term:
+	//      '*'         matches any sequence of non-Separator characters
+	//      '?'         matches any single non-Separator character
+	//      '[' [ '^' ] { character-range } ']' character class (must be non-empty)
+	//      c           matches character c (c != '*', '?', '\\', '[')
+	//      '\\' c      matches character c
+	//
+	// character-range:
+	//   c         matches character c (c != '\\', '-', ']')
+	//   '\\' c    matches character c
+	//   lo '-' hi matches character c for lo <= c <= hi
+	//
+	// Match requires pattern to match all of name, not just a substring.
+	// The only possible returned error is ErrBadPattern, when pattern
+	// is malformed.
+	//
+	// On Windows, escaping is disabled. Instead, '\\' is treated as
+	// path separator.
+	//
 	Files []string `yaml:",omitempty"`
 	// RootDir defines the root directory used to recursively search for Kubernetes files
 	RootDir string `yaml:",omitempty"`
@@ -54,30 +66,32 @@ type Spec struct {
 	Ignore MatchingRules `yaml:",omitempty"`
 	// Only allows to specify rule to only autodiscover manifest for a specific Kubernetes manifest based on a rule
 	Only MatchingRules `yaml:",omitempty"`
-	/*
-		versionfilter provides parameters to specify the version pattern used when generating manifest.
-
-		kind - semver
-			versionfilter of kind `semver` uses semantic versioning as version filtering
-			pattern accepts one of:
-				`patch` - patch only update patch version
-				`minor` - minor only update minor version
-				`major` - major only update major versions
-				`a version constraint` such as `>= 1.0.0`
-
-		kind - regex
-			versionfilter of kind `regex` uses regular expression as version filtering
-			pattern accepts a valid regular expression
-
-		example:
-		```
-			versionfilter:
-				kind: semver
-				pattern: minor
-		```
-
-		and its type like regex, semver, or just latest.
-	*/
+	// versionfilter provides parameters to specify the version pattern used when generating manifest.
+	//
+	// More information available at
+	// https://www.updatecli.io/docs/core/versionfilter/
+	//
+	// kind - semver
+	//   versionfilter of kind `semver` uses semantic versioning as version filtering
+	//   pattern accepts one of:
+	//     `patch` - patch only update patch version
+	//     `minor` - minor only update minor version
+	//     `major` - major only update major versions
+	//     `a version constraint` such as `>= 1.0.0`
+	//
+	// kind - regex
+	// versionfilter of kind `regex` uses regular expression as version filtering
+	// pattern accepts a valid regular expression
+	//
+	// example:
+	// ```
+	//   versionfilter:
+	//   kind: semver
+	//   pattern: minor
+	// ```
+	//
+	// More version filter available at https://www.updatecli.io/docs/core/versionfilter/
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
