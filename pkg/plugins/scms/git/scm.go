@@ -179,6 +179,17 @@ func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
 		g.GetDirectory())
 }
 
+// IsRemoteWorkingBranchExist checks if the working branch exists on remote
+func (g *Git) IsRemoteWorkingBranchExist() (bool, error) {
+	_, workingBranch, _ := g.GetBranches()
+
+	return g.nativeGitHandler.IsRemoteBranchExist(
+		workingBranch,
+		g.spec.Username,
+		g.spec.Password,
+		g.GetDirectory())
+}
+
 // PushTag push tags
 func (g *Git) PushTag(tag string) error {
 	err := g.nativeGitHandler.PushTag(

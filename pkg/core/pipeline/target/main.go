@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-git/go-git/v5"
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
@@ -169,17 +168,17 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	if !o.DryRun {
-
 		if o.ExistingOnly {
-			_, err := s.IsRemoteBranchUpToDate()
+			upToDate, err := s.IsRemoteWorkingBranchExist()
 			if err != nil {
-				if errors.Is(err, git.ErrRemoteNotFound) {
-					logrus.Infof("New pipeline detected, skipping publish")
-					t.Result.Result = result.SKIPPED
-					t.Result.Description = "pipeline is running in existing-only mode, skipping publish step"
-					return nil
-				}
-				return err
+				return fmt.Errorf("checking if remote branch is up to date: %s", err.Error())
+			}
+
+			if !upToDate {
+				logrus.Infof("No new pipeline run will be created as the pipeline is running in existing-only mode")
+				t.Result.Result = result.SKIPPED
+				t.Result.Description = "pipeline is running in existing-only mode, skipping publish step"
+				return nil
 			}
 		}
 

@@ -174,6 +174,18 @@ func (b *Bitbucket) IsRemoteBranchUpToDate() (bool, error) {
 		b.GetDirectory())
 }
 
+// IsRemoteWorkingBranchExist checks if the branch reference name is published on
+// on the default remote
+func (b *Bitbucket) IsRemoteWorkingBranchExist() (bool, error) {
+	_, workingBranch, _ := b.GetBranches()
+
+	return b.nativeGitHandler.IsRemoteBranchExist(
+		workingBranch,
+		b.GetUsername(),
+		b.GetPassword(),
+		b.GetDirectory())
+}
+
 // Push run `git push` to the corresponding Bitbucket Server remote branch if not already created.
 func (b *Bitbucket) Push() (bool, error) {
 	return b.nativeGitHandler.Push(

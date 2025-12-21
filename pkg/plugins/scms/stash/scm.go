@@ -157,6 +157,18 @@ func (s *Stash) IsRemoteBranchUpToDate() (bool, error) {
 		s.GetDirectory())
 }
 
+// IsRemoteWorkingBranchExist checks if the branch reference name is published on
+// on the default remote
+func (s *Stash) IsRemoteWorkingBranchExist() (bool, error) {
+	_, workingBranch, _ := s.GetBranches()
+
+	return s.nativeGitHandler.IsRemoteBranchExist(
+		workingBranch,
+		s.Spec.Username,
+		s.Spec.Token,
+		s.GetDirectory())
+}
+
 // Push run `git push` to the corresponding Bitbucket Server remote branch if not already created.
 func (s *Stash) Push() (bool, error) {
 	return s.nativeGitHandler.Push(

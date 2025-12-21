@@ -410,6 +410,23 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 		g.GetDirectory())
 }
 
+// IsRemoteWorkingBranchExist checks if the branch reference name is published on
+// on the default remote
+func (g *Github) IsRemoteWorkingBranchExist() (bool, error) {
+	_, workingBranch, _ := g.GetBranches()
+
+	accessToken, err := token.GetAccessToken(g.token)
+	if err != nil {
+		return false, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	return g.nativeGitHandler.IsRemoteBranchExist(
+		workingBranch,
+		g.username,
+		accessToken,
+		g.GetDirectory())
+}
+
 // Push run `git push` on the GitHub remote branch if not already created.
 func (g *Github) Push() (bool, error) {
 	// If the commit is done using the GitHub API, we don't need to push

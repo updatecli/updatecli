@@ -157,6 +157,18 @@ func (g *Gitea) IsRemoteBranchUpToDate() (bool, error) {
 		g.GetDirectory())
 }
 
+// IsRemoteWorkingBranchExist checks if the branch reference name is published on
+// on the default remote
+func (g *Gitea) IsRemoteWorkingBranchExist() (bool, error) {
+	_, workingBranch, _ := g.GetBranches()
+
+	return g.nativeGitHandler.IsRemoteBranchExist(
+		workingBranch,
+		g.Spec.Username,
+		g.Spec.Token,
+		g.GetDirectory())
+}
+
 // Push run `git push` to the corresponding Gitea remote branch if not already created.
 func (g *Gitea) Push() (bool, error) {
 	return g.nativeGitHandler.Push(
