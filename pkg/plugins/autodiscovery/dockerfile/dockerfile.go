@@ -141,11 +141,19 @@ func (d Dockerfile) generateManifest(
 	versionFilterRegex := d.versionFilter.Regex
 	tagFilter := "*"
 
+	registryUsername := ""
+	registryPassword := ""
+	registryToken := ""
+
 	if sourceSpec != nil {
 		versionFilterKind = sourceSpec.VersionFilter.Kind
 		versionFilterPattern = sourceSpec.VersionFilter.Pattern
 		versionFilterRegex = sourceSpec.VersionFilter.Regex
 		tagFilter = sourceSpec.TagFilter
+
+		registryPassword = sourceSpec.Password
+		registryUsername = sourceSpec.Username
+		registryToken = sourceSpec.Token
 	}
 
 	// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
@@ -187,6 +195,9 @@ func (d Dockerfile) generateManifest(
 		ImageTag             string
 		ScmID                string
 		SourceID             string
+		RegistryUsername     string
+		RegistryPassword     string
+		RegistryToken        string
 		TargetID             string
 		TargetFile           string
 		TargetKeyword        string
@@ -201,6 +212,9 @@ func (d Dockerfile) generateManifest(
 		ImageTag:             tag,
 		ScmID:                d.scmID,
 		SourceID:             image,
+		RegistryUsername:     registryUsername,
+		RegistryPassword:     registryPassword,
+		RegistryToken:        registryToken,
 		TargetID:             image,
 		TargetFile:           relativeFoundDockerfile,
 		TargetKeyword:        targetInstruction,
