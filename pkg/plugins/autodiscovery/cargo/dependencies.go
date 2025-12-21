@@ -86,6 +86,7 @@ func (c Cargo) generateManifest(
 
 	sourceVersionFilterKind := filter.Kind
 	sourceVersionFilterPattern := filter.Pattern
+	sourceVersionFilterRegex := filter.Regex
 
 	if filter.Kind == version.SEMVERVERSIONKIND && filter.Pattern != "*" {
 		sourceVersionFilterPattern = dependency.Version
@@ -130,6 +131,7 @@ func (c Cargo) generateManifest(
 		SourceName                 string
 		SourceVersionFilterKind    string
 		SourceVersionFilterPattern string
+		SourceVersionFilterRegex   string
 		ExistingSourceID           string
 		ExistingSourceName         string
 		ExistingSourceKey          string
@@ -157,6 +159,7 @@ func (c Cargo) generateManifest(
 		SourceName:                 fmt.Sprintf("Get latest %q crate version", dependency.Name),
 		SourceVersionFilterKind:    sourceVersionFilterKind,
 		SourceVersionFilterPattern: sourceVersionFilterPattern,
+		SourceVersionFilterRegex:   sourceVersionFilterRegex,
 		ExistingSourceID:           fmt.Sprintf("%s-current-version", dependency.Name),
 		ExistingSourceKey:          existingSourceKey,
 		ExistingSourceName:         fmt.Sprintf("Get current %q crate version", dependency.Name),

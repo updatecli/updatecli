@@ -130,11 +130,13 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 
 	versionFilterKind := k.versionFilter.Kind
 	versionFilterPattern := k.versionFilter.Pattern
+	versionFilterRegex := k.versionFilter.Regex
 	tagFilter := "*"
 
 	if sourceSpec != nil {
 		versionFilterKind = sourceSpec.VersionFilter.Kind
 		versionFilterPattern = sourceSpec.VersionFilter.Pattern
+		versionFilterRegex = sourceSpec.VersionFilter.Regex
 		tagFilter = sourceSpec.TagFilter
 	}
 
@@ -142,6 +144,7 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 	if !k.spec.VersionFilter.IsZero() {
 		versionFilterKind = k.versionFilter.Kind
 		versionFilterPattern, err = k.versionFilter.GreaterThanPattern(imageTag)
+		versionFilterRegex = k.versionFilter.Regex
 		if err != nil {
 			logrus.Debugf("building version filter pattern: %s", err)
 			versionFilterPattern = "*"
@@ -182,6 +185,7 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		SourceTagFilter      string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 		TargetID             string
 		TargetKey            string
 		TargetPrefix         string
@@ -204,6 +208,7 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		TargetName:           fmt.Sprintf("deps: bump container image %q to {{ source %q }}", imageName, sourceId),
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   versionFilterRegex,
 		ScmID:                k.scmID,
 	}
 

@@ -18,7 +18,7 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
-{{- if or (eq .VersionFilterKind "regex") (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+{{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
 {{- end }}
 targets:
@@ -50,7 +50,7 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
-{{- if or (eq .VersionFilterKind "regex") (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+{{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
 {{- end }}
   oci-digest:

@@ -18,6 +18,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+        {{- end }}
 targets:
   terraformLockVersion:
     name: {{ .TargetName }}
