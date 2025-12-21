@@ -16,6 +16,7 @@ import (
 var (
 	// defaultFluxFiles specifies accepted Helm chart metadata file name
 	defaultFluxFiles            []string = []string{"*.yaml", "*.yml"}
+	defaultVersionFilterRegex   string   = "*"
 	defaultVersionFilterPattern string   = "*"
 	defaultVersionFilterKind    string   = "semver"
 )

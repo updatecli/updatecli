@@ -92,9 +92,11 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	}
 
 	versionFilterKind, versionFilterPattern := detectVersionFilter(versionFilterRef)
+	versionFilterRegex := "*"
 	if !g.spec.VersionFilter.IsZero() {
 		versionFilterKind = g.versionFilter.Kind
 		versionFilterPattern, err = g.versionFilter.GreaterThanPattern(versionFilterRef)
+		versionFilterRegex = g.versionFilter.Regex
 		if err != nil {
 			logrus.Debugf("building version filter pattern: %s", err)
 			versionFilterPattern = versionFilterRef
@@ -136,6 +138,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		Repository           string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 		TargetKey            string
 		ScmID                string
 		Token                string
@@ -151,6 +154,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		Repository:           spec.Repository,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   versionFilterRegex,
 		ScmID:                g.scmID,
 		TargetKey:            targetKey,
 		Token:                token,

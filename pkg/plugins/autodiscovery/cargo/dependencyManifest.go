@@ -18,6 +18,9 @@ sources:
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
+        {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
+        regex: '{{ .SourceVersionFilterRegex }}'
+        {{- end }}
 {{- if .WithRegistry }}
       registry:
         url: '{{ .RegistryURL }}'
@@ -25,9 +28,9 @@ sources:
         auth:
           token: '{{ .RegistryAuthToken }}'
           headerFormat : '{{ .RegistryHeaderFormat }}'
-{{- if .RegistrySCMID }}
+    {{- if .RegistrySCMID }}
     scmid: '{{ .RegistrySCMID }}'
-{{- end }}
+    {{- end }}
 {{- end }}
   {{ .ExistingSourceID }}:
     name: '{{ .ExistingSourceName }}'

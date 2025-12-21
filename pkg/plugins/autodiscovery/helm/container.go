@@ -175,11 +175,13 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 			versionFilterKind := h.versionFilter.Kind
 			versionFilterPattern := h.versionFilter.Pattern
+			versionFilterRegex := h.versionFilter.Regex
 			tagFilter := "*"
 
 			if sourceSpec != nil {
 				versionFilterKind = sourceSpec.VersionFilter.Kind
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
+				versionFilterRegex = sourceSpec.VersionFilter.Regex
 				tagFilter = sourceSpec.TagFilter
 				imageName = sourceSpec.Image
 				imageTag = sourceSpec.Tag
@@ -189,6 +191,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			if !h.spec.VersionFilter.IsZero() {
 				versionFilterKind = h.versionFilter.Kind
 				versionFilterPattern, err = h.versionFilter.GreaterThanPattern(image.tag)
+				versionFilterRegex = h.versionFilter.Regex
 				tagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
@@ -235,6 +238,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				ConditionRepositoryValue    string
 				SourceVersionFilterKind     string
 				SourceVersionFilterPattern  string
+				SourceVersionFilterRegex    string
 				SourceImageName             string
 				SourceTagFilter             string
 				TargetID                    string
@@ -261,6 +265,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				ConditionRepositoryValue:    image.repository,
 				SourceVersionFilterKind:     versionFilterKind,
 				SourceVersionFilterPattern:  versionFilterPattern,
+				SourceVersionFilterRegex:    versionFilterRegex,
 				SourceImageName:             imageName,
 				SourceTagFilter:             tagFilter,
 				TargetID:                    imageSourceSlug,

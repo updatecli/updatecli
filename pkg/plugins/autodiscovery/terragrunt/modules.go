@@ -262,6 +262,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		Transformers         []terragruntTransformer
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 	}{
 		ActionID:             t.actionID,
 		TerragruntModulePath: filename,
@@ -280,6 +281,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		Transformers:         transformers,
 		VersionFilterKind:    t.versionFilter.Kind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   t.versionFilter.Regex,
 	}
 
 	manifest := bytes.Buffer{}
