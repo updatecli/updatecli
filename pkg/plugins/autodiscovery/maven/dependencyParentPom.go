@@ -78,9 +78,11 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		sourceVersionFilterKind := m.versionFilter.Kind
 		sourceVersionFilterPattern := m.versionFilter.Pattern
+		sourceVersionFilterRegex := m.versionFilter.Regex
 		if !m.spec.VersionFilter.IsZero() {
 			sourceVersionFilterKind = m.versionFilter.Kind
 			sourceVersionFilterPattern, err = m.versionFilter.GreaterThanPattern(parentPom.Version)
+			sourceVersionFilterRegex = m.versionFilter.Regex
 			if err != nil {
 				logrus.Debugf("building version filter pattern: %s", err)
 				sourceVersionFilterPattern = "*"
@@ -127,6 +129,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			SourceRepositories         []string
 			SourceVersionFilterKind    string
 			SourceVersionFilterPattern string
+			SourceVersionFilterRegex   string
 			TargetID                   string
 			TargetName                 string
 			TargetXMLPath              string
@@ -152,6 +155,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			SourceRepositories:         mavenRepositories,
 			SourceVersionFilterKind:    sourceVersionFilterKind,
 			SourceVersionFilterPattern: sourceVersionFilterPattern,
+			SourceVersionFilterRegex:   sourceVersionFilterRegex,
 			TargetID:                   artifactFullName,
 			TargetName:                 fmt.Sprintf("deps(maven): update %q to {{ source %q }}", artifactFullName, artifactFullName),
 			TargetXMLPath:              "/project/parent/version",

@@ -148,10 +148,12 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 
 	sourceVersionFilterKind := "semver"
 	sourceVersionFilterPattern := "*"
+	sourceVersionFilterRegex := "*"
 
 	if !f.spec.VersionFilter.IsZero() {
 		sourceVersionFilterKind = f.versionFilter.Kind
 		sourceVersionFilterPattern, err = f.versionFilter.GreaterThanPattern(data.TargetRevision)
+		sourceVersionFilterRegex = f.versionFilter.Regex
 		if err != nil {
 			logrus.Debugf("building version filter pattern: %s", err)
 			sourceVersionFilterPattern = "*"
@@ -184,6 +186,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		SourceKind                 string
 		SourceVersionFilterKind    string
 		SourceVersionFilterPattern string
+		SourceVersionFilterRegex   string
 		TargetID                   string
 		TargetKey                  string
 		File                       string
@@ -201,6 +204,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		SourceKind:                 "helmchart",
 		SourceVersionFilterKind:    sourceVersionFilterKind,
 		SourceVersionFilterPattern: sourceVersionFilterPattern,
+		SourceVersionFilterRegex:   sourceVersionFilterRegex,
 		TargetID:                   data.Chart,
 		TargetKey:                  targetKey,
 		File:                       file,

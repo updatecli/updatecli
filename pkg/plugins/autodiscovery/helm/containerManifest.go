@@ -17,7 +17,7 @@ sources:
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
-{{- if or (eq .SourceVersionFilterKind "regex") (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
+{{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
 {{- end }}
 conditions:
@@ -76,6 +76,9 @@ sources:
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
+        {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
+        regex: '{{ .SourceVersionFilterRegex }}'
+        {{- end }}
   image-digest:
     name: 'get latest image "{{ .ImageName }}" digest'
     kind: 'dockerdigest'

@@ -106,10 +106,12 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 
 			sourceVersionFilterKind := "semver"
 			sourceVersionFilterPattern := "*"
+			sourceVersionFilterRegex := "*"
 			if !u.spec.VersionFilter.IsZero() {
 				sourceVersionFilterKind = u.versionFilter.Kind
 				if policyVersion != "latest" {
 					sourceVersionFilterPattern, err = u.versionFilter.GreaterThanPattern(policyVersion)
+					sourceVersionFilterRegex = u.versionFilter.Regex
 					if err != nil {
 						logrus.Debugf("building version filter pattern: %s", err)
 						sourceVersionFilterPattern = "*"
@@ -125,6 +127,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 				SourceVersionName          string
 				SourceVersionFilterKind    string
 				SourceVersionFilterPattern string
+				SourceVersionFilterRegex   string
 				SourceDigestID             string
 				SourceDigestName           string
 				SourceDigestTag            string
@@ -143,6 +146,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 				SourceDigestTag:            "{{ source \"version\" }}",
 				SourceVersionFilterKind:    sourceVersionFilterKind,
 				SourceVersionFilterPattern: sourceVersionFilterPattern,
+				SourceVersionFilterRegex:   sourceVersionFilterRegex,
 				TargetName:                 fmt.Sprintf("deps(updatecli): bump %q policy to {{ source %q}}", policyName, "version"),
 				TargetKey:                  fmt.Sprintf("$.policies[%d].policy", i),
 				File:                       foundUpdateComposeFile,

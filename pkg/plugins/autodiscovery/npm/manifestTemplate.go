@@ -12,7 +12,7 @@ sources:
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
-{{- if or (eq .SourceVersionFilterKind "regex") (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
+{{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
 {{- end }}
 targets:
@@ -114,6 +114,7 @@ type manifestTemplateParams struct {
 	SourceNPMName              string
 	SourceVersionFilterKind    string
 	SourceVersionFilterPattern string
+	SourceVersionFilterRegex   string
 	TargetID                   string
 	TargetName                 string
 	TargetKey                  string

@@ -81,10 +81,12 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 
 		sourceVersionFilterKind := defaultVersionFilterKind
 		sourceVersionFilterPattern := defaultVersionFilterPattern
+		sourceVersionFilterRegex := defaultVersionFilterRegex
 
 		if !f.spec.VersionFilter.IsZero() {
 			sourceVersionFilterKind = f.versionFilter.Kind
 			sourceVersionFilterPattern, err = f.versionFilter.GreaterThanPattern(helmChartVersion)
+			sourceVersionFilterRegex = f.versionFilter.Regex
 			if err != nil {
 				logrus.Debugf("building version filter pattern: %s", err)
 				sourceVersionFilterPattern = helmChartVersion
@@ -105,6 +107,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 			ImageName                  string
 			SourceVersionFilterKind    string
 			SourceVersionFilterPattern string
+			SourceVersionFilterRegex   string
 			ScmID                      string
 		}{
 			ActionID:                   f.actionID,
@@ -113,6 +116,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 			File:                       relateFoundFluxFile,
 			SourceVersionFilterKind:    sourceVersionFilterKind,
 			SourceVersionFilterPattern: sourceVersionFilterPattern,
+			SourceVersionFilterRegex:   sourceVersionFilterRegex,
 			ScmID:                      f.scmID,
 		}
 

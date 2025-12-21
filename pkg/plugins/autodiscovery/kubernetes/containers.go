@@ -93,11 +93,13 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 
 	versionFilterKind := k.versionFilter.Kind
 	versionFilterPattern := k.versionFilter.Pattern
+	versionFilterRegex := k.versionFilter.Regex
 	tagFilter := "*"
 
 	if sourceSpec != nil {
 		versionFilterKind = sourceSpec.VersionFilter.Kind
 		versionFilterPattern = sourceSpec.VersionFilter.Pattern
+		versionFilterRegex = sourceSpec.VersionFilter.Regex
 		tagFilter = sourceSpec.TagFilter
 	}
 
@@ -105,6 +107,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 	if !k.spec.VersionFilter.IsZero() {
 		versionFilterKind = k.versionFilter.Kind
 		versionFilterPattern, err = k.versionFilter.GreaterThanPattern(imageTag)
+		versionFilterRegex = k.versionFilter.Regex
 		if err != nil {
 			versionFilterPattern = "*"
 			logrus.Debugf("building version filter pattern: %s", err)
@@ -143,6 +146,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		SourceTagFilter      string
 		VersionFilterKind    string
 		VersionFilterPattern string
+		VersionFilterRegex   string
 		TargetID             string
 		TargetKey            string
 		TargetPrefix         string
@@ -161,6 +165,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		TargetFile:           relativeFoundKubernetesFile,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
+		VersionFilterRegex:   versionFilterRegex,
 		ScmID:                k.scmID,
 	}
 

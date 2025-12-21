@@ -81,6 +81,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 
 			sourceVersionFilterKind := "semver"
 			sourceVersionFilterPattern := "*"
+			sourceVersionFilterRegex := "*"
 
 			if strings.HasPrefix(dependency.Repository, "file://") || dependency.Repository == "" {
 				logrus.Debugf("Ignoring dependency %q for chart %q as it is a local dependency\n", chartName, dependency.Name)
@@ -90,6 +91,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 			if !h.spec.VersionFilter.IsZero() {
 				sourceVersionFilterKind = h.versionFilter.Kind
 				sourceVersionFilterPattern, err = h.versionFilter.GreaterThanPattern(dependency.Version)
+				sourceVersionFilterRegex = h.versionFilter.Regex
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
@@ -133,6 +135,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				SourceName                  string
 				SourceVersionFilterKind     string
 				SourceVersionFilterPattern  string
+				SourceVersionFilterRegex    string
 				TargetID                    string
 				TargetKey                   string
 				TargetChartName             string
@@ -153,6 +156,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				SourceName:                  fmt.Sprintf("Get latest %q Helm chart version", dependency.Name),
 				SourceVersionFilterKind:     sourceVersionFilterKind,
 				SourceVersionFilterPattern:  sourceVersionFilterPattern,
+				SourceVersionFilterRegex:    sourceVersionFilterRegex,
 				TargetID:                    dependencyNameSlug,
 				TargetKey:                   fmt.Sprintf("$.dependencies[%d].version", i),
 				TargetChartName:             chartRelativeMetadataPath,

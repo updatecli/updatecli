@@ -57,18 +57,21 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 
 		versionFilterKind := defaultVersionFilterKind
 		versionFilterPattern := defaultVersionFilterPattern
+		versionFilterRegex := defaultVersionFilterRegex
 		tagFilter := ""
 
 		sourceSpec := dockerimage.NewDockerImageSpecFromImage(ociName, ociVersion, f.spec.Auths)
 		if sourceSpec != nil {
 			versionFilterKind = sourceSpec.VersionFilter.Kind
 			versionFilterPattern = sourceSpec.VersionFilter.Pattern
+			versionFilterRegex = sourceSpec.VersionFilter.Regex
 			tagFilter = sourceSpec.TagFilter
 		}
 
 		if !f.spec.VersionFilter.IsZero() {
 			versionFilterKind = f.versionFilter.Kind
 			versionFilterPattern, err = f.versionFilter.GreaterThanPattern(ociVersion)
+			versionFilterRegex = f.versionFilter.Regex
 			if err != nil {
 				logrus.Debugf("building version filter pattern: %s", err)
 				versionFilterPattern = ociVersion
@@ -107,6 +110,7 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 			ImageName            string
 			VersionFilterKind    string
 			VersionFilterPattern string
+			VersionFilterRegex   string
 			ScmID                string
 			TagFilter            string
 		}{
@@ -116,6 +120,7 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 			File:                 relateFoundFluxFile,
 			VersionFilterKind:    versionFilterKind,
 			VersionFilterPattern: versionFilterPattern,
+			VersionFilterRegex:   versionFilterRegex,
 			ScmID:                f.scmID,
 			TagFilter:            tagFilter,
 		}
