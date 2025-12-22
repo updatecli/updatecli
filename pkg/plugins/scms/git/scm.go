@@ -167,7 +167,7 @@ func (g *Git) PushBranch(branch string) error {
 	return nil
 }
 
-// IsRemoteBranchUpToDate checks if the working branch should be push to remote
+// IsRemoteBranchUpToDate checks if the local working branch is up to date with the remote branch.
 func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
@@ -179,7 +179,7 @@ func (g *Git) IsRemoteBranchUpToDate() (bool, error) {
 		g.GetDirectory())
 }
 
-// IsRemoteWorkingBranchExist checks if the working branch exists on remote
+// IsRemoteWorkingBranchExist checks if the remote working branch exists.
 func (g *Git) IsRemoteWorkingBranchExist() (bool, error) {
 	_, workingBranch, _ := g.GetBranches()
 

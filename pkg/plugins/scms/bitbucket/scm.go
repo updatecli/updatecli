@@ -161,8 +161,7 @@ func (b *Bitbucket) Add(files []string) error {
 	return nil
 }
 
-// IsRemoteBranchUpToDate checks if the branch reference name is published on
-// on the default remote
+// IsRemoteBranchUpToDate checks if the local branch is up to date with the remote branch.
 func (b *Bitbucket) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := b.GetBranches()
 
@@ -174,8 +173,7 @@ func (b *Bitbucket) IsRemoteBranchUpToDate() (bool, error) {
 		b.GetDirectory())
 }
 
-// IsRemoteWorkingBranchExist checks if the branch reference name is published on
-// on the default remote
+// IsRemoteWorkingBranchExist checks if the remote branch exists.
 func (b *Bitbucket) IsRemoteWorkingBranchExist() (bool, error) {
 	_, workingBranch, _ := b.GetBranches()
 

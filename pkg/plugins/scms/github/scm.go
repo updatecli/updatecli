@@ -392,8 +392,7 @@ func (g *Github) Add(files []string) error {
 	return nil
 }
 
-// IsRemoteBranchUpToDate checks if the branch reference name is published on
-// on the default remote
+// IsRemoteBranchUpToDate checks if the local working branch is up to date with the remote branch.
 func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := g.GetBranches()
 
@@ -410,8 +409,7 @@ func (g *Github) IsRemoteBranchUpToDate() (bool, error) {
 		g.GetDirectory())
 }
 
-// IsRemoteWorkingBranchExist checks if the branch reference name is published on
-// on the default remote
+// IsRemoteWorkingBranchExist checks if the remote working branch exists.
 func (g *Github) IsRemoteWorkingBranchExist() (bool, error) {
 	_, workingBranch, _ := g.GetBranches()
 

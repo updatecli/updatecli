@@ -204,7 +204,7 @@ func (g GoGit) IsRemoteBranchExist(branch, username, password, workingDir string
 	logrus.Debugf("Checking if remote branch %q exists", branch)
 
 	auth := transportHttp.BasicAuth{
-		Username: username, // anything excepted an empty string
+		Username: username, // anything except an empty string
 		Password: password,
 	}
 

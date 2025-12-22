@@ -171,7 +171,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		if o.ExistingOnly {
 			upToDate, err := s.IsRemoteWorkingBranchExist()
 			if err != nil {
-				return fmt.Errorf("checking if remote branch is up to date: %s", err.Error())
+				return fmt.Errorf("checking if remote branch exist: %s", err.Error())
 			}
 
 			if !upToDate {

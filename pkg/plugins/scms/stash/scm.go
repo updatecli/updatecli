@@ -144,8 +144,7 @@ func (s *Stash) Add(files []string) error {
 	return nil
 }
 
-// IsRemoteBranchUpToDate checks if the branch reference name is published on
-// on the default remote
+// IsRemoteBranchUpToDate checks if the local working branch is up to date with the remote branch.
 func (s *Stash) IsRemoteBranchUpToDate() (bool, error) {
 	sourceBranch, workingBranch, _ := s.GetBranches()
 
@@ -157,8 +156,7 @@ func (s *Stash) IsRemoteBranchUpToDate() (bool, error) {
 		s.GetDirectory())
 }
 
-// IsRemoteWorkingBranchExist checks if the branch reference name is published on
-// on the default remote
+// IsRemoteWorkingBranchExist checks if the remote working branch exists.
 func (s *Stash) IsRemoteWorkingBranchExist() (bool, error) {
 	_, workingBranch, _ := s.GetBranches()
 
