@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -13,12 +14,14 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		digest            bool
+		versionFilter     *version.Filter
 		expectedPipelines []string
 	}{
 		{
-			name:    "Scenario 1",
-			rootDir: "testdata/updatecli-action",
-			digest:  true,
+			name:          "Scenario 1",
+			rootDir:       "testdata/updatecli-action",
+			digest:        true,
+			versionFilter: nil,
 			expectedPipelines: []string{`name: 'deps(dockerfile): bump "updatecli/updatecli" digest'
 sources:
   updatecli/updatecli:
@@ -51,9 +54,10 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario 2: arg with suffix",
-			rootDir: "testdata/jenkins",
-			digest:  true,
+			name:          "Scenario 2: arg with suffix",
+			rootDir:       "testdata/jenkins",
+			digest:        true,
+			versionFilter: nil,
 			expectedPipelines: []string{`name: 'deps(dockerfile): bump "jenkins/jenkins" digest'
 sources:
   jenkins/jenkins:
@@ -86,9 +90,10 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario 3: Digest disabled",
-			rootDir: "testdata/updatecli-action",
-			digest:  false,
+			name:          "Scenario 3: Digest disabled",
+			rootDir:       "testdata/updatecli-action",
+			digest:        false,
+			versionFilter: nil,
 			expectedPipelines: []string{`name: 'deps(dockerfile): bump "updatecli/updatecli" tag'
 sources:
   updatecli/updatecli:
@@ -113,9 +118,10 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario 4: Reuse base image and scratch",
-			rootDir: "testdata/scratch-and-base",
-			digest:  true,
+			name:          "Scenario 4: Reuse base image and scratch",
+			rootDir:       "testdata/scratch-and-base",
+			digest:        true,
+			versionFilter: nil,
 			expectedPipelines: []string{`name: 'deps(dockerfile): bump "updatecli/updatecli" digest'
 sources:
   updatecli/updatecli:
@@ -148,9 +154,10 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario 5: Should not update stage name as image",
-			rootDir: "testdata/similar-stage-and-image",
-			digest:  true,
+			name:          "Scenario 5: Should not update stage name as image",
+			rootDir:       "testdata/similar-stage-and-image",
+			digest:        true,
+			versionFilter: nil,
 			expectedPipelines: []string{`name: 'deps(dockerfile): bump "python" digest'
 sources:
   python:
@@ -183,9 +190,10 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario 6: Alpine",
-			rootDir: "testdata/alpine",
-			digest:  false,
+			name:          "Scenario 6: Alpine",
+			rootDir:       "testdata/alpine",
+			digest:        false,
+			versionFilter: nil,
 			expectedPipelines: []string{`name: 'deps(dockerfile): bump "alpine" tag'
 sources:
   alpine:
@@ -252,9 +260,10 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario 7: Multi-variable instructions should be ignored",
-			rootDir: "testdata/multi-variable",
-			digest:  false,
+			name:          "Scenario 7: Multi-variable instructions should be ignored",
+			rootDir:       "testdata/multi-variable",
+			digest:        false,
+			versionFilter: nil,
 			expectedPipelines: []string{`name: 'deps(dockerfile): bump "node" tag'
 sources:
   node:
@@ -299,16 +308,52 @@ targets:
     sourceid: 'node'
 `},
 		},
+		{
+			name:    "Scenario 8: Version filter with regex/semver",
+			rootDir: "testdata/python-slim",
+			digest:  false,
+			versionFilter: &version.Filter{
+				Kind:    "regex/semver",
+				Pattern: ">=3.14",
+				Regex:   `^(\d+\.\d+)-slim$`,
+			},
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "python" tag'
+sources:
+  python:
+    name: 'get latest image tag for "python"'
+    kind: 'dockerimage'
+    spec:
+      image: 'python'
+      tagfilter: ''
+      versionfilter:
+        kind: 'regex/semver'
+        pattern: '>=3.14'
+        regex: '^(\d+\.\d+)-slim$'
+targets:
+  python:
+    name: 'deps: update Docker image "python" to "{{ source "python" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'python'
+    sourceid: 'python'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
 
 		t.Run(tt.name, func(t *testing.T) {
 			digest := tt.digest
-			dockerfile, err := New(
-				Spec{
-					Digest: &digest,
-				}, tt.rootDir, "", "")
+			spec := Spec{
+				Digest: &digest,
+			}
+			if tt.versionFilter != nil {
+				spec.VersionFilter = *tt.versionFilter
+			}
+			dockerfile, err := New(spec, tt.rootDir, "", "")
 			require.NoError(t, err)
 
 			rawPipelines, err := dockerfile.DiscoverManifests()

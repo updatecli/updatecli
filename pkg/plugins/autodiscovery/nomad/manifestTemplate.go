@@ -18,6 +18,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+{{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+{{- end }}
 targets:
   {{ .TargetID }}:
     name: 'deps(nomad): update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
@@ -50,6 +53,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+{{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+{{- end }}
   {{ .SourceID }}-digest:
     name: 'get latest image "{{ .ImageName }}" digest'
     kind: 'dockerdigest'

@@ -3,7 +3,9 @@ package yaml
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/parser"
@@ -88,12 +90,23 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 			return fmt.Errorf("parsing yaml file: %w", err)
 		}
 
-		node, err := urlPath.FilterFile(file)
-		if err != nil && !errors.Is(err, goyaml.ErrNotFoundNode) {
-			return fmt.Errorf("searching in yaml file: %w", err)
-		}
-		if node != nil {
-			results = append(results, node.String())
+		for index, doc := range file.Docs {
+
+			if y.spec.DocumentIndex != nil {
+				if index != *y.spec.DocumentIndex {
+					continue
+				}
+			}
+
+			node, err := urlPath.FilterNode(doc.Body)
+			if err != nil {
+				return fmt.Errorf("searching in yaml document index %d: %w", *y.spec.DocumentIndex, err)
+			}
+
+			if node != nil {
+				results = append(results, node.String())
+				break
+			}
 		}
 
 	case EngineYamlPath:
@@ -102,19 +115,35 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 			return fmt.Errorf("crafting yamlpath query: %w", err)
 		}
 
-		var n yaml.Node
-		err = yaml.Unmarshal([]byte(fileContent), &n)
-		if err != nil {
-			return fmt.Errorf("parsing yaml file: %w", err)
+		// Decode the file into one or more YAML document nodes
+		var docs []*yaml.Node
+		dec := yaml.NewDecoder(strings.NewReader(y.files[filePath].content))
+		for {
+			var doc yaml.Node
+			if derr := dec.Decode(&doc); derr != nil {
+				if derr == io.EOF {
+					break
+				}
+				return fmt.Errorf("parsing yaml file %q: %w", originalFilePath, derr)
+			}
+			docs = append(docs, &doc)
 		}
 
-		founds, err := urlPath.Find(&n)
-		if err != nil {
-			return fmt.Errorf("searching in yaml file: %w", err)
-		}
+		for index, doc := range docs {
+			if y.spec.DocumentIndex != nil {
+				if index != *y.spec.DocumentIndex {
+					continue
+				}
+			}
 
-		for i := range founds {
-			results = append(results, founds[i].Value)
+			founds, err := urlPath.Find(doc)
+			if err != nil {
+				return fmt.Errorf("searching in yaml file: %w", err)
+			}
+
+			for i := range founds {
+				results = append(results, founds[i].Value)
+			}
 		}
 
 	default:

@@ -9,6 +9,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
+func ptrInt(i int) *int {
+	return &i
+}
+
 func Test_Condition(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -20,6 +24,83 @@ func Test_Condition(t *testing.T) {
 		isResultWanted   bool
 		isErrorWanted    bool
 	}{
+		{
+			name: "yamlpath Passing Case with multiple document",
+			spec: Spec{
+				File:   "data.yaml",
+				Key:    "$.name",
+				Engine: "yamlpath",
+			},
+			files: map[string]file{
+				"data.yaml": {
+					originalFilePath: "data.yaml",
+					filePath:         "data.yaml",
+				},
+			},
+			inputSourceValue: "John",
+			mockedContents: map[string]string{
+				"data.yaml": `---
+name: John
+age: 30
+---
+name: Doe
+age: 25
+`,
+			},
+			isResultWanted: false,
+		},
+		{
+			name: "yamlpath Passing Case with multiple document",
+			spec: Spec{
+				File:          "data.yaml",
+				Key:           "$.name",
+				Engine:        "yamlpath",
+				DocumentIndex: ptrInt(1),
+			},
+			files: map[string]file{
+				"data.yaml": {
+					originalFilePath: "data.yaml",
+					filePath:         "data.yaml",
+				},
+			},
+			inputSourceValue: "Doe",
+			mockedContents: map[string]string{
+				"data.yaml": `---
+name: John
+age: 30
+---
+name: Doe
+age: 25
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing Case with multiple document",
+			spec: Spec{
+				File:          "data.yaml",
+				Key:           "$.name",
+				Engine:        "go-yaml",
+				DocumentIndex: ptrInt(1),
+			},
+			files: map[string]file{
+				"data.yaml": {
+					originalFilePath: "data.yaml",
+					filePath:         "data.yaml",
+				},
+			},
+			inputSourceValue: "Doe",
+			mockedContents: map[string]string{
+				"data.yaml": `---
+name: John
+age: 30
+---
+name: Doe
+age: 25
+`,
+			},
+			isResultWanted: true,
+		},
 		{
 			name: "Passing Case with complex key",
 			spec: Spec{

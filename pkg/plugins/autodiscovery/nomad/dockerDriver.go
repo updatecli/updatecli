@@ -128,11 +128,13 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 
 			versionFilterKind := n.versionFilter.Kind
 			versionFilterPattern := n.versionFilter.Pattern
+			versionFilterRegex := n.versionFilter.Regex
 			tagFilter := "*"
 
 			if sourceSpec != nil {
 				versionFilterKind = sourceSpec.VersionFilter.Kind
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
+				versionFilterRegex = sourceSpec.VersionFilter.Regex
 				tagFilter = sourceSpec.TagFilter
 			}
 
@@ -140,6 +142,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 			if !n.spec.VersionFilter.IsZero() {
 				versionFilterKind = n.versionFilter.Kind
 				versionFilterPattern, err = n.versionFilter.GreaterThanPattern(imageTag)
+				versionFilterRegex = n.versionFilter.Regex
 				tagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
@@ -185,6 +188,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				TagFilter            string
 				VersionFilterKind    string
 				VersionFilterPattern string
+				VersionFilterRegex   string
 				ScmID                string
 			}{
 				ActionID:             n.actionID,
@@ -198,6 +202,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				TagFilter:            tagFilter,
 				VersionFilterKind:    versionFilterKind,
 				VersionFilterPattern: versionFilterPattern,
+				VersionFilterRegex:   versionFilterRegex,
 				ScmID:                n.scmID,
 			}
 

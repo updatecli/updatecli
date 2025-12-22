@@ -67,6 +67,7 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 			}
 
 			versionPattern, err := p.versionFilter.GreaterThanPattern(repo.Rev)
+			versionRegex := p.versionFilter.Regex
 			if err != nil {
 				logrus.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
 				continue
@@ -92,6 +93,7 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 				SourceKind                 string
 				SourceVersionFilterKind    string
 				SourceVersionFilterPattern string
+				SourceVersionFilterRegex   string
 				TargetID                   string
 				TargetName                 string
 				TargetEngine               string
@@ -109,6 +111,7 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 				SourceKind:                 "gittag",
 				SourceVersionFilterKind:    p.versionFilter.Kind,
 				SourceVersionFilterPattern: versionPattern,
+				SourceVersionFilterRegex:   versionRegex,
 				TargetID:                   ".pre-commit-config.yaml",
 				TargetName:                 fmt.Sprintf("deps(precommit): bump %q repo version to {{ source %q }}", repo.Repo, targetSource),
 				TargetKey:                  fmt.Sprintf("$.repos[?(@.repo == '%s')].rev", repo.Repo),

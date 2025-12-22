@@ -128,12 +128,14 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 
 			versionFilterKind := d.versionFilter.Kind
 			versionFilterPattern := d.versionFilter.Pattern
+			versionFilterRegex := d.versionFilter.Regex
 			tagFilter := "*"
 			architecture := ""
 
 			if sourceSpec != nil {
 				versionFilterKind = sourceSpec.VersionFilter.Kind
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
+				versionFilterRegex = sourceSpec.VersionFilter.Regex
 				tagFilter = sourceSpec.TagFilter
 				architecture = sourceSpec.Architecture
 			}
@@ -142,6 +144,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			if !d.spec.VersionFilter.IsZero() {
 				versionFilterKind = d.versionFilter.Kind
 				versionFilterPattern, err = d.versionFilter.GreaterThanPattern(imageTag)
+				versionFilterRegex = d.versionFilter.Regex
 				tagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
@@ -187,6 +190,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				TagFilter            string
 				VersionFilterKind    string
 				VersionFilterPattern string
+				VersionFilterRegex   string
 				ScmID                string
 			}{
 				ActionID:             d.actionID,
@@ -201,6 +205,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				TagFilter:            tagFilter,
 				VersionFilterKind:    versionFilterKind,
 				VersionFilterPattern: versionFilterPattern,
+				VersionFilterRegex:   versionFilterRegex,
 				ScmID:                d.scmID,
 			}
 

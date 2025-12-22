@@ -18,6 +18,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+{{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+{{- end }}
 targets:
   oci:
     name: 'deps(flux): bump OCI repository "{{ .OCIName }}"'
@@ -47,6 +50,9 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
+{{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        regex: '{{ .VersionFilterRegex }}'
+{{- end }}
   oci-digest:
     name: 'Get latest "{{ .OCIName }}" OCI artifact digest'
     kind: 'dockerdigest'

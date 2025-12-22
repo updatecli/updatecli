@@ -104,9 +104,11 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 
 			sourceVersionFilterKind := m.versionFilter.Kind
 			sourceVersionFilterPattern := m.versionFilter.Pattern
+			sourceVersionFilterRegex := m.versionFilter.Regex
 			if !m.spec.VersionFilter.IsZero() {
 				sourceVersionFilterKind = m.versionFilter.Kind
 				sourceVersionFilterPattern, err = m.versionFilter.GreaterThanPattern(dependency.Version)
+				sourceVersionFilterRegex = m.versionFilter.Regex
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
@@ -153,6 +155,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 				SourceRepositories         []string
 				SourceVersionFilterKind    string
 				SourceVersionFilterPattern string
+				SourceVersionFilterRegex   string
 				TargetID                   string
 				TargetName                 string
 				TargetXMLPath              string
@@ -178,6 +181,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 				SourceRepositories:         mavenRepositories,
 				SourceVersionFilterKind:    sourceVersionFilterKind,
 				SourceVersionFilterPattern: sourceVersionFilterPattern,
+				SourceVersionFilterRegex:   sourceVersionFilterRegex,
 				TargetID:                   artifactFullName,
 				TargetName:                 fmt.Sprintf("deps(maven): update %q to {{ source %q }}", artifactFullName, artifactFullName),
 				TargetXMLPath:              fmt.Sprintf("%s/dependencies/dependency[%d]/version", dependencyPathPrefix, i+1),

@@ -76,7 +76,7 @@ sha256sum --ignore-missing -c checksums.txt
 **Verify Container signature**
 
 ```
-cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.110.3
+cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.112.0
 ```
 
 == Documentation
@@ -219,5 +219,3 @@ link:https://github.com/updatecli/updatecli/graphs/contributors"[image:https://c
 == Thanks to the sponsors ❤️
 
 link:https://www.prefect.io/[image:https://avatars.githubusercontent.com/u/41086007?v=4[alt=PrefectHQ,height=200, width=200]]
-
-<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=bbb8ed0c-c2db-44e1-a072-dfc098e79bea" />
