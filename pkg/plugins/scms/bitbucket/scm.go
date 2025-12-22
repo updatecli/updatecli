@@ -173,7 +173,7 @@ func (b *Bitbucket) IsRemoteBranchUpToDate() (bool, error) {
 		b.GetDirectory())
 }
 
-// IsRemoteWorkingBranchExist checks if the remote branch exists.
+// IsRemoteWorkingBranchExist checks if the remote working branch exists.
 func (b *Bitbucket) IsRemoteWorkingBranchExist() (bool, error) {
 	_, workingBranch, _ := b.GetBranches()
 
