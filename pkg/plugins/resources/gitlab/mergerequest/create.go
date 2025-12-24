@@ -13,7 +13,7 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
-const gitlabRequestTimeout = 30 * time.Second
+const gitlabRequestTimeout = 60 * time.Second
 
 // CreateAction opens a Merge Request on the GitLab server
 func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) error {
@@ -166,7 +166,9 @@ func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) err
 	)
 
 	if err != nil {
-		logrus.Debugf("HTTP Response:\n\tReturn code: %d\n\n", resp.StatusCode)
+		if resp != nil {
+			logrus.Debugf("HTTP Response:\n\tReturn code: %d\n\n", resp.StatusCode)
+		}
 
 		return fmt.Errorf("create GitLab mergerequest: %v", err)
 	}
