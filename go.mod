@@ -26,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.34.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.19.2
+	helm.sh/helm/v3 v3.19.4
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -46,7 +46,7 @@ require (
 	github.com/fluxcd/helm-controller/api v1.4.5
 	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/go-viper/mapstructure/v2 v2.4.0
-	github.com/goccy/go-yaml v1.19.0
+	github.com/goccy/go-yaml v1.19.1
 	github.com/google/go-containerregistry v0.20.5
 	github.com/google/go-github/v69 v69.2.0
 	github.com/goware/urlx v0.3.2
@@ -221,7 +221,7 @@ require (
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/cyphar/filepath-securejoin v0.6.0 // indirect
+	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
@@ -328,12 +328,12 @@ require (
 	k8s.io/apiextensions-apiserver v0.34.2 // indirect
 	k8s.io/apimachinery v0.34.2 // indirect
 	k8s.io/apiserver v0.34.2 // indirect
-	k8s.io/cli-runtime v0.34.0 // indirect
+	k8s.io/cli-runtime v0.34.2 // indirect
 	k8s.io/client-go v0.34.2 // indirect
 	k8s.io/component-base v0.34.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
-	k8s.io/kubectl v0.34.0 // indirect
+	k8s.io/kubectl v0.34.2 // indirect
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
