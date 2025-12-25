@@ -1,0 +1,50 @@
+# NOTE: Files prefixed with an underscore are partial Updatecli configuration
+# templates. They are intended to be included into other Updatecli manifests
+# and are not full standalone documents unless you explicitly make them so
+# (for example by adding a leading `---` and providing all required fields).
+
+# {{ if and .scm.enabled ( eq .scm.kind "github" ) }}
+# {{ $GitHubUser := env ""}}
+# {{ $GitHubUsername := env "GITHUB_ACTOR"}}
+# {{ $GitHubPAT := env .scm.env_token }}
+# {{ $GitHubRepositoryList := env "GITHUB_REPOSITORY" | split "/"}}
+actions:
+  default:
+    kind: "github/pullrequest"
+    spec:
+      #{{ if .automerge }}
+      automerge: {{.automerge }}
+      # {{ end }}
+      # {{ if .labels }}
+      labels:
+        # {{ range .labels }}
+        - '{{ . }}'
+        # {{ end }}
+      # {{ end }}
+      mergemethod: "squash"
+      scmid: "default"
+
+scms:
+  default:
+  kind: "github"
+  spec:
+    # {{ if .scm.user }}
+    user: '{{ default $GitHubUser .scm.user }}'
+    # {{ end }}
+    # {{ if .scm.email }}
+    email: '{{ .scm.email }}'
+    # {{ end }}
+    owner: '{{ default $GitHubRepositoryList._0 .scm.owner }}'
+    repository: '{{ default $GitHubRepositoryList._1 .scm.repository }}'
+    token: '{{ default $GitHubPAT .scm.token }}'
+    username: '{{ default $GitHubUsername  .scm.username }}'
+    #{{ if .scm.branch }}
+    branch: '{{ .scm.branch }}'
+    #{{ end }}
+    # {{ if .scm.commitusingapi }}
+    commitusingapi: {{.scm.commitusingapi}}
+    # {{ end }}
+    # {{ if .scm.url }}
+    url: '{{ .scm.url }}'
+    # {{ end }}
+# {{ end }}

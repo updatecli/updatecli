@@ -22,7 +22,12 @@ func TestRun(t *testing.T) {
 	assert.FileExists(t, filepath.Join(testRootDir, "Policy.yaml"))
 
 	assert.DirExists(t, filepath.Join(testRootDir, "updatecli.d"))
-	assert.FileExists(t, filepath.Join(testRootDir, "updatecli.d", "default.yaml"))
+	assert.FileExists(t, filepath.Join(testRootDir, "updatecli.d", "_scm.bitbucket.yaml"))
+	assert.FileExists(t, filepath.Join(testRootDir, "updatecli.d", "_scm.github.yaml"))
+	assert.FileExists(t, filepath.Join(testRootDir, "updatecli.d", "_scm.gitea.yaml"))
+	assert.FileExists(t, filepath.Join(testRootDir, "updatecli.d", "_scm.gitlab.yaml"))
+	assert.FileExists(t, filepath.Join(testRootDir, "updatecli.d", "_scm.stash.yaml"))
+	assert.FileExists(t, filepath.Join(testRootDir, "updatecli.d", "default.example.yaml"))
 
 	assert.FileExists(t, filepath.Join(testRootDir, "README.md"))
 

@@ -1,0 +1,33 @@
+# NOTE: Files prefixed with an underscore are partial Updatecli configuration
+# templates. They are intended to be included into other Updatecli manifests
+# and are not full standalone documents unless you explicitly make them so
+# (for example by adding a leading `---` and providing all required fields).
+
+# {{ if and .scm.enabled ( eq .scm.kind "gitlab") }}
+# {{ $GitlabPAT := env .scm.env_token }}
+actions:
+  default:
+    kind: "gitlab/mergerequest"
+    scmid: "default"
+
+scms:
+  default:
+    kind: "gitlab"
+    spec:
+      # {{ if .scm.user }}
+      user: '{{ .scm.user }}'
+      # {{ end }}
+      # {{ if .scm.email }}
+      email: '{{ .scm.email }}'
+      # {{ end }}
+      owner: '{{ .scm.owner }}'
+      repository: '{{ .scm.repository }}'
+      token: '{{ default $GitlabPAT .scm.token }}'
+      username: '{{ .scm.username }}'
+      # {{ if .scm.branch }}
+      branch: '{{ .scm.branch }}'
+      # {{ end }}
+      # {{ if .scm.url }}
+      url: '{{ .scm.url }}'
+      # {{ end }}
+# {{ end }}
