@@ -11,23 +11,23 @@ actions:
     scmid: "default"
 
 scms:
-    default:
-        kind: "gitea"
-        spec:
-            # {{ if .scm.user }}
-            user: '{{ .scm.user }}'
-            # {{ end }}
-            # {{ if .scm.email }}
-            email: '{{ .scm.email }}'
-            # {{ end }}
-            owner: '{{ .scm.owner }}'
-            repository: '{{ .scm.repository }}'
-            token: '{{ default $GiteaPAT .scm.token }}'
-            username: '{{ .scm.username }}'
-            # {{ if .scm.branch }}
-            branch: '{{ .scm.branch }}'
-            # {{ end }}
-            # {{ if .scm.url }}
-            url: '{{ .scm.url }}'
-            # {{ end }}
+  default:
+    kind: "gitea"
+    spec:
+      # {{ if .scm.user }}
+      user: '{{ .scm.user }}'
+      # {{ end }}
+      # {{ if .scm.email }}
+      email: '{{ .scm.email }}'
+      # {{ end }}
+      owner: '{{ .scm.owner }}'
+      repository: '{{ .scm.repository }}'
+      token: '{{ default $GiteaPAT .scm.token }}'
+      username: '{{ .scm.username }}'
+      # {{ if .scm.branch }}
+      branch: '{{ .scm.branch }}'
+      # {{ end }}
+      # {{ if .scm.url }}
+      url: '{{ .scm.url }}'
+      # {{ end }}
 # {{ end }}
