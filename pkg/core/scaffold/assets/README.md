@@ -11,7 +11,7 @@ bundle as a starting point for publishing a reusable Updatecli policy.
 
 Before running, update these files to match your environment:
 - `Policy.yaml` — policy metadata and `version`.
-- `values.d/default.yaml` — default policy inputs.
+- `values.yaml` — default policy inputs.
 - `updatecli.d/default.yaml` — pipeline configuration and SCM settings.
 
 ## QUICK USAGE

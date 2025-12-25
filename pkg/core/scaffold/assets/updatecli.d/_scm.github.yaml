@@ -22,7 +22,7 @@ actions:
         # {{ end }}
       # {{ end }}
       mergemethod: "squash"
-      scmid: "default"
+    scmid: "default"
 
 scms:
   default:

@@ -4,7 +4,7 @@
 # (for example by adding a leading `---` and providing all required fields).
 
 # {{ if and .scm.enabled ( eq .scm.kind "bitbucket") }}
-# {{ $GitbucketPAT := env .scm.env_token }}
+# {{ $BitbucketPAT := env .scm.env_token }}
 actions:
   default:
     kind: "bitbucket/pullrequest"
@@ -16,7 +16,7 @@ scms:
     spec:
       owner: '{{ .scm.owner }}'
       repository: '{{ .scm.repository }}'
-      token: '{{ default $GitbucketPAT .scm.token }}'
+      token: '{{ default $BitbucketPAT .scm.token }}'
       username: '{{ .scm.username }}'
       # {{- if .scm.branch }}
       branch: '{{ .scm.branch }}'

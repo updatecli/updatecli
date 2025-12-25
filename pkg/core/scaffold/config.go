@@ -102,15 +102,17 @@ func (s *Scaffold) scaffoldConfig(rootDir string) error {
 		f, err := os.Create(configFilePath)
 		if err != nil {
 			logrus.Errorf("Failed to create config file: %s", configFilePath)
+			f.Close()
 			continue
 		}
-		defer f.Close()
 
 		_, err = f.Write([]byte(cf.Content))
 		if err != nil {
 			logrus.Errorf("Failed to write config file: %s", configFilePath)
+			f.Close()
 			continue
 		}
+		f.Close()
 	}
 
 	return nil
