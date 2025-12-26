@@ -96,11 +96,19 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 	versionFilterRegex := k.versionFilter.Regex
 	tagFilter := "*"
 
+	registryUsername := ""
+	registryPassword := ""
+	registryToken := ""
+
 	if sourceSpec != nil {
 		versionFilterKind = sourceSpec.VersionFilter.Kind
 		versionFilterPattern = sourceSpec.VersionFilter.Pattern
 		versionFilterRegex = sourceSpec.VersionFilter.Regex
 		tagFilter = sourceSpec.TagFilter
+
+		registryUsername = sourceSpec.Username
+		registryPassword = sourceSpec.Password
+		registryToken = sourceSpec.Token
 	}
 
 	// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
@@ -147,6 +155,9 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		VersionFilterKind    string
 		VersionFilterPattern string
 		VersionFilterRegex   string
+		RegistryUsername     string
+		RegistryPassword     string
+		RegistryToken        string
 		TargetID             string
 		TargetKey            string
 		TargetPrefix         string
@@ -159,6 +170,9 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		ImageTag:             imageTag,
 		SourceID:             sourceId,
 		SourceTagFilter:      tagFilter,
+		RegistryUsername:     registryUsername,
+		RegistryPassword:     registryPassword,
+		RegistryToken:        registryToken,
 		TargetID:             containerName,
 		TargetPrefix:         imageName + ":",
 		TargetKey:            targetKey,

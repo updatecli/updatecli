@@ -131,11 +131,19 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 			versionFilterRegex := n.versionFilter.Regex
 			tagFilter := "*"
 
+			registryUsername := ""
+			registryPassword := ""
+			registryToken := ""
+
 			if sourceSpec != nil {
 				versionFilterKind = sourceSpec.VersionFilter.Kind
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
 				versionFilterRegex = sourceSpec.VersionFilter.Regex
 				tagFilter = sourceSpec.TagFilter
+
+				registryUsername = sourceSpec.Username
+				registryPassword = sourceSpec.Password
+				registryToken = sourceSpec.Token
 			}
 
 			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
@@ -181,6 +189,9 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				ImageName            string
 				ImageTag             string
 				SourceID             string
+				RegistryUsername     string
+				RegistryPassword     string
+				RegistryToken        string
 				TargetID             string
 				TargetFile           string
 				TargetPath           string
@@ -195,6 +206,9 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				ImageName:            imageName,
 				ImageTag:             imageTag,
 				SourceID:             "default",
+				RegistryUsername:     registryUsername,
+				RegistryPassword:     registryPassword,
+				RegistryToken:        registryToken,
 				TargetID:             "default",
 				TargetFile:           relativeNomadFile,
 				TargetPath:           nomadDockerSpec.Path,
