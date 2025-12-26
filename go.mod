@@ -310,7 +310,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	gitlab.com/gitlab-org/api/client-go v1.8.1
+	gitlab.com/gitlab-org/api/client-go v1.8.2
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/mod v0.31.0
 	golang.org/x/net v0.47.0
@@ -320,7 +320,7 @@ require (
 	golang.org/x/tools v0.39.0 // indirect
 	google.golang.org/api v0.250.0 // indirect
 	google.golang.org/grpc v1.76.0 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0
