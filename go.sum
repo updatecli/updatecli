@@ -755,8 +755,8 @@ github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940 h1:4r45xpDWB6
 github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940/go.mod h1:CmBdvvj3nqzfzJ6nTCIwDTPZ56aVGvDrmztiO5g3qrM=
 github.com/zeebo/errs v1.4.0 h1:XNdoD/RRMKP7HD0UhJnIzUy74ISdGGxURlYG8HSWSfM=
 github.com/zeebo/errs v1.4.0/go.mod h1:sgbWHsvVuTPHcqJJGQ1WhI5KbWlHYz+2+2C/LSEtCw4=
-gitlab.com/gitlab-org/api/client-go v1.8.2 h1:rDNJLOalQmG9yw6YjNK5Hx6+uhPyiCA/WYZ+jJugc9I=
-gitlab.com/gitlab-org/api/client-go v1.8.2/go.mod h1:71yTJk1lnHCWcZLvM5kPAXzeJ2fn5GjaoV8gTOPd4ME=
+gitlab.com/gitlab-org/api/client-go v1.10.0 h1:VlB9gXQdG6w643lH53VduUHVnCWQG5Ty86VbXnyi70A=
+gitlab.com/gitlab-org/api/client-go v1.10.0/go.mod h1:U3QKvjbT1J1FrgLsA7w/XlhoBIendUqB4o3/Ht3UhEQ=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
 go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
 go.opentelemetry.io/contrib/bridges/prometheus v0.57.0 h1:UW0+QyeyBVhn+COBec3nGhfnFe5lwB0ic1JBVjzhk0w=
