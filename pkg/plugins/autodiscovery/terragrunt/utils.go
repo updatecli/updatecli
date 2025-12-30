@@ -169,7 +169,13 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 		switch sourceType {
 		case SourceTypeRegistry:
 			param = "version"
-			source.baseUrl = fmt.Sprintf("%s%s", u.Host, u.Path)
+			// Remove leading slash from path for registry modules
+			path := strings.TrimPrefix(u.Path, "/")
+			if u.Host != "" {
+				source.baseUrl = fmt.Sprintf("%s/%s", u.Host, path)
+			} else {
+				source.baseUrl = path
+			}
 		case SourceTypeGit:
 			// Git
 			param = "ref"
