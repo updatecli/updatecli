@@ -28,7 +28,7 @@ type MatchingRule struct {
 		  # Ignore modules update for a specific registry
 		  tfr://registry.opentofu.org:
 		  # Ignore modules updates for a very specific module
-		  tfr://terraform-aws-modules/rdss/aws:
+		  tfr:///terraform-aws-modules/rdss/aws:
 		  registry.terraform.io/hashicorp/aws:
 		  # Ignore module updates for this version
 		  git@github.com:hashicorp/exampleLongNameForSorting.git: "1.x"
