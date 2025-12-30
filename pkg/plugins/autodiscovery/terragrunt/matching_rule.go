@@ -81,6 +81,8 @@ func (m MatchingRules) isMatchingRules(rootDir string, filePath string, module *
 					// tf expect version to have 3 to 4 slash, but let's allow for kind of wildcarding here
 					if strings.HasPrefix(ruleModuleUrl, "tfr://") {
 						baseUrl := strings.TrimPrefix(ruleModuleUrl, "tfr://")
+					// Handle tfr:/// (triple slash) format by removing leading slash
+					baseUrl = strings.TrimPrefix(baseUrl, "/")
 						suffix := ""
 						add := 3
 						if baseUrl == "" {
