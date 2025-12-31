@@ -176,7 +176,13 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 			parts := strings.Split(fmt.Sprintf("%s:%s", u.Scheme, u.Opaque), "://")
 			if len(parts) == 2 {
 				source.protocol = parts[0]
-				source.baseUrl = parts[1]
+				// Strip Terragrunt's // path separator (used for subdirectories)
+				// e.g., "https://github.com/foo/bar//subdir" -> "https://github.com/foo/bar"
+				baseUrl := parts[1]
+				if idx := strings.Index(baseUrl, "//"); idx != -1 {
+					baseUrl = baseUrl[:idx]
+				}
+				source.baseUrl = baseUrl
 			}
 		default:
 			// Github
