@@ -4,6 +4,21 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
+// GitHubSpec defines GitHub credentials for accessing private repositories
+type GitHubSpec struct {
+	// `token` specifies the GitHub token to use for authentication
+	//
+	// compatible:
+	//   * autodiscovery
+	//
+	// default:
+	//   automatically detected from UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN environment variables
+	//
+	// example:
+	//   ghp_xxxxxxxxxxxx
+	Token string `yaml:",omitempty"`
+}
+
 // Spec defines the Terraform parameters.
 type Spec struct {
 	// `rootdir` defines the root directory from where looking for terragrunt configuration
@@ -12,6 +27,17 @@ type Spec struct {
 	Ignore MatchingRules `yaml:",omitempty"`
 	// `only` specify required rule to restrict `.terraform.lock.hcl` update.
 	Only MatchingRules `yaml:",omitempty"`
+	// `github` specifies the github credentials to use for accessing private repositories
+	//
+	// default:
+	//   Token is automatically detected from UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN environment variables
+	//
+	// example:
+	// ```
+	//   github:
+	//     token: "ghp_xxxxxxxxxxxx"
+	// ```
+	GitHub GitHubSpec `yaml:",omitempty"`
 	/*
 		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
 

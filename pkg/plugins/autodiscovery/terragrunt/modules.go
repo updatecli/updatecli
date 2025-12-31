@@ -10,6 +10,7 @@ import (
 
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 )
 
 const (
@@ -256,6 +257,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleTargetSystem   string
 		ModuleSourceScm      string
 		ModuleSourceScmUrl   string
+		GitHubToken          string
 		ScmID                string
 		TargetName           string
 		TargetPath           string
@@ -275,6 +277,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleTargetSystem:   ModuleNameTargetSystem,
 		ModuleSourceScm:      ModuleSourceScm,
 		ModuleSourceScmUrl:   ModuleSourceScmUrl,
+		GitHubToken:          t.getGitHubToken(),
 		ScmID:                t.scmID,
 		TargetPath:           targetPath,
 		TargetName:           fmt.Sprintf("deps: bump %s to {{ source \"latestVersion\" }}", module.ForDisplay()),
@@ -290,4 +293,42 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		return nil, err
 	}
 	return manifest.Bytes(), nil
+}
+
+// getGitHubToken returns the GitHub token value for authentication
+// It first checks the spec, then falls back to environment variables using the standard token helper
+func (t Terragrunt) getGitHubToken() string {
+	// Use token from spec if provided
+	if t.spec.GitHub.Token != "" {
+		return t.spec.GitHub.Token
+	}
+
+	// Fall back to environment variables using the standard token helper
+	// This checks UPDATECLI_GITHUB_TOKEN first, then GitHub App credentials
+	_, tokenSource, err := token.GetTokenSourceFromEnv()
+	if err != nil {
+		logrus.Debugf("failed to get token source from environment: %s", err)
+	}
+
+	if tokenSource != nil {
+		accessToken, err := token.GetAccessToken(tokenSource)
+		if err != nil {
+			logrus.Debugf("failed to get access token: %s", err)
+			return ""
+		}
+		return accessToken
+	}
+
+	// Fall back to GITHUB_TOKEN environment variable
+	_, tokenSource = token.GetFallbackTokenSourceFromEnv()
+	if tokenSource != nil {
+		accessToken, err := token.GetAccessToken(tokenSource)
+		if err != nil {
+			logrus.Debugf("failed to get fallback access token: %s", err)
+			return ""
+		}
+		return accessToken
+	}
+
+	return ""
 }
