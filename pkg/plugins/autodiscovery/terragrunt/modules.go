@@ -10,7 +10,6 @@ import (
 
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 )
 
 const (
@@ -257,7 +256,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleTargetSystem   string
 		ModuleSourceScm      string
 		ModuleSourceScmUrl   string
-		GitHubToken          string
+		Token                string
 		ScmID                string
 		TargetName           string
 		TargetPath           string
@@ -277,7 +276,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleTargetSystem:   ModuleNameTargetSystem,
 		ModuleSourceScm:      ModuleSourceScm,
 		ModuleSourceScmUrl:   ModuleSourceScmUrl,
-		GitHubToken:          t.getGitHubToken(),
+		Token:                t.getToken(),
 		ScmID:                t.scmID,
 		TargetPath:           targetPath,
 		TargetName:           fmt.Sprintf("deps: bump %s to {{ source \"latestVersion\" }}", module.ForDisplay()),
@@ -295,40 +294,17 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 	return manifest.Bytes(), nil
 }
 
-// getGitHubToken returns the GitHub token value for authentication
-// It first checks the spec, then falls back to environment variables using the standard token helper
-func (t Terragrunt) getGitHubToken() string {
-	// Use token from spec if provided
-	if t.spec.GitHub.Token != "" {
-		return t.spec.GitHub.Token
+// getToken returns the token value for authentication with any Git provider
+// It handles two cases based on the Token pointer:
+//   - nil: no authentication (default behavior for public repos)
+//   - &"": same as nil, no authentication
+//   - &"xxx": use the specified token
+func (t Terragrunt) getToken() string {
+	// Case 1: Token is nil - no authentication
+	if t.spec.Token == nil {
+		return ""
 	}
 
-	// Fall back to environment variables using the standard token helper
-	// This checks UPDATECLI_GITHUB_TOKEN first, then GitHub App credentials
-	_, tokenSource, err := token.GetTokenSourceFromEnv()
-	if err != nil {
-		logrus.Debugf("failed to get token source from environment: %s", err)
-	}
-
-	if tokenSource != nil {
-		accessToken, err := token.GetAccessToken(tokenSource)
-		if err != nil {
-			logrus.Debugf("failed to get access token: %s", err)
-			return ""
-		}
-		return accessToken
-	}
-
-	// Fall back to GITHUB_TOKEN environment variable
-	_, tokenSource = token.GetFallbackTokenSourceFromEnv()
-	if tokenSource != nil {
-		accessToken, err := token.GetAccessToken(tokenSource)
-		if err != nil {
-			logrus.Debugf("failed to get fallback access token: %s", err)
-			return ""
-		}
-		return accessToken
-	}
-
-	return ""
+	// Case 2: Token pointer is set - use the value (even if empty)
+	return *t.spec.Token
 }

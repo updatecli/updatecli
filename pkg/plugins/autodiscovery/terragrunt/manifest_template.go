@@ -13,8 +13,8 @@ scms:
     kind: 'git'
     spec:
       url: '{{ .ModuleSourceScmUrl }}'
-{{- if .GitHubToken }}
-      password: '{{ .GitHubToken }}'
+{{- if .Token }}
+      password: '{{ .Token }}'
 {{- end }}
 {{- end }}
 sources:

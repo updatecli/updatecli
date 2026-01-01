@@ -4,21 +4,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// GitHubSpec defines GitHub credentials for accessing private repositories
-type GitHubSpec struct {
-	// `token` specifies the GitHub token to use for authentication
-	//
-	// compatible:
-	//   * autodiscovery
-	//
-	// default:
-	//   automatically detected from UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN environment variables
-	//
-	// example:
-	//   ghp_xxxxxxxxxxxx
-	Token string `yaml:",omitempty"`
-}
-
 // Spec defines the Terraform parameters.
 type Spec struct {
 	// `rootdir` defines the root directory from where looking for terragrunt configuration
@@ -27,17 +12,24 @@ type Spec struct {
 	Ignore MatchingRules `yaml:",omitempty"`
 	// `only` specify required rule to restrict `.terraform.lock.hcl` update.
 	Only MatchingRules `yaml:",omitempty"`
-	// `github` specifies the github credentials to use for accessing private repositories
+	// `token` specifies the token to use for Git authentication when accessing private repositories.
+	// Works with any Git provider (GitHub, GitLab, Bitbucket, Gitea, etc.)
+	//
+	// compatible:
+	//   * autodiscovery
 	//
 	// default:
-	//   Token is automatically detected from UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN environment variables
+	//   When not specified: No authentication (suitable for public repositories)
+	//
+	// remark:
+	//   Must be explicitly set for private repositories.
+	//   Use template functions to read from environment: token: "{{ requiredEnv \"GITLAB_TOKEN\" }}"
 	//
 	// example:
-	// ```
-	//   github:
-	//     token: "ghp_xxxxxxxxxxxx"
-	// ```
-	GitHub GitHubSpec `yaml:",omitempty"`
+	//   token: "ghp_xxxxxxxxxxxx"
+	//   token: "glpat-xxxxxxxxxxxx"
+	//   token: "{{ requiredEnv \"GITLAB_TOKEN\" }}"
+	Token *string `yaml:",omitempty"`
 	/*
 		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
 
