@@ -212,6 +212,30 @@ func TestToSourceUrl(t *testing.T) {
 			},
 		},
 		{
+			name:   "git http repo with double slash path separator",
+			source: "git::https://github.com/terraform-aws-modules/terraform-aws-lambda.git//?ref=v6.0.0",
+			expectedModule: terragruntModuleSource{
+				protocol:        "git::https",
+				baseUrl:         "github.com/terraform-aws-modules/terraform-aws-lambda.git",
+				rawSource:       "git::https://github.com/terraform-aws-modules/terraform-aws-lambda.git//?ref=v6.0.0",
+				evaluatedSource: "git::https://github.com/terraform-aws-modules/terraform-aws-lambda.git//?ref=v6.0.0",
+				version:         "6.0.0",
+				sourceType:      SourceTypeGit,
+			},
+		},
+		{
+			name:   "git http repo with double slash and submodule",
+			source: "git::https://github.com/terraform-aws-modules/terraform-aws-eks.git//modules/karpenter?ref=v20.0.0",
+			expectedModule: terragruntModuleSource{
+				protocol:        "git::https",
+				baseUrl:         "github.com/terraform-aws-modules/terraform-aws-eks.git",
+				rawSource:       "git::https://github.com/terraform-aws-modules/terraform-aws-eks.git//modules/karpenter?ref=v20.0.0",
+				evaluatedSource: "git::https://github.com/terraform-aws-modules/terraform-aws-eks.git//modules/karpenter?ref=v20.0.0",
+				version:         "20.0.0",
+				sourceType:      SourceTypeGit,
+			},
+		},
+		{
 			name:   "github repo",
 			source: "github.com/gruntwork-io/terraform-google-network.git//modules/vpc-network?ref=v0.2.9",
 			expectedModule: terragruntModuleSource{
