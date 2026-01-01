@@ -62,8 +62,8 @@ func TestGetTerragruntModules(t *testing.T) {
 				},
 				source: terragruntModuleSource{
 					baseUrl:         "terraform-aws-modules/rdss/aws",
-					rawSource:       "\"tfr://terraform-aws-modules/rdss/aws?version=5.8.1\"",
-					evaluatedSource: "tfr://terraform-aws-modules/rdss/aws?version=5.8.1",
+					rawSource:       "\"tfr:///terraform-aws-modules/rdss/aws?version=5.8.1\"",
+					evaluatedSource: "tfr:///terraform-aws-modules/rdss/aws?version=5.8.1",
 					version:         "5.8.1",
 					sourceType:      SourceTypeRegistry,
 				},
@@ -84,12 +84,12 @@ func TestGetTerragruntModules(t *testing.T) {
 				source: terragruntModuleSource{
 					baseUrl:         "terraform-aws-modules/aurora/aws",
 					rawSource:       "local.base_source_url",
-					evaluatedSource: "tfr://terraform-aws-modules/aurora/aws?version=5.8.1",
+					evaluatedSource: "tfr:///terraform-aws-modules/aurora/aws?version=5.8.1",
 					version:         "5.8.1",
 					sourceType:      SourceTypeRegistry,
 				},
 				hclContext: &map[string]string{
-					"base_source_url": "tfr://terraform-aws-modules/aurora/aws?version=5.8.1",
+					"base_source_url": "tfr:///terraform-aws-modules/aurora/aws?version=5.8.1",
 				},
 			},
 		},
@@ -107,8 +107,8 @@ func TestGetTerragruntModules(t *testing.T) {
 				},
 				source: terragruntModuleSource{
 					baseUrl:         "terraform-aws-modules/vpc/aws",
-					rawSource:       "\"tfr://${local.module}?version=${local.module_version}\"",
-					evaluatedSource: "tfr://terraform-aws-modules/vpc/aws?version=5.8.1",
+					rawSource:       "\"tfr:///${local.module}?version=${local.module_version}\"",
+					evaluatedSource: "tfr:///terraform-aws-modules/vpc/aws?version=5.8.1",
 					version:         "5.8.1",
 					sourceType:      SourceTypeRegistry,
 				},
@@ -132,8 +132,8 @@ func TestGetTerragruntModules(t *testing.T) {
 				},
 				source: terragruntModuleSource{
 					baseUrl:         "terraform-aws-modules/auroravpc/aws",
-					rawSource:       "\"tfr://${local.module}?version=1.2.3\"",
-					evaluatedSource: "tfr://terraform-aws-modules/auroravpc/aws?version=1.2.3",
+					rawSource:       "\"tfr:///${local.module}?version=1.2.3\"",
+					evaluatedSource: "tfr:///terraform-aws-modules/auroravpc/aws?version=1.2.3",
 					version:         "1.2.3",
 					sourceType:      SourceTypeRegistry,
 				},
@@ -181,11 +181,11 @@ func TestToSourceUrl(t *testing.T) {
 	}{
 		{
 			name:   "standard registry",
-			source: "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
+			source: "tfr:///terraform-aws-modules/vpc/aws?version=3.3.0",
 			expectedModule: terragruntModuleSource{
 				baseUrl:         "terraform-aws-modules/vpc/aws",
-				rawSource:       "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
-				evaluatedSource: "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
+				rawSource:       "tfr:///terraform-aws-modules/vpc/aws?version=3.3.0",
+				evaluatedSource: "tfr:///terraform-aws-modules/vpc/aws?version=3.3.0",
 				version:         "3.3.0",
 				sourceType:      SourceTypeRegistry,
 			}}, {
@@ -311,7 +311,7 @@ func TestIsLocalSourceUrl(t *testing.T) {
 			local:  false,
 		},
 		{
-			source: "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
+			source: "tfr:///terraform-aws-modules/vpc/aws?version=3.3.0",
 			local:  false,
 		},
 		{
@@ -384,7 +384,7 @@ func TestGetSourceType(t *testing.T) {
 			source_type: SourceTypeRegistry,
 		},
 		{
-			source:      "tfr://terraform-aws-modules/vpc/aws?version=3.3.0",
+			source:      "tfr:///terraform-aws-modules/vpc/aws?version=3.3.0",
 			source_type: SourceTypeRegistry,
 		},
 		{
@@ -440,17 +440,17 @@ func TestHclExpr(t *testing.T) {
 		{
 			name:   "No Expression",
 			file:   "testdata/inlined.hcl",
-			result: "tfr://terraform-aws-modules/rdss/aws?version=5.8.1",
+			result: "tfr:///terraform-aws-modules/rdss/aws?version=5.8.1",
 		},
 		{
 			name:   "Simple localized scenario",
 			file:   "testdata/simple_localized.hcl",
-			result: "tfr://terraform-aws-modules/aurora/aws?version=5.8.1",
+			result: "tfr:///terraform-aws-modules/aurora/aws?version=5.8.1",
 		},
 		{
 			name:   "Complex localized scenario",
 			file:   "testdata/complex_localized.hcl",
-			result: "tfr://terraform-aws-modules/vpc/aws?version=5.8.1",
+			result: "tfr:///terraform-aws-modules/vpc/aws?version=5.8.1",
 		},
 	}
 

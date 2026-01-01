@@ -28,7 +28,7 @@ type MatchingRule struct {
 		  # Ignore modules update for a specific registry
 		  tfr://registry.opentofu.org:
 		  # Ignore modules updates for a very specific module
-		  tfr://terraform-aws-modules/rdss/aws:
+		  tfr:///terraform-aws-modules/rdss/aws:
 		  registry.terraform.io/hashicorp/aws:
 		  # Ignore module updates for this version
 		  git@github.com:hashicorp/exampleLongNameForSorting.git: "1.x"
@@ -81,6 +81,8 @@ func (m MatchingRules) isMatchingRules(rootDir string, filePath string, module *
 					// tf expect version to have 3 to 4 slash, but let's allow for kind of wildcarding here
 					if strings.HasPrefix(ruleModuleUrl, "tfr://") {
 						baseUrl := strings.TrimPrefix(ruleModuleUrl, "tfr://")
+						// Handle tfr:/// (triple slash) format by removing leading slash
+						baseUrl = strings.TrimPrefix(baseUrl, "/")
 						suffix := ""
 						add := 3
 						if baseUrl == "" {

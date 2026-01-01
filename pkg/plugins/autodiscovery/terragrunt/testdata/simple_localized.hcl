@@ -3,7 +3,7 @@ terraform {
 }
 
 locals {
-  base_source_url = "tfr://terraform-aws-modules/aurora/aws?version=5.8.1"
+  base_source_url = "tfr:///terraform-aws-modules/aurora/aws?version=5.8.1"
   boolean_value   = true
   number_value    = 1
 }
