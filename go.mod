@@ -26,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.34.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.19.2
+	helm.sh/helm/v3 v3.19.4
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -38,7 +38,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.3.0
 	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.4
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.4
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.6
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.274.0
 	github.com/aws/smithy-go v1.24.0
 	github.com/beevik/etree v1.6.0
@@ -47,7 +47,7 @@ require (
 	github.com/fluxcd/helm-controller/api v1.4.5
 	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/go-viper/mapstructure/v2 v2.4.0
-	github.com/goccy/go-yaml v1.19.0
+	github.com/goccy/go-yaml v1.19.1
 	github.com/google/go-containerregistry v0.20.5
 	github.com/google/go-github/v69 v69.2.0
 	github.com/goware/urlx v0.3.2
@@ -71,7 +71,7 @@ require (
 	github.com/yuin/goldmark v1.7.13
 	github.com/zclconf/go-cty v1.17.0
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
-	golang.org/x/text v0.31.0
+	golang.org/x/text v0.32.0
 	golang.org/x/time v0.14.0
 	gopkg.in/ini.v1 v1.67.0
 	oras.land/oras-go/v2 v2.6.0
@@ -117,9 +117,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.45.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.30.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.30.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.41.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.41.5 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
@@ -227,7 +227,7 @@ require (
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/cyphar/filepath-securejoin v0.6.0 // indirect
+	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
@@ -316,17 +316,17 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	gitlab.com/gitlab-org/api/client-go v1.8.1
-	golang.org/x/crypto v0.45.0 // indirect
+	gitlab.com/gitlab-org/api/client-go v1.8.2
+	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/mod v0.31.0
-	golang.org/x/net v0.47.0
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/term v0.37.0 // indirect
+	golang.org/x/net v0.48.0
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/term v0.38.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
 	google.golang.org/api v0.250.0 // indirect
 	google.golang.org/grpc v1.76.0 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0
@@ -334,12 +334,12 @@ require (
 	k8s.io/apiextensions-apiserver v0.34.2 // indirect
 	k8s.io/apimachinery v0.34.2 // indirect
 	k8s.io/apiserver v0.34.2 // indirect
-	k8s.io/cli-runtime v0.34.0 // indirect
+	k8s.io/cli-runtime v0.34.2 // indirect
 	k8s.io/client-go v0.34.2 // indirect
 	k8s.io/component-base v0.34.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
-	k8s.io/kubectl v0.34.0 // indirect
+	k8s.io/kubectl v0.34.2 // indirect
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect

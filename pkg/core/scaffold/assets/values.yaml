@@ -1,0 +1,31 @@
+# NOTE: This file is a scaffold template for default values.
+# These values are used by updatecli when rendering the policy manifest.
+# Edit to match your repository or provide overrides at runtime with --values.
+
+scm:
+  # Enable or disable SCM integration for this policy.
+  # When disabled, Updatecli will not open PRs or push changes.
+  enabled: true
+
+  # SCM provider kind (supported: github, gitlab, gitea, bitbucket, stash).
+  # Use lowercase values.
+  kind: github
+
+  # Token lookup: by default Updatecli reads the token from the named
+  # environment variable. Set this to the env var name (e.g. GITHUB_TOKEN).
+  # Alternatively, you may set `token` below to provide a literal token
+  # (not recommended for checked-in files).
+  env_token: GITHUB_TOKEN
+
+  # Optional: provide a literal token here (overrides env_token). Avoid committing secrets.
+  # token: "ghp_xxx"
+
+  # Repository settings (recommended to fill for CI / automation):
+  # owner: my-org-or-user
+  # repository: my-repo
+  # username: updatecli-bot
+  # user: updatecli-bot
+  # email: updatecli-bot@example.com
+  # branch: main
+
+# Example: to disable SCM during local dry-runs, set `scm.enabled: false`.

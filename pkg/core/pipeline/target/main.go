@@ -168,7 +168,20 @@ func (t *Target) Run(source string, o *Options) (err error) {
 	}
 
 	if !o.DryRun {
-		// o.Commit represents Global updatecli commit option
+		if o.ExistingOnly {
+			upToDate, err := s.IsRemoteWorkingBranchExist()
+			if err != nil {
+				return fmt.Errorf("checking if remote branch exists: %s", err.Error())
+			}
+
+			if !upToDate {
+				logrus.Infof("No new pipeline run will be created as the pipeline is running in existing-only mode")
+				t.Result.Result = result.SKIPPED
+				t.Result.Description = "pipeline is running in existing-only mode, skipping publish step"
+				return nil
+			}
+		}
+
 		// targetCommit represents the local target commit option
 		if o.Commit {
 			if t.Result.Description == "" {
