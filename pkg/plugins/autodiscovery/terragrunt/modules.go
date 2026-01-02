@@ -256,6 +256,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleTargetSystem   string
 		ModuleSourceScm      string
 		ModuleSourceScmUrl   string
+		Token                string
 		ScmID                string
 		TargetName           string
 		TargetPath           string
@@ -275,6 +276,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleTargetSystem:   ModuleNameTargetSystem,
 		ModuleSourceScm:      ModuleSourceScm,
 		ModuleSourceScmUrl:   ModuleSourceScmUrl,
+		Token:                t.getToken(),
 		ScmID:                t.scmID,
 		TargetPath:           targetPath,
 		TargetName:           fmt.Sprintf("deps: bump %s to {{ source \"latestVersion\" }}", module.ForDisplay()),
@@ -290,4 +292,19 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		return nil, err
 	}
 	return manifest.Bytes(), nil
+}
+
+// getToken returns the token value for authentication with any Git provider
+// It handles two cases based on the Token pointer:
+//   - nil: no authentication (default behavior for public repos)
+//   - &"": same as nil, no authentication
+//   - &"xxx": use the specified token
+func (t Terragrunt) getToken() string {
+	// Case 1: Token is nil - no authentication
+	if t.spec.Token == nil {
+		return ""
+	}
+
+	// Case 2: Token pointer is set - use the value (even if empty)
+	return *t.spec.Token
 }
