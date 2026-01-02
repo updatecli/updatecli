@@ -1,6 +1,8 @@
 package scaffold
 
 import (
+	_ "embed"
+
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,38 +12,9 @@ import (
 )
 
 var (
-	policyTemplate = `---
-# Policy.yaml contains metadata for the Updatecli policy.
+	//go:embed assets/Policy.yaml.tmpl
+	policyTemplate string
 
-# Authors is the policy authors
-authors:
-{{- range $author := .Authors }}
-  - {{ $author }}
-{{- end }}
-
-# URL is the policy url
-url: {{ .URL }}
-
-# Documentation is the policy documentation URL
-documentation: {{ .Documentation }}
-
-# Source is the policy source URL
-source: {{ .Source }}
-
-# Version is the policy version. 
-version: {{ .Version }}
-
-# Vendor is the policy vendor
-vendor: {{ .Vendor }}
-
-# License is the policy licenses
-licenses:
-  - "{{ .License }}"
-
-# Description is the short policy description
-description: |
-  {{ .Description }}
-`
 	defaultAuthors       []string = []string{"Please insert an author for your policy"}
 	defaultDocumentation string   = "Please insert a documentation url for your policy"
 	defaultURL           string   = "Please insert a url for your policy"

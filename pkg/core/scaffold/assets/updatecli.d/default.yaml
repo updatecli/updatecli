@@ -1,0 +1,31 @@
+# NOTE: Example pipeline that updates the Updatecli Docker image referenced in a Dockerfile.
+# Adjust or replace it to match your workflow.
+# See https://www.updatecli.io/docs/prologue/quick-start/ for a quick-start guide.
+
+name: 'Update Updatecli Docker image in Dockerfile'
+
+# pipelineid is used to uniquely identify the pipeline across Updatecli runs
+pipelineid: "updatecli_dockerimage"
+
+sources:
+  default:
+    name: 'Get the latest Updatecli Docker image tag'
+    kind: dockerimage
+    spec:
+      image: 'updatecli/updatecli'
+      versionfilter:
+        kind: semver
+        pattern: "*"
+
+targets:
+  default:
+    name: 'Update Updatecli Docker image tag in Dockerfile'
+    kind: 'Dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'updatecli/updatecli'
+    # {{ if .scm.enabled}}
+    scmid: default
+    # {{ end }}

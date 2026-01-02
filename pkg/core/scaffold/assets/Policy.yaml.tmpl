@@ -1,0 +1,42 @@
+# NOTE:
+# Policy.yaml: metadata for an Updatecli policy.
+#
+# Field guide:
+# - `authors` (optional): list of people or teams responsible for the policy.
+#   Example: ["Alice Example", "acme-team"]
+# - `url` (optional): canonical web page for the policy.
+# - `documentation` (optional): link to extended documentation or usage examples.
+# - `source` (optional): VCS or repository URL where the policy source is hosted.
+# - `version` (recommended): policy version (prefer semantic versioning, e.g. 1.0.0).
+# - `vendor` (optional): organization or maintainer name.
+# - `licenses` (recommended): list of license identifiers (SPDX preferred).
+# - `description` (recommended): short multi-line summary. Use a `|` block.
+
+# Authors: list of people or teams responsible for this policy (optional).
+authors:
+{{- range $author := .Authors }}
+  - {{ $author }}
+{{- end }}
+
+# URL: canonical web page for the policy (optional).
+url: {{ .URL }}
+
+# Documentation: link to the policy's documentation or examples (optional).
+documentation: {{ .Documentation }}
+
+# Source: repository or VCS URL where the policy source is stored (optional).
+source: {{ .Source }}
+
+# Version: policy version (prefer semver, e.g. 1.0.0). Recommended.
+version: {{ .Version }}
+
+# Vendor: organization or maintainer (optional).
+vendor: {{ .Vendor }}
+
+# Licenses: list of license identifiers (SPDX preferred).
+licenses:
+  - "{{ .License }}"
+
+# Description: brief human-readable summary. Use a multi-line block.
+description: |
+  {{ .Description }}

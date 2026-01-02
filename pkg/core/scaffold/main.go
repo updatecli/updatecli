@@ -9,8 +9,6 @@ var (
 	defaultPolicyFile = "Policy.yaml"
 	// defaultSecretsDir is the default secrets directory name
 	defaultSecretsDir = "secrets.d"
-	// defaultConfigDir is the default config directory name
-	defaultConfigDir = "updatecli.d"
 	// defaultValuesFile is the default values file name
 	defaultValuesFile = "values.yaml"
 )
@@ -23,8 +21,6 @@ type Scaffold struct {
 	ValuesFile string
 	// SecretsDir is the secrets directory name
 	SecretsDir string
-	// ConfigDir is the config directory name
-	ConfigDir string
 }
 
 // Init initialize a new scaffold
@@ -36,7 +32,6 @@ func (s *Scaffold) Init() {
 		}
 	}
 
-	setDefaultValues(&s.ConfigDir, defaultConfigDir)
 	setDefaultValues(&s.PolicyFile, defaultPolicyFile)
 	setDefaultValues(&s.SecretsDir, defaultSecretsDir)
 	setDefaultValues(&s.ValuesFile, defaultValuesFile)
@@ -52,22 +47,7 @@ func (s *Scaffold) Run(rootDir string) error {
 		return err
 	}
 
-	err = s.scaffoldValues(rootDir)
-	if err != nil {
-		return err
-	}
-
 	err = s.scaffoldConfig(rootDir)
-	if err != nil {
-		return err
-	}
-
-	err = s.scaffoldReadme(rootDir)
-	if err != nil {
-		return err
-	}
-
-	err = s.scaffoldChangelog(rootDir)
 	if err != nil {
 		return err
 	}

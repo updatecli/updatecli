@@ -40,6 +40,7 @@ type GitHandler interface {
 	GetLatestCommitHash(workingDir string) (string, error)
 	IsSimilarBranch(a, b, workingDir string) (bool, error)
 	IsLocalBranchSyncedWithRemote(baseBranch, workingBranch, username, password, workingDir string) (bool, error)
+	IsRemoteBranchExist(branch, username, password, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
 	NewBranch(branch, workingDir string) (bool, error)
 	Pull(username, password, gitRepositoryPath, branch string, singleBranch, forceReset bool) error
@@ -194,6 +195,54 @@ func (g GoGit) IsLocalBranchSyncedWithRemote(baseBranch, workingBranch, username
 		There is no way to git log between two branches at the moment using go-git
 		https://github.com/go-git/go-git/issues/69
 	*/
+
+	return false, nil
+}
+
+// IsRemoteBranchExist checks if a remote branch exists.
+func (g GoGit) IsRemoteBranchExist(branch, username, password, workingDir string) (bool, error) {
+	logrus.Debugf("Checking if remote branch %q exists", branch)
+
+	auth := transportHttp.BasicAuth{
+		Username: username, // anything except an empty string
+		Password: password,
+	}
+
+	gitRepository, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return false, fmt.Errorf("opening %q git directory: %s", workingDir, err)
+	}
+
+	rem, err := gitRepository.Remote(DefaultRemoteReferenceName)
+	if err != nil {
+		// If the remote doesn't exist, then nothing has been published yet
+		if err == git.ErrRemoteNotFound {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("remote %q - %s", DefaultRemoteReferenceName, err)
+	}
+
+	listOptions := git.ListOptions{}
+
+	if !isAuthEmpty(&auth) {
+		listOptions.Auth = &auth
+	}
+
+	remoteRefs, err := rem.List(&listOptions)
+	if err != nil {
+		return false, fmt.Errorf("listing remote %q - %s", DefaultRemoteReferenceName, err)
+	}
+
+	// Looking for remote branch hash
+	for id := range remoteRefs {
+		if remoteRefs[id].Name().IsBranch() {
+			// We are looking for the remote branch matching the local one
+			if remoteRefs[id].Name().Short() == branch {
+				return true, nil
+			}
+		}
+	}
 
 	return false, nil
 }

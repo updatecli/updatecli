@@ -36,6 +36,7 @@ type ScmHandler interface {
 	PushBranch(branch string) error
 	GetChangedFiles(workingDir string) ([]string, error)
 	IsRemoteBranchUpToDate() (bool, error)
+	IsRemoteWorkingBranchExist() (bool, error)
 	GetBranches() (sourceBranch, workingBranch, targetBranch string)
 	GetURL() string
 	Summary() string
