@@ -15,7 +15,7 @@ sources:
     name: 'Get latest version of the terraform-aws-modules/rdss/aws module'
     kind: 'terraform/registry'
     transformers:
-      - addprefix: 'tfr://terraform-aws-modules/rdss/aws?version='
+      - addprefix: 'tfr:///terraform-aws-modules/rdss/aws?version='
     spec:
       versionfilter:
         kind: 'semver'
@@ -40,7 +40,7 @@ sources:
     name: 'Get latest version of the terraform-aws-modules/aurora/aws module'
     kind: 'terraform/registry'
     transformers:
-      - addprefix: 'tfr://terraform-aws-modules/aurora/aws?version='
+      - addprefix: 'tfr:///terraform-aws-modules/aurora/aws?version='
     spec:
       versionfilter:
         kind: 'semver'
@@ -89,7 +89,7 @@ sources:
     name: 'Get latest version of the terraform-aws-modules/auroravpc/aws module'
     kind: 'terraform/registry'
     transformers:
-      - addprefix: 'tfr://${local.module}?version='
+      - addprefix: 'tfr:///${local.module}?version='
     spec:
       versionfilter:
         kind: 'semver'

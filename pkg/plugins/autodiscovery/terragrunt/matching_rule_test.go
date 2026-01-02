@@ -75,7 +75,7 @@ func TestIsMatchingRule(t *testing.T) {
 				},
 			},
 			filePath:       "terragrunt.hcl",
-			moduleUrl:      "tfr://terraform-aws-modules/rds/aws?version=1.0.0",
+			moduleUrl:      "tfr:///terraform-aws-modules/rds/aws?version=1.0.0",
 			expectedResult: true,
 		},
 
@@ -84,12 +84,12 @@ func TestIsMatchingRule(t *testing.T) {
 				MatchingRule{
 					Path: "terragrunt.hcl",
 					Modules: map[string]string{
-						"tfr://": "",
+						"tfr:///": "",
 					},
 				},
 			},
 			filePath:       "terragrunt.hcl",
-			moduleUrl:      "tfr://terraform-aws-modules/rds/aws?version=1.0.0",
+			moduleUrl:      "tfr:///terraform-aws-modules/rds/aws?version=1.0.0",
 			expectedResult: true,
 		},
 
@@ -98,12 +98,12 @@ func TestIsMatchingRule(t *testing.T) {
 				MatchingRule{
 					Path: "terragrunt.hcl",
 					Modules: map[string]string{
-						"tfr://terraform-aws-modules": "",
+						"tfr:///terraform-aws-modules": "",
 					},
 				},
 			},
 			filePath:       "terragrunt.hcl",
-			moduleUrl:      "tfr://terraform-aws-modules/rds/aws?version=1.0.0",
+			moduleUrl:      "tfr:///terraform-aws-modules/rds/aws?version=1.0.0",
 			expectedResult: true,
 		},
 
@@ -112,12 +112,12 @@ func TestIsMatchingRule(t *testing.T) {
 				MatchingRule{
 					Path: "terragrunt.hcl",
 					Modules: map[string]string{
-						"tfr://terraform-aws-modules/rds": "",
+						"tfr:///terraform-aws-modules/rds": "",
 					},
 				},
 			},
 			filePath:       "terragrunt.hcl",
-			moduleUrl:      "tfr://terraform-aws-modules/rds/aws?version=1.0.0",
+			moduleUrl:      "tfr:///terraform-aws-modules/rds/aws?version=1.0.0",
 			expectedResult: true,
 		},
 
@@ -126,12 +126,12 @@ func TestIsMatchingRule(t *testing.T) {
 				MatchingRule{
 					Path: "terragrunt.hcl",
 					Modules: map[string]string{
-						"tfr://terraform-aws-modules/rds/aws": "",
+						"tfr:///terraform-aws-modules/rds/aws": "",
 					},
 				},
 			},
 			filePath:       "terragrunt.hcl",
-			moduleUrl:      "tfr://terraform-aws-modules/rds/aws?version=1.0.0",
+			moduleUrl:      "tfr:///terraform-aws-modules/rds/aws?version=1.0.0",
 			expectedResult: true,
 		},
 		{
@@ -144,7 +144,7 @@ func TestIsMatchingRule(t *testing.T) {
 				},
 			},
 			filePath:       "terragrunt.hcl",
-			moduleUrl:      "tfr://terraform-aws-modules/rds/aws?version=1.0.0",
+			moduleUrl:      "tfr:///terraform-aws-modules/rds/aws?version=1.0.0",
 			expectedResult: false,
 		},
 
@@ -163,22 +163,22 @@ func TestIsMatchingRule(t *testing.T) {
 			rules: MatchingRules{
 				MatchingRule{
 					Modules: map[string]string{
-						"tfr://terraform-aws-modules/rds/aws": ">=5",
+						"tfr:///terraform-aws-modules/rds/aws": ">=5",
 					},
 				},
 			},
-			moduleUrl:      "tfr://terraform-aws-modules/rds/aws?version=5.9.0",
+			moduleUrl:      "tfr:///terraform-aws-modules/rds/aws?version=5.9.0",
 			expectedResult: true,
 		},
 		{
 			rules: MatchingRules{
 				MatchingRule{
 					Modules: map[string]string{
-						"tfr://terraform-aws-modules/rds/aws": ">=6",
+						"tfr:///terraform-aws-modules/rds/aws": ">=6",
 					},
 				},
 			},
-			moduleUrl:      "tfr://terraform-aws-modules/rds/aws?version=5.9.0",
+			moduleUrl:      "tfr:///terraform-aws-modules/rds/aws?version=5.9.0",
 			expectedResult: false,
 		},
 	}
