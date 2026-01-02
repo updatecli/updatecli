@@ -13,6 +13,9 @@ scms:
     kind: 'git'
     spec:
       url: '{{ .ModuleSourceScmUrl }}'
+{{- if .Token }}
+      password: '{{ .Token }}'
+{{- end }}
 {{- end }}
 sources:
   latestVersion:
