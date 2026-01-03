@@ -15,6 +15,15 @@ sources:
     spec:
       image: '{{ .ImageName }}'
       tagfilter: '{{ .SourceTagFilter }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -48,6 +57,15 @@ sources:
     spec:
       image: '{{ .ImageName }}'
       tagfilter: '{{ .SourceTagFilter }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -60,6 +78,15 @@ sources:
     spec:
       image: '{{ .ImageName }}'
       tag: '{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
     dependson:
       - '{{ .SourceID }}'
 targets:
@@ -89,6 +116,15 @@ sources:
     spec:
       image: '{{ .ImageName }}'
       tag: '{{ .ImageTag }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
 targets:
   {{ .TargetID }}:
     name: 'deps: bump container image digest for "{{ .ImageName }}:{{ .ImageTag }}"'

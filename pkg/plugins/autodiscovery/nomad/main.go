@@ -26,6 +26,19 @@ type Spec struct {
 	// only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
 	Only MatchingRules `yaml:",omitempty"`
 	// auths provides a map of registry credentials where the key is the registry URL without scheme
+	// if empty, updatecli relies on OCI credentials such as the one used by Docker.
+	//
+	// example:
+	//
+	// ---
+	// auths:
+	//   "ghcr.io":
+	//     token: "xxx"
+	//   "index.docker.io":
+	//     username: "admin"
+	//     password: "password"
+	// ---
+	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 	// FileMatch allows to override default docker-compose.yaml file matching. Default ["docker-compose.yaml","docker-compose.yml","docker-compose.*.yaml","docker-compose.*.yml"]
 	FileMatch []string `yaml:",omitempty"`
@@ -52,7 +65,9 @@ type Spec struct {
 	//   kind: semver
 	//   pattern: minor
 	//```
-	//and its type like regex, semver, or just latest.
+	//
+	// More version filter available at https://www.updatecli.io/docs/core/versionfilter/
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

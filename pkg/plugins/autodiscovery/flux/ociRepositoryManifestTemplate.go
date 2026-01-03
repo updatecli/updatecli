@@ -18,9 +18,18 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
-{{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
-{{- end }}
+        {{- end }}
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
 targets:
   oci:
     name: 'deps(flux): bump OCI repository "{{ .OCIName }}"'
@@ -50,15 +59,33 @@ sources:
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
-{{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
-{{- end }}
+        {{- end }}
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
   oci-digest:
     name: 'Get latest "{{ .OCIName }}" OCI artifact digest'
     kind: 'dockerdigest'
     spec:
       image: '{{ .OCIName }}'
       tag: '{{ "{{" }} source "oci" {{ "}}" }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
     dependson:
       - 'oci'
 targets:
@@ -87,6 +114,15 @@ sources:
     spec:
       image: '{{ .OCIName }}'
       tag: '{{ .OCIVersion }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
 targets:
   oci:
     name: 'deps(flux): bump OCI repository "{{ .OCIName }}"'

@@ -178,6 +178,10 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			versionFilterRegex := h.versionFilter.Regex
 			tagFilter := "*"
 
+			registryUsername := ""
+			registryPassword := ""
+			registryToken := ""
+
 			if sourceSpec != nil {
 				versionFilterKind = sourceSpec.VersionFilter.Kind
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
@@ -185,6 +189,10 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				tagFilter = sourceSpec.TagFilter
 				imageName = sourceSpec.Image
 				imageTag = sourceSpec.Tag
+
+				registryPassword = sourceSpec.Password
+				registryUsername = sourceSpec.Username
+				registryToken = sourceSpec.Token
 			}
 
 			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
@@ -241,6 +249,9 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				SourceVersionFilterRegex    string
 				SourceImageName             string
 				SourceTagFilter             string
+				RegistryUsername            string
+				RegistryPassword            string
+				RegistryToken               string
 				TargetID                    string
 				TargetKey                   string
 				TargetFile                  string
@@ -268,6 +279,9 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				SourceVersionFilterRegex:    versionFilterRegex,
 				SourceImageName:             imageName,
 				SourceTagFilter:             tagFilter,
+				RegistryUsername:            registryUsername,
+				RegistryPassword:            registryPassword,
+				RegistryToken:               registryToken,
 				TargetID:                    imageSourceSlug,
 				TargetKey:                   image.yamlTagPath,
 				TargetChartName:             chartRelativeMetadataPath,

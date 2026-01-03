@@ -133,11 +133,19 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 	versionFilterRegex := k.versionFilter.Regex
 	tagFilter := "*"
 
+	registryUsername := ""
+	registryPassword := ""
+	registryToken := ""
+
 	if sourceSpec != nil {
 		versionFilterKind = sourceSpec.VersionFilter.Kind
 		versionFilterPattern = sourceSpec.VersionFilter.Pattern
 		versionFilterRegex = sourceSpec.VersionFilter.Regex
 		tagFilter = sourceSpec.TagFilter
+
+		registryUsername = sourceSpec.Username
+		registryPassword = sourceSpec.Password
+		registryToken = sourceSpec.Token
 	}
 
 	// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
@@ -186,6 +194,9 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		VersionFilterKind    string
 		VersionFilterPattern string
 		VersionFilterRegex   string
+		RegistryUsername     string
+		RegistryPassword     string
+		RegistryToken        string
 		TargetID             string
 		TargetKey            string
 		TargetPrefix         string
@@ -193,19 +204,23 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		TargetName           string
 		ScmID                string
 	}{
-		ActionID:             k.actionID,
-		ManifestName:         fmt.Sprintf("deps: bump container image %q", imageName),
-		ImageName:            imageName,
-		ImageTag:             imageTag,
-		SourceID:             sourceId,
-		SourceName:           fmt.Sprintf("get latest container image tag for %q", imageName),
-		SourceKind:           "dockerimage",
-		SourceTagFilter:      tagFilter,
-		TargetID:             imageName,
-		TargetPrefix:         imageName + ":",
-		TargetKey:            targetKey,
-		TargetFile:           relativeFoundKoFile,
-		TargetName:           fmt.Sprintf("deps: bump container image %q to {{ source %q }}", imageName, sourceId),
+		ActionID:         k.actionID,
+		ManifestName:     fmt.Sprintf("deps: bump container image %q", imageName),
+		ImageName:        imageName,
+		ImageTag:         imageTag,
+		SourceID:         sourceId,
+		SourceName:       fmt.Sprintf("get latest container image tag for %q", imageName),
+		SourceKind:       "dockerimage",
+		SourceTagFilter:  tagFilter,
+		TargetID:         imageName,
+		TargetPrefix:     imageName + ":",
+		TargetKey:        targetKey,
+		TargetFile:       relativeFoundKoFile,
+		TargetName:       fmt.Sprintf("deps: bump container image %q to {{ source %q }}", imageName, sourceId),
+		RegistryUsername: registryUsername,
+		RegistryPassword: registryPassword,
+		RegistryToken:    registryToken,
+
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
 		VersionFilterRegex:   versionFilterRegex,
