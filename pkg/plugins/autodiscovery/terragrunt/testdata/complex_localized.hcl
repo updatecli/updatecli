@@ -1,5 +1,5 @@
 terraform {
-  source = "tfr://${local.module}?version=${local.module_version}"
+  source = "tfr:///${local.module}?version=${local.module_version}"
 }
 
 locals {

@@ -12,6 +12,24 @@ type Spec struct {
 	Ignore MatchingRules `yaml:",omitempty"`
 	// `only` specify required rule to restrict `.terraform.lock.hcl` update.
 	Only MatchingRules `yaml:",omitempty"`
+	// `token` specifies the token to use for Git authentication when accessing private repositories.
+	// Works with any Git provider (GitHub, GitLab, Bitbucket, Gitea, etc.)
+	//
+	// compatible:
+	//   * autodiscovery
+	//
+	// default:
+	//   When not specified: No authentication (suitable for public repositories)
+	//
+	// remark:
+	//   Must be explicitly set for private repositories.
+	//   Use template functions to read from environment: token: "{{ requiredEnv \"GITLAB_TOKEN\" }}"
+	//
+	// example:
+	//   token: "ghp_xxxxxxxxxxxx"
+	//   token: "glpat-xxxxxxxxxxxx"
+	//   token: "{{ requiredEnv \"GITLAB_TOKEN\" }}"
+	Token *string `yaml:",omitempty"`
 	/*
 		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
 
