@@ -24,17 +24,16 @@ func (e *Engine) publishToUdash() error {
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Udash - Experimental"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Udash - Experimental")+1))
 
-	udashConfigFile, found := udash.IsConfigFile()
-	if !found {
-		logrus.Infof("Skipping as no Udash configuration file found at %s", udashConfigFile)
-		return nil
-	}
-
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
-		if err := udash.Publish(&pipeline.Report); err != nil &&
-			!errors.Is(err, udash.ErrNoUdashAPIURL) {
-			errs = append(errs, pipeline.Name+err.Error())
+		err := udash.Publish(&pipeline.Report)
+		if err != nil {
+			if errors.Is(err, udash.ErrNoUdashAPIURL) {
+				logrus.Infof("no Udash endpoint detected, skipping")
+				break
+			} else {
+				errs = append(errs, pipeline.Name+err.Error())
+			}
 		}
 		if pipeline.Report.ReportURL != "" {
 			logrus.Infof("%s:\n\t=> %q", pipeline.Name, pipeline.Report.ReportURL)
