@@ -42,7 +42,7 @@ func Publish(r *reports.Report) error {
 
 	configUdashURLString, configUdashApiURLString, configUdashToken, err := getConfigFromFile("")
 	if err != nil {
-		logrus.Debugf("retrieving service access token: %s", err)
+		logrus.Debugf("get Udash config from file: %s", err)
 	}
 
 	setDefaultParam(&envUdashApiURLString, configUdashApiURLString, DefaultEnvVariableAPIURL, "api")
@@ -50,8 +50,7 @@ func Publish(r *reports.Report) error {
 	setDefaultParam(&envUdashToken, configUdashToken, DefaultEnvVariableAccessToken, "token")
 
 	if envUdashApiURLString == "" {
-		logrus.Infof("no Udash endpoint detected, skipping report publication")
-		return nil
+		return ErrNoUdashAPIURL
 	}
 
 	reportApiURL, err := url.Parse(envUdashApiURLString)
