@@ -1,0 +1,10 @@
+name: Test Custom autodiscovery plugin
+
+autodiscovery:
+  crawlers:
+    "pkg/plugins/autodiscovery/plugin/testdata/demo.wasm":
+      # The source code for this plugin is available autodiscovery
+      # https://github.com/updatecli/plugins/tree/main/autodiscovery/demo
+      spec:
+        files:
+          - pkg/plugins/autodiscovery/plugin/testdata/demo/data.txt
