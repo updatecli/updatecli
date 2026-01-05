@@ -160,6 +160,20 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		}
 	}
 
+	token := ""
+	foundRegistry := false
+
+	repoURL, err := url.Parse(data.RepoURL) // to validate URL format
+	if err != nil {
+		logrus.Debugf("invalid URL: %s", err)
+		return nil, nil
+	}
+
+	if _, foundRegistry = f.spec.Auths[repoURL.Host]; foundRegistry {
+		token = f.spec.Auths[repoURL.Host].Token
+		logrus.Debugf("found token for repository %q", data.RepoURL)
+	}
+
 	sourceChartRepository, err := determineChartRepository(data.RepoURL)
 	if err != nil {
 		logrus.Debugf("invalid URL: %s", err)
@@ -189,6 +203,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		SourceVersionFilterRegex   string
 		TargetID                   string
 		TargetKey                  string
+		Token                      string
 		File                       string
 		ScmID                      string
 	}{
@@ -209,6 +224,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		TargetKey:                  targetKey,
 		File:                       file,
 		ScmID:                      f.scmID,
+		Token:                      token,
 	}
 
 	manifest := bytes.Buffer{}
