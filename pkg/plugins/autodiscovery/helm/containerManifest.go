@@ -29,7 +29,6 @@ sources:
       {{- if .RegistryToken }}
       token: '{{ .RegistryToken }}'
       {{- end }}
-
 conditions:
 {{- if .HasRegistry }}
   {{ .ConditionRegistryID }}:
@@ -83,6 +82,9 @@ sources:
     spec:
       image: '{{ .SourceImageName }}'
       tagfilter: '{{ .SourceTagFilter }}'
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
@@ -94,9 +96,6 @@ sources:
       {{- end }}
       {{- if .RegistryPassword }}
       password: '{{ .RegistryPassword }}'
-      {{- end }}
-      {{- if .RegistryToken }}
-      token: '{{ .RegistryToken }}'
       {{- end }}
   image-digest:
     name: 'get latest image "{{ .ImageName }}" digest'

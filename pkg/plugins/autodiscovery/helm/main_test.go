@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -17,11 +18,17 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		digest            bool
+		auths             map[string]docker.InlineKeyChain
 		expectedPipelines []string
 	}{
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata-1/chart",
+			auths: map[string]docker.InlineKeyChain{
+				"charts.min.io": {
+					Token: "token-minio",
+				},
+			},
 			expectedPipelines: []string{`name: 'Bump dependency "minio" for Helm chart "epinio"'
 sources:
   helmchart:
@@ -30,6 +37,7 @@ sources:
     spec:
       name: 'minio'
       url: 'https://charts.min.io/'
+      token: 'token-minio'
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -473,6 +481,7 @@ targets:
 			helm, err := New(
 				Spec{
 					Digest: &digest,
+					Auths:  tt.auths,
 				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)

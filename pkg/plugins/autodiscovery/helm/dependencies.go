@@ -3,6 +3,7 @@ package helm
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"path"
 	"path/filepath"
 	"strings"
@@ -114,6 +115,20 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				}
 			}
 
+			token := ""
+			foundRegistry := false
+
+			repoURL, err := url.Parse(dependency.Repository)
+			if err != nil {
+				logrus.Debugf("invalid URL: %s", err)
+				return nil, nil
+			}
+
+			if _, foundRegistry = h.spec.Auths[repoURL.Host]; foundRegistry {
+				token = h.spec.Auths[repoURL.Host].Token
+				logrus.Debugf("found token for repository %q", dependency.Repository)
+			}
+
 			tmpl, err := template.New("manifest").Parse(dependencyManifest)
 			if err != nil {
 				logrus.Debugln(err)
@@ -142,6 +157,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				TargetChartSkipPackaging    bool
 				TargetChartVersionIncrement string
 				TargetFile                  string
+				Token                       string
 				File                        string
 				ScmID                       string
 			}{
@@ -164,6 +180,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				TargetChartVersionIncrement: h.spec.VersionIncrement,
 				TargetFile:                  filepath.Base(foundChartFile),
 				File:                        relativeFoundChartFile,
+				Token:                       token,
 				ScmID:                       h.scmID,
 			}
 

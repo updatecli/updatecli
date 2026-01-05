@@ -16,12 +16,15 @@ sources:
     spec:
       name: '{{ .DependencyName }}'
       url: '{{ .DependencyRepository }}'
+      {{- if .Token }}
+      token: '{{ .Token }}'
+      {{- end }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
-{{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
+        {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
-{{- end }}
+        {{- end }}
 conditions:
   {{ .ConditionID }}:
     name: 'Ensure Helm chart dependency "{{ .DependencyName }}" is specified'
