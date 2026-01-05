@@ -48,7 +48,7 @@ require (
 	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/goccy/go-yaml v1.19.1
-	github.com/google/go-containerregistry v0.20.5
+	github.com/google/go-containerregistry v0.20.7
 	github.com/google/go-github/v69 v69.2.0
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.23.1-0.20250211201033-5c140ce1cb20
