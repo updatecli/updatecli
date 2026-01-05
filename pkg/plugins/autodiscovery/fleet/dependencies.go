@@ -3,6 +3,7 @@ package fleet
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"path"
 	"path/filepath"
 	"text/template"
@@ -90,6 +91,20 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			}
 		}
 
+		token := ""
+		foundRegistry := false
+
+		helmRepo, err := url.Parse(data.Helm.Repo) // to validate URL format
+		if err != nil {
+			logrus.Debugf("invalid URL: %s", err)
+			return nil, nil
+		}
+
+		if _, foundRegistry = f.spec.Auths[helmRepo.Host]; foundRegistry {
+			token = f.spec.Auths[helmRepo.Host].Token
+			logrus.Debugf("found token for repository %q", data.Helm.Repo)
+		}
+
 		sourceVersionFilterKind := "semver"
 		sourceVersionFilterPattern := "*"
 		sourceVersionFilterRegex := "*"
@@ -124,6 +139,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			SourceVersionFilterKind    string
 			SourceVersionFilterPattern string
 			SourceVersionFilterRegex   string
+			Token                      string
 			TargetID                   string
 			File                       string
 			ScmID                      string
@@ -140,6 +156,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			SourceVersionFilterKind:    sourceVersionFilterKind,
 			SourceVersionFilterPattern: sourceVersionFilterPattern,
 			SourceVersionFilterRegex:   sourceVersionFilterRegex,
+			Token:                      token,
 			TargetID:                   data.Helm.Chart,
 			File:                       relativeFoundChartFile,
 			ScmID:                      f.scmID,
