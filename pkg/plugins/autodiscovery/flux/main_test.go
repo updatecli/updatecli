@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -12,10 +13,50 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		digest            bool
+		auths             map[string]docker.InlineKeyChain
 		scmID             string
 		actionID          string
 		expectedPipelines []string
 	}{
+		{
+			name:    "Scenario - helmrelease Simple with auth",
+			rootDir: "testdata/helmrelease/simple",
+			auths: map[string]docker.InlineKeyChain{
+				"updatecli.github.io": {
+					Token: "mytoken",
+				},
+			},
+			expectedPipelines: []string{`name: 'deps(flux): bump Helmrelease "udash"'
+sources:
+  helmrelease:
+    name: 'Get latest "udash" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'udash'
+      url: 'https://updatecli.github.io/charts'
+      token: 'mytoken'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  helmrelease:
+    name: 'Ensure Helm Chart name "udash"'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'helmrelease.yaml'
+      key: '$.spec.chart.spec.chart'
+      value: 'udash'
+targets:
+  helmrelease:
+    name: 'deps(flux): bump Helmrelease "udash"'
+    kind: 'yaml'
+    spec:
+      file: 'helmrelease.yaml'
+      key: '$.spec.chart.spec.version'
+    sourceid: 'helmrelease'
+`},
+		},
 		{
 			name:    "Scenario - helmrelease Simple",
 			rootDir: "testdata/helmrelease/simple",
@@ -283,6 +324,7 @@ targets:
 			flux, err := New(
 				Spec{
 					Digest: &digest,
+					Auths:  tt.auths,
 				}, tt.rootDir, tt.scmID, tt.actionID)
 
 			require.NoError(t, err)
