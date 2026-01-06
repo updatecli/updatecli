@@ -161,17 +161,15 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 	}
 
 	token := ""
-	foundRegistry := false
-
 	repoURL, err := url.Parse(data.RepoURL) // to validate URL format
-	if err != nil {
-		logrus.Debugf("invalid URL: %s", err)
-		return nil, nil
-	}
-
-	if _, foundRegistry = f.spec.Auths[repoURL.Host]; foundRegistry {
-		token = f.spec.Auths[repoURL.Host].Token
-		logrus.Debugf("found token for repository %q", data.RepoURL)
+	switch err {
+	case nil:
+		if _, ok := f.spec.Auths[repoURL.Host]; ok {
+			token = f.spec.Auths[repoURL.Host].Token
+			logrus.Debugf("found token for repository %q", data.RepoURL)
+		}
+	default:
+		logrus.Debugf("Ignorning auth configuration due to invalid Helm repository URL: %s", err)
 	}
 
 	sourceChartRepository, err := determineChartRepository(data.RepoURL)

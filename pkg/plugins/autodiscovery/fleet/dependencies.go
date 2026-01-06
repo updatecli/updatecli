@@ -92,17 +92,15 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 		}
 
 		token := ""
-		foundRegistry := false
-
 		helmRepo, err := url.Parse(data.Helm.Repo) // to validate URL format
-		if err != nil {
-			logrus.Debugf("invalid URL: %s", err)
-			return nil, nil
-		}
-
-		if _, foundRegistry = f.spec.Auths[helmRepo.Host]; foundRegistry {
-			token = f.spec.Auths[helmRepo.Host].Token
-			logrus.Debugf("found token for repository %q", data.Helm.Repo)
+		switch err {
+		case nil:
+			logrus.Debugf("Ignorning auth configuration due to invalid Helm repository URL: %s", err)
+		default:
+			if _, ok := f.spec.Auths[helmRepo.Host]; ok {
+				token = f.spec.Auths[helmRepo.Host].Token
+				logrus.Debugf("found token for repository %q", data.Helm.Repo)
+			}
 		}
 
 		sourceVersionFilterKind := "semver"

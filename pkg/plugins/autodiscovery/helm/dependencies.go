@@ -116,17 +116,15 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 			}
 
 			token := ""
-			foundRegistry := false
-
 			repoURL, err := url.Parse(dependency.Repository)
-			if err != nil {
-				logrus.Debugf("invalid URL: %s", err)
-				return nil, nil
-			}
-
-			if _, foundRegistry = h.spec.Auths[repoURL.Host]; foundRegistry {
-				token = h.spec.Auths[repoURL.Host].Token
-				logrus.Debugf("found token for repository %q", dependency.Repository)
+			switch err {
+			case nil:
+				if _, ok := h.spec.Auths[repoURL.Host]; ok {
+					token = h.spec.Auths[repoURL.Host].Token
+					logrus.Debugf("found token for repository %q", dependency.Repository)
+				}
+			default:
+				logrus.Debugf("Ignorning auth configuration due to invalid Helm repository URL: %s", err)
 			}
 
 			tmpl, err := template.New("manifest").Parse(dependencyManifest)

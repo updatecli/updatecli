@@ -81,17 +81,15 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 		}
 
 		token := ""
-		foundRegistry := false
-
-		repoURL, err := url.Parse(helmRepositoryURL) // to validate URL format
-		if err != nil {
-			logrus.Debugf("invalid URL: %s", err)
-			return nil
-		}
-
-		if _, foundRegistry = f.spec.Auths[repoURL.Host]; foundRegistry {
-			token = f.spec.Auths[repoURL.Host].Token
-			logrus.Debugf("found token for repository %q", repoURL.Host)
+		repoURL, err := url.Parse(helmRepositoryURL)
+		switch err {
+		case nil:
+			if _, ok := f.spec.Auths[repoURL.Host]; ok {
+				token = f.spec.Auths[repoURL.Host].Token
+				logrus.Debugf("found token for repository %q", repoURL.Host)
+			}
+		default:
+			logrus.Debugf("Ignorning auth configuration due to invalid Helm repository URL: %s", err)
 		}
 
 		sourceVersionFilterKind := defaultVersionFilterKind

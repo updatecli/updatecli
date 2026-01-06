@@ -61,7 +61,7 @@ type Spec struct {
 	//   versionfilter:
 	//   kind: semver
 	//   pattern: minor
-	//```
+	// ```
 	//
 	// More version filter available at https://www.updatecli.io/docs/core/versionfilter/
 	//

@@ -82,15 +82,15 @@ sources:
     spec:
       image: '{{ .SourceImageName }}'
       tagfilter: '{{ .SourceTagFilter }}'
-      {{- if .RegistryToken }}
-      token: '{{ .RegistryToken }}'
-      {{- end }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
         {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
         {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
       {{- if .RegistryUsername }}
       username: '{{ .RegistryUsername }}'
       {{- end }}
