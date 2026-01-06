@@ -78,7 +78,7 @@ sources:
     spec:
       image: '{{ .ImageName }}'
       tag: '{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
-            {{- if .RegistryUsername }}
+      {{- if .RegistryUsername }}
       username: '{{ .RegistryUsername }}'
       {{- end }}
       {{- if .RegistryPassword }}
