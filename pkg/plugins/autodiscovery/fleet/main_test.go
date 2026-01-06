@@ -12,7 +12,57 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		expectedPipelines []string
+		spec              Spec
 	}{
+		{
+			name:    "Scenario 1.1 with auth",
+			rootDir: "testdata",
+			spec: Spec{
+				Auths: map[string]auth{
+					"grafana.github.io": {
+						Token: "token",
+					},
+				},
+			},
+			expectedPipelines: []string{`name: 'deps(rancher/fleet): bump "grafana" Fleet bundle for "grafana" Helm chart'
+sources:
+  grafana:
+    name: 'Get latest "grafana" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'grafana'
+      url: 'https://grafana.github.io/helm-charts'
+      token: 'token'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  grafana-name:
+    name: 'Ensure Helm chart name grafana is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'fleet.d/grafana/fleet.yaml'
+      key: '$.helm.chart'
+      value: 'grafana'
+  grafana-repository:
+    name: 'Ensure Helm chart repository https://grafana.github.io/helm-charts is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'fleet.d/grafana/fleet.yaml'
+      key: '$.helm.repo'
+      value: 'https://grafana.github.io/helm-charts'
+targets:
+  grafana:
+    name: 'deps(helm): bump chart "grafana" in Fleet bundle "grafana"'
+    kind: 'yaml'
+    spec:
+      file: 'fleet.d/grafana/fleet.yaml'
+      key: '$.helm.version'
+    sourceid: 'grafana'
+`},
+		},
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata",
@@ -60,7 +110,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			fleet, err := New(
-				Spec{}, tt.rootDir, "", "")
+				tt.spec, tt.rootDir, "", "")
 
 			require.NoError(t, err)
 

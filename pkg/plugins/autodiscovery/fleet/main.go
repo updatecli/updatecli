@@ -11,6 +11,17 @@ import (
 
 // Spec defines the parameters which can be provided to the fleet builder.
 type Spec struct {
+	// Auths holds a map of string to string where the key is the registry URL and the value the token used for authentication
+	//
+	// Please be aware that only the host part of the URL is used to lookup for authentication token.
+	//
+	// Example:
+	//
+	// ```yaml
+	// auths:
+	//   "my-helm-repo.com": "my-secret-token"
+	// ```
+	Auths map[string]auth `yaml:",omitempty"`
 	// RootDir defines the root directory used to recursively search for Fleet bundle
 	RootDir string `yaml:",omitempty"`
 	// Ignore allows to specify rule to ignore autodiscovery a specific Fleet bundle based on a rule
@@ -42,6 +53,10 @@ type Spec struct {
 		and its type like regex, semver, or just latest.
 	*/
 	VersionFilter version.Filter `yaml:",omitempty"`
+}
+
+type auth struct {
+	Token string `yaml:",omitempty"`
 }
 
 // Fleet holds all information needed to generate fleet bundle.

@@ -60,12 +60,20 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 		versionFilterRegex := defaultVersionFilterRegex
 		tagFilter := ""
 
+		registryUsername := ""
+		registryPassword := ""
+		registryToken := ""
+
 		sourceSpec := dockerimage.NewDockerImageSpecFromImage(ociName, ociVersion, f.spec.Auths)
 		if sourceSpec != nil {
 			versionFilterKind = sourceSpec.VersionFilter.Kind
 			versionFilterPattern = sourceSpec.VersionFilter.Pattern
 			versionFilterRegex = sourceSpec.VersionFilter.Regex
 			tagFilter = sourceSpec.TagFilter
+
+			registryPassword = sourceSpec.Password
+			registryUsername = sourceSpec.Username
+			registryToken = sourceSpec.Token
 		}
 
 		if !f.spec.VersionFilter.IsZero() {
@@ -111,6 +119,9 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 			VersionFilterKind    string
 			VersionFilterPattern string
 			VersionFilterRegex   string
+			RegistryUsername     string
+			RegistryPassword     string
+			RegistryToken        string
 			ScmID                string
 			TagFilter            string
 		}{
@@ -122,6 +133,9 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 			VersionFilterPattern: versionFilterPattern,
 			VersionFilterRegex:   versionFilterRegex,
 			ScmID:                f.scmID,
+			RegistryUsername:     registryUsername,
+			RegistryPassword:     registryPassword,
+			RegistryToken:        registryToken,
 			TagFilter:            tagFilter,
 		}
 

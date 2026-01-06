@@ -15,12 +15,15 @@ sources:
     spec:
       name: '{{ .ChartName }}'
       url: '{{ .ChartRepository }}'
+      {{- if .Token }}
+      token: '{{ .Token }}'
+      {{- end }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
-{{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
+        {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
-{{- end }}
+        {{- end }}
 conditions:
   {{ .ConditionID }}-name:
     name: 'Ensure Helm chart name {{ .ChartName }} is specified'

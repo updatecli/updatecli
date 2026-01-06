@@ -58,27 +58,29 @@ type Spec struct {
 	RootDir string `yaml:",omitempty"`
 	// versionfilter provides parameters to specify the version pattern used when generating manifest.
 	//
+	// More information available at
+	// https://www.updatecli.io/docs/core/versionfilter/
+	//
 	// kind - semver
-	//		versionfilter of kind `semver` uses semantic versioning as version filtering
-	//		pattern accepts one of:
-	//			`patch` - patch only update patch version
-	//			`minor` - minor only update minor version
-	//			`major` - major only update major versions
-	//			`a version constraint` such as `>= 1.0.0`
+	//   versionfilter of kind `semver` uses semantic versioning as version filtering
+	//   pattern accepts one of:
+	//     `patch` - patch only update patch version
+	//     `minor` - minor only update minor version
+	//     `major` - major only update major versions
+	//     `a version constraint` such as `>= 1.0.0`
 	//
-	//	kind - regex
-	//		versionfilter of kind `regex` uses regular expression as version filtering
-	//		pattern accepts a valid regular expression
+	// kind - regex
+	// versionfilter of kind `regex` uses regular expression as version filtering
+	// pattern accepts a valid regular expression
 	//
-	//	example:
-	//	```
-	//		versionfilter:
-	//			kind: semver
-	//			pattern: minor
-	//	```
+	// example:
+	// ```
+	//   versionfilter:
+	//   kind: semver
+	//   pattern: minor
+	// ```
 	//
-	//	and its type like regex, semver, or just latest.
-	//
+	// More version filter available at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

@@ -15,6 +15,9 @@ sources:
     spec:
       name: '{{ .ChartName }}'
       url: '{{ .ChartRepository }}'
+      {{- if .Token }}
+      token: '{{ .Token }}'
+      {{- end }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'

@@ -3,6 +3,7 @@ package helmfile
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"path"
 	"path/filepath"
 	"strings"
@@ -139,6 +140,19 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				helmSourcespec.Password = OCIPassword
 			}
 
+			token := ""
+
+			repoURL, err := url.Parse(chartURL)
+			switch err {
+			case nil:
+				if _, ok := h.spec.Auths[repoURL.Host]; ok {
+					token = h.spec.Auths[repoURL.Host].Token
+					logrus.Debugf("found token for repository %q", chartURL)
+				}
+			default:
+				logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
+			}
+
 			sourceVersionFilterKind := "semver"
 			sourceVersionFilterPattern := "*"
 			sourceVersionFilterRegex := "*"
@@ -192,6 +206,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				TargetName                 string
 				TargetKey                  string
 				File                       string
+				Token                      string
 				ScmID                      string
 			}{
 				ActionID:                   h.actionID,
@@ -213,6 +228,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				TargetKey:                  fmt.Sprintf("$.releases[%d].version", i),
 				File:                       foundHelmfile,
 				ScmID:                      h.scmID,
+				Token:                      token,
 			}
 
 			manifest := bytes.Buffer{}

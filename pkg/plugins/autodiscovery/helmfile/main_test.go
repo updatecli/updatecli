@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -12,10 +13,18 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		expectedPipelines []string
+		spec              Spec
 	}{
 		{
 			name:    "Scenario 1",
 			rootDir: "testdata",
+			spec: Spec{
+				Auths: map[string]docker.InlineKeyChain{
+					"helm.datadoghq.com": {
+						Token: "mytoken",
+					},
+				},
+			},
 			expectedPipelines: []string{`name: 'Bump "datadog" Helm Chart version for Helmfile "helmfile.d/cik8s.yaml"'
 sources:
   datadog:
@@ -24,6 +33,7 @@ sources:
     spec:
       name: 'datadog'
       url: 'https://helm.datadoghq.com'
+      token: 'mytoken'
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -109,7 +119,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			helmfile, err := New(
-				Spec{}, tt.rootDir, "", "")
+				tt.spec, tt.rootDir, "", "")
 			require.NoError(t, err)
 
 			pipelines, err := helmfile.DiscoverManifests()

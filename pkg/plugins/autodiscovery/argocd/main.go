@@ -43,6 +43,21 @@ type Spec struct {
 	//
 	//	and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// Auths holds a map of string to string where the key is the registry URL and the value the token used for authentication
+	//
+	// Please be aware that only the host part of the URL is used to lookup for authentication token.
+	//
+	// Example:
+	//
+	// ```yaml
+	// auths:
+	//   "my-helm-repo.com": "my-secret-token"
+	// ```
+	Auths map[string]auth `yaml:",omitempty"`
+}
+
+type auth struct {
+	Token string `yaml:",omitempty"`
 }
 
 // ArgoCD holds all information needed to generate argocd pipelines.

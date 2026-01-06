@@ -2,6 +2,7 @@ package flux
 
 import (
 	"bytes"
+	"net/url"
 	"path/filepath"
 	"text/template"
 
@@ -79,6 +80,18 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 			}
 		}
 
+		token := ""
+		repoURL, err := url.Parse(helmRepositoryURL)
+		switch err {
+		case nil:
+			if _, ok := f.spec.Auths[repoURL.Host]; ok {
+				token = f.spec.Auths[repoURL.Host].Token
+				logrus.Debugf("found token for repository %q", repoURL.Host)
+			}
+		default:
+			logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
+		}
+
 		sourceVersionFilterKind := defaultVersionFilterKind
 		sourceVersionFilterPattern := defaultVersionFilterPattern
 		sourceVersionFilterRegex := defaultVersionFilterRegex
@@ -109,6 +122,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 			SourceVersionFilterPattern string
 			SourceVersionFilterRegex   string
 			ScmID                      string
+			Token                      string
 		}{
 			ActionID:                   f.actionID,
 			ChartName:                  helmChartName,
@@ -118,6 +132,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 			SourceVersionFilterPattern: sourceVersionFilterPattern,
 			SourceVersionFilterRegex:   sourceVersionFilterRegex,
 			ScmID:                      f.scmID,
+			Token:                      token,
 		}
 
 		manifest := bytes.Buffer{}

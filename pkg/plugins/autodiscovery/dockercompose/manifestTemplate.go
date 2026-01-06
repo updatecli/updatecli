@@ -24,6 +24,15 @@ sources:
 {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
 {{- end }}
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
 targets:
   {{ .TargetID }}:
     name: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
@@ -60,12 +69,30 @@ sources:
 {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
 {{- end }}
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
   {{ .SourceID }}-digest:
     name: 'get latest image "{{ .ImageName }}" digest'
     kind: 'dockerdigest'
     spec:
       image: '{{ .ImageName }}'
       tag: '{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
     dependson:
       - '{{ .SourceID }}'
 targets:
@@ -95,6 +122,15 @@ sources:
     spec:
       image: '{{ .ImageName }}'
       tag: '{{ .ImageTag }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
 targets:
   {{ .TargetID }}:
     name: 'deps: bump Docker image "{{ .ImageName }}:{{ .ImageTag }}" digest'

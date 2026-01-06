@@ -20,6 +20,15 @@ sources:
 {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
 {{- end }}
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
 conditions:
 {{- if .HasRegistry }}
   {{ .ConditionRegistryID }}:
@@ -79,12 +88,30 @@ sources:
         {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
         {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
   image-digest:
     name: 'get latest image "{{ .ImageName }}" digest'
     kind: 'dockerdigest'
     spec:
       image: '{{ .ImageName }}'
       tag: '{{ "{{" }} source "image" {{ "}}" }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
     dependson:
       - 'image'
 conditions:
@@ -140,6 +167,15 @@ sources:
     spec:
       image: '{{ .ImageName }}'
       tag: '{{ .ImageTag }}'
+      {{- if .RegistryUsername }}
+      username: '{{ .RegistryUsername }}'
+      {{- end }}
+      {{- if .RegistryPassword }}
+      password: '{{ .RegistryPassword }}'
+      {{- end }}
+      {{- if .RegistryToken }}
+      token: '{{ .RegistryToken }}'
+      {{- end }}
 conditions:
 {{- if .HasRegistry }}
   {{ .ConditionRegistryID }}:

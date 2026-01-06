@@ -14,11 +14,61 @@ func TestDiscoverManifests(t *testing.T) {
 		actionID          string
 		scmID             string
 		expectedPipelines []string
+		spec              Spec
 	}{
 		{
 			name:              "ArgoCD manifests discovered no source",
 			rootDir:           "testdata/empty",
 			expectedPipelines: []string{},
+		},
+		{
+			name:    "ArgoCD manifests discovery with a single source and auths",
+			rootDir: "testdata/sealed-secrets",
+			spec: Spec{
+				Auths: map[string]auth{
+					"bitnami-labs.github.io": {
+						Token: "token",
+					},
+				},
+			},
+			expectedPipelines: []string{`name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
+sources:
+  sealed-secrets:
+    name: 'Get latest "sealed-secrets" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'sealed-secrets'
+      url: 'https://bitnami-labs.github.io/sealed-secrets'
+      token: 'token'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  sealed-secrets-name:
+    name: 'Ensure Helm chart name sealed-secrets is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.chart'
+      value: 'sealed-secrets'
+  sealed-secrets-repository:
+    name: 'Ensure Helm chart repository https://bitnami-labs.github.io/sealed-secrets is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.repoURL'
+      value: 'https://bitnami-labs.github.io/sealed-secrets'
+targets:
+  sealed-secrets:
+    name: 'deps(helm): update Helm chart "sealed-secrets" to {{ source "sealed-secrets" }}'
+    kind: 'yaml'
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.targetRevision'
+    sourceid: 'sealed-secrets'
+`},
 		},
 		{
 			name:    "ArgoCD manifests discovery with a single source",
@@ -198,7 +248,7 @@ targets:
 
 		t.Run(tt.name, func(t *testing.T) {
 			argocd, err := New(
-				Spec{}, tt.rootDir, tt.scmID, tt.actionID)
+				tt.spec, tt.rootDir, tt.scmID, tt.actionID)
 
 			require.NoError(t, err)
 
