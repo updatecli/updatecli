@@ -169,7 +169,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 			logrus.Debugf("found token for repository %q", data.RepoURL)
 		}
 	default:
-		logrus.Debugf("Ignorning auth configuration due to invalid Helm repository URL: %s", err)
+		logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
 	}
 
 	sourceChartRepository, err := determineChartRepository(data.RepoURL)

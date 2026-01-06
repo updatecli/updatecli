@@ -124,7 +124,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 					logrus.Debugf("found token for repository %q", dependency.Repository)
 				}
 			default:
-				logrus.Debugf("Ignorning auth configuration due to invalid Helm repository URL: %s", err)
+				logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
 			}
 
 			tmpl, err := template.New("manifest").Parse(dependencyManifest)

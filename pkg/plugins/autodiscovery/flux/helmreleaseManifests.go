@@ -89,7 +89,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 				logrus.Debugf("found token for repository %q", repoURL.Host)
 			}
 		default:
-			logrus.Debugf("Ignorning auth configuration due to invalid Helm repository URL: %s", err)
+			logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
 		}
 
 		sourceVersionFilterKind := defaultVersionFilterKind
