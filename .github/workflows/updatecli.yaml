@@ -1,53 +1,35 @@
-name: updatecli
+name: Updatecli
 on:
   release:
   workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   schedule:
-    # Run at 12:00 every Saterday
-    - cron: '0 12 * * 6'
-permissions: {}
+    # Run at 12:00 every Saterday every 14 days
+    - cron: "0 12 */14 * 6"
+
 jobs:
   updatecli:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: "Checkout"
         uses: "actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3" # v6.0.0
+
       - name: "Setup updatecli"
         uses: "updatecli/updatecli-action@5ca36367fadc6ad94d590984fd9c696e783ec635" # v2.96.0
-      - name: Set up Go
-        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          version: "v0.113.0-rc.1"
+
+      - name: "Set up Go"
+        uses: "actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c" # v6.1.0
         with:
           go-version-file: "go.mod"
         id: go
-      - name: "Run updatecli in dryrun"
-        run: "updatecli compose diff"
+
+      - name: "Run updatecli"
+        run: updatecli compose apply --clean-git-branches=true --experimental
         env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
-        id: generate_token
-        if: github.ref == 'refs/heads/main'
-        with:
-          app-id: ${{ secrets.UPDATECLIBOT_APP_ID }}
-          private-key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
-          
-      - name: "Login Udash"
-        if: github.ref == 'refs/heads/main'
-        run: "updatecli udash login --experimental --api-url $UPDATECLI_UDASH_API_URL --oauth-access-token $UPDATECLI_UDASH_ACCESS_TOKEN $UPDATECLI_UDASH_URL"
-        env:
+          UPDATECLI_GITHUB_APP_CLIENT_ID: ${{ secrets.UPDATECLIBOT_APP_ID }}
+          UPDATECLI_GITHUB_APP_PRIVATE_KEY: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
+          UPDATECLI_GITHUB_APP_INSTALLATION_ID: ${{ secrets.UPDATECLIBOT_APP_INSTALLATION_ID }}
           UPDATECLI_UDASH_API_URL: ${{ secrets.UPDATECLI_UDASH_API_URL }}
           UPDATECLI_UDASH_ACCESS_TOKEN: ${{ secrets.UPDATECLI_UDASH_ACCESS_TOKEN }}
           UPDATECLI_UDASH_URL: ${{ secrets.UPDATECLI_UDASH_URL }}
-          
-      - name: "Run updatecli"
-        if: github.ref == 'refs/heads/main'
-        run: "updatecli compose apply --clean-git-branches=true --experimental"
-        env:
-          GITHUB_ACTOR: ${{ secrets.UPDATECLI_BOT_GITHUB_ACTOR }}
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
