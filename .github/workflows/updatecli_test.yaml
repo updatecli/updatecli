@@ -1,0 +1,32 @@
+name: Updatecli Test
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3" # v6.0.0
+
+      - name: "Setup updatecli"
+        uses: "updatecli/updatecli-action@5ca36367fadc6ad94d590984fd9c696e783ec635" # v2.96.0
+        with:
+          version: "v0.113.0-rc.1"
+
+      - name: "Set up Go"
+        uses: "actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c" # v6.1.0
+        with:
+          go-version-file: "go.mod"
+        id: go
+
+      - name: "Test updatecli in dry-run mode"
+        run: "updatecli compose diff"
+        env:
+          # This step is executed in untrusted context. We use a GitHub token with minimal permissions.
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
