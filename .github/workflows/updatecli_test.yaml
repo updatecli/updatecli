@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  prepare:
+  updatecli:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
