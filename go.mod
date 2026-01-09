@@ -153,7 +153,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20230614215431-f32df32a01cd // indirect
@@ -316,7 +316,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	gitlab.com/gitlab-org/api/client-go v1.8.2
+	gitlab.com/gitlab-org/api/client-go v1.11.0
 	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/mod v0.31.0
 	golang.org/x/net v0.48.0
