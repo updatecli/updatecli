@@ -220,6 +220,105 @@ func TestSearch(t *testing.T) {
 				OriginalVersion: "v1.2",
 			},
 		},
+		{
+			name: "Passing case with regex/semver and replaceAll (curl example)",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "curl-(\\d+\\.\\d+\\.\\d+)",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "_",
+					Replacement: ".",
+				},
+				Pattern: "8.15.x",
+			},
+			versions: []string{"curl-8_15_0", "curl-8_14_0", "curl-8_16_0"},
+			want: Version{
+				ParsedVersion:   "8.15.0",
+				OriginalVersion: "curl-8_15_0",
+			},
+		},
+		{
+			name: "Passing case with regex/semver and replaceAll with capture groups",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "v(\\d+\\.\\d+\\.\\d+)",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "([0-9]+)_([0-9]+)_([0-9]+)",
+					Replacement: "$1.$2.$3",
+				},
+				Pattern: ">=1.0.0",
+			},
+			versions: []string{"v1_2_3", "v2_0_0", "v0_9_9"},
+			want: Version{
+				ParsedVersion:   "2.0.0",
+				OriginalVersion: "v2_0_0",
+			},
+		},
+		{
+			name: "Passing case with regex/time and replaceAll",
+			filter: Filter{
+				Kind:    REGEXTIMEVERSIONKIND,
+				Regex:   `^updatecli(\d{8})$`,
+				Pattern: "20060201",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "-",
+					Replacement: "",
+				},
+			},
+			versions: []string{"updatecli-2023-02-01", "updatecli-2023-03-05", "updatecli-2023-01-15"},
+			want: Version{
+				ParsedVersion:   "updatecli-2023-03-05",
+				OriginalVersion: "updatecli-2023-03-05",
+			},
+		},
+		{
+			name: "Passing case with regex and replaceAll",
+			filter: Filter{
+				Kind:    REGEXVERSIONKIND,
+				Pattern: "^updatecli-2\\.(\\d+)$",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "_",
+					Replacement: ".",
+				},
+			},
+			versions: []string{"updatecli-2_0", "updatecli-2_1", "updatecli-3_0"},
+			want: Version{
+				ParsedVersion:   "updatecli-2.1",
+				OriginalVersion: "updatecli-2_1",
+			},
+		},
+		{
+			name: "Passing case with regex/semver and replaceAll (no match in replaceAll)",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "^updatecli-(\\d+\\.\\d+\\.\\d+)$",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "X",
+					Replacement: ".",
+				},
+			},
+			versions: []string{"updatecli-1.0.0", "updatecli-2.0.0", "updatecli-1.1.0"},
+			want: Version{
+				ParsedVersion:   "2.0.0",
+				OriginalVersion: "updatecli-2.0.0",
+			},
+		},
+		{
+			name: "Passing case with regex/semver and replaceAll (empty replacement)",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "^updatecli(\\d+\\.\\d+\\.\\d+)$",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "-",
+					Replacement: "",
+				},
+			},
+			versions: []string{"updatecli-1.0.0", "updatecli-2.0.0", "updatecli-1.1.0"},
+			want: Version{
+				ParsedVersion:   "2.0.0",
+				OriginalVersion: "updatecli-2.0.0",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -267,12 +366,58 @@ func TestValidate(t *testing.T) {
 			},
 			wantErr: &ErrUnsupportedVersionKind{Kind: "noExist"},
 		},
+		{
+			name: "Valid filter with replaceAll",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "^updatecli-(\\d+\\.\\d+\\.\\d+)$",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "_",
+					Replacement: ".",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Invalid replaceAll pattern",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "^updatecli-(\\d+\\.\\d+\\.\\d+)$",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "[invalid",
+					Replacement: ".",
+				},
+			},
+			wantErr: errors.New("replaceAll pattern validation error"), // Marker error to indicate we expect an error
+		},
+		{
+			name: "Valid replaceAll with empty replacement",
+			filter: Filter{
+				Kind:  REGEXSEMVERVERSIONKIND,
+				Regex: "^updatecli-(\\d+\\.\\d+\\.\\d+)$",
+				ReplaceAll: ReplaceAll{
+					Pattern:     "_",
+					Replacement: "",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.filter.Validate()
 
-			assert.Equal(t, tt.wantErr, err)
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				if tt.name == "Invalid replaceAll pattern" {
+					// For invalid replaceAll pattern, check that error contains expected message
+					assert.Contains(t, err.Error(), "invalid replaceAll pattern")
+				} else {
+					assert.Equal(t, tt.wantErr, err)
+				}
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

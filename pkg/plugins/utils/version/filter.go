@@ -39,6 +39,15 @@ var SupportedKind []string = []string{
 	LEXVERSIONKIND,
 }
 
+// ReplaceAll defines a regex replacement that is applied to version strings before filtering.
+// This allows transforming versions (e.g., replacing underscores with dots) before regex extraction.
+type ReplaceAll struct {
+	// Pattern specifies the regex pattern to match for replacement
+	Pattern string `yaml:",omitempty"`
+	// Replacement specifies the replacement string (supports $1, $2, etc. for captured groups)
+	Replacement string `yaml:",omitempty"`
+}
+
 // Filter defines parameters to apply different kind of version matching based on a list of versions
 type Filter struct {
 	// specifies the version kind such as semver, regex, or latest
@@ -54,6 +63,9 @@ type Filter struct {
 	// specifies the regex pattern, used for regex/semver and regex/time.
 	// Output of the first capture group will be used.
 	Regex string `yaml:",omitempty"`
+	// replaceAll applies a regex replacement to version strings before filtering.
+	// This is useful for transforming versions (e.g., curl-8_15_0 to curl-8.15.0) before regex extraction.
+	ReplaceAll ReplaceAll `yaml:",omitempty"`
 }
 
 // Init returns a new (copy) valid instantiated filter
@@ -95,7 +107,30 @@ func (f Filter) Validate() error {
 	if !ok {
 		return &ErrUnsupportedVersionKind{Kind: f.Kind}
 	}
+
+	// Validate ReplaceAll pattern if provided
+	if len(f.ReplaceAll.Pattern) > 0 {
+		_, err := regexp.Compile(f.ReplaceAll.Pattern)
+		if err != nil {
+			return fmt.Errorf("invalid replaceAll pattern %q: %w", f.ReplaceAll.Pattern, err)
+		}
+	}
+
 	return nil
+}
+
+// applyReplaceAll applies the ReplaceAll transformation to a version string if configured
+func (f *Filter) applyReplaceAll(version string) (string, error) {
+	if len(f.ReplaceAll.Pattern) == 0 {
+		return version, nil
+	}
+
+	re, err := regexp.Compile(f.ReplaceAll.Pattern)
+	if err != nil {
+		return "", fmt.Errorf("compiling replaceAll pattern %q: %w", f.ReplaceAll.Pattern, err)
+	}
+
+	return re.ReplaceAllString(version, f.ReplaceAll.Replacement), nil
 }
 
 // Search returns a value matching pattern
@@ -150,8 +185,13 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		// Oldest version appears first in array
 		for i := len(versions) - 1; i >= 0; i-- {
 			v := versions[i]
-			if re.MatchString(v) {
-				foundVersion.ParsedVersion = v
+			// Apply replaceAll transformation if configured
+			transformedV, err := f.applyReplaceAll(v)
+			if err != nil {
+				return foundVersion, err
+			}
+			if re.MatchString(transformedV) {
+				foundVersion.ParsedVersion = transformedV
 				foundVersion.OriginalVersion = v
 				return foundVersion, nil
 			}
@@ -179,7 +219,12 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		versionLookup := make(map[string]string)
 		for i := 0; i < len(versions); i++ {
 			v := versions[i]
-			found := re.FindStringSubmatch(v)
+			// Apply replaceAll transformation if configured
+			transformedV, err := f.applyReplaceAll(v)
+			if err != nil {
+				return foundVersion, err
+			}
+			found := re.FindStringSubmatch(transformedV)
 			if len(found) > 1 {
 				parsedVersions = append(parsedVersions, found[1])
 				versionLookup[found[1]] = v
@@ -213,8 +258,13 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		parsedVersions := make(map[string]string)
 		for i := 0; i < len(versions); i++ {
 			v := versions[i]
+			// Apply replaceAll transformation if configured
+			transformedV, err := f.applyReplaceAll(v)
+			if err != nil {
+				return foundVersion, err
+			}
 
-			found := re.FindStringSubmatch(v)
+			found := re.FindStringSubmatch(transformedV)
 
 			if len(found) > 1 {
 				parsedVersions[found[1]] = v
