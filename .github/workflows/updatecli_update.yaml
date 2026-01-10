@@ -1,10 +1,9 @@
-name: Updatecli
+name: Updatecli - Update
 on:
-  release:
   workflow_dispatch:
-  schedule:
-    # Run at 12:00 every Saterday every 14 days
-    - cron: "0 12 */14 * 6"
+  push:
+    branches:
+      - main
 
 jobs:
   updatecli:
@@ -24,8 +23,8 @@ jobs:
           go-version-file: "go.mod"
         id: go
 
-      - name: "Run updatecli"
-        run: updatecli compose apply --clean-git-branches=true --experimental
+      - name: "Run updatecli only on existing pipelines"
+        run: updatecli compose apply --clean-git-branches=true --existing-only=true --experimental
         env:
           UPDATECLI_GITHUB_APP_CLIENT_ID: ${{ secrets.UPDATECLIBOT_APP_ID }}
           UPDATECLI_GITHUB_APP_PRIVATE_KEY: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
