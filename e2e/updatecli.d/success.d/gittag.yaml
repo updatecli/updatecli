@@ -77,6 +77,20 @@ conditions:
       path: "./"
       versionfilter:
         pattern: "v0.30.0"
+  check-git-tag-parameter:
+    name: "Check the tag 'v0.30.0' exists using tag parameter"
+    kind: "gittag"
+    scmid: git-repo
+    disablesourceinput: true
+    spec:
+      tag: "v0.30.0"
+  check-github-tag-parameter:
+    name: "Check the tag 'v0.30.0' exists in GitHub using tag parameter"
+    kind: "gittag"
+    scmid: github-repo
+    disablesourceinput: true
+    spec:
+      tag: "v0.30.0"
 
 targets:
   create-git-tag:

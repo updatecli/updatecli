@@ -58,13 +58,36 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 		return false, "no git tag found", nil
 	}
 
+	// If spec.Tag is provided, use it for exact match checking (priority over source)
+	// If source is provided and spec.Tag is empty, use source for exact match
+	// Otherwise, fall back to versionFilter pattern matching
+	tag := source
+	if gt.spec.Tag != "" {
+		tag = gt.spec.Tag
+	}
+
+	// If tag is specified (either via spec.Tag or source), check for exact match
+	if tag != "" {
+		for _, t := range tags {
+			if t == tag {
+				return true, fmt.Sprintf("git tag %q found", tag), nil
+			}
+		}
+		// Tag not found
+		if gt.spec.Tag != "" {
+			return false, fmt.Sprintf("no git tag found matching %q", gt.spec.Tag), nil
+		}
+		return false, fmt.Sprintf("no git tag found matching %q", tag), nil
+	}
+
+	// Fall back to versionFilter pattern matching (existing behavior)
 	gt.foundVersion, err = gt.versionFilter.Search(tags)
 	if err != nil {
 		return false, "", err
 	}
-	tag := gt.foundVersion.GetVersion()
+	foundTag := gt.foundVersion.GetVersion()
 
-	if len(tag) == 0 {
+	if len(foundTag) == 0 {
 		return false, fmt.Sprintf("no git tag matching pattern %q, found", gt.versionFilter.Pattern), nil
 	}
 
