@@ -216,3 +216,77 @@ targets:
 	}
 
 }
+
+func TestNew_WithResourceConfig(t *testing.T) {
+	tests := []struct {
+		name              string
+		spec              map[string]interface{}
+		expectedNpmrcPath string
+		expectedURL       string
+		expectedToken     string
+	}{
+		{
+			name: "All resource config fields set",
+			spec: map[string]interface{}{
+				"rootdir":       ".",
+				"npmrcpath":     "/custom/.npmrc",
+				"url":           "https://npm.example.com",
+				"registrytoken": "test-token",
+			},
+			expectedNpmrcPath: "/custom/.npmrc",
+			expectedURL:       "https://npm.example.com",
+			expectedToken:     "test-token",
+		},
+		{
+			name: "Only npmrcpath set",
+			spec: map[string]interface{}{
+				"rootdir":   ".",
+				"npmrcpath": "/custom/.npmrc",
+			},
+			expectedNpmrcPath: "/custom/.npmrc",
+			expectedURL:       "",
+			expectedToken:     "",
+		},
+		{
+			name: "No resource config fields",
+			spec: map[string]interface{}{
+				"rootdir": ".",
+			},
+			expectedNpmrcPath: "",
+			expectedURL:       "",
+			expectedToken:     "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			npm, err := New(tt.spec, ".", "", "")
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedNpmrcPath, npm.npmrcPath)
+			assert.Equal(t, tt.expectedURL, npm.url)
+			assert.Equal(t, tt.expectedToken, npm.registryToken)
+		})
+	}
+}
+
+func TestDiscoverManifests_WithResourceConfig(t *testing.T) {
+	spec := Spec{
+		NpmrcPath:     "/custom/.npmrc",
+		URL:           "https://npm.example.com",
+		RegistryToken: "test-token-123",
+	}
+
+	resource, err := New(spec, "testdata/npmlockfile", "", "")
+	require.NoError(t, err)
+
+	manifests, err := resource.DiscoverManifests()
+	require.NoError(t, err)
+	require.Greater(t, len(manifests), 0)
+
+	// Verify first manifest contains resource-level config
+	manifestStr := string(manifests[0])
+	assert.Contains(t, manifestStr, "npmrcpath: '/custom/.npmrc'")
+	assert.Contains(t, manifestStr, "url: 'https://npm.example.com'")
+	assert.Contains(t, manifestStr, "registrytoken: 'test-token-123'")
+}
