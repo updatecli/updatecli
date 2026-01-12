@@ -53,3 +53,51 @@ func TestGetToken(t *testing.T) {
 		})
 	}
 }
+
+func TestGetUsername(t *testing.T) {
+	emptyString := ""
+	oauth2Username := "oauth2"
+	gitUsername := "git"
+
+	tests := []struct {
+		name             string
+		username         *string
+		expectedUsername string
+	}{
+		{
+			name:             "Nil username - default to oauth2",
+			username:         nil,
+			expectedUsername: "oauth2",
+		},
+		{
+			name:             "Empty username - explicitly set to empty",
+			username:         &emptyString,
+			expectedUsername: "",
+		},
+		{
+			name:             "OAuth2 username - use specific username",
+			username:         &oauth2Username,
+			expectedUsername: "oauth2",
+		},
+		{
+			name:             "Git username - use specific username",
+			username:         &gitUsername,
+			expectedUsername: "git",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create test instance
+			tg := Terragrunt{
+				spec: Spec{
+					Username: tt.username,
+				},
+			}
+
+			// Test
+			result := tg.getUsername()
+			assert.Equal(t, tt.expectedUsername, result)
+		})
+	}
+}
