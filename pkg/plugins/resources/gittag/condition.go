@@ -74,9 +74,6 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 			}
 		}
 		// Tag not found
-		if gt.spec.Tag != "" {
-			return false, fmt.Sprintf("no git tag found matching %q", gt.spec.Tag), nil
-		}
 		return false, fmt.Sprintf("no git tag found matching %q", tag), nil
 	}
 

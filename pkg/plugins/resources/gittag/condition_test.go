@@ -40,10 +40,10 @@ func TestGitTag_Condition(t *testing.T) {
 			spec: Spec{
 				Tag: "v2.0.0",
 			},
-			source:    "",
-			wantPass:  true,
+			source:      "",
+			wantPass:    true,
 			wantMessage: "git tag \"v2.0.0\" found",
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
 			name:      "Tag specified in spec, tag doesn't exist",
@@ -54,10 +54,10 @@ func TestGitTag_Condition(t *testing.T) {
 			spec: Spec{
 				Tag: "v4.0.0",
 			},
-			source:    "",
-			wantPass:  false,
+			source:      "",
+			wantPass:    false,
 			wantMessage: "no git tag found matching \"v4.0.0\"",
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
 			name:      "Tag specified in spec, source also provided - should prioritize spec.Tag",
@@ -68,10 +68,10 @@ func TestGitTag_Condition(t *testing.T) {
 			spec: Spec{
 				Tag: "v2.0.0",
 			},
-			source:    "v1.0.0",
-			wantPass:  true,
+			source:      "v1.0.0",
+			wantPass:    true,
 			wantMessage: "git tag \"v2.0.0\" found",
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
 			name:      "No tag in spec, source provided - should use source",
@@ -79,11 +79,11 @@ func TestGitTag_Condition(t *testing.T) {
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
 				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
 			},
-			spec: Spec{},
-			source:    "v3.0.0",
-			wantPass:  true,
+			spec:        Spec{},
+			source:      "v3.0.0",
+			wantPass:    true,
 			wantMessage: "git tag \"v3.0.0\" found",
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
 			name:      "No tag in spec, source provided but tag doesn't exist",
@@ -91,11 +91,11 @@ func TestGitTag_Condition(t *testing.T) {
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
 				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
 			},
-			spec: Spec{},
-			source:    "v4.0.0",
-			wantPass:  false,
+			spec:        Spec{},
+			source:      "v4.0.0",
+			wantPass:    false,
 			wantMessage: "no git tag found matching \"v4.0.0\"",
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
 			name:      "No tag in spec, no source - should fallback to versionFilter",
@@ -109,10 +109,10 @@ func TestGitTag_Condition(t *testing.T) {
 					Pattern: "latest",
 				},
 			},
-			source:    "",
-			wantPass:  true,
+			source:      "",
+			wantPass:    true,
 			wantMessage: "git tag matching \"latest\" found\n",
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
 			name:      "No tag in spec, no source, versionFilter pattern doesn't match",
@@ -126,10 +126,10 @@ func TestGitTag_Condition(t *testing.T) {
 					Pattern: "~4.0",
 				},
 			},
-			source:    "",
-			wantPass:  false,
+			source:      "",
+			wantPass:    false,
 			wantMessage: "",
-			wantErr:   true,
+			wantErr:     true,
 		},
 		{
 			name:      "Error retrieving tags",
@@ -140,10 +140,10 @@ func TestGitTag_Condition(t *testing.T) {
 			spec: Spec{
 				Tag: "v1.0.0",
 			},
-			source:    "",
-			wantPass:  false,
+			source:      "",
+			wantPass:    false,
 			wantMessage: "",
-			wantErr:   true,
+			wantErr:     true,
 		},
 		{
 			name:      "No tags found in repository",
@@ -154,10 +154,10 @@ func TestGitTag_Condition(t *testing.T) {
 			spec: Spec{
 				Tag: "v1.0.0",
 			},
-			source:    "",
-			wantPass:  false,
+			source:      "",
+			wantPass:    false,
 			wantMessage: "no git tag found",
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
 			name:      "Empty directory - should return error",
@@ -168,10 +168,10 @@ func TestGitTag_Condition(t *testing.T) {
 			spec: Spec{
 				Tag: "v1.0.0",
 			},
-			source:    "",
-			wantPass:  false,
+			source:      "",
+			wantPass:    false,
 			wantMessage: "",
-			wantErr:   true,
+			wantErr:     true,
 		},
 	}
 
@@ -207,4 +207,3 @@ func TestGitTag_Condition(t *testing.T) {
 		})
 	}
 }
-
