@@ -7,16 +7,12 @@ sources:
     spec:
       owner: updatecli
       repository: updatecli-action
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
   prerelease:
     name: Get Latest GitHub Action Prerelease
     kind: githubrelease
     spec:
       owner: updatecli
       repository: updatecli-action
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       typefilter:
         prerelease: true
   release:
@@ -25,8 +21,6 @@ sources:
     spec:
       owner: updatecli
       repository: updatecli-action
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       typefilter:
         release: true
   hash:
@@ -35,8 +29,6 @@ sources:
     spec:
       owner: updatecli
       repository: updatecli-action
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       key: taghash
 conditions:
   default:
@@ -46,8 +38,6 @@ conditions:
     spec:
       owner: updatecli
       repository: updatecli-action
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
   prerelease:
     name: Check Latest GitHub Action Prerelease
     kind: githubrelease
@@ -55,8 +45,6 @@ conditions:
     spec:
       owner: updatecli
       repository: updatecli-action
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       typefilter:
         prerelease: true
   release:
@@ -66,8 +54,5 @@ conditions:
     spec:
       owner: updatecli
       repository: updatecli-action
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       typefilter:
         release: true
-
