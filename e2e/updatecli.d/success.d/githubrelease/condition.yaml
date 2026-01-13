@@ -7,7 +7,6 @@ scms:
       owner: updatecli
       repository: updatecli
       branch: main
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
 
 sources:
   shell:
@@ -28,11 +27,9 @@ conditions:
     spec:
       owner: updatecli
       repository: updatecli
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
 targets:
   version:
     name: Only run if conditions succeeded
     kind: shell
     spec:
-      command: echo release 
-
+      command: echo release

@@ -12,8 +12,6 @@ scms:
     spec:
       owner: updatecli
       repository: app-dashboard
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       branch: main
 
 actions:
@@ -28,7 +26,7 @@ autodiscovery:
   #groupby: individual
   crawlers:
     npm:
-      ignoreVersionConstraints: true
+      ignoreversionconstraints: true
       versionfilter:
         kind: semver
         pattern: "majoronly"
