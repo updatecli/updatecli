@@ -5,20 +5,18 @@ scms:
     spec:
       owner: updatecli-test
       repository: updatecli
-      token: {{ requiredEnv "GITHUB_TOKEN" }}
-      username: {{ requiredEnv "GITHUB_ACTOR" }}
       branch: e2e-tests-golang
 
 actions:
-    default:
-        # The action title mustn't be set each pullrequest use the pipeline title
-        kind: github/pullrequest
-        scmid: default
+  default:
+    # The action title mustn't be set each pullrequest use the pipeline title
+    kind: github/pullrequest
+    scmid: default
 
 autodiscovery:
   # scmid is applied to all crawlers
   scmid: default
-  actionid:  default
+  actionid: default
   groupby: individual
   crawlers:
     golang/gomod:

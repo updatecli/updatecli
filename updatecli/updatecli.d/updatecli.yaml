@@ -3,63 +3,59 @@ name: "docs: bump updatecli version"
 pipelineid: "updatecli"
 
 actions:
-    default:
-        title: 'deps: bump updatecli version to {{ source "latestVersion" }}'
-        kind: github/pullrequest
-        spec:
-            automerge: true
-            labels:
-                - chore
-                - skip-changelog
-        scmid: default
+  default:
+    title: 'deps: bump updatecli version to {{ source "latestVersion" }}'
+    kind: github/pullrequest
+    spec:
+      automerge: true
+      labels:
+        - chore
+        - skip-changelog
+    scmid: default
 scms:
-    default:
-        kind: github
-        spec:
-            branch: '{{ .scm.branch }}'
-            email: '{{ .scm.email }}'
-            owner: '{{ .scm.owner }}'
-            repository: '{{ .scm.repository }}'
-            token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-            user: '{{ .scm.user }}'
-            username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+  default:
+    kind: github
+    spec:
+      branch: "{{ .scm.branch }}"
+      email: "{{ .scm.email }}"
+      owner: "{{ .scm.owner }}"
+      repository: "{{ .scm.repository }}"
+      user: "{{ .scm.user }}"
 
 sources:
-    latestVersion:
-        name: Get latest updatecli release
-        kind: githubrelease
-        spec:
-            owner: updatecli
-            repository: updatecli
-            token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-            username: '{{ requiredEnv "GITHUB_ACTOR" }}'
-            versionfilter:
-              kind: semver
+  latestVersion:
+    name: Get latest updatecli release
+    kind: githubrelease
+    spec:
+      owner: updatecli
+      repository: updatecli
+      versionfilter:
+        kind: semver
 
 conditions:
-    container:
-        name: "Ensure latest container image is publish"
-        kind: dockerimage
-        spec:
-          image: ghcr.io/updatecli/updatecli
+  container:
+    name: "Ensure latest container image is publish"
+    kind: dockerimage
+    spec:
+      image: ghcr.io/updatecli/updatecli
 
 targets:
-    bugReport:
-        name: 'docs: update updatecli version to {{ source "latestVersion" }}'
-        kind: file
-        spec:
-            content: '**updatecli**: {{ source `latestVersion` }}'
-            file: .github/ISSUE_TEMPLATE/1-bug-report.yml
-            matchpattern: '\*\*updatecli\*\*: .*'
-        scmid: default
-        sourceid: latestVersion
+  bugReport:
+    name: 'docs: update updatecli version to {{ source "latestVersion" }}'
+    kind: file
+    spec:
+      content: '**updatecli**: {{ source "latestVersion" }}'
+      file: .github/ISSUE_TEMPLATE/1-bug-report.yml
+      matchpattern: '\*\*updatecli\*\*: .*'
+    scmid: default
+    sourceid: latestVersion
 
-    cosign-container:
-        name: 'docs: update issue template with Updatecli version to {{ source "latestVersion" }}'
-        kind: file
-        spec:
-            file: README.adoc
-            matchpattern: 'ghcr.io/updatecli/updatecli:(.*)'
-            replacepattern: 'ghcr.io/updatecli/updatecli:{{ source "latestVersion" }}'
-        scmid: default
-        sourceid: latestVersion
+  cosign-container:
+    name: 'docs: update issue template with Updatecli version to {{ source "latestVersion" }}'
+    kind: file
+    spec:
+      file: README.adoc
+      matchpattern: "ghcr.io/updatecli/updatecli:(.*)"
+      replacepattern: 'ghcr.io/updatecli/updatecli:{{ source "latestVersion" }}'
+    scmid: default
+    sourceid: latestVersion
