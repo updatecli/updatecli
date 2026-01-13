@@ -1,5 +1,5 @@
-scms:
 name: "Bump minor version for each Golang module one by one"
+scms:
   default:
     kind: github
     spec:
@@ -8,15 +8,15 @@ name: "Bump minor version for each Golang module one by one"
       branch: e2e-tests-golang
 
 actions:
-    default:
-        # The action title mustn't be set each pullrequest use the pipeline title
-        kind: github/pullrequest
-        scmid: default
+  default:
+    # The action title mustn't be set each pullrequest use the pipeline title
+    kind: github/pullrequest
+    scmid: default
 
 autodiscovery:
   # scmid is applied to all crawlers
   scmid: default
-  actionid:  default
+  actionid: default
   groupby: individual
   crawlers:
     golang/gomod:
