@@ -28,5 +28,5 @@ jobs:
         run: "updatecli compose diff"
         env:
           # This step is executed in untrusted context. We use a GitHub token with minimal permissions.
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPDATECLI_GITHUB_USERNAME: ${{ github.actor }}
+          UPDATECLI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

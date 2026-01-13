@@ -19,9 +19,7 @@ scms:
       email: "{{ .scm.email }}"
       owner: "{{ .scm.owner }}"
       repository: "{{ .scm.repository }}"
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       user: "{{ .scm.user }}"
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
 #{{- end }}
 
 sources:

@@ -6,9 +6,7 @@ scms:
       email: me@olblak.com
       owner: olblak
       repository: nocode
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       user: updatecli
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
     disabled: false
 
 sources:
@@ -16,11 +14,11 @@ sources:
     name: Get Latest committed branch
     kind: gitbranch
     scmid: default
-#  path:
-#    name: Get Latest committed branch
-#    kind: gitbranch
-#    spec:
-#      path: ./
+  #  path:
+  #    name: Get Latest committed branch
+  #    kind: gitbranch
+  #    spec:
+  #      path: ./
   url:
     name: Get latest committed branch from url
     kind: gitbranch
@@ -46,12 +44,12 @@ conditions:
     disablesourceinput: true
     spec:
       branch: master
-#  path:
-#    name: Get Latest committed branch
-#    kind: gitbranch
-#    sourceid: path
-#    spec:
-#      path: ./
+  #  path:
+  #    name: Get Latest committed branch
+  #    kind: gitbranch
+  #    sourceid: path
+  #    spec:
+  #      path: ./
   url:
     name: Get latest committed branch from url
     kind: gitbranch
@@ -60,13 +58,13 @@ conditions:
       url: https://github.com/olblak/nocode.git
 
 targets:
-#  default:
-#    name: Create the branch v4 if needed
-#    kind: gitbranch
-#    scmid: default
-#    disablesourceinput: true
-#    spec:
-#      branch: v4
+  #  default:
+  #    name: Create the branch v4 if needed
+  #    kind: gitbranch
+  #    scmid: default
+  #    disablesourceinput: true
+  #    spec:
+  #      branch: v4
   scmid-1:
     name: Create branch master.
     kind: gitbranch
@@ -80,7 +78,6 @@ targets:
     kind: gitbranch
     scmid: default
     sourceid: scmid
-
 #  url:
 #    name: Create branch v3 from url
 #    kind: gitbranch
@@ -89,5 +86,3 @@ targets:
 #      url: https://github.com/olblak/nocode.git
 #      branch: "v3"
 #      sourceBranch: "master"
-#      password: '{{ requiredEnv "GITHUB_TOKEN" }}'
-#      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
