@@ -5,25 +5,23 @@ scms:
     spec:
       owner: updatecli-test
       repository: updatecli
-      token: {{ requiredEnv "GITHUB_TOKEN" }}
-      username: {{ requiredEnv "GITHUB_ACTOR" }}
       branch: e2e-tests-golang
 
 actions:
-    default:
-        # The action title is used to define the pullrequest title
-        # Since we use the groupby: we need to be sure that the pullrequest title
-        # is the same for all the subpipeline.
-        title: Bump Patch version for Golang module
-        kind: github/pullrequest
-        scmid: default
-        spec:
-          labels:
-            - "dependencies"
+  default:
+    # The action title is used to define the pullrequest title
+    # Since we use the groupby: we need to be sure that the pullrequest title
+    # is the same for all the subpipeline.
+    title: Bump Patch version for Golang module
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      labels:
+        - "dependencies"
 
 autodiscovery:
   scmid: default
-  actionid:  default
+  actionid: default
   groupby: all
   crawlers:
     golang/gomod:
@@ -34,4 +32,3 @@ autodiscovery:
       only:
         - modules:
             github.com/beevik/etree: ""
-

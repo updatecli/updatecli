@@ -8,7 +8,6 @@ sources:
     spec:
       owner: updatecli
       repository: updatecli
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
   testerVersion:
     name: Get Tester stage version
     kind: dockerfile

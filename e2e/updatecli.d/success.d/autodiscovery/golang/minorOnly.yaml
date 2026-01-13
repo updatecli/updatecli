@@ -1,12 +1,10 @@
-name: "Bump minor version for each Golang module one by one"
 scms:
+name: "Bump minor version for each Golang module one by one"
   default:
     kind: github
     spec:
       owner: updatecli-test
       repository: updatecli
-      token: {{ requiredEnv "GITHUB_TOKEN" }}
-      username: {{ requiredEnv "GITHUB_ACTOR" }}
       branch: e2e-tests-golang
 
 actions:

@@ -7,8 +7,6 @@ scms:
       branch: main
       owner: updatecli
       repository: updatecli
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
   git-repo:
     kind: git
     spec:
@@ -41,8 +39,6 @@ sources:
       # Relative path are relative to where Updatecli is executed
       path: "./"
 
-
-
 conditions:
   check-git:
     name: Check the tag 'v0.30.0' exists in the git repository
@@ -51,7 +47,7 @@ conditions:
     disablesourceinput: true
     spec:
       versionfilter:
-        pattern: 'v0.30.0'
+        pattern: "v0.30.0"
   check-github:
     name: Check the tag 'v0.30.0' exists in the GitHub repository
     kind: gittag
@@ -59,7 +55,7 @@ conditions:
     disablesourceinput: true
     spec:
       versionfilter:
-        pattern: 'v0.30.0'
+        pattern: "v0.30.0"
   check-git-url:
     name: "Check the tag 'v0.30.0' exists using a url"
     kind: "gittag"
