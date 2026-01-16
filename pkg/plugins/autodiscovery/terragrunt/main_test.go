@@ -115,7 +115,6 @@ scms:
     kind: 'git'
     spec:
       url: 'https://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git'
-      username: 'oauth2'
 sources:
   latestVersion:
     name: 'Get latest version of the github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git module'

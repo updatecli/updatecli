@@ -13,10 +13,8 @@ scms:
     kind: 'git'
     spec:
       url: '{{ .ModuleSourceScmUrl }}'
-{{- if .Username }}
-      username: '{{ .Username }}'
-{{- end }}
 {{- if .Token }}
+      username: '{{ .Username }}'
       password: '{{ .Token }}'
 {{- end }}
 {{- end }}
