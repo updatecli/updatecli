@@ -257,6 +257,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleSourceScm      string
 		ModuleSourceScmUrl   string
 		Token                string
+		Username             string
 		ScmID                string
 		TargetName           string
 		TargetPath           string
@@ -277,6 +278,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 		ModuleSourceScm:      ModuleSourceScm,
 		ModuleSourceScmUrl:   ModuleSourceScmUrl,
 		Token:                t.getToken(),
+		Username:             t.getUsername(),
 		ScmID:                t.scmID,
 		TargetPath:           targetPath,
 		TargetName:           fmt.Sprintf("deps: bump %s to {{ source \"latestVersion\" }}", module.ForDisplay()),
@@ -307,4 +309,19 @@ func (t Terragrunt) getToken() string {
 
 	// Case 2: Token pointer is set - use the value (even if empty)
 	return *t.spec.Token
+}
+
+// getUsername returns the username value for authentication with any Git provider
+// It handles two cases based on the Username pointer:
+//   - nil: return "oauth2" as default for token-based auth (matches GitHub SCM plugin)
+//   - &"": return empty string explicitly set by user
+//   - &"xxx": use the specified username
+func (t Terragrunt) getUsername() string {
+	// Case 1: Username is nil - use default for token-based auth
+	if t.spec.Username == nil {
+		return "oauth2"
+	}
+
+	// Case 2: Username pointer is set - use the value (even if empty)
+	return *t.spec.Username
 }

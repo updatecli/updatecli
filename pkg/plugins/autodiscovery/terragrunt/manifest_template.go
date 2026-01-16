@@ -14,6 +14,7 @@ scms:
     spec:
       url: '{{ .ModuleSourceScmUrl }}'
 {{- if .Token }}
+      username: '{{ .Username }}'
       password: '{{ .Token }}'
 {{- end }}
 {{- end }}
