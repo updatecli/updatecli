@@ -71,7 +71,7 @@ func New(spec interface{}) (*Bazelregistry, error) {
 	b := Bazelregistry{
 		spec:          newSpec,
 		versionFilter: newFilter,
-		webClient:     &http.Client{},
+		webClient:     httpclient.NewRetryClient(),
 		baseURL:       baseURL,
 	}
 

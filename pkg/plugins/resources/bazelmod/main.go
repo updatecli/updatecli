@@ -6,17 +6,12 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Bazelmod stores configuration about the MODULE.bazel file and the module to update
 type Bazelmod struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
-	// Holds both parsed version and original version (to allow retrieving metadata such as changelog)
-	foundVersion version.Version
-	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
-	versionFilter version.Filter
 }
 
 // New returns a reference to a newly initialized Bazelmod object from a Spec
@@ -36,14 +31,8 @@ func New(spec interface{}) (*Bazelmod, error) {
 
 	newSpec.File = strings.TrimPrefix(newSpec.File, "file://")
 
-	newFilter, err := newSpec.VersionFilter.Init()
-	if err != nil {
-		return nil, err
-	}
-
 	b := Bazelmod{
 		spec:             newSpec,
-		versionFilter:    newFilter,
 		contentRetriever: &text.Text{},
 	}
 
@@ -64,8 +53,7 @@ func (b *Bazelmod) Changelog(from, to string) *result.Changelogs {
 // to identify the resource without any sensitive information or context specific data.
 func (b *Bazelmod) ReportConfig() interface{} {
 	return Spec{
-		File:          b.spec.File,
-		Module:        b.spec.Module,
-		VersionFilter: b.spec.VersionFilter,
+		File:   b.spec.File,
+		Module: b.spec.Module,
 	}
 }

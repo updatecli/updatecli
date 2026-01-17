@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Spec defines a specification for a "bazelmod" resource
@@ -33,11 +32,6 @@ type Spec struct {
 	//   * gazelle
 	//   * protobuf
 	Module string `yaml:",omitempty" jsonschema:"required"`
-	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	//
-	// compatible:
-	//   * source
-	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
 var (

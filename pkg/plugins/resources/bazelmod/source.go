@@ -37,10 +37,6 @@ func (b *Bazelmod) Source(workingDir string, resultSource *result.Source) error 
 		return fmt.Errorf("module %q not found in MODULE.bazel file %q", b.spec.Module, filePath)
 	}
 
-	// TODO:
-	if !b.versionFilter.IsZero() {
-	}
-
 	resultSource.Information = dep.Version
 	resultSource.Result = result.SUCCESS
 	resultSource.Description = fmt.Sprintf("version %q found for module %q in file %q",

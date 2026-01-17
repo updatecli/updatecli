@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestNew(t *testing.T) {
@@ -19,18 +18,6 @@ func TestNew(t *testing.T) {
 			spec: Spec{
 				File:   "MODULE.bazel",
 				Module: "rules_go",
-			},
-			wantErr: false,
-		},
-		{
-			name: "With version filter",
-			spec: Spec{
-				File:   "MODULE.bazel",
-				Module: "rules_go",
-				VersionFilter: version.Filter{
-					Kind:    "semver",
-					Pattern: ">=0.40.0",
-				},
 			},
 			wantErr: false,
 		},
@@ -121,10 +108,6 @@ func TestReportConfig(t *testing.T) {
 	spec := Spec{
 		File:   "MODULE.bazel",
 		Module: "rules_go",
-		VersionFilter: version.Filter{
-			Kind:    "semver",
-			Pattern: ">=0.40.0",
-		},
 	}
 
 	b, err := New(spec)
@@ -137,7 +120,6 @@ func TestReportConfig(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, spec.File, reportedSpec.File)
 	assert.Equal(t, spec.Module, reportedSpec.Module)
-	assert.Equal(t, spec.VersionFilter, reportedSpec.VersionFilter)
 }
 
 func TestChangelog(t *testing.T) {
