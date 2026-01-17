@@ -6,11 +6,13 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	updatecliversion "github.com/updatecli/updatecli/pkg/core/version"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -68,10 +70,18 @@ func New(spec interface{}) (*Bazelregistry, error) {
 		baseURL = DefaultRegistryURL
 	}
 
+	// Create HTTP client with timeout
+	// The retry client handles retries for transient errors
+	retryClient := httpclient.NewRetryClient()
+	if httpClient, ok := retryClient.(*http.Client); ok {
+		// Set timeout to prevent hanging requests
+		httpClient.Timeout = 30 * time.Second
+	}
+
 	b := Bazelregistry{
 		spec:          newSpec,
 		versionFilter: newFilter,
-		webClient:     httpclient.NewRetryClient(),
+		webClient:     retryClient,
 		baseURL:       baseURL,
 	}
 
@@ -98,7 +108,18 @@ func (b *Bazelregistry) ReportConfig() interface{} {
 	}
 }
 
-// fetchModuleMetadata fetches the metadata.json for a given module
+// getUserAgent returns a User-Agent string including Updatecli version
+func getUserAgent() string {
+	ua := "updatecli-bazelregistry"
+	if updatecliversion.Version != "" {
+		ua += "/" + updatecliversion.Version
+	} else {
+		ua += "/dev"
+	}
+	return ua
+}
+
+// fetchModuleMetadata fetches the metadata.json for a given module.
 func (b *Bazelregistry) fetchModuleMetadata(module string) (*Metadata, error) {
 	// Build URL by replacing {module} placeholder
 	url := strings.ReplaceAll(b.baseURL, "{module}", module)
@@ -110,7 +131,8 @@ func (b *Bazelregistry) fetchModuleMetadata(module string) (*Metadata, error) {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "updatecli-bazelregistry/1.0")
+	// Set User-Agent with Updatecli version
+	req.Header.Set("User-Agent", getUserAgent())
 
 	resp, err := b.webClient.Do(req)
 	if err != nil {
