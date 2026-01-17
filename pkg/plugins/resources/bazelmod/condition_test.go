@@ -107,6 +107,42 @@ func TestCondition(t *testing.T) {
 			wantErr:       true,
 			errorContains: "no version provided",
 		},
+		{
+			name: "Semantic version comparison - equal versions",
+			spec: Spec{
+				File:   filepath.Join(tmpDir, "MODULE.bazel"),
+				Module: "rules_go",
+			},
+			source:          "0.42.0",
+			rootDir:         "",
+			expectedPass:    true,
+			wantErr:         false,
+			messageContains: "correctly set",
+		},
+		{
+			name: "Semantic version comparison - different patch versions",
+			spec: Spec{
+				File:   filepath.Join(tmpDir, "MODULE.bazel"),
+				Module: "rules_go",
+			},
+			source:          "0.42.1",
+			rootDir:         "",
+			expectedPass:    false,
+			wantErr:         false,
+			messageContains: "incorrectly set",
+		},
+		{
+			name: "Non-semantic version - string comparison",
+			spec: Spec{
+				File:   filepath.Join(tmpDir, "MODULE.bazel"),
+				Module: "protobuf",
+			},
+			source:          "21.7",
+			rootDir:         "",
+			expectedPass:    true,
+			wantErr:         false,
+			messageContains: "correctly set",
+		},
 	}
 
 	for _, tt := range tests {
