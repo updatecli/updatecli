@@ -52,6 +52,15 @@ type Spec struct {
 	//    so we can use versionFilter to retrieve the last Major/Minor/Patch version but in case of complex version constraints, such as ">=1.0.0 <2.0.0",
 	//    Updatecli will convert it to the first version it detects such as 1.0.0 in our example
 	IgnoreVersionConstraints *bool `yaml:",omitempty"`
+	// NpmrcPath defines the path to the .npmrc file to use for all discovered packages.
+	// This will be propagated to all generated npm resource specs.
+	NpmrcPath string `yaml:"npmrcpath,omitempty"`
+	// URL defines the registry url (defaults to `https://registry.npmjs.org/`).
+	// This will be propagated to all generated npm resource specs.
+	URL string `yaml:",omitempty"`
+	// RegistryToken defines the token to use when connecting to the registry.
+	// This will be propagated to all generated npm resource specs.
+	RegistryToken string `yaml:",omitempty"`
 }
 
 // Npm holds all information needed to generate npm manifest.
@@ -68,6 +77,12 @@ type Npm struct {
 	versionFilter version.Filter
 	// ignoreVersionConstraint indicates whether to respect version constraints defined in package.json or not.
 	ignoreVersionConstraint bool
+	// npmrcPath holds the path to the .npmrc file to propagate to generated manifests
+	npmrcPath string
+	// url holds the registry URL to propagate to generated manifests
+	url string
+	// registryToken holds the registry token to propagate to generated manifests
+	registryToken string
 }
 
 // New return a new valid object.
@@ -112,6 +127,9 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 		scmID:                   scmID,
 		versionFilter:           newFilter,
 		ignoreVersionConstraint: ignoreVersionConstraint,
+		npmrcPath:               s.NpmrcPath,
+		url:                     s.URL,
+		registryToken:           s.RegistryToken,
 	}, nil
 
 }

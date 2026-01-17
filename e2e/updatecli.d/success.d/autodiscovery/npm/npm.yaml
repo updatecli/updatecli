@@ -1,7 +1,7 @@
 name: "NPM autodiscovery using git scm"
 scms:
   #default:
-  #  kind: git 
+  #  kind: git
   #  spec:
   #    url: https://github.com/olblak/plugin-site.git
   #    branch: master
@@ -14,19 +14,17 @@ scms:
       #repository: plugin-site
       #branch: master
       repository: updatecli-app-dashboard
-      token: {{ requiredEnv "GITHUB_TOKEN" }}
-      username: {{ requiredEnv "GITHUB_ACTOR" }}
       branch: main
 
 actions:
-    default:
-        kind: github/pullrequest
-        scmid: default
-        
+  default:
+    kind: github/pullrequest
+    scmid: default
+
 autodiscovery:
   # scmid is applied to all crawlers
   scmid: default
-  actionid:  default
+  actionid: default
   groupby: all
   #groupby: individual
   crawlers:
@@ -34,4 +32,3 @@ autodiscovery:
       only:
         - packages:
             "axios": ""
-
