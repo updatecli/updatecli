@@ -11,9 +11,8 @@ import (
 	"github.com/goccy/go-yaml/parser"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 
-	yamlpath_new "github.com/helm-unittest/yaml-jsonpath/pkg/yamlpath"
-	yamlpath_old "github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -111,11 +110,7 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 		}
 
 	case EngineYamlPath:
-		urlPath, err := yamlpath_old.NewPath(y.spec.Key)
-		urlPath1, err := yamlpath_new.NewPath(y.spec.Key)
-		if urlPath != urlPath1 {
-			fmt.Errorf("%s different from %s", urlPath, urlPath1)
-		}
+		urlPath, err := yamlpath.NewPath(y.spec.Key)
 		if err != nil {
 			return fmt.Errorf("crafting yamlpath query: %w", err)
 		}
