@@ -5,21 +5,19 @@ scms:
     spec:
       owner: updatecli-test
       repository: github-actions
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       branch: main
 
 actions:
-    default:
-        kind: github/pullrequest
-        scmid: default
-        spec:
-          labels:
-            - "dependencies"
+  default:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      labels:
+        - "dependencies"
 
 autodiscovery:
   scmid: default
-  actionid:  default
+  actionid: default
   crawlers:
     github/action:
       #versionfilter:

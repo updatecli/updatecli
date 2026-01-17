@@ -18,9 +18,7 @@ scms:
       email: "{{ .scm.email }}"
       owner: "{{ .scm.owner }}"
       repository: "{{ .scm.repository }}"
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       user: "{{ .scm.user }}"
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
     disabled: false
 sources:
   latestVersion:
@@ -29,8 +27,6 @@ sources:
     spec:
       owner: ovh
       repository: venom
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       versionfilter:
         kind: semver
 targets:
@@ -48,7 +44,7 @@ targets:
     kind: file
     spec:
       file: CONTRIBUTING.adoc
-      matchpattern: 'venom version # expect .*'
+      matchpattern: "venom version # expect .*"
       replacepattern: 'venom version # expect {{ source "latestVersion" }}'
     scmid: default
     sourceid: latestVersion

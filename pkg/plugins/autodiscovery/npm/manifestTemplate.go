@@ -9,6 +9,15 @@ sources:
     kind: '{{ .SourceKind }}'
     spec:
       name: '{{ .SourceNPMName }}'
+{{- if .SourceNpmrcPath }}
+      npmrcpath: '{{ .SourceNpmrcPath }}'
+{{- end }}
+{{- if .SourceURL }}
+      url: '{{ .SourceURL }}'
+{{- end }}
+{{- if .SourceRegistryToken }}
+      registrytoken: '{{ .SourceRegistryToken }}'
+{{- end }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
@@ -115,6 +124,9 @@ type manifestTemplateParams struct {
 	SourceVersionFilterKind    string
 	SourceVersionFilterPattern string
 	SourceVersionFilterRegex   string
+	SourceNpmrcPath            string
+	SourceURL                  string
+	SourceRegistryToken        string
 	TargetID                   string
 	TargetName                 string
 	TargetKey                  string
