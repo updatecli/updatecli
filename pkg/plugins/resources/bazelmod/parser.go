@@ -17,9 +17,9 @@ type BazelDep struct {
 
 // ModuleFile represents a parsed MODULE.bazel file
 type ModuleFile struct {
-	Content  string
-	Deps     []BazelDep
-	Lines    []string
+	Content string
+	Deps    []BazelDep
+	Lines   []string
 }
 
 var (
@@ -27,7 +27,7 @@ var (
 	// Matches: bazel_dep(name = "module_name", version = "1.2.3")
 	// Also handles multi-line calls and optional repo_name
 	bazelDepPattern = regexp.MustCompile(`(?m)^\s*bazel_dep\s*\(\s*(?:name\s*=\s*"([^"]+)"\s*,?\s*)?(?:version\s*=\s*"([^"]+)"\s*,?\s*)?(?:repo_name\s*=\s*"([^"]+)"\s*,?\s*)?\)`)
-	
+
 	// Pattern to find the start of a bazel_dep call (may span multiple lines)
 	bazelDepStartPattern = regexp.MustCompile(`(?m)^\s*bazel_dep\s*\(`)
 )
@@ -44,11 +44,11 @@ func ParseModuleFile(content string) (*ModuleFile, error) {
 	// Find all bazel_dep calls
 	// We need to handle multi-line calls, so we'll search for opening parentheses
 	// and then parse until the closing parenthesis
-	
+
 	i := 0
 	for i < len(lines) {
 		line := lines[i]
-		
+
 		// Check if this line starts a bazel_dep call
 		if bazelDepStartPattern.MatchString(line) {
 			dep, endLine, err := parseBazelDep(lines, i)
@@ -72,30 +72,31 @@ func parseBazelDep(lines []string, startLine int) (*BazelDep, int, error) {
 	dep := &BazelDep{
 		LineNum: startLine + 1,
 	}
-	
+
 	// Collect all lines until we find the closing parenthesis
 	var depLines []string
 	parenCount := 0
 	i := startLine
-	
+
 	for i < len(lines) {
 		line := lines[i]
 		depLines = append(depLines, line)
-		
+
 		// Count parentheses to find the end of the function call
 		for _, char := range line {
-			if char == '(' {
+			switch char {
+			case '(':
 				parenCount++
-			} else if char == ')' {
+			case ')':
 				parenCount--
 				if parenCount == 0 {
 					// Found the closing parenthesis
 					dep.FullLine = strings.Join(depLines, "\n")
-					
+
 					// Extract name, version, and repo_name using regex
 					content := strings.Join(depLines, " ")
 					matches := bazelDepPattern.FindStringSubmatch(content)
-					
+
 					if len(matches) >= 3 {
 						dep.Name = matches[1]
 						dep.Version = matches[2]
@@ -108,15 +109,15 @@ func parseBazelDep(lines []string, startLine int) (*BazelDep, int, error) {
 						dep.Version = extractParam(content, "version")
 						dep.RepoName = extractParam(content, "repo_name")
 					}
-					
+
 					return dep, i + 1, nil
 				}
 			}
 		}
-		
+
 		i++
 	}
-	
+
 	// If we get here, we didn't find a closing parenthesis
 	return nil, startLine + 1, fmt.Errorf("unclosed bazel_dep() call starting at line %d", startLine+1)
 }
@@ -152,7 +153,7 @@ func (mf *ModuleFile) UpdateDepVersion(moduleName, newVersion string) (string, e
 	// Replace the version in the full bazel_dep line(s)
 	// Pattern: version = "old_version" (handles whitespace variations)
 	versionPattern := regexp.MustCompile(`(version\s*=\s*")[^"]+(")`)
-	
+
 	// Replace only once (the version in this specific bazel_dep)
 	updatedDepLines := versionPattern.ReplaceAllStringFunc(dep.FullLine, func(match string) string {
 		// Extract the quotes and replace the version
@@ -162,15 +163,15 @@ func (mf *ModuleFile) UpdateDepVersion(moduleName, newVersion string) (string, e
 		}
 		return match
 	})
-	
+
 	// Replace in the original content
 	lines := mf.Lines
 	startLine := dep.LineNum - 1
-	
+
 	// Find the range of lines for this dep
 	depLines := strings.Split(dep.FullLine, "\n")
 	endLine := startLine + len(depLines) - 1
-	
+
 	// Reconstruct the file with the updated lines
 	var newLines []string
 	newLines = append(newLines, lines[:startLine]...)
@@ -178,7 +179,6 @@ func (mf *ModuleFile) UpdateDepVersion(moduleName, newVersion string) (string, e
 	if endLine+1 < len(lines) {
 		newLines = append(newLines, lines[endLine+1:]...)
 	}
-	
+
 	return strings.Join(newLines, "\n"), nil
 }
-

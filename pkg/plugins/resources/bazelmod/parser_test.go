@@ -52,8 +52,8 @@ bazel_dep(name = "protobuf", version = "21.7")`,
 			wantErr:       false,
 		},
 		{
-			name: "Parse empty file",
-			content: `module(name = "test_project", version = "1.0.0")`,
+			name:          "Parse empty file",
+			content:       `module(name = "test_project", version = "1.0.0")`,
 			expectedDeps:  0,
 			expectedNames: []string{},
 			wantErr:       false,
@@ -90,10 +90,10 @@ bazel_dep(name = "gazelle", version = "0.34.0")`
 	require.NoError(t, err)
 
 	tests := []struct {
-		name         string
-		moduleName   string
-		expectedDep  *BazelDep
-		expectedNil  bool
+		name        string
+		moduleName  string
+		expectedDep *BazelDep
+		expectedNil bool
 	}{
 		{
 			name:       "Find existing module",
@@ -195,4 +195,3 @@ bazel_dep(name = "rules_go", version = "0.42.0")`,
 		})
 	}
 }
-

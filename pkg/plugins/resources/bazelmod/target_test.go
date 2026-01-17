@@ -12,15 +12,15 @@ import (
 
 func TestTarget(t *testing.T) {
 	tests := []struct {
-		name          string
-		setupContent  string
-		spec          Spec
-		source        string
-		dryRun        bool
+		name            string
+		setupContent    string
+		spec            Spec
+		source          string
+		dryRun          bool
 		expectedChanged bool
-		wantErr       bool
-		errorContains string
-		checkFile     func(t *testing.T, filePath string)
+		wantErr         bool
+		errorContains   string
+		checkFile       func(t *testing.T, filePath string)
 	}{
 		{
 			name: "Update version - dry run",
@@ -116,9 +116,9 @@ bazel_dep(name = "rules_go", version = "0.42.0")`,
 				File:   "MODULE.bazel",
 				Module: "nonexistent",
 			},
-			source:    "1.0.0",
-			dryRun:    false,
-			wantErr:   true,
+			source:        "1.0.0",
+			dryRun:        false,
+			wantErr:       true,
 			errorContains: "not found",
 		},
 		{
@@ -130,9 +130,9 @@ bazel_dep(name = "rules_go", version = "0.42.0")`,
 				File:   "MODULE.bazel",
 				Module: "rules_go",
 			},
-			source:    "",
-			dryRun:    false,
-			wantErr:   true,
+			source:        "",
+			dryRun:        false,
+			wantErr:       true,
 			errorContains: "no version provided",
 		},
 	}
@@ -142,7 +142,7 @@ bazel_dep(name = "rules_go", version = "0.42.0")`,
 			// Create a temporary directory for test files
 			tmpDir := t.TempDir()
 			filePath := filepath.Join(tmpDir, "MODULE.bazel")
-			err := os.WriteFile(filePath, []byte(tt.setupContent), 0644)
+			err := os.WriteFile(filePath, []byte(tt.setupContent), 0600)
 			require.NoError(t, err)
 
 			// Update spec to use absolute path
@@ -169,4 +169,3 @@ bazel_dep(name = "rules_go", version = "0.42.0")`,
 		})
 	}
 }
-

@@ -33,7 +33,7 @@ func TestSource(t *testing.T) {
 
 	for filename, content := range testFiles {
 		filePath := filepath.Join(tmpDir, filename)
-		err := os.WriteFile(filePath, []byte(content), 0644)
+		err := os.WriteFile(filePath, []byte(content), 0600)
 		require.NoError(t, err)
 	}
 

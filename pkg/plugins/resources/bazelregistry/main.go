@@ -38,7 +38,6 @@ type Maintainer struct {
 type Bazelregistry struct {
 	spec          Spec
 	versionFilter version.Filter // Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
-	foundVersion  version.Version
 	webClient     httpclient.HTTPClient
 	baseURL       string
 }

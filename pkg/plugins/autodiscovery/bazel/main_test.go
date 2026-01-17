@@ -98,9 +98,9 @@ func TestDiscoverManifests(t *testing.T) {
 			spec: Spec{
 				RootDir: "",
 			},
-			scmID:             "",
-			actionID:          "",
-			minManifests:      4, // At least rules_go, gazelle, protobuf, rules_docker
+			scmID:        "",
+			actionID:     "",
+			minManifests: 4, // At least rules_go, gazelle, protobuf, rules_docker
 		},
 		{
 			name:    "Discover with Only filter",
@@ -115,9 +115,9 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 				},
 			},
-			scmID:             "",
-			actionID:          "",
-			minManifests:      2, // rules_go appears in multiple files
+			scmID:        "",
+			actionID:     "",
+			minManifests: 2, // rules_go appears in multiple files
 		},
 		{
 			name:    "Discover with Ignore filter",
@@ -132,9 +132,9 @@ func TestDiscoverManifests(t *testing.T) {
 					},
 				},
 			},
-			scmID:             "",
-			actionID:          "",
-			minManifests:      3, // Should exclude gazelle
+			scmID:        "",
+			actionID:     "",
+			minManifests: 3, // Should exclude gazelle
 		},
 		{
 			name:    "Discover with version filter",
@@ -146,9 +146,9 @@ func TestDiscoverManifests(t *testing.T) {
 					Pattern: "minor",
 				},
 			},
-			scmID:             "",
-			actionID:          "",
-			minManifests:      4,
+			scmID:        "",
+			actionID:     "",
+			minManifests: 4,
 		},
 	}
 
@@ -247,7 +247,7 @@ func TestDiscoverManifestsWithEmptyFiles(t *testing.T) {
     version = "1.0.0",
 )
 `
-	err := os.WriteFile(moduleFile, []byte(content), 0644)
+	err := os.WriteFile(moduleFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	bazel := Bazel{
@@ -316,12 +316,12 @@ func TestManifestTemplateStructure(t *testing.T) {
 
 	// Verify YAML structure
 	lines := strings.Split(manifestStr, "\n")
-	
+
 	// Check for required sections
 	hasSources := false
 	hasConditions := false
 	hasTargets := false
-	
+
 	for _, line := range lines {
 		if strings.TrimSpace(line) == "sources:" {
 			hasSources = true

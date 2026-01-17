@@ -35,16 +35,16 @@ func TestParseModuleDependencies(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Parse invalid MODULE.bazel (parser is lenient and may still extract deps)",
-			moduleFile:  "testdata/invalid/MODULE.bazel",
+			name:       "Parse invalid MODULE.bazel (parser is lenient and may still extract deps)",
+			moduleFile: "testdata/invalid/MODULE.bazel",
 			expectedDeps: []dependency{
 				{Name: "rules_go", Version: "0.42.0"}, // Parser extracts this despite missing comma
 			},
 			expectError: false, // Parser is lenient and may not error on syntax issues
 		},
 		{
-			name:        "Non-existent file",
-			moduleFile:  "testdata/nonexistent/MODULE.bazel",
+			name:         "Non-existent file",
+			moduleFile:   "testdata/nonexistent/MODULE.bazel",
 			expectedDeps: nil,
 			expectError:  true,
 		},
@@ -92,7 +92,7 @@ func TestParseModuleDependenciesEmptyFile(t *testing.T) {
     version = "1.0.0",
 )
 `
-	err := os.WriteFile(moduleFile, []byte(content), 0644)
+	err := os.WriteFile(moduleFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	deps, err := parseModuleDependencies(moduleFile)
@@ -114,7 +114,7 @@ bazel_dep(
     version = "0.42.0",
 )
 `
-	err := os.WriteFile(moduleFile, []byte(content), 0644)
+	err := os.WriteFile(moduleFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	deps, err := parseModuleDependencies(moduleFile)
@@ -123,4 +123,3 @@ bazel_dep(
 	assert.Equal(t, "rules_go", deps[0].Name)
 	assert.Equal(t, "0.42.0", deps[0].Version)
 }
-

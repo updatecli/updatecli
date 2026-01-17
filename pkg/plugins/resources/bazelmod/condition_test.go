@@ -25,7 +25,7 @@ func TestCondition(t *testing.T) {
 		version = "21.7",
 		repo_name = "com_google_protobuf",
 	)`
-	err := os.WriteFile(filePath, []byte(content), 0644)
+	err := os.WriteFile(filePath, []byte(content), 0600)
 	require.NoError(t, err)
 
 	tests := []struct {

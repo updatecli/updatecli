@@ -210,7 +210,7 @@ func TestFindModuleFilesSkipsHiddenDirs(t *testing.T) {
 
 	// Create MODULE.bazel in normal directory
 	normalFile := filepath.Join(normalDir, "MODULE.bazel")
-	err = os.WriteFile(normalFile, []byte("module(name = \"test\")\n"), 0644)
+	err = os.WriteFile(normalFile, []byte("module(name = \"test\")\n"), 0600)
 	require.NoError(t, err)
 
 	// Create hidden directory
@@ -220,7 +220,7 @@ func TestFindModuleFilesSkipsHiddenDirs(t *testing.T) {
 
 	// Create MODULE.bazel in hidden directory
 	hiddenFile := filepath.Join(hiddenDir, "MODULE.bazel")
-	err = os.WriteFile(hiddenFile, []byte("module(name = \"hidden\")\n"), 0644)
+	err = os.WriteFile(hiddenFile, []byte("module(name = \"hidden\")\n"), 0600)
 	require.NoError(t, err)
 
 	// Find files
