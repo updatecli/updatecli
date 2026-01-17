@@ -9,9 +9,8 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/parser"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 
-	yamlpath_new "github.com/helm-unittest/yaml-jsonpath/pkg/yamlpath"
-	yamlpath_old "github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -93,11 +92,7 @@ func (y *Yaml) Condition(source string, scm scm.ScmHandler) (pass bool, message 
 			}
 
 		case EngineYamlPath:
-			urlPath, err := yamlpath_old.NewPath(y.spec.Key)
-			urlPath1, err := yamlpath_new.NewPath(y.spec.Key)
-			if urlPath != urlPath1 {
-				fmt.Errorf("%s different from %s", urlPath, urlPath1)
-			}
+			urlPath, err := yamlpath.NewPath(y.spec.Key)
 			if err != nil {
 				errorMessages = append(errorMessages, fmt.Errorf(
 					"%q - crafting yamlpath query: %w", originalFilePath, err))

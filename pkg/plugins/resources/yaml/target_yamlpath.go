@@ -8,11 +8,10 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 
-	yamlpath_new "github.com/helm-unittest/yaml-jsonpath/pkg/yamlpath"
-	yamlpath_old "github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -55,11 +54,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 
 		// Process each key for this file
 		for _, key := range keys {
-			urlPath, err := yamlpath_old.NewPath(y.spec.Key)
-			urlPath1, err := yamlpath_new.NewPath(y.spec.Key)
-			if urlPath != urlPath1 {
-				fmt.Errorf("%s different from %s", urlPath, urlPath1)
-			}
+			urlPath, err := yamlpath.NewPath(y.spec.Key)
 			if err != nil {
 				return 0, 0, fmt.Errorf("crafting yamlpath query for key %q: %w", key, err)
 			}
