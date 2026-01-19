@@ -55,47 +55,64 @@ func TestGetToken(t *testing.T) {
 }
 
 func TestGetUsername(t *testing.T) {
+	tokenValue := "ghp_token"
 	emptyString := ""
 	oauth2Username := "oauth2"
-	gitUsername := "git"
+	customUsername := "custom"
 
 	tests := []struct {
 		name             string
+		token            *string
 		username         *string
 		expectedUsername string
 	}{
 		{
-			name:             "Nil username - default to oauth2",
+			name:             "No token - returns empty",
+			token:            nil,
+			username:         nil,
+			expectedUsername: "",
+		},
+		{
+			name:             "Empty token - returns empty",
+			token:            &emptyString,
+			username:         nil,
+			expectedUsername: "",
+		},
+		{
+			name:             "Token present, nil username - default to oauth2",
+			token:            &tokenValue,
 			username:         nil,
 			expectedUsername: "oauth2",
 		},
 		{
-			name:             "Empty username - explicitly set to empty",
+			name:             "Token present, empty username",
+			token:            &tokenValue,
 			username:         &emptyString,
 			expectedUsername: "",
 		},
 		{
-			name:             "OAuth2 username - use specific username",
+			name:             "Token present, oauth2 username",
+			token:            &tokenValue,
 			username:         &oauth2Username,
 			expectedUsername: "oauth2",
 		},
 		{
-			name:             "Git username - use specific username",
-			username:         &gitUsername,
-			expectedUsername: "git",
+			name:             "Token present, custom username",
+			token:            &tokenValue,
+			username:         &customUsername,
+			expectedUsername: "custom",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create test instance
 			tg := Terragrunt{
 				spec: Spec{
+					Token:    tt.token,
 					Username: tt.username,
 				},
 			}
 
-			// Test
 			result := tg.getUsername()
 			assert.Equal(t, tt.expectedUsername, result)
 		})

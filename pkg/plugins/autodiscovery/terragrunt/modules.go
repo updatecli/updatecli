@@ -311,17 +311,21 @@ func (t Terragrunt) getToken() string {
 	return *t.spec.Token
 }
 
-// getUsername returns the username value for authentication with any Git provider
-// It handles two cases based on the Username pointer:
+// getUsername returns the username value for authentication with any Git provider.
+// Returns empty string when no token is configured (no authentication needed).
+// When token is present, returns username based on the Username pointer:
 //   - nil: return "oauth2" as default for token-based auth (matches GitHub SCM plugin)
 //   - &"": return empty string explicitly set by user
 //   - &"xxx": use the specified username
 func (t Terragrunt) getUsername() string {
-	// Case 1: Username is nil - use default for token-based auth
+	// No token = no authentication = no username
+	if t.getToken() == "" {
+		return ""
+	}
+
+	// Token present - return username
 	if t.spec.Username == nil {
 		return "oauth2"
 	}
-
-	// Case 2: Username pointer is set - use the value (even if empty)
 	return *t.spec.Username
 }
