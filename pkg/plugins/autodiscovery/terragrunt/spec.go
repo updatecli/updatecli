@@ -30,6 +30,25 @@ type Spec struct {
 	//   token: "glpat-xxxxxxxxxxxx"
 	//   token: "{{ requiredEnv \"GITLAB_TOKEN\" }}"
 	Token *string `yaml:",omitempty"`
+	// `username` specifies the username to use for Git authentication when accessing private repositories.
+	// Works with any Git provider (GitHub, GitLab, Bitbucket, Gitea, etc.)
+	//
+	// compatible:
+	//   * autodiscovery
+	//
+	// default:
+	//   When not specified: "oauth2" (matches GitHub SCM plugin, required for go-git HTTP BasicAuth)
+	//
+	// remark:
+	//   For token-based auth, the username is typically a placeholder (token identifies the user).
+	//   Common values: "oauth2" (default), "x-access-token", "git", or actual username.
+	//   Use template functions to read from environment: username: "{{ requiredEnv \"GIT_USERNAME\" }}"
+	//
+	// example:
+	//   username: "git"
+	//   username: "oauth2"
+	//   username: "{{ requiredEnv \"GIT_USERNAME\" }}"
+	Username *string `yaml:",omitempty"`
 	/*
 		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
 
