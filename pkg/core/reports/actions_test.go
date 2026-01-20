@@ -26,10 +26,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -56,10 +56,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -86,10 +86,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -119,10 +119,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -159,10 +159,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -192,10 +192,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -232,10 +232,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -289,10 +289,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -325,10 +325,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -382,10 +382,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -418,10 +418,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -458,10 +458,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -480,10 +480,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -1223,10 +1223,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -1264,13 +1264,13 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.2",
 									},
 									{
 										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.2",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -1293,10 +1293,10 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
+										Title: "1.0.1",
 									},
 									{
-										Title: "1.0.1",
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -1340,19 +1340,19 @@ func TestActionsMerge(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title: "1.0.0",
-									},
-									{
-										Title: "1.0.1",
-									},
-									{
-										Title: "1.0.2",
+										Title: "1.0.4",
 									},
 									{
 										Title: "1.0.3",
 									},
 									{
-										Title: "1.0.4",
+										Title: "1.0.2",
+									},
+									{
+										Title: "1.0.1",
+									},
+									{
+										Title: "1.0.0",
 									},
 								},
 							},
@@ -1438,10 +1438,10 @@ func TestFromString(t *testing.T) {
         <details id="4567">
             <summary>Target One</summary>
             <details>
-                <summary>1.0.0</summary>
+                <summary>1.0.1</summary>
             </details>
             <details>
-                <summary>1.0.1</summary>
+                <summary>1.0.0</summary>
             </details>
         </details>
         <details id="4568">
@@ -1461,10 +1461,10 @@ func TestFromString(t *testing.T) {
         <details id="4567">
             <summary>Target One</summary>
             <details>
-                <summary>1.0.0</summary>
+                <summary>1.0.1</summary>
             </details>
             <details>
-                <summary>1.0.1</summary>
+                <summary>1.0.0</summary>
             </details>
         </details>
     </action>
@@ -1486,10 +1486,10 @@ func TestFromString(t *testing.T) {
         <details id="4567">
             <summary>Target One</summary>
             <details>
-                <summary>1.0.0</summary>
+                <summary>1.0.1</summary>
             </details>
             <details>
-                <summary>1.0.1</summary>
+                <summary>1.0.0</summary>
             </details>
         </details>
         <details id="4568">
@@ -1545,10 +1545,10 @@ This is not a html formatted report
         <details id="4567">
             <summary>Target One</summary>
             <details>
-                <summary>1.0.0</summary>
+                <summary>1.0.1</summary>
             </details>
             <details>
-                <summary>1.0.1</summary>
+                <summary>1.0.0</summary>
             </details>
         </details>
     </action>
@@ -1570,10 +1570,10 @@ This is not a html formatted report
         <details id="4567">
             <summary>Target One</summary>
             <details>
-                <summary>1.0.0</summary>
+                <summary>1.0.1</summary>
             </details>
             <details>
-                <summary>1.0.1</summary>
+                <summary>1.0.0</summary>
             </details>
         </details>
     </action>
@@ -1596,10 +1596,10 @@ This is not a html formatted report
         <details id="4567">
             <summary>Target One</summary>
             <details>
-                <summary>1.0.0</summary>
+                <summary>1.0.1</summary>
             </details>
             <details>
-                <summary>1.0.1</summary>
+                <summary>1.0.0</summary>
             </details>
         </details>
     </action>
@@ -1611,10 +1611,10 @@ This is not a html formatted report
         <details id="4567">
             <summary>Target One</summary>
             <details>
-                <summary>1.0.0</summary>
+                <summary>1.0.1</summary>
             </details>
             <details>
-                <summary>1.0.1</summary>
+                <summary>1.0.0</summary>
             </details>
         </details>
     </action>
@@ -1647,9 +1647,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
-
 ### 1.0.1
+
+### 1.0.0
 
 ## Target Two
 
@@ -1666,9 +1666,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
-
 ### 1.0.1
+
+### 1.0.0
 
 ## Target Two
 
@@ -1685,9 +1685,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
-
 ### 1.0.1
+
+### 1.0.0
 
 ## Target Two
 
@@ -1707,9 +1707,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
+### 1.0.1
 
-### 1.0.1`,
+### 1.0.0`,
 			newReport: `# Test Title
 
 Pipeline ID: ` + "`" + `1234` + "`" + `
@@ -1729,9 +1729,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
-
 ### 1.0.1
+
+### 1.0.0
 
 ## Target Two
 
@@ -1789,9 +1789,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
+### 1.0.1
 
-### 1.0.1`,
+### 1.0.0`,
 			newReport: `# New Pipeline
 
 Pipeline ID: ` + "`" + `1234` + "`" + `
@@ -1811,9 +1811,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
-
 ### 1.0.1
+
+### 1.0.0
 
 ## Target Two
 
@@ -1833,9 +1833,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
+### 1.0.1
 
-### 1.0.1`,
+### 1.0.0`,
 			oldReport: "",
 			expectedFinalReport: `# New Pipeline
 
@@ -1845,9 +1845,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
+### 1.0.1
 
-### 1.0.1`,
+### 1.0.0`,
 		},
 	}
 
