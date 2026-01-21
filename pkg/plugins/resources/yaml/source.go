@@ -11,9 +11,9 @@ import (
 	"github.com/goccy/go-yaml/parser"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
-	"gopkg.in/yaml.v3"
+
+	"go.yaml.in/yaml/v3"
 )
 
 // Source return the latest version
