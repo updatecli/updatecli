@@ -67,7 +67,7 @@ type ResourceConfig struct {
 	//  * To avoid circular dependencies, the depended resource may need to remove any conditionids or set "disablesourceinput to true".
 	DependsOn []string `yaml:",omitempty"`
 	//name specifies the resource name
-	Name string `yaml:",omitempty"`
+	Name string `yaml:",omitempty" jsonschema:"required"`
 	//kind specifies the resource kind which defines accepted spec value
 	Kind string `yaml:",omitempty" jsonschema:"required"`
 	//transformers defines how the default input value need to be transformed

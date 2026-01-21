@@ -6,7 +6,6 @@ scms:
     spec:
       owner: updatecli
       repository: updatecli
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
       branch: main
 
 sources:

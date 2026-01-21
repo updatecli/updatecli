@@ -24,6 +24,14 @@ type Spec struct {
 	//    * condition
 	//    * target
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// Tag defines the git tag to check for exact match.
+	//
+	// compatible:
+	//   * condition
+	//
+	// When specified, the condition will check for an exact tag match
+	// instead of using versionFilter pattern matching.
+	Tag string `yaml:",omitempty"`
 	//  Message associated to the git tag
 	//
 	//  compatible:
@@ -155,6 +163,7 @@ func (gt *GitTag) ReportConfig() interface{} {
 	return Spec{
 		Path:          gt.spec.Path,
 		VersionFilter: gt.spec.VersionFilter,
+		Tag:           gt.spec.Tag,
 		Key:           gt.spec.Key,
 		URL:           redact.URL(gt.spec.URL),
 		SourceBranch:  gt.spec.SourceBranch,

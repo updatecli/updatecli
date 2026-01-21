@@ -56,15 +56,15 @@ type Commit struct {
 	//
 	Footers string `yaml:",omitempty"`
 	//
-	//  title defines the title of the commit message as defined by the
-	//  conventional commit specification. More information on
-	//  -> https://www.conventionalcommits.org/en/
+	//  Title is the parsed commit message title (not configurable via YAML).
+	//  The title is automatically generated from the target name or description.
 	//
-	//  default:
-	//    default is set to the target name or the target short description
-	//    if the name is not defined.
+	Title string `yaml:"-"`
 	//
-	Title string `yaml:",omitempty"`
+	//  DeprecatedTitle is deprecated and will be ignored.
+	//  The commit title is now always generated from the target name or description.
+	//
+	DeprecatedTitle string `yaml:"title,omitempty"`
 	//
 	//  body defines the commit body of the commit message as defined by the
 	//  conventional commit specification. More information on
@@ -90,11 +90,11 @@ type Commit struct {
 	//  	false
 	//
 	//  important:
-	//   if squash is set to true, then it's highly recommended to set the commit title and body
+	//   if squash is set to true, then it's highly recommended to set the commit body
 	//   to a meaningful value as all other commit information will be lost during the squash operation.
 	//
-	//   if title and body are not set, then the commit title/message will be generated based on the most recent commit
-	//   message of the squashed commits.
+	//   if body is not set, then the commit title/message will be generated based on the most recent commit
+	//   message of the squashed commits. The commit title is always generated from the target name or description.
 	//
 	Squash *bool `yaml:",omitempty"`
 }
@@ -183,13 +183,8 @@ func (c *Commit) ParseMessage(message string) (Commit, error) {
 	// Remove trailing \b so we can handle it from the go template
 	commit.Body = strings.TrimRight(commit.Body, "\n")
 
-	// Only set title if not already defined
-	// so we can specify its value from the updatecli configuration
-	// If title is set, then body is also set, even if it's empty
-	// If title is not set, but body is, we ignore body, otherwise the commit
-	// message will be without context - title is not set, but body is
-	if len(c.Title) > 0 {
-		commit.Title = c.Title
+	// If body is explicitly set in configuration, use it
+	if len(c.Body) > 0 {
 		commit.Body = c.Body
 	}
 
@@ -202,6 +197,12 @@ Validate validates "conventional commit" default parameters.
 func (c *Commit) Validate() error {
 	if len(c.Type) == 0 {
 		c.Type = "chore"
+	}
+
+	// Warn if deprecated Title field is used
+	if len(c.DeprecatedTitle) > 0 {
+		logrus.Warningf("commitMessage.title is deprecated and will be ignored. The commit title is now always generated from the target name or description.")
+		c.DeprecatedTitle = ""
 	}
 
 	return nil

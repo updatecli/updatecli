@@ -5,25 +5,23 @@ name: "docs: bump updatecli version"
 pipelineid: "golang_version"
 
 actions:
-    default:
-        kind: github/pullrequest
-        spec:
-            automerge: true
-            labels:
-                - chore
-                - skip-changelog
-        scmid: default
+  default:
+    kind: github/pullrequest
+    spec:
+      automerge: true
+      labels:
+        - chore
+        - skip-changelog
+    scmid: default
 scms:
-    default:
-        kind: github
-        spec:
-            branch: '{{ .scm.branch }}'
-            email: '{{ .scm.email }}'
-            owner: '{{ .scm.owner }}'
-            repository: '{{ .scm.repository }}'
-            token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-            user: '{{ .scm.user }}'
-            username: '{{ requiredEnv "GITHUB_ACTOR" }}'
+  default:
+    kind: github
+    spec:
+      branch: "{{ .scm.branch }}"
+      email: "{{ .scm.email }}"
+      owner: "{{ .scm.owner }}"
+      repository: "{{ .scm.repository }}"
+      user: "{{ .scm.user }}"
 
 sources:
   golang:
@@ -45,11 +43,11 @@ conditions:
 targets:
   # Apparently devcontainer json file is not a valid json file
   # so we can't use the json plugin
-  devcontainer: 
+  devcontainer:
     name: 'deps: update devcontainer to golang {{ source "golang" }}'
     kind: file
     scmid: default
     spec:
-      file: '.devcontainer/devcontainer.json'
+      file: ".devcontainer/devcontainer.json"
       matchpattern: '"image": "mcr\.microsoft\.com/devcontainers/go:.*"'
       replacepattern: '"image": "mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }}-bookworm"'

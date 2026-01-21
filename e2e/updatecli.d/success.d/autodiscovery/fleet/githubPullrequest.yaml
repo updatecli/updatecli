@@ -5,8 +5,6 @@ scms:
     spec:
       owner: updatecli-test
       repository: fleet-lab
-      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-      username: '{{ requiredEnv "GITHUB_ACTOR" }}'
       branch: main
 
 actions:

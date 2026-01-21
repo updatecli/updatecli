@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 )
@@ -102,10 +103,22 @@ func (a *Action) sort() {
 		})
 
 	for id, target := range a.Targets {
-		sort.Slice(
+		sort.SliceStable(
 			target.Changelogs,
 			func(i, j int) bool {
-				return target.Changelogs[i].Title < target.Changelogs[j].Title
+				titleI := target.Changelogs[i].Title
+				titleJ := target.Changelogs[j].Title
+
+				versionI, errI := semver.NewVersion(titleI)
+				versionJ, errJ := semver.NewVersion(titleJ)
+
+				// If both are valid versions, compare semantically (descending: newest first)
+				if errI == nil && errJ == nil {
+					return versionJ.LessThan(versionI)
+				}
+
+				// Fall back to string comparison for non-versions (ascending)
+				return titleI < titleJ
 			})
 		a.Targets[id] = target
 	}
