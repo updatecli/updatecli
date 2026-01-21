@@ -54,7 +54,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 
 		// Process each key for this file
 		for _, key := range keys {
-			urlPath, err := yamlpath.NewPath(y.spec.Key)
+			urlPath, err := yamlpath.NewPath(key)
 			if err != nil {
 				return 0, 0, fmt.Errorf("crafting yamlpath query for key %q: %w", key, err)
 			}
