@@ -139,7 +139,7 @@ type Spec struct {
 	       * When using template, the source value is passed as `.source` in the template context
 	       * All Go template functions from sprig are available
 	       * The template file is read and rendered at execution time
-	       * `template` is mutually exclusive with `content`, `matchpattern`, and `replacepattern`
+	       * `template` is mutually exclusive with `content`, `line`, `matchpattern`, and `replacepattern`
 
 	   example:
 	       template: "path/to/template.tmpl"
