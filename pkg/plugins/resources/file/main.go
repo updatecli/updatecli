@@ -129,6 +129,22 @@ type Spec struct {
 
 	*/
 	SearchPattern bool `yaml:",omitempty"`
+	/*
+	   `template` specifies the path to a Go template file to render with source values
+
+	   compatible:
+	       * target
+
+	   remarks:
+	       * When using template, the source value is passed as `.source` in the template context
+	       * All Go template functions from sprig are available
+	       * The template file is read and rendered at execution time
+	       * `template` is mutually exclusive with `content`, `matchpattern`, and `replacepattern`
+
+	   example:
+	       template: "path/to/template.tmpl"
+	*/
+	Template string `yaml:",omitempty"`
 }
 
 // File defines a resource of kind "file"
@@ -285,7 +301,21 @@ func (s *Spec) Validate() error {
 		}
 	}
 	if len(s.Content) > 0 && len(s.ReplacePattern) > 0 {
-		validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.replacepattern` and `spec.line` are mutually exclusive")
+		validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.replacepattern` and `spec.content` are mutually exclusive")
+	}
+	if len(s.Template) > 0 {
+		if len(s.Content) > 0 {
+			validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.template` and `spec.content` are mutually exclusive")
+		}
+		if len(s.MatchPattern) > 0 {
+			validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.template` and `spec.matchpattern` are mutually exclusive")
+		}
+		if len(s.ReplacePattern) > 0 {
+			validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.template` and `spec.replacepattern` are mutually exclusive")
+		}
+		if s.Line > 0 {
+			validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.template` and `spec.line` are mutually exclusive")
+		}
 	}
 
 	// Return all the validation errors if any
@@ -352,5 +382,6 @@ func (f *File) ReportConfig() interface{} {
 		MatchPattern:   f.spec.MatchPattern,
 		ReplacePattern: f.spec.ReplacePattern,
 		SearchPattern:  f.spec.SearchPattern,
+		Template:       f.spec.Template,
 	}
 }

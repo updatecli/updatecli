@@ -425,6 +425,150 @@ func TestFile_TargetMultiples(t *testing.T) {
 			},
 			wantedResult: false,
 		},
+		{
+			name:             "Template with source value",
+			inputSourceValue: "1.2.3",
+			spec: Spec{
+				File:     "version.txt",
+				Template: "template1.tmpl",
+			},
+			files: map[string]fileMetadata{
+				"version.txt": {
+					originalPath: "version.txt",
+					path:         "version.txt",
+				},
+			},
+			mockedContents: map[string]string{
+				"version.txt":    "Version: 1.0.0",
+				"template1.tmpl": "Version: {{ .source }}",
+			},
+			wantedContents: map[string]string{
+				"version.txt": "Version: 1.2.3",
+			},
+			wantedResult: true,
+		},
+		{
+			name:             "Template with sprig functions",
+			inputSourceValue: "hello-world",
+			spec: Spec{
+				File:     "config.txt",
+				Template: "template2.tmpl",
+			},
+			files: map[string]fileMetadata{
+				"config.txt": {
+					originalPath: "config.txt",
+					path:         "config.txt",
+				},
+			},
+			mockedContents: map[string]string{
+				"config.txt":     "Name: OLD",
+				"template2.tmpl": "Name: {{ .source | upper }}",
+			},
+			wantedContents: map[string]string{
+				"config.txt": "Name: HELLO-WORLD",
+			},
+			wantedResult: true,
+		},
+		{
+			name:             "Template with multiple files",
+			inputSourceValue: "2.0.0",
+			spec: Spec{
+				Files: []string{
+					"foo.yaml",
+					"bar.yaml",
+				},
+				Template: "template3.tmpl",
+			},
+			files: map[string]fileMetadata{
+				"foo.yaml": {
+					originalPath: "foo.yaml",
+					path:         "foo.yaml",
+				},
+				"bar.yaml": {
+					originalPath: "bar.yaml",
+					path:         "bar.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"foo.yaml":       "version: 1.0.0",
+				"bar.yaml":       "version: 1.5.0",
+				"template3.tmpl": "version: {{ .source }}",
+			},
+			wantedContents: map[string]string{
+				"foo.yaml": "version: 2.0.0",
+				"bar.yaml": "version: 2.0.0",
+			},
+			wantedResult: true,
+		},
+		{
+			name:             "Template with complex structure",
+			inputSourceValue: "v3.5.1",
+			spec: Spec{
+				File:     "deployment.yaml",
+				Template: "template4.tmpl",
+			},
+			files: map[string]fileMetadata{
+				"deployment.yaml": {
+					originalPath: "deployment.yaml",
+					path:         "deployment.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"deployment.yaml": "old content",
+				"template4.tmpl": `apiVersion: apps/v1
+					kind: Deployment
+					metadata:
+					  name: myapp
+					spec:
+					  template:
+						spec:
+						  containers:
+						  - name: app
+							image: myapp:{{ .source }}`,
+			},
+			wantedContents: map[string]string{
+				"deployment.yaml": `apiVersion: apps/v1
+					kind: Deployment
+					metadata:
+					  name: myapp
+					spec:
+					  template:
+						spec:
+						  containers:
+						  - name: app
+							image: myapp:v3.5.1`,
+			},
+			wantedResult: true,
+		},
+		{
+			name:             "Template with JSON array using fromJson",
+			inputSourceValue: `["v1.0.0", "v2.0.0", "v3.0.0"]`,
+			spec: Spec{
+				File:     "versions.yaml",
+				Template: "template5.tmpl",
+			},
+			files: map[string]fileMetadata{
+				"versions.yaml": {
+					originalPath: "versions.yaml",
+					path:         "versions.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"versions.yaml": "old content",
+				"template5.tmpl": `versions:
+					{{- $vers := .source | fromJson }}
+					{{- range $vers }}
+					  - {{ . }}
+					{{- end }}`,
+			},
+			wantedContents: map[string]string{
+				"versions.yaml": `versions:
+					  - v1.0.0
+					  - v2.0.0
+					  - v3.0.0`,
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

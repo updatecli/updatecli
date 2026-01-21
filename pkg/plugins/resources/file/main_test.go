@@ -133,6 +133,50 @@ func Test_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Validation failure with both 'Template' and 'Content' specified",
+			spec: Spec{
+				File:     "/tmp/foo.txt",
+				Template: "/tmp/template.tmpl",
+				Content:  "Hello World",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with both 'Template' and 'MatchPattern' specified",
+			spec: Spec{
+				File:         "/tmp/foo.txt",
+				Template:     "/tmp/template.tmpl",
+				MatchPattern: "pattern=.*",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with both 'Template' and 'ReplacePattern' specified",
+			spec: Spec{
+				File:           "/tmp/foo.txt",
+				Template:       "/tmp/template.tmpl",
+				ReplacePattern: "pattern=.*",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with both 'Template' and 'Line' specified",
+			spec: Spec{
+				File:     "/tmp/foo.txt",
+				Template: "/tmp/template.tmpl",
+				Line:     12,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Passing case with 'Template' only",
+			spec: Spec{
+				File:     "/tmp/foo.txt",
+				Template: "/tmp/template.tmpl",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
