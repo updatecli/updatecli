@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 
-	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
