@@ -8,12 +8,11 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchFleetBundleFiles will look, recursively, for every files named Chart.yaml from a root directory.
 func searchFleetBundleFiles(rootDir string, files []string) ([]string, error) {
-
 	fleetBundleFiles := []string{}
 
 	logrus.Debugf("Looking for Fleet bundle(s) in %q", rootDir)
@@ -32,7 +31,6 @@ func searchFleetBundleFiles(rootDir string, files []string) ([]string, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +46,6 @@ func searchFleetBundleFiles(rootDir string, files []string) ([]string, error) {
 
 // getFleetBundleData reads a Chart.yaml for information that could be automated
 func getFleetBundleData(filename string) (*fleetMetadata, error) {
-
 	var fleetData fleetMetadata
 
 	fleetBundleName := filepath.Base(filepath.Dir(filename))
@@ -71,7 +68,6 @@ func getFleetBundleData(filename string) (*fleetMetadata, error) {
 	}
 
 	err = goyaml.Unmarshal(content, &fleetData)
-
 	if err != nil {
 		return nil, err
 	}

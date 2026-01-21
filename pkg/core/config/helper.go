@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"go.yaml.in/yaml/v3"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"gopkg.in/yaml.v3"
 )
 
 // FileChecksum returns sha256 checksum based on a file content.
@@ -59,7 +59,6 @@ func IsTemplatedString(s string) bool {
 }
 
 func getFieldValueByQuery(conf interface{}, query []string) (value string, err error) {
-
 	if query == nil {
 		query = make([]string, 0)
 	}
@@ -83,7 +82,7 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 		// Check if the passed interface is a pointer
 		// Create a new type of Iface's Type, so we have a pointer to work with
 		// 'dereference' with Elem() and get the field by name
-		//Field = ValueIface.Elem().FieldByName(query[0])
+		// Field = ValueIface.Elem().FieldByName(query[0])
 
 		for _, q := range insensitiveQuery {
 			Field = ValueIface.Elem().FieldByName(q)
@@ -131,12 +130,10 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 	}
 
 	return value, nil
-
 }
 
 // unmarshalConfigSpec unmarshal an Updatecli config spec
 func unmarshalConfigSpec(in []byte, out *[]Spec) error {
-
 	r := bytes.NewReader(in)
 	dec := yaml.NewDecoder(r)
 

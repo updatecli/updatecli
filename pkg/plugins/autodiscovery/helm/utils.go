@@ -8,12 +8,11 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchChartFiles search, recursively, for every files named Chart.yaml from a root directory.
 func searchChartFiles(rootDir string, files []string) ([]string, error) {
-
 	metadataFiles := []string{}
 
 	logrus.Debugf("Looking for Helm charts in %q", rootDir)
@@ -35,7 +34,6 @@ func searchChartFiles(rootDir string, files []string) ([]string, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -62,12 +60,10 @@ func isChartRootDirectory(path string) bool {
 		}
 	}
 	return false
-
 }
 
 // getChartMetadata reads a Chart.yaml for information.
 func getChartMetadata(filename string) (*chartMetadata, error) {
-
 	var chart chartMetadata
 
 	chartName := filepath.Base(filepath.Dir(filename))
@@ -90,7 +86,6 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 	}
 
 	err = goyaml.Unmarshal(content, &chart)
-
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +106,6 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 
 // getValuesFileContent reads a values.yaml for information.
 func getValuesFileContent(filename string) (*valuesContent, error) {
-
 	var values valuesContent
 
 	chartName := filepath.Base(filepath.Dir(filename))
@@ -134,7 +128,6 @@ func getValuesFileContent(filename string) (*valuesContent, error) {
 	}
 
 	err = goyaml.Unmarshal(content, &values)
-
 	if err != nil {
 		return nil, err
 	}
