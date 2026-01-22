@@ -10,12 +10,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/compose"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchUpdatecliComposeFiles search, recursively, for every Updatecli compose files starting from a root directory.
 func searchUpdatecliComposeFiles(rootDir string, files []string) ([]string, error) {
-
 	composeFiles := []string{}
 
 	logrus.Debugf("Looking for Updatecli Compose manifest(s) in %q", rootDir)
@@ -40,7 +39,6 @@ func searchUpdatecliComposeFiles(rootDir string, files []string) ([]string, erro
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +50,6 @@ func searchUpdatecliComposeFiles(rootDir string, files []string) ([]string, erro
 
 // getComposeFileMetadata loads file content from an Updatecli compose file.
 func getComposeFileMetadata(filename string) (*compose.Spec, error) {
-
 	var composeFile compose.Spec
 
 	if _, err := os.Stat(filename); err != nil {
@@ -72,7 +69,6 @@ func getComposeFileMetadata(filename string) (*compose.Spec, error) {
 	}
 
 	err = goyaml.Unmarshal(content, &composeFile)
-
 	if err != nil {
 		return nil, err
 	}

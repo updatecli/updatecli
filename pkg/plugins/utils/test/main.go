@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,6 @@ func AssertConfigSpecEqualByteArray(t *testing.T, spec *config.Spec, manifest st
 // SortConfigSpecArray allows to sort an array of config.Spec using the length of the name field as sorting
 // This function is used to sort a config.Spec array before comparing it to a manifest of type array of byte
 func SortConfigSpecArray(t *testing.T, configSpecs []config.Spec, byteSpecs [][]byte) {
-
 	// We convert byteSpecs to an array of config.Spec so we can apply the same sort
 	// algorithm to both byteSpecs and configSpecs
 	tmpSpecs := make([]config.Spec, len(byteSpecs))
@@ -60,7 +59,6 @@ func SortConfigSpecArray(t *testing.T, configSpecs []config.Spec, byteSpecs [][]
 // yamlMarshalUnmarshal is used to parse a manifest to ensure it's a valid yaml one.
 // yamlMarshalUnmarshal is also used to trim single quotes from yaml values
 func yamlMarshalUnmarshal(t *testing.T, manifest string) string {
-
 	var spec config.Spec
 	err := yaml.Unmarshal([]byte(manifest), &spec)
 	require.NoError(t, err)
