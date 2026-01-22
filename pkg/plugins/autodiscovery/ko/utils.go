@@ -8,12 +8,11 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchKosFiles will look, recursively, for every Ko files.
 func searchKosFiles(rootDir string, files []string) ([]string, error) {
-
 	logrus.Debugf("Looking for Ko files in %q", rootDir)
 
 	koFiles := []string{}
@@ -39,7 +38,6 @@ func searchKosFiles(rootDir string, files []string) ([]string, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +54,6 @@ func searchKosFiles(rootDir string, files []string) ([]string, error) {
 
 // getKoManifestData reads a Ko file for information that could be automatically updated.
 func getKoManifestData(filename string) (*koSpec, error) {
-
 	var data koSpec
 
 	koFile := filepath.Base(filepath.Dir(filename))
@@ -79,7 +76,6 @@ func getKoManifestData(filename string) (*koSpec, error) {
 	}
 
 	err = goyaml.Unmarshal(content, &data)
-
 	if err != nil {
 		return nil, err
 	}
