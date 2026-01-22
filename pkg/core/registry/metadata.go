@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/Masterminds/semver/v3"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 type PolicySpec struct {
@@ -32,7 +32,6 @@ type PolicySpec struct {
 
 // LoadPolicyFile loads an Updatecli compose file into a compose Spec
 func LoadPolicyFile(filename string) (*PolicySpec, error) {
-
 	var policySpec PolicySpec
 
 	f, err := os.Open(filename)

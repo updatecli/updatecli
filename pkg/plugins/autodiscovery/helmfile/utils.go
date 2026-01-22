@@ -8,12 +8,11 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchHelmfileFiles search, recursively, for every Helmfile files starting from a root directory.
 func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
-
 	helmfiles := []string{}
 
 	logrus.Debugf("Looking for Helmfile(s) in %q", rootDir)
@@ -38,7 +37,6 @@ func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +48,6 @@ func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
 
 // getHelmfileMetadata loads file content from a Helmfile file.
 func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
-
 	var helmfile helmfileMetadata
 
 	if _, err := os.Stat(filename); err != nil {
@@ -70,7 +67,6 @@ func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
 	}
 
 	err = goyaml.Unmarshal(content, &helmfile)
-
 	if err != nil {
 		return nil, err
 	}

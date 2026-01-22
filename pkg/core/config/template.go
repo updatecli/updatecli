@@ -14,7 +14,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"github.com/getsops/sops/v3/decrypt"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"cuelang.org/go/cue"
 	cueast "cuelang.org/go/cue/ast"
@@ -49,7 +49,6 @@ func (t *Template) NewStringTemplate(content []byte) ([]byte, error) {
 		Funcs(helmFuncMap()).      // add helm funcMap
 		Funcs(updatecliFuncMap()). // add custom funcMap last so that it takes precedence
 		Parse(string(content))
-
 	if err != nil {
 		return []byte{}, err
 	}
@@ -78,7 +77,6 @@ func (t *Template) NewCueTemplate(content []byte) (cue.Value, error) {
 
 	result := ctx.CompileBytes(content, cue.Scope(scope))
 	return result, nil
-
 }
 
 // readAllValues reads and merges all the values and secrets files into one map
@@ -122,7 +120,6 @@ func (t *Template) readValuesFiles(valueFiles []string, encrypted bool) error {
 
 // ReadFile reads an updatecli values file, it can also read encrypted sops files
 func (t *Template) readFile(filename string, values *map[string]interface{}, encrypted bool) (err error) {
-
 	baseFilename := filepath.Base(filename)
 	extension := filepath.Ext(baseFilename)
 
@@ -183,7 +180,6 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 
 // mergeValueFile merges one or multiple updatecli value files content into one
 func mergeValueFile(valuesFiles ...map[string]interface{}) (results map[string]interface{}) {
-
 	results = make(map[string]interface{})
 
 	for _, values := range valuesFiles {

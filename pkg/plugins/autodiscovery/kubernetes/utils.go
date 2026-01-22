@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchKubernetesFiles will look, recursively, for every files with an extension .yaml or .yml from a root directory.
