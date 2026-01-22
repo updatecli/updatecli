@@ -8,12 +8,11 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchArgoCDFiles will look, recursively, for every YAML files from a root directory.
 func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
-
 	manifestFiles := []string{}
 
 	logrus.Debugf("Looking for ArgoCD manifests in %q", rootDir)
@@ -50,7 +49,6 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +66,6 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 
 // readManifest reads a Chart.yaml for information that could be automated
 func readManifest(filename string) (*ArgoCDApplicationSpec, error) {
-
 	var data ArgoCDApplicationSpec
 
 	if _, err := os.Stat(filename); err != nil {
@@ -103,5 +100,4 @@ func readManifest(filename string) (*ArgoCDApplicationSpec, error) {
 	}
 
 	return nil, nil
-
 }

@@ -3,7 +3,7 @@ package precommit
 import (
 	"os"
 
-	goyaml "gopkg.in/yaml.v3"
+	goyaml "go.yaml.in/yaml/v3"
 )
 
 // precommitRepo represent a precommit repo
@@ -19,7 +19,6 @@ type precommitData struct {
 
 // loadPrecommitData read a file and return its content
 func loadPrecommitData(filename string) (*precommitData, error) {
-
 	rawFileContent, _ := os.ReadFile(filename)
 	var data precommitData
 

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/updatecli/updatecli/pkg/core/tmp"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 	"helm.sh/helm/v3/pkg/time"
 )
 
