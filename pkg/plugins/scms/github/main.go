@@ -318,14 +318,15 @@ If you know what you are doing, please set the force option to true in your conf
 	}
 
 	clientConfig, err := client.New(g.Spec.Username, g.Spec.Token, g.Spec.App, g.Spec.URL)
-
-	g.client = clientConfig.Client
-	g.username = clientConfig.Username
-	g.token = clientConfig.TokenSource
-	g.URL = clientConfig.URL
-
 	if err != nil {
 		return &Github{}, fmt.Errorf("creating GitHub client: %w", err)
+	}
+
+	if clientConfig != nil {
+		g.client = clientConfig.Client
+		g.username = clientConfig.Username
+		g.token = clientConfig.TokenSource
+		g.URL = clientConfig.URL
 	}
 
 	g.setDirectory()
