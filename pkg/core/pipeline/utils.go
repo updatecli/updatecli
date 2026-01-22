@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// shouldSkipREsource checks if the resource dependsOn conditions are met.
+// shouldSkipResource checks if the resource dependsOn conditions are met.
 // if not, the resource is skipped.
 // a dependsOn value must follow one of the three following format:
 // dependsOn:
@@ -25,7 +25,6 @@ import (
 // "or" the boolean operator is optional and can be used to specify that at least one condition must be met
 // if the boolean operator is not provided, it defaults to "and"
 func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) bool {
-
 	// exit early
 	if len(leaf.DependsOn) == 0 {
 		return false
@@ -68,7 +67,6 @@ func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) 
 		}
 	}
 	return shouldSkip
-
 }
 
 // ExtractCustomKeys parses a Go template and extracts custom keys from
@@ -240,7 +238,6 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 }
 
 func (p *Pipeline) Graph(flavor string) (string, error) {
-
 	var graphOutput strings.Builder
 
 	switch flavor {
