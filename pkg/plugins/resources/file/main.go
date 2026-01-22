@@ -145,6 +145,24 @@ type Spec struct {
 	       template: "path/to/template.tmpl"
 	*/
 	Template string `yaml:",omitempty"`
+	/*
+		`templateData` specifies additional data to pass to the template
+
+		compatible:
+		    * target
+
+		remarks:
+		    * When using template, the data specified here is passed as additional fields in the template context
+		    * All Go template functions from sprig are available
+		    * The template file is read and rendered at execution time
+		    * `templateData` is optional
+
+		example:
+		    templateData:
+		        key1: "value1"
+		        key2: "value2"
+	*/
+	TemplateData map[string]interface{} `yaml:",omitempty"`
 }
 
 // File defines a resource of kind "file"
@@ -317,6 +335,9 @@ func (s *Spec) Validate() error {
 			validationErrors = append(validationErrors, "Validation error in target of type 'file': the attributes `spec.template` and `spec.line` are mutually exclusive")
 		}
 	}
+	if len(s.TemplateData) > 0 && len(s.Template) == 0 {
+		validationErrors = append(validationErrors, "Validation error in target of type 'file': the attribute `spec.templateData` is specified but `spec.template` is missing")
+	}
 
 	// Return all the validation errors if any
 	if len(validationErrors) > 0 {
@@ -383,5 +404,6 @@ func (f *File) ReportConfig() interface{} {
 		ReplacePattern: f.spec.ReplacePattern,
 		SearchPattern:  f.spec.SearchPattern,
 		Template:       f.spec.Template,
+		TemplateData:   f.spec.TemplateData,
 	}
 }

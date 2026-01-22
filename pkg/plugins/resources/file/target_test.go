@@ -569,6 +569,98 @@ func TestFile_TargetMultiples(t *testing.T) {
 			},
 			wantedResult: true,
 		},
+		{
+			name:             "Template with template data",
+			inputSourceValue: "MyApp",
+			spec: Spec{
+				File:     "appconfig.ini",
+				Template: "template6.tmpl",
+				TemplateData: map[string]any{
+					"AppVersion": "5.4.3",
+					"Date":       "today",
+				},
+			},
+			files: map[string]fileMetadata{
+				"appconfig.ini": {
+					originalPath: "appconfig.ini",
+					path:         "appconfig.ini",
+				},
+			},
+			mockedContents: map[string]string{
+				"appconfig.ini": "old content",
+				"template6.tmpl": `[Application]
+					name={{ .source }}
+					version={{ .AppVersion }}
+					date="{{ .Date }}"`,
+			},
+			wantedContents: map[string]string{
+				"appconfig.ini": `[Application]
+					name=MyApp
+					version=5.4.3
+					date="today"`,
+			},
+			wantedResult: true,
+		},
+		{
+			name:             "Template data key 'source' reserved",
+			inputSourceValue: "MyApp",
+			spec: Spec{
+				File:     "appconfig.ini",
+				Template: "template6.tmpl",
+				TemplateData: map[string]any{
+					"source":     "SHOULD_NOT_BE_USED",
+					"AppVersion": "5.4.3",
+					"Date":       "today",
+				},
+			},
+			files: map[string]fileMetadata{
+				"appconfig.ini": {
+					originalPath: "appconfig.ini",
+					path:         "appconfig.ini",
+				},
+			},
+			mockedContents: map[string]string{
+				"appconfig.ini": "old content",
+				"template6.tmpl": `[Application]
+					name={{ .source }}
+					version={{ .AppVersion }}
+					date="{{ .Date }}"`,
+			},
+			wantedContents: map[string]string{
+				"appconfig.ini": `[Application]
+					name=MyApp
+					version=5.4.3
+					date="today"`,
+			},
+			wantedResult: true,
+		},
+		{
+			name:             "Template with int type variable",
+			inputSourceValue: "Release2024",
+			spec: Spec{
+				File:     "buildinfo.txt",
+				Template: "template7.tmpl",
+				TemplateData: map[string]any{
+					"BuildNumber": 42,
+				},
+			},
+			files: map[string]fileMetadata{
+				"buildinfo.txt": {
+					originalPath: "buildinfo.txt",
+					path:         "buildinfo.txt",
+				},
+			},
+			mockedContents: map[string]string{
+				"buildinfo.txt": "old content",
+				"template7.tmpl": `Build Name: {{ .source }}
+					Build Number: {{ .BuildNumber }}`,
+			},
+			wantedContents: map[string]string{
+				"buildinfo.txt": `Build Name: Release2024
+					Build Number: 42`,
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

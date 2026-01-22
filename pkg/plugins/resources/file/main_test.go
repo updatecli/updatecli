@@ -177,6 +177,23 @@ func Test_Validate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Passing with 'Template' and 'TemplateData'",
+			spec: Spec{
+				File:         "/tmp/foo.txt",
+				Template:     "/tmp/template.tmpl",
+				TemplateData: map[string]any{"key": "value"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Validation failure with 'TemplateData' but no 'Template' specified",
+			spec: Spec{
+				File:         "/tmp/foo.txt",
+				TemplateData: map[string]any{"key": "value"},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

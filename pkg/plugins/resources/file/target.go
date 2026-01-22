@@ -78,6 +78,13 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		templateData := map[string]interface{}{
 			"source": source,
 		}
+		for k, v := range f.spec.TemplateData {
+			if k == "source" {
+				logrus.Warnf("TemplateData key 'source' is reserved and will be ignored")
+				continue
+			}
+			templateData[k] = v
+		}
 
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, templateData); err != nil {
