@@ -14,8 +14,6 @@ import (
 // Spec defines a specification for a "file" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	//
-	//
 	//   `file` contains the file path
 	//
 	//   compatible:
@@ -26,11 +24,7 @@ type Spec struct {
 	//   remarks:
 	//       * `file` is incompatible with `files`
 	//       * feel free to look at searchpattern attribute to search for files matching a pattern
-	//
-	//
 	File string `yaml:",omitempty"`
-	//
-	//
 	//   `files` contains the file path(s)
 	//
 	//   compatible:
@@ -40,42 +34,26 @@ type Spec struct {
 	//   remarks:
 	//       * `files` is incompatible with `file`
 	//       * feel free to look at searchpattern attribute to search for files matching a pattern
-	//
-	//
 	Files []string `yaml:",omitempty"`
-	//
-	//
 	//   `line` contains the line of the file(s) to manipulate
 	//
 	//   compatible:
 	//       * source
 	//       * condition
 	//       * target
-	//
-	//
 	Line int `yaml:",omitempty"`
-	//
-	//
 	//   `content` specifies the content to manipulate
 	//
 	//   compatible:
 	//       * source
 	//       * condition
 	//       * target
-	//
-	//
 	Content string `yaml:",omitempty"`
-	//
-	//
 	//   `forcecreate` defines if nonexistent file(s) should be created
 	//
 	//   compatible:
 	//       * target
-	//
-	//
 	ForceCreate bool `yaml:",omitempty"`
-	//
-	//
 	//   `matchpattern` specifies the regexp pattern to match on the file(s)
 	//
 	//   compatible:
@@ -90,19 +68,14 @@ type Spec struct {
 	//       * With capture groups, changelogs show actual version changes (e.g., "1.24.5" → "1.25.1")
 	//       * Example: `"version":\s*"([\d\.]+)"` captures version numbers for changelogs
 	//       * Supports full Go regexp syntax
-	//
-	//
 	MatchPattern string `yaml:",omitempty"`
-	//
 	//   `replacepattern` specifies the regexp replace pattern to apply on the file(s) content
 	//
 	//   compatible:
 	//       * source
 	//       * condition
 	//       * target
-	//
 	ReplacePattern string `yaml:",omitempty"`
-	//
 	//   `searchpattern` defines if the MatchPattern should be applied on the file(s) path
 	//
 	//   If set to true, it modifies the behavior of the `file` and `files` attributes to search for files matching the pattern instead of searching for files with the exact name.
@@ -126,10 +99,7 @@ type Spec struct {
 	//           '\\' c      matches character c
 	//           lo '-' hi   matches character c for lo <= c <= hi
 	//   ```
-	//
-	//
 	SearchPattern bool `yaml:",omitempty"`
-	//
 	//   `template` specifies the path to a Go template file to render with source values
 	//
 	//   compatible:
@@ -143,7 +113,6 @@ type Spec struct {
 	//
 	//   example:
 	//       template: "path/to/template.tmpl"
-	//
 	Template string `yaml:",omitempty"`
 	//
 	//	`templateData` specifies additional data to pass to the template
@@ -161,7 +130,6 @@ type Spec struct {
 	//	    templateData:
 	//	        key1: "value1"
 	//	        key2: "value2"
-	//
 	TemplateData map[string]interface{} `yaml:",omitempty"`
 }
 
