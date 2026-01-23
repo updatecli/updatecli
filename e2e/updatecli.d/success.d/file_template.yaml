@@ -40,3 +40,15 @@ targets:
         Date: '{{ source "date" }}'
     sourceid: appVersion
 
+  templateWithOnlyTemplateData:
+    name: Create info_only.txt using Go template with only .TemplateData from file
+    kind: file
+    spec:
+      file: info.txt
+      template: templates/info.tmpl
+      templatedata:
+        ServiceName: MyService
+        Version: '{{ source "appVersion" }}'
+      forcecreate: true
+    disablesourceinput: true
+

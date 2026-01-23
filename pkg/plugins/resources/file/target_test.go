@@ -661,6 +661,27 @@ func TestFile_TargetMultiples(t *testing.T) {
 			},
 			wantedResult: true,
 		},
+		{
+			name: "Template with empty missing sourceid",
+			spec: Spec{
+				File:     "empty.txt",
+				Template: "template8.tmpl",
+			},
+			files: map[string]fileMetadata{
+				"empty.txt": {
+					originalPath: "empty.txt",
+					path:         "empty.txt",
+				},
+			},
+			mockedContents: map[string]string{
+				"empty.txt":      "old content",
+				"template8.tmpl": `{{ .source }}This is a static template with empty variables.`,
+			},
+			wantedContents: map[string]string{
+				"empty.txt": `This is a static template with empty variables.`,
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
