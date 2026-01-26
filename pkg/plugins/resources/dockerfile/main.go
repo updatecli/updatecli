@@ -14,13 +14,55 @@ import (
 // Spec defines a specification for a "dockerfile" resource
 // parsed from an updatecli manifest file
 type Spec struct {
-	// File specifies the dockerimage file path to use and is incompatible with Files
+	// file specifies the dockerimage file path to use and is incompatible with Files
+	//
+	// default: ""
+	//
+	// compatible:
+	// 	* source
+	// 	* condition
+	// 	* target
+	//
+	//  remark:
+	//    File is not compatible with Files. Only one of the two should be specified.
 	File string `yaml:",omitempty"`
 	// Files specifies the dockerimage file path(s) to use and is incompatible with File
+	//
+	// default: []
+	//
+	// compatible:
+	// 	* source
+	// 	* condition
+	// 	* target
+	//
+	//  remark:
+	//    Files is not compatible with File. Only one of the two should be specified.
 	Files []string `yaml:",omitempty"`
 	// Instruction specifies a DockerImage instruction such as ENV
+	// Instruction can be specified as a simple string or as a map with keyword and matcher keys.
+	//
+	// compatible:
+	// 	* source
+	// 	* condition
+	// 	* target
+	//
+	//  default: empty
+	//
+	//  example:
+	//  ```yaml
+	//  instruction:
+	//    keyword: "FROM"
+	//    matcher: "alpine"
+	//  ```
 	Instruction types.Instruction `yaml:"instruction,omitempty"`
 	// Value specifies the value for a specified Dockerfile instruction.
+	//
+	// compatible:
+	// 	* source
+	// 	* condition
+	// 	* target
+	//
+	// default: source output
 	Value string `yaml:"value,omitempty"`
 	// Stage can be used to further refined the scope
 	// For Sources:
