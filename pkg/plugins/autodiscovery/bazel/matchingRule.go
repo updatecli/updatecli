@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule allows specifying rules to identify manifests
 type MatchingRule struct {
 	// `path` specifies a `MODULE.bazel` path pattern, the pattern requires to match all of name, not just a substring.
 	Path string
@@ -103,6 +103,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, moduleName, moduleVers
 			for i := range ruleResults {
 				if !ruleResults[i] {
 					isAllMatching = false
+					break
 				}
 			}
 			if isAllMatching {

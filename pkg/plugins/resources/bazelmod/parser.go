@@ -154,15 +154,17 @@ func (mf *ModuleFile) UpdateDepVersion(moduleName, newVersion string) (string, e
 	// Pattern: version = "old_version" (handles whitespace variations)
 	versionPattern := regexp.MustCompile(`(version\s*=\s*")[^"]+(")`)
 
-	// Replace only once (the version in this specific bazel_dep)
-	updatedDepLines := versionPattern.ReplaceAllStringFunc(dep.FullLine, func(match string) string {
-		// Extract the quotes and replace the version
-		parts := versionPattern.FindStringSubmatch(match)
-		if len(parts) >= 3 {
-			return fmt.Sprintf(`%s%s%s`, parts[1], newVersion, parts[2])
-		}
-		return match
-	})
+	// Replace only the first occurrence to avoid replacing version patterns in comments
+	updatedDepLines := dep.FullLine
+	matches := versionPattern.FindStringSubmatchIndex(dep.FullLine)
+	if len(matches) >= 4 {
+		// matches[0] and matches[1] are the full match indices
+		// matches[2] and matches[3] are the first capture group (prefix: version = ")
+		// matches[4] and matches[5] are the second capture group (suffix: ")
+		prefix := dep.FullLine[matches[2]:matches[3]]
+		suffix := dep.FullLine[matches[4]:matches[5]]
+		updatedDepLines = dep.FullLine[:matches[0]] + prefix + newVersion + suffix + dep.FullLine[matches[1]:]
+	}
 
 	// Replace in the original content
 	lines := mf.Lines

@@ -47,7 +47,7 @@ func (b *Bazelregistry) Source(workingDir string, resultSource *result.Source) e
 			Kind:    version.SEMVERVERSIONKIND,
 			Pattern: "*", // Any version = latest
 		}
-		semverFilter, err := semverFilter.Init()
+		semverFilter, err = semverFilter.Init()
 		if err != nil {
 			return fmt.Errorf("initializing semver filter: %w", err)
 		}
