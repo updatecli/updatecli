@@ -1,0 +1,22 @@
+---
+name: 'Updatecli Pipeline TestSuite'
+vars:
+  message:
+    warning: 'WARNING:'
+    error: 'ERROR:'
+testcases:
+  - name: "Test updatecli pipeline diff shouldn't fail"
+    steps:
+      - script: '../scripts/test_pipeline_diff.bash'
+        type: 'exec'
+        assertions:
+          - 'result.code ShouldEqual 0'
+          - 'result.systemout ShouldNotContainSubstring "{{ .message.warning }}"'
+          - 'result.systemout ShouldNotContainSubstring "{{ .message.error }}"'
+  
+  - name: "Test updatecli pipeline apply shouldn't fail"
+    steps:
+      - script: '../scripts/test_pipeline_apply.bash'
+        type: 'exec'
+        assertions:
+          - 'result.code ShouldEqual 0'

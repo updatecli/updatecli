@@ -1,10 +1,10 @@
 ---
-name: 'Updatecli Diff TestSuite'
+name: 'Updatecli Deprecated Commands TestSuite'
 vars:
   message:
-    deprecated: 'is deprecated'
+    deprecated: 'Deprecated command'
 testcases:
-  - name: "Test updatecli diff shouldn't fail"
+  - name: "Test deprecated diff and apply commands show warnings but still work"
     steps:
       - script: '../scripts/test_deprecated.bash'
         type: 'exec'
