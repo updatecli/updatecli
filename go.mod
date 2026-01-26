@@ -25,7 +25,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.34.0
-	gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	helm.sh/helm/v3 v3.19.4
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -70,6 +70,7 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.7.16
 	github.com/zclconf/go-cty v1.17.0
+	go.yaml.in/yaml/v3 v3.0.4
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 	golang.org/x/text v0.33.0
 	golang.org/x/time v0.14.0
@@ -135,7 +136,6 @@ require (
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/davidmz/go-pageant v1.0.2 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/dprotaso/go-yit v0.0.0-20191028211022-135eb7262960 // indirect
 	github.com/dylibso/observe-sdk/go v0.0.0-20240819160327-2d926c5d788a // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/emicklei/proto v1.14.2 // indirect
@@ -170,7 +170,6 @@ require (
 	github.com/moby/sys/user v0.4.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
@@ -200,7 +199,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
@@ -309,7 +307,7 @@ require (
 	github.com/rubenv/sql-migrate v1.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
+	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
@@ -345,3 +343,5 @@ require (
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect
 )
+
+replace github.com/vmware-labs/yaml-jsonpath => github.com/helm-unittest/yaml-jsonpath v0.4.0 // fork maintained; module path remains vmware-labs
