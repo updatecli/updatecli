@@ -107,10 +107,7 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 		}
 
 		if len(f.files) == 0 {
-			resultTarget.Description = "no file found matching criteria"
-			resultTarget.Result = result.SKIPPED
-			resultTarget.Changed = false
-			return nil
+			return fmt.Errorf("no file found matching criteria for pattern %q", f.spec.MatchPattern)
 		}
 
 	} else {
