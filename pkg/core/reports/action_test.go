@@ -25,11 +25,11 @@ func TestHTMLReportsString(t *testing.T) {
 						Title: "Target One",
 						Changelogs: []ActionTargetChangelog{
 							{
-								Title:       "1.0.0",
+								Title:       "1.0.1",
 								Description: "",
 							},
 							{
-								Title:       "1.0.1",
+								Title:       "1.0.0",
 								Description: "",
 							},
 						},
@@ -45,10 +45,10 @@ func TestHTMLReportsString(t *testing.T) {
     <details id="4567">
         <summary>Target One</summary>
         <details>
-            <summary>1.0.0</summary>
+            <summary>1.0.1</summary>
         </details>
         <details>
-            <summary>1.0.1</summary>
+            <summary>1.0.0</summary>
         </details>
     </details>
     <details id="4567">
@@ -84,11 +84,11 @@ func TestHTMLUnmarshal(t *testing.T) {
 								Title: "Target One",
 								Changelogs: []ActionTargetChangelog{
 									{
-										Title:       "1.0.0",
+										Title:       "1.0.1",
 										Description: "",
 									},
 									{
-										Title:       "1.0.1",
+										Title:       "1.0.0",
 										Description: "",
 									},
 								},
@@ -107,10 +107,10 @@ func TestHTMLUnmarshal(t *testing.T) {
         <details id="4567">
             <summary>Target One</summary>
             <details>
-                <summary>1.0.0</summary>
+                <summary>1.0.1</summary>
             </details>
             <details>
-                <summary>1.0.1</summary>
+                <summary>1.0.0</summary>
             </details>
         </details>
         <details id="4567">
@@ -152,11 +152,11 @@ func TestSort(t *testing.T) {
 						Title: "Target One",
 						Changelogs: []ActionTargetChangelog{
 							{
-								Title:       "1.0.0",
+								Title:       "1.0.1",
 								Description: "",
 							},
 							{
-								Title:       "1.0.1",
+								Title:       "1.0.0",
 								Description: "",
 							},
 						},
@@ -176,11 +176,11 @@ func TestSort(t *testing.T) {
 						Title: "Target One",
 						Changelogs: []ActionTargetChangelog{
 							{
-								Title:       "1.0.0",
+								Title:       "1.0.1",
 								Description: "",
 							},
 							{
-								Title:       "1.0.1",
+								Title:       "1.0.0",
 								Description: "",
 							},
 						},
@@ -203,11 +203,11 @@ func TestSort(t *testing.T) {
 						Title: "Target One",
 						Changelogs: []ActionTargetChangelog{
 							{
-								Title:       "1.0.0",
+								Title:       "1.0.1",
 								Description: "",
 							},
 							{
-								Title:       "1.0.1",
+								Title:       "1.0.0",
 								Description: "",
 							},
 						},
@@ -249,6 +249,59 @@ func TestSort(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.report.sort()
 			assert.Equal(t, tt.expectedOutput, tt.report)
+		})
+	}
+}
+
+func TestToActionSort(t *testing.T) {
+	tests := []struct {
+		name           string
+		report         Action
+		expectedOutput Action
+	}{
+		{
+			name: "version sort",
+			report: Action{
+				Targets: []ActionTarget{
+					{
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title: "v0.100.0",
+							},
+							{
+								Title: "v0.99.0",
+							},
+							{
+								Title: "v0.101.0",
+							},
+						},
+					},
+				},
+			},
+			expectedOutput: Action{
+				Targets: []ActionTarget{
+					{
+						Changelogs: []ActionTargetChangelog{
+							{
+								Title: "v0.101.0",
+							},
+							{
+								Title: "v0.100.0",
+							},
+							{
+								Title: "v0.99.0",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			report := tt.report
+			report.sort()
+			assert.Equal(t, tt.expectedOutput, report)
 		})
 	}
 }
@@ -311,11 +364,11 @@ func TestActionMerge(t *testing.T) {
 						Title: "Target One",
 						Changelogs: []ActionTargetChangelog{
 							{
-								Title:       "1.0.0",
+								Title:       "1.0.1",
 								Description: "",
 							},
 							{
-								Title:       "1.0.1",
+								Title:       "1.0.0",
 								Description: "",
 							},
 						},
@@ -356,11 +409,11 @@ func TestToActionsMarkdownString(t *testing.T) {
 						Title: "Target One",
 						Changelogs: []ActionTargetChangelog{
 							{
-								Title:       "1.0.0",
+								Title:       "1.0.1",
 								Description: "",
 							},
 							{
-								Title:       "1.0.1",
+								Title:       "1.0.0",
 								Description: "",
 							},
 						},
@@ -390,9 +443,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
-
 ### 1.0.1
+
+### 1.0.0
 
 ## Target Two
 
@@ -514,11 +567,11 @@ feat: something cool
 						Title: "Target One",
 						Changelogs: []ActionTargetChangelog{
 							{
-								Title:       "1.0.0",
+								Title:       "1.0.1",
 								Description: "",
 							},
 							{
-								Title:       "1.0.1",
+								Title:       "1.0.0",
 								Description: "",
 							},
 						},
@@ -548,9 +601,9 @@ Pipeline ID: ` + "`" + `1234` + "`" + `
 
 Target ID: ` + "`" + `4567` + "`" + `
 
-### 1.0.0
-
 ### 1.0.1
+
+### 1.0.0
 
 ## Target Two
 
