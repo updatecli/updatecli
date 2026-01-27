@@ -13,53 +13,44 @@ import (
 
 // Spec defines a specification for a "dockerdigest" resource parsed from an updatecli manifest file
 type Spec struct {
-	/*
-		architecture specifies the container image architecture such as `amd64`
-
-		compatible:
-			* source
-			* condition
-
-		default:
-			amd64
-	*/
+	// architecture specifies the container image architecture such as `amd64`
+	//
+	// compatible:
+	// 	* source
+	// 	* condition
+	//
+	// default: amd64
 	Architecture string `yaml:",omitempty"`
-	/*
-		image specifies the container image such as `updatecli/updatecli`
-
-		compatible:
-			* source
-			* condition
-	*/
-	Image string `yaml:",omitempty"`
-	/*
-		tag specifies the container image tag such as `latest`
-
-		compatible:
-			* source
-			* condition
-	*/
+	// image specifies the container image such as `updatecli/updatecli`
+	//
+	// example: `updatecli/updatecli`
+	//
+	// compatible:
+	// 	* source
+	// 	* condition
+	Image string `yaml:",omitempty" jsonschema:"required"`
+	// tag specifies the container image tag such as `latest`
+	//
+	// compatible:
+	// 	* source
+	// 	* condition
 	Tag string `yaml:",omitempty"`
-	/*
-		digest specifies the container image digest such as `sha256:ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6`
-
-		compatible:
-			* condition
-
-		default:
-			When used from a condition, the default value is set to the linked source output.
-	*/
+	// digest specifies the container image digest such as `sha256:ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6`
+	//
+	// compatible:
+	// 	* condition
+	//
+	// default:
+	// 	When used from a condition, the default value is set to the linked source output.
 	Digest                string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
-	/*
-		hideTag specifies if the tag should be hidden from the digest
-
-		compatible:
-			* source
-
-		default:
-			false
-	*/
+	// hideTag specifies if the tag should be hidden from the digest
+	//
+	// compatible:
+	// 	* source
+	//
+	// default:
+	// 	false
 	HideTag bool `yaml:",omitempty"`
 }
 
