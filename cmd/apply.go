@@ -26,7 +26,7 @@ var (
 		*/
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
 		Use:   "apply NAME[:TAG|@DIGEST]",
-		Short: "apply checks if an update is needed then apply the changes",
+		Short: "**Deprecated in favor of updatecli pipeline apply** apply checks if an update is needed then apply the changes",
 		Run: func(cmd *cobra.Command, args []string) {
 			policyReferences = args
 			err := getPolicyFilesFromRegistry()
@@ -47,6 +47,8 @@ var (
 			e.Options.Pipeline.Target.DryRun = false
 			e.Options.Pipeline.Target.CleanGitBranches = applyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = applyExistingOnly
+
+			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline apply`")
 
 			err = run("apply")
 			if err != nil {
