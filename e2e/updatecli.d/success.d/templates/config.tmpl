@@ -1,2 +1,2 @@
 version: {{ .source | quote }}
-versionUpper: {{ .source | upper }}
+versionUpper: {{ printf "%v" .source | upper }}
