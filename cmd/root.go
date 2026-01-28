@@ -21,6 +21,7 @@ import (
 
 var (
 	pipelineIds      []string
+	labels           []string
 	manifestFiles    []string
 	valuesFiles      []string
 	secretsFiles     []string
@@ -95,6 +96,30 @@ func run(command string) error {
 
 	for _, id := range pipelineIds {
 		e.Options.PipelineIDs = append(e.Options.PipelineIDs, strings.Split(id, ",")...)
+	}
+
+	for _, label := range labels {
+		labels := strings.Split(label, ",")
+
+		initLabels := func() {
+			if e.Options.Labels == nil {
+				e.Options.Labels = make(map[string]string)
+			}
+		}
+
+		for i := range labels {
+			labelArray := strings.SplitN(labels[i], ":", 2)
+			switch len(labelArray) {
+			case 2:
+				initLabels()
+				e.Options.Labels[labelArray[0]] = labelArray[1]
+			case 1:
+				initLabels()
+				e.Options.Labels[labelArray[0]] = ""
+			default:
+				logrus.Warnf("Ignoring malformed label filter: %q", label)
+			}
+		}
 	}
 
 	switch command {

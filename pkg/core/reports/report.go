@@ -77,6 +77,7 @@ Report available on {{ .reportURL -}}{{"\n"}}
 // Report contains the result of the execution of a pipeline
 type Report struct {
 	Name   string
+	Labels map[string]string
 	Err    string
 	Graph  string
 	Result string
