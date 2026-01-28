@@ -10,6 +10,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/argocd"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/bazel"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
@@ -111,6 +112,12 @@ var crawlerMap = map[string]struct {
 			return argocd.New(spec, rootDir, scmID, actionID)
 		},
 		spec: argocd.Spec{},
+	},
+	"bazel": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
+			return bazel.New(spec, rootDir, scmID, actionID)
+		},
+		spec: bazel.Spec{},
 	},
 	"cargo": {
 		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
