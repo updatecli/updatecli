@@ -8,4 +8,4 @@ set -eux
 ## In order for the Updatecli manifest to work, we must be at the root of the git repository 
 pushd "$VENOM_VAR_rootpath"
 
-"$VENOM_VAR_binpath/updatecli" diff --config  e2e/updatecli.d/success.d
+"$VENOM_VAR_binpath/updatecli" pipeline diff --config  e2e/updatecli.d/success.d

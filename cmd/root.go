@@ -81,6 +81,7 @@ func init() {
 		diffCmd,
 		prepareCmd,
 		manifestCmd,
+		pipelineCmd,
 		udashCmd,
 		showCmd,
 		composeCmd,
@@ -97,7 +98,7 @@ func run(command string) error {
 	}
 
 	switch command {
-	case "apply", "compose/apply":
+	case "apply", "compose/apply", "pipeline/apply":
 		udash.Audience = udashOAuthAudience
 
 		if applyClean {
@@ -119,7 +120,7 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
-	case "diff", "compose/diff":
+	case "diff", "compose/diff", "pipeline/diff":
 		udash.Audience = udashOAuthAudience
 		if diffClean {
 			defer func() {
@@ -141,7 +142,7 @@ func run(command string) error {
 			return err
 		}
 
-	case "prepare":
+	case "prepare", "pipeline/prepare":
 		if prepareClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
