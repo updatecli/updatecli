@@ -30,9 +30,9 @@ var (
 				Secrets:   secretsFiles,
 			})
 
-			e.Options.Pipeline.Target.Clean = prepareClean
+			e.Options.Pipeline.Target.Clean = pipelinePrepareClean
 
-			err = run("prepare")
+			err = run("pipeline/prepare")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)
