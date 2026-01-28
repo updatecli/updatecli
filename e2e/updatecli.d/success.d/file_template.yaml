@@ -18,7 +18,8 @@ targets:
     kind: file
     spec:
       file: version.txt
-      template: templates/version.tmpl
+      template: e2e/updatecli.d/success.d/templates/version.tmpl
+      forcecreate: true
     sourceid: appVersion
 
   updateConfigWithSprig:
@@ -26,7 +27,8 @@ targets:
     kind: file
     spec:
       file: config.yaml
-      template: templates/config.tmpl
+      forcecreate: true
+      template: e2e/updatecli.d/success.d/templates/config.tmpl
     sourceid: appVersion
 
   templateWithTemplateData:
@@ -34,7 +36,8 @@ targets:
     kind: file
     spec:
       file: release.txt
-      template: templates/release.tmpl
+      forcecreate: true
+      template: e2e/updatecli.d/success.d/templates/release.tmpl
       templatedata:
         Environment: Production
         Date: '{{ source "date" }}'
@@ -45,10 +48,9 @@ targets:
     kind: file
     spec:
       file: info.txt
-      template: templates/info.tmpl
+      template: e2e/updatecli.d/success.d/templates/info.tmpl
       templatedata:
         ServiceName: MyService
         Version: '{{ source "appVersion" }}'
       forcecreate: true
     disablesourceinput: true
-
