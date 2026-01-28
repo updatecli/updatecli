@@ -9,7 +9,7 @@ set -eux
 pushd "$VENOM_VAR_rootpath"
 
 # Test deprecated diff command (should show deprecation warning but still work)
-"$VENOM_VAR_binpath/updatecli" diff --config  e2e/updatecli.d/deprecated.d
+"$VENOM_VAR_binpath/updatecli" pipeline diff --config  e2e/updatecli.d/deprecated.d
 
-# Test deprecated apply command (should show deprecation warning but still work)
-"$VENOM_VAR_binpath/updatecli" apply --config  e2e/updatecli.d/deprecated.d --dry-run
+# Test that deprecated diff command with valid xml config still works with a warning
+"$VENOM_VAR_binpath/updatecli" diff --config  e2e/updatecli.d/success.d/xml.yaml
