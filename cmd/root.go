@@ -142,7 +142,7 @@ func run(command string) error {
 			return err
 		}
 
-	case "prepare":
+	case "prepare", "pipeline/prepare":
 		if prepareClean {
 			defer func() {
 				if err := e.Clean(); err != nil {

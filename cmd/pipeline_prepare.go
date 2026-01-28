@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	prepareClean bool
+	pipelinePrepareClean bool
 
-	prepareCmd = &cobra.Command{
+	pipelinePrepareCmd = &cobra.Command{
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
 		Use:   "prepare NAME[:TAG|@DIGEST]",
 		Short: "prepare run tasks needed for a run like `git clone`",
@@ -32,8 +32,6 @@ var (
 
 			e.Options.Pipeline.Target.Clean = prepareClean
 
-			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline prepare`")
-
 			err = run("prepare")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
@@ -44,9 +42,11 @@ var (
 )
 
 func init() {
-	prepareCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
-	prepareCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
-	prepareCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
-	prepareCmd.Flags().BoolVar(&prepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
-	prepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
+	pipelinePrepareCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
+	pipelinePrepareCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	pipelinePrepareCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
+	pipelinePrepareCmd.Flags().BoolVar(&pipelinePrepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
+	pipelinePrepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
+
+	pipelineCmd.AddCommand(pipelinePrepareCmd)
 }
