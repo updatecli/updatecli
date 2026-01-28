@@ -20,4 +20,6 @@ type Options struct {
 	GraphFlavor string
 	// PipelineIDs holds a list of pipeline IDs to filter on
 	PipelineIDs []string
+	// Labels holds a map of labels to filter on
+	Labels map[string]string
 }

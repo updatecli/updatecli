@@ -21,6 +21,7 @@ import (
 
 var (
 	pipelineIds      []string
+	labels           []string
 	manifestFiles    []string
 	valuesFiles      []string
 	secretsFiles     []string
@@ -81,6 +82,7 @@ func init() {
 		diffCmd,
 		prepareCmd,
 		manifestCmd,
+		pipelineCmd,
 		udashCmd,
 		showCmd,
 		composeCmd,
@@ -96,8 +98,32 @@ func run(command string) error {
 		e.Options.PipelineIDs = append(e.Options.PipelineIDs, strings.Split(id, ",")...)
 	}
 
+	for _, label := range labels {
+		labels := strings.Split(label, ",")
+
+		initLabels := func() {
+			if e.Options.Labels == nil {
+				e.Options.Labels = make(map[string]string)
+			}
+		}
+
+		for i := range labels {
+			labelArray := strings.SplitN(labels[i], ":", 2)
+			switch len(labelArray) {
+			case 2:
+				initLabels()
+				e.Options.Labels[labelArray[0]] = labelArray[1]
+			case 1:
+				initLabels()
+				e.Options.Labels[labelArray[0]] = ""
+			default:
+				logrus.Warnf("Ignoring malformed label filter: %q", label)
+			}
+		}
+	}
+
 	switch command {
-	case "apply", "compose/apply":
+	case "apply", "compose/apply", "pipeline/apply":
 		udash.Audience = udashOAuthAudience
 
 		if applyClean {
@@ -119,7 +145,7 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
-	case "diff", "compose/diff":
+	case "diff", "compose/diff", "pipeline/diff":
 		udash.Audience = udashOAuthAudience
 		if diffClean {
 			defer func() {

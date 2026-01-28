@@ -71,6 +71,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Report.Name = config.Spec.Name
 	p.Report.Result = result.SKIPPED
 	p.Report.PipelineID = config.Spec.PipelineID
+	p.Report.Labels = config.Spec.Labels
 
 	// Init scm
 	for id, scmConfig := range config.Spec.SCMs {
