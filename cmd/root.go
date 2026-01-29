@@ -99,7 +99,7 @@ func run(command string) error {
 	}
 
 	for _, label := range labels {
-		labels := strings.Split(label, ",")
+		labelsArray := strings.Split(label, ",")
 
 		initLabels := func() {
 			if e.Options.Labels == nil {
@@ -107,15 +107,15 @@ func run(command string) error {
 			}
 		}
 
-		for i := range labels {
-			labelArray := strings.SplitN(labels[i], ":", 2)
-			switch len(labelArray) {
+		for i := range labelsArray {
+			labelKeyValue := strings.SplitN(labelsArray[i], ":", 2)
+			switch len(labelKeyValue) {
 			case 2:
 				initLabels()
-				e.Options.Labels[labelArray[0]] = labelArray[1]
+				e.Options.Labels[labelKeyValue[0]] = labelKeyValue[1]
 			case 1:
 				initLabels()
-				e.Options.Labels[labelArray[0]] = ""
+				e.Options.Labels[labelKeyValue[0]] = ""
 			default:
 				logrus.Warnf("Ignoring malformed label filter: %q", label)
 			}

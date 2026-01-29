@@ -954,7 +954,7 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			id: "Test with matching label with label value",
+			id: "Test with matching label key only (empty value)",
 			option: Option{
 				ManifestFile: "testdata/labels/alpine.yaml",
 			},

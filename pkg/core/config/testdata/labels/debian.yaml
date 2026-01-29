@@ -1,0 +1,4 @@
+name: Update Debian Docker Image
+pipelineid: debian
+labels:
+  id: debian

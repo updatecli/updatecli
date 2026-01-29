@@ -63,7 +63,7 @@ func init() {
 	pipelineApplyCmd.Flags().BoolVar(&applyClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	pipelineApplyCmd.Flags().BoolVar(&applyCleanGitBranches, "clean-git-branches", false, "Remove updatecli working git branches like '--clean-git-branches=true'")
 	pipelineApplyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs")
-	pipelineApplyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accept a comma separated list (key:value)")
+	pipelineApplyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 
 	pipelineCmd.AddCommand(pipelineApplyCmd)
 }

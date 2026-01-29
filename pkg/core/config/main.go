@@ -166,7 +166,23 @@ type Spec struct {
 	Targets map[string]target.Config `yaml:",omitempty"`
 	// "version" defines the minimum Updatecli version compatible with the manifest
 	Version string `yaml:",omitempty"`
-	// Labels contains user defined labels attached to the pipeline
+	// Labels contains user defined labels attached to the pipeline.
+	//
+	// Labels are arbitrary key/value pairs that can be used to categorize or
+	// select pipelines. They are typically used for filtering pipelines when
+	// running Updatecli, for example to only run pipelines matching a given
+	// environment, operating system, or team.
+	//
+	// example:
+	// ---
+	// name: "Update dependencies"
+	// labels:
+	//   os: debian
+	//   environment: staging
+	//   team: backend
+	// sources:
+	//   ...
+	// ---
 	Labels map[string]string `yaml:",omitempty"`
 }
 
@@ -393,36 +409,40 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 		}
 
 		if len(pipelineIDFilters) > 0 && !slices.Contains(pipelineIDFilters, config.Spec.PipelineID) {
-			logrus.Infof("Manifest ID %q not referenced in the pipeline filter, skipping.", config.Spec.PipelineID)
+			logrus.Debugf("Manifest ID %q not referenced in the pipeline filter, skipping.", config.Spec.PipelineID)
 			continue
 		}
 
-		if len(pipelineLabels) > 0 {
-			matchingPipelineID := false
-			for key, value := range pipelineLabels {
-				if _, ok := config.Spec.Labels[key]; ok {
-					if value != "" {
-						if value == config.Spec.Labels[key] {
-							matchingPipelineID = true
-							logrus.Infof("Manifest  %q match label %q:%q", option.ManifestFile, key, value)
-						}
-						break
-					}
-					logrus.Infof("Manifest %q match label %q", option.ManifestFile, key)
-					matchingPipelineID = true
-					break
-				}
-			}
-			if !matchingPipelineID {
-				fmt.Printf("Manifest %q did not match label %v, skipping.\n", option.ManifestFile, pipelineLabels)
-				continue
-			}
+		if isMatchingLabel := isMatchingLabel(config.Spec.Labels, pipelineLabels); !isMatchingLabel {
+			logrus.Debugf("Manifest ID %q labels %v did not match filter labels %v, skipping.", config.Spec.PipelineID, config.Spec.Labels, pipelineLabels)
+			continue
 		}
 
 		configs = append(configs, config)
 	}
 
 	return configs, err
+}
+
+// isMatchingLabel checks if a spec labels match filter labels
+func isMatchingLabel(specLabels map[string]string, filterLabels map[string]string) bool {
+
+	if len(filterLabels) == 0 {
+		return true
+	}
+
+	for key, value := range filterLabels {
+		if _, ok := specLabels[key]; ok {
+			if value != "" {
+				if value == specLabels[key] {
+					return true
+				}
+			} else {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // IsManifestDifferentThanOnDisk checks if an Updatecli manifest in memory is the same than the one on disk
