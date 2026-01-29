@@ -1,13 +1,13 @@
 ---
-name: 'Updatecli Diff TestSuite'
+name: 'Updatecli Pipeline TestSuite'
 vars:
   message:
     warning: 'WARNING:'
     error: 'ERROR:'
 testcases:
-  - name: "Test updatecli diff shouldn't fail"
+  - name: "Test updatecli pipeline diff shouldn't fail"
     steps:
-      - script: '../scripts/test_diff.bash'
+      - script: '../scripts/test_pipeline_diff.bash'
         type: 'exec'
         assertions:
           - 'result.code ShouldEqual 0'
