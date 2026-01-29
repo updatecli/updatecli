@@ -15,7 +15,7 @@ var (
 	diffCmd = &cobra.Command{
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
 		Use:   "diff NAME[:TAG|@DIGEST]",
-		Short: "diff shows changes",
+		Short: "**Deprecated in favor of updatecli pipeline diff** diff shows changes",
 		Run: func(cmd *cobra.Command, args []string) {
 			policyReferences = args
 			err := getPolicyFilesFromRegistry()
@@ -34,6 +34,8 @@ var (
 			e.Options.Pipeline.Target.Push = false
 			e.Options.Pipeline.Target.Clean = diffClean
 			e.Options.Pipeline.Target.DryRun = true
+
+			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline diff`")
 
 			err = run("diff")
 			if err != nil {

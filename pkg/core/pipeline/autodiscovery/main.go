@@ -308,8 +308,9 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 	if len(errs) > 0 {
 		for i := range errs {
-			logrus.Info(errs[i])
+			logrus.Errorln(errs[i])
 		}
+		return &g, fmt.Errorf("autodiscovery failed with %d error(s)", len(errs))
 	}
 
 	return &g, nil

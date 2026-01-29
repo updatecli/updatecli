@@ -1,11 +1,14 @@
 package file
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"sort"
 	"strings"
+	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -55,6 +58,39 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 	inputContent := source
 	if len(f.spec.Content) > 0 {
 		inputContent = f.spec.Content
+	}
+
+	// If a template is specified, render it with the source value
+	if len(f.spec.Template) > 0 {
+		// Read the template from file
+		templateContent, err := f.contentRetriever.ReadAll(f.spec.Template)
+		if err != nil {
+			return fmt.Errorf("failed to read template file %q: %w", f.spec.Template, err)
+		}
+
+		tmpl, err := template.New("file").
+			Funcs(sprig.FuncMap()).
+			Parse(templateContent)
+		if err != nil {
+			return fmt.Errorf("failed to parse template from %q: %w", f.spec.Template, err)
+		}
+
+		templateData := map[string]interface{}{
+			"source": source,
+		}
+		for k, v := range f.spec.TemplateData {
+			if k == "source" {
+				logrus.Warnf("TemplateData key 'source' is reserved and will be ignored")
+				continue
+			}
+			templateData[k] = v
+		}
+
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, templateData); err != nil {
+			return fmt.Errorf("failed to execute template from %q: %w", f.spec.Template, err)
+		}
+		inputContent = buf.String()
 	}
 
 	resultTarget.NewInformation = inputContent
