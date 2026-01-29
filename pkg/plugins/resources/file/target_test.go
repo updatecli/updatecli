@@ -760,7 +760,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 			var mockSCM scm.ScmHandler
 			mockedContents := tt.mockedContents
 			wantedContents := tt.wantedContents
-			
+
 			if tt.spec.SearchPattern {
 				tempDir = t.TempDir()
 				// Create the files that will be matched by the pattern
