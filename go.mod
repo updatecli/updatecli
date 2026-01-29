@@ -51,7 +51,7 @@ require (
 	github.com/google/go-containerregistry v0.20.5
 	github.com/google/go-github/v69 v69.2.0
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/hcl/v2 v2.23.1-0.20250211201033-5c140ce1cb20
+	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/terraform-registry-address v0.4.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/jferrl/go-githubauth v1.5.0
@@ -156,12 +156,12 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
-	github.com/hashicorp/terraform-config-inspect v0.0.0-20230614215431-f32df32a01cd // indirect
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/ianlancetaylor/demangle v0.0.0-20240805132620-81f5be970eca // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
+	github.com/minamijoyo/terraform-config-inspect v0.0.0-20250505010908-6ad6eb27d3c9 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.1.0 // indirect
