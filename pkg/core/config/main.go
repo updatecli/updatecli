@@ -432,17 +432,17 @@ func isMatchingLabel(specLabels map[string]string, filterLabels map[string]strin
 	}
 
 	for key, value := range filterLabels {
-		if _, ok := specLabels[key]; ok {
-			if value != "" {
-				if value == specLabels[key] {
-					return true
-				}
-			} else {
-				return true
-			}
+		if _, ok := specLabels[key]; !ok {
+			return false
+		}
+
+		if value != "" && specLabels[key] != value {
+			// Label key exist but value do not match
+			return false
 		}
 	}
-	return false
+	// All filter labels matched
+	return true
 }
 
 // IsManifestDifferentThanOnDisk checks if an Updatecli manifest in memory is the same than the one on disk
