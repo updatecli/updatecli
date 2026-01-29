@@ -1,0 +1,11 @@
+steps:
+  - name: build
+    image: node:18-alpine
+    commands:
+      - npm install
+      - npm run build
+
+  - name: lint
+    image: node:18-alpine
+    commands:
+      - npm run lint
