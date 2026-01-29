@@ -351,11 +351,3 @@ replace github.com/vmware-labs/yaml-jsonpath => github.com/helm-unittest/yaml-js
 // TODO: Replace this with a public fork once created (e.g., github.com/updatecli/tfupdate).
 // See /tmp/tfupdate-bug-report.md for details on the bug and fix.
 replace github.com/minamijoyo/tfupdate => /tmp/tfupdate-patched
-
-// FIXME: tfupdate v0.9.3 has a compilation bug on line 84 of tfupdate/option.go:
-//   slices.Contains[string](...) should be slices.Contains(...)
-// To fix: Create fork at github.com/updatecli/tfupdate with this one-line fix,
-// then replace this line with:
-//   replace github.com/minamijoyo/tfupdate => github.com/updatecli/tfupdate v0.9.3-patched
-// Until then, this PR cannot be merged as-is.
-// replace github.com/minamijoyo/tfupdate => github.com/updatecli/tfupdate v0.9.3-patched
