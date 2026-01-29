@@ -2,6 +2,8 @@ package file
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -682,11 +684,114 @@ func TestFile_TargetMultiples(t *testing.T) {
 			},
 			wantedResult: true,
 		},
+		{
+			name: "Error when searchpattern=true with matchPattern filters out all files",
+			spec: Spec{
+				Files: []string{
+					"file1.txt",
+					"file2.txt",
+				},
+				MatchPattern:   "version=\\d+\\.\\d+\\.\\d+",
+				ReplacePattern: "version=2.0.0",
+				SearchPattern:  true,
+			},
+			files: map[string]fileMetadata{
+				"file1.txt": {
+					originalPath: "file1.txt",
+					path:         "file1.txt",
+				},
+				"file2.txt": {
+					originalPath: "file2.txt",
+					path:         "file2.txt",
+				},
+			},
+			inputSourceValue: "2.0.0",
+			mockedContents: map[string]string{
+				"file1.txt": "some content without version",
+				"file2.txt": "another file without matching pattern",
+			},
+			wantedResult: false,
+			wantedErr:    true,
+		},
+		{
+			name: "Success when searchpattern=true with matchPattern filters some files but others match",
+			spec: Spec{
+				Files: []string{
+					"file1.txt",
+					"file2.txt",
+					"file3.txt",
+				},
+				MatchPattern:   "version=\\d+\\.\\d+\\.\\d+",
+				ReplacePattern: "version=2.0.0",
+				SearchPattern:  true,
+			},
+			files: map[string]fileMetadata{
+				"file1.txt": {
+					originalPath: "file1.txt",
+					path:         "file1.txt",
+				},
+				"file2.txt": {
+					originalPath: "file2.txt",
+					path:         "file2.txt",
+				},
+				"file3.txt": {
+					originalPath: "file3.txt",
+					path:         "file3.txt",
+				},
+			},
+			inputSourceValue: "2.0.0",
+			mockedContents: map[string]string{
+				"file1.txt": "some content without version",
+				"file2.txt": "version=1.0.0",
+				"file3.txt": "version=1.5.0",
+			},
+			wantedContents: map[string]string{
+				"file1.txt": "some content without version",
+				"file2.txt": "version=2.0.0",
+				"file3.txt": "version=2.0.0",
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Create temporary files for SearchPattern tests
+			var tempDir string
+			var mockSCM scm.ScmHandler
+			mockedContents := tt.mockedContents
+			wantedContents := tt.wantedContents
+
+			if tt.spec.SearchPattern {
+				tempDir = t.TempDir()
+				// Create the files that will be matched by the pattern
+				for fileName := range tt.files {
+					filePath := filepath.Join(tempDir, fileName)
+					if err := os.WriteFile(filePath, []byte(""), 0600); err != nil {
+						t.Fatalf("failed to create temp file: %v", err)
+					}
+				}
+				// Use SCM mock to set working directory to temp directory
+				mockSCM = &scm.MockScm{
+					WorkingDir: tempDir,
+				}
+				// Create local copies of mockedContents with temp directory paths
+				updatedContents := make(map[string]string)
+				for fileName, content := range tt.mockedContents {
+					updatedContents[filepath.Join(tempDir, fileName)] = content
+				}
+				mockedContents = updatedContents
+				// Create local copies of wantedContents with temp directory paths
+				if tt.wantedContents != nil {
+					updatedWantedContents := make(map[string]string)
+					for fileName, content := range tt.wantedContents {
+						updatedWantedContents[filepath.Join(tempDir, fileName)] = content
+					}
+					wantedContents = updatedWantedContents
+				}
+			}
+
 			mockedText := text.MockTextRetriever{
-				Contents: tt.mockedContents,
+				Contents: mockedContents,
 				Err:      tt.mockedError,
 			}
 			f := &File{
@@ -696,7 +801,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 			}
 
 			gotResultTarget := result.Target{}
-			gotErr := f.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResultTarget)
+			gotErr := f.Target(tt.inputSourceValue, mockSCM, tt.dryRun, &gotResultTarget)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -706,7 +811,13 @@ func TestFile_TargetMultiples(t *testing.T) {
 
 			assert.Equal(t, tt.wantedResult, gotResultTarget.Changed)
 			for filePath := range tt.files {
-				assert.Equal(t, tt.wantedContents[filePath], mockedText.Contents[filePath])
+				// For SearchPattern tests, use temp directory path; otherwise use original path
+				checkPath := filePath
+				if tt.spec.SearchPattern && tempDir != "" {
+					checkPath = filepath.Join(tempDir, filePath)
+				}
+				expectedContent := wantedContents[checkPath]
+				assert.Equal(t, expectedContent, mockedText.Contents[checkPath], "content mismatch for file %q", checkPath)
 			}
 		})
 	}
