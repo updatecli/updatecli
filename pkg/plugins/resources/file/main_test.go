@@ -133,6 +133,67 @@ func Test_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Validation failure with both 'Template' and 'Content' specified",
+			spec: Spec{
+				File:     "/tmp/foo.txt",
+				Template: "/tmp/template.tmpl",
+				Content:  "Hello World",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with both 'Template' and 'MatchPattern' specified",
+			spec: Spec{
+				File:         "/tmp/foo.txt",
+				Template:     "/tmp/template.tmpl",
+				MatchPattern: "pattern=.*",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with both 'Template' and 'ReplacePattern' specified",
+			spec: Spec{
+				File:           "/tmp/foo.txt",
+				Template:       "/tmp/template.tmpl",
+				ReplacePattern: "pattern=.*",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Validation failure with both 'Template' and 'Line' specified",
+			spec: Spec{
+				File:     "/tmp/foo.txt",
+				Template: "/tmp/template.tmpl",
+				Line:     12,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Passing case with 'Template' only",
+			spec: Spec{
+				File:     "/tmp/foo.txt",
+				Template: "/tmp/template.tmpl",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Passing with 'Template' and 'TemplateData'",
+			spec: Spec{
+				File:         "/tmp/foo.txt",
+				Template:     "/tmp/template.tmpl",
+				TemplateData: map[string]any{"key": "value"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Validation failure with 'TemplateData' but no 'Template' specified",
+			spec: Spec{
+				File:         "/tmp/foo.txt",
+				TemplateData: map[string]any{"key": "value"},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

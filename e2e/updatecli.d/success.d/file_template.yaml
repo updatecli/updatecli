@@ -1,0 +1,56 @@
+name: Test file resource with Go template
+
+sources:
+  appVersion:
+    name: Get application version
+    kind: shell
+    spec:
+      command: echo "1.2.3"
+  date:
+    name: Get today's date
+    kind: shell
+    spec:
+      command: echo "today"
+
+targets:
+  updateVersionFile:
+    name: Update version.txt using Go template from file
+    kind: file
+    spec:
+      file: version.txt
+      template: e2e/updatecli.d/success.d/templates/version.tmpl
+      forcecreate: true
+    sourceid: appVersion
+
+  updateConfigWithSprig:
+    name: Update config.yaml using Go template with sprig functions from file
+    kind: file
+    spec:
+      file: config.yaml
+      forcecreate: true
+      template: e2e/updatecli.d/success.d/templates/config.tmpl
+    sourceid: appVersion
+
+  templateWithTemplateData:
+    name: Update info.txt using Go template with .TemplateData from file
+    kind: file
+    spec:
+      file: release.txt
+      forcecreate: true
+      template: e2e/updatecli.d/success.d/templates/release.tmpl
+      templatedata:
+        Environment: Production
+        Date: '{{ source "date" }}'
+    sourceid: appVersion
+
+  templateWithOnlyTemplateData:
+    name: Create info_only.txt using Go template with only .TemplateData from file
+    kind: file
+    spec:
+      file: info.txt
+      template: e2e/updatecli.d/success.d/templates/info.tmpl
+      templatedata:
+        ServiceName: MyService
+        Version: '{{ source "appVersion" }}'
+      forcecreate: true
+    disablesourceinput: true
