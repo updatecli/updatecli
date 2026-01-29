@@ -79,11 +79,9 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 						logrus.Debugf("Failed loading document from %s as HelmRelease: %s", path, err)
 					}
 
-					if helmRelease != nil {
-						if !hasHelmRelease {
-							f.helmReleaseFiles = append(f.helmReleaseFiles, path)
-							hasHelmRelease = true
-						}
+					if helmRelease != nil && !hasHelmRelease {
+						f.helmReleaseFiles = append(f.helmReleaseFiles, path)
+						hasHelmRelease = true
 					}
 				}
 			}
