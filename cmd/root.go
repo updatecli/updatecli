@@ -109,6 +109,10 @@ func run(command string) error {
 
 		for i := range labelsArray {
 			labelKeyValue := strings.SplitN(labelsArray[i], ":", 2)
+			if labelKeyValue[0] == "" {
+				logrus.Warnf("Ignoring label with empty key: %q", labelsArray[i])
+				continue
+			}
 			switch len(labelKeyValue) {
 			case 2:
 				initLabels()
