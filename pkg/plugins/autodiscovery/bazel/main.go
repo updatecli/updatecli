@@ -36,6 +36,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Bazel, error) {
 		return Bazel{}, err
 	}
 
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Bazel{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Bazel{}, fmt.Errorf("invalid only spec: %w", err)
+	}
+
 	newFilter := s.VersionFilter
 	if s.VersionFilter.IsZero() {
 		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")

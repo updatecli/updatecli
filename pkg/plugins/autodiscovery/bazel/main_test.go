@@ -65,6 +65,58 @@ func TestNew(t *testing.T) {
 			actionID:    "",
 			expectError: true,
 		},
+		{
+			name: "Invalid ignore spec with empty rule",
+			spec: Spec{
+				RootDir: "testdata",
+				Ignore: MatchingRules{
+					{},
+				},
+			},
+			rootDir:     ".",
+			scmID:       "test-scm",
+			actionID:    "test-action",
+			expectError: true,
+		},
+		{
+			name: "Invalid only spec with empty rule",
+			spec: Spec{
+				RootDir: "testdata",
+				Only: MatchingRules{
+					{},
+				},
+			},
+			rootDir:     ".",
+			scmID:       "test-scm",
+			actionID:    "test-action",
+			expectError: true,
+		},
+		{
+			name: "Valid spec with ignore rule",
+			spec: Spec{
+				RootDir: "testdata",
+				Ignore: MatchingRules{
+					{Path: "testdata/project1/MODULE.bazel"},
+				},
+			},
+			rootDir:     ".",
+			scmID:       "test-scm",
+			actionID:    "test-action",
+			expectError: false,
+		},
+		{
+			name: "Valid spec with only rule",
+			spec: Spec{
+				RootDir: "testdata",
+				Only: MatchingRules{
+					{Modules: map[string]string{"rules_go": ""}},
+				},
+			},
+			rootDir:     ".",
+			scmID:       "test-scm",
+			actionID:    "test-action",
+			expectError: false,
+		},
 	}
 
 	for _, tt := range testdata {
