@@ -30,10 +30,19 @@ type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.
 // Returns an error if any rule has no valid fields specified.
+// Also validates that Modules map doesn't contain empty keys (module names).
 func (m MatchingRules) Validate() error {
 	for i, rule := range m {
 		if rule.Path == "" && len(rule.Modules) == 0 {
 			return fmt.Errorf("rule %d has no valid fields (path or modules must be specified)", i+1)
+		}
+		// Validate that Modules map doesn't contain empty keys
+		if len(rule.Modules) > 0 {
+			for moduleName := range rule.Modules {
+				if moduleName == "" {
+					return fmt.Errorf("rule %d contains empty module name in modules map", i+1)
+				}
+			}
 		}
 	}
 	return nil

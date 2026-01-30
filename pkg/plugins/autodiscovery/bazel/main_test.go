@@ -117,6 +117,32 @@ func TestNew(t *testing.T) {
 			actionID:    "test-action",
 			expectError: false,
 		},
+		{
+			name: "Invalid spec with empty module name in ignore rule",
+			spec: Spec{
+				RootDir: "testdata",
+				Ignore: MatchingRules{
+					{Modules: map[string]string{"": ""}},
+				},
+			},
+			rootDir:     ".",
+			scmID:       "test-scm",
+			actionID:    "test-action",
+			expectError: true,
+		},
+		{
+			name: "Invalid spec with empty module name in only rule",
+			spec: Spec{
+				RootDir: "testdata",
+				Only: MatchingRules{
+					{Modules: map[string]string{"": ""}},
+				},
+			},
+			rootDir:     ".",
+			scmID:       "test-scm",
+			actionID:    "test-action",
+			expectError: true,
+		},
 	}
 
 	for _, tt := range testdata {
@@ -389,4 +415,244 @@ func TestManifestTemplateStructure(t *testing.T) {
 	assert.True(t, hasSources, "Manifest should contain sources section")
 	assert.True(t, hasConditions, "Manifest should contain conditions section")
 	assert.True(t, hasTargets, "Manifest should contain targets section")
+}
+
+func TestDiscoverManifestsFullOutput(t *testing.T) {
+	testdata := []struct {
+		name              string
+		rootDir           string
+		spec              Spec
+		scmID             string
+		actionID          string
+		expectedManifests []string
+	}{
+		{
+			name:    "Simple project1 with default version filter",
+			rootDir: "testdata/project1",
+			spec: Spec{
+				RootDir: "",
+			},
+			scmID:    "",
+			actionID: "",
+			expectedManifests: []string{`name: 'Update Bazel module rules_go'
+sources:
+  rules_go:
+    name: 'Get latest version of Bazel module rules_go'
+    kind: bazelregistry
+    spec:
+      module: rules_go
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=0.42.0'
+conditions:
+  rules_go:
+    name: 'Check if Bazel module rules_go is up to date'
+    kind: bazelmod
+    spec:
+      file: 'MODULE.bazel'
+      module: rules_go
+    disablesourceinput: true
+targets:
+  rules_go:
+    name: 'Bump Bazel module rules_go to {{ source "rules_go" }}'
+    kind: bazelmod
+    spec:
+      file: 'MODULE.bazel'
+      module: rules_go
+    sourceid: 'rules_go'
+`, `name: 'Update Bazel module gazelle'
+sources:
+  gazelle:
+    name: 'Get latest version of Bazel module gazelle'
+    kind: bazelregistry
+    spec:
+      module: gazelle
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=0.34.0'
+conditions:
+  gazelle:
+    name: 'Check if Bazel module gazelle is up to date'
+    kind: bazelmod
+    spec:
+      file: 'MODULE.bazel'
+      module: gazelle
+    disablesourceinput: true
+targets:
+  gazelle:
+    name: 'Bump Bazel module gazelle to {{ source "gazelle" }}'
+    kind: bazelmod
+    spec:
+      file: 'MODULE.bazel'
+      module: gazelle
+    sourceid: 'gazelle'
+`, `name: 'Update Bazel module protobuf'
+sources:
+  protobuf:
+    name: 'Get latest version of Bazel module protobuf'
+    kind: bazelregistry
+    spec:
+      module: protobuf
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=21.7.0'
+conditions:
+  protobuf:
+    name: 'Check if Bazel module protobuf is up to date'
+    kind: bazelmod
+    spec:
+      file: 'MODULE.bazel'
+      module: protobuf
+    disablesourceinput: true
+targets:
+  protobuf:
+    name: 'Bump Bazel module protobuf to {{ source "protobuf" }}'
+    kind: bazelmod
+    spec:
+      file: 'MODULE.bazel'
+      module: protobuf
+    sourceid: 'protobuf'
+`,
+			},
+		},
+		{
+			name:    "Project1 with scmID and actionID",
+			rootDir: "testdata/project1",
+			spec: Spec{
+				RootDir: "",
+			},
+			scmID:    "defaultscmid",
+			actionID: "defaultactionid",
+			expectedManifests: []string{`name: 'Update Bazel module rules_go'
+actions:
+  defaultactionid:
+    title: 'Bump Bazel module rules_go to {{ source "rules_go" }}'
+
+sources:
+  rules_go:
+    name: 'Get latest version of Bazel module rules_go'
+    kind: bazelregistry
+    spec:
+      module: rules_go
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=0.42.0'
+conditions:
+  rules_go:
+    name: 'Check if Bazel module rules_go is up to date'
+    kind: bazelmod
+    scmid: 'defaultscmid'
+
+    spec:
+      file: 'MODULE.bazel'
+      module: rules_go
+    disablesourceinput: true
+targets:
+  rules_go:
+    name: 'Bump Bazel module rules_go to {{ source "rules_go" }}'
+    kind: bazelmod
+    scmid: 'defaultscmid'
+
+    spec:
+      file: 'MODULE.bazel'
+      module: rules_go
+    sourceid: 'rules_go'
+`, `name: 'Update Bazel module gazelle'
+actions:
+  defaultactionid:
+    title: 'Bump Bazel module gazelle to {{ source "gazelle" }}'
+
+sources:
+  gazelle:
+    name: 'Get latest version of Bazel module gazelle'
+    kind: bazelregistry
+    spec:
+      module: gazelle
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=0.34.0'
+conditions:
+  gazelle:
+    name: 'Check if Bazel module gazelle is up to date'
+    kind: bazelmod
+    scmid: 'defaultscmid'
+
+    spec:
+      file: 'MODULE.bazel'
+      module: gazelle
+    disablesourceinput: true
+targets:
+  gazelle:
+    name: 'Bump Bazel module gazelle to {{ source "gazelle" }}'
+    kind: bazelmod
+    scmid: 'defaultscmid'
+
+    spec:
+      file: 'MODULE.bazel'
+      module: gazelle
+    sourceid: 'gazelle'
+`, `name: 'Update Bazel module protobuf'
+actions:
+  defaultactionid:
+    title: 'Bump Bazel module protobuf to {{ source "protobuf" }}'
+
+sources:
+  protobuf:
+    name: 'Get latest version of Bazel module protobuf'
+    kind: bazelregistry
+    spec:
+      module: protobuf
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=21.7.0'
+conditions:
+  protobuf:
+    name: 'Check if Bazel module protobuf is up to date'
+    kind: bazelmod
+    scmid: 'defaultscmid'
+
+    spec:
+      file: 'MODULE.bazel'
+      module: protobuf
+    disablesourceinput: true
+targets:
+  protobuf:
+    name: 'Bump Bazel module protobuf to {{ source "protobuf" }}'
+    kind: bazelmod
+    scmid: 'defaultscmid'
+
+    spec:
+      file: 'MODULE.bazel'
+      module: protobuf
+    sourceid: 'protobuf'
+`,
+			},
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			absRootDir, err := filepath.Abs(tt.rootDir)
+			require.NoError(t, err)
+
+			bazel, err := New(tt.spec, absRootDir, tt.scmID, tt.actionID)
+			require.NoError(t, err)
+
+			rawManifests, err := bazel.DiscoverManifests()
+			require.NoError(t, err)
+
+			if len(rawManifests) == 0 {
+				t.Errorf("No manifests found for %s", tt.name)
+			}
+
+			var manifests []string
+			assert.Equal(t, len(tt.expectedManifests), len(rawManifests), "Number of manifests should match")
+
+			for i := range rawManifests {
+				// We expect manifest generated by the autodiscovery to use the yaml syntax
+				manifests = append(manifests, string(rawManifests[i]))
+				assert.Equal(t, tt.expectedManifests[i], manifests[i], "Manifest %d should match expected output", i)
+			}
+		})
+	}
 }

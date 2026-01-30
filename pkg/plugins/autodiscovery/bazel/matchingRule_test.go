@@ -71,6 +71,29 @@ func TestMatchingRulesValidate(t *testing.T) {
 			expectError: true,
 			errorMsg:    "rule 1 has no valid fields",
 		},
+		{
+			name: "rule with empty module name in modules map should fail",
+			rules: MatchingRules{
+				{
+					Modules: map[string]string{"": ""},
+				},
+			},
+			expectError: true,
+			errorMsg:    "rule 1 contains empty module name",
+		},
+		{
+			name: "rule with empty module name and valid module name should fail",
+			rules: MatchingRules{
+				{
+					Modules: map[string]string{
+						"rules_go": "",
+						"":         "",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "rule 1 contains empty module name",
+		},
 	}
 
 	for _, tt := range tests {
