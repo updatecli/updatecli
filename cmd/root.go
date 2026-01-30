@@ -120,8 +120,6 @@ func run(command string) error {
 			case 1:
 				initLabels()
 				e.Options.Labels[labelKeyValue[0]] = ""
-			default:
-				logrus.Warnf("Ignoring malformed label filter: %q", label)
 			}
 		}
 	}

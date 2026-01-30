@@ -437,7 +437,7 @@ func isMatchingLabel(specLabels map[string]string, filterLabels map[string]strin
 		}
 
 		if value != "" && specLabels[key] != value {
-			// Label key exist but value do not match
+			// Label key exists but value does not match
 			return false
 		}
 	}
