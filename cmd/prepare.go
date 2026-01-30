@@ -32,7 +32,7 @@ var (
 
 			e.Options.Pipeline.Target.Clean = prepareClean
 
-			manifestPullPolicyReference = args[0]
+			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline prepare`")
 
 			err = run("prepare")
 			if err != nil {

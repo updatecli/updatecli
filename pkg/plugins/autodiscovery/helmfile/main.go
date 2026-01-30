@@ -1,6 +1,7 @@
 package helmfile
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -65,9 +66,26 @@ type Helmfile struct {
 func New(spec interface{}, rootDir, scmID, actionID string) (Helmfile, error) {
 	var s Spec
 
-	err := mapstructure.Decode(spec, &s)
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		ErrorUnused: true,
+		Result:      &s,
+	})
 	if err != nil {
 		return Helmfile{}, err
+	}
+
+	if err := decoder.Decode(spec); err != nil {
+		return Helmfile{}, fmt.Errorf("invalid spec: %w", err)
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Helmfile{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Helmfile{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	dir := rootDir
