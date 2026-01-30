@@ -1,0 +1,4 @@
+name: Update Alpine Docker Image
+pipelineid: alpine
+labels:
+  id: alpine

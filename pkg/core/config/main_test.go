@@ -842,6 +842,8 @@ func TestNew(t *testing.T) {
 	dataset := []struct {
 		id             string
 		option         Option
+		pipelineIDs    []string
+		labels         map[string]string
 		expectedResult []Config
 		expectedError  error
 	}{
@@ -935,10 +937,74 @@ func TestNew(t *testing.T) {
 			expectedResult: []Config{},
 			expectedError:  errors.New("yaml: unmarshal errors:\n  line 3: cannot unmarshal !!seq into map[string]source.Config"),
 		},
+		{
+			id: "Test with matching label",
+			option: Option{
+				ManifestFile: "testdata/labels/alpine.yaml",
+			},
+			labels: map[string]string{
+				"id": "alpine",
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Update Alpine Docker Image",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with matching label key only (empty value)",
+			option: Option{
+				ManifestFile: "testdata/labels/alpine.yaml",
+			},
+			labels: map[string]string{
+				"id": "",
+			},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Update Alpine Docker Image",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with none matching label debian",
+			option: Option{
+				ManifestFile: "testdata/labels/alpine.yaml",
+			},
+			labels: map[string]string{
+				"id": "debian",
+			},
+			expectedResult: []Config{},
+		},
+		{
+			id: "Test with matching pipelineid",
+			option: Option{
+				ManifestFile: "testdata/labels/alpine.yaml",
+			},
+			pipelineIDs: []string{"alpine"},
+			expectedResult: []Config{
+				{
+					Spec: Spec{
+						Name: "Update Alpine Docker Image",
+					},
+				},
+			},
+		},
+		{
+			id: "Test with none matching pipelineid debian",
+			option: Option{
+				ManifestFile: "testdata/labels/alpine.yaml",
+			},
+			pipelineIDs:    []string{"debian"},
+			expectedResult: []Config{},
+		},
 	}
 
 	for _, data := range dataset {
-		got, err := New(data.option, []string{})
+		got, err := New(data.option, data.pipelineIDs, data.labels)
 
 		switch data.expectedError {
 		case nil:

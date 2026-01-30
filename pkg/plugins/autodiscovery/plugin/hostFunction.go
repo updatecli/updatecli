@@ -41,7 +41,7 @@ func generate_docker_source_spec(ctx context.Context, p *extism.CurrentPlugin, s
 
 	err = json.Unmarshal([]byte(input), &inputData)
 	if err != nil {
-		logrus.Debugf("unmarshaling input string: %s", err)
+		logrus.Debugf("unmarshalling input string: %s", err)
 		stack[0] = 0
 		return
 	}
@@ -81,7 +81,6 @@ func generate_docker_source_spec(ctx context.Context, p *extism.CurrentPlugin, s
 func versionfilter_greater_than_pattern(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
 	logrus.Debugf("Calling versionfilter_greater_than_pattern wasm host function")
 	input, err := p.ReadString(stack[0])
-
 	if err != nil {
 		logrus.Debugf("reading input string: %s", err)
 		stack[0] = 0
@@ -95,7 +94,7 @@ func versionfilter_greater_than_pattern(ctx context.Context, p *extism.CurrentPl
 
 	err = json.Unmarshal([]byte(input), &inputData)
 	if err != nil {
-		logrus.Debugf("unmarshaling input string: %s", err)
+		logrus.Debugf("unmarshalling input string: %s", err)
 		stack[0] = 0
 		return
 	}

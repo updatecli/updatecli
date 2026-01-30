@@ -52,142 +52,138 @@ type Config struct {
 
 // Spec contains pipeline configuration
 type Spec struct {
-	/*
-		"name" defines a pipeline name
-
-		example:
-			* "name: 'deps: update nodejs version to latest stable'"
-
-		remark:
-			* using a short sentence describing the pipeline is a good way to name your pipeline.
-			* using conventional commits convention is a good way to name your pipeline.
-			* "name" is often used a default values for other configuration such as pullrequest title.
-			* "name" shouldn't contain any dynamic information such as source output.
-	*/
+	// "name" defines a pipeline name
+	//
+	// example:
+	// 	* "name: 'deps: update nodejs version to latest stable'"
+	//
+	// remark:
+	// 	* using a short sentence describing the pipeline is a good way to name your pipeline.
+	// 	* using conventional commits convention is a good way to name your pipeline.
+	// 	* "name" is often used a default values for other configuration such as pullrequest title.
+	// 	* "name" shouldn't contain any dynamic information such as source output.
 	Name string `yaml:",omitempty" jsonschema:"required"`
-	/*
-		"pipelineid" allows to identify a full pipeline run.
-
-		example:
-			* "pipelineid: nodejs/dependencies"
-			* "pipelineid: gomod/github.com/updatecli/updatecli"
-			* "pipelineid: autodiscovery/gomodules/minor"
-
-		remark:
-			* "pipelineid" is used to generate uniq branch name for target update relying on scm configuration.
-			* The same "pipelineid" may be used by different Updatecli manifest" to ensure they are updated in the same workflow including pullrequest.
-	*/
+	// "pipelineid" allows to identify a full pipeline run.
+	//
+	// example:
+	// 	* "pipelineid: nodejs/dependencies"
+	// 	* "pipelineid: gomod/github.com/updatecli/updatecli"
+	// 	* "pipelineid: autodiscovery/gomodules/minor"
+	//
+	// remark:
+	// 	* "pipelineid" is used to generate uniq branch name for target update relying on scm configuration.
+	// 	* The same "pipelineid" may be used by different Updatecli manifest" to ensure they are updated in the same workflow including pullrequest.
 	PipelineID string `yaml:",omitempty"`
-	/*
-		"autodiscovery" defines the configuration to automatically discover new versions update.
-
-		example:
-		---
-		autodiscovery:
-			scmid: default
-			actionid:  default
-			groupby: all
-			crawlers:
-				golang/gomod:
-					versionfilter:
-					kind: semver
-					pattern: patch
-		---
-	*/
+	// "autodiscovery" defines the configuration to automatically discover new versions update.
+	//
+	// example:
+	// ---
+	// autodiscovery:
+	// 	scmid: default
+	// 	actionid:  default
+	// 	groupby: all
+	// 	crawlers:
+	// 	  golang/gomod:
+	// 	  	versionfilter:
+	// 	  	kind: semver
+	// 	  	pattern: patch
+	// ---
 	AutoDiscovery autodiscovery.Config `yaml:",omitempty"`
-	/*
-		"title" is deprecated, please use "name" instead.
-	*/
+	// title is deprecated, please use "name" instead.
 	Title string `yaml:",omitempty" jsonschema:"-"`
-	/*
-		!Deprecated in favor of `actions`
-	*/
+	// pullrequets is deprecated in favor of `actions`
 	PullRequests map[string]action.Config `yaml:",omitempty" jsonschema:"-"`
-	/*
-		"actions" defines the list of action configurations which need to be managed.
-
-		examples:
-		---
-		actions:
-			default:
-				kind: github/pullrequest
-				scmid: default
-				spec:
-					automerge: true
-					labels:
-						- "dependencies"
-		---
-	*/
+	// "actions" defines the list of action configurations which need to be managed.
+	// They are triggered if any of the depending target is updated.
+	//
+	// examples:
+	// ---
+	// actions:
+	// 	default:
+	// 	  kind: github/pullrequest
+	// 	  scmid: default
+	// 	  spec:
+	// 	  	automerge: true
+	// 	  	labels:
+	// 	  	  - "dependencies"
+	// ---
 	Actions map[string]action.Config `yaml:",omitempty"`
-	/*
-		"scms" defines the list of repository configuration used to fetch content from.
-
-		examples:
-		---
-		scms:
-			default:
-				kind: github
-				spec:
-					owner: "updatecli"
-					repository: "updatecli"
-					token: "${{ env "GITHUB_TOKEN" }}"
-					branch: "main"
-		---
-
-	*/
+	// "scms" defines the list of repository configuration used to fetch content from.
+	//
+	// examples:
+	// ---
+	// scms:
+	// 	default:
+	// 	  kind: github
+	// 	  spec:
+	// 	    owner: "updatecli"
+	// 	    repository: "updatecli"
+	// 	    token: "${{ env "GITHUB_TOKEN" }}"
+	// 	    branch: "main"
+	// ---
 	SCMs map[string]scm.Config `yaml:"scms,omitempty"`
-	/*
-		"sources" defines the list of Updatecli source definition.
-
-		example:
-		---
-		sources:
-			# Source to retrieve the latest version of nodejs
-			nodejs:
-				name: Get latest nodejs version
-				kind: json
-				spec:
-					file: https://nodejs.org/dist/index.json
-					key: .(lts!=false).version
-		---
-	*/
+	// "sources" defines the list of Updatecli source definition.
+	//
+	// example:
+	// ---
+	// sources:
+	// 	# Source to retrieve the latest version of nodejs
+	//   nodejs:
+	// 	   name: Get latest nodejs version
+	// 	   kind: json
+	// 	   spec:
+	// 	     file: https://nodejs.org/dist/index.json
+	// 	     key: .(lts!=false).version
+	// ---
 	Sources map[string]source.Config `yaml:",omitempty"`
-	/*
-		"conditions" defines the list of Updatecli condition definition.
-
-		example:
-		---
-		conditions:
-			container:
-				name: Check if Updatecli container image for tag "v0.63.0" exists
-				kind: dockerimage
-				spec:
-					image: "updatecli/updatecli:latest"
-					tag: "v0.63.0"
-		---
-	*/
+	// "conditions" defines the list of Updatecli condition definition.
+	//
+	// example:
+	// ---
+	// conditions:
+	//   container:
+	//     name: Check if Updatecli container image for tag "v0.63.0" exists
+	//     kind: dockerimage
+	//     spec:
+	//       image: "updatecli/updatecli:latest"
+	//       tag: "v0.63.0"
+	// ---
 	Conditions map[string]condition.Config `yaml:",omitempty"`
-	/*
-		"targets" defines the list of Updatecli target definition.
-
-		example:
-		---
-		targets:
-		  	default:
-		     	name: 'ci: update Golangci-lint version to {{ source "default" }}'
-		     	kind: yaml
-		     	spec:
-		         	file: .github/workflows/go.yaml
-		         	key: $.jobs.build.steps[2].with.version
-		     	scmid: default
-		     	sourceid: default
-		---
-	*/
+	// targets defines the list of Updatecli target definition.
+	//
+	// example:
+	//---
+	// targets:
+	//   default:
+	//     name: 'ci: update Golangci-lint version to {{ source "default" }}'
+	//     kind: yaml
+	//     spec:
+	//       file: .github/workflows/go.yaml
+	//       key: $.jobs.build.steps[2].with.version
+	//     scmid: default
+	//     sourceid: default
+	//	---
 	Targets map[string]target.Config `yaml:",omitempty"`
-	/*
-		"version" defines the minimum Updatecli version compatible with the manifest
-	*/
+	// "version" defines the minimum Updatecli version compatible with the manifest
 	Version string `yaml:",omitempty"`
+	// Labels contains user defined labels attached to the pipeline.
+	//
+	// Labels are arbitrary key/value pairs that can be used to categorize or
+	// select pipelines. They are typically used for filtering pipelines when
+	// running Updatecli, for example to only run pipelines matching a given
+	// environment, operating system, or team.
+	//
+	// example:
+	// ---
+	// name: "Update dependencies"
+	// labels:
+	//   os: debian
+	//   environment: staging
+	//   team: backend
+	// sources:
+	//   ...
+	// ---
+	Labels map[string]string `yaml:",omitempty"`
 }
 
 // Option contains configuration options such as filepath located on disk,etc.
@@ -213,7 +209,7 @@ func (config *Config) Reset() {
 }
 
 // New reads an updatecli configuration file
-func New(option Option, pipelineIDFilters []string) (configs []Config, err error) {
+func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]string) (configs []Config, err error) {
 	_, basename := filepath.Split(option.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
@@ -413,13 +409,40 @@ func New(option Option, pipelineIDFilters []string) (configs []Config, err error
 		}
 
 		if len(pipelineIDFilters) > 0 && !slices.Contains(pipelineIDFilters, config.Spec.PipelineID) {
-			logrus.Infof("Manifest ID %q not referenced in the pipeline filter, skipping.", config.Spec.PipelineID)
+			logrus.Debugf("Manifest ID %q not referenced in the pipeline filter, skipping.", config.Spec.PipelineID)
 			continue
 		}
+
+		if isMatchingLabel := isMatchingLabel(config.Spec.Labels, pipelineLabels); !isMatchingLabel {
+			logrus.Debugf("Manifest ID %q labels %v did not match filter labels %v, skipping.", config.Spec.PipelineID, config.Spec.Labels, pipelineLabels)
+			continue
+		}
+
 		configs = append(configs, config)
 	}
 
 	return configs, err
+}
+
+// isMatchingLabel checks if a spec labels match filter labels
+func isMatchingLabel(specLabels map[string]string, filterLabels map[string]string) bool {
+
+	if len(filterLabels) == 0 {
+		return true
+	}
+
+	for key, value := range filterLabels {
+		if _, ok := specLabels[key]; !ok {
+			return false
+		}
+
+		if value != "" && specLabels[key] != value {
+			// Label key exists but value does not match
+			return false
+		}
+	}
+	// All filter labels matched
+	return true
 }
 
 // IsManifestDifferentThanOnDisk checks if an Updatecli manifest in memory is the same than the one on disk
