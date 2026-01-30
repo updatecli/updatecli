@@ -20,7 +20,6 @@ sources:
       file: file://ADOPTE??.md
       searchpattern: true
 
-
   adoptersHTTPSScheme:
     name: "Get content from ADOPTERS.md using https scheme"
     kind: file
@@ -50,11 +49,21 @@ conditions:
       file: ADOPTE??.md
       searchpattern: true
 
+  adoptersFilePatternMatch:
+    name: "Update ADOPTE??.md content"
+    sourceid: adopters
+    kind: file
+    spec:
+      file: ADOPTE??.md
+      searchpattern: true
+      matchpattern: "donotexist"
+
 targets:
   adopters:
     name: "Update ADOPTERS.md content"
     sourceid: adopters
     kind: file
+    disableconditions: true
     spec:
       file: ADOPTERS.md
 
@@ -62,6 +71,19 @@ targets:
     name: "Update ADOPTE??.md content"
     sourceid: adopters
     kind: file
+    disableconditions: true
     spec:
       file: ADOPTE??.md
       searchpattern: true
+
+  adoptersFilePatternMatch:
+    name: "Update ADOPTE??.md content should be skipped due to failed condition"
+    sourceid: adopters
+    kind: file
+    dependson:
+      - condition#adoptersFilePatternMatch
+    spec:
+      file: ADOPTE??.md
+      searchpattern: true
+      matchpattern: "donotexist"
+      replacepattern: "xxx"
