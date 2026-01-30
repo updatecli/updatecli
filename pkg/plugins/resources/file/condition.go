@@ -15,7 +15,6 @@ import (
 // Condition test if a file content matches the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
 func (f *File) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
-
 	workDir := ""
 	if scm != nil {
 		workDir = scm.GetDirectory()
@@ -85,7 +84,13 @@ func (f *File) condition(source string) (bool, error) {
 					// When using both a file path pattern AND a content matching regex, then we want to ignore files that don't match the pattern
 					// as otherwise we trigger error for files we don't care about.
 					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+
 					delete(f.files, filePath)
+
+					if len(f.files) == 0 {
+						logrus.Infof("no file found matching criteria %q", f.spec.MatchPattern)
+						return false, nil
+					}
 					continue
 				}
 
@@ -95,11 +100,6 @@ func (f *File) condition(source string) (bool, error) {
 					logMessage,
 					f.spec.MatchPattern,
 				)
-				return false, nil
-			}
-
-			if len(f.files) == 0 {
-				logrus.Debugf("no file found matching criteria")
 				return false, nil
 			}
 
