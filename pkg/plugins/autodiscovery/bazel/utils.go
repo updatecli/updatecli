@@ -3,6 +3,7 @@ package bazel
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -13,14 +14,13 @@ const (
 	ModuleBazelFile string = "MODULE.bazel"
 )
 
-// findModuleFiles recursively searches for MODULE.bazel files starting from rootDir.
+// findModuleFilesFromFS recursively searches for MODULE.bazel files in the given filesystem.
 // It skips hidden directories like .git, .bazel, etc.
-func findModuleFiles(rootDir string) ([]string, error) {
+// Returns relative paths from the filesystem root.
+func findModuleFilesFromFS(fsys fs.FS) ([]string, error) {
 	foundFiles := []string{}
 
-	logrus.Debugf("Looking for MODULE.bazel files in %q", rootDir)
-
-	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			logrus.Debugf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
@@ -29,7 +29,7 @@ func findModuleFiles(rootDir string) ([]string, error) {
 		if d.IsDir() {
 			base := filepath.Base(path)
 			if len(base) > 0 && base[0] == '.' && base != "." && base != ".." {
-				return filepath.SkipDir
+				return fs.SkipDir
 			}
 		}
 
@@ -43,17 +43,33 @@ func findModuleFiles(rootDir string) ([]string, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("walking directory %q: %w", rootDir, err)
+		return nil, fmt.Errorf("walking filesystem: %w", err)
 	}
 
 	logrus.Debugf("%d MODULE.bazel file(s) found", len(foundFiles))
 	for _, foundFile := range foundFiles {
-		relPath, err := filepath.Rel(rootDir, foundFile)
-		if err == nil {
-			logrus.Debugf("    * %q", relPath)
-		} else {
-			logrus.Debugf("    * %q", foundFile)
-		}
+		logrus.Debugf("    * %q", foundFile)
+	}
+
+	return foundFiles, nil
+}
+
+// findModuleFiles recursively searches for MODULE.bazel files starting from rootDir.
+// It skips hidden directories like .git, .bazel, etc.
+func findModuleFiles(rootDir string) ([]string, error) {
+	logrus.Debugf("Looking for MODULE.bazel files in %q", rootDir)
+
+	fsys := os.DirFS(rootDir)
+	relativeFiles, err := findModuleFilesFromFS(fsys)
+	if err != nil {
+		return nil, fmt.Errorf("walking directory %q: %w", rootDir, err)
+	}
+
+	// Convert relative paths to absolute paths
+	foundFiles := make([]string, len(relativeFiles))
+	for i, relFile := range relativeFiles {
+		absFile := filepath.Join(rootDir, relFile)
+		foundFiles[i] = absFile
 	}
 
 	return foundFiles, nil

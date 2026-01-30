@@ -1,7 +1,6 @@
 package bazel
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -84,40 +83,21 @@ func TestParseModuleDependencies(t *testing.T) {
 }
 
 func TestParseModuleDependenciesEmptyFile(t *testing.T) {
-	// Create a temporary file with only module declaration (no dependencies)
-	tmpDir := t.TempDir()
-	moduleFile := filepath.Join(tmpDir, "MODULE.bazel")
-	content := `module(
-    name = "test",
-    version = "1.0.0",
-)
-`
-	err := os.WriteFile(moduleFile, []byte(content), 0600)
+	// Use testdata file instead of creating files on disk
+	absPath, err := filepath.Abs("testdata/empty/MODULE.bazel")
 	require.NoError(t, err)
 
-	deps, err := parseModuleDependencies(moduleFile)
+	deps, err := parseModuleDependencies(absPath)
 	require.NoError(t, err)
 	assert.Len(t, deps, 0)
 }
 
 func TestParseModuleDependenciesMultiLine(t *testing.T) {
-	// Create a temporary file with multi-line bazel_dep
-	tmpDir := t.TempDir()
-	moduleFile := filepath.Join(tmpDir, "MODULE.bazel")
-	content := `module(
-    name = "test",
-    version = "1.0.0",
-)
-
-bazel_dep(
-    name = "rules_go",
-    version = "0.42.0",
-)
-`
-	err := os.WriteFile(moduleFile, []byte(content), 0600)
+	// Use testdata file instead of creating files on disk
+	absPath, err := filepath.Abs("testdata/multiline/MODULE.bazel")
 	require.NoError(t, err)
 
-	deps, err := parseModuleDependencies(moduleFile)
+	deps, err := parseModuleDependencies(absPath)
 	require.NoError(t, err)
 	assert.Len(t, deps, 1)
 	assert.Equal(t, "rules_go", deps[0].Name)
