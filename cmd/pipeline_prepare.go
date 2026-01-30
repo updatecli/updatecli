@@ -47,6 +47,8 @@ func init() {
 	pipelinePrepareCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	pipelinePrepareCmd.Flags().BoolVar(&pipelinePrepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
 	pipelinePrepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
+	pipelinePrepareCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
+	pipelinePrepareCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 
 	pipelineCmd.AddCommand(pipelinePrepareCmd)
 }

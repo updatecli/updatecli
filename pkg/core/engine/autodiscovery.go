@@ -126,6 +126,23 @@ func (e *Engine) LoadAutoDiscovery(defaultEnabled bool) error {
 				return err
 			}
 
+			// Propagate user defined labels to autodiscovery generated pipelines
+			if len(p.Config.Spec.Labels) > 0 {
+				for k, v := range p.Config.Spec.Labels {
+					if manifest.Labels == nil {
+						manifest.Labels = make(map[string]string)
+					}
+
+					if _, ok := manifest.Labels[k]; ok {
+						logrus.Warningf("Label %q defined in autodiscovery pipeline %q is overwriting an existing label defined in the discovered pipeline %q",
+							k,
+							p.Config.Spec.Name,
+							manifest.Name)
+					}
+					manifest.Labels[k] = v
+				}
+			}
+
 			switch p.Config.Spec.AutoDiscovery.GroupBy {
 			/*
 				By default if "group by" is not se then we fallback to all

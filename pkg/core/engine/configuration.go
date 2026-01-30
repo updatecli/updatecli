@@ -88,6 +88,7 @@ func (e *Engine) LoadConfigurations() error {
 					DisableTemplating: e.Options.Config.DisableTemplating,
 				},
 				e.Options.PipelineIDs,
+				e.Options.Labels,
 			)
 
 			switch err {
