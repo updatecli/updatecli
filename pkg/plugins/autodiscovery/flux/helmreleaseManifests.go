@@ -68,7 +68,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 				}
 			}
 
-			// Skip pipeline if at least of the helm chart or helm repository is not specified
+			// Skip pipeline if at least one of the helm chart or helm repository is not specified
 			if len(helmChartName) == 0 || len(helmChartVersion) == 0 || len(helmRepositoryURL) == 0 {
 				continue
 			}
