@@ -26,14 +26,14 @@ sources:
     name: Test URL scheme
     kind: yaml
     spec:
-      file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
+      file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_pipeline.yaml
       key: $.name
 
   scenario31:
     name: Test URL scheme
     kind: yaml
     spec:
-      file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_diff.yaml
+      file: https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/venom.d/test_pipeline.yaml
       key: $.name
 
   getGo-Version-File:
@@ -51,8 +51,8 @@ conditions:
     disablesourceinput: true
     spec:
       files:
-      - e2e/updatecli.d/success.d/yaml/noscm.yaml
-      - e2e/updatecli.d/success.d/yaml/duplicate.yaml
+        - e2e/updatecli.d/success.d/yaml/noscm.yaml
+        - e2e/updatecli.d/success.d/yaml/duplicate.yaml
       key: $.sources.scenario1.kind
       value: yaml
 
@@ -62,8 +62,8 @@ conditions:
     disablesourceinput: true
     spec:
       files:
-      - file://e2e/updatecli.d/success.d/yaml/noscm.yaml
-      - file://e2e/updatecli.d/success.d/yaml/duplicate.yaml
+        - file://e2e/updatecli.d/success.d/yaml/noscm.yaml
+        - file://e2e/updatecli.d/success.d/yaml/duplicate.yaml
       key: $.sources.scenario1.kind
       value: yaml
 
@@ -73,8 +73,8 @@ conditions:
     disablesourceinput: true
     spec:
       files:
-      - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml/noscm.yaml
-      - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml/duplicate.yaml
+        - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml/noscm.yaml
+        - https://raw.githubusercontent.com/updatecli/updatecli/main/e2e/updatecli.d/success.d/yaml/duplicate.yaml
       key: $.sources.scenario1.kind
       value: yaml
 
@@ -87,7 +87,6 @@ targets:
       - addsuffix: -beta
     spec:
       files:
-      - e2e/updatecli.d/success.d/yaml/noscm.yaml
-      - e2e/updatecli.d/success.d/yaml/duplicate.yaml
+        - e2e/updatecli.d/success.d/yaml/noscm.yaml
+        - e2e/updatecli.d/success.d/yaml/duplicate.yaml
       key: $.sources.scenario1.kind
-

@@ -135,3 +135,68 @@ targets:
 	}
 
 }
+
+func TestNewWithInvalidIgnoreSpec(t *testing.T) {
+	tests := []struct {
+		name        string
+		spec        Spec
+		rootDir     string
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "valid ignore spec should pass",
+			spec: Spec{
+				Ignore: MatchingRules{
+					{Repositories: []string{"https://helm.example.com"}},
+				},
+			},
+			rootDir:     "testdata",
+			expectError: false,
+		},
+		{
+			name: "empty ignore rule should fail",
+			spec: Spec{
+				Ignore: MatchingRules{
+					{},
+				},
+			},
+			rootDir:     "testdata",
+			expectError: true,
+			errorMsg:    "invalid ignore spec",
+		},
+		{
+			name: "valid only spec should pass",
+			spec: Spec{
+				Only: MatchingRules{
+					{Path: "testdata/*.yaml"},
+				},
+			},
+			rootDir:     "testdata",
+			expectError: false,
+		},
+		{
+			name: "empty only rule should fail",
+			spec: Spec{
+				Only: MatchingRules{
+					{},
+				},
+			},
+			rootDir:     "testdata",
+			expectError: true,
+			errorMsg:    "invalid only spec",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := New(tt.spec, tt.rootDir, "", "")
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

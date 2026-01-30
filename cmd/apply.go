@@ -26,7 +26,7 @@ var (
 		*/
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
 		Use:   "apply NAME[:TAG|@DIGEST]",
-		Short: "apply checks if an update is needed then apply the changes",
+		Short: "**Deprecated in favor of updatecli pipeline apply** apply checks if an update is needed then apply the changes",
 		Run: func(cmd *cobra.Command, args []string) {
 			policyReferences = args
 			err := getPolicyFilesFromRegistry()
@@ -48,6 +48,8 @@ var (
 			e.Options.Pipeline.Target.CleanGitBranches = applyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = applyExistingOnly
 
+			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline apply`")
+
 			err = run("apply")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
@@ -68,5 +70,6 @@ func init() {
 	applyCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	applyCmd.Flags().BoolVar(&applyClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	applyCmd.Flags().BoolVar(&applyCleanGitBranches, "clean-git-branches", false, "Remove updatecli working git branches like '--clean-git-branches=true'")
-	applyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs")
+	applyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted as comma separated list")
+	applyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines by their labels, accepted as a comma separated list (key:value)")
 }

@@ -32,7 +32,7 @@ var (
 
 			e.Options.Pipeline.Target.Clean = prepareClean
 
-			manifestPullPolicyReference = args[0]
+			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline prepare`")
 
 			err = run("prepare")
 			if err != nil {
@@ -49,4 +49,6 @@ func init() {
 	prepareCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	prepareCmd.Flags().BoolVar(&prepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
 	prepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
+	prepareCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
+	prepareCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 }

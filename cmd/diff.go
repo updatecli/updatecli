@@ -15,7 +15,7 @@ var (
 	diffCmd = &cobra.Command{
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
 		Use:   "diff NAME[:TAG|@DIGEST]",
-		Short: "diff shows changes",
+		Short: "**Deprecated in favor of updatecli pipeline diff** diff shows changes",
 		Run: func(cmd *cobra.Command, args []string) {
 			policyReferences = args
 			err := getPolicyFilesFromRegistry()
@@ -35,6 +35,8 @@ var (
 			e.Options.Pipeline.Target.Clean = diffClean
 			e.Options.Pipeline.Target.DryRun = true
 
+			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline diff`")
+
 			err = run("diff")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
@@ -51,5 +53,6 @@ func init() {
 	diffCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	diffCmd.Flags().BoolVar(&diffClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	diffCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
-	diffCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs")
+	diffCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
+	diffCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 }

@@ -21,6 +21,7 @@ import (
 
 var (
 	pipelineIds      []string
+	labels           []string
 	manifestFiles    []string
 	valuesFiles      []string
 	secretsFiles     []string
@@ -81,6 +82,7 @@ func init() {
 		diffCmd,
 		prepareCmd,
 		manifestCmd,
+		pipelineCmd,
 		udashCmd,
 		showCmd,
 		composeCmd,
@@ -96,8 +98,34 @@ func run(command string) error {
 		e.Options.PipelineIDs = append(e.Options.PipelineIDs, strings.Split(id, ",")...)
 	}
 
+	for _, label := range labels {
+		labelsArray := strings.Split(label, ",")
+
+		initLabels := func() {
+			if e.Options.Labels == nil {
+				e.Options.Labels = make(map[string]string)
+			}
+		}
+
+		for i := range labelsArray {
+			labelKeyValue := strings.SplitN(labelsArray[i], ":", 2)
+			if labelKeyValue[0] == "" {
+				logrus.Warnf("Ignoring label with empty key: %q", labelsArray[i])
+				continue
+			}
+			switch len(labelKeyValue) {
+			case 2:
+				initLabels()
+				e.Options.Labels[labelKeyValue[0]] = labelKeyValue[1]
+			case 1:
+				initLabels()
+				e.Options.Labels[labelKeyValue[0]] = ""
+			}
+		}
+	}
+
 	switch command {
-	case "apply", "compose/apply":
+	case "apply", "compose/apply", "pipeline/apply":
 		udash.Audience = udashOAuthAudience
 
 		if applyClean {
@@ -119,7 +147,7 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
-	case "diff", "compose/diff":
+	case "diff", "compose/diff", "pipeline/diff":
 		udash.Audience = udashOAuthAudience
 		if diffClean {
 			defer func() {
@@ -141,7 +169,7 @@ func run(command string) error {
 			return err
 		}
 
-	case "prepare":
+	case "prepare", "pipeline/prepare":
 		if prepareClean {
 			defer func() {
 				if err := e.Clean(); err != nil {

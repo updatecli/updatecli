@@ -73,6 +73,7 @@ func init() {
 	manifestShowCmd.Flags().BoolVar(&manifestShowGraph, "graph", false, "Output in graph format")
 	manifestShowCmd.Flags().StringVar(&manifestShowGraphFlavor, "graph-flavor", "dot", "Flavor of graph format, accepted values are 'dot' for graphviz or 'mermaid'")
 	manifestShowCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs, accepted a comma separated list")
+	manifestShowCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 
 	manifestCmd.AddCommand(manifestShowCmd)
 }
