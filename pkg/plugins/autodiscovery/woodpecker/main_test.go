@@ -268,7 +268,7 @@ targets:
     name: 'deps: update Woodpecker image "node" to "{{ source "build" }}"'
     kind: 'yaml'
     spec:
-      file: '.woodpecker/build.yml'
+      file: '.woodpecker/build.yaml'
       key: '$.steps[0].image'
     sourceid: 'build'
     transformers:
@@ -289,7 +289,7 @@ targets:
     name: 'deps: update Woodpecker image "node" to "{{ source "lint" }}"'
     kind: 'yaml'
     spec:
-      file: '.woodpecker/build.yml'
+      file: '.woodpecker/build.yaml'
       key: '$.steps[1].image'
     sourceid: 'lint'
     transformers:
