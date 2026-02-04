@@ -1,0 +1,10 @@
+steps:
+  - name: build
+    image: golang:1.21
+    commands:
+      - go build ./...
+
+  - name: test
+    image: golang:1.21
+    commands:
+      - go test ./...

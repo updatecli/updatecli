@@ -30,6 +30,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terragrunt"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/woodpecker"
 )
 
 // GetDefaultCrawlerSpecs return config that defines the default builder that we want to run
@@ -254,6 +255,12 @@ var crawlerMap = map[string]struct {
 			return updatecli.New(spec, rootDir, scmID, actionID)
 		},
 		spec: updatecli.Spec{},
+	},
+	"woodpecker": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
+			return woodpecker.New(spec, rootDir, scmID, actionID)
+		},
+		spec: woodpecker.Spec{},
 	},
 }
 
