@@ -2,7 +2,6 @@ package bazel
 
 import (
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -246,7 +245,6 @@ func TestDiscoverManifests(t *testing.T) {
 				manifestStr := string(manifest)
 				assert.Contains(t, manifestStr, "name:")
 				assert.Contains(t, manifestStr, "sources:")
-				assert.Contains(t, manifestStr, "conditions:")
 				assert.Contains(t, manifestStr, "targets:")
 				assert.Contains(t, manifestStr, "kind: bazelregistry")
 				assert.Contains(t, manifestStr, "kind: bazelmod")
@@ -365,50 +363,6 @@ func TestDiscoverManifestsInvalidFile(t *testing.T) {
 	assert.NotNil(t, manifests)
 }
 
-func TestManifestTemplateStructure(t *testing.T) {
-	bazel := Bazel{
-		actionID: "test-action",
-		scmID:    "test-scm",
-		versionFilter: version.Filter{
-			Kind:    "semver",
-			Pattern: "*",
-		},
-	}
-
-	manifest, err := bazel.getBazelModuleManifest(
-		"MODULE.bazel",
-		"test_module",
-		">=1.0.0",
-	)
-
-	require.NoError(t, err)
-	manifestStr := string(manifest)
-
-	// Verify YAML structure
-	lines := strings.Split(manifestStr, "\n")
-
-	// Check for required sections
-	hasSources := false
-	hasConditions := false
-	hasTargets := false
-
-	for _, line := range lines {
-		if strings.TrimSpace(line) == "sources:" {
-			hasSources = true
-		}
-		if strings.TrimSpace(line) == "conditions:" {
-			hasConditions = true
-		}
-		if strings.TrimSpace(line) == "targets:" {
-			hasTargets = true
-		}
-	}
-
-	assert.True(t, hasSources, "Manifest should contain sources section")
-	assert.True(t, hasConditions, "Manifest should contain conditions section")
-	assert.True(t, hasTargets, "Manifest should contain targets section")
-}
-
 func TestDiscoverManifestsFullOutput(t *testing.T) {
 	testdata := []struct {
 		name              string
@@ -436,14 +390,6 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=0.42.0'
-conditions:
-  rules_go:
-    name: 'Check if Bazel module rules_go is up to date'
-    kind: bazelmod
-    spec:
-      file: 'MODULE.bazel'
-      module: rules_go
-    disablesourceinput: true
 targets:
   rules_go:
     name: 'Bump Bazel module rules_go to {{ source "rules_go" }}'
@@ -462,14 +408,6 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=0.34.0'
-conditions:
-  gazelle:
-    name: 'Check if Bazel module gazelle is up to date'
-    kind: bazelmod
-    spec:
-      file: 'MODULE.bazel'
-      module: gazelle
-    disablesourceinput: true
 targets:
   gazelle:
     name: 'Bump Bazel module gazelle to {{ source "gazelle" }}'
@@ -488,14 +426,6 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=21.7.0'
-conditions:
-  protobuf:
-    name: 'Check if Bazel module protobuf is up to date'
-    kind: bazelmod
-    spec:
-      file: 'MODULE.bazel'
-      module: protobuf
-    disablesourceinput: true
 targets:
   protobuf:
     name: 'Bump Bazel module protobuf to {{ source "protobuf" }}'
@@ -529,16 +459,6 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=0.42.0'
-conditions:
-  rules_go:
-    name: 'Check if Bazel module rules_go is up to date'
-    kind: bazelmod
-    scmid: 'defaultscmid'
-
-    spec:
-      file: 'MODULE.bazel'
-      module: rules_go
-    disablesourceinput: true
 targets:
   rules_go:
     name: 'Bump Bazel module rules_go to {{ source "rules_go" }}'
@@ -563,16 +483,6 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=0.34.0'
-conditions:
-  gazelle:
-    name: 'Check if Bazel module gazelle is up to date'
-    kind: bazelmod
-    scmid: 'defaultscmid'
-
-    spec:
-      file: 'MODULE.bazel'
-      module: gazelle
-    disablesourceinput: true
 targets:
   gazelle:
     name: 'Bump Bazel module gazelle to {{ source "gazelle" }}'
@@ -597,16 +507,6 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=21.7.0'
-conditions:
-  protobuf:
-    name: 'Check if Bazel module protobuf is up to date'
-    kind: bazelmod
-    scmid: 'defaultscmid'
-
-    spec:
-      file: 'MODULE.bazel'
-      module: protobuf
-    disablesourceinput: true
 targets:
   protobuf:
     name: 'Bump Bazel module protobuf to {{ source "protobuf" }}'

@@ -21,17 +21,6 @@ sources:
         regex: '{{ .VersionFilterRegex }}'
 {{- end }}
 {{- end }}
-conditions:
-  {{ .ConditionID }}:
-    name: 'Check if Bazel module {{ .ModuleName }} is up to date'
-    kind: bazelmod
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{ end }}
-    spec:
-      file: '{{ .ModuleFile }}'
-      module: {{ .ModuleName }}
-    disablesourceinput: true
 targets:
   {{ .TargetID }}:
     name: '{{ .TargetName }}'
