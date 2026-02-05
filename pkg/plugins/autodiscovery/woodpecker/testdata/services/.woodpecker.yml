@@ -1,0 +1,12 @@
+steps:
+  - name: test
+    image: python:3.11
+    commands:
+      - pip install -r requirements.txt
+      - pytest
+
+services:
+  - name: database
+    image: postgres:15
+  - name: cache
+    image: redis:7-alpine

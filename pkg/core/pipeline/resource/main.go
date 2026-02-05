@@ -8,6 +8,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/transformer"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/awsami"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/bazelmod"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/bazelregistry"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/cargopackage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/csv"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerdigest"
@@ -96,6 +98,14 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "aws/ami":
 
 		return awsami.New(rs.Spec)
+
+	case "bazelmod":
+
+		return bazelmod.New(rs.Spec)
+
+	case "bazelregistry":
+
+		return bazelregistry.New(rs.Spec)
 
 	case "cargopackage":
 
@@ -271,6 +281,8 @@ type Resource interface {
 func GetResourceMapping() map[string]interface{} {
 	return map[string]interface{}{
 		"aws/ami":            &awsami.Spec{},
+		"bazelmod":           &bazelmod.Spec{},
+		"bazelregistry":      &bazelregistry.Spec{},
 		"cargopackage":       &cargopackage.Spec{},
 		"csv":                &csv.Spec{},
 		"dockerdigest":       &dockerdigest.Spec{},

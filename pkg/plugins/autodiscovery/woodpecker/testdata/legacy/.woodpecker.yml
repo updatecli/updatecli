@@ -1,0 +1,10 @@
+pipeline:
+  build:
+    image: golang:1.20
+    commands:
+      - go build ./...
+
+  test:
+    image: golang:1.20
+    commands:
+      - go test ./...

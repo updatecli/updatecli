@@ -10,6 +10,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/argocd"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/bazel"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockercompose"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/dockerfile"
@@ -29,6 +30,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terragrunt"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/woodpecker"
 )
 
 // GetDefaultCrawlerSpecs return config that defines the default builder that we want to run
@@ -111,6 +113,12 @@ var crawlerMap = map[string]struct {
 			return argocd.New(spec, rootDir, scmID, actionID)
 		},
 		spec: argocd.Spec{},
+	},
+	"bazel": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
+			return bazel.New(spec, rootDir, scmID, actionID)
+		},
+		spec: bazel.Spec{},
 	},
 	"cargo": {
 		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
@@ -247,6 +255,12 @@ var crawlerMap = map[string]struct {
 			return updatecli.New(spec, rootDir, scmID, actionID)
 		},
 		spec: updatecli.Spec{},
+	},
+	"woodpecker": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
+			return woodpecker.New(spec, rootDir, scmID, actionID)
+		},
+		spec: woodpecker.Spec{},
 	},
 }
 
