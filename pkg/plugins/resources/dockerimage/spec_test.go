@@ -84,6 +84,7 @@ func TestGetReferenceInfo(t *testing.T) {
 		expectedOCIName   string
 		expectedOCITag    string
 		expectedOCIDigest string
+		expectedError     string
 	}{
 		{
 			reference:         "golang:1.19.0",
@@ -117,12 +118,21 @@ func TestGetReferenceInfo(t *testing.T) {
 			expectedOCIName: "registry.service.consul:5000/container/redis",
 			expectedOCITag:  "8.4.0",
 		},
+		{
+			reference:     "${IMAGE_PREFIX}/safeline-postgres${ARCH_SUFFIX}:15.2",
+			expectedError: `parsing OCI reference "${IMAGE_PREFIX}/safeline-postgres${ARCH_SUFFIX}:15.2": could not parse reference: ${IMAGE_PREFIX}/safeline-postgres${ARCH_SUFFIX}:15.2`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.reference, func(t *testing.T) {
 			gotImageName, gotImageTag, gotImageDigest, err := ParseOCIReferenceInfo(tt.reference)
 
-			assert.NoError(t, err)
+			if tt.expectedError != "" {
+				assert.EqualError(t, err, tt.expectedError)
+				return
+			} else {
+				assert.NoError(t, err)
+			}
 
 			assert.Equal(t, tt.expectedOCIName, gotImageName)
 			assert.Equal(t, tt.expectedOCITag, gotImageTag)

@@ -86,6 +86,7 @@ func sanitizeRegistryEndpoint(repository string) string {
 	ref, err := name.ParseReference(repository)
 	if err != nil {
 		logrus.Debugf("Unable to parse repository %q: %v", repository, err)
+		return ""
 	}
 	return ref.Context().RegistryStr()
 }
@@ -261,6 +262,12 @@ func ParseOCIReferenceInfo(reference string) (ociName, ociTag, ociDigest string,
 
 	if ociDigest == "" && ociTag == "" {
 		ociTag = "latest"
+	}
+
+	// Validate the OCI reference is a valid one
+	_, err = name.ParseReference(reference)
+	if err != nil {
+		return "", "", "", fmt.Errorf("parsing OCI reference %q: %s", reference, err)
 	}
 
 	return ociName, ociTag, ociDigest, nil
