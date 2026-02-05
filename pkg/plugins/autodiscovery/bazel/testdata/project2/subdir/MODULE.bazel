@@ -1,0 +1,7 @@
+module(
+    name = "subproject",
+    version = "1.0.0",
+)
+
+bazel_dep(name = "rules_docker", version = "0.26.0")
+
