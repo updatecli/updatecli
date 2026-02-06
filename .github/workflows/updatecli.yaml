@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   schedule:
     # Run at 12:00 every Saterday every 14 days
-    - cron: "0 12 */14 * 6"
+    - cron: 0 12 */14 * *
 
 jobs:
   updatecli:
