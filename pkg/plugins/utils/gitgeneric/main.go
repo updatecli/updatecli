@@ -583,7 +583,6 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		URL:               URL,
 		Progress:          &b,
 		RecurseSubmodules: submodule,
-		Depth:             1,
 	}
 
 	if depth != nil {
