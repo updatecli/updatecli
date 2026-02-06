@@ -230,6 +230,67 @@ targets:
 `},
 		},
 		{
+			name:    "Scenario - helmrelease Multiple releases in same file",
+			rootDir: "testdata/helmrelease/multi-release",
+			expectedPipelines: []string{`name: 'deps(flux): bump Helmrelease "udash"'
+sources:
+  helmrelease:
+    name: 'Get latest "udash" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'udash'
+      url: 'https://updatecli.github.io/charts'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  helmrelease:
+    name: 'Ensure Helm Chart name "udash"'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'multi-helmrelease.yaml'
+      key: '$.spec.chart.spec.chart'
+      value: 'udash'
+targets:
+  helmrelease:
+    name: 'deps(flux): bump Helmrelease "udash"'
+    kind: 'yaml'
+    spec:
+      file: 'multi-helmrelease.yaml'
+      key: '$.spec.chart.spec.version'
+    sourceid: 'helmrelease'
+`, `name: 'deps(flux): bump Helmrelease "nginx"'
+sources:
+  helmrelease:
+    name: 'Get latest "nginx" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'nginx'
+      url: 'https://updatecli.github.io/charts'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  helmrelease:
+    name: 'Ensure Helm Chart name "nginx"'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'multi-helmrelease.yaml'
+      key: '$.spec.chart.spec.chart'
+      value: 'nginx'
+targets:
+  helmrelease:
+    name: 'deps(flux): bump Helmrelease "nginx"'
+    kind: 'yaml'
+    spec:
+      file: 'multi-helmrelease.yaml'
+      key: '$.spec.chart.spec.version'
+    sourceid: 'helmrelease'
+`},
+		},
+		{
 			name:    "Scenario - ocirepository ",
 			digest:  false,
 			rootDir: "testdata/ociRepository",

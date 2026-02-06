@@ -19,6 +19,7 @@ func TestSearchFluxFiles(t *testing.T) {
 	}
 
 	expectedHelmReleaseFile := []string{
+		"testdata/helmrelease/multi-release/multi-helmrelease.yaml",
 		"testdata/helmrelease/oci/helmrelease.yaml",
 		"testdata/helmrelease/oci-combined/helmrelease-helmrepository.yaml",
 		"testdata/helmrelease/simple/helmrelease.yaml",
