@@ -33,7 +33,7 @@ const (
 type GitHandler interface {
 	Add(files []string, workingDir string) error
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error
-	Clone(username, password, URL, workingDir string, withSubmodules *bool) error
+	Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int) error
 	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	DeleteBranch(branch, gitRepositoryPath, username, password string) error
 	GetChangedFiles(workingDir string) ([]string, error)
@@ -565,7 +565,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 }
 
 // Clone run `git clone`.
-func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool) error {
+func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int) error {
 	var repo *git.Repository
 
 	auth := transportHttp.BasicAuth{
@@ -583,6 +583,11 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		URL:               URL,
 		Progress:          &b,
 		RecurseSubmodules: submodule,
+		Depth:             1,
+	}
+
+	if depth != nil {
+		cloneOptions.Depth = *depth
 	}
 
 	if !isAuthEmpty(&auth) {

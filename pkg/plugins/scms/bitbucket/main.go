@@ -43,6 +43,15 @@ type Spec struct {
 	//    The default value is based on your local temporary directory like: (on Linux)
 	//    /tmp/updatecli/bitbucket/<owner>/<repository>
 	Directory string `yaml:",omitempty"`
+	// Depth defines the depth used when cloning the git repository.
+	//
+	// Default: disabled (full clone)
+	//
+	// Remark:
+	//   When using a depth greater than 1, Updatecli is not able to retrieve the full git history.
+	//   This may cause some issues when Updatecli tries to push changes to the remote repository.
+	//   In that case, you may need to set the force option to true to force push changes to the remote repository.
+	Depth *int `yaml:",omitempty"`
 	//  "email" defines the email used to commit changes.
 	//
 	//  compatible:

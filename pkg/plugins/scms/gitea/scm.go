@@ -81,6 +81,7 @@ func (g *Gitea) Clone() (string, error) {
 		g.GetURL(),
 		g.GetDirectory(),
 		g.Spec.Submodules,
+		g.Spec.Depth,
 	)
 	if err != nil {
 		logrus.Errorf("failed cloning Gitea repository %q", g.GetURL())

@@ -99,6 +99,7 @@ func (g *Github) Clone() (string, error) {
 		g.GetURL(),
 		g.GetDirectory(),
 		g.Spec.Submodules,
+		g.Spec.Depth,
 	)
 	if err != nil {
 		logrus.Errorf("failed cloning GitHub repository %q", g.GetURL())

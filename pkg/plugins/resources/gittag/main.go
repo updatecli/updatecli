@@ -144,10 +144,16 @@ func (gt *GitTag) Changelog(from, to string) *result.Changelogs {
 
 // clone clones the git repository
 func (gt *GitTag) clone() (string, error) {
+
+	intPtr := func(i int) *int {
+		return &i
+	}
+
 	g, err := git.New(git.Spec{
 		URL:      gt.spec.URL,
 		Username: gt.spec.Username,
 		Password: gt.spec.Password,
+		Depth:    intPtr(1),
 	}, "")
 
 	if err != nil {
