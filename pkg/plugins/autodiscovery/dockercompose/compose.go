@@ -70,7 +70,12 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 		}
 
 		for _, svc := range svcList {
+
 			if svc.Spec.Image == "" {
+				continue
+
+			} else if (strings.Contains(svc.Spec.Image, "${")) && (strings.Contains(svc.Spec.Image, "}")) {
+				logrus.Debugf("Skipping image %q as it contains environment variable, which is not supported at the moment", svc.Spec.Image)
 				continue
 			}
 

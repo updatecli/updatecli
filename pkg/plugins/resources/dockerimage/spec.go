@@ -86,6 +86,7 @@ func sanitizeRegistryEndpoint(repository string) string {
 	ref, err := name.ParseReference(repository)
 	if err != nil {
 		logrus.Debugf("Unable to parse repository %q: %v", repository, err)
+		return ""
 	}
 	return ref.Context().RegistryStr()
 }

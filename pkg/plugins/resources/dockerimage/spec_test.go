@@ -21,6 +21,10 @@ func TestGetRegistryEndpoint(t *testing.T) {
 			image:            "ghcr.io/updatecli/updatecli",
 			expectedRegistry: "ghcr.io",
 		},
+		{
+			image:            "ghcr.io/updatecli/updatecli${ARCH_SUFFIX}",
+			expectedRegistry: "",
+		},
 	}
 
 	for i := range tests {
