@@ -70,18 +70,18 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 		}
 
 		for _, svc := range svcList {
+
 			if svc.Spec.Image == "" {
+				continue
+
+			} else if (strings.Contains(svc.Spec.Image, "${")) && (strings.Contains(svc.Spec.Image, "}")) {
+				logrus.Debugf("Skipping image %q as it contains environment variable, which is not supported at the moment", svc.Spec.Image)
 				continue
 			}
 
 			imageName, imageTag, imageDigest, err := dockerimage.ParseOCIReferenceInfo(svc.Spec.Image)
 			if err != nil {
 				return nil, fmt.Errorf("parsing image %q: %s", svc.Spec.Image, err)
-			}
-
-			if (strings.Contains(svc.Spec.Image, "${")) && (strings.Contains(svc.Spec.Image, "}")) {
-				logrus.Debugf("Skipping image %q as it contains environment variable, which is not supported at the moment", svc.Spec.Image)
-				continue
 			}
 
 			/*
