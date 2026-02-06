@@ -54,7 +54,7 @@ func TestGetDockerComposeSpec(t *testing.T) {
 				dockerComposeService{
 					Name: "jenkins-lts",
 					Spec: dockerComposeServiceSpec{
-						Image: "jenkinsci/jenkins:2.150.1-alpine@256:1fafb0905264413501df60d90a92ca32df8a2011cbfb4876ddff5ceb20c8f165",
+						Image: "jenkinsci/jenkins:2.150.1-alpine@sha256:1c626c48537129ad375832cd961d6ecd4eb8aa3866f24ab23c57c21bd6d81f3f",
 					},
 				},
 				dockerComposeService{
@@ -62,7 +62,15 @@ func TestGetDockerComposeSpec(t *testing.T) {
 					Spec: dockerComposeServiceSpec{
 						Image:    "jenkinsci/jenkins:2.254-alpine",
 						Platform: "linux/amd64",
-					}},
+					},
+				},
+				dockerComposeService{
+					Name: "postgres",
+					Spec: dockerComposeServiceSpec{
+						Image:    "${IMAGE_PREFIX}/safeline-postgres${ARCH_SUFFIX}:15.2",
+						Platform: "",
+					},
+				},
 			},
 		},
 		{

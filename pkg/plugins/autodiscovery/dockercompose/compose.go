@@ -79,6 +79,11 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				return nil, fmt.Errorf("parsing image %q: %s", svc.Spec.Image, err)
 			}
 
+			if (strings.Contains(svc.Spec.Image, "${")) && (strings.Contains(svc.Spec.Image, "}")) {
+				logrus.Debugf("Skipping image %q as it contains environment variable, which is not supported at the moment", svc.Spec.Image)
+				continue
+			}
+
 			/*
 				For the time being, it's not possible to retrieve a list of tag for a specific digest
 				without a significant amount f api call. More information on following issue
