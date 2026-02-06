@@ -2,9 +2,7 @@ module github.com/updatecli/updatecli
 
 go 1.25.5
 
-retract (
-	v0.999.0 // Published accidentally.
-) 
+retract v0.999.0 // Published accidentally.
 
 require (
 	dario.cat/mergo v1.0.2
@@ -59,7 +57,7 @@ require (
 	github.com/jferrl/go-githubauth v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/minamijoyo/hcledit v0.2.17
-	github.com/minamijoyo/tfupdate v0.8.0
+	github.com/minamijoyo/tfupdate v0.9.3
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
 	github.com/nirasan/go-oauth-pkce-code-verifier v0.0.0-20220510032225-4f9f17eaec4c
