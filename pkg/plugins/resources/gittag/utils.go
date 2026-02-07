@@ -58,11 +58,5 @@ func (gt *GitTag) listRemoteDirectoryTags(path string) ([]string, map[string]str
 		tagsList = append(tagsList, ref.Name)
 	}
 
-	//// To align the behavior with `git ls-remote --refs --tags`
-	//// sort the tags list in lexicographical order before returning
-	//sort.Slice(tagsList, func(i, j int) bool {
-	//	return tagsList[i] < tagsList[j]
-	//})
-
 	return tagsList, results, nil
 }

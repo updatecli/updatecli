@@ -27,7 +27,7 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 	if gt.spec.URL != "" {
 		tagsList, tags, err = gt.listRemoteURLTags()
 		if err != nil {
-			return false, "", fmt.Errorf("listing remote tags: %w", err)
+			return false, "", err
 		}
 	} else {
 		if scm != nil {
@@ -45,11 +45,9 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 		}
 
 		if gt.directory == "" {
-			return false, "", fmt.Errorf("unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+			return false, "", fmt.Errorf("unknown Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
 		}
-		if gt.spec.Path != "" {
-			gt.directory = gt.spec.Path
-		}
+
 		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory)
 		if err != nil {
 			return false, "", fmt.Errorf("listing local tags: %w", err)
