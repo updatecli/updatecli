@@ -12,59 +12,54 @@ func (gt *GitTag) Source(workingDir string, resultSource *result.Source) error {
 
 	gt.directory = workingDir
 
-	if gt.spec.URL != "" {
-		gt.directory, err = gt.clone()
-		if err != nil {
-			return err
-		}
-
-	} else if gt.spec.Path != "" {
-		gt.directory = gt.spec.Path
-	}
-
 	err = gt.Validate()
 	if err != nil {
 		return fmt.Errorf("validate git tag: %w", err)
 	}
 
-	if gt.directory == "" {
-		return fmt.Errorf("unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+	var tags map[string]string
+	var tagsList []string
+	if gt.spec.URL != "" {
+		tagsList, tags, err = gt.listRemoteURLTags()
+		if err != nil {
+			return fmt.Errorf("listing remote tags: %w", err)
+		}
+	} else {
+		if gt.directory == "" {
+			return fmt.Errorf("unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+		}
+		if gt.spec.Path != "" {
+			gt.directory = gt.spec.Path
+		}
+		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory)
+		if err != nil {
+			return fmt.Errorf("listing local tags: %w", err)
+		}
 	}
 
-	refs, err := gt.nativeGitHandler.TagRefs(gt.directory)
-	if err != nil {
-		return fmt.Errorf("retrieving tag refs: %w", err)
+	if len(tagsList) == 0 {
+		return fmt.Errorf("no tags found")
 	}
 
-	if len(refs) == 0 {
-		return fmt.Errorf("no tags found at path %q", gt.directory)
-	}
-
-	var tags []string
-	for i := range refs {
-		tags = append(tags, refs[i].Name)
-	}
-
-	gt.foundVersion, err = gt.versionFilter.Search(tags)
+	gt.foundVersion, err = gt.versionFilter.Search(tagsList)
 	if err != nil {
 		return fmt.Errorf("filtering tags: %w", err)
 	}
 
 	name := gt.foundVersion.GetVersion()
-	var hash string
 
-	for i := range refs {
-		if refs[i].Name == name {
-			hash = refs[i].Hash
-		}
+	var hash string
+	if _, ok := tags[name]; ok {
+		hash = tags[name]
 	}
+
 	resultSource.Information = name
 	if gt.spec.Key == "hash" {
 		resultSource.Information = hash
 	}
 
 	if len(resultSource.Information) == 0 {
-		return fmt.Errorf("no git tag found matching pattern %q of kind %q",
+		return fmt.Errorf("no Git tag found matching pattern %q of kind %q",
 			gt.versionFilter.Pattern,
 			gt.versionFilter.Kind,
 		)

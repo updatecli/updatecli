@@ -165,7 +165,7 @@ func (b *Bazelregistry) fetchModuleMetadata(module string) (*Metadata, error) {
 func parseMetadata(data []byte) (*Metadata, error) {
 	var metadata Metadata
 	if err := json.Unmarshal(data, &metadata); err != nil {
-		return nil, fmt.Errorf("unmarshaling metadata: %w", err)
+		return nil, fmt.Errorf("unmarshalling metadata: %w", err)
 	}
 
 	if len(metadata.Versions) == 0 {
