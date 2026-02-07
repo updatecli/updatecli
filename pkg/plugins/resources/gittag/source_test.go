@@ -32,6 +32,28 @@ func TestGitTag_Source(t *testing.T) {
 		wantErr                bool
 	}{
 		{
+			name: "Get tags from a remote https URL, filter with v0.99.3",
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: "0.99.x",
+			},
+			spec: Spec{
+				URL: "https://github.com/updatecli-test/updatecli.git",
+			},
+			wantValue: "v0.99.3",
+		},
+		{
+			name: "Get tags from a remote https SSH, filter with v0.99.3",
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: "0.99.x",
+			},
+			spec: Spec{
+				URL: "git@github.com:updatecli-test/updatecli.git",
+			},
+			wantValue: "v0.99.3",
+		},
+		{
 			name:       "3 tags found, filter with latest",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{

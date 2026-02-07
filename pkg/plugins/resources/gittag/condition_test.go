@@ -12,12 +12,12 @@ import (
 
 type mockGitHandlerForCondition struct {
 	gitgeneric.GitHandler
-	tags      []string
-	tagsError error
+	tagRefs      []gitgeneric.DatedTag
+	tagRefsError error
 }
 
-func (m *mockGitHandlerForCondition) Tags(workingDir string) (tags []string, err error) {
-	return m.tags, m.tagsError
+func (m *mockGitHandlerForCondition) TagRefs(workingDir string) (refs []gitgeneric.DatedTag, err error) {
+	return m.tagRefs, m.tagRefsError
 }
 
 func TestGitTag_Condition(t *testing.T) {
@@ -32,10 +32,32 @@ func TestGitTag_Condition(t *testing.T) {
 		wantErr                bool
 	}{
 		{
+			name: "Get tags from a remote https URL, filter with v0.99.3",
+			spec: Spec{
+				URL: "https://github.com/updatecli-test/updatecli.git",
+				Tag: "v0.99.3",
+			},
+			wantPass:    true,
+			wantMessage: "git tag \"v0.99.3\" found",
+		},
+		{
 			name:      "Tag specified in spec, tag exists",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "v1.0.0",
+						Hash: "hash1",
+					},
+					{
+						Name: "v2.0.0",
+						Hash: "hash2",
+					},
+					{
+						Name: "v3.0.0",
+						Hash: "hash3",
+					},
+				},
 			},
 			spec: Spec{
 				Tag: "v2.0.0",
@@ -49,7 +71,20 @@ func TestGitTag_Condition(t *testing.T) {
 			name:      "Tag specified in spec, tag doesn't exist",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "v1.0.0",
+						Hash: "hash1",
+					},
+					{
+						Name: "v2.0.0",
+						Hash: "hash2",
+					},
+					{
+						Name: "v3.0.0",
+						Hash: "hash3",
+					},
+				},
 			},
 			spec: Spec{
 				Tag: "v4.0.0",
@@ -63,7 +98,20 @@ func TestGitTag_Condition(t *testing.T) {
 			name:      "Tag specified in spec, source also provided - should prioritize spec.Tag",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "v1.0.0",
+						Hash: "hash1",
+					},
+					{
+						Name: "v2.0.0",
+						Hash: "hash2",
+					},
+					{
+						Name: "v3.0.0",
+						Hash: "hash3",
+					},
+				},
 			},
 			spec: Spec{
 				Tag: "v2.0.0",
@@ -77,7 +125,20 @@ func TestGitTag_Condition(t *testing.T) {
 			name:      "No tag in spec, source provided - should use source",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "v1.0.0",
+						Hash: "hash1",
+					},
+					{
+						Name: "v2.0.0",
+						Hash: "hash2",
+					},
+					{
+						Name: "v3.0.0",
+						Hash: "hash3",
+					},
+				},
 			},
 			spec:        Spec{},
 			source:      "v3.0.0",
@@ -89,7 +150,20 @@ func TestGitTag_Condition(t *testing.T) {
 			name:      "No tag in spec, source provided but tag doesn't exist",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "v1.0.0",
+						Hash: "hash1",
+					},
+					{
+						Name: "v2.0.0",
+						Hash: "hash2",
+					},
+					{
+						Name: "v3.0.0",
+						Hash: "hash3",
+					},
+				},
 			},
 			spec:        Spec{},
 			source:      "v4.0.0",
@@ -101,7 +175,20 @@ func TestGitTag_Condition(t *testing.T) {
 			name:      "No tag in spec, no source - should fallback to versionFilter",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "v1.0.0",
+						Hash: "hash1",
+					},
+					{
+						Name: "v2.0.0",
+						Hash: "hash2",
+					},
+					{
+						Name: "v3.0.0",
+						Hash: "hash3",
+					},
+				},
 			},
 			spec: Spec{
 				VersionFilter: version.Filter{
@@ -118,7 +205,20 @@ func TestGitTag_Condition(t *testing.T) {
 			name:      "No tag in spec, no source, versionFilter pattern doesn't match",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{"v1.0.0", "v2.0.0", "v3.0.0"},
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "v1.0.0",
+						Hash: "hash1",
+					},
+					{
+						Name: "v2.0.0",
+						Hash: "hash2",
+					},
+					{
+						Name: "v3.0.0",
+						Hash: "hash3",
+					},
+				},
 			},
 			spec: Spec{
 				VersionFilter: version.Filter{
@@ -135,7 +235,7 @@ func TestGitTag_Condition(t *testing.T) {
 			name:      "Error retrieving tags",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tagsError: fmt.Errorf("failed to retrieve tags"),
+				tagRefsError: fmt.Errorf("failed to retrieve tags"),
 			},
 			spec: Spec{
 				Tag: "v1.0.0",
@@ -149,21 +249,26 @@ func TestGitTag_Condition(t *testing.T) {
 			name:      "No tags found in repository",
 			directory: "/tmp/test-repo",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{},
+				tagRefs: []gitgeneric.DatedTag{},
 			},
 			spec: Spec{
 				Tag: "v1.0.0",
 			},
 			source:      "",
 			wantPass:    false,
-			wantMessage: "no git tag found",
+			wantMessage: "no tags found",
 			wantErr:     false,
 		},
 		{
 			name:      "Empty directory - should return error",
 			directory: "",
 			mockedNativeGitHandler: &mockGitHandlerForCondition{
-				tags: []string{"v1.0.0"},
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "v1.0.0",
+						Hash: "hash1",
+					},
+				},
 			},
 			spec: Spec{
 				Tag: "v1.0.0",

@@ -46,6 +46,8 @@ type Spec struct {
 	//    * source
 	Key string `yaml:",omitempty"`
 	//	"url" specifies the git url to use for fetching Git Tags.
+	//  It is the recommended way to specify the git repository, as it doesn't clone the entire repository, but only fetches the tags.
+	//  Tags retrieved are sorted alphabetically, to align with the behavior of `git ls-remote --refs --tags`.
 	//
 	//	compatible:
 	//	  * source
