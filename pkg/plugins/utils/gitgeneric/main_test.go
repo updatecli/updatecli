@@ -122,7 +122,7 @@ func TestTagsIntegration(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
 	withSubmodules := true
-	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules)
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules, nil)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -148,7 +148,7 @@ func TestTagRefsIntegration(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
 	withSubmodules := true
-	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules)
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules, nil)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -178,7 +178,7 @@ func TestHashesIntegration(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli")
 	withSubmodules := true
-	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules)
+	err := g.Clone("", "", "https://github.com/updatecli/updatecli.git", workingDir, &withSubmodules, nil)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -244,7 +244,7 @@ func TestSubmodulesEnabledContent(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli-submodules")
 	withSubmodules := true
-	err := g.Clone("", "", "https://github.com/updatecli-test/updatecli-submodules.git", workingDir, &withSubmodules)
+	err := g.Clone("", "", "https://github.com/updatecli-test/updatecli-submodules.git", workingDir, &withSubmodules, nil)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -267,7 +267,7 @@ func TestSubmodulesDisabledContent(t *testing.T) {
 	g := GoGit{}
 	workingDir := filepath.Join(os.TempDir(), "tests", "updatecli-submodules")
 	withSubmodules := false
-	err := g.Clone("", "", "https://github.com/updatecli-test/updatecli-submodules.git", workingDir, &withSubmodules)
+	err := g.Clone("", "", "https://github.com/updatecli-test/updatecli-submodules.git", workingDir, &withSubmodules, nil)
 	if err != nil {
 		t.Errorf("Don't expect error: %q", err)
 	}
@@ -314,7 +314,7 @@ func TestLatestCommitHash(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer os.RemoveAll(workingDir)
 			if tt.cloneUrl != "" {
-				err := g.Clone("", "", tt.cloneUrl, tt.workingDir, &withSubmodules)
+				err := g.Clone("", "", tt.cloneUrl, tt.workingDir, &withSubmodules, nil)
 				if err != nil {
 					t.Errorf("unexpected error: %q", err)
 				}

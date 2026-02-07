@@ -85,6 +85,7 @@ func (g *Gitlab) Clone() (string, error) {
 		g.GetURL(),
 		g.GetDirectory(),
 		g.Spec.Submodules,
+		g.Spec.Depth,
 	)
 	if err != nil {
 		logrus.Errorf("failed cloning GitLab repository %q", g.GetURL())
