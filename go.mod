@@ -1,10 +1,8 @@
 module github.com/updatecli/updatecli
 
-go 1.25.5
+go 1.25.7
 
-retract (
-	v0.999.0 // Published accidentally.
-) 
+retract v0.999.0 // Published accidentally.
 
 require (
 	dario.cat/mergo v1.0.2
