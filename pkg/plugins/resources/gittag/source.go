@@ -19,19 +19,16 @@ func (gt *GitTag) Source(workingDir string, resultSource *result.Source) error {
 
 	var tags map[string]string
 	var tagsList []string
-	if gt.spec.URL != "" {
+
+	switch gt.lsRemote {
+	case true:
 		tagsList, tags, err = gt.listRemoteURLTags()
 		if err != nil {
 			return fmt.Errorf("listing remote tags: %w", err)
 		}
-	} else {
-		if gt.directory == "" {
-			return fmt.Errorf("unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
-		}
-		if gt.spec.Path != "" {
-			gt.directory = gt.spec.Path
-		}
-		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory)
+
+	case false:
+		tagsList, tags, err = gt.listRemoteDirectoryTags(workingDir)
 		if err != nil {
 			return fmt.Errorf("listing local tags: %w", err)
 		}

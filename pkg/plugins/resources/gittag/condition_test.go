@@ -35,10 +35,30 @@ func TestGitTag_Condition(t *testing.T) {
 			name: "Get tags from a remote https URL, filter with v0.99.3",
 			spec: Spec{
 				URL: "https://github.com/updatecli-test/updatecli.git",
-				Tag: "v0.99.3",
+				Tag: "0.99.1",
+			},
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "0.99.0",
+						Hash: "abc123",
+					},
+					{
+						Name: "0.100.0",
+						Hash: "ghi789",
+					},
+					{
+						Name: "0.99.1",
+						Hash: "def456",
+					},
+					{
+						Name: "0.101.0",
+						Hash: "ghi789",
+					},
+				},
 			},
 			wantPass:    true,
-			wantMessage: "git tag \"v0.99.3\" found",
+			wantMessage: "git tag \"0.99.1\" found",
 		},
 		{
 			name:      "Tag specified in spec, tag exists",

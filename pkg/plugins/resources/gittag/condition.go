@@ -24,28 +24,22 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 	var tags map[string]string
 	var tagsList []string
 
-	if gt.spec.URL != "" {
+	if scm != nil {
+		gt.directory = scm.GetDirectory()
+	}
+
+	switch gt.lsRemote {
+	case true:
 		tagsList, tags, err = gt.listRemoteURLTags()
 		if err != nil {
-			return false, "", err
-		}
-	} else {
-		if scm != nil {
-			gt.directory = scm.GetDirectory()
+			return false, "", fmt.Errorf("listing remote tags: %w", err)
 		}
 
-		if gt.spec.Path != "" {
-			gt.directory = gt.spec.Path
-		}
-
+	case false:
 		if gt.spec.Path != "" && scm != nil {
 			logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
 				gt.spec.Path,
 				scm.GetDirectory())
-		}
-
-		if gt.directory == "" {
-			return false, "", fmt.Errorf("unknown Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
 		}
 
 		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory)

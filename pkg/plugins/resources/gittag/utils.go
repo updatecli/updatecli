@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 // listRemoteURLTags lists all tags from a remote git repository
@@ -19,7 +20,16 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 		},
 	})
 
-	refs, err := remote.List(&git.ListOptions{})
+	listOptions := &git.ListOptions{}
+
+	if gt.spec.Username != "" && gt.spec.Password != "" {
+		listOptions.Auth = &http.BasicAuth{
+			Username: gt.spec.Username,
+			Password: gt.spec.Password,
+		}
+	}
+
+	refs, err := remote.List(listOptions)
 	if err != nil {
 		return nil, nil, fmt.Errorf("listing remote tags: %w", err)
 	}
@@ -33,8 +43,8 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 		tagsList = append(tagsList, ref.Name().Short())
 	}
 
-	// To align the behavior with `git ls-remote --refs --tags`
-	// sort the tags list in lexicographical order before returning
+	// Sort the tags list in lexicographical order before returning
+	// to align the behavior with `git ls-remote --refs --tags`
 	sort.Slice(tagsList, func(i, j int) bool {
 		return tagsList[i] < tagsList[j]
 	})
@@ -43,12 +53,33 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 }
 
 // listRemoteDirectoryTags lists all tags from a local git repository
-func (gt *GitTag) listRemoteDirectoryTags(path string) ([]string, map[string]string, error) {
+func (gt *GitTag) listRemoteDirectoryTags(workingDir string) ([]string, map[string]string, error) {
+	if gt.nativeGitHandler == nil {
+		return nil, nil, fmt.Errorf("nativeGitHandler is not initialized")
+	}
+
+	gt.directory = workingDir
+
+	var err error
 
 	results := make(map[string]string)
 	tagsList := make([]string, 0)
 
-	refs, err := gt.nativeGitHandler.TagRefs(path)
+	if gt.spec.URL != "" {
+		gt.directory, err = gt.clone()
+		if err != nil {
+			return nil, nil, fmt.Errorf("cloning repository: %w", err)
+		}
+	}
+	if gt.spec.Path != "" {
+		gt.directory = gt.spec.Path
+	}
+
+	if gt.directory == "" {
+		return nil, nil, fmt.Errorf("unknown Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+	}
+
+	refs, err := gt.nativeGitHandler.TagRefs(gt.directory)
 	if err != nil {
 		return nil, nil, fmt.Errorf("retrieving tag refs: %w", err)
 	}

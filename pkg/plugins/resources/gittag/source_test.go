@@ -37,10 +37,30 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "semver",
 				Pattern: "0.99.x",
 			},
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "0.99.0",
+						Hash: "abc123",
+					},
+					{
+						Name: "0.100.0",
+						Hash: "ghi789",
+					},
+					{
+						Name: "0.99.1",
+						Hash: "def456",
+					},
+					{
+						Name: "0.101.0",
+						Hash: "ghi789",
+					},
+				},
+			},
 			spec: Spec{
 				URL: "https://github.com/updatecli-test/updatecli.git",
 			},
-			wantValue: "v0.99.3",
+			wantValue: "0.99.1",
 		},
 		{
 			name:       "3 tags found, filter with latest",
