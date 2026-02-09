@@ -190,6 +190,13 @@ func run(command string) error {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 		}
 
+	case "compose/lint":
+
+		err := e.Lint(composeLintPolicyRootDir)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+		}
+
 	case "manifest/upgrade":
 		err := e.ManifestUpgrade(manifestUpgradeInPlace)
 		if err != nil {
