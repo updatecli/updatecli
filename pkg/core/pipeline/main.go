@@ -361,8 +361,11 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		}
 	}
 
-	displayError := func() {
-		logrus.Infof("%s Something went wrong\n", result.FAILURE)
+	displayError := func(err error) {
+		logrus.Infof("%s Something went wrong:\n\t%s\n\n",
+			result.FAILURE,
+			strings.ReplaceAll(err.Error(), "\n", "\n\t"),
+		)
 	}
 
 	if leaf.Result != result.SKIPPED {
@@ -372,7 +375,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			sourceId := strings.ReplaceAll(id, "source#", "")
 			r, e := p.RunSource(sourceId)
 			if e != nil {
-				displayError()
+				displayError(e)
 				err = e
 			}
 
@@ -384,7 +387,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			conditionId := strings.ReplaceAll(id, "condition#", "")
 			r, e := p.RunCondition(conditionId)
 			if e != nil {
-				displayError()
+				displayError(e)
 				err = e
 			}
 
@@ -396,7 +399,7 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			targetId := strings.ReplaceAll(id, "target#", "")
 			r, changed, e := p.RunTarget(targetId, depsSourceIDs)
 			if e != nil {
-				displayError()
+				displayError(e)
 				err = e
 			}
 
@@ -445,8 +448,12 @@ func (p *Pipeline) Run() error {
 			continue
 		}
 		if leaf.Error != nil {
+			if !hasError {
+				title := fmt.Sprintf("Error(s) found in pipeline %q execution", p.Name)
+				logrus.Infof("\n%s\n%s\n", title, strings.Repeat("-", len(title)))
+			}
 			logrus.Infof("\n")
-			logrus.Errorf("something went wrong in %q : %s", leaf.ID, leaf.Error)
+			logrus.Errorf("something went wrong in %q :\n\t%s", leaf.ID, strings.ReplaceAll(leaf.Error.Error(), "\n", "\n\t"))
 			logrus.Infof("\n")
 			hasError = true
 		}
