@@ -54,7 +54,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.23.1-0.20250211201033-5c140ce1cb20
 	github.com/hashicorp/terraform-registry-address v0.4.0
 	github.com/invopop/jsonschema v0.13.0
-	github.com/jferrl/go-githubauth v1.5.0
+	github.com/jferrl/go-githubauth v1.5.1
 	github.com/joho/godotenv v1.5.1
 	github.com/minamijoyo/hcledit v0.2.17
 	github.com/minamijoyo/tfupdate v0.8.0
