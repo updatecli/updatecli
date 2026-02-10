@@ -32,7 +32,7 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 	case true:
 		tagsList, tags, err = gt.listRemoteURLTags()
 		if err != nil {
-			return false, "", fmt.Errorf("listing remote tags: %w", err)
+			return false, "", err
 		}
 
 	case false:

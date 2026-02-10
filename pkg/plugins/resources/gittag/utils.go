@@ -31,7 +31,7 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 
 	refs, err := remote.List(listOptions)
 	if err != nil {
-		return nil, nil, fmt.Errorf("listing remote tags: %w", err)
+		return nil, nil, err
 	}
 
 	tagsList := make([]string, 0, len(refs))

@@ -60,7 +60,7 @@ type Spec struct {
 	//	  when using the ssh protocol, the user must have the right to clone the repository
 	//	  based on its local ssh configuration
 	//
-	//    it's possible to specify git tags without cloning the repository by using the `lsRemote` option,
+	//    it's possible to specify git tags without cloning the repository by using the `lsremote` option,
 	//    in that case the URL is required and the tags will be retrieved from the remote repository directly without cloning it.
 	URL string `yaml:",omitempty" jsonschema:"required"`
 	//	"username" specifies the username when using the HTTP protocol
@@ -155,7 +155,7 @@ func (gt *GitTag) Validate() error {
 		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
 	}
 
-	if gt.spec.LsRemote != nil {
+	if gt.spec.LsRemote != nil && *gt.spec.LsRemote {
 		if gt.spec.Path != "" {
 			validationErrors = append(validationErrors, "The parameter `path` cannot be used when `lsRemote` is set to true, as `lsremote` is designed to retrieve tags from the remote repository without cloning it.")
 		}

@@ -24,7 +24,7 @@ func (gt *GitTag) Source(workingDir string, resultSource *result.Source) error {
 	case true:
 		tagsList, tags, err = gt.listRemoteURLTags()
 		if err != nil {
-			return fmt.Errorf("listing remote tags: %w", err)
+			return err
 		}
 
 	case false:
