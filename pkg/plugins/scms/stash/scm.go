@@ -129,7 +129,9 @@ func (s *Stash) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		s.Spec.Directory,
-		s.force)
+		s.force,
+		s.Spec.Depth,
+	)
 	if err != nil {
 		return err
 	}

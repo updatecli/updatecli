@@ -146,6 +146,7 @@ func (g *Github) Commit(message string) error {
 			workingBranch,
 			true,
 			true,
+			g.Spec.Depth,
 		); err != nil {
 			return err
 		}
@@ -187,6 +188,7 @@ func (g *Github) Commit(message string) error {
 				workingBranch,
 				true,
 				true,
+				g.Spec.Depth,
 			); err != nil {
 				return err
 			}
@@ -381,6 +383,7 @@ func (g *Github) Checkout() error {
 		workingBranch,
 		g.Spec.Directory,
 		g.force,
+		g.Spec.Depth,
 	)
 }
 

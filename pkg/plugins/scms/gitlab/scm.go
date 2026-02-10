@@ -141,6 +141,7 @@ func (g *Gitlab) Checkout() error {
 		workingBranch,
 		g.Spec.Directory,
 		g.force,
+		g.Spec.Depth,
 	)
 	if err != nil {
 		return err

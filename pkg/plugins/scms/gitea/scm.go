@@ -129,7 +129,9 @@ func (g *Gitea) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		g.Spec.Directory,
-		g.force)
+		g.force,
+		g.Spec.Depth,
+	)
 	if err != nil {
 		return err
 	}

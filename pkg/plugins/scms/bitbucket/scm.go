@@ -146,7 +146,9 @@ func (b *Bitbucket) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		b.Spec.Directory,
-		b.force)
+		b.force,
+		b.Spec.Depth,
+	)
 	if err != nil {
 		return err
 	}
