@@ -10,10 +10,9 @@ import (
 // Condition checks that a git tag exists
 func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
-	if gt.spec.Path != "" && scm != nil {
-		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
-			gt.spec.Path,
-			scm.GetDirectory())
+	err = gt.Validate()
+	if err != nil {
+		return false, "", err
 	}
 
 	if gt.spec.URL != "" && scm != nil {
@@ -22,16 +21,31 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 			scm.GetURL())
 	}
 
-	if gt.spec.URL != "" {
-		gt.directory, err = gt.clone()
+	var tags map[string]string
+	var tagsList []string
+
+	if scm != nil {
+		gt.directory = scm.GetDirectory()
+	}
+
+	switch gt.lsRemote {
+	case true:
+		tagsList, tags, err = gt.listRemoteURLTags()
 		if err != nil {
-			return false, "", fmt.Errorf("cloning git repository: %w", err)
+			return false, "", err
 		}
 
-	} else if gt.spec.Path != "" {
-		gt.directory = gt.spec.Path
-	} else if scm != nil {
-		gt.directory = scm.GetDirectory()
+	case false:
+		if gt.spec.Path != "" && scm != nil {
+			logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+				gt.spec.Path,
+				scm.GetDirectory())
+		}
+
+		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory)
+		if err != nil {
+			return false, "", fmt.Errorf("listing local tags: %w", err)
+		}
 	}
 
 	// If source input is empty, then it means that it was disabled by the user with `disablesourceinput: true`
@@ -40,22 +54,8 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 		gt.versionFilter.Pattern = source
 	}
 
-	err = gt.Validate()
-	if err != nil {
-		return false, "", err
-	}
-
-	if gt.directory == "" {
-		return false, "", fmt.Errorf("unkownn Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
-	}
-
-	tags, err := gt.nativeGitHandler.Tags(gt.directory)
-	if err != nil {
-		return false, "", err
-	}
-
-	if len(tags) == 0 {
-		return false, "no git tag found", nil
+	if len(tagsList) == 0 {
+		return false, "no tags found", nil
 	}
 
 	// If spec.Tag is provided, use it for exact match checking (priority over source)
@@ -68,17 +68,17 @@ func (gt *GitTag) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 
 	// If tag is specified (either via spec.Tag or source), check for exact match
 	if tag != "" {
-		for _, t := range tags {
-			if t == tag {
-				return true, fmt.Sprintf("git tag %q found", tag), nil
-			}
+
+		if _, ok := tags[tag]; ok {
+			return true, fmt.Sprintf("git tag %q found", tag), nil
 		}
+
 		// Tag not found
 		return false, fmt.Sprintf("no git tag found matching %q", tag), nil
 	}
 
 	// Fall back to versionFilter pattern matching (existing behavior)
-	gt.foundVersion, err = gt.versionFilter.Search(tags)
+	gt.foundVersion, err = gt.versionFilter.Search(tagsList)
 	if err != nil {
 		return false, "", err
 	}

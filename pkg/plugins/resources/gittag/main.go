@@ -57,8 +57,11 @@ type Spec struct {
 	//	  * https://github.com/updatecli/updatecli.git
 	//
 	//	remarks:
-	//		when using the ssh protocol, the user must have the right to clone the repository
-	//		based on its local ssh configuration
+	//	  when using the ssh protocol, the user must have the right to clone the repository
+	//	  based on its local ssh configuration
+	//
+	//    it's possible to specify git tags without cloning the repository by using the `lsremote` option,
+	//    in that case the URL is required and the tags will be retrieved from the remote repository directly without cloning it.
 	URL string `yaml:",omitempty" jsonschema:"required"`
 	//	"username" specifies the username when using the HTTP protocol
 	//
@@ -82,6 +85,19 @@ type Spec struct {
 	// remark:
 	//  * sourcebranch is required when the scmid is not defined.
 	SourceBranch string `yaml:",omitempty"`
+	// LsRemote indicates that the resource should only consider remote tags.
+	// When set to true, the tags will be sorted alphabetically to align with the behavior of `git ls-remote --refs --tags`.
+	// This means that default version filter "latest" will return the latest tag in alphabetical order,
+	// you may need to use a different version filter (e.g. semver) to get the expected tag when using lsRemote.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remarks:
+	//   Requires the URL field to be set, as it retrieves tags from the remote repository without cloning it.
+
+	LsRemote *bool `yaml:",omitempty"`
 }
 
 // GitTag defines a resource of kind "gittag"
@@ -95,6 +111,8 @@ type GitTag struct {
 	nativeGitHandler gitgeneric.GitHandler
 	// directory defines the local path where the git repository is cloned.
 	directory string
+	// lsRemote indicates that the resource should only consider remote tags.
+	lsRemote bool
 }
 
 // New returns a reference to a newly initialized GitTag object from a Spec
@@ -112,10 +130,18 @@ func New(spec interface{}) (*GitTag, error) {
 		return &GitTag{}, err
 	}
 
+	// To maintain backward compatibility with existing users,
+	// the lsRemote field is defaulted to false if not specified in the manifest.
+	lsRemote := false
+	if newSpec.LsRemote != nil {
+		lsRemote = *newSpec.LsRemote
+	}
+
 	newResource := &GitTag{
 		spec:             newSpec,
 		versionFilter:    newFilter,
 		nativeGitHandler: &gitgeneric.GoGit{},
+		lsRemote:         lsRemote,
 	}
 
 	return newResource, nil
@@ -127,6 +153,15 @@ func (gt *GitTag) Validate() error {
 
 	if gt.spec.Key != "" && gt.spec.Key != "hash" && gt.spec.Key != "name" {
 		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
+	}
+
+	if gt.spec.LsRemote != nil && *gt.spec.LsRemote {
+		if gt.spec.Path != "" {
+			validationErrors = append(validationErrors, "The parameter `path` cannot be used when `lsRemote` is set to true, as `lsremote` is designed to retrieve tags from the remote repository without cloning it.")
+		}
+		if gt.spec.URL == "" {
+			validationErrors = append(validationErrors, "The parameter `url` is required when `lsRemote` is set to true, as it needs a git repository URL to retrieve tags from the remote repository without cloning it.")
+		}
 	}
 
 	// Return all the validation errors if found any

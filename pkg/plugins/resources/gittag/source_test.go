@@ -21,6 +21,10 @@ func (m *mockNativeGitHandler) TagRefs(workingDir string) (refs []gitgeneric.Dat
 	return m.tagRefs, m.tagRefsError
 }
 
+func boolPtr(b bool) *bool {
+	return &b
+}
+
 func TestGitTag_Source(t *testing.T) {
 	tests := []struct {
 		name                   string
@@ -31,6 +35,152 @@ func TestGitTag_Source(t *testing.T) {
 		wantValue              string
 		wantErr                bool
 	}{
+		{
+			name: "Get latest tags from a remote https URL using lsremote",
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "0.99.0",
+						Hash: "abc123",
+					},
+					{
+						Name: "0.100.0",
+						Hash: "ghi789",
+					},
+					{
+						Name: "0.99.1",
+						Hash: "def456",
+					},
+					{
+						Name: "0.101.0",
+						Hash: "ghi789",
+					},
+				},
+			},
+			spec: Spec{
+				URL:      "https://github.com/updatecli-test/updatecli.git",
+				LsRemote: boolPtr(true),
+			},
+			wantValue: "0.101.0",
+		},
+		{
+			name: "Get latest tags from a remote https URL using lsremote",
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "0.99.0",
+						Hash: "abc123",
+					},
+					{
+						Name: "0.100.0",
+						Hash: "ghi789",
+					},
+					{
+						Name: "0.99.1",
+						Hash: "def456",
+					},
+					{
+						Name: "0.101.0",
+						Hash: "ghi789",
+					},
+				},
+			},
+			spec: Spec{
+				URL:      "https://github.com/updatecli-test/updatecli.git",
+				LsRemote: boolPtr(true),
+			},
+			wantValue: "0.101.0",
+		},
+		{
+			name: "Get latest tags from a remote https URL, filter with v0.99.3",
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "0.99.0",
+						Hash: "abc123",
+					},
+					{
+						Name: "0.100.0",
+						Hash: "ghi789",
+					},
+					{
+						Name: "0.99.1",
+						Hash: "def456",
+					},
+					{
+						Name: "0.101.0",
+						Hash: "ghi789",
+					},
+				},
+			},
+			spec: Spec{
+				URL: "https://github.com/updatecli-test/updatecli.git",
+			},
+			wantValue: "0.101.0",
+		},
+		{
+			name: "No tag found matching pattern",
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: "0.69.x",
+			},
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "0.99.0",
+						Hash: "abc123",
+					},
+				},
+			},
+			spec: Spec{
+				URL: "https://github.com/updatecli-test/updatecli.git",
+			},
+			wantValue: "",
+			wantErr:   true,
+		},
+		{
+			name: "Get latest semver tags from a remote https URL, filter with v0.99.3",
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: "0.99.x",
+			},
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{
+						Name: "0.99.0",
+						Hash: "abc123",
+					},
+					{
+						Name: "0.100.0",
+						Hash: "ghi789",
+					},
+					{
+						Name: "0.99.1",
+						Hash: "def456",
+					},
+					{
+						Name: "0.101.0",
+						Hash: "ghi789",
+					},
+				},
+			},
+			spec: Spec{
+				URL: "https://github.com/updatecli-test/updatecli.git",
+			},
+			wantValue: "0.99.1",
+		},
 		{
 			name:       "3 tags found, filter with latest",
 			workingDir: "github.com/updatecli/updatecli",
