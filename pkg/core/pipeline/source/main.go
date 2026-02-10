@@ -91,7 +91,6 @@ func (s *Source) Run() (err error) {
 
 	if err != nil {
 		s.Result.Result = result.FAILURE
-		logrus.Errorf("%s %s", s.Result.Result, err)
 		return err
 	}
 
@@ -100,7 +99,6 @@ func (s *Source) Run() (err error) {
 	if len(s.Config.Transformers) > 0 {
 		s.Output, err = s.Config.Transformers.Apply(s.Output)
 		if err != nil {
-			logrus.Errorf("%s %s", s.Result.Result, err)
 			s.Result.Result = result.FAILURE
 			return err
 		}
