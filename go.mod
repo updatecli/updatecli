@@ -31,7 +31,7 @@ require (
 )
 
 require (
-	code.gitea.io/sdk/gitea v0.22.1
+	code.gitea.io/sdk/gitea v0.23.2
 	cuelang.org/go v0.15.3
 	github.com/BurntSushi/toml v1.6.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
