@@ -26,13 +26,13 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.34.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	helm.sh/helm/v3 v3.19.4
+	helm.sh/helm/v3 v3.19.5
 	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
 	code.gitea.io/sdk/gitea v0.22.1
-	cuelang.org/go v0.15.3
+	cuelang.org/go v0.15.4
 	github.com/BurntSushi/toml v1.6.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/ProtonMail/go-crypto v1.3.0
@@ -54,7 +54,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.23.1-0.20250211201033-5c140ce1cb20
 	github.com/hashicorp/terraform-registry-address v0.4.0
 	github.com/invopop/jsonschema v0.13.0
-	github.com/jferrl/go-githubauth v1.5.0
+	github.com/jferrl/go-githubauth v1.5.1
 	github.com/joho/godotenv v1.5.1
 	github.com/minamijoyo/hcledit v0.2.17
 	github.com/minamijoyo/tfupdate v0.8.0
@@ -151,7 +151,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
