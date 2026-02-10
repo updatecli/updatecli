@@ -11,7 +11,7 @@ import (
 
 var (
 	// ErrRunTargets is return when at least one error happened during targets execution
-	ErrRunTargets error = errors.New("something went wrong during target execution")
+	ErrRunTargets error = errors.New("something went wrong during pipeline execution")
 )
 
 func (p *Pipeline) updateTarget(id, result string) {
