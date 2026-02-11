@@ -60,12 +60,13 @@ func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultT
 		return nil
 	}
 
-	sourceBranch := "main"
-	if gt.spec.SourceBranch != "" {
-		sourceBranch = gt.spec.SourceBranch
-	}
+	sourceBranch := gt.spec.SourceBranch
 
 	if gt.spec.URL != "" || gt.spec.Path != "" {
+		if sourceBranch == "" {
+			return fmt.Errorf("source branch is required when using URL or Path to specify the git repository")
+		}
+
 		if err = gt.nativeGitHandler.Checkout(gt.spec.Username, gt.spec.Password, sourceBranch, sourceBranch, gt.directory, false, gt.spec.Depth); err != nil {
 			logrus.Errorf("Git checkout branch error: %s", err)
 			return err
