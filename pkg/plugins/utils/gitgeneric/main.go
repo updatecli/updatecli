@@ -463,6 +463,9 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 		}
 
 		if depth != nil {
+			if *depth < 0 {
+				return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+			}
 			pullOptions.Depth = *depth
 		}
 
@@ -590,6 +593,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	}
 
 	if depth != nil {
+		if *depth < 0 {
+			return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+		}
 		cloneOptions.Depth = *depth
 	}
 
@@ -632,6 +638,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		}
 
 		if depth != nil {
+			if *depth < 0 {
+				return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+			}
 			pullOptions.Depth = *depth
 		}
 
@@ -680,6 +689,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		}
 
 		if depth != nil {
+			if *depth < 0 {
+				return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+			}
 			fetchOptions.Depth = *depth
 		}
 
@@ -1079,6 +1091,9 @@ func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, single
 	}
 
 	if depth != nil {
+		if *depth < 0 {
+			return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+		}
 		pullOptions.Depth = *depth
 	}
 
