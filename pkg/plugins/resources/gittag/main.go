@@ -84,6 +84,8 @@ type Spec struct {
 	//
 	// remark:
 	//  * sourcebranch is required when the scmid is not defined.
+	//
+	// default: main
 	SourceBranch string `yaml:",omitempty"`
 	// LsRemote indicates that the resource should only consider remote tags.
 	// When set to true, the tags will be sorted alphabetically to align with the behavior of `git ls-remote --refs --tags`.
@@ -98,6 +100,18 @@ type Spec struct {
 	//   Requires the URL field to be set, as it retrieves tags from the remote repository without cloning it.
 
 	LsRemote *bool `yaml:",omitempty"`
+	// Depth is used to limit the number of commits fetched from the git repository.
+	//
+	// compatible:
+	//  * source
+	//  * condition
+	//  * target
+	//
+	//  default: 0 (no limit)
+	//
+	// remark:
+	//  * Updatecli won't be able to find tags that are not included in the fetched commits.
+	Depth *int `yaml:",omitempty"`
 }
 
 // GitTag defines a resource of kind "gittag"
@@ -183,8 +197,8 @@ func (gt *GitTag) clone() (string, error) {
 		URL:      gt.spec.URL,
 		Username: gt.spec.Username,
 		Password: gt.spec.Password,
+		Depth:    gt.spec.Depth,
 	}, "")
-
 	if err != nil {
 		return "", err
 	}
