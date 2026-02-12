@@ -32,8 +32,8 @@ const (
 
 type GitHandler interface {
 	Add(files []string, workingDir string) error
-	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool) error
-	Clone(username, password, URL, workingDir string, withSubmodules *bool) error
+	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool, depth *int) error
+	Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int) error
 	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	DeleteBranch(branch, gitRepositoryPath, username, password string) error
 	GetChangedFiles(workingDir string) ([]string, error)
@@ -43,7 +43,7 @@ type GitHandler interface {
 	IsRemoteBranchExist(branch, username, password, workingDir string) (bool, error)
 	NewTag(tag, message, workingDir string) (bool, error)
 	NewBranch(branch, workingDir string) (bool, error)
-	Pull(username, password, gitRepositoryPath, branch string, singleBranch, forceReset bool) error
+	Pull(username, password, gitRepositoryPath, branch string, singleBranch, forceReset bool, depth *int) error
 	Push(username string, password string, workingDir string, force bool) (bool, error)
 	PushTag(tag string, username string, password string, workingDir string, force bool) error
 	PushBranch(branch string, username string, password string, workingDir string, force bool) error
@@ -384,7 +384,7 @@ func (g GoGit) Add(files []string, workingDir string) error {
 }
 
 // Checkout create and then uses a temporary git branch.
-func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool) error {
+func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool, depth *int) error {
 	logrus.Debugf("checkout git branch %q, based on %q",
 		newBranch,
 		basedBranch)
@@ -460,6 +460,13 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 		pullOptions := git.PullOptions{
 			Force:    true,
 			Progress: &b,
+		}
+
+		if depth != nil {
+			if *depth < 0 {
+				return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+			}
+			pullOptions.Depth = *depth
 		}
 
 		if !isAuthEmpty(&auth) {
@@ -565,7 +572,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 }
 
 // Clone run `git clone`.
-func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool) error {
+func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int) error {
 	var repo *git.Repository
 
 	auth := transportHttp.BasicAuth{
@@ -583,6 +590,13 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		URL:               URL,
 		Progress:          &b,
 		RecurseSubmodules: submodule,
+	}
+
+	if depth != nil {
+		if *depth < 0 {
+			return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+		}
+		cloneOptions.Depth = *depth
 	}
 
 	if !isAuthEmpty(&auth) {
@@ -621,6 +635,13 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		pullOptions := git.PullOptions{
 			Force:    true,
 			Progress: &b,
+		}
+
+		if depth != nil {
+			if *depth < 0 {
+				return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+			}
+			pullOptions.Depth = *depth
 		}
 
 		if !isAuthEmpty(&auth) {
@@ -666,6 +687,14 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 			RefSpecs: []config.RefSpec{"refs/*:refs/*"},
 			Force:    true,
 		}
+
+		if depth != nil {
+			if *depth < 0 {
+				return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+			}
+			fetchOptions.Depth = *depth
+		}
+
 		if !isAuthEmpty(&auth) {
 			fetchOptions.Auth = &auth
 		}
@@ -1030,7 +1059,7 @@ func isAuthEmpty(auth *transportHttp.BasicAuth) bool {
 }
 
 // Pull run `git pull` on the local HEAD.
-func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, singleBranch, forceReset bool) error {
+func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, singleBranch, forceReset bool, depth *int) error {
 	repository, err := git.PlainOpen(gitRepositoryPath)
 	if err != nil {
 		return fmt.Errorf("opening %q git directory: %w", gitRepositoryPath, err)
@@ -1059,6 +1088,13 @@ func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, single
 		Force:        forceReset,
 		Progress:     &b,
 		SingleBranch: singleBranch,
+	}
+
+	if depth != nil {
+		if *depth < 0 {
+			return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+		}
+		pullOptions.Depth = *depth
 	}
 
 	if branch != "" {

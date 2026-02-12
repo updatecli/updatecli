@@ -81,6 +81,7 @@ func (s *Stash) Clone() (string, error) {
 		s.GetURL(),
 		s.GetDirectory(),
 		s.Spec.Submodules,
+		s.Spec.Depth,
 	)
 	if err != nil {
 		logrus.Errorf("failed cloning Bitbucket repository %q", s.GetURL())
@@ -128,7 +129,9 @@ func (s *Stash) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		s.Spec.Directory,
-		s.force)
+		s.force,
+		s.Spec.Depth,
+	)
 	if err != nil {
 		return err
 	}

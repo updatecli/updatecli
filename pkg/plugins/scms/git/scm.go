@@ -71,7 +71,9 @@ func (g *Git) Checkout() error {
 		sourceBranch,
 		workingBranch,
 		g.GetDirectory(),
-		g.spec.Force)
+		g.spec.Force,
+		g.spec.Depth,
+	)
 	if err != nil {
 		return err
 	}
@@ -100,6 +102,7 @@ func (g *Git) Clone() (string, error) {
 		g.GetURL(),
 		g.GetDirectory(),
 		g.spec.Submodules,
+		g.spec.Depth,
 	)
 	if err != nil {
 		logrus.Errorf("failed cloning git repository %q - %s", g.GetURL(), err)
