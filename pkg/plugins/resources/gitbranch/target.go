@@ -77,7 +77,7 @@ func (gb *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resu
 
 	switch scm {
 	case nil:
-		if err = gb.nativeGitHandler.Checkout(gb.spec.Username, gb.spec.Password, gb.spec.SourceBranch, gb.branch, gb.directory, false); err != nil {
+		if err = gb.nativeGitHandler.Checkout(gb.spec.Username, gb.spec.Password, gb.spec.SourceBranch, gb.branch, gb.directory, false, gb.spec.Depth); err != nil {
 			logrus.Errorf("Git checkout branch error: %s", err)
 			return err
 		}
@@ -93,7 +93,7 @@ func (gb *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resu
 		// ecists on the remote. In this case, we already know that it doesn't.
 		// That being said, we may have a racing issue if the branch is created between the time Updatecli executed and the time
 		// this code is executed so the current execution would fail but not then next one.
-		if err = gb.nativeGitHandler.Checkout("", "", sourceBranch, gb.branch, gb.directory, false); err != nil {
+		if err = gb.nativeGitHandler.Checkout("", "", sourceBranch, gb.branch, gb.directory, false, gb.spec.Depth); err != nil {
 			logrus.Errorf("Git checkout branch error: %s", err)
 			return err
 		}

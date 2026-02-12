@@ -31,6 +31,18 @@ type Spec struct {
 	//    * condition
 	//    * target
 	Branch string `yaml:",omitempty"`
+	// Depth is used to limit the number of commits fetched from the git repository.
+	//
+	// compatible:
+	//  * source
+	//  * condition
+	//  * target
+	//
+	//  default: 0 (no limit)
+	//
+	// remark:
+	//  * Updatecli won't be able to find branches that are not included in the fetched commits.
+	Depth *int `yaml:",omitempty"`
 	//	"url" specifies the git url to use for fetching Git Tags.
 	//
 	//	compatible:
@@ -139,6 +151,7 @@ func (gb *GitBranch) clone() (string, error) {
 		URL:      gb.spec.URL,
 		Username: gb.spec.Username,
 		Password: gb.spec.Password,
+		Depth:    gb.spec.Depth,
 	}, "")
 
 	if err != nil {
