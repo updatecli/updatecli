@@ -41,6 +41,10 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 				// Split YAML documents
 				docs := bytes.Split(data, []byte("---"))
 
+				// Track if we've found a HelmRelease in this file to avoid adding the path multiple times
+				hasHelmRelease := false
+				hasOCIRepository := false
+
 				for _, doc := range docs {
 					if len(bytes.TrimSpace(doc)) == 0 {
 						continue
@@ -63,7 +67,10 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 					}
 
 					if ociRepository != nil {
-						f.ociRepositoryFiles = append(f.ociRepositoryFiles, path)
+						if !hasOCIRepository {
+							f.ociRepositoryFiles = append(f.ociRepositoryFiles, path)
+							hasOCIRepository = true
+						}
 						continue
 					}
 
@@ -72,8 +79,9 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 						logrus.Debugf("Failed loading document from %s as HelmRelease: %s", path, err)
 					}
 
-					if helmRelease != nil {
+					if helmRelease != nil && !hasHelmRelease {
 						f.helmReleaseFiles = append(f.helmReleaseFiles, path)
+						hasHelmRelease = true
 					}
 				}
 			}
