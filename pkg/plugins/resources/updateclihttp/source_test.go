@@ -118,6 +118,37 @@ func TestSource(t *testing.T) {
 			wantErr:              &ErrHttpError{resStatusCode: http.StatusInternalServerError},
 			wantStatus:           result.FAILURE,
 		},
+		{
+			name: "Normal case with single request header",
+			spec: Spec{
+				Url: "https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml",
+				Request: Request{
+					Headers: map[string]string{
+						"Authorization": "Bearer test-token",
+					},
+				},
+			},
+			mockedHTTPStatusCode: http.StatusOK,
+			mockedHTTPBody:       multiLineText,
+			want:                 multiLineText,
+			wantStatus:           result.SUCCESS,
+		},
+		{
+			name: "Normal case with multiple request headers",
+			spec: Spec{
+				Url: "https://repo.jenkins-ci.org/releases/org/jenkins-ci/main/jenkins-war/maven-metadata.xml",
+				Request: Request{
+					Headers: map[string]string{
+						"Authorization": "Bearer test-token",
+						"X-Custom-Header": "custom-value",
+					},
+				},
+			},
+			mockedHTTPStatusCode: http.StatusOK,
+			mockedHTTPBody:       multiLineText,
+			want:                 multiLineText,
+			wantStatus:           result.SUCCESS,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -137,7 +168,13 @@ func TestSource(t *testing.T) {
 						tt.spec.Request.Verb != req.Method {
 						return nil, fmt.Errorf("unexpected verb, expected %s, got %s", tt.spec.Request.Verb, req.Method)
 					}
-					// TODO: check headers
+					// check headers
+					for k, v := range tt.spec.Request.Headers {
+						got := req.Header.Get(k)
+						if got != v {
+							return nil, fmt.Errorf("unexpected header %q value, expected %q, got %q", k, v, got)
+						}
+					}
 					// check body
 					if tt.spec.Request.Body != "" {
 						if req.Body == nil {
