@@ -43,7 +43,7 @@ func (t *Text) readFromURL(url string, line int) (string, error) {
 	}
 	logrus.Debugf("HTTP GET to %q got a response with code %d", redact.URL(url), resp.StatusCode)
 	if resp.StatusCode > 399 {
-		logrus.Debugf("HTTP return code %q for URL %q", resp.StatusCode, redact.URL(url))
+		logrus.Debugf("HTTP return code %d for URL %q", resp.StatusCode, redact.URL(url))
 		return "", fmt.Errorf("URL %q not found or in error", redact.URL(url))
 	}
 
