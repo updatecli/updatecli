@@ -112,7 +112,7 @@ func (g *Stash) SearchBranches() (tags []string, err error) {
 	}
 
 	if resp.Status > 400 {
-		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	results := []string{}
