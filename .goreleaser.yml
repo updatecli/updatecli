@@ -66,6 +66,8 @@ brews:
 
 builds:
   - id: updatecli
+    env:
+      - CGO_ENABLED=0
     main: ./main.go
     binary: updatecli
     ldflags:
@@ -81,6 +83,9 @@ builds:
       - amd64
       - arm64
       - arm
+    ignore:
+      - goos: windows
+        goarch: arm
 
 changelog:
   ## Delegate Changelog to release-drafter

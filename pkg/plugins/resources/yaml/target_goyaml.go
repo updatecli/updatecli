@@ -17,7 +17,6 @@ import (
 )
 
 func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
-
 	nodeToWrite, err := goyaml.ValueToNode(valueToWrite)
 
 	if y.spec.Comment != "" {
@@ -84,10 +83,10 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 						if y.spec.SearchPattern {
 							// If search pattern is true then we don't want to return an error
 							// as we are probably trying to identify a file matching the key
-							logrus.Debugf("ignoring key %q from file %q in document %q: %s", key, originFilePath, index, err)
+							logrus.Debugf("ignoring key %q from file %q in document %d: %s", key, originFilePath, index, err)
 							continue
 						}
-						keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %q from file %q in document %q", key, originFilePath, index))
+						keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %q from file %q in document %d", key, originFilePath, index))
 					}
 
 					errMsg = append(errMsg, fmt.Sprintf("searching for key %q in document index %d: %s", key, index, err.Error()))
@@ -95,7 +94,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				}
 
 				if node == nil {
-					keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %q from file %q", key, originFilePath))
+					keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %s from file %q", key, originFilePath))
 					continue
 				}
 
@@ -195,7 +194,6 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 			err = y.contentRetriever.WriteToFile(
 				y.files[filePath].content,
 				y.files[filePath].filePath)
-
 			if err != nil {
 				return 0, ignoredFiles, fmt.Errorf("saving file %q: %w", originFilePath, err)
 			}

@@ -43,9 +43,8 @@ func (g Stash) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			Closed: true,
 		},
 	)
-
 	if err != nil {
-		logrus.Debugf("Bitbucket Api Response:\nReturn Code: %q\nBody:\n%s", resp.Status, resp.Body)
+		logrus.Debugf("Bitbucket Api Response:\nReturn Code: %d\nBody:\n%s", resp.Status, resp.Body)
 		return err
 	}
 
@@ -91,13 +90,12 @@ func (g Stash) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			Prerelease:  g.spec.Prerelease,
 		},
 	)
-
 	if err != nil {
 		return err
 	}
 
 	if resp.Status >= 400 {
-		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		return fmt.Errorf("error from Bitbucket api: %v", resp.Status)
 	}
 

@@ -40,7 +40,6 @@ type Gitea struct {
 
 // New returns a new valid Gitea object.
 func New(spec interface{}) (*Gitea, error) {
-
 	var s Spec
 	var clientSpec client.Spec
 
@@ -69,13 +68,11 @@ func New(spec interface{}) (*Gitea, error) {
 	s.Spec = clientSpec
 
 	err = s.Validate()
-
 	if err != nil {
 		return &Gitea{}, err
 	}
 
 	c, err := client.New(clientSpec)
-
 	if err != nil {
 		return &Gitea{}, err
 	}
@@ -93,12 +90,10 @@ func New(spec interface{}) (*Gitea, error) {
 	}
 
 	return &g, nil
-
 }
 
 // Retrieve gitea branches from a remote gitea repository
 func (g *Gitea) SearchBranches() (tags []string, err error) {
-
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -116,13 +111,12 @@ func (g *Gitea) SearchBranches() (tags []string, err error) {
 				Size: 30,
 			},
 		)
-
 		if err != nil {
 			return nil, err
 		}
 
 		if resp.Status > 400 {
-			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		}
 
 		for _, branch := range branches {
@@ -143,7 +137,6 @@ func (s Spec) Validate() error {
 	missingParameters := []string{}
 
 	err := s.Spec.Validate()
-
 	if err != nil {
 		gotError = true
 	}

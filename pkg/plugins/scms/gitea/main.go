@@ -184,7 +184,6 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 	}
 
 	err = clientSpec.Validate()
-
 	if err != nil {
 		return &Gitea{}, err
 	}
@@ -197,7 +196,6 @@ func New(spec interface{}, pipelineID string) (*Gitea, error) {
 	s.Spec = clientSpec
 
 	err = s.Validate()
-
 	if err != nil {
 		return &Gitea{}, err
 	}
@@ -254,7 +252,6 @@ If you know what you are doing, please set the force option to true in your conf
 	}
 
 	c, err := client.New(clientSpec)
-
 	if err != nil {
 		return &Gitea{}, err
 	}
@@ -282,12 +279,10 @@ If you know what you are doing, please set the force option to true in your conf
 	g.setDirectory()
 
 	return &g, nil
-
 }
 
 // SearchTags retrieve git tags from a remote gitea repository
 func (g *Gitea) SearchTags() (tags []string, err error) {
-
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -302,13 +297,12 @@ func (g *Gitea) SearchTags() (tags []string, err error) {
 			Size: 30,
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	if resp.Status > 400 {
-		logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	for _, ref := range references {
