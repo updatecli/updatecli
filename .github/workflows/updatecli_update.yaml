@@ -26,6 +26,16 @@ jobs:
           go-version-file: "go.mod"
         id: go
 
+      - name: "Run updatecli only on monitored pipelines"
+        run: updatecli compose apply --clean-git-branches=true --labels="monitoring:enabled" --experimental
+        env:
+          UPDATECLI_GITHUB_APP_CLIENT_ID: ${{ secrets.UPDATECLIBOT_APP_ID }}
+          UPDATECLI_GITHUB_APP_PRIVATE_KEY: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
+          UPDATECLI_GITHUB_APP_INSTALLATION_ID: ${{ secrets.UPDATECLIBOT_APP_INSTALLATION_ID }}
+          UPDATECLI_UDASH_API_URL: ${{ secrets.UPDATECLI_UDASH_API_URL }}
+          UPDATECLI_UDASH_ACCESS_TOKEN: ${{ secrets.UPDATECLI_UDASH_ACCESS_TOKEN }}
+          UPDATECLI_UDASH_URL: ${{ secrets.UPDATECLI_UDASH_URL }}
+
       - name: "Run updatecli only on existing pipelines"
         run: updatecli compose apply --clean-git-branches=true --existing-only=true --experimental
         env:

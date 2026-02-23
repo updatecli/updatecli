@@ -1,6 +1,9 @@
 name: "docs: bump updatecli version"
 
 pipelineid: "updatecli"
+labels:
+  event: release
+  monitoring: enabled
 
 actions:
   default:
