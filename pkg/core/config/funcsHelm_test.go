@@ -17,6 +17,7 @@ limitations under the License.
 */
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"text/template"
@@ -24,8 +25,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// errMarshaler is a test helper that always returns an error from MarshalYAML,
+// allowing us to exercise the error-swallowing path in toYAML.
+type errMarshaler struct{}
+
+func (e errMarshaler) MarshalYAML() (interface{}, error) {
+	return nil, fmt.Errorf("intentional marshal error")
+}
+
 func TestHelmFuncs(t *testing.T) {
-	//TODO write tests for failure cases
 	tests := []struct {
 		tpl, expect string
 		vars        interface{}
@@ -64,6 +72,22 @@ func TestHelmFuncs(t *testing.T) {
 			tpl:    `{{ fromYamlArray . }}`,
 			expect: "[yaml: unmarshal errors:\n  line 1: cannot unmarshal !!map into []interface {}]",
 			vars:   `hello: world`,
+		},
+		// Failure cases: functions swallow errors and embed them in the output.
+		{
+			tpl:    `{{ toYaml . }}`,
+			expect: "",
+			vars:   errMarshaler{},
+		},
+		{
+			tpl:    `{{ fromYaml . }}`,
+			expect: "map[Error:yaml: line 1: did not find expected ',' or ']']",
+			vars:   "key: [unclosed",
+		},
+		{
+			tpl:    `{{ fromYamlArray . }}`,
+			expect: "[yaml: line 1: did not find expected ',' or ']']",
+			vars:   "key: [unclosed",
 		},
 	}
 
