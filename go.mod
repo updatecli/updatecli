@@ -69,7 +69,7 @@ require (
 	github.com/tomwright/dasel/v2 v2.8.1
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.7.16
-	github.com/zclconf/go-cty v1.17.0
+	github.com/zclconf/go-cty v1.18.0
 	go.yaml.in/yaml/v3 v3.0.4
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 	golang.org/x/text v0.34.0
