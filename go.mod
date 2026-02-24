@@ -44,7 +44,7 @@ require (
 	github.com/beevik/etree v1.6.0
 	github.com/drone/go-scm v1.41.1
 	github.com/extism/go-sdk v1.7.1
-	github.com/fluxcd/helm-controller/api v1.4.5
+	github.com/fluxcd/helm-controller/api v1.5.0
 	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/goccy/go-yaml v1.19.2
