@@ -20,7 +20,7 @@ import (
 
 var (
 	MappingSpecChangedIf = map[string]interface{}{
-		"console/output": nil,
+		"console/output": &console.Spec{},
 		"exitcode":       &exitcode.Spec{},
 		"file/checksum":  &checksum.Spec{},
 	}
