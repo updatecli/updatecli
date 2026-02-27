@@ -22,6 +22,7 @@ import (
 )
 
 // ReadConfigurations read every strategies configuration.
+//nolint:funlen
 func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
