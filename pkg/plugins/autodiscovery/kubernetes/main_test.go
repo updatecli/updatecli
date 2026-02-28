@@ -21,6 +21,35 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 	}{
 		{
+			name:    "multiple documents",
+			rootDir: "testdata/multipleDocuments",
+			digest:  false,
+			flavor:  FlavorKubernetes,
+			expectedPipelines: []string{`name: 'deps: bump container image "coredns"'
+sources:
+  coredns:
+    name: 'get latest container image tag for "coredns/coredns"'
+    kind: 'dockerimage'
+    spec:
+      image: 'coredns/coredns'
+      tagfilter: '^\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=1.14.1'
+targets:
+  coredns:
+    name: 'deps: bump container image "coredns/coredns" to {{ source "coredns" }}'
+    kind: 'yaml'
+    spec:
+      file: 'manifest.yaml'
+      key: "$.spec.template.spec.containers[0].image"
+      documentindex: 1
+    sourceid: 'coredns'
+    transformers:
+      - addprefix: 'coredns/coredns:'
+`},
+		},
+		{
 			name:    "Scenario 1",
 			rootDir: "testdata/success",
 			flavor:  FlavorKubernetes,
@@ -42,6 +71,7 @@ targets:
     spec:
       file: 'pod.yaml'
       key: "$.spec.containers[0].image"
+      documentindex: 0
     sourceid: 'updatecli'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
@@ -69,6 +99,7 @@ targets:
     spec:
       file: 'deployment.yaml'
       key: "$.spec.template.spec.containers[0].image"
+      documentindex: 0
     sourceid: 'nginx'
     transformers:
       - addprefix: 'nginx:'
@@ -105,6 +136,7 @@ targets:
     spec:
       file: 'pod.yaml'
       key: "$.spec.containers[0].image"
+      documentindex: 0
     sourceid: 'updatecli-digest'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
@@ -141,6 +173,7 @@ targets:
     spec:
       file: 'prow.yaml'
       key: "$.presubmits.'*'[0].spec.containers[0].image"
+      documentindex: 0
     sourceid: 'ghcr.io/updatecli/updatecli-digest'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
@@ -170,6 +203,7 @@ targets:
     spec:
       file: 'prow.yaml'
       key: "$.postsubmits.'updatecli/updatecli'[0].spec.containers[0].image"
+      documentindex: 0
     sourceid: 'updatecli-digest'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
@@ -199,6 +233,7 @@ targets:
     spec:
       file: 'prow.yaml'
       key: "$.periodics[0].spec.containers[0].image"
+      documentindex: 0
     sourceid: 'updatecli-digest'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
@@ -227,6 +262,7 @@ targets:
     spec:
       file: 'cronjob.yaml'
       key: "$.spec.jobTemplate.spec.template.spec.containers[0].image"
+      documentindex: 0
     sourceid: 'updatecli'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
@@ -255,6 +291,7 @@ targets:
     spec:
       file: 'initContainers.yaml'
       key: "$.spec.template.spec.initContainers[0].image"
+      documentindex: 0
     sourceid: 'updatecli'
     transformers:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
