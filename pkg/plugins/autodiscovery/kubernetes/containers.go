@@ -55,7 +55,7 @@ func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
 	return manifests, nil
 }
 
-func (k Kubernetes) generateContainerManifest(targetKey, containerName, containerImage, relativeFoundKubernetesFile, manifestNameSuffix string) ([]byte, error) {
+func (k Kubernetes) generateContainerManifest(targetKey, containerName, containerImage, relativeFoundKubernetesFile, manifestNameSuffix string, yamlDocument int) ([]byte, error) {
 	var err error
 
 	if containerImage == "" {
@@ -162,6 +162,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		TargetKey            string
 		TargetPrefix         string
 		TargetFile           string
+		TargetYamlDocument   int
 		ScmID                string
 	}{
 		ActionID:             k.actionID,
@@ -177,6 +178,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		TargetPrefix:         imageName + ":",
 		TargetKey:            targetKey,
 		TargetFile:           relativeFoundKubernetesFile,
+		TargetYamlDocument:   yamlDocument,
 		VersionFilterKind:    versionFilterKind,
 		VersionFilterPattern: versionFilterPattern,
 		VersionFilterRegex:   versionFilterRegex,
