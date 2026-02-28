@@ -40,6 +40,7 @@ targets:
     spec:
       file: '{{ .TargetFile }}'
       key: "{{ .TargetKey}}"
+      documentindex: {{ .TargetYamlDocument }}
     sourceid: '{{ .SourceID }}'
     transformers:
       - addprefix: '{{ .TargetPrefix }}'
@@ -99,6 +100,7 @@ targets:
     spec:
       file: '{{ .TargetFile }}'
       key: "{{ .TargetKey}}"
+      documentindex: {{ .TargetYamlDocument }}
     sourceid: '{{ .SourceID }}-digest'
     transformers:
       - addprefix: '{{ .TargetPrefix }}'
@@ -135,6 +137,7 @@ targets:
     spec:
       file: '{{ .TargetFile }}'
       key: '{{ .TargetKey}}'
+      documentindex: {{ .TargetYamlDocument }}
     sourceid: '{{ .SourceID }}-digest'
     transformers:
       - addprefix: '{{ .TargetPrefix }}'

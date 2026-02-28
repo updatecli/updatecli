@@ -28,6 +28,7 @@ func TestSearchFiles(t *testing.T) {
 				"testdata/initContainers/initContainers.yaml",
 				"testdata/kustomize/deployment.yaml",
 				"testdata/latest/pod.yaml",
+				"testdata/multipleDocuments/manifest.yaml",
 				"testdata/prow/prow.yaml",
 				"testdata/success/pod.yaml",
 				"testdata/template/deployment.yaml",
@@ -84,19 +85,22 @@ func TestGetKubernetesManifestData(t *testing.T) {
 			gotKubernetesManifestData, err := getKubernetesManifestData(
 				tt.filepath)
 
-			if tt.expectedError {
-				assert.EqualError(t, err, tt.expectedErrorMsg)
-				return
-			} else {
-				assert.NoError(t, err)
-			}
+			for _, data := range gotKubernetesManifestData {
 
-			gotContainers := []string{}
-			for _, container := range gotKubernetesManifestData.Spec.Containers {
-				gotContainers = append(gotContainers, container.Image)
-			}
+				if tt.expectedError {
+					assert.EqualError(t, err, tt.expectedErrorMsg)
+					return
+				} else {
+					assert.NoError(t, err)
+				}
 
-			assert.Equal(t, tt.expectedResult, gotContainers)
+				gotContainers := []string{}
+				for _, container := range data.Spec.Containers {
+					gotContainers = append(gotContainers, container.Image)
+				}
+
+				assert.Equal(t, tt.expectedResult, gotContainers)
+			}
 		})
 	}
 }
@@ -141,23 +145,29 @@ func TestGetProwManifestData(t *testing.T) {
 			}
 
 			gotContainers := []string{}
-			for _, repo := range getProwManifestData.ProwPreSubmitJobs {
-				for _, tests := range repo {
-					for _, container := range tests.Spec.Containers {
-						gotContainers = append(gotContainers, container.Image)
+			for _, data := range getProwManifestData {
+				for _, repo := range data.ProwPreSubmitJobs {
+					for _, tests := range repo {
+						for _, container := range tests.Spec.Containers {
+							gotContainers = append(gotContainers, container.Image)
+						}
 					}
 				}
 			}
-			for _, repo := range getProwManifestData.ProwPostSubmitJobs {
-				for _, tests := range repo {
-					for _, container := range tests.Spec.Containers {
-						gotContainers = append(gotContainers, container.Image)
+			for _, data := range getProwManifestData {
+				for _, repo := range data.ProwPostSubmitJobs {
+					for _, tests := range repo {
+						for _, container := range tests.Spec.Containers {
+							gotContainers = append(gotContainers, container.Image)
+						}
 					}
 				}
 			}
-			for _, tests := range getProwManifestData.ProwPeriodicJobs {
-				for _, container := range tests.Spec.Containers {
-					gotContainers = append(gotContainers, container.Image)
+			for _, data := range getProwManifestData {
+				for _, tests := range data.ProwPeriodicJobs {
+					for _, container := range tests.Spec.Containers {
+						gotContainers = append(gotContainers, container.Image)
+					}
 				}
 			}
 
