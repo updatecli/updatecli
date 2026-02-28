@@ -1,13 +1,16 @@
 package kubernetes
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	goyaml "go.yaml.in/yaml/v3"
+
+	goyaml "go.yaml.in/yaml/v4"
 )
 
 // searchKubernetesFiles will look, recursively, for every files with an extension .yaml or .yml from a root directory.
@@ -51,8 +54,8 @@ func searchKubernetesFiles(rootDir string, files []string) ([]string, error) {
 }
 
 // getManifestData reads a T file for information that could be automatically updated.
-func getManifestData[T any](filename, logPrefix string) (*T, error) {
-	data := new(T)
+func getManifestData[T any](filename, logPrefix string) (map[int]*T, error) {
+	result := make(map[int]*T)
 
 	manifestFile := filepath.Base(filepath.Dir(filename))
 	logrus.Debugf("%s file %q found in %q", logPrefix, manifestFile, filepath.Dir(filename))
@@ -62,20 +65,36 @@ func getManifestData[T any](filename, logPrefix string) (*T, error) {
 		return nil, err
 	}
 
-	err = goyaml.Unmarshal(content, data)
+	loader, err := goyaml.NewLoader(bytes.NewReader(content), goyaml.V4)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating yaml loader: %w", err)
 	}
 
-	return data, nil
+	docNum := 1
+
+	for {
+		data := new(T)
+		err := loader.Load(&data)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("parsing yaml file %q: %w", filename, err)
+		}
+
+		result[docNum-1] = data
+		docNum++
+	}
+
+	return result, nil
 }
 
 // getProwManifestData reads a Prow file for information that could be automatically updated.
-func getProwManifestData(filename string) (*prowFlavorManifestSpec, error) {
+func getProwManifestData(filename string) (map[int]*prowFlavorManifestSpec, error) {
 	return getManifestData[prowFlavorManifestSpec](filename, "Prow")
 }
 
 // getKubernetesManifestData reads a Kubernetes file for information that could be automatically updated.
-func getKubernetesManifestData(filename string) (*kubernetesFlavorManifestSpec, error) {
+func getKubernetesManifestData(filename string) (map[int]*kubernetesFlavorManifestSpec, error) {
 	return getManifestData[kubernetesFlavorManifestSpec](filename, "Kubernetes")
 }
