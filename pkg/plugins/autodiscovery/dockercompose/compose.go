@@ -12,11 +12,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
-const (
-	// DefaultFileMatch specifies the default file shell pattern to identify Docker Compose files
-	// Ref. https://pkg.go.dev/path/filepath#Match and https://go.dev/play/p/y2b7tt03r8Q to test
-	DefaultFilePattern string = "*docker-compose*.y*ml"
-)
+// DefaultFileMatch specifies the default file shell pattern to identify Docker Compose files
+// Ref. https://pkg.go.dev/path/filepath#Match and https://go.dev/play/p/y2b7tt03r8Q to test
+var DefaultFilePattern = []string{
+	"docker-compose*.y*ml",
+	"compose*.y*ml",
+}
 
 type dockerComposeServiceSpec struct {
 	Image string
@@ -73,7 +74,6 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 
 			if svc.Spec.Image == "" {
 				continue
-
 			} else if (strings.Contains(svc.Spec.Image, "${")) && (strings.Contains(svc.Spec.Image, "}")) {
 				logrus.Debugf("Skipping image %q as it contains environment variable, which is not supported at the moment", svc.Spec.Image)
 				continue
@@ -242,7 +242,6 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 }
 
 func parsePlatform(platform string) (os, arch, variant string) {
-
 	p := strings.Split(platform, "/")
 	switch len(p) {
 	case 3:

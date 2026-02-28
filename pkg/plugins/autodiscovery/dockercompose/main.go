@@ -40,7 +40,7 @@ type Spec struct {
 	// ---
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	// FileMatch allows to override default docker-compose.yaml file matching. Default ["docker-compose.yaml","docker-compose.yml","docker-compose.*.yaml","docker-compose.*.yml"]
+	// FileMatch allows to override default docker-compose.yaml file matching. Default ["compose.yaml", "compose.yml", "compose.*.yaml", "compose.*.yml", "docker-compose.yaml","docker-compose.yml","docker-compose.*.yaml","docker-compose.*.yml"]
 	FileMatch []string `yaml:",omitempty"`
 	// versionfilter provides parameters to specify the version pattern used when generating manifest.
 	//
@@ -130,7 +130,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (DockerCompose, erro
 		digest:        digest,
 		spec:          s,
 		rootDir:       dir,
-		filematch:     []string{DefaultFilePattern},
+		filematch:     DefaultFilePattern,
 		scmID:         scmID,
 		versionFilter: newFilter,
 	}
@@ -140,7 +140,6 @@ func New(spec interface{}, rootDir, scmID, actionID string) (DockerCompose, erro
 	}
 
 	return d, nil
-
 }
 
 func (d DockerCompose) DiscoverManifests() ([][]byte, error) {

@@ -1,0 +1,6 @@
+services:
+  # just fake services to test the file matching pattern
+  fake-service:
+    image: ${IMAGE_PREFIX}/safeline-postgres${ARCH_SUFFIX}:15.2
+    ports:
+      - "8080:8080"
