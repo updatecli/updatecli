@@ -35,6 +35,7 @@ conditions:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}.chart'
+      documentindex: {{ .TargetYamlDocument }}
       value: '{{ .ChartName }}'
   {{ .ConditionID }}-repository:
     name: 'Ensure Helm chart repository {{ .ChartRepository }} is specified'
@@ -46,6 +47,7 @@ conditions:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}.repoURL'
+      documentindex: {{ .TargetYamlDocument }}
       value: '{{ .ChartRepository }}'
 targets:
   {{ .TargetID }}:
@@ -57,6 +59,7 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}.targetRevision'
+      documentindex: {{ .TargetYamlDocument }}
     sourceid: '{{ .SourceID }}'
 `
 )
