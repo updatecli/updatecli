@@ -16,6 +16,11 @@ import (
 func (g *GitLabSearch) ScmsGenerator(ctx context.Context) ([]gitlabscm.Spec, error) {
 	results := make([]gitlabscm.Spec, 0)
 
+	re, err := regexp.Compile(g.branch)
+	if err != nil {
+		return nil, fmt.Errorf("invalid branch regex %q: %w", g.branch, err)
+	}
+
 	glClient := (*gitlab.Client)(g.client)
 
 	includeSubGroups := g.includeSubgroups
@@ -50,11 +55,6 @@ func (g *GitLabSearch) ScmsGenerator(ctx context.Context) ([]gitlabscm.Spec, err
 			branches, err := g.listBranches(ctx, glClient, project.PathWithNamespace)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list branches for %s: %w", project.PathWithNamespace, err)
-			}
-
-			re, err := regexp.Compile(g.branch)
-			if err != nil {
-				return nil, fmt.Errorf("invalid branch regex %q: %w", g.branch, err)
 			}
 
 			for _, branchName := range branches {
