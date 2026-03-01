@@ -71,6 +71,7 @@ require (
 	github.com/yuin/goldmark v1.7.16
 	github.com/zclconf/go-cty v1.18.0
 	go.yaml.in/yaml/v3 v3.0.4
+	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 	golang.org/x/text v0.34.0
 	golang.org/x/time v0.14.0
