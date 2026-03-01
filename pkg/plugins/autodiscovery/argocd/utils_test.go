@@ -15,12 +15,14 @@ func TestSearchFiles(t *testing.T) {
 	}
 
 	expectedFiles := []string{
+		"testdata/empty/manifest.yaml",
+		"testdata/multi-release/manifest.yaml",
 		"testdata/oci-helm-source/manifest.yaml",
 		"testdata/sealed-secrets/manifest.yaml",
 		"testdata/sealed-secrets_sources/manifest.yaml",
 	}
 
-	assert.Equal(t, gotFiles, expectedFiles)
+	assert.Equal(t, expectedFiles, gotFiles)
 }
 
 func TestListChartDependency(t *testing.T) {
@@ -30,8 +32,12 @@ func TestListChartDependency(t *testing.T) {
 	if err != nil {
 		t.Errorf("%s\n", err)
 	}
-	expectedChartName := "sealed-secrets"
-	if gotChartData.Spec.Source.Chart != expectedChartName {
-		t.Errorf("Expecting Chart Name %q but got %q", expectedChartName, gotChartData.Spec.Source.Chart)
+
+	for _, data := range gotChartData {
+		expectedChartName := "sealed-secrets"
+		if data.Spec.Source.Chart != expectedChartName {
+			t.Errorf("Expecting Chart Name %q but got %q", expectedChartName, data.Spec.Source.Chart)
+		}
 	}
+
 }

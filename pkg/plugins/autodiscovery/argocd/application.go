@@ -3,6 +3,7 @@ package argocd
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -16,13 +17,18 @@ var (
 	ArgoCDFilePatterns [2]string = [2]string{"*.yaml", "*.yml"}
 )
 
-// ArgoCDApplicationSpec is the information that we need to retrieve from Helm chart files.
+// ArgocdApplicationSpec represents the subset of ArgoCD application manifest relevant for Updatecli autodiscovery
 type ArgoCDApplicationSpec struct {
 	ApiVersion string `yaml:"apiVersion"`
 	Kind       string `yaml:"kind"`
 	Spec       struct {
-		Source  ApplicationSourceSpec
-		Sources []ApplicationSourceSpec
+		Source   ApplicationSourceSpec
+		Sources  []ApplicationSourceSpec
+		Template struct {
+			Spec struct {
+				Source ApplicationSourceSpec
+			}
+		}
 	}
 }
 
@@ -83,40 +89,62 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 		}
 
 		// Retrieve chart dependencies for each chart
-		data, err := readManifest(foundFile)
+		d, err := readManifest(foundFile)
 		if err != nil {
 			logrus.Debugln(err)
 			continue
 		}
 
-		if !data.Spec.Source.IsZero() {
-			manifest, err := f.generateManifestBySource(
-				data.Spec.Source,
-				relativeFilepath,
-				"$.spec.source",
-			)
-			if err != nil {
-				logrus.Errorf("error discovering application source: %s", err)
+		for documentIndex := range maps.Keys(d) {
+			data := d[documentIndex]
+			if !data.Spec.Source.IsZero() {
+				manifest, err := f.generateManifestBySource(
+					data.Spec.Source,
+					relativeFilepath,
+					"$.spec.source",
+					documentIndex,
+				)
+				if err != nil {
+					logrus.Errorf("error discovering application source: %s", err)
+					continue
+				}
+
+				manifests = append(manifests, manifest)
 			}
 
-			manifests = append(manifests, manifest)
-		}
+			if !data.Spec.Template.Spec.Source.IsZero() {
+				manifest, err := f.generateManifestBySource(
+					data.Spec.Template.Spec.Source,
+					relativeFilepath,
+					"$.spec.template.spec.source",
+					documentIndex,
+				)
+				if err != nil {
+					logrus.Errorf("error discovering application source: %s", err)
+					continue
+				}
 
-		for i, source := range data.Spec.Sources {
-			if source.IsZero() {
-				continue
+				manifests = append(manifests, manifest)
 			}
 
-			manifest, err := f.generateManifestBySource(
-				source,
-				relativeFilepath,
-				fmt.Sprintf("$.spec.sources[%d]", i),
-			)
-			if err != nil {
-				logrus.Errorf("error discovering application source: %s", err)
-			}
+			for i, source := range data.Spec.Sources {
+				if source.IsZero() {
+					continue
+				}
 
-			manifests = append(manifests, manifest)
+				manifest, err := f.generateManifestBySource(
+					source,
+					relativeFilepath,
+					fmt.Sprintf("$.spec.sources[%d]", i),
+					documentIndex,
+				)
+				if err != nil {
+					logrus.Errorf("error discovering application source: %s", err)
+					continue
+				}
+
+				manifests = append(manifests, manifest)
+			}
 		}
 	}
 
@@ -124,7 +152,7 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 }
 
 // generateManifestBySource generates an ArgoCD manifest for Updatecli based on the application source input
-func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string, targetKey string) ([]byte, error) {
+func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string, targetKey string, yamlDocument int) ([]byte, error) {
 
 	var err error
 
@@ -201,6 +229,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		SourceVersionFilterRegex   string
 		TargetID                   string
 		TargetKey                  string
+		TargetYamlDocument         int
 		Token                      string
 		File                       string
 		ScmID                      string
@@ -220,6 +249,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		SourceVersionFilterRegex:   sourceVersionFilterRegex,
 		TargetID:                   data.Chart,
 		TargetKey:                  targetKey,
+		TargetYamlDocument:         yamlDocument,
 		File:                       file,
 		ScmID:                      f.scmID,
 		Token:                      token,
