@@ -1,0 +1,67 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: demo-project
+  namespace: argocd
+spec:
+  description: Demo project for OCI Helm applications
+  sourceRepos:
+    - "*"
+  destinations:
+    - namespace: demo
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nginx-oci
+  namespace: argocd
+spec:
+  project: demo-project
+  source:
+    repoURL: oci://registry-1.docker.io/bitnamicharts
+    chart: nginx
+    targetRevision: 15.9.0
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-applicationset
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: staging
+            namespace: demo-staging
+          - name: production
+            namespace: demo-production
+  template:
+    metadata:
+      name: nginx-{{name}}
+    spec:
+      project: demo-project
+      source:
+        repoURL: oci://registry-1.docker.io/bitnamicharts
+        chart: nginx
+        targetRevision: 15.9.0
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
