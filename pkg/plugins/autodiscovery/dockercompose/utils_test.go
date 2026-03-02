@@ -18,8 +18,9 @@ func TestSearchFiles(t *testing.T) {
 		{
 			name:         "Nominal case with test data and default file pattern set",
 			rootDir:      "testdata/",
-			filePatterns: []string{DefaultFilePattern},
+			filePatterns: DefaultFilePattern,
 			expectedFiles: []string{
+				"testdata/compose.yaml",
 				"testdata/docker-compose.yaml",
 			},
 		},
