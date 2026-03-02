@@ -15,6 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/githubsearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlabsearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
@@ -162,6 +163,7 @@ func (Config) JSONSchema() *jschema.Schema {
 		"gitlab":       &gitlab.Spec{},
 		"stash":        &stash.Spec{},
 		"githubsearch": &githubsearch.Spec{},
+		"gitlabsearch": &gitlabsearch.Spec{},
 	}
 
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
