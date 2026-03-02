@@ -19,6 +19,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
+const (
+	// Kind defines the SCM kind for GitLab.
+	Kind = "gitlab"
+)
+
 // Spec defines settings used to interact with GitLab release
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`

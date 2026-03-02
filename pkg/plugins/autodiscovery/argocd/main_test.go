@@ -1,6 +1,7 @@
 package argocd
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,92 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 		spec              Spec
 	}{
+		{
+			name:    "ArgoCD manifests discovered with multiple documents",
+			rootDir: "testdata/multi-release",
+			expectedPipelines: []string{
+				`name: 'deps(helm): bump Helm chart "nginx" in ArgoCD manifest "manifest.yaml"'
+sources:
+  nginx:
+    name: 'Get latest "nginx" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'nginx'
+      url: 'oci://registry-1.docker.io/bitnamicharts'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  nginx-name:
+    name: 'Ensure Helm chart name nginx is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.chart'
+      documentindex: 1
+      value: 'nginx'
+  nginx-repository:
+    name: 'Ensure Helm chart repository oci://registry-1.docker.io/bitnamicharts is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.repoURL'
+      documentindex: 1
+      value: 'oci://registry-1.docker.io/bitnamicharts'
+targets:
+  nginx:
+    name: 'deps(helm): update Helm chart "nginx" to {{ source "nginx" }}'
+    kind: 'yaml'
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.source.targetRevision'
+      documentindex: 1
+    sourceid: 'nginx'
+`,
+				`name: 'deps(helm): bump Helm chart "nginx" in ArgoCD manifest "manifest.yaml"'
+sources:
+  nginx:
+    name: 'Get latest "nginx" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'nginx'
+      url: 'oci://registry-1.docker.io/bitnamicharts'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  nginx-name:
+    name: 'Ensure Helm chart name nginx is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.template.spec.source.chart'
+      documentindex: 2
+      value: 'nginx'
+  nginx-repository:
+    name: 'Ensure Helm chart repository oci://registry-1.docker.io/bitnamicharts is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.template.spec.source.repoURL'
+      documentindex: 2
+      value: 'oci://registry-1.docker.io/bitnamicharts'
+targets:
+  nginx:
+    name: 'deps(helm): update Helm chart "nginx" to {{ source "nginx" }}'
+    kind: 'yaml'
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.template.spec.source.targetRevision'
+      documentindex: 2
+    sourceid: 'nginx'
+`,
+			},
+		},
 		{
 			name:              "ArgoCD manifests discovered no source",
 			rootDir:           "testdata/empty",
@@ -51,6 +138,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.chart'
+      documentindex: 0
       value: 'sealed-secrets'
   sealed-secrets-repository:
     name: 'Ensure Helm chart repository https://bitnami-labs.github.io/sealed-secrets is specified'
@@ -59,6 +147,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.repoURL'
+      documentindex: 0
       value: 'https://bitnami-labs.github.io/sealed-secrets'
 targets:
   sealed-secrets:
@@ -67,6 +156,7 @@ targets:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.targetRevision'
+      documentindex: 0
     sourceid: 'sealed-secrets'
 `},
 		},
@@ -92,6 +182,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.chart'
+      documentindex: 0
       value: 'sealed-secrets'
   sealed-secrets-repository:
     name: 'Ensure Helm chart repository https://bitnami-labs.github.io/sealed-secrets is specified'
@@ -100,6 +191,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.repoURL'
+      documentindex: 0
       value: 'https://bitnami-labs.github.io/sealed-secrets'
 targets:
   sealed-secrets:
@@ -108,6 +200,7 @@ targets:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.targetRevision'
+      documentindex: 0
     sourceid: 'sealed-secrets'
 `},
 		},
@@ -133,6 +226,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.sources[0].chart'
+      documentindex: 0
       value: 'sealed-secrets'
   sealed-secrets-repository:
     name: 'Ensure Helm chart repository https://bitnami-labs.github.io/sealed-secrets is specified'
@@ -141,6 +235,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.sources[0].repoURL'
+      documentindex: 0
       value: 'https://bitnami-labs.github.io/sealed-secrets'
 targets:
   sealed-secrets:
@@ -149,6 +244,7 @@ targets:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.sources[0].targetRevision'
+      documentindex: 0
     sourceid: 'sealed-secrets'
 `},
 		},
@@ -180,6 +276,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.sources[0].chart'
+      documentindex: 0
       value: 'sealed-secrets'
   sealed-secrets-repository:
     name: 'Ensure Helm chart repository https://bitnami-labs.github.io/sealed-secrets is specified'
@@ -189,6 +286,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.sources[0].repoURL'
+      documentindex: 0
       value: 'https://bitnami-labs.github.io/sealed-secrets'
 targets:
   sealed-secrets:
@@ -198,6 +296,7 @@ targets:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.sources[0].targetRevision'
+      documentindex: 0
     sourceid: 'sealed-secrets'
 `},
 		},
@@ -223,6 +322,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.chart'
+      documentindex: 0
       value: 'nginx'
   nginx-repository:
     name: 'Ensure Helm chart repository registry-1.docker.io/bitnamicharts is specified'
@@ -231,6 +331,7 @@ conditions:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.repoURL'
+      documentindex: 0
       value: 'registry-1.docker.io/bitnamicharts'
 targets:
   nginx:
@@ -239,6 +340,7 @@ targets:
     spec:
       file: 'manifest.yaml'
       key: '$.spec.source.targetRevision'
+      documentindex: 0
     sourceid: 'nginx'
 `},
 		},
@@ -256,6 +358,13 @@ targets:
 			rawPipelines, err := argocd.DiscoverManifests()
 			require.NoError(t, err)
 
+			// Sort pipelines by name to ensure consistent order for assertion
+			sort.Slice(rawPipelines, func(i, j int) bool {
+				return string(rawPipelines[i]) < string(rawPipelines[j])
+			})
+
+			require.Equal(t, len(tt.expectedPipelines), len(rawPipelines), "number of discovered pipelines does not match expected")
+
 			for i := range rawPipelines {
 				// We expect manifest generated by the autodiscovery to use the yaml syntax
 				pipelines = append(pipelines, string(rawPipelines[i]))
@@ -263,5 +372,4 @@ targets:
 			}
 		})
 	}
-
 }

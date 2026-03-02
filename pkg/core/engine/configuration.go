@@ -17,9 +17,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/githubsearch"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlabsearch"
 )
 
 // ReadConfigurations read every strategies configuration.
+//
+//nolint:funlen
 func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
@@ -167,6 +171,47 @@ func (e *Engine) LoadConfigurations() error {
 
 							loadedConfigurations = append(loadedConfigurations, newPipeline)
 							logrus.Debugf("githubsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
+						}
+
+					case gitlabsearch.Kind:
+
+						logrus.Debugf("Processing gitlabsearch scm %q for potential multiple repository discovery", scmID)
+
+						ctx := context.Background()
+						glSearchScms, err := gitlabsearch.New(scmConfig.Spec)
+						if err != nil {
+							return fmt.Errorf("unable to instantiate gitlabsearch scm %q: %w", scmID, err)
+						}
+						discoveredGitLabSCms, err := glSearchScms.ScmsGenerator(ctx)
+						if err != nil {
+							return fmt.Errorf("unable to generate scm specs for gitlabsearch scm %q: %w", scmID, err)
+						}
+
+						if len(discoveredGitLabSCms) == 0 {
+							// We need to trigger an error if the gitlab search did not discover any SCMs.
+							// Otherwise Updatecli will not know how to handle this kind of scm later.
+							return fmt.Errorf("no scm discovered for gitlabsearch scm %q", scmID)
+						}
+
+						scmConfig.Kind = gitlab.Kind
+						scmConfig.Spec = discoveredGitLabSCms[0]
+
+						loadedConfigurations[i].Spec.SCMs[scmID] = scmConfig
+
+						for _, spec := range discoveredGitLabSCms[1:] {
+							newPipeline := loadedConfiguration
+
+							newPipeline.Spec.SCMs = make(map[string]scm.Config, len(loadedConfiguration.Spec.SCMs))
+							maps.Copy(newPipeline.Spec.SCMs, loadedConfiguration.Spec.SCMs)
+
+							newSCM := newPipeline.Spec.SCMs[scmID]
+							newSCM.Kind = gitlab.Kind
+							newSCM.Spec = spec
+
+							newPipeline.Spec.SCMs[scmID] = newSCM
+
+							loadedConfigurations = append(loadedConfigurations, newPipeline)
+							logrus.Debugf("gitlabsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
 						}
 					}
 				}

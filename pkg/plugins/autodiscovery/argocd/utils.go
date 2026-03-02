@@ -1,6 +1,7 @@
 package argocd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
@@ -8,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	goyaml "go.yaml.in/yaml/v3"
+	goyaml "go.yaml.in/yaml/v4"
 )
 
 // searchArgoCDFiles will look, recursively, for every YAML files from a root directory.
@@ -19,7 +20,6 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
@@ -65,8 +65,7 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 }
 
 // readManifest reads a Chart.yaml for information that could be automated
-func readManifest(filename string) (*ArgoCDApplicationSpec, error) {
-	var data ArgoCDApplicationSpec
+func readManifest(filename string) (map[int]*ArgoCDApplicationSpec, error) {
 
 	if _, err := os.Stat(filename); err != nil {
 		return nil, err
@@ -84,20 +83,37 @@ func readManifest(filename string) (*ArgoCDApplicationSpec, error) {
 		return nil, err
 	}
 
-	err = goyaml.Unmarshal(content, &data)
+	loader, err := goyaml.NewLoader(bytes.NewReader(content), goyaml.V4)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating yaml loader: %w", err)
 	}
 
-	if !data.Spec.Source.IsZero() {
-		return &data, nil
-	}
+	docNum := 1
+	result := make(map[int]*ArgoCDApplicationSpec)
+	for {
+		data := ArgoCDApplicationSpec{}
 
-	for _, source := range data.Spec.Sources {
-		if !source.IsZero() {
-			return &data, nil
+		err := loader.Load(&data)
+		if err == io.EOF {
+			break
 		}
+		if err != nil {
+			return nil, fmt.Errorf("parsing yaml file %q: %w", filename, err)
+		}
+
+		// Check if the document contains a source definition that we can use to generate an Updatecli manifest
+		if !data.Spec.Source.IsZero() ||
+			!data.Spec.Template.Spec.Source.IsZero() ||
+			len(data.Spec.Sources) > 0 {
+			result[docNum-1] = &data
+		}
+
+		docNum++
 	}
 
-	return nil, nil
+	if len(result) == 0 {
+		return nil, nil
+	}
+
+	return result, nil
 }
