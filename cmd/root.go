@@ -10,6 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/registry"
+	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/core/udash"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 
@@ -30,6 +31,7 @@ var (
 	verbose          bool
 	experimental     bool
 	disableTLS       bool
+	uniqueTmpDir     bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -62,6 +64,7 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "debug", "", false, "Debug Output")
 	rootCmd.PersistentFlags().BoolVarP(&experimental, "experimental", "", false, "Enable Experimental mode")
+	rootCmd.PersistentFlags().BoolVar(&uniqueTmpDir, "unique-tmp-dir", false, "Use a unique temporary directory to allow running multiple Updatecli instances in parallel")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if verbose {
 			logrus.SetLevel(logrus.DebugLevel)
@@ -75,6 +78,13 @@ func init() {
 		if experimental {
 			cmdoptions.Experimental = true
 			logrus.Infof("Experimental Mode Enabled")
+		}
+		if uniqueTmpDir {
+			if err := tmp.InitUnique(); err != nil {
+				logrus.Errorf("failed to initialize unique tmp dir: %s", err)
+				os.Exit(1)
+			}
+			logrus.Infof("Using unique temporary directory: %s", tmp.Directory)
 		}
 	}
 	rootCmd.AddCommand(
