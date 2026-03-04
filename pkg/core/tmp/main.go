@@ -35,6 +35,20 @@ func Create() error {
 	return nil
 }
 
+// InitUnique sets a unique temporary directory for this Updatecli execution.
+// This is useful when running multiple Updatecli instances in parallel targeting
+// the same repository, to avoid conflicts between cloned directories.
+func InitUnique() error {
+	dir, err := os.MkdirTemp("", "updatecli-")
+	if err != nil {
+		return err
+	}
+	Directory = dir
+	BinDirectory = path.Join(Directory, "bin")
+	ReportDirectory = path.Join(Directory, "report")
+	return nil
+}
+
 // InitBin creates a bin directory used by updatecli to store and execute command
 func InitBin() (string, error) {
 	if _, err := os.Stat(BinDirectory); os.IsNotExist(err) {
