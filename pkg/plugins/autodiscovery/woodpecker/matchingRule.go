@@ -1,6 +1,7 @@
 package woodpecker
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -17,6 +18,17 @@ type MatchingRule struct {
 
 // MatchingRules is a slice of MatchingRule
 type MatchingRules []MatchingRule
+
+// Validate checks that each matching rule has at least one non-empty field.
+// Returns an error if any rule has no valid fields specified.
+func (m MatchingRules) Validate() error {
+	for i, rule := range m {
+		if rule.Path == "" && len(rule.Images) == 0 {
+			return fmt.Errorf("rule %d has no valid fields (path or images must be specified)", i+1)
+		}
+	}
+	return nil
+}
 
 // isMatchingRule tests that all defined rules are matching and returns true if it's the case otherwise returns false
 func (m MatchingRules) isMatchingRule(rootDir, filePath, image string) bool {

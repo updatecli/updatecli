@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
@@ -18,6 +19,17 @@ type MatchingRule struct {
 }
 
 type MatchingRules []MatchingRule
+
+// Validate checks that each matching rule has at least one non-empty field.
+// Returns an error if any rule has no valid fields specified.
+func (m MatchingRules) Validate() error {
+	for i, rule := range m {
+		if rule.Path == "" && len(rule.Dependencies) == 0 && len(rule.Containers) == 0 {
+			return fmt.Errorf("rule %d has no valid fields (path, dependencies, or containers must be specified)", i+1)
+		}
+	}
+	return nil
+}
 
 // isMatchingRules checks for each matchingRule if parameters are matching rules and then return true or false.
 func (m MatchingRules) isMatchingRules(rootDir, filePath, dependencyName, dependencyVersion, containerName, containerTag string) bool {

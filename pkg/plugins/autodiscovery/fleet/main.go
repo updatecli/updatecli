@@ -1,6 +1,7 @@
 package fleet
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -80,6 +81,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Fleet, error) {
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Fleet{}, err
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Fleet{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Fleet{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	dir := rootDir
