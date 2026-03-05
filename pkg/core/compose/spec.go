@@ -4,9 +4,25 @@ type Spec struct {
 	// Policies contains a list of policies
 	Policies []Policy
 	// Environment contains a list of environment variables
+	//
+	// Example:
+	//   ENV_VAR1: value1
+	//   ENV_VAR2: value2
 	Environments Environments `yaml:",omitempty"`
 	// Env_files contains a list of environment files
+	//
+	// Example:
+	//   - env_file1.env
+	//   - env_file2.env
 	Env_files EnvFiles `yaml:"env_files,omitempty"`
+	// ValuesInline contains a list of inline values for Updatecli config
+	// This is the default inline values that will be applied to all policies if not overridden by the policy inline values.
+	// A deep merge will be performed between global inline values and policy inline values if both are defined.
+	//
+	// Example:
+	//   key1: value1
+	//   key2: value2
+	ValuesInline map[string]any `yaml:",omitempty"`
 }
 
 type Policy struct {
@@ -18,6 +34,13 @@ type Policy struct {
 	Config []string `yaml:",omitempty"`
 	// Values contains a list of Updatecli config file path
 	Values []string `yaml:",omitempty"`
+	// ValuesInline contains a list of inline values for Updatecli config
+	// A deep merge will be performed between global inline values and policy inline values if both are defined.
+	//
+	// Example:
+	//   key1: value1
+	//   key2: value2
+	ValuesInline map[string]any `yaml:",omitempty"`
 	// Secrets contains a list of Updatecli secret file path
 	Secrets []string `yaml:",omitempty"`
 }
