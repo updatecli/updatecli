@@ -67,7 +67,6 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 	}
 
 	for i := range c.spec.Policies {
-		var localErrs []error
 		if c.spec.Policies[i].IsZero() {
 			continue
 		}
@@ -80,7 +79,7 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		if c.spec.Policies[i].Policy != "" {
 			policyManifest, policyValues, policySecrets, err = registry.Pull(c.spec.Policies[i].Policy, disableTLS)
 			if err != nil {
-				localErrs = append(localErrs, fmt.Errorf("pulling policy %q: %s", c.spec.Policies[i].Policy, err))
+				errs = append(errs, fmt.Errorf("pulling policy %q: %s", c.spec.Policies[i].Policy, err))
 				continue
 			}
 		}
@@ -119,7 +118,7 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		if len(c.spec.Policies[i].ValuesInline) > 0 {
 			policyInlineValues, err := parseValuesInline(c.spec.Policies[i].ValuesInline)
 			if err != nil {
-				localErrs = append(localErrs, fmt.Errorf("parsing inline values for policy %q: %s", c.spec.Policies[i].Name, err))
+				errs = append(errs, fmt.Errorf("parsing inline values for policy %q: %s", c.spec.Policies[i].Name, err))
 				continue
 			}
 
@@ -127,8 +126,7 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		}
 
 		// Try to parse as much valid manifest as possible
-		if len(localErrs) > 0 {
-			errs = append(errs, fmt.Errorf("policy %q errors: %s", c.spec.Policies[i].Name, localErrs))
+		if len(errs) > 0 {
 			continue
 		}
 
@@ -147,7 +145,7 @@ func parseValuesInline(data map[string]any) (string, error) {
 
 	valuesInline, err := yaml.Marshal(data)
 	if err != nil {
-		return "", fmt.Errorf("marshalling inline values: %s", err)
+		return "", fmt.Errorf("marshaling inline values: %s", err)
 	}
 
 	return string(valuesInline), nil
