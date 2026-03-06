@@ -1,6 +1,8 @@
 package compose
 
 type Spec struct {
+	// Name contains the compose name
+	Name string `yaml:",omitempty" jsonschema:"required"`
 	// Policies contains a list of policies
 	Policies []Policy
 	// Environment contains a list of environment variables
@@ -22,7 +24,7 @@ type Spec struct {
 	// Example:
 	//   key1: value1
 	//   key2: value2
-	ValuesInline map[string]any `yaml:",omitempty"`
+	ValuesInline *map[string]any `yaml:",omitempty"`
 }
 
 type Policy struct {
@@ -40,7 +42,7 @@ type Policy struct {
 	// Example:
 	//   key1: value1
 	//   key2: value2
-	ValuesInline map[string]any `yaml:",omitempty"`
+	ValuesInline *map[string]any `yaml:",omitempty"`
 	// Secrets contains a list of Updatecli secret file path
 	Secrets []string `yaml:",omitempty"`
 }

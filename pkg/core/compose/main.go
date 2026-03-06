@@ -12,14 +12,22 @@ import (
 // Compose is a struct that contains a compose object
 type Compose struct {
 	// spec contains the compose spec
-	spec Spec
+	spec     Spec
+	filename string
+	name     string
 }
 
 // New creates a new Compose object
 func New(filename string) (Compose, error) {
 	var c Compose
 
-	logrus.Infof("\nLoading Updatecli compose file: %q", filename)
+	composeFileName := c.spec.Name
+	if c.spec.Name == "" {
+		composeFileName = filename
+		logrus.Warningf("No parameter \"name\" defined in the compose file %q, using %q as default name", c.filename, composeFileName)
+	}
+
+	logrus.Infof("\nLoading Updatecli compose file: %q", composeFileName)
 
 	spec, err := LoadFile(filename)
 	if err != nil {
@@ -28,7 +36,7 @@ func New(filename string) (Compose, error) {
 
 	switch len(spec.Policies) {
 	case 0:
-		logrus.Warningf("No policy defined in the compose file %q", filename)
+		logrus.Warningf("No policy defined in the compose file")
 	case 1:
 		logrus.Infof("One policy detected:\n\t* Policy: %s", spec.Policies[0].Name)
 	default:
@@ -39,12 +47,16 @@ func New(filename string) (Compose, error) {
 	}
 
 	c.spec = *spec
+	c.filename = filename
+
+	c.name = composeFileName
 
 	return c, nil
 }
 
 // GetPolicies returns a list of policies defined in the compose file
 func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
+
 	var manifests []manifest.Manifest
 	var errs []error
 
@@ -56,14 +68,18 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		errs = append(errs, err)
 	}
 
-	globalInlineValues, err := parseValuesInline(c.spec.ValuesInline)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("parsing global inline values: %s", err))
+	var globalInlineValues string
+	if c.spec.ValuesInline != nil {
+		var err error
+		globalInlineValues, err = parseValuesInline(*c.spec.ValuesInline)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("parsing global inline values: %s", err))
+		}
 	}
 
 	// Fail fast if there is an error with the compose file before processing policies
 	if len(errs) > 0 {
-		return manifests, fmt.Errorf("compose file %q errors: %s", c.spec, errs)
+		return manifests, fmt.Errorf("compose file %q errors: %q", c.name, errs)
 	}
 
 	for i := range c.spec.Policies {
@@ -115,8 +131,8 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 			manifest.ValuesInline = append(manifest.ValuesInline, globalInlineValues)
 		}
 
-		if len(c.spec.Policies[i].ValuesInline) > 0 {
-			policyInlineValues, err := parseValuesInline(c.spec.Policies[i].ValuesInline)
+		if c.spec.Policies[i].ValuesInline != nil {
+			policyInlineValues, err := parseValuesInline(*c.spec.Policies[i].ValuesInline)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("parsing inline values for policy %q: %s", c.spec.Policies[i].Name, err))
 				continue
